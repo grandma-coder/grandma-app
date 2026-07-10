@@ -1723,6 +1723,32 @@ export function KidsHome() {
       })()}
 
       {/* ─── Overflow Kids Modal ──────────────────────────────── */}
+      {diffuse ? (
+        <DiffuseSheet
+          visible={overflowKidsVisible}
+          title={t('kids_home_all_kids_title')}
+          onClose={() => setOverflowKidsVisible(false)}
+          scroll={false}
+        >
+          <View>
+            {children.map((c, idx) => {
+              const active = c.id === child.id
+              const kidColor = CHILD_COLORS[idx % CHILD_COLORS.length]
+              return (
+                <DiffuseListRow
+                  key={c.id}
+                  dotColor={kidColor}
+                  title={c.name}
+                  sub={formatAge(c.birthDate)}
+                  last={idx === children.length - 1}
+                  trailing={active ? <Check size={18} color={dt.colors.ink} strokeWidth={2} /> : undefined}
+                  onPress={() => { setActiveChild(c); setOverflowKidsVisible(false) }}
+                />
+              )
+            })}
+          </View>
+        </DiffuseSheet>
+      ) : (
       <Modal visible={overflowKidsVisible} transparent animationType="slide">
         <Pressable style={s.modalOverlay} onPress={() => setOverflowKidsVisible(false)}>
           <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
@@ -1764,6 +1790,7 @@ export function KidsHome() {
           </View>
         </Pressable>
       </Modal>
+      )}
 
       {/* ─── Date Range Picker ────────────────────────────────── */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.dateRangeRow}>
@@ -2352,9 +2379,15 @@ export function KidsHome() {
           {/* Actions row — Date + (optional Time) + Save */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             {/* Date pill */}
+            {(() => { const kAccent = getDiffuseAccent('kids', isDark); return (
             <Pressable
               onPress={() => { setShowDatePicker(!showDatePicker); setShowTimePicker(false) }}
-              style={[s.reminderDateBtn, {
+              style={[s.reminderDateBtn, diffuse ? {
+                borderColor: newReminderDate ? dt.colors.hairline : dt.colors.line,
+                backgroundColor: newReminderDate ? dt.colors.surface : 'transparent',
+                borderRadius: radius.full,
+                flex: 0,
+              } : {
                 borderColor: newReminderDate ? brand.kids : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
                 backgroundColor: newReminderDate
                   ? brand.kids + '18'
@@ -2363,8 +2396,13 @@ export function KidsHome() {
                 flex: 0,
               }]}
             >
-              <Clock size={12} color={newReminderDate ? brand.kids : colors.textSecondary} strokeWidth={2} />
-              <Text style={[s.reminderDateBtnText, {
+              <Clock size={12} color={diffuse ? (newReminderDate ? kAccent : dt.colors.ink3) : (newReminderDate ? brand.kids : colors.textSecondary)} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[s.reminderDateBtnText, diffuse ? {
+                color: newReminderDate ? dt.colors.ink : dt.colors.ink3,
+                fontFamily: diffuseFont.mono,
+                letterSpacing: 0.5,
+                flex: 0,
+              } : {
                 color: newReminderDate ? brand.kids : colors.textSecondary,
                 fontFamily: font.bodySemiBold,
                 flex: 0,
@@ -2375,16 +2413,23 @@ export function KidsHome() {
               </Text>
               {newReminderDate && (
                 <Pressable onPress={() => { setNewReminderDate(null); setNewReminderTime(null); setShowDatePicker(false); setShowTimePicker(false) }} hitSlop={8}>
-                  <X size={10} color={brand.kids} strokeWidth={2.5} />
+                  <X size={10} color={diffuse ? dt.colors.ink3 : brand.kids} strokeWidth={2.5} />
                 </Pressable>
               )}
             </Pressable>
+            ) })()}
 
             {/* Time pill — only visible after date is chosen */}
             {newReminderDate && (
               <Pressable
                 onPress={() => { setShowTimePicker(!showTimePicker); setShowDatePicker(false) }}
-                style={{
+                style={diffuse ? {
+                  flexDirection: 'row', alignItems: 'center', gap: 5,
+                  paddingHorizontal: 12, paddingVertical: 7,
+                  borderRadius: radius.full, borderWidth: 1,
+                  borderColor: newReminderTime ? dt.colors.hairline : dt.colors.line,
+                  backgroundColor: newReminderTime ? dt.colors.surface : 'transparent',
+                } : {
                   flexDirection: 'row', alignItems: 'center', gap: 5,
                   paddingHorizontal: 12, paddingVertical: 7,
                   borderRadius: radius.full, borderWidth: 1,
@@ -2394,15 +2439,15 @@ export function KidsHome() {
                     : (isDark ? colors.surfaceRaised : stickers.peach + '22'),
                 }}
               >
-                <Bell size={11} color={newReminderTime ? '#C06030' : colors.textSecondary} strokeWidth={2} />
-                <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: newReminderTime ? '#C06030' : colors.textSecondary }}>
+                <Bell size={11} color={diffuse ? (newReminderTime ? dt.colors.ink : dt.colors.ink3) : (newReminderTime ? '#C06030' : colors.textSecondary)} strokeWidth={diffuse ? 1.6 : 2} />
+                <Text style={{ fontSize: 11, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0, color: diffuse ? (newReminderTime ? dt.colors.ink : dt.colors.ink3) : (newReminderTime ? '#C06030' : colors.textSecondary) }}>
                   {newReminderTime
                     ? formatTime12h(`${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`)
                     : t('kids_home_reminder_set_time')}
                 </Text>
                 {newReminderTime && (
                   <Pressable onPress={() => { setNewReminderTime(null); setShowTimePicker(false) }} hitSlop={8}>
-                    <X size={9} color="#C06030" strokeWidth={2.5} />
+                    <X size={9} color={diffuse ? dt.colors.ink3 : '#C06030'} strokeWidth={2.5} />
                   </Pressable>
                 )}
               </Pressable>
@@ -2429,27 +2474,45 @@ export function KidsHome() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
               <Pressable
                 onPress={() => setNewReminderChildId(null)}
-                style={[s.childTagChip, {
+                style={[s.childTagChip, diffuse ? {
+                  backgroundColor: newReminderChildId === null ? dt.colors.surface : 'transparent',
+                  borderColor: newReminderChildId === null ? dt.colors.hairline : dt.colors.line,
+                  borderRadius: radius.full,
+                } : {
                   backgroundColor: newReminderChildId === null ? brand.kids + '22' : (isDark ? 'transparent' : 'rgba(20,19,19,0.04)'),
                   borderColor: newReminderChildId === null ? brand.kids : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
                   borderRadius: radius.full,
                 }]}
               >
-                <Text style={[s.childTagChipText, { color: newReminderChildId === null ? brand.kids : colors.textSecondary, fontFamily: font.bodySemiBold }]}>{t('kids_home_reminder_child_all')}</Text>
+                <Text style={[s.childTagChipText, diffuse
+                  ? { color: newReminderChildId === null ? dt.colors.ink : dt.colors.ink2, fontFamily: newReminderChildId === null ? diffuseFont.bodySemiBold : diffuseFont.body }
+                  : { color: newReminderChildId === null ? brand.kids : colors.textSecondary, fontFamily: font.bodySemiBold }]}>{t('kids_home_reminder_child_all')}</Text>
               </Pressable>
-              {children.map((c) => (
+              {children.map((c, ci) => {
+                const kidColor = CHILD_COLORS[ci % CHILD_COLORS.length]
+                const on = newReminderChildId === c.id
+                return (
                 <Pressable
                   key={c.id}
                   onPress={() => setNewReminderChildId(c.id === newReminderChildId ? null : c.id)}
-                  style={[s.childTagChip, {
-                    backgroundColor: newReminderChildId === c.id ? brand.kids + '25' : (isDark ? 'transparent' : 'rgba(20,19,19,0.04)'),
-                    borderColor: newReminderChildId === c.id ? brand.kids : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
+                  style={[s.childTagChip, diffuse ? {
+                    backgroundColor: on ? dt.colors.surface : 'transparent',
+                    borderColor: on ? dt.colors.hairline : dt.colors.line,
+                    borderRadius: radius.full,
+                    flexDirection: 'row', alignItems: 'center', gap: 6,
+                  } : {
+                    backgroundColor: on ? brand.kids + '25' : (isDark ? 'transparent' : 'rgba(20,19,19,0.04)'),
+                    borderColor: on ? brand.kids : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
                     borderRadius: radius.full,
                   }]}
                 >
-                  <Text style={[s.childTagChipText, { color: newReminderChildId === c.id ? brand.kids : colors.textSecondary, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
+                  {diffuse ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: kidColor }} /> : null}
+                  <Text style={[s.childTagChipText, diffuse
+                    ? { color: on ? dt.colors.ink : dt.colors.ink2, fontFamily: on ? diffuseFont.bodySemiBold : diffuseFont.body }
+                    : { color: on ? brand.kids : colors.textSecondary, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
                 </Pressable>
-              ))}
+                )
+              })}
             </ScrollView>
           )}
 
@@ -2690,11 +2753,11 @@ export function KidsHome() {
           </View>
           <View style={s.rewardsStats}>
             <View style={s.rewardsStat}>
-              <FlameSticker size={14} fill={stickers.coral} stroke={dt.colors.ink} />
+              <Flame size={13} color={stickers.coral} strokeWidth={1.8} />
               <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dt.colors.ink }}>{currentStreak}</Text>
             </View>
             <View style={s.rewardsStat}>
-              <StarSticker size={14} fill={stickers.yellow} stroke={dt.colors.ink} />
+              <Star size={13} color={stickers.yellow} strokeWidth={1.8} />
               <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dt.colors.ink }}>{totalPoints}</Text>
             </View>
             <View style={s.rewardsStat}>
@@ -8053,7 +8116,7 @@ function ReminderRow({
         {editing ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <TextInput
-              style={{ fontSize: 15, fontFamily: font.display, color: colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: brand.kids, paddingVertical: 2 }}
+              style={{ fontSize: 15, fontFamily: diffuse ? diffuseFont.display : font.display, color: diffuse ? dt.colors.ink : colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: diffuse ? dt.colors.line2 : brand.kids, paddingVertical: 2 }}
               value={editText}
               onChangeText={setEditText}
               onSubmitEditing={commitEdit}
@@ -8062,10 +8125,10 @@ function ReminderRow({
               returnKeyType="done"
             />
             <Pressable onPress={commitEdit} hitSlop={8}>
-              <Check size={14} color="#BDD48C" strokeWidth={2.5} />
+              <Check size={14} color={diffuse ? dt.colors.ink : '#BDD48C'} strokeWidth={2.5} />
             </Pressable>
             <Pressable onPress={() => { setEditText(r.text); setEditing(false) }} hitSlop={8}>
-              <X size={14} color={colors.textMuted} strokeWidth={2} />
+              <X size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
             </Pressable>
           </View>
         ) : (
@@ -8088,7 +8151,13 @@ function ReminderRow({
           {taggedChild && (
             <View style={[
               s.reminderChildTag,
-              {
+              diffuse ? {
+                backgroundColor: 'transparent',
+                borderColor: dt.colors.line2,
+                borderWidth: 1,
+                paddingHorizontal: 9,
+                paddingVertical: 4,
+              } : {
                 backgroundColor: isDark ? tagColor + '22' : tagColor + '30',
                 borderColor: isDark ? tagColor + '60' : '#141313',
                 borderWidth: 1.2,
@@ -8096,8 +8165,10 @@ function ReminderRow({
                 paddingVertical: 4,
               },
             ]}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: tagColor, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.4)' : '#141313' }} />
-              <Text style={[s.reminderChildTagText, { color: isDark ? tagColor : '#141313', fontFamily: font.bodyBold }]}>{taggedChild.name}</Text>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: tagColor, borderWidth: diffuse ? 0 : 1, borderColor: isDark ? 'rgba(255,255,255,0.4)' : '#141313' }} />
+              <Text style={[s.reminderChildTagText, diffuse
+                ? { color: dt.colors.ink2, fontFamily: diffuseFont.body }
+                : { color: isDark ? tagColor : '#141313', fontFamily: font.bodyBold }]}>{taggedChild.name}</Text>
             </View>
           )}
           {dueDateLabel && (() => {
@@ -8139,14 +8210,21 @@ function ReminderRow({
             )
           })()}
           {r.done && r.archivedAt && (
-            <View style={{
+            <View style={diffuse ? {
+              flexDirection: 'row', alignItems: 'center', gap: 4,
+              backgroundColor: 'transparent',
+              borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4,
+              borderWidth: 1, borderColor: dt.colors.line2,
+            } : {
               flexDirection: 'row', alignItems: 'center', gap: 4,
               backgroundColor: isDark ? '#BDD48C22' : '#BDD48C',
               borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4,
               borderWidth: 1.2, borderColor: isDark ? '#BDD48C60' : '#141313',
             }}>
-              <Check size={9} color={isDark ? '#BDD48C' : '#141313'} strokeWidth={2.5} />
-              <Text style={[s.reminderDueText, { color: isDark ? '#BDD48C' : '#141313', fontFamily: font.bodyBold }]}>
+              <Check size={9} color={diffuse ? dt.colors.ink3 : (isDark ? '#BDD48C' : '#141313')} strokeWidth={2.5} />
+              <Text style={[s.reminderDueText, diffuse
+                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase', fontSize: 9.5 }
+                : { color: isDark ? '#BDD48C' : '#141313', fontFamily: font.bodyBold }]}>
                 {t('kids_home_reminder_done_date', { date: new Date(r.archivedAt).toLocaleDateString('en', { month: 'short', day: 'numeric' }) })}
               </Text>
             </View>
@@ -8158,16 +8236,16 @@ function ReminderRow({
       <View style={{ alignItems: 'center', gap: 10, paddingTop: 4 }}>
         {!editing && !r.done && (
           <Pressable onPress={() => { setEditText(r.text); setEditing(true) }} hitSlop={12}>
-            <Pencil size={13} color={colors.textFaint} strokeWidth={2} />
+            <Pencil size={13} color={diffuse ? dt.colors.ink3 : colors.textFaint} strokeWidth={diffuse ? 1.6 : 2} />
           </Pressable>
         )}
         {onFlag && (
           <Pressable onPress={onFlag} hitSlop={12}>
-            <Flag size={13} color={r.flagged ? '#F5D652' : colors.textFaint} fill={r.flagged ? '#F5D652' : 'transparent'} strokeWidth={2} />
+            <Flag size={13} color={r.flagged ? '#F5D652' : (diffuse ? dt.colors.ink3 : colors.textFaint)} fill={r.flagged ? '#F5D652' : 'transparent'} strokeWidth={diffuse ? 1.6 : 2} />
           </Pressable>
         )}
         <Pressable onPress={onDelete} hitSlop={12}>
-          <Trash2 size={13} color={colors.textFaint} strokeWidth={2} />
+          <Trash2 size={13} color={diffuse ? dt.colors.ink3 : colors.textFaint} strokeWidth={diffuse ? 1.6 : 2} />
         </Pressable>
       </View>
     </View>
@@ -8414,9 +8492,9 @@ function RemindersModal({
                     paddingVertical: 8,
                     paddingHorizontal: 16,
                     borderRadius: 999,
-                    borderWidth: 1.5,
-                    backgroundColor: isAll ? '#F5D652' : (colors.surface),
-                    borderColor: isDark ? (isAll ? '#F5D652' : colors.border) : '#141313',
+                    borderWidth: diffuse ? 1 : 1.5,
+                    backgroundColor: diffuse ? (isAll ? dt.colors.surface : 'transparent') : (isAll ? '#F5D652' : (colors.surface)),
+                    borderColor: diffuse ? (isAll ? dt.colors.hairline : dt.colors.line) : (isDark ? (isAll ? '#F5D652' : colors.border) : '#141313'),
                   }}
                 >
                   {/* Mini stack of kid dots — visual cue that "All" includes every kid */}
@@ -8430,14 +8508,14 @@ function RemindersModal({
                           style={{
                             width: 10, height: 10, borderRadius: 5,
                             backgroundColor: dotColor,
-                            borderWidth: 1, borderColor: '#141313',
+                            borderWidth: diffuse ? 0 : 1, borderColor: '#141313',
                             marginLeft: i === 0 ? 0 : -4,
                           }}
                         />
                       )
                     })}
                   </View>
-                  <Text style={{ fontSize: 13, fontFamily: font.bodyBold, letterSpacing: 0.2, color: isDark ? (isAll ? '#141313' : colors.text) : '#141313' }}>{t('kids_home_reminders_modal_filter_all')}</Text>
+                  <Text style={{ fontSize: 13, fontFamily: diffuse ? (isAll ? diffuseFont.bodySemiBold : diffuseFont.body) : font.bodyBold, letterSpacing: 0.2, color: diffuse ? (isAll ? dt.colors.ink : dt.colors.ink2) : (isDark ? (isAll ? '#141313' : colors.text) : '#141313') }}>{t('kids_home_reminders_modal_filter_all')}</Text>
                 </Pressable>
               )
             })()}
@@ -8517,10 +8595,18 @@ function RemindersModal({
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} scrollEnabled={!isDraggingReminder}>
           {tab === 'active' ? (
             active.length === 0 ? (
+              diffuse ? (
+                <DiffuseEmptyState
+                  style={{ paddingVertical: 48 }}
+                  icon={<DiffuseBloomIcon color={stickers.green} size={48}><Bell size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                  title={t('kids_home_reminders_modal_no_active')}
+                />
+              ) : (
               <View style={s.reminderModalEmpty}>
                 <FlowerSticker size={48} petal="#BDD48C" center="#F5D652" stroke="#141313" />
                 <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>{t('kids_home_reminders_modal_no_active')}</Text>
               </View>
+              )
             ) : (
               <View style={{ marginHorizontal: 16, marginTop: 16 }}>
                 <DraggableReminderList
@@ -8546,14 +8632,22 @@ function RemindersModal({
               </View>
             )
           ) : archivedByDate.length === 0 ? (
+            diffuse ? (
+              <DiffuseEmptyState
+                style={{ paddingVertical: 48 }}
+                icon={<DiffuseBloomIcon color={stickers.yellow} size={48}><Trophy size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                title={t('kids_home_reminders_modal_no_archived')}
+              />
+            ) : (
             <View style={s.reminderModalEmpty}>
               <StarSticker size={48} fill="#F5D652" stroke="#141313" />
               <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>{t('kids_home_reminders_modal_no_archived')}</Text>
             </View>
+            )
           ) : (
             archivedByDate.map(({ label, items }) => (
               <View key={label} style={{ marginHorizontal: 16, marginTop: 16 }}>
-                <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>{label}</Text>
+                <Text style={{ fontSize: 10, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, color: diffuse ? dt.colors.ink3 : colors.textMuted, textTransform: 'uppercase', letterSpacing: diffuse ? 1.6 : 1.2, marginBottom: 8 }}>{label}</Text>
                 <View style={{ gap: 8 }}>
                   {items.map((r, i) => (
                     <ReminderRow
