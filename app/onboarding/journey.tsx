@@ -8,11 +8,11 @@
  */
 
 import { useEffect, useState } from 'react'
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, Pressable, StyleSheet, ScrollView, type DimensionValue } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useTheme, stickers, getModeColor, getModeColorSoft } from '../../constants/theme'
+import { useTheme, stickers, getModeColor, getModeColorSoft, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useOnboardingStore } from '../../store/useOnboardingStore'
 import { useModeStore } from '../../store/useModeStore'
@@ -20,6 +20,9 @@ import { Flower, Heart, Star } from '../../components/ui/Stickers'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { useIsDiffuse, SoftBloom } from '../../components/ui/diffuse/DiffuseKit'
+import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
+import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
 import { useTranslation } from '../../lib/i18n'
 
 interface JourneyOption {
@@ -28,6 +31,10 @@ interface JourneyOption {
   subtitle: string
   sticker: (color: string) => React.ReactNode
   modeKey: 'pre' | 'preg' | 'kids'
+  /** Diffuse blob field: color (blob `--c` first stop) + CENTER anchor coords. */
+  blobColor: string
+  blobCx: string
+  blobCy: string
 }
 
 const FIRST_ROUTE: Record<Behavior, string> = {
@@ -39,6 +46,8 @@ const FIRST_ROUTE: Record<Behavior, string> = {
 export default function JourneyScreen() {
   const insets = useSafeAreaInsets()
   const { colors, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const params = useLocalSearchParams<{ addMode?: string; preselect?: string }>()
 
@@ -52,6 +61,9 @@ export default function JourneyScreen() {
       subtitle: t('onboardingJourney_cycleSubtitle'),
       sticker: (color) => <Flower size={44} petal={color} center={stickers.yellow} />,
       modeKey: 'pre',
+      blobColor: '#F2654E',
+      blobCx: '28%',
+      blobCy: '22%',
     },
     {
       id: 'pregnancy',
@@ -59,6 +71,9 @@ export default function JourneyScreen() {
       subtitle: t('onboardingJourney_pregnantSubtitle'),
       sticker: (color) => <Heart size={42} fill={color} />,
       modeKey: 'preg',
+      blobColor: '#B06AD8',
+      blobCx: '72%',
+      blobCy: '34%',
     },
     {
       id: 'kids',
@@ -66,6 +81,9 @@ export default function JourneyScreen() {
       subtitle: t('onboardingJourney_parentingSubtitle'),
       sticker: (color) => <Star size={44} fill={color} />,
       modeKey: 'kids',
+      blobColor: '#46C173',
+      blobCx: '30%',
+      blobCy: '62%',
     },
   ]
 
@@ -143,6 +161,114 @@ export default function JourneyScreen() {
     setMode(first)
     switchTo(first)
     router.push(FIRST_ROUTE[first] as any)
+  }
+
+  // ─── Diffuse (v3) render — GENERAL 01 · journey picker ───────────────────
+  // Additive branch; the cream render below is unchanged and all enrollment
+  // logic (handleToggle/handleContinue/enroll) is shared. Layout mirrors the
+  // GENERAL 01 frame: aura field (one bloom per journey color) → mono step
+  // kicker → serif "Where are / you right now?" → free-floating blob field →
+  // "Skip for now" text link + solid continue CTA. The HTML frame is single-
+  // select, but this screen is a multi-select enrollment picker; per "match
+  // look, not flow" the blobs keep the existing multi-select toggle — selected
+  // state is driven by newSelections, enrolled-in-add-mode blobs are dimmed.
+  // No fills, no pills, no shadows — hairlines + blooms only.
+  if (diffuse) {
+    return (
+      <AuraField blooms={AURA.journey}>
+        <ScrollView
+          contentContainerStyle={[
+            dStyles.scroll,
+            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Step / add kicker */}
+          <Text style={[dStyles.step, { fontFamily: diffuseFont.mono, color: dt.colors.ink3 }]}>
+            {isAddMode ? t('onboardingJourney_addTitle') : 'step 01 / 02'}
+          </Text>
+
+          {/* Serif question */}
+          <Text style={[dStyles.q, { fontFamily: diffuseFont.display, color: dt.colors.ink }]}>
+            {isAddMode ? t('onboardingJourney_addHeading1') : t('onboardingJourney_heading1')}
+          </Text>
+          <Text style={[dStyles.qItalic, { fontFamily: diffuseFont.italic, color: dt.colors.ink }]}>
+            {isAddMode ? t('onboardingJourney_addHeading2') : t('onboardingJourney_heading2')}
+          </Text>
+          <Text style={[dStyles.qsub, { fontFamily: diffuseFont.body, color: dt.colors.ink2 }]}>
+            {isAddMode ? t('onboardingJourney_addSubtitle') : t('onboardingJourney_subtitle')}
+          </Text>
+
+          {/* Blob field — free-floating bloom circles (BlobPicker treatment,
+              wired inline to the existing multi-select toggle so add-mode
+              dimming of enrolled journeys is preserved). */}
+          <View style={dStyles.blobfield}>
+            {JOURNEYS.map((journey) => {
+              const isEnrolled = enrolledBehaviors.includes(journey.id)
+              const isSelected = newSelections.includes(journey.id)
+              const isDimmed = isAddMode && isEnrolled
+              const active = isSelected || isDimmed
+
+              return (
+                <Pressable
+                  key={journey.id}
+                  onPress={() => !isDimmed && handleToggle(journey.id)}
+                  disabled={isDimmed}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected, disabled: isDimmed }}
+                  style={[
+                    dStyles.blob,
+                    {
+                      left: journey.blobCx as DimensionValue,
+                      top: journey.blobCy as DimensionValue,
+                      opacity: isDimmed ? 0.55 : 1,
+                    },
+                  ]}
+                >
+                  <View
+                    pointerEvents="none"
+                    style={[StyleSheet.absoluteFillObject, active && dStyles.blobActive]}
+                  >
+                    <SoftBloom
+                      color={journey.blobColor}
+                      opacity={active ? 0.82 : 0.5}
+                      cx="50%"
+                      cy="50%"
+                      spread={0.6}
+                      radius="50%"
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      dStyles.blobKicker,
+                      { fontFamily: diffuseFont.mono, color: active ? dt.colors.ink : dt.colors.ink3 },
+                    ]}
+                  >
+                    {journey.subtitle}
+                  </Text>
+                  <Text style={[dStyles.blobName, { fontFamily: diffuseFont.italic, color: dt.colors.ink }]}>
+                    {journey.title}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        </ScrollView>
+
+        {/* Footer — skip link + continue CTA */}
+        <View style={[dStyles.footer, { paddingBottom: insets.bottom + 20 }]}>
+          {hasSelection && (
+            <DiffuseSolidCTA
+              label={isAddMode ? t('onboardingJourney_addCta') : t('auth_continue')}
+              onPress={handleContinue}
+            />
+          )}
+          <View style={dStyles.skipRow}>
+            <DiffuseTextLink label={t('onboardingTransition_skip')} onPress={() => router.back()} />
+          </View>
+        </View>
+      </AuraField>
+    )
   }
 
   // All enrolled — warm empty state
@@ -356,5 +482,70 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
+  },
+})
+
+// ─── Diffuse (v3) styles — GENERAL 01 · journey picker ──────────────────────
+const BLOB_SIZE = 188
+
+const dStyles = StyleSheet.create({
+  scroll: { paddingHorizontal: 28 },
+  step: {
+    fontSize: 11,
+    letterSpacing: 2.2,
+    textTransform: 'uppercase',
+    marginBottom: 22,
+  },
+  q: {
+    fontSize: 40,
+    lineHeight: 42,
+    letterSpacing: -1,
+  },
+  qItalic: {
+    fontSize: 40,
+    lineHeight: 44,
+    letterSpacing: -0.6,
+  },
+  qsub: {
+    fontSize: 14,
+    lineHeight: 21,
+    maxWidth: 260,
+    marginTop: 12,
+  },
+  // Free-layout blob field; blobs are absolutely positioned by CENTER anchor.
+  blobfield: {
+    position: 'relative',
+    width: '100%',
+    height: 420,
+    marginTop: 28,
+  },
+  blob: {
+    position: 'absolute',
+    width: BLOB_SIZE,
+    height: BLOB_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Anchor left/top to the option's CENTER (mirrors BlobPicker).
+    transform: [{ translateX: -BLOB_SIZE / 2 }, { translateY: -BLOB_SIZE / 2 }],
+  },
+  blobActive: {
+    transform: [{ scale: 1.06 }],
+  },
+  blobKicker: {
+    fontSize: 11,
+    letterSpacing: 2.2,
+    textTransform: 'uppercase',
+  },
+  blobName: {
+    fontSize: 27,
+    letterSpacing: -0.3,
+    marginTop: 1,
+  },
+  footer: {
+    paddingHorizontal: 28,
+  },
+  skipRow: {
+    alignItems: 'center',
+    marginTop: 4,
   },
 })

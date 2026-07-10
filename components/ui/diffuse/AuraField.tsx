@@ -57,5 +57,15 @@ export const AURA: Record<string, AuraBloom[]> = {
     { color: '#F5D652', cx: '88%', cy: '26%', opacity: 0.5 },
     { color: '#A98BDD', cx: '50%', cy: '100%', opacity: 0.45 },
   ],
+  // General · Journey picker (GENERAL 01): one bloom per journey color anchored
+  // to the four blob positions from the frame — Cycle coral top-left, Pregnancy
+  // plum top-right, Kids green mid-left, Circle blue bottom-right (bottom:-2% →
+  // cy clamped to 100). Colors are the blob `--c` first stops (design assets).
+  journey: [
+    { color: '#F2654E', cx: '12%', cy: '12%', opacity: 0.42 },
+    { color: '#B06AD8', cx: '88%', cy: '28%', opacity: 0.42 },
+    { color: '#46C173', cx: '12%', cy: '64%', opacity: 0.4 },
+    { color: '#3F9BD8', cx: '88%', cy: '100%', opacity: 0.42 },
+  ],
   // (transcribe the remaining frames as their screens are built — see each screen task)
 }
