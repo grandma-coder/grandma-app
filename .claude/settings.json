@@ -186,7 +186,12 @@
       "Bash(awk '{print $9}')",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('test:', p.scripts.test||'NONE'\\); console.log\\('jest dep:', \\(p.devDependencies&&p.devDependencies.jest\\)||\\(p.dependencies&&p.dependencies.jest\\)||'none'\\); console.log\\('vitest:', \\(p.devDependencies&&p.devDependencies.vitest\\)||'none'\\)\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.jest||'no inline jest config'\\)\\)\")",
-      "Bash(grep -n \"^ User,\\\\| User,$\\\\| User,\" \"/Users/igorcarvalhorodrigues/Projects/grandma-app/app/channel/info/[id].tsx\")"
+      "Bash(grep -n \"^ User,\\\\| User,$\\\\| User,\" \"/Users/igorcarvalhorodrigues/Projects/grandma-app/app/channel/info/[id].tsx\")",
+      "Bash(echo \"=== push exit: $? ===\")",
+      "mcp__claude_ai_Skeleton__set_active_workspace",
+      "mcp__claude_ai_Skeleton__get_spaces",
+      "Bash(/bin/ls -1)",
+      "Bash(awk '$0 > \"20260512160000\"')"
     ],
     "additionalDirectories": [
       "/Users/igorcarvalhorodrigues"

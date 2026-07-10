@@ -64,3 +64,9 @@ docs/claude-design/
 
 # Tolgee CLI build artifacts (generated JSON; do NOT commit)
 tolgee/
+/*.png
+screenshot-*.png
+smoke-*.png
+dl-*.png
+.maestro/**/*.png
+docs/v2-screenshots/
