@@ -14,12 +14,15 @@
 import { useMemo, useState, useEffect } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr, getCycleInfo, type CyclePhase, type CycleConfig } from '../../../lib/cycleLogic'
 import { useCycleHistory } from '../../../lib/cycleAnalytics'
 import { PaperCard } from '../../ui/PaperCard'
 import { Drop, Heart, Pill, Sparkle } from '../../ui/Stickers'
+import { Thermometer as ThermometerLine, Sparkles as SparklesLine, Droplet as DropletLine, Heart as HeartLine } from 'lucide-react-native'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { BbtForm, LhForm, CmForm, IntercourseForm } from '../../calendar/CycleLogForms'
@@ -30,8 +33,32 @@ type RecentLog = { date: string; type: string; value: string | null }
 
 const DAYS_BACK = 7
 
+/** Diffuse: thin Lucide line glyph per signal tile (bbt/lh/cm/intercourse). */
+function TileGlyph({ tile, color }: { tile: Tile; color: string }) {
+  const p = { size: 17, color, strokeWidth: 1.6 as const }
+  switch (tile) {
+    case 'bbt':         return <ThermometerLine {...p} />
+    case 'lh':          return <SparklesLine {...p} />
+    case 'cm':          return <DropletLine {...p} />
+    case 'intercourse': return <HeartLine {...p} />
+  }
+}
+
+/** Bloom hue per signal tile — used behind the diffuse glyph. */
+function tileHue(tile: Tile, stickers: ReturnType<typeof useTheme>['stickers']): string {
+  switch (tile) {
+    case 'bbt':         return stickers.blue
+    case 'lh':          return stickers.peach
+    case 'cm':          return stickers.lilac
+    case 'intercourse': return stickers.pink
+  }
+}
+
 export function FertilitySignalsCard() {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const diffuseAccent = getDiffuseAccent('pre-pregnancy', dt.isDark)
   const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
@@ -142,6 +169,115 @@ export function FertilitySignalsCard() {
   function onSaved() {
     setOpenSheet(null)
     void qc.invalidateQueries({ queryKey: ['cycleLogs'] })
+  }
+
+  const logSheets = (
+    <>
+      <LogSheet visible={openSheet === 'bbt'} title="BBT" onClose={() => setOpenSheet(null)}>
+        <BbtForm date={today} phase={phase} onSaved={onSaved} />
+      </LogSheet>
+      <LogSheet visible={openSheet === 'lh'} title="LH test" onClose={() => setOpenSheet(null)}>
+        <LhForm date={today} phase={phase} onSaved={onSaved} />
+      </LogSheet>
+      <LogSheet visible={openSheet === 'cm'} title="Cervical fluid" onClose={() => setOpenSheet(null)}>
+        <CmForm date={today} phase={phase} onSaved={onSaved} />
+      </LogSheet>
+      <LogSheet visible={openSheet === 'intercourse'} title="Intimacy" onClose={() => setOpenSheet(null)}>
+        <IntercourseForm date={today} phase={phase} onSaved={onSaved} />
+      </LogSheet>
+    </>
+  )
+
+  // ── Diffuse variant: hairline tiles + bloom glyphs, thin sparkline ─────────
+  if (diffuse) {
+    const dCol = dt.colors
+    return (
+      <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
+        <PaperCard tint={undefined} radius={radius.lg} padding={16} style={{ borderColor: dCol.line }}>
+          <View style={styles.head}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dCol.ink3 }}>
+                {t('cycleSignals_title')}
+              </Text>
+              <Text style={{ fontFamily: diffuseFont.displayMedium, fontSize: 22, letterSpacing: -0.4, color: dCol.ink, marginTop: 3 }}>
+                {headline}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.grid}>
+            {tiles.map((tile) => {
+              const filled = tile.value != null
+              const peak = (tile.key === 'lh' && tile.value === 'peak') || (tile.key === 'cm' && tile.value === 'eggwhite')
+              return (
+                <Pressable
+                  key={tile.key}
+                  onPress={() => setOpenSheet(tile.key)}
+                  style={({ pressed }) => [
+                    styles.tile,
+                    { backgroundColor: dCol.surface, borderColor: peak ? dCol.hairline : dCol.line, opacity: pressed ? 0.7 : 1 },
+                  ]}
+                >
+                  <DiffuseBloomIcon color={peak ? diffuseAccent : tileHue(tile.key, stickers)} size={34} intensity={filled ? 0.5 : 0.32}>
+                    <TileGlyph tile={tile.key} color={dCol.ink3} />
+                  </DiffuseBloomIcon>
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', color: dCol.ink3, marginTop: 4 }}>
+                    {tile.label}
+                  </Text>
+                  <Text
+                    style={{ fontFamily: filled ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 12, letterSpacing: 0.3, color: filled ? dCol.ink : dCol.ink4, marginTop: 1 }}
+                    numberOfLines={1}
+                  >
+                    {filled ? (tile.value as string) : t('cycleSignals_logTile')}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+
+          {!isEmpty && (
+            <View style={[styles.spark, { borderTopColor: dCol.line2 }]}>
+              {bbtSeries.map((s, i) => {
+                const vals = bbtSeries.map((b) => b.v).filter((v): v is number => v != null)
+                const min = vals.length ? Math.min(...vals) : 36.0
+                const max = vals.length ? Math.max(...vals) : 37.0
+                const range = Math.max(0.3, max - min)
+                const h = s.v == null ? 4 : 6 + ((s.v - min) / range) * 28
+                const isToday = i === DAYS_BACK - 1
+                return (
+                  <View
+                    key={s.date}
+                    style={{
+                      flex: 1,
+                      height: h,
+                      backgroundColor: s.v == null ? dCol.line : (isToday ? diffuseAccent : dCol.ink3),
+                      borderRadius: 999,
+                    }}
+                  />
+                )
+              })}
+            </View>
+          )}
+
+          {isEmpty && (
+            <View style={styles.empty}>
+              <Text style={{ fontFamily: diffuseFont.displayMedium, fontSize: 18, color: dCol.ink, textAlign: 'center' }}>
+                {t('cycleSignals_logging30s')}
+              </Text>
+              <Text style={{ fontFamily: diffuseFont.body, fontSize: 12, lineHeight: 18, color: dCol.ink3, textAlign: 'center', paddingHorizontal: 8 }}>
+                {t('cycleSignals_emptyBody')}
+              </Text>
+              <PillButton
+                label={t('cycleSignals_logFirstSignal')}
+                variant="paper"
+                onPress={() => setOpenSheet('bbt')}
+              />
+            </View>
+          )}
+        </PaperCard>
+        {logSheets}
+      </View>
+    )
   }
 
   return (
