@@ -711,23 +711,23 @@ export default function ChannelChat() {
   // ─── Render ───────────────────────────────────────────────────────────
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View
         style={[
           styles.header,
-          { paddingTop: insets.top + 8, borderBottomColor: colors.border },
+          { paddingTop: insets.top + 8, borderBottomColor: diffuse ? dt.colors.line : colors.border },
         ]}
       >
         <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
+          <ArrowLeft size={24} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
         </Pressable>
         <Pressable
           onPress={() => router.push(`/channel/info/${id}` as any)}
           style={styles.headerCenter}
         >
           {channel?.channelType === 'private' ? (
-            <Lock size={16} color={colors.textMuted} strokeWidth={2} />
+            <Lock size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
           ) : channel ? (
             (() => {
               const s = channelSticker(channel.id, isDark, channel.avatarUrl)
@@ -740,47 +740,60 @@ export default function ChannelChat() {
             })()
           ) : null}
           <Text
-            style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]}
+            style={[styles.headerTitle, diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
+              : { color: colors.text, fontFamily: font.display }]}
             numberOfLines={1}
           >
             {channel?.name ?? t('channelScreen_nameFallback')}
           </Text>
-          <Text style={[styles.memberCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[styles.memberCount, diffuse
+            ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+            : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
             {channel?.memberCount ?? 0}
           </Text>
-          <Users size={12} color={colors.textMuted} strokeWidth={2} />
+          <Users size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
         </Pressable>
         <View style={styles.headerActions}>
         {/* Share — public: always, private: members only */}
         {(channel?.channelType !== 'private' || isMember) && (
           <Pressable onPress={handleShareChannel} hitSlop={8} style={styles.headerIconBtn}>
-            <Share2 size={18} color={colors.textMuted} strokeWidth={2} />
+            <Share2 size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
           </Pressable>
         )}
         <Pressable onPress={handleFavoriteToggle} hitSlop={8} style={styles.headerIconBtn}>
           <Star
             size={18}
-            color={isFavorited ? stickers.yellow : colors.textMuted}
-            strokeWidth={2}
-            fill={isFavorited ? stickers.yellow : 'none'}
+            color={isFavorited ? (diffuse ? dt.colors.ink : stickers.yellow) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+            strokeWidth={diffuse ? 1.6 : 2}
+            fill={isFavorited ? (diffuse ? dt.colors.ink : stickers.yellow) : 'none'}
           />
         </Pressable>
         <Pressable
           onPress={handleJoinLeave}
           style={[
             styles.joinLeaveBtn,
-            {
-              backgroundColor: isMember ? 'transparent' : accent,
-              borderWidth: isMember ? 1 : 0,
-              borderColor: isMember ? colors.borderStrong : 'transparent',
-              borderRadius: radius.full,
-            },
+            diffuse
+              ? {
+                  backgroundColor: 'transparent',
+                  borderWidth: 1,
+                  borderColor: dt.colors.line2,
+                  borderRadius: 999,
+                }
+              : {
+                  backgroundColor: isMember ? 'transparent' : accent,
+                  borderWidth: isMember ? 1 : 0,
+                  borderColor: isMember ? colors.borderStrong : 'transparent',
+                  borderRadius: radius.full,
+                },
           ]}
         >
           <Text
             style={[
               styles.joinLeaveText,
-              { color: isMember ? colors.textSecondary : colors.textInverse, fontFamily: font.bodyBold },
+              diffuse
+                ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
+                : { color: isMember ? colors.textSecondary : colors.textInverse, fontFamily: font.bodyBold },
             ]}
           >
             {isMember && isOwner
