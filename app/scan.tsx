@@ -11,6 +11,7 @@ import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { Ionicons } from '@expo/vector-icons'
+import { ArrowLeft, Camera, Images, ScanLine } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
@@ -22,7 +23,9 @@ import { supabase } from '../lib/supabase'
 import { checkPremium } from '../lib/revenue'
 import ResultCard from '../components/ui/ResultCard'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
-import { spacing, borderRadius, useTheme } from '../constants/theme'
+import { spacing, borderRadius, useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 import { PartialStickers } from '../components/stickers/PartialStickers'
 import { useTranslation } from '../lib/i18n'
 
@@ -40,6 +43,10 @@ function getScanTypes(t: (key: any) => string) {
 export default function Scan() {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = getDiffuseAccent(mode, dt.isDark)
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
@@ -166,7 +173,6 @@ export default function Scan() {
   const { t } = useTranslation()
   const scanTypes = getScanTypes(t)
   const child = useChildStore((s) => s.activeChild)
-  const mode = useModeStore((s) => s.mode)
   const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
   const pregnancyStoredWeek = usePregnancyStore((s) => s.weekNumber)
   const [scanType, setScanType] = useState('medicine')
@@ -301,55 +307,106 @@ export default function Scan() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: diffuse ? dt.colors.bg : colors.bg }}>
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <Pressable
+            onPress={() => router.back()}
+            style={[
+              styles.backButton,
+              diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
+            ]}
+          >
+            {diffuse ? (
+              <ArrowLeft size={22} color={dt.colors.ink} strokeWidth={1.8} />
+            ) : (
+              <Ionicons name="arrow-back" size={22} color={colors.text} />
+            )}
           </Pressable>
-          <Text style={styles.title}>{t('scan_screenTitle')}</Text>
+          <Text
+            style={[
+              styles.title,
+              diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
+            ]}
+          >
+            {t('scan_screenTitle')}
+          </Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Scan type selector */}
         <View style={styles.typesRow}>
-          {scanTypes.map((type) => (
-            <Pressable
-              key={type.id}
-              onPress={() => setScanType(type.id)}
-              style={[
-                styles.typeChip,
-                scanType === type.id && styles.typeChipActive,
-              ]}
-            >
-              <type.Sticker size={36} />
-              <Text
+          {scanTypes.map((type) => {
+            const active = scanType === type.id
+            return (
+              <Pressable
+                key={type.id}
+                onPress={() => setScanType(type.id)}
                 style={[
-                  styles.typeLabel,
-                  scanType === type.id && styles.typeLabelActive,
+                  styles.typeChip,
+                  active && styles.typeChipActive,
+                  diffuse && {
+                    backgroundColor: 'transparent',
+                    borderColor: active ? accent : dt.colors.line,
+                  },
                 ]}
               >
-                {type.label}
-              </Text>
-            </Pressable>
-          ))}
+                <type.Sticker size={36} />
+                <Text
+                  style={[
+                    styles.typeLabel,
+                    active && styles.typeLabelActive,
+                    diffuse && {
+                      fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
+                      textTransform: 'uppercase',
+                      letterSpacing: 1,
+                      color: active ? dt.colors.ink : dt.colors.ink3,
+                    },
+                  ]}
+                >
+                  {type.label}
+                </Text>
+              </Pressable>
+            )
+          })}
         </View>
 
         {/* Image preview */}
-        <View style={styles.previewContainer}>
+        <View
+          style={[
+            styles.previewContainer,
+            diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line },
+          ]}
+        >
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.preview} resizeMode="contain" />
           ) : (
             <View style={styles.placeholder}>
-              <Ionicons name="scan-outline" size={64} color={colors.textMuted} />
-              <Text style={styles.placeholderText}>
+              {diffuse ? (
+                <DiffuseBloomIcon color={accent} size={64} intensity={0.5}>
+                  <ScanLine size={40} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              ) : (
+                <Ionicons name="scan-outline" size={64} color={colors.textMuted} />
+              )}
+              <Text
+                style={[
+                  styles.placeholderText,
+                  diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.body },
+                ]}
+              >
                 {t('scan_placeholderText')}
               </Text>
             </View>
           )}
           {loading && (
-            <View style={styles.loadingOverlay}>
+            <View
+              style={[
+                styles.loadingOverlay,
+                diffuse && { backgroundColor: dt.isDark ? 'rgba(20,19,19,0.9)' : 'rgba(243,236,217,0.92)' },
+              ]}
+            >
               <BrandedLoader logoSize={72} sublabel={t('scan_grandmaLooking')} />
             </View>
           )}
@@ -358,24 +415,64 @@ export default function Scan() {
         {/* Action buttons */}
         <View style={[styles.actions, { paddingBottom: insets.bottom + 16 }]}>
           <Pressable
-            style={({ pressed }) => [styles.actionButton, pressed && { opacity: 0.85 }]}
+            style={({ pressed }) => [
+              styles.actionButton,
+              diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: accent },
+              pressed && { opacity: 0.85 },
+            ]}
             onPress={() => pickImage(true)}
             disabled={loading}
           >
-            <Ionicons name="camera" size={22} color={colors.textInverse} />
-            <Text style={styles.actionText}>{t('scan_cameraBtn')}</Text>
+            {diffuse ? (
+              <Camera size={20} color={accent} strokeWidth={1.8} />
+            ) : (
+              <Ionicons name="camera" size={22} color={colors.textInverse} />
+            )}
+            <Text
+              style={[
+                styles.actionText,
+                diffuse && {
+                  color: accent,
+                  fontFamily: diffuseFont.monoBold,
+                  textTransform: 'uppercase',
+                  letterSpacing: 1.4,
+                  fontSize: 13,
+                },
+              ]}
+            >
+              {t('scan_cameraBtn')}
+            </Text>
+            {diffuse && <DiffuseArrow color={accent} size={16} />}
           </Pressable>
           <Pressable
             style={({ pressed }) => [
               styles.actionButton,
               styles.actionButtonSecondary,
+              diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
               pressed && { opacity: 0.85 },
             ]}
             onPress={() => pickImage(false)}
             disabled={loading}
           >
-            <Ionicons name="images" size={22} color={colors.text} />
-            <Text style={styles.actionTextSecondary}>{t('scan_libraryBtn')}</Text>
+            {diffuse ? (
+              <Images size={20} color={dt.colors.ink} strokeWidth={1.8} />
+            ) : (
+              <Ionicons name="images" size={22} color={colors.text} />
+            )}
+            <Text
+              style={[
+                styles.actionTextSecondary,
+                diffuse && {
+                  color: dt.colors.ink,
+                  fontFamily: diffuseFont.mono,
+                  textTransform: 'uppercase',
+                  letterSpacing: 1.4,
+                  fontSize: 13,
+                },
+              ]}
+            >
+              {t('scan_libraryBtn')}
+            </Text>
           </Pressable>
         </View>
 

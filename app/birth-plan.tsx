@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { ArrowLeft, Check, ClipboardList, Heart as HeartIcon, Baby, Sparkles } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { BirthTypeCard } from '../components/pregnancy/BirthTypeCard'
@@ -10,7 +11,9 @@ import { Flower, Star, Heart, Bottle, Sparkle } from '../components/ui/Stickers'
 import { MissingStickers } from '../components/stickers/MissingStickers'
 import { birthTypes, hospitalBagChecklist } from '../lib/birthData'
 import type { BirthTopicKey } from '../lib/birthGuideData'
-import { useTheme, spacing, radius, getModeColor } from '../constants/theme'
+import { useTheme, spacing, radius, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../lib/i18n'
 
 const BIRTH_TYPE_TO_TOPIC: Record<string, BirthTopicKey> = {
@@ -27,8 +30,10 @@ const BAG_STATE_KEY = 'grandma:hospital_bag_checklist:v1'
 export default function BirthPlan() {
   const insets = useSafeAreaInsets()
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const accent = getModeColor('preg', isDark)
+  const accent = diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
   const [checked, setChecked] = useState<Record<string, boolean>>({})
   const [hydrated, setHydrated] = useState(false)
@@ -80,7 +85,7 @@ export default function BirthPlan() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: diffuse ? dt.colors.bg : colors.bg }}>
       <ScrollView
         contentContainerStyle={[
           styles.container,
@@ -90,25 +95,65 @@ export default function BirthPlan() {
       >
         <Pressable
           onPress={() => router.back()}
-          style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[
+            styles.backBtn,
+            diffuse
+              ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+              : { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
           accessibilityRole="button"
           accessibilityLabel="Back"
         >
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
+          {diffuse ? (
+            <ArrowLeft size={22} color={dt.colors.ink} strokeWidth={1.8} />
+          ) : (
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          )}
         </Pressable>
 
         <View style={{ alignItems: 'center', marginBottom: 8 }}>
-          <MissingStickers.PregnancyBirthPlanHero size={120} />
+          {diffuse ? (
+            <DiffuseBloomIcon color={accent} size={96} intensity={0.5}>
+              <ClipboardList size={52} color={dt.colors.ink3} strokeWidth={1.4} />
+            </DiffuseBloomIcon>
+          ) : (
+            <MissingStickers.PregnancyBirthPlanHero size={120} />
+          )}
         </View>
-        <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>{t('preg_birthPlan_title')}</Text>
-        <Text style={[styles.subtitleItalic, { color: stickers.coral, fontFamily: font.italic }]}>
+        <Text
+          style={[
+            styles.title,
+            diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
+              : { color: colors.text, fontFamily: font.display },
+          ]}
+        >
+          {t('preg_birthPlan_title')}
+        </Text>
+        <Text
+          style={[
+            styles.subtitleItalic,
+            diffuse
+              ? { color: dt.colors.ink3, fontFamily: diffuseFont.italic }
+              : { color: stickers.coral, fontFamily: font.italic },
+          ]}
+        >
           {t('preg_birthPlan_italicSubtitle')}
         </Text>
 
         {/* Birth Types */}
         <View style={styles.sectionLabelRow}>
           <Flower size={16} petal={stickers.pink} />
-          <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('preg_birthPlan_typesOfBirth')}</Text>
+          <Text
+            style={[
+              styles.sectionLabel,
+              diffuse
+                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                : { color: colors.textMuted, fontFamily: font.bodyMedium },
+            ]}
+          >
+            {t('preg_birthPlan_typesOfBirth')}
+          </Text>
         </View>
         {birthTypes.map((bt) => {
           const topicKey = BIRTH_TYPE_TO_TOPIC[bt.id]
@@ -124,32 +169,68 @@ export default function BirthPlan() {
         {/* Hospital Bag */}
         <View style={styles.sectionLabelRow}>
           <MissingStickers.PregnancyHospitalBag size={24} />
-          <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+          <Text
+            style={[
+              styles.sectionLabel,
+              diffuse
+                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                : { color: colors.textMuted, fontFamily: font.bodyMedium },
+            ]}
+          >
             {t('preg_birthPlan_hospitalBagHeader', { done: doneCount, total })}
           </Text>
         </View>
         {hospitalBagChecklist.map((section) => {
           const cat = section.category.toLowerCase()
-          const Sticker = cat.includes('mom')
-            ? <Heart size={20} fill={stickers.pink} />
-            : cat.includes('baby')
-            ? <Bottle size={20} fill={stickers.blue} />
-            : <Sparkle size={20} fill={stickers.yellow} />
+          const isMom = cat.includes('mom')
+          const isBaby = cat.includes('baby')
+          const Sticker = diffuse ? (
+            <DiffuseBloomIcon color={accent} size={26} intensity={0.45}>
+              {isMom ? (
+                <HeartIcon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              ) : isBaby ? (
+                <Baby size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              ) : (
+                <Sparkles size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              )}
+            </DiffuseBloomIcon>
+          ) : isMom ? (
+            <Heart size={20} fill={stickers.pink} />
+          ) : isBaby ? (
+            <Bottle size={20} fill={stickers.blue} />
+          ) : (
+            <Sparkle size={20} fill={stickers.yellow} />
+          )
           return (
             <View
               key={section.category}
               style={[
                 styles.bagSection,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  borderRadius: radius.lg,
-                },
+                diffuse
+                  ? {
+                      backgroundColor: dt.colors.surface,
+                      borderColor: dt.colors.line,
+                      borderRadius: radius.lg,
+                    }
+                  : {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                      borderRadius: radius.lg,
+                    },
               ]}
             >
               <View style={styles.bagCategoryRow}>
                 {Sticker}
-                <Text style={[styles.bagCategory, { color: colors.text, fontFamily: font.display }]}>{section.category}</Text>
+                <Text
+                  style={[
+                    styles.bagCategory,
+                    diffuse
+                      ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
+                      : { color: colors.text, fontFamily: font.display },
+                  ]}
+                >
+                  {section.category}
+                </Text>
               </View>
               {section.items.map((item, i) => {
                 const key = `${section.category}::${item}`
@@ -166,24 +247,39 @@ export default function BirthPlan() {
                     <View
                       style={[
                         styles.checkCircle,
-                        {
-                          borderColor: isChecked ? accent : colors.borderStrong,
-                          backgroundColor: isChecked ? accent : 'transparent',
-                        },
+                        diffuse
+                          ? {
+                              borderColor: isChecked ? accent : dt.colors.line2,
+                              backgroundColor: isChecked ? accent : 'transparent',
+                            }
+                          : {
+                              borderColor: isChecked ? accent : colors.borderStrong,
+                              backgroundColor: isChecked ? accent : 'transparent',
+                            },
                       ]}
                     >
                       {isChecked && (
-                        <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                        diffuse ? (
+                          <Check size={14} color={dt.colors.surface} strokeWidth={2.4} />
+                        ) : (
+                          <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                        )
                       )}
                     </View>
                     <Text
                       style={[
                         styles.bagItemText,
-                        {
-                          color: isChecked ? colors.textMuted : colors.textSecondary,
-                          fontFamily: font.body,
-                          textDecorationLine: isChecked ? 'line-through' : 'none',
-                        },
+                        diffuse
+                          ? {
+                              color: isChecked ? dt.colors.ink3 : dt.colors.ink2,
+                              fontFamily: diffuseFont.body,
+                              textDecorationLine: isChecked ? 'line-through' : 'none',
+                            }
+                          : {
+                              color: isChecked ? colors.textMuted : colors.textSecondary,
+                              fontFamily: font.body,
+                              textDecorationLine: isChecked ? 'line-through' : 'none',
+                            },
                       ]}
                     >
                       {item}
