@@ -18,14 +18,17 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
-import { useTheme, stickers, font } from '../../constants/theme'
+import { useTheme, stickers, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { Squishy, Heart } from '../../components/ui/Stickers'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { useTranslation } from '../../lib/i18n'
 
 export default function SignUp() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const toast = useSavedToast()
   const [email, setEmail] = useState('')
@@ -69,22 +72,26 @@ export default function SignUp() {
     }
   }
 
-  const bg = colors.bg
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
-  const ink4 = isDark ? colors.textFaint : '#A69E93'
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink3 = diffuse ? dt.colors.ink3 : isDark ? colors.textMuted : '#6E6763'
+  const ink4 = diffuse ? dt.colors.ink4 : isDark ? colors.textFaint : '#A69E93'
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      {/* Decorative stickers */}
-      <View style={[styles.stickerTR, { transform: [{ rotate: '-8deg' }] }]}>
-        <Squishy w={110} h={70} fill={isDark ? stickers.yellow : '#F5D652'} />
-      </View>
-      <View style={[styles.stickerTR2, { transform: [{ rotate: '16deg' }] }]}>
-        <Heart size={40} fill={isDark ? stickers.pink : '#F2B2C7'} />
-      </View>
+      {/* Decorative stickers — hidden under diffuse (hairline system, no chips) */}
+      {!diffuse && (
+        <>
+          <View style={[styles.stickerTR, { transform: [{ rotate: '-8deg' }] }]}>
+            <Squishy w={110} h={70} fill={isDark ? stickers.yellow : '#F5D652'} />
+          </View>
+          <View style={[styles.stickerTR2, { transform: [{ rotate: '16deg' }] }]}>
+            <Heart size={40} fill={isDark ? stickers.pink : '#F2B2C7'} />
+          </View>
+        </>
+      )}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -100,28 +107,43 @@ export default function SignUp() {
         >
           {/* Back button */}
           <Pressable onPress={() => router.back()} hitSlop={12}>
-            <View style={[styles.backBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <View
+              style={[
+                styles.backBtn,
+                {
+                  backgroundColor: diffuse ? 'transparent' : paper,
+                  borderColor: diffuse ? dt.colors.line2 : paperBorder,
+                },
+              ]}
+            >
               <Ionicons name="chevron-back" size={20} color={ink} />
             </View>
           </Pressable>
 
           {/* Heading */}
-          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
+          <Text style={[styles.heading, { fontFamily: diffuse ? diffuseFont.display : font.display, color: ink }]}>
             {t('auth_signUp_heading1')}
           </Text>
-          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
+          <Text style={[styles.heading, { fontFamily: diffuse ? diffuseFont.display : font.display, color: ink }]}>
             {t('auth_signUp_heading2')}
           </Text>
-          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>
+          <Text style={[styles.headingItalic, { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: ink }]}>
             {t('auth_signUp_heading3')}
           </Text>
-          <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
+          <Text style={[styles.sub, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
             {t('auth_signUp_subtitle')}
           </Text>
 
           {/* Paper card inputs */}
           <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+            <Text
+              style={[
+                styles.inputLabel,
+                diffuse
+                  ? { fontFamily: diffuseFont.mono, letterSpacing: 1.4, color: dt.colors.ink3 }
+                  : { fontFamily: font.bodySemiBold, color: ink4 },
+              ]}
+            >
               {t('auth_emailLabel')}
             </Text>
             <TextInput
@@ -129,7 +151,7 @@ export default function SignUp() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              style={[styles.inputText, { fontFamily: font.body, color: ink }]}
+              style={[styles.inputText, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink }]}
               selectionColor={ink}
               placeholder={t('auth_emailPlaceholder')}
               placeholderTextColor={ink4}
@@ -137,48 +159,64 @@ export default function SignUp() {
           </View>
 
           <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+            <Text
+              style={[
+                styles.inputLabel,
+                diffuse
+                  ? { fontFamily: diffuseFont.mono, letterSpacing: 1.4, color: dt.colors.ink3 }
+                  : { fontFamily: font.bodySemiBold, color: ink4 },
+              ]}
+            >
               {t('auth_passwordLabel')}
             </Text>
             <TextInput
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              style={[styles.inputText, { fontFamily: font.body, color: ink }]}
+              style={[styles.inputText, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink }]}
               selectionColor={ink}
               placeholder={t('auth_passwordPlaceholder')}
               placeholderTextColor={ink4}
             />
           </View>
 
-          {/* CTA */}
+          {/* CTA — filled ink pill (current) / hairline pill (diffuse) */}
           <Pressable
             onPress={signUp}
             disabled={loading}
             style={({ pressed }) => [
               styles.cta,
+              diffuse
+                ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+                : { backgroundColor: ink },
               {
-                backgroundColor: ink,
-                opacity: pressed ? 0.88 : loading ? 0.6 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
+                opacity: pressed ? (diffuse ? 0.6 : 0.88) : loading ? 0.6 : 1,
+                transform: [{ scale: pressed && !diffuse ? 0.98 : 1 }],
               },
             ]}
           >
-            <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
+            <Text
+              style={[
+                styles.ctaText,
+                diffuse
+                  ? { fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13, color: ink }
+                  : { fontFamily: font.bodyMedium, color: bg },
+              ]}
+            >
               {loading ? t('auth_creating') : t('auth_continue')}
             </Text>
           </Pressable>
 
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-in')}>
-            <Text style={[styles.switchLink, { fontFamily: font.body, color: ink3 }]}>
+            <Text style={[styles.switchLink, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
               {t('auth_hasAccount')}{' '}
-              <Text style={{ fontFamily: font.bodySemiBold, color: ink }}>{t('auth_signIn')}</Text>
+              <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, color: ink }}>{t('auth_signIn')}</Text>
             </Text>
           </Pressable>
 
           {/* Terms */}
-          <Text style={[styles.terms, { fontFamily: font.body, color: ink4 }]}>
+          <Text style={[styles.terms, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink4 }]}>
             {t('auth_termsPrefix')}{' '}
             <Text style={{ textDecorationLine: 'underline' }}>{t('auth_termsOfSerenity')}</Text>
             {' '}{t('auth_termsAnd')}{' '}

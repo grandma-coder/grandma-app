@@ -19,9 +19,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
-import { useTheme, font } from '../../constants/theme'
+import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { Burst, Blob, Heart, Flower } from '../../components/ui/Stickers'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import {
   signInWithApple,
   signInWithGoogle,
@@ -33,6 +34,8 @@ import { useTranslation } from '../../lib/i18n'
 export default function Welcome() {
   const insets = useSafeAreaInsets()
   const { colors, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   // A caregiver invite link opened while signed out lands here as
@@ -87,32 +90,36 @@ export default function Welcome() {
     }
   }
 
-  const bg = colors.bg
-  const ink = colors.text
-  const ink2 = colors.textSecondary
-  const ink3 = colors.textMuted
-  const paper = colors.surface
-  const paperBorder = colors.border
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink2 = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line2 : colors.border
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      {/* ── Decorative stickers (positioned absolutely) ── */}
-      <View style={[styles.stickerTL, { transform: [{ rotate: '-18deg' }] }]}>
-        <Blob size={110} fill={stickers.yellow} variant={1} />
-      </View>
-      <View style={[styles.stickerTR, { transform: [{ rotate: '24deg' }] }]}>
-        <Burst size={90} fill={stickers.pink} />
-      </View>
-      <View style={[styles.stickerMidL, { transform: [{ rotate: '-8deg' }] }]}>
-        <Flower
-          size={80}
-          petal={stickers.lilac}
-          center={stickers.yellow}
-        />
-      </View>
-      <View style={styles.stickerMidR}>
-        <Heart size={70} fill={stickers.blue} />
-      </View>
+      {/* ── Decorative stickers (positioned absolutely) — collage art; hidden under Diffuse ── */}
+      {!diffuse && (
+        <>
+          <View style={[styles.stickerTL, { transform: [{ rotate: '-18deg' }] }]}>
+            <Blob size={110} fill={stickers.yellow} variant={1} />
+          </View>
+          <View style={[styles.stickerTR, { transform: [{ rotate: '24deg' }] }]}>
+            <Burst size={90} fill={stickers.pink} />
+          </View>
+          <View style={[styles.stickerMidL, { transform: [{ rotate: '-8deg' }] }]}>
+            <Flower
+              size={80}
+              petal={stickers.lilac}
+              center={stickers.yellow}
+            />
+          </View>
+          <View style={styles.stickerMidR}>
+            <Heart size={70} fill={stickers.blue} />
+          </View>
+        </>
+      )}
 
       {/* ── Content ── */}
       <Animated.View
@@ -121,7 +128,7 @@ export default function Welcome() {
           { paddingTop: insets.top + 220, opacity: fadeIn, transform: [{ translateY: slideUp }] },
         ]}
       >
-        {/* Heart-eye logo */}
+        {/* Heart-eye logo — brand mark, kept as-is */}
         <View style={{ marginBottom: 18 }}>
           <GrandmaLogo
             size={104}
@@ -132,22 +139,22 @@ export default function Welcome() {
         </View>
 
         {/* Italic welcome line */}
-        <Text style={[styles.welcomeLine, { fontFamily: font.italic, color: ink3 }]}>
+        <Text style={[styles.welcomeLine, { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: ink3 }]}>
           {t('auth_welcome_intro')}
         </Text>
 
         {/* Main wordmark */}
-        <Text style={[styles.wordmark, { fontFamily: font.display, color: ink }]}>
+        <Text style={[styles.wordmark, { fontFamily: diffuse ? diffuseFont.display : font.display, color: ink }]}>
           {t('auth_signUp_heading2')}
         </Text>
 
-        {/* Italic tagline */}
-        <Text style={[styles.seesYou, { fontFamily: font.italic, color: stickers.coral }]}>
+        {/* Italic tagline — mode-agnostic pre-login; ink under Diffuse, no accent */}
+        <Text style={[styles.seesYou, { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: diffuse ? dt.colors.ink2 : stickers.coral }]}>
           {t('auth_welcome_tagline')}
         </Text>
 
         {/* Body */}
-        <Text style={[styles.body, { fontFamily: font.body, color: ink2 }]}>
+        <Text style={[styles.body, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink2 }]}>
           {t('auth_welcome_body')}
         </Text>
       </Animated.View>
@@ -165,15 +172,24 @@ export default function Welcome() {
             disabled={loading !== null}
             style={({ pressed }) => [
               styles.authBtn,
-              { backgroundColor: ink, opacity: pressed ? 0.88 : loading === 'apple' ? 0.6 : 1 },
+              diffuse
+                ? {
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: dt.colors.line2,
+                    opacity: pressed ? 0.6 : loading === 'apple' ? 0.5 : 1,
+                  }
+                : { backgroundColor: ink, opacity: pressed ? 0.88 : loading === 'apple' ? 0.6 : 1 },
             ]}
           >
             {loading === 'apple' ? (
-              <ActivityIndicator color={bg} />
+              <ActivityIndicator color={diffuse ? dt.colors.ink : bg} />
             ) : (
               <>
-                <Ionicons name="logo-apple" size={18} color={bg} />
-                <Text style={[styles.authBtnText, { fontFamily: font.bodyMedium, color: bg }]}>
+                <Ionicons name="logo-apple" size={18} color={diffuse ? dt.colors.ink : bg} />
+                <Text style={[styles.authBtnText, diffuse
+                  ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
+                  : { fontFamily: font.bodyMedium, color: bg }]}>
                   {t('auth_continueWithApple')}
                 </Text>
               </>
@@ -186,12 +202,19 @@ export default function Welcome() {
           disabled={loading !== null}
           style={({ pressed }) => [
             styles.authBtn,
-            {
-              backgroundColor: paper,
-              borderWidth: 1,
-              borderColor: paperBorder,
-              opacity: pressed ? 0.88 : loading === 'google' ? 0.6 : 1,
-            },
+            diffuse
+              ? {
+                  backgroundColor: 'transparent',
+                  borderWidth: 1,
+                  borderColor: dt.colors.line2,
+                  opacity: pressed ? 0.6 : loading === 'google' ? 0.5 : 1,
+                }
+              : {
+                  backgroundColor: paper,
+                  borderWidth: 1,
+                  borderColor: paperBorder,
+                  opacity: pressed ? 0.88 : loading === 'google' ? 0.6 : 1,
+                },
           ]}
         >
           {loading === 'google' ? (
@@ -199,18 +222,20 @@ export default function Welcome() {
           ) : (
             <>
               <Ionicons name="logo-google" size={18} color={ink} />
-              <Text style={[styles.authBtnText, { fontFamily: font.bodyMedium, color: ink }]}>
+              <Text style={[styles.authBtnText, diffuse
+                ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
+                : { fontFamily: font.bodyMedium, color: ink }]}>
                 {t('auth_continueWithGoogle')}
               </Text>
             </>
           )}
         </Pressable>
 
-        <Text style={[styles.signInLink, { fontFamily: font.body, color: ink3 }]}>
+        <Text style={[styles.signInLink, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
           {t('auth_hasAccount')}{' '}
           <Text
             onPress={() => router.push('/(auth)/sign-in')}
-            style={{ color: ink, fontFamily: font.bodySemiBold }}
+            style={{ color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }}
           >
             {t('auth_signIn')}
           </Text>

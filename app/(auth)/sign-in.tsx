@@ -19,8 +19,9 @@ import {
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
-import { useTheme, stickers, font } from '../../constants/theme'
+import { useTheme, stickers, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { Burst } from '../../components/ui/Stickers'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { signInWithApple, signInWithGoogle, isAppleSignInAvailable } from '../../lib/auth-providers'
 import { setPendingInvite } from '../../lib/pendingInvite'
 import { Ionicons } from '@expo/vector-icons'
@@ -29,6 +30,8 @@ import { useTranslation } from '../../lib/i18n'
 export default function SignIn() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -94,20 +97,22 @@ export default function SignIn() {
     }
   }
 
-  const bg = colors.bg
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
-  const ink2 = isDark ? colors.textSecondary : '#3A3533'
-  const ink3 = isDark ? colors.textMuted : '#6E6763'
-  const ink4 = isDark ? colors.textFaint : '#A69E93'
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink2 = diffuse ? dt.colors.ink2 : isDark ? colors.textSecondary : '#3A3533'
+  const ink3 = diffuse ? dt.colors.ink3 : isDark ? colors.textMuted : '#6E6763'
+  const ink4 = diffuse ? dt.colors.ink4 : isDark ? colors.textFaint : '#A69E93'
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      {/* Decorative sticker */}
-      <View style={styles.stickerTR}>
-        <Burst size={80} fill={isDark ? stickers.yellow : '#F5D652'} />
-      </View>
+      {/* Decorative sticker — collage art; hidden under Diffuse */}
+      {!diffuse && (
+        <View style={styles.stickerTR}>
+          <Burst size={80} fill={isDark ? stickers.yellow : '#F5D652'} />
+        </View>
+      )}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -123,19 +128,22 @@ export default function SignIn() {
         >
           {/* Back button */}
           <Pressable onPress={() => router.back()} hitSlop={12}>
-            <View style={[styles.backBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <View style={[styles.backBtn, {
+              backgroundColor: diffuse ? 'transparent' : paper,
+              borderColor: diffuse ? dt.colors.line2 : paperBorder,
+            }]}>
               <Ionicons name="chevron-back" size={20} color={ink} />
             </View>
           </Pressable>
 
           {/* Heading */}
-          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
+          <Text style={[styles.heading, { fontFamily: diffuse ? diffuseFont.display : font.display, color: ink }]}>
             {t('auth_welcome')}
           </Text>
-          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>
+          <Text style={[styles.headingItalic, { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: ink }]}>
             {t('auth_welcome_back')}
           </Text>
-          <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
+          <Text style={[styles.sub, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
             {t('auth_welcome_waiting')}
           </Text>
 
@@ -146,11 +154,20 @@ export default function SignIn() {
               disabled={oauthLoading !== null}
               style={({ pressed }) => [
                 styles.socialBtn,
-                { backgroundColor: ink, opacity: pressed ? 0.88 : oauthLoading === 'apple' ? 0.6 : 1 },
+                diffuse
+                  ? {
+                      backgroundColor: 'transparent',
+                      borderWidth: 1,
+                      borderColor: dt.colors.line2,
+                      opacity: pressed ? 0.6 : oauthLoading === 'apple' ? 0.5 : 1,
+                    }
+                  : { backgroundColor: ink, opacity: pressed ? 0.88 : oauthLoading === 'apple' ? 0.6 : 1 },
               ]}
             >
-              <Ionicons name="logo-apple" size={18} color={bg} />
-              <Text style={[styles.socialBtnText, { fontFamily: font.bodyMedium, color: bg }]}>
+              <Ionicons name="logo-apple" size={18} color={diffuse ? dt.colors.ink : bg} />
+              <Text style={[styles.socialBtnText, diffuse
+                ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
+                : { fontFamily: font.bodyMedium, color: bg }]}>
                 {t('auth_continueWithApple')}
               </Text>
             </Pressable>
@@ -160,16 +177,25 @@ export default function SignIn() {
             disabled={oauthLoading !== null}
             style={({ pressed }) => [
               styles.socialBtn,
-              {
-                backgroundColor: paper,
-                borderWidth: 1,
-                borderColor: paperBorder,
-                opacity: pressed ? 0.88 : oauthLoading === 'google' ? 0.6 : 1,
-              },
+              diffuse
+                ? {
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: dt.colors.line2,
+                    opacity: pressed ? 0.6 : oauthLoading === 'google' ? 0.5 : 1,
+                  }
+                : {
+                    backgroundColor: paper,
+                    borderWidth: 1,
+                    borderColor: paperBorder,
+                    opacity: pressed ? 0.88 : oauthLoading === 'google' ? 0.6 : 1,
+                  },
             ]}
           >
             <Ionicons name="logo-google" size={18} color={ink} />
-            <Text style={[styles.socialBtnText, { fontFamily: font.bodyMedium, color: ink }]}>
+            <Text style={[styles.socialBtnText, diffuse
+              ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
+              : { fontFamily: font.bodyMedium, color: ink }]}>
               {t('auth_continueWithGoogle')}
             </Text>
           </Pressable>
@@ -177,13 +203,15 @@ export default function SignIn() {
           {/* Divider */}
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
-            <Text style={[styles.dividerText, { fontFamily: font.body, color: ink4 }]}>
+            <Text style={[styles.dividerText, diffuse
+              ? { fontFamily: diffuseFont.mono, color: ink4, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 11 }
+              : { fontFamily: font.body, color: ink4 }]}>
               {t('auth_orSignInEmail')}
             </Text>
             <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
           </View>
 
-          {/* Paper card inputs */}
+          {/* Paper card inputs — hairline fields under Diffuse */}
           <InputField
             label={t('auth_emailLabel')}
             value={email}
@@ -195,6 +223,7 @@ export default function SignIn() {
             ink={ink}
             ink4={ink4}
             font={font}
+            diffuse={diffuse}
           />
           <InputField
             label={t('auth_passwordLabel')}
@@ -206,6 +235,7 @@ export default function SignIn() {
             ink={ink}
             ink4={ink4}
             font={font}
+            diffuse={diffuse}
           />
 
           {/* Forgot */}
@@ -213,7 +243,9 @@ export default function SignIn() {
             onPress={() => router.push('/(auth)/forgot-password')}
             hitSlop={8}
           >
-            <Text style={[styles.forgot, { fontFamily: font.body, color: ink3 }]}>
+            <Text style={[styles.forgot, diffuse
+              ? { fontFamily: diffuseFont.mono, color: ink3, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 11 }
+              : { fontFamily: font.body, color: ink3 }]}>
               {t('auth_forgotPassword')}
             </Text>
           </Pressable>
@@ -224,23 +256,32 @@ export default function SignIn() {
             disabled={loading}
             style={({ pressed }) => [
               styles.cta,
-              {
-                backgroundColor: ink,
-                opacity: pressed ? 0.88 : loading ? 0.6 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
+              diffuse
+                ? {
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: dt.colors.line2,
+                    opacity: pressed ? 0.6 : loading ? 0.5 : 1,
+                  }
+                : {
+                    backgroundColor: ink,
+                    opacity: pressed ? 0.88 : loading ? 0.6 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                  },
             ]}
           >
-            <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
+            <Text style={[styles.ctaText, diffuse
+              ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
+              : { fontFamily: font.bodyMedium, color: bg }]}>
               {loading ? t('auth_signingIn') : t('auth_signInArrow')}
             </Text>
           </Pressable>
 
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-up')}>
-            <Text style={[styles.switchLink, { fontFamily: font.body, color: ink3 }]}>
+            <Text style={[styles.switchLink, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
               {t('auth_newHere')}{' '}
-              <Text style={{ fontFamily: font.bodySemiBold, color: ink }}>
+              <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, color: ink }}>
                 {t('auth_createAccount')}
               </Text>
             </Text>
@@ -263,6 +304,7 @@ interface InputFieldProps {
   ink: string
   ink4: string
   font: { display: string; body: string; bodyMedium: string; bodySemiBold: string }
+  diffuse?: boolean
 }
 
 function InputField({
@@ -277,10 +319,11 @@ function InputField({
   ink,
   ink4,
   font,
+  diffuse,
 }: InputFieldProps) {
   return (
-    <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-      <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+    <View style={[styles.inputCard, diffuse && styles.inputCardFlat, { backgroundColor: paper, borderColor: paperBorder }]}>
+      <Text style={[styles.inputLabel, { fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, color: ink4 }]}>
         {label}
       </Text>
       <TextInput
@@ -289,7 +332,7 @@ function InputField({
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
-        style={[styles.inputText, { fontFamily: font.body, color: ink }]}
+        style={[styles.inputText, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink }]}
         selectionColor={ink}
         placeholderTextColor={ink4}
       />
@@ -366,6 +409,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     marginBottom: 12,
+  },
+  inputCardFlat: {
+    borderWidth: StyleSheet.hairlineWidth,
   },
   inputLabel: {
     fontSize: 10,

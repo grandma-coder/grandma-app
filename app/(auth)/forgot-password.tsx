@@ -19,13 +19,16 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
-import { useTheme, stickers } from '../../constants/theme'
+import { useTheme, stickers, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { Heart } from '../../components/ui/Stickers'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 
 export default function ForgotPassword() {
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -59,18 +62,20 @@ export default function ForgotPassword() {
     }
   }
 
-  const bg = colors.bg
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
-  const ink3 = colors.textMuted
-  const ink4 = colors.textFaint
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
+  const ink4 = diffuse ? dt.colors.ink4 : colors.textFaint
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      <View style={styles.stickerTR}>
-        <Heart size={56} fill={isDark ? stickers.pink : '#F2B2C7'} />
-      </View>
+      {!diffuse && (
+        <View style={styles.stickerTR}>
+          <Heart size={56} fill={isDark ? stickers.pink : '#F2B2C7'} />
+        </View>
+      )}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -85,21 +90,36 @@ export default function ForgotPassword() {
           showsVerticalScrollIndicator={false}
         >
           <Pressable onPress={() => router.back()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Go back">
-            <View style={[styles.backBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <View
+              style={[
+                styles.backBtn,
+                {
+                  backgroundColor: diffuse ? 'transparent' : paper,
+                  borderColor: diffuse ? dt.colors.line2 : paperBorder,
+                },
+              ]}
+            >
               <Ionicons name="chevron-back" size={20} color={ink} />
             </View>
           </Pressable>
 
-          <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>{t('auth_forgot_heading')}</Text>
-          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>{t('auth_forgot_heading2')}</Text>
-          <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
+          <Text style={[styles.heading, { fontFamily: diffuse ? diffuseFont.display : font.display, color: ink }]}>{t('auth_forgot_heading')}</Text>
+          <Text style={[styles.headingItalic, { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: ink }]}>{t('auth_forgot_heading2')}</Text>
+          <Text style={[styles.sub, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
             {sent ? t('auth_forgot_sent') : t('auth_forgot_prompt')}
           </Text>
 
           {!sent && (
             <>
               <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-                <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+                <Text
+                  style={[
+                    styles.inputLabel,
+                    diffuse
+                      ? { fontFamily: diffuseFont.mono, letterSpacing: 1.4, color: dt.colors.ink3 }
+                      : { fontFamily: font.bodySemiBold, color: ink4 },
+                  ]}
+                >
                   {t('auth_emailLabel')}
                 </Text>
                 <TextInput
@@ -108,7 +128,7 @@ export default function ForgotPassword() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  style={[styles.inputText, { fontFamily: font.body, color: ink }]}
+                  style={[styles.inputText, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink }]}
                   selectionColor={ink}
                   placeholder="your@email.com"
                   placeholderTextColor={ink4}
@@ -124,14 +144,23 @@ export default function ForgotPassword() {
                 accessibilityState={{ busy: loading }}
                 style={({ pressed }) => [
                   styles.cta,
+                  diffuse
+                    ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+                    : { backgroundColor: ink },
                   {
-                    backgroundColor: ink,
-                    opacity: pressed ? 0.88 : loading ? 0.6 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                    opacity: pressed ? (diffuse ? 0.6 : 0.88) : loading ? 0.6 : 1,
+                    transform: [{ scale: pressed && !diffuse ? 0.98 : 1 }],
                   },
                 ]}
               >
-                <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
+                <Text
+                  style={[
+                    styles.ctaText,
+                    diffuse
+                      ? { fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13, color: ink }
+                      : { fontFamily: font.bodyMedium, color: bg },
+                  ]}
+                >
                   {loading ? t('auth_sending') : t('auth_sendResetLink')}
                 </Text>
               </Pressable>
@@ -144,14 +173,23 @@ export default function ForgotPassword() {
               accessibilityRole="button"
               style={({ pressed }) => [
                 styles.cta,
+                diffuse
+                  ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
+                  : { backgroundColor: ink },
                 {
-                  backgroundColor: ink,
-                  opacity: pressed ? 0.88 : 1,
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                  opacity: pressed ? (diffuse ? 0.6 : 0.88) : 1,
+                  transform: [{ scale: pressed && !diffuse ? 0.98 : 1 }],
                 },
               ]}
             >
-              <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
+              <Text
+                style={[
+                  styles.ctaText,
+                  diffuse
+                    ? { fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13, color: ink }
+                    : { fontFamily: font.bodyMedium, color: bg },
+                ]}
+              >
                 {t('auth_backToSignIn')}
               </Text>
             </Pressable>
