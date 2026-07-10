@@ -45,5 +45,11 @@ export const AURA: Record<string, AuraBloom[]> = {
     { color: '#ED88A6', cx: '14%', cy: '30%', opacity: 0.5 },
     { color: '#A98BDD', cx: '70%', cy: '100%', opacity: 0.45 },
   ],
+  // Auth · Sign up: peach 86/14, lilac 12/22, rose 64/106 (cy clamped to 100)
+  signup: [
+    { color: '#F4C9A0', cx: '86%', cy: '14%', opacity: 0.5 },
+    { color: '#A98BDD', cx: '12%', cy: '22%', opacity: 0.5 },
+    { color: '#ED88A6', cx: '64%', cy: '100%', opacity: 0.45 },
+  ],
   // (transcribe the remaining frames as their screens are built — see each screen task)
 }
