@@ -698,21 +698,35 @@ function Step4Details({
   onSizeChange: (s: string | null) => void
 }) {
   const { colors, radius, stickers, font, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((sel) => sel.mode)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : ''
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
   const { t } = useTranslation()
 
   const ageGroup = AGE_GROUPS.find((g) => g.label === selectedAge)
   const availableSizes = ageGroup?.sizes ?? []
 
+  const pillStyle = (isActive: boolean) => diffuse
+    ? { backgroundColor: isActive ? dt.colors.surface : 'transparent', borderColor: isActive ? dt.colors.hairline : dt.colors.line, borderRadius: radius.full }
+    : { backgroundColor: isActive ? stickers.pinkSoft : colors.surface, borderColor: isActive ? ink : colors.border, borderRadius: radius.full }
+  const pillTextStyle = (isActive: boolean) => diffuse
+    ? { color: isActive ? dt.colors.ink : dt.colors.ink3, fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono, textTransform: 'uppercase' as const, letterSpacing: 1.2 }
+    : { color: ink, fontFamily: font.bodySemiBold }
+  const fieldLabelStyle = diffuse
+    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase' as const, letterSpacing: 1.6 }
+    : { color: colors.textMuted, fontFamily: font.bodyBold }
+
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_step4Title')}</Text>
-      <Text style={[s.stepHint, { color: colors.textSecondary, fontFamily: font.body }]}>
+      <Text style={[s.stepTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('garage_create_step4Title')}</Text>
+      <Text style={[s.stepHint, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
         {t('garage_create_step4Hint')}
       </Text>
 
       {/* Condition */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('garage_create_fieldCondition')}</Text>
+      <Text style={[s.fieldLabel, fieldLabelStyle]}>{t('garage_create_fieldCondition')}</Text>
       <View style={s.chipRow}>
         {CONDITIONS.map((c) => {
           const isActive = condition === c
@@ -720,23 +734,19 @@ function Step4Details({
             <Pressable
               key={c}
               onPress={() => onConditionChange(c)}
-              style={[s.pillChip, {
-                backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
-                borderColor: isActive ? ink : colors.border,
-                borderRadius: radius.full,
-              }]}
+              style={[s.pillChip, pillStyle(isActive)]}
             >
-              <Text style={[s.pillChipText, { color: ink, fontFamily: font.bodySemiBold }]}>{c}</Text>
+              <Text style={[s.pillChipText, pillTextStyle(isActive)]}>{c}</Text>
             </Pressable>
           )
         })}
       </View>
 
       {/* Age range — pick first */}
-      <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 24 }]}>
+      <Text style={[s.fieldLabel, { marginTop: 24 }, fieldLabelStyle]}>
         {t('garage_create_fieldAgeRange')}
       </Text>
-      <Text style={[s.fieldTip, { color: colors.textMuted, fontFamily: font.italic, marginBottom: 8 }]}>
+      <Text style={[s.fieldTip, { marginBottom: 8 }, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
         {t('garage_create_ageFirstHint')}
       </Text>
       <View style={s.ageGrid}>
@@ -746,14 +756,10 @@ function Step4Details({
             <Pressable
               key={group.label}
               onPress={() => onAgeChange(isActive ? null : group.label)}
-              style={[s.ageChip, {
-                backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
-                borderColor: isActive ? ink : colors.border,
-                borderRadius: radius.full,
-              }]}
+              style={[s.ageChip, pillStyle(isActive)]}
             >
-              {isActive && <Check size={14} color={ink} strokeWidth={3} />}
-              <Text style={[s.ageChipText, { color: ink, fontFamily: font.bodySemiBold }]}>{group.label}</Text>
+              {isActive && <Check size={14} color={diffuse ? accent : ink} strokeWidth={3} />}
+              <Text style={[s.ageChipText, pillTextStyle(isActive)]}>{group.label}</Text>
             </Pressable>
           )
         })}
@@ -762,7 +768,7 @@ function Step4Details({
       {/* Size — shows after age is picked */}
       {selectedAge && availableSizes.length > 0 && (
         <>
-          <Text style={[s.fieldLabel, { color: colors.textMuted, fontFamily: font.bodyBold, marginTop: 24 }]}>
+          <Text style={[s.fieldLabel, { marginTop: 24 }, fieldLabelStyle]}>
             {t('garage_create_fieldSize', { age: selectedAge ?? '' })}
           </Text>
           <View style={s.chipRow}>
@@ -772,13 +778,9 @@ function Step4Details({
                 <Pressable
                   key={sz}
                   onPress={() => onSizeChange(isActive ? null : sz)}
-                  style={[s.pillChip, {
-                    backgroundColor: isActive ? stickers.pinkSoft : colors.surface,
-                    borderColor: isActive ? ink : colors.border,
-                    borderRadius: radius.full,
-                  }]}
+                  style={[s.pillChip, pillStyle(isActive)]}
                 >
-                  <Text style={[s.pillChipText, { color: ink, fontFamily: font.bodySemiBold }]}>{sz}</Text>
+                  <Text style={[s.pillChipText, pillTextStyle(isActive)]}>{sz}</Text>
                 </Pressable>
               )
             })}
@@ -805,12 +807,21 @@ function Step5Preview({
   age: string | null
 }) {
   const { colors, radius, stickers, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const ink = isDark ? colors.text : '#141313'
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
+
+  const badgeStyle = diffuse
+    ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderRadius: radius.full }
+    : null
+  const badgeTextStyle = diffuse
+    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase' as const, letterSpacing: 1.2 }
+    : null
 
   return (
     <View style={s.stepContainer}>
-      <Text style={[s.stepTitle, { color: colors.text, fontFamily: font.display }]}>{t('garage_create_previewTitle')}</Text>
+      <Text style={[s.stepTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('garage_create_previewTitle')}</Text>
 
       {/* Cover image */}
       {media.length > 0 && (
@@ -819,7 +830,9 @@ function Step5Preview({
 
       {/* Media count */}
       {media.length > 1 && (
-        <Text style={[s.previewMediaCount, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[s.previewMediaCount, diffuse
+          ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2 }
+          : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {media.length - 1 === 1
             ? t('garage_create_moreMediaOne', { count: media.length - 1 })
             : t('garage_create_moreMediaMany', { count: media.length - 1 })}
@@ -827,33 +840,33 @@ function Step5Preview({
       )}
 
       {/* Title — editorial serif */}
-      <Text style={[s.previewTitle, { color: colors.text, fontFamily: font.display }]}>{title}</Text>
+      <Text style={[s.previewTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{title}</Text>
 
       {/* Caption */}
       {caption ? (
-        <Text style={[s.previewCaption, { color: colors.textSecondary, fontFamily: font.body }]}>{caption}</Text>
+        <Text style={[s.previewCaption, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{caption}</Text>
       ) : null}
 
       {/* Tags / badges */}
       <View style={s.previewBadges}>
         {category && (
-          <View style={[s.previewBadge, { backgroundColor: stickers.pinkSoft, borderColor: ink, borderRadius: radius.full }]}>
-            <Text style={[s.previewBadgeText, { color: ink, fontFamily: font.bodySemiBold }]}>{category}</Text>
+          <View style={[s.previewBadge, diffuse ? badgeStyle : { backgroundColor: stickers.pinkSoft, borderColor: ink, borderRadius: radius.full }]}>
+            <Text style={[s.previewBadgeText, diffuse ? { ...badgeTextStyle, color: dt.colors.ink } : { color: ink, fontFamily: font.bodySemiBold }]}>{category}</Text>
           </View>
         )}
         {condition && (
-          <View style={[s.previewBadge, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
-            <Text style={[s.previewBadgeText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{condition}</Text>
+          <View style={[s.previewBadge, diffuse ? badgeStyle : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+            <Text style={[s.previewBadgeText, diffuse ? badgeTextStyle : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{condition}</Text>
           </View>
         )}
         {size && (
-          <View style={[s.previewBadge, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
-            <Text style={[s.previewBadgeText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{size}</Text>
+          <View style={[s.previewBadge, diffuse ? badgeStyle : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+            <Text style={[s.previewBadgeText, diffuse ? badgeTextStyle : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{size}</Text>
           </View>
         )}
         {age && (
-          <View style={[s.previewBadge, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
-            <Text style={[s.previewBadgeText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{age}</Text>
+          <View style={[s.previewBadge, diffuse ? badgeStyle : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+            <Text style={[s.previewBadgeText, diffuse ? badgeTextStyle : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{age}</Text>
           </View>
         )}
       </View>

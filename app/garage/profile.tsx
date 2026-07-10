@@ -23,13 +23,15 @@ import {
   User,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { PaperAlert } from '../../components/ui/PaperAlert'
 import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../lib/i18n'
 import { deletePost, toggleSave, type GaragePost } from '../../lib/garagePosts'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 
 const SCREEN_W = Dimensions.get('window').width
 const THUMB_SIZE = (SCREEN_W - 4) / 3 // 3 columns, 2px gaps
@@ -38,6 +40,8 @@ type Tab = 'posts' | 'saved'
 
 export default function GarageProfileScreen() {
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
 
@@ -151,13 +155,15 @@ export default function GarageProfileScreen() {
   const currentData = tab === 'posts' ? myPosts : savedPosts
 
   return (
-    <View style={[s.root, { backgroundColor: colors.bg }]}>
+    <View style={[s.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={() => router.back()} style={s.headerBtn}>
-          <ArrowLeft size={24} color={colors.text} />
+          <ArrowLeft size={24} color={diffuse ? dt.colors.ink : colors.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: colors.text }]}>{t('garage_profile_myVillage')}</Text>
+        <Text style={[s.headerTitle, diffuse
+          ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
+          : { color: colors.text }]}>{t('garage_profile_myVillage')}</Text>
         <View style={s.headerBtn} />
       </View>
 
@@ -165,33 +171,37 @@ export default function GarageProfileScreen() {
       <View style={s.profileSection}>
         {/* Avatar */}
         {userPhoto && !isIconAvatar(userPhoto) ? (
-          <Image source={{ uri: userPhoto }} style={[s.profileAvatar, { borderColor: colors.primary }]} />
+          <Image source={{ uri: userPhoto }} style={[s.profileAvatar, { borderColor: diffuse ? dt.colors.line2 : colors.primary }]} />
         ) : (
-          <View style={[s.profileAvatarPlaceholder, { backgroundColor: colors.surfaceRaised, borderColor: colors.primary }]}>
-            <User size={32} color={colors.textMuted} strokeWidth={1.5} />
+          <View style={[s.profileAvatarPlaceholder, diffuse
+            ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+            : { backgroundColor: colors.surfaceRaised, borderColor: colors.primary }]}>
+            <User size={32} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={1.5} />
           </View>
         )}
 
         {/* Stats */}
         <View style={s.profileStats}>
           <View style={s.statItem}>
-            <Text style={[s.statNumber, { color: colors.text }]}>{postCount}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted }]}>{t('garage_profile_posts')}</Text>
+            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>{postCount}</Text>
+            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2 } : { color: colors.textMuted }]}>{t('garage_profile_posts')}</Text>
           </View>
           <View style={s.statItem}>
-            <Text style={[s.statNumber, { color: colors.text }]}>{savedCount}</Text>
-            <Text style={[s.statLabel, { color: colors.textMuted }]}>{t('garage_profile_saved')}</Text>
+            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>{savedCount}</Text>
+            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2 } : { color: colors.textMuted }]}>{t('garage_profile_saved')}</Text>
           </View>
         </View>
       </View>
 
       {/* Name & info */}
       <View style={s.profileInfo}>
-        <Text style={[s.profileName, { color: colors.text }]}>
+        <Text style={[s.profileName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>
           {userName || userEmail?.split('@')[0] || t('garage_profile_myProfile')}
         </Text>
         {memberSince && (
-          <Text style={[s.profileMeta, { color: colors.textMuted }]}>
+          <Text style={[s.profileMeta, diffuse
+            ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
+            : { color: colors.textMuted }]}>
             {t('garage_profile_memberSince', { date: memberSince })}
           </Text>
         )}
@@ -199,24 +209,24 @@ export default function GarageProfileScreen() {
 
 
       {/* Tab bar */}
-      <View style={[s.tabBar, { borderBottomColor: colors.borderLight }]}>
+      <View style={[s.tabBar, { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight }]}>
         <Pressable
           onPress={() => setTab('posts')}
-          style={[s.tabBtn, tab === 'posts' && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+          style={[s.tabBtn, tab === 'posts' && { borderBottomColor: diffuse ? dt.colors.hairline : colors.primary, borderBottomWidth: 2 }]}
         >
           <Grid3X3
             size={22}
-            color={tab === 'posts' ? colors.primary : colors.textMuted}
+            color={tab === 'posts' ? (diffuse ? dt.colors.ink : colors.primary) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
             strokeWidth={2}
           />
         </Pressable>
         <Pressable
           onPress={() => setTab('saved')}
-          style={[s.tabBtn, tab === 'saved' && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+          style={[s.tabBtn, tab === 'saved' && { borderBottomColor: diffuse ? dt.colors.hairline : colors.primary, borderBottomWidth: 2 }]}
         >
           <Bookmark
             size={22}
-            color={tab === 'saved' ? colors.primary : colors.textMuted}
+            color={tab === 'saved' ? (diffuse ? dt.colors.ink : colors.primary) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
             strokeWidth={2}
           />
         </Pressable>
@@ -228,6 +238,25 @@ export default function GarageProfileScreen() {
           <BrandedLoader />
         </View>
       ) : currentData.length === 0 ? (
+        diffuse ? (
+          tab === 'posts' ? (
+            <DiffuseEmptyState
+              icon={<DiffuseBloomIcon size={72} intensity={0.5}><ShoppingBag size={34} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+              title={t('garage_profile_emptyPostsTitle')}
+              message={t('garage_profile_emptyPostsBody')}
+              ctaLabel={t('garage_profile_createFirst')}
+              onCta={() => router.push('/garage/create' as any)}
+              style={s.emptyState}
+            />
+          ) : (
+            <DiffuseEmptyState
+              icon={<DiffuseBloomIcon size={72} intensity={0.5}><Bookmark size={34} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+              title={t('garage_profile_emptySavedTitle')}
+              message={t('garage_profile_emptySavedBody')}
+              style={s.emptyState}
+            />
+          )
+        ) : (
         <View style={s.emptyState}>
           {tab === 'posts' ? (
             <>
@@ -253,6 +282,7 @@ export default function GarageProfileScreen() {
             </>
           )}
         </View>
+        )
       ) : (
         <FlatList
           data={currentData}
@@ -306,6 +336,8 @@ function PostThumbnail({
   onDelete: () => void
 }) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const hasMedia = post.media.length > 0
   const coverUrl = hasMedia ? post.media[0].url : null
@@ -328,7 +360,7 @@ function PostThumbnail({
       {coverUrl ? (
         <Image source={{ uri: coverUrl }} style={s.thumbImage} />
       ) : (
-        <View style={[s.thumbPlaceholder, { backgroundColor: colors.surfaceRaised }]}>
+        <View style={[s.thumbPlaceholder, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}>
           <Text style={{ fontSize: 24 }}>{t('garage_profile_thumbPlaceholderIcon')}</Text>
         </View>
       )}
