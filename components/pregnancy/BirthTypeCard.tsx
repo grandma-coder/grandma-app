@@ -1,5 +1,9 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { useTheme, radius, spacing } from '../../constants/theme'
+import {
+  useTheme, radius, spacing,
+  useDiffuseTheme, diffuseFont, diffuseRadius,
+} from '../../constants/theme'
+import { useIsDiffuse, DiffuseFieldSurface, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { Leaf, Cross, Heart, Drop } from '../ui/Stickers'
 import { MissingStickers } from '../stickers/MissingStickers'
 import type { BirthType, BirthStickerKind } from '../../lib/birthData'
@@ -24,7 +28,41 @@ function StickerIcon({ kind, size = 44 }: { kind: BirthStickerKind; size?: numbe
 
 export function BirthTypeCard({ birthType, onPress }: BirthTypeCardProps) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
+
+  if (diffuse) {
+    return (
+      <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.9 }]}>
+        <DiffuseFieldSurface
+          mode="preg"
+          isDark={dt.isDark}
+          intensity={0.45}
+          radius={diffuseRadius.lg}
+          style={[styles.dContainer, { borderWidth: 1, borderColor: dt.colors.line }]}
+        >
+          <View style={styles.header}>
+            <View style={styles.iconWrap}>
+              <StickerIcon kind={birthType.sticker} size={56} />
+            </View>
+            <Text style={[styles.dTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+              {birthType.title}
+            </Text>
+          </View>
+          <Text style={[styles.dDescription, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
+            {birthType.description}
+          </Text>
+          <View style={styles.dLearnRow}>
+            <Text style={[styles.dLearnMore, { color: dt.colors.ink, fontFamily: diffuseFont.mono }]}>
+              {t('common_learnMore')}
+            </Text>
+            <DiffuseArrow color={dt.colors.ink3} size={15} />
+          </View>
+        </DiffuseFieldSurface>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
@@ -87,5 +125,30 @@ const styles = StyleSheet.create({
   },
   learnMore: {
     fontSize: 13,
+  },
+  // ── Diffuse ──
+  dContainer: {
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+  },
+  dTitle: {
+    fontSize: 24,
+    letterSpacing: -0.5,
+    flex: 1,
+  },
+  dDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: spacing.sm + 2,
+  },
+  dLearnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dLearnMore: {
+    fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
   },
 })

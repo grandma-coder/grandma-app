@@ -65,7 +65,9 @@ import {
   Camera,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius } from '../../constants/theme'
+import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius, useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius } from '../../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
+import { DiffuseListRow, DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
 import { pregnancyWeeks, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
@@ -376,25 +378,30 @@ function QuickLogSheet({
   onManageRoutines: () => void
 }) {
   const { colors, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const bg = colors.bg
-  const ink = colors.text
-  const accent = getModeColor('preg', isDark)
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const ink = diffuse ? dt.colors.ink : colors.text
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
-      <View style={[styles.fabSheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.fabSheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : null]}>
         <View style={styles.fabSheetHandle}>
-          <View style={[styles.fabSheetHandleBar, { backgroundColor: paperBorder }]} />
+          <View style={[styles.fabSheetHandleBar, { backgroundColor: diffuse ? dt.colors.line2 : paperBorder }]} />
         </View>
         <View style={styles.fabSheetHeaderRow}>
-          <Display size={22} color={ink}>{t('pregCal_log_something')}</Display>
-          <Pressable onPress={onClose} style={[styles.fabSheetClose, { backgroundColor: paper, borderColor: paperBorder }]}>
+          {diffuse ? (
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.3, color: ink }}>{t('pregCal_log_something')}</Text>
+          ) : (
+            <Display size={22} color={ink}>{t('pregCal_log_something')}</Display>
+          )}
+          <Pressable onPress={onClose} style={[styles.fabSheetClose, diffuse ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline, borderRadius: 999, width: 34, height: 34, alignItems: 'center', justifyContent: 'center' } : { backgroundColor: paper, borderColor: paperBorder }]}>
             <X size={18} color={ink} strokeWidth={2} />
           </Pressable>
         </View>
@@ -417,7 +424,10 @@ function QuickLogSheet({
 
           <Pressable
             onPress={() => { onClose(); onManageRoutines() }}
-            style={({ pressed }) => [
+            style={({ pressed }) => diffuse ? [
+              styles.manageRoutinesBtn,
+              { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderWidth: 1, opacity: pressed ? 0.6 : 1 },
+            ] : [
               styles.manageRoutinesBtn,
               {
                 backgroundColor: brand.pregnancySoft,
@@ -432,18 +442,29 @@ function QuickLogSheet({
               },
             ]}
           >
-            <View style={{
+            <View style={diffuse ? {
+              width: 30, height: 30, borderRadius: 15,
+              backgroundColor: 'transparent',
+              borderWidth: 1, borderColor: dt.colors.line2,
+              alignItems: 'center', justifyContent: 'center',
+            } : {
               width: 30, height: 30, borderRadius: 15,
               backgroundColor: paper,
               borderWidth: 1.5, borderColor: ink,
               alignItems: 'center', justifyContent: 'center',
             }}>
-              <Calendar size={15} color={ink} strokeWidth={2.4} />
+              <Calendar size={15} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={diffuse ? 1.7 : 2.4} />
             </View>
-            <Body size={14} color={ink} style={{ fontFamily: font.bodyBold, flex: 1, letterSpacing: 0.2 }}>
-              {t('pregCal_manage_routines')}
-            </Body>
-            <ChevronRight size={16} color={ink} strokeWidth={2.4} />
+            {diffuse ? (
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: dt.colors.ink, flex: 1 }}>
+                {t('pregCal_manage_routines')}
+              </Text>
+            ) : (
+              <Body size={14} color={ink} style={{ fontFamily: font.bodyBold, flex: 1, letterSpacing: 0.2 }}>
+                {t('pregCal_manage_routines')}
+              </Body>
+            )}
+            <ChevronRight size={16} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={diffuse ? 1.7 : 2.4} />
           </Pressable>
         </ScrollView>
       </View>
@@ -467,17 +488,25 @@ function RoutineManager({
   onDeleted: () => void
 }) {
   const { colors, isDark, font, radius, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
-  // Sticker palette (pregnancy = lavender accent)
-  const ST_INK = colors.text
-  const ST_PAPER = colors.surface
-  const ST_CREAM = colors.surfaceRaised
-  const ST_SHEET = colors.surfaceRaised
-  const ST_LAVENDER = getModeColor('preg', isDark)
-  const ST_LAVENDER_SOFT = brand.pregnancySoft
-  const ST_RED = isDark ? '#E66B6B' : brand.error
+  // Sticker palette (pregnancy = lavender accent). Under Diffuse these resolve
+  // to the soft plum field tokens; hard offset shadows collapse to hairlines.
+  const ST_INK = diffuse ? dt.colors.ink : colors.text
+  const ST_PAPER = diffuse ? dt.colors.surface : colors.surface
+  const ST_CREAM = diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised
+  const ST_SHEET = diffuse ? dt.colors.bg : colors.surfaceRaised
+  const ST_LAVENDER = diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)
+  const ST_LAVENDER_SOFT = diffuse ? dt.colors.surfaceRaised : brand.pregnancySoft
+  const ST_RED = diffuse ? dt.colors.error : (isDark ? '#E66B6B' : brand.error)
+  // Resolved chrome helpers so the sticker geometry can stay while the Diffuse
+  // path drops offset shadows and hard ink borders for hairlines + soft fonts.
+  const stBorder = diffuse ? dt.colors.line : (isDark ? colors.border : ST_INK)
+  const fDisplay = diffuse ? diffuseFont.display : font.display
+  const fDisplayBold = diffuse ? diffuseFont.display : font.displayBold
 
   const DEFAULT_FORM = { name: '', type: 'vitamins' as string, time: '08:00', days: [0,1,2,3,4,5,6] as number[] }
 
@@ -567,9 +596,9 @@ function RoutineManager({
     <>
       {/* Name */}
       <View style={{
-        backgroundColor: ST_CREAM,
-        borderColor: ST_INK,
-        borderWidth: 1.5,
+        backgroundColor: diffuse ? dt.colors.surface : ST_CREAM,
+        borderColor: stBorder,
+        borderWidth: diffuse ? 1 : 1.5,
         borderRadius: radius.full,
         height: 56,
         justifyContent: 'center',
@@ -578,14 +607,14 @@ function RoutineManager({
           value={form.name}
           onChangeText={(t) => setForm((p) => ({ ...p, name: t }))}
           placeholder="Routine name"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={diffuse ? dt.colors.ink3 : colors.textMuted}
           underlineColorAndroid="transparent"
           style={{
-            color: isDark ? colors.text : ST_INK,
+            color: diffuse ? dt.colors.ink : (isDark ? colors.text : ST_INK),
             paddingHorizontal: 22,
             paddingVertical: 0,
             fontSize: 15,
-            fontFamily: font.bodySemiBold,
+            fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold,
           }}
         />
       </View>
@@ -600,14 +629,21 @@ function RoutineManager({
           // Dark: full saturation so it pops against the dark surface.
           const activeBg = isDark ? (meta.color || ST_LAVENDER) : softTintFor(meta.color || ST_LAVENDER)
           // Inactive bg in dark mode is the dark surface; ink text is invisible there.
-          const labelColor = active
-            ? (isDark ? '#FFF' : ST_INK)
-            : (isDark ? colors.text : ST_INK)
+          const labelColor = diffuse
+            ? (active ? dt.colors.ink : dt.colors.ink3)
+            : (active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK))
           return (
             <Pressable
               key={t}
               onPress={() => setForm((p) => ({ ...p, type: t }))}
-              style={({ pressed }) => ({
+              style={({ pressed }) => diffuse ? ({
+                paddingHorizontal: 14, paddingVertical: 8,
+                borderRadius: radius.full,
+                borderWidth: 1,
+                borderColor: active ? dt.colors.hairline : dt.colors.line,
+                backgroundColor: active ? dt.colors.surface : 'transparent',
+                opacity: pressed ? 0.7 : 1,
+              }) : ({
                 paddingHorizontal: 14, paddingVertical: 8,
                 borderRadius: radius.full,
                 borderWidth: 1.5,
@@ -620,7 +656,7 @@ function RoutineManager({
                 transform: [{ translateY: active && pressed ? 1 : 0 }],
               })}
             >
-              <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
+              <Text style={{ color: labelColor, fontSize: diffuse ? 11 : 13, fontFamily: diffuse ? (active ? diffuseFont.monoBold : diffuseFont.mono) : (active ? font.bodyBold : font.bodySemiBold), letterSpacing: diffuse ? 0.8 : undefined, textTransform: diffuse ? 'uppercase' : 'none' }}>
                 {meta.label}
               </Text>
             </Pressable>
@@ -632,25 +668,25 @@ function RoutineManager({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{
           width: 32, height: 32, borderRadius: radius.full,
-          backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: ST_INK,
+          backgroundColor: diffuse ? 'transparent' : ST_CREAM, borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? dt.colors.line2 : ST_INK,
           alignItems: 'center', justifyContent: 'center',
         }}>
-          <Clock size={14} color={ST_INK} strokeWidth={2.2} />
+          <Clock size={14} color={diffuse ? dt.colors.ink3 : ST_INK} strokeWidth={diffuse ? 1.7 : 2.2} />
         </View>
         <TextInput
           value={form.time}
           onChangeText={(t) => setForm((p) => ({ ...p, time: t }))}
           placeholder="08:00"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={diffuse ? dt.colors.ink3 : colors.textMuted}
           keyboardType="numbers-and-punctuation"
           style={{
             flex: 1,
-            color: isDark ? colors.text : ST_INK,
-            backgroundColor: ST_CREAM,
-            borderColor: ST_INK,
-            borderWidth: 1.5, borderRadius: radius.full,
+            color: diffuse ? dt.colors.ink : (isDark ? colors.text : ST_INK),
+            backgroundColor: diffuse ? dt.colors.surface : ST_CREAM,
+            borderColor: stBorder,
+            borderWidth: diffuse ? 1 : 1.5, borderRadius: radius.full,
             paddingHorizontal: 16, paddingVertical: 10,
-            fontSize: 15, fontFamily: font.bodySemiBold,
+            fontSize: 15, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold,
           }}
         />
       </View>
@@ -663,7 +699,14 @@ function RoutineManager({
             <Pressable
               key={idx}
               onPress={() => toggleDay(idx)}
-              style={({ pressed }) => ({
+              style={({ pressed }) => diffuse ? ({
+                width: 36, height: 36, borderRadius: radius.full,
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: active ? dt.colors.hairline : dt.colors.line,
+                backgroundColor: active ? dt.colors.surface : 'transparent',
+                opacity: pressed ? 0.7 : 1,
+              }) : ({
                 width: 36, height: 36, borderRadius: radius.full,
                 alignItems: 'center', justifyContent: 'center',
                 borderWidth: 1.5,
@@ -676,7 +719,7 @@ function RoutineManager({
                 transform: [{ translateY: active && pressed ? 1 : 0 }],
               })}
             >
-              <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
+              <Text style={{ fontSize: 13, fontFamily: diffuse ? (active ? diffuseFont.monoBold : diffuseFont.mono) : font.bodyBold, color: diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? '#FFF' : (isDark ? colors.text : ST_INK)) }}>
                 {label}
               </Text>
             </Pressable>
@@ -698,39 +741,51 @@ function RoutineManager({
               backgroundColor: ST_SHEET,
               borderTopLeftRadius: radius.xl,
               borderTopRightRadius: radius.xl,
-              borderTopWidth: 1.5,
-              borderLeftWidth: 1.5,
-              borderRightWidth: 1.5,
-              borderColor: isDark ? colors.border : ST_INK,
+              borderTopWidth: diffuse ? 1 : 1.5,
+              borderLeftWidth: diffuse ? 1 : 1.5,
+              borderRightWidth: diffuse ? 1 : 1.5,
+              borderColor: diffuse ? dt.colors.line : (isDark ? colors.border : ST_INK),
               paddingBottom: insets.bottom + 20,
             }}
           >
             {/* Drag handle */}
             <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
-              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: isDark ? colors.border : colors.borderLight }} />
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: diffuse ? dt.colors.line2 : (isDark ? colors.border : colors.borderLight) }} />
             </View>
 
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 6, paddingBottom: 14, gap: 12 }}>
-              <View style={{
-                width: 48, height: 48, borderRadius: radius.full,
-                backgroundColor: isDark ? colors.surfaceRaised : ST_LAVENDER_SOFT,
-                borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Calendar size={22} color={ST_LAVENDER} strokeWidth={2.2} />
-              </View>
+              {diffuse ? (
+                <DiffuseBloomIcon color={ST_LAVENDER} size={44} intensity={0.5}>
+                  <Calendar size={20} color={dt.colors.ink2} strokeWidth={1.7} />
+                </DiffuseBloomIcon>
+              ) : (
+                <View style={{
+                  width: 48, height: 48, borderRadius: radius.full,
+                  backgroundColor: isDark ? colors.surfaceRaised : ST_LAVENDER_SOFT,
+                  borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Calendar size={22} color={ST_LAVENDER} strokeWidth={2.2} />
+                </View>
+              )}
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>
+                <Text style={{ color: diffuse ? dt.colors.ink : (isDark ? colors.text : ST_INK), fontSize: 24, letterSpacing: diffuse ? -0.3 : -0.5, fontFamily: fDisplay }}>
                   {t('pregCal_manage_routines')}
                 </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: font.bodyMedium }}>
+                <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: diffuse ? 11 : 13, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, letterSpacing: diffuse ? 0.6 : undefined, textTransform: diffuse ? 'uppercase' : 'none' }}>
                   {t('pregCal_recurring_desc')}
                 </Text>
               </View>
               <Pressable
                 onPress={onClose}
-                style={({ pressed }) => ({
+                style={({ pressed }) => diffuse ? ({
+                  width: 36, height: 36, borderRadius: radius.full,
+                  backgroundColor: 'transparent',
+                  borderWidth: 1, borderColor: dt.colors.hairline,
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: pressed ? 0.6 : 1,
+                }) : ({
                   width: 36, height: 36, borderRadius: radius.full,
                   backgroundColor: ST_CREAM,
                   borderWidth: 1.5, borderColor: ST_INK,
@@ -741,7 +796,7 @@ function RoutineManager({
                   transform: [{ translateY: pressed ? 1 : 0 }],
                 })}
               >
-                <X size={15} color={ST_INK} strokeWidth={2.5} />
+                <X size={15} color={ST_INK} strokeWidth={diffuse ? 1.8 : 2.5} />
               </Pressable>
             </View>
 
@@ -749,7 +804,12 @@ function RoutineManager({
               {/* New routine form (paper card) — hidden while editing */}
               {!editingRoutine && (
                 <View
-                  style={{
+                  style={diffuse ? {
+                    backgroundColor: dt.colors.surface,
+                    borderRadius: radius.lg,
+                    borderWidth: 1, borderColor: dt.colors.line,
+                    padding: 16, gap: 12,
+                  } : {
                     backgroundColor: ST_PAPER,
                     borderRadius: radius.lg,
                     borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
@@ -760,17 +820,25 @@ function RoutineManager({
                     shadowRadius: 0, elevation: 2,
                   }}
                 >
-                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
+                  <Text style={{ color: diffuse ? dt.colors.ink : (isDark ? colors.text : ST_INK), fontSize: diffuse ? 20 : 18, fontFamily: fDisplayBold, letterSpacing: -0.3 }}>
                     {t('pregCal_new_routine')}
                   </Text>
                   {formFields}
-                  {/* Save sticker button */}
+                  {/* Save button */}
                   <Pressable
                     onPress={handleSave}
                     disabled={!form.name.trim() || saving}
                     style={({ pressed }) => {
                       const isDisabled = !form.name.trim() || saving
-                      return {
+                      return diffuse ? {
+                        height: 54,
+                        borderRadius: radius.full,
+                        backgroundColor: 'transparent',
+                        borderWidth: 1, borderColor: dt.colors.hairline,
+                        alignItems: 'center', justifyContent: 'center',
+                        opacity: isDisabled ? 0.4 : (pressed ? 0.6 : 1),
+                        marginTop: 4,
+                      } : {
                         height: 56,
                         borderRadius: radius.full,
                         backgroundColor: isDisabled ? ST_LAVENDER + '88' : ST_LAVENDER,
@@ -785,8 +853,8 @@ function RoutineManager({
                     }}
                   >
                     {saving
-                      ? <ActivityIndicator color="#FFF" size="small" />
-                      : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                      ? <ActivityIndicator color={diffuse ? dt.colors.ink : '#FFF'} size="small" />
+                      : <Text style={{ color: diffuse ? dt.colors.ink : '#FFF', fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, fontSize: diffuse ? 12 : 15, letterSpacing: diffuse ? 1.4 : 0.8, textTransform: 'uppercase' }}>
                           {t('pregCal_add_routine')}
                         </Text>
                     }
@@ -797,7 +865,7 @@ function RoutineManager({
               {/* Active routines list */}
               {routines.length > 0 && (
                 <View style={{ marginTop: 20 }}>
-                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
+                  <Text style={{ color: diffuse ? dt.colors.ink : (isDark ? colors.text : ST_INK), fontSize: diffuse ? 20 : 18, fontFamily: fDisplayBold, letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
                     {t('pregCal_active_routines', { count: routines.length })}
                   </Text>
                   {routines.map((r) => {
@@ -806,6 +874,59 @@ function RoutineManager({
                     const daysLabel = r.days_of_week.length === 7
                       ? 'Every day'
                       : r.days_of_week.map((d) => WEEKDAYS[d]).join(', ')
+                    if (diffuse) {
+                      return (
+                        <View
+                          key={r.id}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: 12,
+                            marginBottom: 10,
+                            backgroundColor: dt.colors.surface,
+                            borderRadius: radius.md,
+                            borderWidth: 1, borderColor: dt.colors.line,
+                          }}
+                        >
+                          <DiffuseBloomIcon color={getDiffuseAccent('preg', dt.isDark)} size={32} intensity={0.45}>
+                            <Icon size={14} color={dt.colors.ink2} strokeWidth={1.7} />
+                          </DiffuseBloomIcon>
+                          <View style={{ flex: 1, gap: 3 }}>
+                            <Text style={{ color: dt.colors.ink, fontSize: 15, fontFamily: diffuseFont.body }}>
+                              {r.name}
+                            </Text>
+                            <Text style={{ color: dt.colors.ink3, fontSize: 9.5, fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                              {r.time ? `${fmtTime(r.time)} · ` : ''}{daysLabel}
+                            </Text>
+                          </View>
+                          <Pressable
+                            onPress={() => openEdit(r)}
+                            style={({ pressed }) => ({
+                              width: 32, height: 32, borderRadius: radius.full,
+                              backgroundColor: 'transparent',
+                              borderWidth: 1, borderColor: dt.colors.line2,
+                              alignItems: 'center', justifyContent: 'center',
+                              opacity: pressed ? 0.6 : 1,
+                            })}
+                          >
+                            <Pencil size={13} color={dt.colors.ink3} strokeWidth={1.8} />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => setConfirmDeleteId(r.id)}
+                            style={({ pressed }) => ({
+                              width: 32, height: 32, borderRadius: radius.full,
+                              backgroundColor: 'transparent',
+                              borderWidth: 1, borderColor: dt.colors.error,
+                              alignItems: 'center', justifyContent: 'center',
+                              opacity: pressed ? 0.6 : 1,
+                            })}
+                          >
+                            <Trash2 size={13} color={dt.colors.error} strokeWidth={1.8} />
+                          </Pressable>
+                        </View>
+                      )
+                    }
                     return (
                       <View
                         key={r.id}
@@ -888,7 +1009,13 @@ function RoutineManager({
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View
-              style={{
+              style={diffuse ? {
+                backgroundColor: dt.colors.surface,
+                borderRadius: radius.lg,
+                borderWidth: 1, borderColor: dt.colors.line,
+                padding: 18, gap: 12,
+                overflow: 'hidden',
+              } : {
                 backgroundColor: ST_PAPER,
                 borderRadius: radius.lg,
                 borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
@@ -898,24 +1025,37 @@ function RoutineManager({
                 shadowOpacity: 1, shadowRadius: 0, elevation: 8,
               }}
             >
+              {diffuse ? <SoftBloom color={ST_LAVENDER} cx="88%" cy="8%" opacity={dt.isDark ? 0.2 : 0.28} spread={0.5} /> : null}
               {/* Header */}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={{
-                    width: 36, height: 36, borderRadius: radius.full,
-                    backgroundColor: ST_LAVENDER_SOFT,
-                    borderWidth: 1.5, borderColor: ST_INK,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Pencil size={16} color={ST_LAVENDER} strokeWidth={2.4} />
-                  </View>
-                  <Text style={{ color: ST_INK, fontSize: 20, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
+                  {diffuse ? (
+                    <DiffuseBloomIcon color={ST_LAVENDER} size={36} intensity={0.5}>
+                      <Pencil size={16} color={dt.colors.ink2} strokeWidth={1.7} />
+                    </DiffuseBloomIcon>
+                  ) : (
+                    <View style={{
+                      width: 36, height: 36, borderRadius: radius.full,
+                      backgroundColor: ST_LAVENDER_SOFT,
+                      borderWidth: 1.5, borderColor: ST_INK,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Pencil size={16} color={ST_LAVENDER} strokeWidth={2.4} />
+                    </View>
+                  )}
+                  <Text style={{ color: ST_INK, fontSize: 20, fontFamily: fDisplayBold, letterSpacing: -0.3 }}>
                     {t('pregCal_edit_routine')}
                   </Text>
                 </View>
                 <Pressable
                   onPress={cancelEdit}
-                  style={({ pressed }) => ({
+                  style={({ pressed }) => diffuse ? ({
+                    width: 32, height: 32, borderRadius: radius.full,
+                    backgroundColor: 'transparent',
+                    borderWidth: 1, borderColor: dt.colors.hairline,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: pressed ? 0.6 : 1,
+                  }) : ({
                     width: 32, height: 32, borderRadius: radius.full,
                     backgroundColor: ST_CREAM,
                     borderWidth: 1.5, borderColor: ST_INK,
@@ -926,7 +1066,7 @@ function RoutineManager({
                     transform: [{ translateY: pressed ? 1 : 0 }],
                   })}
                 >
-                  <X size={14} color={ST_INK} strokeWidth={2.5} />
+                  <X size={14} color={ST_INK} strokeWidth={diffuse ? 1.8 : 2.5} />
                 </Pressable>
               </View>
 
@@ -936,7 +1076,14 @@ function RoutineManager({
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
                 <Pressable
                   onPress={cancelEdit}
-                  style={({ pressed }) => ({
+                  style={({ pressed }) => diffuse ? ({
+                    flex: 1, height: 52,
+                    borderRadius: radius.full,
+                    backgroundColor: 'transparent',
+                    borderWidth: 1, borderColor: dt.colors.line2,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: pressed ? 0.6 : 1,
+                  }) : ({
                     flex: 1, height: 52,
                     borderRadius: radius.full,
                     backgroundColor: ST_CREAM,
@@ -948,14 +1095,21 @@ function RoutineManager({
                     transform: [{ translateY: pressed ? 2 : 0 }],
                   })}
                 >
-                  <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                  <Text style={{ color: diffuse ? dt.colors.ink3 : ST_INK, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, fontSize: diffuse ? 12 : 14, letterSpacing: diffuse ? 1.4 : 0.6, textTransform: 'uppercase' }}>
                     {t('common_cancel')}
                   </Text>
                 </Pressable>
                 <Pressable
                   onPress={handleSave}
                   disabled={!form.name.trim() || saving}
-                  style={({ pressed }) => ({
+                  style={({ pressed }) => diffuse ? ({
+                    flex: 1.4, height: 52,
+                    borderRadius: radius.full,
+                    backgroundColor: 'transparent',
+                    borderWidth: 1, borderColor: dt.colors.hairline,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: (!form.name.trim() || saving) ? 0.4 : (pressed ? 0.6 : 1),
+                  }) : ({
                     flex: 1.4, height: 52,
                     borderRadius: radius.full,
                     backgroundColor: ST_LAVENDER,
@@ -969,8 +1123,8 @@ function RoutineManager({
                   })}
                 >
                   {saving
-                    ? <ActivityIndicator color="#FFF" size="small" />
-                    : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                    ? <ActivityIndicator color={diffuse ? dt.colors.ink : '#FFF'} size="small" />
+                    : <Text style={{ color: diffuse ? dt.colors.ink : '#FFF', fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, fontSize: diffuse ? 12 : 14, letterSpacing: diffuse ? 1.4 : 0.6, textTransform: 'uppercase' }}>
                         {t('pregCal_update')}
                       </Text>
                   }
@@ -989,7 +1143,13 @@ function RoutineManager({
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View
-              style={{
+              style={diffuse ? {
+                backgroundColor: dt.colors.surface,
+                borderRadius: radius.xl,
+                borderWidth: 1, borderColor: dt.colors.line,
+                padding: 22, gap: 14,
+                alignItems: 'center',
+              } : {
                 backgroundColor: ST_PAPER,
                 borderRadius: radius.xl,
                 borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
@@ -1000,21 +1160,27 @@ function RoutineManager({
                 shadowOpacity: 1, shadowRadius: 0, elevation: 8,
               }}
             >
-              <View style={{
-                width: 60, height: 60, borderRadius: radius.full,
-                backgroundColor: stickers.peachSoft,
-                borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
-                alignItems: 'center', justifyContent: 'center',
-                shadowColor: ST_INK,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 1, shadowRadius: 0, elevation: 4,
-              }}>
-                <Trash2 size={26} color={ST_RED} strokeWidth={2.2} />
-              </View>
-              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, textAlign: 'center' }}>
+              {diffuse ? (
+                <DiffuseBloomIcon color={dt.colors.error} size={60} intensity={0.5}>
+                  <Trash2 size={26} color={dt.colors.error} strokeWidth={1.8} />
+                </DiffuseBloomIcon>
+              ) : (
+                <View style={{
+                  width: 60, height: 60, borderRadius: radius.full,
+                  backgroundColor: stickers.peachSoft,
+                  borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
+                  alignItems: 'center', justifyContent: 'center',
+                  shadowColor: ST_INK,
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+                }}>
+                  <Trash2 size={26} color={ST_RED} strokeWidth={2.2} />
+                </View>
+              )}
+              <Text style={{ color: diffuse ? dt.colors.ink : (isDark ? colors.text : ST_INK), fontSize: 22, fontFamily: fDisplayBold, letterSpacing: -0.3, textAlign: 'center' }}>
                 {t('pregCal_delete_routine_title')}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center', lineHeight: 20 }}>
+              <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 14, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium, textAlign: 'center', lineHeight: 20 }}>
                 {t('pregCal_delete_routine_desc')}
               </Text>
 
@@ -1022,7 +1188,14 @@ function RoutineManager({
                 <Pressable
                   onPress={() => setConfirmDeleteId(null)}
                   disabled={deleting}
-                  style={({ pressed }) => ({
+                  style={({ pressed }) => diffuse ? ({
+                    flex: 1, height: 52,
+                    borderRadius: radius.full,
+                    backgroundColor: 'transparent',
+                    borderWidth: 1, borderColor: dt.colors.line2,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: deleting ? 0.5 : (pressed ? 0.6 : 1),
+                  }) : ({
                     flex: 1, height: 52,
                     borderRadius: radius.full,
                     backgroundColor: ST_CREAM,
@@ -1035,14 +1208,21 @@ function RoutineManager({
                     opacity: deleting ? 0.5 : 1,
                   })}
                 >
-                  <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                  <Text style={{ color: diffuse ? dt.colors.ink3 : ST_INK, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, fontSize: diffuse ? 12 : 14, letterSpacing: diffuse ? 1.4 : 0.6, textTransform: 'uppercase' }}>
                     {t('common_cancel')}
                   </Text>
                 </Pressable>
                 <Pressable
                   onPress={performDelete}
                   disabled={deleting}
-                  style={({ pressed }) => ({
+                  style={({ pressed }) => diffuse ? ({
+                    flex: 1, height: 52,
+                    borderRadius: radius.full,
+                    backgroundColor: 'transparent',
+                    borderWidth: 1, borderColor: dt.colors.error,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: deleting ? 0.6 : (pressed ? 0.6 : 1),
+                  }) : ({
                     flex: 1, height: 52,
                     borderRadius: radius.full,
                     backgroundColor: ST_RED,
@@ -1056,8 +1236,8 @@ function RoutineManager({
                   })}
                 >
                   {deleting
-                    ? <ActivityIndicator color="#FFF" size="small" />
-                    : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                    ? <ActivityIndicator color={diffuse ? dt.colors.error : '#FFF'} size="small" />
+                    : <Text style={{ color: diffuse ? dt.colors.error : '#FFF', fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, fontSize: diffuse ? 12 : 14, letterSpacing: diffuse ? 1.4 : 0.6, textTransform: 'uppercase' }}>
                         {t('common_delete')}
                       </Text>
                   }
@@ -1102,6 +1282,9 @@ function LogDetailPopup({
   onDeleted: () => void
 }) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const s = isDark ? stickersDark : stickersLight
@@ -1109,10 +1292,10 @@ function LogDetailPopup({
   const Icon = meta.icon
   const stickerCfg = DETAIL_STICKER[log.log_type] ?? { tintKey: 'yellowSoft' as const, label: meta.label }
   const stickerTint = s[stickerCfg.tintKey]
-  const ink = colors.text
-  const inkMuted = colors.textSecondary
-  const paper = colors.surface
-  const paperBorder = colors.borderStrong
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const inkMuted = diffuse ? dt.colors.ink3 : colors.textSecondary
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.borderStrong
 
   // Parse value + notes
   const rawValue = log.value ?? ''
@@ -1185,38 +1368,50 @@ function LogDetailPopup({
   return (
     <View style={styles.detailBody}>
       {/* Sticker header — matches add-log forms */}
-      <LogFormSticker type={log.log_type} label={stickerCfg.label} tint={stickerTint} />
+      {diffuse ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <DiffuseBloomIcon color={dAccent} size={44} intensity={0.5}>
+            {logSticker(log.log_type, 30, dt.isDark)}
+          </DiffuseBloomIcon>
+          <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: dt.colors.ink, flex: 1 }} numberOfLines={2}>
+            {stickerCfg.label}
+          </Text>
+        </View>
+      ) : (
+        <LogFormSticker type={log.log_type} label={stickerCfg.label} tint={stickerTint} />
+      )}
 
       {/* Big metric card on paper */}
-      <View style={[styles.detailMetricCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+      <View style={[styles.detailMetricCard, { backgroundColor: paper, borderColor: paperBorder, borderWidth: diffuse ? 1 : 1.5, overflow: 'hidden' }]}>
+        {diffuse ? <SoftBloom color={dAccent} cx="50%" cy="18%" opacity={dt.isDark ? 0.2 : 0.28} spread={0.5} /> : null}
         {log.log_type === 'mood' ? (
           <MoodFace size={64} variant={moodFaceVariant(rawValue.toLowerCase())} fill={moodFaceFill(rawValue.toLowerCase())} />
         ) : (
-          <Icon size={26} color={meta.color} strokeWidth={2} />
+          <Icon size={26} color={diffuse ? dt.colors.ink2 : meta.color} strokeWidth={diffuse ? 1.6 : 2} />
         )}
         {isText ? (
-          <Text style={[styles.detailMetricText, { color: ink }]}>{metric}</Text>
+          <Text style={[styles.detailMetricText, { color: ink, fontFamily: diffuse ? diffuseFont.display : undefined }]}>{metric}</Text>
         ) : (
-          <Text style={[styles.detailMetricBig, { color: meta.color }]}>
+          <Text style={[styles.detailMetricBig, { color: diffuse ? dt.colors.ink : meta.color, fontFamily: diffuse ? diffuseFont.display : undefined }]}>
             {metric}
-            {unit ? <Text style={[styles.detailMetricUnit, { color: meta.color }]}>{` ${unit}`}</Text> : null}
+            {unit ? <Text style={[styles.detailMetricUnit, { color: diffuse ? dt.colors.ink3 : meta.color, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{` ${unit}`}</Text> : null}
           </Text>
         )}
-        <Text style={[styles.detailMetricLabel, { color: inkMuted }]}>{sublabel}</Text>
+        <Text style={[styles.detailMetricLabel, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{sublabel}</Text>
       </View>
 
       {/* Date pill row — paper chip with timer */}
-      <View style={[styles.detailDateRow, { backgroundColor: stickerTint, borderColor: paperBorder }]}>
-        <Timer size={13} color={ink} strokeWidth={2} />
-        <Text style={[styles.detailDateText, { color: ink }]}>{t('pregCal_date_at_time', { date: dateLabel, time: formatTime(log.created_at) })}</Text>
+      <View style={[styles.detailDateRow, { backgroundColor: diffuse ? 'transparent' : stickerTint, borderColor: diffuse ? dt.colors.line2 : paperBorder, borderWidth: diffuse ? 1 : 1.5 }]}>
+        <Timer size={13} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={diffuse ? 1.7 : 2} />
+        <Text style={[styles.detailDateText, { color: diffuse ? dt.colors.ink3 : ink, fontFamily: diffuse ? diffuseFont.mono : undefined, letterSpacing: diffuse ? 0.6 : undefined, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 11 : 13 }]}>{t('pregCal_date_at_time', { date: dateLabel, time: formatTime(log.created_at) })}</Text>
       </View>
 
       {/* Meta pills */}
       {pills.length > 1 && (
         <View style={styles.detailPillsRow}>
           {pills.slice(1).map((p, i) => (
-            <View key={i} style={[styles.detailPill, { backgroundColor: paper, borderColor: paperBorder }]}>
-              <Text style={[styles.detailPillText, { color: ink }]}>{p.label}</Text>
+            <View key={i} style={[styles.detailPill, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.line2 : paperBorder, borderWidth: diffuse ? 1 : 1.5 }]}>
+              <Text style={[styles.detailPillText, { color: diffuse ? dt.colors.ink3 : ink, fontFamily: diffuse ? diffuseFont.mono : undefined, letterSpacing: diffuse ? 0.6 : undefined, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 10.5 : 12 }]}>{p.label}</Text>
             </View>
           ))}
         </View>
@@ -1224,36 +1419,55 @@ function LogDetailPopup({
 
       {/* Plain notes */}
       {plainNotes && (
-        <View style={[styles.detailNotesBox, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <Text style={[styles.detailNotesText, { color: ink }]}>{plainNotes}</Text>
+        <View style={[styles.detailNotesBox, { backgroundColor: diffuse ? dt.colors.surface : paper, borderColor: diffuse ? dt.colors.line : paperBorder, borderWidth: diffuse ? 1 : 1.5 }]}>
+          <Text style={[styles.detailNotesText, { color: ink, fontFamily: diffuse ? diffuseFont.body : undefined }]}>{plainNotes}</Text>
         </View>
       )}
 
       {/* Actions */}
-      <View style={styles.detailActions}>
-        <StickerButton
-          label="Edit"
-          color={brand.pregnancy}
-          colorDark={'#141313'}
-          icon={<Edit3 size={16} color="#fff" strokeWidth={2.2} />}
-          textColor="#fff"
-          height={56}
-          fontSize={15}
-          onPress={onEdit}
-          style={{ flex: 1 }}
-        />
-        <StickerButton
-          label="Delete"
-          color={isDark ? brand.error + '33' : '#FCE3DD'}
-          colorDark={brand.error}
-          icon={<Trash2 size={16} color={brand.error} strokeWidth={2.2} />}
-          textColor={brand.error}
-          height={56}
-          fontSize={15}
-          onPress={handleDelete}
-          style={{ flex: 1 }}
-        />
-      </View>
+      {diffuse ? (
+        <View style={styles.detailActions}>
+          <Pressable
+            onPress={onEdit}
+            style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 999, borderWidth: 1, borderColor: dt.colors.hairline, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pressed ? 0.6 : 1 })}
+          >
+            <Edit3 size={16} color={dt.colors.ink} strokeWidth={1.8} />
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink }}>{t('common_edit')}</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleDelete}
+            style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pressed ? 0.6 : 1 })}
+          >
+            <Trash2 size={16} color={dt.colors.error} strokeWidth={1.8} />
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.error }}>{t('common_delete')}</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={styles.detailActions}>
+          <StickerButton
+            label="Edit"
+            color={brand.pregnancy}
+            colorDark={'#141313'}
+            icon={<Edit3 size={16} color="#fff" strokeWidth={2.2} />}
+            textColor="#fff"
+            height={56}
+            fontSize={15}
+            onPress={onEdit}
+            style={{ flex: 1 }}
+          />
+          <StickerButton
+            label="Delete"
+            color={isDark ? brand.error + '33' : '#FCE3DD'}
+            colorDark={brand.error}
+            icon={<Trash2 size={16} color={brand.error} strokeWidth={2.2} />}
+            textColor={brand.error}
+            height={56}
+            fontSize={15}
+            onPress={handleDelete}
+            style={{ flex: 1 }}
+          />
+        </View>
+      )}
 
       <PaperAlert
         visible={confirmingDelete}
@@ -1524,6 +1738,9 @@ function DayDetailPanel({
 
 export function PregnancyCalendar() {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -1792,10 +2009,10 @@ export function PregnancyCalendar() {
     const out: Record<string, string[]> = {}
     for (const [date, logs] of Object.entries(calLogs)) {
       const types = [...new Set(logs.map((l) => l.log_type))].slice(0, 3)
-      out[date] = types.map((t) => dotColor(t))
+      out[date] = types.map((tp) => (diffuse ? dAccent : dotColor(tp)))
     }
     return out
-  }, [calLogs])
+  }, [calLogs, diffuse, dAccent])
 
   // ── Cards mode ────────────────────────────────────────────────────────────
 
@@ -1883,18 +2100,48 @@ export function PregnancyCalendar() {
     return (
       <>
         <View style={styles.timelineHeader}>
-          <Display size={22} color={colors.text}>{dayLabel}</Display>
-          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{summary}</Body>
+          {diffuse ? (
+            <>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.3, color: dt.colors.ink }}>{dayLabel}</Text>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 4 }}>{summary}</Text>
+            </>
+          ) : (
+            <>
+              <Display size={22} color={colors.text}>{dayLabel}</Display>
+              <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{summary}</Body>
+            </>
+          )}
         </View>
 
         {rows.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Body size={14} color={colors.textSecondary} align="center">
-              {t('pregCal_nothing_planned')}
-            </Body>
-            <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
-              {t('pregCal_tap_to_add')}
-            </Body>
+          diffuse ? (
+            <DiffuseEmptyState
+              title={t('pregCal_nothing_planned')}
+              message={t('pregCal_tap_to_add')}
+            />
+          ) : (
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Body size={14} color={colors.textSecondary} align="center">
+                {t('pregCal_nothing_planned')}
+              </Body>
+              <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
+                {t('pregCal_tap_to_add')}
+              </Body>
+            </View>
+          )
+        ) : diffuse ? (
+          <View>
+            {rows.map((r, idx) => (
+              <DiffuseListRow
+                key={r.key}
+                icon={r.icon}
+                title={r.title}
+                sub={[r.time !== '—' ? r.time : null, r.subtitle].filter(Boolean).join(' · ') || undefined}
+                onPress={r.onPress}
+                showArrow
+                last={idx === rows.length - 1}
+              />
+            ))}
           </View>
         ) : (
           <View style={{ gap: 10 }}>
@@ -1937,12 +2184,12 @@ export function PregnancyCalendar() {
   // ── Render: Appointments View (sticker S-curve + cards) ────────────────
 
   function renderAppointmentsView() {
-    const ST_INK = '#141313'
-    const ST_PAPER = colors.surface
-    const ST_CREAM = colors.surfaceRaised
-    const ST_LAVENDER = getModeColor('preg', isDark)
-    const ST_GREEN = isDark ? '#9DD68A' : '#86C46F'
-    const ST_CORAL = isDark ? '#F2A088' : '#E58968'
+    const ST_INK = diffuse ? dt.colors.ink : '#141313'
+    const ST_PAPER = diffuse ? dt.colors.surface : colors.surface
+    const ST_CREAM = diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised
+    const ST_LAVENDER = diffuse ? dAccent : getModeColor('preg', isDark)
+    const ST_GREEN = diffuse ? dt.colors.success : (isDark ? '#9DD68A' : '#86C46F')
+    const ST_CORAL = diffuse ? dAccent : (isDark ? '#F2A088' : '#E58968')
 
     // ─── S-curve appointment path ────────────────────────────────────────
     // Wide canvas so each milestone gets breathing room; the parent
@@ -1995,7 +2242,13 @@ export function PregnancyCalendar() {
       <View style={{ gap: 14 }}>
         {/* ─── S-curve sticker card ────────────────────────────────────── */}
         <View
-          style={{
+          style={diffuse ? {
+            backgroundColor: dt.colors.surface,
+            borderRadius: diffuseRadius.lg,
+            borderWidth: 1, borderColor: dt.colors.line,
+            padding: 18,
+            overflow: 'hidden',
+          } : {
             backgroundColor: ST_PAPER,
             borderRadius: 24,
             borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
@@ -2006,23 +2259,35 @@ export function PregnancyCalendar() {
             shadowRadius: 0, elevation: 3,
           }}
         >
+          {diffuse ? <SoftBloom color={dAccent} cx="88%" cy="10%" opacity={dt.isDark ? 0.22 : 0.3} spread={0.5} /> : null}
           {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.4 }}>
+              <Text style={diffuse
+                ? { color: dt.colors.ink, fontSize: 24, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+                : { color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.4 }}>
                 {t('pregCal_pregnancy_path')}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
+              <Text style={diffuse
+                ? { color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 4 }
+                : { color: colors.textMuted, fontSize: 11, fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
                 {t('pregCal_milestones_40w', { count: STANDARD_APPOINTMENTS.length })}
               </Text>
             </View>
-            <View style={{
+            <View style={diffuse ? {
+              backgroundColor: 'transparent',
+              borderWidth: 1, borderColor: dt.colors.line2,
+              borderRadius: 999,
+              paddingHorizontal: 10, paddingVertical: 5,
+            } : {
               backgroundColor: ST_CREAM,
               borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
               borderRadius: 999,
               paddingHorizontal: 10, paddingVertical: 5,
             }}>
-              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>
+              <Text style={diffuse
+                ? { color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' }
+                : { color: isDark ? colors.text : ST_INK, fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>
                 {t('pregCal_trimester', { n: trimester })}
               </Text>
             </View>
@@ -2043,7 +2308,7 @@ export function PregnancyCalendar() {
                 <SvgPath
                   d={fullPath}
                   fill="none"
-                  stroke={isDark ? colors.border : '#D9CFB6'}
+                  stroke={diffuse ? dt.colors.line2 : (isDark ? colors.border : '#D9CFB6')}
                   strokeWidth={3}
                   strokeLinecap="round"
                 />
@@ -2059,7 +2324,7 @@ export function PregnancyCalendar() {
                 )}
                 {/* Beads */}
                 {curveBeads.map((b) => {
-                  const fill = b.status === 'done' ? ST_GREEN : b.status === 'next' ? ST_CORAL : (colors.surface)
+                  const fill = b.status === 'done' ? ST_GREEN : b.status === 'next' ? ST_CORAL : (diffuse ? dt.colors.surface : colors.surface)
                   const r = b.status === 'next' ? 9 : 7
                   return (
                     <SvgG key={b.appt.id}>
@@ -2070,8 +2335,8 @@ export function PregnancyCalendar() {
                       <SvgCircle
                         cx={b.x} cy={b.y} r={r}
                         fill={fill}
-                        stroke={isDark ? colors.text : ST_INK}
-                        strokeWidth={1.8}
+                        stroke={diffuse ? (b.status === 'future' ? dt.colors.line2 : dt.colors.ink) : (isDark ? colors.text : ST_INK)}
+                        strokeWidth={diffuse ? 1.4 : 1.8}
                       />
                     </SvgG>
                   )
@@ -2084,7 +2349,7 @@ export function PregnancyCalendar() {
                   const labelColor =
                     b.status === 'done' ? ST_GREEN
                     : b.status === 'next' ? ST_CORAL
-                    : (colors.textMuted)
+                    : (diffuse ? dt.colors.ink3 : colors.textMuted)
                   return (
                     <Pressable
                       key={b.appt.id}
@@ -2100,9 +2365,10 @@ export function PregnancyCalendar() {
                     >
                       <Text style={{
                         color: labelColor,
-                        fontSize: 11,
-                        fontFamily: b.status === 'next' ? font.bodyBold : font.bodySemiBold,
-                        letterSpacing: 0.4,
+                        fontSize: diffuse ? 10 : 11,
+                        fontFamily: diffuse ? (b.status === 'next' ? diffuseFont.monoBold : diffuseFont.mono) : (b.status === 'next' ? font.bodyBold : font.bodySemiBold),
+                        letterSpacing: diffuse ? 0.8 : 0.4,
+                        textTransform: diffuse ? 'uppercase' : 'none',
                       }}>
                         {t('pregCal_week_label', { week: b.appt.week })}
                       </Text>
@@ -2114,24 +2380,65 @@ export function PregnancyCalendar() {
           </ScrollView>
 
           {/* Legend */}
-          <View style={{ flexDirection: 'row', gap: 14, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: isDark ? colors.border : '#E8DEC6' }}>
+          <View style={{ flexDirection: 'row', gap: 14, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: diffuse ? dt.colors.line : (isDark ? colors.border : '#E8DEC6') }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_GREEN, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('common_done')}</Text>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_GREEN, borderWidth: 1, borderColor: diffuse ? dt.colors.line2 : (isDark ? colors.text : ST_INK) }} />
+              <Text style={diffuse ? { color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase' } : { color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('common_done')}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_CORAL, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('pregCal_status_soon')}</Text>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ST_CORAL, borderWidth: 1, borderColor: diffuse ? dt.colors.line2 : (isDark ? colors.text : ST_INK) }} />
+              <Text style={diffuse ? { color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase' } : { color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('pregCal_status_soon')}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.surface, borderWidth: 1, borderColor: isDark ? colors.text : ST_INK }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('pregCal_status_upcoming')}</Text>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: diffuse ? dt.colors.surface : colors.surface, borderWidth: 1, borderColor: diffuse ? dt.colors.line2 : (isDark ? colors.text : ST_INK) }} />
+              <Text style={diffuse ? { color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase' } : { color: colors.textMuted, fontSize: 11, fontFamily: font.bodySemiBold }}>{t('pregCal_status_upcoming')}</Text>
             </View>
           </View>
         </View>
 
         {/* ─── Appointment cards (tap to open detail) ─────────────────── */}
-        {STANDARD_APPOINTMENTS.map((appt) => {
+        {diffuse ? (
+          <View style={{ backgroundColor: dt.colors.surface, borderRadius: diffuseRadius.lg, borderWidth: 1, borderColor: dt.colors.line, paddingHorizontal: 16 }}>
+            {STANDARD_APPOINTMENTS.map((appt, idx) => {
+              const isDone = weekNumber > appt.week
+              const isNext = !isDone && weekNumber >= appt.week - 2
+              const beadColor = isDone ? ST_GREEN : isNext ? ST_CORAL : dt.colors.surface
+              const wrappedIcon = (
+                <View
+                  style={{
+                    width: 32, height: 32, borderRadius: 16,
+                    alignItems: 'center', justifyContent: 'center',
+                    backgroundColor: beadColor,
+                    borderWidth: 1,
+                    borderColor: isDone || isNext ? dt.colors.ink : dt.colors.line2,
+                  }}
+                >
+                  {isDone ? (
+                    <Check size={15} color={dt.colors.bg} strokeWidth={2.6} />
+                  ) : (
+                    <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 9.5, letterSpacing: 0.3, color: dt.colors.ink }}>
+                      {String(appt.week)}
+                    </Text>
+                  )}
+                </View>
+              )
+              const sub = isDone
+                ? `${t('common_done')} · ${t('pregCal_week_label', { week: appt.week })}`
+                : `${t('pregCal_week_label', { week: appt.week })} · ${appt.prepNote.length > 48 ? appt.prepNote.slice(0, 45) + '…' : appt.prepNote}`
+              return (
+                <DiffuseListRow
+                  key={appt.id}
+                  icon={wrappedIcon}
+                  title={appt.name}
+                  sub={sub}
+                  onPress={() => setSelectedAppt(appt)}
+                  showArrow
+                  last={idx === STANDARD_APPOINTMENTS.length - 1}
+                />
+              )
+            })}
+          </View>
+        ) : STANDARD_APPOINTMENTS.map((appt) => {
           const isDone = weekNumber > appt.week
           const isNext = !isDone && weekNumber >= appt.week - 2
           const status: 'done' | 'next' | 'future' = isDone ? 'done' : isNext ? 'next' : 'future'
@@ -2182,7 +2489,16 @@ export function PregnancyCalendar() {
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
           <Pressable
             onPress={() => setLogForm({ type: 'appointment', date: todayStr })}
-            style={({ pressed }) => ({
+            style={({ pressed }) => diffuse ? ({
+              flex: 1,
+              height: 52,
+              borderRadius: 999,
+              backgroundColor: 'transparent',
+              borderWidth: 1, borderColor: dt.colors.hairline,
+              alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'row', gap: 8,
+              opacity: pressed ? 0.6 : 1,
+            }) : ({
               flex: 1,
               height: 56,
               borderRadius: 999,
@@ -2197,14 +2513,25 @@ export function PregnancyCalendar() {
               transform: [{ translateY: pressed ? 2 : 0 }],
             })}
           >
-            <Plus size={16} color="#FFF" strokeWidth={3} />
-            <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+            <Plus size={16} color={diffuse ? dt.colors.ink : '#FFF'} strokeWidth={diffuse ? 1.8 : 3} />
+            <Text style={diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' }
+              : { color: '#FFF', fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
               {t('pregCal_appointment_btn')}
             </Text>
           </Pressable>
           <Pressable
             onPress={() => setLogForm({ type: 'exam_result', date: todayStr })}
-            style={({ pressed }) => ({
+            style={({ pressed }) => diffuse ? ({
+              flex: 1,
+              height: 52,
+              borderRadius: 999,
+              backgroundColor: 'transparent',
+              borderWidth: 1, borderColor: dt.colors.line2,
+              alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'row', gap: 8,
+              opacity: pressed ? 0.6 : 1,
+            }) : ({
               flex: 1,
               height: 56,
               borderRadius: 999,
@@ -2219,8 +2546,10 @@ export function PregnancyCalendar() {
               transform: [{ translateY: pressed ? 2 : 0 }],
             })}
           >
-            <Camera size={16} color={ST_INK} strokeWidth={2.5} />
-            <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+            <Camera size={16} color={diffuse ? dt.colors.ink3 : ST_INK} strokeWidth={diffuse ? 1.8 : 2.5} />
+            <Text style={diffuse
+              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' }
+              : { color: ST_INK, fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
               {t('pregCal_upload_exam_btn')}
             </Text>
           </Pressable>
@@ -2232,14 +2561,14 @@ export function PregnancyCalendar() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header — "Agenda." title + "+" action */}
       <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 16 }}>
         <AgendaHeader onAdd={() => setShowQuickLog(true)} />
       </View>
 
       {/* Segmented tabs — 3 tabs */}
-      <View style={[styles.segRow, { backgroundColor: colors.bg }]}>
+      <View style={[styles.segRow, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
         <SegmentedTabs
           options={[
             { key: 'timeline', label: 'Timeline' },
@@ -2265,7 +2594,7 @@ export function PregnancyCalendar() {
                 onSelectDate={setSelectedDate}
                 dotsByDate={dotsByDate}
                 weekLabel={`Week ${weekNumber}`}
-                modeColor={brand.pregnancy}
+                modeColor={diffuse ? dAccent : brand.pregnancy}
               />
               <View style={{ height: 12 }} />
               {renderTimelineCards()}

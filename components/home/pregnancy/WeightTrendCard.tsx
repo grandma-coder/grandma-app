@@ -13,7 +13,9 @@ import { ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react-nati
 import Svg, {
   Circle, Line, Path, Rect, Text as SvgText, Defs, LinearGradient, Stop,
 } from 'react-native-svg'
-import { useTheme, font } from '../../../constants/theme'
+import { useTheme, font, radius as themeRadius, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
+import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseSheet, DiffuseMetricTile } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import { StickerButton } from '../../ui/StickerButton'
@@ -120,11 +122,27 @@ interface MiniChartProps {
   mutedColor: string
   width: number
   height: number
+  /** Diffuse overrides — hairline axes / mono labels / paper-token dot strokes. */
+  axisColor?: string
+  labelColor?: string
+  dotStroke?: string
+  bubbleTextColor?: string
+  mono?: boolean
 }
 
-function WeightChart({ points, lowBand, highBand, color, mutedColor, width, height }: MiniChartProps) {
+function WeightChart({
+  points, lowBand, highBand, color, mutedColor, width, height,
+  axisColor, labelColor, dotStroke, bubbleTextColor, mono,
+}: MiniChartProps) {
   const { t } = useTranslation()
   if (points.length < 2) return null
+
+  // Axis lines/gridlines, axis-label ink, dot-ring stroke, in-chart numeric font.
+  const axisCol = axisColor ?? mutedColor
+  const labelCol = labelColor ?? mutedColor
+  const dotStrokeCol = dotStroke ?? '#FFFEF8'
+  const bubbleTextCol = bubbleTextColor ?? '#FFFEF8'
+  const numFont = mono ? diffuseFont.mono : undefined
 
   const leftPad = 36
   const rightPad = 12
@@ -200,14 +218,14 @@ function WeightChart({ points, lowBand, highBand, color, mutedColor, width, heig
         <Line
           x1={leftPad} x2={leftPad + chartW}
           y1={toY(lowBand)} y2={toY(lowBand)}
-          stroke={mutedColor} strokeWidth={1} strokeDasharray="3,4" opacity={0.55}
+          stroke={axisCol} strokeWidth={1} strokeDasharray="3,4" opacity={0.55}
         />
       )}
       {highBand !== undefined && (
         <Line
           x1={leftPad} x2={leftPad + chartW}
           y1={toY(highBand)} y2={toY(highBand)}
-          stroke={mutedColor} strokeWidth={1} strokeDasharray="3,4" opacity={0.55}
+          stroke={axisCol} strokeWidth={1} strokeDasharray="3,4" opacity={0.55}
         />
       )}
 
@@ -217,8 +235,9 @@ function WeightChart({ points, lowBand, highBand, color, mutedColor, width, heig
           key={i}
           x={leftPad - 8}
           y={toY(t.v) + 3}
-          fill={t.emphasize ? mutedColor : mutedColor}
+          fill={labelCol}
           fontSize={9}
+          fontFamily={numFont}
           fontWeight={t.emphasize ? '700' : '500'}
           textAnchor="end"
           opacity={t.emphasize ? 0.9 : 0.5}
@@ -241,12 +260,12 @@ function WeightChart({ points, lowBand, highBand, color, mutedColor, width, heig
       />
 
       {/* Start + current dots */}
-      <Circle cx={firstPoint.x} cy={firstPoint.y} r={4} fill={mutedColor} stroke="#FFFEF8" strokeWidth={2} opacity={0.7} />
-      <Circle cx={lastPoint.x} cy={lastPoint.y} r={5.5} fill={color} stroke="#FFFEF8" strokeWidth={2.5} />
+      <Circle cx={firstPoint.x} cy={firstPoint.y} r={4} fill={mutedColor} stroke={dotStrokeCol} strokeWidth={2} opacity={0.7} />
+      <Circle cx={lastPoint.x} cy={lastPoint.y} r={5.5} fill={color} stroke={dotStrokeCol} strokeWidth={2.5} />
 
       {/* Current value bubble */}
       <Rect x={lastPoint.x - 22} y={lastPoint.y - 22} width={44} height={16} rx={4} fill={color} opacity={0.95} />
-      <SvgText x={lastPoint.x} y={lastPoint.y - 10} fill="#FFFEF8" fontSize={10} fontWeight="800" textAnchor="middle">
+      <SvgText x={lastPoint.x} y={lastPoint.y - 10} fill={bubbleTextCol} fontSize={10} fontFamily={numFont} fontWeight="800" textAnchor="middle">
         {`${lastPoint.v.toFixed(1)}${t('preg_form_weight_kgLabel')}`}
       </SvgText>
 
@@ -259,8 +278,9 @@ function WeightChart({ points, lowBand, highBand, color, mutedColor, width, heig
             key={i}
             x={p.x}
             y={height - 6}
-            fill={mutedColor}
+            fill={labelCol}
             fontSize={9}
+            fontFamily={numFont}
             fontWeight="500"
             textAnchor={i === 0 ? 'start' : i === labelIndices.length - 1 ? 'end' : 'middle'}
             opacity={0.7}
@@ -302,12 +322,150 @@ function WeightDetailModal(props: DetailProps) {
     entries, weekNumber, bandLow, bandHigh, chartWidth,
   } = props
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const ink = colors.text
   const paperBorderStrong = isDark ? colors.border : 'rgba(20,19,19,0.18)'
 
   const recent = [...entries].reverse().slice(0, 8)
   const chartPoints = entries.slice(-12).map((e, i) => ({ x: i, y: e.weight, date: e.date }))
+
+  // ── Diffuse render path ──
+  if (diffuse) {
+    const dAccent = getDiffuseAccent('preg', dt.isDark)
+    const dStatusColor =
+      props.status === 'above' ? dt.colors.warning
+      : props.status === 'below' ? dt.colors.warning
+      : props.status === 'on_track' ? dt.colors.success
+      : dt.colors.ink3
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={t('preg_weight_sheetTitle')}
+        onClose={onClose}
+        chip={`WEEK ${weekNumber}`}
+      >
+        <View style={{ gap: 14 }}>
+          {/* Hero */}
+          <View>
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 44, letterSpacing: -0.5, color: dt.colors.ink }}>
+              {current !== null ? `${current.toFixed(1)} kg` : '—'}
+            </Text>
+            <Text style={{ marginTop: 2, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: dStatusColor }}>
+              {statusText}
+            </Text>
+          </View>
+
+          {/* Stat grid — hairline metric tiles */}
+          <View style={styles.statGrid}>
+            <DiffuseMetricTile
+              value={start !== null ? `${start.toFixed(1)}` : '—'}
+              label={t('preg_weight_labelStarting')}
+            />
+            <DiffuseMetricTile
+              value={gained !== null ? `${gained >= 0 ? '+' : ''}${gained.toFixed(1)}` : '—'}
+              label={t('preg_weight_labelGained')}
+            />
+            <DiffuseMetricTile
+              value={pace !== null ? `${pace >= 0 ? '+' : ''}${pace.toFixed(1)}` : '—'}
+              label={t('preg_weight_labelPace')}
+            />
+          </View>
+
+          {/* Trend chart — accent series, hairline axes, mono labels */}
+          <View style={[styles.chartCardDiffuse, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+                {t('preg_weight_trendHeader', { count: chartPoints.length })}
+              </Text>
+              <View style={[styles.legendDot, { backgroundColor: dAccent, borderColor: dt.colors.line2, borderWidth: 1 }]} />
+            </View>
+            {chartPoints.length >= 2 ? (
+              <View style={{ marginTop: 12, alignItems: 'center' }}>
+                <WeightChart
+                  points={chartPoints}
+                  lowBand={bandLow}
+                  highBand={bandHigh}
+                  color={dAccent}
+                  mutedColor={dt.colors.ink3}
+                  axisColor={dt.colors.line}
+                  labelColor={dt.colors.ink3}
+                  dotStroke={dt.colors.surface}
+                  bubbleTextColor={dt.colors.bg}
+                  mono
+                  width={chartWidth}
+                  height={180}
+                />
+              </View>
+            ) : (
+              <Text style={{ marginTop: 12, fontFamily: diffuseFont.italic, fontSize: 13, color: dt.colors.ink3 }}>
+                {t('preg_weight_emptyHelp')}
+              </Text>
+            )}
+          </View>
+
+          {/* IOM target band */}
+          <View style={[styles.stickerBlockDiffuse, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+              {t('preg_weight_iomTargetFull', { label: band.label.toUpperCase() })}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 26, letterSpacing: -0.5, color: dt.colors.ink }}>{`${band.low}–${band.high}`}</Text>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('preg_weight_iomBandLabel')}</Text>
+            </View>
+            {expectedLow !== null && expectedHigh !== null && (
+              <Text style={{ marginTop: 10, lineHeight: 20, fontFamily: diffuseFont.body, fontSize: 13, color: dt.colors.ink2 }}>
+                {t('preg_weight_byWeekExpect', { week: weekNumber })}{' '}
+                <Text style={{ color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold }}>
+                  {`${expectedLow.toFixed(1)}–${expectedHigh.toFixed(1)} ${t('preg_form_weight_kgLabel')}`}
+                </Text>
+                {t('preg_weight_hitARange')}
+              </Text>
+            )}
+          </View>
+
+          {/* Recent entries */}
+          {recent.length > 0 && (
+            <View style={[styles.stickerBlockDiffuse, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
+              <Text style={{ marginBottom: 6, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('preg_weight_recentEntries')}</Text>
+              {recent.map((e, i) => {
+                const prev = i < recent.length - 1 ? recent[i + 1] : null
+                const delta = prev ? e.weight - prev.weight : 0
+                return (
+                  <View key={i} style={[styles.recentRow, { borderBottomColor: dt.colors.line }]}>
+                    <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+                      {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dt.colors.ink }}>
+                        {`${e.weight.toFixed(1)} ${t('preg_form_weight_kgLabel')}`}
+                      </Text>
+                      {prev && (
+                        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: delta > 0 ? dt.colors.success : delta < 0 ? dt.colors.warning : dt.colors.ink3 }}>
+                          {delta > 0 ? '+' : ''}{delta.toFixed(1)}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                )
+              })}
+            </View>
+          )}
+
+          {/* CTA — containerless hairline action */}
+          <Pressable
+            onPress={() => { onClose(); router.push('/insights') }}
+            style={({ pressed }) => [styles.diffuseCta, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
+            accessibilityRole="button"
+          >
+            <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: dt.colors.ink }}>{t('preg_weight_openInsights')}</Text>
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 16, color: dt.colors.ink3 }}>→</Text>
+          </Pressable>
+        </View>
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <LogSheet
@@ -451,6 +609,9 @@ interface Props {
 
 export function WeightTrendCard({ userId, weekNumber }: Props) {
   const { colors, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const [detailVisible, setDetailVisible] = useState(false)
   const { entries, profile, loading } = useWeightCardData(userId)
@@ -533,53 +694,72 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
 
   const empty = derived.current === null
 
-  return (
+  // ── Variant-resolved tokens for the main card ──
+  const cardInk = diffuse ? dt.colors.ink : colors.text
+  const cardMuted = diffuse ? dt.colors.ink3 : colors.textMuted
+  const monoFont = diffuse ? diffuseFont.mono : font.bodySemiBold
+  const seriesColor = diffuse ? dAccent : stickers.lilac
+  const dispStatusColor = diffuse
+    ? (status === 'on_track' ? dt.colors.success : status === 'no_data' ? dt.colors.ink3 : dt.colors.warning)
+    : statusColor
+  const gainedColor = derived.gained === null
+    ? cardInk
+    : diffuse
+      ? (derived.gained >= 0 ? dt.colors.success : dt.colors.warning)
+      : (derived.gained >= 0 ? stickers.green : stickers.coral)
+
+  const cardInner = (
     <>
-      <Pressable onPress={() => setDetailVisible(true)}>
-        <PaperCard radius={24} padding={18} style={styles.card}>
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
-              <MonoCaps size={10} color={colors.textMuted}>{t('preg_weight_trendWeekLabel', { week: weekNumber })}</MonoCaps>
+              {diffuse
+                ? <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: cardMuted }}>{t('preg_weight_trendWeekLabel', { week: weekNumber })}</Text>
+                : <MonoCaps size={10} color={colors.textMuted}>{t('preg_weight_trendWeekLabel', { week: weekNumber })}</MonoCaps>}
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-                <Display size={28} color={colors.text}>
-                  {empty ? '—' : derived.current!.toFixed(1)}
-                </Display>
-                <Body size={13} color={colors.textMuted} style={{ fontFamily: font.bodyMedium }}>{t('preg_form_weight_kgLabel')}</Body>
+                {diffuse
+                  ? <Text style={{ fontFamily: diffuseFont.display, fontSize: 28, letterSpacing: -0.5, color: cardInk }}>{empty ? '—' : derived.current!.toFixed(1)}</Text>
+                  : <Display size={28} color={colors.text}>{empty ? '—' : derived.current!.toFixed(1)}</Display>}
+                <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: diffuse ? 11 : 13, letterSpacing: diffuse ? 0.6 : 0, textTransform: diffuse ? 'uppercase' : 'none', color: cardMuted }}>{t('preg_form_weight_kgLabel')}</Text>
               </View>
             </View>
-            <View style={[styles.statusPill, { backgroundColor: statusColor + '1A', borderColor: statusColor + '55' }]}>
-              {status === 'on_track' && <TrendingUp size={12} color={statusColor} strokeWidth={2.5} />}
-              {status === 'above' && <TrendingUp size={12} color={statusColor} strokeWidth={2.5} />}
-              {status === 'below' && <TrendingDown size={12} color={statusColor} strokeWidth={2.5} />}
-              {status === 'no_data' && <Minus size={12} color={statusColor} strokeWidth={2.5} />}
-              <Text style={[styles.statusText, { color: statusColor }]} numberOfLines={1}>
+            <View style={[styles.statusPill, diffuse
+              ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+              : { backgroundColor: statusColor + '1A', borderColor: statusColor + '55' }]}>
+              {status === 'on_track' && <TrendingUp size={12} color={dispStatusColor} strokeWidth={2.5} />}
+              {status === 'above' && <TrendingUp size={12} color={dispStatusColor} strokeWidth={2.5} />}
+              {status === 'below' && <TrendingDown size={12} color={dispStatusColor} strokeWidth={2.5} />}
+              {status === 'no_data' && <Minus size={12} color={dispStatusColor} strokeWidth={2.5} />}
+              <Text style={[styles.statusText, diffuse ? { color: dispStatusColor, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase', fontSize: 10 } : { color: statusColor }]} numberOfLines={1}>
                 {status === 'on_track' ? 'On track' : status === 'above' ? 'Above' : status === 'below' ? 'Below' : 'No data'}
               </Text>
             </View>
           </View>
 
           {/* Stat strip */}
-          <View style={styles.statStrip}>
+          <View style={[styles.statStrip, diffuse ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line } : null]}>
             <View style={styles.statCellInline}>
-              <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelStart')}</MonoCaps>
-              <Text style={[styles.statValue, { color: colors.text }]}>
+              {diffuse
+                ? <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: cardMuted }}>{t('preg_weight_labelStart')}</Text>
+                : <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelStart')}</MonoCaps>}
+              <Text style={[styles.statValue, { color: cardInk, fontFamily: monoFont }]}>
                 {derived.start !== null ? `${derived.start.toFixed(1)} kg` : '—'}
               </Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={[styles.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.border }]} />
             <View style={styles.statCellInline}>
-              <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelGained')}</MonoCaps>
-              <Text style={[
-                styles.statValue,
-                { color: derived.gained === null ? colors.text : derived.gained >= 0 ? stickers.green : stickers.coral },
-              ]}>
+              {diffuse
+                ? <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: cardMuted }}>{t('preg_weight_labelGained')}</Text>
+                : <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelGained')}</MonoCaps>}
+              <Text style={[styles.statValue, { color: gainedColor, fontFamily: monoFont }]}>
                 {derived.gained !== null ? `${derived.gained >= 0 ? '+' : ''}${derived.gained.toFixed(1)} kg` : '—'}
               </Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={[styles.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.border }]} />
             <View style={styles.statCellInline}>
-              <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelPace')}</MonoCaps>
-              <Text style={[styles.statValue, { color: colors.text }]}>
+              {diffuse
+                ? <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: cardMuted }}>{t('preg_weight_labelPace')}</Text>
+                : <MonoCaps size={9} color={colors.textMuted}>{t('preg_weight_labelPace')}</MonoCaps>}
+              <Text style={[styles.statValue, { color: cardInk, fontFamily: monoFont }]}>
                 {derived.pace !== null ? `${derived.pace >= 0 ? '+' : ''}${derived.pace.toFixed(1)}/wk` : '—'}
               </Text>
             </View>
@@ -592,31 +772,58 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
                 points={derived.chartPoints}
                 lowBand={bandLow}
                 highBand={bandHigh}
-                color={stickers.lilac}
-                mutedColor={colors.textMuted}
+                color={seriesColor}
+                mutedColor={cardMuted}
+                axisColor={diffuse ? dt.colors.line : undefined}
+                labelColor={diffuse ? dt.colors.ink3 : undefined}
+                dotStroke={diffuse ? dt.colors.surface : undefined}
+                bubbleTextColor={diffuse ? dt.colors.bg : undefined}
+                mono={diffuse}
                 width={SCREEN_W - 76}
                 height={120}
               />
             </View>
           ) : (
-            <View style={styles.emptyChart}>
-              <Body size={12} color={colors.textMuted} align="center">
-                {t('preg_weight_chartEmpty')}
-              </Body>
+            <View style={[styles.emptyChart, diffuse ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line } : null]}>
+              {diffuse
+                ? <Text style={{ textAlign: 'center', fontFamily: diffuseFont.italic, fontSize: 13, color: cardMuted }}>{t('preg_weight_chartEmpty')}</Text>
+                : <Body size={12} color={colors.textMuted} align="center">{t('preg_weight_chartEmpty')}</Body>}
             </View>
           )}
 
           {/* Footer CTA */}
           <View style={styles.footerRow}>
-            <Body size={12} color={colors.textMuted}>
-              {t('preg_weight_targetFooter', { low: band.low, high: band.high, label: band.label })}
-            </Body>
+            {diffuse
+              ? <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: cardMuted }}>{t('preg_weight_targetFooter', { low: band.low, high: band.high, label: band.label })}</Text>
+              : <Body size={12} color={colors.textMuted}>{t('preg_weight_targetFooter', { low: band.low, high: band.high, label: band.label })}</Body>}
             <View style={styles.detailsLink}>
-              <Body size={13} color={stickers.lilac} style={{ fontFamily: font.bodySemiBold }}>{t('preg_weight_details')}</Body>
-              <ChevronRight size={14} color={stickers.lilac} strokeWidth={2.5} />
+              {diffuse
+                ? <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: dAccent }}>{t('preg_weight_details')}</Text>
+                : <Body size={13} color={stickers.lilac} style={{ fontFamily: font.bodySemiBold }}>{t('preg_weight_details')}</Body>}
+              <ChevronRight size={14} color={diffuse ? dAccent : stickers.lilac} strokeWidth={2.5} />
             </View>
           </View>
-        </PaperCard>
+    </>
+  )
+
+  return (
+    <>
+      <Pressable onPress={() => setDetailVisible(true)}>
+        {diffuse ? (
+          <DiffuseFieldSurface
+            mode="preg"
+            isDark={dt.isDark}
+            intensity={0.45}
+            radius={themeRadius.lg}
+            style={{ padding: 18, borderWidth: 1, borderColor: dt.colors.line, overflow: 'hidden' }}
+          >
+            {cardInner}
+          </DiffuseFieldSurface>
+        ) : (
+          <PaperCard radius={24} padding={18} style={styles.card}>
+            {cardInner}
+          </PaperCard>
+        )}
       </Pressable>
 
       <WeightDetailModal
@@ -710,6 +917,11 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 3,
   },
+  chartCardDiffuse: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 18,
+  },
   stickerBlock: {
     borderRadius: 22,
     borderWidth: 1.5,
@@ -719,6 +931,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 3,
+  },
+  stickerBlockDiffuse: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 18,
+  },
+  diffuseCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderTopWidth: 1,
+    paddingTop: 16,
+    marginTop: 4,
   },
   legendDot: {
     width: 14,

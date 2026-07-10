@@ -12,7 +12,8 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import {
   Plus, Bell, Clock, X, Check, Pencil, Flag, Trash2,
 } from 'lucide-react-native'
-import { useTheme, getModeColor, brand, font } from '../../../constants/theme'
+import { useTheme, getModeColor, brand, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 import { Star as StarSticker } from '../../ui/Stickers'
 import { supabase } from '../../../lib/supabase'
@@ -50,8 +51,11 @@ function localDateStr(d: Date): string {
 
 export function PregnancyUserReminders({ userId }: Props) {
   const { colors, radius, isDark, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
-  const ACCENT = getModeColor('pregnancy', isDark)
+  const ACCENT = diffuse ? dAccent : getModeColor('pregnancy', isDark)
 
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [showInput, setShowInput] = useState(false)
@@ -159,7 +163,11 @@ export function PregnancyUserReminders({ userId }: Props) {
   return (
     <View style={{ gap: 10 }}>
       {/* Reminder card — always visible, expands on tap */}
-      <View style={[styles.inputCard, {
+      <View style={[styles.inputCard, diffuse ? {
+        backgroundColor: dt.colors.surface,
+        borderColor: dt.colors.line,
+        shadowOpacity: 0,
+      } : {
         backgroundColor: colors.surface,
         borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
         shadowColor: '#141313',
@@ -175,24 +183,33 @@ export function PregnancyUserReminders({ userId }: Props) {
           onPress={() => { setShowInput(!showInput); if (!showInput) setNewText('') }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: showInput ? 4 : 0 }}
         >
-          <View style={{
+          <View style={diffuse ? {
+            width: 32, height: 32, borderRadius: 16,
+            backgroundColor: 'transparent',
+            borderWidth: 1, borderColor: dt.colors.line2,
+            alignItems: 'center', justifyContent: 'center',
+          } : {
             width: 32, height: 32, borderRadius: 16,
             backgroundColor: stickers.yellow,
             borderWidth: 1.5, borderColor: '#141313',
             alignItems: 'center', justifyContent: 'center',
           }}>
-            <Bell size={13} color="#141313" strokeWidth={2.5} />
+            <Bell size={13} color={diffuse ? dt.colors.ink3 : '#141313'} strokeWidth={diffuse ? 1.8 : 2.5} />
           </View>
-          <Text style={{ flex: 1, fontSize: 16, fontFamily: font.display, color: colors.text, letterSpacing: -0.3 }}>
+          <Text style={{ flex: 1, fontSize: diffuse ? 20 : 16, fontFamily: diffuse ? diffuseFont.display : font.display, color: diffuse ? dt.colors.ink : colors.text, letterSpacing: -0.3 }}>
             {t('preg_reminders_addButton')}
           </Text>
           <View style={{
             width: 28, height: 28, borderRadius: 14,
-            backgroundColor: showInput ? 'rgba(20,19,19,0.06)' : ACCENT + '18',
+            backgroundColor: diffuse
+              ? 'transparent'
+              : (showInput ? 'rgba(20,19,19,0.06)' : ACCENT + '18'),
+            borderWidth: diffuse ? 1 : 0,
+            borderColor: diffuse ? (showInput ? dt.colors.line2 : ACCENT) : 'transparent',
             alignItems: 'center', justifyContent: 'center',
           }}>
             {showInput
-              ? <X size={14} color={colors.textSecondary} strokeWidth={2.5} />
+              ? <X size={14} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={2.5} />
               : <Plus size={14} color={ACCENT} strokeWidth={2.5} />}
           </View>
         </Pressable>
@@ -200,13 +217,18 @@ export function PregnancyUserReminders({ userId }: Props) {
         {showInput && (
           <>
           <TextInput
-            style={[styles.textInput, {
+            style={[styles.textInput, diffuse ? {
+              color: dt.colors.ink,
+              fontFamily: diffuseFont.body,
+              backgroundColor: dt.colors.surfaceRaised,
+              borderColor: dt.colors.line,
+            } : {
               color: colors.text,
               backgroundColor: isDark ? colors.surfaceRaised : 'rgba(20,19,19,0.04)',
               borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
             }]}
             placeholder={t('preg_reminders_inputPlaceholder')}
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             value={newText}
             onChangeText={setNewText}
             onSubmitEditing={addReminder}
@@ -218,7 +240,11 @@ export function PregnancyUserReminders({ userId }: Props) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <Pressable
               onPress={() => { setShowDatePicker(!showDatePicker); setShowTimePicker(false) }}
-              style={[styles.pill, {
+              style={[styles.pill, diffuse ? {
+                borderColor: newDate ? ACCENT : dt.colors.line,
+                backgroundColor: 'transparent',
+                borderRadius: radius.full,
+              } : {
                 borderColor: newDate ? ACCENT : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
                 backgroundColor: newDate
                   ? ACCENT + '18'
@@ -226,8 +252,14 @@ export function PregnancyUserReminders({ userId }: Props) {
                 borderRadius: radius.full,
               }]}
             >
-              <Clock size={12} color={newDate ? ACCENT : colors.textSecondary} strokeWidth={2} />
-              <Text style={{
+              <Clock size={12} color={newDate ? ACCENT : (diffuse ? dt.colors.ink3 : colors.textSecondary)} strokeWidth={2} />
+              <Text style={diffuse ? {
+                fontSize: 11,
+                color: newDate ? ACCENT : dt.colors.ink3,
+                fontFamily: diffuseFont.mono,
+                letterSpacing: 0.5,
+                textTransform: 'uppercase',
+              } : {
                 fontSize: 12,
                 color: newDate ? ACCENT : colors.textSecondary,
                 fontFamily: font.bodySemiBold,
@@ -247,7 +279,13 @@ export function PregnancyUserReminders({ userId }: Props) {
             {newDate && (
               <Pressable
                 onPress={() => { setShowTimePicker(!showTimePicker); setShowDatePicker(false) }}
-                style={{
+                style={diffuse ? {
+                  flexDirection: 'row', alignItems: 'center', gap: 5,
+                  paddingHorizontal: 12, paddingVertical: 7,
+                  borderRadius: radius.full, borderWidth: 1,
+                  borderColor: newTime ? ACCENT : dt.colors.line,
+                  backgroundColor: 'transparent',
+                } : {
                   flexDirection: 'row', alignItems: 'center', gap: 5,
                   paddingHorizontal: 12, paddingVertical: 7,
                   borderRadius: radius.full, borderWidth: 1,
@@ -257,15 +295,18 @@ export function PregnancyUserReminders({ userId }: Props) {
                     : (isDark ? colors.surfaceRaised : stickers.peach + '22'),
                 }}
               >
-                <Bell size={11} color={newTime ? '#C06030' : colors.textSecondary} strokeWidth={2} />
-                <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: newTime ? stickers.peachInk : colors.textSecondary }}>
+                <Bell size={11} color={diffuse ? (newTime ? ACCENT : dt.colors.ink3) : (newTime ? '#C06030' : colors.textSecondary)} strokeWidth={2} />
+                <Text style={diffuse ? {
+                  fontSize: 11, fontFamily: diffuseFont.mono, letterSpacing: 0.5, textTransform: 'uppercase',
+                  color: newTime ? ACCENT : dt.colors.ink3,
+                } : { fontSize: 11, fontFamily: font.bodySemiBold, color: newTime ? stickers.peachInk : colors.textSecondary }}>
                   {newTime
                     ? formatTime12h(`${String(newTime.getHours()).padStart(2, '0')}:${String(newTime.getMinutes()).padStart(2, '0')}`)
                     : t('preg_reminders_setTime')}
                 </Text>
                 {newTime && (
                   <Pressable onPress={() => { setNewTime(null); setShowTimePicker(false) }} hitSlop={8}>
-                    <X size={9} color="#C06030" strokeWidth={2.5} />
+                    <X size={9} color={diffuse ? ACCENT : '#C06030'} strokeWidth={2.5} />
                   </Pressable>
                 )}
               </Pressable>
@@ -275,7 +316,12 @@ export function PregnancyUserReminders({ userId }: Props) {
 
             <Pressable
               onPress={addReminder}
-              style={[styles.saveBtn, {
+              style={[styles.saveBtn, diffuse ? {
+                backgroundColor: 'transparent',
+                borderRadius: radius.full,
+                borderWidth: 1,
+                borderColor: dt.colors.hairline,
+              } : {
                 backgroundColor: ACCENT,
                 borderRadius: radius.full,
                 borderWidth: 1.5,
@@ -284,7 +330,9 @@ export function PregnancyUserReminders({ userId }: Props) {
               accessibilityRole="button"
               accessibilityLabel="Save reminder"
             >
-              <Text style={[styles.saveBtnText, { color: colors.textInverse }]}>{t('preg_reminders_save')}</Text>
+              <Text style={diffuse
+                ? { fontSize: 11, fontFamily: diffuseFont.monoBold, letterSpacing: 1.2, textTransform: 'uppercase', color: dt.colors.ink }
+                : [styles.saveBtnText, { color: colors.textInverse }]}>{t('preg_reminders_save')}</Text>
             </Pressable>
           </View>
 
@@ -293,16 +341,16 @@ export function PregnancyUserReminders({ userId }: Props) {
               borderRadius: 20,
               overflow: 'hidden',
               marginTop: 6,
-              borderWidth: 1.5,
-              borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
-              backgroundColor: colors.surface,
+              borderWidth: diffuse ? 1 : 1.5,
+              borderColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.1)'),
+              backgroundColor: diffuse ? dt.colors.surface : colors.surface,
             }}>
               <DateTimePicker
                 value={newDate ?? new Date()}
                 mode="date"
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 minimumDate={new Date()}
-                themeVariant={isDark ? 'dark' : 'light'}
+                themeVariant={(diffuse ? dt.isDark : isDark) ? 'dark' : 'light'}
                 accentColor={ACCENT}
                 onChange={(_e: DateTimePickerEvent, date?: Date) => {
                   if (Platform.OS !== 'ios') setShowDatePicker(false)
@@ -315,12 +363,14 @@ export function PregnancyUserReminders({ userId }: Props) {
                   style={{
                     alignItems: 'center',
                     paddingVertical: 12,
-                    backgroundColor: isDark ? colors.surface : stickers.blue + '18',
+                    backgroundColor: diffuse ? dt.colors.surface : (isDark ? colors.surface : stickers.blue + '18'),
                     borderTopWidth: 1,
-                    borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    borderTopColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
                   }}
                 >
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: ACCENT }}>{t('preg_reminders_done')}</Text>
+                  <Text style={diffuse
+                    ? { fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dt.colors.ink }
+                    : { fontFamily: font.bodyBold, fontSize: 14, color: ACCENT }}>{t('preg_reminders_done')}</Text>
                 </Pressable>
               )}
             </View>
@@ -331,15 +381,15 @@ export function PregnancyUserReminders({ userId }: Props) {
               borderRadius: 20,
               overflow: 'hidden',
               marginTop: 6,
-              borderWidth: 1.5,
-              borderColor: isDark ? colors.border : 'rgba(20,19,19,0.1)',
-              backgroundColor: colors.surface,
+              borderWidth: diffuse ? 1 : 1.5,
+              borderColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.1)'),
+              backgroundColor: diffuse ? dt.colors.surface : colors.surface,
             }}>
               <DateTimePicker
                 value={newTime ?? (() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d })()}
                 mode="time"
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                themeVariant={isDark ? 'dark' : 'light'}
+                themeVariant={(diffuse ? dt.isDark : isDark) ? 'dark' : 'light'}
                 accentColor={ACCENT}
                 style={{ height: 140 }}
                 onChange={(_e: DateTimePickerEvent, date?: Date) => {
@@ -353,12 +403,14 @@ export function PregnancyUserReminders({ userId }: Props) {
                   style={{
                     alignItems: 'center',
                     paddingVertical: 12,
-                    backgroundColor: isDark ? colors.surface : stickers.peach + '18',
+                    backgroundColor: diffuse ? dt.colors.surface : (isDark ? colors.surface : stickers.peach + '18'),
                     borderTopWidth: 1,
-                    borderTopColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    borderTopColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
                   }}
                 >
-                  <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: stickers.peachInk }}>{t('preg_reminders_done')}</Text>
+                  <Text style={diffuse
+                    ? { fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dt.colors.ink }
+                    : { fontFamily: font.bodyBold, fontSize: 14, color: stickers.peachInk }}>{t('preg_reminders_done')}</Text>
                 </Pressable>
               )}
             </View>
@@ -382,6 +434,8 @@ export function PregnancyUserReminders({ userId }: Props) {
               isDark={isDark}
               stickers={stickers}
               accent={ACCENT}
+              diffuse={diffuse}
+              dt={dt}
               t={t}
             />
           ))}
@@ -392,7 +446,7 @@ export function PregnancyUserReminders({ userId }: Props) {
 }
 
 function ReminderRow({
-  r, onToggle, onDelete, onEdit, onFlag, colors, isDark, stickers, accent, t,
+  r, onToggle, onDelete, onEdit, onFlag, colors, isDark, stickers, accent, diffuse, dt, t,
 }: {
   r: Reminder
   onToggle: () => void
@@ -403,6 +457,8 @@ function ReminderRow({
   isDark: boolean
   stickers: any
   accent: string
+  diffuse: boolean
+  dt: ReturnType<typeof useDiffuseTheme>
   t: ReturnType<typeof useTranslation>['t']
 }) {
   const ACCENT = accent
@@ -412,7 +468,9 @@ function ReminderRow({
   const isOverdue = !r.done && diffDays !== null && diffDays < 0
   const isDueToday = !r.done && diffDays === 0
   const isDueSoon = !r.done && diffDays !== null && diffDays > 0 && diffDays <= 3
-  const dueDateColor = isOverdue ? brand.error : isDueToday ? '#C08000' : isDueSoon ? brand.warning : colors.textMuted
+  const dueDateColor = diffuse
+    ? (isOverdue ? dt.colors.error : isDueToday ? dt.colors.warning : isDueSoon ? dt.colors.warning : dt.colors.ink3)
+    : (isOverdue ? brand.error : isDueToday ? '#C08000' : isDueSoon ? brand.warning : colors.textMuted)
   const timeSuffix = r.dueTime ? ` · ${formatTime12h(r.dueTime)}` : ''
   const dueDateLabel = due
     ? isOverdue
@@ -434,7 +492,9 @@ function ReminderRow({
     setEditing(false)
   }
 
-  const cardBg = isOverdue
+  const cardBg = diffuse
+    ? dt.colors.surface
+    : isOverdue
     ? (isDark ? 'rgba(238,123,109,0.10)' : '#FFF0ED')
     : r.flagged
     ? (isDark ? 'rgba(245,214,82,0.10)' : '#FFFBE6')
@@ -442,7 +502,9 @@ function ReminderRow({
     ? (isDark ? 'rgba(245,214,82,0.08)' : '#FFFDE8')
     : (colors.surface)
 
-  const cardBorder = isOverdue
+  const cardBorder = diffuse
+    ? (isOverdue ? dt.colors.error : r.flagged || isDueToday ? dt.colors.line2 : dt.colors.line)
+    : isOverdue
     ? (isDark ? 'rgba(238,123,109,0.28)' : 'rgba(238,123,109,0.38)')
     : r.flagged || isDueToday
     ? (isDark ? 'rgba(245,214,82,0.28)' : 'rgba(245,214,82,0.65)')
@@ -452,7 +514,16 @@ function ReminderRow({
   const badgeIconColor = isOverdue ? colors.textInverse : colors.text
 
   return (
-    <View style={{
+    <View style={diffuse ? {
+      backgroundColor: cardBg,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: cardBorder,
+      padding: 14,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+    } : {
       backgroundColor: cardBg,
       borderRadius: 20,
       borderWidth: 1.5,
@@ -472,7 +543,22 @@ function ReminderRow({
         accessibilityState={{ checked: r.done }}
         accessibilityLabel={r.done ? 'Mark as not done' : 'Mark as done'}
         hitSlop={6}
-        style={{
+        style={diffuse ? {
+          width: 32, height: 32, borderRadius: 10,
+          backgroundColor: r.done ? ACCENT : 'transparent',
+          borderWidth: 1.5,
+          borderColor: r.done
+            ? ACCENT
+            : isOverdue
+            ? dt.colors.error
+            : isDueToday
+            ? dt.colors.warning
+            : dt.colors.line2,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          marginTop: 1,
+        } : {
           width: 32, height: 32, borderRadius: 10,
           backgroundColor: r.done ? badgeBg : 'transparent',
           borderWidth: 2,
@@ -489,14 +575,14 @@ function ReminderRow({
           marginTop: 1,
         }}
       >
-        {r.done ? <Check size={16} color={badgeIconColor} strokeWidth={3} /> : null}
+        {r.done ? <Check size={16} color={diffuse ? dt.colors.bg : badgeIconColor} strokeWidth={3} /> : null}
       </Pressable>
 
       <View style={{ flex: 1, gap: 6, paddingTop: 2 }}>
         {editing ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <TextInput
-              style={{ fontSize: 15, fontFamily: font.display, color: colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: ACCENT, paddingVertical: 2 }}
+              style={{ fontSize: 15, fontFamily: diffuse ? diffuseFont.body : font.display, color: diffuse ? dt.colors.ink : colors.text, flex: 1, borderBottomWidth: 1, borderBottomColor: ACCENT, paddingVertical: 2 }}
               value={editText}
               onChangeText={setEditText}
               onSubmitEditing={commitEdit}
@@ -505,18 +591,18 @@ function ReminderRow({
               returnKeyType="done"
             />
             <Pressable onPress={commitEdit} hitSlop={8}>
-              <Check size={14} color="#BDD48C" strokeWidth={2.5} />
+              <Check size={14} color={diffuse ? ACCENT : '#BDD48C'} strokeWidth={2.5} />
             </Pressable>
             <Pressable onPress={() => { setEditText(r.text); setEditing(false) }} hitSlop={8}>
-              <X size={14} color={colors.textMuted} strokeWidth={2} />
+              <X size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
             </Pressable>
           </View>
         ) : (
           <Text
             style={{
               fontSize: 15,
-              fontFamily: font.display,
-              color: colors.text,
+              fontFamily: diffuse ? diffuseFont.body : font.display,
+              color: diffuse ? dt.colors.ink : colors.text,
               lineHeight: 21,
             }}
             numberOfLines={2}
@@ -524,6 +610,21 @@ function ReminderRow({
         )}
 
         {dueDateLabel && (() => {
+          if (diffuse) {
+            const dueInk = isOverdue ? dt.colors.error : isDueToday ? dt.colors.warning : dt.colors.ink3
+            return (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: 'transparent',
+                borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4,
+                borderWidth: 1, borderColor: dt.colors.line,
+                alignSelf: 'flex-start',
+              }}>
+                <Clock size={9} color={dueInk} strokeWidth={2.5} />
+                <Text style={{ fontSize: 10, color: dueInk, fontFamily: diffuseFont.mono, letterSpacing: 0.5, textTransform: 'uppercase' }}>{dueDateLabel}</Text>
+              </View>
+            )
+          }
           const dueBg = isOverdue
             ? (isDark ? brand.error + '22' : '#F5B896')
             : isDueToday
@@ -553,14 +654,14 @@ function ReminderRow({
       <View style={{ alignItems: 'center', gap: 10, paddingTop: 4 }}>
         {!editing && (
           <Pressable onPress={() => { setEditText(r.text); setEditing(true) }} hitSlop={12}>
-            <Pencil size={13} color={colors.textMuted} strokeWidth={2} />
+            <Pencil size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
           </Pressable>
         )}
         <Pressable onPress={onFlag} hitSlop={12}>
-          <Flag size={13} color={r.flagged ? '#F5D652' : colors.textMuted} fill={r.flagged ? '#F5D652' : 'transparent'} strokeWidth={2} />
+          <Flag size={13} color={r.flagged ? (diffuse ? ACCENT : '#F5D652') : (diffuse ? dt.colors.ink3 : colors.textMuted)} fill={r.flagged ? (diffuse ? ACCENT : '#F5D652') : 'transparent'} strokeWidth={2} />
         </Pressable>
         <Pressable onPress={onDelete} hitSlop={12}>
-          <Trash2 size={13} color={colors.textMuted} strokeWidth={2} />
+          <Trash2 size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
         </Pressable>
       </View>
     </View>

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import {
   Modal,
   View,
+  Text,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,7 +14,12 @@ import {
 import { X, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info, TriangleAlert, Lightbulb, Stethoscope, BookOpen } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Linking } from 'react-native'
-import { useTheme, font } from '../../constants/theme'
+import {
+  useTheme, font,
+  useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius,
+} from '../../constants/theme'
+import { useIsDiffuse, DiffuseFieldSurface, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
+import { DiffuseSheet } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { useTranslatedContent } from '../../lib/useTranslatedContent'
 import { Display, Body } from '../ui/Typography'
@@ -57,6 +63,8 @@ export function BirthDetailModal({
   onAskGrandma,
 }: BirthDetailModalProps) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
@@ -87,6 +95,89 @@ export function BirthDetailModal({
   const handleAskGrandma = () => {
     handleClose()
     onAskGrandma()
+  }
+
+  // ── Diffuse render path — DiffuseSheet + role-driven sections ──
+  if (diffuse) {
+    const dAccent = getDiffuseAccent('preg', dt.isDark)
+    return (
+      <DiffuseSheet
+        visible={visible}
+        title={topic.title}
+        onClose={handleClose}
+      >
+        {/* Hero — field surface with sticker + subtitle */}
+        <DiffuseFieldSurface
+          mode="preg"
+          isDark={dt.isDark}
+          intensity={0.5}
+          radius={diffuseRadius.md}
+          style={[styles.dHero, { borderWidth: 1, borderColor: dt.colors.line }]}
+        >
+          <View style={styles.heroSticker}>{renderSticker(54)}</View>
+          <Text style={[styles.dHeroSub, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
+            {topic.subtitle}
+          </Text>
+        </DiffuseFieldSurface>
+
+        {topic.disclaimer && (
+          <View style={[styles.dDisclaimer, { borderColor: dt.colors.line, backgroundColor: dt.colors.surfaceRaised }]}>
+            <Info size={14} color={dt.colors.ink3} strokeWidth={2} style={{ marginTop: 2 }} />
+            <Text style={[styles.dDisclaimerText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
+              {topic.disclaimer}
+            </Text>
+          </View>
+        )}
+
+        <View style={{ gap: 8, marginTop: 12 }}>
+          {topic.sections.map((section, index) => (
+            <AccordionItem
+              key={index}
+              topicKey={topicKey}
+              section={section}
+              index={index}
+              isOpen={openIndex === index}
+              onToggle={() => toggle(index)}
+              ink={ink}
+              inkMuted={inkMuted}
+              paper={paper}
+              paperBorder={paperBorder}
+              isDark={isDark}
+              diffuse
+              dt={dt}
+              accent={dAccent}
+            />
+          ))}
+        </View>
+
+        {topic.sources && topic.sources.length > 0 && (
+          <SourcesBlock
+            sources={topic.sources}
+            ink={ink}
+            inkMuted={inkMuted}
+            paper={paper}
+            paperBorder={paperBorder}
+            label={t('preg_birthDetail_sources')}
+            diffuse
+            dt={dt}
+          />
+        )}
+
+        {/* Ask Grandma — containerless hairline action */}
+        <Pressable
+          onPress={handleAskGrandma}
+          accessibilityRole="button"
+          accessibilityLabel="Ask Grandma anything about this topic"
+          style={({ pressed }) => [styles.dCta, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <MessageCircle size={16} color={dt.colors.ink} strokeWidth={2} />
+          <Text style={[styles.dCtaLabel, { color: dt.colors.ink, fontFamily: diffuseFont.mono }]}>
+            {t('preg_birthDetail_askGrandma')}
+          </Text>
+          <DiffuseArrow color={dt.colors.ink3} size={16} />
+        </Pressable>
+      </DiffuseSheet>
+    )
   }
 
   return (
@@ -244,6 +335,8 @@ export function BirthDetailModal({
   )
 }
 
+type DiffuseTokens = ReturnType<typeof useDiffuseTheme>
+
 interface AccordionItemProps {
   topicKey: BirthTopicKey
   section: BirthSection
@@ -255,16 +348,108 @@ interface AccordionItemProps {
   paper: string
   paperBorder: string
   isDark: boolean
+  diffuse?: boolean
+  dt?: DiffuseTokens
+  accent?: string
 }
 
 function AccordionItem({
   topicKey, section, index, isOpen, onToggle, ink, inkMuted, paper, paperBorder, isDark,
+  diffuse, dt, accent,
 }: AccordionItemProps) {
   const numFill = ['#F5D652', '#F2B2C7', '#9DC3E8', '#BDD48C', '#C8B6E8', '#EE7B6D'][index % 6]
   // Long-form birth-guide prose is translated at runtime + cached (Phase C).
   // Stable id-based keys so cache survives content edits (hash guards staleness).
   const { text: sectionTitle } = useTranslatedContent(`birthguide_${topicKey}_${index}_title`, section.title)
   const { text: sectionContent } = useTranslatedContent(`birthguide_${topicKey}_${index}_content`, section.content)
+
+  if (diffuse && dt) {
+    const acc = accent ?? dt.colors.ink
+    return (
+      <View>
+        <Pressable
+          onPress={onToggle}
+          style={({ pressed }) => [
+            styles.dAccHeader,
+            {
+              backgroundColor: dt.colors.surface,
+              borderColor: dt.colors.line,
+              opacity: pressed ? 0.9 : 1,
+              borderBottomLeftRadius: isOpen ? 0 : diffuseRadius.sm,
+              borderBottomRightRadius: isOpen ? 0 : diffuseRadius.sm,
+              borderBottomWidth: isOpen ? 0 : 1,
+            },
+          ]}
+        >
+          <View style={[styles.dNumCircle, { borderColor: dt.colors.line2 }]}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: dt.colors.ink2 }}>
+              {index + 1}
+            </Text>
+          </View>
+          <Text style={[styles.dAccTitle, { flex: 1, color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold }]}>
+            {sectionTitle}
+          </Text>
+          <View style={[styles.dChevWrap, { borderColor: dt.colors.line2 }]}>
+            {isOpen
+              ? <ChevronUp size={13} color={dt.colors.ink3} strokeWidth={2} />
+              : <ChevronDown size={13} color={dt.colors.ink3} strokeWidth={2} />}
+          </View>
+        </Pressable>
+
+        {isOpen && (
+          <View style={[styles.dAccBody, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
+            <Text style={[styles.dBodyText, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]}>
+              {sectionContent}
+            </Text>
+            {section.bullets && section.bullets.length > 0 && (
+              <View style={styles.bulletList}>
+                {section.bullets.map((bullet, i) => (
+                  <View key={i} style={styles.bulletRow}>
+                    <View style={[styles.bulletDot, { backgroundColor: acc, borderColor: 'transparent' }]} />
+                    <Text style={[styles.dBulletText, { color: dt.colors.ink, fontFamily: diffuseFont.body }]}>
+                      {bullet}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {section.subsections && section.subsections.length > 0 && (
+              <View style={styles.subList}>
+                {section.subsections.map((sub, i) => (
+                  <View key={i} style={[styles.subCard, { borderColor: dt.colors.line, backgroundColor: dt.colors.surfaceRaised }]}>
+                    <Text style={[styles.dSubTitle, { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold }]}>
+                      {sub.title}
+                    </Text>
+                    <Text style={[styles.dBodyText, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]}>
+                      {sub.content}
+                    </Text>
+                    {sub.bullets && sub.bullets.length > 0 && (
+                      <View style={[styles.bulletList, { marginTop: 8 }]}>
+                        {sub.bullets.map((bullet, j) => (
+                          <View key={j} style={styles.bulletRow}>
+                            <View style={[styles.bulletDot, { backgroundColor: acc, borderColor: 'transparent' }]} />
+                            <Text style={[styles.dBulletTextSm, { color: dt.colors.ink, fontFamily: diffuseFont.body }]}>
+                              {bullet}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {section.callout && (
+              <CalloutBlock callout={section.callout} ink={ink} inkMuted={inkMuted} paperBorder={paperBorder} isDark={isDark} diffuse dt={dt} />
+            )}
+          </View>
+        )}
+      </View>
+    )
+  }
+
   return (
     <View style={styles.accordionItem}>
       <Pressable
@@ -388,9 +573,11 @@ interface CalloutBlockProps {
   inkMuted: string
   paperBorder: string
   isDark: boolean
+  diffuse?: boolean
+  dt?: DiffuseTokens
 }
 
-function CalloutBlock({ callout, ink, inkMuted, paperBorder, isDark }: CalloutBlockProps) {
+function CalloutBlock({ callout, ink, inkMuted, paperBorder, isDark, diffuse, dt }: CalloutBlockProps) {
   const palette = {
     provider: { bg: isDark ? 'rgba(157,195,232,0.12)' : '#E0EEF8', accent: '#9DC3E8', Icon: Stethoscope },
     urgent:   { bg: isDark ? 'rgba(238,123,109,0.14)' : '#FCE3DE', accent: '#EE7B6D', Icon: TriangleAlert },
@@ -398,6 +585,26 @@ function CalloutBlock({ callout, ink, inkMuted, paperBorder, isDark }: CalloutBl
   }[callout.variant]
 
   const IconCmp = palette.Icon
+
+  if (diffuse && dt) {
+    return (
+      <View style={[styles.dCallout, { borderColor: dt.colors.line, backgroundColor: dt.colors.surfaceRaised }]}>
+        <View style={[styles.dCalloutIcon, { borderColor: dt.colors.line2 }]}>
+          <IconCmp size={14} color={dt.colors.ink2} strokeWidth={2} />
+        </View>
+        <View style={{ flex: 1 }}>
+          {callout.title && (
+            <Text style={[styles.dCalloutTitle, { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold }]}>
+              {callout.title}
+            </Text>
+          )}
+          <Text style={[styles.dCalloutText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
+            {callout.text}
+          </Text>
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View
@@ -433,9 +640,11 @@ interface SourcesBlockProps {
   paper: string
   paperBorder: string
   label: string
+  diffuse?: boolean
+  dt?: DiffuseTokens
 }
 
-function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label }: SourcesBlockProps) {
+function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label, diffuse, dt }: SourcesBlockProps) {
   // Collapsed by default — sources are reassurance, not primary content. The
   // user can tap to expand and check them if they want to.
   const [open, setOpen] = useState(false)
@@ -443,6 +652,50 @@ function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label }: Sou
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setOpen((prev) => !prev)
+  }
+
+  if (diffuse && dt) {
+    return (
+      <View style={[styles.dSourcesCard, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
+        <Pressable
+          onPress={toggle}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          accessibilityLabel={`${label}, ${sources.length} ${sources.length === 1 ? 'source' : 'sources'}`}
+          style={({ pressed }) => [styles.sourcesHeader, { opacity: pressed ? 0.7 : 1 }]}
+        >
+          <BookOpen size={13} color={dt.colors.ink3} strokeWidth={2} />
+          <Text style={[styles.dSourcesLabel, { flex: 1, color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+            {`${label} (${sources.length})`}
+          </Text>
+          {open
+            ? <ChevronUp size={14} color={dt.colors.ink3} strokeWidth={2} />
+            : <ChevronDown size={14} color={dt.colors.ink3} strokeWidth={2} />}
+        </Pressable>
+
+        {open && (
+          <View style={{ marginTop: 6 }}>
+            {sources.map((s, i) => (
+              <Pressable
+                key={i}
+                onPress={() => Linking.openURL(s.url).catch(() => {})}
+                style={({ pressed }) => [styles.sourceRow, { opacity: pressed ? 0.6 : 1 }]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.dSourceLabel, { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold }]}>
+                    {s.label}
+                  </Text>
+                  <Text style={[styles.dSourceOrg, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
+                    {s.org}
+                  </Text>
+                </View>
+                <ExternalLink size={13} color={dt.colors.ink3} strokeWidth={2} />
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </View>
+    )
   }
 
   return (
@@ -640,5 +893,147 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1.5,
     paddingVertical: 14,
+  },
+  // ── Diffuse ──
+  dHero: {
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginTop: 4,
+  },
+  dHeroSub: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  dDisclaimer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: diffuseRadius.sm,
+    padding: 12,
+    marginTop: 12,
+  },
+  dDisclaimerText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  dAccHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: diffuseRadius.sm,
+    borderWidth: 1,
+    padding: 12,
+  },
+  dNumCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  dAccTitle: {
+    fontSize: 14,
+  },
+  dChevWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  dAccBody: {
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: diffuseRadius.sm,
+    borderBottomRightRadius: diffuseRadius.sm,
+    padding: 14,
+    gap: 8,
+  },
+  dBodyText: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  dBulletText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  dBulletTextSm: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  dSubTitle: {
+    fontSize: 13,
+    marginBottom: 6,
+  },
+  dCallout: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: diffuseRadius.sm,
+    padding: 12,
+    marginTop: 12,
+  },
+  dCalloutIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  dCalloutTitle: {
+    fontSize: 13,
+    marginBottom: 3,
+  },
+  dCalloutText: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  dSourcesCard: {
+    borderWidth: 1,
+    borderRadius: diffuseRadius.sm,
+    padding: 14,
+    marginTop: 12,
+  },
+  dSourcesLabel: {
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  dSourceLabel: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  dSourceOrg: {
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 2,
+  },
+  dCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderTopWidth: 1,
+    paddingTop: 18,
+    marginTop: 16,
+  },
+  dCtaLabel: {
+    fontSize: 12,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
   },
 })

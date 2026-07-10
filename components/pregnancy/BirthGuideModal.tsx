@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import {
   Modal,
   View,
+  Text,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,7 +11,12 @@ import {
 import { X, ChevronRight } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, font } from '../../constants/theme'
+import {
+  useTheme, brand, font,
+  useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius,
+} from '../../constants/theme'
+import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
+import { DiffuseSheet, DiffuseSectionHeader, DiffuseListRow, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { Display, MonoCaps, Body } from '../ui/Typography'
 import { BirthDetailModal } from './BirthDetailModal'
@@ -60,6 +66,8 @@ const EXTRA_TOPICS: ExtraTopicTile[] = [
 
 export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
@@ -77,6 +85,82 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const handleAskGrandma = () => {
     handleClose()
     router.push('/grandma-talk')
+  }
+
+  // ── Diffuse render path — DiffuseSheet + field tiles + hairline rows ──
+  if (diffuse) {
+    const dAccent = getDiffuseAccent('preg', dt.isDark)
+    return (
+      <>
+        <DiffuseSheet
+          visible={visible && detailTopic === null}
+          title={t('preg_birthGuide_title')}
+          onClose={handleClose}
+        >
+          <Text style={[styles.dSubtitle, { color: dt.colors.ink3, fontFamily: diffuseFont.italic }]}>
+            {t('preg_birthGuide_subtitle')}
+          </Text>
+
+          {/* Birth type grid — soft field tiles, sticker hero */}
+          <View style={styles.grid}>
+            {BIRTH_TYPES.map((item) => (
+              <Pressable
+                key={item.key}
+                onPress={() => setDetailTopic(item.key)}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.title}. ${item.subtitle}`}
+                style={({ pressed }) => [styles.dTypeCardWrap, { opacity: pressed ? 0.9 : 1 }]}
+              >
+                <DiffuseFieldSurface
+                  mode="preg"
+                  isDark={dt.isDark}
+                  intensity={0.45}
+                  radius={diffuseRadius.md}
+                  style={[styles.dTypeCard, { borderWidth: 1, borderColor: dt.colors.line }]}
+                >
+                  <View style={styles.typeStickerRow}>
+                    {item.sticker(38)}
+                  </View>
+                  <Text style={[styles.dTypeTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+                    {item.title}
+                  </Text>
+                  <Text style={[styles.dTypeSub, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
+                    {item.subtitle}
+                  </Text>
+                </DiffuseFieldSurface>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Also in this guide — hairline rows */}
+          <DiffuseSectionHeader
+            title={t('preg_birthGuide_alsoIn')}
+            style={{ marginTop: 26, marginBottom: 6 }}
+          />
+
+          <View>
+            {EXTRA_TOPICS.map((item, i) => (
+              <DiffuseListRow
+                key={item.key}
+                title={item.title}
+                sub={item.subtitle}
+                icon={<DiffuseBloomIcon color={dAccent} size={30} intensity={0.45}>{item.sticker(24)}</DiffuseBloomIcon>}
+                onPress={() => setDetailTopic(item.key)}
+                showArrow
+                last={i === EXTRA_TOPICS.length - 1}
+              />
+            ))}
+          </View>
+        </DiffuseSheet>
+
+        <BirthDetailModal
+          visible={detailTopic !== null}
+          topicKey={detailTopic}
+          onClose={() => setDetailTopic(null)}
+          onAskGrandma={handleAskGrandma}
+        />
+      </>
+    )
   }
 
   return (
@@ -330,5 +414,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+  },
+  // ── Diffuse ──
+  dSubtitle: {
+    fontSize: 14,
+    lineHeight: 19,
+    marginTop: -6,
+    marginBottom: 18,
+  },
+  dTypeCardWrap: {
+    width: '47.5%',
+  },
+  dTypeCard: {
+    padding: 14,
+    paddingTop: 12,
+  },
+  dTypeTitle: {
+    fontSize: 17,
+    letterSpacing: -0.4,
+    marginTop: 8,
+  },
+  dTypeSub: {
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 3,
   },
 })

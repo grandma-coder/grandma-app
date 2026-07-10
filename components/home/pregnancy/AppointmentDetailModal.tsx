@@ -9,8 +9,10 @@
 import React from 'react'
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { X } from 'lucide-react-native'
-import { useTheme, font } from '../../../constants/theme'
+import { X, BookOpen, Scan, Lightbulb } from 'lucide-react-native'
+import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseSheet, DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { useTranslatedContent } from '../../../lib/useTranslatedContent'
 import { PaperCard } from '../../ui/PaperCard'
@@ -41,6 +43,8 @@ interface Props {
 
 export function AppointmentDetailModal({ visible, appointment, currentWeek, onClose }: Props) {
   const { colors, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   // Long-form appointment prose is translated at runtime + cached (Phase C).
   // Stable id-based keys so cache survives content edits (hash guards staleness).
@@ -64,6 +68,81 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
     weeksAway === 0 ? t('pregnancy_appt_thisWeek') :
     weeksAway === 1 ? t('pregnancy_appt_nextWeek') :
     weeksAway > 0 ? t('pregnancy_appt_inWeeks', { count: weeksAway }) : t('pregnancy_appt_overdue')
+
+  // ─── Diffuse render — DiffuseSheet shell, hairline cards, mono data voice ──
+  if (diffuse) {
+    const accent = getDiffuseAccent('preg', dt.isDark)
+    const ink = dt.colors.ink
+    const ink2 = dt.colors.ink2
+    const ink3 = dt.colors.ink3
+
+    return (
+      <DiffuseSheet visible={visible} title={appointment.name} onClose={onClose} chip={typeInfo.label}>
+        {/* Timing eyebrow */}
+        <Text style={[dstyles.timing, { color: ink3 }]}>
+          {t('pregnancy_appt_weekTiming', { week: appointment.week, timing: timingLabel })}
+        </Text>
+
+        <Text style={[dstyles.description, { color: ink2 }]}>
+          {description}
+        </Text>
+
+        {/* Prep */}
+        <View style={[dstyles.card, { borderColor: dt.colors.line }]}>
+          <View style={dstyles.cardHeader}>
+            <DiffuseBloomIcon color={accent} size={30}>
+              <BookOpen size={16} color={ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+            <Text style={[dstyles.cardLabel, { color: ink3 }]}>{t('pregnancy_appt_prep')}</Text>
+          </View>
+          <Text style={[dstyles.cardBody, { color: ink2 }]}>{prepNote}</Text>
+        </View>
+
+        {/* What to expect */}
+        <View style={[dstyles.card, { borderColor: dt.colors.line }]}>
+          <View style={dstyles.cardHeader}>
+            <DiffuseBloomIcon color={accent} size={30}>
+              <Scan size={16} color={ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+            <Text style={[dstyles.cardLabel, { color: ink3 }]}>{t('pregnancy_appt_whatToExpect')}</Text>
+          </View>
+          <Text style={[dstyles.cardBody, { color: ink2 }]}>{whatToExpect}</Text>
+        </View>
+
+        {/* Questions */}
+        <View style={[dstyles.card, { borderColor: dt.colors.line }]}>
+          <View style={dstyles.cardHeader}>
+            <DiffuseBloomIcon color={accent} size={30}>
+              <Lightbulb size={16} color={ink3} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
+            <Text style={[dstyles.cardLabel, { color: ink3 }]}>{t('pregnancy_appt_questionsToAsk')}</Text>
+          </View>
+          {appointment.questions.map((q, i) => (
+            <View key={i} style={dstyles.questionRow}>
+              <Text style={[dstyles.questionNum, { color: accent }]}>{String(i + 1).padStart(2, '0')}</Text>
+              <Text style={[dstyles.questionText, { color: ink2 }]}>{q}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* CTAs — containerless actions on hairline rules */}
+        <Pressable
+          onPress={() => { onClose(); router.push('/(tabs)/agenda') }}
+          style={({ pressed }) => [dstyles.action, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={[dstyles.actionLabel, { color: ink }]}>{t('pregnancy_appt_scheduleInAgenda')}</Text>
+          <DiffuseArrow color={ink3} size={16} />
+        </Pressable>
+        <Pressable
+          onPress={() => { onClose(); router.push('/grandma-talk') }}
+          style={({ pressed }) => [dstyles.action, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={[dstyles.actionLabel, { color: ink }]}>{t('pregnancy_appt_askGrandma')}</Text>
+          <DiffuseArrow color={ink3} size={16} />
+        </Pressable>
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -188,4 +267,78 @@ const styles = StyleSheet.create({
   },
 
   ctaRow: { paddingHorizontal: 20, marginTop: 8, gap: 10 },
+})
+
+// ─── Diffuse styles — hairline cards, mono data voice, containerless CTAs ────
+const dstyles = StyleSheet.create({
+  timing: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 10.5,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    marginTop: 2,
+    marginBottom: 14,
+  },
+  description: {
+    fontFamily: diffuseFont.body,
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 18,
+  },
+  card: {
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  cardLabel: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  cardBody: {
+    fontFamily: diffuseFont.body,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  questionRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 6,
+  },
+  questionNum: {
+    fontFamily: diffuseFont.monoBold,
+    fontSize: 12,
+    letterSpacing: 0.5,
+    marginTop: 1,
+  },
+  questionText: {
+    flex: 1,
+    fontFamily: diffuseFont.body,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  action: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    paddingTop: 16,
+    paddingBottom: 4,
+    marginTop: 4,
+  },
+  actionLabel: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
 })

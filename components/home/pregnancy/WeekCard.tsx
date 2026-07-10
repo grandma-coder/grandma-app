@@ -15,7 +15,8 @@ import { WeekRuler } from './WeekRuler'
 import { BabyIllustration } from './babyIllustrations'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
-import { font } from '../../../constants/theme'
+import { font, diffuseFont, useDiffuseTheme, getDiffuseAccent, getModeField } from '../../../constants/theme'
+import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 
 function getTrimester(week: number): 1 | 2 | 3 {
@@ -102,6 +103,8 @@ interface WeekCardProps {
 
 export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const data = getWeekData(week)
   const stat = getWeekStat(week)
   const pal = paletteForWeek(week)
@@ -118,6 +121,86 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
   const illSize = illustrationSize(cm, stageColWidth)
 
   const statBorder = pal.fg + 'E5' // ~90% opacity of fg for tick line
+
+  // ─── Diffuse render — soft peach→plum field, serif hero #, mono data ──────
+  if (diffuse) {
+    const accent = getDiffuseAccent('preg', dt.isDark)
+    const [g1] = getModeField('preg', dt.isDark)
+    const ink = dt.colors.ink
+    const ink2 = dt.colors.ink2
+    const ink3 = dt.colors.ink3
+    const hairline = dt.colors.hairline
+
+    return (
+      <Pressable onPress={onPress} style={({ pressed }) => [{ width, opacity: pressed ? 0.96 : 1 }]}>
+        <DiffuseFieldSurface
+          mode="preg"
+          isDark={dt.isDark}
+          intensity={0.55}
+          radius={28}
+          style={[dstyles.card, { borderWidth: 1, borderColor: dt.colors.line }]}
+        >
+          {/* Top row: mono meta (left) + serif-italic fruit name (right) */}
+          <View style={styles.topRow}>
+            <Text style={[dstyles.meta, { color: ink3 }]}>
+              {t('preg_weekDetail_heroLabel', { week: weekStr, trimester: TRI_NAMES[tri - 1] })}
+            </Text>
+            <Text style={[dstyles.sizeName, { color: ink2 }]} numberOfLines={1}>
+              {article}{' '}
+              <Text style={[dstyles.sizeNameItalic, { color: ink }]}>{fruitName}</Text>
+            </Text>
+          </View>
+
+          {/* Middle grid: left = serif mega + illustration, right = mono stats */}
+          <View style={styles.middleGrid}>
+            <View style={styles.leftCol}>
+              <Text style={[dstyles.mega, { color: ink }]}>{weekStr}</Text>
+              <View style={styles.stage}>
+                <BabyIllustration week={week} size={illSize} />
+              </View>
+            </View>
+
+            <View style={styles.rightCol}>
+              <View style={[dstyles.statCell, { borderTopColor: hairline }]}>
+                <Text style={[dstyles.statLabel, { color: ink3 }]}>{t('preg_ring_length')}</Text>
+                <Text style={[dstyles.statValue, { color: ink }]}>
+                  {cm}
+                  <Text style={[dstyles.statUnit, { color: ink2 }]}>{' ' + t('preg_weekCard_unitCm')}</Text>
+                </Text>
+              </View>
+              <View style={[dstyles.statCell, { borderTopColor: hairline }]}>
+                <Text style={[dstyles.statLabel, { color: ink3 }]}>{t('preg_ring_weight')}</Text>
+                <Text style={[dstyles.statValue, { color: ink }]}>
+                  {formatWeightValue(stat.g)}
+                  <Text style={[dstyles.statUnit, { color: ink2 }]}>{' ' + formatWeightUnit(stat.g)}</Text>
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {daysLabel && (
+            <View style={styles.footer}>
+              <Text style={[dstyles.footerLabel, { color: accent }]}>{daysLabel.toUpperCase()}</Text>
+              <Text style={[dstyles.footerLabel, { color: ink3 }]}>
+                {t('preg_weekCard_tapForDetails')}
+              </Text>
+            </View>
+          )}
+
+          {/* Hairline dot-scale ruler — mono labels, accent dot */}
+          <WeekRuler
+            cm={cm}
+            dotColor={accent}
+            lineColor={hairline}
+            textColor={ink}
+            dotStroke={g1}
+            valueFont={diffuseFont.mono}
+            labelFont={diffuseFont.mono}
+          />
+        </DiffuseFieldSurface>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable
@@ -320,6 +403,71 @@ const styles = StyleSheet.create({
   footerLabel: {
     fontFamily: font.bodyMedium,
     fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+})
+
+// ─── Diffuse styles — soft field + serif hero + mono data voice ─────────────
+const dstyles = StyleSheet.create({
+  card: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 14,
+    minHeight: 236,
+  },
+  meta: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    flex: 1,
+  },
+  sizeName: {
+    fontFamily: diffuseFont.display,
+    fontSize: 20,
+    letterSpacing: -0.3,
+    textAlign: 'right',
+  },
+  sizeNameItalic: {
+    fontFamily: diffuseFont.italic,
+    fontStyle: 'italic',
+    fontWeight: '400',
+  },
+  mega: {
+    fontFamily: diffuseFont.displayLight,
+    fontSize: 64,
+    fontWeight: '300',
+    letterSpacing: -2,
+    lineHeight: 68,
+    marginLeft: -2,
+    paddingTop: 2,
+  },
+  statCell: {
+    borderTopWidth: 1,
+    paddingTop: 7,
+    gap: 3,
+  },
+  statLabel: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 9,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontFamily: diffuseFont.display,
+    fontSize: 26,
+    letterSpacing: -0.6,
+    lineHeight: 28,
+  },
+  statUnit: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  footerLabel: {
+    fontFamily: diffuseFont.mono,
+    fontSize: 9.5,
     letterSpacing: 1.4,
     textTransform: 'uppercase',
   },

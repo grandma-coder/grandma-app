@@ -16,12 +16,14 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { Camera, ImagePlus, ScanLine, X } from 'lucide-react-native'
-import { useTheme, brand, stickers as stickerPalette, font } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, brand, stickers as stickerPalette, font } from '../../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
 import { estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import { LogFormSticker } from './LogFormSticker'
+import { logSticker } from './logStickers'
 import { useSavedToast } from '../ui/SavedToast'
 import { useTranslation } from '../../lib/i18n'
 
@@ -51,6 +53,9 @@ async function uploadPlatePhoto(uri: string, userId: string): Promise<string | n
 
 export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const toast = useSavedToast()
   const { t } = useTranslation()
   const [photoUri, setPhotoUri] = useState<string | null>(null)
@@ -204,7 +209,16 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
   return (
     <ScrollView style={{ maxHeight: 560 }} showsVerticalScrollIndicator={false}>
       <View style={styles.form}>
-        <LogFormSticker type="nutrition" label="Log Meal" tint={stickerPalette.greenSoft} />
+        {diffuse ? (
+          <View style={dstyles.header}>
+            <View style={[dstyles.headerChip, { borderColor: dt.colors.line }]}>
+              {logSticker('nutrition', 26, dt.isDark)}
+            </View>
+            <Text style={[dstyles.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]} numberOfLines={2}>Log Meal</Text>
+          </View>
+        ) : (
+          <LogFormSticker type="nutrition" label="Log Meal" tint={stickerPalette.greenSoft} />
+        )}
 
         {photoUri ? (
           <View style={styles.photoBox}>
@@ -227,38 +241,46 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
           <View style={styles.pickRow}>
             <Pressable
               onPress={() => pick('camera')}
-              style={[styles.pickBtn, { backgroundColor: brand.pregnancy }]}
+              style={[styles.pickBtn, diffuse
+                ? { backgroundColor: dAccent + '1F', borderColor: dAccent, borderWidth: 1 }
+                : { backgroundColor: brand.pregnancy }]}
             >
-              <Camera size={18} color={colors.textInverse} strokeWidth={2} />
-              <Text style={[styles.pickBtnText, { color: colors.textInverse }]}>{t('kids_logForm_alertTakePhoto')}</Text>
+              <Camera size={18} color={diffuse ? dAccent : colors.textInverse} strokeWidth={2} />
+              <Text style={[styles.pickBtnText, { color: diffuse ? dAccent : colors.textInverse, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 12 : 15 }]}>{t('kids_logForm_alertTakePhoto')}</Text>
             </Pressable>
             <Pressable
               onPress={() => pick('library')}
-              style={[styles.pickBtn, { backgroundColor: colors.surfaceGlass, borderColor: colors.border, borderWidth: 1 }]}
+              style={[styles.pickBtn, diffuse
+                ? { backgroundColor: 'transparent', borderColor: dt.colors.line, borderWidth: 1 }
+                : { backgroundColor: colors.surfaceGlass, borderColor: colors.border, borderWidth: 1 }]}
             >
-              <ImagePlus size={18} color={colors.text} strokeWidth={2} />
-              <Text style={[styles.pickBtnText, { color: colors.text }]}>{t('kids_foodDash_gallery')}</Text>
+              <ImagePlus size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2} />
+              <Text style={[styles.pickBtnText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 12 : 15 }]}>{t('kids_foodDash_gallery')}</Text>
             </Pressable>
           </View>
         )}
 
         {foods.length > 0 && (
-          <View style={[styles.summaryBox, {
-            backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
-            borderColor: colors.border,
-          }]}>
+          <View style={[styles.summaryBox, diffuse
+            ? { backgroundColor: 'transparent', borderColor: dt.colors.line, shadowOpacity: 0, elevation: 0 }
+            : {
+                backgroundColor: isDark ? colors.surfaceRaised : '#F7F0DF',
+                borderColor: colors.border,
+              }]}>
             <View style={styles.summaryHeader}>
-              <View style={[styles.totalChip, { backgroundColor: stickerPalette.yellowSoft }]}>
-                <ScanLine size={12} color="#141313" strokeWidth={2.4} />
-                <Text style={styles.totalChipText}>{t('pregMeal_approx_kcal', { count: totalCals })}</Text>
+              <View style={[styles.totalChip, diffuse
+                ? { backgroundColor: dAccent + '1F', borderWidth: 1, borderColor: dAccent }
+                : { backgroundColor: stickerPalette.yellowSoft }]}>
+                <ScanLine size={12} color={diffuse ? dAccent : '#141313'} strokeWidth={2.4} />
+                <Text style={[styles.totalChipText, diffuse ? { color: dAccent, fontFamily: diffuseFont.monoBold, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 12 } : null]}>{t('pregMeal_approx_kcal', { count: totalCals })}</Text>
               </View>
             </View>
             {foods.map((f, i) => (
-              <View key={`${f.name}-${i}`} style={[styles.foodRow, { borderBottomColor: colors.borderLight }]}>
-                <Text style={[styles.foodName, { color: colors.textSecondary }]} numberOfLines={1}>
+              <View key={`${f.name}-${i}`} style={[styles.foodRow, { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight }]}>
+                <Text style={[styles.foodName, { color: diffuse ? dt.colors.ink : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]} numberOfLines={1}>
                   {f.name.charAt(0).toUpperCase() + f.name.slice(1)}
                 </Text>
-                <Text style={[styles.foodCals, { color: colors.textMuted }]}>{t('pregMeal_kcal_count', { count: f.cals })}</Text>
+                <Text style={[styles.foodCals, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('pregMeal_kcal_count', { count: f.cals })}</Text>
               </View>
             ))}
           </View>
@@ -267,10 +289,10 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
         {photoUri && !scanning && foods.length === 0 && (
           <Pressable
             onPress={() => scan(photoUri)}
-            style={[styles.scanAgainBtn, { borderColor: colors.border }]}
+            style={[styles.scanAgainBtn, { borderColor: diffuse ? dt.colors.line : colors.border }]}
           >
-            <ScanLine size={16} color={colors.text} strokeWidth={2} />
-            <Text style={[styles.scanAgainText, { color: colors.text }]}>{t('pregMeal_scan_again')}</Text>
+            <ScanLine size={16} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2} />
+            <Text style={[styles.scanAgainText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, letterSpacing: diffuse ? 0.5 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{t('pregMeal_scan_again')}</Text>
           </Pressable>
         )}
 
@@ -296,6 +318,29 @@ function SaveMealButton({
   colors: ReturnType<typeof useTheme>['colors']
 }) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+
+  if (diffuse) {
+    // Containerless action: mono-caps label + arrow on a top hairline.
+    const dAccent = getDiffuseAccent('preg', dt.isDark)
+    return (
+      <Pressable
+        onPress={saving || disabled ? undefined : onPress}
+        style={[styles.saveBtnD, { borderTopColor: dt.colors.line2, opacity: disabled ? 0.45 : 1 }]}
+      >
+        {saving ? (
+          <ActivityIndicator color={dt.colors.ink} />
+        ) : (
+          <>
+            <Text style={[styles.saveTextD, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>{t('pregMeal_save_meal')}</Text>
+            <DiffuseArrow color={dAccent} size={18} />
+          </>
+        )}
+      </Pressable>
+    )
+  }
+
   const ST_INK = '#141313'
   const ST_LAVENDER = isDark ? colors.primary : brand.pregnancy
   const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
@@ -387,4 +432,35 @@ const styles = StyleSheet.create({
   scanAgainText: { fontSize: 14, fontFamily: font.bodyMedium },
   saveBtn: { height: 56, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   saveText: { fontSize: 15, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' },
+  saveBtnD: {
+    marginTop: 4,
+    paddingTop: 18,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  saveTextD: { fontSize: 13, letterSpacing: 2, textTransform: 'uppercase' },
+})
+
+// ─── Diffuse styles ─────────────────────────────────────────────────────────
+const dstyles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerChip: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    letterSpacing: -0.3,
+  },
 })

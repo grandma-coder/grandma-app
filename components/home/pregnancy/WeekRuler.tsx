@@ -21,6 +21,10 @@ interface WeekRulerProps {
   textColor: string
   /** Stroke color for the dot outline (to stand out on dot background). */
   dotStroke: string
+  /** Font for the cm value label above the dot. Defaults to Fraunces bold. */
+  valueFont?: string
+  /** Font for the end labels (0/25/51). Defaults to DM Sans medium. */
+  labelFont?: string
 }
 
 const RULER_VB_W = 360
@@ -30,8 +34,10 @@ const X_END = 350
 const MAX_CM = 51
 const TICKS = 6 // 0, ~10, 20, 30, 40, 51
 
-export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: WeekRulerProps) {
+export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke, valueFont, labelFont }: WeekRulerProps) {
   const { t } = useTranslation()
+  const valFont = valueFont ?? 'Fraunces_700Bold'
+  const endFont = labelFont ?? 'DMSans_500Medium'
   const clamped = Math.max(0, Math.min(MAX_CM, cm))
   const x = X_START + (clamped / MAX_CM) * (X_END - X_START)
   const label = clamped < 1 ? `${clamped.toFixed(2)}cm` : clamped < 10 ? `${clamped.toFixed(1)}cm` : `${Math.round(clamped)}cm`
@@ -53,7 +59,7 @@ export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: Wee
         <SvgText
           x={x}
           y={12}
-          fontFamily="Fraunces_700Bold"
+          fontFamily={valFont}
           fontSize={11}
           fontWeight="700"
           fill={textColor}
@@ -65,7 +71,7 @@ export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: Wee
         <SvgText
           x={X_START}
           y={42}
-          fontFamily="DMSans_500Medium"
+          fontFamily={endFont}
           fontSize={9}
           fill={lineColor}
           textAnchor="start"
@@ -76,7 +82,7 @@ export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: Wee
         <SvgText
           x={(X_START + X_END) / 2}
           y={42}
-          fontFamily="DMSans_500Medium"
+          fontFamily={endFont}
           fontSize={9}
           fill={lineColor}
           textAnchor="middle"
@@ -87,7 +93,7 @@ export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke }: Wee
         <SvgText
           x={X_END}
           y={42}
-          fontFamily="DMSans_500Medium"
+          fontFamily={endFont}
           fontSize={9}
           fill={lineColor}
           textAnchor="end"

@@ -9,7 +9,9 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import Svg, { Path as SvgPath, Circle as SvgCircle } from 'react-native-svg'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { toDateStr } from '../../../lib/cycleLogic'
 import { useTranslation } from '../../../lib/i18n'
 import { LogSheet } from '../../calendar/LogSheet'
@@ -18,6 +20,11 @@ import { PaperCard } from '../../ui/PaperCard'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition, LogExercise,
 } from '../../stickers/RewardStickers'
+import {
+  Smile as SmileLine, Droplet as DropletLine, Moon as MoonLine,
+  Utensils as UtensilsLine, Activity as ActivityLine, Footprints as FootprintsLine,
+  Scale as ScaleLine,
+} from 'lucide-react-native'
 import { moodFaceVariant, moodFaceFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
@@ -70,6 +77,8 @@ function fillDays(history: Point[], days = 7): { values: number[]; labels: strin
 
 export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, userId }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [weightHist, setWeightHist] = useState<Point[]>([])
   const [waterHist, setWaterHist] = useState<Point[]>([])
@@ -107,8 +116,18 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
   })()
   const exerciseLogged = !!todayLogs['exercise']
 
-  const ink = colors.text
-  const muted = colors.textMuted
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
+  const italicFont = diffuse ? diffuseFont.italic : font.italic
+  // Under Diffuse the accent replaces the per-metric sticker hues; charts + bars
+  // + progress use it, and tiles drop their color wash (tint=undefined = paper).
+  const accent = getDiffuseAccent('preg', dt.isDark)
+  const chartColor = diffuse ? accent : stickers.lilac
+  const barColor = diffuse ? accent : stickers.blue
+  const dropFill = diffuse ? accent : stickers.blue
+  const dropMuted = diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.18)')
+  const barTrack = diffuse ? dt.colors.line : 'rgba(20,19,19,0.08)'
+  const tileTint = (c: string) => (diffuse ? undefined : c)
 
   return (
     <LogSheet
@@ -116,25 +135,31 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
       title={t('pregnancy_todayDashboard')}
       onClose={onClose}
       chip={`Week ${weekNumber}`}
-      chipColor={stickers.lilac}
+      chipColor={diffuse ? undefined : stickers.lilac}
     >
       <View style={{ gap: 14 }}>
         {/* Mood — full-width hero tile */}
-        <PaperCard tint={stickers.yellowSoft} radius={20} padding={18} flat>
+        <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelMood')}</MonoCaps>
           </View>
           <View style={styles.moodRow}>
-            <MoodFace
-              size={56}
-              variant={moodKey ? moodFaceVariant(moodKey) : 'okay'}
-              fill={moodKey ? moodFaceFill(moodKey) : stickers.yellow}
-            />
+            {diffuse ? (
+              <DiffuseBloomIcon color={accent} size={52}>
+                <SmileLine size={26} color={dt.colors.ink3} strokeWidth={1.6} />
+              </DiffuseBloomIcon>
+            ) : (
+              <MoodFace
+                size={56}
+                variant={moodKey ? moodFaceVariant(moodKey) : 'okay'}
+                fill={moodKey ? moodFaceFill(moodKey) : stickers.yellow}
+              />
+            )}
             <View style={{ flex: 1 }}>
               <Display size={28} color={ink}>
                 {moodKey ? (MOOD_LABELS[moodKey] ?? moodKey) : t('pregnancy_dashboard_notLoggedYet')}
               </Display>
-              <Body size={12} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+              <Body size={12} color={muted} style={{ marginTop: 2, fontFamily: italicFont }}>
                 {moodKey ? t('pregnancy_dashboard_howYouFelt') : t('pregnancy_dashboard_tapMoodAbove')}
               </Body>
             </View>
@@ -142,60 +167,60 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         </PaperCard>
 
         {/* Hydration — full-width with 8 droplets */}
-        <PaperCard tint={stickers.blueSoft} radius={20} padding={18} flat>
+        <PaperCard tint={tileTint(stickers.blueSoft)} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            <LogWater size={20} />
+            {diffuse ? <DropletLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogWater size={20} />}
             <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelHydration')}</MonoCaps>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
             <Display size={32} color={ink}>{waterVal}</Display>
-            <Body size={14} color={muted} style={{ fontFamily: font.italic }}>{t('pregnancy_dashboard_perEight')}</Body>
+            <Body size={14} color={muted} style={{ fontFamily: italicFont }}>{t('pregnancy_dashboard_perEight')}</Body>
           </View>
           <View style={styles.dropletRow}>
             {Array.from({ length: 8 }, (_, i) => (
-              <Droplet key={i} filled={i < waterVal} fill={stickers.blue} muted={isDark ? colors.border : 'rgba(20,19,19,0.18)'} ink={ink} />
+              <Droplet key={i} filled={i < waterVal} fill={dropFill} muted={dropMuted} ink={ink} />
             ))}
           </View>
         </PaperCard>
 
         {/* 2-col grid: Sleep + Meals */}
         <View style={styles.twoCol}>
-          <PaperCard tint={stickers.lilacSoft} radius={20} padding={16} flat style={styles.colTile}>
+          <PaperCard tint={tileTint(stickers.lilacSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              <LogSleep size={18} />
+              {diffuse ? <MoonLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogSleep size={18} />}
               <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelSleep')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
               {sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '—'}
             </Display>
-            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: italicFont }}>
               {sleepVal !== null
                 ? sleepVal >= 7 ? t('pregnancy_dashboard_restfulNight') : t('pregnancy_dashboard_couldUseMore')
                 : t('pregnancy_dashboard_notLogged')}
             </Body>
             {sleepVal !== null && (
-              <View style={[styles.tileBar, { backgroundColor: 'rgba(20,19,19,0.08)' }]}>
+              <View style={[styles.tileBar, { backgroundColor: barTrack }]}>
                 <View style={[styles.tileBarFill, {
                   width: `${Math.min(100, (sleepVal / 9) * 100)}%`,
-                  backgroundColor: stickers.lilac,
+                  backgroundColor: diffuse ? accent : stickers.lilac,
                 }]} />
               </View>
             )}
           </PaperCard>
 
-          <PaperCard tint={stickers.peachSoft} radius={20} padding={16} flat style={styles.colTile}>
+          <PaperCard tint={tileTint(stickers.peachSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              <LogNutrition size={18} />
+              {diffuse ? <UtensilsLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogNutrition size={18} />}
               <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelMeals')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>{nutritionVal}/3</Display>
-            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: italicFont }}>
               {nutritionTotalCals > 0 ? t('pregnancy_dashboard_kcal', { count: nutritionTotalCals }) : t('pregnancy_dashboard_notLogged')}
             </Body>
-            <View style={[styles.tileBar, { backgroundColor: 'rgba(20,19,19,0.08)' }]}>
+            <View style={[styles.tileBar, { backgroundColor: barTrack }]}>
               <View style={[styles.tileBarFill, {
                 width: `${Math.min(100, (nutritionVal / 3) * 100)}%`,
-                backgroundColor: stickers.peach,
+                backgroundColor: diffuse ? accent : stickers.peach,
               }]} />
             </View>
           </PaperCard>
@@ -203,45 +228,45 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
 
         {/* 2-col grid: Exercise + (Kicks if T3 / else Weight today) */}
         <View style={styles.twoCol}>
-          <PaperCard tint={stickers.pinkSoft} radius={20} padding={16} flat style={styles.colTile}>
+          <PaperCard tint={tileTint(stickers.pinkSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              <LogExercise size={18} />
+              {diffuse ? <ActivityLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogExercise size={18} />}
               <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelExercise')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
               {exerciseLogged ? '✓' : '—'}
             </Display>
-            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+            <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: italicFont }}>
               {exerciseLogged ? t('pregnancy_dashboard_doneToday') : t('pregnancy_dashboard_notLogged')}
             </Body>
           </PaperCard>
 
           {weekNumber >= 28 ? (
-            <PaperCard tint={stickers.greenSoft} radius={20} padding={16} flat style={styles.colTile}>
+            <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
               <View style={styles.tileHeader}>
-                <LogKicks size={18} />
+                {diffuse ? <FootprintsLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogKicks size={18} />}
                 <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelKicks')}</MonoCaps>
               </View>
               <Display size={28} color={ink} style={{ marginTop: 4 }}>
                 {kicksVal !== null ? String(kicksVal) : '—'}
               </Display>
-              <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+              <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: italicFont }}>
                 {kicksVal !== null ? t('pregnancy_dashboard_sessionsToday') : t('pregnancy_dashboard_notLogged')}
               </Body>
             </PaperCard>
           ) : (
-            <PaperCard tint={stickers.greenSoft} radius={20} padding={16} flat style={styles.colTile}>
+            <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
               <View style={styles.tileHeader}>
-                <LogWeight size={18} />
+                {diffuse ? <ScaleLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogWeight size={18} />}
                 <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelWeight')}</MonoCaps>
               </View>
               <Display size={28} color={ink} style={{ marginTop: 4 }}>
                 {weightVal !== null ? `${weightVal.toFixed(1)}` : '—'}
                 {weightVal !== null && (
-                  <Text style={{ fontSize: 14, color: muted, fontFamily: font.italic }}>{t('pregnancy_todayDash_unitKg')}</Text>
+                  <Text style={{ fontSize: 14, color: muted, fontFamily: italicFont }}>{t('pregnancy_todayDash_unitKg')}</Text>
                 )}
               </Display>
-              <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: font.italic }}>
+              <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: italicFont }}>
                 {weightVal !== null ? t('pregnancy_dashboard_loggedToday') : t('pregnancy_dashboard_notLogged')}
               </Body>
             </PaperCard>
@@ -249,9 +274,9 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         </View>
 
         {/* 7-day weight sparkline */}
-        <PaperCard tint={colors.surface} radius={20} padding={18} flat>
+        <PaperCard tint={diffuse ? undefined : colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            <LogWeight size={18} />
+            {diffuse ? <ScaleLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogWeight size={18} />}
             <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelWeightLast7')}</MonoCaps>
           </View>
           {loading ? (
@@ -259,18 +284,18 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
               <ActivityIndicator color={muted} />
             </View>
           ) : weightHist.filter((h) => h.value > 0).length >= 2 ? (
-            <Sparkline points={fillDays(weightHist).values} color={stickers.lilac} ink={ink} />
+            <Sparkline points={fillDays(weightHist).values} color={chartColor} ink={ink} axis={diffuse ? dt.colors.line : ink} />
           ) : (
-            <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: font.italic }}>
+            <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: italicFont }}>
               {t('pregnancy_todayDash_weightNeedMore')}
             </Body>
           )}
         </PaperCard>
 
         {/* 7-day hydration bars */}
-        <PaperCard tint={colors.surface} radius={20} padding={18} flat>
+        <PaperCard tint={diffuse ? undefined : colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            <LogWater size={18} />
+            {diffuse ? <DropletLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogWater size={18} />}
             <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelHydrationLast7')}</MonoCaps>
           </View>
           {loading ? (
@@ -282,9 +307,12 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
               values={fillDays(waterHist).values}
               labels={fillDays(waterHist).labels}
               max={8}
-              color={stickers.blue}
+              color={barColor}
               ink={ink}
               muted={muted}
+              emptyBar={diffuse ? dt.colors.line : 'rgba(20,19,19,0.06)'}
+              barBorder={diffuse ? dt.colors.line2 : ink}
+              labelFont={diffuse ? diffuseFont.mono : undefined}
             />
           )}
         </PaperCard>
@@ -309,7 +337,7 @@ function Droplet({ filled, fill, muted, ink }: { filled: boolean; fill: string; 
   )
 }
 
-function Sparkline({ points, color, ink }: { points: number[]; color: string; ink: string }) {
+function Sparkline({ points, color, ink, axis }: { points: number[]; color: string; ink: string; axis?: string }) {
   const W = 280
   const H = 90
   const PAD = 6
@@ -319,13 +347,14 @@ function Sparkline({ points, color, ink }: { points: number[]; color: string; in
   const xs = points.map((_, i) => PAD + (i * (W - PAD * 2)) / (points.length - 1))
   const ys = points.map((v) => v === 0 ? H - PAD : H - PAD - ((v - min) / range) * (H - PAD * 2))
   const d = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${ys[i].toFixed(1)}`).join(' ')
+  const nodeStroke = axis ?? ink
 
   return (
     <View style={{ marginTop: 10, alignItems: 'center' }}>
       <Svg width={W} height={H}>
         <SvgPath d={d} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         {xs.map((x, i) => points[i] > 0 ? (
-          <SvgCircle key={i} cx={x} cy={ys[i]} r={3} fill={color} stroke={ink} strokeWidth={1} />
+          <SvgCircle key={i} cx={x} cy={ys[i]} r={3} fill={color} stroke={nodeStroke} strokeWidth={1} />
         ) : null)}
       </Svg>
     </View>
@@ -333,8 +362,10 @@ function Sparkline({ points, color, ink }: { points: number[]; color: string; in
 }
 
 function BarSeries({
-  values, labels, max, color, ink, muted,
-}: { values: number[]; labels: string[]; max: number; color: string; ink: string; muted: string }) {
+  values, labels, max, color, ink, muted, emptyBar, barBorder, labelFont,
+}: { values: number[]; labels: string[]; max: number; color: string; ink: string; muted: string; emptyBar?: string; barBorder?: string; labelFont?: string }) {
+  const empty = emptyBar ?? 'rgba(20,19,19,0.06)'
+  const border = barBorder ?? ink
   return (
     <View style={{ marginTop: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 70 }}>
@@ -345,10 +376,10 @@ function BarSeries({
               <View style={{
                 width: '100%',
                 height: `${pct * 100}%`,
-                backgroundColor: v > 0 ? color : 'rgba(20,19,19,0.06)',
+                backgroundColor: v > 0 ? color : empty,
                 borderRadius: 6,
                 borderWidth: 1,
-                borderColor: v > 0 ? ink : 'transparent',
+                borderColor: v > 0 ? border : 'transparent',
               }} />
             </View>
           )
@@ -356,7 +387,7 @@ function BarSeries({
       </View>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
         {labels.map((l, i) => (
-          <Text key={i} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: muted }}>
+          <Text key={i} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: muted, fontFamily: labelFont, letterSpacing: labelFont ? 0.5 : undefined, textTransform: labelFont ? 'uppercase' : undefined }}>
             {l}
           </Text>
         ))}

@@ -26,7 +26,8 @@ import {
   AffirmationMode,
 } from './affirmationTemplates'
 import { useSavedToast } from '../../ui/SavedToast'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { PillButton } from '../../ui/PillButton'
 import { StickerButton } from '../../ui/StickerButton'
 import { useTranslation } from '../../../lib/i18n'
@@ -52,14 +53,19 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
   const shotRefs = useRef<Record<string, ViewShot | null>>({})
   const toast = useSavedToast()
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   const templates = useMemo(() => templatesForMode(mode), [mode])
 
   const { stickers } = useTheme()
-  const paperBg = colors.bg
+  // Sheet-chrome canvas: reskin under Diffuse. Tile socket (cardBg/borderCol)
+  // stays on the current tokens — the tiles are exported PNG assets, untouched.
+  const paperBg = diffuse ? dt.colors.bg : colors.bg
   const cardBg = colors.surface
   const borderCol = colors.border
+  const chromeBorder = diffuse ? dt.colors.line : borderCol
 
   const handleHeaderShare = async () => {
     const first = templates[0]
@@ -92,7 +98,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
       <SafeAreaView style={[styles.container, { backgroundColor: paperBg }]} edges={['top']}>
 
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: borderCol }]}>
+        <View style={[styles.header, { borderBottomColor: chromeBorder }]}>
           <PillButton
             label="Close"
             onPress={onClose}
@@ -101,7 +107,15 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
             style={styles.headerSideBtn}
           />
           <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
+            <Text
+              style={[
+                styles.headerTitle,
+                diffuse
+                  ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
+                  : { color: colors.text, fontFamily: font.display },
+              ]}
+              numberOfLines={1}
+            >
               {t('pregnancy_shareAffirmation')}
             </Text>
           </View>
@@ -115,7 +129,14 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
         </View>
 
         {/* Instruction line */}
-        <Text style={[styles.instructions, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+        <Text
+          style={[
+            styles.instructions,
+            diffuse
+              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 11 }
+              : { color: colors.textMuted, fontFamily: font.bodyMedium },
+          ]}
+        >
           {styleMode === 'text' ? 'Tap to copy · Hold to copy' : 'Tap to save · Hold to copy'}
         </Text>
 

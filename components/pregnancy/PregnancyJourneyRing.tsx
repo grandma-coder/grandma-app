@@ -23,7 +23,8 @@ import { getWeekData } from '../../lib/pregnancyData'
 import { getWeekStat } from '../../lib/weekStats'
 import { toDateStr } from '../../lib/cycleLogic'
 import { useTranslation } from '../../lib/i18n'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, getDiffuseAccent, getModeField, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 const SVG_SIZE = 320
@@ -110,6 +111,19 @@ const LOG_DISPLAY: Record<string, { labelKey: string; color: string }> = {
   nesting:     { labelKey: 'preg_ring_log_nesting',     color: '#F5D652' }, // mustard
   birth_prep:  { labelKey: 'preg_ring_log_birthPrep',   color: '#F5B896' }, // peach
   exam_result: { labelKey: 'preg_ring_log_examResult',  color: '#F5D652' }, // mustard
+}
+
+// Diffuse: soft per-log dot color — cycle the peach→plum field stops so log
+// rows stay low-saturation and on-palette instead of the bold current hues.
+function diffuseLogColor(
+  type: string,
+  field: [string, string, string, string],
+  accent: string,
+): string {
+  const order = Object.keys(LOG_DISPLAY)
+  const idx = order.indexOf(type)
+  if (idx < 0) return accent
+  return field[idx % field.length]
 }
 
 function formatLogDay(dateISO: string): string {
@@ -235,6 +249,8 @@ interface Props {
 // ─── Component ───────────────────────────────────────────────────────────────
 export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   const { font, colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
 
@@ -495,6 +511,195 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   // Theme-aware colors for SVG (must be strings for SVG props)
   const orbitStroke = colors.border
 
+  // ─── Diffuse render — soft plum accent ring, serif hero #, mono data ────────
+  if (diffuse) {
+    const accent = getDiffuseAccent('preg', dt.isDark)
+    const field = getModeField('preg', dt.isDark)
+    const ink = dt.colors.ink
+    const ink2 = dt.colors.ink2
+    const ink3 = dt.colors.ink3
+    const line = dt.colors.line
+    const hairline = dt.colors.hairline
+    // Selected-week accent: active weeks glow plum, inactive fade to muted ink.
+    const dcol = selectedWeek <= weekNumber ? accent : ink3
+
+    return (
+      <View style={styles.container}>
+        {/* ── Ring ── */}
+        <View style={styles.ringWrap}>
+          <View {...panResponder.panHandlers} style={styles.ringStage}>
+            {/* Animated layer: per-week fruit stickers rotate around SVG center */}
+            <Animated.View style={[StyleSheet.absoluteFill, dotsAnimatedStyle]}>
+              {dots.map((d) => (
+                <View
+                  key={d.week}
+                  style={{
+                    position: 'absolute',
+                    left: d.bx - d.size / 2,
+                    top:  d.by - d.size / 2,
+                    width: d.size,
+                    height: d.size,
+                    opacity: d.opacity,
+                  }}
+                >
+                  <BabyIllustration
+                    week={d.week}
+                    size={d.size}
+                    character={false}
+                  />
+                </View>
+              ))}
+            </Animated.View>
+            {/* Static layer: hairline orbit track + accent anchor at 6 o'clock */}
+            <Svg width={SVG_SIZE} height={SVG_SIZE} style={StyleSheet.absoluteFill}>
+              <Circle
+                cx={CX} cy={CY} r={RING_R}
+                fill="none"
+                stroke={line}
+                strokeWidth={1}
+              />
+              {/* Soft inner halo so the framed illustration pops */}
+              <Circle
+                cx={CX} cy={CY + RING_R} r={14}
+                fill={dcol + '22'}
+                stroke="none"
+              />
+              {/* Outer ring — plum accent */}
+              <Circle
+                cx={CX} cy={CY + RING_R} r={16}
+                fill="none"
+                stroke={dcol}
+                strokeWidth={1.5}
+              />
+            </Svg>
+
+            {/* Center overlay */}
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              <View style={styles.centerInner}>
+                <Text style={[dstyles.centerLabel, { color: ink3 }]}>
+                  {t('preg_ring_weekLabel')}
+                </Text>
+                <Text style={[dstyles.centerNumber, { color: dcol }]}>
+                  {selectedWeek}
+                </Text>
+                <Text style={[dstyles.centerStatus, { color: ink3 }]}>
+                  {isCurrWeek ? t('preg_ring_statusHere') : isPastWeek ? t('preg_ring_statusCompleted') : t('preg_ring_statusUpcoming')}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <Text style={[dstyles.hint, { color: ink3 }]}>
+          {t('preg_ring_gestureHint')}
+        </Text>
+
+        {/* ── Bottom panel ── */}
+        <ScrollView
+          style={styles.panel}
+          contentContainerStyle={[styles.panelContent, { paddingBottom: insets.bottom + 32 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Size name + status — fruit anchors left, status on the right. */}
+          <View style={styles.sizeRow}>
+            <View style={styles.sizeBlock}>
+              <Text style={[dstyles.sizeText, { color: ink }]} numberOfLines={1}>
+                {article}{' '}
+                <Text style={[dstyles.sizeNameAccent, { color: ink }]}>
+                  {sizeName}
+                </Text>
+              </Text>
+              <Text style={[dstyles.dateLabel, { color: ink3 }]}>
+                {dateLabel} {t('common_dotSeparator')} {triLabel}
+              </Text>
+            </View>
+            <View style={[dstyles.statusPill, { borderColor: line }]}>
+              <Text style={[dstyles.statusPillText, { color: accent }]}>
+                {statusLabel}
+              </Text>
+            </View>
+          </View>
+
+          {/* LENGTH / WEIGHT stats — serif numbers, mono labels/units */}
+          <View style={styles.statsRow}>
+            <View style={[dstyles.statCell, { borderTopColor: hairline }]}>
+              <Text style={[dstyles.statLabel, { color: ink3 }]}>
+                {t('preg_ring_length')}
+              </Text>
+              <Text style={[dstyles.statValue, { color: ink }]}>
+                {stat.cm}
+                <Text style={[dstyles.statUnit, { color: ink2 }]}>
+                  {' ' + t('preg_weekCard_unitCm')}
+                </Text>
+              </Text>
+            </View>
+            <View style={[dstyles.statCell, { borderTopColor: hairline }]}>
+              <Text style={[dstyles.statLabel, { color: ink3 }]}>
+                {t('preg_ring_weight')}
+              </Text>
+              <Text style={[dstyles.statValue, { color: ink }]}>
+                {formatWeightValue(stat.g)}
+                <Text style={[dstyles.statUnit, { color: ink2 }]}>
+                  {' ' + formatWeightUnit(stat.g)}
+                </Text>
+              </Text>
+            </View>
+          </View>
+
+          {/* This week milestone note */}
+          <View style={styles.section}>
+            <Text style={[dstyles.sectionLabel, { color: ink3 }]}>
+              {t('preg_ring_thisWeek')}
+            </Text>
+            <Text style={[dstyles.noteText, { color: ink2 }]}>
+              {weekData.developmentFact}
+            </Text>
+          </View>
+
+          {/* Logged this week */}
+          <View style={styles.section}>
+            <Text style={[dstyles.sectionLabel, { color: ink3 }]}>
+              {t('preg_ring_loggedThisWeek')}
+            </Text>
+            {pillarGroups.length > 0 ? (
+              <View style={styles.logList}>
+                {pillarGroups.map((g) => (
+                  <View key={g.type} style={styles.logRow}>
+                    <View style={[styles.logDot, { backgroundColor: diffuseLogColor(g.type, field, accent) }]} />
+                    <View style={styles.logBody}>
+                      <View style={styles.logHeader}>
+                        <Text style={[dstyles.logLabel, { color: ink }]}>
+                          {g.label}
+                        </Text>
+                        <Text style={[dstyles.logDay, { color: ink3 }]}>
+                          {formatLogDay(g.lastDate)}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[dstyles.logDetail, { color: ink2 }]}
+                        numberOfLines={2}
+                      >
+                        {g.summary}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={[dstyles.emptyLogs, { color: ink3 }]}>
+                {isCurrWeek
+                  ? t('preg_ring_emptyCurrent')
+                  : isPastWeek
+                  ? t('preg_ring_emptyPast')
+                  : t('preg_ring_emptyFuture')}
+              </Text>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    )
+  }
+
   return (
     <View style={styles.container}>
       {/* ── Ring ── */}
@@ -726,4 +931,38 @@ const styles = StyleSheet.create({
   logDay:    { fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
   logDetail: { fontSize: 13, lineHeight: 19 },
   emptyLogs: { fontSize: 12, fontStyle: 'italic' },
+})
+
+// ─── Diffuse styles — serif hero + mono data voice, hairline chrome ─────────
+const dstyles = StyleSheet.create({
+  hint: { fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center', marginTop: 2 },
+
+  centerLabel:  { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 2 },
+  centerNumber: { fontFamily: diffuseFont.displayLight, fontSize: 60, fontWeight: '300', letterSpacing: -1.5, lineHeight: 64 },
+  centerStatus: { fontFamily: diffuseFont.mono, fontSize: 8.5, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 2 },
+
+  // Status pill — hairline outline, mono label (no filled pill under Diffuse)
+  statusPill:     { paddingHorizontal: 11, paddingVertical: 4, borderRadius: 99, borderWidth: 1 },
+  statusPillText: { fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase' },
+
+  // Size + date row
+  dateLabel:      { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase' },
+  sizeText:       { fontFamily: diffuseFont.display, fontSize: 26, letterSpacing: -0.4, textAlign: 'left' },
+  sizeNameAccent: { fontFamily: diffuseFont.italic, fontStyle: 'italic', fontWeight: '400' },
+
+  // Length / Weight stats
+  statCell:  { flex: 1, borderTopWidth: 1, paddingTop: 8, gap: 3 },
+  statLabel: { fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1.8, textTransform: 'uppercase' },
+  statValue: { fontFamily: diffuseFont.display, fontSize: 32, letterSpacing: -0.8, lineHeight: 36 },
+  statUnit:  { fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 0.5, fontWeight: '400' },
+
+  // Sections
+  sectionLabel: { fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1.6, textTransform: 'uppercase' },
+  noteText:     { fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22 },
+
+  // Log entries
+  logLabel:  { fontFamily: diffuseFont.bodySemiBold, fontSize: 13, letterSpacing: 0.2 },
+  logDay:    { fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase' },
+  logDetail: { fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 19 },
+  emptyLogs: { fontFamily: diffuseFont.italic, fontStyle: 'italic', fontSize: 12 },
 })

@@ -21,9 +21,16 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
-import { ChevronRight, Info, X, FlaskConical } from 'lucide-react-native'
+import {
+  ChevronRight, Info, X, FlaskConical,
+  Crown as CrownLine, Flower2 as FlowerLine, Heart as HeartLine, Moon as MoonLine,
+  Smile as SmileLine, Zap as ZapLine, Droplet as DropletLine, Leaf as LeafLine,
+  Activity as ActivityLine, Clock as ClockLine, Cross as CrossLine, Sparkles as SparklesLine,
+} from 'lucide-react-native'
 
-import { useTheme, font } from '../../constants/theme'
+import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../constants/theme'
+import { useIsDiffuse, DiffuseFieldSurface, SoftBloom, DiffuseGrain } from '../ui/diffuse/DiffuseKit'
+import { DiffuseSheet, DiffuseStatCard, DiffuseMetricTile, DiffuseSectionHeader, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -166,6 +173,24 @@ function renderPillarSticker(key: PillarKey, color: string, size = 24) {
   }
 }
 
+/** Diffuse: the pillar glyph as a thin Lucide line icon (over a bloom). */
+function renderPillarGlyph(key: PillarKey, color: string, size = 18) {
+  const p = { size, color, strokeWidth: 1.6 as const }
+  switch (key) {
+    case 'wellbeing':    return <CrownLine {...p} />
+    case 'weight':       return <FlowerLine {...p} />
+    case 'kicks':        return <HeartLine {...p} />
+    case 'sleep':        return <MoonLine {...p} />
+    case 'mood':         return <SmileLine {...p} />
+    case 'symptoms':     return <ZapLine {...p} />
+    case 'hydration':    return <DropletLine {...p} />
+    case 'nutrition':    return <LeafLine {...p} />
+    case 'exercise':     return <ActivityLine {...p} />
+    case 'contractions': return <ClockLine {...p} />
+    case 'birth':        return <CrossLine {...p} />
+  }
+}
+
 // ─── Trimester / week helpers ──────────────────────────────────────────────
 
 function trimesterFor(week: number): 1 | 2 | 3 {
@@ -211,6 +236,9 @@ interface PregnancyAnalyticsProps {
 
 export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {}) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const accent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -285,7 +313,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const showContractions = trimester === 3 || contractions.length > 0
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
@@ -299,19 +327,23 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               <Pressable
                 onPress={onExamsPress}
                 hitSlop={10}
-                style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                style={[styles.infoBtn, diffuse
+                  ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                  : { backgroundColor: colors.surface, borderColor: colors.border }]}
                 accessibilityLabel="Exams"
               >
-                <FlaskConical size={16} color={colors.text} strokeWidth={2} />
+                <FlaskConical size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
               </Pressable>
             ) : null}
             <Pressable
               onPress={() => setShowInfo(true)}
               hitSlop={10}
-              style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[styles.infoBtn, diffuse
+                ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                : { backgroundColor: colors.surface, borderColor: colors.border }]}
               accessibilityLabel="How analytics work"
             >
-              <Info size={16} color={colors.text} strokeWidth={2} />
+              <Info size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
           </View>
         </View>
@@ -325,54 +357,127 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
           />
         </Animated.View>
 
+        {/* PeriodSelector self-gates to Diffuse segment pills. */}
         <PeriodSelector value={period} onChange={setPeriod} showCustom={false} />
 
         {/* Hero: Weight gain chart — tap to expand */}
-        <BigChartCard
-          label={`WEIGHT GAIN · WEEK ${weekNumber}`}
-          value={weightValue}
-          unit={weightUnit}
-          blobColor={stickers.lilacSoft}
-          onPress={() => setOpenPillar('weight')}
-        >
-          <MiniLineChart data={weights} color={stickers.lilac} />
-        </BigChartCard>
+        {diffuse ? (
+          <Pressable onPress={() => setOpenPillar('weight')} style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}>
+            <DiffuseFieldSurface
+              mode="preg"
+              isDark={dt.isDark}
+              radius={28}
+              style={{ marginHorizontal: 20, marginTop: 8, padding: 20, borderWidth: 1, borderColor: dt.colors.line }}
+            >
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+                {`WEIGHT GAIN · WEEK ${weekNumber}`}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 4, gap: 6 }}>
+                <Text style={{ fontFamily: diffuseFont.display, fontSize: 38, lineHeight: 40, color: dt.colors.ink, letterSpacing: -0.5 }}>
+                  {weightValue}
+                </Text>
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: dt.colors.ink3, paddingBottom: 8 }}>
+                  {weightUnit}
+                </Text>
+              </View>
+              <View style={{ marginTop: 14 }}>
+                <MiniLineChart data={weights} color={accent} />
+              </View>
+            </DiffuseFieldSurface>
+          </Pressable>
+        ) : (
+          <BigChartCard
+            label={`WEIGHT GAIN · WEEK ${weekNumber}`}
+            value={weightValue}
+            unit={weightUnit}
+            blobColor={stickers.lilacSoft}
+            onPress={() => setOpenPillar('weight')}
+          >
+            <MiniLineChart data={weights} color={stickers.lilac} />
+          </BigChartCard>
+        )}
 
         {/* 2×2 tappable stat grid */}
-        <View style={styles.grid}>
-          <View style={styles.gridRow}>
-            <MiniStatTile
-              label="KICKS / DAY"
-              value={avgKicks ? String(avgKicks) : '—'}
-              sticker={<Heart size={28} fill={stickers.pink} />}
-              tint={stickers.pinkSoft}
-              onPress={() => setOpenPillar('kicks')}
-            />
-            <MiniStatTile
-              label="SYMPTOMS"
-              value={symptomCount > 0 ? `${symptomCount} logged` : 'None'}
-              sticker={<Bolt size={28} fill={stickers.yellow} />}
-              tint={stickers.yellowSoft}
-              onPress={() => setOpenPillar('symptoms')}
-            />
+        {diffuse ? (
+          <View style={styles.grid}>
+            <View style={styles.gridRow}>
+              <DiffuseStatCard
+                flex={1}
+                label="KICKS / DAY"
+                value={avgKicks ? String(avgKicks) : undefined}
+                emptyLabel="—"
+                icon={renderPillarGlyph('kicks', dt.colors.ink3, 18)}
+                accent={accent}
+                onPress={() => setOpenPillar('kicks')}
+              />
+              <DiffuseStatCard
+                flex={1}
+                label="SYMPTOMS"
+                value={symptomCount > 0 ? String(symptomCount) : undefined}
+                sub={symptomCount > 0 ? 'LOGGED' : undefined}
+                emptyLabel="None"
+                icon={renderPillarGlyph('symptoms', dt.colors.ink3, 18)}
+                accent={accent}
+                onPress={() => setOpenPillar('symptoms')}
+              />
+            </View>
+            <View style={styles.gridRow}>
+              <DiffuseStatCard
+                flex={1}
+                label="SLEEP"
+                value={sleepAvg !== '—' ? sleepAvg : undefined}
+                emptyLabel="—"
+                icon={renderPillarGlyph('sleep', dt.colors.ink3, 18)}
+                accent={accent}
+                onPress={() => setOpenPillar('sleep')}
+              />
+              <DiffuseStatCard
+                flex={1}
+                label="WELLBEING"
+                value={wellbeing ? `${wellbeing.overall}%` : undefined}
+                emptyLabel="—"
+                icon={renderPillarGlyph('wellbeing', dt.colors.ink3, 18)}
+                accent={accent}
+                onPress={() => setOpenPillar('wellbeing')}
+              />
+            </View>
           </View>
-          <View style={styles.gridRow}>
-            <MiniStatTile
-              label="SLEEP"
-              value={sleepAvg}
-              sticker={<Moon size={28} fill={stickers.lilac} />}
-              tint={stickers.lilacSoft}
-              onPress={() => setOpenPillar('sleep')}
-            />
-            <MiniStatTile
-              label="WELLBEING"
-              value={wellbeing ? `${wellbeing.overall}%` : '—'}
-              sticker={<Crown size={28} fill={stickers.green} />}
-              tint={stickers.greenSoft}
-              onPress={() => setOpenPillar('wellbeing')}
-            />
+        ) : (
+          <View style={styles.grid}>
+            <View style={styles.gridRow}>
+              <MiniStatTile
+                label="KICKS / DAY"
+                value={avgKicks ? String(avgKicks) : '—'}
+                sticker={<Heart size={28} fill={stickers.pink} />}
+                tint={stickers.pinkSoft}
+                onPress={() => setOpenPillar('kicks')}
+              />
+              <MiniStatTile
+                label="SYMPTOMS"
+                value={symptomCount > 0 ? `${symptomCount} logged` : 'None'}
+                sticker={<Bolt size={28} fill={stickers.yellow} />}
+                tint={stickers.yellowSoft}
+                onPress={() => setOpenPillar('symptoms')}
+              />
+            </View>
+            <View style={styles.gridRow}>
+              <MiniStatTile
+                label="SLEEP"
+                value={sleepAvg}
+                sticker={<Moon size={28} fill={stickers.lilac} />}
+                tint={stickers.lilacSoft}
+                onPress={() => setOpenPillar('sleep')}
+              />
+              <MiniStatTile
+                label="WELLBEING"
+                value={wellbeing ? `${wellbeing.overall}%` : '—'}
+                sticker={<Crown size={28} fill={stickers.green} />}
+                tint={stickers.greenSoft}
+                onPress={() => setOpenPillar('wellbeing')}
+              />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Mood trend strip */}
         {moodTrend.length > 0 && (
@@ -392,12 +497,14 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle="Glasses per day · target 8"
             onPress={() => setOpenPillar('hydration')}
           >
-            <View style={[styles.chartCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={[styles.chartCard, diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+              : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
               <MiniBarChart
                 data={hydrationData}
                 labels={hydrationHistory.map((h) => shortDay(h.date))}
                 longLabels={hydrationHistory.map((h) => formatLogDate(h.date))}
-                color={stickers.blue}
+                color={diffuse ? accent : stickers.blue}
                 target={8}
                 unit="gl"
               />
@@ -412,7 +519,9 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle="4 nutrients × 7 days"
             onPress={() => setOpenPillar('nutrition')}
           >
-            <View style={[styles.chartCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={[styles.chartCard, diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+              : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
               <NutritionMini matrix={nutritionMatrix} />
             </View>
           </Section>
@@ -425,12 +534,14 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle="Minutes per session · target 150 / week"
             onPress={() => setOpenPillar('exercise')}
           >
-            <View style={[styles.chartCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={[styles.chartCard, diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+              : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
               <MiniBarChart
                 data={exerciseHistory.map((e) => e.minutes)}
                 labels={exerciseHistory.map((e) => shortDay(e.date))}
                 longLabels={exerciseHistory.map((e) => formatLogDate(e.date))}
-                color={stickers.coral}
+                color={diffuse ? accent : stickers.coral}
                 target={Math.round(150 / 7)}
                 unit="min"
               />
@@ -445,14 +556,16 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle={`${symptomFreq.length} unique this period`}
             onPress={() => setOpenPillar('symptoms')}
           >
-            <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={[styles.listCard, diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+              : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
               {symptomFreq.map((s, i) => (
                 <View
                   key={s.symptom}
                   style={[
                     styles.listRow,
                     i < symptomFreq.length - 1 && {
-                      borderBottomColor: colors.borderLight,
+                      borderBottomColor: diffuse ? dt.colors.line : colors.borderLight,
                       borderBottomWidth: StyleSheet.hairlineWidth,
                     },
                   ]}
@@ -460,19 +573,29 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                   <View
                     style={[
                       styles.rank,
-                      { backgroundColor: stickers.yellowSoft, borderColor: 'rgba(20,19,19,0.12)' },
+                      diffuse
+                        ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                        : { backgroundColor: stickers.yellowSoft, borderColor: 'rgba(20,19,19,0.12)' },
                     ]}
                   >
-                    <Text style={[styles.rankText, { color: colors.text }]}>{i + 1}</Text>
+                    <Text style={[styles.rankText, diffuse
+                      ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                      : { color: colors.text }]}>{i + 1}</Text>
                   </View>
-                  <Text style={[styles.listLabel, { color: colors.text }]}>{s.symptom}</Text>
+                  <Text style={[styles.listLabel, diffuse
+                    ? { color: dt.colors.ink, fontFamily: diffuseFont.body }
+                    : { color: colors.text }]}>{s.symptom}</Text>
                   <View
                     style={[
                       styles.countChip,
-                      { backgroundColor: stickers.yellowSoft, borderColor: 'rgba(20,19,19,0.12)' },
+                      diffuse
+                        ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                        : { backgroundColor: stickers.yellowSoft, borderColor: 'rgba(20,19,19,0.12)' },
                     ]}
                   >
-                    <Text style={[styles.countText, { color: colors.text }]}>{t('preg_analytics_times_prefix', { count: s.count })}</Text>
+                    <Text style={[styles.countText, diffuse
+                      ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' }
+                      : { color: colors.text }]}>{t('preg_analytics_times_prefix', { count: s.count })}</Text>
                   </View>
                 </View>
               ))}
@@ -484,10 +607,12 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         <View style={{ paddingHorizontal: 20, marginTop: 28, gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
-              <Text style={{ fontSize: 20, color: colors.text, fontFamily: font.display, letterSpacing: -0.3 }}>
+              <Text style={{ fontSize: 20, color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.3 }}>
                 {'Labor & birth'}
               </Text>
-              <Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: font.bodyMedium, marginTop: 2 }}>
+              <Text style={diffuse
+                ? { fontSize: 10, color: dt.colors.ink3, fontFamily: diffuseFont.mono, marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }
+                : { fontSize: 12, color: colors.textMuted, fontFamily: font.bodyMedium, marginTop: 2 }}>
                 {'Track contractions and how ready you are'}
               </Text>
             </View>
@@ -561,6 +686,8 @@ function Section({
   children: React.ReactNode
 }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
       <Pressable
@@ -570,16 +697,18 @@ function Section({
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 20, color: colors.text, fontFamily: font.display, letterSpacing: -0.3 }}>
+            <Text style={{ fontSize: 20, color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.3 }}>
               {title}
             </Text>
             {subtitle ? (
-              <Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: font.bodyMedium, marginTop: 2 }}>
+              <Text style={diffuse
+                ? { fontSize: 10, color: dt.colors.ink3, fontFamily: diffuseFont.mono, marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }
+                : { fontSize: 12, color: colors.textMuted, fontFamily: font.bodyMedium, marginTop: 2 }}>
                 {subtitle}
               </Text>
             ) : null}
           </View>
-          {onPress ? <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} /> : null}
+          {onPress ? <ChevronRight size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} /> : null}
         </View>
       </Pressable>
       {children}
@@ -591,9 +720,13 @@ function Section({
 
 function MoodTrendStrip({ data }: { data: { log_date: string; value: string | null }[] }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const entries = data.slice(-12)
   return (
-    <View style={[styles.moodStripCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+    <View style={[styles.moodStripCard, diffuse
+      ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+      : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
       <View style={styles.moodStripRow}>
         {entries.map((e, i) => (
           <View key={i} style={{ alignItems: 'center', gap: 4 }}>
@@ -602,7 +735,9 @@ function MoodTrendStrip({ data }: { data: { log_date: string; value: string | nu
               variant={moodFaceVariant(e.value ?? undefined)}
               fill={moodFaceFill(e.value ?? undefined)}
             />
-            <Text style={{ fontSize: 9, color: colors.textMuted, fontFamily: font.bodyMedium }}>
+            <Text style={diffuse
+              ? { fontSize: 9, color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4 }
+              : { fontSize: 9, color: colors.textMuted, fontFamily: font.bodyMedium }}>
               {shortDay(e.log_date)}
             </Text>
           </View>
@@ -620,6 +755,9 @@ function NutritionMini({
   matrix: { iron: boolean[]; folic: boolean[]; protein: boolean[]; calcium: boolean[]; dates: string[] }
 }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const accent = getDiffuseAccent('preg', dt.isDark)
   const rows = [
     { label: 'Iron',    arr: matrix.iron,    color: stickers.coral },
     { label: 'Folic',   arr: matrix.folic,   color: stickers.green },
@@ -631,8 +769,12 @@ function NutritionMini({
       {rows.map((r) => (
         <View key={r.label}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text style={{ color: colors.text, fontSize: 12, fontFamily: font.bodyMedium }}>{r.label}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+            <Text style={diffuse
+              ? { color: dt.colors.ink, fontSize: 12, fontFamily: diffuseFont.body }
+              : { color: colors.text, fontSize: 12, fontFamily: font.bodyMedium }}>{r.label}</Text>
+            <Text style={diffuse
+              ? { color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 0.4 }
+              : { color: colors.textMuted, fontSize: 11 }}>
               {r.arr.filter(Boolean).length}/{r.arr.length}
             </Text>
           </View>
@@ -644,8 +786,8 @@ function NutritionMini({
                   flex: 1,
                   height: 14,
                   borderRadius: 4,
-                  backgroundColor: hit ? r.color : stickers.greenSoft,
-                  opacity: hit ? 1 : 0.35,
+                  backgroundColor: diffuse ? (hit ? accent : dt.colors.line) : (hit ? r.color : stickers.greenSoft),
+                  opacity: diffuse ? 1 : (hit ? 1 : 0.35),
                 }}
               />
             ))}
@@ -662,6 +804,9 @@ function HeroWeekCard({
   weekNumber, trimester, daysToDue,
 }: { weekNumber: number; trimester: 1 | 2 | 3; daysToDue: number | null }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const accent = getDiffuseAccent('preg', dt.isDark)
   const palette = pillarPalette('weight', stickers)
   const dDaysText = daysToDue === null
     ? '—'
@@ -670,6 +815,44 @@ function HeroWeekCard({
     : daysToDue === 0
     ? 'Due today'
     : `${Math.abs(daysToDue)} day${daysToDue === -1 ? '' : 's'} past due`
+
+  if (diffuse) {
+    return (
+      <DiffuseFieldSurface
+        mode="preg"
+        isDark={dt.isDark}
+        radius={26}
+        style={[styles.hero, { borderWidth: 1, borderColor: dt.colors.line }]}
+      >
+        <View style={[styles.heroChip, { borderWidth: 0 }]}>
+          <DiffuseBloomIcon color={accent} size={38}>
+            {renderPillarGlyph('weight', dt.colors.ink3, 22)}
+          </DiffuseBloomIcon>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.heroLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+            {trimesterLabel(trimester).toUpperCase()}
+          </Text>
+          <Text style={[styles.heroValue, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+            {'Week '}{weekNumber}
+          </Text>
+          <Text style={[styles.heroSub, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase', fontSize: 10 }]}>
+            {dDaysText}
+          </Text>
+        </View>
+        <View style={styles.heroBadge}>
+          <View style={[styles.heroBadgeInner, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
+            <Text style={[styles.heroBadgeNum, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+              {trimester}
+            </Text>
+            <Text style={[styles.heroBadgeT, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+              {'TRI'}
+            </Text>
+          </View>
+        </View>
+      </DiffuseFieldSurface>
+    )
+  }
 
   return (
     <View
@@ -720,7 +903,52 @@ function HeroBanner({
   onPress: () => void
 }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const accent = getDiffuseAccent('preg', dt.isDark)
   const palette = pillarPalette(pillarKey, stickers)
+
+  if (diffuse) {
+    return (
+      <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}>
+        <DiffuseFieldSurface
+          mode="preg"
+          isDark={dt.isDark}
+          radius={26}
+          style={[styles.hero, { marginHorizontal: 0, marginTop: 0, marginBottom: 0, borderWidth: 1, borderColor: dt.colors.line }]}
+        >
+          <View style={[styles.heroChip, { borderWidth: 0 }]}>
+            <DiffuseBloomIcon color={accent} size={38}>
+              {renderPillarGlyph(pillarKey, dt.colors.ink3, 22)}
+            </DiffuseBloomIcon>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.heroLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+              {label}
+            </Text>
+            <Text style={[styles.heroValue, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+              {title}
+            </Text>
+            {subtitle ? (
+              <Text style={[styles.heroSub, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]} numberOfLines={2}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </View>
+          <View style={styles.heroBadge}>
+            <View style={[styles.heroBadgeInner, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
+              <Text style={[styles.heroBadgeNum, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+                {badgeText}
+              </Text>
+              <Text style={[styles.heroBadgeT, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                {badgeCaption}
+              </Text>
+            </View>
+          </View>
+        </DiffuseFieldSurface>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable
@@ -866,6 +1094,9 @@ interface DetailProps {
 function PillarDetailModal(props: DetailProps) {
   const { pillarKey, onClose } = props
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -874,6 +1105,18 @@ function PillarDetailModal(props: DetailProps) {
   const label = t(PILLAR_LABEL_KEY[pillarKey] as any)
   const palette = pillarPalette(pillarKey, stickers)
   const sheetH = SCREEN_H * 0.87
+
+  if (diffuse) {
+    return (
+      <DiffuseSheet visible title={label} onClose={onClose} chip={meta.blurb.toUpperCase()}>
+        <View style={{ gap: 16, paddingTop: 4 }}>
+          <Animated.View entering={FadeInDown.duration(220)}>
+            <DetailDispatcher {...props} pillarKey={pillarKey} accentColor={dAccent} accentTint={undefined} />
+          </Animated.View>
+        </View>
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
@@ -1007,12 +1250,18 @@ function DetailDispatcher(props: DetailProps & { pillarKey: PillarKey; accentCol
 
 function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()
 
   if (!wellbeing) {
     return (
       <PaperCard>
-        <Body size={13} color={colors.textMuted}>
+        <Body size={13} color={muted}>
           Not enough recent logs to compute wellbeing yet. Keep logging sleep, mood, water,
           nutrition, and movement and a score will appear here.
         </Body>
@@ -1033,12 +1282,16 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
 
   return (
     <>
-      <View style={[styles.scoreHero, { backgroundColor: stickers.greenSoft, borderColor: 'rgba(20,19,19,0.12)' }]}>
-        <Text style={{ color: colors.text, fontSize: 56, fontFamily: font.display, letterSpacing: -1 }}>
-          {wellbeing.overall}%
-        </Text>
-        <Body size={13} color={colors.textSecondary}>{t('preg_analytics_overall_last7')}</Body>
-      </View>
+      {diffuse ? (
+        <ScoreHero value={`${wellbeing.overall}%`} caption={t('preg_analytics_overall_last7')} />
+      ) : (
+        <View style={[styles.scoreHero, { backgroundColor: stickers.greenSoft, borderColor: 'rgba(20,19,19,0.12)' }]}>
+          <Text style={{ color: colors.text, fontSize: 56, fontFamily: font.display, letterSpacing: -1 }}>
+            {wellbeing.overall}%
+          </Text>
+          <Body size={13} color={colors.textSecondary}>{t('preg_analytics_overall_last7')}</Body>
+        </View>
+      )}
 
       <StatTilesRow
         tint={accentTint}
@@ -1058,13 +1311,13 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
             return (
               <View key={p.key}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text style={{ color: colors.text, fontSize: 14, fontFamily: font.bodyMedium }}>{p.label}</Text>
-                  <Text style={{ color: p.color, fontSize: 13, fontFamily: font.bodySemiBold }}>
+                  <Text style={{ color: ink, fontSize: 14, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }}>{p.label}</Text>
+                  <Text style={{ color: diffuse ? dt.colors.ink : p.color, fontSize: 13, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }}>
                     {v.toFixed(1)} / 10
                   </Text>
                 </View>
-                <View style={{ height: 8, borderRadius: 999, backgroundColor: p.tint, overflow: 'hidden' }}>
-                  <View style={{ width: `${pct}%`, height: '100%', backgroundColor: p.color, borderRadius: 999 }} />
+                <View style={{ height: diffuse ? 3 : 8, borderRadius: 999, backgroundColor: diffuse ? dt.colors.line : p.tint, overflow: 'hidden' }}>
+                  <View style={{ width: `${pct}%`, height: '100%', backgroundColor: diffuse ? dAccent : p.color, borderRadius: 999 }} />
                 </View>
               </View>
             )
@@ -1073,11 +1326,11 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
       </PaperCard>
 
       <PaperCard title="How it's computed">
-        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+        <Body size={13} color={sec} style={{ lineHeight: 20 }}>
           Each pillar scores 0–10 from your last 7 days of logs.{' '}
-          <Body size={13} color={colors.text}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
-          <Body size={13} color={colors.text}>{'Mood'}</Body>{' '}counts positive entries.{' '}
-          <Body size={13} color={colors.text}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
+          <Body size={13} color={ink}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
+          <Body size={13} color={ink}>{'Mood'}</Body>{' '}counts positive entries.{' '}
+          <Body size={13} color={ink}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
           logs-per-day against healthy pregnancy targets. Overall = average × 10.
         </Body>
       </PaperCard>
@@ -1089,6 +1342,10 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
 
 function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()
   const validEntries = weightHistory.filter((e) => e.weight > 0)
   const weights = validEntries.map((e) => e.weight)
@@ -1123,7 +1380,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
             height={180}
           />
         ) : (
-          <Body size={13} color={colors.textMuted}>
+          <Body size={13} color={muted}>
             {t('preg_analytics_noWeightTrend')}
           </Body>
         )}
@@ -1136,7 +1393,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
       ) : null}
 
       <PaperCard title={`Healthy range · Week ${weekNumber}`}>
-        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+        <Body size={13} color={sec} style={{ lineHeight: 20 }}>
           {trimester === 1
             ? 'In the first trimester, gaining 0.5–2 kg total is typical — many people lose a little from nausea.'
             : trimester === 2
@@ -1159,6 +1416,14 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
 
 function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
+  const barFill = diffuse ? dAccent : stickers.pink
+  const barTrack = diffuse ? dt.colors.line : stickers.pinkSoft
   const { t } = useTranslation()
   const avg = kickSessions.length > 0
     ? Math.round(kickSessions.reduce((a, b) => a + b.kicks, 0) / kickSessions.length)
@@ -1199,9 +1464,9 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
 
       <PaperCard title="Recent kick counts">
         {kickSessions.length > 0 ? (
-          <MiniBarChart data={kickValues} labels={kickLabels} color={stickers.pink} />
+          <MiniBarChart data={kickValues} labels={kickLabels} color={diffuse ? dAccent : stickers.pink} />
         ) : (
-          <Body size={13} color={colors.textMuted}>
+          <Body size={13} color={muted}>
             {t('preg_analytics_noKickSessions')}
           </Body>
         )}
@@ -1209,21 +1474,21 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
 
       {weekNumber >= 24 ? (
         <PaperCard title="10-in-2-hours rule">
-          <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
             From week 28, aim for 10 distinct movements in under 2 hours. Less than that warrants a
             call to your OB.
           </Body>
           <View style={{ marginTop: 10 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-              <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium }}>
+              <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }}>
                 {t('preg_analytics_sessionsHittingTarget')}
               </Text>
-              <Text style={{ color: stickers.pink, fontSize: 13, fontFamily: font.bodySemiBold }}>
+              <Text style={{ color: diffuse ? dt.colors.ink : stickers.pink, fontSize: 13, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }}>
                 {meets10in2h} / {kickSessions.length} ({compliancePct}%)
               </Text>
             </View>
-            <View style={{ height: 8, borderRadius: 999, backgroundColor: stickers.pinkSoft, overflow: 'hidden' }}>
-              <View style={{ width: `${compliancePct}%`, height: '100%', backgroundColor: stickers.pink, borderRadius: 999 }} />
+            <View style={{ height: diffuse ? 3 : 8, borderRadius: 999, backgroundColor: barTrack, overflow: 'hidden' }}>
+              <View style={{ width: `${compliancePct}%`, height: '100%', backgroundColor: barFill, borderRadius: 999 }} />
             </View>
           </View>
         </PaperCard>
@@ -1237,11 +1502,11 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
               return (
                 <View key={b.label}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium }}>{b.label}</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('preg_analytics_stat_value_pct', { value: b.value, pct })}</Text>
+                    <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }}>{b.label}</Text>
+                    <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>{t('preg_analytics_stat_value_pct', { value: b.value, pct })}</Text>
                   </View>
-                  <View style={{ height: 6, borderRadius: 3, backgroundColor: stickers.pinkSoft, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: stickers.pink, borderRadius: 3 }} />
+                  <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: barTrack, overflow: 'hidden' }}>
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: barFill, borderRadius: 3 }} />
                   </View>
                 </View>
               )
@@ -1260,6 +1525,12 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
 
 function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()
   const hours = sleepHistory.map((s) => s.hours)
   const labels = sleepHistory.map((s) => shortDay(s.date))
@@ -1282,9 +1553,9 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
 
       <PaperCard title="Sleep hours per night">
         {hours.length > 0 ? (
-          <MiniBarChart data={hours} labels={labels} color={stickers.lilac} />
+          <MiniBarChart data={hours} labels={labels} color={diffuse ? dAccent : stickers.lilac} />
         ) : (
-          <Body size={13} color={colors.textMuted}>
+          <Body size={13} color={muted}>
             {t('preg_analytics_noSleepLogs')}
           </Body>
         )}
@@ -1292,10 +1563,10 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
 
       {hours.length > 0 ? (
         <PaperCard title="Sleep debt">
-          <Text style={{ color: colors.text, fontSize: 24, fontFamily: font.display }}>
+          <Text style={{ color: ink, fontSize: 24, fontFamily: diffuse ? diffuseFont.display : font.display }}>
             {debt.toFixed(1)}{'h'}
           </Text>
-          <Body size={13} color={colors.textSecondary}>
+          <Body size={13} color={sec}>
             vs an 8-hour target across the last {hours.length} nights you logged.
           </Body>
         </PaperCard>
@@ -1308,6 +1579,11 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
 
 function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()
   const positive = ['happy', 'radiant', 'energetic', 'okay']
   const totals: Record<string, number> = {}
@@ -1339,7 +1615,7 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
               .map(([mood, count]): MoodBubbleItem => ({ mood, count }))}
           />
         ) : (
-          <Body size={13} color={colors.textMuted}>{t('preg_analytics_no_moods')}</Body>
+          <Body size={13} color={muted}>{t('preg_analytics_no_moods')}</Body>
         )}
       </PaperCard>
 
@@ -1353,13 +1629,13 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
               return (
                 <View key={mood}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium, textTransform: 'capitalize' }}>
+                    <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium, textTransform: 'capitalize' }}>
                       {mood}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('preg_analytics_stat_value_pct', { value: n, pct })}</Text>
+                    <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>{t('preg_analytics_stat_value_pct', { value: n, pct })}</Text>
                   </View>
-                  <View style={{ height: 6, borderRadius: 3, backgroundColor: tint, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 3 }} />
+                  <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: diffuse ? dt.colors.line : tint, overflow: 'hidden' }}>
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: diffuse ? dAccent : color, borderRadius: 3 }} />
                   </View>
                 </View>
               )
@@ -1375,6 +1651,12 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
 
 function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()
   const total = symptomFreq.reduce((a, b) => a + b.count, 0)
 
@@ -1402,28 +1684,28 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
               return (
                 <View key={s.symptom}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium, textTransform: 'capitalize' }}>
+                    <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium, textTransform: 'capitalize' }}>
                       {s.symptom}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
+                    <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
                   </View>
-                  <View style={{ height: 6, borderRadius: 3, backgroundColor: stickers.yellowSoft, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: stickers.yellow, borderRadius: 3 }} />
+                  <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: diffuse ? dt.colors.line : stickers.yellowSoft, overflow: 'hidden' }}>
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: diffuse ? dAccent : stickers.yellow, borderRadius: 3 }} />
                   </View>
                 </View>
               )
             })}
           </View>
         ) : (
-          <Body size={13} color={colors.textMuted}>{t('preg_analytics_no_symptoms')}</Body>
+          <Body size={13} color={muted}>{t('preg_analytics_no_symptoms')}</Body>
         )}
       </PaperCard>
 
       {severeHits.length > 0 ? (
         <PaperCard title="Worth a call">
-          <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
             You've logged{' '}
-            <Body size={13} color={colors.text}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
+            <Body size={13} color={ink}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
             . These can be normal but warrant a call to your provider — especially if persistent or severe.
           </Body>
         </PaperCard>
@@ -1436,9 +1718,16 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
 
 function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
+  const df = diffuse ? diffuseFont : null
   const { t } = useTranslation()
-  const accent = accentColor ?? stickers.blue
-  const tint = accentTint ?? stickers.blueSoft
+  const accent = diffuse ? dAccent : (accentColor ?? stickers.blue)
+  const tint = diffuse ? dt.colors.line : (accentTint ?? stickers.blueSoft)
   const TARGET = 8
 
   const data = hydrationHistory.map((h) => h.glasses)
@@ -1496,28 +1785,28 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
               width: 84,
               height: 84,
               borderRadius: 999,
-              backgroundColor: tint,
+              backgroundColor: diffuse ? 'transparent' : tint,
               borderWidth: 1.5,
-              borderColor: 'rgba(20,19,19,0.12)',
+              borderColor: diffuse ? dt.colors.line2 : 'rgba(20,19,19,0.12)',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Text style={{ fontFamily: font.display, fontSize: 30, color: colors.text, letterSpacing: -0.5 }}>
+            <Text style={{ fontFamily: df?.display ?? font.display, fontSize: 30, color: ink, letterSpacing: -0.5 }}>
               {todayGlasses}
             </Text>
-            <Text style={{ fontFamily: font.bodyMedium, fontSize: 10, color: colors.textSecondary, marginTop: -2 }}>
+            <Text style={{ fontFamily: df?.mono ?? font.bodyMedium, fontSize: 10, color: sec, marginTop: -2 }}>
               {'of '}{TARGET}
             </Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font.display, fontSize: 22, color: colors.text, letterSpacing: -0.4 }}>
+            <Text style={{ fontFamily: df?.display ?? font.display, fontSize: 22, color: ink, letterSpacing: -0.4 }}>
               {todayPct}{'% of goal'}
             </Text>
-            <Text style={{ fontFamily: font.bodyMedium, fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
+            <Text style={{ fontFamily: df?.body ?? font.bodyMedium, fontSize: 13, color: sec, marginTop: 2 }}>
               {todayRemaining > 0 ? `${todayRemaining} more glass${todayRemaining === 1 ? '' : 'es'} to go.` : 'Goal reached. Keep sipping.'}
             </Text>
-            <View style={{ marginTop: 10, height: 8, borderRadius: 999, backgroundColor: tint, overflow: 'hidden' }}>
+            <View style={{ marginTop: 10, height: diffuse ? 3 : 8, borderRadius: 999, backgroundColor: diffuse ? dt.colors.line : tint, overflow: 'hidden' }}>
               <View style={{ width: `${todayPct}%`, height: '100%', backgroundColor: accent, borderRadius: 999 }} />
             </View>
           </View>
@@ -1537,20 +1826,20 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                   aspectRatio: 0.6,
                   borderRadius: 8,
                   borderWidth: 1.5,
-                  borderColor: filled ? accent : 'rgba(20,19,19,0.18)',
+                  borderColor: filled ? accent : (diffuse ? dt.colors.line2 : 'rgba(20,19,19,0.18)'),
                   backgroundColor: filled ? accent : 'transparent',
                   alignItems: 'center',
                   justifyContent: 'flex-end',
                   paddingBottom: 4,
                 }}
               >
-                {filled ? <Drop size={14} fill={colors.surface} /> : null}
+                {filled ? <Drop size={14} fill={diffuse ? dt.colors.bg : colors.surface} /> : null}
               </View>
             )
           })}
         </View>
         {todayGlasses > TARGET ? (
-          <Text style={{ marginTop: 10, fontSize: 11, color: colors.textSecondary, fontFamily: font.bodyMedium }}>
+          <Text style={{ marginTop: 10, fontSize: 11, color: sec, fontFamily: df?.body ?? font.bodyMedium }}>
             {'+'}{todayGlasses - TARGET}{' extra · keep going'}
           </Text>
         ) : null}
@@ -1570,16 +1859,16 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
               unit="gl"
             />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-              <Text style={{ fontSize: 11, color: colors.textSecondary, fontFamily: font.bodyMedium }}>
+              <Text style={{ fontSize: 11, color: sec, fontFamily: df?.body ?? font.bodyMedium }}>
                 {'Goal line at '}{TARGET}{' glasses'}
               </Text>
-              <Text style={{ fontSize: 11, color: accent, fontFamily: font.bodySemiBold }}>
+              <Text style={{ fontSize: 11, color: diffuse ? dt.colors.ink : accent, fontFamily: df?.monoBold ?? font.bodySemiBold }}>
                 {hitRate}{'% hit rate'}
               </Text>
             </View>
           </>
         ) : (
-          <Body size={13} color={colors.textMuted}>
+          <Body size={13} color={muted}>
             {t('preg_analytics_noHydrationLogs')}
           </Body>
         )}
@@ -1622,20 +1911,20 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
               const pct = Math.min(100, (row.value / TARGET) * 100)
               return (
                 <View key={row.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Text style={{ width: 84, fontSize: 13, color: colors.text, fontFamily: font.bodyMedium }}>
+                  <Text style={{ width: 84, fontSize: 13, color: ink, fontFamily: df?.body ?? font.bodyMedium }}>
                     {row.label}
                   </Text>
-                  <View style={{ flex: 1, height: 8, borderRadius: 999, backgroundColor: tint, overflow: 'hidden' }}>
+                  <View style={{ flex: 1, height: diffuse ? 3 : 8, borderRadius: 999, backgroundColor: diffuse ? dt.colors.line : tint, overflow: 'hidden' }}>
                     <View style={{ width: `${pct}%`, height: '100%', backgroundColor: accent, borderRadius: 999 }} />
                   </View>
-                  <Text style={{ width: 60, textAlign: 'right', fontSize: 13, color: colors.text, fontFamily: font.bodySemiBold }}>
+                  <Text style={{ width: 60, textAlign: 'right', fontSize: 13, color: ink, fontFamily: df?.monoBold ?? font.bodySemiBold }}>
                     {row.value.toFixed(1)}{' gl'}
                   </Text>
                 </View>
               )
             })}
           </View>
-          <Text style={{ marginTop: 12, fontSize: 11, color: colors.textMuted, fontFamily: font.bodyMedium, lineHeight: 16 }}>
+          <Text style={{ marginTop: 12, fontSize: 11, color: muted, fontFamily: df?.body ?? font.bodyMedium, lineHeight: 16 }}>
             Approximate split based on average daily intake. Log timestamps when sipping to refine.
           </Text>
         </PaperCard>
@@ -1644,7 +1933,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
       {/* Status pill */}
       {data.length > 0 ? (
         <PaperCard title={`Week ${weekNumber} status`}>
-          <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
             {avg >= TARGET
               ? `You're averaging ${avg.toFixed(1)} glasses — great rhythm. Keep sipping consistently across the day.`
               : avg >= TARGET * 0.75
@@ -1662,7 +1951,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
       ) : null}
 
       <PaperCard title="Why hydration matters">
-        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+        <Body size={13} color={sec} style={{ lineHeight: 20 }}>
           {trimester === 1
             ? 'Water helps with morning sickness — sip slowly and keep a bottle by the bed.'
             : trimester === 2
@@ -1690,7 +1979,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                   marginTop: 7,
                 }}
               />
-              <Text style={{ flex: 1, fontSize: 13, lineHeight: 20, color: colors.textSecondary, fontFamily: font.bodyMedium }}>
+              <Text style={{ flex: 1, fontSize: 13, lineHeight: 20, color: sec, fontFamily: df?.body ?? font.bodyMedium }}>
                 {tip}
               </Text>
             </View>
@@ -1711,34 +2000,32 @@ function MiniInfoTile({
   accent: string
 }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <View
       style={{
         flex: 1,
-        backgroundColor: tint,
+        backgroundColor: diffuse ? dt.colors.surface : tint,
         borderWidth: 1,
-        borderColor: 'rgba(20,19,19,0.10)',
+        borderColor: diffuse ? dt.colors.line : 'rgba(20,19,19,0.10)',
         borderRadius: 18,
         paddingVertical: 14,
         paddingHorizontal: 12,
       }}
     >
       <Text
-        style={{
-          fontSize: 9,
-          letterSpacing: 1.4,
-          textTransform: 'uppercase',
-          color: colors.textSecondary,
-          fontFamily: font.bodySemiBold,
-        }}
+        style={diffuse
+          ? { fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+          : { fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary, fontFamily: font.bodySemiBold }}
       >
         {label}
       </Text>
       <Text
         style={{
           fontSize: 22,
-          color: colors.text,
-          fontFamily: font.display,
+          color: diffuse ? dt.colors.ink : colors.text,
+          fontFamily: diffuse ? diffuseFont.display : font.display,
           letterSpacing: -0.3,
           marginTop: 4,
         }}
@@ -1747,12 +2034,9 @@ function MiniInfoTile({
         {value}
       </Text>
       <Text
-        style={{
-          fontSize: 10,
-          color: accent,
-          fontFamily: font.bodySemiBold,
-          marginTop: 2,
-        }}
+        style={diffuse
+          ? { fontSize: 9, color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 3 }
+          : { fontSize: 10, color: accent, fontFamily: font.bodySemiBold, marginTop: 2 }}
         numberOfLines={1}
       >
         {caption}
@@ -1763,11 +2047,17 @@ function MiniInfoTile({
 
 function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()
   if (!nutritionMatrix) {
     return (
       <PaperCard>
-        <Body size={13} color={colors.textMuted}>
+        <Body size={13} color={muted}>
           {t('preg_analytics_nutritionLoading')}
         </Body>
       </PaperCard>
@@ -1795,8 +2085,8 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
           {nutrients.map((n) => (
             <View key={n.key}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium }}>{n.label}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }}>{n.label}</Text>
+                <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>
                   {n.arr.filter(Boolean).length}/{n.arr.length}{' days'}
                 </Text>
               </View>
@@ -1808,8 +2098,8 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
                       flex: 1,
                       height: 18,
                       borderRadius: 4,
-                      backgroundColor: hit ? n.color : stickers.greenSoft,
-                      opacity: hit ? 1 : 0.4,
+                      backgroundColor: diffuse ? (hit ? dAccent : dt.colors.line) : (hit ? n.color : stickers.greenSoft),
+                      opacity: diffuse ? 1 : (hit ? 1 : 0.4),
                     }}
                   />
                 ))}
@@ -1821,9 +2111,9 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
                     style={{
                       flex: 1,
                       textAlign: 'center',
-                      color: colors.textMuted,
+                      color: muted,
                       fontSize: 9,
-                      fontFamily: font.bodyMedium,
+                      fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium,
                     }}
                   >
                     {shortDay(d)}
@@ -1836,7 +2126,7 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
       </PaperCard>
 
       <PaperCard title="Trimester focus">
-        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+        <Body size={13} color={sec} style={{ lineHeight: 20 }}>
           {trimester === 1
             ? 'Folic acid is the headline — 400–600 mcg/day reduces neural tube risk. If nausea blocks meals, small bland snacks count.'
             : trimester === 2
@@ -2203,6 +2493,26 @@ function ScoreInfoModal({
 
 // ─── Reusable bits ─────────────────────────────────────────────────────────
 
+/** Diffuse-only big-score hero (soft field + serif number + mono caption). */
+function ScoreHero({ value, caption }: { value: string; caption: string }) {
+  const dt = useDiffuseTheme()
+  return (
+    <DiffuseFieldSurface
+      mode="preg"
+      isDark={dt.isDark}
+      radius={24}
+      style={[styles.scoreHero, { borderWidth: 1, borderColor: dt.colors.line }]}
+    >
+      <Text style={{ color: dt.colors.ink, fontSize: 56, fontFamily: diffuseFont.display, letterSpacing: -1 }}>
+        {value}
+      </Text>
+      <Text style={{ color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' }}>
+        {caption}
+      </Text>
+    </DiffuseFieldSurface>
+  )
+}
+
 function PaperCard({
   title, children, accent, withBlob,
 }: {
@@ -2212,29 +2522,42 @@ function PaperCard({
   withBlob?: boolean
 }) {
   const { colors, font, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const blobColor = accent ?? stickers.lilac
   return (
     <View
       style={[
         styles.paperCard,
-        { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' },
+        diffuse
+          ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+          : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' },
       ]}
     >
-      {withBlob ? (
+      {withBlob && !diffuse ? (
         <View pointerEvents="none" style={styles.paperCardBlob}>
           <Blob size={72} fill={blobColor} variant={2} stroke={colors.text} />
         </View>
       ) : null}
       {title ? (
         <Text
-          style={{
-            fontSize: 11,
-            letterSpacing: 1.6,
-            textTransform: 'uppercase',
-            color: accent ?? colors.textMuted,
-            fontFamily: font.bodySemiBold,
-            marginBottom: 12,
-          }}
+          style={diffuse
+            ? {
+                fontSize: 10,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+                color: dt.colors.ink3,
+                fontFamily: diffuseFont.mono,
+                marginBottom: 12,
+              }
+            : {
+                fontSize: 11,
+                letterSpacing: 1.6,
+                textTransform: 'uppercase',
+                color: accent ?? colors.textMuted,
+                fontFamily: font.bodySemiBold,
+                marginBottom: 12,
+              }}
         >
           {title}
         </Text>
@@ -2252,7 +2575,19 @@ function StatTilesRow({
   color?: string
 }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
   const bg = tint ?? colors.surface
+
+  if (diffuse) {
+    return (
+      <View style={styles.statTilesRow}>
+        {items.map((it, i) => (
+          <DiffuseMetricTile key={it.label + i} value={it.value} label={it.label} />
+        ))}
+      </View>
+    )
+  }
+
   return (
     <View style={styles.statTilesRow}>
       {items.map((it, i) => (
@@ -2311,10 +2646,13 @@ function WeightByWeekList({
   tint: string
 }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   if (rows.length === 0) return null
   const min = Math.min(...rows.map((r) => r.weight))
   const max = Math.max(...rows.map((r) => r.weight))
   const range = Math.max(0.1, max - min)
+  const track = diffuse ? dt.colors.line : tint
   return (
     <View style={{ gap: 10 }}>
       {rows.map((w, i) => {
@@ -2330,24 +2668,24 @@ function WeightByWeekList({
                 paddingVertical: 4,
                 paddingHorizontal: 10,
                 borderRadius: 999,
-                backgroundColor: tint,
+                backgroundColor: diffuse ? 'transparent' : tint,
                 borderWidth: 1,
-                borderColor: 'rgba(20,19,19,0.10)',
+                borderColor: diffuse ? dt.colors.line2 : 'rgba(20,19,19,0.10)',
                 alignItems: 'center',
               }}
             >
               <Text
                 style={{
                   fontSize: 11,
-                  color: colors.text,
-                  fontFamily: font.bodySemiBold,
+                  color: diffuse ? dt.colors.ink3 : colors.text,
+                  fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold,
                   letterSpacing: 0.4,
                 }}
               >
                 {'W'}{w.week}
               </Text>
             </View>
-            <View style={{ flex: 1, height: 6, borderRadius: 999, backgroundColor: tint, overflow: 'hidden' }}>
+            <View style={{ flex: 1, height: 6, borderRadius: 999, backgroundColor: track, overflow: 'hidden' }}>
               <View
                 style={{
                   width: `${Math.max(8, pct)}%`,
@@ -2359,9 +2697,9 @@ function WeightByWeekList({
             </View>
             <Text
               style={{
-                color: colors.text,
+                color: diffuse ? dt.colors.ink : colors.text,
                 fontSize: 13,
-                fontFamily: font.bodySemiBold,
+                fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold,
                 minWidth: 56,
                 textAlign: 'right',
               }}
@@ -2376,6 +2714,26 @@ function WeightByWeekList({
 }
 
 function Pill({ color, tint, label }: { color: string; tint: string; label: string }) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  if (diffuse) {
+    return (
+      <View
+        style={{
+          alignSelf: 'flex-start',
+          marginTop: 12,
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 999,
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderColor: dt.colors.line2,
+        }}
+      >
+        <Text style={{ color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase' }}>{label}</Text>
+      </View>
+    )
+  }
   return (
     <View
       style={{

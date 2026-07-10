@@ -12,7 +12,8 @@ import React, { useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, Dimensions, ActivityIndicator, Alert,
 } from 'react-native'
-import { useTheme, brand, font } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, brand, font } from '../../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -48,6 +49,9 @@ const CONFIGS: Record<SimpleLogType, {
 
 export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const [value, setValue] = useState('')
   const [saving, setSaving] = useState(false)
@@ -90,21 +94,25 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
     void invalidatePregnancyLogQueries()
   }
 
+  const canSave = !!value.trim()
+
   return (
     <View style={styles.form}>
       <View style={styles.header}>
         <cfg.Sticker size={32} />
-        <Text style={[styles.title, { color: colors.text }]}>{cfg.label}</Text>
+        <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{cfg.label}</Text>
       </View>
 
-      <View style={[styles.input, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
+      <View style={[styles.input, diffuse
+        ? { backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18 }
+        : { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
         <Text
-          style={[styles.inputText, { color: value ? colors.text : colors.textMuted }]}
+          style={[styles.inputText, { color: value ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink4 : colors.textMuted), fontFamily: diffuse ? diffuseFont.display : font.display }]}
           numberOfLines={1}
         >
           {value || cfg.placeholder}
         </Text>
-        <Text style={[styles.unit, { color: colors.textMuted }]}>{cfg.unit}</Text>
+        <Text style={[styles.unit, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>{cfg.unit}</Text>
       </View>
 
       <View style={styles.numpad}>
@@ -118,27 +126,45 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
             }}
             style={({ pressed }) => [
               styles.key,
-              { backgroundColor: pressed ? colors.surfaceRaised : colors.surfaceGlass },
+              diffuse
+                ? { backgroundColor: pressed ? dt.colors.surfaceRaised : 'transparent', borderWidth: 1, borderColor: dt.colors.line, borderRadius: 14 }
+                : { backgroundColor: pressed ? colors.surfaceRaised : colors.surfaceGlass },
             ]}
           >
-            <Text style={[styles.keyText, { color: colors.text }]}>{key}</Text>
+            <Text style={[styles.keyText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{key}</Text>
           </Pressable>
         ))}
       </View>
 
-      <Pressable
-        onPress={handleSave}
-        style={[styles.saveBtn, {
-          backgroundColor: brand.pregnancy,
-          opacity: !value.trim() || saving ? 0.6 : 1,
-        }]}
-        disabled={saving || !value.trim()}
-      >
-        {saving
-          ? <ActivityIndicator color={colors.textInverse} />
-          : <Text style={[styles.saveText, { color: colors.textInverse }]}>{t('common_save')}</Text>
-        }
-      </Pressable>
+      {diffuse ? (
+        <Pressable
+          onPress={saving || !canSave ? undefined : handleSave}
+          style={[styles.saveBtnD, { borderTopColor: dt.colors.line2, opacity: canSave ? 1 : 0.45 }]}
+        >
+          {saving ? (
+            <ActivityIndicator color={dt.colors.ink} />
+          ) : (
+            <>
+              <Text style={[styles.saveTextD, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>{t('common_save')}</Text>
+              <DiffuseArrow color={dAccent} size={18} />
+            </>
+          )}
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={handleSave}
+          style={[styles.saveBtn, {
+            backgroundColor: brand.pregnancy,
+            opacity: !value.trim() || saving ? 0.6 : 1,
+          }]}
+          disabled={saving || !value.trim()}
+        >
+          {saving
+            ? <ActivityIndicator color={colors.textInverse} />
+            : <Text style={[styles.saveText, { color: colors.textInverse }]}>{t('common_save')}</Text>
+          }
+        </Pressable>
+      )}
     </View>
   )
 }
@@ -161,4 +187,13 @@ const styles = StyleSheet.create({
   keyText: { fontSize: 18, fontFamily: font.display },
   saveBtn: { borderRadius: 999, paddingVertical: 16, alignItems: 'center' },
   saveText: { fontSize: 16, fontFamily: font.bodySemiBold },
+  saveBtnD: {
+    marginTop: 2,
+    paddingTop: 18,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  saveTextD: { fontSize: 13, letterSpacing: 2, textTransform: 'uppercase' },
 })

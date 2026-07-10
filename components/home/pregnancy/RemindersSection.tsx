@@ -1,7 +1,9 @@
 import React from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
-import { useTheme, font } from '../../../constants/theme'
+import { useTheme, font, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import {
@@ -43,6 +45,8 @@ export function RemindersSection({
   onOpenAppointment,
 }: Props) {
   const { colors, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   const items: ReminderItem[] = []
@@ -94,30 +98,49 @@ export function RemindersSection({
 
   return (
     <View style={styles.root}>
-      {items.slice(0, 4).map((item) => (
-        <Pressable
-          key={item.id}
-          onPress={item.onPress}
-          style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
-          accessibilityRole="button"
-          accessibilityLabel={`${item.title}. ${item.subtitle}`}
-        >
-          <PaperCard tint={item.tint} radius={20} padding={14} flat style={styles.item}>
-            <View style={styles.iconWrap}>
-              <item.Sticker size={32} />
-            </View>
-            <View style={styles.itemBody}>
-              <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={[styles.itemSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
-                {item.subtitle}
-              </Text>
-            </View>
-            <ChevronRight size={14} color={item.accent} strokeWidth={2} />
-          </PaperCard>
-        </Pressable>
-      ))}
+      {items.slice(0, 4).map((item) => {
+        const titleColor = diffuse ? dt.colors.ink : colors.text
+        const subColor = diffuse ? dt.colors.ink3 : colors.textMuted
+        const titleFont = diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold
+        const subFont = diffuse ? diffuseFont.body : font.body
+        return (
+          <Pressable
+            key={item.id}
+            onPress={item.onPress}
+            style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.title}. ${item.subtitle}`}
+          >
+            <PaperCard
+              tint={diffuse ? dt.colors.surface : item.tint}
+              radius={20}
+              padding={14}
+              flat
+              borderColor={diffuse ? dt.colors.line : undefined}
+              style={styles.item}
+            >
+              {diffuse ? (
+                <DiffuseBloomIcon color={item.accent} size={36} intensity={0.5}>
+                  <item.Sticker size={30} />
+                </DiffuseBloomIcon>
+              ) : (
+                <View style={styles.iconWrap}>
+                  <item.Sticker size={32} />
+                </View>
+              )}
+              <View style={styles.itemBody}>
+                <Text style={[styles.itemTitle, { color: titleColor, fontFamily: titleFont }]} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={[styles.itemSubtitle, { color: subColor, fontFamily: subFont }]} numberOfLines={2}>
+                  {item.subtitle}
+                </Text>
+              </View>
+              <ChevronRight size={14} color={item.accent} strokeWidth={2} />
+            </PaperCard>
+          </Pressable>
+        )
+      })}
     </View>
   )
 }

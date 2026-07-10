@@ -26,7 +26,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { X, ArrowLeft, ChevronRight } from 'lucide-react-native'
-import { useTheme, font } from '../../../constants/theme'
+import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../../constants/theme'
+import { useIsDiffuse, SoftBloom, DiffuseGrain } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { useTranslatedContent } from '../../../lib/useTranslatedContent'
 import { getWeekData } from '../../../lib/pregnancyData'
@@ -100,11 +102,12 @@ function DevPointRow({
   dotColor,
   textColor,
 }: { week: number; index: number; point: string; dotColor: string; textColor: string }) {
+  const diffuse = useIsDiffuse()
   const { text } = useTranslatedContent(`week_${week}_dev${index}`, point)
   return (
     <View style={styles.devRow}>
       <View style={[styles.devDot, { backgroundColor: dotColor }]} />
-      <Text style={[styles.devText, { color: textColor }]}>{text}</Text>
+      <Text style={[styles.devText, { color: textColor }, diffuse ? { fontFamily: diffuseFont.body } : null]}>{text}</Text>
     </View>
   )
 }
@@ -118,6 +121,7 @@ function PrepListRow({
   titleColor,
   descColor,
   chevronColor,
+  accent,
   onPress,
 }: {
   week: number
@@ -128,8 +132,10 @@ function PrepListRow({
   titleColor: string
   descColor: string
   chevronColor: string
+  accent: string
   onPress: () => void
 }) {
+  const diffuse = useIsDiffuse()
   const { text: desc } = useTranslatedContent(`week_${week}_prep_${item.i}_summary`, item.d)
   return (
     <Pressable
@@ -141,12 +147,18 @@ function PrepListRow({
         { backgroundColor: cardBg, borderColor: cardBorder, opacity: pressed ? 0.7 : 1 },
       ]}
     >
-      <View style={[styles.prepIconBox, { backgroundColor: iconBg }]}>
-        <StickerIcon name={item.i} size={34} />
-      </View>
+      {diffuse ? (
+        <DiffuseBloomIcon color={accent} size={44}>
+          <StickerIcon name={item.i} size={30} />
+        </DiffuseBloomIcon>
+      ) : (
+        <View style={[styles.prepIconBox, { backgroundColor: iconBg }]}>
+          <StickerIcon name={item.i} size={34} />
+        </View>
+      )}
       <View style={{ flex: 1 }}>
-        <Text style={[styles.prepTitle, { color: titleColor }]}>{item.t}</Text>
-        <Text style={[styles.prepDesc, { color: descColor }]}>{desc}</Text>
+        <Text style={[styles.prepTitle, { color: titleColor }, diffuse ? { fontFamily: diffuseFont.bodySemiBold } : null]}>{item.t}</Text>
+        <Text style={[styles.prepDesc, { color: descColor }, diffuse ? { fontFamily: diffuseFont.body } : null]}>{desc}</Text>
       </View>
       <ChevronRight size={18} color={chevronColor} strokeWidth={2} />
     </Pressable>
@@ -161,11 +173,15 @@ function PrepDetailSheet({
   accentSoft,
 }: { item: PrepItemDef; week: number; onBack: () => void; accent: string; accentSoft: string }) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const guide = getPrepGuide(item, week)
-  const ink = colors.text
-  const ink2 = colors.textSecondary
-  const ink3 = colors.textMuted
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink2 = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
+  const rootBg = diffuse ? dt.colors.bg : colors.surface
+  const headerBg = diffuse ? dt.colors.surface : (isDark ? colors.surface : 'rgba(20,19,19,0.04)')
 
   // Long-form week/prep prose is translated at runtime + cached (Phase C).
   // Stable id-based keys so cache survives content edits (hash guards staleness).
@@ -175,7 +191,7 @@ function PrepDetailSheet({
   const { text: prepWatch } = useTranslatedContent(`${prepKey}_watch`, guide.watch ?? '')
 
   return (
-    <View style={[styles.prepDetailRoot, { backgroundColor: colors.surface }]}>
+    <View style={[styles.prepDetailRoot, { backgroundColor: rootBg }]}>
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
@@ -189,36 +205,42 @@ function PrepDetailSheet({
           accessibilityLabel="Back to week details"
         >
           <ArrowLeft size={18} color={accent} strokeWidth={2} />
-          <Text style={[styles.prepBackText, { color: accent }]}>{t('common_back')}</Text>
+          <Text style={[styles.prepBackText, { color: accent }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase' } : null]}>{t('common_back')}</Text>
         </Pressable>
 
-        <View style={[styles.prepDetailHeader, { backgroundColor: isDark ? colors.surface : 'rgba(20,19,19,0.04)' }]}>
-          <View style={[styles.prepIconBox, { backgroundColor: accentSoft }]}>
-            <StickerIcon name={item.i} size={36} />
-          </View>
+        <View style={[styles.prepDetailHeader, { backgroundColor: headerBg }, diffuse ? { borderWidth: 1, borderColor: dt.colors.line } : null]}>
+          {diffuse ? (
+            <DiffuseBloomIcon color={accent} size={48}>
+              <StickerIcon name={item.i} size={34} />
+            </DiffuseBloomIcon>
+          ) : (
+            <View style={[styles.prepIconBox, { backgroundColor: accentSoft }]}>
+              <StickerIcon name={item.i} size={36} />
+            </View>
+          )}
           <View style={{ flex: 1 }}>
-            <Text style={[styles.prepDetailTitle, { color: ink }]}>{item.t}</Text>
-            <Text style={[styles.prepDetailSummary, { color: ink3 }]}>
+            <Text style={[styles.prepDetailTitle, { color: ink }, diffuse ? { fontFamily: diffuseFont.display } : null]}>{item.t}</Text>
+            <Text style={[styles.prepDetailSummary, { color: ink3 }, diffuse ? { fontFamily: diffuseFont.body } : null]}>
               {prepSummary}
             </Text>
           </View>
         </View>
 
-        <Text style={[styles.prepSectionTitle, { color: ink3 }]}>{t('preg_weekDetail_prep_whyNow')}</Text>
-        <Text style={[styles.prepDetailContent, { color: ink2 }]}>
+        <Text style={[styles.prepSectionTitle, { color: ink3 }, diffuse ? { fontFamily: diffuseFont.mono } : null]}>{t('preg_weekDetail_prep_whyNow')}</Text>
+        <Text style={[styles.prepDetailContent, { color: ink2 }, diffuse ? { fontFamily: diffuseFont.body } : null]}>
           {prepWhy}
         </Text>
 
-        <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>{t('preg_weekDetail_prep_howToDoIt')}</Text>
+        <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }, diffuse ? { fontFamily: diffuseFont.mono } : null]}>{t('preg_weekDetail_prep_howToDoIt')}</Text>
         {guide.how.map((step, i) => (
           <PrepStepRow key={i} prepKey={prepKey} index={i} step={step} accent={accent} textColor={ink2} />
         ))}
 
         {guide.watch ? (
           <>
-            <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }]}>{t('preg_weekDetail_prep_watchFor')}</Text>
-            <View style={[styles.prepWatchBox, { backgroundColor: accentSoft, borderColor: accent + '40' }]}>
-              <Text style={[styles.prepDetailContent, { color: ink2 }]}>{prepWatch}</Text>
+            <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }, diffuse ? { fontFamily: diffuseFont.mono } : null]}>{t('preg_weekDetail_prep_watchFor')}</Text>
+            <View style={[styles.prepWatchBox, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: accentSoft, borderColor: accent + '40' }]}>
+              <Text style={[styles.prepDetailContent, { color: ink2 }, diffuse ? { fontFamily: diffuseFont.body } : null]}>{prepWatch}</Text>
             </View>
           </>
         ) : null}
@@ -234,11 +256,12 @@ function PrepStepRow({
   accent,
   textColor,
 }: { prepKey: string; index: number; step: string; accent: string; textColor: string }) {
+  const diffuse = useIsDiffuse()
   const { text } = useTranslatedContent(`${prepKey}_how${index}`, step)
   return (
     <View style={styles.prepStepRow}>
       <View style={[styles.prepStepDot, { backgroundColor: accent }]} />
-      <Text style={[styles.prepStepText, { color: textColor }]}>{text}</Text>
+      <Text style={[styles.prepStepText, { color: textColor }, diffuse ? { fontFamily: diffuseFont.body } : null]}>{text}</Text>
     </View>
   )
 }
@@ -247,6 +270,8 @@ function PrepStepRow({
 
 export function WeekDetailModal({ visible, week, onClose }: Props) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [selectedPrep, setSelectedPrep] = useState<PrepItemDef | null>(null)
   // Keep the last prep item rendered while sliding back so the animation has content
@@ -300,15 +325,27 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
     return min + (max - min) * t
   })()
 
+  // Diffuse-resolved accent + field (warm plum + peach→plum stops).
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const [dField1, dField2] = getModeField('preg', dt.isDark)
+
   // Cream paper body background — adapts to dark mode
-  const paperBg = isDark ? colors.surface : '#FFFEF8'
-  const pillBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(20,19,19,0.05)'
-  const pillBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(20,19,19,0.14)'
-  const prepCardBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(20,19,19,0.035)'
-  const prepCardBorder = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(20,19,19,0.08)'
-  const bodyInk = colors.text
-  const bodyInk2 = colors.textSecondary
-  const bodyInk3 = colors.textMuted
+  const paperBg = diffuse ? dt.colors.bg : (isDark ? colors.surface : '#FFFEF8')
+  const pillBg = diffuse ? 'transparent' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(20,19,19,0.05)')
+  const pillBorder = diffuse ? dt.colors.line2 : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(20,19,19,0.14)')
+  const prepCardBg = diffuse ? dt.colors.surface : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(20,19,19,0.035)')
+  const prepCardBorder = diffuse ? dt.colors.line : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(20,19,19,0.08)')
+  const bodyInk = diffuse ? dt.colors.ink : colors.text
+  const bodyInk2 = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const bodyInk3 = diffuse ? dt.colors.ink3 : colors.textMuted
+  // Under Diffuse: dev dots + prep icon socket use the accent, not the palette hue.
+  const devDotColor = diffuse ? dAccent : pal.accent
+  const prepIconBg = diffuse ? dAccent : pal.accentSoft
+  // Hero: colored palette bg (current) → soft paper + accent bloom (Diffuse).
+  const heroBg = diffuse ? dt.colors.surface : pal.bg
+  const heroMetaFg = diffuse ? dt.colors.ink3 : pal.metaFg
+  const heroFg = diffuse ? dt.colors.ink : pal.fg
+  const heroCloseIcon = diffuse ? dt.colors.ink : '#141313'
 
   return (
     <Modal
@@ -329,16 +366,23 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
         <View style={[styles.sheet, { backgroundColor: paperBg }]}>
           <Animated.View style={[styles.layer, mainAnimStyle]} pointerEvents={selectedPrep ? 'none' : 'auto'}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
-              {/* Hero — inherits card's palette */}
-              <View style={[styles.hero, { backgroundColor: pal.bg }]}>
+              {/* Hero — inherits card's palette (current) / soft accent field (Diffuse) */}
+              <View style={[styles.hero, { backgroundColor: heroBg }, diffuse ? { borderBottomWidth: 1, borderBottomColor: dt.colors.line } : null]}>
+                {diffuse ? (
+                  <>
+                    <SoftBloom color={dField1} cx="88%" cy="18%" opacity={dt.isDark ? 0.32 : 0.46} spread={0.5} />
+                    <SoftBloom color={dField2} cx="62%" cy="46%" opacity={dt.isDark ? 0.2 : 0.28} spread={0.5} />
+                    <DiffuseGrain opacity={0.04} />
+                  </>
+                ) : null}
                 <Pressable
                   onPress={onClose}
-                  style={styles.closeBtn}
+                  style={[styles.closeBtn, diffuse ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline } : null]}
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel="Close week details"
                 >
-                  <X size={18} color="#141313" strokeWidth={2.5} />
+                  <X size={18} color={heroCloseIcon} strokeWidth={2.5} />
                 </Pressable>
 
                 {/* Static baby-size illustration — proportional to actual size, like the WeekCard */}
@@ -346,26 +390,26 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                   <BabyIllustration week={week} size={fruitSize} />
                 </View>
 
-                <Text style={[styles.heroLabel, { color: pal.metaFg }]}>
+                <Text style={[styles.heroLabel, { color: heroMetaFg }, diffuse ? { fontFamily: diffuseFont.mono, letterSpacing: 1.6 } : null]}>
                   {t('preg_weekDetail_heroLabel', { week, trimester: TRI_NAMES[tri - 1].toUpperCase() })}
                 </Text>
 
-                <Text style={[styles.heroMega, { color: pal.fg }]}>{weekStr}</Text>
+                <Text style={[styles.heroMega, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.displayLight, fontWeight: '300' } : null]}>{weekStr}</Text>
 
                 <View style={styles.heroSizeRow}>
-                  <Text style={[styles.heroSize, { color: pal.fg }]}>
+                  <Text style={[styles.heroSize, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.display } : null]}>
                     {article}{' '}
-                    <Text style={styles.heroSizeBold}>{fruitName}</Text>
+                    <Text style={[styles.heroSizeBold, diffuse ? { fontFamily: diffuseFont.italic } : null]}>{fruitName}</Text>
                   </Text>
-                  <Text style={[styles.heroSizeDot, { color: pal.fg }]}>{t('common_dotSeparator')}</Text>
+                  <Text style={[styles.heroSizeDot, { color: heroFg }]}>{t('common_dotSeparator')}</Text>
                   <View style={styles.heroStatBox}>
-                    <View style={[styles.heroStatTick, { backgroundColor: pal.fg }]} />
-                    <Text style={[styles.heroStat, { color: pal.fg }]}>{lengthStr}</Text>
+                    <View style={[styles.heroStatTick, { backgroundColor: diffuse ? dAccent : pal.fg }]} />
+                    <Text style={[styles.heroStat, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 13 } : null]}>{lengthStr}</Text>
                   </View>
-                  <Text style={[styles.heroSizeDot, { color: pal.fg }]}>{t('common_dotSeparator')}</Text>
+                  <Text style={[styles.heroSizeDot, { color: heroFg }]}>{t('common_dotSeparator')}</Text>
                   <View style={styles.heroStatBox}>
-                    <View style={[styles.heroStatTick, { backgroundColor: pal.fg }]} />
-                    <Text style={[styles.heroStat, { color: pal.fg }]}>{weightStr}</Text>
+                    <View style={[styles.heroStatTick, { backgroundColor: diffuse ? dAccent : pal.fg }]} />
+                    <Text style={[styles.heroStat, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 13 } : null]}>{weightStr}</Text>
                   </View>
                 </View>
               </View>
@@ -373,22 +417,22 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
               <View style={styles.body}>
                 {/* Baby's Development */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>{t('preg_weekDetail_babyDevelopment')}</Text>
+                  <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : null]}>{t('preg_weekDetail_babyDevelopment')}</Text>
                   {content.dev.map((point, i) => (
-                    <DevPointRow key={i} week={week} index={i} point={point} dotColor={pal.accent} textColor={bodyInk2} />
+                    <DevPointRow key={i} week={week} index={i} point={point} dotColor={devDotColor} textColor={bodyInk2} />
                   ))}
                 </View>
 
                 {/* Common Symptoms */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>{t('preg_weekDetail_commonSymptoms')}</Text>
+                  <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : null]}>{t('preg_weekDetail_commonSymptoms')}</Text>
                   <View style={styles.pillsRow}>
                     {content.sym.map((sym) => (
                       <View
                         key={sym}
                         style={[styles.pill, { backgroundColor: pillBg, borderColor: pillBorder }]}
                       >
-                        <Text style={[styles.pillText, { color: bodyInk2 }]}>{sym}</Text>
+                        <Text style={[styles.pillText, { color: bodyInk2 }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase' } : null]}>{sym}</Text>
                       </View>
                     ))}
                   </View>
@@ -397,7 +441,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 {/* What to Prepare */}
                 {content.prep.length > 0 && (
                   <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: bodyInk3 }]}>{t('preg_weekDetail_whatToPrepare')}</Text>
+                    <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : null]}>{t('preg_weekDetail_whatToPrepare')}</Text>
                     {content.prep.map((item, i) => (
                       <PrepListRow
                         key={`${item.i}-${i}`}
@@ -405,10 +449,11 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                         item={item}
                         cardBg={prepCardBg}
                         cardBorder={prepCardBorder}
-                        iconBg={pal.accentSoft}
+                        iconBg={prepIconBg}
                         titleColor={bodyInk}
                         descColor={bodyInk3}
                         chevronColor={bodyInk3}
+                        accent={dAccent}
                         onPress={() => setSelectedPrep(item)}
                       />
                     ))}
@@ -427,7 +472,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 item={pendingPrep}
                 week={week}
                 onBack={() => setSelectedPrep(null)}
-                accent={pal.accent}
+                accent={diffuse ? dAccent : pal.accent}
                 accentSoft={pal.accentSoft}
               />
             ) : null}
@@ -462,6 +507,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     position: 'relative',
+    overflow: 'hidden',
   },
   closeBtn: {
     position: 'absolute',

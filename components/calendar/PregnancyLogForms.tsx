@@ -24,17 +24,22 @@ import {
 import Svg, { Path } from 'react-native-svg'
 import {
   useTheme,
+  useDiffuseTheme,
+  diffuseFont,
+  getDiffuseAccent,
   stickers as stickersLight,
   stickersDark,
   getModeColor,
   getModeColorSoft,
   font,
 } from '../../constants/theme'
+import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
 import { useTranslation } from '../../lib/i18n'
 import { LogFormSticker } from './LogFormSticker'
+import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
@@ -95,6 +100,67 @@ async function savePregnancyLog(
   void invalidatePregnancyLogQueries()
 }
 
+// ─── Diffuse shared bits ───────────────────────────────────────────────────
+// Header, chip + tag-chip in the Diffuse idiom: sticker in a hairline circle,
+// mono eyebrow, serif title; chips are hairline pills with mono labels and an
+// accent-tinted "on" state. Used only inside the Diffuse render branches; the
+// current-system paths (LogFormSticker / colored chips) stay untouched.
+
+function DiffuseFormHeader({ type, title }: { type: string; title: string }) {
+  const dt = useDiffuseTheme()
+  return (
+    <View style={dstyles.header}>
+      <View style={[dstyles.headerChip, { borderColor: dt.colors.line }]}>
+        {logSticker(type, 26, dt.isDark)}
+      </View>
+      <Text style={[dstyles.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]} numberOfLines={2}>
+        {title}
+      </Text>
+    </View>
+  )
+}
+
+/** Hairline mono chip — accent-tinted surface + accent hairline when selected. */
+function DiffuseChip({
+  label, selected, onPress, showCheck, accent,
+}: { label: string; selected: boolean; onPress: () => void; showCheck?: boolean; accent: string }) {
+  const dt = useDiffuseTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        dstyles.chip,
+        {
+          backgroundColor: selected ? accent + '1F' : 'transparent',
+          borderColor: selected ? accent : dt.colors.line,
+        },
+      ]}
+    >
+      {showCheck && selected ? (
+        <Check size={12} color={accent} strokeWidth={3} />
+      ) : null}
+      <Text
+        style={[
+          dstyles.chipLabel,
+          { color: selected ? accent : dt.colors.ink3, fontFamily: selected ? diffuseFont.monoBold : diffuseFont.mono },
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
+/** Diffuse mono field label. */
+function DiffuseFieldLabel({ children }: { children: React.ReactNode }) {
+  const dt = useDiffuseTheme()
+  return (
+    <Text style={[dstyles.fieldLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+      {children}
+    </Text>
+  )
+}
+
 // ─── Mood Form ─────────────────────────────────────────────────────────────
 
 // Mood ids are stable; labels resolved via i18n at render time.
@@ -115,6 +181,9 @@ export function PregnancyMoodForm({
   onSaved: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const s = isDark ? stickersDark : stickersLight
   const { t } = useTranslation()
   const [mood, setMood] = useState<string | null>(null)
@@ -136,11 +205,15 @@ export function PregnancyMoodForm({
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="mood"
-        label={t('preg_form_mood_question')}
-        tint={s.yellowSoft}
-      />
+      {diffuse ? (
+        <DiffuseFormHeader type="mood" title={t('preg_form_mood_question')} />
+      ) : (
+        <LogFormSticker
+          type="mood"
+          label={t('preg_form_mood_question')}
+          tint={s.yellowSoft}
+        />
+      )}
       <View style={styles.moodRow}>
         {MOOD_IDS.map((id) => {
           const active = mood === id
@@ -150,11 +223,17 @@ export function PregnancyMoodForm({
               onPress={() => setMood(id)}
               style={[
                 styles.moodBtn,
-                {
-                  backgroundColor: active ? getModeColorSoft('preg', isDark) : colors.surface,
-                  borderColor: active ? getModeColor('preg', isDark) : colors.border,
-                  borderRadius: radius.lg,
-                },
+                diffuse
+                  ? {
+                      backgroundColor: active ? dAccent + '1F' : 'transparent',
+                      borderColor: active ? dAccent : dt.colors.line,
+                      borderRadius: 18,
+                    }
+                  : {
+                      backgroundColor: active ? getModeColorSoft('preg', isDark) : colors.surface,
+                      borderColor: active ? getModeColor('preg', isDark) : colors.border,
+                      borderRadius: radius.lg,
+                    },
               ]}
             >
               <MoodFace
@@ -165,7 +244,9 @@ export function PregnancyMoodForm({
               <Text
                 style={[
                   styles.moodLabel,
-                  { color: active ? getModeColor('preg', isDark) : colors.textSecondary },
+                  diffuse
+                    ? { color: active ? dAccent : dt.colors.ink3, fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase', fontSize: 10 }
+                    : { color: active ? getModeColor('preg', isDark) : colors.textSecondary },
                 ]}
               >
                 {t(MOOD_LABEL_KEYS[id])}
@@ -178,16 +259,18 @@ export function PregnancyMoodForm({
         value={notes}
         onChangeText={setNotes}
         placeholder={t('preg_form_mood_notesPlaceholder')}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline
         style={[
           styles.inputMultiline,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-          },
+          diffuse
+            ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
+            : {
+                color: colors.text,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.lg,
+              },
         ]}
       />
       <SaveButton onPress={save} saving={saving} disabled={!mood} />
@@ -222,6 +305,9 @@ export function PregnancySymptomsForm({
   onSaved: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const s = isDark ? stickersDark : stickersLight
   const { t } = useTranslation()
   const [selected, setSelected] = useState<string[]>([])
@@ -249,14 +335,30 @@ export function PregnancySymptomsForm({
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="symptom"
-        label={t('preg_form_symptoms_question')}
-        tint={s.peachSoft}
-      />
+      {diffuse ? (
+        <DiffuseFormHeader type="symptom" title={t('preg_form_symptoms_question')} />
+      ) : (
+        <LogFormSticker
+          type="symptom"
+          label={t('preg_form_symptoms_question')}
+          tint={s.peachSoft}
+        />
+      )}
       <View style={styles.chipGrid}>
         {SYMPTOM_OPTIONS.map((opt) => {
           const active = selected.includes(opt.id)
+          if (diffuse) {
+            return (
+              <DiffuseChip
+                key={opt.id}
+                label={t(opt.key)}
+                selected={active}
+                showCheck
+                accent={dAccent}
+                onPress={() => toggle(opt.id)}
+              />
+            )
+          }
           return (
             <Pressable
               key={opt.id}
@@ -289,16 +391,18 @@ export function PregnancySymptomsForm({
         value={notes}
         onChangeText={setNotes}
         placeholder={t('preg_form_symptoms_notesPlaceholder')}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline
         style={[
           styles.inputMultiline,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-          },
+          diffuse
+            ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
+            : {
+                color: colors.text,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.lg,
+              },
         ]}
       />
       <SaveButton
@@ -330,6 +434,9 @@ export function AppointmentForm({
   onSaved: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const s = isDark ? stickersDark : stickersLight
   const [type, setType] = useState<string | null>(null)
   const [customType, setCustomType] = useState('')
@@ -368,18 +475,36 @@ export function AppointmentForm({
   const inkBorder = isDark ? colors.border : ST_INK
   const inkText = isDark ? colors.text : ST_INK
 
+  // Diffuse hairline input style (shared across the 3 text fields below).
+  const dInput = { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, fontFamily: diffuseFont.body } as const
+
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="appointment"
-        label={`Visit on ${formatDate(date)}`}
-        tint={s.yellowSoft}
-      />
+      {diffuse ? (
+        <DiffuseFormHeader type="appointment" title={`Visit on ${formatDate(date)}`} />
+      ) : (
+        <LogFormSticker
+          type="appointment"
+          label={`Visit on ${formatDate(date)}`}
+          tint={s.yellowSoft}
+        />
+      )}
 
-      {/* Type chips — sticker pills */}
+      {/* Type chips — sticker pills / hairline mono chips */}
       <View style={styles.chipGrid}>
         {APPOINTMENT_TYPES.map((t) => {
           const active = type === t
+          if (diffuse) {
+            return (
+              <DiffuseChip
+                key={t}
+                label={t}
+                selected={active}
+                accent={dAccent}
+                onPress={() => setType(t)}
+              />
+            )
+          }
           return (
             <Pressable
               key={t}
@@ -421,18 +546,20 @@ export function AppointmentForm({
           value={customType}
           onChangeText={setCustomType}
           placeholder="Describe the appointment"
-          placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+          placeholderTextColor={diffuse ? dt.colors.ink4 : (isDark ? colors.textMuted : '#8A8480')}
           autoFocus
           style={[
             styles.input,
-            {
-              color: inkText,
-              backgroundColor: ST_CREAM,
-              borderColor: inkBorder,
-              borderWidth: 1.5,
-              borderRadius: 999,
-              height: 56,
-            },
+            diffuse
+              ? { ...dInput, borderWidth: 1, borderRadius: 18, height: 56 }
+              : {
+                  color: inkText,
+                  backgroundColor: ST_CREAM,
+                  borderColor: inkBorder,
+                  borderWidth: 1.5,
+                  borderRadius: 999,
+                  height: 56,
+                },
           ]}
         />
       )}
@@ -441,19 +568,21 @@ export function AppointmentForm({
         value={doctor}
         onChangeText={setDoctor}
         placeholder="Doctor name (optional)"
-        placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : (isDark ? colors.textMuted : '#8A8480')}
         style={[
           styles.input,
-          {
-            color: inkText,
-            backgroundColor: ST_CREAM,
-            borderColor: inkBorder,
-            borderWidth: 1.5,
-            borderRadius: 999,
-            height: 56,
-            paddingVertical: 0,
-            textAlignVertical: 'center',
-          },
+          diffuse
+            ? { ...dInput, borderWidth: 1, borderRadius: 18, height: 56, paddingVertical: 0, textAlignVertical: 'center' }
+            : {
+                color: inkText,
+                backgroundColor: ST_CREAM,
+                borderColor: inkBorder,
+                borderWidth: 1.5,
+                borderRadius: 999,
+                height: 56,
+                paddingVertical: 0,
+                textAlignVertical: 'center',
+              },
         ]}
       />
 
@@ -461,17 +590,19 @@ export function AppointmentForm({
         value={notes}
         onChangeText={setNotes}
         placeholder="Notes (optional)"
-        placeholderTextColor={isDark ? colors.textMuted : '#8A8480'}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : (isDark ? colors.textMuted : '#8A8480')}
         multiline
         style={[
           styles.inputMultiline,
-          {
-            color: inkText,
-            backgroundColor: ST_CREAM,
-            borderColor: inkBorder,
-            borderWidth: 1.5,
-            borderRadius: 22,
-          },
+          diffuse
+            ? { ...dInput, borderWidth: 1, borderRadius: 18 }
+            : {
+                color: inkText,
+                backgroundColor: ST_CREAM,
+                borderColor: inkBorder,
+                borderWidth: 1.5,
+                borderRadius: 22,
+              },
         ]}
       />
 
@@ -498,6 +629,9 @@ export function KickCountForm({
   onSaved: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [count, setCount] = useState(0)
@@ -529,49 +663,78 @@ export function KickCountForm({
   const ink = '#141313'
   const cream = '#FFFEF8'
   const pinkSticker = '#F2B2C7'
+  // Diffuse ink ramp for the neutralized tap button / dots / copy.
+  const dInk = dt.colors.ink
+  const dInk3 = dt.colors.ink3
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="kick_count"
-        label="Count baby's kicks"
-        tint={s.pinkSoft}
-      />
+      {diffuse ? (
+        <DiffuseFormHeader type="kick_count" title="Count baby's kicks" />
+      ) : (
+        <LogFormSticker
+          type="kick_count"
+          label="Count baby's kicks"
+          tint={s.pinkSoft}
+        />
+      )}
 
       <View style={styles.kickCenter}>
         {/* Big tap button — sticker style with ink border + corner stickers */}
         <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center', paddingTop: 14, paddingBottom: 6 }}>
-          <View style={{ position: 'absolute', top: -2, left: 14, transform: [{ rotate: '-18deg' }], opacity: 0.85 }} pointerEvents="none">
-            <HeartSticker size={28} fill={pinkSticker} stroke={ink} />
+          <View style={{ position: 'absolute', top: -2, left: 14, transform: [{ rotate: '-18deg' }], opacity: diffuse ? 0.6 : 0.85 }} pointerEvents="none">
+            <HeartSticker size={28} fill={pinkSticker} stroke={diffuse ? dt.colors.line2 : ink} />
           </View>
-          <View style={{ position: 'absolute', top: 8, right: 14, transform: [{ rotate: '20deg' }], opacity: 0.85 }} pointerEvents="none">
-            <StarSticker size={26} fill="#F5D652" stroke={ink} />
+          <View style={{ position: 'absolute', top: 8, right: 14, transform: [{ rotate: '20deg' }], opacity: diffuse ? 0.6 : 0.85 }} pointerEvents="none">
+            <StarSticker size={26} fill="#F5D652" stroke={diffuse ? dt.colors.line2 : ink} />
           </View>
-          <View style={{ position: 'absolute', bottom: 6, right: 36, transform: [{ rotate: '-12deg' }], opacity: 0.7 }} pointerEvents="none">
-            <BurstSticker size={22} fill="#9DC3E8" stroke={ink} />
+          <View style={{ position: 'absolute', bottom: 6, right: 36, transform: [{ rotate: '-12deg' }], opacity: diffuse ? 0.5 : 0.7 }} pointerEvents="none">
+            <BurstSticker size={22} fill="#9DC3E8" stroke={diffuse ? dt.colors.line2 : ink} />
           </View>
 
           <Pressable
             onPress={() => setCount((c) => c + 1)}
             style={({ pressed }) => [
-              {
-                width: 168,
-                height: 168,
-                borderRadius: 999,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: goalReached ? '#BDD48C' : pinkSticker,
-                borderWidth: 2.5,
-                borderColor: ink,
-                shadowColor: ink,
-                shadowOpacity: pressed ? 0.05 : 0.15,
-                shadowRadius: pressed ? 4 : 12,
-                shadowOffset: { width: 0, height: pressed ? 2 : 6 },
-                transform: [{ scale: pressed ? 0.96 : 1 }],
-              },
+              diffuse
+                ? {
+                    width: 168,
+                    height: 168,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: goalReached ? dAccent : dt.colors.line2,
+                    transform: [{ scale: pressed ? 0.96 : 1 }],
+                  }
+                : {
+                    width: 168,
+                    height: 168,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: goalReached ? '#BDD48C' : pinkSticker,
+                    borderWidth: 2.5,
+                    borderColor: ink,
+                    shadowColor: ink,
+                    shadowOpacity: pressed ? 0.05 : 0.15,
+                    shadowRadius: pressed ? 4 : 12,
+                    shadowOffset: { width: 0, height: pressed ? 2 : 6 },
+                    transform: [{ scale: pressed ? 0.96 : 1 }],
+                  },
             ]}
           >
-            <View style={{
+            <View style={diffuse ? {
+              width: 140,
+              height: 140,
+              borderRadius: 999,
+              backgroundColor: 'transparent',
+              borderWidth: 1,
+              borderColor: dt.colors.line,
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+            } : {
               width: 140,
               height: 140,
               borderRadius: 999,
@@ -582,17 +745,17 @@ export function KickCountForm({
               justifyContent: 'center',
               gap: 4,
             }}>
-              <Hand size={42} color={ink} strokeWidth={2} />
-              <Text style={{ fontSize: 12, fontFamily: font.bodyBold, color: ink, letterSpacing: 2 }}>{t('preg_form_kick_tap')}</Text>
+              <Hand size={42} color={diffuse ? dInk : ink} strokeWidth={2} />
+              <Text style={{ fontSize: 12, fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold, color: diffuse ? dInk : ink, letterSpacing: 2 }}>{t('preg_form_kick_tap')}</Text>
             </View>
           </Pressable>
         </View>
 
-        {/* Big count — Fraunces */}
+        {/* Big count — serif */}
         <Text style={{
           fontSize: 56,
-          fontFamily: font.display,
-          color: isDark ? colors.text : ink,
+          fontFamily: diffuse ? diffuseFont.display : font.display,
+          color: diffuse ? dInk : (isDark ? colors.text : ink),
           letterSpacing: -1.5,
           lineHeight: 60,
           marginTop: 4,
@@ -600,8 +763,8 @@ export function KickCountForm({
           {count}
           <Text style={{
             fontSize: 22,
-            fontFamily: font.display,
-            color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)',
+            fontFamily: diffuse ? diffuseFont.mono : font.display,
+            color: diffuse ? dInk3 : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'),
             letterSpacing: -0.4,
           }}>{count === 1 ? ' kick' : ' kicks'}</Text>
         </Text>
@@ -615,9 +778,13 @@ export function KickCountForm({
                 width: 11,
                 height: 11,
                 borderRadius: 999,
-                backgroundColor: filled ? (goalReached ? '#BDD48C' : pinkSticker) : 'transparent',
+                backgroundColor: filled
+                  ? (diffuse ? (goalReached ? dAccent : dt.colors.line2) : (goalReached ? '#BDD48C' : pinkSticker))
+                  : 'transparent',
                 borderWidth: 1.5,
-                borderColor: filled ? ink : (isDark ? colors.border : 'rgba(20,19,19,0.22)'),
+                borderColor: filled
+                  ? (diffuse ? (goalReached ? dAccent : dt.colors.line2) : ink)
+                  : (diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.22)')),
               }}
             />
           ))}
@@ -625,10 +792,12 @@ export function KickCountForm({
 
         <Text style={{
           fontSize: 13,
-          fontFamily: font.bodyMedium,
-          color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)',
+          fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium,
+          color: diffuse ? dInk3 : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'),
           textAlign: 'center',
           marginTop: 6,
+          letterSpacing: diffuse ? 0.6 : 0,
+          textTransform: diffuse ? 'uppercase' : 'none',
         }}>
           {goalReached
             ? 'Goal reached! Great session.'
@@ -660,10 +829,35 @@ function SaveButton({
   label?: string
 }) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const isDisabled = !!disabled
+
+  if (diffuse) {
+    // Containerless action: mono-caps label + arrow on a top hairline rule.
+    const dAccent = getDiffuseAccent('preg', dt.isDark)
+    return (
+      <Pressable
+        onPress={saving || isDisabled ? undefined : onPress}
+        style={[dstyles.saveBtnD, { borderTopColor: dt.colors.line2, opacity: isDisabled ? 0.45 : 1 }]}
+      >
+        {saving ? (
+          <ActivityIndicator color={dt.colors.ink} />
+        ) : (
+          <>
+            <Text style={[dstyles.saveLabelD, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>
+              {label ?? 'Save'}
+            </Text>
+            <DiffuseArrow color={dAccent} size={18} />
+          </>
+        )}
+      </Pressable>
+    )
+  }
+
   const ST_INK = '#141313'
   const ST_LAVENDER = isDark ? colors.primary : getModeColor('preg', isDark)
   const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
-  const isDisabled = !!disabled
   return (
     <Pressable
       onPress={onPress}
@@ -714,6 +908,9 @@ function formatDate(dateStr: string): string {
 
 export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const sliderColor = diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [hours, setHours] = useState(7)
@@ -734,27 +931,31 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="sleep"
-        label={`Sleep on ${formatDate(date)}`}
-        tint={s.lilacSoft}
-      />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_hoursSlept')}</Text>
+      {diffuse ? (
+        <DiffuseFormHeader type="sleep" title={`Sleep on ${formatDate(date)}`} />
+      ) : (
+        <LogFormSticker
+          type="sleep"
+          label={`Sleep on ${formatDate(date)}`}
+          tint={s.lilacSoft}
+        />
+      )}
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_sleep_hoursSlept')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_hoursSlept')}</Text>}
       <StepSlider
         min={3}
         max={12}
         value={hours}
         onChange={setHours}
-        color={getModeColor('preg', isDark)}
+        color={sliderColor}
         unit={hours === 1 ? 'hour' : 'hours'}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_qualityRange')}</Text>
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_sleep_qualityRange')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_qualityRange')}</Text>}
       <StepSlider
         min={1}
         max={10}
         value={quality}
         onChange={setQuality}
-        color={getModeColor('preg', isDark)}
+        color={sliderColor}
       />
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
@@ -767,6 +968,9 @@ const EXERCISE_TYPES = ['Yoga', 'Walk', 'Swim', 'Stretching', 'Pilates', 'Other'
 
 export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [exerciseType, setExerciseType] = useState<string | null>('Walk')
@@ -793,28 +997,42 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="exercise"
-        label={`Movement on ${formatDate(date)}`}
-        tint={s.greenSoft}
-      />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_exercise_typeLabel')}</Text>
+      {diffuse ? (
+        <DiffuseFormHeader type="exercise" title={`Movement on ${formatDate(date)}`} />
+      ) : (
+        <LogFormSticker
+          type="exercise"
+          label={`Movement on ${formatDate(date)}`}
+          tint={s.greenSoft}
+        />
+      )}
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_exercise_typeLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_exercise_typeLabel')}</Text>}
       <View style={styles.chipRow}>
         {EXERCISE_TYPES.map((etype) => (
-          <Pressable
-            key={etype}
-            onPress={() => setExerciseType(etype)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: exerciseType === etype ? getModeColor('preg', isDark) + '24' : colors.surface,
-                borderColor: exerciseType === etype ? getModeColor('preg', isDark) : colors.border,
-                borderRadius: radius.full,
-              },
-            ]}
-          >
-            <Text style={[styles.chipText, { color: exerciseType === etype ? getModeColor('preg', isDark) : colors.text }]}>{etype}</Text>
-          </Pressable>
+          diffuse ? (
+            <DiffuseChip
+              key={etype}
+              label={etype}
+              selected={exerciseType === etype}
+              accent={dAccent}
+              onPress={() => setExerciseType(etype)}
+            />
+          ) : (
+            <Pressable
+              key={etype}
+              onPress={() => setExerciseType(etype)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: exerciseType === etype ? getModeColor('preg', isDark) + '24' : colors.surface,
+                  borderColor: exerciseType === etype ? getModeColor('preg', isDark) : colors.border,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text style={[styles.chipText, { color: exerciseType === etype ? getModeColor('preg', isDark) : colors.text }]}>{etype}</Text>
+            </Pressable>
+          )
         ))}
       </View>
       {isOther && (
@@ -822,26 +1040,28 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
           value={customType}
           onChangeText={setCustomType}
           placeholder="What kind of movement?"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
           autoFocus
           style={[
             styles.input,
-            {
-              color: colors.text,
-              backgroundColor: colors.surface,
-              borderColor: getModeColor('preg', isDark),
-              borderRadius: radius.lg,
-            },
+            diffuse
+              ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
+              : {
+                  color: colors.text,
+                  backgroundColor: colors.surface,
+                  borderColor: getModeColor('preg', isDark),
+                  borderRadius: radius.lg,
+                },
           ]}
         />
       )}
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_exercise_minutesFieldLabel')}</Text>
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_exercise_minutesFieldLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_exercise_minutesFieldLabel')}</Text>}
       <StepSlider
         min={5}
         max={120}
         value={minutes}
         onChange={setMinutes}
-        color={getModeColor('preg', isDark)}
+        color={diffuse ? dAccent : getModeColor('preg', isDark)}
         unit="min"
       />
       <SaveButton onPress={save} saving={saving} disabled={!canSave} />
@@ -855,6 +1075,9 @@ const NUTRITION_TAGS = ['Iron', 'Folic acid', 'Protein', 'Calcium', 'DHA', 'Vita
 
 export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [tags, setTags] = useState<string[]>([])
@@ -880,15 +1103,30 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="nutrition"
-        label={`Nourish on ${formatDate(date)}`}
-        tint={s.greenSoft}
-      />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nutrition_coverageLabel')}</Text>
+      {diffuse ? (
+        <DiffuseFormHeader type="nutrition" title={`Nourish on ${formatDate(date)}`} />
+      ) : (
+        <LogFormSticker
+          type="nutrition"
+          label={`Nourish on ${formatDate(date)}`}
+          tint={s.greenSoft}
+        />
+      )}
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_nutrition_coverageLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nutrition_coverageLabel')}</Text>}
       <View style={styles.chipRow}>
         {NUTRITION_TAGS.map((tag) => {
           const active = tags.includes(tag)
+          if (diffuse) {
+            return (
+              <DiffuseChip
+                key={tag}
+                label={tag}
+                selected={active}
+                accent={dAccent}
+                onPress={() => toggle(tag)}
+              />
+            )
+          }
           return (
             <Pressable
               key={tag}
@@ -911,9 +1149,11 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
         value={nutritionNotes}
         onChangeText={setNutritionNotes}
         placeholder="Notes (optional)"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline
-        style={[styles.inputMultiline, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.inputMultiline, diffuse
+          ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
+          : { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
       <SaveButton onPress={save} saving={saving} disabled={tags.length === 0} />
     </View>
@@ -924,6 +1164,8 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
 
 export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [sets, setSets] = useState(3)
@@ -943,18 +1185,22 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="kegel"
-        label="Pelvic floor practice"
-        tint={s.lilacSoft}
-      />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_kegel_setsCompletedLabel')}</Text>
+      {diffuse ? (
+        <DiffuseFormHeader type="kegel" title="Pelvic floor practice" />
+      ) : (
+        <LogFormSticker
+          type="kegel"
+          label="Pelvic floor practice"
+          tint={s.lilacSoft}
+        />
+      )}
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_kegel_setsCompletedLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_kegel_setsCompletedLabel')}</Text>}
       <StepSlider
         min={1}
         max={20}
         value={sets}
         onChange={setSets}
-        color={getModeColor('preg', isDark)}
+        color={diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)}
         unit={sets === 1 ? 'set' : 'sets'}
       />
       <SaveButton onPress={save} saving={saving} disabled={false} />
@@ -966,6 +1212,9 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
 export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [glasses, setGlasses] = useState(1)
@@ -973,11 +1222,13 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
   const GOAL = 8
   const remaining = Math.max(0, GOAL - glasses)
-  const ink = isDark ? colors.text : '#141313'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.10)'
-  const dropFill = '#9DC3E8'                                  // sticker blue
-  const dropMuted = isDark ? colors.border : 'rgba(20,19,19,0.18)'
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
+  const paper = diffuse ? 'transparent' : (isDark ? colors.surface : '#FFFEF8')
+  const paperBorder = diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.10)')
+  const dropFill = diffuse ? dAccent : '#9DC3E8'             // sticker blue / accent
+  const dropMuted = diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.18)')
+  const numFont = diffuse ? diffuseFont.display : font.display
+  const stepBtnFont = diffuse ? diffuseFont.monoBold : font.display
 
   async function save() {
     setSaving(true)
@@ -998,11 +1249,15 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
 
   return (
     <View style={styles.form}>
-      <LogFormSticker type="water" label="Hydration check-in" tint={s.blueSoft} />
+      {diffuse ? (
+        <DiffuseFormHeader type="water" title="Hydration check-in" />
+      ) : (
+        <LogFormSticker type="water" label="Hydration check-in" tint={s.blueSoft} />
+      )}
 
       {/* Counter card */}
       <View style={[styles.waterCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-        <Text style={[styles.waterMetaLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
+        <Text style={[styles.waterMetaLabel, { color: diffuse ? dt.colors.ink3 : ink, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>
           {t('preg_form_water_glassesTodayLabel')}
         </Text>
 
@@ -1016,12 +1271,12 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
               pressed && { transform: [{ scale: 0.94 }], opacity: 0.85 },
             ]}
           >
-            <Text style={[styles.waterStepText, { color: ink, fontFamily: font.display }]}>{'−'}</Text>
+            <Text style={[styles.waterStepText, { color: ink, fontFamily: stepBtnFont }]}>{'−'}</Text>
           </Pressable>
 
-          <Text style={[styles.waterValue, { color: ink, fontFamily: font.display }]}>
+          <Text style={[styles.waterValue, { color: ink, fontFamily: numFont }]}>
             {glasses}
-            <Text style={[styles.waterValueUnit, { color: ink, fontFamily: font.italic }]}>
+            <Text style={[styles.waterValueUnit, { color: diffuse ? dt.colors.ink3 : ink, fontFamily: diffuse ? diffuseFont.mono : font.italic, fontStyle: diffuse ? 'normal' : 'italic' }]}>
               /{GOAL}
             </Text>
           </Text>
@@ -1035,18 +1290,18 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
               pressed && { transform: [{ scale: 0.94 }], opacity: 0.85 },
             ]}
           >
-            <Text style={[styles.waterStepText, { color: ink, fontFamily: font.display }]}>+</Text>
+            <Text style={[styles.waterStepText, { color: ink, fontFamily: stepBtnFont }]}>+</Text>
           </Pressable>
         </View>
 
         {/* Droplet progress tally */}
         <View style={styles.waterDropletRow}>
           {Array.from({ length: GOAL }, (_, i) => (
-            <Droplet key={i} filled={i < glasses} fill={dropFill} stroke={ink} muted={dropMuted} />
+            <Droplet key={i} filled={i < glasses} fill={dropFill} stroke={diffuse ? dAccent : ink} muted={dropMuted} />
           ))}
         </View>
 
-        <Text style={[styles.waterHint, { color: ink, fontFamily: font.italic }]}>
+        <Text style={[styles.waterHint, { color: diffuse ? dt.colors.ink3 : ink, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
           {hint}
         </Text>
       </View>
@@ -1074,6 +1329,8 @@ function Droplet({ filled, fill, stroke, muted }: { filled: boolean; fill: strin
 
 export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [saving, setSaving] = useState(false)
@@ -1092,12 +1349,18 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="vitamins"
-        label="Prenatal vitamins"
-        tint={s.greenSoft}
-      />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign: 'center' }]}>
+      {diffuse ? (
+        <DiffuseFormHeader type="vitamins" title="Prenatal vitamins" />
+      ) : (
+        <LogFormSticker
+          type="vitamins"
+          label="Prenatal vitamins"
+          tint={s.greenSoft}
+        />
+      )}
+      <Text style={[styles.fieldLabel, diffuse
+        ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textAlign: 'center' }
+        : { color: colors.textSecondary, textAlign: 'center' }]}>
         {t('preg_form_vitamins_question')}
       </Text>
       <SaveButton onPress={save} saving={saving} disabled={false} />
@@ -1111,6 +1374,9 @@ const NESTING_CATEGORIES = ['Nursery', 'Cleaning', 'Laundry', 'Shopping', 'Organ
 
 export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [nestingTitle, setNestingTitle] = useState('')
@@ -1137,35 +1403,51 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="nesting"
-        label="Getting ready at home"
-        tint={s.peachSoft}
-      />
+      {diffuse ? (
+        <DiffuseFormHeader type="nesting" title="Getting ready at home" />
+      ) : (
+        <LogFormSticker
+          type="nesting"
+          label="Getting ready at home"
+          tint={s.peachSoft}
+        />
+      )}
       <TextInput
         value={nestingTitle}
         onChangeText={setNestingTitle}
         placeholder="Task name (e.g. Set up crib)"
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+        style={[styles.input, diffuse
+          ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
+          : { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nesting_categoryLabel')}</Text>
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_nesting_categoryLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nesting_categoryLabel')}</Text>}
       <View style={styles.chipRow}>
         {NESTING_CATEGORIES.map((cat) => (
-          <Pressable
-            key={cat}
-            onPress={() => setNestingCategory(cat)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: nestingCategory === cat ? getModeColor('preg', isDark) + '24' : colors.surface,
-                borderColor: nestingCategory === cat ? getModeColor('preg', isDark) : colors.border,
-                borderRadius: radius.full,
-              },
-            ]}
-          >
-            <Text style={[styles.chipText, { color: nestingCategory === cat ? getModeColor('preg', isDark) : colors.text }]}>{cat}</Text>
-          </Pressable>
+          diffuse ? (
+            <DiffuseChip
+              key={cat}
+              label={cat}
+              selected={nestingCategory === cat}
+              accent={dAccent}
+              onPress={() => setNestingCategory(cat)}
+            />
+          ) : (
+            <Pressable
+              key={cat}
+              onPress={() => setNestingCategory(cat)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: nestingCategory === cat ? getModeColor('preg', isDark) + '24' : colors.surface,
+                  borderColor: nestingCategory === cat ? getModeColor('preg', isDark) : colors.border,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text style={[styles.chipText, { color: nestingCategory === cat ? getModeColor('preg', isDark) : colors.text }]}>{cat}</Text>
+            </Pressable>
+          )
         ))}
       </View>
       {isOther && (
@@ -1173,17 +1455,23 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
           value={customCategory}
           onChangeText={setCustomCategory}
           placeholder="Custom category"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
           autoFocus
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: isDark ? colors.border : '#141313', borderRadius: radius.lg }]}
+          style={[styles.input, diffuse
+            ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line2, borderRadius: 18, fontFamily: diffuseFont.body }
+            : { color: colors.text, backgroundColor: colors.surface, borderColor: isDark ? colors.border : '#141313', borderRadius: radius.lg }]}
         />
       )}
       <Pressable
         onPress={() => setDone((d) => !d)}
-        style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
+        style={[styles.toggleRow2, diffuse
+          ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line, borderRadius: 18 }
+          : { backgroundColor: colors.surface, borderRadius: radius.lg }]}
       >
-        <Text style={[styles.toggleLabel, { color: colors.text }]}>{t('preg_form_nesting_alreadyDone')}</Text>
-        <View style={[styles.togglePill, { backgroundColor: done ? getModeColor('preg', isDark) : colors.border }]}>
+        <Text style={[styles.toggleLabel, diffuse
+          ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase', fontSize: 12 }
+          : { color: colors.text }]}>{t('preg_form_nesting_alreadyDone')}</Text>
+        <View style={[styles.togglePill, { backgroundColor: done ? (diffuse ? dAccent : getModeColor('preg', isDark)) : (diffuse ? dt.colors.line2 : colors.border) }]}>
           <View style={[styles.toggleThumb, { marginLeft: done ? 20 : 2 }]} />
         </View>
       </Pressable>
@@ -1199,6 +1487,9 @@ const BIRTH_PREP_CATEGORIES = ['Hospital bag', 'Birth plan', 'Classes', 'Postpar
 
 export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [birthPrepTitle, setBirthPrepTitle] = useState('')
@@ -1226,35 +1517,51 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="birth_prep"
-        label="Preparing for baby"
-        tint={s.lilacSoft}
-      />
+      {diffuse ? (
+        <DiffuseFormHeader type="birth_prep" title="Preparing for baby" />
+      ) : (
+        <LogFormSticker
+          type="birth_prep"
+          label="Preparing for baby"
+          tint={s.lilacSoft}
+        />
+      )}
       <TextInput
         value={birthPrepTitle}
         onChangeText={setBirthPrepTitle}
         placeholder="Task name (e.g. Pack hospital bag)"
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+        style={[styles.input, diffuse
+          ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
+          : { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nesting_categoryLabel')}</Text>
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_nesting_categoryLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_nesting_categoryLabel')}</Text>}
       <View style={styles.chipRow}>
         {BIRTH_PREP_CATEGORIES.map((cat) => (
-          <Pressable
-            key={cat}
-            onPress={() => setBirthPrepCategory(cat)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: birthPrepCategory === cat ? getModeColor('preg', isDark) + '24' : colors.surface,
-                borderColor: birthPrepCategory === cat ? getModeColor('preg', isDark) : colors.border,
-                borderRadius: radius.full,
-              },
-            ]}
-          >
-            <Text style={[styles.chipText, { color: birthPrepCategory === cat ? getModeColor('preg', isDark) : colors.text }]}>{cat}</Text>
-          </Pressable>
+          diffuse ? (
+            <DiffuseChip
+              key={cat}
+              label={cat}
+              selected={birthPrepCategory === cat}
+              accent={dAccent}
+              onPress={() => setBirthPrepCategory(cat)}
+            />
+          ) : (
+            <Pressable
+              key={cat}
+              onPress={() => setBirthPrepCategory(cat)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: birthPrepCategory === cat ? getModeColor('preg', isDark) + '24' : colors.surface,
+                  borderColor: birthPrepCategory === cat ? getModeColor('preg', isDark) : colors.border,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text style={[styles.chipText, { color: birthPrepCategory === cat ? getModeColor('preg', isDark) : colors.text }]}>{cat}</Text>
+            </Pressable>
+          )
         ))}
       </View>
       {isOther && (
@@ -1262,26 +1569,32 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
           value={customCategory}
           onChangeText={setCustomCategory}
           placeholder="Custom category"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
           autoFocus
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: getModeColor('preg', isDark), borderRadius: radius.lg }]}
+          style={[styles.input, diffuse
+            ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line2, borderRadius: 18, fontFamily: diffuseFont.body }
+            : { color: colors.text, backgroundColor: colors.surface, borderColor: getModeColor('preg', isDark), borderRadius: radius.lg }]}
         />
       )}
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_birthprep_dueByWeek')}</Text>
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_birthprep_dueByWeek')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_birthprep_dueByWeek')}</Text>}
       <StepSlider
         min={20}
         max={42}
         value={dueWeek}
         onChange={setDueWeek}
-        color={getModeColor('preg', isDark)}
+        color={diffuse ? dAccent : getModeColor('preg', isDark)}
         unit={`week${dueWeek === 1 ? '' : 's'}`}
       />
       <Pressable
         onPress={() => setDone((d) => !d)}
-        style={[styles.toggleRow2, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
+        style={[styles.toggleRow2, diffuse
+          ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line, borderRadius: 18 }
+          : { backgroundColor: colors.surface, borderRadius: radius.lg }]}
       >
-        <Text style={[styles.toggleLabel, { color: colors.text }]}>{t('preg_form_nesting_alreadyDone')}</Text>
-        <View style={[styles.togglePill, { backgroundColor: done ? getModeColor('preg', isDark) : colors.border }]}>
+        <Text style={[styles.toggleLabel, diffuse
+          ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase', fontSize: 12 }
+          : { color: colors.text }]}>{t('preg_form_nesting_alreadyDone')}</Text>
+        <View style={[styles.togglePill, { backgroundColor: done ? (diffuse ? dAccent : getModeColor('preg', isDark)) : (diffuse ? dt.colors.line2 : colors.border) }]}>
           <View style={[styles.toggleThumb, { marginLeft: done ? 20 : 2 }]} />
         </View>
       </Pressable>
@@ -1294,6 +1607,9 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
 
 export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const sliderColor = diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [durationSec, setDurationSec] = useState(45)
@@ -1315,36 +1631,42 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="contraction"
-        label={`Contraction on ${formatDate(date)}`}
-        tint={s.pinkSoft}
-      />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_contraction_durationLabel')}</Text>
+      {diffuse ? (
+        <DiffuseFormHeader type="contraction" title={`Contraction on ${formatDate(date)}`} />
+      ) : (
+        <LogFormSticker
+          type="contraction"
+          label={`Contraction on ${formatDate(date)}`}
+          tint={s.pinkSoft}
+        />
+      )}
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_contraction_durationLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_contraction_durationLabel')}</Text>}
       <StepSlider
         min={10}
         max={180}
         value={durationSec}
         onChange={setDurationSec}
-        color={getModeColor('preg', isDark)}
+        color={sliderColor}
         unit="sec"
       />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_contraction_intervalLabel')}</Text>
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_contraction_intervalLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_contraction_intervalLabel')}</Text>}
       <StepSlider
         min={1}
         max={30}
         value={intervalMin}
         onChange={setIntervalMin}
-        color={getModeColor('preg', isDark)}
+        color={sliderColor}
         unit={intervalMin === 1 ? 'minute' : 'minutes'}
       />
       <TextInput
         value={contractionNotes}
         onChangeText={setContractionNotes}
         placeholder="Notes (intensity, location)"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline
-        style={[styles.inputMultiline, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+        style={[styles.inputMultiline, diffuse
+          ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
+          : { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
       />
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
@@ -1355,6 +1677,8 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
 
 export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [weight, setWeight] = useState('70')
@@ -1379,22 +1703,28 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="weight"
-        label={`Weight on ${formatDate(date)}`}
-        tint={s.peachSoft}
-      />
-      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_weight_fieldLabel')}</Text>
-      <View style={[styles.weightCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+      {diffuse ? (
+        <DiffuseFormHeader type="weight" title={`Weight on ${formatDate(date)}`} />
+      ) : (
+        <LogFormSticker
+          type="weight"
+          label={`Weight on ${formatDate(date)}`}
+          tint={s.peachSoft}
+        />
+      )}
+      {diffuse ? <DiffuseFieldLabel>{t('preg_form_weight_fieldLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_weight_fieldLabel')}</Text>}
+      <View style={[styles.weightCard, diffuse
+        ? { backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 20 }
+        : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
         <TextInput
           value={weight}
           onChangeText={setWeight}
           keyboardType="decimal-pad"
           placeholder="68.5"
-          placeholderTextColor={colors.textMuted}
-          style={[styles.weightInput, { color: colors.text, fontFamily: font.display }]}
+          placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+          style={[styles.weightInput, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}
         />
-        <Text style={[styles.weightUnit, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('preg_form_weight_kgLabel')}</Text>
+        <Text style={[styles.weightUnit, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('preg_form_weight_kgLabel')}</Text>
       </View>
       <SaveButton onPress={save} saving={saving} disabled={weight.trim() === ''} />
     </View>
@@ -1635,5 +1965,61 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     backgroundColor: '#FFFFFF',
+  },
+})
+
+// ─── Diffuse styles ─────────────────────────────────────────────────────────
+const dstyles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerChip: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    letterSpacing: -0.3,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  chipLabel: {
+    fontSize: 12,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  fieldLabel: {
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  saveBtnD: {
+    marginTop: 18,
+    paddingTop: 18,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  saveLabelD: {
+    fontSize: 13,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
 })
