@@ -227,8 +227,10 @@ export function DiffuseMetricTile({ value, label, icon, highlighted, style }: Me
   return (
     <View style={[dp.metricTile, { borderColor: highlighted ? colors.hairline : colors.line, backgroundColor: colors.surface }, style]}>
       {icon ? <View style={{ marginBottom: 4 }}>{icon}</View> : null}
-      <Text style={[roleType.serif, { fontSize: 24, color: colors.ink, textAlign: 'center' }]}>{value}</Text>
-      <Text style={[roleType.eyebrow, { color: colors.ink3, textAlign: 'center', marginTop: 3 }]}>{label}</Text>
+      <Text style={[roleType.serif, { fontSize: 24, color: colors.ink, textAlign: 'center' }]} numberOfLines={1}>{value}</Text>
+      {/* Tighter tracking + single-line so long labels (e.g. ACTIVITIES) fit
+          the narrow tile at full size instead of wrapping mid-word. */}
+      <Text style={[roleType.eyebrow, { color: colors.ink3, textAlign: 'center', marginTop: 3, letterSpacing: 1, fontSize: 9 }]} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
     </View>
   )
 }
