@@ -36,8 +36,19 @@ import {
   Heart,
   Calendar,
   Hash,
+  Trophy,
+  Crown,
+  Medal,
+  Award,
+  Sparkles,
 } from 'lucide-react-native'
-import { useTheme } from '../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../components/ui/diffuse/DiffuseKit'
+import {
+  DiffuseEmptyState,
+  DiffuseBloomIcon,
+} from '../components/ui/diffuse/DiffusePrimitives'
+import { useModeStore } from '../store/useModeStore'
 import { useTranslation } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
 import { AvatarView, isIconAvatar } from '../components/ui/AvatarPicker'
@@ -339,6 +350,10 @@ function FloatingSticker({
 
 function SceneStickers() {
   const { stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  // Diffuse suppresses the big decorative sticker constellation — the language
+  // is restrained hairline + soft blooms, not floating sticker heroes.
+  if (diffuse) return null
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <FloatingSticker top={120} right={24} size={42} variant="bob" delay={0} duration={3400} opacity={0.55}>
@@ -394,12 +409,17 @@ function AnimatedStarIcon({ size, fill }: { size: number; fill: string }) {
 
 export default function LeaderboardScreen() {
   const { colors, radius, stickers, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
+  const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : stickers.yellow
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
 
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
 
   const [entries, setEntries] = useState<LeaderEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -442,14 +462,14 @@ export default function LeaderboardScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.bg }, styles.center]}>
+      <View style={[styles.root, { backgroundColor: bg }, styles.center]}>
         <BrandedLoader />
       </View>
     )
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: bg }]}>
       {/* Ambient sticker constellation — lives behind everything */}
       <SceneStickers />
 
@@ -459,20 +479,37 @@ export default function LeaderboardScreen() {
           title="Leaderboard"
           right={
             myEntry ? (
-              <View
-                style={[
-                  styles.rankPill,
-                  {
-                    backgroundColor: stickers.yellowSoft,
-                    borderColor: paperBorder,
-                  },
-                ]}
-              >
-                <AnimatedStarIcon size={14} fill={stickers.yellow} />
-                <Text style={[styles.rankPillText, { color: ink, fontFamily: font.display }]}>
-                  #{myEntry.rank}
-                </Text>
-              </View>
+              diffuse ? (
+                <View
+                  style={[
+                    styles.rankPill,
+                    {
+                      backgroundColor: 'transparent',
+                      borderColor: dt.colors.hairline,
+                    },
+                  ]}
+                >
+                  <Trophy size={13} color={dt.colors.ink3} strokeWidth={1.8} />
+                  <Text style={[styles.rankPillText, { color: ink, fontFamily: diffuseFont.monoBold }]}>
+                    #{myEntry.rank}
+                  </Text>
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.rankPill,
+                    {
+                      backgroundColor: stickers.yellowSoft,
+                      borderColor: paperBorder,
+                    },
+                  ]}
+                >
+                  <AnimatedStarIcon size={14} fill={stickers.yellow} />
+                  <Text style={[styles.rankPillText, { color: ink, fontFamily: font.display }]}>
+                    #{myEntry.rank}
+                  </Text>
+                </View>
+              )
             ) : undefined
           }
         />
@@ -488,6 +525,48 @@ export default function LeaderboardScreen() {
           const isActive = activeTab === tab.key
           const count = tabCounts[tab.key]
           const tabLabel = tab.key === 'all' ? t('leaderboard_tabAll') : tab.key === 'moms' ? t('leaderboard_tabMoms') : tab.key === 'caregivers' ? t('leaderboard_tabCaregivers') : t('leaderboard_tabPartners')
+          if (diffuse) {
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key)}
+                style={({ pressed }) => [
+                  styles.tabPill,
+                  {
+                    backgroundColor: isActive ? dt.colors.surface : 'transparent',
+                    borderColor: isActive ? dt.colors.hairline : dt.colors.line,
+                    borderRadius: 999,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tabPillText,
+                    {
+                      color: isActive ? dt.colors.ink : dt.colors.ink3,
+                      fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono,
+                      letterSpacing: 1,
+                      textTransform: 'uppercase',
+                    },
+                  ]}
+                >
+                  {tabLabel}
+                </Text>
+                <Text
+                  style={[
+                    styles.tabPillCount,
+                    {
+                      color: isActive ? dt.colors.ink2 : dt.colors.ink4,
+                      fontFamily: diffuseFont.mono,
+                    },
+                  ]}
+                >
+                  {count}
+                </Text>
+              </Pressable>
+            )
+          }
           return (
             <Pressable
               key={tab.key}
@@ -597,7 +676,7 @@ export default function LeaderboardScreen() {
               styles.profileSheet,
               {
                 backgroundColor: paper,
-                borderRadius: radius.xl,
+                borderRadius: diffuse ? 28 : radius.xl,
                 borderColor: paperBorder,
                 paddingBottom: insets.bottom + 24,
               },
@@ -622,10 +701,13 @@ function Podium({
   onPress: (e: LeaderEntry) => void
 }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
 
   // Reorder for visual: [2, 1, 3]
   const order = [entries[1], entries[0], entries[2]].filter(Boolean)
@@ -636,6 +718,18 @@ function Podium({
     3: stickers.peach,
   } as const
 
+  // Diffuse: line-icon-over-bloom per rank (crown / medal / award), keyed to
+  // the mode accent bloom instead of filled sticker sockets.
+  const rankBloomIcon = (rank: 1 | 2 | 3, size: number) => {
+    const acc = getDiffuseAccent(mode, dt.isDark)
+    const Glyph = rank === 1 ? Crown : rank === 2 ? Medal : Award
+    return (
+      <DiffuseBloomIcon color={acc} size={size} intensity={0.5}>
+        <Glyph size={size * 0.62} color={dt.colors.ink2} strokeWidth={1.7} />
+      </DiffuseBloomIcon>
+    )
+  }
+
   return (
     <View style={styles.podiumRow}>
       {order.map((entry) => {
@@ -643,6 +737,53 @@ function Podium({
         const isCenter = rank === 1
         const fill = stickerFills[rank]
         const isMe = entry.user_id === myUserId
+
+        if (diffuse) {
+          return (
+            <Pressable
+              key={entry.user_id}
+              onPress={() => onPress(entry)}
+              style={({ pressed }) => [
+                styles.podiumCard,
+                {
+                  backgroundColor: paper,
+                  borderColor: paperBorder,
+                  borderRadius: 28,
+                  transform: [{ translateY: isCenter ? -8 : 0 }],
+                },
+                pressed && { opacity: 0.9 },
+              ]}
+            >
+              {rankBloomIcon(rank, isCenter ? 52 : 44)}
+
+              <AvatarView
+                value={entry.photo_url}
+                size={isCenter ? 56 : 48}
+                accent="transparent"
+                initial={(entry.name || '?').trim().charAt(0).toUpperCase()}
+                textColor={ink}
+                borderColor={dt.colors.line2}
+                borderWidth={1}
+              />
+
+              <Text
+                style={[styles.podiumName, { color: ink, fontFamily: diffuseFont.body }]}
+                numberOfLines={1}
+              >
+                {isMe ? t('leaderboard_you') : entry.name.split(' ')[0]}
+              </Text>
+
+              <View style={styles.podiumPtsRow}>
+                <Text style={[styles.podiumPts, { color: ink, fontFamily: diffuseFont.display }]}>
+                  {entry.total_points}
+                </Text>
+                <Text style={[styles.podiumPtsLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }]}>
+                  {t('leaderboard_pts')}
+                </Text>
+              </View>
+            </Pressable>
+          )
+        }
 
         return (
           <Pressable
@@ -705,13 +846,88 @@ function LeaderRow({
   onPress: () => void
 }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
   const paper = colors.surface
   const paperBorder = colors.border
-  const ink = colors.text
+  const ink = diffuse ? dt.colors.ink : colors.text
 
   const meTint = isDark ? stickers.pinkSoft : stickers.pinkSoft
   const meBorder = stickers.coral
+
+  if (diffuse) {
+    const acc = getDiffuseAccent(mode, dt.isDark)
+    const statParts: { icon: React.ReactNode; value: number }[] = []
+    if (entry.child_logs > 0) statParts.push({ icon: <Calendar size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.child_logs })
+    if (entry.garage_posts + entry.channel_posts > 0) statParts.push({ icon: <MessageCircle size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.garage_posts + entry.channel_posts })
+    if (entry.garage_likes + entry.channel_reactions > 0) statParts.push({ icon: <Heart size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.garage_likes + entry.channel_reactions })
+    if (entry.channels_joined > 0) statParts.push({ icon: <Hash size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.channels_joined })
+
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.diffuseRow,
+          {
+            borderColor: isMe ? dt.colors.hairline : dt.colors.line,
+            backgroundColor: dt.colors.surface,
+          },
+          pressed && { opacity: 0.6 },
+        ]}
+      >
+        {/* Current-user emphasis: a soft accent bloom, not a saturated pill. */}
+        {isMe ? <SoftBloom color={acc} cx="8%" cy="50%" opacity={dt.isDark ? 0.22 : 0.18} spread={0.4} radius="70%" /> : null}
+
+        <View style={styles.rowRank}>
+          <Text style={[styles.diffuseRowRankText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+            {entry.rank}
+          </Text>
+        </View>
+
+        <AvatarView
+          value={entry.photo_url}
+          size={40}
+          accent="transparent"
+          initial={(entry.name || '?').trim().charAt(0).toUpperCase()}
+          textColor={ink}
+          borderColor={isMe ? dt.colors.hairline : dt.colors.line2}
+          borderWidth={1}
+        />
+
+        <View style={styles.rowInfo}>
+          <Text
+            style={[styles.rowName, { color: ink, fontFamily: diffuseFont.bodyMedium }]}
+            numberOfLines={1}
+          >
+            {isMe ? t('leaderboard_youSuffix', { name: entry.name }) : entry.name}
+          </Text>
+          {statParts.length > 0 && (
+            <View style={styles.rowStats}>
+              {statParts.map((s, i) => (
+                <View key={i} style={styles.statChip}>
+                  {s.icon}
+                  <Text style={[styles.diffuseStatChipText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                    {s.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        <View style={styles.rowPts}>
+          <Text style={[styles.diffuseRowPtsValue, { color: ink, fontFamily: diffuseFont.monoBold }]}>
+            {entry.total_points}
+          </Text>
+          <Text style={[styles.diffuseRowPtsLabel, { color: dt.colors.ink4, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }]}>
+            {t('leaderboard_pts')}
+          </Text>
+        </View>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable
@@ -793,10 +1009,38 @@ function StatChip({ icon, value }: { icon: React.ReactNode; value: number }) {
 
 function SoloCheer() {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = colors.text
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
+
+  if (diffuse) {
+    const acc = getDiffuseAccent(mode, dt.isDark)
+    return (
+      <View
+        style={[
+          styles.soloWrap,
+          { backgroundColor: paper, borderColor: paperBorder, borderRadius: 28 },
+        ]}
+      >
+        <View style={{ marginBottom: 6 }} pointerEvents="none">
+          <DiffuseBloomIcon color={acc} size={64} intensity={0.5}>
+            <Sparkles size={30} color={dt.colors.ink2} strokeWidth={1.6} />
+          </DiffuseBloomIcon>
+        </View>
+
+        <Display size={20} align="center" color={ink}>
+          {t('leaderboard_aloneTop')}
+        </Display>
+        <Text style={[styles.soloItalic, { color: dt.colors.ink3, fontFamily: diffuseFont.italic }]}>
+          {t('leaderboard_aloneTopBody')}
+        </Text>
+      </View>
+    )
+  }
 
   return (
     <View
@@ -831,8 +1075,42 @@ function SoloCheer() {
 
 function YouCard({ entry, onPress }: { entry: LeaderEntry; onPress: () => void }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
-  const ink = colors.text
+  const ink = diffuse ? dt.colors.ink : colors.text
+
+  if (diffuse) {
+    const acc = getDiffuseAccent(mode, dt.isDark)
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.youCard,
+          {
+            backgroundColor: dt.colors.surface,
+            borderColor: dt.colors.hairline,
+            borderRadius: 28,
+          },
+          pressed && { opacity: 0.92 },
+        ]}
+      >
+        {/* Subtle accent bloom instead of the filled coral wash + heart sticker. */}
+        <SoftBloom color={acc} cx="88%" cy="70%" opacity={dt.isDark ? 0.26 : 0.2} spread={0.5} radius="70%" />
+
+        <View style={{ flex: 1, gap: 4 }}>
+          <MonoCaps color={dt.colors.ink3}>{t('leaderboard_yourSpot')}</MonoCaps>
+          <Text style={[styles.youName, { color: ink, fontFamily: diffuseFont.display }]}>
+            {t('leaderboard_rankHero', { name: entry.name.split(' ')[0], rank: entry.rank })}
+          </Text>
+          <Text style={[styles.youSub, { color: dt.colors.ink3, fontFamily: diffuseFont.italic }]}>
+            {t('leaderboard_pointsSeason', { n: entry.total_points })}
+          </Text>
+        </View>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable
@@ -868,7 +1146,21 @@ function YouCard({ entry, onPress }: { entry: LeaderEntry; onPress: () => void }
 
 function EmptyState() {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
+
+  if (diffuse) {
+    return (
+      <DiffuseEmptyState
+        icon={<Trophy size={30} color={dt.colors.ink2} strokeWidth={1.6} />}
+        title={t('leaderboard_justYou')}
+        message={t('leaderboard_justYouBody')}
+      />
+    )
+  }
+
   return (
     <View style={styles.emptyWrap}>
       <View style={styles.emptyStickerWrap}>
@@ -888,9 +1180,12 @@ function EmptyState() {
 
 function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => void }) {
   const { colors, stickers, font, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const { t } = useTranslation()
-  const ink = colors.text
-  const paperBorder = colors.border
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const paperBorder = diffuse ? dt.colors.line : colors.border
 
   const rankFill =
     entry.rank === 1 ? stickers.yellow :
@@ -902,6 +1197,101 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
     entry.caregiver_role === 'nanny' ? t('leaderboard_roleCaregiver') :
     entry.caregiver_role === 'family' ? t('leaderboard_roleFamilyMember') :
     t('leaderboard_roleParent')
+
+  if (diffuse) {
+    const acc = getDiffuseAccent(mode, dt.isDark)
+    const RankGlyph = entry.rank === 1 ? Crown : entry.rank === 2 ? Medal : entry.rank === 3 ? Award : Trophy
+    return (
+      <>
+        <Pressable onPress={onClose} style={[styles.diffuseProfileClose, { borderColor: dt.colors.hairline }]} hitSlop={12}>
+          <X size={18} color={dt.colors.ink} />
+        </Pressable>
+
+        {/* Soft accent bloom in place of the giant translucent rank sticker. */}
+        <View style={styles.profileStickerBg} pointerEvents="none">
+          <SoftBloom color={acc} cx="70%" cy="30%" opacity={dt.isDark ? 0.2 : 0.16} spread={0.5} radius="60%" />
+        </View>
+
+        <View style={styles.profileAvatarWrap}>
+          <AvatarView
+            value={entry.photo_url}
+            size={84}
+            accent="transparent"
+            initial={(entry.name || '?').trim().charAt(0).toUpperCase()}
+            textColor={ink}
+            borderColor={dt.colors.line2}
+            borderWidth={1}
+          />
+          <View
+            style={[
+              styles.profileRankBadge,
+              {
+                backgroundColor: dt.colors.surface,
+                borderColor: dt.colors.hairline,
+              },
+            ]}
+          >
+            <Text style={[styles.diffuseProfileRankText, { color: ink, fontFamily: diffuseFont.monoBold }]}>
+              #{entry.rank}
+            </Text>
+          </View>
+        </View>
+
+        <Display size={26} align="center" color={ink}>
+          {entry.name}
+        </Display>
+        <Text style={[styles.profileRole, { color: dt.colors.ink3, fontFamily: diffuseFont.italic }]}>
+          {roleLabel}
+        </Text>
+
+        <View
+          style={[
+            styles.profilePointsPill,
+            {
+              backgroundColor: 'transparent',
+              borderColor: dt.colors.hairline,
+              borderRadius: 999,
+            },
+          ]}
+        >
+          <Trophy size={15} color={dt.colors.ink3} strokeWidth={1.8} />
+          <Text style={[styles.diffuseProfilePointsText, { color: ink, fontFamily: diffuseFont.monoBold }]}>
+            {entry.total_points}
+          </Text>
+          <Text style={[styles.profilePointsLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }]}>
+            {t('leaderboard_statPoints')}
+          </Text>
+        </View>
+
+        <View style={styles.profileStatsGrid}>
+          <ProfileStat
+            label={t('leaderboard_statChildLogs')}
+            value={entry.child_logs}
+            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Calendar size={17} color={dt.colors.ink2} strokeWidth={1.7} /></DiffuseBloomIcon>}
+            tint="transparent"
+          />
+          <ProfileStat
+            label={t('leaderboard_statPosts')}
+            value={entry.garage_posts + entry.channel_posts}
+            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><MessageCircle size={17} color={dt.colors.ink2} strokeWidth={1.7} /></DiffuseBloomIcon>}
+            tint="transparent"
+          />
+          <ProfileStat
+            label={t('leaderboard_statReactions')}
+            value={entry.garage_likes + entry.channel_reactions}
+            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Heart size={17} color={dt.colors.ink2} strokeWidth={1.7} /></DiffuseBloomIcon>}
+            tint="transparent"
+          />
+          <ProfileStat
+            label={t('leaderboard_statChannels')}
+            value={entry.channels_joined}
+            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Hash size={17} color={dt.colors.ink2} strokeWidth={1.7} /></DiffuseBloomIcon>}
+            tint="transparent"
+          />
+        </View>
+      </>
+    )
+  }
 
   return (
     <>
@@ -1003,8 +1393,33 @@ function ProfileStat({
   tint: string
 }) {
   const { colors, font, radius, isDark } = useTheme()
-  const ink = colors.text
-  const paperBorder = colors.border
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+
+  if (diffuse) {
+    return (
+      <View
+        style={[
+          styles.profileStat,
+          {
+            backgroundColor: dt.colors.surface,
+            borderColor: paperBorder,
+            borderRadius: 20,
+          },
+        ]}
+      >
+        <View style={styles.profileStatSticker}>{sticker}</View>
+        <Text style={[styles.profileStatValue, { color: ink, fontFamily: diffuseFont.display }]}>
+          {value}
+        </Text>
+        <Text style={[styles.profileStatLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+          {label.toUpperCase()}
+        </Text>
+      </View>
+    )
+  }
 
   return (
     <View
@@ -1123,6 +1538,21 @@ const styles = StyleSheet.create({
   rowPtsValue: { fontSize: 20, letterSpacing: -0.5 },
   rowPtsLabel: { fontSize: 10 },
 
+  // Diffuse-only row treatment: hairline-bordered rows, mono rank/points.
+  diffuseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  diffuseRowRankText: { fontSize: 15, letterSpacing: 0.5 },
+  diffuseStatChipText: { fontSize: 10, letterSpacing: 0.5 },
+  diffuseRowPtsValue: { fontSize: 17, letterSpacing: 0.3 },
+  diffuseRowPtsLabel: { fontSize: 8, marginTop: 1 },
+
   youCard: {
     padding: 18,
     borderWidth: 1,
@@ -1196,6 +1626,18 @@ const styles = StyleSheet.create({
     right: 14,
     zIndex: 10,
   },
+  diffuseProfileClose: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   profileAvatarWrap: { alignItems: 'center', marginTop: 4 },
   profileAvatar: { width: 84, height: 84, borderRadius: 42, overflow: 'hidden' },
   profileRankBadge: {
@@ -1209,6 +1651,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   profileRankText: { fontSize: 13, letterSpacing: -0.2 },
+  diffuseProfileRankText: { fontSize: 11, letterSpacing: 0.3 },
   profileRole: { fontSize: 15, marginTop: -4 },
 
   profilePointsPill: {
@@ -1221,6 +1664,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   profilePointsText: { fontSize: 22, letterSpacing: -0.3 },
+  diffuseProfilePointsText: { fontSize: 18, letterSpacing: 0.3 },
   profilePointsLabel: { fontSize: 13 },
 
   profileStatsGrid: {
