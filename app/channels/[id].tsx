@@ -5,11 +5,16 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getThreads, type Thread } from '../../lib/channels'
 import { ThreadCard } from '../../components/channels/ThreadCard'
-import { typography, spacing, useTheme, font } from '../../constants/theme'
+import { typography, spacing, useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseEmptyState, DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
+import { MessageSquare } from 'lucide-react-native'
 import { useTranslation } from '../../lib/i18n'
 
 export default function ChannelDetail() {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -26,20 +31,30 @@ export default function ChannelDetail() {
   }, [id])
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: diffuse ? dt.colors.bg : colors.bg }}>
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
-            style={[styles.backBtn, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}
+            style={[styles.backBtn, diffuse
+              ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+              : { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}
           >
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+            <Ionicons name="arrow-back" size={22} color={diffuse ? dt.colors.ink : colors.text} />
           </Pressable>
-          <Text style={styles.title}>{t('channelDetail_title')}</Text>
+          <Text style={[styles.title, diffuse && { fontFamily: diffuseFont.display, color: dt.colors.ink, letterSpacing: -0.5 }]}>{t('channelDetail_title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {threads.length === 0 && !loading ? (
+          diffuse ? (
+            <DiffuseEmptyState
+              icon={<DiffuseBloomIcon size={40}><MessageSquare size={26} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+              title={t('channelDetail_emptyTitle')}
+              message={t('channelDetail_emptySubtitle')}
+              style={{ flex: 1 }}
+            />
+          ) : (
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>{t('channelDetail_emptyIcon')}</Text>
             <Text style={styles.emptyTitle}>{t('channelDetail_emptyTitle')}</Text>
@@ -47,6 +62,7 @@ export default function ChannelDetail() {
               {t('channelDetail_emptySubtitle')}
             </Text>
           </View>
+          )
         ) : (
           <FlatList
             data={threads}

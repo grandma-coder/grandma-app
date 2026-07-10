@@ -10,13 +10,16 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { getUnreadNotificationCount } from '../lib/channelPosts'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../constants/theme'
 import { GarageTab } from '../components/connections/GarageTab'
 import { ChannelsTab } from '../components/connections/ChannelsTab'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 
 export default function ConnectionsScreen() {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ tab?: string }>()
   const [tab, setTab] = useState<'garage' | 'channels'>(
@@ -31,17 +34,19 @@ export default function ConnectionsScreen() {
   )
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
         <ScreenHeader
           title="Connections"
           right={
             <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8}>
-              <View style={[styles.bellBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Ionicons name="notifications-outline" size={18} color={colors.text} />
+              <View style={[styles.bellBtn, diffuse
+                ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Ionicons name="notifications-outline" size={18} color={diffuse ? dt.colors.ink : colors.text} />
                 {notifCount > 0 && (
-                  <View style={[styles.notifBadge, { backgroundColor: brand.error }]}>
-                    <Text style={[styles.notifBadgeText, { color: colors.textInverse }]}>{notifCount > 9 ? '9+' : notifCount}</Text>
+                  <View style={[styles.notifBadge, { backgroundColor: diffuse ? dt.colors.error : brand.error }]}>
+                    <Text style={[styles.notifBadgeText, { color: diffuse ? dt.colors.surface : colors.textInverse, fontFamily: diffuse ? diffuseFont.monoBold : undefined }]}>{notifCount > 9 ? '9+' : notifCount}</Text>
                   </View>
                 )}
               </View>
@@ -51,7 +56,9 @@ export default function ConnectionsScreen() {
       </View>
 
       {/* Segmented pill tab bar */}
-      <View style={[styles.tabBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.tabBar, diffuse
+        ? { backgroundColor: 'transparent', borderColor: dt.colors.line, gap: 8 }
+        : { backgroundColor: colors.surface, borderColor: colors.border }]}>
         {(['garage', 'channels'] as const).map((t) => {
           const active = tab === t
           return (
@@ -59,16 +66,30 @@ export default function ConnectionsScreen() {
               <View
                 style={[
                   styles.tabBtn,
-                  { backgroundColor: active ? colors.text : 'transparent' },
+                  diffuse
+                    ? {
+                        backgroundColor: active ? dt.colors.surface : 'transparent',
+                        borderWidth: 1,
+                        borderColor: active ? dt.colors.hairline : dt.colors.line,
+                      }
+                    : { backgroundColor: active ? colors.text : 'transparent' },
                 ]}
               >
                 <Text
                   style={[
                     styles.tabText,
-                    {
-                      fontFamily: active ? font.bodySemiBold : font.bodyMedium,
-                      color: active ? colors.bg : colors.textMuted,
-                    },
+                    diffuse
+                      ? {
+                          fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
+                          color: active ? dt.colors.ink : dt.colors.ink3,
+                          textTransform: 'uppercase',
+                          letterSpacing: 1.4,
+                          fontSize: 12,
+                        }
+                      : {
+                          fontFamily: active ? font.bodySemiBold : font.bodyMedium,
+                          color: active ? colors.bg : colors.textMuted,
+                        },
                   ]}
                 >
                   {t === 'garage' ? 'Village' : 'Channels'}
