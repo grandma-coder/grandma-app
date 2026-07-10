@@ -39,16 +39,19 @@ import {
   FileText,
   Camera,
   ImageIcon,
+  Heart,
 } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
+import { useIsDiffuse, DiffuseArrow, SoftBloom } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import {
   Cross as CrossSticker,
   Heart as HeartSticker,
@@ -105,13 +108,18 @@ function planTypeLabel(t: InsurancePlanType): string {
 
 export default function EmergencyInsuranceScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
   const toast = useSavedToast()
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const coralInk = stickers.coralInk
-  const peachInk = stickers.peachInk
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const coralInk = diffuse ? dt.colors.ink : stickers.coralInk
+  const peachInk = diffuse ? dt.colors.ink : stickers.peachInk
+  const textColor = diffuse ? dt.colors.ink : colors.text
+  const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const secondaryColor = diffuse ? dt.colors.ink2 : colors.textSecondary
 
   const store = useEmergencyInsuranceStore()
   const [loading, setLoading] = useState(true)
@@ -216,15 +224,15 @@ export default function EmergencyInsuranceScreen() {
   // ─── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <ScreenHeader />
         <View style={styles.titleBlock}>
-          <Text style={[styles.bigTitle, { color: colors.text, fontFamily: font.display }]}>
+          <Text style={[styles.bigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
             {t('emergencyInsurance_title')}
           </Text>
-          <Text style={[styles.bigSubtitle, { color: coralInk, fontFamily: font.italic }]}>
+          <Text style={[styles.bigSubtitle, { color: diffuse ? dt.colors.ink3 : coralInk, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
             {t('emergencyInsurance_subtitle')}
           </Text>
         </View>
@@ -242,35 +250,54 @@ export default function EmergencyInsuranceScreen() {
           {/* ── Emergency Contacts Section ───────────────────────────── */}
           <View style={styles.sectionHeader}>
             <View style={styles.sectionLabelRow}>
-              <HeartSticker size={16} fill={stickers.coral} />
-              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('emergencyInsurance_sectionContacts')}</Text>
+              {diffuse ? (
+                <DiffuseBloomIcon color={dt.colors.ink} size={26} intensity={0.4}>
+                  <Heart size={15} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              ) : (
+                <HeartSticker size={16} fill={stickers.coral} />
+              )}
+              <Text style={[styles.sectionLabel, { color: mutedColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('emergencyInsurance_sectionContacts')}</Text>
             </View>
-            <Pressable onPress={openAddContact} hitSlop={8}>
-              <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
-                <SparkleSticker size={14} fill={coralInk} stroke={coralInk} />
-                <Plus size={14} color={coralInk} strokeWidth={3} />
-                <Text style={[styles.addPillText, { color: coralInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_add')}</Text>
-              </View>
-            </Pressable>
+            {diffuse ? (
+              <Pressable onPress={openAddContact} hitSlop={8} style={styles.addPillDiffuse}>
+                <Text style={[styles.addPillTextDiffuse, { color: dt.colors.ink, fontFamily: diffuseFont.mono }]}>{t('emergencyInsurance_add')}</Text>
+                <DiffuseArrow color={dt.colors.ink3} size={15} />
+              </Pressable>
+            ) : (
+              <Pressable onPress={openAddContact} hitSlop={8}>
+                <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
+                  <SparkleSticker size={14} fill={coralInk} stroke={coralInk} />
+                  <Plus size={14} color={coralInk} strokeWidth={3} />
+                  <Text style={[styles.addPillText, { color: coralInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_add')}</Text>
+                </View>
+              </Pressable>
+            )}
           </View>
 
           {store.contacts.length === 0 ? (
             <Pressable
               onPress={openAddContact}
-              style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}
+              style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder, borderStyle: diffuse ? 'solid' : 'dashed' }]}
             >
               <View style={styles.emptyIllustration}>
-                <CrossSticker size={140} fill={stickers.coral} />
+                {diffuse ? (
+                  <DiffuseBloomIcon color={dt.colors.ink} size={64} intensity={0.4}>
+                    <Heart size={30} color={dt.colors.ink3} strokeWidth={1.4} />
+                  </DiffuseBloomIcon>
+                ) : (
+                  <CrossSticker size={140} fill={stickers.coral} />
+                )}
               </View>
-              <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>
+              <Text style={[styles.emptyTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                 {t('emergencyInsurance_emptyContacts')}
               </Text>
-              <Body size={14} align="center" color={colors.textMuted}>
+              <Body size={14} align="center" color={mutedColor}>
                 {t('emergencyInsurance_emptyContactsHint')}
               </Body>
             </Pressable>
           ) : (
-            <View style={[styles.cardGroup, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <View style={[styles.cardGroup, diffuse && styles.cardGroupDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
               {store.contacts.map((contact, idx) => (
                 <Pressable
                   key={contact.id}
@@ -278,35 +305,48 @@ export default function EmergencyInsuranceScreen() {
                   style={[
                     styles.contactRow,
                     idx < store.contacts.length - 1 && {
-                      borderBottomWidth: 1,
-                      borderBottomColor: colors.borderLight,
+                      borderBottomWidth: diffuse ? StyleSheet.hairlineWidth : 1,
+                      borderBottomColor: diffuse ? dt.colors.line : colors.borderLight,
                     },
                   ]}
                 >
-                  <View style={[styles.contactAvatar, { backgroundColor: stickers.coral + (isDark ? '32' : '40') }]}>
-                    <CrossSticker size={20} fill={stickers.coral} />
-                  </View>
+                  {diffuse ? (
+                    <View style={[styles.contactAvatar, styles.contactAvatarDiffuse, { borderColor: dt.colors.line2 }]}>
+                      <Heart size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+                    </View>
+                  ) : (
+                    <View style={[styles.contactAvatar, { backgroundColor: stickers.coral + (isDark ? '32' : '40') }]}>
+                      <CrossSticker size={20} fill={stickers.coral} />
+                    </View>
+                  )}
                   <View style={styles.contactInfo}>
                     <View style={styles.contactNameRow}>
-                      <Text style={[styles.contactName, { color: colors.text, fontFamily: font.display }]}>
+                      <Text style={[styles.contactName, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                         {contact.name}
                       </Text>
                       {contact.isPrimary && (
-                        <View style={[styles.primaryBadge, { backgroundColor: stickers.yellow + (isDark ? '32' : '50') }]}>
-                          <Star size={10} color={stickers.yellowInk} strokeWidth={2.5} fill={stickers.yellowInk} />
-                          <Text style={[styles.primaryText, { color: stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_primaryBadge')}</Text>
-                        </View>
+                        diffuse ? (
+                          <View style={[styles.primaryBadge, styles.primaryBadgeDiffuse, { borderColor: dt.colors.line2 }]}>
+                            <Star size={9} color={dt.colors.ink3} strokeWidth={2} />
+                            <Text style={[styles.primaryText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2 }]}>{t('emergencyInsurance_primaryBadge')}</Text>
+                          </View>
+                        ) : (
+                          <View style={[styles.primaryBadge, { backgroundColor: stickers.yellow + (isDark ? '32' : '50') }]}>
+                            <Star size={10} color={stickers.yellowInk} strokeWidth={2.5} fill={stickers.yellowInk} />
+                            <Text style={[styles.primaryText, { color: stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_primaryBadge')}</Text>
+                          </View>
+                        )
                       )}
                     </View>
-                    <Text style={[styles.contactMeta, { color: colors.textSecondary, fontFamily: font.body }]}>
+                    <Text style={[styles.contactMeta, { color: secondaryColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                       {relationshipLabel(contact.relationship)}
                     </Text>
-                    <Text style={[styles.contactPhone, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+                    <Text style={[styles.contactPhone, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 0.6 : undefined }]}>
                       {contact.phone}
                     </Text>
                   </View>
                   <Pressable onPress={() => confirmDeleteContact(contact)} hitSlop={8}>
-                    <Trash2 size={16} color={colors.textMuted} strokeWidth={2} />
+                    <Trash2 size={16} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
                   </Pressable>
                 </Pressable>
               ))}
@@ -316,30 +356,49 @@ export default function EmergencyInsuranceScreen() {
           {/* ── Insurance Plans Section ──────────────────────────────── */}
           <View style={[styles.sectionHeader, { marginTop: 28 }]}>
             <View style={styles.sectionLabelRow}>
-              <StarSticker size={16} fill={stickers.peach} />
-              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('emergencyInsurance_sectionPlans')}</Text>
+              {diffuse ? (
+                <DiffuseBloomIcon color={dt.colors.ink} size={26} intensity={0.4}>
+                  <Shield size={15} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              ) : (
+                <StarSticker size={16} fill={stickers.peach} />
+              )}
+              <Text style={[styles.sectionLabel, { color: mutedColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('emergencyInsurance_sectionPlans')}</Text>
             </View>
-            <Pressable onPress={openAddPlan} hitSlop={8}>
-              <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
-                <SparkleSticker size={14} fill={peachInk} stroke={peachInk} />
-                <Plus size={14} color={peachInk} strokeWidth={3} />
-                <Text style={[styles.addPillText, { color: peachInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_add')}</Text>
-              </View>
-            </Pressable>
+            {diffuse ? (
+              <Pressable onPress={openAddPlan} hitSlop={8} style={styles.addPillDiffuse}>
+                <Text style={[styles.addPillTextDiffuse, { color: dt.colors.ink, fontFamily: diffuseFont.mono }]}>{t('emergencyInsurance_add')}</Text>
+                <DiffuseArrow color={dt.colors.ink3} size={15} />
+              </Pressable>
+            ) : (
+              <Pressable onPress={openAddPlan} hitSlop={8}>
+                <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
+                  <SparkleSticker size={14} fill={peachInk} stroke={peachInk} />
+                  <Plus size={14} color={peachInk} strokeWidth={3} />
+                  <Text style={[styles.addPillText, { color: peachInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_add')}</Text>
+                </View>
+              </Pressable>
+            )}
           </View>
 
           {store.plans.length === 0 ? (
             <Pressable
               onPress={openAddPlan}
-              style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}
+              style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder, borderStyle: diffuse ? 'solid' : 'dashed' }]}
             >
-              <View style={[styles.emptyIllustration, { transform: [{ rotate: '-6deg' }] }]}>
-                <Squishy w={140} h={94} fill={stickers.peach} />
+              <View style={[styles.emptyIllustration, !diffuse && { transform: [{ rotate: '-6deg' }] }]}>
+                {diffuse ? (
+                  <DiffuseBloomIcon color={dt.colors.ink} size={64} intensity={0.4}>
+                    <Shield size={30} color={dt.colors.ink3} strokeWidth={1.4} />
+                  </DiffuseBloomIcon>
+                ) : (
+                  <Squishy w={140} h={94} fill={stickers.peach} />
+                )}
               </View>
-              <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>
+              <Text style={[styles.emptyTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                 {t('emergencyInsurance_emptyPlans')}
               </Text>
-              <Body size={14} align="center" color={colors.textMuted}>
+              <Body size={14} align="center" color={mutedColor}>
                 {t('emergencyInsurance_emptyPlansHint')}
               </Body>
             </Pressable>
@@ -349,24 +408,38 @@ export default function EmergencyInsuranceScreen() {
                 <Pressable
                   key={plan.id}
                   onPress={() => openEditPlan(plan)}
-                  style={[styles.planCard, { backgroundColor: paper, borderColor: paperBorder }]}
+                  style={[styles.planCard, diffuse && styles.planCardDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}
                 >
                   <View style={styles.planHeader}>
-                    <View style={[styles.planTypeIcon, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
-                      <Building2 size={18} color={stickers.peachInk} strokeWidth={2} />
-                    </View>
+                    {diffuse ? (
+                      <DiffuseBloomIcon color={dt.colors.ink} size={42} intensity={0.42}>
+                        <Building2 size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+                      </DiffuseBloomIcon>
+                    ) : (
+                      <View style={[styles.planTypeIcon, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
+                        <Building2 size={18} color={stickers.peachInk} strokeWidth={2} />
+                      </View>
+                    )}
                     <View style={styles.planHeaderText}>
-                      <Text style={[styles.planProvider, { color: colors.text, fontFamily: font.display }]}>
+                      <Text style={[styles.planProvider, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                         {plan.providerName}
                       </Text>
-                      <View style={[styles.planTypeBadge, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
-                        <Text style={[styles.planTypeText, { color: stickers.peachInk, fontFamily: font.bodySemiBold }]}>
-                          {planTypeLabel(plan.planType)}
-                        </Text>
-                      </View>
+                      {diffuse ? (
+                        <View style={[styles.planTypeBadge, styles.planTypeBadgeDiffuse, { borderColor: dt.colors.line2 }]}>
+                          <Text style={[styles.planTypeText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2 }]}>
+                            {planTypeLabel(plan.planType)}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.planTypeBadge, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
+                          <Text style={[styles.planTypeText, { color: stickers.peachInk, fontFamily: font.bodySemiBold }]}>
+                            {planTypeLabel(plan.planType)}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                     <Pressable onPress={() => confirmDeletePlan(plan)} hitSlop={8}>
-                      <Trash2 size={16} color={colors.textMuted} strokeWidth={2} />
+                      <Trash2 size={16} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
                     </Pressable>
                   </View>
 
@@ -441,10 +514,12 @@ export default function EmergencyInsuranceScreen() {
 
 function PlanField({ label, value }: { label: string; value: string }) {
   const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   return (
     <View style={styles.planField}>
-      <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
-      <Text style={[styles.planFieldValue, { color: colors.text, fontFamily: font.bodyMedium }]}>{value}</Text>
+      <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{label}</MonoCaps>
+      <Text style={[styles.planFieldValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, letterSpacing: diffuse ? 0.6 : undefined }]}>{value}</Text>
     </View>
   )
 }
@@ -471,10 +546,15 @@ function ContactFormModal({
   }) => Promise<void>
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
-  const paper = colors.surface
-  const paperBorder = colors.border
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const textColor = diffuse ? dt.colors.ink : colors.text
+  const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const bodyFont = diffuse ? diffuseFont.body : font.body
   const isEdit = !!contact
 
   const [name, setName] = useState('')
@@ -531,21 +611,21 @@ function ContactFormModal({
       onShow={resetForm}
     >
       <KeyboardAvoidingView
-        style={[styles.modalRoot, { backgroundColor: colors.bg }]}
+        style={[styles.modalRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* Modal header */}
         <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
           <Pressable onPress={onClose} hitSlop={10}>
-            <View style={[styles.modalHeaderBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-              <Ionicons name="close" size={20} color={colors.text} />
+            <View style={[styles.modalHeaderBtn, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.hairline : paperBorder }]}>
+              <Ionicons name="close" size={20} color={textColor} />
             </View>
           </Pressable>
           <View style={styles.modalTitleCenter}>
-            <Text style={[styles.modalBigTitle, { color: colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.modalBigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
               {isEdit ? t('emergencyInsurance_editContact') : t('emergencyInsurance_addContact')}
             </Text>
-            <Text style={[styles.modalItalic, { color: stickers.coralInk, fontFamily: font.italic }]}>
+            <Text style={[styles.modalItalic, { color: diffuse ? dt.colors.ink3 : stickers.coralInk, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
               {t('emergencyInsurance_someoneToCall')}
             </Text>
           </View>
@@ -557,108 +637,113 @@ function ContactFormModal({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldName')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <User size={18} color={colors.textMuted} strokeWidth={2} />
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldName')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <User size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder={t('emergencyInsurance_contactNamePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              placeholderTextColor={mutedColor}
+              style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
               autoCapitalize="words"
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldRelationship')}</MonoCaps>
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldRelationship')}</MonoCaps>
           <Pressable
             onPress={() => setShowRelPicker(!showRelPicker)}
-            style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}
+            style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}
           >
-            <Ionicons name="people-outline" size={18} color={colors.textMuted} />
-            <Text style={[styles.inputText, { color: colors.text, flex: 1, fontFamily: font.body }]}>
+            <Ionicons name="people-outline" size={18} color={mutedColor} />
+            <Text style={[styles.inputText, { color: textColor, flex: 1, fontFamily: bodyFont }]}>
               {relationshipLabel(relationship)}
             </Text>
-            <ChevronDown size={18} color={colors.textMuted} />
+            <ChevronDown size={18} color={mutedColor} />
           </Pressable>
           {showRelPicker && (
-            <View style={[styles.pickerList, { backgroundColor: paper, borderColor: paperBorder }]}>
-              {RELATIONSHIPS.map((rel) => (
+            <View style={[styles.pickerList, diffuse && styles.pickerListDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+              {RELATIONSHIPS.map((rel) => {
+                const active = relationship === rel.id
+                return (
                 <Pressable
                   key={rel.id}
                   onPress={() => { setRelationship(rel.id); setShowRelPicker(false) }}
                   style={[
                     styles.pickerItem,
-                    relationship === rel.id && { backgroundColor: colors.surfaceRaised },
+                    active && (diffuse
+                      ? { backgroundColor: 'transparent', borderLeftWidth: 2, borderLeftColor: dt.colors.hairline }
+                      : { backgroundColor: colors.surfaceRaised }),
                   ]}
                 >
-                  <Text style={[styles.pickerItemText, { color: colors.text, fontFamily: relationship === rel.id ? font.bodySemiBold : font.body }]}>
+                  <Text style={[styles.pickerItemText, { color: textColor, fontFamily: diffuse ? (active ? diffuseFont.bodySemiBold : diffuseFont.body) : (active ? font.bodySemiBold : font.body) }]}>
                     {rel.label}
                   </Text>
                 </Pressable>
-              ))}
+                )
+              })}
             </View>
           )}
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldPhone')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Phone size={18} color={colors.textMuted} strokeWidth={2} />
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldPhone')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <Phone size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={phone}
               onChangeText={setPhone}
               placeholder={t('emergencyInsurance_phonePlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={mutedColor}
               keyboardType="phone-pad"
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldEmailOptional')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Mail size={18} color={colors.textMuted} strokeWidth={2} />
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldEmailOptional')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <Mail size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={email}
               onChangeText={setEmail}
               placeholder={t('emergencyInsurance_emailPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={mutedColor}
               keyboardType="email-address"
               autoCapitalize="none"
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
             />
           </View>
 
           <Pressable
             onPress={() => setIsPrimary(!isPrimary)}
-            style={[styles.toggleRow, { backgroundColor: paper, borderColor: paperBorder }]}
+            style={[styles.toggleRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}
           >
             <Star
               size={18}
-              color={isPrimary ? (stickers.yellowInk) : colors.textMuted}
-              strokeWidth={2}
-              fill={isPrimary ? (stickers.yellowInk) : 'transparent'}
+              color={isPrimary ? (diffuse ? dt.colors.ink : stickers.yellowInk) : mutedColor}
+              strokeWidth={diffuse ? 1.6 : 2}
+              fill={isPrimary ? (diffuse ? dt.colors.ink : stickers.yellowInk) : 'transparent'}
             />
-            <Text style={[styles.toggleLabel, { color: colors.text, fontFamily: font.bodyMedium }]}>{t('emergencyInsurance_primaryContact')}</Text>
+            <Text style={[styles.toggleLabel, { color: textColor, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{t('emergencyInsurance_primaryContact')}</Text>
             <View
               style={[
                 styles.toggleDot,
                 {
-                  backgroundColor: isPrimary ? colors.text : colors.borderLight,
+                  backgroundColor: isPrimary ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.line2 : colors.borderLight),
                 },
               ]}
             >
-              {isPrimary && <View style={[styles.toggleDotInner, { backgroundColor: colors.bg }]} />}
+              {isPrimary && <View style={[styles.toggleDotInner, { backgroundColor: diffuse ? dt.colors.surface : colors.bg }]} />}
             </View>
           </Pressable>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: 28 }]}>
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: diffuse ? 16 : 28 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
               placeholder={t('emergencyInsurance_notesPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={mutedColor}
               multiline
-              style={[styles.inputText, { color: colors.text, textAlignVertical: 'top', fontFamily: font.body }]}
+              style={[styles.inputText, { color: textColor, textAlignVertical: 'top', fontFamily: bodyFont }]}
             />
           </View>
         </ScrollView>
@@ -701,14 +786,20 @@ function PlanFormModal({
   }) => Promise<void>
 }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
   const toast = useSavedToast()
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const accent = stickers.peachInk
-  const accentBg = stickers.peachSoft
-  const coral = stickers.coral
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const accent = diffuse ? dt.colors.ink : stickers.peachInk
+  const accentBg = diffuse ? dt.colors.surface : stickers.peachSoft
+  const coral = diffuse ? dt.colors.ink : stickers.coral
+  const textColor = diffuse ? dt.colors.ink : colors.text
+  const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const secondaryColor = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const bodyFont = diffuse ? diffuseFont.body : font.body
   const isEdit = !!plan
 
   const [planType, setPlanType] = useState<InsurancePlanType>('health')
@@ -789,21 +880,21 @@ function PlanFormModal({
       onShow={resetForm}
     >
       <KeyboardAvoidingView
-        style={[styles.modalRoot, { backgroundColor: colors.bg }]}
+        style={[styles.modalRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* Modal header */}
         <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
           <Pressable onPress={onClose} hitSlop={10}>
-            <View style={[styles.modalHeaderBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-              <Ionicons name="close" size={20} color={colors.text} />
+            <View style={[styles.modalHeaderBtn, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.hairline : paperBorder }]}>
+              <Ionicons name="close" size={20} color={textColor} />
             </View>
           </Pressable>
           <View style={styles.modalTitleCenter}>
-            <Text style={[styles.modalBigTitle, { color: colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.modalBigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
               {isEdit ? t('emergencyInsurance_editPlan') : t('emergencyInsurance_addPlan')}
             </Text>
-            <Text style={[styles.modalItalic, { color: stickers.coralInk, fontFamily: font.italic }]}>
+            <Text style={[styles.modalItalic, { color: diffuse ? dt.colors.ink3 : stickers.coralInk, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
               {t('emergencyInsurance_keepCardOnHand')}
             </Text>
           </View>
@@ -816,17 +907,27 @@ function PlanFormModal({
           keyboardShouldPersistTaps="handled"
         >
           {/* Scan card banner */}
-          <View style={[styles.scanBanner, { backgroundColor: accentBg, borderColor: paperBorder, transform: [{ rotate: '-1deg' }] }]}>
-            <View style={styles.scanBurstDecor} pointerEvents="none">
-              <BurstSticker size={120} fill={stickers.peach} stroke={stickers.peach} />
-            </View>
+          <View style={[styles.scanBanner, diffuse && styles.scanBannerDiffuse, { backgroundColor: accentBg, borderColor: paperBorder }, !diffuse && { transform: [{ rotate: '-1deg' }] }]}>
+            {diffuse ? (
+              <SoftBloom color={dt.colors.ink} cx="88%" cy="18%" opacity={dt.isDark ? 0.14 : 0.1} spread={0.5} />
+            ) : (
+              <View style={styles.scanBurstDecor} pointerEvents="none">
+                <BurstSticker size={120} fill={stickers.peach} stroke={stickers.peach} />
+              </View>
+            )}
             <View style={styles.scanBannerContent}>
-              <CreditCard size={20} color={coral} strokeWidth={2} />
+              {diffuse ? (
+                <DiffuseBloomIcon color={dt.colors.ink} size={34} intensity={0.42}>
+                  <CreditCard size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+                </DiffuseBloomIcon>
+              ) : (
+                <CreditCard size={20} color={coral} strokeWidth={2} />
+              )}
               <View style={styles.scanBannerText}>
-                <Text style={[styles.scanBannerTitle, { color: colors.text, fontFamily: font.display }]}>
+                <Text style={[styles.scanBannerTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                   {t('emergencyInsurance_scanBannerTitle')}
                 </Text>
-                <Text style={[styles.scanBannerSubtitle, { color: colors.textSecondary, fontFamily: font.body }]}>
+                <Text style={[styles.scanBannerSubtitle, { color: secondaryColor, fontFamily: bodyFont }]}>
                   {t('emergencyInsurance_scanBannerDesc')}
                 </Text>
               </View>
@@ -837,44 +938,46 @@ function PlanFormModal({
                 disabled={scanning}
                 style={({ pressed }) => [
                   styles.scanBtn,
-                  { backgroundColor: coral },
+                  diffuse
+                    ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }
+                    : { backgroundColor: coral },
                   pressed && { opacity: 0.85 },
                   scanning && { opacity: 0.5 },
                 ]}
               >
-                <Camera size={16} color="#FFFEF8" strokeWidth={2.5} />
-                <Text style={[styles.scanBtnText, { color: colors.surface, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_scanCamera')}</Text>
+                <Camera size={16} color={diffuse ? dt.colors.ink : '#FFFEF8'} strokeWidth={diffuse ? 1.6 : 2.5} />
+                <Text style={[styles.scanBtnText, { color: diffuse ? dt.colors.ink : colors.surface, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1.2 : undefined }]}>{t('emergencyInsurance_scanCamera')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => handleScanCard(false)}
                 disabled={scanning}
                 style={({ pressed }) => [
                   styles.scanBtn,
-                  { backgroundColor: paper, borderWidth: 1, borderColor: paperBorder },
+                  { backgroundColor: 'transparent', borderWidth: 1, borderColor: diffuse ? dt.colors.line2 : paperBorder },
                   pressed && { opacity: 0.85 },
                   scanning && { opacity: 0.5 },
                 ]}
               >
-                <ImageIcon size={16} color={colors.text} strokeWidth={2.5} />
-                <Text style={[styles.scanBtnText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_scanGallery')}</Text>
+                <ImageIcon size={16} color={textColor} strokeWidth={diffuse ? 1.6 : 2.5} />
+                <Text style={[styles.scanBtnText, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1.2 : undefined }]}>{t('emergencyInsurance_scanGallery')}</Text>
               </Pressable>
             </View>
             {scanning && (
               <View style={styles.scanningRow}>
                 <ActivityIndicator size="small" color={accent} />
-                <Text style={[styles.scanningText, { color: colors.textSecondary, fontFamily: font.body }]}>
+                <Text style={[styles.scanningText, { color: secondaryColor, fontFamily: bodyFont }]}>
                   {t('emergencyInsurance_scanReading')}
                 </Text>
               </View>
             )}
           </View>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldType')}</MonoCaps>
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldType')}</MonoCaps>
           <View style={styles.chipRow}>
             {PLAN_TYPES.map((t) => {
               const active = planType === t.id
-              const chipColor = active ? coral : colors.textMuted
-              const chipFill = active ? coral : stickers.peach
+              const chipColor = diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? coral : colors.textMuted)
+              const chipFill = diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? coral : stickers.peach)
               let icon = null
               if (t.id === 'health') icon = <CrossSticker size={18} fill={chipFill} stroke={chipColor} />
               else if (t.id === 'dental') icon = <SparkleSticker size={18} fill={chipFill} stroke={chipColor} />
@@ -885,15 +988,23 @@ function PlanFormModal({
                   onPress={() => setPlanType(t.id)}
                   style={[
                     styles.typeChip,
-                    {
-                      backgroundColor: active ? stickers.peachSoft : paper,
-                      borderColor: active ? coral : paperBorder,
-                      borderWidth: active ? 2 : 1,
-                    },
+                    diffuse
+                      ? {
+                          backgroundColor: 'transparent',
+                          borderColor: active ? dt.colors.hairline : dt.colors.line,
+                          borderWidth: 1,
+                        }
+                      : {
+                          backgroundColor: active ? stickers.peachSoft : paper,
+                          borderColor: active ? coral : paperBorder,
+                          borderWidth: active ? 2 : 1,
+                        },
                   ]}
                 >
                   {icon}
-                  <Text style={[styles.typeChipText, { color: active ? coral : colors.text, fontFamily: active ? font.display : font.bodyMedium, fontSize: active ? 16 : 14 }]}>
+                  <Text style={[styles.typeChipText, diffuse
+                    ? { color: active ? dt.colors.ink : dt.colors.ink3, fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' }
+                    : { color: active ? coral : colors.text, fontFamily: active ? font.display : font.bodyMedium, fontSize: active ? 16 : 14 }]}>
                     {t.label}
                   </Text>
                 </Pressable>
@@ -901,92 +1012,92 @@ function PlanFormModal({
             })}
           </View>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldProvider')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Building2 size={18} color={colors.textMuted} strokeWidth={2} />
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldProvider')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <Building2 size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={providerName}
               onChangeText={setProviderName}
               placeholder={t('emergencyInsurance_providerPlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              placeholderTextColor={mutedColor}
+              style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
               autoCapitalize="words"
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldPlanNameOptional')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <FileText size={18} color={colors.textMuted} strokeWidth={2} />
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldPlanNameOptional')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <FileText size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={planName}
               onChangeText={setPlanName}
               placeholder={t('emergencyInsurance_planNamePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              placeholderTextColor={mutedColor}
+              style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldPolicyNumber')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <CreditCard size={18} color={colors.textMuted} strokeWidth={2} />
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldPolicyNumber')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <CreditCard size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={policyNumber}
               onChangeText={setPolicyNumber}
               placeholder={t('emergencyInsurance_policyPlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              placeholderTextColor={mutedColor}
+              style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
             />
           </View>
 
           <View style={styles.twoCol}>
             <View style={styles.twoColItem}>
-              <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldGroupNumber')}</MonoCaps>
-              <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldGroupNumber')}</MonoCaps>
+              <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <TextInput
                   value={groupNumber}
                   onChangeText={setGroupNumber}
                   placeholder={t('emergencyInsurance_groupPlaceholder')}
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+                  placeholderTextColor={mutedColor}
+                  style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
                 />
               </View>
             </View>
             <View style={styles.twoColItem}>
-              <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldMemberId')}</MonoCaps>
-              <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldMemberId')}</MonoCaps>
+              <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <TextInput
                   value={memberId}
                   onChangeText={setMemberId}
                   placeholder={t('emergencyInsurance_memberIdPlaceholder')}
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+                  placeholderTextColor={mutedColor}
+                  style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
                 />
               </View>
             </View>
           </View>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldInsurancePhone')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Phone size={18} color={colors.textMuted} strokeWidth={2} />
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldInsurancePhone')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <Phone size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={phone}
               onChangeText={setPhone}
               placeholder={t('emergencyInsurance_insPhonePlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={mutedColor}
               keyboardType="phone-pad"
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              style={[styles.inputText, { color: textColor, fontFamily: bodyFont }]}
             />
           </View>
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
-          <View style={[styles.inputRow, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: 28 }]}>
+          <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
+          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: diffuse ? 16 : 28 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
               placeholder={t('emergencyInsurance_coveragePlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={mutedColor}
               multiline
-              style={[styles.inputText, { color: colors.text, textAlignVertical: 'top', fontFamily: font.body }]}
+              style={[styles.inputText, { color: textColor, textAlignVertical: 'top', fontFamily: bodyFont }]}
             />
           </View>
         </ScrollView>
@@ -1108,6 +1219,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   addPillText: { fontSize: 13 },
+  addPillDiffuse: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+  },
+  addPillTextDiffuse: { fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase' },
 
   // Empty state
   emptyCard: {
@@ -1129,6 +1247,19 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
     overflow: 'hidden',
+  },
+  cardGroupDiffuse: {
+    borderRadius: 20,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  contactAvatarDiffuse: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+  },
+  primaryBadgeDiffuse: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
   },
   contactRow: {
     flexDirection: 'row',
@@ -1170,6 +1301,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
+  },
+  planCardDiffuse: {
+    borderRadius: 20,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  planTypeBadgeDiffuse: {
+    borderWidth: 1,
   },
   planHeader: {
     flexDirection: 'row',
@@ -1215,9 +1354,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginTop: 6,
   },
+  inputRowDiffuse: {
+    borderRadius: 16,
+    paddingHorizontal: 16,
+  },
   inputText: { flex: 1, fontSize: 15 },
 
   pickerList: { marginTop: 4, overflow: 'hidden', borderWidth: 1, borderRadius: 28 },
+  pickerListDiffuse: { borderRadius: 16 },
   pickerItem: { paddingVertical: 12, paddingHorizontal: 16 },
   pickerItemText: { fontSize: 15 },
 
@@ -1261,6 +1405,9 @@ const styles = StyleSheet.create({
     gap: 14,
     borderRadius: 22,
     overflow: 'hidden',
+  },
+  scanBannerDiffuse: {
+    borderRadius: 20,
   },
   scanBannerContent: {
     flexDirection: 'row',
