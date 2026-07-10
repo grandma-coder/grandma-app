@@ -8,11 +8,14 @@
 import { ScrollView, Pressable, Text, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useChildStore } from '../../store/useChildStore'
-import { useTheme, radius, font } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, radius, font } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import type { ChildWithRole } from '../../types'
 
 export function CaregiverChildPicker() {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
@@ -37,6 +40,9 @@ export function CaregiverChildPicker() {
     >
       {caregiverChildren.map((c: ChildWithRole) => {
         const active = activeChild?.id === c.id
+        // Diffuse: hairline pill — never a filled saturated pill. Active =
+        // transparent bg + strong hairline border + a semibold weight shift;
+        // inactive = paper surface + faint line. A leading dot marks active.
         return (
           <Pressable
             key={c.id}
@@ -46,16 +52,33 @@ export function CaregiverChildPicker() {
             accessibilityLabel={`Switch to ${c.name}`}
             style={[
               styles.pill,
-              {
-                backgroundColor: active ? colors.text : colors.surface,
-                borderColor: colors.border,
-              },
+              diffuse
+                ? {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    backgroundColor: active ? dt.colors.surface : 'transparent',
+                    borderColor: active ? dt.colors.hairline : dt.colors.line,
+                  }
+                : {
+                    backgroundColor: active ? colors.text : colors.surface,
+                    borderColor: colors.border,
+                  },
             ]}
           >
+            {diffuse && active ? (
+              <Text style={[styles.dot, { backgroundColor: dt.colors.ink }]} />
+            ) : null}
             <Text
               style={[
                 styles.pillText,
-                { color: active ? colors.bg : colors.text, fontFamily: font.bodyMedium },
+                diffuse
+                  ? {
+                      color: active ? dt.colors.ink : dt.colors.ink3,
+                      fontFamily: active ? diffuseFont.bodySemiBold : diffuseFont.body,
+                    }
+                  : { color: active ? colors.bg : colors.text, fontFamily: font.bodyMedium },
               ]}
             >
               {c.name}
@@ -81,5 +104,10 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontSize: 14,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
 })

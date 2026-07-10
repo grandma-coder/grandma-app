@@ -15,7 +15,8 @@ import { useMemo, useState } from 'react'
 import { ScrollView, View, Text, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useChildStore } from '../../store/useChildStore'
-import { useTheme, font, radius } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, font, radius } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { hasCapability, CAPABILITY } from '../../lib/caregiverPermissions'
 import { PaperCard } from '../ui/PaperCard'
 import { PillButton } from '../ui/PillButton'
@@ -28,6 +29,8 @@ import { useTranslation } from '../../lib/i18n'
 export function CaregiverHome() {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const activeChild = useChildStore((s) => s.activeChild)
   const styles = useMemo(() => makeStyles(colors), [colors])
@@ -47,8 +50,20 @@ export function CaregiverHome() {
         <PaperCard radius={28} padding={24}>
           <View style={styles.emptyWrap}>
             <RoleFamily size={56} />
-            <Text style={styles.emptyTitle}>{t('caregiverHome_emptyTitle')}</Text>
-            <Text style={styles.emptyText}>
+            <Text
+              style={[
+                styles.emptyTitle,
+                diffuse && { fontFamily: diffuseFont.display, color: dt.colors.ink },
+              ]}
+            >
+              {t('caregiverHome_emptyTitle')}
+            </Text>
+            <Text
+              style={[
+                styles.emptyText,
+                diffuse && { fontFamily: diffuseFont.body, color: dt.colors.ink3 },
+              ]}
+            >
               You're not linked to a child yet. Ask the parent to add you to their
               care circle, or check that your invite was accepted.
             </Text>
@@ -80,12 +95,39 @@ export function CaregiverHome() {
             accessibilityRole="header"
             accessibilityLabel={`${activeChild.name} — ${isFamily ? 'Family caregiver' : 'Nanny'}`}
           >
-            <View style={styles.avatar}>
+            <View
+              style={[
+                styles.avatar,
+                diffuse && {
+                  backgroundColor: 'transparent',
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: dt.colors.line2,
+                },
+              ]}
+            >
               {isFamily ? <RoleFamily size={36} /> : <RoleNanny size={36} />}
             </View>
             <View style={styles.headerText}>
-              <Text style={styles.childName}>{activeChild.name}</Text>
-              <Text style={styles.roleLabel}>
+              <Text
+                style={[
+                  styles.childName,
+                  diffuse && { fontFamily: diffuseFont.display, color: dt.colors.ink },
+                ]}
+              >
+                {activeChild.name}
+              </Text>
+              <Text
+                style={[
+                  styles.roleLabel,
+                  diffuse && {
+                    fontFamily: diffuseFont.mono,
+                    color: dt.colors.ink3,
+                    textTransform: 'uppercase',
+                    letterSpacing: 1.4,
+                    fontSize: 11,
+                  },
+                ]}
+              >
                 {isFamily ? 'Family caregiver' : 'Nanny'}
               </Text>
             </View>
