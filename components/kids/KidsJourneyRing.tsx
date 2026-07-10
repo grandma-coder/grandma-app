@@ -278,6 +278,16 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
       {/* ── Ring ── */}
       <View style={styles.ringWrap}>
         <View {...panResponder.panHandlers} style={styles.ringStage}>
+          {/* Soft focal glow behind the 6 o'clock anchor frame (selected leap's
+              colour) — makes the tracked leap read as a beautiful highlight. */}
+          {diffuse ? (
+            <View
+              pointerEvents="none"
+              style={{ position: 'absolute', width: 64, height: 64, left: CX - 32, top: CY + RING_R - 32 }}
+            >
+              <SoftBloom color={col} opacity={isDark ? 0.45 : 0.55} spread={0.5} radius="50%" />
+            </View>
+          ) : null}
           {/* Animated layer: leap dots rotate around SVG center */}
           <Animated.View style={[StyleSheet.absoluteFill, dotsAnimatedStyle]}>
             {dots.map((d) => {
@@ -404,16 +414,17 @@ export function KidsJourneyRing({ weekAge, childName, leaps = GROWTH_LEAPS }: Pr
               strokeWidth={diffuse ? 1 : 1.5}
             />
             {diffuse ? (
-              // Soft stationary anchor ring at 6 o'clock — leaps rotate into it
-              // (matches the cycle wheel's calm hairline selection frame; no
-              // hard chevron).
+              // Stationary focal frame at 6 o'clock — the leap you're tracking
+              // rotates into it. A ring in the selected leap's own colour makes
+              // it a beautiful highlight rather than a plain grey circle (a soft
+              // bloom sits behind it, rendered as a View above this SVG).
               <Circle
                 cx={CX}
                 cy={CY + RING_R}
-                r={16}
+                r={19}
                 fill="none"
-                stroke={dt.colors.line2}
-                strokeWidth={1}
+                stroke={col}
+                strokeWidth={1.5}
               />
             ) : (
               <Polygon
@@ -1036,7 +1047,10 @@ const styles = StyleSheet.create({
   centerWeek: { fontSize: 14, marginTop: 4, fontStyle: 'italic' },
 
   panel: { flex: 1 },
-  panelContent: { paddingHorizontal: 24, paddingTop: 14, gap: 16 },
+  // flexGrow + centered so the bottom content sits balanced in the available
+  // space (rather than pinned to the top with dead space below when the list
+  // is absent under Diffuse). With more content it just fills naturally.
+  panelContent: { paddingHorizontal: 24, paddingTop: 14, gap: 16, flexGrow: 1, justifyContent: 'center' },
 
   metaRow: {
     flexDirection: 'row',
