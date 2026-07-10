@@ -26,7 +26,7 @@ import {
 } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
@@ -36,6 +36,8 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { ChildPill, childColor } from '../../components/ui/ChildPills'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseListRow, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 import {
   Cross as CrossSticker,
   Heart as HeartSticker,
@@ -80,11 +82,13 @@ const VACCINE_SCHEDULE = [
 
 export default function HealthHistoryScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
-  const paper = colors.surface
-  const paperBorder = colors.border
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
 
   const [events, setEvents] = useState<HealthEvent[]>([])
   const [filterChild, setFilterChild] = useState<string | null>(null)
@@ -133,14 +137,14 @@ export default function HealthHistoryScreen() {
   const givenVaccineNames = new Set(vaccines.map((v) => v.value.split(/[,(]/)[0].trim()))
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <ScreenHeader
           title="Health History"
           right={
             <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10}>
-              <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-                <Ionicons name="add" size={20} color={colors.text} />
+              <View style={[styles.headerAddBtn, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                <Ionicons name="add" size={20} color={diffuse ? dt.colors.ink : colors.text} />
               </View>
             </Pressable>
           }
@@ -151,22 +155,38 @@ export default function HealthHistoryScreen() {
       {children.length > 1 && (
         <View style={styles.filterRow}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
-            <ChildPill
-              label="All Kids"
-              active={!filterChild}
-              color={stickers.lilac}
-              showDot={false}
-              onPress={() => setFilterChild(null)}
-            />
-            {children.map((c, idx) => (
-              <ChildPill
-                key={c.id}
-                label={c.name}
-                active={filterChild === c.id}
-                color={childColor(idx)}
-                onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
-              />
-            ))}
+            {diffuse ? (
+              <>
+                <DiffuseChoicePill label="All Kids" active={!filterChild} onPress={() => setFilterChild(null)} />
+                {children.map((c) => (
+                  <DiffuseChoicePill
+                    key={c.id}
+                    label={c.name}
+                    active={filterChild === c.id}
+                    onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
+                  />
+                ))}
+              </>
+            ) : (
+              <>
+                <ChildPill
+                  label="All Kids"
+                  active={!filterChild}
+                  color={stickers.lilac}
+                  showDot={false}
+                  onPress={() => setFilterChild(null)}
+                />
+                {children.map((c, idx) => (
+                  <ChildPill
+                    key={c.id}
+                    label={c.name}
+                    active={filterChild === c.id}
+                    color={childColor(idx)}
+                    onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
+                  />
+                ))}
+              </>
+            )}
           </ScrollView>
         </View>
       )}
@@ -181,22 +201,31 @@ export default function HealthHistoryScreen() {
         </View>
 
         {/* ─── Vaccine Tracker ──────────────────────────────────────── */}
-        <Pressable onPress={() => setDetailSection('vaccine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <Pressable onPress={() => setDetailSection('vaccine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
           <SectionHeader icon={Syringe} color={stickers.greenInk} title="Vaccines" />
           {vaccines.length > 0 ? (
             <View style={styles.vaccineList}>
               {vaccines.slice(0, 3).map((v) => (
                 <View key={v.id} style={styles.vaccineItem}>
-                  <Check size={14} color={stickers.greenInk} strokeWidth={2.5} />
-                  <Text style={[styles.vaccineText, { color: colors.text, fontFamily: font.bodyMedium }]}>{v.value}</Text>
-                  <Text style={[styles.vaccineDate, { color: colors.textMuted, fontFamily: font.body }]}>{new Date(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
+                  <Check size={14} color={diffuse ? dt.colors.ink3 : stickers.greenInk} strokeWidth={diffuse ? 1.6 : 2.5} />
+                  <Text style={[styles.vaccineText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{v.value}</Text>
+                  <Text style={[styles.vaccineDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{new Date(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
                 </View>
               ))}
               {vaccines.length > 3 && (
-                <View style={[styles.moreChip, { backgroundColor: stickers.green + (isDark ? '24' : '32'), borderColor: stickers.green + (isDark ? '40' : '60') }]}>
-                  <Text style={[styles.moreChipText, { color: stickers.greenInk, fontFamily: font.bodySemiBold }]}>{t('healthHistory_nMore', { n: vaccines.length - 3 })}</Text>
+                <View style={[styles.moreChip, diffuse
+                  ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                  : { backgroundColor: stickers.green + (isDark ? '24' : '32'), borderColor: stickers.green + (isDark ? '40' : '60') }]}>
+                  <Text style={[styles.moreChipText, { color: diffuse ? dt.colors.ink3 : stickers.greenInk, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1.2 : 0.2, textTransform: diffuse ? 'uppercase' : 'none' }]}>{t('healthHistory_nMore', { n: vaccines.length - 3 })}</Text>
                 </View>
               )}
+            </View>
+          ) : diffuse ? (
+            <View style={[styles.emptyState, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
+              <DiffuseBloomIcon color={stickers.green} size={30} intensity={0.4}>
+                <Syringe size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              </DiffuseBloomIcon>
+              <Text style={[styles.emptyText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>{t('healthHistory_noVaccinesYet')}</Text>
             </View>
           ) : (
             <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -205,28 +234,39 @@ export default function HealthHistoryScreen() {
             </View>
           )}
           {/* Next recommended */}
-          <View style={[styles.nextVaccine, { backgroundColor: stickers.green + (isDark ? '20' : '30') }]}>
-            <Text style={[styles.nextLabel, { color: stickers.greenInk, fontFamily: font.bodySemiBold }]}>{t('healthHistory_recommendedSchedule')}</Text>
-            <Text style={[styles.nextText, { color: colors.textSecondary, fontFamily: font.body }]}>
+          <View style={[styles.nextVaccine, diffuse
+            ? { backgroundColor: 'transparent', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 }
+            : { backgroundColor: stickers.green + (isDark ? '20' : '30') }]}>
+            <Text style={[styles.nextLabel, { color: diffuse ? dt.colors.ink3 : stickers.greenInk, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1.4 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{t('healthHistory_recommendedSchedule')}</Text>
+            <Text style={[styles.nextText, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
               {VACCINE_SCHEDULE.filter((v) => !givenVaccineNames.has(v.name)).slice(0, 2).map((v) => `${v.name} (${v.ages[0]})`).join(', ') || 'All up to date!'}
             </Text>
           </View>
         </Pressable>
 
         {/* ─── Medications ──────────────────────────────────────────── */}
-        <Pressable onPress={() => setDetailSection('medicine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <Pressable onPress={() => setDetailSection('medicine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
           <SectionHeader icon={Pill} color={stickers.blueInk} title="Medications" />
           {medications.length > 0 ? (
             medications.slice(0, 3).map((m) => (
               <View key={m.id} style={styles.medItem}>
-                <View style={[styles.medDot, { backgroundColor: stickers.blue, borderColor: colors.borderStrong }]} />
+                <View style={[styles.medDot, diffuse
+                  ? { backgroundColor: dt.colors.ink3, borderColor: 'transparent' }
+                  : { backgroundColor: stickers.blue, borderColor: colors.borderStrong }]} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.medName, { color: colors.text, fontFamily: font.bodyMedium }]}>{m.value}</Text>
-                  {m.notes ? <Text style={[styles.medNotes, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>{m.notes}</Text> : null}
+                  <Text style={[styles.medName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{m.value}</Text>
+                  {m.notes ? <Text style={[styles.medNotes, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={1}>{m.notes}</Text> : null}
                 </View>
-                <Text style={[styles.medDate, { color: colors.textMuted, fontFamily: font.body }]}>{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
+                <Text style={[styles.medDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
               </View>
             ))
+          ) : diffuse ? (
+            <View style={[styles.emptyState, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
+              <DiffuseBloomIcon color={stickers.blue} size={30} intensity={0.4}>
+                <Pill size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              </DiffuseBloomIcon>
+              <Text style={[styles.emptyText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>{t('healthHistory_noMedicationsLogged')}</Text>
+            </View>
           ) : (
             <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <DropSticker size={28} />
@@ -235,17 +275,19 @@ export default function HealthHistoryScreen() {
           )}
           {/* Active meds from child profiles */}
           {children.some((c) => c.medications.length > 0) && (
-            <View style={[styles.activeMeds, { backgroundColor: stickers.blue + (isDark ? '20' : '30') }]}>
-              <Text style={[styles.nextLabel, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{t('healthHistory_currentMedications')}</Text>
+            <View style={[styles.activeMeds, diffuse
+              ? { backgroundColor: 'transparent', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 }
+              : { backgroundColor: stickers.blue + (isDark ? '20' : '30') }]}>
+              <Text style={[styles.nextLabel, { color: diffuse ? dt.colors.ink3 : stickers.blueInk, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1.4 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{t('healthHistory_currentMedications')}</Text>
               {children.filter((c) => c.medications.length > 0).map((c) => (
-                <Text key={c.id} style={[styles.nextText, { color: colors.textSecondary, fontFamily: font.body }]}>{c.name}: {c.medications.join(', ')}</Text>
+                <Text key={c.id} style={[styles.nextText, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{c.name}: {c.medications.join(', ')}</Text>
               ))}
             </View>
           )}
         </Pressable>
 
         {/* ─── Growth ───────────────────────────────────────────────── */}
-        <Pressable onPress={() => setDetailSection('growth')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <Pressable onPress={() => setDetailSection('growth')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
           <SectionHeader icon={TrendingUp} color={stickers.blueInk} title="Growth" />
           {growthEntries.length > 0 ? (
             <>
@@ -256,23 +298,25 @@ export default function HealthHistoryScreen() {
                 const latestWeight = growthEntries.find((g) => g.value.toLowerCase().includes('weight'))
                 const latestHeight = growthEntries.find((g) => g.value.toLowerCase().includes('height'))
 
-                const wColor = stickers.blueInk
-                const hColor = stickers.peachInk
+                const wColor = diffuse ? dt.colors.ink2 : stickers.blueInk
+                const hColor = diffuse ? dt.colors.ink2 : stickers.peachInk
+                const subFont = diffuse ? diffuseFont.mono : font.bodySemiBold
+                const subExtra = diffuse ? { letterSpacing: 1.4, textTransform: 'uppercase' as const, fontSize: 10 } : {}
                 return (
                   <>
                     {/* Weight bars */}
                     {weights.length > 0 && (
                       <>
-                        <Text style={[styles.chartSubtitle, { color: wColor, fontFamily: font.bodySemiBold }]}>{t('healthHistory_weightKg')}</Text>
+                        <Text style={[styles.chartSubtitle, { color: wColor, fontFamily: subFont }, subExtra]}>{t('healthHistory_weightKg')}</Text>
                         <View style={styles.miniChart}>
                           {weights.map((g) => {
                             const num = parseFloat(g.value.replace(/[^0-9.]/g, '')) || 5
                             const h = Math.min(50, Math.max(10, (num / 20) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
-                                <Text style={[styles.barValue, { color: wColor, fontFamily: font.display }]}>{num}</Text>
-                                <View style={[styles.bar, { height: h, backgroundColor: stickers.blue + (isDark ? '40' : '60'), borderColor: stickers.blue + (isDark ? '60' : '70'), borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
-                                <Text style={[styles.barLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
+                                <Text style={[styles.barValue, { color: wColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{num}</Text>
+                                <View style={[styles.bar, { height: h, backgroundColor: diffuse ? dt.colors.line2 : stickers.blue + (isDark ? '40' : '60'), borderColor: diffuse ? 'transparent' : stickers.blue + (isDark ? '60' : '70'), borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
+                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
                               </View>
                             )
                           })}
@@ -282,23 +326,23 @@ export default function HealthHistoryScreen() {
                     {/* Height bars */}
                     {heights.length > 0 && (
                       <>
-                        <Text style={[styles.chartSubtitle, { color: hColor, fontFamily: font.bodySemiBold }]}>{t('healthHistory_heightCm')}</Text>
+                        <Text style={[styles.chartSubtitle, { color: hColor, fontFamily: subFont }, subExtra]}>{t('healthHistory_heightCm')}</Text>
                         <View style={styles.miniChart}>
                           {heights.map((g) => {
                             const num = parseFloat(g.value.replace(/[^0-9.]/g, '')) || 50
                             const h = Math.min(50, Math.max(10, (num / 120) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
-                                <Text style={[styles.barValue, { color: hColor, fontFamily: font.display }]}>{num}</Text>
-                                <View style={[styles.bar, { height: h, backgroundColor: stickers.peach + (isDark ? '40' : '60'), borderColor: stickers.peach + (isDark ? '60' : '70'), borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
-                                <Text style={[styles.barLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
+                                <Text style={[styles.barValue, { color: hColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{num}</Text>
+                                <View style={[styles.bar, { height: h, backgroundColor: diffuse ? dt.colors.line2 : stickers.peach + (isDark ? '40' : '60'), borderColor: diffuse ? 'transparent' : stickers.peach + (isDark ? '60' : '70'), borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
+                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
                               </View>
                             )
                           })}
                         </View>
                       </>
                     )}
-                    <Text style={[styles.lastMeasure, { color: colors.textSecondary, fontFamily: font.body }]}>
+                    <Text style={[styles.lastMeasure, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                       {latestWeight ? `Weight: ${latestWeight.value.replace(/weight:?\s*/i, '')}` : ''}
                       {latestWeight && latestHeight ? '  ·  ' : ''}
                       {latestHeight ? `Height: ${latestHeight.value.replace(/height:?\s*/i, '')}` : ''}
@@ -307,6 +351,13 @@ export default function HealthHistoryScreen() {
                 )
               })()}
             </>
+          ) : diffuse ? (
+            <View style={[styles.emptyState, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
+              <DiffuseBloomIcon color={stickers.blue} size={30} intensity={0.4}>
+                <TrendingUp size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              </DiffuseBloomIcon>
+              <Text style={[styles.emptyText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>{t('healthHistory_noGrowthEntries')}</Text>
+            </View>
           ) : (
             <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <FlowerSticker size={28} />
@@ -316,21 +367,30 @@ export default function HealthHistoryScreen() {
         </Pressable>
 
         {/* ─── Milestones ───────────────────────────────────────────── */}
-        <Pressable onPress={() => setDetailSection('milestone')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <Pressable onPress={() => setDetailSection('milestone')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
           <SectionHeader icon={Star} color={stickers.yellowInk} title="Milestones" />
           {milestones.length > 0 ? (
             <View style={styles.milestoneList}>
               {milestones.slice(0, 4).map((m) => (
                 <View key={m.id} style={styles.milestoneItem}>
-                  <View style={[styles.milestoneDot, { backgroundColor: stickers.yellow, borderColor: colors.borderStrong }]} />
+                  <View style={[styles.milestoneDot, diffuse
+                    ? { backgroundColor: dt.colors.ink3, borderColor: 'transparent' }
+                    : { backgroundColor: stickers.yellow, borderColor: colors.borderStrong }]} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.milestoneText, { color: colors.text, fontFamily: font.bodySemiBold }]}>{m.value}</Text>
-                    <Text style={[styles.milestoneDate, { color: colors.textMuted, fontFamily: font.body }]}>
+                    <Text style={[styles.milestoneText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>{m.value}</Text>
+                    <Text style={[styles.milestoneDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>
                       {`${m.childName} · ${new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
                     </Text>
                   </View>
                 </View>
               ))}
+            </View>
+          ) : diffuse ? (
+            <View style={[styles.emptyState, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
+              <DiffuseBloomIcon color={stickers.yellow} size={30} intensity={0.4}>
+                <Star size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              </DiffuseBloomIcon>
+              <Text style={[styles.emptyText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>{t('healthHistory_noMilestones')}</Text>
             </View>
           ) : (
             <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -351,16 +411,18 @@ export default function HealthHistoryScreen() {
           )
           if (alertKids.length === 0) return null
           return (
-          <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
             <SectionHeader icon={AlertTriangle} color={stickers.coralInk} title="Allergies & Alerts" showChevron={false} />
             {alertKids.map((c) => (
               <View key={c.id} style={styles.refChild}>
-                <Text style={[styles.refChildName, { color: colors.text, fontFamily: font.display }]}>{c.name}</Text>
+                <Text style={[styles.refChildName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: diffuse ? -0.5 : 0 }]}>{c.name}</Text>
                 {c.allergies.filter((a) => a && a.toLowerCase() !== 'no').length > 0 && (
                   <View style={styles.refChipRow}>
                     {c.allergies.filter((a) => a && a.toLowerCase() !== 'no').map((a) => (
-                      <View key={a} style={[styles.refChip, { backgroundColor: stickers.coral + (isDark ? '28' : '32') }]}>
-                        <Text style={[styles.refChipText, { color: stickers.coralInk, fontFamily: font.bodySemiBold }]}>{a}</Text>
+                      <View key={a} style={[styles.refChip, diffuse
+                        ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                        : { backgroundColor: stickers.coral + (isDark ? '28' : '32') }]}>
+                        <Text style={[styles.refChipText, { color: diffuse ? dt.colors.ink2 : stickers.coralInk, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{a}</Text>
                       </View>
                     ))}
                   </View>
@@ -368,9 +430,11 @@ export default function HealthHistoryScreen() {
                 {c.medications.length > 0 && (
                   <View style={styles.refChipRow}>
                     {c.medications.map((m) => (
-                      <View key={m} style={[styles.refChip, { backgroundColor: stickers.blue + (isDark ? '28' : '32') }]}>
-                        <Pill size={10} color={stickers.blueInk} strokeWidth={2} />
-                        <Text style={[styles.refChipText, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{m}</Text>
+                      <View key={m} style={[styles.refChip, diffuse
+                        ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                        : { backgroundColor: stickers.blue + (isDark ? '28' : '32') }]}>
+                        <Pill size={10} color={diffuse ? dt.colors.ink3 : stickers.blueInk} strokeWidth={diffuse ? 1.6 : 2} />
+                        <Text style={[styles.refChipText, { color: diffuse ? dt.colors.ink2 : stickers.blueInk, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{m}</Text>
                       </View>
                     ))}
                   </View>
@@ -405,8 +469,21 @@ export default function HealthHistoryScreen() {
 
 function SectionHeader({ icon: Icon, color, title, showChevron = true }: { icon: any; color: string; title: string; showChevron?: boolean }) {
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const paper = colors.surface
   const paperBorder = colors.borderStrong
+  if (diffuse) {
+    return (
+      <View style={styles.sectionHeader}>
+        <DiffuseBloomIcon color={color} size={32} intensity={0.45}>
+          <Icon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+        </DiffuseBloomIcon>
+        <Text style={[styles.sectionTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.5 }]}>{title}</Text>
+        {showChevron ? <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : null}
+      </View>
+    )
+  }
   return (
     <View style={styles.sectionHeader}>
       <View style={[styles.sectionIconBadge, { backgroundColor: paper, borderColor: paperBorder }]}>
@@ -422,8 +499,31 @@ function SectionHeader({ icon: Icon, color, title, showChevron = true }: { icon:
 
 function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const paper = colors.surface
   const paperBorder = colors.borderStrong
+  if (diffuse) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.statCard,
+          {
+            backgroundColor: dt.colors.surface,
+            borderColor: dt.colors.line,
+            opacity: pressed ? 0.92 : 1,
+          },
+        ]}
+      >
+        <DiffuseBloomIcon color={bg} size={30} intensity={0.45}>
+          <Icon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+        </DiffuseBloomIcon>
+        <Text style={[styles.statNum, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>{num}</Text>
+        <Text style={[styles.statLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 9 }]} numberOfLines={1}>{label}</Text>
+      </Pressable>
+    )
+  }
   return (
     <Pressable
       onPress={onPress}
@@ -445,36 +545,78 @@ function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
   )
 }
 
+// ─── Diffuse choice pill (hairline child/type selector) ─────────────────────
+
+function DiffuseChoicePill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const dt = useDiffuseTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        formStyles.diffusePill,
+        {
+          borderColor: active ? dt.colors.hairline : dt.colors.line2,
+          backgroundColor: active ? dt.colors.surface : 'transparent',
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      <Text
+        style={{
+          fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
+          fontSize: 11,
+          letterSpacing: 1.4,
+          textTransform: 'uppercase',
+          color: active ? dt.colors.ink : dt.colors.ink3,
+        }}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
 // ─── Detail Popup ─────────────────────────────────────────────────────────
 
 function DetailPopup({ section, events, onClose }: { section: string; events: HealthEvent[]; onClose: () => void }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
-  const paper = colors.surface
-  const paperBorder = colors.border
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
   const cfg = TYPE_CFG[section] ?? { label: section, icon: FileText, color: colors.textMuted, placeholder: '' }
   const Icon = cfg.icon
 
   return (
     <Modal visible animationType="slide" presentationStyle="overFullScreen">
-      <View style={[styles.detailRoot, { backgroundColor: colors.bg }]}>
+      <View style={[styles.detailRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
         <View style={[styles.detailHeader, { paddingTop: insets.top + 8 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Icon size={20} color={cfg.color} strokeWidth={2} />
+            {diffuse ? (
+              <DiffuseBloomIcon color={cfg.color} size={30} intensity={0.45}>
+                <Icon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+              </DiffuseBloomIcon>
+            ) : (
+              <Icon size={20} color={cfg.color} strokeWidth={2} />
+            )}
             <Display size={22} color={colors.text}>{cfg.label}</Display>
           </View>
           <Pressable onPress={onClose} hitSlop={10}>
-            <View style={[styles.detailClose, { backgroundColor: paper, borderColor: paperBorder }]}>
-              <Ionicons name="close" size={20} color={colors.text} />
+            <View style={[styles.detailClose, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+              <Ionicons name="close" size={20} color={diffuse ? dt.colors.ink : colors.text} />
             </View>
           </Pressable>
         </View>
 
         {/* Summary */}
-        <View style={[styles.detailSummary, { backgroundColor: cfg.color + (isDark ? '20' : '20'), borderColor: cfg.color + '40', marginHorizontal: 20 }]}>
-          <Text style={[styles.detailSummaryNum, { color: cfg.color, fontFamily: font.display }]}>{events.length}</Text>
-          <Text style={[styles.detailSummaryLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{t('healthHistory_totalEntries', { label: cfg.label.toLowerCase() })}</Text>
+        <View style={[styles.detailSummary, diffuse
+          ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, marginHorizontal: 20 }
+          : { backgroundColor: cfg.color + (isDark ? '20' : '20'), borderColor: cfg.color + '40', marginHorizontal: 20 }]}>
+          <Text style={[styles.detailSummaryNum, { color: diffuse ? dt.colors.ink : cfg.color, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{events.length}</Text>
+          <Text style={[styles.detailSummaryLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, letterSpacing: diffuse ? 1.4 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{t('healthHistory_totalEntries', { label: cfg.label.toLowerCase() })}</Text>
         </View>
 
         <ScrollView
@@ -485,26 +627,37 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
           keyboardShouldPersistTaps="handled"
         >
           {events.length === 0 && (
-            <Text style={[styles.emptyText, { color: colors.textMuted, textAlign: 'center', marginTop: 40, fontFamily: font.body }]}>{t('healthHistory_noEntries', { label: cfg.label.toLowerCase() })}</Text>
+            <Text style={[styles.emptyText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, textAlign: 'center', marginTop: 40, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{t('healthHistory_noEntries', { label: cfg.label.toLowerCase() })}</Text>
           )}
           {events.map((e) => (
             <View
               key={e.id}
-              style={[styles.detailItem, {
-                backgroundColor: paper,
-                borderColor: paperBorder,
-                borderLeftColor: cfg.color,
-                borderLeftWidth: 3,
-              }]}
+              style={[styles.detailItem, diffuse
+                ? {
+                    backgroundColor: dt.colors.surface,
+                    borderColor: dt.colors.line,
+                    borderLeftColor: cfg.color,
+                    borderLeftWidth: 3,
+                    shadowOpacity: 0,
+                    elevation: 0,
+                  }
+                : {
+                    backgroundColor: paper,
+                    borderColor: paperBorder,
+                    borderLeftColor: cfg.color,
+                    borderLeftWidth: 3,
+                  }]}
             >
               <View style={styles.detailItemTop}>
-                <Text style={[styles.detailItemValue, { color: colors.text, fontFamily: font.display }]}>{e.value}</Text>
-                <View style={[styles.detailChildBadge, { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
-                  <Text style={[styles.detailChildText, { color: stickers.blueInk, fontFamily: font.bodySemiBold }]}>{e.childName}</Text>
+                <Text style={[styles.detailItemValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: diffuse ? -0.5 : -0.1 }]}>{e.value}</Text>
+                <View style={[styles.detailChildBadge, diffuse
+                  ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                  : { backgroundColor: stickers.blue + (isDark ? '28' : '40') }]}>
+                  <Text style={[styles.detailChildText, { color: diffuse ? dt.colors.ink3 : stickers.blueInk, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{e.childName}</Text>
                 </View>
               </View>
-              {e.notes ? <Text style={[styles.detailItemNotes, { color: colors.textMuted, fontFamily: font.body }]}>{e.notes}</Text> : null}
-              <Text style={[styles.detailItemDate, { color: colors.textMuted, fontFamily: font.body }]}>
+              {e.notes ? <Text style={[styles.detailItemNotes, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{e.notes}</Text> : null}
+              <Text style={[styles.detailItemDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>
                 {new Date(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
               </Text>
             </View>
@@ -521,10 +674,12 @@ const ADD_TYPES = Object.entries(TYPE_CFG).map(([id, cfg]) => ({ id, ...cfg }))
 
 function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
-  const paper = colors.surface
-  const paperBorder = colors.border
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
 
   const [eventType, setEventType] = useState<string | null>(null)
   const [selectedChild, setSelectedChild] = useState(children.length === 1 ? children[0]?.id ?? '' : '')
@@ -600,7 +755,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
     <LogSheet visible={visible} title="Log Health Event" onClose={() => { reset(); onClose() }}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldType')}</MonoCaps>
+          <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('emergencyInsurance_fieldType')}</MonoCaps>
           <View style={formStyles.typeGrid}>
             {ADD_TYPES.map((t) => {
               const active = eventType === t.id
@@ -611,15 +766,23 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
                   onPress={() => setEventType(t.id)}
                   style={[
                     formStyles.typeBtn,
-                    {
-                      backgroundColor: tintBg,
-                      borderColor: active ? colors.text : paperBorder,
-                      borderWidth: active ? 1.5 : 1,
-                    },
+                    diffuse
+                      ? {
+                          backgroundColor: active ? dt.colors.surface : 'transparent',
+                          borderColor: active ? dt.colors.hairline : dt.colors.line2,
+                          borderWidth: active ? 1.5 : StyleSheet.hairlineWidth,
+                        }
+                      : {
+                          backgroundColor: tintBg,
+                          borderColor: active ? colors.text : paperBorder,
+                          borderWidth: active ? 1.5 : 1,
+                        },
                   ]}
                 >
-                  <t.icon size={20} color={active ? colors.text : colors.textMuted} strokeWidth={2} />
-                  <Text style={[formStyles.typeLabel, { color: active ? colors.text : colors.textSecondary, fontFamily: active ? font.bodySemiBold : font.bodyMedium }]}>{t.label}</Text>
+                  <t.icon size={20} color={diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? colors.text : colors.textMuted)} strokeWidth={diffuse ? 1.6 : 2} />
+                  <Text style={[formStyles.typeLabel, diffuse
+                    ? { color: active ? dt.colors.ink : dt.colors.ink3, fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 10 }
+                    : { color: active ? colors.text : colors.textSecondary, fontFamily: active ? font.bodySemiBold : font.bodyMedium }]}>{t.label}</Text>
                 </Pressable>
               )
             })}
@@ -627,28 +790,37 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
           {children.length > 1 && (
             <>
-              <MonoCaps color={colors.textMuted}>{t('healthHistory_fieldChild')}</MonoCaps>
+              <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('healthHistory_fieldChild')}</MonoCaps>
               <View style={formStyles.childRow}>
-                {children.map((c, idx) => (
-                  <ChildPill
-                    key={c.id}
-                    label={c.name}
-                    active={selectedChild === c.id}
-                    color={childColor(idx)}
-                    onPress={() => setSelectedChild(c.id)}
-                  />
-                ))}
+                {diffuse
+                  ? children.map((c) => (
+                      <DiffuseChoicePill
+                        key={c.id}
+                        label={c.name}
+                        active={selectedChild === c.id}
+                        onPress={() => setSelectedChild(c.id)}
+                      />
+                    ))
+                  : children.map((c, idx) => (
+                      <ChildPill
+                        key={c.id}
+                        label={c.name}
+                        active={selectedChild === c.id}
+                        color={childColor(idx)}
+                        onPress={() => setSelectedChild(c.id)}
+                      />
+                    ))}
               </View>
             </>
           )}
 
-          <MonoCaps color={colors.textMuted}>{t('memories_labelDate')}</MonoCaps>
+          <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('memories_labelDate')}</MonoCaps>
           <Pressable
             onPress={() => setShowDatePicker(!showDatePicker)}
             style={[formStyles.dateBtn, { backgroundColor: paper, borderColor: paperBorder }]}
           >
-            <Calendar size={16} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[formStyles.dateBtnText, { color: colors.text, fontFamily: font.body }]}>{eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</Text>
+            <Calendar size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[formStyles.dateBtnText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</Text>
           </Pressable>
           {showDatePicker && (
             <DateTimePicker
@@ -657,53 +829,53 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
               maximumDate={new Date()}
               minimumDate={new Date(2015, 0, 1)}
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              themeVariant={isDark ? 'dark' : 'light'}
+              themeVariant={(diffuse ? dt.isDark : isDark) ? 'dark' : 'light'}
               onChange={(_, d) => { if (Platform.OS === 'android') setShowDatePicker(false); if (d) setEventDate(d) }}
             />
           )}
 
           {eventType === 'growth' ? (
             <>
-              <MonoCaps color={colors.textMuted}>{t('healthHistory_weightKg')}</MonoCaps>
+              <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('healthHistory_weightKg')}</MonoCaps>
               <TextInput
                 value={weight}
                 onChangeText={setWeight}
                 placeholder="e.g. 10.5"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
                 keyboardType="decimal-pad"
-                style={[formStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+                style={[formStyles.input, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }]}
               />
-              <MonoCaps color={colors.textMuted}>{t('healthHistory_heightCm')}</MonoCaps>
+              <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('healthHistory_heightCm')}</MonoCaps>
               <TextInput
                 value={height}
                 onChangeText={setHeight}
                 placeholder="e.g. 78"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
                 keyboardType="decimal-pad"
-                style={[formStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+                style={[formStyles.input, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }]}
               />
             </>
           ) : (
             <>
-              <MonoCaps color={colors.textMuted}>{t('preg_weight_details')}</MonoCaps>
+              <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('preg_weight_details')}</MonoCaps>
               <TextInput
                 value={value}
                 onChangeText={setValue}
                 placeholder={selCfg?.placeholder ?? 'Describe…'}
-                placeholderTextColor={colors.textMuted}
-                style={[formStyles.input, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+                placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+                style={[formStyles.input, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }]}
               />
             </>
           )}
 
-          <MonoCaps color={colors.textMuted}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
+          <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
           <TextInput
             value={notes}
             onChangeText={setNotes}
             placeholder="Additional details…"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             multiline
-            style={[formStyles.inputMulti, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+            style={[formStyles.inputMulti, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }]}
           />
 
           <PillButton
@@ -769,6 +941,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
+  },
+  diffuseCard: {
+    shadowOpacity: 0,
+    elevation: 0,
+    borderRadius: 26,
   },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   sectionIconBadge: {
@@ -885,6 +1062,14 @@ const styles = StyleSheet.create({
 
 const formStyles = StyleSheet.create({
   form: { gap: 12, paddingBottom: 40 },
+  diffusePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   typeBtn: {
     width: '31.5%',

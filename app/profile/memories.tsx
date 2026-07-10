@@ -41,7 +41,7 @@ import {
 } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
@@ -53,6 +53,8 @@ import { PaperAlert } from '../../components/ui/PaperAlert'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { Heart as HeartSticker, Flower as FlowerSticker, Star as StarSticker } from '../../components/ui/Stickers'
 import { ChildPill, childColor } from '../../components/ui/ChildPills'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 
 const SCREEN_W = Dimensions.get('window').width
 const GRID_GAP = 3
@@ -67,13 +69,46 @@ interface MemoryPost {
   notes: string
 }
 
+// Diffuse hairline child-selector pill (replaces the filled ChildPill under diffuse)
+function MemoriesChoicePill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const dt = useDiffuseTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.choicePill,
+        {
+          borderColor: active ? dt.colors.hairline : dt.colors.line2,
+          backgroundColor: active ? dt.colors.surface : 'transparent',
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      <Text
+        style={{
+          fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
+          fontSize: 11,
+          letterSpacing: 1.4,
+          textTransform: 'uppercase',
+          color: active ? dt.colors.ink : dt.colors.ink3,
+        }}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
 export default function MemoriesScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
-  const paper = colors.surface
-  const paperBorder = colors.border
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
 
   const [allPosts, setAllPosts] = useState<MemoryPost[]>([])
   const [loading, setLoading] = useState(true)
@@ -303,15 +338,15 @@ export default function MemoriesScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <ScreenHeader
           title={t('memories_headerTitle')}
           right={
             <Pressable onPress={pickPhotos} hitSlop={10}>
-              <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-                <Ionicons name="add" size={20} color={colors.text} />
+              <View style={[styles.headerAddBtn, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                <Ionicons name="add" size={20} color={diffuse ? dt.colors.ink : colors.text} />
               </View>
             </Pressable>
           }
@@ -320,17 +355,17 @@ export default function MemoriesScreen() {
 
       {/* Search bar */}
       <View style={[styles.searchBar, { backgroundColor: paper, borderColor: paperBorder, marginHorizontal: 20 }]}>
-        <Search size={16} color={colors.textMuted} strokeWidth={2} />
+        <Search size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder={t('memories_searchPlaceholder')}
-          placeholderTextColor={colors.textMuted}
-          style={[styles.searchInput, { color: colors.text, fontFamily: font.body }]}
+          placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+          style={[styles.searchInput, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
         />
         {searchQuery.length > 0 && (
           <Pressable onPress={() => setSearchQuery('')}>
-            <X size={16} color={colors.textMuted} />
+            <X size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
           </Pressable>
         )}
       </View>
@@ -340,23 +375,37 @@ export default function MemoriesScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
           <Pressable
             onPress={() => setFilterChild(null)}
-            style={[styles.chip, {
-              backgroundColor: !filterChild ? stickers.lilac + (isDark ? '32' : '40') : paper,
-              borderColor: !filterChild ? (stickers.lilacInk) : paperBorder,
-            }]}
+            style={[styles.chip, diffuse
+              ? {
+                  backgroundColor: !filterChild ? dt.colors.surface : 'transparent',
+                  borderColor: !filterChild ? dt.colors.hairline : dt.colors.line2,
+                }
+              : {
+                  backgroundColor: !filterChild ? stickers.lilac + (isDark ? '32' : '40') : paper,
+                  borderColor: !filterChild ? (stickers.lilacInk) : paperBorder,
+                }]}
           >
-            <Text style={[styles.chipText, { color: !filterChild ? (stickers.lilacInk) : colors.text, fontFamily: font.bodySemiBold }]}>{t('memories_filterAllKids')}</Text>
+            <Text style={[styles.chipText, diffuse
+              ? { color: !filterChild ? dt.colors.ink : dt.colors.ink3, fontFamily: !filterChild ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase' }
+              : { color: !filterChild ? (stickers.lilacInk) : colors.text, fontFamily: font.bodySemiBold }]}>{t('memories_filterAllKids')}</Text>
           </Pressable>
           {children.map((c) => (
             <Pressable
               key={c.id}
               onPress={() => setFilterChild(filterChild === c.id ? null : c.id)}
-              style={[styles.chip, {
-                backgroundColor: filterChild === c.id ? stickers.blue + (isDark ? '32' : '40') : paper,
-                borderColor: filterChild === c.id ? (stickers.blueInk) : paperBorder,
-              }]}
+              style={[styles.chip, diffuse
+                ? {
+                    backgroundColor: filterChild === c.id ? dt.colors.surface : 'transparent',
+                    borderColor: filterChild === c.id ? dt.colors.hairline : dt.colors.line2,
+                  }
+                : {
+                    backgroundColor: filterChild === c.id ? stickers.blue + (isDark ? '32' : '40') : paper,
+                    borderColor: filterChild === c.id ? (stickers.blueInk) : paperBorder,
+                  }]}
             >
-              <Text style={[styles.chipText, { color: filterChild === c.id ? (stickers.blueInk) : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
+              <Text style={[styles.chipText, diffuse
+                ? { color: filterChild === c.id ? dt.colors.ink : dt.colors.ink3, fontFamily: filterChild === c.id ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase' }
+                : { color: filterChild === c.id ? (stickers.blueInk) : colors.text, fontFamily: font.bodySemiBold }]}>{c.name}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -377,26 +426,43 @@ export default function MemoriesScreen() {
               ]
               Alert.alert('Filter by Month', undefined, options)
             }}
-            style={[styles.monthDropdown, {
-              backgroundColor: filterMonth ? stickers.yellow + (isDark ? '28' : '40') : paper,
-              borderColor: filterMonth ? (stickers.yellowInk) : paperBorder,
-            }]}
+            style={[styles.monthDropdown, diffuse
+              ? {
+                  backgroundColor: filterMonth ? dt.colors.surface : 'transparent',
+                  borderColor: filterMonth ? dt.colors.hairline : dt.colors.line2,
+                }
+              : {
+                  backgroundColor: filterMonth ? stickers.yellow + (isDark ? '28' : '40') : paper,
+                  borderColor: filterMonth ? (stickers.yellowInk) : paperBorder,
+                }]}
           >
-            <Calendar size={14} color={filterMonth ? (stickers.yellowInk) : colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.monthDropdownText, { color: filterMonth ? (stickers.yellowInk) : colors.text, fontFamily: font.bodySemiBold }]}>
+            <Calendar size={14} color={diffuse ? (filterMonth ? dt.colors.ink : dt.colors.ink3) : (filterMonth ? (stickers.yellowInk) : colors.textMuted)} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[styles.monthDropdownText, diffuse
+              ? { color: filterMonth ? dt.colors.ink : dt.colors.ink3, fontFamily: filterMonth ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 11 }
+              : { color: filterMonth ? (stickers.yellowInk) : colors.text, fontFamily: font.bodySemiBold }]}>
               {filterMonth ? formatMonth(filterMonth) : t('memories_filterAllTime')}
             </Text>
-            <ChevronRight size={14} color={colors.textMuted} style={{ transform: [{ rotate: '90deg' }] }} />
+            <ChevronRight size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ transform: [{ rotate: '90deg' }] }} />
           </Pressable>
         )}
-        <Text style={[styles.countText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+        <Text style={[styles.countText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, letterSpacing: diffuse ? 0.8 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>
           {`${filtered.length === 1 ? t('memories_countOne', { count: filtered.length }) : t('memories_countMany', { count: filtered.length })} ${t('common_dotSeparator')} ${t('memories_photos', { count: totalPhotos })}`}
         </Text>
       </View>
 
       {/* Gallery */}
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {!loading && filtered.length === 0 && (
+        {!loading && filtered.length === 0 && diffuse && (
+          <DiffuseEmptyState
+            icon={<HeartSticker size={30} fill={stickers.pink} />}
+            title={t('memories_emptyTitle')}
+            message={t('memories_emptySubtitle')}
+            ctaLabel={t('memories_addFirst')}
+            onCta={pickPhotos}
+            style={{ marginTop: 24 }}
+          />
+        )}
+        {!loading && filtered.length === 0 && !diffuse && (
           <View style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}>
             <HeartSticker size={64} fill={stickers.pink} />
             <Display size={20} align="center" color={colors.text}>{t('memories_emptyTitle')}</Display>
@@ -415,7 +481,7 @@ export default function MemoriesScreen() {
 
         {sections.map(([month, posts]) => (
           <View key={month} style={styles.monthSection}>
-            <Text style={[styles.monthTitle, { color: colors.text, fontFamily: font.display }]}>{month}</Text>
+            <Text style={[styles.monthTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: diffuse ? -0.5 : -0.2 }]}>{month}</Text>
             <View style={styles.grid}>
               {posts.map((p) => (
                 <Pressable
@@ -530,11 +596,11 @@ export default function MemoriesScreen() {
 
       {/* ─── Add Memory Sheet ──────────────────────────────────────── */}
       <Modal visible={showAddSheet} animationType="slide" presentationStyle="pageSheet">
-        <View style={[styles.sheetRoot, { backgroundColor: colors.bg }]}>
+        <View style={[styles.sheetRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
           <View style={[styles.sheetHeader, { paddingTop: insets.top + 8 }]}>
             <Pressable onPress={() => { setShowAddSheet(false); setPendingPhotos([]) }} hitSlop={10}>
-              <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-                <Ionicons name="close" size={20} color={colors.text} />
+              <View style={[styles.headerAddBtn, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                <Ionicons name="close" size={20} color={diffuse ? dt.colors.ink : colors.text} />
               </View>
             </Pressable>
             <Display size={20} color={colors.text}>{t('memories_sheetTitle')}</Display>
@@ -551,29 +617,29 @@ export default function MemoriesScreen() {
                   </Pressable>
                 </View>
               ))}
-              <Pressable onPress={pickPhotos} style={[styles.previewAdd, { borderColor: paperBorder }]}>
-                <Plus size={24} color={colors.textMuted} />
-                <Text style={[styles.previewAddText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('memories_addBtn')}</Text>
+              <Pressable onPress={pickPhotos} style={[styles.previewAdd, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                <Plus size={24} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+                <Text style={[styles.previewAddText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, letterSpacing: diffuse ? 1 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{t('memories_addBtn')}</Text>
               </Pressable>
             </ScrollView>
 
-            <MonoCaps color={colors.textMuted}>{t('memories_labelCaption')}</MonoCaps>
+            <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('memories_labelCaption')}</MonoCaps>
             <TextInput
               value={caption}
               onChangeText={setCaption}
               placeholder={t('memories_captionPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
               multiline
-              style={[styles.captionInput, { color: colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: font.body }]}
+              style={[styles.captionInput, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }]}
             />
 
-            <MonoCaps color={colors.textMuted}>{t('memories_labelDate')}</MonoCaps>
+            <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('memories_labelDate')}</MonoCaps>
             <Pressable
               onPress={() => setShowDatePicker(!showDatePicker)}
               style={[styles.dateBtn, { backgroundColor: paper, borderColor: paperBorder }]}
             >
-              <Calendar size={16} color={colors.textMuted} strokeWidth={2} />
-              <Text style={[styles.dateBtnText, { color: colors.text, fontFamily: font.body }]}>
+              <Calendar size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[styles.dateBtnText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                 {memoryDate.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
               </Text>
             </Pressable>
@@ -584,7 +650,7 @@ export default function MemoriesScreen() {
                 maximumDate={new Date()}
                 minimumDate={new Date(2015, 0, 1)}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                themeVariant={isDark ? 'dark' : 'light'}
+                themeVariant={(diffuse ? dt.isDark : isDark) ? 'dark' : 'light'}
                 onChange={(_, d) => {
                   if (Platform.OS === 'android') setShowDatePicker(false)
                   if (d) setMemoryDate(d)
@@ -592,17 +658,26 @@ export default function MemoriesScreen() {
               />
             )}
 
-            <MonoCaps color={colors.textMuted}>{t('memories_labelWhichChild')}</MonoCaps>
+            <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('memories_labelWhichChild')}</MonoCaps>
             <View style={styles.childChips}>
-              {children.map((c, idx) => (
-                <ChildPill
-                  key={c.id}
-                  label={c.name}
-                  active={selectedChild === c.id}
-                  color={childColor(idx)}
-                  onPress={() => setSelectedChild(c.id)}
-                />
-              ))}
+              {diffuse
+                ? children.map((c) => (
+                    <MemoriesChoicePill
+                      key={c.id}
+                      label={c.name}
+                      active={selectedChild === c.id}
+                      onPress={() => setSelectedChild(c.id)}
+                    />
+                  ))
+                : children.map((c, idx) => (
+                    <ChildPill
+                      key={c.id}
+                      label={c.name}
+                      active={selectedChild === c.id}
+                      color={childColor(idx)}
+                      onPress={() => setSelectedChild(c.id)}
+                    />
+                  ))}
             </View>
 
             <PillButton
@@ -779,6 +854,14 @@ const styles = StyleSheet.create({
   dateBtnText: { fontSize: 15 },
 
   childChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  choicePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
   childChip: {
     flexDirection: 'row',
     alignItems: 'center',
