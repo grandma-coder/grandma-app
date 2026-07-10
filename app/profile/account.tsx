@@ -8,10 +8,12 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import {
-  Mail, Lock, Eye, EyeOff, ChevronRight,
+  Mail, Lock, Eye, EyeOff, ChevronRight, KeyRound, LogOut, Trash2,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { signOut } from '../../lib/signOut'
@@ -22,13 +24,15 @@ import { Heart, Star, Moon, Cross, Sparkle } from '../../components/ui/Stickers'
 
 export default function AccountScreen() {
   const { colors, font, stickers, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { t } = useTranslation()
 
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const dangerLabel = stickers.coralInk
+  const paper = diffuse ? dt.colors.surface : colors.surface
+  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const dangerLabel = diffuse ? dt.colors.error : stickers.coralInk
 
   const [email, setEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -94,7 +98,17 @@ export default function AccountScreen() {
     )
   }
 
-  function SectionLabel({ children, sticker, color }: { children: React.ReactNode; sticker: React.ReactNode; color?: string }) {
+  function SectionLabel({ children, sticker, diffuseIcon, color }: { children: React.ReactNode; sticker: React.ReactNode; diffuseIcon?: React.ReactNode; color?: string }) {
+    if (diffuse) {
+      return (
+        <View style={styles.sectionLabel}>
+          {diffuseIcon ? (
+            <DiffuseBloomIcon color={color ?? dt.colors.ink} size={22} intensity={0.4}>{diffuseIcon}</DiffuseBloomIcon>
+          ) : null}
+          <MonoCaps color={color ?? dt.colors.ink3} style={{ letterSpacing: 2 }}>{children}</MonoCaps>
+        </View>
+      )
+    }
     return (
       <View style={styles.sectionLabel}>
         <View style={styles.sectionSticker}>{sticker}</View>
@@ -104,7 +118,7 @@ export default function AccountScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <ScreenHeader title="" />
       </View>
@@ -112,25 +126,28 @@ export default function AccountScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Big Fraunces title */}
         <View style={styles.titleBlock}>
-          <Display size={32} color={colors.text}>{t('account_title')}</Display>
-          <DisplayItalic size={18} color={stickers.coral} style={{ marginTop: 6 }}>
+          <Display size={32} color={diffuse ? dt.colors.ink : colors.text}>{t('account_title')}</Display>
+          <DisplayItalic size={18} color={diffuse ? dt.colors.ink3 : stickers.coral} style={{ marginTop: 6 }}>
             {t('account_subtitle')}
           </DisplayItalic>
         </View>
 
         {/* Email */}
-        <SectionLabel sticker={<Heart size={20} fill={stickers.pink} />}>{t('account_sectionEmail')}</SectionLabel>
-        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <SectionLabel
+          sticker={<Heart size={20} fill={stickers.pink} />}
+          diffuseIcon={<Mail size={12} color={dt.colors.ink3} strokeWidth={1.5} />}
+        >{t('account_sectionEmail')}</SectionLabel>
+        <View style={[styles.card, diffuse && styles.cardFlat, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={[styles.inputRow, { borderBottomColor: paperBorder }]}>
-            <Mail size={18} color={colors.textMuted} strokeWidth={2} />
+            <Mail size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.5 : 2} />
             <TextInput
               value={email}
               onChangeText={setEmail}
               placeholder={t('account_emailPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              style={[styles.inputText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
             />
           </View>
           <Pressable
@@ -138,90 +155,138 @@ export default function AccountScreen() {
             disabled={saving}
             style={({ pressed }) => [
               styles.actionPill,
-              {
-                backgroundColor: stickers.lilacSoft,
-                borderColor: paperBorder,
-                opacity: saving ? 0.6 : 1,
-                transform: [{ translateY: pressed ? 1 : 0 }],
-              },
+              diffuse
+                ? {
+                    backgroundColor: 'transparent',
+                    borderColor: dt.colors.line2,
+                    opacity: saving ? 0.5 : pressed ? 0.6 : 1,
+                  }
+                : {
+                    backgroundColor: stickers.lilacSoft,
+                    borderColor: paperBorder,
+                    opacity: saving ? 0.6 : 1,
+                    transform: [{ translateY: pressed ? 1 : 0 }],
+                  },
             ]}
           >
-            <Sparkle size={20} fill={stickers.yellow} />
-            <Text style={[styles.actionPillText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+            {diffuse ? null : <Sparkle size={20} fill={stickers.yellow} />}
+            <Text style={[styles.actionPillText, diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 2, textTransform: 'uppercase', fontSize: 12 }
+              : { color: colors.text, fontFamily: font.bodySemiBold }]}>
               {saving ? t('account_saving') : t('account_updateEmail')}
             </Text>
           </Pressable>
         </View>
 
         {/* Password */}
-        <SectionLabel sticker={<Star size={20} fill={stickers.yellow} />}>{t('account_sectionPassword')}</SectionLabel>
-        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <SectionLabel
+          sticker={<Star size={20} fill={stickers.yellow} />}
+          diffuseIcon={<KeyRound size={12} color={dt.colors.ink3} strokeWidth={1.5} />}
+        >{t('account_sectionPassword')}</SectionLabel>
+        <View style={[styles.card, diffuse && styles.cardFlat, { backgroundColor: paper, borderColor: paperBorder }]}>
           <View style={[styles.inputRow, { borderBottomColor: paperBorder }]}>
-            <Lock size={18} color={colors.textMuted} strokeWidth={2} />
+            <Lock size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.5 : 2} />
             <TextInput
               value={newPassword}
               onChangeText={setNewPassword}
               placeholder={t('account_newPasswordPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
               secureTextEntry={!showPassword}
-              style={[styles.inputText, { color: colors.text, fontFamily: font.body }]}
+              style={[styles.inputText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)}>
-              {showPassword ? <EyeOff size={18} color={colors.textMuted} /> : <Eye size={18} color={colors.textMuted} />}
+              {showPassword
+                ? <EyeOff size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.5 : 2} />
+                : <Eye size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.5 : 2} />}
             </Pressable>
           </View>
-          <Body size={12} color={colors.textMuted}>{t('account_minChars')}</Body>
+          <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('account_minChars')}</Body>
           <Pressable
             onPress={handleChangePassword}
             disabled={saving || newPassword.length < 6}
             style={({ pressed }) => [
               styles.actionPill,
-              {
-                backgroundColor: stickers.lilacSoft,
-                borderColor: paperBorder,
-                opacity: (saving || newPassword.length < 6) ? 0.5 : 1,
-                transform: [{ translateY: pressed ? 1 : 0 }],
-              },
+              diffuse
+                ? {
+                    backgroundColor: 'transparent',
+                    borderColor: dt.colors.line2,
+                    opacity: (saving || newPassword.length < 6) ? 0.4 : pressed ? 0.6 : 1,
+                  }
+                : {
+                    backgroundColor: stickers.lilacSoft,
+                    borderColor: paperBorder,
+                    opacity: (saving || newPassword.length < 6) ? 0.5 : 1,
+                    transform: [{ translateY: pressed ? 1 : 0 }],
+                  },
             ]}
           >
-            <Sparkle size={20} fill={stickers.yellow} />
-            <Text style={[styles.actionPillText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+            {diffuse ? null : <Sparkle size={20} fill={stickers.yellow} />}
+            <Text style={[styles.actionPillText, diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 2, textTransform: 'uppercase', fontSize: 12 }
+              : { color: colors.text, fontFamily: font.bodySemiBold }]}>
               {saving ? t('account_saving') : t('account_changePassword')}
             </Text>
           </Pressable>
         </View>
 
         {/* Sessions */}
-        <SectionLabel sticker={<Moon size={20} fill={stickers.lilac} />}>{t('account_sectionSessions')}</SectionLabel>
-        <View style={[styles.card, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <SectionLabel
+          sticker={<Moon size={20} fill={stickers.lilac} />}
+          diffuseIcon={<LogOut size={12} color={dt.colors.ink3} strokeWidth={1.5} />}
+        >{t('account_sectionSessions')}</SectionLabel>
+        <View style={[styles.card, diffuse && styles.cardFlat, { backgroundColor: paper, borderColor: paperBorder }]}>
           <Pressable onPress={handleSignOutAll} style={styles.row}>
             <View style={styles.rowLeft}>
-              <Moon size={32} fill={stickers.lilac} />
-              <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('account_signOutAllDevices')}</Text>
+              {diffuse ? (
+                <DiffuseBloomIcon color={dt.colors.ink} size={32} intensity={0.4}>
+                  <LogOut size={15} color={dt.colors.ink} strokeWidth={1.5} />
+                </DiffuseBloomIcon>
+              ) : (
+                <Moon size={32} fill={stickers.lilac} />
+              )}
+              <Text style={[styles.rowLabel, diffuse
+                ? { color: dt.colors.ink, fontFamily: diffuseFont.body }
+                : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('account_signOutAllDevices')}</Text>
             </View>
-            <ChevronRight size={18} color={colors.textMuted} />
+            <ChevronRight size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.5 : 2} />
           </Pressable>
         </View>
 
         {/* Danger zone */}
-        <SectionLabel sticker={<Cross size={20} fill={stickers.coral} />} color={dangerLabel}>
+        <SectionLabel
+          sticker={<Cross size={20} fill={stickers.coral} />}
+          diffuseIcon={<Trash2 size={12} color={dt.colors.error} strokeWidth={1.5} />}
+          color={dangerLabel}
+        >
           {t('account_sectionDanger')}
         </SectionLabel>
         <Pressable
           onPress={handleDeleteAccount}
           style={({ pressed }) => [
             styles.dangerBtn,
-            {
-              backgroundColor: stickers.peachSoft,
-              borderColor: stickers.coral,
-              transform: [{ translateY: pressed ? 1 : 0 }],
-            },
+            diffuse
+              ? {
+                  backgroundColor: 'transparent',
+                  borderColor: dt.colors.error,
+                  opacity: pressed ? 0.6 : 1,
+                }
+              : {
+                  backgroundColor: stickers.peachSoft,
+                  borderColor: stickers.coral,
+                  transform: [{ translateY: pressed ? 1 : 0 }],
+                },
           ]}
         >
-          <Cross size={28} fill={stickers.coral} />
-          <Text style={[styles.dangerTextBtn, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('account_deleteAccount')}</Text>
+          {diffuse ? (
+            <Trash2 size={16} color={dt.colors.error} strokeWidth={1.5} />
+          ) : (
+            <Cross size={28} fill={stickers.coral} />
+          )}
+          <Text style={[styles.dangerTextBtn, diffuse
+            ? { color: dt.colors.error, fontFamily: diffuseFont.mono, letterSpacing: 2, textTransform: 'uppercase', fontSize: 12 }
+            : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('account_deleteAccount')}</Text>
         </Pressable>
-        <Text style={[styles.dangerHint, { color: colors.textMuted, fontFamily: font.body }]}>
+        <Text style={[styles.dangerHint, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('account_deleteHint')}
         </Text>
       </ScrollView>
@@ -244,6 +309,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
+  },
+  cardFlat: {
+    borderRadius: 20,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
   },
   inputRow: {
     flexDirection: 'row',
