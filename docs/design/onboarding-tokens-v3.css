@@ -1,0 +1,125 @@
+/* grandma.app — v3 "Diffuse" tokens
+   ADDITIVE: a new drop-in theme scope. Apply with data-theme="diffuse".
+   Direction: ONE sophisticated, delicate, clean type + icon language for all
+   behaviors. Behaviors are differentiated ONLY by color + shape + blur —
+   soft grainy generative gradient fields. Nothing here overrides v1 or v2. */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+[data-theme="diffuse"] {
+  /* ---- type: unified, delicate, sophisticated ---- */
+  --d-display: 'Cormorant Garamond', Georgia, serif; /* @kind font */
+  --d-sans:    'Hanken Grotesk', -apple-system, system-ui, sans-serif; /* @kind font */
+  --d-mono:    'Space Mono', ui-monospace, monospace; /* @kind font */
+  --d-font-body: var(--d-sans);
+
+  /* ---- TYPE ROLES — the ONE clear rule. Assign by MEANING, never by size.
+     Three voices, three jobs:
+       SERIF  (--role-title) — expressive language ONLY: screen/section titles
+                               + feeling words ("Morning, Lia." · "Happy").
+       SANS   (--role-read)  — reading ONLY: body copy + selectable row labels.
+       MONO   (--role-data)  — the dominant DATA voice: every pill, chip,
+                               segmented, button, eyebrow, label, caption,
+                               timestamp, UNIT and NUMBER (counts, stats,
+                               dates, targets, metrics, progress).
+     ONE exception: the single large focal number of a data tile is a
+     "display number" → SERIF (--role-num-hero). Every other number → MONO. */
+  --role-title:    var(--d-display);
+  --role-read:     var(--d-sans);
+  --role-data:     var(--d-mono);
+  --role-num-hero: var(--d-display);
+
+  /* ---- neutral foundation (paper + ink) ---- */
+  --d-paper:    #F4F1E8;   /* warm off-white canvas */
+  --d-paper-2:  #FBFAF5;   /* raised card */
+  --d-ink:      #1A1916;   /* near-black, slightly warm */
+  --d-ink-2:    #4A463E;
+  --d-ink-3:    #807A6E;
+  --d-ink-4:    #B3AC9C;
+  --d-line:     rgba(26,25,22,.12);
+  --d-line-2:   rgba(26,25,22,.20);
+  --d-hairline: rgba(26,25,22,.55);  /* the thin sophisticated rule */
+
+  /* ---- shared neutrals mapped onto the existing token names ---- */
+  --bg: var(--d-paper);
+  --bg-deep: #EDE9DD;
+  --paper: var(--d-paper-2);
+  --paper-2: #F7F4EC;
+  --ink: var(--d-ink);
+  --ink-2: var(--d-ink-2);
+  --ink-3: var(--d-ink-3);
+  --ink-4: var(--d-ink-4);
+  --line: var(--d-line);
+  --line-2: var(--d-line-2);
+  --font-display: var(--d-display);
+  --font-body: var(--d-sans);
+  --font-hand: var(--d-display);
+  --font-mono: var(--d-mono);
+
+  /* ---- shapes: clean, generous, calm ---- */
+  --d-r-sm: 14px;
+  --d-r-md: 20px;
+  --d-r-lg: 28px;
+  --d-r-xl: 40px;
+  --d-blur-soft: 40px;
+  --d-blur-field: 70px;   /* generative-field blob blur */
+  --d-blur-glass: 18px;
+
+  /* shadows — barely-there, premium */
+  --sh-card: 0 1px 2px rgba(26,25,22,.04), 0 8px 30px -18px rgba(26,25,22,.18);
+  --sh-pop:  0 2px 6px rgba(26,25,22,.06), 0 22px 50px -24px rgba(26,25,22,.30);
+
+  /* ---- grain overlay (used by .diffuse-grain / fields) ---- */
+  --d-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); /* @kind other */
+  --d-grain-opacity: 0.22; /* @kind other */
+}
+
+/* =====================================================================
+   BEHAVIOR FIELDS — the ONLY thing that changes per behavior is the
+   generative gradient (color stops) + the blob shape/blur. Type stays
+   identical. Each scope exposes --g1..--g4 (the diffuse light colors)
+   and an --accent pulled from the field for ink/CTA moments.
+   ===================================================================== */
+
+/* CYCLE — coral → rose → lilac, calm warm-cool */
+[data-theme="diffuse"] [data-mode="pre"],
+[data-theme="diffuse"][data-mode="pre"] {
+  --g1: #F0A99A;  --g2: #F0B8C8;  --g3: #C9B7E6;  --g4: #F7DCC0;
+  --accent: #C25872;  --accent-soft: #F6DCE4;
+}
+/* PREGNANCY — peach → blush → plum, warm bloom */
+[data-theme="diffuse"] [data-mode="preg"],
+[data-theme="diffuse"][data-mode="preg"] {
+  --g1: #F8C9A6;  --g2: #F2AEC6;  --g3: #BDA4E2;  --g4: #F8E1B2;
+  --accent: #8F5FC6;  --accent-soft: #E7D8F5;
+}
+/* RAISING — bright multi, playful spectrum */
+[data-theme="diffuse"] [data-mode="kids"],
+[data-theme="diffuse"][data-mode="kids"] {
+  --g1: #F4D888;  --g2: #A2D8B4;  --g3: #A6BCE6;  --g4: #F4B396;
+  --accent: #4C79CE;  --accent-soft: #CBDCF7;
+}
+/* CAREGIVER — calm teal → blue → mint, trustworthy */
+[data-theme="diffuse"] [data-mode="care"],
+[data-theme="diffuse"][data-mode="care"] {
+  --g1: #A6D6DC;  --g2: #B0C0E4;  --g3: #C6E7D9;  --g4: #D4E1F0;
+  --accent: #4A8496;  --accent-soft: #D2EAEE;
+}
+
+/* ---- dark variant: deepen paper, brighten field ---- */
+[data-theme="diffuse"][data-dark] {
+  --bg: #16140F;
+  --bg-deep: #100E0A;
+  --paper: #211E18;
+  --paper-2: #2A261F;
+  --ink: #F4F1E8;
+  --ink-2: #D8D2C4;
+  --ink-3: #A39C8C;
+  --ink-4: #6E685C;
+  --line: rgba(244,241,232,.12);
+  --line-2: rgba(244,241,232,.22);
+  --d-hairline: rgba(244,241,232,.55);
+  --d-grain-opacity: 0.16; /* @kind other */
+  --sh-card: 0 1px 2px rgba(0,0,0,.3), 0 10px 34px -18px rgba(0,0,0,.6);
+  --sh-pop:  0 2px 6px rgba(0,0,0,.4), 0 26px 56px -24px rgba(0,0,0,.7);
+}

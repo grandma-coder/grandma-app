@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="diffuse">
+<head>
+<meta charset="UTF-8">
+<meta name="design_doc_mode" content="canvas">
+<title>grandma.app — Auth &amp; Onboarding</title>
+<link rel="stylesheet" href="src/tokens-v3.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--d-sans);color:var(--d-ink);background:#E7E3D7}
+
+  /* ---------- canvas scaffolding ---------- */
+  .frame{position:absolute}
+  .flabel{font-family:var(--d-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#6b6457;margin-bottom:14px;display:flex;gap:10px;align-items:center}
+  .flabel b{color:#1A1916;font-weight:400}
+  .flabel .dot{width:7px;height:7px;border-radius:50%}
+  .secthead{position:absolute;font-family:var(--d-display);font-weight:300;font-size:46px;color:#1A1916;letter-spacing:-.01em}
+  .secthead em{font-style:italic;color:#8A857A}
+  .secthead .k{display:block;font-family:var(--d-mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#9a9484;margin-bottom:8px;font-weight:400}
+
+  /* ---------- device ---------- */
+  .phone{width:390px;height:844px;border-radius:56px;background:#0e0d0b;padding:12px;
+    box-shadow:0 2px 4px rgba(0,0,0,.3),0 40px 90px -30px rgba(0,0,0,.5)}
+  .screen{position:relative;width:100%;height:100%;border-radius:46px;overflow:hidden;background:#FCF5EA;isolation:isolate;color:#1A1916}
+  .notch{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:118px;height:30px;background:#0e0d0b;border-radius:18px;z-index:6}
+  .status{display:flex;justify-content:space-between;align-items:center;padding:18px 30px 0;font-family:var(--d-mono);font-size:12px;letter-spacing:.04em;font-weight:700}
+  .status .r{display:flex;gap:6px;align-items:center}
+  .status svg{width:16px;height:16px}
+
+  /* the AURA — soft pastel field, gently blurred + grain */
+  .aura::before{content:"";position:absolute;inset:-30%;z-index:0;background:var(--aura);filter:blur(40px) saturate(1.08)}
+  .aura::after{content:"";position:absolute;inset:0;z-index:1;opacity:.24;mix-blend-mode:soft-light;pointer-events:none;background-image:var(--d-grain)}
+  .ui{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column}
+
+  /* ---------- type helpers ---------- */
+  .serif{font-family:var(--d-display)}
+  .mono{font-family:var(--d-mono)}
+  .lab{font-family:var(--d-mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#807A6E}
+  /* gradient-mono eyebrow (the "TRYING" label on the gradient field) */
+  .gradlab{display:inline-block;font-family:var(--d-mono);font-weight:600;font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+    background:var(--gradtext,linear-gradient(100deg,#F2654E,#B06AD8));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  [data-mode="pre"]{--gradtext:linear-gradient(100deg,#F2654E,#ED88A6 55%,#B06AD8)}
+  [data-mode="preg"]{--gradtext:linear-gradient(100deg,#B06AD8,#ED88A6 55%,#F7A86A)}
+  [data-mode="kids"]{--gradtext:linear-gradient(100deg,#46C173,#3F9BD8)}
+  .ink{color:#1A1916}
+  .pad{padding:0 30px}
+
+  /* ---------- onboarding chrome ---------- */
+  .ob-head{display:flex;justify-content:space-between;align-items:center;padding:16px 26px 0}
+  .ob-back{width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+  .ob-step{font-family:var(--d-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(26,25,22,.55)}
+  .prog{margin:16px 30px 0;height:3px;border-radius:99px;background:rgba(26,25,22,.12);overflow:hidden}
+  .prog>span{display:block;height:100%;border-radius:99px;background:rgba(26,25,22,.7)}
+  .q{font-family:var(--d-display);font-weight:300;font-size:36px;line-height:1.02;letter-spacing:-.01em;margin:0}
+  .q em{font-style:italic;color:rgba(26,25,22,.55)}
+  .qsub{font-size:13.5px;line-height:1.45;color:rgba(26,25,22,.6);margin:11px 0 0;max-width:262px;font-weight:400}
+  .body-area{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .cta{padding:0 30px 34px}
+
+  /* glass + buttons (carried from Diffuse system) */
+  .glass{position:relative;background:linear-gradient(150deg,rgba(255,255,255,.55),rgba(255,255,255,.28));backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);
+    border:1px solid rgba(255,255,255,.6);border-radius:24px;
+    box-shadow:inset 0 1.5px 1px rgba(255,255,255,.9), 0 18px 44px -28px rgba(26,25,22,.5)}
+  .pillbtn{font-family:var(--d-sans);font-weight:600;font-size:15px;border:none;cursor:pointer;border-radius:99px;padding:16px 22px;display:flex;align-items:center;justify-content:center;gap:8px}
+  /* primary CTA — containerless, editorial mono */
+  .solid{position:relative;color:#1A1916;background:none;box-shadow:none;
+    font-family:var(--d-mono);font-weight:600;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+    justify-content:space-between;border-radius:0;padding:18px 2px 2px;border-top:1px solid rgba(26,25,22,.2)}
+  .solid::after{display:none}
+  .solid svg{width:22px;height:18px;opacity:.85;transition:transform .25s ease}
+  .solid:hover{background:none}
+  .solid:hover svg{transform:translateX(6px)}
+  .ghost{position:relative;background:linear-gradient(150deg,rgba(255,255,255,.46),rgba(255,255,255,.18));backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5);color:#1A1916;box-shadow:inset 0 1.5px 1px rgba(255,255,255,.85), inset 0 0 0 1px rgba(255,255,255,.45)}
+  .dark{background:#1A1916;color:#FCF5EA;box-shadow:0 16px 34px -20px rgba(26,25,22,.6)}
+  .dark.pillbtn:hover{background:#000}
+  /* gradient-glass pill (OAuth primary) — no flat black */
+  .gradpill{position:relative;overflow:hidden;color:#1A1916;
+    background:linear-gradient(135deg,rgba(247,168,106,.62),rgba(237,136,166,.5),rgba(169,139,221,.56));
+    backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);
+    box-shadow:inset 0 1.5px 1px rgba(255,255,255,.9), inset 0 0 0 1px rgba(255,255,255,.45)}
+  .gradpill::after{content:"";position:absolute;left:0;right:0;top:0;height:55%;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0))}
+  /* mono text link (secondary / skip) — containerless */
+  .txtlink{font-family:var(--d-mono);font-weight:600;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(26,25,22,.5);background:none;border:none;cursor:pointer;padding:15px;width:100%;text-align:center}
+  .txtlink:hover{color:#1A1916}
+  /* OAuth — containerless mono rows on hairlines (no pill, no glass, no fill) */
+  .pillbtn.oauth{font-family:var(--d-mono);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:#1A1916;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;border:none;border-bottom:1px solid rgba(26,25,22,.16);border-radius:0;box-shadow:none;justify-content:flex-start;gap:12px;padding:16px 2px}
+  .pillbtn.oauth::after{display:none}
+  .pillbtn.oauth:hover{opacity:.55;background:none}
+  .pillbtn.oauth svg{width:16px;height:16px;flex:none}
+
+  /* choice list → timeline-graph picker (connector line + nodes + outline-ellipse selection) */
+  .choice{display:flex;flex-direction:column;position:relative}
+  .choice::before{content:"";position:absolute;left:23px;top:34px;bottom:34px;width:1px;background:rgba(26,25,22,.16);z-index:0}
+  .choicecard{display:flex;align-items:center;gap:18px;padding:14px 2px;cursor:pointer;border-bottom:none;position:relative;z-index:1;transition:padding-left .2s ease}
+  .choicecard:last-child{border-bottom:none}
+  .choicecard.on{padding-left:0}
+  .choicecard .ic{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;background:var(--d-bg,#FCF5EA);border:1.5px solid rgba(26,25,22,.18);transition:border-color .2s ease}
+  .choicecard.on .ic{border-color:#1A1916}
+  .choicecard .ic .gl{position:absolute;inset:2px;border-radius:50%;filter:blur(8px);opacity:0;transition:opacity .2s ease}
+  .choicecard.on .ic .gl{opacity:.85}
+  .choicecard .ic svg{position:relative;width:22px;height:22px;z-index:1}
+  .choicecard .tx b{position:relative;display:inline-block;font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .choicecard.on .tx b::after{content:"";position:absolute;inset:-7px -15px;border:1.5px solid rgba(26,25,22,.55);border-radius:50%}
+  .choicecard .tx span{display:block;font-family:var(--d-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#807A6E;margin-top:5px}
+  .choicecard .chk{display:none}
+  /* iconless choice rows get a matching ring node on the line */
+  .choicecard:not(:has(.ic)){padding-left:66px}
+  .choicecard:not(:has(.ic))::before{content:"";position:absolute;left:17px;top:50%;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;border:1.5px solid rgba(26,25,22,.4);background:var(--d-bg,#FCF5EA)}
+  .choicecard.on:not(:has(.ic))::before{background:#1A1916;border-color:#1A1916}
+
+  /* chips — soft mono pills (the "5 days" family) */
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{font-family:var(--d-mono);font-size:12px;font-weight:500;letter-spacing:.04em;padding:11px 18px;border-radius:99px;cursor:pointer;color:rgba(26,25,22,.5);
+    background:rgba(255,255,255,.3);border:1px solid rgba(26,25,22,.14);transition:all .2s ease}
+  .chip.on{color:#1A1916;font-weight:700;border-color:rgba(26,25,22,.62);background:rgba(255,255,255,.6);box-shadow:inset 0 1px 1px rgba(255,255,255,.7)}
+  .other-input{display:none;margin-top:14px}
+  .other-input.show{display:block}
+  .other-input input{width:100%;font-family:var(--d-mono);font-size:13px;letter-spacing:.03em;color:#1A1916;
+    padding:13px 16px;border-radius:14px;border:1px solid rgba(26,25,22,.2);background:rgba(255,255,255,.4);
+    box-shadow:inset 0 1px 2px rgba(26,25,22,.06);outline:none}
+  .other-input input::placeholder{color:rgba(26,25,22,.4)}
+  .other-input input:focus{border-color:rgba(26,25,22,.55);background:rgba(255,255,255,.6)}
+
+  /* segmented — soft mono pills (same "5 days" family) */
+  .seg{display:flex;justify-content:center;gap:8px;background:none;border:none;padding:0}
+  .seg button{position:relative;border:1px solid rgba(26,25,22,.14);background:rgba(255,255,255,.3);cursor:pointer;font-family:var(--d-mono);font-weight:500;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:rgba(26,25,22,.5);padding:11px 22px;border-radius:99px;transition:all .2s ease}
+  .seg button.on{color:#1A1916;font-weight:700;border-color:rgba(26,25,22,.62);background:rgba(255,255,255,.6);box-shadow:inset 0 1px 1px rgba(255,255,255,.7)}
+
+  /* stepper */
+  .stepper{display:flex;align-items:center;justify-content:center;gap:26px}
+  .stepper button{width:54px;height:54px;border-radius:50%;cursor:pointer;font-size:24px;font-weight:300;color:#1A1916;background:transparent;border:1px solid rgba(26,25,22,.22);display:flex;align-items:center;justify-content:center;line-height:1}
+  .stepper .val{font-family:var(--d-display);font-weight:300;font-size:80px;line-height:.85;min-width:118px;text-align:center}
+  .stepper .val small{display:block;font-family:var(--d-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#807A6E;margin-top:8px;font-weight:400}
+
+  /* date wheel */
+  .wheel{display:flex;justify-content:center;gap:8px;position:relative;padding:8px 0}
+  .wheel::before{content:"";position:absolute;left:14px;right:14px;top:50%;transform:translateY(-50%);height:50px;border-top:1px solid rgba(26,25,22,.16);border-bottom:1px solid rgba(26,25,22,.16)}
+  .wcol{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:18px;width:80px}
+  .wcol span{color:rgba(26,25,22,.32);line-height:1.1}
+  .wcol .sel{color:#1A1916;font-weight:600;font-size:21px}
+  .wcol.wide{width:120px}
+
+  /* avatar grid */
+  .avgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+  .av{aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;
+    background:transparent}
+  .av::before{content:"";position:absolute;inset:0;background:var(--g);filter:blur(9px) saturate(.74);
+    -webkit-mask:radial-gradient(closest-side,#000 36%,transparent 82%);mask:radial-gradient(closest-side,#000 36%,transparent 82%)}
+  .av svg{width:25px;height:25px;position:relative;z-index:1;opacity:.72;stroke-width:1.4}
+  .av.on{box-shadow:inset 0 0 0 2px rgba(26,25,22,.82)}
+  .av.on::before{filter:blur(8px) saturate(.86)}
+  .av.on svg{opacity:.9}
+  .av.cam{background:transparent}
+  .av.cam::before{display:none}
+  .av.cam svg{opacity:.55}
+
+  /* text input (bare, sophisticated) */
+  .field{width:100%;background:transparent;border:none;border-bottom:1.5px solid rgba(26,25,22,.26);padding:10px 2px 14px;font-family:var(--d-sans);font-size:18px;color:#1A1916;outline:none}
+  .field::placeholder{color:rgba(26,25,22,.38)}
+  .field-lab{font-family:var(--d-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#807A6E;margin-bottom:4px;display:block}
+  .inputcard{padding:0 2px;background:transparent;border-bottom:1.5px solid rgba(26,25,22,.26)}
+  .inputcard .field{border:none;padding:6px 0 12px;font-size:17px}
+
+  /* auth specifics */
+  .authfield{width:100%;background:transparent;border:none;border-bottom:1.5px solid rgba(26,25,22,.26);padding:10px 0 14px;font-family:var(--d-sans);font-size:17px;color:#1A1916;outline:none}
+  .authfield::placeholder{color:rgba(26,25,22,.4)}
+  .oauth{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
+  .divider{display:flex;align-items:center;gap:14px;color:rgba(26,25,22,.4);font-family:var(--d-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin:22px 0}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:rgba(26,25,22,.18)}
+  .foot{font-size:13px;color:rgba(26,25,22,.6);text-align:center}
+  .foot b{color:#1A1916;font-weight:600}
+
+  /* brand eye mark */
+  .glogo{display:block;filter:drop-shadow(0 8px 22px rgba(26,25,22,.16))}
+  .glogo-eye{animation:glblink 3.6s infinite;transform-origin:100px 100px;transform-box:fill-box}
+  @keyframes glblink{0%,88%,100%{transform:scaleY(1)}92%,96%{transform:scaleY(.06)}}
+  .glogo-h{animation:glpulse 1.6s ease-in-out infinite;transform-origin:100px 104px;transform-box:fill-box}
+  @keyframes glpulse{0%,100%{transform:scale(1)}40%{transform:scale(1.12)}60%{transform:scale(.96)}}
+  .glogo-float{animation:glfloat 5s ease-in-out infinite}
+  @keyframes glfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @media (prefers-reduced-motion:reduce){.glogo-eye,.glogo-h,.glogo-float{animation:none}}
+
+  /* ---------- blob journey picker ---------- */
+  .blobpick{position:relative;width:100%;height:100%}
+  .bopt{position:absolute;width:188px;height:188px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer}
+  .bopt::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--c);filter:blur(28px);opacity:.5;transition:opacity .3s ease,transform .3s ease}
+  .bopt.sel::before{opacity:.82;transform:scale(1.06)}
+  .bopt .k{position:relative;font-family:var(--d-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(26,25,22,.65)}
+  .bopt.sel .k{color:#1A1916}
+  .bopt .n{position:relative;font-family:var(--d-display);font-style:italic;font-size:27px;color:#1A1916;margin-top:1px;letter-spacing:-.01em}
+
+  /* ---------- modern dot-grid calendar ---------- */
+  .bigdate-row{display:flex;align-items:flex-end;justify-content:space-between}
+  .bigdate{font-family:var(--d-display);font-weight:300;font-size:92px;line-height:.74;letter-spacing:-.03em}
+  .monthlab{font-family:var(--d-display);font-size:25px;font-weight:400;line-height:1}
+  .dotcal{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;--cdot:#F2654E}
+  .dotcal .dow{font-family:var(--d-mono);font-size:8.5px;letter-spacing:.02em;text-transform:uppercase;color:#9a9484;text-align:center;padding-bottom:2px}
+  .dotcal .d{aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:rgba(26,25,22,.55);border:1px solid rgba(26,25,22,.12);cursor:pointer}
+  .dotcal .d.muted{border-color:transparent;color:rgba(26,25,22,.2)}
+  .dotcal .d.period{position:relative;border-color:transparent;color:#1A1916}
+  .dotcal .d.period::before{content:"";position:absolute;bottom:15%;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--cdot,#F2654E)}
+  .dotcal .d.sel{position:relative;border-color:var(--cdot,#F2654E);color:#1A1916;font-weight:600}
+  .dotcal .d.sel::before{content:"";display:block;position:absolute;inset:-38%;border-radius:50%;background:radial-gradient(circle, var(--cdot,#F2654E) 0%, transparent 68%);filter:blur(8px) saturate(.85);opacity:.55;z-index:-1;pointer-events:none}
+  [data-mode="pre"] .dotcal{--cdot:#F2654E}
+  [data-mode="preg"] .dotcal{--cdot:#B06AD8}
+  [data-mode="kids"] .dotcal{--cdot:#46C173}
+
+  /* ---------- arc scroll picker (WOVE-style) ---------- */
+  .arcpick{position:relative;width:100%;height:336px;overflow:hidden;touch-action:none;cursor:ns-resize;user-select:none}
+  .arcline{position:absolute;width:600px;height:600px;border-radius:50%;border:1px solid rgba(26,25,22,.16);left:-410px;top:-130px;pointer-events:none}
+  .arcdot{position:absolute;left:190px;top:170px;width:7px;height:7px;border-radius:50%;background:#1A1916;transform:translate(-50%,-50%);pointer-events:none}
+  .arcnum{position:absolute;font-family:var(--d-display);font-weight:300;color:#1A1916;transform-origin:center;white-space:nowrap;pointer-events:none;line-height:1;letter-spacing:-.02em}
+  .arcnum .u{font-family:var(--d-mono);font-weight:400;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#807A6E;margin-left:12px;vertical-align:middle}
+
+  /* ---------- creative option pickers ---------- */
+  /* two-pole gradient field (binary) */
+  .polefield{position:relative;width:100%;height:100%;min-height:340px}
+  .poleline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  .poleblob{position:absolute;width:152px;text-align:center;cursor:pointer;z-index:1}
+  .poleblob::before{content:"";display:block;width:120px;height:120px;margin:0 auto 14px;border-radius:50%;background:var(--c);filter:blur(20px);opacity:.4;transition:opacity .3s,transform .3s}
+  .poleblob.on::before{opacity:.9;transform:scale(1.1)}
+  .poleblob b{font-size:17px;font-weight:600;letter-spacing:-.01em;display:block;transition:color .2s}
+  .poleblob:not(.on) b{color:rgba(26,25,22,.5)}
+  .poleblob small{font-family:var(--d-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#807A6E;display:block;margin-top:5px}
+
+  /* triangle constellation (3) */
+  .triconst{position:relative;width:100%;height:344px}
+  .constline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  .trinode{position:absolute;transform:translate(-50%,-50%);width:132px;text-align:center;cursor:pointer;z-index:1}
+  .trinode::before{content:"";display:block;width:88px;height:88px;margin:0 auto 10px;border-radius:50%;background:var(--c);filter:blur(15px);opacity:.42;transition:opacity .3s,transform .3s}
+  .trinode.on::before{opacity:.92;transform:scale(1.14)}
+  .trinode b{font-size:15.5px;font-weight:600;line-height:1.12;display:block;transition:color .2s}
+  .trinode:not(.on) b{color:rgba(26,25,22,.5)}
+  .trinode small{font-family:var(--d-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#807A6E;display:block;margin-top:5px}
+
+  /* orbit ring (4) */
+  .orbit{position:relative;width:100%;height:360px}
+  .orbsvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .orbnode{position:absolute;transform:translate(-50%,-50%);width:124px;text-align:center;cursor:pointer}
+  .orbnode .od{width:13px;height:13px;border-radius:50%;background:rgba(26,25,22,.24);margin:0 auto 10px;transition:.3s}
+  .orbnode.on .od{background:var(--c2,#1A1916);box-shadow:0 0 0 6px var(--cg,rgba(242,101,78,.18));transform:scale(1.18)}
+  .orbnode b{font-size:14.5px;font-weight:600;line-height:1.14;display:block;transition:color .2s}
+  .orbnode:not(.on) b{color:rgba(26,25,22,.46)}
+  .orbnode small{font-family:var(--d-mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#807A6E;display:block;margin-top:4px}
+
+  /* bloom cluster (multi-select metaball) */
+  .bloom{position:relative;width:100%;max-width:300px;margin:6px auto 0}
+  .bloomsvg{position:absolute;inset:0;width:100%;height:100%;filter:blur(11px) saturate(.82);opacity:.92}
+  .bloomlbl{position:absolute;transform:translate(-50%,-50%);width:96px;text-align:center;font-family:var(--d-mono);font-size:9.5px;font-weight:500;line-height:1.25;letter-spacing:.07em;text-transform:uppercase;color:rgba(26,25,22,.5);cursor:pointer;z-index:2;transition:color .2s}
+  .bloomlbl::before{content:"";display:block;width:6px;height:6px;border-radius:50%;border:1.2px solid rgba(26,25,22,.34);margin:0 auto 6px;transition:.2s}
+  .bloomlbl.on{color:#1A1916;font-weight:600}
+  .bloomlbl.on::before{background:#1A1916;border-color:#1A1916;box-shadow:0 0 0 4px rgba(255,255,255,.45)}
+</style>
+</head>
+<body>
+
+<!-- ============================================================= -->
+<!-- SECTION HEAD: AUTH                                              -->
+<!-- ============================================================= -->
+<div class="secthead" style="left:60px;top:60px"><span class="k">grandma.app · part 01</span>Auth <em>— meeting grandma</em></div>
+
+<!-- ---------- AUTH 01 · welcome ---------- -->
+<div class="frame" style="left:60px;top:180px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>01 ·</span> <b>Welcome</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Auth · Welcome"
+    style="--aura:radial-gradient(60% 45% at 18% 16%, #F4C9A0 0%, transparent 70%), radial-gradient(55% 50% at 88% 24%, #ED88A6 0%, transparent 72%), radial-gradient(80% 60% at 50% 108%, #A98BDD 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head" style="justify-content:flex-end"><span class="ob-step">since 1·9·2·4</span></div>
+      <div class="pad" style="margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div class="glogo-float">
+          <svg class="glogo" viewBox="0 0 200 200" width="74" height="74">
+            <g stroke="#1A1916" stroke-width="4.5" stroke-linecap="round" fill="none">
+              <path d="M100 35 L100 60"/><path d="M70 42 L78 65"/><path d="M130 42 L122 65"/><path d="M48 58 L62 74"/><path d="M152 58 L138 74"/>
+              <path d="M100 160 L100 140"/><path d="M70 158 L78 138"/><path d="M130 158 L122 138"/><path d="M48 142 L62 128"/><path d="M152 142 L138 128"/></g>
+            <g class="glogo-eye">
+              <path d="M 35 100 Q 100 55 165 100 Q 100 145 35 100 Z" fill="#F5D652" stroke="#1A1916" stroke-width="4.5" stroke-linejoin="round"/>
+              <g class="glogo-h">
+                <path d="M100 128 C 72 106 64 86 82 76 C 92 71 100 80 100 88 C 100 80 108 71 118 76 C 136 86 128 106 100 128 Z" fill="#1A1916"/>
+                <path d="M100 122 C 78 104 72 88 86 80 C 94 77 100 83 100 90 C 100 83 106 77 114 80 C 128 88 122 104 100 122 Z" fill="#EE7B6D"/></g></g>
+          </svg>
+        </div>
+        <div class="lab">welcome to</div>
+      </div>
+      <div class="pad" style="margin-top:8px;text-align:center">
+        <h1 class="serif ink" style="font-weight:300;font-size:62px;line-height:.92;margin:0;letter-spacing:-.02em">grandma</h1>
+        <div class="serif" style="font-style:italic;font-size:24px;color:#C6486A;margin-top:4px">sees you.</div>
+        <p style="font-size:14px;line-height:1.5;color:rgba(26,25,22,.62);margin:18px auto 0;max-width:230px">Your wise companion through trying, pregnancy, and the first years.</p>
+      </div>
+      <div class="cta" style="margin-top:auto">
+        <button class="pillbtn gradpill oauth" style="width:100%">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1c-1.3.1-2.8.9-3.7 2-.8.9-1.5 2.3-1.2 3.7 1.4.1 2.9-.7 3.8-1.8.8-1 1.4-2.4 1.1-3.9zM20 17.4c-.6 1.4-1 2-1.8 3.2-1.1 1.7-2.7 3.8-4.6 3.8-1.7 0-2.2-1.1-4.5-1.1s-2.8 1.1-4.5 1.1c-1.9 0-3.3-1.9-4.5-3.6C-3 17.5 1.6 9 6.5 9c1.6 0 2.9 1.1 3.9 1.1 1 0 2.7-1.2 4.6-1.1 2.3.1 4 1.3 5 3.2-2.6 1.6-2.2 5.4 0 6.2z"/></svg>
+          Continue with Apple</button>
+        <button class="pillbtn ghost oauth" style="width:100%;margin-top:10px">
+          <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+          Continue with Google</button>
+        <p class="foot" style="margin-top:18px">Already have an account? <b>Sign in</b></p>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- AUTH 02 · sign in ---------- -->
+<div class="frame" style="left:580px;top:180px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>02 ·</span> <b>Sign in</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Auth · Sign in"
+    style="--aura:radial-gradient(55% 44% at 84% 12%, #F5D652 0%, transparent 70%), radial-gradient(60% 48% at 14% 30%, #ED88A6 0%, transparent 72%), radial-gradient(70% 55% at 70% 104%, #A98BDD 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+      <div class="pad" style="margin-top:14px">
+        <h1 class="q serif">Welcome<br><em>back, dear.</em></h1>
+        <p class="qsub">Grandma's been waiting for you.</p>
+      </div>
+      <div class="pad" style="margin-top:26px">
+        <button class="pillbtn gradpill oauth" style="width:100%"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1c-1.3.1-2.8.9-3.7 2-.8.9-1.5 2.3-1.2 3.7 1.4.1 2.9-.7 3.8-1.8.8-1 1.4-2.4 1.1-3.9zM20 17.4c-.6 1.4-1 2-1.8 3.2-1.1 1.7-2.7 3.8-4.6 3.8-1.7 0-2.2-1.1-4.5-1.1s-2.8 1.1-4.5 1.1c-1.9 0-3.3-1.9-4.5-3.6C-3 17.5 1.6 9 6.5 9c1.6 0 2.9 1.1 3.9 1.1 1 0 2.7-1.2 4.6-1.1 2.3.1 4 1.3 5 3.2-2.6 1.6-2.2 5.4 0 6.2z"/></svg>
+          Continue with Apple</button>
+        <button class="pillbtn ghost oauth" style="width:100%;margin-top:10px"><svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+          Continue with Google</button>
+        <div class="divider">or with email</div>
+        <span class="field-lab">Email</span>
+        <input class="authfield" placeholder="you@example.com">
+        <span class="field-lab" style="margin-top:20px">Password</span>
+        <input class="authfield" type="password" placeholder="••••••••">
+        <div style="text-align:right;margin-top:10px"><span class="serif" style="font-style:italic;font-size:14px;color:rgba(26,25,22,.6)">Forgot password?</span></div>
+      </div>
+      <div class="cta" style="margin-top:auto">
+        <button class="pillbtn solid" style="width:100%">Sign in <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+        <p class="foot" style="margin-top:16px">New here? <b>Create account</b></p>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- AUTH 03 · sign up ---------- -->
+<div class="frame" style="left:1100px;top:180px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>03 ·</span> <b>Sign up</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Auth · Sign up"
+    style="--aura:radial-gradient(58% 46% at 86% 14%, #F4C9A0 0%, transparent 70%), radial-gradient(60% 50% at 12% 22%, #A98BDD 0%, transparent 72%), radial-gradient(72% 56% at 64% 106%, #ED88A6 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+      <div class="pad" style="margin-top:14px">
+        <h1 class="q serif">What should<br>grandma <em>call you?</em></h1>
+        <p class="qsub">Create an account to start your journey.</p>
+      </div>
+      <div class="pad" style="margin-top:26px">
+        <span class="field-lab">Your name</span>
+        <input class="authfield" placeholder="Lena">
+        <span class="field-lab" style="margin-top:20px">Email</span>
+        <input class="authfield" placeholder="you@example.com">
+        <span class="field-lab" style="margin-top:20px">Password</span>
+        <input class="authfield" type="password" placeholder="min. 6 characters">
+      </div>
+      <div class="cta" style="margin-top:auto">
+        <button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+        <p class="foot" style="margin-top:16px">Already have an account? <b>Sign in</b></p>
+        <p class="mono" style="font-size:9.5px;letter-spacing:.04em;color:rgba(26,25,22,.45);text-align:center;margin:14px 0 0;line-height:1.6">By continuing you agree to grandma's Terms<br>of Service and Privacy Policy</p>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- AUTH 04 · forgot password ---------- -->
+<div class="frame" style="left:1620px;top:180px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>04 ·</span> <b>Forgot password</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Auth · Forgot password"
+    style="--aura:radial-gradient(56% 44% at 16% 14%, #ED88A6 0%, transparent 70%), radial-gradient(60% 50% at 88% 26%, #F5D652 0%, transparent 72%), radial-gradient(74% 56% at 50% 106%, #A98BDD 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+      <div class="pad" style="margin-top:14px">
+        <h1 class="q serif">Forgot<br><em>password?</em></h1>
+        <p class="qsub">Enter your email and we'll send a gentle reset link your way.</p>
+      </div>
+      <div class="pad" style="margin-top:28px">
+        <span class="field-lab">Email</span>
+        <input class="authfield" placeholder="you@example.com">
+      </div>
+      <div class="cta" style="margin-top:auto">
+        <button class="pillbtn solid" style="width:100%">Send reset link <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+        <p class="foot" style="margin-top:16px">Remembered it? <b>Sign in</b></p>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SECTION HEAD: ONBOARDING · GENERAL                              -->
+<!-- ============================================================= -->
+<div class="secthead" style="left:60px;top:1140px"><span class="k">grandma.app · part 02 · onboarding</span>The <em>journey picker</em></div>
+
+<!-- ---------- GENERAL 01 · journey picker ---------- -->
+<div class="frame" style="left:60px;top:1260px">
+  <div class="flabel"><span class="dot" style="background:#807A6E"></span><span>01 ·</span> <b>Which journey</b></div>
+  <div class="phone"><div class="screen aura" data-screen-label="Journey · Pick"
+    style="--aura:radial-gradient(60% 50% at 50% 120%, #F4C9A0 0%, transparent 64%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">step 01 / 02</span></div>
+      <div class="pad" style="margin-top:18px">
+        <h1 class="q serif">Where are<br>you <em>right now?</em></h1>
+        <p class="qsub">Pick the chapter you're in. You can always switch later.</p>
+      </div>
+      <div class="body-area" style="display:block;padding:6px 14px 0">
+        <div class="blobpick">
+          <div class="bopt sel" style="--c:radial-gradient(circle,#F2654E,#ED5A7E);left:-6px;top:2%">
+            <span class="k">Trying</span><span class="n">Cycle</span>
+          </div>
+          <div class="bopt" style="--c:radial-gradient(circle,#B06AD8,#ED88A6);right:-10px;top:24%">
+            <span class="k">Expecting</span><span class="n">Pregnancy</span>
+          </div>
+          <div class="bopt" style="--c:radial-gradient(circle,#46C173,#7FCB57);left:-2px;top:52%">
+            <span class="k">Raising</span><span class="n">Kids</span>
+          </div>
+          <div class="bopt" style="--c:radial-gradient(circle,#3F9BD8,#6FB7E0);right:-4px;bottom:-2%">
+            <span class="k">Caring</span><span class="n">Circle</span>
+          </div>
+        </div>
+      </div>
+      <div class="cta">
+        <button class="txtlink">Skip for now</button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- GENERAL 02 · all enrolled ---------- -->
+<div class="frame" style="left:580px;top:1260px">
+  <div class="flabel"><span class="dot" style="background:#807A6E"></span><span>02 ·</span> <b>All journeys</b></div>
+  <div class="phone"><div class="screen aura" data-screen-label="Journey · All enrolled"
+    style="--aura:radial-gradient(38% 25% at 50% 40%, #5E6AB6 0%, rgba(94,106,182,.5) 40%, rgba(94,106,182,0) 72%), radial-gradient(125% 72% at 50% -10%, #CFC9E6 0%, rgba(207,201,230,0) 56%), linear-gradient(178deg, #C8C5E2 0%, #ECB8A6 42%, #F4A892 74%, #F3A68E 100%)">
+    <div class="ui">
+      <div class="ob-head" style="justify-content:flex-end"><span class="ob-step">you're all set</span></div>
+      <div class="body-area pad" style="align-items:center;text-align:center;gap:0">
+        <div class="glogo-float" style="margin-bottom:24px">
+          <svg class="glogo" viewBox="0 0 200 200" width="68" height="68">
+            <g class="glogo-eye"><path d="M 35 100 Q 100 55 165 100 Q 100 145 35 100 Z" fill="#F5D652" stroke="#1A1916" stroke-width="4.5" stroke-linejoin="round"/>
+              <g class="glogo-h"><path d="M100 128 C 72 106 64 86 82 76 C 92 71 100 80 100 88 C 100 80 108 71 118 76 C 136 86 128 106 100 128 Z" fill="#1A1916"/>
+                <path d="M100 122 C 78 104 72 88 86 80 C 94 77 100 83 100 90 C 100 83 106 77 114 80 C 128 88 122 104 100 122 Z" fill="#EE7B6D"/></g></g></svg>
+        </div>
+        <h1 class="serif ink" style="font-weight:300;font-size:42px;line-height:1.0;margin:0">Grandma's with<br>you through <em style="font-style:italic;color:#C6486A">all of it.</em></h1>
+        <p class="qsub" style="max-width:250px;margin-top:14px">Whatever this season holds, you'll find your three journeys waiting on your home.</p>
+        <div style="display:flex;gap:9px;margin-top:26px;flex-wrap:wrap;justify-content:center">
+          <span class="chip"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F2654E;margin-right:7px;vertical-align:middle"></span>Cycle</span>
+          <span class="chip"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#8A4FD0;margin-right:7px;vertical-align:middle"></span>Pregnancy</span>
+          <span class="chip"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2C66D6;margin-right:7px;vertical-align:middle"></span>Kids</span>
+        </div>
+      </div>
+      <div class="cta">
+        <button class="pillbtn solid" style="width:100%">Enter grandma <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SECTION HEAD: ONBOARDING · CYCLE                                -->
+<!-- ============================================================= -->
+<div class="secthead" style="left:60px;top:2220px"><span class="k">onboarding · journey</span>Cycle <em>— trying to conceive</em></div>
+
+<!-- ---------- CYCLE 01 · last period ---------- -->
+<div class="frame" style="left:60px;top:2360px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>01 ·</span> <b>Last period</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Cycle · Last period"
+    style="--aura:radial-gradient(46% 34% at 88% 6%, #F2654E 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">cycle · 01 / 08</span></div>
+      <div class="prog"><span style="width:12.5%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">When did your<br><em>last period</em> start?</h1>
+        <p class="qsub">Tap the day it began. A rough date is perfectly fine.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:18px;gap:18px">
+        <div class="bigdate-row">
+          <div class="bigdate" style="color:#F2654E">23</div>
+          <div style="text-align:right">
+            <div class="monthlab">May</div>
+            <div class="mono" style="font-size:11.5px;letter-spacing:.14em;color:#807A6E;margin-top:4px">2025 · FRI</div>
+          </div>
+        </div>
+        <div class="dotcal">
+          <span class="dow">Mo</span><span class="dow">Tu</span><span class="dow">We</span><span class="dow">Th</span><span class="dow">Fr</span><span class="dow">Sa</span><span class="dow">Su</span>
+          <span class="d muted">29</span><span class="d muted">30</span><span class="d">1</span><span class="d">2</span><span class="d">3</span><span class="d">4</span><span class="d">5</span>
+          <span class="d">6</span><span class="d">7</span><span class="d">8</span><span class="d">9</span><span class="d">10</span><span class="d">11</span><span class="d">12</span>
+          <span class="d">13</span><span class="d">14</span><span class="d">15</span><span class="d">16</span><span class="d">17</span><span class="d">18</span><span class="d">19</span>
+          <span class="d period">20</span><span class="d period">21</span><span class="d period">22</span><span class="d sel">23</span><span class="d period">24</span><span class="d">25</span><span class="d">26</span>
+          <span class="d">27</span><span class="d">28</span><span class="d">29</span><span class="d">30</span><span class="d">31</span><span class="d muted">1</span><span class="d muted">2</span>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- CYCLE 02 · cycle length ---------- -->
+<div class="frame" style="left:580px;top:2360px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>02 ·</span> <b>Cycle length</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Cycle · Length"
+    style="--aura:radial-gradient(54% 44% at 86% 14%, #ED88A6 0%, transparent 70%), radial-gradient(52% 46% at 12% 28%, #F4C9A0 0%, transparent 72%), radial-gradient(72% 56% at 56% 106%, #A98BDD 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">cycle · 02 / 08</span></div>
+      <div class="prog"><span style="width:25%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">How long is your<br><em>usual</em> cycle?</h1>
+        <p class="qsub">Count from the first day of one period to the next.</p>
+      </div>
+  <div class="body-area" style="display:block;padding:0;position:relative">
+        <div class="arcpick" id="cyclearc" data-min="21" data-max="35" data-val="28">
+          <div class="arcline"></div>
+          <div class="arcdot"></div>
+          <div class="arcnums"></div>
+        </div>
+        <div class="pad" style="position:relative;margin-top:2px">
+          <span class="field-lab" style="text-align:center;display:block;margin-bottom:12px">Is your cycle regular?</span>
+          <div class="seg"><button class="on">Yes, steady</button><button>It varies</button></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- CYCLE 03 · period length ---------- -->
+<div class="frame" style="left:1100px;top:2360px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>03 ·</span> <b>Period length</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Cycle · Period length"
+    style="--aura:radial-gradient(44% 32% at 8% 8%, #ED88A6 0%, transparent 64%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">cycle · 03 / 08</span></div>
+      <div class="prog"><span style="width:37.5%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">How many days<br>is your <em>period?</em></h1>
+        <p class="qsub">Pick the closest. Spotting days don't need to count.</p>
+      </div>
+      <div class="body-area pad">
+        <div class="chips" style="justify-content:center;gap:11px">
+          <span class="chip">3 days</span>
+          <span class="chip">4 days</span>
+          <span class="chip on">5 days</span>
+          <span class="chip">6 days</span>
+          <span class="chip">7+ days</span>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- CYCLE 04 · conditions ---------- -->
+<div class="frame" style="left:1620px;top:2360px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>04 ·</span> <b>Conditions</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Cycle · Conditions"
+    style="--aura:radial-gradient(54% 44% at 84% 12%, #A98BDD 0%, transparent 70%), radial-gradient(56% 46% at 14% 30%, #ED88A6 0%, transparent 72%), radial-gradient(70% 54% at 62% 106%, #F4C9A0 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">cycle · 04 / 08</span></div>
+      <div class="prog"><span style="width:50%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Anything grandma<br><em>should know?</em></h1>
+        <p class="qsub">Select any that apply. This stays private, always.</p>
+      </div>
+      <div class="body-area" style="justify-content:center;padding:0 14px;margin-top:0">
+        <div class="bloom" style="aspect-ratio:320/420">
+          <svg class="bloomsvg" viewBox="0 0 320 420" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <filter id="goocy" x="-25%" y="-25%" width="150%" height="150%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b"/>
+                <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10"/>
+              </filter>
+              <linearGradient id="gradcy" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#F6C58E"/>
+                <stop offset="0.28" stop-color="#F19BB0"/>
+                <stop offset="0.55" stop-color="#E87E8E"/>
+                <stop offset="0.8" stop-color="#B79AD9"/>
+                <stop offset="1" stop-color="#9B8BDD"/>
+              </linearGradient>
+              <mask id="mcy">
+                <g filter="url(#goocy)" fill="#fff">
+                  <circle cx="110" cy="125" r="50"/>
+                  <circle cx="210" cy="130" r="46"/>
+                  <circle cx="72" cy="210" r="44"/>
+                  <circle cx="160" cy="205" r="54"/>
+                  <circle cx="250" cy="210" r="44"/>
+                  <circle cx="108" cy="295" r="48"/>
+                  <circle cx="212" cy="295" r="46"/>
+                  <circle cx="160" cy="365" r="42"/>
+                </g>
+              </mask>
+            </defs>
+            <rect width="320" height="420" fill="url(#gradcy)" mask="url(#mcy)"/>
+          </svg>
+          <span class="bloomlbl on" style="left:34.4%;top:29.8%">PCOS</span>
+          <span class="bloomlbl" style="left:65.6%;top:31%">Endometriosis</span>
+          <span class="bloomlbl" style="left:22.5%;top:50%">Thyroid</span>
+          <span class="bloomlbl" style="left:50%;top:48.8%">Irregular cycles</span>
+          <span class="bloomlbl" style="left:78.1%;top:50%">Fibroids</span>
+          <span class="bloomlbl on" style="left:33.75%;top:70.2%">Anemia</span>
+          <span class="bloomlbl" style="left:66.25%;top:70.2%">Diabetes</span>
+          <span class="bloomlbl" style="left:50%;top:86.9%">None of these</span>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- CYCLE 05 · temp unit ---------- -->
+<div class="frame" style="left:2140px;top:2360px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>05 ·</span> <b>Temp unit</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Cycle · Temp unit"
+    style="--aura:radial-gradient(46% 34% at 92% 10%, #F4C9A0 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">cycle · 05 / 08</span></div>
+      <div class="prog"><span style="width:62.5%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Temperature<br><em>unit</em> preference?</h1>
+        <p class="qsub">For basal body temperature tracking.</p>
+      </div>
+      <div class="body-area pad" style="gap:18px">
+        <div class="seg"><button class="on">Celsius °C</button><button>Fahrenheit °F</button></div>
+        <p class="qsub" style="text-align:center;margin:0 auto;max-width:240px">A small daily reading helps grandma spot your fertile window.</p>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- CYCLE 06 · trying duration ---------- -->
+<div class="frame" style="left:2660px;top:2360px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>06 ·</span> <b>Trying duration</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Cycle · Trying duration"
+    style="--aura:radial-gradient(54% 44% at 86% 14%, #F2654E 0%, transparent 70%), radial-gradient(56% 46% at 12% 26%, #A98BDD 0%, transparent 72%), radial-gradient(70% 54% at 60% 106%, #F4C9A0 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">cycle · 06 / 08</span></div>
+      <div class="prog"><span style="width:75%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">How long have you<br>been <em>trying?</em></h1>
+        <p class="qsub">No pressure — this just helps us pace your support.</p>
+      </div>
+      <div class="body-area" style="display:block;padding:0 16px">
+        <div class="orbit">
+          <svg class="orbsvg" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="33" ry="40" fill="none" stroke="rgba(26,25,22,.2)" stroke-width=".5" stroke-dasharray=".6 2.6" stroke-linecap="round"/></svg>
+          <div class="orbnode" style="--c2:#F2654E;--cg:rgba(242,101,78,.18);left:27%;top:22%"><div class="od"></div><b>Just getting<br>started</b></div>
+          <div class="orbnode on" style="--c2:#ED5A7E;--cg:rgba(237,90,126,.18);left:73%;top:22%"><div class="od"></div><b>Under<br>6 months</b></div>
+          <div class="orbnode" style="--c2:#A98BDD;--cg:rgba(169,139,221,.2);left:27%;top:78%"><div class="od"></div><b>6 to<br>12 months</b></div>
+          <div class="orbnode" style="--c2:#B06AD8;--cg:rgba(176,106,216,.2);left:73%;top:78%"><div class="od"></div><b>Over<br>a year</b></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- CYCLE 07 · temp tracking ---------- -->
+<div class="frame" style="left:3180px;top:2360px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>07 ·</span> <b>Temp tracking</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Cycle · Temp tracking"
+    style="--aura:radial-gradient(48% 36% at 6% 94%, #A98BDD 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">cycle · 07 / 08</span></div>
+      <div class="prog"><span style="width:87.5%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Tracking your<br>temperature <em>each morning?</em></h1>
+        <p class="qsub">Taken right when you wake, before getting up.</p>
+      </div>
+      <div class="body-area" style="display:block;padding:0 24px;margin-top:4px">
+        <div class="polefield">
+          <svg class="poleline" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="74" y1="26" x2="26" y2="78" stroke="rgba(26,25,22,.22)" stroke-width=".4"/></svg>
+          <div class="poleblob on" style="--c:radial-gradient(circle,#F2654E,#ED88A6);right:-6px;top:5%"><b>Yes, every day</b><small>Already a habit</small></div>
+          <div class="poleblob" style="--c:radial-gradient(circle,#A98BDD,#F4C9A0);left:-6px;bottom:5%"><b>Not yet</b><small>Grandma reminds me</small></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ---------- CYCLE 08 · supplements ---------- -->
+<div class="frame" style="left:3700px;top:2360px">
+  <div class="flabel"><span class="dot" style="background:#C6486A"></span><span>08 ·</span> <b>Supplements</b></div>
+  <div class="phone"><div class="screen aura" data-mode="pre" data-screen-label="Cycle · Supplements"
+    style="--aura:radial-gradient(54% 44% at 84% 12%, #ED88A6 0%, transparent 70%), radial-gradient(56% 46% at 14% 28%, #F2654E 0%, transparent 72%), radial-gradient(70% 54% at 60% 106%, #F4C9A0 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">cycle · 08 / 08</span></div>
+      <div class="prog"><span style="width:100%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Any supplements<br>you're <em>taking?</em></h1>
+        <p class="qsub">Add your own or tap a common one below.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:6px">
+        <div class="chips">
+          <span class="chip on">Folic acid</span><span class="chip on">Vitamin D</span><span class="chip">Omega-3</span>
+          <span class="chip">Prenatal</span><span class="chip">CoQ10</span><span class="chip">Iron</span>
+          <span class="chip">None</span>
+          <span class="chip" onclick="var w=this.parentNode.parentNode.querySelector('.other-input');this.classList.toggle('on');w.classList.toggle('show');if(w.classList.contains('show'))w.querySelector('input').focus();">Other +</span>
+        </div>
+        <div class="other-input">
+          <input type="text" placeholder="Type a supplement…">
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Finish setup <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SECTION HEAD: ONBOARDING · PREGNANCY                            -->
+<!-- ============================================================= -->
+<div class="secthead" style="left:60px;top:3440px"><span class="k">onboarding · journey</span>Pregnancy <em>— expecting</em></div>
+
+<!-- PREG 01 · due date (modern calendar) -->
+<div class="frame" style="left:60px;top:3580px">
+  <div class="flabel"><span class="dot" style="background:#B06AD8"></span><span>01 ·</span> <b>Due date</b></div>
+  <div class="phone"><div class="screen aura" data-mode="preg" data-screen-label="Pregnancy · Due date"
+    style="--aura:radial-gradient(46% 34% at 90% 6%, #B06AD8 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">pregnancy · 01 / 07</span></div>
+      <div class="prog"><span style="width:14.3%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">When is your<br>little one <em>due?</em></h1>
+        <p class="qsub">An estimate is fine — grandma will refine it with you.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:18px;gap:18px">
+        <div class="bigdate-row">
+          <div class="bigdate" style="color:#B06AD8">14</div>
+          <div style="text-align:right">
+            <div class="monthlab">January</div>
+            <div class="mono" style="font-size:11.5px;letter-spacing:.14em;color:#807A6E;margin-top:4px">2026 · WED</div>
+          </div>
+        </div>
+        <div class="dotcal">
+          <span class="dow">Mo</span><span class="dow">Tu</span><span class="dow">We</span><span class="dow">Th</span><span class="dow">Fr</span><span class="dow">Sa</span><span class="dow">Su</span>
+          <span class="d muted">29</span><span class="d muted">30</span><span class="d muted">31</span><span class="d">1</span><span class="d">2</span><span class="d">3</span><span class="d">4</span>
+          <span class="d">5</span><span class="d">6</span><span class="d">7</span><span class="d">8</span><span class="d">9</span><span class="d">10</span><span class="d">11</span>
+          <span class="d">12</span><span class="d">13</span><span class="d sel">14</span><span class="d">15</span><span class="d">16</span><span class="d">17</span><span class="d">18</span>
+          <span class="d">19</span><span class="d">20</span><span class="d">21</span><span class="d">22</span><span class="d">23</span><span class="d">24</span><span class="d">25</span>
+          <span class="d">26</span><span class="d">27</span><span class="d">28</span><span class="d">29</span><span class="d">30</span><span class="d">31</span><span class="d muted">1</span>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- PREG 02 · first pregnancy -->
+<div class="frame" style="left:580px;top:3580px">
+  <div class="flabel"><span class="dot" style="background:#B06AD8"></span><span>02 ·</span> <b>First pregnancy</b></div>
+  <div class="phone"><div class="screen aura" data-mode="preg" data-screen-label="Pregnancy · First pregnancy"
+    style="--aura:radial-gradient(46% 34% at 8% 8%, #ED88A6 0%, transparent 64%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">pregnancy · 02 / 07</span></div>
+      <div class="prog"><span style="width:28.6%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Is this your<br><em>first</em> pregnancy?</h1>
+        <p class="qsub">So grandma knows how much to explain along the way.</p>
+      </div>
+      <div class="body-area" style="display:block;padding:0 24px;margin-top:4px">
+        <div class="polefield">
+          <svg class="poleline" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="74" y1="26" x2="26" y2="78" stroke="rgba(26,25,22,.22)" stroke-width=".4"/></svg>
+          <div class="poleblob on" style="--c:radial-gradient(circle,#ED88A6,#B06AD8);right:-6px;top:5%"><b>Yes, my first</b><small>Everything's new</small></div>
+          <div class="poleblob" style="--c:radial-gradient(circle,#F7A86A,#F4C9A0);left:-6px;bottom:5%"><b>I have others</b><small>Been here before</small></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- PREG 03 · feeling -->
+<div class="frame" style="left:1100px;top:3580px">
+  <div class="flabel"><span class="dot" style="background:#B06AD8"></span><span>03 ·</span> <b>Feeling</b></div>
+  <div class="phone"><div class="screen aura" data-mode="preg" data-screen-label="Pregnancy · Feeling"
+    style="--aura:radial-gradient(54% 44% at 84% 12%, #B06AD8 0%, transparent 70%), radial-gradient(56% 46% at 14% 30%, #F7A86A 0%, transparent 72%), radial-gradient(70% 54% at 62% 106%, #ED88A6 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">pregnancy · 03 / 07</span></div>
+      <div class="prog"><span style="width:42.9%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">How are you<br><em>feeling</em> lately?</h1>
+        <p class="qsub">Pick all that fit. There's no wrong answer.</p>
+      </div>
+      <div class="body-area" style="justify-content:center;padding:0 14px;margin-top:0">
+        <div class="bloom" style="aspect-ratio:340/400">
+          <svg class="bloomsvg" viewBox="0 0 340 400" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <filter id="goopg" x="-25%" y="-25%" width="150%" height="150%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b"/>
+                <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10"/>
+              </filter>
+              <linearGradient id="gradpg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#C3A6E6"/>
+                <stop offset="0.32" stop-color="#C49BE0"/>
+                <stop offset="0.56" stop-color="#E0A6C4"/>
+                <stop offset="0.8" stop-color="#F4C9A0"/>
+                <stop offset="1" stop-color="#F2B98E"/>
+              </linearGradient>
+              <mask id="mpg">
+                <g filter="url(#goopg)" fill="#fff">
+                  <circle cx="80" cy="120" r="50"/>
+                  <circle cx="170" cy="118" r="46"/>
+                  <circle cx="260" cy="120" r="50"/>
+                  <circle cx="78" cy="205" r="46"/>
+                  <circle cx="170" cy="205" r="54"/>
+                  <circle cx="262" cy="205" r="46"/>
+                  <circle cx="82" cy="290" r="48"/>
+                  <circle cx="170" cy="292" r="46"/>
+                  <circle cx="258" cy="290" r="50"/>
+                </g>
+              </mask>
+            </defs>
+            <rect width="340" height="400" fill="url(#gradpg)" mask="url(#mpg)"/>
+          </svg>
+          <span class="bloomlbl on" style="left:23.5%;top:30%">Excited</span>
+          <span class="bloomlbl" style="left:50%;top:29.5%">Tired</span>
+          <span class="bloomlbl on" style="left:76.5%;top:30%">Nauseous</span>
+          <span class="bloomlbl" style="left:22.9%;top:51.25%">Anxious</span>
+          <span class="bloomlbl" style="left:50%;top:51.25%">Glowing</span>
+          <span class="bloomlbl" style="left:77%;top:51.25%">Overwhelmed</span>
+          <span class="bloomlbl" style="left:24.1%;top:72.5%">Hungry</span>
+          <span class="bloomlbl" style="left:50%;top:73%">Emotional</span>
+          <span class="bloomlbl" style="left:75.9%;top:72.5%">Calm</span>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- PREG 04 · birth place -->
+<div class="frame" style="left:1620px;top:3580px">
+  <div class="flabel"><span class="dot" style="background:#B06AD8"></span><span>04 ·</span> <b>Birth place</b></div>
+  <div class="phone"><div class="screen aura" data-mode="preg" data-screen-label="Pregnancy · Birth place"
+    style="--aura:radial-gradient(46% 34% at 90% 8%, #B06AD8 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">pregnancy · 04 / 07</span></div>
+      <div class="prog"><span style="width:57.1%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Where will you<br><em>give birth?</em></h1>
+        <p class="qsub">You can change this anytime as plans evolve.</p>
+      </div>
+      <div class="body-area" style="display:block;padding:0 16px">
+        <div class="orbit">
+          <svg class="orbsvg" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="33" ry="40" fill="none" stroke="rgba(26,25,22,.2)" stroke-width=".5" stroke-dasharray=".6 2.6" stroke-linecap="round"/></svg>
+          <div class="orbnode on" style="--c2:#B06AD8;--cg:rgba(176,106,216,.2);left:27%;top:22%"><div class="od"></div><b>Hospital</b></div>
+          <div class="orbnode" style="--c2:#F7A86A;--cg:rgba(247,168,106,.2);left:73%;top:22%"><div class="od"></div><b>Birth<br>center</b></div>
+          <div class="orbnode" style="--c2:#ED88A6;--cg:rgba(237,136,166,.2);left:27%;top:78%"><div class="od"></div><b>Home<br>birth</b></div>
+          <div class="orbnode" style="--c2:#A98BDD;--cg:rgba(169,139,221,.2);left:73%;top:78%"><div class="od"></div><b>Undecided</b></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- PREG 05 · care provider -->
+<div class="frame" style="left:2140px;top:3580px">
+  <div class="flabel"><span class="dot" style="background:#B06AD8"></span><span>05 ·</span> <b>Care provider</b></div>
+  <div class="phone"><div class="screen aura" data-mode="preg" data-screen-label="Pregnancy · Care provider"
+    style="--aura:radial-gradient(54% 44% at 86% 14%, #F7A86A 0%, transparent 70%), radial-gradient(56% 46% at 12% 26%, #B06AD8 0%, transparent 72%), radial-gradient(70% 54% at 60% 106%, #ED88A6 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">pregnancy · 05 / 07</span></div>
+      <div class="prog"><span style="width:71.4%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Who's on your<br><em>care team?</em></h1>
+        <p class="qsub">We'll tailor appointment reminders to fit.</p>
+      </div>
+      <div class="body-area" style="display:block;padding:0 16px">
+        <div class="orbit">
+          <svg class="orbsvg" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="33" ry="40" fill="none" stroke="rgba(26,25,22,.2)" stroke-width=".5" stroke-dasharray=".6 2.6" stroke-linecap="round"/></svg>
+          <div class="orbnode on" style="--c2:#B06AD8;--cg:rgba(176,106,216,.2);left:27%;top:22%"><div class="od"></div><b>OB-GYN</b></div>
+          <div class="orbnode" style="--c2:#F7A86A;--cg:rgba(247,168,106,.2);left:73%;top:22%"><div class="od"></div><b>Midwife</b></div>
+          <div class="orbnode" style="--c2:#ED88A6;--cg:rgba(237,136,166,.2);left:27%;top:78%"><div class="od"></div><b>Doula</b></div>
+          <div class="orbnode" style="--c2:#A98BDD;--cg:rgba(169,139,221,.2);left:73%;top:78%"><div class="od"></div><b>Not yet</b></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- PREG 06 · conditions & allergies -->
+<div class="frame" style="left:2660px;top:3580px">
+  <div class="flabel"><span class="dot" style="background:#B06AD8"></span><span>06 ·</span> <b>Conditions</b></div>
+  <div class="phone"><div class="screen aura" data-mode="preg" data-screen-label="Pregnancy · Conditions"
+    style="--aura:radial-gradient(54% 44% at 86% 14%, #F7A86A 0%, transparent 70%), radial-gradient(56% 46% at 12% 26%, #B06AD8 0%, transparent 72%), radial-gradient(70% 54% at 60% 106%, #ED88A6 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">pregnancy · 06 / 07</span></div>
+      <div class="prog"><span style="width:85.7%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Anything we<br>should <em>know?</em></h1>
+        <p class="qsub">Conditions or allergies grandma should keep in mind.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:6px">
+        <div class="chips">
+          <span class="chip">Gestational diabetes</span><span class="chip">High blood pressure</span><span class="chip">Anemia</span>
+          <span class="chip">Thyroid</span><span class="chip">Preeclampsia risk</span><span class="chip">Food allergy</span>
+          <span class="chip on">None yet</span>
+          <span class="chip" onclick="var w=this.parentNode.parentNode.querySelector('.other-input');this.classList.toggle('on');w.classList.toggle('show');if(w.classList.contains('show'))w.querySelector('input').focus();">Other +</span>
+        </div>
+        <div class="other-input">
+          <input type="text" placeholder="Type a condition…">
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- PREG 07 · add partner -->
+<div class="frame" style="left:3180px;top:3580px">
+  <div class="flabel"><span class="dot" style="background:#B06AD8"></span><span>07 ·</span> <b>Add partner</b></div>
+  <div class="phone"><div class="screen aura" data-mode="preg" data-screen-label="Pregnancy · Add partner"
+    style="--aura:radial-gradient(46% 34% at 6% 94%, #B06AD8 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">pregnancy · 07 / 07</span></div>
+      <div class="prog"><span style="width:100%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Want to add<br>your <em>partner?</em></h1>
+        <p class="qsub">Share the journey — they'll get gentle updates too.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:14px;gap:24px">
+        <div style="display:flex;justify-content:center">
+          <div style="position:relative;width:104px;height:104px;display:flex;align-items:center;justify-content:center">
+            <div style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#ED88A6,#B06AD8);filter:blur(18px);opacity:.5"></div>
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.4" style="position:relative"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"/></svg>
+          </div>
+        </div>
+        <div><span class="field-lab">Partner's email</span><input class="field" placeholder="them@email.com"></div>
+        <button class="pillbtn oauth" style="justify-content:center;gap:10px;border-bottom:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 13a5 5 0 007.1 0l2-2a5 5 0 00-7.1-7.1l-1 1"/><path d="M15 11a5 5 0 00-7.1 0l-2 2a5 5 0 007.1 7.1l1-1"/></svg>Or copy invite link</button>
+      </div>
+      <div class="cta" style="display:flex;flex-direction:column;gap:0">
+        <button class="pillbtn solid" style="width:100%">Send invite <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+        <button class="txtlink">Skip for now</button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SECTION HEAD: ONBOARDING · KIDS                                 -->
+<!-- ============================================================= -->
+<div class="secthead" style="left:60px;top:4660px"><span class="k">onboarding · journey</span>Kids <em>— raising children</em></div>
+
+<!-- KIDS 01 · how many -->
+<div class="frame" style="left:60px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>01 ·</span> <b>How many</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · How many"
+    style="--aura:radial-gradient(54% 44% at 86% 14%, #46C173 0%, transparent 70%), radial-gradient(52% 46% at 12% 28%, #7FCB57 0%, transparent 72%), radial-gradient(72% 56% at 56% 106%, #3F9BD8 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 01 / 09</span></div>
+      <div class="prog"><span style="width:11.1%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">How many<br>little <em>ones?</em></h1>
+        <p class="qsub">Scroll to your number — you can add more anytime.</p>
+      </div>
+      <div class="body-area" style="display:block;padding:0;position:relative">
+        <div class="arcpick" id="kidscount" data-min="1" data-max="8" data-val="2" data-unit="kids">
+          <div class="arcline"></div><div class="arcdot"></div><div class="arcnums"></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- KIDS 02 · child name -->
+<div class="frame" style="left:580px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>02 ·</span> <b>Child's name</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · Name"
+    style="--aura:radial-gradient(46% 34% at 8% 8%, #46C173 0%, transparent 64%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 02 / 09</span></div>
+      <div class="prog"><span style="width:22.2%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">What's your<br>little one's <em>name?</em></h1>
+        <p class="qsub">First child of two. We'll get to the next one soon.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:18px">
+        <span class="field-lab">Name</span>
+        <input class="field" placeholder="Maya">
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- KIDS 03 · birthday (calendar) -->
+<div class="frame" style="left:1100px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>03 ·</span> <b>Birthday</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · Birthday"
+    style="--aura:radial-gradient(54% 44% at 84% 12%, #3F9BD8 0%, transparent 70%), radial-gradient(56% 46% at 14% 30%, #46C173 0%, transparent 72%), radial-gradient(70% 54% at 62% 106%, #7FCB57 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 03 / 09</span></div>
+      <div class="prog"><span style="width:33.3%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">When was<br><em>Maya</em> born?</h1>
+        <p class="qsub">Tap her birthday on the calendar.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:18px;gap:18px">
+        <div class="bigdate-row">
+          <div class="bigdate" style="color:#3F9BD8">08</div>
+          <div style="text-align:right">
+            <div class="monthlab">March</div>
+            <div class="mono" style="font-size:11.5px;letter-spacing:.14em;color:#807A6E;margin-top:4px">2023 · WED</div>
+          </div>
+        </div>
+        <div class="dotcal">
+          <span class="dow">Mo</span><span class="dow">Tu</span><span class="dow">We</span><span class="dow">Th</span><span class="dow">Fr</span><span class="dow">Sa</span><span class="dow">Su</span>
+          <span class="d muted">27</span><span class="d muted">28</span><span class="d">1</span><span class="d">2</span><span class="d">3</span><span class="d">4</span><span class="d">5</span>
+          <span class="d">6</span><span class="d">7</span><span class="d sel">8</span><span class="d">9</span><span class="d">10</span><span class="d">11</span><span class="d">12</span>
+          <span class="d">13</span><span class="d">14</span><span class="d">15</span><span class="d">16</span><span class="d">17</span><span class="d">18</span><span class="d">19</span>
+          <span class="d">20</span><span class="d">21</span><span class="d">22</span><span class="d">23</span><span class="d">24</span><span class="d">25</span><span class="d">26</span>
+          <span class="d">27</span><span class="d">28</span><span class="d">29</span><span class="d">30</span><span class="d">31</span><span class="d muted">1</span><span class="d muted">2</span>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- KIDS 04 · country -->
+<div class="frame" style="left:1620px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>04 ·</span> <b>Country</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · Country"
+    style="--aura:radial-gradient(46% 34% at 92% 10%, #7FCB57 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 04 / 09</span></div>
+      <div class="prog"><span style="width:44.4%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Where do you<br>and <em>Maya</em> live?</h1>
+        <p class="qsub">Helps grandma localize milestones and vaccine schedules.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:18px;gap:22px">
+        <div class="inputcard" style="display:flex;align-items:center;gap:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#807A6E" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+          <input class="field" placeholder="Search countries…" style="border:none;flex:1;padding-left:0">
+        </div>
+        <div>
+          <span class="field-lab" style="margin-bottom:10px">Popular</span>
+          <div class="chips single">
+            <span class="chip on">United States</span><span class="chip">Canada</span><span class="chip">United Kingdom</span>
+            <span class="chip">Brazil</span><span class="chip">Australia</span><span class="chip">Germany</span>
+          </div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- KIDS 05 · avatar -->
+<div class="frame" style="left:2140px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>05 ·</span> <b>Avatar</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · Avatar"
+    style="--aura:radial-gradient(54% 44% at 86% 14%, #46C173 0%, transparent 70%), radial-gradient(56% 46% at 12% 26%, #3F9BD8 0%, transparent 72%), radial-gradient(70% 54% at 60% 106%, #7FCB57 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 05 / 09</span></div>
+      <div class="prog"><span style="width:55.6%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Pick a look<br>for <em>Maya</em></h1>
+        <p class="qsub">Tap to choose a photo or a little icon — change it anytime.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:20px">
+        <div class="avgrid">
+          <div class="av cam"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L18 8h2a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.2"/></svg></div>
+          <div class="av on" style="--g:radial-gradient(circle at 36% 32%,#7FCB57,#46C173)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#6FB7E0,#3F9BD8)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-9a4 4 0 017-2 4 4 0 017 2c0 4.5-7 9-7 9z"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#F4C9A0,#F7A86A)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.4 1.4M16.6 16.6L18 18M18 6l-1.4 1.4M7.4 16.6L6 18"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#A98BDD,#B06AD8)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linejoin="round"><path d="M20 14a8 8 0 11-10-10 6 6 0 0010 10z"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#E0A6C4,#ED88A6)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><path d="M12 4a3 3 0 010 6M12 14a3 3 0 010 6M4 12a3 3 0 016 0M14 12a3 3 0 016 0"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#6FB7E0,#46C173)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linejoin="round"><path d="M7 18h10a4 4 0 000-8 5 5 0 00-9.5-1A3.5 3.5 0 007 18z"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#7FCB57,#6FB7E0)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linejoin="round"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14zM5 19c4-4 7-6 10-7"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#6FB7E0,#3F9BD8)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linejoin="round"><path d="M3 12c3-5 10-5 13 0-3 5-10 5-13 0z"/><path d="M16 12l5-3v6z"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#F7A86A,#ED88A6)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14c3 0 5-2.5 5-6S15 2 12 2 7 4.5 7 8s2 6 5 6zM12 14v4M12 18l-2 2M12 18l2 2"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#46C173,#7FCB57)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linecap="round"><path d="M4 18a8 8 0 0116 0M7 18a5 5 0 0110 0M10 18a2 2 0 014 0"/></svg></div>
+          <div class="av" style="--g:radial-gradient(circle at 36% 32%,#B06AD8,#A98BDD)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M8.5 14a4 4 0 007 0"/></svg></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- KIDS 06 · allergies -->
+<div class="frame" style="left:2660px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>06 ·</span> <b>Allergies</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · Allergies"
+    style="--aura:radial-gradient(46% 34% at 8% 92%, #3F9BD8 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 06 / 09</span></div>
+      <div class="prog"><span style="width:66.7%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Anything Maya's<br><em>allergic</em> to?</h1>
+        <p class="qsub">Grandma keeps this handy for recipes and tips.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:6px">
+        <div class="chips">
+          <span class="chip">Dairy</span><span class="chip on">Peanuts</span><span class="chip">Eggs</span>
+          <span class="chip">Gluten</span><span class="chip">Shellfish</span><span class="chip">Soy</span>
+          <span class="chip">None known</span>
+          <span class="chip" onclick="var w=this.parentNode.parentNode.querySelector('.other-input');this.classList.toggle('on');w.classList.toggle('show');if(w.classList.contains('show'))w.querySelector('input').focus();">Other +</span>
+        </div>
+        <div class="other-input">
+          <input type="text" placeholder="Type an allergy…">
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- KIDS 07 · conditions -->
+<div class="frame" style="left:3180px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>07 ·</span> <b>Conditions</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · Conditions"
+    style="--aura:radial-gradient(54% 44% at 84% 12%, #7FCB57 0%, transparent 70%), radial-gradient(56% 46% at 14% 28%, #46C173 0%, transparent 72%), radial-gradient(70% 54% at 60% 106%, #3F9BD8 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 07 / 09</span></div>
+      <div class="prog"><span style="width:77.8%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Any conditions<br>to <em>track?</em></h1>
+        <p class="qsub">Grandma tailors tips and reminders around them.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:6px">
+        <div class="chips">
+          <span class="chip">Asthma</span><span class="chip on">Eczema</span><span class="chip">Reflux</span>
+          <span class="chip">Ear infections</span><span class="chip">Food sensitivities</span><span class="chip">None</span>
+          <span class="chip" onclick="var w=this.parentNode.parentNode.querySelector('.other-input');this.classList.toggle('on');w.classList.toggle('show');if(w.classList.contains('show'))w.querySelector('input').focus();">Other +</span>
+        </div>
+        <div class="other-input">
+          <input type="text" placeholder="Type a condition…">
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Continue <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- KIDS 08 · add partner -->
+<div class="frame" style="left:3700px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>08 ·</span> <b>Add partner</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · Add partner"
+    style="--aura:radial-gradient(46% 34% at 92% 8%, #46C173 0%, transparent 66%), #F7F2E8">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 08 / 09</span></div>
+      <div class="prog"><span style="width:88.9%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Want to add<br>a <em>partner?</em></h1>
+        <p class="qsub">Co-parent together — they'll see Maya's updates too.</p>
+      </div>
+      <div class="body-area pad" style="justify-content:flex-start;margin-top:14px;gap:24px">
+        <div style="display:flex;justify-content:center">
+          <div style="position:relative;width:104px;height:104px;display:flex;align-items:center;justify-content:center">
+            <div style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#7FCB57,#3F9BD8);filter:blur(18px);opacity:.5"></div>
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="1.4" style="position:relative"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"/></svg>
+          </div>
+        </div>
+        <div><span class="field-lab">Partner's email</span><input class="field" placeholder="them@email.com"></div>
+        <button class="pillbtn oauth" style="justify-content:center;gap:10px;border-bottom:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 13a5 5 0 007.1 0l2-2a5 5 0 00-7.1-7.1l-1 1"/><path d="M15 11a5 5 0 00-7.1 0l-2 2a5 5 0 007.1 7.1l1-1"/></svg>Or copy invite link</button>
+      </div>
+      <div class="cta" style="display:flex;flex-direction:column;gap:0">
+        <button class="pillbtn solid" style="width:100%">Send invite <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+        <button class="txtlink">Skip for now</button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- KIDS 09 · add caregiver -->
+<div class="frame" style="left:4220px;top:4800px">
+  <div class="flabel"><span class="dot" style="background:#3F9BD8"></span><span>09 ·</span> <b>Add caregiver</b></div>
+  <div class="phone"><div class="screen aura" data-mode="kids" data-screen-label="Kids · Add caregiver"
+    style="--aura:radial-gradient(70% 55% at 50% 18%, #7FCB57 0%, transparent 66%), radial-gradient(55% 50% at 16% 80%, #46C173 0%, transparent 70%), radial-gradient(60% 55% at 88% 84%, #3F9BD8 0%, transparent 70%), #F6F1E6">
+    <div class="ui">
+      <div class="ob-head"><button class="ob-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1916" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="ob-step">kids · 09 / 09</span></div>
+      <div class="prog"><span style="width:100%"></span></div>
+      <div class="pad" style="margin-top:22px">
+        <h1 class="q serif">Anyone else<br>who <em>helps?</em></h1>
+        <p class="qsub">A doctor, nanny, or grandparent can join too.</p>
+      </div>
+      <div class="body-area pad" style="margin-top:6px">
+        <div class="choice">
+          <div class="choicecard on"><div class="tx"><b>Pediatrician</b><span>Appointments & checkups</span></div></div>
+          <div class="choicecard"><div class="tx"><b>Nanny or sitter</b><span>Daily care</span></div></div>
+          <div class="choicecard"><div class="tx"><b>Grandparent</b><span>Family helper</span></div></div>
+          <div class="choicecard"><div class="tx"><b>Not right now</b><span>Add anytime later</span></div></div>
+        </div>
+      </div>
+      <div class="cta"><button class="pillbtn solid" style="width:100%">Finish setup <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============================================================= -->
+<!-- ARC SCROLL PICKER                                               -->
+<!-- ============================================================= -->
+<script>
+(function(){
+  document.querySelectorAll('.arcpick').forEach(function(arc){
+    var min = +arc.dataset.min, max = +arc.dataset.max;
+    var sel = +arc.dataset.val;
+    var nums = arc.querySelector('.arcnums');
+    var CX = -110, CY = 170, R = 300, STEP = 13 * Math.PI/180;
+    var SIZES = [76, 42, 30, 22], OPAC = [1, .5, .32, .18];
+    function render(){
+      nums.innerHTML = '';
+      for(var k=-3;k<=3;k++){
+        var v = sel + k;
+        if(v < min || v > max) continue;
+        var a = k * STEP;
+        var x = CX + R*Math.cos(a), y = CY + R*Math.sin(a);
+        var i = Math.abs(k);
+        var el = document.createElement('div');
+        el.className = 'arcnum';
+        el.style.left = x+'px'; el.style.top = y+'px';
+        el.style.fontSize = SIZES[i]+'px';
+        el.style.opacity = OPAC[i];
+        el.style.transform = 'translate(-50%,-50%) rotate('+(a)+'rad)';
+        el.innerHTML = (k===0) ? v + '<span class="u">'+(arc.dataset.unit||'days')+'</span>' : v;
+        nums.appendChild(el);
+      }
+    }
+    function step(d){ sel = Math.max(min, Math.min(max, sel + d)); render(); }
+    render();
+    var acc = 0;
+    arc.addEventListener('wheel', function(e){
+      e.preventDefault();
+      acc += e.deltaY;
+      if(Math.abs(acc) > 26){ step(acc>0?1:-1); acc = 0; }
+    }, {passive:false});
+    var dragging=false, lastY=0, dacc=0;
+    arc.addEventListener('pointerdown', function(e){ dragging=true; lastY=e.clientY; dacc=0; arc.setPointerCapture(e.pointerId); });
+    arc.addEventListener('pointermove', function(e){
+      if(!dragging) return;
+      dacc += (lastY - e.clientY); lastY = e.clientY;
+      if(Math.abs(dacc) > 22){ step(dacc>0?1:-1); dacc = 0; }
+    });
+    arc.addEventListener('pointerup', function(){ dragging=false; });
+    arc.addEventListener('pointercancel', function(){ dragging=false; });
+  });
+})();
+</script>
+
+<!-- ============================================================= -->
+<!-- CREATIVE PICKER tap-select                                      -->
+<!-- ============================================================= -->
+<script>
+(function(){
+  // radio pickers (single-select graph nodes)
+  document.querySelectorAll('.polefield,.triconst,.orbit').forEach(function(g){
+    var nodes = g.querySelectorAll('.poleblob,.trinode,.orbnode');
+    nodes.forEach(function(n){
+      n.addEventListener('click', function(){
+        nodes.forEach(function(x){ x.classList.remove('on'); });
+        n.classList.add('on');
+      });
+    });
+  });
+  // chips — multi-select toggle (single-select if .single); "None"-type is exclusive
+  document.querySelectorAll('.chips').forEach(function(group){
+    var single = group.classList.contains('single');
+    var chips = group.querySelectorAll('.chip');
+    var isNone = function(c){ return /^none/i.test(c.textContent.trim()); };
+    chips.forEach(function(c){
+      c.addEventListener('click', function(){
+        if(single){ chips.forEach(function(x){ x.classList.remove('on'); }); c.classList.add('on'); return; }
+        if(isNone(c)){
+          chips.forEach(function(x){ if(x!==c) x.classList.remove('on'); });
+          c.classList.toggle('on');
+        } else {
+          c.classList.toggle('on');
+          if(c.classList.contains('on')) chips.forEach(function(x){ if(isNone(x)) x.classList.remove('on'); });
+        }
+      });
+    });
+  });
+  // segmented control — single-select
+  document.querySelectorAll('.seg').forEach(function(seg){
+    var btns = seg.querySelectorAll('button');
+    btns.forEach(function(b){ b.addEventListener('click', function(){ btns.forEach(function(x){ x.classList.remove('on'); }); b.classList.add('on'); }); });
+  });
+  // choice list — single-select (multi if .multi)
+  document.querySelectorAll('.choice').forEach(function(list){
+    var multi = list.classList.contains('multi');
+    var cards = list.querySelectorAll('.choicecard');
+    cards.forEach(function(card){ card.addEventListener('click', function(){
+      if(multi){ card.classList.toggle('on'); }
+      else { cards.forEach(function(x){ x.classList.remove('on'); }); card.classList.add('on'); }
+    }); });
+  });
+  // bloom labels — multi-select toggle
+  document.querySelectorAll('.bloom').forEach(function(b){
+    b.querySelectorAll('.bloomlbl').forEach(function(l){ l.addEventListener('click', function(){ l.classList.toggle('on'); }); });
+  });
+  // avatar grid — single-select
+  document.querySelectorAll('.avgrid').forEach(function(g){
+    var avs = g.querySelectorAll('.av');
+    avs.forEach(function(a){ a.addEventListener('click', function(){ avs.forEach(function(x){ x.classList.remove('on'); }); a.classList.add('on'); }); });
+  });
+  // calendar — single-select date, updates the big date label
+  document.querySelectorAll('.dotcal').forEach(function(cal){
+    var screen = cal.closest('.screen');
+    var big = screen ? screen.querySelector('.bigdate') : null;
+    cal.querySelectorAll('.d').forEach(function(d){
+      if(d.classList.contains('muted')) return;
+      d.addEventListener('click', function(){
+        cal.querySelectorAll('.d').forEach(function(x){ x.classList.remove('sel'); });
+        d.classList.add('sel');
+        if(big) big.textContent = ('0'+d.textContent.trim()).slice(-2);
+      });
+    });
+  });
+  // blob journey picker — single-select
+  document.querySelectorAll('.blobpick').forEach(function(bp){
+    var opts = bp.querySelectorAll('.bopt');
+    opts.forEach(function(o){ o.addEventListener('click', function(){ opts.forEach(function(x){ x.classList.remove('sel'); }); o.classList.add('sel'); }); });
+  });
+})();
+</script>
+
+<!-- ============================================================= -->
+<!-- STATUS-BAR + NOTCH injector (keeps each screen markup focused)  -->
+<!-- ============================================================= -->
+<script>
+(function(){
+  var NOTCH = '<div class="notch"></div>';
+  var STATUS = '<div class="status"><span>9:41</span><div class="r">'+
+    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v-5H2v5zm4 0h2V9H6v8zm4 0h2V6h-2v11zm4 0h2v-8h-2v8zm4 0h2V8h-2v9z"/></svg>'+
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="18" height="10" rx="3"/><path d="M22 11v2"/></svg>'+
+    '</div></div>';
+  document.querySelectorAll('.screen').forEach(function(s){
+    if(!s.querySelector('.notch')) s.insertAdjacentHTML('afterbegin', NOTCH);
+    var ui = s.querySelector('.ui');
+    if(ui && !ui.querySelector('.status')) ui.insertAdjacentHTML('afterbegin', STATUS);
+  });
+})();
+</script>
+
+</body>
+</html>
