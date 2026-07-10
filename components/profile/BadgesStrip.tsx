@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Animated, Easing } from 'react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { BadgeIcon } from '../stickers/BadgeIcon'
 import { useTranslation } from '../../lib/i18n'
 
@@ -21,13 +22,22 @@ interface BadgesStripProps {
  */
 export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
   const { colors, radius } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
+
+  const circleBg = diffuse ? dt.colors.surface : colors.surfaceRaised
+  const circleBorder = diffuse ? dt.colors.line2 : colors.border
 
   return (
     <View
       style={[
         styles.card,
-        {
+        diffuse ? {
+          backgroundColor: dt.colors.surface,
+          borderColor: dt.colors.line,
+          borderRadius: radius.lg,
+        } : {
           backgroundColor: colors.surface,
           borderColor: colors.border,
           borderRadius: radius.lg,
@@ -35,9 +45,13 @@ export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
       ]}
     >
       <View style={styles.header}>
-        <Text style={[styles.headerLabel, { color: colors.textMuted }]}>{t('badges_title')}</Text>
+        <Text style={[styles.headerLabel, diffuse
+          ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.6 }
+          : { color: colors.textMuted }]}>{t('badges_title')}</Text>
         <Pressable onPress={onSeeAll} hitSlop={8}>
-          <Text style={[styles.allLink, { color: colors.textMuted }]}>
+          <Text style={[styles.allLink, diffuse
+            ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 10 }
+            : { color: colors.textMuted }]}>
             {t('badges_stripAllCount', { total })}
           </Text>
         </Pressable>
@@ -48,10 +62,12 @@ export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
           <View
             style={[
               styles.circle,
-              { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+              { backgroundColor: circleBg, borderColor: circleBorder },
             ]}
           />
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+          <Text style={[styles.emptyText, diffuse
+            ? { color: dt.colors.ink3, fontFamily: diffuseFont.body }
+            : { color: colors.textMuted }]}>
             {t('badges_stripEmpty')}
           </Text>
         </View>
@@ -66,17 +82,16 @@ export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
               <View
                 style={[
                   styles.circle,
-                  {
-                    backgroundColor: colors.surfaceRaised,
-                    borderColor: colors.border,
-                  },
+                  { backgroundColor: circleBg, borderColor: circleBorder },
                 ]}
               >
                 <BreathingBadge>
                   <BadgeIcon badgeId={b.badgeId} size={40} />
                 </BreathingBadge>
               </View>
-              <Text style={[styles.dayLabel, { color: colors.textMuted }]}>
+              <Text style={[styles.dayLabel, diffuse
+                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4 }
+                : { color: colors.textMuted }]}>
                 {b.label}
               </Text>
             </View>

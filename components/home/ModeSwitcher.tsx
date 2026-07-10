@@ -2,13 +2,16 @@ import { useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { useTheme, borderRadius } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, borderRadius } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import type { JourneyMode } from '../../types'
 
 export function ModeSwitcher() {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const { mode, cycleIntent, setMode } = useModeStore()
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
@@ -33,7 +36,10 @@ export function ModeSwitcher() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, diffuse && {
+      backgroundColor: 'transparent',
+      borderColor: dt.colors.line,
+    }]}>
       {MODES.map((m) => {
         const isActive = mode === m.id
         const isLocked = !enrolledBehaviors.includes(m.id)
@@ -43,7 +49,10 @@ export function ModeSwitcher() {
             onPress={() => handlePress(m.id)}
             style={[
               styles.pill,
-              isActive && styles.pillActive,
+              // Diffuse: active = hairline paper pill (no filled accent).
+              diffuse
+                ? (isActive && { backgroundColor: dt.colors.surface, borderWidth: 1, borderColor: dt.colors.hairline })
+                : (isActive && styles.pillActive),
               isLocked && styles.pillLocked,
             ]}
           >
@@ -52,15 +61,16 @@ export function ModeSwitcher() {
                 <Ionicons
                   name="lock-closed"
                   size={10}
-                  color={colors.textMuted}
+                  color={diffuse ? dt.colors.ink3 : colors.textMuted}
                   style={styles.lockIcon}
                 />
               )}
               <Text
                 style={[
                   styles.label,
-                  isActive && styles.labelActive,
-                  isLocked && styles.labelLocked,
+                  diffuse
+                    ? { fontFamily: diffuseFont.mono, fontWeight: '400', color: isActive ? dt.colors.ink : dt.colors.ink3 }
+                    : [isActive && styles.labelActive, isLocked && styles.labelLocked],
                 ]}
               >
                 {m.label}

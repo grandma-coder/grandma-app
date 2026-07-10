@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { View, Text, Pressable, Animated, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme, brand, getModeColor } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, brand, getModeColor } from '../../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
 import { ModeTrying, ModePregnant, ModeParent } from '../stickers/RewardStickers'
@@ -27,6 +28,8 @@ const PILL_ORDER: Array<{ behavior: Behavior; label: string }> = [
  */
 export function MyJourneyPillGrid() {
   const { colors, radius, isDark, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const currentBehavior = useBehaviorStore((s) => s.currentBehavior)
   const enrolled = useBehaviorStore((s) => s.enrolledBehaviors)
@@ -76,19 +79,26 @@ export function MyJourneyPillGrid() {
       <View
         style={[
           styles.card,
-          {
+          diffuse ? {
+            backgroundColor: dt.colors.surface,
+            borderColor: dt.colors.line,
+            borderRadius: radius.lg,
+          } : {
             backgroundColor: colors.surface,
             borderColor: colors.border,
             borderRadius: radius.lg,
           },
         ]}
       >
-        <Text style={[styles.header, { color: colors.textMuted }]}>{t('profile_myJourneyHeader')}</Text>
+        <Text style={[styles.header, diffuse
+          ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.6 }
+          : { color: colors.textMuted }]}>{t('profile_myJourneyHeader')}</Text>
         <View style={styles.grid}>
           {pills.map(({ behavior, label }) => {
             const isActive = behavior === currentBehavior
             const isEnrolled = enrolled.includes(behavior)
             const accent = getModeColor(behavior, isDark)
+            const dAccent = getDiffuseAccent(behavior, dt.isDark)
             const Icon = ICON_BY_BEHAVIOR[behavior]
             return (
               <Pressable
@@ -96,7 +106,13 @@ export function MyJourneyPillGrid() {
                 onPress={() => handlePress(behavior)}
                 style={({ pressed }) => [
                   styles.pill,
-                  {
+                  // Diffuse: active = hairline paper pill (accent shown via a soft
+                  // bloom behind the icon), inactive = transparent hairline.
+                  diffuse ? {
+                    backgroundColor: isActive ? dt.colors.surface : 'transparent',
+                    borderColor: isActive ? dt.colors.hairline : dt.colors.line,
+                    opacity: isActive ? 1 : isEnrolled ? 0.75 : 0.4,
+                  } : {
                     backgroundColor: isActive ? accent : colors.surfaceRaised,
                     borderColor: colors.border,
                     opacity: isActive ? 1 : isEnrolled ? 0.6 : 0.35,
@@ -104,20 +120,31 @@ export function MyJourneyPillGrid() {
                   pressed && { opacity: (isActive ? 1 : 0.6) * 0.8 },
                 ]}
               >
+                {diffuse && isActive ? (
+                  <View pointerEvents="none" style={{ position: 'absolute', top: 4, width: 52, height: 52, alignSelf: 'center' }}>
+                    <SoftBloom color={dAccent} opacity={dt.isDark ? 0.4 : 0.5} spread={0.5} radius="55%" />
+                  </View>
+                ) : null}
                 <Icon size={36} />
                 <Text
                   style={[
                     styles.pillLabel,
-                    { fontFamily: font.display, color: colors.text },
+                    diffuse
+                      ? { fontFamily: diffuseFont.display, color: dt.colors.ink }
+                      : { fontFamily: font.display, color: colors.text },
                   ]}
                   allowFontScaling={false}
                 >
                   {label}
                 </Text>
                 {isActive ? (
-                  <Text style={[styles.activeHint, { color: colors.text }]}>{t('profile_myJourneyActive')}</Text>
+                  <Text style={[styles.activeHint, diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 8.5 }
+                    : { color: colors.text }]}>{t('profile_myJourneyActive')}</Text>
                 ) : !isEnrolled ? (
-                  <Text style={[styles.activeHint, { color: colors.textMuted }]}>{t('profile_myJourneyAdd')}</Text>
+                  <Text style={[styles.activeHint, diffuse
+                    ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 8.5 }
+                    : { color: colors.textMuted }]}>{t('profile_myJourneyAdd')}</Text>
                 ) : null}
               </Pressable>
             )

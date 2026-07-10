@@ -1,7 +1,8 @@
 import { useRef } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { Heart as HeartSticker, Squishy, Star as StarSticker } from '../ui/Stickers'
 import { AvatarView } from '../ui/AvatarPicker'
 
@@ -43,6 +44,8 @@ export function ProfileHero({
   onKidPillPress,
 }: ProfileHeroProps) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
 
   const tapCount = useRef(0)
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -65,23 +68,29 @@ export function ProfileHero({
         size={108}
         accent={accentColor}
         initial={initial}
-        borderColor={colors.text}
-        borderWidth={3}
+        borderColor={diffuse ? dt.colors.line2 : colors.text}
+        borderWidth={diffuse ? 1 : 3}
       />
-      <View style={styles.avatarStar}>
-        <StarSticker size={38} fill={stickers.yellow} />
-      </View>
+      {/* Corner star sticker — hidden under Diffuse (no collage accents). */}
+      {!diffuse && (
+        <View style={styles.avatarStar}>
+          <StarSticker size={38} fill={stickers.yellow} />
+        </View>
+      )}
     </View>
   )
 
   return (
     <View style={styles.root}>
+      {/* Decorative collage stickers — hidden under Diffuse. */}
+      {!diffuse && (<>
       <View style={styles.stickerLeft}>
         <Squishy w={64} h={44} fill={stickers.yellow} />
       </View>
       <View style={styles.stickerRight}>
         <HeartSticker size={40} fill={stickers.pink} />
       </View>
+      </>)}
 
       {onAvatarPress ? (
         <Pressable
@@ -98,7 +107,7 @@ export function ProfileHero({
       <Pressable onPress={handleNameTap} hitSlop={6}>
         <View style={styles.nameRow}>
           <Text
-            style={[styles.firstName, { fontFamily: font.display, color: colors.text }]}
+            style={[styles.firstName, { fontFamily: diffuse ? diffuseFont.display : font.display, color: diffuse ? dt.colors.ink : colors.text }]}
             allowFontScaling={false}
           >
             {firstName}
@@ -107,7 +116,7 @@ export function ProfileHero({
             <Text
               style={[
                 styles.lastName,
-                { fontFamily: font.italic, color: colors.text },
+                { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: diffuse ? dt.colors.ink : colors.text },
               ]}
               allowFontScaling={false}
             >
@@ -119,7 +128,9 @@ export function ProfileHero({
       </Pressable>
 
       {subtitle ? (
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+        <Text style={[styles.subtitle, diffuse
+          ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 11 }
+          : { color: colors.textMuted }]}>
           {subtitle}
         </Text>
       ) : null}
@@ -133,14 +144,16 @@ export function ProfileHero({
               hitSlop={4}
               style={({ pressed }) => [
                 styles.kidPill,
-                {
-                  backgroundColor: k.color + '25',
-                  borderColor: k.color + '60',
-                },
+                diffuse
+                  ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, flexDirection: 'row', alignItems: 'center', gap: 6 }
+                  : { backgroundColor: k.color + '25', borderColor: k.color + '60' },
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <Text style={[styles.kidPillText, { color: k.color }]} numberOfLines={1}>
+              {diffuse ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: k.color }} /> : null}
+              <Text style={[styles.kidPillText, diffuse
+                ? { color: dt.colors.ink2, fontFamily: diffuseFont.body, fontWeight: '400' }
+                : { color: k.color }]} numberOfLines={1}>
                 {k.name}
               </Text>
             </Pressable>
