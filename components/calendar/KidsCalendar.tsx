@@ -2401,7 +2401,7 @@ export function KidsCalendar() {
       if (diffuse) {
         return (
           <DiffuseEmptyState
-            icon={<DiffuseBloomIcon color={stickers.green} size={48}><Baby size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<Character name="baby" size={40} color={stickers.green} />}
             title={t('kids_calendar_addChildToSeeJourney')}
           />
         )
@@ -2452,7 +2452,7 @@ export function KidsCalendar() {
         return (
           <View>
             <DiffuseEmptyState
-              icon={<DiffuseBloomIcon color={stickers.pink} size={48}><Heart size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+              icon={<Character name="checkup" size={40} color={stickers.pink} />}
               title={t('kids_calendar_noVisitsYet')}
               message={t('kids_calendar_visitHint')}
             />

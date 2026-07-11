@@ -8352,7 +8352,7 @@ function RemindersModal({
               diffuse ? (
                 <DiffuseEmptyState
                   style={{ paddingVertical: 48 }}
-                  icon={<DiffuseBloomIcon color={stickers.green} size={48}><Bell size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                  icon={<Character name="bell" size={40} color={stickers.green} />}
                   title={t('kids_home_reminders_modal_no_active')}
                 />
               ) : (
@@ -8389,7 +8389,7 @@ function RemindersModal({
             diffuse ? (
               <DiffuseEmptyState
                 style={{ paddingVertical: 48 }}
-                icon={<DiffuseBloomIcon color={stickers.yellow} size={48}><Trophy size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                icon={<Character name="crown" size={40} color={stickers.yellow} />}
                 title={t('kids_home_reminders_modal_no_archived')}
               />
             ) : (
