@@ -593,9 +593,9 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
     <View
       style={[
         diffuseNav.wrap,
-        // Solid page-bg band so content scrolling behind the floating pill is
-        // hidden (no card edge showing through) — the pill floats on cream.
-        { paddingBottom: insets.bottom + 8, backgroundColor: colors.bg },
+        // Transparent — only the floating pill shows; the page shows through
+        // around it.
+        { paddingBottom: insets.bottom + 8, backgroundColor: 'transparent' },
       ]}
     >
       {/* Floating capsule bar — inset from the edges, hairline paper pill. The
@@ -656,10 +656,10 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
 }
 
 const diffuseNav = StyleSheet.create({
-  // Solid page-bg band behind the floating pill (bg set inline). Extra top
-  // padding makes the cream band reach up so no content card peeks behind it.
+  // Transparent outer container — only the floating pill is visible; the page
+  // shows through around it (bg set inline).
   wrap: {
-    paddingTop: 16,
+    paddingTop: 8,
   },
   // Floating capsule: paper surface, fully rounded, hairline border, soft lift.
   pill: {
