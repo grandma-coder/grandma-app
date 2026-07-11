@@ -49,11 +49,12 @@ export function checkKeyParity() {
  * en value has a real newline, or a doubled-up backslash run before a quote.
  */
 function checkOverEscape() {
-  const enObj = en as Record<string, string>
+  const asMap = (o: unknown) => o as Record<string, string>
+  const enObj = asMap(en)
   const bad: string[] = []
   for (const [locale, obj] of Object.entries(translations)) {
     if (locale === 'en') continue
-    const loc = obj as Record<string, string>
+    const loc = asMap(obj)
     for (const k of Object.keys(enObj)) {
       const ev = enObj[k]
       const lv = loc[k]

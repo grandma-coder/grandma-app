@@ -3069,4 +3069,37 @@ export interface TranslationKeys {
   affirmationShare_openPhotosHint: string
   affirmationShare_a11yTile: string
   affirmationShare_a11yTileHint: string
+  // ─── Batch 4: prepreg + cycle phase labels ───
+  prepreg_learn_fertilityBasics_title: string
+  prepreg_learn_nutritionPrep_title: string
+  prepreg_learn_emotionalReadiness_title: string
+  prepreg_learn_financialPlanning_title: string
+  prepreg_learn_partnerJourney_title: string
+  prepreg_learn_healthCheckups_title: string
+  prepreg_checklist_prenatalVitamins_title: string
+  prepreg_checklist_doctorVisit_title: string
+  prepreg_checklist_dentalCheck_title: string
+  prepreg_checklist_vaccines_title: string
+  prepreg_checklist_trackCycle_title: string
+  prepreg_checklist_cutAlcohol_title: string
+  prepreg_checklist_exercise_title: string
+  prepreg_checklist_finances_title: string
+  prepreg_checklist_partnerTalk_title: string
+  prepreg_checklist_stress_title: string
+  prepreg_insight_selfCareDay_title: string
+  prepreg_insight_ironRichFoods_title: string
+  prepreg_insight_extraHydrated_title: string
+  prepreg_insight_energyRising_title: string
+  prepreg_insight_bestWorkouts_title: string
+  prepreg_insight_fertileApproaching_title: string
+  prepreg_insight_peakFertility_title: string
+  prepreg_insight_watchForSigns_title: string
+  prepreg_insight_checkYourTemp_title: string
+  prepreg_insight_twoWeekWait_title: string
+  prepreg_insight_magnesiumHelps_title: string
+  prepreg_insight_prioritizeSleep_title: string
+  cyclePhase_menstruation_label: string
+  cyclePhase_follicular_label: string
+  cyclePhase_ovulation_label: string
+  cyclePhase_luteal_label: string
 }

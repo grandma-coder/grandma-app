@@ -5,8 +5,13 @@ import { PaperCard } from '../ui/PaperCard'
 import { useAppTheme } from '../ui/ThemeProvider'
 import { brand, stickers, borderRadius, shadows } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { useTranslatedContent } from '../../lib/useTranslatedContent'
 import { LiquidFillBottle } from '../charts/GalleryCharts'
 import { DAILY_WATER_GOAL, getHydrationLevel } from '../../lib/cycleLogic'
+
+// Long-form pre-conception folic-acid tip → runtime-translated + cached.
+const FOLIC_ACID_TIP =
+  'Take your folic acid (400mcg) daily — ideally 1-3 months before conceiving. It prevents neural tube defects and is the single most important supplement for pre-conception.'
 
 interface HealthDashboardProps {
   waterGlasses?: number
@@ -19,6 +24,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
   const { colors: tc } = useAppTheme()
   const { t } = useTranslation()
   const hydration = getHydrationLevel(waterGlasses)
+  const { text: folicAcidTip } = useTranslatedContent('prepreg_healthDash_folicAcidTip', FOLIC_ACID_TIP)
 
   return (
     <View style={styles.container}>
@@ -125,7 +131,7 @@ export function HealthDashboard({ waterGlasses = 0, sleepHours = 0, onAddWater, 
           <Text style={styles.nutritionTitle}>{t('prepreg_healthDash_nutritionTip')}</Text>
         </View>
         <Text style={[styles.nutritionText, { color: tc.textSecondary }]}>
-          Take your folic acid (400mcg) daily — ideally 1-3 months before conceiving. It prevents neural tube defects and is the single most important supplement for pre-conception.
+          {folicAcidTip}
         </Text>
       </PaperCard>
     </View>

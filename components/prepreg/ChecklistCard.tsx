@@ -5,10 +5,58 @@ import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
 import type { ChecklistItem } from '../../lib/prepregnancyData'
 import { useTranslation } from '../../lib/i18n'
+import type { TranslationKey } from '../../lib/i18n'
+import { useTranslatedContent } from '../../lib/useTranslatedContent'
 
 interface ChecklistCardProps {
   items: ChecklistItem[]
   onToggle?: (id: string, completed: boolean) => void
+}
+
+// Stable id → static title key. Titles are short labels → static t() catalog.
+const CHECKLIST_TITLE_KEYS: Record<string, string> = {
+  'prenatal-vitamins': 'prepreg_checklist_prenatalVitamins_title',
+  'doctor-visit': 'prepreg_checklist_doctorVisit_title',
+  'dental-check': 'prepreg_checklist_dentalCheck_title',
+  vaccines: 'prepreg_checklist_vaccines_title',
+  'track-cycle': 'prepreg_checklist_trackCycle_title',
+  'cut-alcohol': 'prepreg_checklist_cutAlcohol_title',
+  exercise: 'prepreg_checklist_exercise_title',
+  finances: 'prepreg_checklist_finances_title',
+  'partner-talk': 'prepreg_checklist_partnerTalk_title',
+  stress: 'prepreg_checklist_stress_title',
+}
+
+// One hook call per row → each item must render as its own component (hooks can't
+// live inside a .map). Mirrors the WeekDetailModal sub-component pattern.
+function ChecklistRow({
+  item,
+  isDone,
+  onPress,
+}: {
+  item: ChecklistItem
+  isDone: boolean
+  onPress: () => void
+}) {
+  const { colors } = useTheme()
+  const { t } = useTranslation()
+  // Long-form description → runtime-translated + cached (id-based stable key).
+  const { text: description } = useTranslatedContent(`prepreg_checklist_${item.id}_desc`, item.description)
+  const titleKey = CHECKLIST_TITLE_KEYS[item.id]
+  const title = titleKey ? t(titleKey as TranslationKey) : item.title
+  return (
+    <Pressable onPress={onPress} style={[styles.row, { borderBottomColor: colors.border }]}>
+      <View style={[styles.checkbox, { borderColor: colors.border }, isDone && { backgroundColor: colors.accent, borderColor: colors.accent }]}>
+        {isDone && <Ionicons name="checkmark" size={14} color={colors.textInverse} />}
+      </View>
+      <View style={styles.rowContent}>
+        <Text style={[styles.itemTitle, { color: colors.text }, isDone && { textDecorationLine: 'line-through', color: colors.textMuted }]}>
+          {title}
+        </Text>
+        <Text style={[styles.itemDesc, { color: colors.textMuted }]}>{description}</Text>
+      </View>
+    </Pressable>
+  )
 }
 
 export function ChecklistCard({ items, onToggle }: ChecklistCardProps) {
@@ -41,22 +89,14 @@ export function ChecklistCard({ items, onToggle }: ChecklistCardProps) {
         <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: colors.accent }]} />
       </View>
 
-      {items.map((item) => {
-        const isDone = completed.has(item.id)
-        return (
-          <Pressable key={item.id} onPress={() => toggle(item.id)} style={[styles.row, { borderBottomColor: colors.border }]}>
-            <View style={[styles.checkbox, { borderColor: colors.border }, isDone && { backgroundColor: colors.accent, borderColor: colors.accent }]}>
-              {isDone && <Ionicons name="checkmark" size={14} color={colors.textInverse} />}
-            </View>
-            <View style={styles.rowContent}>
-              <Text style={[styles.itemTitle, { color: colors.text }, isDone && { textDecorationLine: 'line-through', color: colors.textMuted }]}>
-                {item.title}
-              </Text>
-              <Text style={[styles.itemDesc, { color: colors.textMuted }]}>{item.description}</Text>
-            </View>
-          </Pressable>
-        )
-      })}
+      {items.map((item) => (
+        <ChecklistRow
+          key={item.id}
+          item={item}
+          isDone={completed.has(item.id)}
+          onPress={() => toggle(item.id)}
+        />
+      ))}
     </PaperCard>
   )
 }

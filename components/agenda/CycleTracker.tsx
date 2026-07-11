@@ -4,10 +4,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { CyclePhaseRing } from '../prepreg/CyclePhaseRing'
 import { getCycleInfo, getMonthCycleDots, toDateStr } from '../../lib/cycleLogic'
-import type { CycleInfo } from '../../lib/cycleLogic'
+import type { CycleInfo, CyclePhase } from '../../lib/cycleLogic'
 import { brand, stickers, borderRadius, typography, useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import type { TranslationKey } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
+import { useTranslatedContent } from '../../lib/useTranslatedContent'
 
 interface CycleTrackerProps {
   selectedDate: string
@@ -38,6 +40,56 @@ const SYMPTOM_OPTIONS: { id: string; labelKey: keyof TranslationKeys; icon: stri
   { id: 'cm_dry', labelKey: 'cycleTracker_symptom_cmDry', icon: 'water-outline', color: '#6E6763' }, // colors.textMuted (light)
 ]
 
+// Short phase labels come from getPhaseLabel() in lib/cycleLogic.ts (English
+// prose we can't hook inside a lib fn). Map the phase → a static t() key so the
+// label localizes. Keyed by phase so the source string never leaks in.
+const PHASE_LABEL_KEY: Record<CyclePhase, TranslationKey> = {
+  menstruation: 'cyclePhase_menstruation_label' as TranslationKey,
+  follicular: 'cyclePhase_follicular_label' as TranslationKey,
+  ovulation: 'cyclePhase_ovulation_label' as TranslationKey,
+  luteal: 'cyclePhase_luteal_label' as TranslationKey,
+}
+
+// One useTranslatedContent hook per list item — hooks can't run inside a .map,
+// so each tip/nutrition line renders as its own row sub-component. Mirrors the
+// DevPointRow pattern in components/home/pregnancy/WeekDetailModal.tsx.
+function PhaseTipRow({
+  phase,
+  index,
+  tip,
+  bulletColor,
+  styles,
+}: {
+  phase: CyclePhase
+  index: number
+  tip: string
+  bulletColor: string
+  styles: ReturnType<typeof makeStyles>
+}) {
+  const { text } = useTranslatedContent(`cyclePhase_${phase}_tip_${index}`, tip)
+  return (
+    <View style={styles.tipRow}>
+      <View style={[styles.tipBullet, { backgroundColor: bulletColor }]} />
+      <Text style={styles.tipText}>{text}</Text>
+    </View>
+  )
+}
+
+function PhaseNutritionRow({
+  phase,
+  index,
+  tip,
+  styles,
+}: {
+  phase: CyclePhase
+  index: number
+  tip: string
+  styles: ReturnType<typeof makeStyles>
+}) {
+  const { text } = useTranslatedContent(`cyclePhase_${phase}_nutrition_${index}`, tip)
+  return <Text style={styles.nutritionItem}>{'•'} {text}</Text>
+}
+
 export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
   const { colors } = useTheme()
   const { t } = useTranslation()
@@ -52,6 +104,15 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
   const cycleInfo = getCycleInfo({ lastPeriodStart, cycleLength: 28, periodLength: 5 }, selectedDate)
   const selectedInfo = getCycleInfo({ lastPeriodStart, cycleLength: 28, periodLength: 5 }, selectedDate)
 
+  const selectedPhase = selectedInfo.phase as CyclePhase
+  const cyclePhase = cycleInfo.phase as CyclePhase
+  // Long-form phase paragraph — translate at render (source is a lib fn we can't
+  // hook inside). Stable id-based key derived from phase, never the text.
+  const { text: phaseDescription } = useTranslatedContent(
+    `cyclePhase_${selectedPhase}_desc`,
+    selectedInfo.phaseDescription,
+  )
+
   return (
     <View style={styles.container}>
       {/* Cycle Phase Ring */}
@@ -61,10 +122,10 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
       <PaperCard radius={28} padding={20} style={styles.dateInfoCard}>
         <View style={styles.dateInfoHeader}>
           <View style={[styles.datePhaseDot, { backgroundColor: selectedInfo.phaseColor }]} />
-          <Text style={styles.dateInfoPhase}>{selectedInfo.phaseLabel}</Text>
+          <Text style={styles.dateInfoPhase}>{t(PHASE_LABEL_KEY[selectedPhase])}</Text>
           <Text style={styles.dateInfoDay}>{t('cycleTracker_day', { day: selectedInfo.cycleDay })}</Text>
         </View>
-        <Text style={styles.dateInfoDesc}>{selectedInfo.phaseDescription}</Text>
+        <Text style={styles.dateInfoDesc}>{phaseDescription}</Text>
 
         {/* Fertility indicator */}
         {selectedInfo.isFertile && (
@@ -116,20 +177,24 @@ export function CycleTracker({ selectedDate, onLogEntry }: CycleTrackerProps) {
       {/* Phase tips */}
       <Text style={styles.sectionLabel}>{t('cycleTracker_todaysTips')}</Text>
       {cycleInfo.dailyTips.map((tip, i) => (
-        <View key={i} style={styles.tipRow}>
-          <View style={[styles.tipBullet, { backgroundColor: cycleInfo.phaseColor }]} />
-          <Text style={styles.tipText}>{tip}</Text>
-        </View>
+        <PhaseTipRow
+          key={i}
+          phase={cyclePhase}
+          index={i}
+          tip={tip}
+          bulletColor={cycleInfo.phaseColor}
+          styles={styles}
+        />
       ))}
 
       {/* Nutrition for this phase */}
       <PaperCard radius={28} padding={20} style={styles.nutritionCard}>
         <View style={styles.nutritionHeader}>
           <Ionicons name="nutrition" size={18} color={stickers.green} />
-          <Text style={styles.nutritionTitle}>{t('cycleTracker_nutritionFor', { phase: cycleInfo.phaseLabel.toUpperCase() })}</Text>
+          <Text style={styles.nutritionTitle}>{t('cycleTracker_nutritionFor', { phase: t(PHASE_LABEL_KEY[cyclePhase]).toUpperCase() })}</Text>
         </View>
         {cycleInfo.nutritionTips.map((tip, i) => (
-          <Text key={i} style={styles.nutritionItem}>{'•'} {tip}</Text>
+          <PhaseNutritionRow key={i} phase={cyclePhase} index={i} tip={tip} styles={styles} />
         ))}
       </PaperCard>
     </View>

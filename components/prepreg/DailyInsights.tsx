@@ -4,6 +4,8 @@ import { PaperCard } from '../ui/PaperCard'
 import { useTheme, brand, stickers, borderRadius } from '../../constants/theme'
 import type { CycleInfo } from '../../lib/cycleLogic'
 import { useTranslation } from '../../lib/i18n'
+import type { TranslationKey } from '../../lib/i18n'
+import { useTranslatedContent } from '../../lib/useTranslatedContent'
 
 interface DailyInsightsProps {
   cycleInfo: CycleInfo
@@ -11,29 +13,71 @@ interface DailyInsightsProps {
   onAskGrandma?: (question: string) => void
 }
 
+interface PhaseInsight {
+  id: string
+  icon: string
+  iconColor: string
+  bgColor: string
+  titleKey: string
+  title: string
+  body: string
+}
+
 // iconColor uses the saturated sticker; bgColor uses the same hue at ~15% alpha
 // (RN/iOS reads an 'XX' alpha suffix on hex strings).
-const PHASE_INSIGHTS: Record<string, { icon: string; iconColor: string; bgColor: string; title: string; body: string }[]> = {
+// `id` = stable prose key for body translation; `titleKey` = static t() label key.
+const PHASE_INSIGHTS: Record<string, PhaseInsight[]> = {
   menstruation: [
-    { icon: 'heart-outline', iconColor: stickers.coral, bgColor: stickers.coral + '15', title: 'Self-care day', body: 'Your body is doing hard work. Prioritize rest, warmth, and nourishing food.' },
-    { icon: 'restaurant-outline', iconColor: stickers.green, bgColor: stickers.green + '15', title: 'Eat iron-rich foods', body: 'Spinach, lentils, and red meat help replenish iron lost during menstruation.' },
-    { icon: 'water-outline', iconColor: stickers.blue, bgColor: stickers.blue + '15', title: 'Stay extra hydrated', body: 'You lose more fluids during your period. Aim for 10 glasses of water today.' },
+    { id: 'menstruation_0', icon: 'heart-outline', iconColor: stickers.coral, bgColor: stickers.coral + '15', titleKey: 'prepreg_insight_selfCareDay_title', title: 'Self-care day', body: 'Your body is doing hard work. Prioritize rest, warmth, and nourishing food.' },
+    { id: 'menstruation_1', icon: 'restaurant-outline', iconColor: stickers.green, bgColor: stickers.green + '15', titleKey: 'prepreg_insight_ironRichFoods_title', title: 'Eat iron-rich foods', body: 'Spinach, lentils, and red meat help replenish iron lost during menstruation.' },
+    { id: 'menstruation_2', icon: 'water-outline', iconColor: stickers.blue, bgColor: stickers.blue + '15', titleKey: 'prepreg_insight_extraHydrated_title', title: 'Stay extra hydrated', body: 'You lose more fluids during your period. Aim for 10 glasses of water today.' },
   ],
   follicular: [
-    { icon: 'flash-outline', iconColor: stickers.yellow, bgColor: stickers.yellow + '15', title: 'Energy is rising', body: 'Estrogen is climbing — this is your most energetic phase. Great for exercise and planning.' },
-    { icon: 'fitness-outline', iconColor: stickers.green, bgColor: stickers.green + '15', title: 'Best time for workouts', body: 'Your body can handle more intense exercise now. Try HIIT, running, or strength training.' },
-    { icon: 'calendar-outline', iconColor: brand.prePregnancy, bgColor: brand.prePregnancy + '15', title: 'Fertile window approaching', body: 'Your fertile window opens soon. Start tracking ovulation signs like cervical mucus.' },
+    { id: 'follicular_0', icon: 'flash-outline', iconColor: stickers.yellow, bgColor: stickers.yellow + '15', titleKey: 'prepreg_insight_energyRising_title', title: 'Energy is rising', body: 'Estrogen is climbing — this is your most energetic phase. Great for exercise and planning.' },
+    { id: 'follicular_1', icon: 'fitness-outline', iconColor: stickers.green, bgColor: stickers.green + '15', titleKey: 'prepreg_insight_bestWorkouts_title', title: 'Best time for workouts', body: 'Your body can handle more intense exercise now. Try HIIT, running, or strength training.' },
+    { id: 'follicular_2', icon: 'calendar-outline', iconColor: brand.prePregnancy, bgColor: brand.prePregnancy + '15', titleKey: 'prepreg_insight_fertileApproaching_title', title: 'Fertile window approaching', body: 'Your fertile window opens soon. Start tracking ovulation signs like cervical mucus.' },
   ],
   ovulation: [
-    { icon: 'flower-outline', iconColor: stickers.green, bgColor: stickers.green + '15', title: 'Peak fertility!', body: 'The egg has been released. This is the best time to conceive if you are trying.' },
-    { icon: 'eye-outline', iconColor: brand.prePregnancy, bgColor: brand.prePregnancy + '15', title: 'Watch for signs', body: 'Egg-white cervical mucus, mild cramping (mittelschmerz), and increased libido are all ovulation signs.' },
-    { icon: 'thermometer-outline', iconColor: stickers.coral, bgColor: stickers.coral + '15', title: 'Check your temp', body: 'Basal body temperature rises 0.2-0.5°F after ovulation. Track it each morning before getting up.' },
+    { id: 'ovulation_0', icon: 'flower-outline', iconColor: stickers.green, bgColor: stickers.green + '15', titleKey: 'prepreg_insight_peakFertility_title', title: 'Peak fertility!', body: 'The egg has been released. This is the best time to conceive if you are trying.' },
+    { id: 'ovulation_1', icon: 'eye-outline', iconColor: brand.prePregnancy, bgColor: brand.prePregnancy + '15', titleKey: 'prepreg_insight_watchForSigns_title', title: 'Watch for signs', body: 'Egg-white cervical mucus, mild cramping (mittelschmerz), and increased libido are all ovulation signs.' },
+    { id: 'ovulation_2', icon: 'thermometer-outline', iconColor: stickers.coral, bgColor: stickers.coral + '15', titleKey: 'prepreg_insight_checkYourTemp_title', title: 'Check your temp', body: 'Basal body temperature rises 0.2-0.5°F after ovulation. Track it each morning before getting up.' },
   ],
   luteal: [
-    { icon: 'leaf-outline', iconColor: stickers.lilac, bgColor: stickers.lilac + '15', title: 'Two-week wait', body: 'If you tried to conceive, implantation may happen in 6-12 days. Avoid alcohol and excess caffeine.' },
-    { icon: 'nutrition-outline', iconColor: stickers.green, bgColor: stickers.green + '15', title: 'Magnesium helps', body: 'Dark chocolate, almonds, and bananas are rich in magnesium — eases PMS symptoms and supports implantation.' },
-    { icon: 'moon-outline', iconColor: stickers.blue, bgColor: stickers.blue + '15', title: 'Prioritize sleep', body: 'Progesterone may make you sleepier. Lean into it — 7-9 hours of sleep supports fertility.' },
+    { id: 'luteal_0', icon: 'leaf-outline', iconColor: stickers.lilac, bgColor: stickers.lilac + '15', titleKey: 'prepreg_insight_twoWeekWait_title', title: 'Two-week wait', body: 'If you tried to conceive, implantation may happen in 6-12 days. Avoid alcohol and excess caffeine.' },
+    { id: 'luteal_1', icon: 'nutrition-outline', iconColor: stickers.green, bgColor: stickers.green + '15', titleKey: 'prepreg_insight_magnesiumHelps_title', title: 'Magnesium helps', body: 'Dark chocolate, almonds, and bananas are rich in magnesium — eases PMS symptoms and supports implantation.' },
+    { id: 'luteal_2', icon: 'moon-outline', iconColor: stickers.blue, bgColor: stickers.blue + '15', titleKey: 'prepreg_insight_prioritizeSleep_title', title: 'Prioritize sleep', body: 'Progesterone may make you sleepier. Lean into it — 7-9 hours of sleep supports fertility.' },
   ],
+}
+
+// One hook call per card → each insight renders as its own component (hooks can't
+// live inside a .map). Mirrors the WeekDetailModal sub-component pattern.
+function InsightCard({
+  insight,
+  textColor,
+  bodyColor,
+  onAskGrandma,
+}: {
+  insight: PhaseInsight
+  textColor: string
+  bodyColor: string
+  onAskGrandma?: (question: string) => void
+}) {
+  const { t } = useTranslation()
+  // Long-form body → runtime-translated + cached (id-based stable key).
+  const { text: body } = useTranslatedContent(`prepreg_insight_${insight.id}_body`, insight.body)
+  const title = t(insight.titleKey as TranslationKey)
+  return (
+    <Pressable
+      onPress={() => onAskGrandma?.(title)}
+      style={[styles.insightCard, { backgroundColor: insight.bgColor }]}
+    >
+      <View style={[styles.insightIcon, { backgroundColor: insight.iconColor + '25' }]}>
+        <Ionicons name={insight.icon as any} size={18} color={insight.iconColor} />
+      </View>
+      <Text style={[styles.insightTitle, { color: textColor }]}>{title}</Text>
+      <Text style={[styles.insightBody, { color: bodyColor }]} numberOfLines={3}>{body}</Text>
+    </Pressable>
+  )
 }
 
 export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyInsightsProps) {
@@ -63,18 +107,14 @@ export function DailyInsights({ cycleInfo, onLogSymptoms, onAskGrandma }: DailyI
         </Pressable>
 
         {/* Phase-specific insight cards */}
-        {insights.map((insight, i) => (
-          <Pressable
-            key={i}
-            onPress={() => onAskGrandma?.(insight.title)}
-            style={[styles.insightCard, { backgroundColor: insight.bgColor }]}
-          >
-            <View style={[styles.insightIcon, { backgroundColor: insight.iconColor + '25' }]}>
-              <Ionicons name={insight.icon as any} size={18} color={insight.iconColor} />
-            </View>
-            <Text style={[styles.insightTitle, { color: tc.text }]}>{insight.title}</Text>
-            <Text style={[styles.insightBody, { color: tc.textSecondary }]} numberOfLines={3}>{insight.body}</Text>
-          </Pressable>
+        {insights.map((insight) => (
+          <InsightCard
+            key={insight.id}
+            insight={insight}
+            textColor={tc.text}
+            bodyColor={tc.textSecondary}
+            onAskGrandma={onAskGrandma}
+          />
         ))}
       </ScrollView>
 
