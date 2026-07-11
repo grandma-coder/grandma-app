@@ -26,6 +26,7 @@ import {
   Animated,
   Keyboard,
 } from 'react-native'
+import { BlurView } from 'expo-blur'
 import { router, useLocalSearchParams } from 'expo-router'
 import {
   Send,
@@ -707,9 +708,10 @@ function WheelFollowup({
         style={({ pressed }) => [
           wheelStyles.followupPill,
           {
+            // Hairline paper chip — no accent border/shadow (soft ink lift only).
             backgroundColor: dt.colors.surface,
-            borderColor: tint,
-            shadowColor: tint,
+            borderColor: dt.colors.line2,
+            shadowColor: '#141313',
             opacity: pressed ? 0.7 : 1,
           },
         ]}
@@ -791,9 +793,24 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick }: WheelProps) {
 
   return (
     <View style={wheelStyles.wrap}>
-      {/* Backdrop — tap anywhere to collapse the fan */}
+      {/* Backdrop — a soft blur + dim over the conversation so the fanned
+          picker reads as its own layer (not overlapping the chat). Fades in
+          with the fan; tap anywhere to collapse. */}
       {open ? (
-        <Pressable style={wheelStyles.backdrop} onPress={collapse} />
+        <Animated.View
+          style={[wheelStyles.backdrop, { opacity: progress }]}
+          pointerEvents="box-none"
+        >
+          <BlurView
+            intensity={dt.isDark ? 22 : 18}
+            tint={dt.isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+          <Pressable
+            style={[StyleSheet.absoluteFill, { backgroundColor: dt.colors.bg + (dt.isDark ? 'B0' : 'A6') }]}
+            onPress={collapse}
+          />
+        </Animated.View>
       ) : null}
 
       {/* Fanned follow-ups, anchored above the rail */}
@@ -824,9 +841,11 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick }: WheelProps) {
               style={({ pressed }) => [
                 styles.chip,
                 {
-                  backgroundColor: active ? tint : 'transparent',
-                  borderColor: active ? tint : dt.colors.line2,
-                  borderWidth: StyleSheet.hairlineWidth,
+                  // Hairline selection — active = paper surface + firm hairline
+                  // (no filled accent pill under Diffuse).
+                  backgroundColor: active ? dt.colors.surface : 'transparent',
+                  borderColor: active ? dt.colors.hairline : dt.colors.line2,
+                  borderWidth: 1,
                   opacity: pressed ? 0.6 : 1,
                 },
               ]}
@@ -835,8 +854,8 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick }: WheelProps) {
                 style={[
                   styles.chipLabel,
                   {
-                    color: active ? '#FFFFFF' : dt.colors.ink,
-                    fontFamily: diffuseFont.monoBold,
+                    color: active ? dt.colors.ink : dt.colors.ink3,
+                    fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
                     letterSpacing: 0.4,
                   },
                 ]}
