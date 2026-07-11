@@ -2649,7 +2649,7 @@ export function KidsHome() {
             <View style={diffuse
               ? { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }
               : { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(245,214,82,0.24)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-              <Bell size={20} color={diffuse ? dt.colors.ink3 : '#EE7B6D'} strokeWidth={diffuse ? 1.6 : 2} />
+              {diffuse ? <Character name="bell" size={24} color={stickers.yellow} /> : <Bell size={20} color="#EE7B6D" strokeWidth={2} />}
             </View>
             <Text style={[s.remindersEmptyText, diffuse
               ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
@@ -3771,9 +3771,7 @@ function HealthCard({ reminders, healthHistory, child }: {
       {/* Icon */}
       {diffuse ? (
         <View style={s.hcIconWrap}>
-          <DiffuseBloomIcon color={stickers.green} size={40} intensity={0.5}>
-            <CrossSticker size={22} fill={green + '99'} stroke={green} />
-          </DiffuseBloomIcon>
+          <Character name="health" size={28} color={stickers.green} />
         </View>
       ) : (
       <View style={[s.hcIconWrap, { backgroundColor: isDark ? '#1A2810' : '#EEF7E4' }]}>
@@ -3860,9 +3858,7 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
     return (
       <View style={{ paddingVertical: 14, paddingHorizontal: 2, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2, gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <DiffuseBloomIcon color={stickers.blue} size={30}>
-            <Droplets size={17} color={dt.colors.ink3} strokeWidth={1.6} />
-          </DiffuseBloomIcon>
+          <Character name="diaper" size={22} color={stickers.blue} />
           <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, color: dt.colors.ink, letterSpacing: -0.4 }}>{count}</Text>
           <Text style={{ flex: 1, textAlign: 'right', fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.8, textTransform: 'uppercase', color: dt.colors.ink3 }} numberOfLines={1}>
             {`${t('kids_home_diaper_pee')} ${pee} · ${t('kids_home_diaper_poop')} ${poop} · ${t('kids_home_diaper_mixed')} ${mixed}`}
