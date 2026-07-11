@@ -3,7 +3,7 @@
  *
  * Section order (top → bottom):
  * 1. BabyHeroCarousel   — swipeable FlatList, full-width, tappable → WeekDetailModal
- * 2. AffirmationRevealCard — glow-burst VFX reveal, Supabase-backed
+ * 2. DailyMessageCard — glow-burst VFX reveal, Supabase-backed
  * 3. QuickLogStrip      — today's routine chips with checkmark state
  * 4. TodaySummaryCard   — single "today at a glance" card → opens daily dashboard modal
  * 5. RemindersSection   — upcoming appts + week tips + habit nudges
@@ -326,7 +326,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         onPressWeek={handleHeroPress}
       />
 
-      {/* 2. Affirmation Reveal */}
+      {/* 2. Daily Message */}
       <View style={styles.section}>
         <DailyMessageCard />
       </View>

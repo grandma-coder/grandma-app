@@ -1,6 +1,6 @@
 // components/home/pregnancy/DailyMessageModal.tsx
 import { useEffect, useState } from 'react'
-import { Modal, View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
+import { Modal, View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { stickers, font, radius } from '../../../constants/theme'
@@ -33,9 +33,13 @@ export function DailyMessageModal({ visible, onClose }: Props) {
   }
 
   async function pick(optionIndex: number) {
-    const card = await answer(optionIndex)
-    buildDeck(card)
-    setPhase('reveal')
+    try {
+      const card = await answer(optionIndex)
+      buildDeck(card)
+      setPhase('reveal')
+    } catch {
+      Alert.alert('Something went wrong', 'We couldn\'t save your message. Please try again.')
+    }
   }
 
   if (!todayQuestion) return null
