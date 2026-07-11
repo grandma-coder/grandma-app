@@ -25,6 +25,7 @@ import {
   ScrollView,
   Animated,
   Keyboard,
+  Modal,
 } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { router, useLocalSearchParams } from 'expo-router'
@@ -729,9 +730,12 @@ interface WheelProps {
   diffuse: boolean
   tint: string
   onPick: (prompt: string) => void
+  /** Distance from the screen bottom to the top of the composer, so the fan
+   *  sits just above the input inside the full-screen overlay. */
+  fanBottom: number
 }
 
-function SuggestionWheel({ suggestions, diffuse, tint, onPick }: WheelProps) {
+function SuggestionWheel({ suggestions, diffuse, tint, onPick, fanBottom }: WheelProps) {
   const { colors, font } = useTheme()
   const dt = useDiffuseTheme()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
@@ -793,42 +797,42 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick }: WheelProps) {
 
   return (
     <View style={wheelStyles.wrap}>
-      {/* Backdrop — a soft blur + dim over the conversation so the fanned
-          picker reads as its own layer (not overlapping the chat). Fades in
-          with the fan; tap anywhere to collapse. */}
-      {open ? (
-        <Animated.View
-          style={[wheelStyles.backdrop, { opacity: progress }]}
-          pointerEvents="box-none"
-        >
-          <BlurView
-            intensity={dt.isDark ? 22 : 18}
-            tint={dt.isDark ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFill}
-          />
-          <Pressable
-            style={[StyleSheet.absoluteFill, { backgroundColor: dt.colors.bg + (dt.isDark ? 'B0' : 'A6') }]}
-            onPress={collapse}
-          />
-        </Animated.View>
-      ) : null}
+      {/* Full-screen overlay in a Modal so the scrim covers EVERYTHING —
+          header, child pills, and orb included (a nested scrim is clipped by
+          the composer container). Blur + dim fade in with the fan; the fan
+          sits just above the composer via `fanBottom`. */}
+      <Modal visible={open != null} transparent animationType="none" onRequestClose={collapse}>
+        {open ? (
+          <View style={StyleSheet.absoluteFill}>
+            <Animated.View style={[StyleSheet.absoluteFill, { opacity: progress }]}>
+              <BlurView
+                intensity={dt.isDark ? 40 : 34}
+                tint={dt.isDark ? 'dark' : 'light'}
+                style={StyleSheet.absoluteFill}
+              />
+              <Pressable
+                style={[StyleSheet.absoluteFill, { backgroundColor: dt.colors.bg + (dt.isDark ? 'C4' : 'B8') }]}
+                onPress={collapse}
+              />
+            </Animated.View>
 
-      {/* Fanned follow-ups, anchored above the rail */}
-      {open ? (
-        <View pointerEvents="box-none" style={wheelStyles.fan}>
-          {open.followups.map((q, i) => (
-            <WheelFollowup
-              key={q}
-              text={q}
-              index={i}
-              count={open.followups.length}
-              progress={progress}
-              tint={tint}
-              onPick={pick}
-            />
-          ))}
-        </View>
-      ) : null}
+            {/* Fanned follow-ups, anchored just above the composer */}
+            <View pointerEvents="box-none" style={[wheelStyles.fan, { bottom: fanBottom }]}>
+              {open.followups.map((q, i) => (
+                <WheelFollowup
+                  key={q}
+                  text={q}
+                  index={i}
+                  count={open.followups.length}
+                  progress={progress}
+                  tint={tint}
+                  onPick={pick}
+                />
+              ))}
+            </View>
+          </View>
+        ) : null}
+      </Modal>
 
       {/* Category rail */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionsRow}>
@@ -872,14 +876,9 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick }: WheelProps) {
 
 const wheelStyles = StyleSheet.create({
   wrap: { position: 'relative' },
-  backdrop: {
-    position: 'absolute',
-    left: 0, right: 0, bottom: 0,
-    top: -600,
-  },
   fan: {
     position: 'absolute',
-    left: 0, right: 0, bottom: 8,
+    left: 0, right: 0,
     alignItems: 'center',
   },
   followup: { position: 'absolute', bottom: 0, maxWidth: '86%' },
@@ -1745,6 +1744,7 @@ export function GrandmaTalk() {
             diffuse={diffuse}
             tint={accent}
             onPick={sendText}
+            fanBottom={insets.bottom + 150}
           />
         )}
 
