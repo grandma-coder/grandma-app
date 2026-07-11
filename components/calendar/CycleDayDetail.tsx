@@ -150,7 +150,8 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
       </Text>
       {grouped.length > 0 ? (
         diffuse ? (
-          // v4 vertical "choice timeline" — same system as the Kids calendar.
+          // Kids-style choice timeline (spine + node + serif title), rendered
+          // in COMPACT mode so this day summary stays delicate, not huge.
           <View style={styles.timeline}>
             {grouped.map((g, i) => (
               <DiffuseTimelineRow
@@ -159,6 +160,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
                 title={g.label}
                 accent={g.summary !== '✓' ? g.summary : undefined}
                 logged
+                compact
                 first={i === 0}
                 last={i === grouped.length - 1}
               />

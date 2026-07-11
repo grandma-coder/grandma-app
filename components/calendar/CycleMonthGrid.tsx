@@ -163,13 +163,14 @@ export function CycleMonthGrid({
     const selDate = new Date(selectedDate + 'T00:00:00')
     const monthDate = new Date(visibleMonth.year, visibleMonth.month, 1)
 
-    // Per-phase bloom intensity — ovulation is the peak, period strong, the
-    // long follicular/luteal stretches sit back so they don't overwhelm.
+    // Per-phase bloom intensity (0..1) — kept low overall so the wash reads as
+    // a whisper of color. Ovulation is the relative peak; the long
+    // follicular/luteal stretches sit furthest back.
     const phaseIntensity: Record<CyclePhase, number> = {
-      menstruation: 0.85,
-      follicular: 0.4,
+      menstruation: 0.7,
+      follicular: 0.3,
       ovulation: 1,
-      luteal: 0.45,
+      luteal: 0.32,
     }
 
     return (

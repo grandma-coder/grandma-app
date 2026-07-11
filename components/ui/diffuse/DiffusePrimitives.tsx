@@ -584,6 +584,7 @@ const dp = StyleSheet.create({
   calCellWrap: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', padding: 3 },
   calCell: { width: '100%', aspectRatio: 1, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   calBloom: { position: 'absolute', width: '128%', height: '128%', borderRadius: 999 },
+  calFieldBloom: { position: 'absolute', width: '108%', height: '108%', borderRadius: 999 },
   calPeriodDot: { position: 'absolute', bottom: 6, width: 4, height: 4, borderRadius: 2 },
   calMarker: { position: 'absolute', bottom: 3, alignItems: 'center', justifyContent: 'center' },
 })
@@ -709,10 +710,12 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
               onPress={() => onChange(c.date)}
               style={dp.calCellWrap}
             >
-              {/* Soft phase-band bloom behind the cell (below the selected bloom). */}
+              {/* Soft phase-band bloom behind the cell (below the selected bloom).
+                  A whisper of color — low opacity + wide feather so it reads as
+                  a tint, never a solid disc. */}
               {field && !selected ? (
-                <View pointerEvents="none" style={dp.calBloom}>
-                  <SoftBloom color={field.color} opacity={0.32 + 0.5 * field.intensity} spread={0.4} radius="52%" />
+                <View pointerEvents="none" style={dp.calFieldBloom}>
+                  <SoftBloom color={field.color} opacity={0.1 + 0.16 * field.intensity} spread={0.28} radius="60%" />
                 </View>
               ) : null}
               {selected ? (

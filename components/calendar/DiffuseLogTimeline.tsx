@@ -75,19 +75,22 @@ export function DiffuseLogIcon({ type, size = 34, inkColor }: { type: string; si
 
 // ─── Timeline node + row + now-marker ──────────────────────────────────────
 
-const TL_NODE = 46                    // node diameter
+const TL_NODE = 46                    // node diameter (default)
+const TL_NODE_COMPACT = 30            // node diameter (compact)
 const TL_SPINE_LEFT = TL_NODE / 2     // 23 → spine passes through node center
+const TL_SPINE_LEFT_COMPACT = TL_NODE_COMPACT / 2
 
 /** One node circle on the connector: bordered disc, bg fill, bloom behind glyph. */
-export function DiffuseTimelineNode({ type, active }: { type: string; active?: boolean }) {
+export function DiffuseTimelineNode({ type, active, compact }: { type: string; active?: boolean; compact?: boolean }) {
   const { colors } = useDiffuseTheme()
   const Glyph = DIFFUSE_LOG_GLYPH[type] ?? Circle
+  const node = compact ? TL_NODE_COMPACT : TL_NODE
   return (
     <View
       style={{
-        width: TL_NODE,
-        height: TL_NODE,
-        borderRadius: TL_NODE / 2,
+        width: node,
+        height: node,
+        borderRadius: node / 2,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: colors.bg,
@@ -99,7 +102,7 @@ export function DiffuseTimelineNode({ type, active }: { type: string; active?: b
       <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
         <SoftBloom color={diffuseLogHue(type)} opacity={active ? 0.9 : 0.62} spread={0.42} radius="50%" />
       </View>
-      <Glyph size={20} color={colors.ink2} strokeWidth={1.6} style={{ zIndex: 1 }} />
+      <Glyph size={compact ? 14 : 20} color={colors.ink2} strokeWidth={1.6} style={{ zIndex: 1 }} />
     </View>
   )
 }
@@ -113,6 +116,7 @@ export interface DiffuseTimelineRowProps {
   chip?: { label: string } | null
   logged?: boolean
   active?: boolean       // firms node border to ink (e.g. the current/next entry)
+  compact?: boolean      // smaller node + tighter spacing (day-summary use)
   first?: boolean
   last?: boolean
   onPress?: () => void
@@ -120,41 +124,46 @@ export interface DiffuseTimelineRowProps {
 
 /** A single timeline entry: node on the spine + text block. */
 export function DiffuseTimelineRow({
-  type, time, title, accent, sub, chip, logged, active, first, last, onPress,
+  type, time, title, accent, sub, chip, logged, active, compact, first, last, onPress,
 }: DiffuseTimelineRowProps) {
   const { colors } = useDiffuseTheme()
   const showTime = time && time !== '—'
   const Container: any = onPress ? Pressable : View
+  // Compact geometry — smaller node, tighter node padding, narrower gap so the
+  // spine still passes through the (smaller) node center.
+  const node = compact ? TL_NODE_COMPACT : TL_NODE
+  const nodePadV = compact ? 6 : 12
+  const spineLeft = compact ? TL_SPINE_LEFT_COMPACT : TL_SPINE_LEFT
   return (
     <Container
       onPress={onPress}
-      style={({ pressed }: { pressed?: boolean }) => [tlStyles.row, { opacity: pressed ? 0.6 : 1 }]}
+      style={({ pressed }: { pressed?: boolean }) => [tlStyles.row, compact ? tlStyles.rowCompact : null, { opacity: pressed ? 0.6 : 1 }]}
     >
       {/* Spine segments — half-height above/below the node, trimmed at ends. */}
-      <View pointerEvents="none" style={tlStyles.spineCol}>
-        {!first && <View style={[tlStyles.spineSeg, { top: 0, height: TL_NODE / 2 + 12, backgroundColor: colors.line2 }]} />}
-        {!last && <View style={[tlStyles.spineSeg, { top: TL_NODE / 2 + 12, bottom: 0, backgroundColor: colors.line2 }]} />}
+      <View pointerEvents="none" style={[tlStyles.spineCol, { left: spineLeft - 0.5 }]}>
+        {!first && <View style={[tlStyles.spineSeg, { top: 0, height: node / 2 + nodePadV, backgroundColor: colors.line2 }]} />}
+        {!last && <View style={[tlStyles.spineSeg, { top: node / 2 + nodePadV, bottom: 0, backgroundColor: colors.line2 }]} />}
       </View>
 
-      <View style={{ paddingVertical: 12 }}>
-        <DiffuseTimelineNode type={type} active={active} />
+      <View style={{ paddingVertical: nodePadV }}>
+        <DiffuseTimelineNode type={type} active={active} compact={compact} />
       </View>
 
-      <View style={tlStyles.body}>
+      <View style={compact ? tlStyles.bodyCompact : tlStyles.body}>
         {showTime ? (
           <Text style={[tlStyles.time, { color: colors.ink3 }]}>{time}</Text>
         ) : null}
         <View style={tlStyles.titleRow}>
-          <Text style={[tlStyles.title, { color: colors.ink }]} numberOfLines={1}>
+          <Text style={[compact ? tlStyles.titleCompact : tlStyles.title, { color: colors.ink }]} numberOfLines={1}>
             {title}
-            {accent ? <Text style={[tlStyles.accent, { color: colors.ink2 }]}>{'  ·  '}{accent}</Text> : null}
+            {accent ? <Text style={[compact ? tlStyles.accentCompact : tlStyles.accent, { color: colors.ink2 }]}>{'  ·  '}{accent}</Text> : null}
           </Text>
           {chip ? (
             <View style={[tlStyles.chip, { borderColor: colors.line2 }]}>
               <Text style={[tlStyles.chipTxt, { color: colors.ink3 }]}>{chip.label}</Text>
             </View>
           ) : null}
-          {logged ? <Check size={13} color={colors.success} strokeWidth={2} style={{ marginLeft: 6 }} /> : null}
+          {logged ? <Check size={compact ? 12 : 13} color={colors.success} strokeWidth={2} style={{ marginLeft: 6 }} /> : null}
         </View>
         {sub ? (
           <Text style={[tlStyles.sub, { color: colors.ink3 }]} numberOfLines={2}>{sub}</Text>
@@ -183,13 +192,17 @@ export function DiffuseNowMarker({ label, time, mode = 'kids' }: { label: string
 
 const tlStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, position: 'relative' },
+  rowCompact: { gap: 11 },
   spineCol: { position: 'absolute', left: TL_SPINE_LEFT - 0.5, top: 0, bottom: 0, width: 1 },
   spineSeg: { position: 'absolute', left: 0, width: 1 },
   body: { flex: 1, paddingTop: 14, paddingBottom: 4 },
+  bodyCompact: { flex: 1, paddingTop: 9, paddingBottom: 2, justifyContent: 'center', minHeight: 30 },
   time: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 3 },
   titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap' },
   title: { fontFamily: diffuseFont.display, fontSize: 18, letterSpacing: -0.3, flexShrink: 1 },
+  titleCompact: { fontFamily: diffuseFont.display, fontSize: 15, letterSpacing: -0.2, flexShrink: 1 },
   accent: { fontFamily: diffuseFont.italic, fontSize: 18, letterSpacing: -0.2 },
+  accentCompact: { fontFamily: diffuseFont.italic, fontSize: 15, letterSpacing: -0.2 },
   sub: { fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 18, marginTop: 3 },
   chip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1, marginLeft: 8 },
   chipTxt: { fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 0.8, textTransform: 'uppercase' },
