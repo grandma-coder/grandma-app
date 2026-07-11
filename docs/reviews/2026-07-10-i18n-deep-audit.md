@@ -1,5 +1,30 @@
 # i18n Deep Audit — All Behaviors (2026-07-10)
 
+## ⏸ RESUME HERE (progress as of session end)
+
+**Committed & verified** (parity green, no over-escapes, 0 tsc errors in touched files):
+- `fe258e1` — Batch 1–3: value-equality misses; 3 translation-template leaks (CycleAnalytics PHASE_VOICE, scan.tsx — **KidsHome sleepQuality/dominantLabel still TODO**); community (`channel/*`) + exams + shared-agenda alerts→t() (~118 keys). **Tooling**: new `scripts/i18n-sync-keys.ts`, hardened `i18n-fill-translations.ts` (imports modules, no key-drop/over-escape), new `scripts/i18n-untranslated.ts`, over-escape guard in `i18n-check.ts`, repaired pre-existing `\n`/quote corruption, normalized `cycleRing_note_*` one-per-line.
+- `e732146` — Batch 4: prepreg + cycle-phase **prose** via `useTranslatedContent` (short labels = 32 static keys). English data files unchanged; translate at render.
+
+**The workflow per batch** (proven, repeat it):
+1. Dispatch parallel writer agents (general-purpose), each owning DISJOINT files. Rules: reuse `common_*` + existing keys (grep first); prose → `useTranslatedContent(idKey, en)` rendered as per-item sub-components (see `WeekDetailModal.tsx`); short labels → static keys reported back as `keyName | "English"`; add `as TranslationKey` cast so files compile before keys exist; DO NOT edit `lib/i18n/*`.
+2. Collect reported keys → **dedup-guard** against existing (Batch 3 hit 6 collisions) → append to `en.ts` + `keys.ts`.
+3. `npx tsx scripts/i18n-sync-keys.ts` (adds to all 12 locales) → `npx tsx scripts/i18n-check.ts` → `npx tsc --noEmit | grep -v onboarding/kids/index`.
+4. `npx tsx scripts/i18n-fill-translations.ts pt-BR && … es`.
+5. Re-verify parity + tsc, then commit **my files only** (see collision note).
+
+**⚠️ Concurrent Diffuse agent** owns/edits (leave dirty, never stage): `app/onboarding/kids/index.tsx` (has a pre-existing syntax error at ~:947 — NOT mine), `components/analytics/KidsPillarCollage.tsx` (tsc errors — theirs), `app/(tabs)/_layout.tsx`, `components/home/cycle/DailyNudgeCard.tsx`, `MoodSymptomPickerSheet.tsx`, `KidsHome.tsx`, `KidsCalendar.tsx`. Verify tsc excluding these.
+
+**Remaining batches** (in `docs/reviews/2026-07-10-i18n-deep-audit.md` worklist below):
+- **Batch 5 — Analytics** (NOT STARTED; agents were cut off by session limit, PregnancyAnalytics partial edit reverted): PregnancyAnalytics (~90 sites, mostly static stat/label keys + prose tips/takeaways), KidsAnalytics (~50: health-tips prose + labels), CycleDetailSheets (empty-states→prose, mood/legend→static). Plus **KidsHome `sleepQuality`/`dominantLabel` leak** (keep as stable non-localized keys used for lookups; localize at render via label map + translate `qualityCopy` tag/blurb).
+- **Batch 6 — Profile**: care-circle (~80), pregnancy (~55), kids (~50), notifications (settings 7×2 + 3 groups), + alert bodies in account/personal/privacy/memories/emergency-insurance/health-history.
+- **Batch 7 — Calendar/log forms**: PregnancyCalendar (~25, several are 1-line reuse of existing keys the diffuse branch already uses), PregnancyLogForms (~45, incl 14× `Alert.alert('Error',…)`→`common_error`/`common_unknownError`), KidsCalendar/KidsLogForms (persisted routine-name issue — needs type→key lookup), CycleLogForms (9× Error alert), Simple/Meal forms.
+- **Batch 8 — Chat + garage**: GrandmaTalk (quick-chips 18 label+18 prompt, idle/ready/typing/thinking pools ~40, greetings 16, error fallback), garage/* (CATEGORIES/CONDITIONS/AGE_GROUPS, photo-safety alert, GarageScreen empty states), lib/channelPosts.ts (3 system-msg templates).
+- **Batch 9 — Shared + home + KidsHome**: PaperAlert/DatePickerField/SavedToast defaults, PeriodSelector, CustomRangeModal, AppointmentDetailModal, CalendarView, paywall (trial/CTA/legal), daily-rewards (quests), leaderboard; home cycle cards (MOOD_META/CM/LH dupes → reuse dashboard keys); **KidsHome datasets**: vaccineInfo (→useTranslatedContent) + growthLeaps (**dedupe KidsHome's copy to import lib/growthLeaps.ts first**, then wire) — all Diffuse-owned, coordinate.
+
+---
+
+
 Deep language review across all journey modes + shared surfaces, focused on the classes the lint guard **cannot** catch: `title=`/`label=`/`placeholder=`/`accessibilityLabel=` props, data arrays / object literals, function-return strings, `Alert.alert()` args, and English ternaries — plus registry keys whose translated value is byte-identical to English.
 
 Two detection methods:
