@@ -1,25 +1,23 @@
 /**
- * KidsPillarCollage — the "thriving breakdown" as a soft-bloom sticker collage.
+ * KidsPillarCollage — the "thriving breakdown" as a scattered sticker collage.
  *
- * Diffuse-only. Takes the reference's playful scattered-shapes layout (each
- * metric its own organic shape, value inside) but renders it in the delicate
- * Diffuse language: a low-saturation grainy SoftBloom in the pillar's colour
- * behind a hairline-outlined sticker glyph, on cream — never a loud flat fill.
+ * Diffuse-only. Reference-style: each pillar is its own organic sticker shape
+ * (full pastel-vivid fill + soft ink outline) with the pillar NAME + a smaller
+ * value line inside. Shapes are absolutely positioned in a fixed canvas via
+ * hand-tuned scatter slots (staggered, some overlap) so they read as a loose
+ * collage, not a grid — and are sized by score. Tapping a shape drills into
+ * that pillar's detail (same as the old PillarRow list it replaces).
  *
- * Each pillar is sized by its score (higher = a touch more present; low / no
- * data sits smaller + fainter), lightly rotated, and laid out in a staggered
- * wrap so it reads as a collage, not a table. Tapping a shape drills into that
- * pillar's detail (same as the old PillarRow list it replaces).
- *
- * Shapes + colours reuse the caller's existing PILLAR_CONFIG / stickerForPillar
- * mapping — nothing new invented. Consumers render it inside a `useIsDiffuse()`
- * branch; it does not gate itself.
+ * Shapes + colours reuse the caller's existing PILLAR_CONFIG mapping. Consumers
+ * render it inside a `useIsDiffuse()` branch; it does not gate itself.
  */
 
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native'
 import { useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { Heart, Moon, Cross, Leaf, Burst, Star } from '../ui/Stickers'
 import type { PillarScore } from '../../lib/analyticsData'
+
+const SCREEN_W = Dimensions.get('window').width
 
 export type CollagePillarKey = 'nutrition' | 'sleep' | 'mood' | 'health' | 'growth' | 'activity'
 
@@ -49,15 +47,24 @@ function PillarShape({ pillar, size, color, stroke }: { pillar: CollagePillarKey
   }
 }
 
-// Gentle per-index rotations so the collage feels hand-placed, not gridded
-// (within the app's sticker-rotation band, −14°…+14°).
-const ROTATIONS = [-9, 7, -5, 11, -13, 6]
+// Free scatter layout (reference-style). Each pillar gets a hand-placed slot as
+// a fraction of the canvas — staggered rows, varied x, some overlap — so the
+// shapes read as a loose collage, not a grid. cx/cy are the shape CENTRE as a
+// fraction of canvas width/height; rot tilts it. Deterministic (no random).
+const CANVAS_H = 440
+const SLOTS: Record<CollagePillarKey, { cx: number; cy: number; rot: number }> = {
+  nutrition: { cx: 0.26, cy: 0.17, rot: -8 },   // top-left
+  sleep:     { cx: 0.72, cy: 0.20, rot: 9 },    // top-right
+  mood:      { cx: 0.24, cy: 0.50, rot: -5 },   // mid-left
+  health:    { cx: 0.55, cy: 0.46, rot: 6 },    // mid-centre (overlaps neighbours)
+  growth:    { cx: 0.80, cy: 0.54, rot: 12 },   // mid-right
+  activity:  { cx: 0.44, cy: 0.82, rot: -11 },  // bottom-centre
+}
 
-// Tile size scales with score: no-data smallest, 10/10 largest. Bigger tiles
-// than before so the hero number has room to breathe (reference-style).
+// Tile size scales with score: no-data smallest, 10/10 largest.
 function tileSizeFor(score: PillarScore | undefined): number {
-  const MIN = 128
-  const MAX = 164
+  const MIN = 132
+  const MAX = 172
   if (!score?.hasData) return MIN
   const t = Math.max(0, Math.min(1, score.value / 10))
   return Math.round(MIN + (MAX - MIN) * t)
@@ -65,37 +72,44 @@ function tileSizeFor(score: PillarScore | undefined): number {
 
 export function KidsPillarCollage({ items, onPillarPress }: Props) {
   const { colors } = useDiffuseTheme()
+  const canvasW = SCREEN_W - 40 // screen minus the section's horizontal padding
 
   return (
-    <View style={styles.wrap}>
-      {items.map((item, i) => {
+    <View style={[styles.canvas, { width: canvasW, height: CANVAS_H }]}>
+      {items.map((item) => {
         const tile = tileSizeFor(item.score)
         const has = !!item.score?.hasData
-        const rot = ROTATIONS[i % ROTATIONS.length]
-        // Hero number sized to the tile (reference-style big figure).
-        const numSize = Math.round(tile * 0.4)
+        const slot = SLOTS[item.key]
+        // Position by centre → top-left corner.
+        const left = canvasW * slot.cx - tile / 2
+        const top = CANVAS_H * slot.cy - tile / 2
+        const nameSize = Math.round(tile * 0.15)
+        const valSize = Math.round(tile * 0.12)
         return (
           <Pressable
             key={item.key}
             onPress={() => onPillarPress(item.key)}
             style={({ pressed }) => [
               styles.tile,
-              { width: tile, height: tile, opacity: pressed ? 0.8 : has ? 1 : 0.72, transform: [{ rotate: `${rot}deg` }] },
+              { width: tile, height: tile, left, top, opacity: pressed ? 0.82 : has ? 1 : 0.7, transform: [{ rotate: `${slot.rot}deg` }] },
             ]}
             accessibilityRole="button"
             accessibilityLabel={`${item.label}${has ? `, ${item.score!.value.toFixed(1)} out of 10` : ', no data'}`}
           >
-            {/* The pillar's organic SHAPE is the tile — a full pastel-vivid fill
-                (reference match), soft ink outline, clean on paper (no disc). */}
+            {/* The pillar's organic SHAPE — full pastel-vivid fill (reference
+                match), soft ink outline, clean on paper. */}
             <View pointerEvents="none" style={styles.shapeLayer}>
               <PillarShape pillar={item.key} size={tile} color={item.color + 'D9'} stroke={colors.ink + '4D'} />
             </View>
 
-            {/* Counter-rotate so the number stays upright inside the tilted shape.
-                Reference layout: ONE huge number, no label, no notes. */}
-            <View style={[styles.inner, { transform: [{ rotate: `${-rot}deg` }] }]}>
-              <Text style={[styles.hero, { color: colors.ink, fontSize: numSize, lineHeight: numSize * 1.02 }]} numberOfLines={1}>
-                {has ? item.score!.value.toFixed(1) : '—'}
+            {/* Counter-rotate so text stays upright. Reference layout: pillar
+                NAME (prominent) over a smaller value line. */}
+            <View style={[styles.inner, { transform: [{ rotate: `${-slot.rot}deg` }] }]}>
+              <Text style={[styles.name, { color: colors.ink, fontSize: nameSize }]} numberOfLines={1}>
+                {item.label.toLowerCase()}
+              </Text>
+              <Text style={[styles.val, { color: colors.ink2, fontSize: valSize }]} numberOfLines={1}>
+                {has ? `${item.score!.value.toFixed(1)} / 10` : '—'}
               </Text>
             </View>
           </Pressable>
@@ -106,15 +120,13 @@ export function KidsPillarCollage({ items, onPillarPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 2,
+  canvas: {
+    alignSelf: 'center',
     marginTop: 4,
+    position: 'relative',
   },
   tile: {
+    position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -126,9 +138,14 @@ const styles = StyleSheet.create({
   inner: {
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
   },
-  hero: {
-    fontFamily: diffuseFont.displayMedium,   // heavier figure — reference-style
-    letterSpacing: -1.5,
+  name: {
+    fontFamily: diffuseFont.displayMedium,
+    letterSpacing: -0.3,
+  },
+  val: {
+    fontFamily: diffuseFont.mono,
+    letterSpacing: 0.4,
   },
 })
