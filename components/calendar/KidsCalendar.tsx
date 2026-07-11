@@ -413,9 +413,19 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
           if (parsed.time) parts.push(fmtTime(parsed.time))
           return parts.join(' · ') || notes || ''
         }
+        case 'mood': {
+          // Routine-logged moods store { mood, routineId, routineName, ... }.
+          // Show only the mood label — never the internal routine keys.
+          const moodVal = parsed.mood ?? parsed.value ?? parsed.label
+          if (typeof moodVal === 'string' && moodVal.trim()) return moodVal
+          return notes || ''
+        }
         default: {
+          // Internal bookkeeping keys stamped when a log is saved from a
+          // routine — must never surface to the user (they include a raw UUID).
+          const INTERNAL_KEYS = new Set(['routineId', 'routineName', 'routineType', 'childId', 'id'])
           const parts = Object.entries(parsed)
-            .filter(([, v]) => v && v !== false)
+            .filter(([k, v]) => v && v !== false && !INTERNAL_KEYS.has(k))
             .map(([k, v]) => (v === true ? k : `${v}`))
           return parts.join(' · ') || notes || ''
         }
@@ -4268,7 +4278,16 @@ export function KidsCalendar() {
 
                     {/* ── Mood Rich Card ── */}
                     {selectedLog.type === 'mood' && (() => {
-                      const moodVal = selectedLog.value ?? ''
+                      // A mood logged from a routine stores JSON
+                      // ({ mood, routineId, routineName, … }); a direct mood
+                      // log stores the bare mood string. Extract the mood
+                      // either way so we never surface the raw JSON / UUID.
+                      const rawMood = selectedLog.value ?? ''
+                      let moodVal = rawMood
+                      try {
+                        const p = JSON.parse(rawMood)
+                        if (p && typeof p === 'object') moodVal = p.mood ?? p.value ?? p.label ?? ''
+                      } catch {}
                       const moodMeta: Record<string, { label: string; color: string }> = {
                         happy:     { label: 'Happy',     color: stickers.green },
                         calm:      { label: 'Calm',      color: stickers.blue },
