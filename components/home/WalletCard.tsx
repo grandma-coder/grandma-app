@@ -77,10 +77,22 @@ export function WalletCard({
     ink = (stickers as Record<string, string>)[tone + 'Ink'] ?? colors.text
   }
   const border = diffuse ? dt.colors.line : colors.border
-  // The circular icon chip: paper-white on tinted cards, subtle on cream.
-  const chipBg = tone === 'surface' || diffuse
-    ? (diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised)
-    : '#FFFEF8'
+
+  // The circular icon chip.
+  //  · Current: paper-white on tinted cards, subtle raised on cream.
+  //  · Diffuse: the card surface stays hairline-clean, so the chip carries the
+  //    per-tone color (soft sticker tint) — this is how cards stay visually
+  //    distinguishable under Diffuse without saturated fills.
+  let chipBg: string
+  if (diffuse) {
+    const softTone =
+      tone === 'surface' ? dt.colors.surfaceRaised
+      : tone === 'mode' || tone === 'lavender' ? getModeColor(mode, isDark) + '2E'
+      : ((stickers as Record<string, string>)[tone + 'Soft'] ?? dt.colors.surfaceRaised)
+    chipBg = softTone
+  } else {
+    chipBg = tone === 'surface' ? colors.surfaceRaised : '#FFFEF8'
+  }
 
   const showBody = expanded && !linkOnly && !!children
 
