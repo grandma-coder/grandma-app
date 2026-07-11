@@ -25,7 +25,6 @@ import {
   ScrollView,
   Animated,
   Keyboard,
-  Modal,
 } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { router, useLocalSearchParams } from 'expo-router'
@@ -676,8 +675,6 @@ function getSuggestions(
 // spring; tap one to send, tap the backdrop or the same pill to collapse. The
 // current (cream) theme keeps the plain horizontal scroll unchanged.
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
-
 function WheelFollowup({
   text, index, count, progress, tint, onPick,
 }: {
@@ -689,34 +686,24 @@ function WheelFollowup({
   onPick: (t: string) => void
 }) {
   const dt = useDiffuseTheme()
-  // Fan the chips up in a gentle arc: newest at bottom, arcing left→right as
-  // they rise. translateY lifts each chip; translateX gives the curved sweep.
-  // Compact spacing so all follow-ups fit above the composer without a scrim.
-  const rise = 44 + index * 44
-  const t = count > 1 ? index / (count - 1) : 0.5
-  const sway = Math.sin(t * Math.PI) * 22 - 11 // -11..+11 arc bulge
-  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0, -rise] })
-  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, sway] })
-  const opacity = progress.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0, 1] })
-  const scale = progress.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] })
+  // Inline stacked list — each row fades + slides up with a per-item stagger
+  // (later rows start later). Rendered in normal flow above the rail, filling
+  // the empty gap; no overlay, no wash.
+  const start = count > 1 ? (index / count) * 0.5 : 0
+  const opacity = progress.interpolate({ inputRange: [start, Math.min(1, start + 0.5)], outputRange: [0, 1], extrapolate: 'clamp' })
+  const translateY = progress.interpolate({ inputRange: [start, Math.min(1, start + 0.5)], outputRange: [10, 0], extrapolate: 'clamp' })
 
   return (
-    <Animated.View
-      style={[
-        wheelStyles.followup,
-        { opacity, transform: [{ translateX }, { translateY }, { scale }] },
-      ]}
-    >
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
       <Pressable
         onPress={() => onPick(text)}
         style={({ pressed }) => [
           wheelStyles.followupPill,
           {
-            // Hairline paper chip — no accent border/shadow (soft ink lift only).
             backgroundColor: dt.colors.surface,
             borderColor: dt.colors.line2,
             shadowColor: '#141313',
-            opacity: pressed ? 0.7 : 1,
+            opacity: pressed ? 0.6 : 1,
           },
         ]}
       >
@@ -733,12 +720,9 @@ interface WheelProps {
   diffuse: boolean
   tint: string
   onPick: (prompt: string) => void
-  /** Distance from the screen bottom to the top of the composer, so the fan
-   *  sits just above the input inside the full-screen overlay. */
-  fanBottom: number
 }
 
-function SuggestionWheel({ suggestions, diffuse, tint, onPick, fanBottom }: WheelProps) {
+function SuggestionWheel({ suggestions, diffuse, tint, onPick }: WheelProps) {
   const { colors, font } = useTheme()
   const dt = useDiffuseTheme()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
@@ -800,36 +784,24 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick, fanBottom }: Whee
 
   return (
     <View style={wheelStyles.wrap}>
-      {/* Full-screen overlay in a Modal so the fan escapes the composer's
-          clipping and floats over the whole screen. A LIGHT page-colour wash
-          (no blur) quiets the chat behind the fan so the floating pills don't
-          read as overlapping the reply card — soft, not a heavy frost. The
-          wash is also the tap-catcher: tapping it collapses the fan. */}
-      <Modal visible={open != null} transparent animationType="none" onRequestClose={collapse}>
-        {open ? (
-          <View style={StyleSheet.absoluteFill}>
-            <AnimatedPressable
-              style={[StyleSheet.absoluteFill, { backgroundColor: dt.colors.bg, opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 0.9] }) }]}
-              onPress={collapse}
+      {/* Inline follow-up list — fills the empty space above the rail when a
+          category is open. No overlay, no wash: the options just appear here
+          and you pick from them. */}
+      {open ? (
+        <View style={wheelStyles.followupList}>
+          {open.followups.map((q, i) => (
+            <WheelFollowup
+              key={q}
+              text={q}
+              index={i}
+              count={open.followups.length}
+              progress={progress}
+              tint={tint}
+              onPick={pick}
             />
-
-            {/* Fanned follow-ups, anchored just above the composer */}
-            <View pointerEvents="box-none" style={[wheelStyles.fan, { bottom: fanBottom }]}>
-              {open.followups.map((q, i) => (
-                <WheelFollowup
-                  key={q}
-                  text={q}
-                  index={i}
-                  count={open.followups.length}
-                  progress={progress}
-                  tint={tint}
-                  onPick={pick}
-                />
-              ))}
-            </View>
-          </View>
-        ) : null}
-      </Modal>
+          ))}
+        </View>
+      ) : null}
 
       {/* Category rail */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionsRow}>
@@ -873,22 +845,24 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick, fanBottom }: Whee
 
 const wheelStyles = StyleSheet.create({
   wrap: { position: 'relative' },
-  fan: {
-    position: 'absolute',
-    left: 0, right: 0,
+  // Inline stacked follow-ups, centered above the rail, filling the gap.
+  followupList: {
     alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
   },
-  followup: { position: 'absolute', bottom: 0, maxWidth: '84%' },
   followupPill: {
-    paddingHorizontal: 15,
-    paddingVertical: 9,
+    maxWidth: '92%',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 999,
     borderWidth: 1,
     shadowColor: '#141313',
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   followupText: { fontSize: 13, textAlign: 'center', lineHeight: 17 },
 })
@@ -1742,7 +1716,6 @@ export function GrandmaTalk() {
             diffuse={diffuse}
             tint={accent}
             onPick={sendText}
-            fanBottom={insets.bottom + 150}
           />
         )}
 
