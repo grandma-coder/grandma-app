@@ -33,7 +33,7 @@ import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface, SoftBloom, DiffuseArrow, DiffuseGrain } from '../ui/diffuse/DiffuseKit'
 import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile, DiffuseBloomIcon, DiffuseDotCalendar, DiffuseLeapGraph, DiffuseSheet, DiffuseListRow, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
-import { Character } from '../characters/Characters'
+import { Character, type CharacterName } from '../characters/Characters'
 import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -7686,32 +7686,32 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
     return `${suggested.activity} activities/day helps maintain a complete picture of your child's day — meals, activities, milestones, and health. Consistency helps pediatrician visits too.`
   }
 
-  type MetricRow = { key: string; label: string; unit: string; color: string; icon: typeof Moon; value: string; setValue: (v: string) => void; suggested: number; desc: string; step: number; reason: string }
+  type MetricRow = { key: string; label: string; unit: string; color: string; icon: typeof Moon; char: CharacterName; value: string; setValue: (v: string) => void; suggested: number; desc: string; step: number; reason: string }
 
   // Build metrics list based on feeding stage
   const metrics: MetricRow[] = [
-    { key: 'sleep', label: 'Sleep', unit: 'hours/day', color: PILLAR_COLORS.sleep, icon: Moon, value: sleep, setValue: setSleep, suggested: suggested.sleep, desc: 'CDC recommended for age', step: 1, reason: sleepReason() },
+    { key: 'sleep', label: 'Sleep', unit: 'hours/day', color: PILLAR_COLORS.sleep, icon: Moon, char: 'sleep', value: sleep, setValue: setSleep, suggested: suggested.sleep, desc: 'CDC recommended for age', step: 1, reason: sleepReason() },
   ]
 
   if (stage === 'liquid') {
     metrics.push(
-      { key: 'feedings', label: 'Feedings', unit: 'feeds/day', color: PILLAR_COLORS.nutrition, icon: Droplets, value: feedings, setValue: setFeedings, suggested: suggested.feedings, desc: 'Breast & bottle feeds', step: 1, reason: feedingsReason() },
-      { key: 'feedingMl', label: 'Volume', unit: 'ml/day', color: PILLAR_COLORS.nutrition, icon: Droplets, value: feedingMl, setValue: setFeedingMl, suggested: suggested.feedingMl, desc: 'Total milk/formula volume', step: 50, reason: feedingMlReason() },
+      { key: 'feedings', label: 'Feedings', unit: 'feeds/day', color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'feeding', value: feedings, setValue: setFeedings, suggested: suggested.feedings, desc: 'Breast & bottle feeds', step: 1, reason: feedingsReason() },
+      { key: 'feedingMl', label: 'Volume', unit: 'ml/day', color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'milk', value: feedingMl, setValue: setFeedingMl, suggested: suggested.feedingMl, desc: 'Total milk/formula volume', step: 50, reason: feedingMlReason() },
     )
   } else {
     metrics.push(
-      { key: 'calories', label: stage === 'mixed' ? 'Solids Cal' : 'Calories', unit: 'kcal/day', color: PILLAR_COLORS.nutrition, icon: Utensils, value: calories, setValue: setCalories, suggested: suggested.calories, desc: stage === 'mixed' ? 'From solid food (intro stage)' : 'Based on age & growth', step: 50, reason: caloriesReason() },
+      { key: 'calories', label: stage === 'mixed' ? 'Solids Cal' : 'Calories', unit: 'kcal/day', color: PILLAR_COLORS.nutrition, icon: Utensils, char: 'calories', value: calories, setValue: setCalories, suggested: suggested.calories, desc: stage === 'mixed' ? 'From solid food (intro stage)' : 'Based on age & growth', step: 50, reason: caloriesReason() },
     )
     if (suggested.feedings > 0) {
       metrics.push(
-        { key: 'feedings', label: 'Milk Feeds', unit: 'feeds/day', color: PILLAR_COLORS.nutrition, icon: Droplets, value: feedings, setValue: setFeedings, suggested: suggested.feedings, desc: 'Bottles & breastfeeds per day', step: 1, reason: feedingsReason() },
-        { key: 'feedingMl', label: 'Milk Volume', unit: 'ml/day', color: PILLAR_COLORS.nutrition, icon: Droplets, value: feedingMl, setValue: setFeedingMl, suggested: suggested.feedingMl, desc: 'Daily milk/formula intake', step: 50, reason: feedingMlReason() },
+        { key: 'feedings', label: 'Milk Feeds', unit: 'feeds/day', color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'feeding', value: feedings, setValue: setFeedings, suggested: suggested.feedings, desc: 'Bottles & breastfeeds per day', step: 1, reason: feedingsReason() },
+        { key: 'feedingMl', label: 'Milk Volume', unit: 'ml/day', color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'milk', value: feedingMl, setValue: setFeedingMl, suggested: suggested.feedingMl, desc: 'Daily milk/formula intake', step: 50, reason: feedingMlReason() },
       )
     }
   }
 
   metrics.push(
-    { key: 'activity', label: 'Activities', unit: 'logs/day', color: PILLAR_COLORS.activity, icon: Zap, value: activity, setValue: setActivity, suggested: suggested.activity, desc: 'Total daily activities', step: 1, reason: activityReason() },
+    { key: 'activity', label: 'Activities', unit: 'logs/day', color: PILLAR_COLORS.activity, icon: Zap, char: 'activity', value: activity, setValue: setActivity, suggested: suggested.activity, desc: 'Total daily activities', step: 1, reason: activityReason() },
   )
 
   if (diffuse) {
@@ -7753,7 +7753,6 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
               contentContainerStyle={{ gap: 10 }}
             >
               {metrics.map((m) => {
-                const Icon = m.icon
                 return (
                   <View
                     key={m.key}
@@ -7764,9 +7763,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                       paddingVertical: 12, paddingHorizontal: 14,
                     }}
                   >
-                    <DiffuseBloomIcon color={acc} size={40} intensity={0.45}>
-                      <Icon size={20} color={dCol.ink3} strokeWidth={1.5} />
-                    </DiffuseBloomIcon>
+                    <Character name={m.char} size={30} color={m.color} />
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 16, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.2 }}>{m.label}</Text>
                       <Text style={{ fontSize: 11.5, fontFamily: diffuseFont.body, color: dCol.ink3, marginTop: 1 }}>{m.desc}</Text>
