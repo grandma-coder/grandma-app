@@ -13,9 +13,9 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import {
   Utensils, Moon, Sun, Heart, Thermometer, Pill, Syringe, Smile, Camera,
-  Baby, Sparkles, Dumbbell, FileText, MinusCircle, Circle, Check,
-  Droplets, Thermometer as ThermoIcon, Activity, Footprints, Timer,
-  Sprout, HeartHandshake, Flower2, Waves,
+  Sparkles, Dumbbell, FileText, MinusCircle, Circle, Check,
+  Droplets, Droplet, Thermometer as ThermoIcon, Activity, Footprints, Timer,
+  Sprout, HeartHandshake, Flower2, Waves, Ruler, Stethoscope, Milk,
 } from 'lucide-react-native'
 import { useDiffuseTheme, diffuseFont, getDiffuseAccent, stickers } from '../../constants/theme'
 import { SoftBloom } from '../ui/diffuse/DiffuseKit'
@@ -25,11 +25,14 @@ import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 
 /** Lucide line glyph per log type. */
 export const DIFFUSE_LOG_GLYPH: Record<string, typeof Utensils> = {
-  // kids
-  feeding: Utensils, food: Utensils, sleep: Moon, wake_up: Sun,
-  health: Heart, temperature: Thermometer, medicine: Pill, vaccine: Syringe,
-  mood: Smile, memory: Camera, photo: Camera, diaper: Baby,
-  growth: Heart, milestone: Sparkles, activity: Dumbbell,
+  // kids — each type gets a distinct, recognizable glyph (no shared faces):
+  //   feeding=Milk (bottle/breast) vs food=Utensils (solids); diaper=Droplet
+  //   (not a baby-face, so it never clashes with mood=Smile); health=Stethoscope
+  //   and growth=Ruler (both were Heart before — ambiguous).
+  feeding: Milk, food: Utensils, sleep: Moon, wake_up: Sun,
+  health: Stethoscope, temperature: Thermometer, medicine: Pill, vaccine: Syringe,
+  mood: Smile, memory: Camera, photo: Camera, diaper: Droplet,
+  growth: Ruler, milestone: Sparkles, activity: Dumbbell,
   note: FileText, exam: Sprout, skipped: MinusCircle,
   // cycle
   basal_temp: ThermoIcon, lh: Droplets, cervical_mucus: Waves,
