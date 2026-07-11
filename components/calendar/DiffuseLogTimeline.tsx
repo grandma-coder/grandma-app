@@ -20,6 +20,7 @@ import {
 import { useDiffuseTheme, diffuseFont, getDiffuseAccent, stickers } from '../../constants/theme'
 import { SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
+import { Character, type CharacterName } from '../characters/Characters'
 
 // ─── Glyph + hue maps (superset: kids · cycle · pregnancy) ─────────────────
 
@@ -44,6 +45,24 @@ export const DIFFUSE_LOG_GLYPH: Record<string, typeof Utensils> = {
   nutrition: Utensils, appointment: Sprout,
 }
 
+/** Log type → character-blob concept. Types not listed fall back to the Lucide
+ *  glyph above (so nothing regresses). */
+const DIFFUSE_LOG_CHARACTER: Record<string, CharacterName> = {
+  // kids
+  feeding: 'feeding', food: 'nutrition', sleep: 'sleep', wake_up: 'sun',
+  health: 'checkup', temperature: 'temperature', medicine: 'medicine', vaccine: 'vaccine',
+  mood: 'mood', memory: 'photo', photo: 'photo', diaper: 'diaper',
+  growth: 'growth', milestone: 'sparkle', activity: 'activity', note: 'note', exam: 'exam',
+  // cycle
+  basal_temp: 'temperature', lh: 'water', cervical_mucus: 'water',
+  intercourse: 'heart', symptom: 'activity',
+  period_start: 'period', period_end: 'period', ovulation: 'ovulation',
+  // pregnancy
+  weight: 'growth', kick_count: 'kick', contraction: 'contraction',
+  water: 'water', exercise: 'activity', vitamins: 'medicine', kegel: 'soothe',
+  nutrition: 'nutrition', appointment: 'checkup', bath: 'bath', potty: 'potty', milk: 'milk',
+}
+
 /** Soft bloom hue per log type (from the sticker palette). */
 export function diffuseLogHue(type: string): string {
   const map: Record<string, string> = {
@@ -66,12 +85,17 @@ export function diffuseLogHue(type: string): string {
   return map[type] ?? stickers.blue
 }
 
-/** A Diffuse bloom-icon for a log type — the shared icon treatment (no spine). */
+/** A Diffuse bloom-icon for a log type — the shared icon treatment (no spine).
+ *  Prefers a character-blob when the type has a concept; else the Lucide glyph. */
 export function DiffuseLogIcon({ type, size = 34, inkColor }: { type: string; size?: number; inkColor: string }) {
+  const hue = diffuseLogHue(type)
+  const character = DIFFUSE_LOG_CHARACTER[type]
   const Glyph = DIFFUSE_LOG_GLYPH[type] ?? Circle
   return (
-    <DiffuseBloomIcon color={diffuseLogHue(type)} size={size}>
-      <Glyph size={size * 0.5} color={inkColor} strokeWidth={1.6} />
+    <DiffuseBloomIcon color={hue} size={size}>
+      {character
+        ? <Character name={character} size={size * 0.62} color={hue} />
+        : <Glyph size={size * 0.5} color={inkColor} strokeWidth={1.6} />}
     </DiffuseBloomIcon>
   )
 }
@@ -101,6 +125,7 @@ const TL_SPINE_LEFT_COMPACT = TL_NODE_COMPACT / 2
 /** One node circle on the connector: bordered disc, bg fill, bloom behind glyph. */
 export function DiffuseTimelineNode({ type, active, compact }: { type: string; active?: boolean; compact?: boolean }) {
   const { colors } = useDiffuseTheme()
+  const character = DIFFUSE_LOG_CHARACTER[type]
   const Glyph = DIFFUSE_LOG_GLYPH[type] ?? Circle
   const node = compact ? TL_NODE_COMPACT : TL_NODE
   return (
@@ -120,7 +145,9 @@ export function DiffuseTimelineNode({ type, active, compact }: { type: string; a
       <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
         <SoftBloom color={diffuseLogHue(type)} opacity={active ? 0.9 : 0.62} spread={0.42} radius="50%" />
       </View>
-      <Glyph size={compact ? 14 : 20} color={colors.ink2} strokeWidth={1.6} style={{ zIndex: 1 }} />
+      {character
+        ? <View style={{ zIndex: 1 }}><Character name={character} size={compact ? 18 : 26} color={diffuseLogHue(type)} bg={colors.bg} /></View>
+        : <Glyph size={compact ? 14 : 20} color={colors.ink2} strokeWidth={1.6} style={{ zIndex: 1 }} />}
     </View>
   )
 }
