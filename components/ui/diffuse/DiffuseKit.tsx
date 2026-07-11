@@ -11,7 +11,7 @@
 
 import { ReactNode, useEffect, useMemo, useRef } from 'react'
 import { View, Text, StyleSheet, ViewStyle, StyleProp, TextStyle, TextProps, Platform, Animated, Easing } from 'react-native'
-import Svg, { Defs, Filter, FeTurbulence, Rect, RadialGradient, LinearGradient as SvgLinearGradient, Stop, Circle, Ellipse, Path, ClipPath, G } from 'react-native-svg'
+import Svg, { Defs, Filter, FeTurbulence, Rect, RadialGradient, Stop, Circle, Ellipse, ClipPath, G } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useThemeStore } from '../../../store/useThemeStore'
 import {
@@ -199,10 +199,10 @@ export function IridescentBubble({ size, tint, isDark = false, style }: Iridesce
 }
 
 // ─── LiveOrb ──────────────────────────────────────────────────────────────────
-// A solid glossy iridescent sphere (no paper core, no text inside) with animated
-// "electronic wave" streaks flowing across its surface so it reads as alive.
-// Warm sheen top-left → magenta body → deep violet lower-right, mode-tinted.
-// The waves are SVG paths translated horizontally under a circular clip.
+// A smooth thermal-aura orb: warm cream/peach core → coral → pink/magenta band
+// → gold → a teal/mint rim that darkens toward the edge, wrapped in a thin bright
+// outline. No paper core, no text inside. It slowly breathes/rotates its aura so
+// it reads as alive (no hard wave lines — the reference is a smooth gradient blob).
 
 const AnimatedG = Animated.createAnimatedComponent(G)
 
@@ -210,10 +210,10 @@ let liveOrbSeq = 0
 interface LiveOrbProps {
   /** Sphere diameter in px. */
   size: number
-  /** Mode accent — biases the body + halo hue. */
+  /** Mode accent — biases the ambient halo hue only (the aura palette is fixed). */
   tint: string
   isDark?: boolean
-  /** Wave speed multiplier — raise while thinking, lower when idle. Default 1. */
+  /** Aura drift speed multiplier — raise while thinking, lower when idle. */
   speed?: number
   style?: StyleProp<ViewStyle>
 }
@@ -221,22 +221,21 @@ interface LiveOrbProps {
 export function LiveOrb({ size, tint, isDark = false, speed = 1, style }: LiveOrbProps) {
   const seq = useMemo(() => liveOrbSeq++, [])
   const halo = `lo-h${seq}`
-  const sphere = `lo-s${seq}`
-  const sheen = `lo-sh${seq}`
-  const deep = `lo-d${seq}`
+  const core = `lo-core${seq}`
+  const pink = `lo-p${seq}`
+  const gold = `lo-g${seq}`
+  const teal = `lo-t${seq}`
   const clip = `lo-c${seq}`
-  const wave1 = `lo-w1${seq}`
-  const wave2 = `lo-w2${seq}`
 
-  // Drift animation for the wave layers (0→1 loops). Two layers at different
-  // phases give a living, non-repeating shimmer.
+  // Slow aura drift — two offset layers gently counter-rotate so the thermal
+  // bands shift like a living lava-lamp blob. Rotation, not wave lines.
   const drift = useRef(new Animated.Value(0)).current
   useEffect(() => {
     const loop = Animated.loop(
       Animated.timing(drift, {
         toValue: 1,
-        duration: 4200 / Math.max(0.4, speed),
-        easing: Easing.linear,
+        duration: 14000 / Math.max(0.4, speed),
+        easing: Easing.inOut(Easing.sin),
         useNativeDriver: true,
       }),
     )
@@ -245,25 +244,12 @@ export function LiveOrb({ size, tint, isDark = false, speed = 1, style }: LiveOr
   }, [speed])
 
   const c = size / 2
-  const r = size * 0.34 // solid sphere radius (halo feathers beyond)
+  const r = size * 0.34 // sphere radius (halo feathers beyond)
   const cx = c
   const cy = c
 
-  // Wave band geometry — drawn wider than the sphere so translation never
-  // reveals an edge; the clip keeps it on the sphere.
-  const bandW = r * 2.6
-  const w1x = drift.interpolate({ inputRange: [0, 1], outputRange: [0, r * 0.9] })
-  const w2x = drift.interpolate({ inputRange: [0, 1], outputRange: [0, -r * 0.9] })
-
-  // A gentle sine-ish streak path spanning the band, repeated as several close
-  // parallel lines — delicate brushed-light curves, not bold rings.
-  const streak = (yOff: number) => {
-    const y = cy + yOff
-    const a = r * 0.1 // amplitude — subtle
-    return `M ${cx - bandW / 2} ${y} `
-      + `C ${cx - bandW / 4} ${y - a}, ${cx - bandW / 8} ${y + a}, ${cx} ${y} `
-      + `C ${cx + bandW / 8} ${y - a}, ${cx + bandW / 4} ${y + a}, ${cx + bandW / 2} ${y}`
-  }
+  const spinA = drift.interpolate({ inputRange: [0, 1], outputRange: [0, 10] })
+  const spinB = drift.interpolate({ inputRange: [0, 1], outputRange: [0, -8] })
 
   return (
     <View pointerEvents="none" style={[{ width: size, height: size }, style]}>
@@ -271,39 +257,39 @@ export function LiveOrb({ size, tint, isDark = false, speed = 1, style }: LiveOr
         <Defs>
           {/* Ambient halo — soft mode-tinted glow feathering off the sphere */}
           <RadialGradient id={halo} cx="50%" cy="50%" r="50%">
-            <Stop offset="0.55" stopColor={tint} stopOpacity={isDark ? 0.22 : 0.28} />
-            <Stop offset="0.8" stopColor={tint} stopOpacity={isDark ? 0.1 : 0.13} />
+            <Stop offset="0.6" stopColor={tint} stopOpacity={isDark ? 0.18 : 0.22} />
+            <Stop offset="0.82" stopColor={tint} stopOpacity={isDark ? 0.08 : 0.1} />
             <Stop offset="1" stopColor={tint} stopOpacity={0} />
           </RadialGradient>
-          {/* Sphere body — magenta/pink core biased warm at top-left */}
-          <RadialGradient id={sphere} cx="38%" cy="34%" r="72%">
-            <Stop offset="0" stopColor="#FF7AB8" stopOpacity={1} />
-            <Stop offset="0.42" stopColor={tint} stopOpacity={1} />
-            <Stop offset="0.82" stopColor="#8A4FD8" stopOpacity={1} />
-            <Stop offset="1" stopColor="#5B2F9E" stopOpacity={1} />
+          {/* Core — soft cream/peach glow at the very centre only, so the pink
+              and gold thermal bands stay visible around it. */}
+          <RadialGradient id={core} cx="48%" cy="52%" r="40%">
+            <Stop offset="0" stopColor="#FDEBCB" stopOpacity={0.95} />
+            <Stop offset="0.6" stopColor="#FBD3A6" stopOpacity={0.6} />
+            <Stop offset="1" stopColor="#FBD3A6" stopOpacity={0} />
           </RadialGradient>
-          {/* Warm sheen — orange/coral bright kiss upper-left (the light source) */}
-          <RadialGradient id={sheen} cx="34%" cy="28%" r="42%">
-            <Stop offset="0" stopColor="#FFD08A" stopOpacity={0.95} />
-            <Stop offset="0.4" stopColor="#FF9A6B" stopOpacity={0.5} />
-            <Stop offset="1" stopColor="#FF9A6B" stopOpacity={0} />
+          {/* Pink/coral band — bold hot-pink arc sweeping the upper-left, the
+              dominant warm colour of the reference. */}
+          <RadialGradient id={pink} cx="40%" cy="30%" r="62%">
+            <Stop offset="0" stopColor="#FF4E7E" stopOpacity={0} />
+            <Stop offset="0.42" stopColor="#FF4E7E" stopOpacity={0.95} />
+            <Stop offset="0.7" stopColor="#FF6F97" stopOpacity={0.6} />
+            <Stop offset="1" stopColor="#FF6F97" stopOpacity={0} />
           </RadialGradient>
-          {/* Deep shade — violet weight lower-right for the 3D roundness */}
-          <RadialGradient id={deep} cx="72%" cy="78%" r="52%">
-            <Stop offset="0" stopColor="#4A2088" stopOpacity={0.55} />
-            <Stop offset="1" stopColor="#4A2088" stopOpacity={0} />
+          {/* Gold band — warm yellow ring between the pink and the teal rim */}
+          <RadialGradient id={gold} cx="50%" cy="50%" r="50%">
+            <Stop offset="0.52" stopColor="#FFC23C" stopOpacity={0} />
+            <Stop offset="0.74" stopColor="#FFC23C" stopOpacity={0.92} />
+            <Stop offset="0.9" stopColor="#FFD466" stopOpacity={0.55} />
+            <Stop offset="1" stopColor="#FFD466" stopOpacity={0} />
           </RadialGradient>
-          {/* Wave stroke gradient — bright warm fading out at the band ends */}
-          <SvgLinearGradient id={wave1} x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0} />
-            <Stop offset="0.5" stopColor="#FFE1C4" stopOpacity={isDark ? 0.5 : 0.62} />
-            <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
-          </SvgLinearGradient>
-          <SvgLinearGradient id={wave2} x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0} />
-            <Stop offset="0.5" stopColor="#FFC7E6" stopOpacity={isDark ? 0.4 : 0.5} />
-            <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
-          </SvgLinearGradient>
+          {/* Teal rim — mint/green outer ring darkening toward the edge, the
+              signature of the reference. Wider band, peaks at the sphere edge. */}
+          <RadialGradient id={teal} cx="50%" cy="50%" r="50%">
+            <Stop offset="0.66" stopColor="#5CC2A8" stopOpacity={0} />
+            <Stop offset="0.85" stopColor="#4FB89E" stopOpacity={0.9} />
+            <Stop offset="1" stopColor="#1B6857" stopOpacity={1} />
+          </RadialGradient>
           <ClipPath id={clip}>
             <Circle cx={cx} cy={cy} r={r} />
           </ClipPath>
@@ -312,26 +298,21 @@ export function LiveOrb({ size, tint, isDark = false, speed = 1, style }: LiveOr
         {/* Ambient halo behind the sphere */}
         <Rect width={size} height={size} fill={`url(#${halo})`} />
 
-        {/* Solid sphere + shading */}
-        <Circle cx={cx} cy={cy} r={r} fill={`url(#${sphere})`} />
+        {/* Thin bright outline just outside the aura */}
+        <Circle cx={cx} cy={cy} r={r + 0.5} fill="none" stroke="#FFFFFF" strokeWidth={size * 0.006} strokeOpacity={isDark ? 0.5 : 0.85} />
+
+        {/* Aura layers, clipped to the sphere. Two counter-drifting groups keep
+            the thermal bands alive without hard lines. */}
         <G clipPath={`url(#${clip})`}>
-          <Circle cx={cx} cy={cy} r={r} fill={`url(#${deep})`} />
-
-          {/* Animated electronic waves — fine parallel light-lines, two drifting
-              layers at opposite phase for a living shimmer */}
-          <AnimatedG translateX={w1x}>
-            <Path d={streak(-r * 0.3)} stroke={`url(#${wave1})`} strokeWidth={size * 0.006} fill="none" strokeLinecap="round" />
-            <Path d={streak(-r * 0.12)} stroke={`url(#${wave1})`} strokeWidth={size * 0.008} fill="none" strokeLinecap="round" />
-            <Path d={streak(r * 0.06)} stroke={`url(#${wave1})`} strokeWidth={size * 0.007} fill="none" strokeLinecap="round" />
-            <Path d={streak(r * 0.26)} stroke={`url(#${wave1})`} strokeWidth={size * 0.006} fill="none" strokeLinecap="round" />
+          <Circle cx={cx} cy={cy} r={r} fill="#F6D9B0" />
+          <AnimatedG originX={cx} originY={cy} rotation={spinA}>
+            <Circle cx={cx} cy={cy} r={r} fill={`url(#${pink})`} />
+            <Circle cx={cx} cy={cy} r={r} fill={`url(#${gold})`} />
           </AnimatedG>
-          <AnimatedG translateX={w2x}>
-            <Path d={streak(-r * 0.02)} stroke={`url(#${wave2})`} strokeWidth={size * 0.006} fill="none" strokeLinecap="round" />
-            <Path d={streak(r * 0.16)} stroke={`url(#${wave2})`} strokeWidth={size * 0.007} fill="none" strokeLinecap="round" />
+          <AnimatedG originX={cx} originY={cy} rotation={spinB}>
+            <Circle cx={cx} cy={cy} r={r} fill={`url(#${teal})`} />
           </AnimatedG>
-
-          {/* Warm sheen on top of the waves so the light source stays crisp */}
-          <Circle cx={cx} cy={cy} r={r} fill={`url(#${sheen})`} />
+          <Circle cx={cx} cy={cy} r={r} fill={`url(#${core})`} />
         </G>
       </Svg>
     </View>
