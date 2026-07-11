@@ -46,7 +46,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickerPalette, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
-import { useIsDiffuse, SoftBloom, IridescentBubble } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, SoftBloom, LiveOrb } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { Burst, Heart, Flower } from '../ui/Stickers'
 import { useModeStore } from '../../store/useModeStore'
@@ -474,33 +474,21 @@ function GrandmaOrb({ status, state, size = 260 }: GrandmaOrbProps) {
 
   const s = size
 
-  // Diffuse: an iridescent soap-bubble aura (pearl cyan → lilac → peach, mode-
-  // tinted rim) with a soft paper core holding a line moon glyph + mono status.
+  // Diffuse: a solid, living iridescent orb (no paper core, no text inside) with
+  // animated electronic-wave streaks. The status greeting sits BELOW the orb.
   if (diffuse) {
     const accent = getDiffuseAccent(mode, dt.isDark)
+    // Waves drift faster the more active the orb state is.
+    const waveSpeed = state === 'thinking' ? 1.8 : state === 'typing' ? 1.3 : 1
     return (
-      <Animated.View style={[orbStyles.root, { width: s, height: s, transform: [{ scale: breathe }] }]}>
-        <IridescentBubble size={s} tint={accent} isDark={dt.isDark} style={orbStyles.ring} />
-        <View
-          style={[
-            orbStyles.core,
-            {
-              width: s * 0.48,
-              height: s * 0.48,
-              borderRadius: (s * 0.48) / 2,
-              backgroundColor: dt.colors.surface,
-              shadowColor: accent,
-              shadowOpacity: dt.isDark ? 0.35 : 0.28,
-              shadowRadius: 24,
-              shadowOffset: { width: 0, height: 0 },
-              elevation: 0,
-            },
-          ]}
-        >
-          <MoonIcon size={26} color={dt.colors.ink3} strokeWidth={1.5} />
-          <Text style={[orbStyles.statusMono, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>{status}</Text>
-        </View>
-      </Animated.View>
+      <View style={orbStyles.diffuseWrap}>
+        <Animated.View style={{ transform: [{ scale: breathe }] }}>
+          <LiveOrb size={s * 0.66} tint={accent} isDark={dt.isDark} speed={waveSpeed} />
+        </Animated.View>
+        <Text style={[orbStyles.greeting, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+          {status}
+        </Text>
+      </View>
     )
   }
 
@@ -528,6 +516,9 @@ const orbStyles = StyleSheet.create({
   core: { alignItems: 'center', justifyContent: 'center', gap: 8 },
   status: { fontSize: 16, letterSpacing: -0.3 },
   statusMono: { fontSize: 11, letterSpacing: 0.6, textAlign: 'center', paddingHorizontal: 12, textTransform: 'lowercase' },
+  // Diffuse: orb stacked over a greeting line beneath it (reference layout).
+  diffuseWrap: { alignItems: 'center', justifyContent: 'center', gap: 22 },
+  greeting: { fontSize: 26, lineHeight: 32, letterSpacing: -0.3, textAlign: 'center', paddingHorizontal: 28 },
 })
 
 // ─── Initial suggestion chips ─────────────────────────────────────────────
