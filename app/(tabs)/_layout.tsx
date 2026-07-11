@@ -195,19 +195,25 @@ function CenterTabButton() {
           {diffuse ? (
             <Animated.View
               style={[
-                diffuseFab.node,
-                {
-                  backgroundColor: dt.colors.surface,
-                  borderColor: dt.colors.line2,
-                  transform: [{ rotate: rotation }, { scale: pulse }],
-                },
+                diffuseFab.stage,
+                { transform: [{ rotate: rotation }, { scale: pulse }] },
               ]}
             >
-              {/* soft accent bloom behind the node — no hard silhouette */}
+              {/* Soft accent bloom — a SIBLING behind the node, NOT a child of
+                  it. A child would be clipped by the node's borderRadius into a
+                  hard disc; here the feathered SVG falloff bleeds into the page.
+                  Large box + gentle spread so the edge is invisible. */}
               <View pointerEvents="none" style={diffuseFab.bloom}>
-                <SoftBloom color={accentColor} opacity={dt.isDark ? 0.5 : 0.6} spread={0.5} radius="55%" />
+                <SoftBloom color={accentColor} opacity={dt.isDark ? 0.42 : 0.5} spread={0.35} radius="50%" />
               </View>
-              <Plus size={26} color={dt.colors.ink} strokeWidth={2} />
+              <View
+                style={[
+                  diffuseFab.node,
+                  { backgroundColor: dt.colors.surface, borderColor: dt.colors.line2 },
+                ]}
+              >
+                <Plus size={26} color={dt.colors.ink} strokeWidth={2} />
+              </View>
             </Animated.View>
           ) : (
           <Animated.View
@@ -732,7 +738,17 @@ export default function TabLayout() {
 
 // Diffuse center FAB — calm circular node (paper + hairline) with a soft
 // mode-accent bloom behind it, replacing the collage Burst sticker.
+const FAB_BLOOM = 128 // bloom canvas — well larger than the 60px node so the
+                      // radial falloff reaches full transparency before any edge
 const diffuseFab = StyleSheet.create({
+  // Unclipped stage sized to the bloom; the node + bloom are siblings inside it.
+  // NO borderRadius / overflow here, so the feathered bloom is never clipped.
+  stage: {
+    width: FAB_BLOOM,
+    height: FAB_BLOOM,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   node: {
     width: 60,
     height: 60,
@@ -741,12 +757,9 @@ const diffuseFab = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Full-stage bloom centered behind the node.
   bloom: {
-    position: 'absolute',
-    top: -18,
-    left: -18,
-    right: -18,
-    bottom: -18,
+    ...StyleSheet.absoluteFillObject,
   },
 })
 
