@@ -25,6 +25,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 import { useTranslation } from '../../lib/i18n'
 import { useTheme, useDiffuseTheme, getDiffuseAccent, getModeField, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { DiffuseTimelineRow } from '../calendar/DiffuseLogTimeline'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 const SVG_SIZE = 320
@@ -662,27 +663,19 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               {t('preg_ring_loggedThisWeek')}
             </Text>
             {pillarGroups.length > 0 ? (
-              <View style={styles.logList}>
-                {pillarGroups.map((g) => (
-                  <View key={g.type} style={styles.logRow}>
-                    <View style={[styles.logDot, { backgroundColor: diffuseLogColor(g.type, field, accent) }]} />
-                    <View style={styles.logBody}>
-                      <View style={styles.logHeader}>
-                        <Text style={[dstyles.logLabel, { color: ink }]}>
-                          {g.label}
-                        </Text>
-                        <Text style={[dstyles.logDay, { color: ink3 }]}>
-                          {formatLogDay(g.lastDate)}
-                        </Text>
-                      </View>
-                      <Text
-                        style={[dstyles.logDetail, { color: ink2 }]}
-                        numberOfLines={2}
-                      >
-                        {g.summary}
-                      </Text>
-                    </View>
-                  </View>
+              // v4 vertical "choice timeline" — same system as Kids/Cycle.
+              <View style={{ marginTop: 2 }}>
+                {pillarGroups.map((g, i) => (
+                  <DiffuseTimelineRow
+                    key={g.type}
+                    type={g.type}
+                    time={formatLogDay(g.lastDate)}
+                    title={g.label}
+                    sub={g.summary}
+                    logged
+                    first={i === 0}
+                    last={i === pillarGroups.length - 1}
+                  />
                 ))}
               </View>
             ) : (
