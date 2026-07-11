@@ -466,6 +466,7 @@ export const en: TranslationKeys = {
   // Pregnancy home (Wave 1)
   pregnancy_todaysRoutines: "TODAY'S ROUTINES",
   pregnancy_reminders: 'REMINDERS',
+  pregnancy_weekWallet_label: 'YOUR WEEK',
   pregnancy_birthGuideTitle: 'Birth Guide',
   pregnancy_birthGuideSubtitle: 'Natural · C-Section · Home · Water',
   pregnancy_grandmaCtaSubtitle: 'Questions, worries, or just need a pep talk',

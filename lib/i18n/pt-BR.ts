@@ -413,6 +413,7 @@ export const ptBR: TranslationKeys = {
   pregnancy_birthPlan: "Plano de Parto",
   pregnancy_todaysRoutines: "ROTINAS DE HOJE",
   pregnancy_reminders: "LEMBRETES",
+  pregnancy_weekWallet_label: 'YOUR WEEK',
   pregnancy_birthGuideTitle: "Guia de Parto",
   pregnancy_birthGuideSubtitle: "Natural · Cesariana · Casa · Água",
   pregnancy_grandmaCtaSubtitle: "Dúvidas, preocupações ou só precisa de um incentivo",

@@ -413,6 +413,7 @@ export const es: TranslationKeys = {
   pregnancy_birthPlan: "Plan de Parto",
   pregnancy_todaysRoutines: "RUTINAS DE HOY",
   pregnancy_reminders: "RECORDATORIOS",
+  pregnancy_weekWallet_label: 'YOUR WEEK',
   pregnancy_birthGuideTitle: "Guía de parto",
   pregnancy_birthGuideSubtitle: "Natural · Cesárea · En casa · En el agua",
   pregnancy_grandmaCtaSubtitle: "Preguntas, preocupaciones o solo necesitas ánimo",

@@ -15,34 +15,27 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
-  Pressable,
   ScrollView,
   FlatList,
-  Modal,
   StyleSheet,
   Dimensions,
 } from 'react-native'
-import { router, useFocusEffect } from 'expo-router'
-import { ChevronRight, X } from 'lucide-react-native'
+import { useFocusEffect } from 'expo-router'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, font, radius, diffuseFont, useDiffuseTheme } from '../../constants/theme'
+import { useTheme, diffuseFont, useDiffuseTheme } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { useTranslation } from '../../lib/i18n'
 import { HomeGreeting } from './HomeGreeting'
-import { PaperCard } from '../ui/PaperCard'
-import { Leaf } from '../ui/Stickers'
-import { MonoCaps, Body } from '../ui/Typography'
-import { GrandmaLogo } from '../ui/GrandmaLogo'
+import { MonoCaps } from '../ui/Typography'
 import { supabase } from '../../lib/supabase'
 import { pregnancyWeeks, getDaysToGo, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import { toDateStr } from '../../lib/cycleLogic'
-import type { TodayLogEntry } from '../../lib/analyticsData'
 import {
   PregnancyMoodForm,
   PregnancySymptomsForm,
@@ -59,11 +52,8 @@ import { PregnancyMealForm } from '../calendar/PregnancyMealForm'
 import { LogSheet } from '../calendar/LogSheet'
 
 import { WeekCard } from './pregnancy/WeekCard'
-import { LogWeight } from '../stickers/RewardStickers'
 import { AffirmationRevealCard } from './pregnancy/AffirmationRevealCard'
-import { TodaySummaryCard } from './pregnancy/TodaySummaryCard'
-import { RemindersSection } from './pregnancy/RemindersSection'
-import type { ReminderLogType } from './pregnancy/RemindersSection'
+import { WeekWallet } from './pregnancy/WeekWallet'
 import { PregnancyUserReminders } from './pregnancy/PregnancyUserReminders'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
 import { BirthGuideModal } from '../pregnancy/BirthGuideModal'
@@ -181,48 +171,6 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
   )
 }
 
-// ─── Slim secondary row ───────────────────────────────────────────────────────
-// Compact single-line row used for weight, birth guide, and Ask Grandma.
-
-interface SlimRowProps {
-  icon: React.ReactNode
-  title: string
-  value?: string
-  onPress: () => void
-}
-
-function SlimRow({ icon, title, value, onPress }: SlimRowProps) {
-  const { colors, font } = useTheme()
-  const diffuse = useIsDiffuse()
-  const dt = useDiffuseTheme()
-  const titleColor = diffuse ? dt.colors.ink : colors.text
-  const titleFont = diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold
-  const valueColor = diffuse ? dt.colors.ink3 : colors.textMuted
-  const chevronColor = diffuse ? dt.colors.ink3 : colors.textMuted
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}>
-      <PaperCard
-        radius={radius.md}
-        padding={14}
-        tint={diffuse ? dt.colors.surface : undefined}
-        borderColor={diffuse ? dt.colors.line : undefined}
-        style={styles.slimRow}
-      >
-        <View style={styles.slimIcon}>{icon}</View>
-        <Text style={[styles.slimTitle, { color: titleColor, fontFamily: titleFont }]} numberOfLines={1}>
-          {title}
-        </Text>
-        {value ? (
-          <Text style={{ fontSize: 14, color: valueColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }} numberOfLines={1}>
-            {value}
-          </Text>
-        ) : null}
-        <ChevronRight size={18} color={chevronColor} strokeWidth={2} />
-      </PaperCard>
-    </Pressable>
-  )
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 type InlineLogType =
@@ -248,7 +196,7 @@ const INLINE_LOG_TITLE_KEY: Record<Exclude<InlineLogType, null>, string> = {
 interface PregnancyHomeProps { topInset?: number }
 
 export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
-  const { colors, stickers } = useTheme()
+  const { colors } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const bg = diffuse ? dt.colors.bg : colors.bg
@@ -382,57 +330,30 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         <AffirmationRevealCard />
       </View>
 
-      {/* 3. Today tracker — merged chips + glance; pills open log sheets */}
-      <View style={[styles.section, { paddingHorizontal: 0 }]}>
-        <TodaySummaryCard
-          todayLogs={todayLogs}
-          weekNumber={weekNumber}
-          userId={userId}
-          onLogMetric={(type) => setActiveLog(type as InlineLogType)}
-        />
-      </View>
-
-      {/* 4. Reminders */}
+      {/* 3. Week Wallet — collapsible stack (tracker + reminders + shortcuts) */}
       <View style={styles.section}>
         {diffuse ? (
           <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
-            {t('pregnancy_reminders')}
+            {t('pregnancy_weekWallet_label')}
           </Text>
         ) : (
-          <MonoCaps style={{ marginBottom: 12 }}>{t('pregnancy_reminders')}</MonoCaps>
+          <MonoCaps style={{ marginBottom: 12 }}>{t('pregnancy_weekWallet_label')}</MonoCaps>
         )}
-        <RemindersSection
+        <WeekWallet
           weekNumber={weekNumber}
           todayLogs={todayLogs}
+          userId={userId}
+          latestWeight={latestWeight}
+          onLogMetric={(type) => setActiveLog(type as InlineLogType)}
+          onOpenAppointment={(appt) => setApptDetail(appt)}
           onOpenWeekDetail={() => {
             setDetailWeek(weekNumber)
             setWeekDetailVisible(true)
           }}
-          onLog={(type: ReminderLogType) => setActiveLog(type as InlineLogType)}
-          onOpenAppointment={(appt) => setApptDetail(appt)}
+          onOpenBirthGuide={() => setBirthGuideVisible(true)}
         />
         <View style={{ height: 12 }} />
         <PregnancyUserReminders userId={userId ?? null} />
-      </View>
-
-      {/* 5-7. Slim secondary rows — weight, birth guide, Ask Grandma */}
-      <View style={[styles.section, { gap: 10 }]}>
-        <SlimRow
-          icon={<LogWeight size={24} />}
-          title={t('preg_weight_sheetTitle')}
-          value={latestWeight !== null ? `${latestWeight.toFixed(1)} kg` : undefined}
-          onPress={() => router.push('/insights')}
-        />
-        <SlimRow
-          icon={<Leaf size={24} fill={stickers.green} />}
-          title={t('pregnancy_birthGuideTitle')}
-          onPress={() => setBirthGuideVisible(true)}
-        />
-        <SlimRow
-          icon={<GrandmaLogo size={28} palette="lilac" outline={colors.text} />}
-          title={t('pregnancy_appt_askGrandma')}
-          onPress={() => router.push('/grandma-talk')}
-        />
       </View>
 
       {/* Week detail modal */}
@@ -479,14 +400,4 @@ const styles = StyleSheet.create({
 
   // Shared section
   section: { paddingHorizontal: 20, marginTop: 24 },
-
-  // Slim secondary rows — layout only; PaperCard supplies bg/border/shadow.
-  slimRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 52,
-  },
-  slimIcon: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  slimTitle: { flex: 1, fontSize: 15 },
 })

@@ -463,6 +463,7 @@ export interface TranslationKeys {
   // ─── Pregnancy home (Wave 1) ──────────────────────────────────────────
   pregnancy_todaysRoutines: string
   pregnancy_reminders: string
+  pregnancy_weekWallet_label: string
   pregnancy_birthGuideTitle: string
   pregnancy_birthGuideSubtitle: string
   pregnancy_grandmaCtaSubtitle: string
