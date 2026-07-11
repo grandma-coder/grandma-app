@@ -527,6 +527,8 @@ interface Suggestion {
   label: string
   prompt: string
   emoji: string
+  /** Related sub-questions fanned out in the wheel when this pill is tapped. */
+  followups: string[]
 }
 
 function getSuggestions(
@@ -539,28 +541,118 @@ function getSuggestions(
   const age = childAge ?? 'their age'
 
   const kidsSuggestions: Suggestion[] = [
-    { emoji: '🍼', label: 'Feeding tips', prompt: `What are the best feeding practices for a ${age}?` },
-    { emoji: '😴', label: 'Sleep routine', prompt: `How do I build a healthy sleep routine for ${name}?` },
-    { emoji: '💉', label: 'Vaccine schedule', prompt: `What vaccines should a ${age} get?` },
-    { emoji: '🌱', label: 'Growth & milestones', prompt: `What milestones should I expect from a ${age}?` },
-    { emoji: '🤒', label: 'Fever guidance', prompt: `When should I worry about a fever in a ${age}?` },
-    { emoji: '🥣', label: 'Introducing solids', prompt: `How do I safely introduce solid foods to ${name}?` },
+    { emoji: '🍼', label: 'Feeding tips', prompt: `What are the best feeding practices for a ${age}?`, followups: [
+      `How much should a ${age} eat per day?`,
+      `Is ${name} eating enough?`,
+      `What foods should I avoid for a ${age}?`,
+      `How do I handle a picky eater?`,
+    ] },
+    { emoji: '😴', label: 'Sleep routine', prompt: `How do I build a healthy sleep routine for ${name}?`, followups: [
+      `How much sleep does a ${age} need?`,
+      `Why does ${name} keep waking at night?`,
+      `Is it time to drop a nap?`,
+      `How do I handle sleep regressions?`,
+    ] },
+    { emoji: '💉', label: 'Vaccine schedule', prompt: `What vaccines should a ${age} get?`, followups: [
+      `Which vaccines are due right now?`,
+      `Are side effects normal after shots?`,
+      `Can I delay or space out vaccines?`,
+      `What if we missed a vaccine?`,
+    ] },
+    { emoji: '🌱', label: 'Growth & milestones', prompt: `What milestones should I expect from a ${age}?`, followups: [
+      `Is ${name} on track developmentally?`,
+      `What should I do to encourage development?`,
+      `When should I worry about a delay?`,
+      `What's a growth leap and when do they happen?`,
+    ] },
+    { emoji: '🤒', label: 'Fever guidance', prompt: `When should I worry about a fever in a ${age}?`, followups: [
+      `What temperature is a real fever?`,
+      `When should I call the doctor?`,
+      `How do I bring a fever down safely?`,
+      `What comfort measures help a sick ${age}?`,
+    ] },
+    { emoji: '🥣', label: 'Introducing solids', prompt: `How do I safely introduce solid foods to ${name}?`, followups: [
+      `Is ${name} ready for solids?`,
+      `What are good first foods?`,
+      `How do I spot an allergic reaction?`,
+      `Baby-led weaning or purees?`,
+    ] },
   ]
   const pregnancySuggestions: Suggestion[] = [
-    { emoji: '🥗', label: 'What to eat', prompt: 'What foods are best to eat during pregnancy?' },
-    { emoji: '😖', label: 'Symptom check', prompt: 'What pregnancy symptoms should I watch out for?' },
-    { emoji: '🛌', label: 'Better sleep', prompt: 'How can I sleep better during pregnancy?' },
-    { emoji: '🏥', label: 'Birth prep', prompt: 'How do I prepare for labor and birth?' },
-    { emoji: '🤱', label: 'Breastfeeding', prompt: 'What should I know about breastfeeding before the baby arrives?' },
-    { emoji: '💆', label: 'Managing stress', prompt: 'How do I manage stress and anxiety during pregnancy?' },
+    { emoji: '🥗', label: 'What to eat', prompt: 'What foods are best to eat during pregnancy?', followups: [
+      'Which foods should I avoid while pregnant?',
+      'How much weight should I gain?',
+      'Do I need to eat for two?',
+      'What helps with cravings and nausea?',
+    ] },
+    { emoji: '😖', label: 'Symptom check', prompt: 'What pregnancy symptoms should I watch out for?', followups: [
+      'Which symptoms mean I should call my doctor?',
+      'Is this cramping normal?',
+      'How do I ease back and hip pain?',
+      'When does morning sickness end?',
+    ] },
+    { emoji: '🛌', label: 'Better sleep', prompt: 'How can I sleep better during pregnancy?', followups: [
+      'What sleep position is safest?',
+      'How do I stop waking to pee all night?',
+      'Are pregnancy pillows worth it?',
+      'How do I quiet a racing mind at night?',
+    ] },
+    { emoji: '🏥', label: 'Birth prep', prompt: 'How do I prepare for labor and birth?', followups: [
+      'What should go in my hospital bag?',
+      'How do I write a birth plan?',
+      'How will I know labor has started?',
+      'What are my pain-relief options?',
+    ] },
+    { emoji: '🤱', label: 'Breastfeeding', prompt: 'What should I know about breastfeeding before the baby arrives?', followups: [
+      'How do I get a good latch?',
+      'How do I build up my milk supply?',
+      'What breastfeeding gear do I actually need?',
+      'Breast or bottle — how do I decide?',
+    ] },
+    { emoji: '💆', label: 'Managing stress', prompt: 'How do I manage stress and anxiety during pregnancy?', followups: [
+      'Is anxiety normal during pregnancy?',
+      'What relaxation techniques are safe?',
+      'How do I prepare emotionally for the baby?',
+      'When should I seek support for my mood?',
+    ] },
   ]
   const prePregSuggestions: Suggestion[] = [
-    { emoji: '🥦', label: 'Fertility foods', prompt: 'What foods boost fertility?' },
-    { emoji: '📅', label: 'Cycle tracking', prompt: 'How do I track my cycle to find my fertile window?' },
-    { emoji: '💊', label: 'Pre-natal vitamins', prompt: 'Which vitamins should I start before getting pregnant?' },
-    { emoji: '🧘', label: 'Stress & fertility', prompt: 'How does stress affect my ability to conceive?' },
-    { emoji: '🩺', label: 'Health checks', prompt: 'What health checks should I do before trying to conceive?' },
-    { emoji: '👫', label: 'Partner prep', prompt: 'How can my partner also prepare for pregnancy?' },
+    { emoji: '🥦', label: 'Fertility foods', prompt: 'What foods boost fertility?', followups: [
+      'Which foods should I cut back on?',
+      'Does caffeine affect fertility?',
+      'What should my partner eat too?',
+      'Are fertility supplements worth it?',
+    ] },
+    { emoji: '📅', label: 'Cycle tracking', prompt: 'How do I track my cycle to find my fertile window?', followups: [
+      'When am I most fertile?',
+      'How do ovulation tests work?',
+      'What does basal body temperature tell me?',
+      'Is my cycle length normal?',
+    ] },
+    { emoji: '💊', label: 'Pre-natal vitamins', prompt: 'Which vitamins should I start before getting pregnant?', followups: [
+      'When should I start prenatals?',
+      'How much folic acid do I need?',
+      'Do I need iron or vitamin D?',
+      'Which brands are worth it?',
+    ] },
+    { emoji: '🧘', label: 'Stress & fertility', prompt: 'How does stress affect my ability to conceive?', followups: [
+      'Can stress delay ovulation?',
+      'What relaxation habits help conception?',
+      'How do I cope with TTC anxiety?',
+      'Does exercise help or hurt fertility?',
+    ] },
+    { emoji: '🩺', label: 'Health checks', prompt: 'What health checks should I do before trying to conceive?', followups: [
+      'What preconception tests are recommended?',
+      'Should I see a doctor before trying?',
+      'How do existing conditions affect pregnancy?',
+      'When should I get a fertility work-up?',
+    ] },
+    { emoji: '👫', label: 'Partner prep', prompt: 'How can my partner also prepare for pregnancy?', followups: [
+      'How does male fertility factor in?',
+      'What lifestyle changes should we both make?',
+      'How do we stay connected while TTC?',
+      'What can my partner do to help?',
+    ] },
   ]
 
   const pool: Suggestion[] = []
@@ -575,6 +667,215 @@ function getSuggestions(
   const offset = (childName?.charCodeAt(0) ?? 0) % 3
   return [...pool.slice(offset), ...pool.slice(0, offset)]
 }
+
+// ─── Suggestion wheel ────────────────────────────────────────────────────────
+// Category pills in a horizontal rail. Under Diffuse, tapping a pill fans its
+// follow-up questions out in a curved arc above the rail with a staggered
+// spring; tap one to send, tap the backdrop or the same pill to collapse. The
+// current (cream) theme keeps the plain horizontal scroll unchanged.
+
+function WheelFollowup({
+  text, index, count, progress, tint, onPick,
+}: {
+  text: string
+  index: number
+  count: number
+  progress: Animated.Value
+  tint: string
+  onPick: (t: string) => void
+}) {
+  const dt = useDiffuseTheme()
+  // Fan the chips up in a gentle arc: newest at bottom, arcing left→right as
+  // they rise. translateY lifts each chip; translateX gives the curved sweep.
+  const rise = 56 + index * 52
+  const t = count > 1 ? index / (count - 1) : 0.5
+  const sway = Math.sin(t * Math.PI) * 26 - 13 // -13..+13 arc bulge
+  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0, -rise] })
+  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, sway] })
+  const opacity = progress.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0, 1] })
+  const scale = progress.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] })
+
+  return (
+    <Animated.View
+      style={[
+        wheelStyles.followup,
+        { opacity, transform: [{ translateX }, { translateY }, { scale }] },
+      ]}
+    >
+      <Pressable
+        onPress={() => onPick(text)}
+        style={({ pressed }) => [
+          wheelStyles.followupPill,
+          {
+            backgroundColor: dt.colors.surface,
+            borderColor: tint,
+            shadowColor: tint,
+            opacity: pressed ? 0.7 : 1,
+          },
+        ]}
+      >
+        <Text style={[wheelStyles.followupText, { color: dt.colors.ink, fontFamily: diffuseFont.body }]} numberOfLines={2}>
+          {text}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  )
+}
+
+interface WheelProps {
+  suggestions: Suggestion[]
+  diffuse: boolean
+  tint: string
+  onPick: (prompt: string) => void
+}
+
+function SuggestionWheel({ suggestions, diffuse, tint, onPick }: WheelProps) {
+  const { colors, font } = useTheme()
+  const dt = useDiffuseTheme()
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const progress = useRef(new Animated.Value(0)).current
+
+  const open = suggestions[openIndex ?? -1]
+
+  const animateTo = useCallback((to: number, cb?: () => void) => {
+    Animated.spring(progress, {
+      toValue: to,
+      useNativeDriver: true,
+      damping: 15,
+      stiffness: 180,
+      mass: 0.8,
+    }).start(cb)
+  }, [progress])
+
+  const collapse = useCallback(() => {
+    animateTo(0, () => setOpenIndex(null))
+  }, [animateTo])
+
+  const toggle = useCallback((i: number) => {
+    if (openIndex === i) { collapse(); return }
+    if (openIndex !== null) {
+      // Switch categories: snap closed then reopen the new one.
+      progress.setValue(0)
+    }
+    setOpenIndex(i)
+    progress.setValue(0)
+    animateTo(1)
+  }, [openIndex, collapse, animateTo, progress])
+
+  const pick = useCallback((prompt: string) => {
+    animateTo(0, () => setOpenIndex(null))
+    onPick(prompt)
+  }, [animateTo, onPick])
+
+  // Non-diffuse: unchanged flat horizontal scroll (each pill sends its prompt).
+  if (!diffuse) {
+    return (
+      <View style={styles.suggestionsWrapper}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionsRow}>
+          {suggestions.map((s, i) => (
+            <Pressable
+              key={i}
+              onPress={() => onPick(s.prompt)}
+              style={({ pressed }) => [
+                styles.chip,
+                { backgroundColor: pressed ? colors.surfaceRaised : colors.surface, borderColor: colors.borderLight },
+              ]}
+            >
+              <Text style={[styles.chipLabel, { color: colors.text, fontFamily: font.body }]}>{s.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+    )
+  }
+
+  return (
+    <View style={wheelStyles.wrap}>
+      {/* Backdrop — tap anywhere to collapse the fan */}
+      {open ? (
+        <Pressable style={wheelStyles.backdrop} onPress={collapse} />
+      ) : null}
+
+      {/* Fanned follow-ups, anchored above the rail */}
+      {open ? (
+        <View pointerEvents="box-none" style={wheelStyles.fan}>
+          {open.followups.map((q, i) => (
+            <WheelFollowup
+              key={q}
+              text={q}
+              index={i}
+              count={open.followups.length}
+              progress={progress}
+              tint={tint}
+              onPick={pick}
+            />
+          ))}
+        </View>
+      ) : null}
+
+      {/* Category rail */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionsRow}>
+        {suggestions.map((s, i) => {
+          const active = openIndex === i
+          return (
+            <Pressable
+              key={i}
+              onPress={() => toggle(i)}
+              style={({ pressed }) => [
+                styles.chip,
+                {
+                  backgroundColor: active ? tint : 'transparent',
+                  borderColor: active ? tint : dt.colors.line2,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.chipLabel,
+                  {
+                    color: active ? '#FFFFFF' : dt.colors.ink,
+                    fontFamily: diffuseFont.monoBold,
+                    letterSpacing: 0.4,
+                  },
+                ]}
+              >
+                {s.label}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </ScrollView>
+    </View>
+  )
+}
+
+const wheelStyles = StyleSheet.create({
+  wrap: { position: 'relative' },
+  backdrop: {
+    position: 'absolute',
+    left: 0, right: 0, bottom: 0,
+    top: -600,
+  },
+  fan: {
+    position: 'absolute',
+    left: 0, right: 0, bottom: 8,
+    alignItems: 'center',
+  },
+  followup: { position: 'absolute', bottom: 0, maxWidth: '86%' },
+  followupPill: {
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+    borderRadius: 999,
+    borderWidth: 1,
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  followupText: { fontSize: 14, textAlign: 'center', lineHeight: 19 },
+})
 
 // ─── Greeting ──────────────────────────────────────────────────────────────
 
@@ -1229,16 +1530,11 @@ export function GrandmaTalk() {
       const label = isUser ? `YOU, ${timeAgo}` : 'GRANDMA'
 
       if (diffuse) {
-        // Softened bubbles: no saturated dark fill. Latest grandma reply = paper
-        // surface with a whisper accent bloom; user = faint surface tint; other
-        // grandma = hairline on the page bg. Labels mono, body ink.
+        // Soft paper cards — generous radius, no visible border, a gentle paper
+        // lift shadow, and (on the latest grandma reply) a whisper accent bloom
+        // top-right + a warm one bottom-left. Labels mono, body ink.
         const accent = getDiffuseAccent(mode, dt.isDark)
-        const dCardBg = isUser
-          ? dt.colors.surface
-          : isLatestGrandma
-            ? dt.colors.surface
-            : dt.colors.bg
-        const dBorderColor = isLatestGrandma ? dt.colors.line2 : dt.colors.line
+        const dCardBg = dt.colors.surface
         const dTextColor = dt.colors.ink
         const dLabelColor = dt.colors.ink3
         return (
@@ -1246,17 +1542,22 @@ export function GrandmaTalk() {
             {isLatestGrandma && <SwayingFlower />}
             <View
               style={[
-                styles.card,
+                styles.cardSoft,
                 {
                   backgroundColor: dCardBg,
-                  borderColor: dBorderColor,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  overflow: 'hidden',
+                  shadowColor: dt.isDark ? '#000' : accent,
+                  shadowOpacity: dt.isDark ? 0.3 : 0.16,
+                  shadowRadius: 22,
+                  shadowOffset: { width: 0, height: 8 },
+                  elevation: 3,
                 },
               ]}
             >
               {isLatestGrandma ? (
-                <SoftBloom color={accent} cx="88%" cy="8%" opacity={dt.isDark ? 0.26 : 0.32} spread={0.5} radius="55%" />
+                <>
+                  <SoftBloom color={accent} cx="90%" cy="6%" opacity={dt.isDark ? 0.24 : 0.3} spread={0.5} radius="58%" />
+                  <SoftBloom color="#F4C9D2" cx="8%" cy="96%" opacity={dt.isDark ? 0.18 : 0.24} spread={0.5} radius="55%" />
+                </>
               ) : null}
               <Text style={[styles.cardLabel, { color: dLabelColor, fontFamily: diffuseFont.mono }]}>
                 {label}
@@ -1418,41 +1719,14 @@ export function GrandmaTalk() {
           }
         />
 
-        {/* Initial suggestion chips (before first message) */}
+        {/* Initial suggestion chips (before first message) — wheel under Diffuse */}
         {showInitialSuggestions && (
-          <View style={styles.suggestionsWrapper}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.suggestionsRow}
-            >
-              {suggestions.map((s, i) => (
-                <Pressable
-                  key={i}
-                  onPress={() => sendText(s.prompt)}
-                  style={({ pressed }) => [
-                    styles.chip,
-                    diffuse
-                      ? {
-                          // Hairline transparent pill — no filled color chip.
-                          backgroundColor: 'transparent',
-                          borderColor: dt.colors.line2,
-                          borderWidth: StyleSheet.hairlineWidth,
-                          opacity: pressed ? 0.6 : 1,
-                        }
-                      : {
-                          backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
-                          borderColor: colors.borderLight,
-                        },
-                  ]}
-                >
-                  <Text style={[styles.chipLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.monoBold : font.body, letterSpacing: diffuse ? 0.4 : 0 }]}>
-                    {s.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
+          <SuggestionWheel
+            suggestions={suggestions}
+            diffuse={diffuse}
+            tint={accent}
+            onPick={sendText}
+          />
         )}
 
         {/* AI follow-up suggestions (after Grandma replies) */}
@@ -1689,6 +1963,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 14,
     gap: 8,
+  },
+  // Diffuse: softer, rounder, borderless paper card with a gentle lift.
+  cardSoft: {
+    borderRadius: 28,
+    paddingHorizontal: 22,
+    paddingVertical: 18,
+    gap: 10,
+    overflow: 'hidden',
   },
   cardLabel: {
     fontSize: 10,
