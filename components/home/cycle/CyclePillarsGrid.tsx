@@ -7,10 +7,10 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useTheme, useDiffuseTheme, diffuseFont, getModeField } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
+import { Character } from '../../characters/Characters'
 import { Display, Body } from '../../ui/Typography'
 import { Leaf, Flower, Moon, Heart } from '../../ui/Stickers'
-import { Sprout, Flower2, Moon as MoonLine, Heart as HeartLine, ChevronRight } from 'lucide-react-native'
+import { ChevronRight } from 'lucide-react-native'
 import { prePregPillars } from '../../../lib/prePregPillars'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -78,13 +78,14 @@ export function CyclePillarsGrid() {
     }
   }
 
-  function renderLineIcon(s: PillarTile['sticker']) {
-    const c = dt.colors.ink3
+  function renderLineIcon(s: PillarTile['sticker'], hue: string) {
+    // Character-blob per cycle pillar (leaf=nutrition, flower=sparkle,
+    // moon=sleep, heart=heart), filled in the tile hue.
     switch (s) {
-      case 'leaf':   return <Sprout size={18} color={c} strokeWidth={1.6} />
-      case 'flower': return <Flower2 size={18} color={c} strokeWidth={1.6} />
-      case 'moon':   return <MoonLine size={18} color={c} strokeWidth={1.6} />
-      case 'heart':  return <HeartLine size={18} color={c} strokeWidth={1.6} />
+      case 'leaf':   return <Character name="nutrition" size={26} color={hue} />
+      case 'flower': return <Character name="sparkle" size={26} color={hue} />
+      case 'moon':   return <Character name="sleep" size={26} color={hue} />
+      case 'heart':  return <Character name="heart" size={26} color={hue} />
     }
   }
 
@@ -123,9 +124,9 @@ export function CyclePillarsGrid() {
             ]}
           >
             {diffuse ? (
-              <DiffuseBloomIcon color={diffuseTint(tile.tint, field)} size={40} intensity={0.5}>
-                {renderLineIcon(tile.sticker)}
-              </DiffuseBloomIcon>
+              <View style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+                {renderLineIcon(tile.sticker, diffuseTint(tile.tint, field))}
+              </View>
             ) : (
               <View style={[styles.stickerChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 {renderSticker(tile.sticker)}
