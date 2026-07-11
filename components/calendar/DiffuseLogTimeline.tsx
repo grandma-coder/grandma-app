@@ -73,6 +73,21 @@ export function DiffuseLogIcon({ type, size = 34, inkColor }: { type: string; si
   )
 }
 
+// A clock time token like "1:17 AM" / "12:22 PM" (used to de-dupe the accent
+// detail line against the row's time eyebrow).
+const TIME_TOKEN = /\d{1,2}:\d{2}\s?(?:AM|PM)/i
+
+/** Strip a leading/trailing "· <time>" token from an accent detail string so
+ *  it doesn't repeat the time already shown in the row's eyebrow. */
+function stripDupTime(accent?: string, _time?: string): string | undefined {
+  if (!accent) return accent
+  const parts = accent.split('·').map((s) => s.trim()).filter(Boolean)
+  // Drop any standalone part that is purely a clock time (front or back edge).
+  const kept = parts.filter((p) => !(TIME_TOKEN.test(p) && p.replace(TIME_TOKEN, '').trim() === ''))
+  const out = kept.join(' · ')
+  return out || undefined
+}
+
 // ─── Timeline node + row + now-marker ──────────────────────────────────────
 
 const TL_NODE = 46                    // node diameter (default)
@@ -129,6 +144,10 @@ export function DiffuseTimelineRow({
   const { colors } = useDiffuseTheme()
   const showTime = time && time !== '—'
   const Container: any = onPress ? Pressable : View
+  // De-dupe: the time already shows as the eyebrow, so strip any leading or
+  // trailing "· 12:22 AM" token from the accent detail line to avoid repeating
+  // it (e.g. "Food · 12:22 AM · Lunch" → "Lunch · good · ~90 kcal").
+  const cleanAccent = stripDupTime(accent, showTime ? time : undefined)
   // Compact geometry — smaller node, tighter node padding, narrower gap so the
   // spine still passes through the (smaller) node center.
   const node = compact ? TL_NODE_COMPACT : TL_NODE
@@ -156,7 +175,7 @@ export function DiffuseTimelineRow({
         <View style={tlStyles.titleRow}>
           <Text style={[compact ? tlStyles.titleCompact : tlStyles.title, { color: colors.ink }]} numberOfLines={1}>
             {title}
-            {accent ? <Text style={[compact ? tlStyles.accentCompact : tlStyles.accent, { color: colors.ink2 }]}>{'  ·  '}{accent}</Text> : null}
+            {cleanAccent ? <Text style={[compact ? tlStyles.accentCompact : tlStyles.accent, { color: colors.ink2 }]}>{'  ·  '}{cleanAccent}</Text> : null}
           </Text>
           {chip ? (
             <View style={[tlStyles.chip, { borderColor: colors.line2 }]}>
@@ -196,8 +215,8 @@ const tlStyles = StyleSheet.create({
   spineCol: { position: 'absolute', left: TL_SPINE_LEFT - 0.5, top: 0, bottom: 0, width: 1 },
   spineSeg: { position: 'absolute', left: 0, width: 1 },
   body: { flex: 1, paddingTop: 14, paddingBottom: 4 },
-  bodyCompact: { flex: 1, paddingTop: 6, paddingBottom: 1, justifyContent: 'center', minHeight: 30 },
-  time: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 3 },
+  bodyCompact: { flex: 1, paddingTop: 4, paddingBottom: 10, justifyContent: 'center', minHeight: 34 },
+  time: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 4 },
   titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap' },
   title: { fontFamily: diffuseFont.display, fontSize: 18, letterSpacing: -0.3, flexShrink: 1 },
   titleCompact: { fontFamily: diffuseFont.display, fontSize: 15, letterSpacing: -0.2, flexShrink: 1 },
