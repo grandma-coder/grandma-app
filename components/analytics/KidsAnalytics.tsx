@@ -865,9 +865,6 @@ export function KidsAnalytics() {
                     compact
                   />
                 </View>
-                <View style={{ marginTop: 14 }}>
-                  <RoutineComplianceSection data={analytics.routineCompliance} />
-                </View>
               </View>
             )
           }
