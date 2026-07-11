@@ -593,10 +593,12 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
     <View
       style={[
         diffuseNav.wrap,
-        { paddingBottom: insets.bottom, backgroundColor: colors.bg, borderTopColor: colors.line2 },
+        { paddingBottom: insets.bottom + 8 },
       ]}
     >
-      <View style={diffuseNav.row}>
+      {/* Floating capsule bar — inset from the edges, hairline paper pill. The
+          center FAB pops above the pill's top edge (raised via centerWrapper). */}
+      <View style={[diffuseNav.pill, { backgroundColor: colors.surface, borderColor: colors.line2 }]}>
         {visible.map((route) => {
           const isFocused = state.routes[state.index]?.key === route.key
 
@@ -652,8 +654,25 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
 }
 
 const diffuseNav = StyleSheet.create({
+  // Transparent outer container — the bar floats; no full-width strip, no
+  // top hairline. Horizontal inset makes the pill sit away from the edges.
   wrap: {
-    borderTopWidth: 1,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
+  },
+  // Floating capsule: paper surface, fully rounded, hairline border, soft lift.
+  pill: {
+    flexDirection: 'row',
+    height: 66,
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    borderRadius: 33,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
   },
   row: {
     flexDirection: 'row',
