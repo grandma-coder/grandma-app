@@ -148,9 +148,11 @@ export function DailyNudgeCard({ cycleConfig }: Props) {
         accessibilityLabel={t('cycle_nudge_label' as any)}
         style={({ pressed }) => [styles.wash, { opacity: pressed ? 0.7 : 1 }]}
       >
-        {/* Free bloom — inset negative so the feathered edge bleeds off-card. */}
+        {/* Free bloom — a faint whisper feathered off the top-left corner near
+            the icon. Kept low-opacity + small so it tints the paper rather than
+            painting a muddy gradient across the whole block. */}
         <View pointerEvents="none" style={styles.washBloom}>
-          <SoftBloom color={diffuseAccent} cx="30%" cy="34%" opacity={dt.isDark ? 0.28 : 0.34} spread={0.42} radius="52%" />
+          <SoftBloom color={diffuseAccent} cx="18%" cy="26%" opacity={dt.isDark ? 0.12 : 0.15} spread={0.16} radius="42%" />
         </View>
 
         <View style={styles.washRow}>
@@ -246,7 +248,9 @@ const styles = StyleSheet.create({
   // The bloom bleeds off the edges into the page (washBloom is negative-inset
   // and NOT clipped), so there is no card silhouette.
   wash: { paddingVertical: 20, paddingHorizontal: 4 },
-  washBloom: { position: 'absolute', top: -40, left: -50, right: -20, bottom: -40 },
+  // Bloom occupies only the top-left region (not the full card) so the radial
+  // stays a small corner whisper that feathers into the page.
+  washBloom: { position: 'absolute', top: -30, left: -40, width: 220, height: 180 },
   washRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   washIcon: { width: 40, alignItems: 'center', justifyContent: 'center' },
   washBody: { flex: 1, gap: 6 },
