@@ -18,7 +18,6 @@
 
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useDiffuseTheme, diffuseFont } from '../../constants/theme'
-import { SoftBloom, DiffuseGrain } from '../ui/diffuse/DiffuseKit'
 import { Heart, Moon, Cross, Leaf, Burst, Star } from '../ui/Stickers'
 import type { PillarScore } from '../../lib/analyticsData'
 
@@ -40,8 +39,8 @@ interface Props {
 // Rendered Diffuse-soft: a translucent tint fill (not the vivid flat colour)
 // with a light hairline stroke, so the collage stays delicate.
 function PillarShape({ pillar, size, color }: { pillar: CollagePillarKey; size: number; color: string }) {
-  const fill = color + '3A'          // ~23% alpha — a soft wash of the hue
-  const stroke = color + '80'        // ~50% alpha — hairline in the hue, not ink
+  const fill = color + '5C'          // ~36% alpha — a soft-but-present wash of the hue
+  const stroke = color + 'B0'        // ~69% alpha — hairline in the hue, not ink
   switch (pillar) {
     case 'nutrition': return <Leaf size={size} fill={fill} stroke={stroke} />
     case 'sleep':     return <Moon size={size} fill={fill} stroke={stroke} />
@@ -67,7 +66,7 @@ function tileSizeFor(score: PillarScore | undefined): number {
 }
 
 export function KidsPillarCollage({ items, onPillarPress }: Props) {
-  const { colors, isDark } = useDiffuseTheme()
+  const { colors } = useDiffuseTheme()
 
   return (
     <View style={styles.wrap}>
@@ -76,7 +75,7 @@ export function KidsPillarCollage({ items, onPillarPress }: Props) {
         const has = !!item.score?.hasData
         const rot = ROTATIONS[i % ROTATIONS.length]
         // Hero number sized to the tile (reference-style big figure).
-        const numSize = Math.round(tile * 0.34)
+        const numSize = Math.round(tile * 0.4)
         return (
           <Pressable
             key={item.key}
@@ -88,23 +87,15 @@ export function KidsPillarCollage({ items, onPillarPress }: Props) {
             accessibilityRole="button"
             accessibilityLabel={`${item.label}${has ? `, ${item.score!.value.toFixed(1)} out of 10` : ', no data'}`}
           >
-            {/* The pillar's organic SHAPE fills the tile as the backdrop — the
-                reference's "each metric is its own coloured shape". Rendered
-                Diffuse-soft (a faint grainy bloom lifts it off the paper). */}
-            <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-              <SoftBloom color={item.color} cx="50%" cy="50%" opacity={isDark ? 0.24 : 0.32} spread={0.55} radius="58%" />
-            </View>
+            {/* The pillar's organic SHAPE is the tile — clean on paper, no backing
+                disc/shadow (reference-style). Grain only, for the Diffuse texture. */}
             <View pointerEvents="none" style={styles.shapeLayer}>
               <PillarShape pillar={item.key} size={tile} color={item.color} />
             </View>
-            <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-              <DiffuseGrain radius={tile / 2} opacity={0.05} />
-            </View>
 
-            {/* Counter-rotate the content so text stays upright inside the tilted tile.
-                Reference layout: small pillar name over ONE huge number. No notes. */}
+            {/* Counter-rotate so the number stays upright inside the tilted shape.
+                Reference layout: ONE huge number, no label, no notes. */}
             <View style={[styles.inner, { transform: [{ rotate: `${-rot}deg` }] }]}>
-              <Text style={[styles.label, { color: colors.ink }]} numberOfLines={1}>{item.label}</Text>
               <Text style={[styles.hero, { color: colors.ink, fontSize: numSize, lineHeight: numSize * 1.02 }]} numberOfLines={1}>
                 {has ? item.score!.value.toFixed(1) : '—'}
               </Text>
@@ -138,15 +129,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  label: {
-    fontFamily: diffuseFont.mono,
-    fontSize: 10,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 1,
-  },
   hero: {
-    fontFamily: diffuseFont.display,
-    letterSpacing: -1,
+    fontFamily: diffuseFont.displayLight,   // the "huge hero number" face
+    letterSpacing: -1.5,
   },
 })

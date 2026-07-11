@@ -807,15 +807,18 @@ export function KidsAnalytics() {
               onPillarPress={setSelectedPillar}
             />
 
-            {/* ── 3. GRANDMA AI INSIGHT ── */}
-            <GrandmaInsightCard
-              scores={analytics.scores}
-              analytics={analytics}
-              childName={childName}
-              ageMonths={ageMonths}
-            />
+            {/* ── GRANDMA AI INSIGHT — current system shows it above the
+                   breakdown; Diffuse moves it BELOW the collage (rendered later). ── */}
+            {!diffuse && (
+              <GrandmaInsightCard
+                scores={analytics.scores}
+                analytics={analytics}
+                childName={childName}
+                ageMonths={ageMonths}
+              />
+            )}
 
-            {/* ── 4. THRIVING BREAKDOWN (tips folded into each pillar row) ── */}
+            {/* ── THRIVING BREAKDOWN (collage in Diffuse, tip rows otherwise) ── */}
             {(() => {
               const tips = getHealthTips(analytics.scores, analytics, ageMonths, childName)
               const tipMap = tipByPillar(tips)
@@ -825,8 +828,8 @@ export function KidsAnalytics() {
                     {t('kids_analytics_thriving_breakdown')}
                   </Text>
                   {diffuse ? (
-                    // Soft-bloom sticker collage — playful scattered shapes,
-                    // sized by score, each taps into its pillar detail.
+                    // Soft sticker collage — playful scattered shapes, sized by
+                    // score, big hero number, each taps into its pillar detail.
                     <KidsPillarCollage
                       items={PILLAR_ORDER.map((key) => ({
                         key,
@@ -846,6 +849,18 @@ export function KidsAnalytics() {
                         onPress={() => setSelectedPillar(key)}
                       />
                     ))
+                  )}
+                  {/* Diffuse: Grandma insight sits BELOW the collage, compact. */}
+                  {diffuse && (
+                    <View style={{ marginTop: 8 }}>
+                      <GrandmaInsightCard
+                        scores={analytics.scores}
+                        analytics={analytics}
+                        childName={childName}
+                        ageMonths={ageMonths}
+                        compact
+                      />
+                    </View>
                   )}
                   <RoutineComplianceSection data={analytics.routineCompliance} />
                 </View>
@@ -1751,12 +1766,13 @@ function buildInsightActions(
 }
 
 function GrandmaInsightCard({
-  scores, analytics, childName, ageMonths,
+  scores, analytics, childName, ageMonths, compact = false,
 }: {
   scores: WellnessScores
   analytics: AnalyticsData
   childName: string
   ageMonths: number
+  compact?: boolean
 }) {
   const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
@@ -1788,16 +1804,18 @@ function GrandmaInsightCard({
           onPress={() => setDetailOpen(true)}
           style={({ pressed }) => [
             {
-              borderRadius: 26,
-              padding: 20,
+              borderRadius: compact ? 20 : 26,
+              padding: compact ? 16 : 20,
               backgroundColor: dt.colors.surface,
+              borderWidth: compact ? 1 : 0,
+              borderColor: dt.colors.line,
               overflow: 'hidden',
               opacity: pressed ? 0.94 : 1,
             },
           ]}
         >
           <SoftBloom color={accent} cx="86%" cy="14%" opacity={dt.isDark ? 0.26 : 0.36} spread={0.55} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 8 : 12 }}>
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>
               {t('kids_analytics_grandma_says_label')}
             </Text>
@@ -1805,17 +1823,20 @@ function GrandmaInsightCard({
               {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </Text>
           </View>
-          <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, lineHeight: 28, color: dt.colors.ink, letterSpacing: -0.3 }}>
+          <Text
+            style={{ fontFamily: diffuseFont.body, fontSize: compact ? 14 : 22, lineHeight: compact ? 20 : 28, color: compact ? dt.colors.ink2 : dt.colors.ink, letterSpacing: compact ? 0 : -0.3 }}
+            numberOfLines={compact ? 3 : undefined}
+          >
             {highlights.message}
           </Text>
           <Pressable
             onPress={(e) => { e.stopPropagation?.(); handleDiscussPress() }}
             hitSlop={8}
             style={({ pressed }) => [
-              { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: 16, marginTop: 18, opacity: pressed ? 0.6 : 1 },
+              { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: compact ? 12 : 16, marginTop: compact ? 12 : 18, opacity: pressed ? 0.6 : 1 },
             ]}
           >
-            <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>
+            <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: compact ? 11 : 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>
               {t('kids_analytics_discuss_btn')}
             </Text>
             <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dt.colors.ink3 }}>→</Text>
