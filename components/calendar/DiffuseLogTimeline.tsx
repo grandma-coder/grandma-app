@@ -132,7 +132,7 @@ export function DiffuseTimelineRow({
   // Compact geometry — smaller node, tighter node padding, narrower gap so the
   // spine still passes through the (smaller) node center.
   const node = compact ? TL_NODE_COMPACT : TL_NODE
-  const nodePadV = compact ? 6 : 12
+  const nodePadV = compact ? 4 : 12
   const spineLeft = compact ? TL_SPINE_LEFT_COMPACT : TL_SPINE_LEFT
   return (
     <Container
@@ -196,7 +196,7 @@ const tlStyles = StyleSheet.create({
   spineCol: { position: 'absolute', left: TL_SPINE_LEFT - 0.5, top: 0, bottom: 0, width: 1 },
   spineSeg: { position: 'absolute', left: 0, width: 1 },
   body: { flex: 1, paddingTop: 14, paddingBottom: 4 },
-  bodyCompact: { flex: 1, paddingTop: 9, paddingBottom: 2, justifyContent: 'center', minHeight: 30 },
+  bodyCompact: { flex: 1, paddingTop: 6, paddingBottom: 1, justifyContent: 'center', minHeight: 30 },
   time: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 3 },
   titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap' },
   title: { fontFamily: diffuseFont.display, fontSize: 18, letterSpacing: -0.3, flexShrink: 1 },

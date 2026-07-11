@@ -2226,6 +2226,7 @@ export function KidsCalendar() {
                     chip={r.chip ? { label: r.chip.label } : null}
                     logged={r.logged}
                     active={idx === nowInsertIdx}
+                    compact
                     first={idx === 0}
                     last={idx === rows.length - 1}
                     onPress={r.onPress}
