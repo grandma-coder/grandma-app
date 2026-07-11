@@ -19,6 +19,8 @@ import { useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { buildKidsWalletCards, type KidsWalletCardId } from '../../lib/kidsWallet'
 import { WalletCard } from './WalletCard'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { Character } from '../characters/Characters'
 import {
   NotifyGoalAchieved, NotifyRoutine, LogDiaper, LogGrowth,
 } from '../stickers/RewardStickers'
@@ -45,6 +47,7 @@ export function KidsWallet({
 }: KidsWalletProps) {
   const { colors, stickers } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
 
   const [openId, setOpenId] = useState<KidsWalletCardId | null>(null)
   const cards = buildKidsWalletCards({ hasDiaper, hasGrowthLeap })
@@ -52,6 +55,20 @@ export function KidsWallet({
   const toggle = (id: KidsWalletCardId) => setOpenId((cur) => (cur === id ? null : id))
 
   const iconFor = (id: KidsWalletCardId): React.ReactNode => {
+    // Under Diffuse, the wallet rows use the unified Character-blob family
+    // (ask_grandma keeps the brand mark). Current cream-paper keeps the
+    // branded / reward stickers.
+    if (diffuse) {
+      switch (id) {
+        case 'goals': return <Character name="star" size={26} color={stickers.yellow} />
+        case 'health': return <Character name="health" size={26} color={stickers.coral} />
+        case 'diaper': return <Character name="diaper" size={26} color={stickers.peach} />
+        case 'growth_leap': return <Character name="growth" size={26} color={stickers.green} />
+        case 'reminders': return <Character name="clock" size={26} color={stickers.blue} />
+        case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
+        case 'rewards': return <Character name="crown" size={26} color={stickers.yellow} />
+      }
+    }
     switch (id) {
       case 'goals': return <StarSticker size={24} fill={stickers.yellow} stroke="#141313" />
       case 'health': return <HeartSticker size={24} fill={stickers.coral} />
