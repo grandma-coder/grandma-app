@@ -58,7 +58,7 @@ Do **not** mix — a Diffuse screen reads from `useDiffuseTheme()`; a current sc
 
 - **ONE delicate type language** for every behavior — behaviors differ **only** by color + shape + blur.
 - **Soft, grainy, generative gradient FIELDS** (`g1..g4`) per behavior, each with a single **accent**. No flat fills, no hard edges.
-- **Type roles, assigned by meaning not size:** serif = titles + feeling words · sans = reading · **mono = the data voice** (labels, chips, numbers, units, dates) · serif = the one hero number.
+- **Type roles, assigned by meaning not size:** **bold sans (Hanken Grotesk Bold) = titles + hero numbers + feeling words** · sans = reading · **mono = the data voice** (labels, chips, numbers, units, dates). *(The display role was Cormorant serif through mid-2026; it is now a Swiss-grotesque bold sans — see the `diffuseFont` note below.)*
 - **Containerless actions** (mono label + arrow, or gradient-glass spray), **hairline selection** (rings/dots/ellipses), **dot calendars**. (These are component-phase concerns — not built yet.)
 
 ### Diffuse tokens (in `constants/theme.ts`)
@@ -66,7 +66,7 @@ Do **not** mix — a Diffuse screen reads from `useDiffuseTheme()`; a current sc
 | Export | What |
 |---|---|
 | `diffuseLightTokens` / `diffuseDarkTokens` | paper/ink/line semantic scale (`bg`, `surface`, `ink`, `ink2..4`, `line`, `line2`, **`hairline`**) + carried-forward `success/warning/error` + tab tokens |
-| `diffuseFont` | `display` (Cormorant Garamond Light) · `italic` (Cormorant italic) · `body` (Hanken Grotesk) · `mono` (Space Mono) + weights |
+| `diffuseFont` | `display` (**Hanken Grotesk Bold** — Swiss-grotesque; see note ⓘ) · `italic` (Hanken Bold Italic) · `body` (Hanken Grotesk) · `mono` (Space Mono) + weights |
 | `diffuseTypeRole` | `title` / `read` / `data` / `numHero` — **assign font by role, never by size** |
 | `diffuseFields` | per-mode 4-stop field `{ g1,g2,g3,g4, accent, accentSoft }` for `pre / preg / kids / care` |
 | `diffuseRadius` | `sm 14 · md 20 · lg 28 · xl 40` (no `full`/pill — Diffuse has no filled pills) |
@@ -77,10 +77,11 @@ Do **not** mix — a Diffuse screen reads from `useDiffuseTheme()`; a current sc
 | `getDiffuseAccent(mode)` / `getDiffuseAccentSoft(mode)` | the per-mode accent (+ soft) |
 | `useDiffuseTheme()` | the resolver hook |
 
-### Two decisions baked into Phase 1
+### Decisions baked into Phase 1
 
 1. **Stickers/icons stay ACTIVE under Diffuse.** The v3 direction drops the *sticker-collage surface treatment*, but the **sticker SVG components remain the icon system** — `useDiffuseTheme()` returns `stickers` (light/dark resolved) exactly like `useTheme()` does. Do **not** treat `stickers.*` / `stickersDark.*` as legacy or removed.
 2. **`care` (Caregiver) is SCAFFOLD ONLY.** The 4th behavior exists in the token layer (`diffuseFields.care`, and `getModeColor`/`getModeColorSoft`/`getModeField` accept `'care'`) so the palette is ready — but there are **no** care screens, tabs, routes, or store wiring, and none should be added under this phase.
+3. **ⓘ Display font — Swiss-grotesque (bold sans), not serif.** The Diffuse `display`/`italic`/`displayLight`/`displayMedium`/`displayRegular` tokens resolve to **Hanken Grotesk Bold / Bold-Italic** (a Helvetica-style grotesque), giving titles + hero numbers + feeling-word accents a bold, confident, Braun/Vignelli feel. This **supersedes the original Cormorant Garamond serif** (the v4 base weight was Regular 400, hero numbers Light 300). The change is made in ONE place — the `diffuseFont` `display*`/`italic` keys in `constants/theme.ts` — so it flows to every Diffuse header app-wide via `diffuseFont.display` and the `Display`/`DisplayItalic` primitives; the original Cormorant values are kept in inline comments there for reference. **`body` (Hanken Regular) and `mono` (Space Mono) are unchanged.** Consequence: the bold sans is *wider* than the serif — new large headers may need a slightly reduced size or `flexShrink`/`numberOfLines` to avoid clipping (see `HomeGreeting` for the pattern). Never hardcode `'CormorantGaramond_*'` or `'HankenGrotesk_*'` in components — always pull from `diffuseFont`.
 
 ### Not yet built (later phases)
 
