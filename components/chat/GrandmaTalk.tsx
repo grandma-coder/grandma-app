@@ -46,7 +46,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickerPalette, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
-import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, SoftBloom, IridescentBubble } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { Burst, Heart, Flower } from '../ui/Stickers'
 import { useModeStore } from '../../store/useModeStore'
@@ -474,32 +474,30 @@ function GrandmaOrb({ status, state, size = 260 }: GrandmaOrbProps) {
 
   const s = size
 
-  // Diffuse: concentric feathered blooms of the mode accent (no saturated rings),
-  // a hairline paper core, a line moon glyph, and mono status text.
+  // Diffuse: an iridescent soap-bubble aura (pearl cyan → lilac → peach, mode-
+  // tinted rim) with a soft paper core holding a line moon glyph + mono status.
   if (diffuse) {
     const accent = getDiffuseAccent(mode, dt.isDark)
     return (
       <Animated.View style={[orbStyles.root, { width: s, height: s, transform: [{ scale: breathe }] }]}>
-        <View pointerEvents="none" style={[orbStyles.ring, { width: s, height: s }]}>
-          <SoftBloom color={accent} opacity={dt.isDark ? 0.3 : 0.4} spread={0.55} radius="55%" />
-        </View>
-        <View pointerEvents="none" style={[orbStyles.ring, { width: s * 0.7, height: s * 0.7 }]}>
-          <SoftBloom color={accent} opacity={dt.isDark ? 0.34 : 0.44} spread={0.5} radius="52%" />
-        </View>
+        <IridescentBubble size={s} tint={accent} isDark={dt.isDark} style={orbStyles.ring} />
         <View
           style={[
             orbStyles.core,
             {
-              width: s * 0.52,
-              height: s * 0.52,
-              borderRadius: (s * 0.52) / 2,
+              width: s * 0.48,
+              height: s * 0.48,
+              borderRadius: (s * 0.48) / 2,
               backgroundColor: dt.colors.surface,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: dt.colors.line2,
+              shadowColor: accent,
+              shadowOpacity: dt.isDark ? 0.35 : 0.28,
+              shadowRadius: 24,
+              shadowOffset: { width: 0, height: 0 },
+              elevation: 0,
             },
           ]}
         >
-          <MoonIcon size={28} color={dt.colors.ink3} strokeWidth={1.5} />
+          <MoonIcon size={26} color={dt.colors.ink3} strokeWidth={1.5} />
           <Text style={[orbStyles.statusMono, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>{status}</Text>
         </View>
       </Animated.View>
@@ -1437,7 +1435,7 @@ export function GrandmaTalk() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.suggestionsRow}
             >
-              {suggestions.slice(0, 4).map((s, i) => (
+              {suggestions.map((s, i) => (
                 <Pressable
                   key={i}
                   onPress={() => sendText(s.prompt)}
@@ -1457,7 +1455,7 @@ export function GrandmaTalk() {
                         },
                   ]}
                 >
-                  <Text style={[styles.chipLabel, { color: diffuse ? dt.colors.ink2 : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.4 : 0 }]}>
+                  <Text style={[styles.chipLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.monoBold : font.body, letterSpacing: diffuse ? 0.4 : 0 }]}>
                     {s.label}
                   </Text>
                 </Pressable>
@@ -1493,7 +1491,7 @@ export function GrandmaTalk() {
                         },
                   ]}
                 >
-                  <Text style={[styles.chipLabel, { color: diffuse ? dt.colors.ink2 : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.4 : 0 }]} numberOfLines={1}>
+                  <Text style={[styles.chipLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.monoBold : font.body, letterSpacing: diffuse ? 0.4 : 0 }]} numberOfLines={1}>
                     {s}
                   </Text>
                 </Pressable>

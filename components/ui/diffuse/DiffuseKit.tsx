@@ -11,7 +11,7 @@
 
 import { ReactNode, useMemo } from 'react'
 import { View, Text, StyleSheet, ViewStyle, StyleProp, TextStyle, TextProps, Platform } from 'react-native'
-import Svg, { Defs, Filter, FeTurbulence, Rect, RadialGradient, Stop } from 'react-native-svg'
+import Svg, { Defs, Filter, FeTurbulence, Rect, RadialGradient, Stop, Circle, Ellipse } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useThemeStore } from '../../../store/useThemeStore'
 import {
@@ -99,6 +99,100 @@ export function SoftBloom({ color, opacity = 0.5, cx = '50%', cy = '50%', spread
           </RadialGradient>
         </Defs>
         <Rect width="100%" height="100%" fill={`url(#${id})`} />
+      </Svg>
+    </View>
+  )
+}
+
+// ─── IridescentBubble ────────────────────────────────────────────────────────
+// A soap-bubble orb: pearlescent multi-hue interior (cyan → lilac → peach), a
+// bright off-centre highlight, a saturated rim ring, and a warm kiss on the
+// lower edge — all feathered to transparent via layered SVG radial gradients.
+// A plain RN View can only ever be a hard disc; this is why it lives in SVG.
+//
+// The iridescence is intentionally near-fixed (it's what makes it read as a
+// bubble). `tint` nudges the whole thing toward the active mode accent so the
+// orb still belongs to its journey, without losing the pearl character.
+
+let bubbleSeq = 0
+interface IridescentBubbleProps {
+  /** Overall diameter in px. */
+  size: number
+  /** Mode accent to bias the palette toward (rim + ambient halo). */
+  tint: string
+  isDark?: boolean
+  style?: StyleProp<ViewStyle>
+}
+
+export function IridescentBubble({ size, tint, isDark = false, style }: IridescentBubbleProps) {
+  const seq = useMemo(() => bubbleSeq++, [])
+  const halo = `bh${seq}`
+  const body = `bb${seq}`
+  const hi = `bi${seq}`
+  const rim = `br${seq}`
+  const kiss = `bk${seq}`
+
+  // Iridescent stops — pearl cyan/mint core, lilac shoulder, transparent edge.
+  const cyan = '#BFEAF2'
+  const mint = '#CDEFE0'
+  const lilac = '#C9BEF0'
+  const peach = '#F4C9D2'
+  const c = size / 2
+
+  // The bubble body fills most of the frame (r ≈ 0.46) so the sheen has room to
+  // show around the ~0.24-radius paper core the caller lays on top. The rim is a
+  // WIDE soft band (0.6 → 1.0), not a hard ring, so it feathers like real soap.
+  const bodyR = size * 0.46
+
+  return (
+    <View pointerEvents="none" style={[{ width: size, height: size }, style]}>
+      <Svg width={size} height={size}>
+        <Defs>
+          {/* Ambient halo — mode-tinted, very soft, fills the whole frame */}
+          <RadialGradient id={halo} cx="50%" cy="52%" r="52%">
+            <Stop offset="0" stopColor={tint} stopOpacity={isDark ? 0.14 : 0.18} />
+            <Stop offset="0.6" stopColor={tint} stopOpacity={isDark ? 0.06 : 0.08} />
+            <Stop offset="1" stopColor={tint} stopOpacity={0} />
+          </RadialGradient>
+          {/* Pearl body — cyan/mint dominant in the upper-left shoulder → lilac →
+              transparent. Hotspot skewed up-left so the top of the ring reads
+              distinctly cyan-mint (the iridescent tell), not uniform lilac. */}
+          <RadialGradient id={body} cx="40%" cy="38%" r="56%">
+            <Stop offset="0" stopColor={mint} stopOpacity={isDark ? 0.22 : 0.3} />
+            <Stop offset="0.45" stopColor={cyan} stopOpacity={isDark ? 0.46 : 0.64} />
+            <Stop offset="0.78" stopColor={lilac} stopOpacity={isDark ? 0.4 : 0.52} />
+            <Stop offset="1" stopColor={lilac} stopOpacity={0} />
+          </RadialGradient>
+          {/* Bright sheen highlight — upper-left crescent, the wet-glass read */}
+          <RadialGradient id={hi} cx="36%" cy="32%" r="34%">
+            <Stop offset="0" stopColor="#FFFFFF" stopOpacity={isDark ? 0.42 : 0.6} />
+            <Stop offset="0.65" stopColor="#FFFFFF" stopOpacity={isDark ? 0.1 : 0.16} />
+            <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+          </RadialGradient>
+          {/* Rim — wide soft band peaking near the edge (blue → violet), feathered */}
+          <RadialGradient id={rim} cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor="#9FB6F0" stopOpacity={0} />
+            <Stop offset="0.6" stopColor="#9FB6F0" stopOpacity={0} />
+            <Stop offset="0.82" stopColor="#9FB6F0" stopOpacity={isDark ? 0.28 : 0.4} />
+            <Stop offset="0.92" stopColor={lilac} stopOpacity={isDark ? 0.24 : 0.34} />
+            <Stop offset="1" stopColor={lilac} stopOpacity={0} />
+          </RadialGradient>
+          {/* Warm kiss — wide peach bloom sweeping the lower-right edge, so the
+              bottom of the ring shifts warm (cyan top ↔ peach bottom = iridescent) */}
+          <RadialGradient id={kiss} cx="68%" cy="76%" r="52%">
+            <Stop offset="0" stopColor={peach} stopOpacity={isDark ? 0.3 : 0.42} />
+            <Stop offset="0.6" stopColor={peach} stopOpacity={isDark ? 0.12 : 0.18} />
+            <Stop offset="1" stopColor={peach} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+
+        {/* Ambient halo across the whole frame */}
+        <Rect width={size} height={size} fill={`url(#${halo})`} />
+        {/* Sphere layers, all centred */}
+        <Circle cx={c} cy={c} r={bodyR} fill={`url(#${body})`} />
+        <Circle cx={c} cy={c} r={bodyR} fill={`url(#${kiss})`} />
+        <Circle cx={c} cy={c} r={bodyR} fill={`url(#${rim})`} />
+        <Ellipse cx={c * 0.82} cy={c * 0.76} rx={bodyR * 0.5} ry={bodyR * 0.4} fill={`url(#${hi})`} />
       </Svg>
     </View>
   )
