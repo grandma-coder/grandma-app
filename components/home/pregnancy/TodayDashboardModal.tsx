@@ -11,7 +11,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import Svg, { Path as SvgPath, Circle as SvgCircle } from 'react-native-svg'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
+import { Character } from '../../characters/Characters'
 import { toDateStr } from '../../../lib/cycleLogic'
 import { useTranslation } from '../../../lib/i18n'
 import { LogSheet } from '../../calendar/LogSheet'
@@ -21,7 +21,7 @@ import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition, LogExercise,
 } from '../../stickers/RewardStickers'
 import {
-  Smile as SmileLine, Droplet as DropletLine, Moon as MoonLine,
+  Droplet as DropletLine, Moon as MoonLine,
   Utensils as UtensilsLine, Activity as ActivityLine, Footprints as FootprintsLine,
   Scale as ScaleLine,
 } from 'lucide-react-native'
@@ -145,9 +145,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           </View>
           <View style={styles.moodRow}>
             {diffuse ? (
-              <DiffuseBloomIcon color={accent} size={52}>
-                <SmileLine size={26} color={dt.colors.ink3} strokeWidth={1.6} />
-              </DiffuseBloomIcon>
+              <Character name="mood" size={48} color={moodKey ? moodFaceFill(moodKey) : stickers.yellow} />
             ) : (
               <MoodFace
                 size={56}

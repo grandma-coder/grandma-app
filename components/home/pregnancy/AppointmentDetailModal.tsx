@@ -9,10 +9,11 @@
 import React from 'react'
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { X, BookOpen, Scan, Lightbulb } from 'lucide-react-native'
+import { X } from 'lucide-react-native'
+import { Character } from '../../characters/Characters'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseSheet, DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
+import { DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { useTranslatedContent } from '../../../lib/useTranslatedContent'
 import { PaperCard } from '../../ui/PaperCard'
@@ -90,9 +91,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
         {/* Prep */}
         <View style={[dstyles.card, { borderColor: dt.colors.line }]}>
           <View style={dstyles.cardHeader}>
-            <DiffuseBloomIcon color={accent} size={30}>
-              <BookOpen size={16} color={ink3} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
+            <Character name="note" size={22} color={accent} />
             <Text style={[dstyles.cardLabel, { color: ink3 }]}>{t('pregnancy_appt_prep')}</Text>
           </View>
           <Text style={[dstyles.cardBody, { color: ink2 }]}>{prepNote}</Text>
@@ -101,9 +100,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
         {/* What to expect */}
         <View style={[dstyles.card, { borderColor: dt.colors.line }]}>
           <View style={dstyles.cardHeader}>
-            <DiffuseBloomIcon color={accent} size={30}>
-              <Scan size={16} color={ink3} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
+            <Character name="checkup" size={22} color={accent} />
             <Text style={[dstyles.cardLabel, { color: ink3 }]}>{t('pregnancy_appt_whatToExpect')}</Text>
           </View>
           <Text style={[dstyles.cardBody, { color: ink2 }]}>{whatToExpect}</Text>
@@ -112,9 +109,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
         {/* Questions */}
         <View style={[dstyles.card, { borderColor: dt.colors.line }]}>
           <View style={dstyles.cardHeader}>
-            <DiffuseBloomIcon color={accent} size={30}>
-              <Lightbulb size={16} color={ink3} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
+            <Character name="sparkle" size={22} color={accent} />
             <Text style={[dstyles.cardLabel, { color: ink3 }]}>{t('pregnancy_appt_questionsToAsk')}</Text>
           </View>
           {appointment.questions.map((q, i) => (
