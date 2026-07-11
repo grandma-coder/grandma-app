@@ -20,5 +20,4 @@ export const getCardById = (id: string) =>
 export * from './types'
 export * from './tags'
 export { matchCard } from './matcher'
-// TODO(task 4): uncomment once lib/dailyMessage/pickDailyQuestion.ts exists
-// export { pickDailyQuestion } from './pickDailyQuestion'
+export { pickDailyQuestion } from './pickDailyQuestion'
