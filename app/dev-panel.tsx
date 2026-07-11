@@ -42,7 +42,6 @@ const ONBOARDING_FLOWS: Array<[string, string]> = [
   ['Pre-pregnancy onboarding', '/onboarding/cycle'],
   ['Pregnancy onboarding', '/onboarding/pregnancy'],
   ['Kids onboarding', '/onboarding/kids'],
-  ['Child profile', '/onboarding/child-profile'],
   ['Transition', '/onboarding/transition'],
 ]
 
@@ -87,10 +86,6 @@ const COMMUNITY_SCREENS: Array<[string, string]> = [
   ['Garage · profile  ⚠ legacy design', '/garage/profile'],
   ['Garage · create  ⚠ legacy design', '/garage/create'],
   ['Garage · share  ⚠ legacy design', '/garage/share'],
-]
-
-const EXCHANGE_SCREENS: Array<[string, string]> = [
-  ['Exchange · create listing', '/exchange/create'],
 ]
 
 const PREGNANCY_ONLY: Array<[string, string]> = [
@@ -505,13 +500,6 @@ export default function DevPanel() {
         {/* Community / Garage */}
         <Section title="COMMUNITY · CHANNELS · GARAGE">
           {COMMUNITY_SCREENS.map(([label, route]) => (
-            <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
-          ))}
-        </Section>
-
-        {/* Exchange */}
-        <Section title="EXCHANGE (MARKETPLACE)">
-          {EXCHANGE_SCREENS.map(([label, route]) => (
             <ActionRow key={route} label={label} onPress={() => navTo(route)} busy={busy} />
           ))}
         </Section>

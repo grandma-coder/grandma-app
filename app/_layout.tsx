@@ -58,6 +58,7 @@ import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
 import { useCaregiverStore } from '../store/useCaregiverStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
+import { useDevStore } from '../store/useDevStore'
 import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
@@ -155,6 +156,11 @@ export default function RootLayout() {
 
   const router = useRouter()
   const segments = useSegments()
+  // Dev panel launches auth/onboarding previews via router.push after calling
+  // enterDevMode(). The route guard below would otherwise bounce a logged-in
+  // user straight back to (tabs) (or into onboarding), making those previews
+  // un-openable. While dev mode is active, stand down.
+  const devActive = useDevStore((s) => s.active)
 
   const setChildren = useChildStore((s) => s.setChildren)
   // Boot path uses setModeUnsafe because the coerce below runs the same
@@ -507,6 +513,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (loading || !behaviorHydrated) return
 
+    // Dev-panel preview mode: the user is intentionally viewing an auth or
+    // onboarding screen while already signed in. Don't redirect them out.
+    if (devActive) return
+
     // During password recovery the user holds a valid (temporary) session but
     // must stay on the reset screen — skip the guard so it can't redirect them.
     if (recoveryMode) return
@@ -538,7 +548,7 @@ export default function RootLayout() {
     } else if (session && hasCompletedOnboarding && inAuth) {
       router.replace('/(tabs)')
     }
-  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode])
+  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode, devActive])
 
   // ─── Loading state ────────────────────────────────────────────────────────
   if (loading || !behaviorHydrated || !modeHydrated || !fontsLoaded) {
