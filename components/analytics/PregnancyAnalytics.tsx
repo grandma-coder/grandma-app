@@ -23,14 +23,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 import {
   ChevronRight, Info, X, FlaskConical,
-  Crown as CrownLine, Flower2 as FlowerLine, Heart as HeartLine, Moon as MoonLine,
-  Smile as SmileLine, Zap as ZapLine, Droplet as DropletLine, Leaf as LeafLine,
-  Activity as ActivityLine, Clock as ClockLine, Cross as CrossLine, Sparkles as SparklesLine,
 } from 'lucide-react-native'
 
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface, SoftBloom, DiffuseGrain } from '../ui/diffuse/DiffuseKit'
-import { DiffuseSheet, DiffuseStatCard, DiffuseMetricTile, DiffuseSectionHeader, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseSheet, DiffuseStatCard, DiffuseMetricTile, DiffuseSectionHeader } from '../ui/diffuse/DiffusePrimitives'
 import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -59,6 +56,7 @@ import {
   type PregnancyWeightByWeek,
 } from '../../lib/analyticsData'
 
+import { Character, type CharacterName } from '../characters/Characters'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { AnalyticsTitle } from './shared/AnalyticsTitle'
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
@@ -174,21 +172,16 @@ function renderPillarSticker(key: PillarKey, color: string, size = 24) {
 }
 
 /** Diffuse: the pillar glyph as a thin Lucide line icon (over a bloom). */
+// Pregnancy pillar → character-blob concept. The glyph now renders a Character
+// (self-contained, no bloom needed); `color` fills the blob.
+const PREG_PILLAR_CHARACTER: Record<PillarKey, CharacterName> = {
+  wellbeing: 'crown', weight: 'growth', kicks: 'kick', sleep: 'sleep',
+  mood: 'mood', symptoms: 'activity', hydration: 'water', nutrition: 'nutrition',
+  exercise: 'activity', contractions: 'contraction', birth: 'baby',
+}
+
 function renderPillarGlyph(key: PillarKey, color: string, size = 18) {
-  const p = { size, color, strokeWidth: 1.6 as const }
-  switch (key) {
-    case 'wellbeing':    return <CrownLine {...p} />
-    case 'weight':       return <FlowerLine {...p} />
-    case 'kicks':        return <HeartLine {...p} />
-    case 'sleep':        return <MoonLine {...p} />
-    case 'mood':         return <SmileLine {...p} />
-    case 'symptoms':     return <ZapLine {...p} />
-    case 'hydration':    return <DropletLine {...p} />
-    case 'nutrition':    return <LeafLine {...p} />
-    case 'exercise':     return <ActivityLine {...p} />
-    case 'contractions': return <ClockLine {...p} />
-    case 'birth':        return <CrossLine {...p} />
-  }
+  return <Character name={PREG_PILLAR_CHARACTER[key]} size={size + 6} color={color} />
 }
 
 // ─── Trimester / week helpers ──────────────────────────────────────────────
@@ -406,7 +399,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 label="KICKS / DAY"
                 value={avgKicks ? String(avgKicks) : undefined}
                 emptyLabel="—"
-                icon={renderPillarGlyph('kicks', dt.colors.ink3, 18)}
+                icon={renderPillarGlyph('kicks', accent, 18)}
+                iconNoBloom
                 accent={accent}
                 onPress={() => setOpenPillar('kicks')}
               />
@@ -416,7 +410,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 value={symptomCount > 0 ? String(symptomCount) : undefined}
                 sub={symptomCount > 0 ? 'LOGGED' : undefined}
                 emptyLabel="None"
-                icon={renderPillarGlyph('symptoms', dt.colors.ink3, 18)}
+                icon={renderPillarGlyph('symptoms', accent, 18)}
+                iconNoBloom
                 accent={accent}
                 onPress={() => setOpenPillar('symptoms')}
               />
@@ -427,7 +422,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 label="SLEEP"
                 value={sleepAvg !== '—' ? sleepAvg : undefined}
                 emptyLabel="—"
-                icon={renderPillarGlyph('sleep', dt.colors.ink3, 18)}
+                icon={renderPillarGlyph('sleep', accent, 18)}
+                iconNoBloom
                 accent={accent}
                 onPress={() => setOpenPillar('sleep')}
               />
@@ -436,7 +432,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 label="WELLBEING"
                 value={wellbeing ? `${wellbeing.overall}%` : undefined}
                 emptyLabel="—"
-                icon={renderPillarGlyph('wellbeing', dt.colors.ink3, 18)}
+                icon={renderPillarGlyph('wellbeing', accent, 18)}
+                iconNoBloom
                 accent={accent}
                 onPress={() => setOpenPillar('wellbeing')}
               />
@@ -825,9 +822,7 @@ function HeroWeekCard({
         style={[styles.hero, { borderWidth: 1, borderColor: dt.colors.line }]}
       >
         <View style={[styles.heroChip, { borderWidth: 0 }]}>
-          <DiffuseBloomIcon color={accent} size={38}>
-            {renderPillarGlyph('weight', dt.colors.ink3, 22)}
-          </DiffuseBloomIcon>
+          {renderPillarGlyph('weight', accent, 28)}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.heroLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
@@ -918,9 +913,7 @@ function HeroBanner({
           style={[styles.hero, { marginHorizontal: 0, marginTop: 0, marginBottom: 0, borderWidth: 1, borderColor: dt.colors.line }]}
         >
           <View style={[styles.heroChip, { borderWidth: 0 }]}>
-            <DiffuseBloomIcon color={accent} size={38}>
-              {renderPillarGlyph(pillarKey, dt.colors.ink3, 22)}
-            </DiffuseBloomIcon>
+            {renderPillarGlyph(pillarKey, accent, 28)}
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.heroLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>

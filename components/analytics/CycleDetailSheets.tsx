@@ -12,8 +12,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, type MoodId } from '../../lib/cycleAnalytics'
 import { Burst, Flower } from '../ui/Stickers'
-import { Sparkles as SparklesLine, Flower2 as FlowerLine } from 'lucide-react-native'
-import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
+import { Character } from '../characters/Characters'
 import { MiniBarChart } from './shared/MiniCharts'
 import { useTranslation } from '../../lib/i18n'
 
@@ -326,9 +325,7 @@ function PMSDetail() {
               <View key={s.name} style={pmsStyles.symptomRow}>
                 <View style={pmsStyles.symptomLeft}>
                   {diffuse ? (
-                    <DiffuseBloomIcon color={stickers.peach} size={32}>
-                      <SparklesLine size={16} color={dt.colors.ink3} strokeWidth={1.6} />
-                    </DiffuseBloomIcon>
+                    <Character name="activity" size={24} color={stickers.peach} />
                   ) : (
                     <View style={[pmsStyles.chip, { backgroundColor: stickers.peachSoft, borderColor: colors.border }]}>
                       <Burst size={20} fill={stickers.peach} points={8} wobble={0.2} />
@@ -407,9 +404,7 @@ function FertileDetail() {
     <View style={{ gap: 18 }}>
       <View style={[fertStyles.currentCard, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line } : { backgroundColor: stickers.pinkSoft, borderColor: colors.border }]}>
         {diffuse ? (
-          <DiffuseBloomIcon color={stickers.pink} size={48}>
-            <FlowerLine size={24} color={dt.colors.ink3} strokeWidth={1.6} />
-          </DiffuseBloomIcon>
+          <Character name="ovulation" size={40} color={stickers.pink} />
         ) : (
           <View style={[fertStyles.currentChip, { backgroundColor: colors.surface }]}>
             <Flower size={40} petal={stickers.pink} center={stickers.yellow} />

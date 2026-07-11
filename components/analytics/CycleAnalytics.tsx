@@ -18,12 +18,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useTheme, radius, shadows, useDiffuseTheme, diffuseFont, getDiffuseAccent, stickers as stickerPalette } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
+import { Character } from '../characters/Characters'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { PhaseFlowChart } from './shared/PhaseFlowChart'
 import { Moon, Burst, Flower, Heart, Drop, Star } from '../ui/Stickers'
-import { Sparkles as SparklesLine, Heart as HeartLine, Moon as MoonLine, Activity as ActivityLine, Droplet as DropletLine, Flower2 as FlowerLine } from 'lucide-react-native'
 import {
   getCycleInfo,
   dailyFertilityCurve,
@@ -148,9 +147,7 @@ export function CycleAnalytics() {
             </Text>
             <View pointerEvents="none" style={styles.heroSticker}>
               {diffuse ? (
-                <DiffuseBloomIcon color={accent} size={40}>
-                  <PhaseGlyph phase={info.phase} color={dt.colors.ink3} />
-                </DiffuseBloomIcon>
+                <PhaseGlyph phase={info.phase} color={accent} />
               ) : (
                 <PhaseSticker phase={info.phase} stickers={stickers} />
               )}
@@ -223,7 +220,7 @@ export function CycleAnalytics() {
               tilt={2.5}
               tint={stickers.yellowSoft}
               sticker={<Flower size={24} petal={stickers.pink} center={stickers.yellow} />}
-              diffuseIcon={<SparklesLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />}
+              diffuseIcon={<Character name="ovulation" size={26} color={stickerPalette.pink} />}
               diffuseHue={stickerPalette.pink}
               value={fertileLabel}
               sub={fertileSub}
@@ -233,7 +230,7 @@ export function CycleAnalytics() {
               tilt={-3}
               tint={stickers.greenSoft}
               sticker={<Heart size={22} fill={stickers.pink} />}
-              diffuseIcon={<HeartLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />}
+              diffuseIcon={<Character name="mood" size={26} color={stickerPalette.coral} />}
               diffuseHue={stickerPalette.coral}
               value={moodLabel}
               sub={moodSub}
@@ -249,7 +246,7 @@ export function CycleAnalytics() {
             wide
             tint={stickers.lilacSoft}
             sticker={<Moon size={24} fill={stickers.lilac} />}
-            diffuseIcon={<MoonLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />}
+            diffuseIcon={<Character name="period" size={26} color={stickerPalette.lilac} />}
             diffuseHue={stickerPalette.lilac}
             value={regularLabel}
             sub={regularSub}
@@ -260,7 +257,7 @@ export function CycleAnalytics() {
             wide
             tint={stickers.pinkSoft}
             sticker={<Burst size={24} fill={stickers.coral} points={8} />}
-            diffuseIcon={<ActivityLine size={18} color={dt.colors.ink3} strokeWidth={1.6} />}
+            diffuseIcon={<Character name="activity" size={26} color={stickerPalette.coral} />}
             diffuseHue={stickerPalette.coral}
             value={pmsLabel}
             sub={pmsSub}
@@ -318,9 +315,7 @@ function TiltChip({
       ]}
     >
       {diffuse ? (
-        <DiffuseBloomIcon color={diffuseHue ?? dt.colors.ink3} size={38}>
-          {diffuseIcon}
-        </DiffuseBloomIcon>
+        diffuseIcon
       ) : (
         <View style={[styles.chipChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           {sticker}
@@ -361,17 +356,12 @@ function PhaseSticker({ phase, stickers }: { phase: CyclePhase; stickers: Return
 
 /** Diffuse: the hero phase glyph as a thin Lucide line icon (over a bloom). */
 function PhaseGlyph({ phase, color }: { phase: CyclePhase; color: string }) {
-  const props = { size: 22, color, strokeWidth: 1.6 as const }
   switch (phase) {
-    case 'menstruation':
-      return <DropletLine {...props} />
-    case 'follicular':
-      return <SparklesLine {...props} />
-    case 'ovulation':
-      return <FlowerLine {...props} />
+    case 'menstruation': return <Character name="period" size={28} color={color} />
+    case 'follicular':   return <Character name="sparkle" size={28} color={color} />
+    case 'ovulation':    return <Character name="ovulation" size={28} color={color} />
     case 'luteal':
-    default:
-      return <MoonLine {...props} />
+    default:             return <Character name="night" size={28} color={color} />
   }
 }
 
