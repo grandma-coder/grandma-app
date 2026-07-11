@@ -26,7 +26,7 @@ export type CharacterName =
   // symbolic & affective
   | 'star' | 'sparkle' | 'sun' | 'night' | 'heart' | 'streak' | 'crown' | 'gem'
   // wellness · relationship · misc
-  | 'soothe' | 'hug' | 'community' | 'note' | 'photo' | 'bell'
+  | 'soothe' | 'hug' | 'community' | 'note' | 'photo' | 'bell' | 'clock'
 
 // Default hue per concept (deepened sticker palette). Overridable via `color`.
 const HUE: Record<CharacterName, string> = {
@@ -38,15 +38,16 @@ const HUE: Record<CharacterName, string> = {
   star: '#C9A02C', sparkle: '#C9A02C', sun: '#C9A02C', night: '#8E72C9', heart: '#D98CA6',
   streak: '#D86A4F', crown: '#C9A02C', gem: '#7FA8D8',
   soothe: '#8E72C9', hug: '#D98CA6', community: '#7A9D4A', note: '#E08A5A', photo: '#7FA8D8', bell: '#C9A02C',
+  clock: '#8E72C9',
 }
 
 // Blob silhouette (48×48) per concept, ported from the approved set.
 const D: Record<CharacterName, string> = {
   nutrition: 'M24 44c-9 0-16-6-16-15 0-7 5-12 11-13-2-4-1-9 3-11 1-1 2 0 2 1 0 2-1 4 0 6 2-3 5-4 8-3 1 0 1 2 0 2-3 1-5 3-5 6 6 1 13 6 13 14 0 9-7 13-16 13Z',
   sleep: 'M32 4C18 4 8 13 8 25s10 21 24 20c2 0 2-2 0-3-8-3-14-9-14-18S24 9 32 6c2-1 2-2 0-2Z',
-  mood: 'M24 43C11 34 6 26 6 18 6 11 11 7 16 7c4 0 7 3 8 6 1-3 4-6 8-6 5 0 10 4 10 11 0 8-5 16-18 25Z',
+  mood: 'M24 6a18 18 0 1 1 0 36 18 18 0 0 1 0-36Z',
   health: 'M19 8c0-2 2-4 5-4s5 2 5 4v6h6c2 0 4 2 4 5s-2 5-4 5h-6v6c0 2-2 4-5 4s-5-2-5-4v-6H8c-2 0-4-2-4-5s2-5 4-5h11V8Z',
-  growth: 'M24 4c1 0 2 1 3 3l3 7c1 1 2 2 3 2l8 1c3 0 4 3 2 5l-6 5c-1 1-1 2-1 3l2 8c1 3-2 4-4 3l-7-4c-1-1-2-1-3 0l-7 4c-2 1-5 0-4-3l2-8c0-1 0-2-1-3l-6-5c-2-2-1-5 2-5l8-1c1 0 2-1 3-2l3-7c1-2 2-3 3-3Z',
+  growth: 'M24 44v-14M24 30c-6 0-11-4-11-10 0-1 1-2 2-2 6 0 11 4 11 10 0 1-1 2-2 2ZM24 30c6 0 11-5 11-11 0-1-1-2-2-2-6 0-11 5-11 11 0 1 1 2 2 2ZM24 20c0-6 3-11 3-11s3 5 3 9c0 3-2 5-5 5s-1 0-1-3Z',
   activity: 'M24 3c1 0 2 1 2 3 1 4 2 6 5 5 3-2 5 0 4 3-1 3-1 5 2 6 3 1 3 4 0 5-3 1-3 3-2 6 1 3-1 5-4 3-3-1-4 1-5 5 0 2-1 3-2 3s-2-1-2-3c-1-4-2-6-5-5-3 2-5 0-4-3 1-3 1-5-2-6-3-1-3-4 0-5 3-1 3-3 2-6-1-3 1-5 4-3 3 1 4-1 5-5 0-2 1-3 2-3Z',
   water: 'M24 4c-2 6-14 16-14 26 0 8 6 14 14 14s14-6 14-14C38 20 26 10 24 4Z',
   calories: 'M24 4c-1 6-8 9-8 18 0 3 1 5 3 7-1-4 1-7 4-9-1 5 3 7 3 12 0 3-2 6-6 6 6 3 15-1 15-11 0-11-9-16-11-23Z',
@@ -60,7 +61,7 @@ const D: Record<CharacterName, string> = {
   medicine: 'M13 13a9 9 0 0 1 13 0l9 9a9 9 0 0 1-13 13l-9-9a9 9 0 0 1 0-13Z',
   vaccine: 'M20 6h8v3h-2v13h4v3H18v-3h4V9h-2V6ZM22 28h4v9l-2 4-2-4v-9Z',
   heartbeat: 'M24 43C11 34 6 26 6 18 6 11 11 7 16 7c4 0 7 3 8 6 1-3 4-6 8-6 5 0 10 4 10 11 0 8-5 16-18 25Z',
-  checkup: 'M20 6h8v6h6v8h-6v6h-8v-6h-6v-8h6V6Z',
+  checkup: 'M24 42C11 33 6 25 6 17 6 10 11 6 16 6c4 0 7 3 8 6 1-3 4-6 8-6 5 0 10 4 10 11 0 8-5 16-18 25Z',
   exam: 'M20 6h8v10l7 15a3 3 0 0 1-3 4H16a3 3 0 0 1-3-4l7-15V6Z',
   period: 'M24 4c-3 8-16 18-16 28 0 8 7 12 16 12s16-4 16-12C40 22 27 12 24 4Z',
   ovulation: 'M24 6c11 0 18 7 18 18s-7 18-18 18S6 35 6 24 13 6 24 6Z',
@@ -70,9 +71,9 @@ const D: Record<CharacterName, string> = {
   star: 'M24 4c1 0 2 1 3 3l3 7c1 1 2 2 3 2l8 1c3 0 4 3 2 5l-6 5c-1 1-1 2-1 3l2 8c1 3-2 4-4 3l-7-4c-1-1-2-1-3 0l-7 4c-2 1-5 0-4-3l2-8c0-1 0-2-1-3l-6-5c-2-2-1-5 2-5l8-1c1 0 2-1 3-2l3-7c1-2 2-3 3-3Z',
   sparkle: 'M24 3c1 0 2 1 2 3 1 4 2 6 5 5 3-2 5 0 4 3-1 3-1 5 2 6 3 1 3 4 0 5-3 1-3 3-2 6 1 3-1 5-4 3-3-1-4 1-5 5 0 2-1 3-2 3s-2-1-2-3c-1-4-2-6-5-5-3 2-5 0-4-3 1-3 1-5-2-6-3-1-3-4 0-5 3-1 3-3 2-6-1-3 1-5 4-3 3 1 4-1 5-5 0-2 1-3 2-3Z',
   sun: 'M24 12a12 12 0 1 1 0 24 12 12 0 0 1 0-24ZM24 3v4M24 41v4M8.5 8.5l3 3M36.5 36.5l3 3M3 24h4M41 24h4M8.5 39.5l3-3M36.5 11.5l3-3',
-  night: 'M32 4C18 4 8 13 8 25s10 21 24 20c2 0 2-2 0-3-8-3-14-9-14-18S24 9 32 6c2-1 2-2 0-2Z',
+  night: 'M30 6C17 6 8 15 8 26s9 18 21 17c2 0 2-2 0-3-7-2-12-8-12-16s5-13 12-15c2-1 2-3 0-3ZM37 8l1.5 3.5L42 13l-3.5 1.5L37 18l-1.5-3.5L32 13l3.5-1.5Z',
   heart: 'M24 43C11 34 6 26 6 18 6 11 11 7 16 7c4 0 7 3 8 6 1-3 4-6 8-6 5 0 10 4 10 11 0 8-5 16-18 25Z',
-  streak: 'M24 4c-1 7-9 10-9 19 0 7 5 12 12 12s12-5 12-13c0-4-2-6-4-9 0 3-1 5-3 6 1-6-4-10-4-16-1 1-3 1-4 1Z',
+  streak: 'M24 5c-1 6-7 9-7 16 0 3 1 5 3 7-1-4 1-6 3-8-1 5 3 6 3 10 0 3-2 5-5 5 5 2 12-1 12-10 0-9-8-13-9-20-1 0-2 0-3 0ZM14 38h20l-2 5H16Z',
   crown: 'M6 34l4-20 8 8 6-12 6 12 8-8 4 20c0 2-1 3-4 3H10c-3 0-4-1-4-3Z',
   gem: 'M16 6h16l8 10-16 22L8 16Z',
   soothe: 'M24 40C13 32 8 26 8 19c0-5 4-8 8-8 3 0 6 2 8 5 2-3 5-5 8-5 4 0 8 3 8 8 0 7-5 13-16 21Z',
@@ -81,20 +82,21 @@ const D: Record<CharacterName, string> = {
   note: 'M12 6h16l8 8v28H12Z',
   photo: 'M8 14h6l3-4h14l3 4h6v24H8Z',
   bell: 'M24 6c-7 0-11 5-11 12 0 8-4 10-4 12h30c0-2-4-4-4-12 0-7-4-12-11-12ZM20 34a4 4 0 0 0 8 0',
+  clock: 'M24 6a18 18 0 1 1 0 36 18 18 0 0 1 0-36Z',
 }
 
 // Face per concept. Eyes ONLY on creatures/subjects; object glyphs are faceless
 // ('none'). Some creatures use an expression; some concepts use a "cut-out"
 // detail rendered in the surface/paper colour (pulse, target, wave, blip, lens,
 // or the community's four eyes).
-type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'blip' | 'lens' | 'quad' | 'none'
+type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'blip' | 'lens' | 'quad' | 'check' | 'hands' | 'none'
 const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, number] }> = {
   // subjects / creatures → eyes
   nutrition: { kind: 'dots', e: [19, 30, 29, 30] },
   sleep: { kind: 'sleepy', e: [17, 21, 25, 23] },
-  mood: { kind: 'dots', e: [18, 19, 30, 19] },
+  mood: { kind: 'smile', e: [16, 22, 26, 22] },
   health: { kind: 'dots', e: [20, 25, 28, 25] },
-  growth: { kind: 'dots', e: [21, 24, 27, 24] },
+  growth: { kind: 'dots', e: [20, 38, 28, 38] },
   activity: { kind: 'dots', e: [21, 22, 27, 22] },
   water: { kind: 'dots', e: [20, 28, 28, 28] },
   calories: { kind: 'dots', e: [21, 26, 27, 26] },
@@ -121,7 +123,7 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   bath: { kind: 'none', e: [0, 0, 0, 0] },
   medicine: { kind: 'none', e: [0, 0, 0, 0] },
   vaccine: { kind: 'none', e: [0, 0, 0, 0] },
-  checkup: { kind: 'none', e: [0, 0, 0, 0] },
+  checkup: { kind: 'check', e: [0, 0, 0, 0] },
   exam: { kind: 'none', e: [0, 0, 0, 0] },
   period: { kind: 'none', e: [0, 0, 0, 0] },
   kick: { kind: 'none', e: [0, 0, 0, 0] },
@@ -131,6 +133,7 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   soothe: { kind: 'none', e: [0, 0, 0, 0] },
   note: { kind: 'none', e: [0, 0, 0, 0] },
   bell: { kind: 'none', e: [0, 0, 0, 0] },
+  clock: { kind: 'hands', e: [0, 0, 0, 0] },
 }
 
 interface Props {
@@ -196,6 +199,12 @@ export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1
       )}
       {f.kind === 'blip' && (
         <Path d="M24 27c-4-3-6-5-6-8 0-2 1.5-3.5 3.5-3.5 1.2 0 2 .6 2.5 1.5.5-.9 1.3-1.5 2.5-1.5 2 0 3.5 1.5 3.5 3.5 0 3-2 5-6 8Z" fill={bg} />
+      )}
+      {f.kind === 'check' && (
+        <Path d="M17 20l4 4 8-8" stroke={bg} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+      {f.kind === 'hands' && (
+        <Path d="M24 14v10l7 4" stroke={bg} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       )}
     </Svg>
   )
