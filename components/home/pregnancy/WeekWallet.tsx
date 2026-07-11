@@ -23,8 +23,9 @@ import { getWeekData } from '../../../lib/pregnancyData'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
 import { WalletCard } from './WalletCard'
 import { TodaySummaryCard } from './TodaySummaryCard'
+import { PregnancyUserReminders } from './PregnancyUserReminders'
 import {
-  NotifyAppointmentDue, TipRead, LogKicks, LogWeight, LogHeartbeat,
+  NotifyAppointmentDue, TipRead, LogKicks, LogHeartbeat, NotifyRoutine,
 } from '../../stickers/RewardStickers'
 import { Leaf } from '../../ui/Stickers'
 import { GrandmaLogo } from '../../ui/GrandmaLogo'
@@ -33,7 +34,6 @@ interface WeekWalletProps {
   weekNumber: number
   todayLogs: Record<string, TodayLogEntry>
   userId: string | undefined
-  latestWeight: number | null
   onLogMetric: (type: string) => void
   onOpenAppointment: (appt: StandardAppointment) => void
   onOpenWeekDetail: () => void
@@ -41,7 +41,7 @@ interface WeekWalletProps {
 }
 
 export function WeekWallet({
-  weekNumber, todayLogs, userId, latestWeight,
+  weekNumber, todayLogs, userId,
   onLogMetric, onOpenAppointment, onOpenWeekDetail, onOpenBirthGuide,
 }: WeekWalletProps) {
   const { colors, stickers, font: f } = useTheme()
@@ -103,7 +103,7 @@ export function WeekWallet({
       case 'appointment': return <NotifyAppointmentDue size={26} />
       case 'week_tip': return <TipRead size={26} />
       case 'kicks': return <LogKicks size={26} />
-      case 'weight': return <LogWeight size={24} />
+      case 'reminders': return <NotifyRoutine size={26} />
       case 'birth_guide': return <Leaf size={24} fill={stickers.green} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="lilac" outline={colors.text} />
     }
@@ -115,7 +115,7 @@ export function WeekWallet({
       case 'appointment': return appt?.name ?? ''
       case 'week_tip': return t('pregnancy_reminder_weekTip', { week: weekNumber })
       case 'kicks': return t('pregnancy_reminder_kickCountTitle')
-      case 'weight': return t('preg_weight_sheetTitle')
+      case 'reminders': return t('preg_reminders_addButton')
       case 'birth_guide': return t('pregnancy_birthGuideTitle')
       case 'ask_grandma': return t('pregnancy_appt_askGrandma')
     }
@@ -161,13 +161,8 @@ export function WeekWallet({
             {linkBtn(t('pregnancy_logTitle_kicks'), () => onLogMetric('kick_count'))}
           </View>
         )
-      case 'weight':
-        return (
-          <View style={{ gap: 10 }}>
-            {bodyText(latestWeight !== null ? `${latestWeight.toFixed(1)} kg` : t('pregnancy_summaryHint_empty'))}
-            {linkBtn(t('preg_weekCard_tapForDetails'), () => router.push('/insights'))}
-          </View>
-        )
+      case 'reminders':
+        return <PregnancyUserReminders userId={userId ?? null} />
       default:
         return null
     }
@@ -177,15 +172,12 @@ export function WeekWallet({
     <View>
       {cards.map((c, i) => {
         const isLast = i === cards.length - 1
-        const trailing =
-          c.id === 'weight' && latestWeight !== null ? `${latestWeight.toFixed(1)} kg` : undefined
         return (
           <WalletCard
             key={c.id}
             tone={c.tone}
             icon={iconFor(c.id)}
             title={titleFor(c.id)}
-            trailingValue={trailing}
             expanded={openId === c.id}
             linkOnly={c.linkOnly}
             last={isLast}

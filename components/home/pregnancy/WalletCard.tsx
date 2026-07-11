@@ -1,10 +1,12 @@
 /**
  * WalletCard — one card in the pregnancy-home "Week Wallet" stack.
  *
- * Collapsed: a single header row (glyph · title · optional trailing value ·
- * arrow). Expandable cards render `children` in a body when `expanded`; the
- * header chevron rotates. `linkOnly` cards show an up-right arrow and route /
- * open a modal on press instead of expanding.
+ * Modelled on the Apple-Wallet / "Expenses" reference: a chunky saturated card
+ * with a circular icon chip top-left, a small muted kicker label above a bold
+ * title, and an optional right-aligned value. Cards overlap into a peeking
+ * stack. Expandable cards render `children` in a body when `expanded` and their
+ * chevron rotates; `linkOnly` cards show an up-right arrow and route / open a
+ * modal on press instead of expanding.
  *
  * Follows the reanimated shared-value pattern used across the app
  * (see ActivityPillCard). Honors the Diffuse variant.
@@ -72,6 +74,10 @@ export function WalletCard({
     ink = (stickers as Record<string, string>)[tone + 'Ink'] ?? colors.text
   }
   const border = diffuse ? dt.colors.line : colors.border
+  // The circular icon chip: paper-white on tinted cards, subtle on cream.
+  const chipBg = tone === 'surface' || diffuse
+    ? (diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised)
+    : '#FFFEF8'
 
   const showBody = expanded && !linkOnly && !!children
 
@@ -83,38 +89,40 @@ export function WalletCard({
           backgroundColor: bg,
           borderColor: border,
           borderWidth: diffuse ? 1 : StyleSheet.hairlineWidth,
-          marginBottom: last ? 0 : (expanded ? 4 : -14),
+          marginBottom: last ? 0 : (expanded ? 6 : -16),
           zIndex: expanded ? 30 : undefined,
         },
       ]}
     >
       <Pressable
         onPress={onPressHeader}
-        style={({ pressed }) => [styles.header, { opacity: pressed ? 0.85 : 1 }]}
+        style={({ pressed }) => [styles.header, { opacity: pressed ? 0.9 : 1 }]}
         accessibilityRole="button"
         accessibilityLabel={title}
         accessibilityState={linkOnly ? undefined : { expanded }}
       >
-        <View style={styles.icon}>{icon}</View>
+        <View style={[styles.chip, { backgroundColor: chipBg }]}>{icon}</View>
+
         <Text
           style={[styles.title, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}
           numberOfLines={1}
         >
           {title}
         </Text>
+
         {trailingValue ? (
           <Text
-            style={[styles.trailing, { color: ink, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}
+            style={[styles.trailing, { color: ink, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}
             numberOfLines={1}
           >
             {trailingValue}
           </Text>
         ) : null}
         {linkOnly ? (
-          <ArrowUpRight size={18} color={ink} strokeWidth={2} style={{ opacity: 0.7 }} />
+          <ArrowUpRight size={20} color={ink} strokeWidth={2.2} style={{ opacity: 0.8 }} />
         ) : (
           <Animated.View style={arrowStyle}>
-            <ChevronDown size={18} color={ink} strokeWidth={2} style={{ opacity: 0.7 }} />
+            <ChevronDown size={20} color={ink} strokeWidth={2.2} style={{ opacity: 0.8 }} />
           </Animated.View>
         )}
       </Pressable>
@@ -125,13 +133,16 @@ export function WalletCard({
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 22, overflow: 'hidden' },
+  card: { borderRadius: 26, overflow: 'hidden' },
   header: {
-    flexDirection: 'row', alignItems: 'center', gap: 11,
-    paddingHorizontal: 15, paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 13,
+    paddingHorizontal: 16, paddingVertical: 16,
   },
-  icon: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  title: { flex: 1, fontSize: 16, letterSpacing: -0.2 },
-  trailing: { fontSize: 13 },
-  body: { paddingHorizontal: 15, paddingBottom: 16, paddingTop: 2 },
+  chip: {
+    width: 42, height: 42, borderRadius: 21,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  title: { flex: 1, minWidth: 0, fontSize: 18, letterSpacing: -0.3 },
+  trailing: { fontSize: 14 },
+  body: { paddingHorizontal: 16, paddingBottom: 18, paddingTop: 2 },
 })

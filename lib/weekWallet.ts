@@ -11,10 +11,10 @@ import type { StandardAppointment } from './pregnancyAppointments'
 
 export type WalletCardId =
   | 'today' | 'appointment' | 'week_tip' | 'kicks'
-  | 'weight' | 'birth_guide' | 'ask_grandma'
+  | 'reminders' | 'birth_guide' | 'ask_grandma'
 
 /** Sticker palette tone for the card cover. 'surface' = paper white. */
-export type WalletTone = 'surface' | 'yellow' | 'lilac' | 'green' | 'peach' | 'lavender'
+export type WalletTone = 'surface' | 'yellow' | 'lilac' | 'green' | 'peach' | 'lavender' | 'blue'
 
 export interface WalletCardDescriptor {
   id: WalletCardId
@@ -52,7 +52,7 @@ export function buildWalletCards(input: BuildWalletCardsInput): WalletCardDescri
     cards.push({ id: 'kicks', tone: 'green', linkOnly: false })
   }
 
-  cards.push({ id: 'weight', tone: 'peach', linkOnly: false })
+  cards.push({ id: 'reminders', tone: 'blue', linkOnly: false })
   cards.push({ id: 'birth_guide', tone: 'green', linkOnly: true })
   cards.push({ id: 'ask_grandma', tone: 'lavender', linkOnly: true })
 

@@ -54,7 +54,6 @@ import { LogSheet } from '../calendar/LogSheet'
 import { WeekCard } from './pregnancy/WeekCard'
 import { AffirmationRevealCard } from './pregnancy/AffirmationRevealCard'
 import { WeekWallet } from './pregnancy/WeekWallet'
-import { PregnancyUserReminders } from './pregnancy/PregnancyUserReminders'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
 import { BirthGuideModal } from '../pregnancy/BirthGuideModal'
 import { AppointmentDetailModal } from './pregnancy/AppointmentDetailModal'
@@ -230,7 +229,9 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   const { data: todayLogs = {}, refetch: refetchTodayLogs } = usePregnancyTodayLogs(userId)
 
   // Latest logged weight — drives the slim weight row's trailing value.
-  const { data: latestWeight = null, refetch: refetchWeight } = useQuery({
+  // Kept to refresh the weight cache on focus / after logging; the value is
+  // read inside Today's pills, not here.
+  const { refetch: refetchWeight } = useQuery({
     queryKey: ['pregnancy-latest-weight', userId],
     enabled: !!userId,
     queryFn: async () => {
@@ -343,7 +344,6 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
           weekNumber={weekNumber}
           todayLogs={todayLogs}
           userId={userId}
-          latestWeight={latestWeight}
           onLogMetric={(type) => setActiveLog(type as InlineLogType)}
           onOpenAppointment={(appt) => setApptDetail(appt)}
           onOpenWeekDetail={() => {
@@ -352,8 +352,6 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
           }}
           onOpenBirthGuide={() => setBirthGuideVisible(true)}
         />
-        <View style={{ height: 12 }} />
-        <PregnancyUserReminders userId={userId ?? null} />
       </View>
 
       {/* Week detail modal */}

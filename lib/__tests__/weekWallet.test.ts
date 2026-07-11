@@ -10,18 +10,27 @@ const appt = {
 const loggedKick: TodayLogEntry = { value: '10', notes: null, created_at: '2026-07-11' }
 
 describe('buildWalletCards', () => {
-  test('week 12, no appt, no tip → today, weight, birth_guide, ask_grandma', () => {
+  test('week 12, no appt, no tip → today, reminders, birth_guide, ask_grandma', () => {
     const ids = buildWalletCards({
       weekNumber: 12, todayLogs: {}, hasWeekTip: false, upcomingAppointment: null,
     }).map((c) => c.id)
-    expect(ids).toEqual(['today', 'weight', 'birth_guide', 'ask_grandma'])
+    expect(ids).toEqual(['today', 'reminders', 'birth_guide', 'ask_grandma'])
   })
 
   test('appointment + tip appear in order after today', () => {
     const ids = buildWalletCards({
       weekNumber: 20, todayLogs: {}, hasWeekTip: true, upcomingAppointment: appt,
     }).map((c) => c.id)
-    expect(ids).toEqual(['today', 'appointment', 'week_tip', 'weight', 'birth_guide', 'ask_grandma'])
+    expect(ids).toEqual(['today', 'appointment', 'week_tip', 'reminders', 'birth_guide', 'ask_grandma'])
+  })
+
+  test('reminders card is always present and expandable (not linkOnly)', () => {
+    const cards = buildWalletCards({
+      weekNumber: 12, todayLogs: {}, hasWeekTip: false, upcomingAppointment: null,
+    })
+    const rem = cards.find((c) => c.id === 'reminders')!
+    expect(rem).toBeDefined()
+    expect(rem.linkOnly).toBe(false)
   })
 
   test('kicks appears at week 28 when not logged, hidden once logged', () => {

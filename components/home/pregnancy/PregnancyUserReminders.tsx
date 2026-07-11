@@ -15,7 +15,6 @@ import {
 import { useTheme, getModeColor, brand, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
-import { Star as StarSticker } from '../../ui/Stickers'
 import { supabase } from '../../../lib/supabase'
 
 interface Reminder {
@@ -31,6 +30,9 @@ interface Reminder {
 
 interface Props {
   userId: string | null
+  /** Embedded inside the Week Wallet card: drop the outer card chrome and the
+   *  redundant "Add reminder" header (the wallet card header owns that). */
+  bare?: boolean
 }
 
 function formatTime12h(hhmm: string): string {
@@ -175,10 +177,6 @@ export function PregnancyUserReminders({ userId }: Props) {
         shadowRadius: 14,
         shadowOffset: { width: 0, height: 4 },
       }]}>
-        <View style={{ position: 'absolute', top: -10, right: 14, transform: [{ rotate: '15deg' }] }} pointerEvents="none">
-          <StarSticker size={36} fill={stickers.yellow} stroke="#141313" />
-        </View>
-
         <Pressable
           onPress={() => { setShowInput(!showInput); if (!showInput) setNewText('') }}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: showInput ? 4 : 0 }}
