@@ -234,14 +234,18 @@ function DiffuseChip({
   hue?: string
 }) {
   const { colors } = useDiffuseTheme()
+  // Soft-tint active state: faint hue wash + a hue-colored hairline. When no hue
+  // is supplied the chip keeps its neutral (surface + hairline) active look.
+  const activeBorder = hue ? hue + '99' : colors.hairline
+  const activeBg = hue ? hue + '26' : colors.surface
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         df.chip,
         {
-          borderColor: active ? colors.hairline : colors.line,
-          backgroundColor: active ? (hue ? hue + '22' : colors.surface) : 'transparent',
+          borderColor: active ? activeBorder : colors.line,
+          backgroundColor: active ? activeBg : 'transparent',
           opacity: pressed ? 0.7 : 1,
         },
       ]}
@@ -251,6 +255,25 @@ function DiffuseChip({
     </Pressable>
   )
 }
+
+/** Meal-moment → sticker hue. Warm dawn → cool night, so the meal-time row
+ *  reads as a soft spectrum across the day. */
+const MEAL_HUE: Record<MealMoment, keyof typeof stickerPalette> = {
+  breakfast: 'peach',
+  morning_snack: 'yellow',
+  lunch: 'green',
+  afternoon_snack: 'blue',
+  dinner: 'lilac',
+  night_snack: 'coral',
+}
+
+/** Ordered soft-hue cycle for enum chip groups with no intrinsic color
+ *  (sleep quality, event type, activity, consistency). Each option in a row
+ *  gets a distinct sticker hue by its index so the row reads as a soft
+ *  spectrum. Pull the actual value via useDiffuseTheme().stickers[key]. */
+const CHIP_HUE_CYCLE: (keyof typeof stickerPalette)[] = ['green', 'blue', 'lilac', 'peach', 'yellow', 'pink', 'coral']
+const chipHueAt = (dt: ReturnType<typeof useDiffuseTheme>, i: number) =>
+  dt.stickers[CHIP_HUE_CYCLE[i % CHIP_HUE_CYCLE.length]]
 
 /** Diffuse bare underlined field with a mono uppercase label above. */
 function DiffuseField({
@@ -1513,10 +1536,16 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
           {feedType === 'solids' ? (
             <>
-              {/* Meal moment */}
+              {/* Meal moment — each its own soft hue across the day */}
               <View style={df.chipGrid}>
                 {MEAL_MOMENTS.map((m) => (
-                  <DiffuseChip key={m.id} label={m.label} active={meal === m.id} onPress={() => setMeal(m.id)} />
+                  <DiffuseChip
+                    key={m.id}
+                    label={m.label}
+                    active={meal === m.id}
+                    onPress={() => setMeal(m.id)}
+                    hue={dTheme.stickers[MEAL_HUE[m.id]]}
+                  />
                 ))}
               </View>
 
@@ -2612,8 +2641,8 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
           </View>
         )}
         <View style={df.chipGrid}>
-          {qualities.map((q) => (
-            <DiffuseChip key={q} label={q} active={quality === q} onPress={() => setQuality(q)} />
+          {qualities.map((q, i) => (
+            <DiffuseChip key={q} label={q} active={quality === q} onPress={() => setQuality(q)} hue={chipHueAt(dTheme, i)} />
           ))}
         </View>
         <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
@@ -2810,8 +2839,8 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         </View>
         <DiffuseFormHeader kind="health" />
         <View style={df.chipGrid}>
-          {HEALTH_EVENTS.map((e) => (
-            <DiffuseChip key={e} label={e} active={eventType === e} onPress={() => setEventType(e)} />
+          {HEALTH_EVENTS.map((e, i) => (
+            <DiffuseChip key={e} label={e} active={eventType === e} onPress={() => setEventType(e)} hue={chipHueAt(dTheme, i)} />
           ))}
         </View>
         <DiffuseField
@@ -3327,8 +3356,8 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
             </View>
           )}
           <View style={df.chipGrid}>
-            {ACTIVITY_TYPES.map((a) => (
-              <DiffuseChip key={a.id} label={a.label} active={activityType === a.id} onPress={() => setActivityType(a.id)} />
+            {ACTIVITY_TYPES.map((a, i) => (
+              <DiffuseChip key={a.id} label={a.label} active={activityType === a.id} onPress={() => setActivityType(a.id)} hue={chipHueAt(dTheme, i)} />
             ))}
           </View>
           <DiffuseField label={t('kids_logForm_placeholderActivityName')} value={name} onChangeText={setName} placeholder={t('kids_logForm_placeholderActivityName')} />
@@ -3571,8 +3600,8 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
 
               <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_consistency')}</Text>
               <View style={df.chipGrid}>
-                {DIAPER_CONSISTENCIES.map((c) => (
-                  <DiffuseChip key={c.id} label={c.label} active={consistency === c.id} onPress={() => setConsistency(c.id)} />
+                {DIAPER_CONSISTENCIES.map((c, i) => (
+                  <DiffuseChip key={c.id} label={c.label} active={consistency === c.id} onPress={() => setConsistency(c.id)} hue={chipHueAt(dTheme, i)} />
                 ))}
               </View>
             </>
