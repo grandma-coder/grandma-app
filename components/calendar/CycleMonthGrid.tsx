@@ -10,12 +10,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
-import { useTheme, useDiffuseTheme, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { DaySticker } from '../home/cycle/dayStickers'
+import { CyclePhaseGlyph, CYCLE_PHASE_ORDER } from './CyclePhaseGlyph'
 import { useTranslation } from '../../lib/i18n'
 
 interface Props {
@@ -57,6 +58,14 @@ function phaseTint(phase: CyclePhase, s: ReturnType<typeof useTheme>['stickers']
     case 'ovulation':    return s.peachSoft
     case 'luteal':       return s.lilacSoft
   }
+}
+
+// Legend labels reuse the existing cycle-ring phase-label i18n keys.
+const PHASE_LEGEND_KEY: Record<CyclePhase, 'cycleRing_label_menstruation' | 'cycleRing_label_follicular' | 'cycleRing_label_ovulation' | 'cycleRing_label_luteal'> = {
+  menstruation: 'cycleRing_label_menstruation',
+  follicular:   'cycleRing_label_follicular',
+  ovulation:    'cycleRing_label_ovulation',
+  luteal:       'cycleRing_label_luteal',
 }
 
 function startOfMonthGrid(year: number, month: number): Date {
@@ -146,11 +155,23 @@ export function CycleMonthGrid({
   }, [cycleConfig, visibleMonth.year, visibleMonth.month])
 
   if (diffuse) {
-    // v4 `.dotcal`: hairline dot grid, period days get an accent dot, selected
-    // day = accent ring + soft bloom. Its own month nav drives the parent's
-    // visibleMonth so log-fetch + day-detail stay in sync.
+    // v4 `.dotcal`, enriched: each in-month day carries a soft phase-band bloom
+    // (color = phase, intensity peaks at ovulation) + a tiny colored phase glyph
+    // so the whole cycle arc reads at a glance. Selected day = accent ring +
+    // bloom. Its own month nav drives the parent's visibleMonth so log-fetch +
+    // day-detail stay in sync.
     const selDate = new Date(selectedDate + 'T00:00:00')
     const monthDate = new Date(visibleMonth.year, visibleMonth.month, 1)
+
+    // Per-phase bloom intensity — ovulation is the peak, period strong, the
+    // long follicular/luteal stretches sit back so they don't overwhelm.
+    const phaseIntensity: Record<CyclePhase, number> = {
+      menstruation: 0.85,
+      follicular: 0.4,
+      ovulation: 1,
+      luteal: 0.45,
+    }
+
     return (
       <View style={[styles.wrap, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
         <DiffuseDotCalendar
@@ -158,6 +179,14 @@ export function CycleMonthGrid({
           month={monthDate}
           periodDays={periodDays}
           accent={getDiffuseAccent('pre-pregnancy', dt.isDark)}
+          dayField={(date) => {
+            const phase = getCycleInfo(cycleConfig, toDateStr(date)).phase as CyclePhase
+            return { color: phaseAccent(phase, stickers), intensity: phaseIntensity[phase] }
+          }}
+          dayMarker={(date) => {
+            const phase = getCycleInfo(cycleConfig, toDateStr(date)).phase as CyclePhase
+            return <CyclePhaseGlyph phase={phase} color={phaseAccent(phase, stickers)} size={11} />
+          }}
           onMonthChange={(d) => {
             // Keep the parent's visibleMonth (→ log fetch + period-day derivation) in sync.
             if (d < monthDate) onPrevMonth()
@@ -165,6 +194,18 @@ export function CycleMonthGrid({
           }}
           onChange={(d) => onSelectDate(toDateStr(d))}
         />
+
+        {/* Delicate phase legend — colored glyph + mono-caps label. */}
+        <View style={styles.legendRow}>
+          {CYCLE_PHASE_ORDER.map((phase) => (
+            <View key={phase} style={styles.legendItem}>
+              <CyclePhaseGlyph phase={phase} color={phaseAccent(phase, stickers)} size={12} />
+              <Text style={[styles.legendLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                {t(PHASE_LEGEND_KEY[phase])}
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
     )
   }
@@ -327,5 +368,25 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1.5,
     borderStyle: 'dashed',
+  },
+
+  // Diffuse phase legend
+  legendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingHorizontal: 2,
+    rowGap: 8,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  legendLabel: {
+    fontSize: 9,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
 })

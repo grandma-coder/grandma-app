@@ -585,6 +585,7 @@ const dp = StyleSheet.create({
   calCell: { width: '100%', aspectRatio: 1, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   calBloom: { position: 'absolute', width: '128%', height: '128%', borderRadius: 999 },
   calPeriodDot: { position: 'absolute', bottom: 6, width: 4, height: 4, borderRadius: 2 },
+  calMarker: { position: 'absolute', bottom: 3, alignItems: 'center', justifyContent: 'center' },
 })
 
 // ─── DiffuseBloomIcon ───────────────────────────────────────────────────────
@@ -634,11 +635,17 @@ interface DotCalendarProps {
   periodDays?: number[]              // day-of-month numbers to mark with an accent dot
   accent?: string
   onMonthChange?: (firstOfMonth: Date) => void  // fired when the ‹ › nav changes month (additive; optional)
+  // ── Additive per-day layers (optional). When provided they enrich each
+  // in-month cell; every existing caller that omits them is unchanged. ──
+  /** Soft phase-band bloom behind the cell: { color, intensity 0..1 } | null. */
+  dayField?: (date: Date) => { color: string; intensity: number } | null
+  /** Small marker under the day number (replaces the period dot when returned). */
+  dayMarker?: (date: Date) => ReactNode
 }
 
 const DOW = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
 
-export function DiffuseDotCalendar({ value, onChange, month, minimumDate, periodDays, accent, onMonthChange }: DotCalendarProps) {
+export function DiffuseDotCalendar({ value, onChange, month, minimumDate, periodDays, accent, onMonthChange, dayField, dayMarker }: DotCalendarProps) {
   const { colors, isDark } = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
   const acc = accent ?? getDiffuseAccent(mode, isDark)
@@ -691,6 +698,10 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
           const selected = c.inMonth && sameDay(c.date, value)
           const disabled = minimumDate ? isBefore(new Date(c.date), minimumDate) : false
           const isPeriod = c.inMonth && periodDays?.includes(c.day)
+          // Additive layers — only computed for in-month days when the caller
+          // supplies the callbacks; otherwise fully unchanged legacy behavior.
+          const field = c.inMonth && dayField ? dayField(c.date) : null
+          const marker = c.inMonth && dayMarker ? dayMarker(c.date) : null
           return (
             <Pressable
               key={i}
@@ -698,6 +709,12 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
               onPress={() => onChange(c.date)}
               style={dp.calCellWrap}
             >
+              {/* Soft phase-band bloom behind the cell (below the selected bloom). */}
+              {field && !selected ? (
+                <View pointerEvents="none" style={dp.calBloom}>
+                  <SoftBloom color={field.color} opacity={0.32 + 0.5 * field.intensity} spread={0.4} radius="52%" />
+                </View>
+              ) : null}
               {selected ? (
                 <View pointerEvents="none" style={dp.calBloom}>
                   <SoftBloom color={acc} opacity={0.55} spread={0.34} radius="50%" />
@@ -707,7 +724,7 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
                 style={[
                   dp.calCell,
                   {
-                    borderColor: selected ? acc : (c.inMonth && !isPeriod ? colors.line : 'transparent'),
+                    borderColor: selected ? acc : (c.inMonth && !isPeriod && !field ? colors.line : 'transparent'),
                   },
                 ]}
               >
@@ -721,7 +738,12 @@ export function DiffuseDotCalendar({ value, onChange, month, minimumDate, period
                   {c.day}
                 </Text>
               </View>
-              {isPeriod && !selected ? <View style={[dp.calPeriodDot, { backgroundColor: acc }]} /> : null}
+              {/* Custom day marker (phase glyph) wins; else legacy period dot. */}
+              {marker && !selected ? (
+                <View pointerEvents="none" style={dp.calMarker}>{marker}</View>
+              ) : isPeriod && !selected && !dayMarker ? (
+                <View style={[dp.calPeriodDot, { backgroundColor: acc }]} />
+              ) : null}
             </Pressable>
           )
         })}
