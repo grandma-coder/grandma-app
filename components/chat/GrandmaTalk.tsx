@@ -1760,6 +1760,7 @@ export function GrandmaTalk() {
                   onPress={() => sendText(s)}
                   style={({ pressed }) => [
                     styles.chip,
+                    styles.chipCapped,
                     diffuse
                       ? {
                           backgroundColor: 'transparent',
@@ -2012,16 +2013,19 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 8,
   },
-  suggestionsRow: { paddingHorizontal: 16, gap: 8 },
+  suggestionsRow: { paddingHorizontal: 16, gap: 7 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
   },
-  chipLabel: { fontSize: 14, fontWeight: '500' },
+  chipLabel: { fontSize: 12.5, fontWeight: '500' },
+  // AI follow-up pills are full sentences — cap width so long ones truncate
+  // with an ellipsis instead of running off-screen.
+  chipCapped: { maxWidth: 300 },
 
   // Input bar — "Tap to talk" pill + mic
   inputBar: {
