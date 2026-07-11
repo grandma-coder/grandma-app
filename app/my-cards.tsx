@@ -6,6 +6,7 @@ import { X, ChevronLeft } from 'lucide-react-native'
 import { useTheme } from '../constants/theme'
 import { useDailyMessage, type DailyMessageRow } from '../lib/dailyMessage/useDailyMessage'
 import { getCardById } from '../lib/dailyMessage'
+import { cardTint, cardHairline } from '../lib/dailyMessage/cardTint'
 import type { DailyCard } from '../lib/dailyMessage'
 
 interface CollectionItem {
@@ -13,9 +14,18 @@ interface CollectionItem {
   card: DailyCard
 }
 
+// "2026-07-11" → "Jul 11". Keeps the mono-caps date warm and short.
+function fmtDate(iso: string): string {
+  const [, m, d] = iso.split('-')
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+  const mi = Number(m) - 1
+  if (mi < 0 || mi > 11) return iso
+  return `${months[mi]} ${Number(d)}`
+}
+
 export default function MyCardsScreen() {
   const insets = useSafeAreaInsets()
-  const { colors, stickers, font, radius } = useTheme()
+  const { colors, font, radius } = useTheme()
   const { collection } = useDailyMessage()
   const [openId, setOpenId] = useState<string | null>(null)
 
@@ -26,50 +36,69 @@ export default function MyCardsScreen() {
   }, [])
 
   const open = openId ? getCardById(openId) ?? null : null
+  const openTint = open ? cardTint(open.color) : null
 
   const styles = StyleSheet.create({
     fill: { flex: 1, backgroundColor: colors.bg },
-    back: { paddingHorizontal: 16 },
-    title: { fontFamily: font.display, fontSize: 30, color: stickers.charcoal, paddingHorizontal: 16, marginTop: 4 },
-    tile: { borderRadius: radius.md, padding: 14, minHeight: 150, justifyContent: 'center' },
-    tileText: { fontFamily: font.display, fontSize: 15, lineHeight: 20, color: stickers.charcoal },
-    tileDate: { fontFamily: font.bodyMedium, fontSize: 11, color: stickers.charcoal, opacity: 0.5, marginTop: 6 },
-    empty: { fontFamily: font.body, fontSize: 15, color: stickers.charcoal, textAlign: 'center', marginTop: 60, opacity: 0.6 },
-    overlay: { flex: 1, backgroundColor: 'rgba(20,19,19,0.55)', justifyContent: 'center', padding: 24 },
-    big: { borderRadius: radius.lg, padding: 28, minHeight: 300, justifyContent: 'center' },
-    close: { position: 'absolute', top: 16, right: 16, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-    bigText: { fontFamily: font.display, fontSize: 26, lineHeight: 32, color: stickers.charcoal },
+    header: { paddingHorizontal: 20 },
+    back: { width: 40, height: 40, justifyContent: 'center', marginLeft: -8 },
+    eyebrow: { fontFamily: font.bodyMedium, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase', color: colors.textMuted, marginTop: 2 },
+    title: { fontFamily: font.display, fontSize: 34, color: colors.text, marginTop: 2 },
+    // Soft tint wash + hairline colored edge + ink serif italic.
+    tile: { flex: 1, borderRadius: radius.lg, borderWidth: 1, padding: 16, minHeight: 156, justifyContent: 'space-between' },
+    tileText: { fontFamily: font.italic, fontSize: 17, lineHeight: 22 },
+    tileDate: { fontFamily: font.bodyMedium, fontSize: 9.5, letterSpacing: 1.5, marginTop: 12 },
+    empty: { fontFamily: font.italic, fontSize: 18, color: colors.textMuted, textAlign: 'center', marginTop: 80 },
+    overlay: { flex: 1, backgroundColor: colors.bg + 'F2', justifyContent: 'center', paddingHorizontal: 24 },
+    big: { borderRadius: radius.lg, borderWidth: 1, padding: 30, minHeight: 260, justifyContent: 'center' },
+    bigText: { fontFamily: font.italic, fontSize: 27, lineHeight: 34 },
+    bigDate: { fontFamily: font.bodyMedium, fontSize: 10, letterSpacing: 1.5, marginTop: 20 },
+    close: { position: 'absolute', top: 14, right: 14, width: 38, height: 38, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   })
 
   return (
     <View style={[styles.fill, { paddingTop: insets.top + 8 }]}>
-      <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
-        <ChevronLeft size={24} color={stickers.charcoal} />
-      </Pressable>
-      <Text style={styles.title}>My Cards</Text>
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
+          <ChevronLeft size={26} color={colors.text} strokeWidth={2} />
+        </Pressable>
+        <Text style={styles.eyebrow}>DAILY MESSAGE</Text>
+        <Text style={styles.title}>My Cards</Text>
+      </View>
+
       <FlatList
         data={cards}
         keyExtractor={(x) => x.row.id}
         numColumns={2}
         columnWrapperStyle={{ gap: 12 }}
-        contentContainerStyle={{ gap: 12, padding: 16 }}
-        renderItem={({ item }) => (
-          <Pressable style={{ flex: 1 }} onPress={() => setOpenId(item.card.id)}>
-            <View style={[styles.tile, { backgroundColor: stickers[item.card.color] }]}>
-              <Text style={styles.tileText} numberOfLines={5}>{item.card.text}</Text>
-            </View>
-            <Text style={styles.tileDate}>{item.row.date}</Text>
-          </Pressable>
-        )}
+        contentContainerStyle={{ gap: 12, padding: 20 }}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => {
+          const tint = cardTint(item.card.color)
+          return (
+            <Pressable style={{ flex: 1 }} onPress={() => setOpenId(item.card.id)}>
+              <View style={[styles.tile, { backgroundColor: tint.soft, borderColor: cardHairline(item.card.color) }]}>
+                <Text style={[styles.tileText, { color: tint.ink }]} numberOfLines={5}>{item.card.text}</Text>
+                <Text style={[styles.tileDate, { color: tint.ink, opacity: 0.7 }]}>{fmtDate(item.row.date)}</Text>
+              </View>
+            </Pressable>
+          )
+        }}
         ListEmptyComponent={<Text style={styles.empty}>Your drawn cards will collect here.</Text>}
       />
+
       <Modal visible={!!open} transparent animationType="fade" onRequestClose={() => setOpenId(null)}>
         <View style={styles.overlay}>
-          <View style={[styles.big, { backgroundColor: open ? stickers[open.color] : stickers.yellow }]}>
-            <Pressable onPress={() => setOpenId(null)} style={styles.close} hitSlop={12}>
-              <X size={22} color={stickers.charcoal} />
+          <View style={[styles.big, { backgroundColor: openTint?.soft ?? colors.surface, borderColor: open ? cardHairline(open.color) : colors.border }]}>
+            <Pressable onPress={() => setOpenId(null)} style={[styles.close, { borderColor: (openTint?.ink ?? colors.text) + '33' }]} hitSlop={12}>
+              <X size={20} color={openTint?.ink ?? colors.text} strokeWidth={2} />
             </Pressable>
-            <Text style={styles.bigText}>{open?.text}</Text>
+            <Text style={[styles.bigText, { color: openTint?.ink ?? colors.text }]}>{open?.text}</Text>
+            {open ? (
+              <Text style={[styles.bigDate, { color: openTint?.ink ?? colors.textMuted, opacity: 0.6 }]}>
+                {fmtDate(collection.find((r) => r.card_id === open.id)?.date ?? '')}
+              </Text>
+            ) : null}
           </View>
         </View>
       </Modal>

@@ -1,7 +1,8 @@
 // components/home/pregnancy/DailyMessageDeck.tsx
 import { useRef, useState } from 'react'
 import { View, Text, StyleSheet, useWindowDimensions, Animated, PanResponder } from 'react-native'
-import { stickers, radius, font } from '../../../constants/theme'
+import { radius, font } from '../../../constants/theme'
+import { cardTint, cardHairline } from '../../../lib/dailyMessage/cardTint'
 import type { DailyCard } from '../../../lib/dailyMessage/types'
 
 interface Props {
@@ -66,10 +67,11 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
         .reverse() // render back-to-front so the top card sits above
         .map(({ card, i }) => {
           const isTop = i === 0
+          const tint = cardTint(card.color)
           const body = (
-            <View style={[styles.card, { backgroundColor: stickers[card.color] }]}>
-              <View style={styles.dot} />
-              <Text style={styles.cardText}>{card.text}</Text>
+            <View style={[styles.card, { backgroundColor: tint.soft, borderColor: cardHairline(card.color) }]}>
+              <View style={[styles.dot, { backgroundColor: tint.ink }]} />
+              <Text style={[styles.cardText, { color: tint.ink }]}>{card.text}</Text>
             </View>
           )
           if (!isTop) {
@@ -96,7 +98,8 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
 const styles = StyleSheet.create({
   wrap: { height: 420, alignItems: 'center', justifyContent: 'flex-start' },
   abs: { position: 'absolute', width: '86%', alignSelf: 'center' },
-  card: { minHeight: 380, borderRadius: radius.lg, padding: 28, justifyContent: 'flex-start', gap: 20 },
-  dot: { width: 14, height: 14, borderRadius: 7, backgroundColor: stickers.charcoal },
-  cardText: { fontFamily: font.display, fontSize: 26, lineHeight: 32, color: stickers.charcoal },
+  // Soft tint wash + hairline colored edge + ink serif italic — the cream idiom.
+  card: { minHeight: 380, borderRadius: radius.lg, borderWidth: 1, padding: 30, justifyContent: 'flex-start', gap: 22 },
+  dot: { width: 12, height: 12, borderRadius: 6, opacity: 0.8 },
+  cardText: { fontFamily: font.italic, fontSize: 28, lineHeight: 36 },
 })
