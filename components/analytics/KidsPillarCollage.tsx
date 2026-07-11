@@ -36,18 +36,16 @@ interface Props {
 }
 
 // Sticker shape per pillar — same shape language as the pillar list + ring.
-// Rendered Diffuse-soft: a translucent tint fill (not the vivid flat colour)
-// with a light hairline stroke, so the collage stays delicate.
-function PillarShape({ pillar, size, color }: { pillar: CollagePillarKey; size: number; color: string }) {
-  const fill = color + '5C'          // ~36% alpha — a soft-but-present wash of the hue
-  const stroke = color + 'B0'        // ~69% alpha — hairline in the hue, not ink
+// Reference match: full saturated fill + a soft ink outline (the shapes ARE the
+// colour, like the reference's flat vivid blocks).
+function PillarShape({ pillar, size, color, stroke }: { pillar: CollagePillarKey; size: number; color: string; stroke: string }) {
   switch (pillar) {
-    case 'nutrition': return <Leaf size={size} fill={fill} stroke={stroke} />
-    case 'sleep':     return <Moon size={size} fill={fill} stroke={stroke} />
-    case 'mood':      return <Heart size={size} fill={fill} stroke={stroke} />
-    case 'health':    return <Cross size={size} fill={fill} stroke={stroke} />
-    case 'growth':    return <Star size={size} fill={fill} stroke={stroke} />
-    case 'activity':  return <Burst size={size} fill={fill} stroke={stroke} points={8} />
+    case 'nutrition': return <Leaf size={size} fill={color} stroke={stroke} />
+    case 'sleep':     return <Moon size={size} fill={color} stroke={stroke} />
+    case 'mood':      return <Heart size={size} fill={color} stroke={stroke} />
+    case 'health':    return <Cross size={size} fill={color} stroke={stroke} />
+    case 'growth':    return <Star size={size} fill={color} stroke={stroke} />
+    case 'activity':  return <Burst size={size} fill={color} stroke={stroke} points={8} />
   }
 }
 
@@ -58,8 +56,8 @@ const ROTATIONS = [-9, 7, -5, 11, -13, 6]
 // Tile size scales with score: no-data smallest, 10/10 largest. Bigger tiles
 // than before so the hero number has room to breathe (reference-style).
 function tileSizeFor(score: PillarScore | undefined): number {
-  const MIN = 116
-  const MAX = 150
+  const MIN = 128
+  const MAX = 164
   if (!score?.hasData) return MIN
   const t = Math.max(0, Math.min(1, score.value / 10))
   return Math.round(MIN + (MAX - MIN) * t)
@@ -87,10 +85,10 @@ export function KidsPillarCollage({ items, onPillarPress }: Props) {
             accessibilityRole="button"
             accessibilityLabel={`${item.label}${has ? `, ${item.score!.value.toFixed(1)} out of 10` : ', no data'}`}
           >
-            {/* The pillar's organic SHAPE is the tile — clean on paper, no backing
-                disc/shadow (reference-style). Grain only, for the Diffuse texture. */}
+            {/* The pillar's organic SHAPE is the tile — a full pastel-vivid fill
+                (reference match), soft ink outline, clean on paper (no disc). */}
             <View pointerEvents="none" style={styles.shapeLayer}>
-              <PillarShape pillar={item.key} size={tile} color={item.color} />
+              <PillarShape pillar={item.key} size={tile} color={item.color + 'D9'} stroke={colors.ink + '4D'} />
             </View>
 
             {/* Counter-rotate so the number stays upright inside the tilted shape.
@@ -130,7 +128,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   hero: {
-    fontFamily: diffuseFont.displayLight,   // the "huge hero number" face
+    fontFamily: diffuseFont.displayMedium,   // heavier figure — reference-style
     letterSpacing: -1.5,
   },
 })

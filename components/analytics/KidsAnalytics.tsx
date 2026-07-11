@@ -1270,39 +1270,16 @@ function KidsWellnessRingCard({
   const caption = overall >= 8.5 ? t('kids_analytics_caption_thriving') : overall >= 7 ? t('kids_analytics_caption_on_track') : overall >= 5 ? t('kids_analytics_caption_developing') : t('kids_analytics_caption_needs_care')
 
   if (diffuse) {
-    const accent = getDiffuseAccent('kids', dt.isDark)
-    // Per-pillar dot rows around the ring: a hairline containerless list.
+    // No wheel, no pillar list — a big reference-style overall number + caption
+    // heads the screen; the pillar collage below carries the per-pillar read.
     return (
-      <View style={{ gap: 18, marginTop: 4 }}>
-        <View style={{ alignItems: 'center', paddingVertical: 8, overflow: 'hidden', borderRadius: 28 }}>
-          <SoftBloom color={accent} cx="50%" cy="30%" opacity={dt.isDark ? 0.3 : 0.4} spread={0.5} />
-          <DiffuseCircularMetric
-            progress={overall / 10}
-            value={hasAnyData ? overall.toFixed(1) : '—'}
-            unit="/ 10"
-            label={caption.toUpperCase()}
-            size={200}
-            color={accent}
-            strokeWidth={5}
-          />
-        </View>
-        <View>
-          {PILLAR_ORDER.map((key, i) => {
-            const seg = segments.find((s) => s.id === key)
-            const sc = scores[key]
-            return (
-              <DiffuseListRow
-                key={key}
-                title={PILLAR_CONFIG[key].label}
-                dotColor={seg?.color}
-                value={sc.hasData ? sc.value.toFixed(1) : '—'}
-                valueColor={sc.hasData ? dt.colors.ink : dt.colors.ink3}
-                onPress={() => onPillarPress(key)}
-                last={i === PILLAR_ORDER.length - 1}
-              />
-            )
-          })}
-        </View>
+      <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4 }}>
+        <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 96, lineHeight: 100, color: dt.colors.ink, letterSpacing: -3 }}>
+          {hasAnyData ? overall.toFixed(1) : '—'}
+        </Text>
+        <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 2.5, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 6 }}>
+          {caption.toUpperCase()}
+        </Text>
       </View>
     )
   }
