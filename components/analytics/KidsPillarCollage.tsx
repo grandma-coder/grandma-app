@@ -48,23 +48,25 @@ function PillarShape({ pillar, size, color, stroke }: { pillar: CollagePillarKey
 }
 
 // Free scatter layout (reference-style). Each pillar gets a hand-placed slot as
-// a fraction of the canvas — staggered rows, varied x, some overlap — so the
-// shapes read as a loose collage, not a grid. cx/cy are the shape CENTRE as a
-// fraction of canvas width/height; rot tilts it. Deterministic (no random).
-const CANVAS_H = 440
-const SLOTS: Record<CollagePillarKey, { cx: number; cy: number; rot: number }> = {
-  nutrition: { cx: 0.26, cy: 0.17, rot: -8 },   // top-left
-  sleep:     { cx: 0.72, cy: 0.20, rot: 9 },    // top-right
-  mood:      { cx: 0.24, cy: 0.50, rot: -5 },   // mid-left
-  health:    { cx: 0.55, cy: 0.46, rot: 6 },    // mid-centre (overlaps neighbours)
-  growth:    { cx: 0.80, cy: 0.54, rot: 12 },   // mid-right
-  activity:  { cx: 0.44, cy: 0.82, rot: -11 },  // bottom-centre
+// a fraction of the canvas — staggered rows, gentle overlap — so the shapes read
+// as a loose collage, not a grid. cx/cy are the shape CENTRE as a fraction of
+// canvas width/height; rot tilts it. `fit` scales the text box to the shape's
+// usable inner core (a heart/cross holds more text than a star/leaf/moon).
+// Deterministic (no random).
+const CANVAS_H = 560
+const SLOTS: Record<CollagePillarKey, { cx: number; cy: number; rot: number; fit: number }> = {
+  nutrition: { cx: 0.24, cy: 0.13, rot: -6, fit: 0.5 },  // leaf — narrow
+  sleep:     { cx: 0.74, cy: 0.15, rot: 8,  fit: 0.42 }, // moon — narrow crescent
+  mood:      { cx: 0.25, cy: 0.44, rot: -4, fit: 0.62 }, // heart — roomy
+  health:    { cx: 0.72, cy: 0.46, rot: 5,  fit: 0.58 }, // cross — roomy centre
+  growth:    { cx: 0.30, cy: 0.76, rot: -9, fit: 0.44 }, // star — narrow points
+  activity:  { cx: 0.72, cy: 0.80, rot: 10, fit: 0.44 }, // burst — narrow points
 }
 
 // Tile size scales with score: no-data smallest, 10/10 largest.
 function tileSizeFor(score: PillarScore | undefined): number {
-  const MIN = 132
-  const MAX = 172
+  const MIN = 148
+  const MAX = 186
   if (!score?.hasData) return MIN
   const t = Math.max(0, Math.min(1, score.value / 10))
   return Math.round(MIN + (MAX - MIN) * t)
@@ -83,8 +85,11 @@ export function KidsPillarCollage({ items, onPillarPress }: Props) {
         // Position by centre → top-left corner.
         const left = canvasW * slot.cx - tile / 2
         const top = CANVAS_H * slot.cy - tile / 2
-        const nameSize = Math.round(tile * 0.15)
-        const valSize = Math.round(tile * 0.12)
+        // Text sized to fit the shape's usable inner core. Number only (no "/10")
+        // so it never overflows the narrow shapes. Name is a small label above
+        // the larger focal number.
+        const valSize = Math.round(tile * 0.2 * (slot.fit / 0.5))
+        const nameSize = Math.max(9, Math.round(valSize * 0.46))
         return (
           <Pressable
             key={item.key}
@@ -102,14 +107,14 @@ export function KidsPillarCollage({ items, onPillarPress }: Props) {
               <PillarShape pillar={item.key} size={tile} color={item.color + 'D9'} stroke={colors.ink + '4D'} />
             </View>
 
-            {/* Counter-rotate so text stays upright. Reference layout: pillar
-                NAME (prominent) over a smaller value line. */}
-            <View style={[styles.inner, { transform: [{ rotate: `${-slot.rot}deg` }] }]}>
-              <Text style={[styles.name, { color: colors.ink, fontSize: nameSize }]} numberOfLines={1}>
+            {/* Counter-rotate so text stays upright. NAME over the number, both
+                confined to the shape's inner core (width = tile × fit). */}
+            <View style={[styles.inner, { width: tile * slot.fit, transform: [{ rotate: `${-slot.rot}deg` }] }]}>
+              <Text style={[styles.name, { color: colors.ink, fontSize: nameSize }]} numberOfLines={1} adjustsFontSizeToFit>
                 {item.label.toLowerCase()}
               </Text>
-              <Text style={[styles.val, { color: colors.ink2, fontSize: valSize }]} numberOfLines={1}>
-                {has ? `${item.score!.value.toFixed(1)} / 10` : '—'}
+              <Text style={[styles.val, { color: colors.ink, fontSize: valSize }]} numberOfLines={1}>
+                {has ? item.score!.value.toFixed(1) : '—'}
               </Text>
             </View>
           </Pressable>
@@ -141,11 +146,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   name: {
-    fontFamily: diffuseFont.displayMedium,
-    letterSpacing: -0.3,
+    fontFamily: diffuseFont.mono,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    textAlign: 'center',
   },
   val: {
-    fontFamily: diffuseFont.mono,
-    letterSpacing: 0.4,
+    fontFamily: diffuseFont.displayMedium,
+    letterSpacing: -0.5,
+    textAlign: 'center',
   },
 })
