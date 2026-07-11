@@ -676,6 +676,8 @@ function getSuggestions(
 // spring; tap one to send, tap the backdrop or the same pill to collapse. The
 // current (cream) theme keeps the plain horizontal scroll unchanged.
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+
 function WheelFollowup({
   text, index, count, progress, tint, onPick,
 }: {
@@ -799,13 +801,17 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick, fanBottom }: Whee
   return (
     <View style={wheelStyles.wrap}>
       {/* Full-screen overlay in a Modal so the fan escapes the composer's
-          clipping and floats over the whole screen — but NO blur/dim: the fan
-          reads as a light picker over the un-dimmed chat. A transparent
-          tap-catcher behind it collapses the fan on an outside tap. */}
+          clipping and floats over the whole screen. A LIGHT page-colour wash
+          (no blur) quiets the chat behind the fan so the floating pills don't
+          read as overlapping the reply card — soft, not a heavy frost. The
+          wash is also the tap-catcher: tapping it collapses the fan. */}
       <Modal visible={open != null} transparent animationType="none" onRequestClose={collapse}>
         {open ? (
           <View style={StyleSheet.absoluteFill}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={collapse} />
+            <AnimatedPressable
+              style={[StyleSheet.absoluteFill, { backgroundColor: dt.colors.bg, opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 0.9] }) }]}
+              onPress={collapse}
+            />
 
             {/* Fanned follow-ups, anchored just above the composer */}
             <View pointerEvents="box-none" style={[wheelStyles.fan, { bottom: fanBottom }]}>
