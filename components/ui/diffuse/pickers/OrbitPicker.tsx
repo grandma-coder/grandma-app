@@ -1,8 +1,9 @@
 import React from 'react'
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native'
 import Svg, { Ellipse } from 'react-native-svg'
-import { useTheme } from '../../../../constants/theme'
+import { useDiffuseTheme, diffuseFont } from '../../../../constants/theme'
 import { orbitNodePositions } from '../../../../lib/diffusePickers/orbit'
+import { SoftBloom } from '../DiffuseKit'
 
 export interface OrbitOption {
   key: string
@@ -20,6 +21,7 @@ interface OrbitPickerProps {
 const CONTAINER_SIZE = 340
 const NODE_DOT_SIZE = 13
 const GLOW_RING_SIZE = NODE_DOT_SIZE + 6 * 2
+const BLOOM_SIZE = NODE_DOT_SIZE * 2.75
 
 /**
  * OrbitPicker — a 4-option single-select picker rendered as a dashed ellipse ring
@@ -30,7 +32,7 @@ const GLOW_RING_SIZE = NODE_DOT_SIZE + 6 * 2
  * selection state is fully controlled via `value` / `onChange`.
  */
 export function OrbitPicker({ options, value, onChange }: OrbitPickerProps) {
-  const { colors, font } = useTheme()
+  const dt = useDiffuseTheme()
   const positions = orbitNodePositions(options.length)
 
   return (
@@ -47,7 +49,7 @@ export function OrbitPicker({ options, value, onChange }: OrbitPickerProps) {
           rx={33}
           ry={40}
           fill="none"
-          stroke={colors.border}
+          stroke={dt.colors.line2}
           strokeWidth={0.6}
           strokeDasharray=".6 2.6"
         />
@@ -69,19 +71,23 @@ export function OrbitPicker({ options, value, onChange }: OrbitPickerProps) {
             accessibilityState={{ selected }}
             accessibilityLabel={option.label}
           >
-            <View
-              style={[
-                styles.glowRing,
-                selected && {
-                  backgroundColor: `${option.accent}33`,
-                },
-              ]}
-            >
+            <View style={styles.glowRing}>
+              {selected ? (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.bloomWrap,
+                    { width: BLOOM_SIZE, height: BLOOM_SIZE, borderRadius: BLOOM_SIZE / 2 },
+                  ]}
+                >
+                  <SoftBloom color={option.accent} opacity={0.75} spread={0.55} radius="55%" />
+                </View>
+              ) : null}
               <View
                 style={[
                   styles.dot,
                   {
-                    backgroundColor: selected ? option.accent : colors.border,
+                    backgroundColor: selected ? option.accent : dt.colors.line2,
                     transform: [{ scale: selected ? 1.18 : 1 }],
                   },
                 ]}
@@ -91,8 +97,8 @@ export function OrbitPicker({ options, value, onChange }: OrbitPickerProps) {
               style={[
                 styles.label,
                 {
-                  fontFamily: font.bodySemiBold,
-                  color: selected ? colors.text : colors.textFaint,
+                  fontFamily: diffuseFont.bodySemiBold,
+                  color: selected ? dt.colors.ink : dt.colors.ink3,
                 },
               ]}
             >
@@ -103,8 +109,8 @@ export function OrbitPicker({ options, value, onChange }: OrbitPickerProps) {
                 style={[
                   styles.sub,
                   {
-                    fontFamily: font.body,
-                    color: colors.textFaint,
+                    fontFamily: diffuseFont.mono,
+                    color: dt.colors.ink3,
                   },
                 ]}
               >
@@ -132,10 +138,13 @@ const styles = StyleSheet.create({
   glowRing: {
     width: GLOW_RING_SIZE,
     height: GLOW_RING_SIZE,
-    borderRadius: GLOW_RING_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+  },
+  bloomWrap: {
+    position: 'absolute',
+    alignSelf: 'center',
   },
   dot: {
     width: NODE_DOT_SIZE,
