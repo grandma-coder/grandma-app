@@ -51,42 +51,45 @@ const D: Record<CharacterName, string> = {
   water: 'M24 4c-2 6-14 16-14 26 0 8 6 14 14 14s14-6 14-14C38 20 26 10 24 4Z',
   calories: 'M24 4c-1 6-8 9-8 18 0 3 1 5 3 7-1-4 1-7 4-9-1 5 3 7 3 12 0 3-2 6-6 6 6 3 15-1 15-11 0-11-9-16-11-23Z',
   temperature: 'M24 6c-4 0-7 3-7 7v13c-3 2-5 5-5 9 0 7 5 11 12 11s12-4 12-11c0-4-2-7-5-9V13c0-4-3-7-7-7Z',
-  feeding: 'M24 6c8 0 14 4 14 12 0 4-2 7-2 11 0 6-5 9-12 9s-12-3-12-9c0-4-2-7-2-11 0-8 6-12 14-12Z',
-  milk: 'M18 4h12l-1 6c4 2 6 6 6 11v13c0 4-3 6-11 6s-11-2-11-6V21c0-5 2-9 6-11l-1-6Z',
-  diaper: 'M8 16h32c0 12-6 22-16 22S8 28 8 16Z',
-  potty: 'M12 18h24v6a10 10 0 0 1-20 0v-6ZM10 14h28v4H10Z',
-  bath: 'M8 24h32v4a10 10 0 0 1-10 10H18A10 10 0 0 1 8 28v-4ZM14 24V12a4 4 0 0 1 8 0',
-  baby: 'M24 6c9 0 15 6 15 15 0 6-3 11-8 14-2 1-4 2-7 2s-5-1-7-2c-5-3-8-8-8-14C9 12 15 6 24 6Z',
-  medicine: 'M14 10a10 10 0 0 1 14 0l10 10a10 10 0 0 1-14 14L14 24a10 10 0 0 1 0-14Z',
-  vaccine: 'M28 6l14 14-4 4-3-3-14 14-6 2-3-3 2-6L28 8l-3-3 3-2ZM10 34l4 4',
+  feeding: 'M7 23h34a1 1 0 0 1 1 1c0 8-6 14-13 15v2a2 2 0 0 1-4 0v-1c-9-1-15-7-15-15a1 1 0 0 1 1-1ZM31 8c1 0 2 1 2 2l-1 11a1 1 0 0 1-2 0l-1-11c0-1 1-2 2-2Z',
+  milk: 'M20 5h8a1 1 0 0 1 0 4h-1l1 3c3 1 5 4 5 8v14c0 3-2 5-9 5s-9-2-9-5V24c0-4 2-7 5-8l1-3h-1a1 1 0 0 1 0-4Z',
+  diaper: 'M9 15h30c0 14-7 24-15 24S9 29 9 15Z',
+  potty: 'M11 20h26v2a10 10 0 0 1-4 8l1 5a1 1 0 0 1-1 1H15a1 1 0 0 1-1-1l1-5a10 10 0 0 1-4-8v-2ZM8 15h32a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1ZM37 21c3 0 3 5 0 5Z',
+  bath: 'M7 24h34v3a11 11 0 0 1-11 11H18A11 11 0 0 1 7 27v-3ZM13 24V14a3 3 0 0 1 6 0v10Z',
+  baby: 'M24 8a15 15 0 1 0 0 30 15 15 0 0 0 0-30ZM24 8c0-3 4-4 6-2 1 2-1 4-3 4',
+  medicine: 'M13 13a9 9 0 0 1 13 0l9 9a9 9 0 0 1-13 13l-9-9a9 9 0 0 1 0-13Z',
+  vaccine: 'M20 6h8v3h-2v13h4v3H18v-3h4V9h-2V6ZM22 28h4v9l-2 4-2-4v-9Z',
   heartbeat: 'M24 43C11 34 6 26 6 18 6 11 11 7 16 7c4 0 7 3 8 6 1-3 4-6 8-6 5 0 10 4 10 11 0 8-5 16-18 25Z',
   checkup: 'M20 6h8v6h6v8h-6v6h-8v-6h-6v-8h6V6Z',
-  exam: 'M18 6h12v9l6 12c1 3-1 6-4 6H16c-3 0-5-3-4-6l6-12V6Z',
+  exam: 'M20 6h8v10l7 15a3 3 0 0 1-3 4H16a3 3 0 0 1-3-4l7-15V6Z',
   period: 'M24 4c-3 8-16 18-16 28 0 8 7 12 16 12s16-4 16-12C40 22 27 12 24 4Z',
   ovulation: 'M24 6c11 0 18 7 18 18s-7 18-18 18S6 35 6 24 13 6 24 6Z',
-  kick: 'M14 30c2-8 8-12 15-12 5 0 9 3 9 7 0 3-2 5-6 6l-6 2c-2 1-3 3-3 5 0 1-1 2-2 2-3 0-4-4-4-8 0-1 0-2 0-3l-3 3c-1 1-3 0-3-2 0-2 2-4 6-5Z',
+  kick: 'M16 28c-4-1-7-5-7-11 0-6 4-10 9-10s8 4 8 10c0 5-2 9-5 10-2 1-3 3-3 5s-1 4-4 4-4-2-4-4 1-3 3-4c1 0 1 0 1 0ZM30 12a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM36 15a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM38 22a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z',
   contraction: 'M24 8c9 0 16 7 16 16s-7 16-16 16S8 33 8 24 15 8 24 8Z',
-  ultrasound: 'M10 24a14 14 0 0 1 28 0c0 4-3 6-3 9 0 3-4 5-11 5s-11-2-11-5c0-3-3-5-3-9Z',
+  ultrasound: 'M8 10h32a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H27l2 5h-10l2-5H8a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2Z',
   star: 'M24 4c1 0 2 1 3 3l3 7c1 1 2 2 3 2l8 1c3 0 4 3 2 5l-6 5c-1 1-1 2-1 3l2 8c1 3-2 4-4 3l-7-4c-1-1-2-1-3 0l-7 4c-2 1-5 0-4-3l2-8c0-1 0-2-1-3l-6-5c-2-2-1-5 2-5l8-1c1 0 2-1 3-2l3-7c1-2 2-3 3-3Z',
   sparkle: 'M24 3c1 0 2 1 2 3 1 4 2 6 5 5 3-2 5 0 4 3-1 3-1 5 2 6 3 1 3 4 0 5-3 1-3 3-2 6 1 3-1 5-4 3-3-1-4 1-5 5 0 2-1 3-2 3s-2-1-2-3c-1-4-2-6-5-5-3 2-5 0-4-3 1-3 1-5-2-6-3-1-3-4 0-5 3-1 3-3 2-6-1-3 1-5 4-3 3 1 4-1 5-5 0-2 1-3 2-3Z',
   sun: 'M24 12a12 12 0 1 1 0 24 12 12 0 0 1 0-24ZM24 3v4M24 41v4M8.5 8.5l3 3M36.5 36.5l3 3M3 24h4M41 24h4M8.5 39.5l3-3M36.5 11.5l3-3',
   night: 'M32 4C18 4 8 13 8 25s10 21 24 20c2 0 2-2 0-3-8-3-14-9-14-18S24 9 32 6c2-1 2-2 0-2Z',
   heart: 'M24 43C11 34 6 26 6 18 6 11 11 7 16 7c4 0 7 3 8 6 1-3 4-6 8-6 5 0 10 4 10 11 0 8-5 16-18 25Z',
   streak: 'M24 4c-1 7-9 10-9 19 0 7 5 12 12 12s12-5 12-13c0-4-2-6-4-9 0 3-1 5-3 6 1-6-4-10-4-16-1 1-3 1-4 1Z',
-  crown: 'M6 34l4-20 8 8 6-12 6 12 8-8 4 20c0 3-2 4-8 4H14c-6 0-8-1-8-4Z',
-  gem: 'M16 6h16l8 10-16 22L8 16 16 6Z',
-  soothe: 'M24 10c6-6 18-4 18 6 0 6-6 12-18 20C12 28 6 22 6 16c0-10 12-12 18-6Z',
-  hug: 'M12 20a8 8 0 0 1 16 0M20 20a8 8 0 0 1 16 0M8 26c0 8 7 14 16 14s16-6 16-14',
-  community: 'M16 18a6 6 0 1 1 12 0M28 20a6 6 0 1 1 10 4M10 22a6 6 0 1 1 10-4M8 36c0-6 5-9 10-9M40 36c0-6-5-9-10-9M18 38c0-6 3-10 6-10s6 4 6 10',
-  note: 'M12 8h20l6 6v26H12V8Z',
-  photo: 'M8 14h6l3-4h14l3 4h6v24H8V14Z',
+  crown: 'M6 34l4-20 8 8 6-12 6 12 8-8 4 20c0 2-1 3-4 3H10c-3 0-4-1-4-3Z',
+  gem: 'M16 6h16l8 10-16 22L8 16Z',
+  soothe: 'M24 40C13 32 8 26 8 19c0-5 4-8 8-8 3 0 6 2 8 5 2-3 5-5 8-5 4 0 8 3 8 8 0 7-5 13-16 21Z',
+  hug: 'M24 8a10 10 0 1 1 0 20 10 10 0 0 1 0-20ZM10 40c0-7 5-12 10-13M38 40c0-7-5-12-10-13',
+  community: 'M18 12a7 7 0 1 1 0 14 7 7 0 0 1 0-14ZM32 14a6 6 0 1 1 0 12 6 6 0 0 1 0-12ZM6 40c0-7 5-12 12-12s12 5 12 12ZM32 28c6 0 10 4 10 12H30',
+  note: 'M12 6h16l8 8v28H12Z',
+  photo: 'M8 14h6l3-4h14l3 4h6v24H8Z',
   bell: 'M24 6c-7 0-11 5-11 12 0 8-4 10-4 12h30c0-2-4-4-4-12 0-7-4-12-11-12ZM20 34a4 4 0 0 0 8 0',
 }
 
-// Eye/face type per concept. 'dots' default; a few get expression or a
-// "face-as-content" line (heartbeat pulse, contraction wave).
-type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'ring' | 'none'
+// Face per concept. Eyes ONLY on creatures/subjects; object glyphs are faceless
+// ('none'). Some creatures use an expression; some concepts use a "cut-out"
+// detail rendered in the surface/paper colour (pulse, target, wave, blip, lens,
+// or the community's four eyes).
+type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'blip' | 'lens' | 'quad' | 'none'
 const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, number] }> = {
+  // subjects / creatures → eyes
   nutrition: { kind: 'dots', e: [19, 30, 29, 30] },
   sleep: { kind: 'sleepy', e: [17, 21, 25, 23] },
   mood: { kind: 'dots', e: [18, 19, 30, 19] },
@@ -95,37 +98,39 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   activity: { kind: 'dots', e: [21, 22, 27, 22] },
   water: { kind: 'dots', e: [20, 28, 28, 28] },
   calories: { kind: 'dots', e: [21, 26, 27, 26] },
-  temperature: { kind: 'dots', e: [20, 30, 28, 30] },
-  feeding: { kind: 'dots', e: [20, 24, 28, 24] },
-  milk: { kind: 'dots', e: [20, 26, 28, 26] },
-  diaper: { kind: 'dots', e: [20, 25, 28, 25] },
-  potty: { kind: 'dots', e: [20, 24, 28, 24] },
-  bath: { kind: 'dots', e: [20, 29, 28, 29] },
-  baby: { kind: 'dots', e: [19, 22, 29, 22] },
-  medicine: { kind: 'dots', e: [19, 22, 29, 26] },
-  vaccine: { kind: 'dots', e: [16, 30, 22, 30] },
-  heartbeat: { kind: 'pulse', e: [0, 0, 0, 0] },
-  checkup: { kind: 'smile', e: [17, 26, 25, 26] },
-  exam: { kind: 'dots', e: [20, 28, 28, 28] },
-  period: { kind: 'dots', e: [20, 30, 28, 30] },
-  ovulation: { kind: 'target', e: [0, 0, 0, 0] },
-  kick: { kind: 'dots', e: [24, 26, 31, 24] },
-  contraction: { kind: 'wave', e: [0, 0, 0, 0] },
-  ultrasound: { kind: 'dots', e: [19, 22, 29, 22] },
+  baby: { kind: 'dots', e: [19, 24, 29, 24] },
   star: { kind: 'dots', e: [21, 24, 27, 24] },
   sparkle: { kind: 'smile', e: [21, 22, 27, 22] },
   sun: { kind: 'smile', e: [19, 23, 25, 23] },
   night: { kind: 'dots', e: [18, 20, 26, 23] },
   heart: { kind: 'smile', e: [18, 19, 28, 19] },
-  streak: { kind: 'dots', e: [22, 26, 28, 26] },
-  crown: { kind: 'dots', e: [20, 26, 28, 26] },
-  gem: { kind: 'dots', e: [20, 20, 28, 20] },
-  soothe: { kind: 'dots', e: [18, 18, 30, 18] },
-  hug: { kind: 'smile', e: [19, 24, 25, 24] },
-  community: { kind: 'none', e: [0, 0, 0, 0] },
-  note: { kind: 'dots', e: [20, 24, 28, 24] },
-  photo: { kind: 'ring', e: [0, 0, 0, 0] },
-  bell: { kind: 'dots', e: [20, 20, 28, 20] },
+  hug: { kind: 'smile', e: [20, 16, 28, 16] },
+  community: { kind: 'quad', e: [0, 0, 0, 0] },
+  // concept "face-as-content" cut-outs
+  heartbeat: { kind: 'pulse', e: [0, 0, 0, 0] },
+  ovulation: { kind: 'target', e: [0, 0, 0, 0] },
+  contraction: { kind: 'wave', e: [0, 0, 0, 0] },
+  ultrasound: { kind: 'blip', e: [0, 0, 0, 0] },
+  photo: { kind: 'lens', e: [0, 0, 0, 0] },
+  // objects → faceless
+  temperature: { kind: 'none', e: [0, 0, 0, 0] },
+  feeding: { kind: 'none', e: [0, 0, 0, 0] },
+  milk: { kind: 'none', e: [0, 0, 0, 0] },
+  diaper: { kind: 'none', e: [0, 0, 0, 0] },
+  potty: { kind: 'none', e: [0, 0, 0, 0] },
+  bath: { kind: 'none', e: [0, 0, 0, 0] },
+  medicine: { kind: 'none', e: [0, 0, 0, 0] },
+  vaccine: { kind: 'none', e: [0, 0, 0, 0] },
+  checkup: { kind: 'none', e: [0, 0, 0, 0] },
+  exam: { kind: 'none', e: [0, 0, 0, 0] },
+  period: { kind: 'none', e: [0, 0, 0, 0] },
+  kick: { kind: 'none', e: [0, 0, 0, 0] },
+  streak: { kind: 'none', e: [0, 0, 0, 0] },
+  crown: { kind: 'none', e: [0, 0, 0, 0] },
+  gem: { kind: 'none', e: [0, 0, 0, 0] },
+  soothe: { kind: 'none', e: [0, 0, 0, 0] },
+  note: { kind: 'none', e: [0, 0, 0, 0] },
+  bell: { kind: 'none', e: [0, 0, 0, 0] },
 }
 
 interface Props {
@@ -135,9 +140,12 @@ interface Props {
   color?: string
   /** Dot/expression colour; a warm near-black that reads on every hue. */
   eye?: string
+  /** Surface/paper colour for "cut-out" details (pulse, target, wave, lens).
+   *  Defaults to the Diffuse light paper; pass dt.colors.bg to match dark. */
+  bg?: string
 }
 
-export function Character({ name, size = 24, color, eye = '#1A1916' }: Props) {
+export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1E8' }: Props) {
   const fill = color ?? HUE[name]
   const f = FACE[name]
   const [a, b, c, d] = f.e
@@ -162,20 +170,32 @@ export function Character({ name, size = 24, color, eye = '#1A1916' }: Props) {
           <Path d={`M${c} ${d}q2.4 2.6 4.8 0`} stroke={eye} strokeWidth={1.8} fill="none" strokeLinecap="round" />
         </>
       )}
+      {f.kind === 'quad' && (
+        <>
+          <Circle cx={15} cy={18} r={1.5} fill={eye} />
+          <Circle cx={21} cy={18} r={1.5} fill={eye} />
+          <Circle cx={30} cy={20} r={1.4} fill={eye} />
+          <Circle cx={35} cy={20} r={1.4} fill={eye} />
+        </>
+      )}
+      {/* cut-out details rendered in the paper colour */}
       {f.kind === 'pulse' && (
-        <Path d="M14 21h5l2-4 3 8 2-4h8" stroke={eye} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M13 22h5l2-5 3 10 2-5h8" stroke={bg} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       )}
       {f.kind === 'wave' && (
-        <Path d="M14 24q5-8 10 0 5-8 10 0" stroke={eye} strokeWidth={1.8} fill="none" strokeLinecap="round" />
+        <Path d="M12 24q6-9 12 0 6-9 12 0" stroke={bg} strokeWidth={2.2} fill="none" strokeLinecap="round" />
       )}
       {f.kind === 'target' && (
         <>
-          <Circle cx={24} cy={24} r={5} fill="none" stroke={eye} strokeWidth={1.8} />
-          <Circle cx={24} cy={24} r={1.6} fill={eye} />
+          <Circle cx={24} cy={24} r={6} fill="none" stroke={bg} strokeWidth={2.2} />
+          <Circle cx={24} cy={24} r={2} fill={bg} />
         </>
       )}
-      {f.kind === 'ring' && (
-        <Circle cx={24} cy={26} r={7} fill="none" stroke={eye} strokeWidth={1.8} />
+      {f.kind === 'lens' && (
+        <Circle cx={24} cy={26} r={7} fill="none" stroke={bg} strokeWidth={2.4} />
+      )}
+      {f.kind === 'blip' && (
+        <Path d="M24 27c-4-3-6-5-6-8 0-2 1.5-3.5 3.5-3.5 1.2 0 2 .6 2.5 1.5.5-.9 1.3-1.5 2.5-1.5 2 0 3.5 1.5 3.5 3.5 0 3-2 5-6 8Z" fill={bg} />
       )}
     </Svg>
   )
