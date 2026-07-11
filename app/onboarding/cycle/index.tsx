@@ -25,7 +25,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { Flower, Drop, Moon, Sun, Leaf, Heart } from '../../../components/ui/Stickers'
 import { PillButton } from '../../../components/ui/PillButton'
-import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
+import { useTheme, brand, stickers, getModeColor, getModeColorSoft, getDiffuseAccent, diffuseFields } from '../../../constants/theme'
+import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
+import { DiffuseDotCalendar } from '../../../components/ui/diffuse/DiffusePrimitives'
+import { DiffuseField } from '../../../components/ui/diffuse/DiffuseField'
+import { ArcDial } from '../../../components/ui/diffuse/pickers/ArcDial'
+import { SegmentedBloom } from '../../../components/ui/diffuse/pickers/SegmentedBloom'
+import { BloomChips } from '../../../components/ui/diffuse/pickers/BloomChips'
+import { MetaballBloom } from '../../../components/ui/diffuse/pickers/MetaballBloom'
+import { OrbitPicker } from '../../../components/ui/diffuse/pickers/OrbitPicker'
+import { PoleField } from '../../../components/ui/diffuse/pickers/PoleField'
 import {
   useCycleOnboardingStore,
   type ConditionChip,
@@ -66,6 +75,25 @@ function getSteps(ttc: boolean): StepId[] {
     return [...base, 'ttc_duration', 'ttc_temperature', 'ttc_supplements', 'complete']
   }
   return [...base, 'complete']
+}
+
+// ─── Local date ↔ ISO string helpers (Diffuse calendar bridge) ──────────────
+// The store keeps `lastPeriodDate` as an ISO 'YYYY-MM-DD' string; DiffuseDotCalendar
+// is controlled by a Date. Convert with LOCAL date parts (not toISOString) so an
+// evening selection west of UTC doesn't slide to the previous day.
+
+function isoToDate(iso: string | null): Date {
+  if (!iso) return new Date()
+  const [y, m, d] = iso.split('-').map((p) => parseInt(p, 10))
+  if (!y || !m || !d) return new Date()
+  return new Date(y, m - 1, d)
+}
+
+function dateToIso(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
@@ -288,6 +316,7 @@ function StepLastPeriod({
   onSkip: () => void
 }) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const date = useCycleOnboardingStore((s) => s.lastPeriodDate)
   const setDate = useCycleOnboardingStore((s) => s.setLastPeriodDate)
 
@@ -295,24 +324,34 @@ function StepLastPeriod({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_lastPeriod')}
       sticker={<Flower size={56} petal={stickers.pink} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
       continueDisabled={!date}
     >
-      <View style={stepStyles.centered}>
-        <DatePickerField
-          inline
-          label=""
-          value={date || ''}
-          onChange={setDate}
-          placeholder={t('cycleOnboarding_datePlaceholder')}
-          modalTitle={t('cycleOnboarding_modalLastPeriod')}
-          maximumDate={new Date()}
+      {diffuse ? (
+        <DiffuseDotCalendar
+          value={isoToDate(date)}
+          onChange={(d) => setDate(dateToIso(d))}
           minimumDate={new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)}
+          accent={diffuseFields.pre.accent}
         />
-      </View>
+      ) : (
+        <View style={stepStyles.centered}>
+          <DatePickerField
+            inline
+            label=""
+            value={date || ''}
+            onChange={setDate}
+            placeholder={t('cycleOnboarding_datePlaceholder')}
+            modalTitle={t('cycleOnboarding_modalLastPeriod')}
+            maximumDate={new Date()}
+            minimumDate={new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)}
+          />
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -330,6 +369,7 @@ function StepCycleLength({
 }) {
   const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const cycleLength = useCycleOnboardingStore((s) => s.cycleLength)
@@ -343,56 +383,93 @@ function StepCycleLength({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_cycleLength')}
       sticker={<Moon size={52} fill={stickers.lilac} />}
       onContinue={onContinue}
     >
-      <View style={stepStyles.inputRow}>
-        {!unknown && (
-          <View style={[stepStyles.numberInputWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}>
-            <TextInput
-              value={cycleLength?.toString() ?? ''}
-              onChangeText={(txt) => {
-                const n = parseInt(txt, 10)
-                setCycleLength(isNaN(n) ? null : Math.min(60, Math.max(1, n)))
-              }}
-              keyboardType="number-pad"
-              maxLength={2}
-              style={[stepStyles.numberInput, { color: colors.text, fontFamily: font.display }]}
-              placeholderTextColor={colors.textMuted}
-              placeholder="28"
+      {diffuse ? (
+        <>
+          {!unknown && (
+            <ArcDial
+              min={21}
+              max={35}
+              value={cycleLength ?? 28}
+              onChange={setCycleLength}
+              unit={t('cycleOnboarding_days')}
             />
-            <Text style={[stepStyles.unitLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{t('cycleOnboarding_days')}</Text>
+          )}
+          {/* Preserve the "I don't know" affordance as a hairline segmented row. */}
+          <View style={stepStyles.diffuseRow}>
+            <SegmentedBloom
+              options={[{ key: 'unknown', label: t('cycleOnboarding_iDontKnow') }]}
+              value={unknown ? 'unknown' : null}
+              onChange={() => setUnknown(!unknown)}
+            />
           </View>
-        )}
 
-        <Pressable
-          onPress={() => setUnknown(!unknown)}
-          style={[
-            stepStyles.chip,
-            {
-              backgroundColor: unknown ? modeSoft : colors.surface,
-              borderColor: unknown ? mode : colors.border,
-              borderRadius: radius.lg,
-            },
-          ]}
-        >
-          <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
-            {t('cycleOnboarding_iDontKnow')}
-          </Text>
-        </Pressable>
-      </View>
+          {/* TTC toggle */}
+          <View style={stepStyles.diffuseBlock}>
+            <SegmentedBloom
+              options={[
+                { key: 'yes', label: t('common_yes') },
+                { key: 'no', label: t('common_no') },
+              ]}
+              value={ttc ? 'yes' : 'no'}
+              onChange={(k) => setTTC(k === 'yes')}
+            />
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={stepStyles.inputRow}>
+            {!unknown && (
+              <View style={[stepStyles.numberInputWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}>
+                <TextInput
+                  value={cycleLength?.toString() ?? ''}
+                  onChangeText={(txt) => {
+                    const n = parseInt(txt, 10)
+                    setCycleLength(isNaN(n) ? null : Math.min(60, Math.max(1, n)))
+                  }}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                  style={[stepStyles.numberInput, { color: colors.text, fontFamily: font.display }]}
+                  placeholderTextColor={colors.textMuted}
+                  placeholder="28"
+                />
+                <Text style={[stepStyles.unitLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{t('cycleOnboarding_days')}</Text>
+              </View>
+            )}
 
-      {/* TTC toggle */}
-      <View style={[stepStyles.ttcCard, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-        <Text style={[stepStyles.ttcLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-          {t('cycleOnboarding_q_ttc')}
-        </Text>
-        <View style={stepStyles.toggleRow}>
-          <TogglePill label={t('common_yes')} active={ttc} onPress={() => setTTC(true)} />
-          <TogglePill label={t('common_no')} active={!ttc} onPress={() => setTTC(false)} />
-        </View>
-      </View>
+            <Pressable
+              onPress={() => setUnknown(!unknown)}
+              style={[
+                stepStyles.chip,
+                {
+                  backgroundColor: unknown ? modeSoft : colors.surface,
+                  borderColor: unknown ? mode : colors.border,
+                  borderRadius: radius.lg,
+                },
+              ]}
+            >
+              <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
+                {t('cycleOnboarding_iDontKnow')}
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* TTC toggle */}
+          <View style={[stepStyles.ttcCard, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
+            <Text style={[stepStyles.ttcLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+              {t('cycleOnboarding_q_ttc')}
+            </Text>
+            <View style={stepStyles.toggleRow}>
+              <TogglePill label={t('common_yes')} active={ttc} onPress={() => setTTC(true)} />
+              <TogglePill label={t('common_no')} active={!ttc} onPress={() => setTTC(false)} />
+            </View>
+          </View>
+        </>
+      )}
     </OnboardingStep>
   )
 }
@@ -410,6 +487,7 @@ function StepPeriodDuration({
 }) {
   const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const duration = useCycleOnboardingStore((s) => s.periodDuration)
@@ -421,36 +499,49 @@ function StepPeriodDuration({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_periodDuration')}
       sticker={<Drop size={52} fill={stickers.coral} />}
       onContinue={onContinue}
     >
-      <View style={stepStyles.chipGrid}>
-        {options.map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => setDuration(n)}
-            style={[
-              stepStyles.durationChip,
-              {
-                backgroundColor: duration === n ? modeSoft : colors.surface,
-                borderColor: duration === n ? mode : colors.text,
-                shadowColor: colors.text,
-                borderRadius: radius.full,
-              },
-            ]}
-          >
-            <Text
+      {diffuse ? (
+        <BloomChips
+          multi={false}
+          options={options.map((n) => ({ key: String(n), label: `${n} ${t('cycleOnboarding_days')}` }))}
+          value={duration != null ? [String(duration)] : []}
+          onChange={(next) => {
+            const n = parseInt(next[0], 10)
+            if (!isNaN(n)) setDuration(n)
+          }}
+        />
+      ) : (
+        <View style={stepStyles.chipGrid}>
+          {options.map((n) => (
+            <Pressable
+              key={n}
+              onPress={() => setDuration(n)}
               style={[
-                stepStyles.durationChipText,
-                { color: duration === n ? mode : colors.text, fontFamily: font.bodySemiBold },
+                stepStyles.durationChip,
+                {
+                  backgroundColor: duration === n ? modeSoft : colors.surface,
+                  borderColor: duration === n ? mode : colors.text,
+                  shadowColor: colors.text,
+                  borderRadius: radius.full,
+                },
               ]}
             >
-              {n} {t('cycleOnboarding_days')}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+              <Text
+                style={[
+                  stepStyles.durationChipText,
+                  { color: duration === n ? mode : colors.text, fontFamily: font.bodySemiBold },
+                ]}
+              >
+                {n} {t('cycleOnboarding_days')}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -477,6 +568,7 @@ function StepConditions({
 }) {
   const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const conditions = useCycleOnboardingStore((s) => s.conditions)
@@ -489,62 +581,95 @@ function StepConditions({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_conditions')}
       sticker={<Leaf size={56} fill={stickers.green} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
-      <View style={stepStyles.chipGrid}>
-        {CONDITION_OPTIONS.map((opt) => {
-          const selected = conditions.includes(opt.id)
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() => toggle(opt.id)}
+      {diffuse ? (
+        <>
+          <View style={stepStyles.metaballStage}>
+            <MetaballBloom
+              fieldColor={getDiffuseAccent('pre-pregnancy')}
+              options={CONDITION_OPTIONS.map((opt) => ({ key: opt.id, label: t(opt.labelKey) }))}
+              value={conditions}
+              onChange={(next) => {
+                // Fold the picker's next array back through the store's toggle so
+                // the "prefer not to say"-exclusive rule stays authoritative.
+                const added = next.filter((k) => !conditions.includes(k as ConditionChip))
+                const removed = conditions.filter((k) => !next.includes(k))
+                added.forEach((k) => toggle(k as ConditionChip))
+                removed.forEach((k) => toggle(k))
+              }}
+            />
+          </View>
+          {otherSelected && (
+            <View style={stepStyles.diffuseBlock}>
+              <DiffuseField
+                value={conditionsOther ?? ''}
+                onChangeText={setConditionsOther}
+                placeholder={t('cycleOnboarding_conditionOtherPlaceholder')}
+                autoCapitalize="sentences"
+              />
+            </View>
+          )}
+        </>
+      ) : (
+        <>
+          <View style={stepStyles.chipGrid}>
+            {CONDITION_OPTIONS.map((opt) => {
+              const selected = conditions.includes(opt.id)
+              return (
+                <Pressable
+                  key={opt.id}
+                  onPress={() => toggle(opt.id)}
+                  style={[
+                    stepStyles.conditionChip,
+                    {
+                      backgroundColor: selected ? modeSoft : colors.surface,
+                      borderColor: selected ? mode : colors.text,
+                      shadowColor: colors.text,
+                      borderRadius: radius.full,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      stepStyles.conditionChipText,
+                      { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
+                    ]}
+                  >
+                    {t(opt.labelKey)}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+
+          {otherSelected && (
+            <View
               style={[
-                stepStyles.conditionChip,
+                stepStyles.otherInputWrap,
                 {
-                  backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: selected ? mode : colors.text,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderRadius: radius.md,
                   shadowColor: colors.text,
-                  borderRadius: radius.full,
                 },
               ]}
             >
-              <Text
-                style={[
-                  stepStyles.conditionChipText,
-                  { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
-                ]}
-              >
-                {t(opt.labelKey)}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-
-      {otherSelected && (
-        <View
-          style={[
-            stepStyles.otherInputWrap,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.md,
-              shadowColor: colors.text,
-            },
-          ]}
-        >
-          <TextInput
-            value={conditionsOther ?? ''}
-            onChangeText={setConditionsOther}
-            placeholder={t('cycleOnboarding_conditionOtherPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.bodyMedium }]}
-            autoCapitalize="sentences"
-          />
-        </View>
+              <TextInput
+                value={conditionsOther ?? ''}
+                onChangeText={setConditionsOther}
+                placeholder={t('cycleOnboarding_conditionOtherPlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.bodyMedium }]}
+                autoCapitalize="sentences"
+              />
+            </View>
+          )}
+        </>
       )}
     </OnboardingStep>
   )
@@ -563,6 +688,7 @@ function StepTempUnit({
 }) {
   const { t } = useTranslation()
   const { colors, radius, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const unit = useCycleOnboardingStore((s) => s.tempUnit)
@@ -572,14 +698,26 @@ function StepTempUnit({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_tempUnit')}
       sticker={<Sun size={56} fill={stickers.yellow} />}
       onContinue={onContinue}
     >
-      <View style={stepStyles.toggleRow}>
-        <TogglePill label={t('cycleOnboarding_tempCelsius')} active={unit === 'celsius'} onPress={() => setUnit('celsius')} />
-        <TogglePill label={t('cycleOnboarding_tempFahrenheit')} active={unit === 'fahrenheit'} onPress={() => setUnit('fahrenheit')} />
-      </View>
+      {diffuse ? (
+        <SegmentedBloom
+          options={[
+            { key: 'celsius', label: t('cycleOnboarding_tempCelsius') },
+            { key: 'fahrenheit', label: t('cycleOnboarding_tempFahrenheit') },
+          ]}
+          value={unit}
+          onChange={(k) => setUnit(k as TempUnit)}
+        />
+      ) : (
+        <View style={stepStyles.toggleRow}>
+          <TogglePill label={t('cycleOnboarding_tempCelsius')} active={unit === 'celsius'} onPress={() => setUnit('celsius')} />
+          <TogglePill label={t('cycleOnboarding_tempFahrenheit')} active={unit === 'fahrenheit'} onPress={() => setUnit('fahrenheit')} />
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -605,49 +743,66 @@ function StepTTCDuration({
 }) {
   const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const duration = useCycleOnboardingStore((s) => s.tryingDuration)
   const setDuration = useCycleOnboardingStore((s) => s.setTryingDuration)
 
+  // Pre-preg field hues for the orbit nodes (design accent values).
+  const orbitAccents = [diffuseFields.pre.g1, diffuseFields.pre.g2, diffuseFields.pre.g3]
+
   return (
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_ttcDuration')}
       sticker={<Flower size={56} petal={stickers.pink} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
-      <View style={stepStyles.chipGrid}>
-        {TTC_DURATION_OPTIONS.map((opt) => {
-          const selected = duration === opt.id
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() => setDuration(opt.id)}
-              style={[
-                stepStyles.conditionChip,
-                {
-                  backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: selected ? mode : colors.text,
-                  shadowColor: colors.text,
-                  borderRadius: radius.full,
-                },
-              ]}
-            >
-              <Text
+      {diffuse ? (
+        <OrbitPicker
+          options={TTC_DURATION_OPTIONS.map((opt, i) => ({
+            key: opt.id,
+            label: t(opt.labelKey),
+            accent: orbitAccents[i % orbitAccents.length],
+          }))}
+          value={duration}
+          onChange={(k) => setDuration(k as TryingDuration)}
+        />
+      ) : (
+        <View style={stepStyles.chipGrid}>
+          {TTC_DURATION_OPTIONS.map((opt) => {
+            const selected = duration === opt.id
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => setDuration(opt.id)}
                 style={[
-                  stepStyles.conditionChipText,
-                  { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
+                  stepStyles.conditionChip,
+                  {
+                    backgroundColor: selected ? modeSoft : colors.surface,
+                    borderColor: selected ? mode : colors.text,
+                    shadowColor: colors.text,
+                    borderRadius: radius.full,
+                  },
                 ]}
               >
-                {t(opt.labelKey)}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
+                <Text
+                  style={[
+                    stepStyles.conditionChipText,
+                    { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
+                  ]}
+                >
+                  {t(opt.labelKey)}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -664,6 +819,7 @@ function StepTTCTemperature({
   onContinue: () => void
 }) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const tracking = useCycleOnboardingStore((s) => s.trackingTemperature)
   const setTracking = useCycleOnboardingStore((s) => s.setTrackingTemperature)
 
@@ -671,14 +827,26 @@ function StepTTCTemperature({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_trackingTemp')}
       sticker={<Sun size={56} fill={stickers.yellow} />}
       onContinue={onContinue}
     >
-      <View style={stepStyles.toggleRow}>
-        <TogglePill label={t('common_yes')} active={tracking === true} onPress={() => setTracking(true)} />
-        <TogglePill label={t('cycleOnboarding_notYet')} active={tracking === false} onPress={() => setTracking(false)} />
-      </View>
+      {diffuse ? (
+        <PoleField
+          options={[
+            { key: 'yes', label: t('common_yes'), color: diffuseFields.pre.g2 },
+            { key: 'notyet', label: t('cycleOnboarding_notYet'), color: diffuseFields.pre.g3 },
+          ]}
+          value={tracking === null ? null : tracking ? 'yes' : 'notyet'}
+          onChange={(k) => setTracking(k === 'yes')}
+        />
+      ) : (
+        <View style={stepStyles.toggleRow}>
+          <TogglePill label={t('common_yes')} active={tracking === true} onPress={() => setTracking(true)} />
+          <TogglePill label={t('cycleOnboarding_notYet')} active={tracking === false} onPress={() => setTracking(false)} />
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -698,6 +866,7 @@ function StepTTCSupplements({
 }) {
   const { t } = useTranslation()
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
   const supplements = useCycleOnboardingStore((s) => s.supplements)
@@ -707,28 +876,42 @@ function StepTTCSupplements({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_supplements')}
       sticker={<Leaf size={56} fill={stickers.green} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
-      <TextInput
-        value={supplements ?? ''}
-        onChangeText={setSupplements}
-        placeholder={t('cycleOnboarding_supplementsPlaceholder')}
-        placeholderTextColor={colors.textMuted}
-        multiline
-        style={[
-          stepStyles.textArea,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.md,
-            fontFamily: font.bodyMedium,
-          },
-        ]}
-      />
+      {diffuse ? (
+        // The store keeps supplements as one free-text string (no chip catalog /
+        // i18n keys exist for individual supplements), so the Diffuse path uses
+        // the bare underlined field — the v4 equivalent of the cream text area —
+        // wired to the SAME setSupplements setter.
+        <DiffuseField
+          value={supplements ?? ''}
+          onChangeText={setSupplements}
+          placeholder={t('cycleOnboarding_supplementsPlaceholder')}
+          autoCapitalize="sentences"
+        />
+      ) : (
+        <TextInput
+          value={supplements ?? ''}
+          onChangeText={setSupplements}
+          placeholder={t('cycleOnboarding_supplementsPlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          multiline
+          style={[
+            stepStyles.textArea,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+              fontFamily: font.bodyMedium,
+            },
+          ]}
+        />
+      )}
     </OnboardingStep>
   )
 }
@@ -937,6 +1120,18 @@ const stepStyles = StyleSheet.create({
     fontSize: 16,
     minHeight: 120,
     textAlignVertical: 'top',
+  },
+  // Diffuse-only spacing helpers (layout-only; no colors/shadows).
+  diffuseRow: {
+    marginTop: 20,
+    alignItems: 'flex-start',
+  },
+  diffuseBlock: {
+    marginTop: 28,
+  },
+  metaballStage: {
+    height: 300,
+    width: '100%',
   },
 })
 
