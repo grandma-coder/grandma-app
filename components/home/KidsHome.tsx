@@ -33,6 +33,7 @@ import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface, SoftBloom, DiffuseArrow, DiffuseGrain } from '../ui/diffuse/DiffuseKit'
 import { DiffuseStatCard, DiffuseCircularMetric, DiffuseSegmentPill, DiffuseSectionHeader, DiffuseMetricTile, DiffuseBloomIcon, DiffuseDotCalendar, DiffuseLeapGraph, DiffuseSheet, DiffuseListRow, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
+import { Character } from '../characters/Characters'
 import { EmptyState } from '../ui/EmptyState'
 import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -3010,7 +3011,7 @@ function DiffuseHeroTiles({
           sub={sleepSub}
           accent={stickers.blue}
           accent2={stickers.lilac}
-          icon={<Moon size={18} color={colors.ink3} strokeWidth={1.6} />}
+          icon={<Character name="sleep" size={26} color={stickers.lilac} />}
           onPress={!hasSleep && onLogSleep ? onLogSleep : onPressSleep}
         />
         <DiffuseStatCard
@@ -3020,7 +3021,7 @@ function DiffuseHeroTiles({
           sub={moodSub}
           accent={stickers.yellow}
           accent2={stickers.peach}
-          icon={hasMoods && dominantMood ? <MoodFace size={22} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} /> : <Smile size={18} color={colors.ink3} strokeWidth={1.6} />}
+          icon={hasMoods && dominantMood ? <MoodFace size={22} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} /> : <Character name="mood" size={26} color={stickers.pink} />}
           emptyLabel={t('kids_home_tile_mood_empty')}
           onPress={!hasMoods && onLogMood ? onLogMood : onPressMood}
         />
@@ -3034,7 +3035,7 @@ function DiffuseHeroTiles({
           sub={calSub}
           accent={stickers.peach}
           accent2={stickers.coral}
-          icon={<Flame size={18} color={colors.ink3} strokeWidth={1.6} />}
+          icon={<Character name="calories" size={26} color={stickers.coral} />}
           progress={calPct}
           onPress={!hasFeed && onLogFeeding ? onLogFeeding : onPressCalories}
         />
@@ -3046,7 +3047,7 @@ function DiffuseHeroTiles({
           sub={activitySub}
           accent={stickers.green}
           accent2={stickers.blue}
-          icon={<Zap size={18} color={colors.ink3} strokeWidth={1.6} />}
+          icon={<Character name="activity" size={26} color={stickers.green} />}
           onPress={!hasActivity && onLogActivity ? onLogActivity : onPressActivity}
         />
       </View>
