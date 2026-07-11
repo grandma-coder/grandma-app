@@ -13,13 +13,13 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import Svg, { Path as SvgPath, Circle as SvgCircle } from 'react-native-svg'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
+import { Character } from '../../characters/Characters'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { PaperCard } from '../../ui/PaperCard'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
-import { Smile as SmileLine, Thermometer as ThermometerLine, Droplet as DropletLine, Heart as HeartLine } from 'lucide-react-native'
+import { Thermometer as ThermometerLine, Droplet as DropletLine, Heart as HeartLine } from 'lucide-react-native'
 import { SymptomSticker } from '../../calendar/symptomStickers'
 import { symptomLabel } from '../../../lib/cycleSymptoms'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
@@ -178,9 +178,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
           </View>
           <View style={styles.moodRow}>
             {diffuse ? (
-              <DiffuseBloomIcon color={stickers.yellow} size={52}>
-                <SmileLine size={26} color={dt.colors.ink3} strokeWidth={1.6} />
-              </DiffuseBloomIcon>
+              <Character name="mood" size={48} color={moodMeta?.fill ?? stickers.yellow} />
             ) : moodMeta ? (
               <moodMeta.Sticker size={48} fill={moodMeta.fill} />
             ) : (

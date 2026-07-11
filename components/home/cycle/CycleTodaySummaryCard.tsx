@@ -9,11 +9,11 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { ChevronRight, Smile as SmileLine, Sprout, Droplet, Thermometer, Heart as HeartLine } from 'lucide-react-native'
+import { ChevronRight } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
+import { Character, type CharacterName } from '../../characters/Characters'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { seedCycleData } from '../../../lib/devSeed'
@@ -183,13 +183,13 @@ export function CycleTodaySummaryCard({ phase }: Props) {
 
   // Diffuse: the 3 primary signals as v4 `.srow` rows (bloom line-icon + read
   // label + mono value). The full 7-chip set stays in the current path.
-  const diffuseRows: { key: string; Icon: typeof SmileLine; color: string; label: string; value: string }[] = [
-    { key: 'mood', Icon: SmileLine, color: stickers.yellow, label: t('cycleDash_mood' as any), value: moodMeta?.label ?? '—' },
-    { key: 'symptoms', Icon: Sprout, color: stickers.green, label: t('cycleDash_symptoms' as any), value: symptoms.length > 0 ? String(symptoms.length) : '—' },
-    { key: 'bbt', Icon: Thermometer, color: stickers.blue, label: t('cycleDash_bbt' as any), value: bbtValue ? `${bbtValue}°` : '—' },
-    { key: 'lh', Icon: Droplet, color: stickers.peach, label: t('cycleDash_lh' as any), value: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '—' },
-    { key: 'cm', Icon: Droplet, color: stickers.lilac, label: t('cycleDash_cm' as any), value: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '—' },
-    { key: 'intimacy', Icon: HeartLine, color: stickers.pink, label: t('cycleDash_intimacy' as any), value: intimacy ? '✓' : '—' },
+  const diffuseRows: { key: string; char: CharacterName; color: string; label: string; value: string }[] = [
+    { key: 'mood', char: 'mood', color: stickers.yellow, label: t('cycleDash_mood' as any), value: moodMeta?.label ?? '—' },
+    { key: 'symptoms', char: 'health', color: stickers.green, label: t('cycleDash_symptoms' as any), value: symptoms.length > 0 ? String(symptoms.length) : '—' },
+    { key: 'bbt', char: 'temperature', color: stickers.blue, label: t('cycleDash_bbt' as any), value: bbtValue ? `${bbtValue}°` : '—' },
+    { key: 'lh', char: 'ovulation', color: stickers.peach, label: t('cycleDash_lh' as any), value: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '—' },
+    { key: 'cm', char: 'water', color: stickers.lilac, label: t('cycleDash_cm' as any), value: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '—' },
+    { key: 'intimacy', char: 'heart', color: stickers.pink, label: t('cycleDash_intimacy' as any), value: intimacy ? '✓' : '—' },
   ]
 
   return (
@@ -219,9 +219,7 @@ export function CycleTodaySummaryCard({ phase }: Props) {
                     { borderBottomColor: dt.colors.line, borderBottomWidth: i === diffuseRows.length - 1 ? 0 : StyleSheet.hairlineWidth },
                   ]}
                 >
-                  <DiffuseBloomIcon color={r.color} size={30} intensity={0.42}>
-                    <r.Icon size={15} color={dt.colors.ink3} strokeWidth={1.6} />
-                  </DiffuseBloomIcon>
+                  <Character name={r.char} size={26} color={r.color} />
                   <Text style={[styles.srowLabel, { color: dt.colors.ink, fontFamily: diffuseFont.body }]} numberOfLines={1}>
                     {r.label}
                   </Text>

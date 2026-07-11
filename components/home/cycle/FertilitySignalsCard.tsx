@@ -16,13 +16,12 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
+import { Character, type CharacterName } from '../../characters/Characters'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr, getCycleInfo, type CyclePhase, type CycleConfig } from '../../../lib/cycleLogic'
 import { useCycleHistory } from '../../../lib/cycleAnalytics'
 import { PaperCard } from '../../ui/PaperCard'
 import { Drop, Heart, Pill, Sparkle } from '../../ui/Stickers'
-import { Thermometer as ThermometerLine, Sparkles as SparklesLine, Droplet as DropletLine, Heart as HeartLine } from 'lucide-react-native'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { BbtForm, LhForm, CmForm, IntercourseForm } from '../../calendar/CycleLogForms'
@@ -34,14 +33,15 @@ type RecentLog = { date: string; type: string; value: string | null }
 const DAYS_BACK = 7
 
 /** Diffuse: thin Lucide line glyph per signal tile (bbt/lh/cm/intercourse). */
+const TILE_CHAR: Record<Tile, CharacterName> = {
+  bbt: 'temperature',
+  lh: 'ovulation',
+  cm: 'water',
+  intercourse: 'heart',
+}
+
 function TileGlyph({ tile, color }: { tile: Tile; color: string }) {
-  const p = { size: 17, color, strokeWidth: 1.6 as const }
-  switch (tile) {
-    case 'bbt':         return <ThermometerLine {...p} />
-    case 'lh':          return <SparklesLine {...p} />
-    case 'cm':          return <DropletLine {...p} />
-    case 'intercourse': return <HeartLine {...p} />
-  }
+  return <Character name={TILE_CHAR[tile]} size={26} color={color} />
 }
 
 /** Bloom hue per signal tile — used behind the diffuse glyph. */
@@ -218,9 +218,7 @@ export function FertilitySignalsCard() {
                     { backgroundColor: dCol.surface, borderColor: peak ? dCol.hairline : dCol.line, opacity: pressed ? 0.7 : 1 },
                   ]}
                 >
-                  <DiffuseBloomIcon color={peak ? diffuseAccent : tileHue(tile.key, stickers)} size={34} intensity={filled ? 0.5 : 0.32}>
-                    <TileGlyph tile={tile.key} color={dCol.ink3} />
-                  </DiffuseBloomIcon>
+                  <TileGlyph tile={tile.key} color={filled ? (peak ? diffuseAccent : tileHue(tile.key, stickers)) : dCol.line2} />
                   <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', color: dCol.ink3, marginTop: 4 }}>
                     {tile.label}
                   </Text>

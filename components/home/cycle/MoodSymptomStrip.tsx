@@ -22,9 +22,8 @@ import { MoodSymptomPickerSheet } from './MoodSymptomPickerSheet'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PaperCard } from '../../ui/PaperCard'
 import { Sad, Smiley, Sleepy } from '../../ui/Stickers'
-import { useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useDiffuseTheme, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 
 type MoodId = '1' | '2' | '3' | '4' | '5'
@@ -147,9 +146,9 @@ export function MoodSymptomStrip({ phase }: Props) {
           {diffuse ? (
             <Pressable onPress={() => setMoodSheet(true)} hitSlop={6}>
               {hasMood ? (
-                <DiffuseBloomIcon color={getDiffuseAccent('pre-pregnancy', dt.isDark)} size={38} intensity={0.5}>
-                  <MoodFace id={moodId!} size={20} stickerSet={stickers} />
-                </DiffuseBloomIcon>
+                <View style={[styles.face, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
+                  <MoodFace id={moodId!} size={22} stickerSet={stickers} />
+                </View>
               ) : (
                 <View style={[styles.face, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
                   <Text style={{ fontSize: 16, color: dt.colors.ink3, fontFamily: diffuseFont.body, marginTop: -1 }}>+</Text>

@@ -9,12 +9,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
-import { Heart as HeartLine } from 'lucide-react-native'
+import { Character } from '../../characters/Characters'
 import { Heart } from '../../ui/Stickers'
 import { PaperCard } from '../../ui/PaperCard'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseArrow, SoftBloom } from '../../ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
@@ -163,9 +162,7 @@ export function DailyNudgeCard({ cycleConfig, selectedDate }: Props) {
 
         <View style={styles.washRow}>
           <View style={styles.washIcon}>
-            <DiffuseBloomIcon color={diffuseAccent} size={38} intensity={0.5}>
-              <HeartLine size={19} color={dt.colors.ink2} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
+            <Character name="heart" size={32} color={diffuseAccent} />
           </View>
 
           <View style={styles.washBody}>
