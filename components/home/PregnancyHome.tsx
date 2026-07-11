@@ -52,7 +52,7 @@ import { PregnancyMealForm } from '../calendar/PregnancyMealForm'
 import { LogSheet } from '../calendar/LogSheet'
 
 import { WeekCard } from './pregnancy/WeekCard'
-import { AffirmationRevealCard } from './pregnancy/AffirmationRevealCard'
+import { DailyMessageCard } from './pregnancy/DailyMessageCard'
 import { WeekWallet } from './pregnancy/WeekWallet'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
 import { BirthGuideModal } from '../pregnancy/BirthGuideModal'
@@ -328,7 +328,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
 
       {/* 2. Affirmation Reveal */}
       <View style={styles.section}>
-        <AffirmationRevealCard />
+        <DailyMessageCard />
       </View>
 
       {/* 3. Week Wallet — collapsible stack (tracker + reminders + shortcuts) */}
