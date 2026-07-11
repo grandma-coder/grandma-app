@@ -120,10 +120,6 @@ function phaseLabel(phase: CyclePhase, t: TFn): string {
   return t(`cycleRing_label_${phase}` as TranslationKey)
 }
 
-function thisDayNote(phase: CyclePhase, t: TFn): string {
-  return t(`cycleRing_note_${phase}` as TranslationKey)
-}
-
 // ─── Dot geometry ───────────────────────────────────────────────────────────
 type DayState = 'past' | 'today' | 'future'
 
@@ -778,16 +774,6 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
           </View>
         </View>
 
-        {/* This day */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-            {t('cycle_ring_label_this_day')}
-          </Text>
-          <Text style={[styles.noteText, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
-            {thisDayNote(selPhase, t)}
-          </Text>
-        </View>
-
       </ScrollView>
     </View>
   )
@@ -858,7 +844,6 @@ const styles = StyleSheet.create({
 
   section: { gap: 8 },
   sectionLabel: { fontSize: 9.5, letterSpacing: 1.8 },
-  noteText: { fontSize: 14, lineHeight: 22 },
 
   legendRowInline: {
     flexDirection: 'row',
