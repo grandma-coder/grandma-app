@@ -114,7 +114,7 @@ import { HealthScoreRing, type RingSegment } from './shared/HealthScoreRing'
 import { CustomRangeModal } from './shared/CustomRangeModal'
 import { KidsAnalyticsHero } from './KidsAnalyticsHero'
 import { KidsPillarBands, type PillarBandItem } from './KidsPillarBands'
-import { PillarCharacter } from './PillarCharacters'
+import { Character } from '../characters/Characters'
 import {
   Heart as StickerHeart,
   Moon as StickerMoon,
@@ -176,12 +176,12 @@ const PILLAR_ORDER: PillarKey[] = ['nutrition', 'sleep', 'mood', 'health', 'grow
 
 // Playful character-blob glyph per pillar for the editorial band rows (Diffuse).
 const PILLAR_LINE_ICON: Record<PillarKey, (size: number, color: string) => React.ReactNode> = {
-  nutrition: (s, c) => <PillarCharacter pillar="nutrition" size={s} color={c} />,
-  sleep:     (s, c) => <PillarCharacter pillar="sleep" size={s} color={c} />,
-  mood:      (s, c) => <PillarCharacter pillar="mood" size={s} color={c} />,
-  health:    (s, c) => <PillarCharacter pillar="health" size={s} color={c} />,
-  growth:    (s, c) => <PillarCharacter pillar="growth" size={s} color={c} />,
-  activity:  (s, c) => <PillarCharacter pillar="activity" size={s} color={c} />,
+  nutrition: (s, c) => <Character name="nutrition" size={s} color={c} />,
+  sleep:     (s, c) => <Character name="sleep" size={s} color={c} />,
+  mood:      (s, c) => <Character name="mood" size={s} color={c} />,
+  health:    (s, c) => <Character name="health" size={s} color={c} />,
+  growth:    (s, c) => <Character name="growth" size={s} color={c} />,
+  activity:  (s, c) => <Character name="activity" size={s} color={c} />,
 }
 
 // Maps each pillar to a sticker component and the paper-palette tint used for
