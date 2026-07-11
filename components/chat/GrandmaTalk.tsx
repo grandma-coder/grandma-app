@@ -689,9 +689,10 @@ function WheelFollowup({
   const dt = useDiffuseTheme()
   // Fan the chips up in a gentle arc: newest at bottom, arcing left→right as
   // they rise. translateY lifts each chip; translateX gives the curved sweep.
-  const rise = 56 + index * 52
+  // Compact spacing so all follow-ups fit above the composer without a scrim.
+  const rise = 44 + index * 44
   const t = count > 1 ? index / (count - 1) : 0.5
-  const sway = Math.sin(t * Math.PI) * 26 - 13 // -13..+13 arc bulge
+  const sway = Math.sin(t * Math.PI) * 22 - 11 // -11..+11 arc bulge
   const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0, -rise] })
   const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, sway] })
   const opacity = progress.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0, 1] })
@@ -797,24 +798,14 @@ function SuggestionWheel({ suggestions, diffuse, tint, onPick, fanBottom }: Whee
 
   return (
     <View style={wheelStyles.wrap}>
-      {/* Full-screen overlay in a Modal so the scrim covers EVERYTHING —
-          header, child pills, and orb included (a nested scrim is clipped by
-          the composer container). Blur + dim fade in with the fan; the fan
-          sits just above the composer via `fanBottom`. */}
+      {/* Full-screen overlay in a Modal so the fan escapes the composer's
+          clipping and floats over the whole screen — but NO blur/dim: the fan
+          reads as a light picker over the un-dimmed chat. A transparent
+          tap-catcher behind it collapses the fan on an outside tap. */}
       <Modal visible={open != null} transparent animationType="none" onRequestClose={collapse}>
         {open ? (
           <View style={StyleSheet.absoluteFill}>
-            <Animated.View style={[StyleSheet.absoluteFill, { opacity: progress }]}>
-              <BlurView
-                intensity={dt.isDark ? 40 : 34}
-                tint={dt.isDark ? 'dark' : 'light'}
-                style={StyleSheet.absoluteFill}
-              />
-              <Pressable
-                style={[StyleSheet.absoluteFill, { backgroundColor: dt.colors.bg + (dt.isDark ? 'C4' : 'B8') }]}
-                onPress={collapse}
-              />
-            </Animated.View>
+            <Pressable style={StyleSheet.absoluteFill} onPress={collapse} />
 
             {/* Fanned follow-ups, anchored just above the composer */}
             <View pointerEvents="box-none" style={[wheelStyles.fan, { bottom: fanBottom }]}>
@@ -881,18 +872,19 @@ const wheelStyles = StyleSheet.create({
     left: 0, right: 0,
     alignItems: 'center',
   },
-  followup: { position: 'absolute', bottom: 0, maxWidth: '86%' },
+  followup: { position: 'absolute', bottom: 0, maxWidth: '84%' },
   followupPill: {
-    paddingHorizontal: 18,
-    paddingVertical: 13,
+    paddingHorizontal: 15,
+    paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 1,
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    shadowColor: '#141313',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  followupText: { fontSize: 14, textAlign: 'center', lineHeight: 19 },
+  followupText: { fontSize: 13, textAlign: 'center', lineHeight: 17 },
 })
 
 // ─── Greeting ──────────────────────────────────────────────────────────────
