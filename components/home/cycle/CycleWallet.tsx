@@ -57,7 +57,7 @@ export function CycleWallet({ cycleConfig, selectedDate, phase }: CycleWalletPro
     switch (id) {
       case 'nudge': return <DailyNudgeCard cycleConfig={cycleConfig} selectedDate={selectedDate} />
       case 'mood': return <MoodSymptomStrip phase={phase} />
-      case 'today': return <CycleTodaySummaryCard phase={phase} />
+      case 'today': return <CycleTodaySummaryCard phase={phase} bare />
       case 'pillars': return <CyclePillarsGrid />
     }
   }

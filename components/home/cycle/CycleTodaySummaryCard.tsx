@@ -24,9 +24,19 @@ import { SymptomSticker } from '../../calendar/symptomStickers'
 import { CycleTodayDashboardModal } from './CycleTodayDashboardModal'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
 import { useTranslation } from '../../../lib/i18n'
+import { LogSheet } from '../../calendar/LogSheet'
+import {
+  MoodForm, SymptomsForm, BbtForm, LhForm, CmForm, IntimacyForm, PeriodStartForm,
+} from '../../calendar/CycleLogForms'
+
+/** Chip key → the cycle_logs sheet it opens. */
+type CycleSheetType =
+  | 'mood' | 'symptom' | 'basal_temp' | 'lh' | 'cm' | 'intercourse' | 'period_start'
 
 interface Props {
   phase: CyclePhase
+  /** Embedded inside the Cycle wallet card: skip the outer PaperCard chrome. */
+  bare?: boolean
 }
 
 type Row = { type: string; value: string | null }
@@ -47,7 +57,7 @@ const LH_LABEL: Record<string, string> = {
   negative: 'Neg', faint: 'Faint', positive: 'Pos', peak: 'Peak',
 }
 
-export function CycleTodaySummaryCard({ phase }: Props) {
+export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -59,6 +69,12 @@ export function CycleTodaySummaryCard({ phase }: Props) {
 
   const [userId, setUserId] = useState<string | undefined>()
   const [open, setOpen] = useState(false)
+  // Which signal's log sheet is open (tap a chip to log it, like pregnancy).
+  const [sheetType, setSheetType] = useState<CycleSheetType | null>(null)
+  const closeSheet = () => {
+    setSheetType(null)
+    void qc.invalidateQueries({ queryKey: ['cycleLogs'] })
+  }
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session } }) =>
       setUserId(session?.user.id),
@@ -120,45 +136,59 @@ export function CycleTodaySummaryCard({ phase }: Props) {
   const moodMeta = moodValue ? MOOD_META[moodValue] : null
   const topSymptom = symptoms[0] as SymptomId | undefined
 
-  const chips: { key: string; icon: React.ReactNode; label: string }[] = [
+  const chips: { key: string; sheet: CycleSheetType; icon: React.ReactNode; label: string; done: boolean }[] = [
     {
       key: 'mood',
+      sheet: 'mood',
       icon: moodMeta
         ? <moodMeta.Sticker size={22} fill={moodMeta.fill} />
         : <Smiley size={22} fill={stickers.yellowSoft} />,
-      label: moodMeta?.label ?? '—',
+      label: moodMeta?.label ?? '+',
+      done: !!moodMeta,
     },
     {
       key: 'symptoms',
+      sheet: 'symptom',
       icon: topSymptom
         ? <SymptomSticker id={topSymptom} size={18} />
         : <Heart size={22} fill={stickers.pinkSoft} />,
-      label: symptoms.length > 0 ? `${symptoms.length}` : '—',
+      label: symptoms.length > 0 ? `${symptoms.length}` : '+',
+      done: symptoms.length > 0,
     },
     {
       key: 'bbt',
+      sheet: 'basal_temp',
       icon: <Drop size={22} fill={stickers.blue} />,
-      label: bbtValue ? `${bbtValue}°` : '—',
+      label: bbtValue ? `${bbtValue}°` : '+',
+      done: !!bbtValue,
     },
     {
       key: 'lh',
+      sheet: 'lh',
       icon: <Drop size={22} fill={stickers.yellow} />,
-      label: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '—',
+      label: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '+',
+      done: !!lhValue,
     },
     {
       key: 'cm',
+      sheet: 'cm',
       icon: <Drop size={22} fill={stickers.green} />,
-      label: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '—',
+      label: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '+',
+      done: !!cmValue,
     },
     {
       key: 'intimacy',
+      sheet: 'intercourse',
       icon: <Heart size={22} fill={intimacy ? stickers.pink : stickers.pinkSoft} />,
-      label: intimacy ? '✓' : '—',
+      label: intimacy ? '✓' : '+',
+      done: !!intimacy,
     },
     {
       key: 'period_start',
+      sheet: 'period_start',
       icon: <Drop size={22} fill={periodStart ? stickers.coral : stickers.pinkSoft} />,
-      label: periodStart ? (periodStart === 'light' ? 'Lt' : periodStart === 'medium' ? 'Md' : periodStart === 'heavy' ? 'Hv' : '✓') : '—',
+      label: periodStart ? (periodStart === 'light' ? 'Lt' : periodStart === 'medium' ? 'Md' : periodStart === 'heavy' ? 'Hv' : '✓') : '+',
+      done: !!periodStart,
     },
   ]
 
@@ -192,72 +222,101 @@ export function CycleTodaySummaryCard({ phase }: Props) {
     { key: 'intimacy', char: 'heart', color: stickers.pink, label: t('cycleDash_intimacy' as any), value: intimacy ? '✓' : '—' },
   ]
 
-  return (
-    <View style={styles.wrap}>
-      <Pressable
-        onPress={() => setOpen(true)}
-        style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}
-      >
-        <PaperCard tint={diffuse ? undefined : paper} radius={24} padding={18}>
-          <View style={styles.headerRow}>
-            <View style={{ flex: 1 }}>
-              <Display size={22} color={diffuse ? dt.colors.ink : ink}>{t('cycleDash_today')}</Display>
-              <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.mono : font.italic, ...(diffuse ? { letterSpacing: 1, textTransform: 'uppercase' as const, fontSize: 10 } : null) }}>
-                {summaryHint}
-              </Body>
-            </View>
-            <ChevronRight size={20} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
-          </View>
+  const sheetTitle: Record<CycleSheetType, string> = {
+    mood: t('cycleCalendar_logSheet_mood'),
+    symptom: t('cycleCalendar_logSheet_symptoms'),
+    basal_temp: t('cycleCalendar_logSheet_temperature'),
+    lh: t('cycleDash_lh'),
+    cm: t('cycleDash_cervicalMucus'),
+    intercourse: t('cycleCalendar_logSheet_intimacy'),
+    period_start: t('cycleCalendar_logSheet_periodStart'),
+  }
 
-          {diffuse ? (
-            <View style={styles.srows}>
-              {diffuseRows.map((r, i) => (
-                <View
-                  key={r.key}
-                  style={[
-                    styles.srow,
-                    { borderBottomColor: dt.colors.line, borderBottomWidth: i === diffuseRows.length - 1 ? 0 : StyleSheet.hairlineWidth },
-                  ]}
-                >
-                  <Character name={r.char} size={26} color={r.color} />
-                  <Text style={[styles.srowLabel, { color: dt.colors.ink, fontFamily: diffuseFont.body }]} numberOfLines={1}>
-                    {r.label}
-                  </Text>
-                  <Text style={[styles.srowValue, { color: r.value === '—' ? dt.colors.ink4 : dt.colors.ink, fontFamily: diffuseFont.monoBold }]} numberOfLines={1}>
-                    {r.value}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.chipsRow}>
-              {chips.map((c) => (
-                <View key={c.key} style={styles.chip}>
-                  <View style={styles.chipIcon}>{c.icon}</View>
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.chipLabel, { color: ink, fontFamily: font.bodySemiBold }]}
-                  >
-                    {c.label}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
+  const inner = (
+    <>
+      {/* Header — tap the chevron to open the full dashboard */}
+      <Pressable onPress={() => setOpen(true)} style={({ pressed }) => [styles.headerRow, { opacity: pressed ? 0.7 : 1 }]}>
+        <View style={{ flex: 1 }}>
+          <Display size={22} color={diffuse ? dt.colors.ink : ink}>{t('cycleDash_today')}</Display>
+          <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.mono : font.italic, ...(diffuse ? { letterSpacing: 1, textTransform: 'uppercase' as const, fontSize: 10 } : null) }}>
+            {summaryHint}
+          </Body>
+        </View>
+        <ChevronRight size={20} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+      </Pressable>
 
-          <View style={[styles.progressTrack, { backgroundColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.06)') }]}>
-            <View
-              style={[
-                styles.progressFill,
+      {diffuse ? (
+        <View style={styles.srows}>
+          {diffuseRows.map((r, i) => (
+            <Pressable
+              key={r.key}
+              onPress={() => setSheetType(r.key as CycleSheetType)}
+              style={({ pressed }) => [
+                styles.srow,
+                { borderBottomColor: dt.colors.line, borderBottomWidth: i === diffuseRows.length - 1 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.6 : 1 },
+              ]}
+            >
+              <Character name={r.char} size={26} color={r.color} />
+              <Text style={[styles.srowLabel, { color: dt.colors.ink, fontFamily: diffuseFont.body }]} numberOfLines={1}>
+                {r.label}
+              </Text>
+              <Text style={[styles.srowValue, { color: r.value === '—' ? dt.colors.ink4 : dt.colors.ink, fontFamily: diffuseFont.monoBold }]} numberOfLines={1}>
+                {r.value}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.chipsRow}>
+          {chips.map((c) => (
+            <Pressable
+              key={c.key}
+              onPress={() => setSheetType(c.sheet)}
+              style={({ pressed }) => [
+                styles.chip,
                 {
-                  width: `${(completed / totalTrackable) * 100}%`,
-                  backgroundColor: diffuse ? (completed === totalTrackable ? dt.colors.ink3 : diffuseAccent) : (completed === totalTrackable ? stickers.green : phaseAccent),
+                  backgroundColor: c.done ? stickers.greenSoft : 'rgba(20,19,19,0.04)',
+                  borderWidth: c.done ? 1 : 0,
+                  borderColor: c.done ? stickers.green : 'transparent',
+                  opacity: pressed ? 0.7 : 1,
                 },
               ]}
-            />
-          </View>
+            >
+              <View style={styles.chipIcon}>{c.icon}</View>
+              <Text
+                numberOfLines={1}
+                style={[styles.chipLabel, { color: c.done ? stickers.greenInk : ink, fontFamily: font.bodySemiBold }]}
+              >
+                {c.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
+      <View style={[styles.progressTrack, { backgroundColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.06)') }]}>
+        <View
+          style={[
+            styles.progressFill,
+            {
+              width: `${(completed / totalTrackable) * 100}%`,
+              backgroundColor: diffuse ? (completed === totalTrackable ? dt.colors.ink3 : diffuseAccent) : (completed === totalTrackable ? stickers.green : phaseAccent),
+            },
+          ]}
+        />
+      </View>
+    </>
+  )
+
+  return (
+    <View style={bare ? undefined : styles.wrap}>
+      {bare ? (
+        inner
+      ) : (
+        <PaperCard tint={diffuse ? undefined : paper} radius={24} padding={18}>
+          {inner}
         </PaperCard>
-      </Pressable>
+      )}
 
       {userId && (
         <CycleTodayDashboardModal
@@ -267,6 +326,29 @@ export function CycleTodaySummaryCard({ phase }: Props) {
           userId={userId}
         />
       )}
+
+      {/* Tap-to-log sheets — one per signal, like PregnancyHome */}
+      <LogSheet visible={sheetType === 'mood'} title={sheetTitle.mood} onClose={closeSheet}>
+        <MoodForm date={today} phase={phase} onSaved={closeSheet} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'symptom'} title={sheetTitle.symptom} onClose={closeSheet}>
+        <SymptomsForm date={today} phase={phase} onSaved={closeSheet} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'basal_temp'} title={sheetTitle.basal_temp} onClose={closeSheet}>
+        <BbtForm date={today} phase={phase} onSaved={closeSheet} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'lh'} title={sheetTitle.lh} onClose={closeSheet}>
+        <LhForm date={today} phase={phase} onSaved={closeSheet} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'cm'} title={sheetTitle.cm} onClose={closeSheet}>
+        <CmForm date={today} phase={phase} onSaved={closeSheet} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'intercourse'} title={sheetTitle.intercourse} onClose={closeSheet}>
+        <IntimacyForm date={today} phase={phase} onSaved={closeSheet} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'period_start'} title={sheetTitle.period_start} onClose={closeSheet}>
+        <PeriodStartForm date={today} phase={phase} onSaved={closeSheet} />
+      </LogSheet>
     </View>
   )
 }
