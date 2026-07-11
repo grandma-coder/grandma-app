@@ -129,6 +129,7 @@ interface StatCardProps {
   unit?: string            // small serif unit after the value
   sub?: string             // sub line under the value (mono/read)
   icon?: ReactNode         // sticker, in a hairline circle (left)
+  iconNoBloom?: boolean    // skip the icon halo (for solid character glyphs)
   trailing?: ReactNode     // e.g. a ring — replaces the icon slot on the right
   emptyLabel?: string      // shown in place of value when value is empty
   progress?: number        // 0..1 → renders a hairline progress bar
@@ -146,6 +147,7 @@ export function DiffuseStatCard({
   unit,
   sub,
   icon,
+  iconNoBloom = false,
   trailing,
   emptyLabel = 'Tap to log',
   progress,
@@ -182,7 +184,7 @@ export function DiffuseStatCard({
 
       <View style={dp.statHeaderRow}>
         <Text style={[roleType.eyebrow, { color: colors.ink3 }]} numberOfLines={1}>{label}</Text>
-        {icon ? <DiffuseBloomIcon color={c1} size={30} intensity={0.45}>{icon}</DiffuseBloomIcon> : null}
+        {icon ? <DiffuseBloomIcon color={c1} size={30} intensity={0.45} noBloom={iconNoBloom}>{icon}</DiffuseBloomIcon> : null}
       </View>
 
       <View style={dp.statBodyRow}>
@@ -603,20 +605,24 @@ interface BloomIconProps {
   color?: string             // bloom hue (defaults to mode accent)
   size?: number              // bloom box (default 34)
   intensity?: number         // bloom opacity (default 0.5)
+  noBloom?: boolean          // skip the halo (for solid character glyphs)
 }
 
-export function DiffuseBloomIcon({ children, color, size = 34, intensity = 0.55 }: BloomIconProps) {
+export function DiffuseBloomIcon({ children, color, size = 34, intensity = 0.55, noBloom = false }: BloomIconProps) {
   const { isDark } = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
   const bloom = color ?? getDiffuseAccent(mode, isDark)
   // The bloom box extends just past the glyph so the feathered edge hugs the
-  // icon (a tighter halo, not a wash across the whole tile).
+  // icon (a tighter halo, not a wash across the whole tile). Solid character
+  // glyphs don't need the halo → pass noBloom to render the glyph clean.
   const box = size * 1.3
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <View pointerEvents="none" style={{ position: 'absolute', width: box, height: box, left: (size - box) / 2, top: (size - box) / 2 }}>
-        <SoftBloom color={bloom} opacity={isDark ? intensity * 0.8 : intensity} spread={0.42} radius="50%" />
-      </View>
+      {noBloom ? null : (
+        <View pointerEvents="none" style={{ position: 'absolute', width: box, height: box, left: (size - box) / 2, top: (size - box) / 2 }}>
+          <SoftBloom color={bloom} opacity={isDark ? intensity * 0.8 : intensity} spread={0.42} radius="50%" />
+        </View>
+      )}
       <View style={{ zIndex: 1 }}>{children}</View>
     </View>
   )

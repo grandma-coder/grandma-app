@@ -3012,6 +3012,7 @@ function DiffuseHeroTiles({
           accent={stickers.blue}
           accent2={stickers.lilac}
           icon={<Character name="sleep" size={26} color={stickers.lilac} />}
+          iconNoBloom
           onPress={!hasSleep && onLogSleep ? onLogSleep : onPressSleep}
         />
         <DiffuseStatCard
@@ -3022,6 +3023,7 @@ function DiffuseHeroTiles({
           accent={stickers.yellow}
           accent2={stickers.peach}
           icon={hasMoods && dominantMood ? <MoodFace size={22} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} /> : <Character name="mood" size={26} color={stickers.pink} />}
+          iconNoBloom
           emptyLabel={t('kids_home_tile_mood_empty')}
           onPress={!hasMoods && onLogMood ? onLogMood : onPressMood}
         />
@@ -3036,6 +3038,7 @@ function DiffuseHeroTiles({
           accent={stickers.peach}
           accent2={stickers.coral}
           icon={<Character name="calories" size={26} color={stickers.coral} />}
+          iconNoBloom
           progress={calPct}
           onPress={!hasFeed && onLogFeeding ? onLogFeeding : onPressCalories}
         />
@@ -3048,6 +3051,7 @@ function DiffuseHeroTiles({
           accent={stickers.green}
           accent2={stickers.blue}
           icon={<Character name="activity" size={26} color={stickers.green} />}
+          iconNoBloom
           onPress={!hasActivity && onLogActivity ? onLogActivity : onPressActivity}
         />
       </View>

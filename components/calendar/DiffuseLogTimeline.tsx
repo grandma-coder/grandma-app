@@ -92,7 +92,7 @@ export function DiffuseLogIcon({ type, size = 34, inkColor }: { type: string; si
   const character = DIFFUSE_LOG_CHARACTER[type]
   const Glyph = DIFFUSE_LOG_GLYPH[type] ?? Circle
   return (
-    <DiffuseBloomIcon color={hue} size={size}>
+    <DiffuseBloomIcon color={hue} size={size} noBloom={!!character}>
       {character
         ? <Character name={character} size={size * 0.62} color={hue} />
         : <Glyph size={size * 0.5} color={inkColor} strokeWidth={1.6} />}
@@ -142,9 +142,12 @@ export function DiffuseTimelineNode({ type, active, compact }: { type: string; a
         overflow: 'hidden',
       }}
     >
-      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-        <SoftBloom color={diffuseLogHue(type)} opacity={active ? 0.9 : 0.62} spread={0.42} radius="50%" />
-      </View>
+      {/* Solid character glyphs sit clean — no bloom behind them. */}
+      {character ? null : (
+        <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+          <SoftBloom color={diffuseLogHue(type)} opacity={active ? 0.9 : 0.62} spread={0.42} radius="50%" />
+        </View>
+      )}
       {character
         ? <View style={{ zIndex: 1 }}><Character name={character} size={compact ? 18 : 26} color={diffuseLogHue(type)} bg={colors.bg} /></View>
         : <Glyph size={compact ? 14 : 20} color={colors.ink2} strokeWidth={1.6} style={{ zIndex: 1 }} />}
