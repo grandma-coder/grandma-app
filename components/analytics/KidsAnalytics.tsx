@@ -1077,7 +1077,7 @@ function ScoreInfoModal({
           return (
             <View key={key} style={{ borderTopWidth: 1, borderTopColor: dt.colors.line, paddingVertical: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <DiffuseBloomIcon color={config.color} size={26} intensity={0.4}><Icon size={15} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>
+                {PILLAR_LINE_ICON[key](22, config.color)}
                 <Text style={{ flex: 1, fontFamily: diffuseFont.display, fontSize: 17, color: dt.colors.ink }}>{config.label}</Text>
                 <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, color: dt.colors.ink3 }}>{WEIGHTS[key]}</Text>
                 {score?.hasData && (
@@ -2910,9 +2910,7 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
         ]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <DiffuseBloomIcon color={palette.chip} size={30} intensity={0.45}>
-            <Icon size={17} color={dt.colors.ink3} strokeWidth={1.5} />
-          </DiffuseBloomIcon>
+          {PILLAR_LINE_ICON[pillarKey](26, palette.chip)}
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dt.colors.ink }}>{config.label}</Text>
@@ -4280,7 +4278,7 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
   if (diffuse) {
     return (
       <DiffuseEmptyState
-        icon={<DiffuseBloomIcon color={config.color} size={48} intensity={0.5}><Icon size={24} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>}
+        icon={PILLAR_LINE_ICON[pillar](40, config.color)}
         title={config.label}
         message={messages[pillar]}
       />
