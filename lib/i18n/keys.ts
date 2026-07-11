@@ -1430,6 +1430,12 @@ export interface TranslationKeys {
   kids_calendar_selected: string
   kids_calendar_deleteRoutineConfirm: string
   kids_calendar_deleteRoutineConfirmMsg: string
+  kids_calendar_deleteRoutinesConfirmMsg: string
+  kids_calendar_select: string
+  kids_calendar_selectAll: string
+  kids_calendar_clearSelection: string
+  kids_calendar_selectedCount: string
+  kids_calendar_deleteN: string
   kids_calendar_routineSkipToday: string
   kids_calendar_routineDeleteAll: string
   kids_calendar_routineWhatToDo: string

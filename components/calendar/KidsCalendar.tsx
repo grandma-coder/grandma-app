@@ -775,6 +775,7 @@ interface DiffuseRoutineManagerProps {
   routineSaving: boolean
   onSave: () => void
   onDelete: (id: string) => void
+  onDeleteMany: (ids: string[], onDone?: () => void) => void
   routineFilterKid: string | null
   setRoutineFilterKid: (id: string | null) => void
   t: (key: TranslationKey, params?: Record<string, string | number>) => string
@@ -782,11 +783,28 @@ interface DiffuseRoutineManagerProps {
 
 function DiffuseRoutineManager({
   visible, onClose, routines, children, routineForm, setRoutineForm,
-  routineEditing, setRoutineEditing, routineSaving, onSave, onDelete,
+  routineEditing, setRoutineEditing, routineSaving, onSave, onDelete, onDeleteMany,
   routineFilterKid, setRoutineFilterKid, t,
 }: DiffuseRoutineManagerProps) {
   const { colors } = useDiffuseTheme()
   const listed = routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid) : routines
+
+  // Multi-select delete mode. Local to the manager — enter via "SELECT", tap
+  // rows to toggle, then delete the batch or clear all.
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const exitSelect = () => { setSelectMode(false); setSelectedIds(new Set()) }
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  const allSelected = listed.length > 0 && listed.every((r) => selectedIds.has(r.id))
+  const toggleAll = () =>
+    setSelectedIds(allSelected ? new Set() : new Set(listed.map((r) => r.id)))
+  // Editing a routine or filtering to another kid should drop select mode.
+  useEffect(() => { if (routineEditing) exitSelect() }, [routineEditing])
 
   const input = (value: string, onChange: (v: string) => void, placeholder: string, keyboardType?: 'numbers-and-punctuation') => (
     <View style={[dm.inputWrap, { borderColor: colors.line2, backgroundColor: colors.surface }]}>
@@ -893,9 +911,19 @@ function DiffuseRoutineManager({
       {/* Existing routines */}
       {listed.length > 0 && (
         <View style={{ marginTop: 24 }}>
-          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3, marginBottom: 8 }}>
-            {t('kids_logForm_activeRoutines', { count: listed.length })}
-          </Text>
+          {/* Section header — count + select toggle */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3 }}>
+              {selectMode
+                ? t('kids_calendar_selectedCount', { count: selectedIds.size })
+                : t('kids_logForm_activeRoutines', { count: listed.length })}
+            </Text>
+            <Pressable onPress={() => (selectMode ? exitSelect() : setSelectMode(true))} hitSlop={8}>
+              <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: selectMode ? colors.ink : colors.ink3 }}>
+                {selectMode ? t('common_done') : t('kids_calendar_select')}
+              </Text>
+            </Pressable>
+          </View>
           {/* Kid filter chips */}
           {children.length > 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
@@ -926,6 +954,7 @@ function DiffuseRoutineManager({
           {listed.map((r, idx) => {
             const childName = children.find((c) => c.id === r.child_id)?.name
             const sub = `${r.time ? fmtTime(r.time) : t('kids_logForm_anytime')} · ${r.days_of_week.length === 7 ? t('kids_logForm_daily') : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}${childName ? ` · ${childName}` : ''}`
+            const checked = selectedIds.has(r.id)
             return (
               <DiffuseListRow
                 key={r.id}
@@ -933,22 +962,52 @@ function DiffuseRoutineManager({
                 sub={sub}
                 icon={<DiffuseLogIcon type={r.type} size={34} inkColor={colors.ink3} />}
                 last={idx === listed.length - 1}
+                onPress={selectMode ? () => toggleSelected(r.id) : undefined}
                 trailing={
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
-                    <Pressable
-                      onPress={() => { setRoutineEditing(r); setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week }) }}
-                      hitSlop={10}
-                    >
-                      <Pencil size={16} color={colors.ink3} strokeWidth={1.6} />
-                    </Pressable>
-                    <Pressable onPress={() => onDelete(r.id)} hitSlop={10}>
-                      <Trash2 size={16} color={colors.ink3} strokeWidth={1.6} />
-                    </Pressable>
-                  </View>
+                  selectMode ? (
+                    checked ? (
+                      <CheckCircle2 size={22} color={colors.ink} strokeWidth={1.8} />
+                    ) : (
+                      <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.line2 }} />
+                    )
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+                      <Pressable
+                        onPress={() => { setRoutineEditing(r); setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week }) }}
+                        hitSlop={10}
+                      >
+                        <Pencil size={16} color={colors.ink3} strokeWidth={1.6} />
+                      </Pressable>
+                      <Pressable onPress={() => onDelete(r.id)} hitSlop={10}>
+                        <Trash2 size={16} color={colors.ink3} strokeWidth={1.6} />
+                      </Pressable>
+                    </View>
+                  )
                 }
               />
             )
           })}
+
+          {/* Batch action bar — only in select mode */}
+          {selectMode && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 14 }}>
+              <Pressable onPress={toggleAll} style={({ pressed }) => [dm.actionRow, { borderTopColor: colors.line2, opacity: pressed ? 0.6 : 1, flex: 1 }]}>
+                <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3 }}>
+                  {allSelected ? t('kids_calendar_clearSelection') : t('kids_calendar_selectAll')}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => onDeleteMany(Array.from(selectedIds), exitSelect)}
+                disabled={selectedIds.size === 0 || routineSaving}
+                style={({ pressed }) => [dm.actionRow, { borderTopColor: selectedIds.size ? colors.error : colors.line2, opacity: selectedIds.size === 0 ? 0.4 : (pressed ? 0.6 : 1), flex: 1.4 }]}
+              >
+                <Trash2 size={15} color={selectedIds.size ? colors.error : colors.ink3} strokeWidth={1.8} />
+                <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: selectedIds.size ? colors.error : colors.ink3 }}>
+                  {t('kids_calendar_deleteN', { count: selectedIds.size })}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       )}
     </DiffuseSheet>
@@ -1843,6 +1902,37 @@ export function KidsCalendar() {
       setRoutineDeleting(false)
       setConfirmDeleteRoutineId(null)
     }
+  }
+
+  // Batch delete for the Diffuse routine manager's multi-select mode. Confirms
+  // once, then deletes all ids in a single query. Returns true on success so the
+  // caller can exit select mode.
+  function deleteRoutinesMany(ids: string[], onDone?: () => void) {
+    if (ids.length === 0) return
+    Alert.alert(
+      t('kids_calendar_deleteRoutineConfirm'),
+      t('kids_calendar_deleteRoutinesConfirmMsg', { count: ids.length }),
+      [
+        { text: t('common_cancel'), style: 'cancel' },
+        {
+          text: t('common_delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setRoutineDeleting(true)
+            try {
+              const { error } = await supabase.from('child_routines').delete().in('id', ids)
+              if (error) throw error
+              await fetchRoutines()
+              onDone?.()
+            } catch (e: any) {
+              Alert.alert(t('kids_calendar_alertCouldNotDelete'), e?.message ?? 'Please check your connection and try again.')
+            } finally {
+              setRoutineDeleting(false)
+            }
+          },
+        },
+      ],
+    )
   }
 
   function cancelRoutineEdit() {
@@ -2971,6 +3061,7 @@ export function KidsCalendar() {
           routineSaving={routineSaving}
           onSave={saveRoutine}
           onDelete={deleteRoutine}
+          onDeleteMany={deleteRoutinesMany}
           routineFilterKid={routineFilterKid}
           setRoutineFilterKid={setRoutineFilterKid}
           t={t}
