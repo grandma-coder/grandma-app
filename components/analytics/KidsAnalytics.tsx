@@ -112,7 +112,11 @@ import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { BigChartCard } from './shared/BigChartCard'
 import { HealthScoreRing, type RingSegment } from './shared/HealthScoreRing'
 import { CustomRangeModal } from './shared/CustomRangeModal'
-import { KidsPillarCollage } from './KidsPillarCollage'
+import { KidsAnalyticsHero } from './KidsAnalyticsHero'
+import { KidsPillarBands, type PillarBandItem } from './KidsPillarBands'
+import {
+  WaterDropIcon, SleepIcon, HandHeartIcon, StethoscopeIcon, WeightIcon, FootprintIcon,
+} from '../stickers/LineIcons'
 import {
   Heart as StickerHeart,
   Moon as StickerMoon,
@@ -171,6 +175,16 @@ const PILLAR_CONFIG = {
 
 type PillarKey = keyof typeof PILLAR_CONFIG
 const PILLAR_ORDER: PillarKey[] = ['nutrition', 'sleep', 'mood', 'health', 'growth', 'activity']
+
+// Single-stroke LineIcon per pillar for the editorial band rows (Diffuse).
+const PILLAR_LINE_ICON: Record<PillarKey, (size: number, color: string) => React.ReactNode> = {
+  nutrition: (s, c) => <WaterDropIcon size={s} color={c} />,
+  sleep:     (s, c) => <SleepIcon size={s} color={c} />,
+  mood:      (s, c) => <HandHeartIcon size={s} color={c} />,
+  health:    (s, c) => <StethoscopeIcon size={s} color={c} />,
+  growth:    (s, c) => <WeightIcon size={s} color={c} />,
+  activity:  (s, c) => <FootprintIcon size={s} color={c} />,
+}
 
 // Maps each pillar to a sticker component and the paper-palette tint used for
 // the 2026 redesign (soft pastel bg + vivid chip color).
@@ -538,7 +552,7 @@ function buildGrandmaContext(
 
 export function KidsAnalytics() {
   const { t } = useTranslation()
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
@@ -799,75 +813,82 @@ export function KidsAnalytics() {
           </Pressable>
         )}
 
-        {analytics && (
-          <>
-            {/* ── 2. WELLNESS RING (2026 redesign) ── */}
-            <KidsWellnessRingCard
-              scores={analytics.scores}
-              onPillarPress={setSelectedPillar}
-            />
+        {analytics && (() => {
+          const tips = getHealthTips(analytics.scores, analytics, ageMonths, childName)
+          const tipMap = tipByPillar(tips)
 
-            {/* ── GRANDMA AI INSIGHT — current system shows it above the
-                   breakdown; Diffuse moves it BELOW the collage (rendered later). ── */}
-            {!diffuse && (
-              <GrandmaInsightCard
-                scores={analytics.scores}
-                analytics={analytics}
-                childName={childName}
-                ageMonths={ageMonths}
-              />
-            )}
-
-            {/* ── THRIVING BREAKDOWN (collage in Diffuse, tip rows otherwise) ── */}
-            {(() => {
-              const tips = getHealthTips(analytics.scores, analytics, ageMonths, childName)
-              const tipMap = tipByPillar(tips)
-              return (
-                <View style={styles.pillarSection}>
-                  <Text style={[styles.pillarSectionTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
-                    {t('kids_analytics_thriving_breakdown')}
+          if (diffuse) {
+            // ── Editorial dashboard (Diffuse): hero stat → Grandma one-liner →
+            //    pillar bands sorted worst-first → compact Grandma card → routines.
+            const s = analytics.scores
+            const hasAnyData = PILLAR_ORDER.some((k) => s[k].hasData)
+            const overall = Number.isFinite(s.overall) ? s.overall : 0
+            const band = overall >= 8.5 ? t('kids_analytics_caption_thriving')
+              : overall >= 7 ? t('kids_analytics_caption_on_track')
+              : overall >= 5 ? t('kids_analytics_caption_developing')
+              : t('kids_analytics_caption_needs_care')
+            const highlights = buildInsightHighlights(s, analytics, childName, ageMonths)
+            const softFor: Record<PillarKey, string> = {
+              nutrition: stickers.greenSoft, sleep: stickers.lilacSoft, mood: stickers.pinkSoft,
+              health: stickers.blueSoft, growth: stickers.yellowSoft, activity: stickers.peachSoft,
+            }
+            const bandItems: PillarBandItem[] = PILLAR_ORDER.map((key) => ({
+              key,
+              label: PILLAR_CONFIG[key].label,
+              color: PILLAR_CONFIG[key].color,
+              softColor: softFor[key],
+              score: s[key],
+              takeaway: tipMap[key]?.body,
+              icon: PILLAR_LINE_ICON[key],
+            }))
+            return (
+              <View style={{ gap: 4 }}>
+                <KidsAnalyticsHero
+                  overall={overall}
+                  hasData={hasAnyData}
+                  caption={`${t('kids_analytics_thriving_breakdown')} · ${band}`.toUpperCase()}
+                  childName={childName}
+                  band={band}
+                />
+                {highlights.message ? (
+                  <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink2, borderLeftWidth: 2, borderLeftColor: dt.colors.line2, paddingLeft: 12, marginTop: 10, marginBottom: 18 }}>
+                    {highlights.message}
                   </Text>
-                  {diffuse ? (
-                    // Soft sticker collage — playful scattered shapes, sized by
-                    // score, big hero number, each taps into its pillar detail.
-                    <KidsPillarCollage
-                      items={PILLAR_ORDER.map((key) => ({
-                        key,
-                        label: PILLAR_CONFIG[key].label,
-                        color: PILLAR_CONFIG[key].color,
-                        score: analytics.scores[key],
-                      }))}
-                      onPillarPress={(key) => setSelectedPillar(key)}
-                    />
-                  ) : (
-                    PILLAR_ORDER.map((key) => (
-                      <PillarRow
-                        key={key}
-                        pillarKey={key}
-                        score={analytics.scores[key]}
-                        tip={tipMap[key]}
-                        onPress={() => setSelectedPillar(key)}
-                      />
-                    ))
-                  )}
-                  {/* Diffuse: Grandma insight sits BELOW the collage, compact. */}
-                  {diffuse && (
-                    <View style={{ marginTop: 8 }}>
-                      <GrandmaInsightCard
-                        scores={analytics.scores}
-                        analytics={analytics}
-                        childName={childName}
-                        ageMonths={ageMonths}
-                        compact
-                      />
-                    </View>
-                  )}
+                ) : <View style={{ height: 14 }} />}
+                <KidsPillarBands items={bandItems} onPillarPress={(key) => setSelectedPillar(key as PillarKey)} />
+                <View style={{ marginTop: 14 }}>
+                  <GrandmaInsightCard
+                    scores={s}
+                    analytics={analytics}
+                    childName={childName}
+                    ageMonths={ageMonths}
+                    compact
+                  />
+                </View>
+                <View style={{ marginTop: 14 }}>
                   <RoutineComplianceSection data={analytics.routineCompliance} />
                 </View>
-              )
-            })()}
-          </>
-        )}
+              </View>
+            )
+          }
+
+          // ── Current system (unchanged): ring → grandma → tip rows → routines.
+          return (
+            <>
+              <KidsWellnessRingCard scores={analytics.scores} onPillarPress={setSelectedPillar} />
+              <GrandmaInsightCard scores={analytics.scores} analytics={analytics} childName={childName} ageMonths={ageMonths} />
+              <View style={styles.pillarSection}>
+                <Text style={[styles.pillarSectionTitle, { color: colors.text, fontFamily: font.display }]}>
+                  {t('kids_analytics_thriving_breakdown')}
+                </Text>
+                {PILLAR_ORDER.map((key) => (
+                  <PillarRow key={key} pillarKey={key} score={analytics.scores[key]} tip={tipMap[key]} onPress={() => setSelectedPillar(key)} />
+                ))}
+                <RoutineComplianceSection data={analytics.routineCompliance} />
+              </View>
+            </>
+          )
+        })()}
 
         {analytics && analytics.totalLogs === 0 && !isLoading && (
           diffuse ? (
