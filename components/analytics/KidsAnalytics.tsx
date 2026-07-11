@@ -112,6 +112,7 @@ import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { BigChartCard } from './shared/BigChartCard'
 import { HealthScoreRing, type RingSegment } from './shared/HealthScoreRing'
 import { CustomRangeModal } from './shared/CustomRangeModal'
+import { KidsPillarCollage } from './KidsPillarCollage'
 import {
   Heart as StickerHeart,
   Moon as StickerMoon,
@@ -823,15 +824,29 @@ export function KidsAnalytics() {
                   <Text style={[styles.pillarSectionTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
                     {t('kids_analytics_thriving_breakdown')}
                   </Text>
-                  {PILLAR_ORDER.map((key) => (
-                    <PillarRow
-                      key={key}
-                      pillarKey={key}
-                      score={analytics.scores[key]}
-                      tip={tipMap[key]}
-                      onPress={() => setSelectedPillar(key)}
+                  {diffuse ? (
+                    // Soft-bloom sticker collage — playful scattered shapes,
+                    // sized by score, each taps into its pillar detail.
+                    <KidsPillarCollage
+                      items={PILLAR_ORDER.map((key) => ({
+                        key,
+                        label: PILLAR_CONFIG[key].label,
+                        color: PILLAR_CONFIG[key].color,
+                        score: analytics.scores[key],
+                      }))}
+                      onPillarPress={(key) => setSelectedPillar(key)}
                     />
-                  ))}
+                  ) : (
+                    PILLAR_ORDER.map((key) => (
+                      <PillarRow
+                        key={key}
+                        pillarKey={key}
+                        score={analytics.scores[key]}
+                        tip={tipMap[key]}
+                        onPress={() => setSelectedPillar(key)}
+                      />
+                    ))
+                  )}
                   <RoutineComplianceSection data={analytics.routineCompliance} />
                 </View>
               )
