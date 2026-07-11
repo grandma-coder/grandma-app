@@ -52,6 +52,7 @@ import { HankenGrotesk_400Regular } from '@expo-google-fonts/hanken-grotesk/400R
 import { HankenGrotesk_500Medium } from '@expo-google-fonts/hanken-grotesk/500Medium'
 import { HankenGrotesk_600SemiBold } from '@expo-google-fonts/hanken-grotesk/600SemiBold'
 import { HankenGrotesk_700Bold } from '@expo-google-fonts/hanken-grotesk/700Bold'
+import { HankenGrotesk_700Bold_Italic } from '@expo-google-fonts/hanken-grotesk/700Bold_Italic'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
@@ -147,6 +148,7 @@ export default function RootLayout() {
     HankenGrotesk_500Medium,
     HankenGrotesk_600SemiBold,
     HankenGrotesk_700Bold,
+    HankenGrotesk_700Bold_Italic,
   })
 
   // Apply DM Sans as the default for every Text / TextInput once fonts load.

@@ -53,8 +53,13 @@ export function HomeGreeting({
         <View style={styles.row}>
           {diffuse ? (
             <>
-              <Text style={{ fontFamily: diffuseFont.display, fontSize: size, color: ink, letterSpacing: -0.4 }}>{t('home_hi')}</Text>
-              <Text style={{ fontFamily: diffuseFont.italic, fontSize: size, color: ink, marginLeft: 8 }}>{displayName}</Text>
+              {/* Swiss display font is wider than the serif — cap the size a
+                  touch and let the name shrink/truncate so it never clips. */}
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: size - 2, color: ink, letterSpacing: -0.6 }}>{t('home_hi')}</Text>
+              <Text
+                style={{ fontFamily: diffuseFont.italic, fontSize: size - 2, color: ink, marginLeft: 8, flexShrink: 1 }}
+                numberOfLines={1}
+              >{displayName}</Text>
             </>
           ) : (
             <>
