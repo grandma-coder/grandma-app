@@ -4,7 +4,7 @@ import { toDateStr } from '../cycleLogic'
 import { useModeStore } from '../../store/useModeStore'
 import { pickDailyQuestion } from './pickDailyQuestion'
 import { matchCard } from './matcher'
-import { getCardById } from './index'
+import { getCardById, getQuestionsForMode } from './index'
 import type { DailyCard, DailyQuestion } from './types'
 
 export interface DailyMessageRow {
@@ -51,10 +51,14 @@ export function useDailyMessage() {
     },
   })
 
-  const todayQuestion: DailyQuestion | null = (() => {
-    // userId only needed for stable rotation; fall back to 'anon' before auth resolves.
-    return pickDailyQuestion(today, entryQ.data?.user_id ?? 'anon', mode)
-  })()
+  // Guard against unpopulated question banks (e.g. 'kids', 'pre-pregnancy' today) —
+  // pickDailyQuestion throws when the mode's bank is empty, and this hook must never
+  // throw at render regardless of which mode is active when a caller mounts it.
+  // userId only needed for stable rotation; fall back to 'anon' before auth resolves.
+  const todayQuestion: DailyQuestion | null =
+    getQuestionsForMode(mode).length > 0
+      ? pickDailyQuestion(today, entryQ.data?.user_id ?? 'anon', mode)
+      : null
 
   const todayCard: DailyCard | null =
     entryQ.data ? getCardById(entryQ.data.card_id) ?? null : null
@@ -63,6 +67,9 @@ export function useDailyMessage() {
     mutationFn: async (optionIndex: number): Promise<DailyCard> => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in')
+      if (getQuestionsForMode(mode).length === 0) {
+        throw new Error(`No daily questions available for mode "${mode}"`)
+      }
       const question = pickDailyQuestion(today, user.id, mode)
       const card = resolveAnswer(question, optionIndex)
       const { error } = await supabase.from('daily_messages').upsert(
