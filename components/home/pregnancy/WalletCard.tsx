@@ -52,6 +52,9 @@ export function WalletCard({
   }))
 
   // ── resolve tone → cover bg + ink ──
+  // Full sticker colors (not the pale *Soft) so each card reads as its own
+  // hue, wallet-style. Dark ink on the warm tones stays legible; on cream
+  // (surface) and lavender we fall back to the theme ink.
   let bg = colors.surface
   let ink = colors.text
   if (diffuse) {
@@ -64,7 +67,8 @@ export function WalletCard({
     bg = getModeColor('pregnancy', isDark)
     ink = isDark ? colors.text : '#141313'
   } else {
-    bg = (stickers as Record<string, string>)[tone + 'Soft'] ?? colors.surface
+    // yellow / lilac / green / peach → the saturated sticker color + its ink tint
+    bg = (stickers as Record<string, string>)[tone] ?? colors.surface
     ink = (stickers as Record<string, string>)[tone + 'Ink'] ?? colors.text
   }
   const border = diffuse ? dt.colors.line : colors.border
