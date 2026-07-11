@@ -6,7 +6,7 @@
  * Saves children to Supabase children table + care_circle entries.
  */
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, type ReactNode } from 'react'
 import {
   View,
   Text,
@@ -28,9 +28,16 @@ import { Star, Heart, Moon, Sun, Flower, Cloud, Leaf } from '../../../components
 import { PillButton } from '../../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, brand, stickers, getModeColor, getModeColorSoft } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, brand, stickers, getModeColor, getModeColorSoft, diffuseFields } from '../../../constants/theme'
+import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
+import { DiffuseDotCalendar } from '../../../components/ui/diffuse/DiffusePrimitives'
+import { DiffuseField } from '../../../components/ui/diffuse/DiffuseField'
+import { ArcDial } from '../../../components/ui/diffuse/pickers/ArcDial'
+import { BloomChips } from '../../../components/ui/diffuse/pickers/BloomChips'
+import { AvatarBloomGrid } from '../../../components/ui/diffuse/pickers/AvatarBloomGrid'
+import { ChoiceTimeline } from '../../../components/ui/diffuse/pickers/ChoiceTimeline'
 import { useTranslation } from '../../../lib/i18n'
-import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../../components/ui/AvatarPicker'
+import { AvatarView, AvatarPickerModal, isIconAvatar, buildIconAvatarValue } from '../../../components/ui/AvatarPicker'
 import {
   useKidsOnboardingStore,
   type CaregiverRole,
@@ -73,6 +80,41 @@ function childIndexForStep(stepIndex: number, childCount: number): number {
   if (stepIndex <= 0) return 0
   return Math.floor((stepIndex - 1) / 6)
 }
+
+// ─── Local date ↔ ISO string helpers (Diffuse calendar bridge) ──────────────
+// The store keeps `birthDate` as an ISO 'YYYY-MM-DD' string; DiffuseDotCalendar
+// is controlled by a Date. Convert with LOCAL date parts (not toISOString) so an
+// evening selection west of UTC doesn't slide to the previous day.
+
+function isoToDate(iso: string | null): Date {
+  if (!iso) return new Date()
+  const [y, m, d] = iso.split('-').map((p) => parseInt(p, 10))
+  if (!y || !m || !d) return new Date()
+  return new Date(y, m - 1, d)
+}
+
+function dateToIso(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// ─── Diffuse avatar options (KIDS 05 · pick a look) ─────────────────────────
+// AvatarBloomGrid keys are the SAME `icon:<key>` sentinels the cream path stores
+// in `photoUri` (via AvatarPickerModal → buildIconAvatarValue), so a selected
+// bloom avatar round-trips through AvatarView + the save flow (isIconAvatar
+// passes it through unchanged). Stickers stay active under Diffuse (per the
+// standing icon-system decision); the sticker sits over a kids-palette bloom.
+const DIFFUSE_AVATAR_OPTIONS: { iconKey: 'star' | 'heart' | 'flower' | 'sun' | 'moon' | 'cloud' | 'leaf'; color: string; render: (size: number) => ReactNode }[] = [
+  { iconKey: 'star', color: diffuseFields.kids.g1, render: (s) => <Star size={s} fill={stickers.blue} /> },
+  { iconKey: 'heart', color: diffuseFields.kids.g4, render: (s) => <Heart size={s} fill={stickers.pink} /> },
+  { iconKey: 'flower', color: diffuseFields.kids.g3, render: (s) => <Flower size={s} petal={stickers.blue} center={stickers.yellow} /> },
+  { iconKey: 'sun', color: diffuseFields.kids.g1, render: (s) => <Sun size={s} fill={stickers.yellow} /> },
+  { iconKey: 'moon', color: diffuseFields.kids.g3, render: (s) => <Moon size={s} fill={stickers.lilac} /> },
+  { iconKey: 'cloud', color: diffuseFields.kids.g2, render: (s) => <Cloud size={s} fill={stickers.blue} /> },
+  { iconKey: 'leaf', color: diffuseFields.kids.g2, render: (s) => <Leaf size={s} fill={stickers.green} /> },
+]
 
 // ─── Common allergy options ────────────────────────────────────────────────
 
@@ -519,6 +561,7 @@ function StepChildCount({
   onContinue: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const count = useKidsOnboardingStore((s) => s.childCount)
@@ -528,10 +571,17 @@ function StepChildCount({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question="How many children are you tracking?"
       sticker={<Star size={56} fill={stickers.blue} />}
       onContinue={onContinue}
     >
+      {diffuse ? (
+        // The store hard-clamps childCount to 1..6 (setChildCount), so the dial
+        // is bounded at 6 to stay in sync with the live store — a higher max
+        // would let the dial show a value the store immediately clamps back.
+        <ArcDial min={1} max={6} value={count} onChange={setCount} unit="kids" />
+      ) : (
       <View style={stepStyles.counterRow}>
         <Pressable
           onPress={() => setCount(count - 1)}
@@ -569,6 +619,7 @@ function StepChildCount({
           <Plus size={24} color={colors.text} strokeWidth={2.5} />
         </Pressable>
       </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -589,6 +640,7 @@ function StepChildName({
   onContinue: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -600,11 +652,20 @@ function StepChildName({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question={`${label}What is their name?`}
       sticker={<Heart size={52} fill={stickers.pink} />}
       onContinue={onContinue}
       continueDisabled={!child?.name.trim()}
     >
+      {diffuse ? (
+        <DiffuseField
+          value={child?.name ?? ''}
+          onChangeText={(name) => updateChild(childIdx, { name })}
+          placeholder="First name"
+          autoCapitalize="words"
+        />
+      ) : (
       <TextInput
         value={child?.name ?? ''}
         onChangeText={(name) => updateChild(childIdx, { name })}
@@ -624,6 +685,7 @@ function StepChildName({
           },
         ]}
       />
+      )}
     </OnboardingStep>
   )
 }
@@ -643,6 +705,7 @@ function StepChildDob({
 }) {
   const { colors, radius, font, isDark } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -663,11 +726,22 @@ function StepChildDob({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question={`When was ${childName} born?`}
       sticker={<Sun size={56} fill={stickers.yellow} />}
       onContinue={onContinue}
       continueDisabled={!child?.birthDate}
     >
+      {diffuse ? (
+        // DiffuseDotCalendar bounds only via minimumDate; the 18y-back floor is
+        // preserved. The continueDisabled gate still requires a selection.
+        <DiffuseDotCalendar
+          value={isoToDate(child?.birthDate ?? null)}
+          onChange={(d) => updateChild(childIdx, { birthDate: dateToIso(d) })}
+          minimumDate={minDate}
+          accent={diffuseFields.kids.accent}
+        />
+      ) : (
       <View style={stepStyles.centered}>
         <DatePickerField
           inline
@@ -696,6 +770,7 @@ function StepChildDob({
           </View>
         )}
       </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -744,6 +819,7 @@ function StepChildCountry({
 }) {
   const { colors, radius, font, isDark } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -763,10 +839,44 @@ function StepChildCountry({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question={`Where does ${childName} live?`}
       sticker={<Cloud size={64} fill={stickers.blue} />}
       onContinue={onContinue}
     >
+      {diffuse ? (
+        // Search field above a single-select BloomChips of the (filtered)
+        // countries. Selecting a chip writes the real country CODE to the SAME
+        // updateChild setter the cream path uses.
+        <View>
+          <DiffuseField
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search country…"
+            autoCapitalize="none"
+          />
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            style={{ maxHeight: 360, marginTop: 18 }}
+            nestedScrollEnabled
+          >
+            <BloomChips
+              multi={false}
+              options={filteredOptions.map((c) => ({ key: c.code, label: c.name }))}
+              value={[selected]}
+              onChange={(next) => {
+                if (next[0]) updateChild(childIdx, { countryCode: next[0] })
+              }}
+            />
+            {filteredOptions.length === 0 && (
+              <Text style={{ color: colors.textMuted, padding: 16, width: '100%' }}>
+                {t('kidsOnboard_noCountriesFound')}
+              </Text>
+            )}
+          </ScrollView>
+        </View>
+      ) : (
       <View>
         {/* Search input — sticker treatment to match design system */}
         <View
@@ -834,6 +944,7 @@ function StepChildCountry({
           </View>
         </ScrollView>
       </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -854,7 +965,9 @@ function StepChildPhoto({
   onSkip: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -880,11 +993,40 @@ function StepChildPhoto({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question={`Pick a photo or icon for ${childName}`}
       sticker={<Flower size={56} petal={stickers.blue} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
+      {diffuse ? (
+        // Soft-bloom avatar grid. Option keys ARE the `icon:<key>` sentinels the
+        // cream path stores (buildIconAvatarValue), so a selected avatar writes
+        // the same photoUri value + round-trips through AvatarView and the save
+        // flow. The camera tile taps through to the existing pickImage handler.
+        <View style={stepStyles.photoDiffuse}>
+          <View style={stepStyles.photoDiffusePreview}>
+            <AvatarView
+              value={child?.photoUri ?? null}
+              size={132}
+              accent={diffuseFields.kids.accent}
+              initial={childInitial}
+              bucket={'child-photos' as any}
+            />
+          </View>
+          <AvatarBloomGrid
+            options={DIFFUSE_AVATAR_OPTIONS.map((opt) => ({
+              key: buildIconAvatarValue(opt.iconKey),
+              color: opt.color,
+              icon: opt.render(30),
+            }))}
+            value={child?.photoUri && isIconAvatar(child.photoUri) ? child.photoUri : null}
+            onChange={(key) => updateChild(childIdx, { photoUri: key })}
+            onPickPhoto={pickImage}
+            cameraIcon={<Camera size={22} color={dt.colors.ink} strokeWidth={1.6} />}
+          />
+        </View>
+      ) : (
       <View style={stepStyles.centered}>
         <Pressable onPress={() => setPickerOpen(true)}>
           {child?.photoUri ? (
@@ -923,6 +1065,7 @@ function StepChildPhoto({
           onRemove={child?.photoUri ? () => updateChild(childIdx, { photoUri: null as any }) : undefined}
         />
       </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -943,6 +1086,7 @@ function StepChildAllergies({
   onSkip: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -955,11 +1099,43 @@ function StepChildAllergies({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question={`Any allergies for ${childName}?`}
       sticker={<Leaf size={56} fill={stickers.green} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
+      {diffuse ? (
+        // Multi-select chips over the SAME allergies array. 'Other' stays a chip
+        // (so toggleAllergy sets the 'Other' sentinel exactly as cream does and
+        // save-time buildAllergies is untouched); a bare DiffuseField below binds
+        // allergiesOther. Fold the picker's next array back through toggleAllergy.
+        <>
+          <BloomChips
+            multi
+            options={ALLERGY_OPTIONS.map((a) => ({ key: a, label: a }))}
+            value={child?.allergies ?? []}
+            onChange={(next) => {
+              const current = child?.allergies ?? []
+              const added = next.filter((k) => !current.includes(k))
+              const removed = current.filter((k) => !next.includes(k))
+              added.forEach((k) => toggleAllergy(childIdx, k))
+              removed.forEach((k) => toggleAllergy(childIdx, k))
+            }}
+          />
+          {otherSelected && (
+            <View style={stepStyles.diffuseBlock}>
+              <DiffuseField
+                value={child?.allergiesOther ?? ''}
+                onChangeText={(txt) => updateChild(childIdx, { allergiesOther: txt })}
+                placeholder="Tell us what other allergies…"
+                autoCapitalize="sentences"
+              />
+            </View>
+          )}
+        </>
+      ) : (
+      <>
       <View style={stepStyles.chipGrid}>
         {ALLERGY_OPTIONS.map((allergy) => {
           const selected = child?.allergies.includes(allergy) ?? false
@@ -1014,6 +1190,8 @@ function StepChildAllergies({
           />
         </View>
       )}
+      </>
+      )}
     </OnboardingStep>
   )
 }
@@ -1034,6 +1212,7 @@ function StepChildConditions({
   onSkip: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
@@ -1044,11 +1223,23 @@ function StepChildConditions({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question={`Any conditions or medications for ${childName}?`}
       sticker={<Moon size={52} fill={stickers.lilac} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
+      {diffuse ? (
+        // The store keeps conditions as one free-text string (conditionsText — no
+        // condition chip catalog / i18n keys exist), so the Diffuse path uses the
+        // bare underlined field wired to the SAME updateChild setter.
+        <DiffuseField
+          value={child?.conditionsText ?? ''}
+          onChangeText={(text) => updateChild(childIdx, { conditionsText: text })}
+          placeholder="e.g. Asthma, daily inhaler…"
+          autoCapitalize="sentences"
+        />
+      ) : (
       <TextInput
         value={child?.conditionsText ?? ''}
         onChangeText={(text) => updateChild(childIdx, { conditionsText: text })}
@@ -1067,6 +1258,7 @@ function StepChildConditions({
           },
         ]}
       />
+      )}
     </OnboardingStep>
   )
 }
@@ -1085,7 +1277,9 @@ function StepPartner({
   onSkip: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const partner = useKidsOnboardingStore((s) => s.partnerName)
@@ -1095,11 +1289,28 @@ function StepPartner({
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question="Want to add your partner?"
       sticker={<Heart size={56} fill={stickers.pink} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
+      {diffuse ? (
+        // Bare underlined field wired to the SAME setPartner setter. Invite / skip
+        // stays with OnboardingStep's CTA + text link.
+        <View style={stepStyles.diffusePartnerBlock}>
+          <DiffuseField
+            value={partner ?? ''}
+            onChangeText={setPartner}
+            placeholder="Partner's name"
+            autoCapitalize="words"
+          />
+          <Text style={[stepStyles.diffuseHint, { color: dt.colors.ink3, fontFamily: font.body }]}>
+            {t('kidsOnboard_partnerHint')}
+          </Text>
+        </View>
+      ) : (
+      <>
       <TextInput
         value={partner ?? ''}
         onChangeText={setPartner}
@@ -1121,6 +1332,8 @@ function StepPartner({
       <Text style={[stepStyles.hint, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
         {t('kidsOnboard_partnerHint')}
       </Text>
+      </>
+      )}
     </OnboardingStep>
   )
 }
@@ -1139,6 +1352,7 @@ function StepCaregiver({
   onSkip: () => void
 }) {
   const { colors, radius, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('kids', isDark)
   const modeSoft = getModeColorSoft('kids', isDark)
   const role = useKidsOnboardingStore((s) => s.caregiverRole)
@@ -1146,15 +1360,45 @@ function StepCaregiver({
   const setRole = useKidsOnboardingStore((s) => s.setCaregiverRole)
   const setName = useKidsOnboardingStore((s) => s.setCaregiverName)
 
+  // Kids-field hues for the timeline node blooms (design accent values).
+  const timelineBlooms = [diffuseFields.kids.g1, diffuseFields.kids.g2, diffuseFields.kids.g3, diffuseFields.kids.g4]
+
   return (
     <OnboardingStep
       step={step}
       total={total}
+      auraMode="kids"
       question="Want to add a caregiver?"
       sticker={<Star size={56} fill={stickers.blue} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
+      {diffuse ? (
+        // Vertical connector-line role picker → the SAME setCaregiverRole setter;
+        // the name DiffuseField appears after a role is chosen, wired to setName.
+        <>
+          <ChoiceTimeline
+            options={CAREGIVER_ROLES.map((opt, i) => ({
+              key: opt.id,
+              label: opt.label,
+              bloomColor: timelineBlooms[i % timelineBlooms.length],
+            }))}
+            value={role}
+            onChange={(k) => setRole(k as CaregiverRole)}
+          />
+          {role && (
+            <View style={stepStyles.diffuseBlock}>
+              <DiffuseField
+                value={name ?? ''}
+                onChangeText={setName}
+                placeholder={`${CAREGIVER_ROLES.find((r) => r.id === role)?.label}'s name`}
+                autoCapitalize="words"
+              />
+            </View>
+          )}
+        </>
+      ) : (
+      <>
       {/* Role selector */}
       <View style={stepStyles.chipGrid}>
         {CAREGIVER_ROLES.map((opt) => {
@@ -1207,6 +1451,8 @@ function StepCaregiver({
             },
           ]}
         />
+      )}
+      </>
       )}
     </OnboardingStep>
   )
@@ -1486,6 +1732,23 @@ const stepStyles = StyleSheet.create({
   },
   roleChipText: {
     fontSize: 15,
+  },
+  // Diffuse-only spacing helpers (layout-only; no colors/shadows).
+  diffuseBlock: {
+    marginTop: 28,
+  },
+  diffusePartnerBlock: {
+    gap: 16,
+  },
+  diffuseHint: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  photoDiffuse: {
+    gap: 28,
+  },
+  photoDiffusePreview: {
+    alignItems: 'center',
   },
 })
 
