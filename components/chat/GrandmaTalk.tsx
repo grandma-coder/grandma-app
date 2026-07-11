@@ -485,7 +485,7 @@ function GrandmaOrb({ status, state, size = 260 }: GrandmaOrbProps) {
     return (
       <View style={orbStyles.diffuseWrap}>
         <Animated.View style={{ transform: [{ scale: breathe }] }}>
-          <LiveOrb size={s * 0.66} tint={accent} isDark={dt.isDark} speed={waveSpeed} />
+          <LiveOrb size={s * 0.82} tint={accent} isDark={dt.isDark} speed={waveSpeed} />
         </Animated.View>
         <Text style={[orbStyles.greeting, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
           {status}
