@@ -960,28 +960,24 @@ function DiffuseRoutineManager({
                 key={r.id}
                 title={r.name}
                 sub={sub}
-                icon={<DiffuseLogIcon type={r.type} size={34} inkColor={colors.ink3} />}
+                icon={<DiffuseLogIcon type={r.type} size={22} inkColor={colors.ink3} />}
                 last={idx === listed.length - 1}
-                onPress={selectMode ? () => toggleSelected(r.id) : undefined}
+                compact
+                // Row tap = edit (out of select mode) / toggle (in select mode).
+                onPress={selectMode
+                  ? () => toggleSelected(r.id)
+                  : () => { setRoutineEditing(r); setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week }) }}
                 trailing={
                   selectMode ? (
                     checked ? (
-                      <CheckCircle2 size={22} color={colors.ink} strokeWidth={1.8} />
+                      <CheckCircle2 size={20} color={colors.ink} strokeWidth={1.8} />
                     ) : (
-                      <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.line2 }} />
+                      <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.line2 }} />
                     )
                   ) : (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
-                      <Pressable
-                        onPress={() => { setRoutineEditing(r); setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week }) }}
-                        hitSlop={10}
-                      >
-                        <Pencil size={16} color={colors.ink3} strokeWidth={1.6} />
-                      </Pressable>
-                      <Pressable onPress={() => onDelete(r.id)} hitSlop={10}>
-                        <Trash2 size={16} color={colors.ink3} strokeWidth={1.6} />
-                      </Pressable>
-                    </View>
+                    <Pressable onPress={() => onDelete(r.id)} hitSlop={12}>
+                      <Trash2 size={15} color={colors.ink3} strokeWidth={1.6} />
+                    </Pressable>
                   )
                 }
               />

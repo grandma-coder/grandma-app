@@ -252,6 +252,7 @@ interface ListRowProps {
   onPress?: () => void
   showArrow?: boolean
   last?: boolean           // drop the bottom hairline on the last row
+  compact?: boolean        // tighter padding + smaller icon (dense lists)
   style?: StyleProp<ViewStyle>
 }
 
@@ -266,33 +267,67 @@ export function DiffuseListRow({
   onPress,
   showArrow,
   last,
+  compact,
   style,
 }: ListRowProps) {
   const { colors } = useDiffuseTheme()
-  const Container: any = onPress ? Pressable : View
-  return (
-    <Container
+  const baseStyle = [
+    dp.listRow,
+    compact && dp.listRowCompact,
+    { borderBottomColor: colors.line, borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth },
+    style,
+  ]
+  // A function `style` is only valid on Pressable — a plain View silently drops
+  // it, which collapses the row back to a column. So branch the container AND
+  // the style shape: Pressable gets the pressed-opacity function, View gets a
+  // plain array.
+  return onPress ? (
+    <Pressable
       onPress={onPress}
-      style={({ pressed }: { pressed?: boolean }) => [
-        dp.listRow,
-        { borderBottomColor: colors.line, borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.6 : 1 },
-        style,
-      ]}
+      style={({ pressed }: { pressed?: boolean }) => [baseStyle, { opacity: pressed ? 0.6 : 1 }]}
     >
+      <RowContent
+        icon={icon} dotColor={dotColor} title={title} sub={sub}
+        value={value} valueColor={valueColor} trailing={trailing}
+        showArrow={showArrow} hasPress compact={compact} colors={colors}
+      />
+    </Pressable>
+  ) : (
+    <View style={baseStyle}>
+      <RowContent
+        icon={icon} dotColor={dotColor} title={title} sub={sub}
+        value={value} valueColor={valueColor} trailing={trailing}
+        showArrow={showArrow} hasPress={false} compact={compact} colors={colors}
+      />
+    </View>
+  )
+}
+
+/** Inner content of a DiffuseListRow — shared by the Pressable and View
+ *  variants so the layout can never diverge between them. */
+function RowContent({
+  icon, dotColor, title, sub, value, valueColor, trailing, showArrow, hasPress, compact, colors,
+}: {
+  icon?: ReactNode; dotColor?: string; title: string; sub?: string
+  value?: string; valueColor?: string; trailing?: ReactNode; showArrow?: boolean
+  hasPress: boolean; compact?: boolean; colors: ReturnType<typeof useDiffuseTheme>['colors']
+}) {
+  return (
+    <>
       {icon ? (
-        <View style={[dp.listIcon, { borderColor: colors.line2 }]}>{icon}</View>
+        <View style={[dp.listIcon, compact && dp.listIconCompact, { borderColor: colors.line2 }]}>{icon}</View>
       ) : dotColor ? (
         <View style={[dp.listDot, { backgroundColor: dotColor }]} />
       ) : null}
       <View style={{ flex: 1 }}>
-        <Text style={[roleType.read, { fontSize: 15, color: colors.ink }]} numberOfLines={1}>{title}</Text>
-        {sub ? <Text style={[roleType.data, { fontSize: 9.5, color: colors.ink3, marginTop: 3 }]} numberOfLines={1}>{sub}</Text> : null}
+        <Text style={[roleType.read, { fontSize: compact ? 14 : 15, color: colors.ink }]} numberOfLines={1}>{title}</Text>
+        {sub ? <Text style={[roleType.data, { fontSize: 9.5, color: colors.ink3, marginTop: compact ? 1 : 3 }]} numberOfLines={1}>{sub}</Text> : null}
       </View>
       {trailing ? trailing
         : value !== undefined ? <Text style={[roleType.data, { fontSize: 13, color: valueColor ?? colors.ink, fontFamily: diffuseFont.monoBold }]}>{value}</Text>
-        : showArrow && onPress ? <DiffuseArrow color={colors.ink3} size={16} />
+        : showArrow && hasPress ? <DiffuseArrow color={colors.ink3} size={16} />
         : null}
-    </Container>
+    </>
   )
 }
 
@@ -510,6 +545,10 @@ const dp = StyleSheet.create({
     gap: 14,
     paddingVertical: 14,
   },
+  listRowCompact: {
+    gap: 11,
+    paddingVertical: 9,
+  },
   listIcon: {
     width: 40,
     height: 40,
@@ -517,6 +556,11 @@ const dp = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  listIconCompact: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
   },
   listDot: {
     width: 10,
