@@ -28,6 +28,9 @@ interface Props {
   userId: string | undefined
   /** Open the log sheet for a given metric. Maps pill key → InlineLogType. */
   onLogMetric: (type: string) => void
+  /** Render just the inner content (no PaperCard/DiffuseFieldSurface chrome).
+   *  Used when embedded inside another card, e.g. the Week Wallet. */
+  bare?: boolean
 }
 
 const MOOD_LABELS: Record<string, string> = {
@@ -35,7 +38,7 @@ const MOOD_LABELS: Record<string, string> = {
   anxious: 'Anxious', nauseous: 'Nauseous', energetic: 'Energetic', sad: 'Sad',
 }
 
-export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric }: Props) {
+export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, bare = false }: Props) {
   const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -210,8 +213,10 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric }:
   )
 
   return (
-    <View style={styles.wrap}>
-      {diffuse ? (
+    <View style={bare ? undefined : styles.wrap}>
+      {bare ? (
+        inner
+      ) : diffuse ? (
         <DiffuseFieldSurface
           mode="preg"
           isDark={dt.isDark}
