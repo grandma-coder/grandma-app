@@ -14,6 +14,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
+import { DiffuseTimelineRow } from './DiffuseLogTimeline'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
@@ -148,15 +149,31 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
         {t('cycleDayDetail_loggedThisDay')}
       </Text>
       {grouped.length > 0 ? (
+        diffuse ? (
+          // v4 vertical "choice timeline" — same system as the Kids calendar.
+          <View style={styles.timeline}>
+            {grouped.map((g, i) => (
+              <DiffuseTimelineRow
+                key={g.type}
+                type={g.type}
+                title={g.label}
+                accent={g.summary !== '✓' ? g.summary : undefined}
+                logged
+                first={i === 0}
+                last={i === grouped.length - 1}
+              />
+            ))}
+          </View>
+        ) : (
         <View style={styles.logList}>
           {grouped.map((g) => (
-            <View key={g.type} style={[styles.logRow, diffuse ? { borderBottomColor: dt.colors.line, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 8 } : null]}>
-              <View style={[styles.logDot, { backgroundColor: diffuse ? dt.colors.ink3 : g.color }]} />
-              <Text style={[styles.logLabel, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: ink, fontFamily: font.bodySemiBold }]}>
+            <View key={g.type} style={styles.logRow}>
+              <View style={[styles.logDot, { backgroundColor: g.color }]} />
+              <Text style={[styles.logLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
                 {g.label}
               </Text>
               <Text
-                style={[styles.logValue, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 12, textAlign: 'right', textTransform: 'uppercase', letterSpacing: 0.4 } : { color: colors.textSecondary, fontFamily: font.body }]}
+                style={[styles.logValue, { color: colors.textSecondary, fontFamily: font.body }]}
                 numberOfLines={1}
               >
                 {g.summary}
@@ -164,6 +181,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
             </View>
           ))}
         </View>
+        )
       ) : (
         <Text style={[styles.empty, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textFaint, fontFamily: font.body }]}>
           {t('cycleDayDetail_emptyDay')}
@@ -212,6 +230,7 @@ const styles = StyleSheet.create({
   fertPillText: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase' },
   sectionLabel: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2 },
   logList: { gap: 8 },
+  timeline: { marginTop: 2 },
   logRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   logDot: { width: 8, height: 8, borderRadius: 999 },
   logLabel: { fontSize: 13 },
