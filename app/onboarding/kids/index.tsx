@@ -38,6 +38,7 @@ import { AvatarBloomGrid } from '../../../components/ui/diffuse/pickers/AvatarBl
 import { ChoiceTimeline } from '../../../components/ui/diffuse/pickers/ChoiceTimeline'
 import { useTranslation } from '../../../lib/i18n'
 import { AvatarView, AvatarPickerModal, isIconAvatar, buildIconAvatarValue } from '../../../components/ui/AvatarPicker'
+import { PHOTO_BUCKETS } from '../../../lib/photoSigning'
 import {
   useKidsOnboardingStore,
   type CaregiverRole,
@@ -1011,7 +1012,7 @@ function StepChildPhoto({
               size={132}
               accent={diffuseFields.kids.accent}
               initial={childInitial}
-              bucket={'child-photos' as any}
+              bucket={PHOTO_BUCKETS.child}
             />
           </View>
           <AvatarBloomGrid

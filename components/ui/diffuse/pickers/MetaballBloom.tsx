@@ -116,7 +116,7 @@ export function MetaballBloom({ options, value, onChange, fieldColor }: Metaball
             <Text
               style={[
                 styles.labelText,
-                { color: on ? colors.ink : colors.ink3, fontWeight: on ? '600' : '500' },
+                { color: on ? colors.ink : colors.ink3, fontFamily: on ? diffuseFont.monoBold : diffuseFont.mono },
               ]}
             >
               {opt.label}
