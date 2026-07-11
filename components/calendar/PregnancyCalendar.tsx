@@ -67,6 +67,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius, useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
+import { DiffuseTimelineRow } from './DiffuseLogTimeline'
 import { DiffuseListRow, DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
@@ -1503,6 +1504,8 @@ function DayDetailPanel({
   onOpenRoutine: (type: LogFormType) => void
 }) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   const [pendingCollapsed, setPendingCollapsed] = useState(false)
@@ -1558,27 +1561,77 @@ function DayDetailPanel({
   }
 
   return (
-    <View style={[styles.dayPanel, { backgroundColor: colors.surface }]}>
+    <View style={[styles.dayPanel, diffuse ? { backgroundColor: dt.colors.surface, borderWidth: 1, borderColor: dt.colors.line } : { backgroundColor: colors.surface }]}>
       {/* Header — calendar icon + date + activity count */}
       <View style={styles.dayPanelHeader}>
         <View style={styles.dayPanelDateRow}>
-          <Calendar size={15} color={brand.pregnancy} strokeWidth={2} />
-          <Text style={[styles.dayPanelDate, { color: colors.text }]}>
+          <Calendar size={15} color={diffuse ? dt.colors.ink3 : brand.pregnancy} strokeWidth={diffuse ? 1.6 : 2} />
+          <Text style={[styles.dayPanelDate, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>
             {formatDayLabel(dateStr, todayStr)}
           </Text>
         </View>
-        <Text style={[styles.dayPanelCount, { color: colors.textMuted }]}>
+        <Text style={[styles.dayPanelCount, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted }]}>
           {nonEmptyLogs.length} {nonEmptyLogs.length === 1 ? 'activity' : 'activities'}
         </Text>
       </View>
 
       {/* Empty state */}
       {nonEmptyLogs.length === 0 && pendingRoutines.length === 0 && (
-        <Text style={[styles.emptyDay, { color: colors.textMuted }]}>{t('pregCal_no_logs_day')}</Text>
+        <Text style={[styles.emptyDay, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted }]}>{t('pregCal_no_logs_day')}</Text>
       )}
 
+      {/* ── Diffuse: flat vertical "choice timeline" (match Kids/Cycle) ─────
+          Pending routines render as un-logged rows, then logged entries as
+          logged rows — one DiffuseTimelineRow per entry, no collapse groups. */}
+      {diffuse ? (() => {
+        const rows: Array<{ key: string; type: string; time?: string; title: string; sub?: string; logged: boolean; onPress: () => void }> = []
+        for (const r of pendingRoutines) {
+          const meta = LOG_META[r.type] ?? { label: r.type }
+          rows.push({
+            key: `p-${r.id}`,
+            type: r.type,
+            time: r.time ? fmtTime(r.time) : undefined,
+            title: meta.label,
+            sub: t('pregCal_tap_to_log'),
+            logged: false,
+            onPress: () => onOpenRoutine(r.type as LogFormType),
+          })
+        }
+        for (const log of nonEmptyLogs) {
+          const meta = LOG_META[log.log_type] ?? { label: log.log_type }
+          const v = formatLogValue(log)
+          rows.push({
+            key: `l-${log.id}`,
+            type: log.log_type,
+            time: formatTime(log.created_at),
+            title: meta.label,
+            sub: v !== '' ? v : undefined,
+            logged: true,
+            onPress: () => onOpenLog(log),
+          })
+        }
+        if (rows.length === 0) return null
+        return (
+          <View style={{ marginTop: 4 }}>
+            {rows.map((r, i) => (
+              <DiffuseTimelineRow
+                key={r.key}
+                type={r.type}
+                time={r.time}
+                title={r.title}
+                sub={r.sub}
+                logged={r.logged}
+                first={i === 0}
+                last={i === rows.length - 1}
+                onPress={r.onPress}
+              />
+            ))}
+          </View>
+        )
+      })() : null}
+
       {/* ── Pending routines — grouped by type ────────────────────────────── */}
-      {pendingRoutines.length > 0 && (
+      {!diffuse && pendingRoutines.length > 0 && (
         <>
           <Pressable
             onPress={() => {
@@ -1645,12 +1698,12 @@ function DayDetailPanel({
       )}
 
       {/* Divider between pending and logged */}
-      {pendingRoutines.length > 0 && nonEmptyLogs.length > 0 && (
+      {!diffuse && pendingRoutines.length > 0 && nonEmptyLogs.length > 0 && (
         <View style={[styles.listDivider, { backgroundColor: colors.border }]} />
       )}
 
       {/* ── Logged entries — grouped by type ──────────────────────────────── */}
-      {nonEmptyLogs.length > 0 && (
+      {!diffuse && nonEmptyLogs.length > 0 && (
         <>
           <Pressable
             onPress={() => {
