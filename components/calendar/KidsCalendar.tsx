@@ -79,6 +79,7 @@ import {
   DiffuseTimelineRow,
   DiffuseNowMarker,
 } from './DiffuseLogTimeline'
+import { Character, type CharacterName } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
@@ -763,6 +764,12 @@ const diffuseVisitStyles = StyleSheet.create({
 
 const ROUTINE_TYPES = ['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health']
 
+/** Routine category → character-blob concept for the compact type pills. */
+const ROUTINE_TYPE_CHARACTER: Record<string, CharacterName> = {
+  feeding: 'feeding', food: 'nutrition', sleep: 'sleep', diaper: 'diaper',
+  activity: 'activity', mood: 'mood', health: 'checkup',
+}
+
 interface DiffuseRoutineManagerProps {
   visible: boolean
   onClose: () => void
@@ -828,6 +835,7 @@ function DiffuseRoutineManager({
         {ROUTINE_TYPES.map((rtype) => {
           const active = routineForm.type === rtype
           const meta = LOG_META[rtype]
+          const char = ROUTINE_TYPE_CHARACTER[rtype]
           return (
             <Pressable
               key={rtype}
@@ -837,7 +845,8 @@ function DiffuseRoutineManager({
                 { borderColor: active ? colors.hairline : colors.line, backgroundColor: active ? colors.surface : 'transparent', opacity: pressed ? 0.7 : 1 },
               ]}
             >
-              <Text style={{ fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: active ? colors.ink : colors.ink3 }}>
+              {char ? <Character name={char} size={18} color={active ? colors.ink : colors.ink3} /> : null}
+              <Text style={{ fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase', color: active ? colors.ink : colors.ink3 }}>
                 {t(meta.labelKey)}
               </Text>
             </Pressable>
@@ -1012,7 +1021,7 @@ function DiffuseRoutineManager({
 
 const dm = StyleSheet.create({
   inputWrap: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, height: 52, justifyContent: 'center' },
-  typeChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1 },
+  typeChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 8, paddingRight: 11, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
   dayChip: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   actionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderTopWidth: 1, paddingTop: 16 },
 })
