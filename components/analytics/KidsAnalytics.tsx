@@ -678,7 +678,7 @@ export function KidsAnalytics() {
       >
         {/* ── HEADER (2026 redesign) ── */}
         {diffuse ? (
-          <View style={{ marginBottom: 4 }}>
+          <View style={{ marginTop: 8, marginBottom: 4 }}>
             <DiffuseSectionHeader
               eyebrow={getAgeLabel(ageMonths)}
               title={`${childName}'s patterns`}
@@ -730,13 +730,40 @@ export function KidsAnalytics() {
         )}
 
         {diffuse ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
-            <DiffuseSegmentPill
-              options={diffusePeriodOptions}
-              value={period}
-              onChange={handlePeriodChange}
-            />
-          </ScrollView>
+          // Compact one-line segmented row — pills flex to share the width so all
+          // five periods fit without horizontal scrolling.
+          <View style={styles.periodRowD}>
+            {diffusePeriodOptions.map((o) => {
+              const on = o.key === period
+              return (
+                <Pressable
+                  key={o.key}
+                  onPress={() => handlePeriodChange(o.key)}
+                  style={({ pressed }) => [
+                    styles.periodPillD,
+                    {
+                      borderColor: on ? dt.colors.hairline : dt.colors.line,
+                      backgroundColor: on ? dt.colors.surface : 'transparent',
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontFamily: on ? diffuseFont.monoBold : diffuseFont.mono,
+                      fontSize: 10.5,
+                      letterSpacing: 0.3,
+                      textTransform: 'uppercase',
+                      color: on ? dt.colors.ink : dt.colors.ink3,
+                    }}
+                  >
+                    {o.label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
         ) : (
           <PeriodSelector
             value={period}
@@ -4794,6 +4821,20 @@ const styles = StyleSheet.create({
   infoBtnNew: {
     width: 38,
     height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Compact one-line period segmented row (Diffuse) — pills share the width.
+  periodRowD: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  periodPillD: {
+    flex: 1,
+    paddingVertical: 9,
+    paddingHorizontal: 4,
     borderRadius: 999,
     borderWidth: 1,
     alignItems: 'center',

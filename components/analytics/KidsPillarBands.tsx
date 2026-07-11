@@ -40,12 +40,20 @@ function sortLowestFirst(items: PillarBandItem[]): PillarBandItem[] {
   })
 }
 
+// Diffuse wants a whisper of the pillar hue, not a saturated block. Render the
+// soft tint at low alpha over the paper canvas so bands read muted + editorial.
+// The *Soft tokens are 6-digit hex → append an alpha byte.
+const BAND_ALPHA = '3A' // ~23%
+function mute(hex: string): string {
+  return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex + BAND_ALPHA : hex
+}
+
 export function KidsPillarBands({ items, onPillarPress }: Props) {
   const { colors } = useDiffuseTheme()
   const sorted = sortLowestFirst(items)
 
   return (
-    <View style={[styles.wrap, { borderColor: colors.line }]}>
+    <View style={[styles.wrap, { borderColor: colors.line, backgroundColor: colors.surface }]}>
       {sorted.map((item, i) => {
         const has = !!item.score?.hasData
         const focus = i === 0 // top row = needs-attention focus
@@ -57,7 +65,7 @@ export function KidsPillarBands({ items, onPillarPress }: Props) {
             style={({ pressed }) => [
               styles.band,
               focus && styles.bandFocus,
-              { backgroundColor: item.softColor, opacity: pressed ? 0.85 : 1 },
+              { backgroundColor: mute(item.softColor), opacity: pressed ? 0.85 : 1 },
               i > 0 && { borderTopWidth: 1, borderTopColor: colors.line },
             ]}
             accessibilityRole="button"
