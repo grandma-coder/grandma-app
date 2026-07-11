@@ -11,7 +11,7 @@
  *     "Logged this day" list from cycle_logs.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, PanResponder, StyleSheet } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import Animated, {
@@ -180,6 +180,9 @@ const LEGEND: { phase: CyclePhase; label: string; meaning: string }[] = [
 // ─── Props ──────────────────────────────────────────────────────────────────
 interface Props {
   cycleConfig: CycleConfig
+  /** Fired (YYYY-MM-DD) whenever the scrubbed/selected ring day changes, so the
+   *  host can keep sibling surfaces (e.g. the daily nudge) in sync. */
+  onSelectedDateChange?: (date: string) => void
 }
 
 // ─── Week-strip cell ──────────────────────────────────────────────────────
@@ -275,7 +278,7 @@ function StripCell({
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
-export function CycleJourneyRingFull({ cycleConfig }: Props) {
+export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Props) {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -326,6 +329,11 @@ export function CycleJourneyRingFull({ cycleConfig }: Props) {
   const selectedDate = useMemo(() => {
     return addDays(todayStr, selectedDay - cycleDayToday)
   }, [todayStr, selectedDay, cycleDayToday])
+
+  // Lift the selected date up so sibling surfaces (daily nudge) can follow it.
+  useEffect(() => {
+    onSelectedDateChange?.(selectedDate)
+  }, [selectedDate, onSelectedDateChange])
 
   // ── Gesture ───────────────────────────────────────────────────────────────
   // Rotate by the finger's angle around the ring center. The angle is computed

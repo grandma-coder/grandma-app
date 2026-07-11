@@ -8,7 +8,7 @@
  *   5. CyclePillarsGrid            (2×2 + See all → /cycle-pillars)
  */
 
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme } from '../../constants/theme'
@@ -58,6 +58,11 @@ export function CycleHome() {
 
   const info = getCycleInfo(cycleConfig, toDateStr(new Date()))
 
+  // The day the ring is scrubbed to — drives the daily nudge below. Starts on
+  // today; the ring lifts changes up via onSelectedDateChange.
+  const [selectedDate, setSelectedDate] = useState(() => toDateStr(new Date()))
+  const handleSelectedDateChange = useCallback((d: string) => setSelectedDate(d), [])
+
   if (historyPending) {
     return <View style={[styles.root, { backgroundColor: bg }]} />
   }
@@ -75,10 +80,10 @@ export function CycleHome() {
           <HomeGreeting name={displayName} microLabel={microLabel} />
         </View>
 
-        <CycleJourneyRingFull cycleConfig={cycleConfig} />
+        <CycleJourneyRingFull cycleConfig={cycleConfig} onSelectedDateChange={handleSelectedDateChange} />
 
         <View style={styles.cardWrap}>
-          <DailyNudgeCard cycleConfig={cycleConfig} />
+          <DailyNudgeCard cycleConfig={cycleConfig} selectedDate={selectedDate} />
         </View>
         <MoodSymptomStrip phase={info.phase as CyclePhase} />
 

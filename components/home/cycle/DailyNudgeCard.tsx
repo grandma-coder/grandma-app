@@ -22,6 +22,10 @@ import { detectBBTShift } from '../../../lib/cycleConfidence'
 
 interface Props {
   cycleConfig: CycleConfig
+  /** Day the ring is scrubbed to (YYYY-MM-DD). The nudge's phase follows this;
+   *  the log-context signals (BBT/LH/mood) stay today-only since those logs
+   *  only exist for today. Defaults to today when omitted. */
+  selectedDate?: string
 }
 
 const PILLAR_LABEL_KEY: Record<string, string> = {
@@ -49,7 +53,7 @@ function renderHeadline(s: string, baseColor: string, accentColor: string, displ
 }
 
 
-export function DailyNudgeCard({ cycleConfig }: Props) {
+export function DailyNudgeCard({ cycleConfig, selectedDate }: Props) {
   const { colors, stickers, brand, font, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -63,8 +67,9 @@ export function DailyNudgeCard({ cycleConfig }: Props) {
     void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id))
   }, [])
 
-  const info = getCycleInfo(cycleConfig)
   const today = toDateStr(new Date())
+  // Phase follows the scrubbed ring day; falls back to today.
+  const info = getCycleInfo(cycleConfig, selectedDate ?? today)
 
   const { data: todayRows = [] } = useQuery({
     queryKey: ['cycleLogs', 'nudge', userId, today],
