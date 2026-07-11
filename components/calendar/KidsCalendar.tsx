@@ -934,15 +934,15 @@ function DiffuseRoutineManager({
                 icon={<DiffuseLogIcon type={r.type} size={34} inkColor={colors.ink3} />}
                 last={idx === listed.length - 1}
                 trailing={
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
                     <Pressable
                       onPress={() => { setRoutineEditing(r); setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week }) }}
-                      hitSlop={8}
+                      hitSlop={10}
                     >
-                      <Pencil size={15} color={colors.ink3} strokeWidth={1.6} />
+                      <Pencil size={16} color={colors.ink3} strokeWidth={1.6} />
                     </Pressable>
-                    <Pressable onPress={() => onDelete(r.id)} hitSlop={8}>
-                      <Trash2 size={15} color={colors.error} strokeWidth={1.6} />
+                    <Pressable onPress={() => onDelete(r.id)} hitSlop={10}>
+                      <Trash2 size={16} color={colors.ink3} strokeWidth={1.6} />
                     </Pressable>
                   </View>
                 }
@@ -1816,12 +1816,21 @@ export function KidsCalendar() {
     }
   }
 
+  // Native confirm — a second Modal (DiffuseSheet) stacked on the already-open
+  // routine-manager Modal doesn't reliably present on iOS, so the old in-app
+  // confirm sheet silently did nothing. Alert.alert always sits above any modal.
   function deleteRoutine(id: string) {
-    setConfirmDeleteRoutineId(id)
+    Alert.alert(
+      t('kids_calendar_deleteRoutineConfirm'),
+      t('kids_calendar_deleteRoutineConfirmMsg'),
+      [
+        { text: t('common_cancel'), style: 'cancel' },
+        { text: t('common_delete'), style: 'destructive', onPress: () => performRoutineDelete(id) },
+      ],
+    )
   }
 
-  async function performRoutineDelete() {
-    const id = confirmDeleteRoutineId
+  async function performRoutineDelete(id: string) {
     if (!id) return
     setRoutineDeleting(true)
     try {
@@ -3652,7 +3661,7 @@ export function KidsCalendar() {
               <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('common_cancel')}</Text>
             </Pressable>
             <Pressable
-              onPress={performRoutineDelete}
+              onPress={() => confirmDeleteRoutineId && performRoutineDelete(confirmDeleteRoutineId)}
               disabled={routineDeleting}
               style={({ pressed }) => [dm.actionRow, { borderTopColor: dt.colors.error, opacity: routineDeleting ? 0.6 : (pressed ? 0.6 : 1), flex: 1 }]}
             >
@@ -3745,7 +3754,7 @@ export function KidsCalendar() {
                       </Text>
                     </Pressable>
                     <Pressable
-                      onPress={performRoutineDelete}
+                      onPress={() => confirmDeleteRoutineId && performRoutineDelete(confirmDeleteRoutineId)}
                       disabled={routineDeleting}
                       style={({ pressed }) => ({
                         flex: 1, height: 52,
