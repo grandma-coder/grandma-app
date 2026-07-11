@@ -41,6 +41,11 @@ const STICKER_INK = '#141313'
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
 
+// Swiss-grotesque prototype font (Helvetica-like) — Hanken Grotesk is already
+// loaded in _layout's useFonts, so no install/rebuild needed.
+const SWISS = 'HankenGrotesk_700Bold'
+const SWISS_MED = 'HankenGrotesk_500Medium'
+
 // ─── Grandma Central Menu — fan-open sticker overlay ───────────────────────
 // Each action gets a distinct sticker shape from the brand vocabulary.
 // On open: items stack at the + pivot, then fan out in a leque with
@@ -246,21 +251,23 @@ function CenterTabButton() {
             subtitle; tap a word to focus, tap the focused word (or GO) to go. */}
         {diffuse ? (
           <>
-            {/* Large calm breathing bloom, centered on the screen. */}
+            {/* Centered word-stack menu with a big calm breathing bloom, now
+                rendered in a Swiss-grotesque font (Hanken Bold) instead of the
+                Cormorant serif — evaluating a bolder sans header direction. */}
             <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: overlayAnim }]}>
               <SoftBloom color={accentColor} cx="50%" cy="46%" opacity={dt.isDark ? 0.42 : 0.5} spread={0.4} radius="58%" />
             </Animated.View>
 
-            {/* Prompt */}
+            {/* Prompt — lowercase Swiss, accent name. */}
             <Animated.View pointerEvents="none" style={[styles.prompt, { top: insets.top + 72, opacity: overlayAnim }]}>
-              <Text style={[styles.promptKicker, { color: ink3Color, fontFamily: diffuseFont.mono }]}>{t('tabFan_kicker')}</Text>
-              <Text style={[styles.promptLine, { color: inkColor, fontFamily: diffuseFont.display }]}>
+              <Text style={[styles.promptKicker, { color: ink3Color, fontFamily: SWISS_MED, letterSpacing: 1.6 }]}>menu</Text>
+              <Text style={[styles.promptLine, { color: inkColor, fontFamily: SWISS, letterSpacing: -1, textTransform: 'lowercase' }]}>
                 {t('tabFan_whereTo')}
-                <Text style={[styles.promptItalic, { color: accentColor, fontFamily: diffuseFont.italic }]}>{`${userName}?`}</Text>
+                <Text style={{ color: accentColor }}>{`${userName}?`}</Text>
               </Text>
             </Animated.View>
 
-            {/* Vertical word-stack */}
+            {/* Centered vertical word-stack. */}
             <View style={styles.wordStack} pointerEvents="box-none">
               {WHEEL_ITEMS.map((item, i) => {
                 const focused = i === focusedIdx
@@ -269,7 +276,7 @@ function CenterTabButton() {
                   <Animated.View
                     key={item.id}
                     style={{
-                      opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0, focused ? 1 : 0.32] }),
+                      opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0, focused ? 1 : 0.3] }),
                       transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
                     }}
                   >
@@ -277,11 +284,11 @@ function CenterTabButton() {
                       onPress={() => (focused ? handleItem(item.route) : setFocusedIdx(i))}
                       style={({ pressed }) => [styles.wordRow, { opacity: pressed ? 0.6 : 1 }]}
                     >
-                      <Text style={[styles.word, { color: focused ? inkColor : ink3Color, fontFamily: diffuseFont.display }]}>
-                        {t(item.labelKey)}
+                      <Text style={[styles.word, { color: focused ? inkColor : ink3Color, fontFamily: SWISS, letterSpacing: -0.8 }]}>
+                        {t(item.labelKey).toLowerCase()}
                       </Text>
                       {focused ? (
-                        <Text style={[styles.wordSub, { color: ink3Color, fontFamily: diffuseFont.mono }]} numberOfLines={1}>
+                        <Text style={[styles.wordSub, { color: ink3Color, fontFamily: SWISS_MED, letterSpacing: 1.4 }]} numberOfLines={1}>
                           {t(item.subtitleKey)}
                         </Text>
                       ) : null}
@@ -291,13 +298,13 @@ function CenterTabButton() {
               })}
             </View>
 
-            {/* GO CTA — navigates the focused destination. */}
+            {/* GO CTA. */}
             <Animated.View style={[styles.goWrap, { bottom: insets.bottom + 40, opacity: overlayAnim }]}>
               <Pressable
                 onPress={() => handleItem(WHEEL_ITEMS[focusedIdx].route)}
                 style={({ pressed }) => [styles.goPill, { borderColor: dt.colors.line2, backgroundColor: dt.colors.surface, opacity: pressed ? 0.7 : 1 }]}
               >
-                <Text style={[styles.goText, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>GO</Text>
+                <Text style={[styles.goText, { color: dt.colors.ink, fontFamily: SWISS }]}>go</Text>
                 <DiffuseArrow color={accentColor} size={18} />
               </Pressable>
             </Animated.View>
@@ -995,6 +1002,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 110,
     opacity: 0.72,
+  },
+})
+
+// Swiss-grotesque menu prototype styles — Braun/Vignelli-flavored: corner
+// index + asterisk, low left-aligned lowercase bold word list.
+const swiss = StyleSheet.create({
+  corner: {
+    position: 'absolute',
+  },
+  cornerNum: {
+    fontSize: 34,
+    letterSpacing: -1,
+  },
+  cornerStar: {
+    fontSize: 30,
+    lineHeight: 30,
+  },
+  stack: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+  },
+  row: {
+    paddingVertical: 1,
+  },
+  backRow: {
+    paddingVertical: 1,
+    marginTop: 28,
+  },
+  word: {
+    fontSize: 34,
+    letterSpacing: -0.8,
+    lineHeight: 40,
   },
 })
 
