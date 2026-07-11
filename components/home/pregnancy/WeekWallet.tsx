@@ -21,7 +21,7 @@ import { getUpcomingAppointment } from '../../../lib/pregnancyAppointments'
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 import { getWeekData } from '../../../lib/pregnancyData'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
-import { WalletCard } from './WalletCard'
+import { WalletCard } from '../WalletCard'
 import { TodaySummaryCard } from './TodaySummaryCard'
 import { PregnancyUserReminders } from './PregnancyUserReminders'
 import {

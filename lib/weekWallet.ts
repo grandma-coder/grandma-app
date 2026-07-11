@@ -8,13 +8,13 @@
 
 import type { TodayLogEntry } from './analyticsData'
 import type { StandardAppointment } from './pregnancyAppointments'
+import type { WalletTone } from './wallet'
+
+export type { WalletTone }
 
 export type WalletCardId =
   | 'today' | 'appointment' | 'week_tip' | 'kicks'
   | 'reminders' | 'birth_guide' | 'ask_grandma'
-
-/** Sticker palette tone for the card cover. 'surface' = paper white. */
-export type WalletTone = 'surface' | 'yellow' | 'lilac' | 'green' | 'peach' | 'lavender' | 'blue'
 
 export interface WalletCardDescriptor {
   id: WalletCardId
