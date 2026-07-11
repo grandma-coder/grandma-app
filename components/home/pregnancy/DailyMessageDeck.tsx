@@ -18,9 +18,17 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
   const [index, setIndex] = useState(0)
   const pan = useRef(new Animated.ValueXY()).current
 
+  // PanResponder is created once (below) and its handlers must never close
+  // over `index`/`cards` from that first render — always dereference these
+  // refs, which are kept fresh on every render, instead.
+  const indexRef = useRef(index)
+  const cardsRef = useRef(cards)
+  indexRef.current = index
+  cardsRef.current = cards
+
   const advance = (card: DailyCard) => {
     onTopSwiped?.(card)
-    setIndex((i) => Math.min(i + 1, cards.length - 1))
+    setIndex((i) => Math.min(i + 1, cardsRef.current.length - 1))
     pan.setValue({ x: 0, y: 0 })
   }
 
@@ -29,13 +37,15 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8,
       onPanResponderMove: Animated.event([null, { dx: pan.x }], { useNativeDriver: false }),
       onPanResponderRelease: (_, g) => {
-        const hasNext = index < cards.length - 1
+        const i = indexRef.current
+        const deck = cardsRef.current
+        const hasNext = i < deck.length - 1
         if (Math.abs(g.dx) > width * 0.3 && hasNext) {
           Animated.timing(pan, {
             toValue: { x: Math.sign(g.dx) * width, y: 0 },
             duration: 200,
             useNativeDriver: false,
-          }).start(() => advance(cards[index]))
+          }).start(() => advance(deck[i]))
         } else {
           Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start()
         }
