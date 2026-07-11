@@ -392,6 +392,10 @@ export interface TranslationKeys {
   cycle_nudge_luteal_pms_headline: string
   cycle_nudge_luteal_pms_body: string
   cycle_nudge_label: string
+  cycle_wallet_nudge: string
+  cycle_wallet_mood: string
+  cycle_wallet_today: string
+  cycle_wallet_pillars: string
   cycle_nudge_from: string
   cycle_nudge_read_more: string
   cycle_nudge_reflect_from?: string

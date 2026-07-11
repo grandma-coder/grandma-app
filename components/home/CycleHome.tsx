@@ -19,10 +19,7 @@ import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { CycleJourneyRingFull } from './cycle/CycleJourneyRingFull'
-import { DailyNudgeCard } from './cycle/DailyNudgeCard'
-import { MoodSymptomStrip } from './cycle/MoodSymptomStrip'
-import { CyclePillarsGrid } from './cycle/CyclePillarsGrid'
-import { CycleTodaySummaryCard } from './cycle/CycleTodaySummaryCard'
+import { CycleWallet } from './cycle/CycleWallet'
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -83,13 +80,12 @@ export function CycleHome() {
         <CycleJourneyRingFull cycleConfig={cycleConfig} onSelectedDateChange={handleSelectedDateChange} />
 
         <View style={styles.cardWrap}>
-          <DailyNudgeCard cycleConfig={cycleConfig} selectedDate={selectedDate} />
+          <CycleWallet
+            cycleConfig={cycleConfig}
+            selectedDate={selectedDate}
+            phase={info.phase as CyclePhase}
+          />
         </View>
-        <MoodSymptomStrip phase={info.phase as CyclePhase} />
-
-        <CycleTodaySummaryCard phase={info.phase as CyclePhase} />
-
-        <CyclePillarsGrid />
       </ScrollView>
     </View>
   )
