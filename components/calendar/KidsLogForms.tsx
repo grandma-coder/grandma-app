@@ -210,27 +210,12 @@ const df = StyleSheet.create({
   dividerText: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' },
 })
 
-/** Diffuse header — sticker over a hairline circle + serif title. */
-function DiffuseFormHeader({ kind }: { kind: FormKind }) {
-  const { t } = useTranslation()
-  const { colors, stickers: dStickers } = useDiffuseTheme()
-  const map: Record<FormKind, { node: ReactElement; label: string }> = {
-    feeding: { node: <Drop size={22} fill={dStickers.peach} />, label: t('kids_logForm_labelFeeding') },
-    sleep:   { node: <MoonSticker size={22} fill={dStickers.lilac} />, label: t('kids_logForm_labelSleep') },
-    health:  { node: <HeartSticker size={22} fill={dStickers.pink} />, label: t('kids_logForm_labelHealth') },
-    mood:    { node: <Flower size={22} petal={dStickers.lilac} center={dStickers.yellow} />, label: t('kids_logForm_labelMood') },
-    memory:  { node: <HeartSticker size={22} fill={dStickers.coral} />, label: t('kids_logForm_labelMemory') },
-    activity:{ node: <Star size={22} fill={dStickers.yellow} />, label: t('kids_logForm_labelActivity') },
-    diaper:  { node: <Drop size={22} fill={dStickers.blue} />, label: t('kids_logForm_labelDiaper') },
-    wakeup:  { node: <Star size={22} fill={dStickers.yellow} />, label: t('kids_logForm_labelWakeUp') },
-  }
-  const m = map[kind]
-  return (
-    <View style={df.headerRow}>
-      <View style={[df.headerIcon, { borderColor: colors.line2 }]}>{m.node}</View>
-      <Text style={[df.headerTitle, { color: colors.ink }]}>{m.label}</Text>
-    </View>
-  )
+/** Diffuse header — intentionally renders nothing.
+ *  The enclosing LogSheet already shows the "Log <Kind>" title, so a second
+ *  big title + sticker here was a pure duplication. Kept as a no-op so the
+ *  call sites don't need to change. */
+function DiffuseFormHeader(_props: { kind: FormKind }) {
+  return null
 }
 
 /** Diffuse hairline mono chip (single/multi-select). Active = hairline border

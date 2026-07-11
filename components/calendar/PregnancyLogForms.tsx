@@ -106,18 +106,11 @@ async function savePregnancyLog(
 // accent-tinted "on" state. Used only inside the Diffuse render branches; the
 // current-system paths (LogFormSticker / colored chips) stay untouched.
 
-function DiffuseFormHeader({ type, title }: { type: string; title: string }) {
-  const dt = useDiffuseTheme()
-  return (
-    <View style={dstyles.header}>
-      <View style={[dstyles.headerChip, { borderColor: dt.colors.line }]}>
-        {logSticker(type, 26, dt.isDark)}
-      </View>
-      <Text style={[dstyles.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]} numberOfLines={2}>
-        {title}
-      </Text>
-    </View>
-  )
+// Intentionally renders nothing. The enclosing LogSheet already shows the
+// "Log <Type>" title, so a second big title + sticker here was a pure
+// duplication. Kept as a no-op so the call sites don't need to change.
+function DiffuseFormHeader(_props: { type: string; title: string }) {
+  return null
 }
 
 /** Hairline mono chip — accent-tinted surface + accent hairline when selected. */
