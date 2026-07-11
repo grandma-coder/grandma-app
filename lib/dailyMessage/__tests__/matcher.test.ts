@@ -1,5 +1,6 @@
 import { matchCard } from '../matcher'
 import type { DailyCard } from '../types'
+import { PREGNANCY_CARDS } from '../cards.pregnancy'
 
 // Deterministic rng: always pick index 0 of the top tier.
 const first = () => 0
@@ -21,5 +22,17 @@ describe('matchCard', () => {
   })
   it('never returns null', () => {
     expect(matchCard(['wonder'], 'pregnancy', { rng: first })).toBeTruthy()
+  })
+  it('still returns a valid card when every pregnancy card id is excluded', () => {
+    const allIds = PREGNANCY_CARDS.map((c) => c.id)
+    let c: DailyCard | undefined
+    expect(() => {
+      c = matchCard(['reassurance'], 'pregnancy', { exclude: allIds, rng: first })
+    }).not.toThrow()
+    expect(c).toBeTruthy()
+    expect(c?.mode).toBe('pregnancy')
+  })
+  it('throws a descriptive error for a mode with an empty card bank', () => {
+    expect(() => matchCard(['joy'], 'kids')).toThrow('matchCard: no cards for mode "kids"')
   })
 })
