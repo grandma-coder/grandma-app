@@ -14,4 +14,9 @@ describe('pickDailyQuestion', () => {
   it('always returns a pregnancy question', () => {
     expect(pickDailyQuestion('2026-07-11', 'user-1', 'pregnancy').mode).toBe('pregnancy')
   })
+  it('throws a descriptive error for modes with an empty question bank', () => {
+    expect(() => pickDailyQuestion('2026-07-11', 'user-1', 'kids')).toThrow(
+      'pickDailyQuestion: no questions for mode "kids"'
+    )
+  })
 })
