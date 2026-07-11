@@ -405,7 +405,7 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
         }
         case 'diaper': {
           const parts: string[] = []
-          const typeLabels: Record<string, string> = { pee: 'Pee 💧', poop: 'Poop 💩', mixed: 'Both 🔄' }
+          const typeLabels: Record<string, string> = { pee: 'Pee', poop: 'Poop', mixed: 'Both' }
           if (parsed.diaperType) parts.push(typeLabels[parsed.diaperType] ?? parsed.diaperType)
           if (parsed.color) parts.push(parsed.color.charAt(0).toUpperCase() + parsed.color.slice(1))
           if (parsed.consistency) parts.push(parsed.consistency.charAt(0).toUpperCase() + parsed.consistency.slice(1))
