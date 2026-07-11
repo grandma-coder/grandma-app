@@ -195,25 +195,23 @@ function CenterTabButton() {
           {diffuse ? (
             <Animated.View
               style={[
-                diffuseFab.stage,
-                { transform: [{ rotate: rotation }, { scale: pulse }] },
+                diffuseFab.node,
+                {
+                  backgroundColor: dt.colors.surface,
+                  borderColor: dt.colors.line2,
+                  transform: [{ rotate: rotation }, { scale: pulse }],
+                },
               ]}
             >
-              {/* Soft accent bloom — a SIBLING behind the node, NOT a child of
-                  it. A child would be clipped by the node's borderRadius into a
-                  hard disc; here the feathered SVG falloff bleeds into the page.
-                  Large box + gentle spread so the edge is invisible. */}
+              {/* Soft accent glow CONTAINED inside the button: the bloom is a
+                  child of the rounded node, so its radial gradient is clipped to
+                  the circle and fades from a tinted center to the surface at the
+                  rim — a soft-filled node, not an outward halo. overflow:hidden
+                  guarantees the clip on Android too. */}
               <View pointerEvents="none" style={diffuseFab.bloom}>
-                <SoftBloom color={accentColor} opacity={dt.isDark ? 0.42 : 0.5} spread={0.35} radius="50%" />
+                <SoftBloom color={accentColor} opacity={dt.isDark ? 0.5 : 0.6} spread={0.55} radius="70%" />
               </View>
-              <View
-                style={[
-                  diffuseFab.node,
-                  { backgroundColor: dt.colors.surface, borderColor: dt.colors.line2 },
-                ]}
-              >
-                <Plus size={26} color={dt.colors.ink} strokeWidth={2} />
-              </View>
+              <Plus size={26} color={dt.colors.ink} strokeWidth={2} />
             </Animated.View>
           ) : (
           <Animated.View
@@ -738,26 +736,20 @@ export default function TabLayout() {
 
 // Diffuse center FAB — calm circular node (paper + hairline) with a soft
 // mode-accent bloom behind it, replacing the collage Burst sticker.
-const FAB_BLOOM = 128 // bloom canvas — well larger than the 60px node so the
-                      // radial falloff reaches full transparency before any edge
 const diffuseFab = StyleSheet.create({
-  // Unclipped stage sized to the bloom; the node + bloom are siblings inside it.
-  // NO borderRadius / overflow here, so the feathered bloom is never clipped.
-  stage: {
-    width: FAB_BLOOM,
-    height: FAB_BLOOM,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // The glow lives INSIDE the button: overflow:hidden + borderRadius clip the
+  // child bloom to the circle so it reads as a soft-filled node, not a halo.
   node: {
     width: 60,
     height: 60,
     borderRadius: 30,
     borderWidth: 1,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Full-stage bloom centered behind the node.
+  // Bloom fills the node; its radial falloff fades from a tinted center to the
+  // paper surface at the rim (clipped by the node's rounded overflow).
   bloom: {
     ...StyleSheet.absoluteFillObject,
   },
