@@ -593,7 +593,9 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
     <View
       style={[
         diffuseNav.wrap,
-        { paddingBottom: insets.bottom + 8 },
+        // Solid page-bg band so content scrolling behind the floating pill is
+        // hidden (no card edge showing through) — the pill floats on cream.
+        { paddingBottom: insets.bottom + 8, backgroundColor: colors.bg },
       ]}
     >
       {/* Floating capsule bar — inset from the edges, hairline paper pill. The
@@ -654,24 +656,24 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
 }
 
 const diffuseNav = StyleSheet.create({
-  // Transparent outer container — the bar floats; no full-width strip, no
-  // top hairline. Horizontal inset makes the pill sit away from the edges.
+  // Solid page-bg band behind the floating pill (bg set inline). Extra top
+  // padding makes the cream band reach up so no content card peeks behind it.
   wrap: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   // Floating capsule: paper surface, fully rounded, hairline border, soft lift.
   pill: {
     flexDirection: 'row',
     height: 66,
+    marginHorizontal: 16,
     alignItems: 'center',
     paddingHorizontal: 6,
     borderRadius: 33,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: '#141313',
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 8,
   },
   row: {
