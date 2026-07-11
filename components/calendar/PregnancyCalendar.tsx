@@ -67,7 +67,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius, useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
-import { DiffuseTimelineRow } from './DiffuseLogTimeline'
+import { DiffuseTimelineRow, DiffuseLogIcon } from './DiffuseLogTimeline'
 import { DiffuseListRow, DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
@@ -1371,9 +1371,7 @@ function LogDetailPopup({
       {/* Sticker header — matches add-log forms */}
       {diffuse ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-          <DiffuseBloomIcon color={dAccent} size={44} intensity={0.5}>
-            {logSticker(log.log_type, 30, dt.isDark)}
-          </DiffuseBloomIcon>
+          <DiffuseLogIcon type={log.log_type} size={44} inkColor={dt.colors.ink3} />
           <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: dt.colors.ink, flex: 1 }} numberOfLines={2}>
             {stickerCfg.label}
           </Text>
