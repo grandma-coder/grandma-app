@@ -4642,7 +4642,7 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
       >
         {entries.length === 0 ? (
           <DiffuseEmptyState
-            icon={<DiffuseBloomIcon color={acc}><Activity size={20} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<Character name="activity" size={21} color={acc} />}
             title={t('kids_home_activity_empty')}
           />
         ) : (
@@ -4733,9 +4733,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
         chip={doseLabel || undefined}
       >
         <View style={{ alignItems: 'flex-start', marginBottom: 18 }}>
-          <DiffuseBloomIcon color={acc} size={44} intensity={0.5}>
-            <Syringe size={24} color={dCol.ink2} strokeWidth={1.5} />
-          </DiffuseBloomIcon>
+          <Character name="vaccine" size={28} color={acc} />
         </View>
         {info ? (
           <View style={{ gap: 18 }}>
@@ -5461,9 +5459,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
                 {q.tag.toUpperCase()}{'  ·  '}{t('kids_home_sleep_modal_pct_target', { pct, target: sleepTarget.toFixed(0) })}
               </Text>
             </View>
-            <DiffuseBloomIcon color={acc} size={44} intensity={0.5}>
-              <Moon size={24} color={dCol.ink2} strokeWidth={1.5} />
-            </DiffuseBloomIcon>
+            <Character name="sleep" size={28} color={acc} />
           </View>
         </View>
 
@@ -5513,7 +5509,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
           </View>
           <View style={[s.modalHeader, { gap: 10, alignItems: 'flex-start' }]}>
             <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: ST_BLUE, borderWidth: 2, borderColor: ST_INK, alignItems: 'center', justifyContent: 'center', shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}>
-              <Moon size={28} color={ST_INK} strokeWidth={2} />
+              <Character name="sleep" size={28} color={ST_INK} />
             </View>
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={{ color: ink, fontSize: 22, fontFamily: font.display, letterSpacing: -0.4 }}>{t('kids_home_sleep_modal_title')}</Text>
@@ -5637,9 +5633,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
           {/* Sleep summary — hairline row */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 22, padding: 16, overflow: 'hidden' }}>
             <SoftBloom color={acc} cx="88%" cy="30%" opacity={dt.isDark ? 0.28 : 0.4} spread={0.5} />
-            <DiffuseBloomIcon color={acc} size={40} intensity={0.5}>
-              <Moon size={22} color={dCol.ink2} strokeWidth={1.5} />
-            </DiffuseBloomIcon>
+            <Character name="sleep" size={26} color={acc} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_health_sleep_quality_label')}</Text>
               <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, color: dCol.ink, letterSpacing: -0.3, marginTop: 2 }}>{sleepQuality}</Text>
@@ -5691,7 +5685,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             <View style={{ marginTop: 24 }}>
               <DiffuseSectionHeader
                 title={t('kids_home_health_latest_growth')}
-                icon={<DiffuseBloomIcon color={acc}><TrendingUp size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                icon={<Character name="growth" size={21} color={acc} />}
                 right={<Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.5, color: dCol.ink3 }}>{healthHistory.growth[0]?.date ? formatHealthDate(healthHistory.growth[0].date) : ''}</Text>}
               />
               <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -5705,7 +5699,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
           <View style={{ marginTop: 24 }}>
             <DiffuseSectionHeader
               title={t('kids_home_health_activity_overview')}
-              icon={<DiffuseBloomIcon color={acc}><Zap size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+              icon={<Character name="activity" size={21} color={acc} />}
             />
             <DiffuseListRow
               title={t('kids_home_health_activities_label')}
@@ -5736,7 +5730,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
           <View style={{ marginTop: 24 }}>
             <DiffuseSectionHeader
               title={t('kids_home_health_allergies')}
-              icon={<DiffuseBloomIcon color={acc}><Heart size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+              icon={<Character name="heart" size={21} color={acc} />}
             />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {child.allergies.map((a, i) => (
@@ -5761,7 +5755,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             <View style={{ marginTop: 24 }}>
               <DiffuseSectionHeader
                 title={t('kids_home_health_medications')}
-                icon={<DiffuseBloomIcon color={acc}><Pill size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                icon={<Character name="medicine" size={21} color={acc} />}
               />
               {child.medications.map((m, i) => (
                 <DiffuseListRow
@@ -5779,7 +5773,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
           <View style={{ marginTop: 24 }}>
             <DiffuseSectionHeader
               title={t('kids_home_health_vaccine_schedule')}
-              icon={<DiffuseBloomIcon color={acc}><Syringe size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+              icon={<Character name="vaccine" size={21} color={acc} />}
             />
             <VaccineScheduleTree
               child={child}
@@ -6806,9 +6800,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                   </Text>
                 )}
               </View>
-              <DiffuseBloomIcon color={acc} size={44} intensity={0.5}>
-                <Droplets size={24} color={dCol.ink2} strokeWidth={1.5} />
-              </DiffuseBloomIcon>
+              <Character name="water" size={28} color={acc} />
             </View>
 
             {/* 3-tile breakdown */}
@@ -6817,24 +6809,22 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                 <DiffuseMetricTile
                   value={feedingBreast.toLocaleString()}
                   label={'Breast'}
-                  icon={<DiffuseBloomIcon color={stickers.pink} size={30}><Baby size={16} color={dCol.ink2} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                  icon={<Character name="baby" size={20} color={stickers.pink} />}
                 />
                 <DiffuseMetricTile
                   value={feedingBottle.toLocaleString()}
                   label={'Bottle'}
-                  icon={<DiffuseBloomIcon color={stickers.blue} size={30}><Milk size={16} color={dCol.ink2} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                  icon={<Character name="milk" size={20} color={stickers.blue} />}
                 />
                 <DiffuseMetricTile
                   value={feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—'}
                   label={'Total Vol'}
-                  icon={<DiffuseBloomIcon color={stickers.peach} size={30}><Droplets size={16} color={dCol.ink2} strokeWidth={1.5} /></DiffuseBloomIcon>}
+                  icon={<Character name="water" size={20} color={stickers.peach} />}
                 />
               </View>
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line, borderRadius: 20, padding: 14 }}>
-                <DiffuseBloomIcon color={acc} size={40} intensity={0.5}>
-                  <Baby size={20} color={dCol.ink2} strokeWidth={1.5} />
-                </DiffuseBloomIcon>
+                <Character name="baby" size={26} color={acc} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontFamily: diffuseFont.bodySemiBold, fontSize: 13, color: dCol.ink }}>
                     {t('kids_home_feeding_modal_no_detail_title')}
@@ -6911,9 +6901,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                 </Text>
               )}
             </View>
-            <DiffuseBloomIcon color={acc} size={44} intensity={0.5}>
-              <Utensils size={24} color={dCol.ink2} strokeWidth={1.5} />
-            </DiffuseBloomIcon>
+            <Character name="nutrition" size={28} color={acc} />
           </View>
         )}
 
@@ -7306,9 +7294,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
               </Text>
             ) : null}
           </View>
-          <DiffuseBloomIcon color={stickers.green} size={44}>
-            <Zap size={24} color={dCol.ink2} strokeWidth={1.5} />
-          </DiffuseBloomIcon>
+          <Character name="activity" size={28} color={stickers.green} />
         </View>
 
         {/* 3 analytics tiles — hairline */}
@@ -7316,17 +7302,17 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
           <DiffuseMetricTile
             value={`${activeDays}${rangeDays > 0 ? `/${rangeDays}` : ''}`}
             label={t('kids_home_activities_modal_active_days')}
-            icon={<DiffuseBloomIcon color={stickers.green} size={30}><Clock size={15} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<Character name="clock" size={20} color={stickers.green} />}
           />
           <DiffuseMetricTile
             value={topMeta ? topMeta.label.split(' ')[0] : '—'}
             label={t('kids_home_activities_modal_top')}
-            icon={<DiffuseBloomIcon color={stickers.yellow} size={30}><TrendingUp size={15} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<Character name="growth" size={20} color={stickers.yellow} />}
           />
           <DiffuseMetricTile
             value={String(distinctTypes)}
             label={t('kids_home_activities_modal_types')}
-            icon={<DiffuseBloomIcon color={stickers.lilac} size={30}><Sparkles size={15} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<Character name="sparkle" size={20} color={stickers.lilac} />}
           />
         </View>
 
@@ -7401,7 +7387,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
           </View>
         ) : (
           <DiffuseEmptyState
-            icon={<DiffuseBloomIcon color={stickers.green} size={48}><Zap size={26} color={dCol.ink2} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<Character name="activity" size={30} color={stickers.green} />}
             title={t('kids_home_activities_modal_no_entries')}
             style={{ marginTop: 24 }}
           />
