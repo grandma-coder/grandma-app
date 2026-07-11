@@ -23,7 +23,14 @@ import { Heart, Star, Moon, Sun, Flower, Cloud, Smiley, Sleepy, Sad, Sparkle, Le
 import { PillButton } from '../../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, brand, stickers, font, getModeColor, getModeColorSoft } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, brand, stickers, font, getModeColor, getModeColorSoft, getDiffuseAccent, diffuseFields } from '../../../constants/theme'
+import { useIsDiffuse, SoftBloom } from '../../../components/ui/diffuse/DiffuseKit'
+import { DiffuseDotCalendar } from '../../../components/ui/diffuse/DiffusePrimitives'
+import { DiffuseField } from '../../../components/ui/diffuse/DiffuseField'
+import { PoleField } from '../../../components/ui/diffuse/pickers/PoleField'
+import { OrbitPicker } from '../../../components/ui/diffuse/pickers/OrbitPicker'
+import { MetaballBloom } from '../../../components/ui/diffuse/pickers/MetaballBloom'
+import { User } from 'lucide-react-native'
 import { useTranslation } from '../../../lib/i18n'
 import {
   usePregnancyOnboardingStore,
@@ -86,6 +93,23 @@ const BIRTH_PLACE_OPTIONS: { id: BirthPlace; label: string }[] = [
 ]
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
+
+// Local date ↔ ISO 'YYYY-MM-DD' bridge for DiffuseDotCalendar (controlled by a
+// Date; the store keeps `dueDate` as an ISO string). Uses LOCAL date parts (not
+// toISOString) so an evening selection west of UTC doesn't slide back a day.
+function isoToDate(iso: string | null): Date {
+  if (!iso) return new Date()
+  const [y, m, d] = iso.split('-').map((p) => parseInt(p, 10))
+  if (!y || !m || !d) return new Date()
+  return new Date(y, m - 1, d)
+}
+
+function dateToIso(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 function calcWeekNumber(dueDateStr: string): number {
   const due = new Date(dueDateStr + 'T00:00:00')
@@ -344,6 +368,7 @@ function StepDueDate({
 }) {
   const { colors, radius, isDark } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pregnancy', isDark)
   const modeSoft = getModeColorSoft('pregnancy', isDark)
   const dueDate = usePregnancyOnboardingStore((s) => s.dueDate)
@@ -372,37 +397,47 @@ function StepDueDate({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
+      auraMode="pregnancy"
       question={t('preg_onboard_step_dueDate')}
       sticker={<Heart size={56} fill={stickers.lilac} />}
       onContinue={onContinue}
       continueDisabled={!dueDate}
     >
-      <View style={stepStyles.centered}>
-        <DatePickerField
-          inline
-          label=""
-          value={dueDate || ''}
-          onChange={setDueDate}
-          placeholder="Tap to select your due date"
-          modalTitle="Due date"
+      {diffuse ? (
+        <DiffuseDotCalendar
+          value={isoToDate(dueDate)}
+          onChange={(d) => setDueDate(dateToIso(d))}
           minimumDate={new Date()}
-          maximumDate={maxDue}
+          accent={diffuseFields.preg.accent}
         />
+      ) : (
+        <View style={stepStyles.centered}>
+          <DatePickerField
+            inline
+            label=""
+            value={dueDate || ''}
+            onChange={setDueDate}
+            placeholder="Tap to select your due date"
+            modalTitle="Due date"
+            minimumDate={new Date()}
+            maximumDate={maxDue}
+          />
 
-        {/* Week indicator */}
-        {dueDate && (
-          <View
-            style={[
-              stepStyles.weekBadge,
-              { backgroundColor: modeSoft, borderRadius: radius.lg },
-            ]}
-          >
-            <Text style={[stepStyles.weekBadgeText, { color: mode }]}>
-              {t('preg_onboard_completionBadge', { week: calcWeekNumber(dueDate), days: daysUntil(dueDate) })}
-            </Text>
-          </View>
-        )}
-      </View>
+          {/* Week indicator */}
+          {dueDate && (
+            <View
+              style={[
+                stepStyles.weekBadge,
+                { backgroundColor: modeSoft, borderRadius: radius.lg },
+              ]}
+            >
+              <Text style={[stepStyles.weekBadgeText, { color: mode }]}>
+                {t('preg_onboard_completionBadge', { week: calcWeekNumber(dueDate), days: daysUntil(dueDate) })}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -417,6 +452,7 @@ function StepFirstPregnancy({
   onContinue: () => void
 }) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const first = usePregnancyOnboardingStore((s) => s.firstPregnancy)
   const setFirst = usePregnancyOnboardingStore((s) => s.setFirstPregnancy)
 
@@ -424,15 +460,27 @@ function StepFirstPregnancy({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
+      auraMode="pregnancy"
       question={t('preg_onboard_step_firstPregnancy')}
       sticker={<Star size={52} fill={stickers.yellow} />}
       onContinue={onContinue}
       continueDisabled={first === null}
     >
-      <View style={stepStyles.toggleRow}>
-        <TogglePill label={t('preg_onboard_yes')} active={first === true} onPress={() => setFirst(true)} />
-        <TogglePill label={t('preg_onboard_no')} active={first === false} onPress={() => setFirst(false)} />
-      </View>
+      {diffuse ? (
+        <PoleField
+          options={[
+            { key: 'yes', label: t('preg_onboard_yes'), color: diffuseFields.preg.g2 },
+            { key: 'no', label: t('preg_onboard_no'), color: diffuseFields.preg.g3 },
+          ]}
+          value={first === null ? null : first ? 'yes' : 'no'}
+          onChange={(k) => setFirst(k === 'yes')}
+        />
+      ) : (
+        <View style={stepStyles.toggleRow}>
+          <TogglePill label={t('preg_onboard_yes')} active={first === true} onPress={() => setFirst(true)} />
+          <TogglePill label={t('preg_onboard_no')} active={first === false} onPress={() => setFirst(false)} />
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -450,6 +498,7 @@ function StepMood({
 }) {
   const { colors, radius, isDark } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pregnancy', isDark)
   const modeSoft = getModeColorSoft('pregnancy', isDark)
   const mood = usePregnancyOnboardingStore((s) => s.mood)
@@ -459,41 +508,59 @@ function StepMood({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
+      auraMode="pregnancy"
       question={t('preg_onboard_step_mood')}
       sticker={<Sun size={56} fill={stickers.peach} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
-      <View style={stepStyles.moodGrid}>
-        {MOOD_OPTIONS.map((opt) => {
-          const selected = mood === opt.id
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() => setMood(opt.id)}
-              style={[
-                stepStyles.moodCard,
-                {
-                  backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: selected ? mode : colors.text,
-                  shadowColor: colors.text,
-                  borderRadius: radius.lg,
-                },
-              ]}
-            >
-              <View style={stepStyles.moodIcon}>{opt.icon(40)}</View>
-              <Text
+      {diffuse ? (
+        // The store holds a single PregnancyMood; MetaballBloom is multi-select,
+        // so drive it single — value is the one selected mood (or none) and
+        // onChange keeps only the newly-tapped key. Store shape is unchanged.
+        <View style={stepStyles.metaballStage}>
+          <MetaballBloom
+            fieldColor={getDiffuseAccent('pregnancy', isDark)}
+            options={MOOD_OPTIONS.map((opt) => ({ key: opt.id, label: opt.label }))}
+            value={mood ? [mood] : []}
+            onChange={(next) => {
+              const added = next.find((k) => k !== mood)
+              setMood(added ? (added as PregnancyMood) : null)
+            }}
+          />
+        </View>
+      ) : (
+        <View style={stepStyles.moodGrid}>
+          {MOOD_OPTIONS.map((opt) => {
+            const selected = mood === opt.id
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => setMood(opt.id)}
                 style={[
-                  stepStyles.moodLabel,
-                  { color: selected ? mode : colors.textSecondary },
+                  stepStyles.moodCard,
+                  {
+                    backgroundColor: selected ? modeSoft : colors.surface,
+                    borderColor: selected ? mode : colors.text,
+                    shadowColor: colors.text,
+                    borderRadius: radius.lg,
+                  },
                 ]}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
+                <View style={stepStyles.moodIcon}>{opt.icon(40)}</View>
+                <Text
+                  style={[
+                    stepStyles.moodLabel,
+                    { color: selected ? mode : colors.textSecondary },
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -511,49 +578,71 @@ function StepBirthPlace({
 }) {
   const { colors, radius, isDark } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pregnancy', isDark)
   const modeSoft = getModeColorSoft('pregnancy', isDark)
   const place = usePregnancyOnboardingStore((s) => s.birthPlace)
   const setPlace = usePregnancyOnboardingStore((s) => s.setBirthPlace)
 
+  // Pregnancy field hues for the orbit nodes (design accent values).
+  const orbitAccents = [
+    diffuseFields.preg.accent,
+    diffuseFields.preg.g1,
+    diffuseFields.preg.g2,
+    diffuseFields.preg.g3,
+  ]
+
   return (
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
+      auraMode="pregnancy"
       question={t('preg_onboard_step_birthPlace')}
       sticker={<Cloud size={64} fill={stickers.blue} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
-      <View style={stepStyles.chipGrid}>
-        {BIRTH_PLACE_OPTIONS.map((opt) => {
-          const selected = place === opt.id
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() => setPlace(opt.id)}
-              style={[
-                stepStyles.placeChip,
-                {
-                  backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: selected ? mode : colors.text,
-                  shadowColor: colors.text,
-                  borderRadius: radius.full,
-                },
-              ]}
-            >
-              <Text
+      {diffuse ? (
+        <OrbitPicker
+          options={BIRTH_PLACE_OPTIONS.map((opt, i) => ({
+            key: opt.id,
+            label: opt.label,
+            accent: orbitAccents[i % orbitAccents.length],
+          }))}
+          value={place}
+          onChange={(k) => setPlace(k as BirthPlace)}
+        />
+      ) : (
+        <View style={stepStyles.chipGrid}>
+          {BIRTH_PLACE_OPTIONS.map((opt) => {
+            const selected = place === opt.id
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => setPlace(opt.id)}
                 style={[
-                  stepStyles.placeChipText,
-                  { color: selected ? mode : colors.text },
+                  stepStyles.placeChip,
+                  {
+                    backgroundColor: selected ? modeSoft : colors.surface,
+                    borderColor: selected ? mode : colors.text,
+                    shadowColor: colors.text,
+                    borderRadius: radius.full,
+                  },
                 ]}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
+                <Text
+                  style={[
+                    stepStyles.placeChipText,
+                    { color: selected ? mode : colors.text },
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -571,6 +660,7 @@ function StepCareProvider({
 }) {
   const { colors, radius, isDark } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pregnancy', isDark)
   const modeSoft = getModeColorSoft('pregnancy', isDark)
   const provider = usePregnancyOnboardingStore((s) => s.careProvider)
@@ -580,27 +670,40 @@ function StepCareProvider({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
+      auraMode="pregnancy"
       question={t('preg_onboard_step_careProvider')}
       sticker={<Flower size={56} petal={stickers.lilac} center={stickers.yellow} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
-      <TextInput
-        value={provider ?? ''}
-        onChangeText={setProvider}
-        placeholder={t('preg_onboard_careProviderPlaceholder')}
-        placeholderTextColor={colors.textMuted}
-        style={[
-          stepStyles.textInput,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.md,
-          },
-        ]}
-        autoCapitalize="words"
-      />
+      {diffuse ? (
+        // The store keeps careProvider as one free-text string (no provider
+        // chip catalog / i18n keys exist), so the Diffuse path uses the bare
+        // underlined field wired to the SAME setProvider setter.
+        <DiffuseField
+          value={provider ?? ''}
+          onChangeText={setProvider}
+          placeholder={t('preg_onboard_careProviderPlaceholder')}
+          autoCapitalize="words"
+        />
+      ) : (
+        <TextInput
+          value={provider ?? ''}
+          onChangeText={setProvider}
+          placeholder={t('preg_onboard_careProviderPlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          style={[
+            stepStyles.textInput,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+          autoCapitalize="words"
+        />
+      )}
     </OnboardingStep>
   )
 }
@@ -618,6 +721,7 @@ function StepConditions({
 }) {
   const { colors, radius, isDark } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pregnancy', isDark)
   const modeSoft = getModeColorSoft('pregnancy', isDark)
   const conditions = usePregnancyOnboardingStore((s) => s.conditionsText)
@@ -627,27 +731,40 @@ function StepConditions({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
+      auraMode="pregnancy"
       question={t('preg_onboard_step_conditions')}
       sticker={<Moon size={52} fill={stickers.lilac} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
-      <TextInput
-        value={conditions ?? ''}
-        onChangeText={setConditions}
-        placeholder={t('preg_onboard_conditionsPlaceholder')}
-        placeholderTextColor={colors.textMuted}
-        multiline
-        style={[
-          stepStyles.textArea,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.md,
-          },
-        ]}
-      />
+      {diffuse ? (
+        // The store keeps conditions as one free-text string (no condition chip
+        // catalog / i18n keys exist), so the Diffuse path uses the bare
+        // underlined field wired to the SAME setConditions setter.
+        <DiffuseField
+          value={conditions ?? ''}
+          onChangeText={setConditions}
+          placeholder={t('preg_onboard_conditionsPlaceholder')}
+          autoCapitalize="sentences"
+        />
+      ) : (
+        <TextInput
+          value={conditions ?? ''}
+          onChangeText={setConditions}
+          placeholder={t('preg_onboard_conditionsPlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          multiline
+          style={[
+            stepStyles.textArea,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        />
+      )}
     </OnboardingStep>
   )
 }
@@ -664,7 +781,9 @@ function StepPartner({
   onSkip: () => void
 }) {
   const { colors, radius, isDark } = useTheme()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const mode = getModeColor('pregnancy', isDark)
   const modeSoft = getModeColorSoft('pregnancy', isDark)
   const partner = usePregnancyOnboardingStore((s) => s.partnerName)
@@ -674,30 +793,55 @@ function StepPartner({
     <OnboardingStep
       step={step}
       total={TOTAL_STEPS}
+      auraMode="pregnancy"
       question={t('preg_onboard_step_partner')}
       sticker={<Heart size={56} fill={stickers.pink} />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
-      <TextInput
-        value={partner ?? ''}
-        onChangeText={setPartner}
-        placeholder={t('preg_onboard_partnerNamePlaceholder')}
-        placeholderTextColor={colors.textMuted}
-        style={[
-          stepStyles.textInput,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.md,
-          },
-        ]}
-        autoCapitalize="words"
-      />
-      <Text style={[stepStyles.hint, { color: colors.textMuted }]}>
-        {t('preg_onboard_partnerHint')}
-      </Text>
+      {diffuse ? (
+        // Bloom avatar + bare underlined field wired to the SAME setPartner
+        // setter. Invite / skip stays with OnboardingStep's CTA + text link.
+        <View style={stepStyles.partnerBlock}>
+          <View style={stepStyles.partnerAvatarWrap}>
+            <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+              <SoftBloom color={diffuseFields.preg.accent} opacity={0.5} spread={0.55} radius="55%" />
+            </View>
+            <User size={40} color={dt.colors.ink} strokeWidth={1.4} />
+          </View>
+          <DiffuseField
+            value={partner ?? ''}
+            onChangeText={setPartner}
+            placeholder={t('preg_onboard_partnerNamePlaceholder')}
+            autoCapitalize="words"
+          />
+          <Text style={[stepStyles.partnerHint, { color: dt.colors.ink3, fontFamily: font.body }]}>
+            {t('preg_onboard_partnerHint')}
+          </Text>
+        </View>
+      ) : (
+        <>
+          <TextInput
+            value={partner ?? ''}
+            onChangeText={setPartner}
+            placeholder={t('preg_onboard_partnerNamePlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            style={[
+              stepStyles.textInput,
+              {
+                color: colors.text,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+              },
+            ]}
+            autoCapitalize="words"
+          />
+          <Text style={[stepStyles.hint, { color: colors.textMuted }]}>
+            {t('preg_onboard_partnerHint')}
+          </Text>
+        </>
+      )}
     </OnboardingStep>
   )
 }
@@ -945,6 +1089,26 @@ const stepStyles = StyleSheet.create({
     fontSize: 13,
     fontFamily: font.bodyMedium,
     marginTop: 12,
+    lineHeight: 18,
+  },
+  // Diffuse-only spacing helpers (layout-only; no colors/shadows).
+  metaballStage: {
+    height: 340,
+    width: '100%',
+  },
+  partnerBlock: {
+    gap: 24,
+  },
+  partnerAvatarWrap: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  partnerHint: {
+    fontSize: 13,
     lineHeight: 18,
   },
 })
