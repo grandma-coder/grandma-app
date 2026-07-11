@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
-import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
 import { ALL_SYMPTOMS } from '../../../lib/cycleSymptoms'
@@ -85,7 +85,9 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
                     : { backgroundColor: on ? stickers.pinkSoft : colors.surface, borderColor: on ? ink : colors.border, borderWidth: on ? 2 : 1 },
                 ]}
               >
-                <SymptomSticker id={s.id} size={16} />
+                {/* Diffuse chips are hairline + mono (no loud sticker); current
+                    system keeps the colorful symptom sticker. */}
+                {!diffuse ? <SymptomSticker id={s.id} size={16} /> : null}
                 <Text style={diffuse
                   ? { color: on ? dt.colors.ink : dt.colors.ink3, fontFamily: on ? diffuseFont.monoBold : diffuseFont.mono, fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase' }
                   : { color: ink, fontFamily: font.bodyBold, fontSize: 12 }}>{s.label}</Text>
@@ -93,13 +95,22 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
             )
           })}
         </View>
-        <PillButton
-          label={saving ? t('cycleSignals_saving') : t('cycleSignals_saveSymptoms', { count: picked.length })}
-          variant="accent"
-          accentColor={diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink}
-          onPress={save}
-          disabled={saving}
-        />
+        {diffuse ? (
+          <Pressable onPress={save} disabled={saving} style={[styles.saveD, { borderTopColor: dt.colors.line2, opacity: saving ? 0.5 : 1 }]}>
+            <Text style={{ fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink, fontFamily: diffuseFont.monoBold }}>
+              {saving ? t('cycleSignals_saving') : t('cycleSignals_saveSymptoms', { count: picked.length })}
+            </Text>
+            <DiffuseArrow color={getDiffuseAccent('pre-pregnancy', dt.isDark)} size={16} />
+          </Pressable>
+        ) : (
+          <PillButton
+            label={saving ? t('cycleSignals_saving') : t('cycleSignals_saveSymptoms', { count: picked.length })}
+            variant="accent"
+            accentColor={stickers.pink}
+            onPress={save}
+            disabled={saving}
+          />
+        )}
       </ScrollView>
     </LogSheet>
   )
@@ -111,5 +122,9 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999,
+  },
+  saveD: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: 4, paddingTop: 16, borderTopWidth: 1,
   },
 })

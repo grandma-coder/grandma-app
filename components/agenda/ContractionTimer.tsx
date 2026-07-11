@@ -63,13 +63,13 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
         notes: JSON.stringify({ intervalSeconds }),
       })
       if (error) {
-        Alert.alert('Save failed', `Contraction not saved: ${error.message}`)
+        Alert.alert(t('common_saveFailed'), t('contractionTimer_notSaved', { message: error.message }))
         return
       }
       queryClient.invalidateQueries({ queryKey: ['pregnancy-week-logs'] })
       queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs'] })
     } catch (e: any) {
-      Alert.alert('Save failed', e?.message ?? 'Could not save contraction.')
+      Alert.alert(t('common_saveFailed'), e?.message ?? t('contractionTimer_couldNotSave'))
     }
   }
 
@@ -162,7 +162,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
             pressed && { transform: [{ scale: 0.95 }] },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={isActive ? 'End contraction' : 'Start contraction'}
+          accessibilityLabel={isActive ? t('contractionTimer_a11yEnd') : t('contractionTimer_a11yStart')}
         >
           <Ionicons
             name={isActive ? 'stop' : 'play'}
@@ -212,7 +212,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
                 disabled={saving}
                 style={[styles.saveButton, saving && { opacity: 0.5 }]}
                 accessibilityRole="button"
-                accessibilityLabel="Save contraction session"
+                accessibilityLabel={t('contractionTimer_a11ySaveSession')}
               >
                 <Text style={styles.saveButtonText}>{saving ? t('preg_contractions_saving') : t('preg_contractions_saveSession')}</Text>
               </Pressable>
@@ -221,7 +221,7 @@ export function ContractionTimer({ onSave }: ContractionTimerProps) {
               onPress={handleReset}
               style={styles.resetButton}
               accessibilityRole="button"
-              accessibilityLabel="Reset contraction session"
+              accessibilityLabel={t('contractionTimer_a11yReset')}
             >
               <Text style={styles.resetText}>{t('preg_contractions_reset')}</Text>
             </Pressable>

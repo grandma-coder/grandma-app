@@ -361,7 +361,7 @@ export default function ChannelChat() {
       // Attach reply-to info for display (not stored in DB, just local display)
       if (replyTo) {
         newMsg.reply_to_content = replyTo.content
-        newMsg.reply_to_author = replyTo.author_name ?? 'someone'
+        newMsg.reply_to_author = replyTo.author_name ?? t('channelScreen_someoneLower')
       }
 
       setMessages((prev) => {
@@ -379,7 +379,7 @@ export default function ChannelChat() {
       setReplyTo(null)
       setMentionIds([])
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Failed to send message')
+      Alert.alert(t('common_error'), e.message ?? t('channelScreen_sendFailed'))
     } finally {
       setSending(false)
     }
@@ -411,7 +411,7 @@ export default function ChannelChat() {
           setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
         }
       } catch {
-        Alert.alert('Error', 'Could not load photo.')
+        Alert.alert(t('common_error'), t('channelScreen_photoLoadFailed'))
       }
     }
   }
@@ -447,27 +447,27 @@ export default function ChannelChat() {
     const members = await getChannelMembers(id)
     const others = members.filter((m) => m.user_id !== currentUserId)
     if (others.length === 0) {
-      Alert.alert('No Members', 'There are no other members to transfer ownership to. You can delete the channel instead.')
+      Alert.alert(t('channelScreen_noMembersTitle'), t('channelScreen_noMembersBodyDelete'))
       return
     }
     const buttons = others.slice(0, 8).map((m) => ({
-      text: m.name ?? 'Member',
+      text: m.name ?? t('channelScreen_memberFallback'),
       onPress: () => {
         Alert.alert(
-          'Confirm Transfer',
-          `Transfer ownership of #${channel?.name} to ${m.name ?? 'this member'}? This cannot be undone.`,
+          t('channelScreen_confirmTransferTitle'),
+          t('channelScreen_confirmTransferBody', { channel: channel?.name ?? '', member: m.name ?? t('channelScreen_thisMember') }),
           [
-            { text: 'Cancel', style: 'cancel' as const },
+            { text: t('common_cancel'), style: 'cancel' as const },
             {
-              text: 'Transfer',
+              text: t('channelScreen_transferBtn'),
               onPress: async () => {
                 try {
                   await transferChannelOwnership(id, m.user_id)
                   setIsOwner(false)
-                  toast.show({ title: 'Done', message: `Ownership transferred to ${m.name ?? 'the new host'}.` })
+                  toast.show({ title: t('channelScreen_doneTitle'), message: t('channelScreen_transferredMsg', { member: m.name ?? t('channelScreen_theNewHost') }) })
                   load()
                 } catch (e: any) {
-                  Alert.alert('Error', e.message)
+                  Alert.alert(t('common_error'), e.message)
                 }
               },
             },
@@ -475,8 +475,8 @@ export default function ChannelChat() {
         )
       },
     }))
-    buttons.push({ text: 'Cancel', onPress: () => {} })
-    Alert.alert('Transfer Ownership', 'Select the new channel host:', buttons as any)
+    buttons.push({ text: t('common_cancel'), onPress: () => {} })
+    Alert.alert(t('channelScreen_transferOwnershipTitle'), t('channelScreen_transferOwnershipBody'), buttons as any)
   }
 
   function handleJoinLeave() {
@@ -485,28 +485,28 @@ export default function ChannelChat() {
     if (isMember && isOwner) {
       // Creator cannot leave — offer delete or transfer
       Alert.alert(
-        'You are the host',
-        'As the channel creator, you cannot leave. You can transfer ownership to another member or delete the channel.',
+        t('channelScreen_hostAlertTitle'),
+        t('channelScreen_hostAlertBody'),
         [
-          { text: 'Transfer Ownership', onPress: handleTransferOwnership },
+          { text: t('channelScreen_transferOwnershipTitle'), onPress: handleTransferOwnership },
           {
-            text: 'Delete Channel',
+            text: t('channelScreen_deleteChannelBtn'),
             style: 'destructive',
             onPress: () => {
               Alert.alert(
-                'Delete Channel',
-                'This will permanently delete this channel and all its messages. This cannot be undone.',
+                t('channelScreen_deleteChannelBtn'),
+                t('channelScreen_deleteChannelBody'),
                 [
-                  { text: 'Cancel', style: 'cancel' },
+                  { text: t('common_cancel'), style: 'cancel' },
                   {
-                    text: 'Delete Forever',
+                    text: t('channelScreen_deleteForever'),
                     style: 'destructive',
                     onPress: async () => {
                       try {
                         await supabase.from('channels').delete().eq('id', id)
                         router.replace('/connections' as any)
                       } catch (e: any) {
-                        Alert.alert('Error', e.message)
+                        Alert.alert(t('common_error'), e.message)
                       }
                     },
                   },
@@ -514,7 +514,7 @@ export default function ChannelChat() {
               )
             },
           },
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common_cancel'), style: 'cancel' },
         ]
       )
       return
@@ -526,24 +526,24 @@ export default function ChannelChat() {
     } else if (channel?.channelType === 'private') {
       // Private channel: request to join
       if (myRequest?.status === 'pending') {
-        Alert.alert('Request Pending', 'Your request to join is awaiting approval from the channel host.')
+        Alert.alert(t('channelScreen_requestPendingTitle'), t('channelScreen_requestPendingBody'))
         return
       }
       Alert.alert(
-        'Request to Join',
-        `This is a private channel. Send a request to the host to join #${channel.name}?`,
+        t('channelScreen_requestToJoinTitle'),
+        t('channelScreen_requestToJoinBody', { channel: channel.name }),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common_cancel'), style: 'cancel' },
           {
-            text: 'Send Request',
+            text: t('channelScreen_sendRequestBtn'),
             onPress: async () => {
               try {
                 await requestToJoinChannel(id)
                 const req = await getMyRequestStatus(id)
                 setMyRequest(req)
-                Alert.alert('Request Sent', 'The channel host will review your request.')
+                Alert.alert(t('channelScreen_requestSentTitle'), t('channelScreen_requestSentBody'))
               } catch (e: any) {
-                Alert.alert('Error', e.message)
+                Alert.alert(t('common_error'), e.message)
               }
             },
           },
@@ -552,19 +552,19 @@ export default function ChannelChat() {
     } else {
       // Public channel: confirm join
       Alert.alert(
-        'Join Channel',
-        `Join #${channel?.name ?? 'this channel'}?`,
+        t('channelScreen_joinChannelTitle'),
+        t('channelScreen_joinChannelBody', { channel: channel?.name ?? t('channelScreen_thisChannel') }),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common_cancel'), style: 'cancel' },
           {
-            text: 'Join',
+            text: t('channelScreen_join'),
             onPress: async () => {
               try {
                 await joinChannel(id)
                 setIsMember(true)
                 load()
               } catch {
-                Alert.alert('Error', 'Failed to join channel')
+                Alert.alert(t('common_error'), t('channelScreen_joinFailed'))
               }
             },
           },
@@ -589,7 +589,7 @@ export default function ChannelChat() {
 
     // Private channels: only members can share
     if (channel.channelType === 'private' && !isMember) {
-      Alert.alert('Private Channel', 'Only members can share this channel.')
+      Alert.alert(t('channelScreen_privateChannelTitle'), t('channelScreen_privateChannelShareBody'))
       return
     }
 
@@ -602,7 +602,7 @@ export default function ChannelChat() {
     const { setStringAsync } = await import('expo-clipboard')
     await setStringAsync(channelUrl)
     setShowShare(false)
-    toast.show({ title: 'Copied!', message: 'Channel link copied to clipboard.' })
+    toast.show({ title: t('channelScreen_copiedTitle'), message: t('channelScreen_linkCopiedMsg') })
   }
 
   async function confirmLeave() {
@@ -614,7 +614,7 @@ export default function ChannelChat() {
       setShowLeave(false)
       load()
     } catch {
-      Alert.alert('Error', 'Failed to leave channel')
+      Alert.alert(t('common_error'), t('channelScreen_leaveFailed'))
     } finally {
       setLeaving(false)
     }
@@ -624,18 +624,18 @@ export default function ChannelChat() {
     if (!id || !channel) return
     const channelUrl = `grandma-app://channel/${id}`
     const desc = channel.description ? `\n${channel.description}` : ''
-    const privacy = channel.channelType === 'private' ? ' (Private)' : ''
-    const shareMessage = `Join #${channel.name}${privacy} on grandma.app!${desc}\n\n${channelUrl}`
+    const privacy = channel.channelType === 'private' ? ` ${t('channelScreen_privateSuffix')}` : ''
+    const shareMessage = `${t('channelScreen_shareMessage', { channel: channel.name, privacy })}${desc}\n\n${channelUrl}`
     setShowShare(false)
     await Share.share({ message: shareMessage, title: `#${channel.name}` })
   }
 
   function handleDeleteMessage(msgId: string, authorId: string) {
     if (authorId !== currentUserId) return
-    Alert.alert('Delete Message', 'Remove this message?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('channelScreen_deleteMessageTitle'), t('channelScreen_removeMessageBody'), [
+      { text: t('common_cancel'), style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive',
+        text: t('common_delete'), style: 'destructive',
         onPress: async () => {
           setMessages((prev) => prev.filter((m) => m.id !== msgId))
           await deleteMessage(msgId, authorId).catch(() => load())
@@ -650,10 +650,10 @@ export default function ChannelChat() {
     try {
       await rateChannel(id, myRating, myReview || undefined)
       setShowRating(false)
-      toast.show({ title: 'Thanks!', message: 'Your rating has been submitted.' })
+      toast.show({ title: t('channelScreen_thanksTitle'), message: t('channelScreen_ratingSubmittedMsg') })
       load() // Refresh to get updated avg
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setSavingRating(false)
     }
@@ -860,7 +860,7 @@ export default function ChannelChat() {
             numberOfLines={1}
           >
             <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold } : { fontFamily: font.bodyBold }}>
-              {pinnedMessage.author_name ?? 'Someone'}
+              {pinnedMessage.author_name ?? t('channelScreen_someoneFallback')}
             </Text>
             {': '}
             {pinnedMessage.content}
@@ -896,8 +896,8 @@ export default function ChannelChat() {
               const EmptyIcon = s?.Component
               const emptyTitle = isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')
               const emptyMsg = isMember
-                ? 'Start the conversation — your story helps someone else feel less alone.'
-                : `Join ${channel?.name ? `#${channel.name}` : 'this channel'} to start the conversation.`
+                ? t('channelScreen_emptyMemberMsg')
+                : t('channelScreen_emptyJoinMsg', { channel: channel?.name ? `#${channel.name}` : t('channelScreen_thisChannel') })
               if (diffuse) {
                 return (
                   <DiffuseEmptyState
@@ -929,13 +929,13 @@ export default function ChannelChat() {
                 message={item}
                 onReaction={() => handleReaction(item.id)}
                 onLongPress={() => {
-                  Alert.alert('Message', '', [
+                  Alert.alert(t('channelScreen_messageActionsTitle'), '', [
                     { text: t('channelScreen_replyInThread'), onPress: () => router.push(`/channel/thread/${item.id}` as any) },
                     { text: t('channelScreen_replyingTo'), onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
                     ...(item.author_id === currentUserId ? [
-                      { text: 'Delete', style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
+                      { text: t('common_delete'), style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
                     ] : []),
-                    { text: 'Cancel', style: 'cancel' as const },
+                    { text: t('common_cancel'), style: 'cancel' as const },
                   ])
                 }}
                 onThreadPress={() => router.push(`/channel/thread/${item.id}` as any)}
@@ -1017,7 +1017,7 @@ export default function ChannelChat() {
             >
               {t('channelScreen_replyingTo')}{' '}
               <Text style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }}>
-                {replyTo.author_name ?? 'someone'}
+                {replyTo.author_name ?? t('channelScreen_someoneLower')}
               </Text>
             </Text>
             <Pressable onPress={() => setReplyTo(null)} hitSlop={8}>
@@ -1227,7 +1227,7 @@ export default function ChannelChat() {
       {/* Leave confirm sheet */}
       <LeaveChannelSheet
         visible={showLeave}
-        channelName={channel?.name ?? 'this channel'}
+        channelName={channel?.name ?? t('channelScreen_thisChannel')}
         leaving={leaving}
         onCancel={() => setShowLeave(false)}
         onConfirm={confirmLeave}
@@ -1487,7 +1487,7 @@ function MessageBubbleBase({
             ? { backgroundColor: 'transparent', borderLeftColor: dt.colors.line2, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, borderLeftWidth: 3, borderRadius: 12 }
             : { backgroundColor: colors.surfaceRaised, borderLeftColor: colors.primary }]}>
             <Text style={[styles.inlineReplyAuthor, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.primary, fontFamily: font.bodyBold }]}>
-              {message.reply_to_author ?? 'someone'}
+              {message.reply_to_author ?? t('channelScreen_someoneLower')}
             </Text>
             <Text style={[styles.inlineReplyText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
               {message.reply_to_content}

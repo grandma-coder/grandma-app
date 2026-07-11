@@ -214,7 +214,7 @@ export default function Scan() {
 
     const { granted } = await permissionFn()
     if (!granted) {
-      Alert.alert(t('scan_permissionNeeded'), t('scan_permissionMsg', { type: useCamera ? 'camera' : 'photo library' }))
+      Alert.alert(t('scan_permissionNeeded'), t('scan_permissionMsg', { type: useCamera ? t('scan_permissionType_camera') : t('scan_permissionType_library') }))
       return
     }
 

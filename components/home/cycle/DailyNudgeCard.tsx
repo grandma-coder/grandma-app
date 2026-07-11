@@ -14,6 +14,7 @@ import { Heart } from '../../ui/Stickers'
 import { PaperCard } from '../../ui/PaperCard'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseArrow, SoftBloom } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../../lib/cycleLogic'
@@ -162,7 +163,9 @@ export function DailyNudgeCard({ cycleConfig, selectedDate }: Props) {
 
         <View style={styles.washRow}>
           <View style={styles.washIcon}>
-            <HeartLine size={20} color={dt.colors.ink3} strokeWidth={1.6} />
+            <DiffuseBloomIcon color={diffuseAccent} size={38} intensity={0.5}>
+              <HeartLine size={19} color={dt.colors.ink2} strokeWidth={1.6} />
+            </DiffuseBloomIcon>
           </View>
 
           <View style={styles.washBody}>

@@ -113,7 +113,7 @@ export default function ThreadView() {
       setText('')
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200)
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setSending(false)
     }
@@ -165,7 +165,7 @@ export default function ThreadView() {
                   <Text style={[s.authorName, diffuse
                     ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold, fontWeight: '400' }
                     : { color: colors.text }]}>
-                    {parentMsg.author_name ?? 'Member'}
+                    {parentMsg.author_name ?? t('channelThread_memberFallback')}
                   </Text>
                   <Text style={[s.time, diffuse
                     ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
@@ -199,7 +199,7 @@ export default function ThreadView() {
                   <Text style={[s.replyAuthor, diffuse
                     ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold, fontWeight: '400' }
                     : { color: colors.text }]}>
-                    {item.author_name ?? 'Member'}
+                    {item.author_name ?? t('channelThread_memberFallback')}
                   </Text>
                   <Text style={[s.replyTime, diffuse
                     ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }

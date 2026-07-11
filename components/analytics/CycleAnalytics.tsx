@@ -39,14 +39,14 @@ import {
   useMoodStats,
 } from '../../lib/cycleAnalytics'
 import { CycleDetailSheet, type CycleDetailType } from './CycleDetailSheets'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 
-/** Warm phase copy keyed by cycle phase. */
-const PHASE_VOICE: Record<CyclePhase, { word: string; line: string }> = {
-  menstruation: { word: 'Period', line: 'rest up — your body’s resetting.' },
-  follicular: { word: 'Follicular', line: 'energy’s climbing back up.' },
-  ovulation: { word: 'Ovulation', line: 'your fertile window is open.' },
-  luteal: { word: 'Luteal', line: 'winding down toward your next period.' },
+/** Warm phase copy keyed by cycle phase — resolved through t() so it localizes. */
+const PHASE_VOICE_KEYS: Record<CyclePhase, { word: TranslationKey; line: TranslationKey }> = {
+  menstruation: { word: 'cycleAnalytics_phaseWord_menstruation', line: 'cycleAnalytics_phaseLine_menstruation' },
+  follicular: { word: 'cycleAnalytics_phaseWord_follicular', line: 'cycleAnalytics_phaseLine_follicular' },
+  ovulation: { word: 'cycleAnalytics_phaseWord_ovulation', line: 'cycleAnalytics_phaseLine_ovulation' },
+  luteal: { word: 'cycleAnalytics_phaseWord_luteal', line: 'cycleAnalytics_phaseLine_luteal' },
 }
 
 export function CycleAnalytics() {
@@ -82,7 +82,10 @@ export function CycleAnalytics() {
     () => dailyFertilityCurve(cycleConfig.cycleLength, cycleConfig.lutealPhase),
     [cycleConfig.cycleLength, cycleConfig.lutealPhase],
   )
-  const voice = PHASE_VOICE[info.phase]
+  const voice = {
+    word: t(PHASE_VOICE_KEYS[info.phase].word),
+    line: t(PHASE_VOICE_KEYS[info.phase].line),
+  }
 
   // Phase accent drives the whole screen's color story.
   const PHASE_ACCENT: Record<CyclePhase, string> = {

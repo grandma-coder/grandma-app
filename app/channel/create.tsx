@@ -10,7 +10,7 @@ import { ArrowLeft, Check, Camera, Lock, Globe } from 'lucide-react-native'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { createChannel } from '../../lib/channelPosts'
 import {
   STICKER_PRESETS,
@@ -34,6 +34,19 @@ const CATEGORIES = [
 ] as const
 
 type Category = (typeof CATEGORIES)[number]
+
+/** Maps a stable English category value to its i18n key for display. */
+const CATEGORY_KEY: Record<Category, TranslationKey> = {
+  Parenting: 'channelCreate_category_parenting',
+  Pregnancy: 'channelCreate_category_pregnancy',
+  Fertility: 'channelCreate_category_fertility',
+  Feeding: 'channelCreate_category_feeding',
+  Sleep: 'channelCreate_category_sleep',
+  Community: 'channelCreate_category_community',
+  Wellness: 'channelCreate_category_wellness',
+  Milestones: 'channelCreate_category_milestones',
+  Other: 'channelCreate_category_other',
+}
 
 type IconChoice =
   | { kind: 'sticker'; index: number }
@@ -98,7 +111,7 @@ export default function CreateChannel() {
       setCreatedChannelId(id)
       setShowSuccess(true)
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setLoading(false)
     }
@@ -292,7 +305,7 @@ export default function CreateChannel() {
                       ? { color: selected ? dt.colors.ink : dt.colors.ink3, fontFamily: selected ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
                       : selected && styles.chipTextSelected,
                   ]}>
-                    {c}
+                    {t(CATEGORY_KEY[c])}
                   </Text>
                 </Pressable>
               )

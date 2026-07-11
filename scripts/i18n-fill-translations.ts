@@ -12,6 +12,10 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 
+import { en as enLocale } from '../lib/i18n/en'
+import { ptBR } from '../lib/i18n/pt-BR'
+import { es } from '../lib/i18n/es'
+
 const LOCALE = process.argv[2]
 const DRY_RUN = process.argv.includes('--dry-run')
 const LOCALE_NAMES: Record<string, string> = {
@@ -41,20 +45,21 @@ if (!ANTHROPIC_API_KEY) {
   process.exit(1)
 }
 
-// --- parse a locale .ts file into { key: value } (order-preserving list of lines) ---
-function parseLocale(path: string): Record<string, string> {
-  const src = readFileSync(path, 'utf8')
-  const out: Record<string, string> = {}
-  // matches:  keyName: 'value',  or  keyName: "value",  (values may contain \' or \n escapes)
-  for (const m of src.matchAll(/^\s+([a-zA-Z0-9_]+):\s*(["'])((?:\\.|(?!\2).)*)\2/gm)) {
-    out[m[1]] = m[3]
-  }
-  return out
+// Import the compiled locale modules (NOT a regex parse) so every key round-trips
+// exactly — the old regex parser silently dropped keys crammed onto one line
+// (the cycleRing_note_* incident) and mangled embedded escapes.
+const asMap = (o: unknown) => o as Record<string, string>
+const LOCALE_OBJ: Record<string, Record<string, string>> = {
+  'pt-BR': asMap(ptBR),
+  es: asMap(es),
 }
-
-const en = parseLocale('lib/i18n/en.ts')
+const en = asMap(enLocale)
 const localePath = `lib/i18n/${LOCALE}.ts`
-const loc = parseLocale(localePath)
+const loc = LOCALE_OBJ[LOCALE]
+if (!loc) {
+  console.error(`This script only fills pt-BR / es (got ${LOCALE}). Add the import + LOCALE_OBJ entry to support more.`)
+  process.exit(1)
+}
 
 // A value with no letters (punctuation/symbol/number only — e.g. '·', '•', '‹',
 // smart quotes, '{{n}}d') is language-neutral: never translate it, just carry the

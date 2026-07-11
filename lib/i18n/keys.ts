@@ -30,6 +30,11 @@ export interface TranslationKeys {
   common_nDays: string
   common_kcal: string
   common_couldntLoad: string
+  common_saveFailed: string
+  common_unknownError: string
+  common_tryAgain: string
+  common_checkConnection: string
+  common_remove: string
   common_update: string
   common_at: string
   common_dotSeparator: string
@@ -1679,6 +1684,14 @@ export interface TranslationKeys {
   cycleAnalytics_fertileSub_passed: string
   // ─── B7b: CycleAnalytics residual strings ─────────────────────────────────
   cycleAnalytics_day_voiceline: string
+  cycleAnalytics_phaseWord_menstruation: string
+  cycleAnalytics_phaseWord_follicular: string
+  cycleAnalytics_phaseWord_ovulation: string
+  cycleAnalytics_phaseWord_luteal: string
+  cycleAnalytics_phaseLine_menstruation: string
+  cycleAnalytics_phaseLine_follicular: string
+  cycleAnalytics_phaseLine_ovulation: string
+  cycleAnalytics_phaseLine_luteal: string
   cycleAnalytics_seed_hint: string
   cycleAnalytics_cycle_n: string
   cycleAnalytics_log_cycles_hint: string
@@ -2471,6 +2484,8 @@ export interface TranslationKeys {
   scan_libraryBtn: string
   scan_permissionNeeded: string
   scan_permissionMsg: string
+  scan_permissionType_camera: string
+  scan_permissionType_library: string
   scan_failed: string
   scan_typeMedicine: string
   scan_typeFood: string
@@ -2935,4 +2950,123 @@ export interface TranslationKeys {
   emergencyInsurance_emptyPlansHint: string
   emergencyInsurance_someoneToCall: string
   emergencyInsurance_keepCardOnHand: string
+  // ─── Batch 3: community + exams + agenda ───
+  channelScreen_sendFailed: string
+  channelScreen_photoLoadFailed: string
+  channelScreen_noMembersBodyDelete: string
+  channelScreen_confirmTransferTitle: string
+  channelScreen_confirmTransferBody: string
+  channelScreen_thisMember: string
+  channelScreen_doneTitle: string
+  channelScreen_transferredMsg: string
+  channelScreen_theNewHost: string
+  channelScreen_transferOwnershipTitle: string
+  channelScreen_transferOwnershipBody: string
+  channelScreen_hostAlertTitle: string
+  channelScreen_hostAlertBody: string
+  channelScreen_deleteChannelBtn: string
+  channelScreen_deleteChannelBody: string
+  channelScreen_deleteForever: string
+  channelScreen_requestPendingTitle: string
+  channelScreen_requestPendingBody: string
+  channelScreen_requestToJoinTitle: string
+  channelScreen_requestToJoinBody: string
+  channelScreen_sendRequestBtn: string
+  channelScreen_requestSentTitle: string
+  channelScreen_requestSentBody: string
+  channelScreen_joinChannelTitle: string
+  channelScreen_joinChannelBody: string
+  channelScreen_joinFailed: string
+  channelScreen_thisChannel: string
+  channelScreen_privateChannelTitle: string
+  channelScreen_privateChannelShareBody: string
+  channelScreen_linkCopiedMsg: string
+  channelScreen_leaveFailed: string
+  channelScreen_privateSuffix: string
+  channelScreen_shareMessage: string
+  channelScreen_deleteMessageTitle: string
+  channelScreen_removeMessageBody: string
+  channelScreen_thanksTitle: string
+  channelScreen_ratingSubmittedMsg: string
+  channelScreen_someoneFallback: string
+  channelScreen_someoneLower: string
+  channelScreen_emptyMemberMsg: string
+  channelScreen_emptyJoinMsg: string
+  channelScreen_messageActionsTitle: string
+  channelInfo_deleteMessageTitle: string
+  channelInfo_removeMessageBody: string
+  channelInfo_hostAlertTitle: string
+  channelInfo_hostAlertBody: string
+  channelInfo_leaveChannelTitle: string
+  channelInfo_leaveChannelConfirm: string
+  channelInfo_thisChannel: string
+  channelInfo_leave: string
+  channelInfo_leaveFailed: string
+  channelInfo_noMembersBody: string
+  channelInfo_confirmTransferTitle: string
+  channelInfo_confirmTransferBody: string
+  channelInfo_thisMember: string
+  channelInfo_transferBtn: string
+  channelInfo_doneTitle: string
+  channelInfo_transferredMsg: string
+  channelInfo_theNewHost: string
+  channelInfo_selectNewHost: string
+  channelInfo_approvedTitle: string
+  channelInfo_approvedBody: string
+  channelInfo_userFallback: string
+  channelInfo_denyRequestTitle: string
+  channelInfo_denyRequestBody: string
+  channelInfo_thisUser: string
+  channelInfo_denyBtn: string
+  channelInfo_privateChannelTitle: string
+  channelInfo_privateChannelShareBody: string
+  channelInfo_privateSuffix: string
+  channelInfo_shareMessage: string
+  channelInfo_shareChannelTitle: string
+  channelInfo_copyLink: string
+  channelInfo_copiedTitle: string
+  channelInfo_linkCopiedMsg: string
+  channelInfo_shareEllipsis: string
+  channelInfo_privateLabel: string
+  channelInfo_shareSubPrivate: string
+  channelInfo_shareSubPublic: string
+  channelCreate_category_parenting: string
+  channelCreate_category_pregnancy: string
+  channelCreate_category_fertility: string
+  channelCreate_category_feeding: string
+  channelCreate_category_sleep: string
+  channelCreate_category_community: string
+  channelCreate_category_wellness: string
+  channelCreate_category_milestones: string
+  channelCreate_category_other: string
+  contractionTimer_notSaved: string
+  contractionTimer_couldNotSave: string
+  contractionTimer_a11yEnd: string
+  contractionTimer_a11yStart: string
+  contractionTimer_a11ySaveSession: string
+  contractionTimer_a11yReset: string
+  appointmentList_a11yAdd: string
+  appointmentList_a11yDismiss: string
+  appointmentList_a11yType: string
+  cycleMoodStrip_moodSheetTitle: string
+  affirmationShare_share: string
+  affirmationShare_dialogTitle: string
+  affirmationShare_unavailable: string
+  affirmationShare_deviceCannotShare: string
+  affirmationShare_shareFailed: string
+  affirmationShare_hintTextOnly: string
+  affirmationShare_hintWithBg: string
+  affirmationShare_withBackground: string
+  affirmationShare_textOnly: string
+  affirmationShare_copied: string
+  affirmationShare_pasteHint: string
+  affirmationShare_holdToSaveInstead: string
+  affirmationShare_trySaveInstead: string
+  affirmationShare_couldNotCreate: string
+  affirmationShare_photosAccessNeeded: string
+  affirmationShare_openingSettings: string
+  affirmationShare_savedToPhotos: string
+  affirmationShare_openPhotosHint: string
+  affirmationShare_a11yTile: string
+  affirmationShare_a11yTileHint: string
 }

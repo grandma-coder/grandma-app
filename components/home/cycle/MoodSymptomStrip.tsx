@@ -22,8 +22,9 @@ import { MoodSymptomPickerSheet } from './MoodSymptomPickerSheet'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PaperCard } from '../../ui/PaperCard'
 import { Sad, Smiley, Sleepy } from '../../ui/Stickers'
-import { useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 
 type MoodId = '1' | '2' | '3' | '4' | '5'
@@ -107,8 +108,8 @@ export function MoodSymptomStrip({ phase }: Props) {
       }
       await qc.invalidateQueries({ queryKey: ['cycleLogs'] })
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Unknown error'
-      Alert.alert('Error', message)
+      const message = e instanceof Error ? e.message : t('common_unknownError')
+      Alert.alert(t('common_error'), message)
     }
   }
 
@@ -128,8 +129,8 @@ export function MoodSymptomStrip({ phase }: Props) {
       await qc.invalidateQueries({ queryKey: ['cycleLogs'] })
       setMoodSheet(false)
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Unknown error'
-      Alert.alert('Error', message)
+      const message = e instanceof Error ? e.message : t('common_unknownError')
+      Alert.alert(t('common_error'), message)
     }
   }
 
@@ -143,32 +144,38 @@ export function MoodSymptomStrip({ phase }: Props) {
           <Text style={[styles.heading, { fontFamily: diffuse ? diffuseFont.display : font.display, color: diffuse ? dt.colors.ink : ink }]}>
             {t('cycleMoodStrip_heading')}
           </Text>
-          <Pressable
-            onPress={() => setMoodSheet(true)}
-            hitSlop={6}
-            style={[
-              styles.face,
-              diffuse
-                ? {
-                    backgroundColor: 'transparent',
-                    borderColor: hasMood ? dt.colors.hairline : dt.colors.line2,
-                    borderStyle: 'solid',
-                  }
-                : {
-                    backgroundColor: hasMood ? stickers.yellow : colors.surfaceRaised,
-                    borderColor: hasMood ? ink : colors.border,
-                    borderStyle: hasMood ? 'solid' : 'dashed',
-                  },
-            ]}
-          >
-            {hasMood ? (
-              <MoodFace id={moodId!} size={18} stickerSet={stickers} />
-            ) : (
-              <Text style={{ fontSize: 15, color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.bodyBold, marginTop: -1 }}>
-                +
-              </Text>
-            )}
-          </Pressable>
+          {diffuse ? (
+            <Pressable onPress={() => setMoodSheet(true)} hitSlop={6}>
+              {hasMood ? (
+                <DiffuseBloomIcon color={getDiffuseAccent('pre-pregnancy', dt.isDark)} size={38} intensity={0.5}>
+                  <MoodFace id={moodId!} size={20} stickerSet={stickers} />
+                </DiffuseBloomIcon>
+              ) : (
+                <View style={[styles.face, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
+                  <Text style={{ fontSize: 16, color: dt.colors.ink3, fontFamily: diffuseFont.body, marginTop: -1 }}>+</Text>
+                </View>
+              )}
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => setMoodSheet(true)}
+              hitSlop={6}
+              style={[
+                styles.face,
+                {
+                  backgroundColor: hasMood ? stickers.yellow : colors.surfaceRaised,
+                  borderColor: hasMood ? ink : colors.border,
+                  borderStyle: hasMood ? 'solid' : 'dashed',
+                },
+              ]}
+            >
+              {hasMood ? (
+                <MoodFace id={moodId!} size={18} stickerSet={stickers} />
+              ) : (
+                <Text style={{ fontSize: 15, color: colors.textMuted, fontFamily: font.bodyBold, marginTop: -1 }}>+</Text>
+              )}
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.chips}>
@@ -240,7 +247,7 @@ export function MoodSymptomStrip({ phase }: Props) {
         onClose={() => setPickerOpen(false)}
         initialSelected={todaySymptoms}
       />
-      <LogSheet visible={moodSheet} title="How's today?" onClose={() => setMoodSheet(false)}>
+      <LogSheet visible={moodSheet} title={t('cycleMoodStrip_moodSheetTitle')} onClose={() => setMoodSheet(false)}>
         <View style={styles.moodRow}>
           {MOODS.map((id) => {
             const active = moodToday === id

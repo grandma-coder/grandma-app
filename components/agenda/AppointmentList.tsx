@@ -118,7 +118,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
         onPress={() => setShowAdd(true)}
         style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.85 }]}
         accessibilityRole="button"
-        accessibilityLabel="Add appointment"
+        accessibilityLabel={t('appointmentList_a11yAdd')}
       >
         <Ionicons name="add-circle-outline" size={20} color={colors.textInverse} />
         <Text style={styles.addButtonText}>{t('preg_appts_addButton')}</Text>
@@ -157,7 +157,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
         <Pressable
           style={styles.modalOverlay}
           onPress={() => setShowAdd(false)}
-          accessibilityLabel="Dismiss appointment form"
+          accessibilityLabel={t('appointmentList_a11yDismiss')}
         >
           <Pressable style={styles.modalSheet} onPress={() => { /* swallow */ }}>
             <View style={styles.modalHandle} />
@@ -176,7 +176,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
                       isActive && { borderColor: type.color, backgroundColor: type.color + '22' },
                     ]}
                     accessibilityRole="button"
-                    accessibilityLabel={`Type: ${type.label}`}
+                    accessibilityLabel={t('appointmentList_a11yType', { type: type.label })}
                   >
                     <Ionicons name={type.icon as any} size={14} color={isActive ? type.color : colors.textMuted} />
                     <Text style={[styles.typeChipText, isActive && { color: type.color }]}>{type.label}</Text>
@@ -222,7 +222,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
                 onPress={() => setShowAdd(false)}
                 style={styles.cancelButton}
                 accessibilityRole="button"
-                accessibilityLabel="Cancel"
+                accessibilityLabel={t('common_cancel')}
               >
                 <Text style={styles.cancelText}>{t('common_cancel')}</Text>
               </Pressable>
@@ -231,7 +231,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
                 style={[styles.submitButton, !title.trim() && { opacity: 0.5 }]}
                 disabled={!title.trim()}
                 accessibilityRole="button"
-                accessibilityLabel="Add appointment"
+                accessibilityLabel={t('appointmentList_a11yAdd')}
               >
                 <Text style={styles.submitText}>{t('preg_appts_submitAdd')}</Text>
                 <Ionicons name="add-circle" size={18} color={colors.textInverse} />

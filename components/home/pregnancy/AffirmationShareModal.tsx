@@ -75,7 +75,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
     try {
       const canShare = await Sharing.isAvailableAsync()
       if (!canShare) {
-        toast.show({ title: 'Sharing unavailable', message: 'Your device cannot share right now.', autoDismiss: 1800 })
+        toast.show({ title: t('affirmationShare_unavailable'), message: t('affirmationShare_deviceCannotShare'), autoDismiss: 1800 })
         return
       }
       const uri = await captureRef(ref, {
@@ -85,11 +85,11 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
       })
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Share affirmation',
+        dialogTitle: t('affirmationShare_dialogTitle'),
         UTI: 'public.png',
       })
     } catch {
-      toast.show({ title: 'Share failed', message: 'Please try again.', autoDismiss: 1800 })
+      toast.show({ title: t('affirmationShare_shareFailed'), message: t('common_tryAgain'), autoDismiss: 1800 })
     }
   }
 
@@ -100,7 +100,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: chromeBorder }]}>
           <PillButton
-            label="Close"
+            label={t('common_close')}
             onPress={onClose}
             variant="paper"
             height={38}
@@ -120,7 +120,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
             </Text>
           </View>
           <PillButton
-            label="Share"
+            label={t('affirmationShare_share')}
             onPress={handleHeaderShare}
             variant="ink"
             height={38}
@@ -137,13 +137,13 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
               : { color: colors.textMuted, fontFamily: font.bodyMedium },
           ]}
         >
-          {styleMode === 'text' ? 'Tap to copy · Hold to copy' : 'Tap to save · Hold to copy'}
+          {styleMode === 'text' ? t('affirmationShare_hintTextOnly') : t('affirmationShare_hintWithBg')}
         </Text>
 
         {/* Background / text-only toggle */}
         <View style={styles.toggleWrap}>
           <StickerButton
-            label="With background"
+            label={t('affirmationShare_withBackground')}
             color={stickers.yellow}
             colorSoft={stickers.yellowSoft}
             colorDark="#C4A828"
@@ -154,7 +154,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
             style={styles.toggleBtn}
           />
           <StickerButton
-            label="Text only"
+            label={t('affirmationShare_textOnly')}
             color={stickers.lilac}
             colorSoft={stickers.lilacSoft}
             colorDark="#8B74C5"
@@ -213,6 +213,7 @@ function TemplateTile({
   const scale = TILE_W / CANVAS_W
   const shotRef = useRef<ViewShot | null>(null)
   const toast = useSavedToast()
+  const { t } = useTranslation()
 
   const checkOpacity = useRef(new Animated.Value(0)).current
   const checkScale = useRef(new Animated.Value(0.5)).current
@@ -249,18 +250,18 @@ function TemplateTile({
         if (Platform.OS === 'ios') {
           const base64 = await captureRef(shotRef.current, { format: 'png', quality: 1, result: 'base64' })
           await Clipboard.setImageAsync(base64)
-          toast.show({ title: 'Copied!', message: 'Paste into your Story or a message.', autoDismiss: 1800 })
+          toast.show({ title: t('affirmationShare_copied'), message: t('affirmationShare_pasteHint'), autoDismiss: 1800 })
         } else {
           const uri = await captureRef(shotRef.current, { format: 'png', quality: 1, result: 'tmpfile' })
           const available = await Sharing.isAvailableAsync()
           if (available) {
-            await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share affirmation' })
+            await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('affirmationShare_dialogTitle') })
           } else {
-            toast.show({ title: 'Sharing unavailable', message: 'Tap and hold to save instead.', autoDismiss: 2400 })
+            toast.show({ title: t('affirmationShare_unavailable'), message: t('affirmationShare_holdToSaveInstead'), autoDismiss: 2400 })
           }
         }
       } catch {
-        toast.show({ title: 'Share failed', message: "Couldn't create image. Try again.", autoDismiss: 1800 })
+        toast.show({ title: t('affirmationShare_shareFailed'), message: t('affirmationShare_couldNotCreate'), autoDismiss: 1800 })
       }
       return
     }
@@ -270,8 +271,8 @@ function TemplateTile({
         // No image-clipboard fallback on Android either, so route the user
         // to Settings directly — there's no way forward without permission.
         toast.show({
-          title: 'Photos access needed',
-          message: 'Opening Settings — enable Photos access for grandma.app.',
+          title: t('affirmationShare_photosAccessNeeded'),
+          message: t('affirmationShare_openingSettings'),
           autoDismiss: 2400,
         })
         setTimeout(() => Linking.openSettings().catch(() => {}), 500)
@@ -280,9 +281,9 @@ function TemplateTile({
       const uri = await captureRef(shotRef.current, captureArgs)
       await MediaLibrary.saveToLibraryAsync(uri)
       playCheck()
-      toast.show({ title: 'Saved to Photos', message: 'Open Photos to share or edit.', autoDismiss: 1800 })
+      toast.show({ title: t('affirmationShare_savedToPhotos'), message: t('affirmationShare_openPhotosHint'), autoDismiss: 1800 })
     } catch {
-      toast.show({ title: 'Save failed', message: 'Please try again.', autoDismiss: 1800 })
+      toast.show({ title: t('common_saveFailed'), message: t('common_tryAgain'), autoDismiss: 1800 })
     }
   }
 
@@ -292,19 +293,19 @@ function TemplateTile({
       if (Platform.OS === 'ios') {
         const base64 = await captureRef(shotRef.current, { format: 'png', quality: 0.95, result: 'base64' })
         await Clipboard.setImageAsync(base64)
-        toast.show({ title: 'Copied!', message: 'Paste into your Story or a message.', autoDismiss: 1800 })
+        toast.show({ title: t('affirmationShare_copied'), message: t('affirmationShare_pasteHint'), autoDismiss: 1800 })
       } else {
         // Android: copy isn't supported for images — share-sheet instead.
         const uri = await captureRef(shotRef.current, { format: 'png', quality: 0.95, result: 'tmpfile' })
         const available = await Sharing.isAvailableAsync()
         if (available) {
-          await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share affirmation' })
+          await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('affirmationShare_dialogTitle') })
         } else {
-          toast.show({ title: 'Sharing unavailable', message: 'Try the Save button instead.', autoDismiss: 2400 })
+          toast.show({ title: t('affirmationShare_unavailable'), message: t('affirmationShare_trySaveInstead'), autoDismiss: 2400 })
         }
       }
     } catch {
-      toast.show({ title: 'Share failed', message: "Couldn't create image. Try again.", autoDismiss: 1800 })
+      toast.show({ title: t('affirmationShare_shareFailed'), message: t('affirmationShare_couldNotCreate'), autoDismiss: 1800 })
     }
   }
 
@@ -318,8 +319,8 @@ function TemplateTile({
       onLongPress={handleLongCopy}
       delayLongPress={600}
       accessibilityRole="button"
-      accessibilityLabel="Affirmation template. Tap to save or share. Long press to copy."
-      accessibilityHint="Long press for sharing options"
+      accessibilityLabel={t('affirmationShare_a11yTile')}
+      accessibilityHint={t('affirmationShare_a11yTileHint')}
       style={({ pressed }) => [
         styles.tile,
         {
