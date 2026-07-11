@@ -39,6 +39,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
+import { KidsWallet } from './KidsWallet'
 import { GrowthPercentileChart } from '../kids/GrowthPercentileChart'
 import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker, Star as StarSticker, Cross as CrossSticker, Moon as MoonSticker, Sparkle as SparkleSticker, Leaf as LeafSticker, Pill as PillSticker } from '../ui/Stickers'
 import { StickerPalette } from '../stickers/BrandStickers'
@@ -2163,156 +2164,11 @@ export function KidsHome() {
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
 
-      {/* ─── Set Goals Button ────────────────────────────────────── */}
-      {diffuse ? (
-        /* containerless hairline row — no card, no wash (bias-to-less) */
-        <Pressable
-          onPress={() => setGoalsModalVisible(true)}
-          style={({ pressed }) => [{
-            flexDirection: 'row', alignItems: 'center', gap: 12,
-            paddingVertical: 16, paddingHorizontal: 2,
-            borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth,
-            borderColor: dt.colors.line2, opacity: pressed ? 0.6 : 1,
-          }]}
-        >
-          <Text style={{ fontSize: 22, fontFamily: diffuseFont.displayMedium, color: dt.colors.ink, letterSpacing: -0.4 }}>{t('kids_home_set_goals_btn')}</Text>
-          <Text style={{ flex: 1, textAlign: 'right', fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.4, fontSize: 9.5, color: dt.colors.ink3 }}>
-            {t('kids_home_set_goals_hint')}
-          </Text>
-          <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} />
-        </Pressable>
-      ) : (
-      <Pressable
-        onPress={() => setGoalsModalVisible(true)}
-        style={({ pressed }) => [
-          s.setGoalsBtn,
-          {
-            backgroundColor: colors.surface,
-            borderColor: isDark ? colors.border : '#141313',
-            shadowColor: '#141313',
-            shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-            shadowOpacity: 1,
-            shadowRadius: 0,
-            elevation: 4,
-            transform: [{ translateY: pressed ? 2 : 0 }],
-          },
-        ]}
-      >
-        <View
-          style={[
-            s.setGoalsBtnIcon,
-            {
-              backgroundColor: '#F5D652',
-              borderWidth: 1.2,
-              borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#141313',
-            },
-          ]}
-        >
-          <StarSticker size={20} fill="#F5D652" stroke="#141313" />
-        </View>
-        <Text style={[s.setGoalsBtnText, { color: colors.text, fontFamily: font.displayBold }]}>{t('kids_home_set_goals_btn')}</Text>
-        <Text style={[s.setGoalsBtnHint, { color: isDark ? colors.textMuted : 'rgba(20,19,19,0.55)', fontFamily: font.bodyMedium }]}>
-          {t('kids_home_set_goals_hint')}
-        </Text>
-        <View
-          style={{
-            width: 26, height: 26, borderRadius: 13,
-            backgroundColor: colors.surface,
-            borderWidth: 1.2, borderColor: isDark ? colors.border : '#141313',
-            alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <ChevronRight size={13} color={colors.text} strokeWidth={2.4} />
-        </View>
-      </Pressable>
-      )}
-
-      {/* ─── Health + Diaper (Mood + Calories live in hero tiles now) ─── */}
-      <View style={s.sectionHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {diffuse ? null : (
-            <View style={{ transform: [{ rotate: '-8deg' }] }}>
-              <HeartSticker size={28} fill="#EE7B6D" />
-            </View>
-          )}
-          <Text style={[s.sectionTitle, diffuse
-            ? { color: dt.colors.ink, fontFamily: diffuseFont.displayMedium, fontSize: 24, letterSpacing: -0.5 }
-            : { color: colors.text }]}>{t('kids_home_section_health_care')}</Text>
-        </View>
-      </View>
-
-      <Pressable onPress={() => setHealthModalVisible(true)}>
-        <HealthCard reminders={reminders} healthHistory={healthHistory} child={child} />
-      </Pressable>
-      {rangeData.diaperCount > 0 && (
-        <Pressable onPress={() => setDiaperModalVisible(true)} style={{ marginTop: 10 }}>
-          <DiaperCard count={rangeData.diaperCount} pee={rangeData.diaperPee} poop={rangeData.diaperPoop} mixed={rangeData.diaperMixed} diaperByDay={rangeData.diaperByDay} startDate={dateBounds.startDate} endDate={dateBounds.endDate} />
-        </Pressable>
-      )}
-
-      {/* ─── Growth Leap ──────────────────────────────────────── */}
-      {growthLeap && <GrowthLeapCard leap={growthLeap} childName={child.name} />}
-
-      {/* ─── Reminders ────────────────────────────────────────── */}
-      <View style={s.sectionHeader}>
-        <Pressable
-          onPress={() => reminders.length > 0 && setRemindersModalVisible(true)}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
-          hitSlop={6}
-        >
-          {diffuse ? null : (
-            <View style={{ transform: [{ rotate: '10deg' }] }}>
-              <FlowerSticker size={28} petal="#C8B6E8" center="#F5D652" />
-            </View>
-          )}
-          <Text style={[s.sectionTitle, diffuse
-            ? { color: dt.colors.ink, fontFamily: diffuseFont.displayMedium, fontSize: 24, letterSpacing: -0.5 }
-            : { color: colors.text }]}>{t('kids_home_section_reminders')}</Text>
-          {reminders.length > 0 ? (
-            <View style={diffuse ? {
-              paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
-              borderWidth: 1, borderColor: dt.colors.line2,
-            } : {
-              paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
-              backgroundColor: brand.kids + '18',
-            }}>
-              <Text style={diffuse
-                ? { fontSize: 10, fontFamily: diffuseFont.monoBold, color: dt.colors.ink3, letterSpacing: 0.5 }
-                : { fontSize: 11, fontFamily: font.bodyBold, color: brand.kids, letterSpacing: 0.3 }}>
-                {reminders.filter(r => !r.done).length}
-              </Text>
-            </View>
-          ) : null}
-        </Pressable>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {reminders.length > 0 ? (
-            <Pressable
-              onPress={() => setRemindersModalVisible(true)}
-              style={[s.addReminderBtn, diffuse
-                ? { borderWidth: 1, borderColor: dt.colors.line, borderRadius: radius.full }
-                : { backgroundColor: 'rgba(20,19,19,0.05)', borderRadius: radius.full }]}
-              hitSlop={6}
-            >
-              <Text style={[s.addReminderBtnText, diffuse
-                ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 10 }
-                : { color: colors.textSecondary }]}>{t('kids_home_reminders_view_all')}</Text>
-            </Pressable>
-          ) : null}
-          <Pressable
-            onPress={() => { setShowReminderInput(!showReminderInput); setNewReminderText('') }}
-            style={[s.addReminderBtn, diffuse
-              ? { borderWidth: 1, borderColor: dt.colors.line, borderRadius: radius.full }
-              : { backgroundColor: brand.kids + '15', borderRadius: radius.full }]}
-          >
-            <Plus size={13} color={diffuse ? dt.colors.ink3 : brand.kids} strokeWidth={diffuse ? 1.8 : 2.5} />
-            <Text style={[s.addReminderBtnText, diffuse
-              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 10 }
-              : { color: brand.kids }]}>{t('kids_home_reminders_add_btn')}</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {showReminderInput && (
+      {/* ─── Wallet stack (Set Goals → Rewards) ─────────────── */}
+      {(() => {
+        const growthLeapBody = growthLeap ? (<GrowthLeapCard leap={growthLeap} childName={child.name} />) : null
+        const remindersBody = (
+          <View style={{ gap: 12 }}>
         <View style={[s.reminderInputCard, diffuse ? {
           backgroundColor: dt.colors.surface,
           borderRadius: radius.lg,
@@ -2635,8 +2491,6 @@ export function KidsHome() {
             </View>
           )}
         </View>
-      )}
-
       {(() => {
         const active = reminders.filter(r => !r.done)
         const archived = reminders.filter(r => r.done)
@@ -2685,6 +2539,21 @@ export function KidsHome() {
               </Pressable>
             )}
           </View>
+        )
+      })()}
+          </View>
+        )
+        return (
+          <KidsWallet
+            hasDiaper={rangeData.diaperCount > 0}
+            hasGrowthLeap={!!growthLeap}
+            growthLeapName={growthLeap?.name}
+            onOpenGoals={() => setGoalsModalVisible(true)}
+            onOpenHealth={() => setHealthModalVisible(true)}
+            onOpenDiaper={() => setDiaperModalVisible(true)}
+            growthLeapBody={growthLeapBody}
+            remindersBody={remindersBody}
+          />
         )
       })()}
 
