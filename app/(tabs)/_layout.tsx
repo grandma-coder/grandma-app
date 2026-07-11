@@ -29,7 +29,7 @@ import { getModeConfig } from '../../lib/modeConfig'
 import { useTheme, brand, getModeColor, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
-import { useIsDiffuse, SoftBloom } from '../../components/ui/diffuse/DiffuseKit'
+import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 
 // ─── Collage Strip constants ───────────────────────────────────────────────
@@ -136,6 +136,9 @@ function CenterTabButton() {
   const fullName = (profile?.name ?? parentName ?? '').trim()
   const userName = fullName.split(/\s+/)[0] || 'dear'
   const [open, setOpen] = useState(false)
+  // Diffuse word-stack: which destination is focused (shows its subtitle + is
+  // the target of GO). Defaults to the middle item.
+  const [focusedIdx, setFocusedIdx] = useState(Math.floor(WHEEL_ITEMS.length / 2))
 
   // Animated values
   const overlayAnim = useRef(new Animated.Value(0)).current
@@ -144,6 +147,7 @@ function CenterTabButton() {
 
   const animateOpen = useCallback(() => {
     setOpen(true)
+    setFocusedIdx(Math.floor(WHEEL_ITEMS.length / 2))
     Animated.timing(overlayAnim, { toValue: 1, duration: 260, useNativeDriver: true }).start()
     Animated.spring(spinAnim, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }).start()
     // Fan (leque) open — stagger per item, spring out from pivot
@@ -235,6 +239,71 @@ function CenterTabButton() {
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: scrimColor, opacity: overlayAnim }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={animateClose} />
         </Animated.View>
+
+        {/* ── Diffuse: immersive word-stack menu ─────────────────────────────
+            A big soft breathing mode-accent bloom + a vertical stack of the
+            destinations as large serif words. The focused word shows its
+            subtitle; tap a word to focus, tap the focused word (or GO) to go. */}
+        {diffuse ? (
+          <>
+            {/* Large calm breathing bloom, centered on the screen. */}
+            <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: overlayAnim }]}>
+              <SoftBloom color={accentColor} cx="50%" cy="46%" opacity={dt.isDark ? 0.42 : 0.5} spread={0.4} radius="58%" />
+            </Animated.View>
+
+            {/* Prompt */}
+            <Animated.View pointerEvents="none" style={[styles.prompt, { top: insets.top + 72, opacity: overlayAnim }]}>
+              <Text style={[styles.promptKicker, { color: ink3Color, fontFamily: diffuseFont.mono }]}>{t('tabFan_kicker')}</Text>
+              <Text style={[styles.promptLine, { color: inkColor, fontFamily: diffuseFont.display }]}>
+                {t('tabFan_whereTo')}
+                <Text style={[styles.promptItalic, { color: accentColor, fontFamily: diffuseFont.italic }]}>{`${userName}?`}</Text>
+              </Text>
+            </Animated.View>
+
+            {/* Vertical word-stack */}
+            <View style={styles.wordStack} pointerEvents="box-none">
+              {WHEEL_ITEMS.map((item, i) => {
+                const focused = i === focusedIdx
+                const anim = itemAnims[i]
+                return (
+                  <Animated.View
+                    key={item.id}
+                    style={{
+                      opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0, focused ? 1 : 0.32] }),
+                      transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
+                    }}
+                  >
+                    <Pressable
+                      onPress={() => (focused ? handleItem(item.route) : setFocusedIdx(i))}
+                      style={({ pressed }) => [styles.wordRow, { opacity: pressed ? 0.6 : 1 }]}
+                    >
+                      <Text style={[styles.word, { color: focused ? inkColor : ink3Color, fontFamily: diffuseFont.display }]}>
+                        {t(item.labelKey)}
+                      </Text>
+                      {focused ? (
+                        <Text style={[styles.wordSub, { color: ink3Color, fontFamily: diffuseFont.mono }]} numberOfLines={1}>
+                          {t(item.subtitleKey)}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  </Animated.View>
+                )
+              })}
+            </View>
+
+            {/* GO CTA — navigates the focused destination. */}
+            <Animated.View style={[styles.goWrap, { bottom: insets.bottom + 40, opacity: overlayAnim }]}>
+              <Pressable
+                onPress={() => handleItem(WHEEL_ITEMS[focusedIdx].route)}
+                style={({ pressed }) => [styles.goPill, { borderColor: dt.colors.line2, backgroundColor: dt.colors.surface, opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Text style={[styles.goText, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>GO</Text>
+                <DiffuseArrow color={accentColor} size={18} />
+              </Pressable>
+            </Animated.View>
+          </>
+        ) : (
+        <>
 
         {/* Decorative sticker confetti — sits above scrim, below tiles.
             Hidden under Diffuse (the calm variant has no collage confetti). */}
@@ -360,6 +429,8 @@ function CenterTabButton() {
             </Animated.View>
           )
         })}
+        </>
+        )}
       </Modal>
     </>
   )
@@ -830,6 +901,48 @@ const styles = StyleSheet.create({
   promptItalic: {
     fontFamily: font.italic,
     fontStyle: 'italic',
+  },
+  // ── Diffuse word-stack menu ──
+  wordStack: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  wordRow: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  word: {
+    fontSize: 38,
+    letterSpacing: -0.6,
+    lineHeight: 44,
+    textAlign: 'center',
+  },
+  wordSub: {
+    fontSize: 10.5,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    marginTop: 6,
+  },
+  goWrap: {
+    position: 'absolute',
+    right: 24,
+    alignItems: 'flex-end',
+  },
+  goPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  goText: {
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   promptRule: {
     width: 36,
