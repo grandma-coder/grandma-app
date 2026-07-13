@@ -62,6 +62,7 @@ export function KidsWallet({
       switch (id) {
         case 'goals': return <Character name="star" size={26} color={stickers.yellow} />
         case 'health': return <Character name="health" size={26} color={stickers.coral} />
+        case 'exams': return <Character name="exam" size={26} color={stickers.lilac} />
         case 'diaper': return <Character name="diaper" size={26} color={stickers.peach} />
         case 'growth_leap': return <Character name="growth" size={26} color={stickers.green} />
         case 'reminders': return <Character name="clock" size={26} color={stickers.blue} />
@@ -72,6 +73,7 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return <StarSticker size={24} fill={stickers.yellow} stroke="#141313" />
       case 'health': return <HeartSticker size={24} fill={stickers.coral} />
+      case 'exams': return <Character name="exam" size={24} color={stickers.lilac} />
       case 'diaper': return <LogDiaper size={24} />
       case 'growth_leap': return <LogGrowth size={24} />
       case 'reminders': return <NotifyRoutine size={24} />
@@ -84,6 +86,7 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return t('kids_home_set_goals_btn')
       case 'health': return t('kids_home_section_health_care')
+      case 'exams': return t('kids_home_exams_title')
       case 'diaper': return t('kids_home_diaper_tracker_title')
       case 'growth_leap': return growthLeapName ?? t('kids_home_section_reminders')
       case 'reminders': return t('kids_home_section_reminders')
@@ -96,6 +99,7 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return onOpenGoals()
       case 'health': return onOpenHealth()
+      case 'exams': return router.push('/exams' as never)
       case 'diaper': return onOpenDiaper()
       case 'ask_grandma': return router.push('/grandma-talk' as never)
       case 'rewards': return router.push('/daily-rewards' as never)

@@ -881,6 +881,7 @@ export const ko: TranslationKeys = {
   kids_home_range_past_7days: "Past 7 Days",
   kids_home_range_past_30days: "Past 30 Days",
   kids_home_diaper_tracker_title: "Diaper Tracker",
+  kids_home_exams_title: "Exams",
   kids_home_diaper_trend_label: "Trend",
   kids_home_diaper_stool_color: "Stool Color",
   kids_home_mood_trends_title: "Mood Trends",

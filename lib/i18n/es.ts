@@ -881,6 +881,7 @@ export const es: TranslationKeys = {
   kids_home_range_past_7days: "Últimos 7 Días",
   kids_home_range_past_30days: "Últimos 30 Días",
   kids_home_diaper_tracker_title: "Rastreador de Pañales",
+  kids_home_exams_title: "Exams",
   kids_home_diaper_trend_label: "Tendencia",
   kids_home_diaper_stool_color: "Color de las Heces",
   kids_home_mood_trends_title: "Tendencias del Estado de Ánimo",

@@ -989,6 +989,7 @@ export interface TranslationKeys {
   kids_home_range_past_7days: string
   kids_home_range_past_30days: string
   kids_home_diaper_tracker_title: string
+  kids_home_exams_title: string
   kids_home_diaper_trend_label: string
   kids_home_diaper_stool_color: string
   kids_home_mood_trends_title: string

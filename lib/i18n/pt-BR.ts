@@ -881,6 +881,7 @@ export const ptBR: TranslationKeys = {
   kids_home_range_past_7days: "Últimos 7 dias",
   kids_home_range_past_30days: "Últimos 30 dias",
   kids_home_diaper_tracker_title: "Rastreador de Fraldas",
+  kids_home_exams_title: "Exams",
   kids_home_diaper_trend_label: "Tendência",
   kids_home_diaper_stool_color: "Cor das Fezes",
   kids_home_mood_trends_title: "Tendências de Humor",

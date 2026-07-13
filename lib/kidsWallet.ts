@@ -6,14 +6,14 @@
  * unit-tested in isolation.
  *
  * Card set (below the 2×2 stat tiles), in order:
- *   goals (always) · health (always) · diaper? · growth_leap? · reminders
- *   (always) · ask_grandma (always) · rewards (always)
+ *   goals (always) · health (always) · exams (always) · diaper? ·
+ *   growth_leap? · reminders (always) · ask_grandma (always) · rewards (always)
  */
 
 import type { WalletTone } from './wallet'
 
 export type KidsWalletCardId =
-  | 'goals' | 'health' | 'diaper' | 'growth_leap'
+  | 'goals' | 'health' | 'exams' | 'diaper' | 'growth_leap'
   | 'reminders' | 'ask_grandma' | 'rewards'
 
 export interface KidsWalletCardDescriptor {
@@ -36,6 +36,7 @@ export function buildKidsWalletCards(input: BuildKidsWalletCardsInput): KidsWall
   const cards: KidsWalletCardDescriptor[] = [
     { id: 'goals', tone: 'yellow', linkOnly: true },
     { id: 'health', tone: 'green', linkOnly: true },
+    { id: 'exams', tone: 'lilac', linkOnly: true },
   ]
 
   if (hasDiaper) {
