@@ -27,6 +27,8 @@ export type CharacterName =
   | 'star' | 'sparkle' | 'sun' | 'night' | 'heart' | 'streak' | 'crown' | 'gem'
   // wellness · relationship · misc
   | 'soothe' | 'hug' | 'community' | 'note' | 'photo' | 'bell' | 'clock'
+  // birth-guide topics
+  | 'cloud' | 'key' | 'lungs' | 'warning'
 
 // Default hue per concept (deepened sticker palette). Overridable via `color`.
 const HUE: Record<CharacterName, string> = {
@@ -39,6 +41,7 @@ const HUE: Record<CharacterName, string> = {
   streak: '#D86A4F', crown: '#C9A02C', gem: '#7FA8D8',
   soothe: '#8E72C9', hug: '#D98CA6', community: '#7A9D4A', note: '#E08A5A', photo: '#7FA8D8', bell: '#C9A02C',
   clock: '#8E72C9',
+  cloud: '#7FA8D8', key: '#C9A02C', lungs: '#D98CA6', warning: '#D86A4F',
 }
 
 // Blob silhouette (48×48) per concept, ported from the approved set.
@@ -83,13 +86,17 @@ const D: Record<CharacterName, string> = {
   photo: 'M8 14h6l3-4h14l3 4h6v24H8Z',
   bell: 'M24 6c-7 0-11 5-11 12 0 8-4 10-4 12h30c0-2-4-4-4-12 0-7-4-12-11-12ZM20 34a4 4 0 0 0 8 0',
   clock: 'M24 6a18 18 0 1 1 0 36 18 18 0 0 1 0-36Z',
+  cloud: 'M14 34a8 8 0 0 1-1-16 10 10 0 0 1 19-2 7 7 0 0 1 2 18Z',
+  key: 'M17 6a11 11 0 1 0 8 18l10 10 4-4-3-3 3-3-4-4-3 3-3-3a11 11 0 0 0-9-14ZM16 13a4.5 4.5 0 1 1 0 7 4.5 4.5 0 0 1 0-7Z',
+  lungs: 'M23 6h2v10c0 2 2 3 4 3 4 0 6 3 6 9v8c0 3-2 5-5 5s-5-2-5-5V19h-2v17c0 3-2 5-5 5s-5-2-5-5v-8c0-6 2-9 6-9 2 0 4-1 4-3V6Z',
+  warning: 'M21 6a4 4 0 0 1 6 0l16 30a4 4 0 0 1-3 6H8a4 4 0 0 1-3-6Z',
 }
 
 // Face per concept. Eyes ONLY on creatures/subjects; object glyphs are faceless
 // ('none'). Some creatures use an expression; some concepts use a "cut-out"
 // detail rendered in the surface/paper colour (pulse, target, wave, blip, lens,
 // or the community's four eyes).
-type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'blip' | 'lens' | 'quad' | 'check' | 'hands' | 'none'
+type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'blip' | 'lens' | 'quad' | 'check' | 'hands' | 'warn' | 'none'
 const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, number] }> = {
   // subjects / creatures → eyes
   nutrition: { kind: 'dots', e: [19, 30, 29, 30] },
@@ -108,6 +115,10 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   heart: { kind: 'smile', e: [18, 19, 28, 19] },
   hug: { kind: 'smile', e: [20, 16, 28, 16] },
   community: { kind: 'quad', e: [0, 0, 0, 0] },
+  cloud: { kind: 'dots', e: [19, 27, 27, 27] },
+  key: { kind: 'none', e: [0, 0, 0, 0] },
+  lungs: { kind: 'none', e: [0, 0, 0, 0] },
+  warning: { kind: 'warn', e: [0, 0, 0, 0] },
   // concept "face-as-content" cut-outs
   heartbeat: { kind: 'pulse', e: [0, 0, 0, 0] },
   ovulation: { kind: 'target', e: [0, 0, 0, 0] },
@@ -205,6 +216,12 @@ export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1
       )}
       {f.kind === 'hands' && (
         <Path d="M24 14v10l7 4" stroke={bg} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+      {f.kind === 'warn' && (
+        <>
+          <Path d="M24 19v9" stroke={bg} strokeWidth={3} fill="none" strokeLinecap="round" />
+          <Circle cx={24} cy={35} r={2} fill={bg} />
+        </>
       )}
     </Svg>
   )
