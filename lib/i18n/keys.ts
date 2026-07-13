@@ -1382,6 +1382,8 @@ export interface TranslationKeys {
   kids_calendar_tabTimeline: string
   kids_calendar_tabJourney: string
   kids_calendar_tabVisits: string
+  kids_calendar_viewMonth: string
+  kids_calendar_viewWeek: string
   kids_calendar_nothingPlanned: string
   kids_calendar_tapToLog: string
   kids_calendar_tapToLogRoutine: string

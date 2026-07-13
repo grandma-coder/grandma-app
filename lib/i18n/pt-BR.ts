@@ -1258,6 +1258,8 @@ export const ptBR: TranslationKeys = {
   kids_calendar_tabTimeline: "Cronograma",
   kids_calendar_tabJourney: "Jornada",
   kids_calendar_tabVisits: "Visitas",
+  kids_calendar_viewMonth: "Month",
+  kids_calendar_viewWeek: "Week",
   kids_calendar_nothingPlanned: "Nada planejado para este dia.",
   kids_calendar_tapToLog: "Toque + acima para registrar algo.",
   kids_calendar_tapToLogRoutine: "Toque para registrar",

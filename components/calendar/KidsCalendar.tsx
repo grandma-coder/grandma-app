@@ -92,6 +92,7 @@ import { ActivityPillCard } from './ActivityPillCard'
 import { LogTile, LogTileGrid } from './LogTile'
 import { SectionHeader } from './SectionHeader'
 import { AgendaWeekStrip } from './AgendaWeekStrip'
+import { LogMonthGrid } from './LogMonthGrid'
 import { Display, Body } from '../ui/Typography'
 import { logSticker } from './logStickers'
 import {
@@ -1213,6 +1214,8 @@ export function KidsCalendar() {
 
   const [selectedChildId, setSelectedChildId] = useState<string | 'all'>('all')
   const [view, setView] = useState<'timeline' | 'journey' | 'visits'>('timeline')
+  // Timeline sub-view: the full month grid (default) vs the compact week strip.
+  const [calView, setCalView] = useState<'month' | 'week'>('month')
   const [logSheetOpen, setLogSheetOpen] = useState(false)
   const [kidPickerOpen, setKidPickerOpen] = useState(false)
   const [dayZoomH, setDayZoomH] = useState(DAY_VIEW_DEFAULT_HOUR_H)
@@ -1759,6 +1762,21 @@ export function KidsCalendar() {
     }
     return map
   }, [monthLogs])
+
+  // Month-grid adapter: date → distinct log types, ordered by significance so
+  // the top-3 shown in each day cell are the meaningful ones (health/milestones
+  // before routine feeds). Feeds <LogMonthGrid>.
+  const monthGridByDate = useMemo(() => {
+    const PRIORITY = ['vaccine', 'health', 'temperature', 'medicine', 'milestone', 'growth', 'mood', 'sleep', 'feeding', 'food', 'diaper', 'activity', 'memory', 'note']
+    const rank = (t: string) => { const i = PRIORITY.indexOf(t); return i === -1 ? 99 : i }
+    const map = new Map<string, string[]>()
+    for (const [date, logs] of logsByDate) {
+      const seen = new Set<string>()
+      for (const l of logs) seen.add(l.type)
+      map.set(date, [...seen].sort((a, b) => rank(a) - rank(b)))
+    }
+    return map
+  }, [logsByDate])
 
   const childIdsByDate = useMemo(() => {
     const map = new Map<string, Set<string>>()
@@ -2816,11 +2834,10 @@ export function KidsCalendar() {
           <SegmentedTabs
             options={[
               { key: 'timeline', label: t('kids_calendar_tabTimeline') },
-              { key: 'journey', label: t('kids_calendar_tabJourney') },
               { key: 'visits', label: t('kids_calendar_tabVisits') },
             ]}
             value={view}
-            onChange={(k) => setView(k as 'timeline' | 'journey' | 'visits')}
+            onChange={(k) => setView(k as 'timeline' | 'visits')}
             activeBg={isDark ? brand.kids + '40' : '#9EC5FF'}
             activeFg={colors.text}
           />
@@ -2842,11 +2859,34 @@ export function KidsCalendar() {
         {view === 'timeline' ? (
           <>
             {diffuse ? (
-              <DiffuseWeekStrip
-                selectedDate={selectedDate}
-                onSelectDate={handleDayPress}
-                dotsByDate={dotsByDate}
-              />
+              <>
+                {/* Month grid (default) vs. compact week strip — toggle chip. */}
+                <View style={styles.calViewToggle}>
+                  <Pressable onPress={() => setCalView('month')} hitSlop={6} style={[styles.calViewChip, calView === 'month' && { backgroundColor: dt.colors.surface, borderColor: dt.colors.hairline }]}>
+                    <Text style={[styles.calViewChipText, { color: calView === 'month' ? dt.colors.ink : dt.colors.ink3, fontFamily: calView === 'month' ? diffuseFont.monoBold : diffuseFont.mono }]}>{t('kids_calendar_viewMonth')}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setCalView('week')} hitSlop={6} style={[styles.calViewChip, calView === 'week' && { backgroundColor: dt.colors.surface, borderColor: dt.colors.hairline }]}>
+                    <Text style={[styles.calViewChipText, { color: calView === 'week' ? dt.colors.ink : dt.colors.ink3, fontFamily: calView === 'week' ? diffuseFont.monoBold : diffuseFont.mono }]}>{t('kids_calendar_viewWeek')}</Text>
+                  </Pressable>
+                </View>
+                {calView === 'month' ? (
+                  <LogMonthGrid
+                    mode="kids"
+                    selectedDate={selectedDate}
+                    visibleMonth={{ year, month }}
+                    onSelectDate={handleDayPress}
+                    onPrevMonth={() => setViewDate(new Date(year, month - 1, 1))}
+                    onNextMonth={() => setViewDate(new Date(year, month + 1, 1))}
+                    logsByDate={monthGridByDate}
+                  />
+                ) : (
+                  <DiffuseWeekStrip
+                    selectedDate={selectedDate}
+                    onSelectDate={handleDayPress}
+                    dotsByDate={dotsByDate}
+                  />
+                )}
+              </>
             ) : (
               <AgendaWeekStrip
                 selectedDate={selectedDate}
@@ -4816,6 +4856,9 @@ const styles = StyleSheet.create({
   addLogBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 3 },
   addLogBtnDiffuse: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   toggleWrap: { marginBottom: 14 },
+  calViewToggle: { flexDirection: 'row', gap: 6, marginBottom: 10, alignSelf: 'flex-start' },
+  calViewChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'transparent' },
+  calViewChipText: { fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
   fabSheetTitleWrap: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
   fabSheetBody: { paddingHorizontal: 20, gap: 14 },
   manageRoutinesBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 999, borderWidth: 1 },

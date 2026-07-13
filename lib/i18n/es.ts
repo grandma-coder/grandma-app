@@ -1258,6 +1258,8 @@ export const es: TranslationKeys = {
   kids_calendar_tabTimeline: "Cronología",
   kids_calendar_tabJourney: "Recorrido",
   kids_calendar_tabVisits: "Visitas",
+  kids_calendar_viewMonth: "Month",
+  kids_calendar_viewWeek: "Week",
   kids_calendar_nothingPlanned: "Nada planeado para este día.",
   kids_calendar_tapToLog: "Toca + arriba para registrar algo.",
   kids_calendar_tapToLogRoutine: "Toca para registrar",
