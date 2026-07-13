@@ -558,9 +558,9 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle="4 nutrients × 7 days"
             onPress={() => setOpenPillar('nutrition')}
           >
-            <View style={[styles.chartCard, diffuse
-              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
-              : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={diffuse
+              ? styles.chartBare
+              : [styles.chartCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
               <NutritionMini matrix={nutritionMatrix} />
             </View>
           </Section>
@@ -573,11 +573,12 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle="Minutes per session · target 150 / week"
             onPress={() => setOpenPillar('exercise')}
           >
-            <View style={[styles.chartCard, diffuse
-              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
-              : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={diffuse
+              ? styles.chartBare
+              : [styles.chartCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
               {diffuse ? (
-                // Radial petal burst — each session a petal, length = minutes.
+                // Radial petal burst — floats on the page (no card), the shape
+                // is self-contained enough to stand alone.
                 <PetalBurst
                   data={exerciseHistory.map((e) => e.minutes)}
                   color={stickers.coral}
@@ -607,9 +608,9 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             onPress={() => setOpenPillar('symptoms')}
           >
             {diffuse ? (
-              // Stacked lozenges — each symptom a rounded bar, length = count,
-              // its own sticker hue, count inside. Editorial, not a ranked list.
-              <View style={[styles.listCard, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, paddingVertical: 20 }]}>
+              // Stacked lozenges — full-width bars float on the page (no card);
+              // each symptom its own sticker hue, count inside.
+              <View style={styles.chartBare}>
                 <StackedLozenges
                   data={symptomFreq.slice(0, 5).map((s, i) => ({
                     label: s.symptom,
@@ -908,7 +909,7 @@ function HeroWeekCard({
         style={[styles.hero, { borderWidth: 1, borderColor: dt.colors.line }]}
       >
         <View style={[styles.heroChip, { borderWidth: 0 }]}>
-          {renderPillarGlyph('weight', accent, 28)}
+          {renderPillarGlyph('weight', stickers.green, 28)}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.heroLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
@@ -999,7 +1000,7 @@ function HeroBanner({
           style={[styles.hero, { marginHorizontal: 0, marginTop: 0, marginBottom: 0, borderWidth: 1, borderColor: dt.colors.line }]}
         >
           <View style={[styles.heroChip, { borderWidth: 0 }]}>
-            {renderPillarGlyph(pillarKey, accent, 28)}
+            {renderPillarGlyph(pillarKey, palette.chip, 28)}
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.heroLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
@@ -3347,6 +3348,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 22,
     padding: 14,
+  },
+  // Card-less chart wrapper — chart floats on the page bg (Diffuse). Padding
+  // only, so some charts sit in a card and some breathe on the cream canvas.
+  chartBare: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
   },
   listCard: {
     borderWidth: 1,

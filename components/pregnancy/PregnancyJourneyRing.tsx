@@ -592,7 +592,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         {/* ── Bottom panel ── */}
         <ScrollView
           style={styles.panel}
-          contentContainerStyle={[styles.panelContent, { paddingBottom: insets.bottom + 32 }]}
+          contentContainerStyle={[styles.panelContent, { paddingBottom: 4 }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Size name + status — fruit anchors left, status on the right. */}
@@ -712,7 +712,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
       {/* ── Bottom panel ── */}
       <ScrollView
         style={styles.panel}
-        contentContainerStyle={[styles.panelContent, { paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[styles.panelContent, { paddingBottom: 4 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Size name + status pill — fruit anchors left, status on the right.
