@@ -6,15 +6,18 @@ import { View, StyleSheet } from 'react-native'
 import { Heart, Star, Drop, Moon, Flower } from '../../stickers/BrandStickers'
 import { cardTint, cardGlyph } from '../../../lib/dailyMessage/cardTint'
 import type { StickerColorKey } from '../../../lib/dailyMessage/types'
+import type { JourneyMode } from '../../../types'
 
 interface Props {
   color: StickerColorKey
   size?: number // socket diameter
+  /** Which mode's glyph family to use — cycle vs pregnancy read differently. */
+  mode?: JourneyMode
 }
 
-export function CardSticker({ color, size = 44 }: Props) {
+export function CardSticker({ color, size = 44, mode = 'pregnancy' }: Props) {
   const tint = cardTint(color)
-  const glyph = cardGlyph(color)
+  const glyph = cardGlyph(color, mode)
   const g = Math.round(size * 0.52)
   // Ink-colored glyph on a soft-tint socket — readable, contained accent.
   const common = { size: g, fill: tint.ink, stroke: tint.ink }

@@ -93,7 +93,7 @@ export function CycleHome() {
         <CycleTodaySummaryCard phase={info.phase as CyclePhase} />
 
         <View style={styles.cardWrap}>
-          <CycleWallet phase={info.phase as CyclePhase} />
+          <CycleWallet />
         </View>
       </ScrollView>
     </View>

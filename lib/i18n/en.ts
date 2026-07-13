@@ -1740,6 +1740,8 @@ export const en: TranslationKeys = {
 
   // ─── Cycle Today Dashboard Modal (Wave B4) ────────────────────────────────
   cycleDash_today: 'Today at a glance',
+  cycleDash_footer: 'Your daily signals',
+  cycleDash_seeResults: 'See results',
   cycleDash_mood: 'MOOD',
   cycleDash_bbt: 'BBT',
   cycleDash_lh: 'LH',

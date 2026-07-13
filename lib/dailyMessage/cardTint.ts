@@ -3,6 +3,7 @@
 // it), instead of a full-saturation fill. Not every sticker key ships a *Soft or
 // *Ink token, so this table is explicit and safe.
 import { stickers } from '../../constants/theme'
+import type { JourneyMode } from '../../types'
 import type { StickerColorKey } from './types'
 
 export interface CardTint {
@@ -40,7 +41,9 @@ export function cardHairline(color: StickerColorKey): string {
 // (in a tinted socket) instead of a bare dot — matching the app's icon-chip
 // grammar. Names map to exports in components/stickers/BrandStickers.tsx.
 export type StickerGlyph = 'Heart' | 'Star' | 'Drop' | 'Moon' | 'Flower'
-const GLYPH: Record<StickerColorKey, StickerGlyph> = {
+
+// Pregnancy leans Heart/Star — the baby-and-wonder feel.
+const GLYPH_PREGNANCY: Record<StickerColorKey, StickerGlyph> = {
   yellow: 'Star',
   blue: 'Drop',
   pink: 'Heart',
@@ -50,6 +53,27 @@ const GLYPH: Record<StickerColorKey, StickerGlyph> = {
   coral: 'Heart',
   charcoal: 'Star',
 }
-export function cardGlyph(color: StickerColorKey): StickerGlyph {
-  return GLYPH[color]
+
+// Cycle / women's-general leans Moon/Flower/Drop — the lunar-cycle, blossoming,
+// flow language. Deliberately no Heart (that reads as the pregnancy/baby motif)
+// so the two behaviors are visually distinct even at a glance.
+const GLYPH_PREPREGNANCY: Record<StickerColorKey, StickerGlyph> = {
+  yellow: 'Star',
+  blue: 'Drop',
+  pink: 'Flower',
+  green: 'Flower',
+  lilac: 'Moon',
+  peach: 'Moon',
+  coral: 'Drop',
+  charcoal: 'Star',
+}
+
+const GLYPH_BY_MODE: Record<JourneyMode, Record<StickerColorKey, StickerGlyph>> = {
+  pregnancy: GLYPH_PREGNANCY,
+  'pre-pregnancy': GLYPH_PREPREGNANCY,
+  kids: GLYPH_PREGNANCY, // no kids bank yet; safe default keeps the type total
+}
+
+export function cardGlyph(color: StickerColorKey, mode: JourneyMode = 'pregnancy'): StickerGlyph {
+  return GLYPH_BY_MODE[mode][color]
 }

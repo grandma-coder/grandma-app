@@ -1585,6 +1585,8 @@ export const es: TranslationKeys = {
   cycleSignals_emptyBody: "La temp matutina + un rápido chequeo nos dice cuándo tu ventana fértil alcanza su pico — mejor que adivinanzas del calendario.",
   cycleSignals_logFirstSignal: "Registra la primera señal",
   cycleDash_today: "Hoy de un vistazo",
+  cycleDash_footer: "Tus señales diarias",
+  cycleDash_seeResults: "Ver resultados",
   cycleDash_mood: "HUMOR",
   cycleDash_bbt: "TEMP",
   cycleDash_lh: "LH",

@@ -87,7 +87,7 @@ export default function MyCardsScreen() {
         renderItem={({ item }) => (
           <Pressable style={{ flex: 1 }} onPress={() => setOpenId(item.card.id)}>
             <View style={styles.tile}>
-              <CardSticker color={item.card.color} size={38} />
+              <CardSticker color={item.card.color} size={38} mode={item.card.mode} />
               <Display size={16} style={styles.tileText} numberOfLines={4}>{item.card.text}</Display>
               <View style={styles.tileDate}>
                 <MonoCaps color={colors.textFaint} size={9}>{fmtDate(item.row.date)}</MonoCaps>
@@ -104,7 +104,7 @@ export default function MyCardsScreen() {
             <Pressable onPress={() => setOpenId(null)} style={styles.close} hitSlop={12}>
               <X size={18} color={colors.text} strokeWidth={2} />
             </Pressable>
-            {open ? <CardSticker color={open.color} size={48} /> : null}
+            {open ? <CardSticker color={open.color} size={48} mode={open.mode} /> : null}
             <Display size={25} style={styles.bigText}>{open?.text}</Display>
             {open ? <MonoCaps color={colors.textFaint} size={9}>{fmtDate(openDate)}</MonoCaps> : null}
           </View>

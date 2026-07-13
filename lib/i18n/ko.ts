@@ -1585,6 +1585,8 @@ export const ko: TranslationKeys = {
   cycleSignals_emptyBody: "Morning temp + a quick check tells us when your fertile window actually peaks — better than calendar guesses.",
   cycleSignals_logFirstSignal: "Log first signal",
   cycleDash_today: "Today at a glance",
+  cycleDash_footer: "Your daily signals",
+  cycleDash_seeResults: "See results",
   cycleDash_mood: "MOOD",
   cycleDash_bbt: "BBT",
   cycleDash_lh: "LH",

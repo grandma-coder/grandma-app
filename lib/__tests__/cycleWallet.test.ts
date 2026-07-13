@@ -1,9 +1,9 @@
 import { buildCycleWalletCards } from '../cycleWallet'
 
 describe('buildCycleWalletCards', () => {
-  test('returns mood, pillars in order (today → quick-log card, nudge → Daily Message)', () => {
+  test('returns only pillars (today → quick-log, nudge → Daily Message, mood → Today card)', () => {
     const ids = buildCycleWalletCards().map((c) => c.id)
-    expect(ids).toEqual(['mood', 'pillars'])
+    expect(ids).toEqual(['pillars'])
   })
 
   test('all cards are expandable (not link-only)', () => {

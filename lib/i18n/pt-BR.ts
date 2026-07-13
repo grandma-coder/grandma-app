@@ -1585,6 +1585,8 @@ export const ptBR: TranslationKeys = {
   cycleSignals_emptyBody: "Temperatura matinal + uma verificação rápida nos mostram quando sua janela fértil realmente atinge o pico — melhor que adivinhas no calendário.",
   cycleSignals_logFirstSignal: "Registre o primeiro sinal",
   cycleDash_today: "Hoje em resumo",
+  cycleDash_footer: "Seus sinais diários",
+  cycleDash_seeResults: "Ver resultados",
   cycleDash_mood: "HUMOR",
   cycleDash_bbt: "TEMP BASAL",
   cycleDash_lh: "LH",

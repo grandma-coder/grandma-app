@@ -1751,6 +1751,8 @@ export interface TranslationKeys {
 
   // ─── Cycle Today Dashboard Modal (Wave B4) ────────────────────────────────
   cycleDash_today: string
+  cycleDash_footer: string
+  cycleDash_seeResults: string
   cycleDash_mood: string
   cycleDash_bbt: string
   cycleDash_lh: string

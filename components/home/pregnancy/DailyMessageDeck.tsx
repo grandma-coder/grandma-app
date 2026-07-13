@@ -70,7 +70,7 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
           const isTop = i === 0
           const body = (
             <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <CardSticker color={card.color} size={48} />
+              <CardSticker color={card.color} size={48} mode={card.mode} />
               <Display size={25} style={styles.cardText}>{card.text}</Display>
             </View>
           )

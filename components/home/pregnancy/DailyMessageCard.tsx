@@ -24,7 +24,7 @@ export function DailyMessageCard() {
 
         {isAnswered && todayCard ? (
           <View style={styles.answeredRow}>
-            <CardSticker color={todayCard.color} size={44} />
+            <CardSticker color={todayCard.color} size={44} mode={todayCard.mode} />
             <Display size={18} style={styles.flex} numberOfLines={3}>{todayCard.text}</Display>
           </View>
         ) : (

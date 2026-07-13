@@ -9,16 +9,14 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { ChevronRight, Pencil } from 'lucide-react-native'
+import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
-import { Character, type CharacterName } from '../../characters/Characters'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { seedCycleData } from '../../../lib/devSeed'
-import { PaperCard } from '../../ui/PaperCard'
-import { Display, Body } from '../../ui/Typography'
+import { Display } from '../../ui/Typography'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
 import { SymptomSticker } from '../../calendar/symptomStickers'
 import { CycleTodayDashboardModal } from './CycleTodayDashboardModal'
@@ -64,11 +62,9 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const diffuseAccent = getDiffuseAccent('pre-pregnancy', dt.isDark)
   const { t } = useTranslation()
   const qc = useQueryClient()
   const ink = isDark ? colors.text : '#141313'
-  const paper = isDark ? colors.surface : '#FFFEF8'
 
   const [userId, setUserId] = useState<string | undefined>()
   const [open, setOpen] = useState(false)
@@ -227,19 +223,6 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
           ? `${totalTrackable - completed} signals left for today`
           : 'tap to see today’s signals'
 
-  const phaseAccent = phaseColor(phase, stickers)
-
-  // Diffuse: the 3 primary signals as v4 `.srow` rows (bloom line-icon + read
-  // label + mono value). The full 7-chip set stays in the current path.
-  const diffuseRows: { key: string; char: CharacterName; color: string; label: string; value: string }[] = [
-    { key: 'mood', char: 'mood', color: stickers.yellow, label: t('cycleDash_mood' as any), value: moodMeta?.label ?? '—' },
-    { key: 'symptoms', char: 'health', color: stickers.green, label: t('cycleDash_symptoms' as any), value: symptoms.length > 0 ? String(symptoms.length) : '—' },
-    { key: 'bbt', char: 'temperature', color: stickers.blue, label: t('cycleDash_bbt' as any), value: bbtValue ? `${bbtValue}°` : '—' },
-    { key: 'lh', char: 'ovulation', color: stickers.peach, label: t('cycleDash_lh' as any), value: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '—' },
-    { key: 'cm', char: 'water', color: stickers.lilac, label: t('cycleDash_cm' as any), value: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '—' },
-    { key: 'intimacy', char: 'heart', color: stickers.pink, label: t('cycleDash_intimacy' as any), value: intimacy ? '✓' : '—' },
-  ]
-
   const sheetTitle: Record<CycleSheetType, string> = {
     mood: t('cycleCalendar_logSheet_mood'),
     symptom: t('cycleCalendar_logSheet_symptoms'),
@@ -250,113 +233,111 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
     period_start: t('cycleCalendar_logSheet_periodStart'),
   }
 
-  // Diffuse rows follow the same enabled-keys filter + order as the chips.
-  const rowByKey = new Map(diffuseRows.map((r) => [r.key, r]))
-  const visibleRows = activeKeys
-    .map((k) => rowByKey.get(k))
-    .filter((r): r is (typeof diffuseRows)[number] => !!r)
+  // ── Variant-resolved tokens (matches pregnancy TodaySummaryCard) ──
+  const titleColor = diffuse ? dt.colors.ink : ink
+  const hintColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const hintFont = diffuse ? diffuseFont.italic : font.italic
+  const chevronColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const neutralBg = diffuse ? dt.colors.surfaceRaised : colors.surfaceGlass
+  const trackColor = diffuse ? dt.colors.line : colors.border
+  const labelFont = diffuse ? diffuseFont.mono : font.bodySemiBold
 
+  // Containerless, horizontal-chip layout — identical grammar to the pregnancy
+  // TodaySummaryCard (no gray card block / no vertical rows). The card sits on
+  // the page canvas; only a completed signal tints soft green.
   const inner = (
     <>
-      {/* Header — tap the chevron to open the full dashboard; Edit opens the
-          chip picker (standalone card only). */}
+      {/* Header — plain title + hint; Edit (chip picker) on the right, exactly
+          like pregnancy. Standalone card only; wallet-embedded shows a chevron. */}
       <View style={styles.headerRow}>
-        <Pressable onPress={() => setOpen(true)} style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.7 : 1 }]}>
-          <Display size={22} color={diffuse ? dt.colors.ink : ink}>{t('cycleDash_today')}</Display>
-          <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.mono : font.italic, ...(diffuse ? { letterSpacing: 1, textTransform: 'uppercase' as const, fontSize: 10 } : null) }}>
+        <View style={{ flex: 1 }}>
+          {diffuse ? (
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: titleColor }}>
+              {t('cycleDash_today')}
+            </Text>
+          ) : (
+            <Display size={22} color={ink}>{t('cycleDash_today')}</Display>
+          )}
+          <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor, ...(diffuse ? { letterSpacing: 1, textTransform: 'uppercase' as const, fontSize: 10 } : null) }}>
             {summaryHint}
-          </Body>
-        </Pressable>
+          </Text>
+        </View>
         {!bare ? (
-          <Pressable
-            onPress={() => setPickerOpen(true)}
-            hitSlop={10}
-            style={({ pressed }) => [styles.editBtn, { borderColor: diffuse ? dt.colors.line2 : colors.border, opacity: pressed ? 0.6 : 1 }]}
-            accessibilityRole="button"
-            accessibilityLabel={t('common_edit')}
-          >
-            <Pencil size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
-            <Text style={{ fontSize: 11, color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0 }}>
+          <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [styles.editBtn, { opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button" accessibilityLabel={t('common_edit')}>
+            <SlidersHorizontal size={15} color={chevronColor} strokeWidth={2} />
+            <Text style={{ fontFamily: labelFont, fontSize: 12, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
               {t('common_edit')}
             </Text>
           </Pressable>
         ) : (
-          <ChevronRight size={20} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+          <ChevronRight size={20} color={chevronColor} strokeWidth={diffuse ? 1.6 : 2} />
         )}
       </View>
 
-      {diffuse ? (
-        <View style={styles.srows}>
-          {visibleRows.map((r, i) => (
-            <Pressable
-              key={r.key}
-              onPress={() => setSheetType(r.key as CycleSheetType)}
-              style={({ pressed }) => [
-                styles.srow,
-                { borderBottomColor: dt.colors.line, borderBottomWidth: i === visibleRows.length - 1 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.6 : 1 },
-              ]}
-            >
-              <Character name={r.char} size={26} color={r.color} />
-              <Text style={[styles.srowLabel, { color: dt.colors.ink, fontFamily: diffuseFont.body }]} numberOfLines={1}>
-                {r.label}
-              </Text>
-              <Text style={[styles.srowValue, { color: r.value === '—' ? dt.colors.ink4 : dt.colors.ink, fontFamily: diffuseFont.monoBold }]} numberOfLines={1}>
-                {r.value}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.chipsRow}>
-          {visibleChips.map((c) => (
+      {/* Tappable signal pills — neutral hairline; only a completed signal
+          tints soft green (no mode-accent). */}
+      <View style={styles.chipsRow}>
+        {visibleChips.map((c) => {
+          const bg = c.done ? stickers.greenSoft : neutralBg
+          const border = c.done ? stickers.green : (diffuse ? dt.colors.line : colors.border)
+          const textColor = c.done ? stickers.greenInk : titleColor
+          return (
             <Pressable
               key={c.key}
               onPress={() => setSheetType(c.sheet)}
               style={({ pressed }) => [
                 styles.chip,
-                {
-                  backgroundColor: c.done ? stickers.greenSoft : 'rgba(20,19,19,0.04)',
-                  borderWidth: c.done ? 1 : 0,
-                  borderColor: c.done ? stickers.green : 'transparent',
-                  opacity: pressed ? 0.7 : 1,
-                },
+                { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, opacity: pressed ? 0.8 : 1 },
               ]}
             >
               <View style={styles.chipIcon}>{c.icon}</View>
               <Text
                 numberOfLines={1}
-                style={[styles.chipLabel, { color: c.done ? stickers.greenInk : ink, fontFamily: font.bodySemiBold }]}
+                style={[styles.chipLabel, { color: textColor, fontFamily: labelFont, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.5 : 0 }]}
               >
                 {c.label}
               </Text>
             </Pressable>
-          ))}
-        </View>
-      )}
+          )
+        })}
+      </View>
 
-      <View style={[styles.progressTrack, { backgroundColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.06)') }]}>
+      {/* Subtle progress bar — completion over the tracked signals. */}
+      <View style={[styles.progressTrack, { backgroundColor: trackColor }]}>
         <View
           style={[
             styles.progressFill,
             {
               width: `${(completed / totalTrackable) * 100}%`,
-              backgroundColor: diffuse ? (completed === totalTrackable ? dt.colors.ink3 : diffuseAccent) : (completed === totalTrackable ? stickers.green : phaseAccent),
+              backgroundColor: completed === totalTrackable ? stickers.green : (diffuse ? dt.colors.ink3 : colors.textMuted),
             },
           ]}
         />
+      </View>
+
+      {/* Footer — label + "see results" pill that opens the dashboard. */}
+      <View style={[styles.footer, { borderTopColor: trackColor }]}>
+        <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: hintColor }}>
+          {t('cycleDash_footer')}
+        </Text>
+        <Pressable
+          onPress={() => setOpen(true)}
+          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Text style={{ fontFamily: labelFont, fontSize: 12, color: titleColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
+            {t('cycleDash_seeResults')}
+          </Text>
+          <ChevronRight size={14} color={chevronColor} strokeWidth={2} />
+        </Pressable>
       </View>
     </>
   )
 
   return (
     <View style={bare ? undefined : styles.wrap}>
-      {bare ? (
-        inner
-      ) : (
-        <PaperCard tint={diffuse ? undefined : paper} radius={24} padding={18}>
-          {inner}
-        </PaperCard>
-      )}
+      {/* Containerless in both variants — sits on the page canvas directly,
+          flush with the section eyebrow (matches pregnancy). */}
+      {bare ? inner : <View>{inner}</View>}
 
       {userId && (
         <CycleTodayDashboardModal
@@ -398,38 +379,23 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
   )
 }
 
-function phaseColor(phase: CyclePhase, s: ReturnType<typeof useTheme>['stickers']): string {
-  switch (phase) {
-    case 'menstruation': return s.coral
-    case 'follicular':   return s.green
-    case 'ovulation':    return s.peach
-    case 'luteal':       return s.lilac
-  }
-}
-
 const styles = StyleSheet.create({
+  // Matches pregnancy TodaySummaryCard: containerless, horizontal chips, footer.
   wrap: { paddingHorizontal: 20, marginTop: 12 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
-  editBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, borderWidth: 1,
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 10, paddingVertical: 6,
+    paddingHorizontal: 10, paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: 'rgba(20,19,19,0.04)',
+    borderWidth: 1,
     minWidth: 0,
   },
   chipIcon: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
   chipLabel: { fontSize: 12, maxWidth: 70 },
   progressTrack: { height: 4, borderRadius: 2, marginTop: 14, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 2 },
-  // Diffuse summary rows (`.srow`)
-  srows: { marginTop: 4 },
-  srow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
-  srowLabel: { flex: 1, fontSize: 14 },
-  srowValue: { fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  resultsPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
 })
