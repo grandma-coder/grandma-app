@@ -646,48 +646,6 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               </Text>
             </View>
           </View>
-
-          {/* This week milestone note */}
-          <View style={styles.section}>
-            <Text style={[dstyles.sectionLabel, { color: ink3 }]}>
-              {t('preg_ring_thisWeek')}
-            </Text>
-            <Text style={[dstyles.noteText, { color: ink2 }]}>
-              {weekData.developmentFact}
-            </Text>
-          </View>
-
-          {/* Logged this week */}
-          <View style={styles.section}>
-            <Text style={[dstyles.sectionLabel, { color: ink3 }]}>
-              {t('preg_ring_loggedThisWeek')}
-            </Text>
-            {pillarGroups.length > 0 ? (
-              // v4 vertical "choice timeline" — same system as Kids/Cycle.
-              <View style={{ marginTop: 2 }}>
-                {pillarGroups.map((g, i) => (
-                  <DiffuseTimelineRow
-                    key={g.type}
-                    type={g.type}
-                    time={formatLogDay(g.lastDate)}
-                    title={g.label}
-                    sub={g.summary}
-                    logged
-                    first={i === 0}
-                    last={i === pillarGroups.length - 1}
-                  />
-                ))}
-              </View>
-            ) : (
-              <Text style={[dstyles.emptyLogs, { color: ink3 }]}>
-                {isCurrWeek
-                  ? t('preg_ring_emptyCurrent')
-                  : isPastWeek
-                  ? t('preg_ring_emptyPast')
-                  : t('preg_ring_emptyFuture')}
-              </Text>
-            )}
-          </View>
         </ScrollView>
       </View>
     )
@@ -816,56 +774,6 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               </Text>
             </Text>
           </View>
-        </View>
-
-        {/* This week milestone note */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-            {t('preg_ring_thisWeek')}
-          </Text>
-          <Text style={[styles.noteText, { color: colors.textSecondary, fontFamily: font.body }]}>
-            {weekData.developmentFact}
-          </Text>
-        </View>
-
-        {/* Logged this week */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
-            {t('preg_ring_loggedThisWeek')}
-          </Text>
-          {pillarGroups.length > 0 ? (
-            <View style={styles.logList}>
-              {pillarGroups.map((g) => (
-                <View key={g.type} style={styles.logRow}>
-                  <View style={[styles.logDot, { backgroundColor: g.color }]} />
-                  <View style={styles.logBody}>
-                    <View style={styles.logHeader}>
-                      <Text style={[styles.logLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                        {g.label}
-                      </Text>
-                      <Text style={[styles.logDay, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
-                        {formatLogDay(g.lastDate)}
-                      </Text>
-                    </View>
-                    <Text
-                      style={[styles.logDetail, { color: colors.textSecondary, fontFamily: font.body }]}
-                      numberOfLines={2}
-                    >
-                      {g.summary}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text style={[styles.emptyLogs, { color: colors.textFaint, fontFamily: font.body }]}>
-              {isCurrWeek
-                ? t('preg_ring_emptyCurrent')
-                : isPastWeek
-                ? t('preg_ring_emptyPast')
-                : t('preg_ring_emptyFuture')}
-            </Text>
-          )}
         </View>
       </ScrollView>
     </View>

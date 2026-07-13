@@ -34,6 +34,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 import { useTranslation } from '../../lib/i18n'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
+import { PregnancyJourneyRing } from '../pregnancy/PregnancyJourneyRing'
 import {
   usePregnancyWeightHistory,
   usePregnancyKickSessions,
@@ -313,42 +314,66 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
       >
         <AnalyticsHeader hide />
 
-        <View style={styles.titleRow}>
-          <AnalyticsTitle primary="Pregnancy," italic="week over week." />
-          <View style={styles.actionRow}>
-            {onExamsPress ? (
-              <Pressable
-                onPress={onExamsPress}
-                hitSlop={10}
-                style={[styles.infoBtn, diffuse
-                  ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-                  : { backgroundColor: colors.surface, borderColor: colors.border }]}
-                accessibilityLabel="Exams"
-              >
-                <FlaskConical size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-              </Pressable>
-            ) : null}
-            <Pressable
-              onPress={() => setShowInfo(true)}
-              hitSlop={10}
-              style={[styles.infoBtn, diffuse
-                ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-                : { backgroundColor: colors.surface, borderColor: colors.border }]}
-              accessibilityLabel="How analytics work"
-            >
-              <Info size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-            </Pressable>
+        {diffuse ? (
+          <View style={{ marginTop: 8, marginBottom: 4, paddingHorizontal: 20 }}>
+            <DiffuseSectionHeader
+              eyebrow="PREGNANCY"
+              title="Week over week"
+              right={(
+                <View style={styles.actionRow}>
+                  {onExamsPress ? (
+                    <Pressable
+                      onPress={onExamsPress}
+                      hitSlop={10}
+                      style={[styles.infoBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}
+                      accessibilityLabel="Exams"
+                    >
+                      <FlaskConical size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                    </Pressable>
+                  ) : null}
+                  <Pressable
+                    onPress={() => setShowInfo(true)}
+                    hitSlop={10}
+                    style={[styles.infoBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}
+                    accessibilityLabel="How analytics work"
+                  >
+                    <Info size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                  </Pressable>
+                </View>
+              )}
+            />
           </View>
-        </View>
+        ) : (
+          <View style={styles.titleRow}>
+            <AnalyticsTitle primary="Pregnancy," italic="week over week." />
+            <View style={styles.actionRow}>
+              {onExamsPress ? (
+                <Pressable
+                  onPress={onExamsPress}
+                  hitSlop={10}
+                  style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  accessibilityLabel="Exams"
+                >
+                  <FlaskConical size={16} color={colors.text} strokeWidth={2} />
+                </Pressable>
+              ) : null}
+              <Pressable
+                onPress={() => setShowInfo(true)}
+                hitSlop={10}
+                style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                accessibilityLabel="How analytics work"
+              >
+                <Info size={16} color={colors.text} strokeWidth={2} />
+              </Pressable>
+            </View>
+          </View>
+        )}
 
-        {/* Hero week card */}
-        <Animated.View entering={FadeInDown.duration(280)}>
-          <HeroWeekCard
-            weekNumber={weekNumber}
-            trimester={trimester}
-            daysToDue={dDays}
-          />
-        </Animated.View>
+        {/* Journey ring — the hero (moved here from Calendar → Journey). Shows
+            the spinnable week wheel + size/length/weight/this-week detail. */}
+        {dueDate ? (
+          <PregnancyJourneyRing weekNumber={weekNumber} dueDate={dueDate} />
+        ) : null}
 
         {/* PeriodSelector self-gates to Diffuse segment pills. */}
         <PeriodSelector value={period} onChange={setPeriod} showCustom={false} />
@@ -356,11 +381,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         {/* Hero: Weight gain chart — tap to expand */}
         {diffuse ? (
           <Pressable onPress={() => setOpenPillar('weight')} style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1 }]}>
-            <DiffuseFieldSurface
-              mode="preg"
-              isDark={dt.isDark}
-              radius={28}
-              style={{ marginHorizontal: 20, marginTop: 8, padding: 20, borderWidth: 1, borderColor: dt.colors.line }}
+            {/* Clean paper card + a soft-blue chart line (not the lavender mode
+                wash) so the screen isn't uniformly purple. */}
+            <View
+              style={{ marginHorizontal: 20, marginTop: 8, padding: 20, borderRadius: 28, borderWidth: 1, borderColor: dt.colors.line, backgroundColor: dt.colors.surface }}
             >
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>
                 {`WEIGHT GAIN · WEEK ${weekNumber}`}
@@ -374,9 +398,9 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 </Text>
               </View>
               <View style={{ marginTop: 14 }}>
-                <MiniLineChart data={weights} color={accent} />
+                <MiniLineChart data={weights} color={stickers.blue} />
               </View>
-            </DiffuseFieldSurface>
+            </View>
           </Pressable>
         ) : (
           <BigChartCard
@@ -399,9 +423,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 label="KICKS / DAY"
                 value={avgKicks ? String(avgKicks) : undefined}
                 emptyLabel="—"
-                icon={renderPillarGlyph('kicks', accent, 18)}
+                icon={renderPillarGlyph('kicks', stickers.pink, 18)}
                 iconNoBloom
-                accent={accent}
+                accent={stickers.pink}
+                accent2={stickers.peach}
                 onPress={() => setOpenPillar('kicks')}
               />
               <DiffuseStatCard
@@ -410,9 +435,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 value={symptomCount > 0 ? String(symptomCount) : undefined}
                 sub={symptomCount > 0 ? 'LOGGED' : undefined}
                 emptyLabel="None"
-                icon={renderPillarGlyph('symptoms', accent, 18)}
+                icon={renderPillarGlyph('symptoms', stickers.yellow, 18)}
                 iconNoBloom
-                accent={accent}
+                accent={stickers.yellow}
+                accent2={stickers.peach}
                 onPress={() => setOpenPillar('symptoms')}
               />
             </View>
@@ -422,9 +448,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 label="SLEEP"
                 value={sleepAvg !== '—' ? sleepAvg : undefined}
                 emptyLabel="—"
-                icon={renderPillarGlyph('sleep', accent, 18)}
+                icon={renderPillarGlyph('sleep', stickers.lilac, 18)}
                 iconNoBloom
-                accent={accent}
+                accent={stickers.lilac}
+                accent2={stickers.blue}
                 onPress={() => setOpenPillar('sleep')}
               />
               <DiffuseStatCard
@@ -432,9 +459,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 label="WELLBEING"
                 value={wellbeing ? `${wellbeing.overall}%` : undefined}
                 emptyLabel="—"
-                icon={renderPillarGlyph('wellbeing', accent, 18)}
+                icon={renderPillarGlyph('wellbeing', stickers.green, 18)}
                 iconNoBloom
-                accent={accent}
+                accent={stickers.green}
+                accent2={stickers.blue}
                 onPress={() => setOpenPillar('wellbeing')}
               />
             </View>

@@ -82,7 +82,6 @@ import {
 import type { PregnancyCalendarLog } from '../../lib/analyticsData'
 import { STANDARD_APPOINTMENTS } from '../../lib/pregnancyAppointments'
 import Svg, { Path as SvgPath, Circle as SvgCircle, G as SvgG, Line as SvgLine } from 'react-native-svg'
-import { PregnancyJourneyRing } from '../pregnancy/PregnancyJourneyRing'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { LogTile, LogTileGrid } from './LogTile'
@@ -147,7 +146,7 @@ const TRIMESTER_COLOR: Record<1 | 2 | 3, string> = {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ViewTab = 'timeline' | 'journey' | 'appointments'
+type ViewTab = 'timeline' | 'appointments'
 type LogFormType =
   | 'mood' | 'weight' | 'symptom' | 'appointment' | 'exam_result' | 'kick_count'
   | 'sleep' | 'exercise' | 'nutrition' | 'kegel' | 'water' | 'vitamins'
@@ -2224,14 +2223,6 @@ export function PregnancyCalendar() {
   // ── Render: Timeline Hours mode (day grid) ──────────────────────────────
 
 
-  // ── Render: Journey View (cards) ─────────────────────────────────────────
-
-  function renderJourneyView() {
-    return (
-      <PregnancyJourneyRing weekNumber={weekNumber} dueDate={dueDate} />
-    )
-  }
-
   // ── Render: Appointments View (sticker S-curve + cards) ────────────────
 
   function renderAppointmentsView() {
@@ -2623,7 +2614,6 @@ export function PregnancyCalendar() {
         <SegmentedTabs
           options={[
             { key: 'timeline', label: 'Timeline' },
-            { key: 'journey', label: 'Journey' },
             { key: 'appointments', label: 'Appts' },
           ]}
           value={view}
@@ -2631,29 +2621,25 @@ export function PregnancyCalendar() {
         />
       </View>
 
-      {view === 'journey' ? (
-        renderJourneyView()
-      ) : (
-        <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          {view === 'timeline' && (
-            <>
-              <AgendaWeekStrip
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-                dotsByDate={dotsByDate}
-                weekLabel={`Week ${weekNumber}`}
-                modeColor={diffuse ? dAccent : brand.pregnancy}
-              />
-              <View style={{ height: 12 }} />
-              {renderTimelineCards()}
-            </>
-          )}
-          {view === 'appointments' && renderAppointmentsView()}
-        </ScrollView>
-      )}
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {view === 'timeline' && (
+          <>
+            <AgendaWeekStrip
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              dotsByDate={dotsByDate}
+              weekLabel={`Week ${weekNumber}`}
+              modeColor={diffuse ? dAccent : brand.pregnancy}
+            />
+            <View style={{ height: 12 }} />
+            {renderTimelineCards()}
+          </>
+        )}
+        {view === 'appointments' && renderAppointmentsView()}
+      </ScrollView>
 
       {/* Quick Log Sheet */}
       <QuickLogSheet
