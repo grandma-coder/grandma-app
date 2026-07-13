@@ -18,6 +18,12 @@ interface BarProps {
   labels?: string[]
   /** Fill color (defaults to accent). */
   color?: string
+  /**
+   * Multi-hue palette — each bar cycles through these colors (editorial, mixed
+   * look). When set it overrides `color` for the bars; the target line + latest
+   * highlight still use `color` (or the first palette entry) as the anchor hue.
+   */
+  palette?: string[]
   /** Paint latest bar in a bolder variant. */
   highlightLast?: boolean
   height?: number
@@ -33,6 +39,7 @@ export function MiniBarChart({
   data,
   labels = [],
   color,
+  palette,
   highlightLast = true,
   height = 130,
   target,
@@ -40,8 +47,10 @@ export function MiniBarChart({
   longLabels,
 }: BarProps) {
   const { colors, stickers, font } = useTheme()
-  const accent = color ?? stickers.yellow
-  const softAccent = color ? color + '40' : stickers.yellowSoft
+  const anchor = color ?? palette?.[0] ?? stickers.yellow
+  const accent = anchor
+  // Per-bar hue: cycle the palette when provided, else the single accent.
+  const barHue = (i: number) => (palette && palette.length > 0 ? palette[i % palette.length] : accent)
 
   const [selected, setSelected] = useState<number | null>(null)
   const tooltipLabels = longLabels ?? labels
@@ -103,7 +112,10 @@ export function MiniBarChart({
             const y = chartH - padBottom - h
             const isLast = i === data.length - 1 && highlightLast
             const isSel = i === selected
-            const fill = isSel || isLast ? accent : softAccent
+            const hue = barHue(i)
+            // Full hue when highlighted/selected; otherwise a soft wash of that
+            // same hue so a palette reads as a mix without shouting.
+            const fill = isSel || isLast ? hue : hue + '55'
             return (
               <Rect
                 key={i}

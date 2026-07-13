@@ -398,7 +398,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 </Text>
               </View>
               <View style={{ marginTop: 14 }}>
-                <MiniLineChart data={weights} color={stickers.blue} />
+                <MiniLineChart data={weights} color={stickers.green} />
               </View>
             </View>
           </Pressable>
@@ -529,7 +529,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 data={hydrationData}
                 labels={hydrationHistory.map((h) => shortDay(h.date))}
                 longLabels={hydrationHistory.map((h) => formatLogDate(h.date))}
-                color={diffuse ? accent : stickers.blue}
+                color={stickers.blue}
+                palette={[stickers.blue, stickers.green, stickers.lilac]}
                 target={8}
                 unit="gl"
               />
@@ -566,7 +567,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 data={exerciseHistory.map((e) => e.minutes)}
                 labels={exerciseHistory.map((e) => shortDay(e.date))}
                 longLabels={exerciseHistory.map((e) => formatLogDate(e.date))}
-                color={diffuse ? accent : stickers.coral}
+                color={stickers.coral}
+                palette={[stickers.coral, stickers.peach, stickers.yellow]}
                 target={Math.round(150 / 7)}
                 unit="min"
               />
@@ -1132,7 +1134,9 @@ function PillarDetailModal(props: DetailProps) {
       <DiffuseSheet visible title={label} onClose={onClose} chip={meta.blurb.toUpperCase()}>
         <View style={{ gap: 16, paddingTop: 4 }}>
           <Animated.View entering={FadeInDown.duration(220)}>
-            <DetailDispatcher {...props} pillarKey={pillarKey} accentColor={dAccent} accentTint={undefined} />
+            {/* Use the pillar's OWN hue (not the violet mode accent) so each
+                detail sheet's charts read in that metric's colour. */}
+            <DetailDispatcher {...props} pillarKey={pillarKey} accentColor={palette.chip} accentTint={palette.tint} />
           </Animated.View>
         </View>
       </DiffuseSheet>
@@ -1443,7 +1447,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
   const ink = diffuse ? dt.colors.ink : colors.text
   const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
-  const barFill = diffuse ? dAccent : stickers.pink
+  const barFill = diffuse ? (accentColor ?? dAccent) : stickers.pink
   const barTrack = diffuse ? dt.colors.line : stickers.pinkSoft
   const { t } = useTranslation()
   const avg = kickSessions.length > 0
@@ -1747,7 +1751,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const df = diffuse ? diffuseFont : null
   const { t } = useTranslation()
-  const accent = diffuse ? dAccent : (accentColor ?? stickers.blue)
+  const accent = diffuse ? (accentColor ?? dAccent) : (accentColor ?? stickers.blue)
   const tint = diffuse ? dt.colors.line : (accentTint ?? stickers.blueSoft)
   const TARGET = 8
 
