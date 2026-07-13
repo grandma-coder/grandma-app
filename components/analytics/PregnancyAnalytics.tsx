@@ -63,7 +63,7 @@ import { AnalyticsTitle } from './shared/AnalyticsTitle'
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { BigChartCard } from './shared/BigChartCard'
 import { MiniStatTile } from './shared/MiniStatTile'
-import { MiniLineChart, MiniBarChart, PillDivergingChart } from './shared/MiniCharts'
+import { MiniLineChart, MiniBarChart, PillDivergingChart, GlowAreaLine, BlobCluster } from './shared/MiniCharts'
 import { Display, Body } from '../ui/Typography'
 import {
   Heart,
@@ -398,7 +398,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 </Text>
               </View>
               <View style={{ marginTop: 14 }}>
-                <MiniLineChart data={weights} color={stickers.green} />
+                <GlowAreaLine data={weights} color={stickers.green} color2={stickers.blue} />
               </View>
             </View>
           </Pressable>
@@ -576,15 +576,27 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             <View style={[styles.chartCard, diffuse
               ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
               : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
-              <MiniBarChart
-                data={exerciseHistory.map((e) => e.minutes)}
-                labels={exerciseHistory.map((e) => shortDay(e.date))}
-                longLabels={exerciseHistory.map((e) => formatLogDate(e.date))}
-                color={stickers.coral}
-                palette={[stickers.coral, stickers.peach, stickers.yellow]}
-                target={Math.round(150 / 7)}
-                unit="min"
-              />
+              {diffuse ? (
+                <PillDivergingChart
+                  data={exerciseHistory.map((e) => e.minutes)}
+                  labels={exerciseHistory.map((e) => shortDay(e.date))}
+                  longLabels={exerciseHistory.map((e) => formatLogDate(e.date))}
+                  target={Math.round(150 / 7)}
+                  upColor={stickers.coral}
+                  downColor={stickers.lilac}
+                  unit="min"
+                />
+              ) : (
+                <MiniBarChart
+                  data={exerciseHistory.map((e) => e.minutes)}
+                  labels={exerciseHistory.map((e) => shortDay(e.date))}
+                  longLabels={exerciseHistory.map((e) => formatLogDate(e.date))}
+                  color={stickers.coral}
+                  palette={[stickers.coral, stickers.peach, stickers.yellow]}
+                  target={Math.round(150 / 7)}
+                  unit="min"
+                />
+              )}
             </View>
           </Section>
         )}
@@ -596,9 +608,21 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle={`${symptomFreq.length} unique this period`}
             onPress={() => setOpenPillar('symptoms')}
           >
-            <View style={[styles.listCard, diffuse
-              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
-              : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            {diffuse ? (
+              // Circle-pack blobs — each symptom a soft bloomed circle sized by
+              // count, cycling the sticker palette. Distinct from every other
+              // chart on the screen.
+              <View style={[styles.listCard, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, paddingVertical: 20 }]}>
+                <BlobCluster
+                  data={symptomFreq.slice(0, 6).map((s, i) => ({
+                    label: s.symptom,
+                    value: s.count,
+                    color: [stickers.coral, stickers.yellow, stickers.blue, stickers.green, stickers.lilac, stickers.pink][i % 6],
+                  }))}
+                />
+              </View>
+            ) : (
+            <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
               {symptomFreq.map((s, i) => (
                 <View
                   key={s.symptom}
@@ -640,6 +664,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 </View>
               ))}
             </View>
+            )}
           </Section>
         )}
 
@@ -1851,27 +1876,25 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         </View>
       </PaperCard>
 
-      {/* Glass tracker — visual 8 glasses */}
+      {/* Glass tracker — soft water-drop blobs that fill as you sip. Filled =
+          a bloomed drop sticker in the hue; empty = a hairline ghost drop. */}
       <PaperCard title="Glass-by-glass · today">
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 6 }}>
           {Array.from({ length: TARGET }, (_, i) => {
             const filled = i < todayGlasses
             return (
-              <View
-                key={i}
-                style={{
-                  flex: 1,
-                  aspectRatio: 0.6,
-                  borderRadius: 8,
-                  borderWidth: 1.5,
-                  borderColor: filled ? accent : (diffuse ? dt.colors.line2 : 'rgba(20,19,19,0.18)'),
-                  backgroundColor: filled ? accent : 'transparent',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  paddingBottom: 4,
-                }}
-              >
-                {filled ? <Drop size={14} fill={diffuse ? dt.colors.bg : colors.surface} /> : null}
+              <View key={i} style={{ flex: 1, aspectRatio: 0.74, alignItems: 'center', justifyContent: 'center' }}>
+                {/* Soft blob halo behind a filled drop */}
+                {filled && diffuse ? (
+                  <View style={StyleSheet.absoluteFill}>
+                    <SoftBloom color={accent} opacity={dt.isDark ? 0.4 : 0.5} spread={0.5} radius="52%" />
+                  </View>
+                ) : null}
+                <Drop
+                  size={30}
+                  fill={filled ? accent : 'transparent'}
+                  stroke={filled ? accent : (diffuse ? dt.colors.line2 : 'rgba(20,19,19,0.22)')}
+                />
               </View>
             )
           })}
@@ -1883,19 +1906,32 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         ) : null}
       </PaperCard>
 
-      {/* Last 7 days bar chart */}
+      {/* Last 7 days — diverging pills (met above / shortfall hatched below) */}
       <PaperCard title="Last 7 days">
         {data.length > 0 ? (
           <>
-            <MiniBarChart
-              data={data}
-              labels={labels}
-              longLabels={longLabels}
-              color={accent}
-              height={140}
-              target={TARGET}
-              unit="gl"
-            />
+            {diffuse ? (
+              <PillDivergingChart
+                data={data}
+                labels={labels}
+                longLabels={longLabels}
+                target={TARGET}
+                upColor={accent}
+                downColor={stickers.coral}
+                height={170}
+                unit="gl"
+              />
+            ) : (
+              <MiniBarChart
+                data={data}
+                labels={labels}
+                longLabels={longLabels}
+                color={accent}
+                height={140}
+                target={TARGET}
+                unit="gl"
+              />
+            )}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <Text style={{ fontSize: 11, color: sec, fontFamily: df?.body ?? font.bodyMedium }}>
                 {'Goal line at '}{TARGET}{' glasses'}

@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native'
-import Svg, { Path, Circle, Line, Rect, Defs, Pattern, G } from 'react-native-svg'
+import Svg, { Path, Circle, Line, Rect, Defs, Pattern, G, LinearGradient, RadialGradient, Stop } from 'react-native-svg'
 import { useTheme } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -539,6 +539,186 @@ export function MiniLineChart({
             </Text>
           </View>
         ) : null}
+      </View>
+    </View>
+  )
+}
+
+// ─── GlowAreaLine ─────────────────────────────────────────────────────────────
+// A smooth line with a GLOWING gradient area beneath (hue → transparent) and a
+// bright end-cap dot. Feels lit, not flat — for Weight/growth trends.
+
+let glowSeq = 0
+interface GlowLineProps {
+  data: number[]
+  color: string
+  /** Optional secondary hue the area fades toward (defaults to `color`). */
+  color2?: string
+  height?: number
+  width?: number
+  labels?: string[]
+  unit?: string
+}
+
+export function GlowAreaLine({ data, color, color2, height = 150, width = DEFAULT_CHART_W, labels, unit }: GlowLineProps) {
+  const { colors, font } = useTheme()
+  const seq = useMemo(() => glowSeq++, [])
+  const areaId = `glowA${seq}`
+  const interactive = !!labels && labels.length === data.length
+  const [selected, setSelected] = useState<number | null>(null)
+
+  if (data.length < 2) return <EmptyChart height={height} />
+
+  const pad = 12
+  const viewW = width
+  const viewH = height
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = Math.max(0.01, max - min)
+
+  const points = data.map((v, i) => ({
+    x: pad + (i * (viewW - pad * 2)) / (data.length - 1),
+    y: viewH - pad - ((v - min) / range) * (viewH - pad * 2),
+  }))
+
+  const smooth = (() => {
+    let d = `M${points[0].x},${points[0].y}`
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1]
+      const cur = points[i]
+      const mx = (prev.x + cur.x) / 2
+      d += ` Q${mx},${prev.y} ${cur.x},${cur.y}`
+    }
+    return d
+  })()
+  const area = `${smooth} L${points[points.length - 1].x},${viewH - pad} L${points[0].x},${viewH - pad} Z`
+  const end = points[points.length - 1]
+  const sel = selected !== null ? points[selected] : null
+
+  return (
+    <View style={{ width: '100%', alignItems: 'center' }}>
+      <View style={{ width: viewW, height: viewH }}>
+        <Svg width={viewW} height={viewH}>
+          <Defs>
+            <LinearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={color2 ?? color} stopOpacity={0.42} />
+              <Stop offset="0.6" stopColor={color} stopOpacity={0.14} />
+              <Stop offset="1" stopColor={color} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          {/* Glow underlay: same path, thick + faint, gives the lit halo */}
+          <Path d={smooth} stroke={color} strokeWidth={9} strokeOpacity={0.16} strokeLinecap="round" fill="none" />
+          <Path d={area} fill={`url(#${areaId})`} />
+          <Path d={smooth} stroke={color} strokeWidth={3.5} strokeLinecap="round" fill="none" />
+          {sel ? (
+            <Line x1={sel.x} y1={pad} x2={sel.x} y2={viewH - pad} stroke={color} strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
+          ) : null}
+          {/* Bright end cap */}
+          <Circle cx={end.x} cy={end.y} r={7} fill={color} opacity={0.25} />
+          <Circle cx={end.x} cy={end.y} r={4} fill={color} stroke={colors.surface} strokeWidth={1.5} />
+          {sel ? <Circle cx={sel.x} cy={sel.y} r={5} fill={color} stroke={colors.surface} strokeWidth={1.5} /> : null}
+        </Svg>
+        {interactive
+          ? points.map((p, i) => (
+              <Pressable
+                key={i}
+                onPress={() => setSelected((s) => (s === i ? null : i))}
+                hitSlop={6}
+                style={{ position: 'absolute', left: p.x - 14, top: p.y - 14, width: 28, height: 28, borderRadius: 14 }}
+              />
+            ))
+          : null}
+        {sel && labels ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: Math.max(4, Math.min(viewW - 124, sel.x - 60)),
+              top: Math.max(4, sel.y - 52),
+              width: 120,
+              paddingVertical: 6,
+              paddingHorizontal: 10,
+              borderRadius: 12,
+              backgroundColor: colors.text,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: colors.bg, fontFamily: font.bodySemiBold, fontSize: 13 }} numberOfLines={1}>
+              {data[selected!].toFixed(1)}{unit ? ` ${unit}` : ''}
+            </Text>
+            <Text style={{ color: colors.bg, fontFamily: font.body, fontSize: 10, opacity: 0.75 }} numberOfLines={1}>
+              {labels[selected!]}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+    </View>
+  )
+}
+
+// ─── BlobCluster ──────────────────────────────────────────────────────────────
+// Circle-pack style: each item a soft bloomed circle sized by value, laid out in
+// a tidy wrapped row (biggest first). Label + count centred in each blob. A
+// playful alternative to a ranked list / bar chart (Symptoms, Movement types).
+
+export interface BlobDatum {
+  label: string
+  value: number
+  color: string
+}
+interface BlobClusterProps {
+  data: BlobDatum[]
+  height?: number
+  /** Show the numeric value under the label inside each blob. */
+  showValue?: boolean
+}
+
+let blobSeq = 0
+export function BlobCluster({ data, height = 200, showValue = true }: BlobClusterProps) {
+  const { colors, font } = useTheme()
+  const seq = useMemo(() => blobSeq++, [])
+  if (data.length === 0) return <EmptyChart height={height} />
+
+  const chartW = DEFAULT_CHART_W
+  const max = Math.max(...data.map((d) => d.value), 1)
+  const sorted = [...data].sort((a, b) => b.value - a.value)
+
+  // Size each blob between a min and max diameter by value.
+  const minD = 54
+  const maxD = Math.min(120, chartW * 0.42)
+  const diamFor = (v: number) => minD + (v / max) * (maxD - minD)
+
+  return (
+    <View style={{ width: chartW, alignSelf: 'center', minHeight: height }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'center' }}>
+        {sorted.map((d, i) => {
+          const dia = Math.round(diamFor(d.value))
+          const fontSize = Math.max(11, Math.min(15, dia * 0.16))
+          return (
+            <View key={`${d.label}-${i}`} style={{ width: dia, height: dia, alignItems: 'center', justifyContent: 'center' }}>
+              <Svg width={dia} height={dia} style={StyleSheet.absoluteFill}>
+                <Defs>
+                  <RadialGradient id={`blob${seq}-${i}`} cx="42%" cy="38%" r="65%">
+                    <Stop offset="0" stopColor={d.color} stopOpacity={0.95} />
+                    <Stop offset="1" stopColor={d.color} stopOpacity={0.62} />
+                  </RadialGradient>
+                </Defs>
+                <Circle cx={dia / 2} cy={dia / 2} r={dia / 2} fill={`url(#blob${seq}-${i})`} />
+              </Svg>
+              <Text
+                style={{ color: '#FFFEF8', fontFamily: font.bodySemiBold, fontSize, textAlign: 'center', paddingHorizontal: 6 }}
+                numberOfLines={2}
+              >
+                {d.label}
+              </Text>
+              {showValue ? (
+                <Text style={{ color: '#FFFEF8', fontFamily: font.bodySemiBold, fontSize: fontSize + 2, opacity: 0.92, marginTop: 1 }}>
+                  {d.value}
+                </Text>
+              ) : null}
+            </View>
+          )
+        })}
       </View>
     </View>
   )
