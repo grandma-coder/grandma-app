@@ -25,7 +25,8 @@ import {
   Search,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { searchCountries, countryByCode } from '../../lib/countries'
 import { useChildStore } from '../../store/useChildStore'
@@ -44,6 +45,45 @@ import {
   Squishy,
 } from '../../components/ui/Stickers'
 import type { ChildWithRole } from '../../types'
+
+// ─── Theme (Diffuse-aware) ──────────────────────────────────────────────────
+// Under the Diffuse variant (now the default), source the surface palette + serif
+// from the v3 tokens so this screen matches its already-Diffuse ScreenHeader /
+// PillButton. Every component below reads `colors`/`font` from here, so the swap
+// lives in one place. When !diffuse the values fall straight through to
+// theme.colors / theme.font, leaving current-variant users unchanged.
+function useKidsTheme() {
+  const theme = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const colors = diffuse
+    ? {
+        ...theme.colors,
+        bg: dt.colors.bg,
+        bgWarm: dt.colors.bg,
+        surface: dt.colors.surface,
+        surfaceRaised: dt.colors.surfaceRaised,
+        border: dt.colors.line,
+        borderLight: dt.colors.line,
+        text: dt.colors.ink,
+        textSecondary: dt.colors.ink2,
+        textMuted: dt.colors.ink3,
+        textFaint: dt.colors.ink4,
+      }
+    : theme.colors
+  const font = diffuse
+    ? { ...theme.font, display: diffuseFont.display, body: diffuseFont.body, italic: diffuseFont.italic }
+    : theme.font
+  // Paper surface + hairline that previously hardcoded '#FFFEF8' /
+  // 'rgba(20,19,19,0.08)'. Under Diffuse these follow the v3 palette; under the
+  // current variant they resolve to the original cream values.
+  const paper = diffuse ? colors.surface : (theme.isDark ? colors.surface : '#FFFEF8')
+  const hairline = diffuse ? colors.border : (theme.isDark ? colors.border : 'rgba(20,19,19,0.08)')
+  // Readable dark ink for text sitting on a light-tinted chip. Diffuse routes it
+  // to the v3 ink; current variant keeps the original warm '#3A3533'.
+  const chipInk = diffuse ? colors.text : '#3A3533'
+  return { ...theme, diffuse, colors, font, paper, hairline, chipInk }
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -113,7 +153,7 @@ function mapDbChild(c: any): ChildWithRole {
 // ─── Main Screen ──────────────────────────────────────────────────────────
 
 export default function KidsProfileScreen() {
-  const { colors, isDark, stickers } = useTheme()
+  const { colors, isDark, stickers, paper, hairline } = useKidsTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
@@ -159,8 +199,8 @@ export default function KidsProfileScreen() {
                 style={[
                   styles.headerAddBtn,
                   {
-                    backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                    borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                    backgroundColor: paper,
+                    borderColor: hairline,
                   },
                 ]}
               >
@@ -198,7 +238,7 @@ export default function KidsProfileScreen() {
           label="Add a Child"
           variant="ink"
           onPress={() => setShowAddSheet(true)}
-          leading={<Ionicons name="add" size={18} color={isDark ? '#1A1713' : '#F3ECD9'} />}
+          leading={<Ionicons name="add" size={18} color={colors.bg} />}
           style={{ marginTop: 8 }}
         />
       </ScrollView>
@@ -231,7 +271,7 @@ export default function KidsProfileScreen() {
 const KID_COLORS = ['#9DC3E8', '#F2B2C7', '#BDD48C', '#C8B6E8', '#F5D652', '#F5B896']
 
 function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; index: number; onEdit: () => void; onDelete: () => void }) {
-  const { colors, font, stickers, isDark } = useTheme()
+  const { colors, font, stickers, isDark, paper, hairline, chipInk } = useKidsTheme()
   const accent = KID_COLORS[index % KID_COLORS.length]
 
   // Collect summary tags
@@ -262,8 +302,8 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
       style={({ pressed }) => [
         styles.childCard,
         {
-          backgroundColor: isDark ? colors.surface : '#FFFEF8',
-          borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+          backgroundColor: paper,
+          borderColor: hairline,
         },
         pressed && { opacity: 0.9 },
       ]}
@@ -293,7 +333,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
                 <Text
                   style={[
                     styles.sexBadgeText,
-                    { color: isDark ? sexColor : '#3A3533', fontFamily: font.bodySemiBold },
+                    { color: isDark ? sexColor : chipInk, fontFamily: font.bodySemiBold },
                   ]}
                 >
                   {sexLabel}
@@ -328,7 +368,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
               <Text
                 style={[
                   styles.miniChipText,
-                  { color: isDark ? t.color : '#3A3533', fontFamily: font.bodySemiBold },
+                  { color: isDark ? t.color : chipInk, fontFamily: font.bodySemiBold },
                 ]}
               >
                 {t.label}
@@ -373,11 +413,10 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
   chipColor: string
   placeholder: string
 }) {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, isDark, paper, hairline, chipInk } = useKidsTheme()
   const { t } = useTranslation()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const chipFg = isDark ? chipColor : '#3A3533'
+  const border = hairline
+  const chipFg = isDark ? chipColor : chipInk
   const [query, setQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
 
@@ -473,7 +512,7 @@ function EditChildSheet({
   onClose: () => void
   onSaved: (updated: ChildWithRole) => void
 }) {
-  const { colors, font, stickers, isDark } = useTheme()
+  const { colors, font, stickers, isDark, paper, hairline } = useKidsTheme()
   const { t } = useTranslation()
 
   const [name, setName] = useState(child.name)
@@ -578,8 +617,8 @@ function EditChildSheet({
                 style={[
                   formStyles.optionBtn,
                   {
-                    backgroundColor: sex === opt.value ? colors.text : (isDark ? colors.surface : '#FFFEF8'),
-                    borderColor: sex === opt.value ? colors.text : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                    backgroundColor: sex === opt.value ? colors.text : paper,
+                    borderColor: sex === opt.value ? colors.text : hairline,
                   },
                 ]}
               >
@@ -631,8 +670,8 @@ function EditChildSheet({
                 style={[
                   formStyles.bloodBtn,
                   {
-                    backgroundColor: bloodType === bt ? stickers.coral + (isDark ? '32' : '28') : (isDark ? colors.surface : '#FFFEF8'),
-                    borderColor: bloodType === bt ? stickers.coral : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                    backgroundColor: bloodType === bt ? stickers.coral + (isDark ? '32' : '28') : paper,
+                    borderColor: bloodType === bt ? stickers.coral : hairline,
                   },
                 ]}
               >
@@ -647,8 +686,8 @@ function EditChildSheet({
               style={[
                 formStyles.inputRow,
                 {
-                  backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                  borderColor: countryDropdownOpen ? colors.text : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                  backgroundColor: paper,
+                  borderColor: countryDropdownOpen ? colors.text : hairline,
                 },
               ]}
             >
@@ -677,8 +716,8 @@ function EditChildSheet({
                   style={[
                     formStyles.dropdown,
                     {
-                      backgroundColor: isDark ? colors.surface : '#FFFEF8',
-                      borderColor: isDark ? colors.border : 'rgba(20,19,19,0.08)',
+                      backgroundColor: paper,
+                      borderColor: hairline,
                     },
                   ]}
                 >
@@ -749,7 +788,7 @@ function AddChildSheet({
   onClose: () => void
   onAdded: (child: ChildWithRole) => void
 }) {
-  const { colors, font, stickers, isDark } = useTheme()
+  const { colors, font, stickers, isDark, paper, hairline } = useKidsTheme()
   const { t } = useTranslation()
 
   const [name, setName] = useState('')
@@ -840,8 +879,8 @@ function AddChildSheet({
                 style={[
                   formStyles.optionBtn,
                   {
-                    backgroundColor: sex === opt.value ? colors.text : (isDark ? colors.surface : '#FFFEF8'),
-                    borderColor: sex === opt.value ? colors.text : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                    backgroundColor: sex === opt.value ? colors.text : paper,
+                    borderColor: sex === opt.value ? colors.text : hairline,
                   },
                 ]}
               >
@@ -893,8 +932,8 @@ function AddChildSheet({
                 style={[
                   formStyles.bloodBtn,
                   {
-                    backgroundColor: bloodType === bt ? stickers.coral + (isDark ? '32' : '28') : (isDark ? colors.surface : '#FFFEF8'),
-                    borderColor: bloodType === bt ? stickers.coral : (isDark ? colors.border : 'rgba(20,19,19,0.08)'),
+                    backgroundColor: bloodType === bt ? stickers.coral + (isDark ? '32' : '28') : paper,
+                    borderColor: bloodType === bt ? stickers.coral : hairline,
                   },
                 ]}
               >
@@ -938,7 +977,7 @@ function AddChildSheet({
 // ─── Section Header ───────────────────────────────────────────────────────
 
 function SectionHeader({ label }: { label: string }) {
-  const { colors } = useTheme()
+  const { colors } = useKidsTheme()
   return (
     <View style={formStyles.sectionHeader}>
       <View style={[formStyles.sectionLine, { backgroundColor: colors.borderLight }]} />
@@ -953,9 +992,8 @@ function SectionHeader({ label }: { label: string }) {
 function FormField({ label, value, onChangeText, placeholder, multiline, hint, keyboardType }: {
   label: string; value: string; onChangeText: (t: string) => void; placeholder: string; multiline?: boolean; hint?: string; keyboardType?: any
 }) {
-  const { colors, font, isDark } = useTheme()
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const border = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const { colors, font, paper, hairline } = useKidsTheme()
+  const border = hairline
   return (
     <View style={formStyles.field}>
       <MonoCaps color={colors.textMuted}>{label}</MonoCaps>
