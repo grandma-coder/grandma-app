@@ -1,11 +1,13 @@
 // QuickLogPicker — choose which quick-log chips show on the "Log something" home
-// card. Reuses the shared LogSheet shell (so its background/handle/title match
-// every other sheet, in both the current and Diffuse variants). Each row shows
-// the log's own sticker in a soft-tinted socket, with a check toggle.
+// card. Reuses the shared LogSheet shell (background/handle/title match every
+// other sheet, in both variants). Edits a local draft while open; an explicit
+// Save commits it to the store and closes — so it's clear the choice was saved.
+import { useEffect, useState } from 'react'
 import { View, Pressable, StyleSheet } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { useTheme, radius } from '../../../constants/theme'
 import { Body } from '../../ui/Typography'
+import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
 import {
@@ -34,23 +36,43 @@ function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers
 }
 
 export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
-  const { colors, stickers } = useTheme()
+  const { colors } = useTheme()
+  const themeStickers = useTheme().stickers
   const { t } = useTranslation()
   const enabledKeys = useQuickLogStore((s) => s.enabledKeys)
-  const toggle = useQuickLogStore((s) => s.toggle)
+  const setEnabled = useQuickLogStore((s) => s.setEnabled)
+
+  // Local draft — edits stay uncommitted until Save. Re-seeded from the store
+  // each time the sheet opens (so Cancel/X discards).
+  const [draft, setDraft] = useState<string[]>(enabledKeys)
+  useEffect(() => {
+    if (visible) setDraft(enabledKeys)
+  }, [visible]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const available = PREG_QUICK_LOGS.filter((q) => q.minWeek === undefined || weekNumber >= q.minWeek)
 
+  const toggleDraft = (key: string) =>
+    setDraft((d) => (d.includes(key) ? d.filter((k) => k !== key) : [...d, key]))
+
+  const dirty = draft.length !== enabledKeys.length || draft.some((k) => !enabledKeys.includes(k))
+
+  const save = () => {
+    // Persist in catalog order so chips render consistently.
+    const ordered = PREG_QUICK_LOGS.filter((q) => draft.includes(q.key)).map((q) => q.key)
+    setEnabled(ordered)
+    onClose()
+  }
+
   return (
     <LogSheet visible={visible} title={t('pregnancy_quickLogs_pickTitle')} onClose={onClose}>
-      <View style={{ gap: 10, paddingBottom: 8 }}>
+      <View style={{ gap: 10 }}>
         {available.map((q) => {
-          const on = enabledKeys.includes(q.key)
-          const s = stickerFor(q.key, stickers)
+          const on = draft.includes(q.key)
+          const s = stickerFor(q.key, themeStickers)
           return (
             <Pressable
               key={q.key}
-              onPress={() => toggle(q.key)}
+              onPress={() => toggleDraft(q.key)}
               style={({ pressed }) => [
                 styles.row,
                 { borderColor: on ? colors.text : colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 },
@@ -65,6 +87,15 @@ export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
           )
         })}
       </View>
+
+      <View style={styles.saveWrap}>
+        <PillButton
+          label={dirty ? t('common_save') : t('common_done')}
+          variant="ink"
+          onPress={dirty ? save : onClose}
+          disabled={draft.length === 0}
+        />
+      </View>
     </LogSheet>
   )
 }
@@ -73,4 +104,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: radius.lg, paddingVertical: 14, paddingHorizontal: 16 },
   socket: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
   checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  saveWrap: { marginTop: 16 },
 })
