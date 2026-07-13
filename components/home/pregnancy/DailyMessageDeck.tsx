@@ -1,7 +1,8 @@
 // components/home/pregnancy/DailyMessageDeck.tsx
 import { useRef, useState } from 'react'
 import { View, Text, StyleSheet, useWindowDimensions, Animated, PanResponder } from 'react-native'
-import { useTheme, radius, font, shadows } from '../../../constants/theme'
+import { useTheme, radius, shadows } from '../../../constants/theme'
+import { Display } from '../../ui/Typography'
 import { CardSticker } from './CardSticker'
 import type { DailyCard } from '../../../lib/dailyMessage/types'
 
@@ -70,7 +71,7 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
           const body = (
             <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <CardSticker color={card.color} size={48} />
-              <Text style={[styles.cardText, { color: colors.text }]}>{card.text}</Text>
+              <Display size={25} style={styles.cardText}>{card.text}</Display>
             </View>
           )
           if (!isTop) {
@@ -100,5 +101,5 @@ const styles = StyleSheet.create({
   // Paper surface + hairline + subtle shadow + small sticker accent + ink serif
   // on paper — the app's card grammar (WeekCard / PaperCard), not a tint wash.
   card: { minHeight: 360, borderRadius: radius.lg, borderWidth: 1, padding: 28, justifyContent: 'flex-start', gap: 24, ...shadows.card },
-  cardText: { fontFamily: font.display, fontSize: 25, lineHeight: 34, letterSpacing: -0.3 },
+  cardText: { lineHeight: 34, letterSpacing: -0.3 },
 })

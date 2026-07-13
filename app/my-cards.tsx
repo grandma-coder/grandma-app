@@ -55,15 +55,15 @@ export default function MyCardsScreen() {
     fill: { flex: 1, backgroundColor: colors.bg },
     header: { paddingHorizontal: 20 },
     back: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-    title: { fontFamily: font.display, fontSize: 28, letterSpacing: -0.5, color: colors.text, marginTop: 8 },
+    title: { letterSpacing: -0.5, marginTop: 8 },
     // Paper surface + hairline + subtle shadow + small sticker accent + ink serif.
     tile: { flex: 1, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 16, minHeight: 168, justifyContent: 'space-between', ...shadows.card },
-    tileText: { fontFamily: font.display, fontSize: 16, lineHeight: 22, letterSpacing: -0.2, color: colors.text, marginTop: 12 },
+    tileText: { lineHeight: 22, letterSpacing: -0.2, marginTop: 12 },
     tileDate: { marginTop: 10 },
     empty: { fontFamily: font.italic, fontSize: 18, color: colors.textMuted, textAlign: 'center', marginTop: 80 },
     overlay: { flex: 1, backgroundColor: colors.bg + 'F2', justifyContent: 'center', paddingHorizontal: 24 },
     big: { borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 28, minHeight: 260, justifyContent: 'flex-start', gap: 22, ...shadows.cardPop },
-    bigText: { fontFamily: font.display, fontSize: 25, lineHeight: 33, letterSpacing: -0.3, color: colors.text },
+    bigText: { lineHeight: 33, letterSpacing: -0.3 },
     close: { position: 'absolute', top: 14, right: 14, width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   })
 
@@ -105,7 +105,7 @@ export default function MyCardsScreen() {
               <X size={18} color={colors.text} strokeWidth={2} />
             </Pressable>
             {open ? <CardSticker color={open.color} size={48} /> : null}
-            <Text style={styles.bigText}>{open?.text}</Text>
+            <Display size={25} style={styles.bigText}>{open?.text}</Display>
             {open ? <MonoCaps color={colors.textFaint} size={9}>{fmtDate(openDate)}</MonoCaps> : null}
           </View>
         </View>

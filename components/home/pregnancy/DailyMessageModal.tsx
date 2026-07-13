@@ -4,7 +4,7 @@ import { Modal, View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, ArrowRight } from 'lucide-react-native'
 import { useTheme, font, radius } from '../../../constants/theme'
-import { MonoCaps } from '../../ui/Typography'
+import { Display, MonoCaps } from '../../ui/Typography'
 import { PillButton } from '../../ui/PillButton'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
 import { matchCard } from '../../../lib/dailyMessage/matcher'
@@ -57,7 +57,7 @@ export function DailyMessageModal({ visible, onClose }: Props) {
         {phase === 'question' ? (
           <ScrollView contentContainerStyle={styles.qBody} showsVerticalScrollIndicator={false}>
             <MonoCaps color={colors.textMuted}>DAILY MESSAGE</MonoCaps>
-            <Text style={[styles.qPrompt, { color: colors.text }]}>{todayQuestion.prompt}</Text>
+            <Display size={30} style={styles.qPrompt}>{todayQuestion.prompt}</Display>
             <View style={{ gap: 10, marginTop: 28 }}>
               {todayQuestion.options.map((o, i) => (
                 <Pressable
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1, paddingHorizontal: 24 },
   close: { alignSelf: 'flex-end', width: 38, height: 38, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   qBody: { paddingTop: 20, paddingBottom: 40 },
-  qPrompt: { fontFamily: font.display, fontSize: 30, lineHeight: 37, letterSpacing: -0.5, marginTop: 12 },
+  qPrompt: { lineHeight: 37, letterSpacing: -0.5, marginTop: 12 },
   option: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: radius.md, paddingVertical: 18, paddingHorizontal: 20 },
   optionText: { fontFamily: font.bodySemiBold, fontSize: 16, letterSpacing: -0.2 },
   actions: { flexDirection: 'row', gap: 12, justifyContent: 'center', paddingVertical: 20 },

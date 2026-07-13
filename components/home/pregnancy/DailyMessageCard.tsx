@@ -4,9 +4,9 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { ArrowRight, ArrowUpRight } from 'lucide-react-native'
 import { PaperCard } from '../../ui/PaperCard'
-import { MonoCaps } from '../../ui/Typography'
+import { Display, MonoCaps } from '../../ui/Typography'
 import { CardSticker } from './CardSticker'
-import { useTheme, font, radius } from '../../../constants/theme'
+import { useTheme, font } from '../../../constants/theme'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
 import { DailyMessageModal } from './DailyMessageModal'
 
@@ -25,14 +25,13 @@ export function DailyMessageCard() {
           </MonoCaps>
 
           {isAnswered && todayCard ? (
-            // Answered: paper surface, small sticker accent, ink serif on paper.
             <View style={styles.answeredRow}>
               <CardSticker color={todayCard.color} size={44} />
-              <Text style={[styles.miniText, { color: colors.text }]} numberOfLines={3}>{todayCard.text}</Text>
+              <Display size={18} style={styles.flex} numberOfLines={3}>{todayCard.text}</Display>
             </View>
           ) : (
             <>
-              <Text style={[styles.prompt, { color: colors.text }]}>{todayQuestion.prompt}</Text>
+              <Display size={23} style={styles.prompt}>{todayQuestion.prompt}</Display>
               <View style={styles.answerRow}>
                 <Text style={[styles.answer, { color: colors.text }]}>Answer</Text>
                 <ArrowRight size={16} color={colors.text} strokeWidth={2} />
@@ -54,11 +53,11 @@ export function DailyMessageCard() {
 }
 
 const styles = StyleSheet.create({
-  prompt: { fontFamily: font.display, fontSize: 23, lineHeight: 29, letterSpacing: -0.3, marginTop: 10 },
+  flex: { flex: 1 },
+  prompt: { marginTop: 10 },
   answerRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 16 },
   answer: { fontFamily: font.bodySemiBold, fontSize: 15, letterSpacing: -0.2 },
   answeredRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 14 },
-  miniText: { flex: 1, fontFamily: font.display, fontSize: 18, lineHeight: 25, letterSpacing: -0.2 },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 16 },
   link: { fontFamily: font.bodyMedium, fontSize: 12.5, letterSpacing: 0.2 },
 })
