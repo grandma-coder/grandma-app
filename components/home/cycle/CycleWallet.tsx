@@ -9,6 +9,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
+import { router } from 'expo-router'
 import { useTheme } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
@@ -18,9 +19,10 @@ import { LogSheet } from '../../calendar/LogSheet'
 import { UserReminders } from '../UserReminders'
 import { CyclePillarsGrid } from './CyclePillarsGrid'
 import { NotifyRoutine, LogOvulation } from '../../stickers/RewardStickers'
+import { Character } from '../../characters/Characters'
 
 export function CycleWallet() {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const { t } = useTranslation()
 
   const [userId, setUserId] = useState<string | null>(null)
@@ -36,6 +38,7 @@ export function CycleWallet() {
     switch (id) {
       case 'reminders': return <NotifyRoutine size={26} />
       case 'pillars': return <LogOvulation size={24} />
+      case 'exams': return <Character name="exam" size={26} color={stickers.blue} />
     }
   }
 
@@ -43,6 +46,7 @@ export function CycleWallet() {
     switch (id) {
       case 'reminders': return t('preg_reminders_addButton')
       case 'pillars': return t('cycle_wallet_pillars')
+      case 'exams': return t('kids_home_exams_title')
     }
   }
 
@@ -50,6 +54,7 @@ export function CycleWallet() {
   const onHeader = (id: CycleWalletCardId) => {
     if (id === 'reminders') return setRemindersOpen(true)
     if (id === 'pillars') return setPillarsOpen(true)
+    if (id === 'exams') return router.push('/exams')
   }
 
   return (

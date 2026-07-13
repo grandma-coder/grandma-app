@@ -14,7 +14,7 @@ export type { WalletTone }
 
 export type WalletCardId =
   | 'appointment' | 'week_tip' | 'kicks'
-  | 'reminders' | 'birth_guide' | 'ask_grandma'
+  | 'reminders' | 'exams' | 'birth_guide' | 'ask_grandma'
 
 export interface WalletCardDescriptor {
   id: WalletCardId
@@ -51,6 +51,7 @@ export function buildWalletCards(input: BuildWalletCardsInput): WalletCardDescri
   }
 
   cards.push({ id: 'reminders', tone: 'blue', linkOnly: false })
+  cards.push({ id: 'exams', tone: 'lilac', linkOnly: true })
   cards.push({ id: 'birth_guide', tone: 'green', linkOnly: true })
   cards.push({ id: 'ask_grandma', tone: 'lavender', linkOnly: true })
 

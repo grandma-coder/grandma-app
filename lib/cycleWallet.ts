@@ -12,7 +12,7 @@
 
 import type { WalletTone } from './wallet'
 
-export type CycleWalletCardId = 'reminders' | 'pillars'
+export type CycleWalletCardId = 'reminders' | 'pillars' | 'exams'
 
 export interface CycleWalletCardDescriptor {
   id: CycleWalletCardId
@@ -24,5 +24,6 @@ export function buildCycleWalletCards(): CycleWalletCardDescriptor[] {
   return [
     { id: 'reminders', tone: 'yellow', linkOnly: true },
     { id: 'pillars', tone: 'lilac', linkOnly: true },
+    { id: 'exams', tone: 'blue', linkOnly: true },
   ]
 }

@@ -15,6 +15,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useTheme, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { Character } from '../../characters/Characters'
 import { useTranslation } from '../../../lib/i18n'
 import { buildWalletCards, type WalletCardId } from '../../../lib/weekWallet'
 import { getUpcomingAppointment } from '../../../lib/pregnancyAppointments'
@@ -67,6 +68,7 @@ export function WeekWallet({
       case 'week_tip': return <TipRead size={26} />
       case 'kicks': return <LogKicks size={26} />
       case 'reminders': return <NotifyRoutine size={26} />
+      case 'exams': return <Character name="exam" size={26} color={stickers.lilac} />
       case 'birth_guide': return <Leaf size={24} fill={stickers.green} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="lilac" outline={colors.text} />
     }
@@ -78,6 +80,7 @@ export function WeekWallet({
       case 'week_tip': return t('pregnancy_reminder_weekTip', { week: weekNumber })
       case 'kicks': return t('pregnancy_reminder_kickCountTitle')
       case 'reminders': return t('preg_reminders_addButton')
+      case 'exams': return t('kids_home_exams_title')
       case 'birth_guide': return t('pregnancy_birthGuideTitle')
       case 'ask_grandma': return t('pregnancy_appt_askGrandma')
     }
@@ -87,6 +90,7 @@ export function WeekWallet({
   // inline. Reminders opens its own full sheet.
   const onHeader = (id: WalletCardId, linkOnly: boolean) => {
     if (id === 'birth_guide') return onOpenBirthGuide()
+    if (id === 'exams') return router.push('/exams')
     if (id === 'ask_grandma') return router.push('/grandma-talk')
     if (id === 'appointment') return appt && onOpenAppointment(appt)
     if (id === 'week_tip') return onOpenWeekDetail()
