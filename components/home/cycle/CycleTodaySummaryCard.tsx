@@ -315,19 +315,16 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
         />
       </View>
 
-      {/* Footer — label + "see results" pill that opens the dashboard. */}
+      {/* Footer — a single "see results" pill (matches the pregnancy card:
+          no label, no chevron, plain paper pill). */}
       <View style={[styles.footer, { borderTopColor: trackColor }]}>
-        <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: hintColor }}>
-          {t('cycleDash_footer')}
-        </Text>
         <Pressable
           onPress={() => setOpen(true)}
-          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? dt.colors.surface : colors.surface, opacity: pressed ? 0.7 : 1 }]}
         >
-          <Text style={{ fontFamily: labelFont, fontSize: 12, color: titleColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
+          <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, fontSize: 13, letterSpacing: -0.1, color: titleColor }}>
             {t('cycleDash_seeResults')}
           </Text>
-          <ChevronRight size={14} color={chevronColor} strokeWidth={2} />
         </Pressable>
       </View>
     </>
@@ -396,6 +393,6 @@ const styles = StyleSheet.create({
   chipLabel: { fontSize: 12, maxWidth: 70 },
   progressTrack: { height: 4, borderRadius: 2, marginTop: 14, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 2 },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
-  resultsPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
+  footer: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  resultsPill: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16 },
 })
