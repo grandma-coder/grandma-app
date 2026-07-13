@@ -12,6 +12,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { useTheme, radius, diffuseFont, useDiffuseTheme, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
+import { Character } from '../../characters/Characters'
 import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
 import { Display } from '../../ui/Typography'
@@ -78,35 +79,35 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
     {
       key: 'water',
       logType: 'water',
-      icon: <LogWater size={22} />,
+      icon: diffuse ? <Character name="water" size={24} color={stickers.blue} /> : <LogWater size={22} />,
       label: `${waterVal}/8`,
       done: waterVal >= 8,
     },
     {
       key: 'sleep',
       logType: 'sleep',
-      icon: <LogSleep size={22} />,
+      icon: diffuse ? <Character name="sleep" size={24} color={stickers.lilac} /> : <LogSleep size={22} />,
       label: sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '+',
       done: sleepVal !== null,
     },
     {
       key: 'meals',
       logType: 'nutrition',
-      icon: <LogNutrition size={22} />,
+      icon: diffuse ? <Character name="nutrition" size={24} color={stickers.green} /> : <LogNutrition size={22} />,
       label: `${nutritionVal}/3`,
       done: nutritionVal >= 3,
     },
     {
       key: 'weight',
       logType: 'weight',
-      icon: <LogWeight size={22} />,
+      icon: diffuse ? <Character name="growth" size={24} color={stickers.peach} /> : <LogWeight size={22} />,
       label: weightVal !== null ? `${weightVal.toFixed(1)}kg` : '+',
       done: weightVal !== null,
     },
     ...(weekNumber >= 28 ? [{
       key: 'kicks',
       logType: 'kick_count',
-      icon: <LogKicks size={22} />,
+      icon: diffuse ? <Character name="kick" size={24} color={stickers.coral} /> : <LogKicks size={22} />,
       label: kicksVal !== null ? String(kicksVal) : '+',
       done: kicksVal !== null,
     }] : []),
