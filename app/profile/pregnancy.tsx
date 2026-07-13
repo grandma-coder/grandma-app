@@ -47,9 +47,10 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display } from '../../components/ui/Typography'
 import {
   Heart as HeartSticker, Squishy, Star as StarSticker, Flower as FlowerSticker,
-  Sparkle, Squiggle, CircleDashed, ClockFace, Drop, Cross, Moon, Pill, Bear,
-  Foot, Lungs, Key, Leaf,
+  Sparkle, Squiggle, CircleDashed, ClockFace, Drop, Cross, Moon, Bear,
+  Key, Leaf,
 } from '../../components/ui/Stickers'
+import { Character, type CharacterName } from '../../components/characters/Characters'
 import { PaperCard } from '../../components/ui/PaperCard'
 import { PillButton } from '../../components/ui/PillButton'
 import { PaperAlert } from '../../components/ui/PaperAlert'
@@ -280,26 +281,29 @@ interface OptionsSheetProps {
 }
 
 // Map a label → sticker + tint pair so each modal feels like its own object.
+// Edit-field modal header icon → the unified Character-blob family, keyed off the
+// field label. `tint` keeps the soft badge background per field.
 function modalAccent(label: string, stickers: ReturnType<typeof useTheme>['stickers']):
   { node: React.ReactNode; tint: string } {
   const k = label.toLowerCase()
-  if (k.includes('blood')) return { node: <Drop size={22} fill={stickers.pink} />, tint: stickers.pinkSoft }
-  if (k.includes('rh')) return { node: <Drop size={22} fill={stickers.lilac} />, tint: stickers.lilacSoft }
-  if (k.includes('conception')) return { node: <Sparkle size={20} fill={stickers.yellow} />, tint: stickers.yellowSoft }
-  if (k.includes('location')) return { node: <FlowerSticker size={22} petal={stickers.green} center={stickers.yellow} />, tint: stickers.greenSoft }
-  if (k.includes('pain')) return { node: <Lungs size={22} fill={stickers.peach} />, tint: stickers.peachSoft }
-  if (k.includes('atmos')) return { node: <Moon size={22} fill={stickers.lilac} />, tint: stickers.lilacSoft }
-  if (k.includes('cord')) return { node: <Squiggle w={22} h={14} stroke={stickers.coral} />, tint: stickers.peachSoft }
-  if (k.includes('feed') || k.includes('breast')) return { node: <Drop size={22} fill={stickers.pink} />, tint: stickers.pinkSoft }
-  if (k.includes('duration')) return { node: <ClockFace size={22} fill={stickers.blue} />, tint: stickers.blueSoft }
-  if (k.includes('height')) return { node: <StarSticker size={22} fill={stickers.yellow} />, tint: stickers.yellowSoft }
-  if (k.includes('weight')) return { node: <Pill size={22} fill={stickers.green} />, tint: stickers.greenSoft }
-  if (k.includes('scan') || k.includes('week')) return { node: <ClockFace size={22} fill={stickers.lilac} />, tint: stickers.lilacSoft }
-  if (k.includes('sex')) return { node: <HeartSticker size={22} fill={stickers.pink} />, tint: stickers.pinkSoft }
-  if (k.includes('position')) return { node: <Foot size={22} fill={stickers.peach} />, tint: stickers.peachSoft }
-  if (k.includes('baby')) return { node: <Bear size={24} fill={stickers.yellow} />, tint: stickers.yellowSoft }
-  if (k.includes('health')) return { node: <Cross size={22} fill={stickers.peach} />, tint: stickers.peachSoft }
-  return { node: <Sparkle size={20} fill={stickers.lilac} />, tint: stickers.lilacSoft }
+  const blob = (name: CharacterName, color: string) => <Character name={name} size={24} color={color} />
+  if (k.includes('blood')) return { node: blob('water', stickers.pink), tint: stickers.pinkSoft }
+  if (k.includes('rh')) return { node: blob('water', stickers.lilac), tint: stickers.lilacSoft }
+  if (k.includes('conception')) return { node: blob('sparkle', stickers.yellow), tint: stickers.yellowSoft }
+  if (k.includes('location')) return { node: blob('nutrition', stickers.green), tint: stickers.greenSoft }
+  if (k.includes('pain')) return { node: blob('lungs', stickers.peach), tint: stickers.peachSoft }
+  if (k.includes('atmos')) return { node: blob('night', stickers.lilac), tint: stickers.lilacSoft }
+  if (k.includes('cord')) return { node: blob('heartbeat', stickers.coral), tint: stickers.peachSoft }
+  if (k.includes('feed') || k.includes('breast')) return { node: blob('feeding', stickers.pink), tint: stickers.pinkSoft }
+  if (k.includes('duration')) return { node: blob('clock', stickers.blue), tint: stickers.blueSoft }
+  if (k.includes('height')) return { node: blob('growth', stickers.yellow), tint: stickers.yellowSoft }
+  if (k.includes('weight')) return { node: blob('growth', stickers.green), tint: stickers.greenSoft }
+  if (k.includes('scan') || k.includes('week')) return { node: blob('clock', stickers.lilac), tint: stickers.lilacSoft }
+  if (k.includes('sex')) return { node: blob('heart', stickers.pink), tint: stickers.pinkSoft }
+  if (k.includes('position')) return { node: blob('kick', stickers.peach), tint: stickers.peachSoft }
+  if (k.includes('baby')) return { node: blob('baby', stickers.yellow), tint: stickers.yellowSoft }
+  if (k.includes('health')) return { node: blob('health', stickers.peach), tint: stickers.peachSoft }
+  return { node: blob('sparkle', stickers.lilac), tint: stickers.lilacSoft }
 }
 
 function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose: () => void; stickers: ReturnType<typeof useTheme>['stickers'] }) {
