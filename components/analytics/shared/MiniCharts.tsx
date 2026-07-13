@@ -5,8 +5,8 @@
 
 import { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native'
-import Svg, { Path, Circle, Line, Rect, Defs, Pattern, G, LinearGradient, RadialGradient, Stop } from 'react-native-svg'
-import { useTheme } from '../../../constants/theme'
+import Svg, { Path, Circle, Line, Rect, Defs, Pattern, G, LinearGradient, RadialGradient, Stop, Ellipse, Text as SvgText } from 'react-native-svg'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 
 const DEFAULT_CHART_W = Dimensions.get('window').width - 76
@@ -720,6 +720,403 @@ export function BlobCluster({ data, height = 200, showValue = true }: BlobCluste
           )
         })}
       </View>
+    </View>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Chart language v2 — one distinct shape per metric (ported from the approved
+// design-gallery Artifact). Every fill uses a per-metric sticker hue; the
+// pregnancy violet only appears as a hairline accent. Diffuse-only shapes.
+// ══════════════════════════════════════════════════════════════════════════════
+
+const CW = DEFAULT_CHART_W
+// alpha helper for #rrggbb → rgba
+function withA(hexc: string, a: number): string {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hexc)) return hexc
+  const n = parseInt(hexc.slice(1), 16)
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`
+}
+// small label row under a chart
+function LabelRow({ labels, activeIndex }: { labels: string[]; activeIndex?: number | null }) {
+  const { colors, font } = useTheme()
+  if (labels.length === 0) return null
+  return (
+    <View style={[styles.labelRow, { width: CW, alignSelf: 'center', marginTop: 4 }]}>
+      {labels.map((l, i) => (
+        <Text key={i} numberOfLines={1} style={[styles.barLabel, { color: i === activeIndex ? colors.text : colors.textMuted, fontFamily: i === activeIndex ? font.bodySemiBold : font.body }]}>{l}</Text>
+      ))}
+    </View>
+  )
+}
+
+// ─── SipColumns ──── hydration: filled level columns w/ ghost outline + meniscus
+interface SipProps { data: number[]; target: number; color: string; accent?: string; max?: number; labels?: string[]; longLabels?: string[]; height?: number; unit?: string }
+export function SipColumns({ data, target, color, accent, max, labels = [], longLabels, height = 150, unit }: SipProps) {
+  const { colors } = useTheme()
+  const dt = useDiffuseTheme()
+  const [sel, setSel] = useState<number | null>(null)
+  if (data.length === 0) return <EmptyChart height={height} />
+  const M = max ?? Math.max(...data, target) * 1.15
+  const n = data.length, padx = 4, slot = (CW - padx * 2) / n
+  const bw = Math.min(30, Math.max(10, slot * 0.55)), r = bw / 2
+  const top = 8, bot = height - 18, ih = bot - top
+  const tips = longLabels ?? labels
+  const acc = accent ?? '#8F5FC6'
+  const cardBg = dt.colors.surface
+  return (
+    <View style={{ width: '100%' }}>
+      <View style={{ width: CW, height, alignSelf: 'center' }}>
+        <Svg width={CW} height={height}>
+          <Defs>
+            <LinearGradient id="sipG" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={color} stopOpacity={1} />
+              <Stop offset="1" stopColor={color} stopOpacity={0.72} />
+            </LinearGradient>
+          </Defs>
+          {data.map((v, i) => {
+            const cx = padx + slot * (i + 0.5), x = cx - bw / 2
+            const fh = Math.max(bw, (Math.min(v, M) / M) * ih)
+            const met = v >= target
+            return (
+              <G key={i}>
+                <Rect x={x} y={top} width={bw} height={ih} rx={r} ry={r} fill="none" stroke={dt.colors.line} strokeWidth={1.3} />
+                <Rect x={x} y={bot - fh} width={bw} height={fh} rx={r} ry={r} fill="url(#sipG)" opacity={i === sel ? 1 : 0.94} />
+                <Circle cx={cx} cy={bot - fh + 6} r={2.3} fill={cardBg} />
+                {met ? <Circle cx={cx} cy={bot + 9} r={2.6} fill="none" stroke={acc} strokeWidth={1.5} /> : null}
+              </G>
+            )
+          })}
+          {(() => { const ty = bot - (target / M) * ih; return (
+            <Line x1={padx} x2={CW - padx} y1={ty} y2={ty} stroke={dt.colors.hairline} strokeWidth={1} strokeDasharray="2 4" opacity={0.6} />
+          )})()}
+        </Svg>
+        {data.map((_, i) => { const cx = padx + slot * (i + 0.5); return (
+          <Pressable key={i} onPress={() => setSel(s => s === i ? null : i)} hitSlop={4} style={{ position: 'absolute', left: cx - slot / 2, top: 0, width: slot, height }} />
+        )})}
+        {sel !== null ? <BarTooltip chartW={CW} cx={padx + slot * (sel + 0.5)} top={Math.max(2, bot - (Math.min(data[sel], M) / M) * ih - 38)} value={`${formatBarValue(data[sel])}${unit ? ` ${unit}` : ''}`} label={tips[sel]} /> : null}
+      </View>
+      <LabelRow labels={labels} activeIndex={sel} />
+    </View>
+  )
+}
+
+// ─── PetalBurst ──── movement: rounded petals radiating from a center blob
+interface PetalProps { data: number[]; color: string; color2?: string; centerLabel?: string; height?: number }
+export function PetalBurst({ data, color, color2, centerLabel, height = 170 }: PetalProps) {
+  const dt = useDiffuseTheme()
+  if (data.length === 0) return <EmptyChart height={height} />
+  const w = CW, h = height, cx = w / 2, cy = h * 0.52, inner = 13, n = data.length
+  const max = Math.max(...data, 1)
+  const petals = data.map((v, i) => {
+    const ang = (-Math.PI / 2) + (i / n) * Math.PI * 2
+    const len = inner + (v / max) * (Math.min(w, h * 1.8) * 0.28)
+    return { ang, len, warm: i % 3 === 0 }
+  })
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={w} height={h}>
+        <Circle cx={cx} cy={cy} r={inner + 4} fill={withA(color, 0.26)} />
+        {petals.map((p, i) => {
+          const pw = 9, x0 = cx + Math.cos(p.ang) * inner, y0 = cy + Math.sin(p.ang) * inner
+          const x1 = cx + Math.cos(p.ang) * p.len, y1 = cy + Math.sin(p.ang) * p.len
+          const stroke = p.warm && color2 ? color2 : color
+          return <Line key={i} x1={x0} y1={y0} x2={x1} y2={y1} stroke={stroke} strokeWidth={pw} strokeLinecap="round" opacity={0.9} />
+        })}
+        <Circle cx={cx} cy={cy} r={inner} fill={dt.colors.surface} />
+        {centerLabel ? <SvgText x={cx} y={cy + 5} fontSize={15} fontWeight="800" fill={color} textAnchor="middle" fontFamily={diffuseFont.display}>{centerLabel}</SvgText> : null}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── StackedLozenges ──── symptoms: horizontal rounded lozenges, hue per row
+export interface LozengeDatum { label: string; value: number; color: string }
+export function StackedLozenges({ data, height = 190 }: { data: LozengeDatum[]; height?: number }) {
+  const { colors, font } = useTheme()
+  if (data.length === 0) return <EmptyChart height={height} />
+  const max = Math.max(...data.map(d => d.value), 1)
+  const n = data.length, gap = 8, bh = (height - gap * (n - 1)) / n
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={CW} height={height}>
+        {data.map((d, i) => {
+          const y = i * (bh + gap), bw = Math.max(bh, (d.value / max) * (CW - 2))
+          return (
+            <G key={d.label}>
+              <Rect x={0} y={y} width={bw} height={bh} rx={bh / 2} ry={bh / 2} fill={withA(d.color, 0.9)} />
+              <SvgText x={14} y={y + bh / 2 + 4} fontSize={12} fontWeight="700" fill={colors.text} fontFamily={font.bodySemiBold}>{d.label}</SvgText>
+              <SvgText x={Math.max(bw - 10, 42)} y={y + bh / 2 + 4} fontSize={13} fontWeight="700" fill={bw > 64 ? '#1A1916' : colors.textMuted} textAnchor="end" fontFamily={font.bodySemiBold}>{String(d.value)}</SvgText>
+            </G>
+          )
+        })}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── BeadedThread ──── kicks: wavy thread + beads sized by count, latest accented
+interface BeadProps { data: number[]; color: string; accent?: string; labels?: string[]; height?: number }
+export function BeadedThread({ data, color, accent, labels = [], height = 150 }: BeadProps) {
+  const dt = useDiffuseTheme()
+  if (data.length === 0) return <EmptyChart height={height} />
+  const w = CW, h = height, pad = 16, cy = h / 2, n = data.length, max = Math.max(...data, 1)
+  const wave = (t: number) => cy + Math.sin(t * Math.PI * 3) * 10
+  let d = ''
+  for (let i = 0; i <= 100; i++) { const x = pad + (i / 100) * (w - pad * 2), y = wave(i / 100); d += (i ? 'L' : 'M') + x + ',' + y }
+  const acc = accent ?? '#8F5FC6'
+  return (
+    <View style={{ width: CW, alignSelf: 'center' }}>
+      <Svg width={w} height={h}>
+        <Path d={d} stroke={dt.colors.line} strokeWidth={2} fill="none" />
+        {data.map((v, i) => {
+          const x = pad + i * (w - pad * 2) / (n - 1), y = wave(i / (n - 1)), r = 4 + (v / max) * 7, last = i === n - 1
+          return (
+            <G key={i}>
+              {last ? <Circle cx={x} cy={y} r={r + 3.5} fill="none" stroke={acc} strokeWidth={1.6} /> : null}
+              <Circle cx={x} cy={y} r={r} fill={last ? color : withA(color, 0.55)} />
+            </G>
+          )
+        })}
+      </Svg>
+      <LabelRow labels={labels} />
+    </View>
+  )
+}
+
+// ─── CrescentBars ──── sleep: rounded bars with a moon-notch on each cap
+interface CrescentProps { data: number[]; color: string; max?: number; labels?: string[]; height?: number }
+export function CrescentBars({ data, color, max, labels = [], height = 150 }: CrescentProps) {
+  const dt = useDiffuseTheme()
+  if (data.length === 0) return <EmptyChart height={height} />
+  const M = max ?? Math.max(...data) * 1.1
+  const n = data.length, padx = 6, slot = (CW - padx * 2) / n
+  const bw = Math.min(18, slot * 0.55), r = bw / 2, bot = height - 6, ih = height - 16
+  return (
+    <View style={{ width: CW, alignSelf: 'center' }}>
+      <Svg width={CW} height={height}>
+        {data.map((v, i) => {
+          const cx = padx + slot * (i + 0.5), x = cx - bw / 2, bh = Math.max(bw, (v / M) * ih), y = bot - bh, last = i === n - 1
+          return (
+            <G key={i}>
+              <Rect x={x} y={y} width={bw} height={bh} rx={r} ry={r} fill={last ? color : withA(color, 0.5)} />
+              <Circle cx={cx + bw * 0.22} cy={y + bw * 0.42} r={r * 0.6} fill={dt.colors.surface} />
+            </G>
+          )
+        })}
+      </Svg>
+      <LabelRow labels={labels} />
+    </View>
+  )
+}
+
+// ─── ConcentricArcs ──── wellbeing: nested half-donut rings, one hue per pillar
+export interface ArcDatum { value: number; color: string } // value 0..10
+export function ConcentricArcs({ data, centerLabel, height = 180 }: { data: ArcDatum[]; centerLabel?: string; height?: number }) {
+  const { colors, font } = useTheme()
+  const dt = useDiffuseTheme()
+  if (data.length === 0) return <EmptyChart height={height} />
+  const w = CW, h = height, cx = w / 2, cy = h * 0.94
+  const base = Math.min(w * 0.42, h * 0.86), gap = (base - 16) / data.length, sw = gap * 0.72
+  // build a half-arc path (180°..180°+span) at radius rad
+  const arcPath = (rad: number, frac: number) => {
+    const a0 = Math.PI, a1 = Math.PI + frac * Math.PI
+    const x0 = cx + rad * Math.cos(a0), y0 = cy + rad * Math.sin(a0)
+    const x1 = cx + rad * Math.cos(a1), y1 = cy + rad * Math.sin(a1)
+    const large = frac > 0.5 ? 1 : 0
+    return `M ${x0} ${y0} A ${rad} ${rad} 0 ${large} 1 ${x1} ${y1}`
+  }
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={w} height={h}>
+        {data.map((d, i) => {
+          const rad = 16 + gap * (i + 0.5)
+          return (
+            <G key={i}>
+              <Path d={arcPath(rad, 1)} stroke={dt.colors.line} strokeWidth={sw} fill="none" strokeLinecap="round" />
+              <Path d={arcPath(rad, Math.max(0.02, d.value / 10))} stroke={d.color} strokeWidth={sw} fill="none" strokeLinecap="round" />
+            </G>
+          )
+        })}
+        {centerLabel ? <SvgText x={cx} y={cy - 6} fontSize={22} fontWeight="800" fill={colors.text} textAnchor="middle" fontFamily={diffuseFont.display}>{centerLabel}</SvgText> : null}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── TieredLozenges ──── weight-by-week: labeled rows, fill = value in range
+export interface TierRow { label: string; value: number; display: string }
+export function TieredLozenges({ rows, min, max, color, height = 150 }: { rows: TierRow[]; min: number; max: number; color: string; height?: number }) {
+  const { colors, font } = useTheme()
+  const dt = useDiffuseTheme()
+  if (rows.length === 0) return <EmptyChart height={height} />
+  const n = rows.length, gap = 6, bh = (height - gap * (n - 1)) / n, track = CW * 0.78, x0 = CW * 0.14
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={CW} height={height}>
+        {rows.map((rw, i) => {
+          const y = i * (bh + gap), val = Math.max(0, Math.min(1, (rw.value - min) / Math.max(0.01, max - min)))
+          const bw = Math.max(bh, val * track), last = i === n - 1
+          return (
+            <G key={rw.label}>
+              <SvgText x={0} y={y + bh / 2 + 3} fontSize={9} fill={colors.textMuted} fontFamily={diffuseFont.mono}>{rw.label}</SvgText>
+              <Rect x={x0} y={y} width={track} height={bh} rx={bh / 2} ry={bh / 2} fill={dt.colors.surfaceRaised} />
+              <Rect x={x0} y={y} width={bw} height={bh} rx={bh / 2} ry={bh / 2} fill={last ? color : withA(color, 0.7)} />
+              <SvgText x={CW} y={y + bh / 2 + 4} fontSize={11} fontWeight="700" fill={colors.text} textAnchor="end" fontFamily={font.bodySemiBold}>{rw.display}</SvgText>
+            </G>
+          )
+        })}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── SplitMeters ──── when-you-sip / when-active: labeled soft meters
+export interface MeterRow { label: string; frac: number; color: string }
+export function SplitMeters({ rows, height }: { rows: MeterRow[]; height?: number }) {
+  const { colors, font } = useTheme()
+  const dt = useDiffuseTheme()
+  const n = rows.length, gap = 12, bh = 16, H = height ?? n * (bh + gap)
+  const track = CW * 0.6, x0 = CW * 0.34
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height: H }}>
+      <Svg width={CW} height={H}>
+        {rows.map((rw, i) => {
+          const y = i * (bh + gap) + 2
+          return (
+            <G key={rw.label}>
+              <SvgText x={0} y={y + bh / 2 + 4} fontSize={12} fill={colors.text} fontFamily={font.bodyMedium}>{rw.label}</SvgText>
+              <Rect x={x0} y={y} width={track} height={bh} rx={bh / 2} ry={bh / 2} fill={dt.colors.surfaceRaised} />
+              <Rect x={x0} y={y} width={Math.max(bh, track * Math.max(0, Math.min(1, rw.frac)))} height={bh} rx={bh / 2} ry={bh / 2} fill={rw.color} />
+            </G>
+          )
+        })}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── CheckpointPills ──── birth readiness: fill pills, done = green ✓
+export interface CheckRow { label: string; done: number } // 0..1
+export function CheckpointPills({ rows, color, doneColor, height = 170 }: { rows: CheckRow[]; color: string; doneColor: string; height?: number }) {
+  const { colors, font } = useTheme()
+  const dt = useDiffuseTheme()
+  if (rows.length === 0) return <EmptyChart height={height} />
+  const n = rows.length, gap = 8, bh = (height - gap * (n - 1)) / n
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={CW} height={height}>
+        {rows.map((rw, i) => {
+          const y = i * (bh + gap), done = rw.done, full = done >= 1
+          return (
+            <G key={rw.label}>
+              <Rect x={0} y={y} width={CW} height={bh} rx={bh / 2} ry={bh / 2} fill={dt.colors.surfaceRaised} />
+              {done > 0 ? <Rect x={0} y={y} width={Math.max(bh, CW * done)} height={bh} rx={bh / 2} ry={bh / 2} fill={full ? doneColor : withA(color, 0.9)} /> : null}
+              <SvgText x={12} y={y + bh / 2 + 4} fontSize={12} fontWeight="700" fill={full ? '#1A1916' : colors.textMuted} fontFamily={font.bodySemiBold}>{(full ? '✓ ' : '') + rw.label}</SvgText>
+            </G>
+          )
+        })}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── NutrientMatrix ──── nutrition: dot grid, hue per nutrient row
+export function NutrientMatrix({ matrix, colors: hues, labels = [], height = 130 }: { matrix: boolean[][]; colors: string[]; labels?: string[]; height?: number }) {
+  const dt = useDiffuseTheme()
+  if (matrix.length === 0) return <EmptyChart height={height} />
+  const rowsN = matrix.length, colsN = matrix[0]?.length ?? 0
+  if (colsN === 0) return <EmptyChart height={height} />
+  const gx = (CW - 8) / colsN, gy = (height - 8) / rowsN
+  return (
+    <View style={{ width: CW, alignSelf: 'center' }}>
+      <Svg width={CW} height={height}>
+        {matrix.map((row, r) => row.map((on, c) => {
+          const cx = 6 + gx * (c + 0.5), cy = 6 + gy * (r + 0.5)
+          return <Circle key={`${r}-${c}`} cx={cx} cy={cy} r={on ? 7 : 4} fill={on ? (hues[r] ?? '#9DC3E8') : dt.colors.line} />
+        }))}
+      </Svg>
+      <LabelRow labels={labels} />
+    </View>
+  )
+}
+
+// ─── HalftoneRidge ──── activity timeline: rainbow dot-density silhouette
+export function HalftoneRidge({ data, stops, labels, height = 190 }: { data: number[]; stops: string[]; labels?: [string, string, string]; height?: number }) {
+  const { colors } = useTheme()
+  if (data.length === 0) return <EmptyChart height={height} />
+  const w = CW, h = height, step = 7, base = h - 6
+  const max = Math.max(...data, 1)
+  // sample the ridge from data (interpolated)
+  const ridgeAt = (x: number) => {
+    const t = x / w, fi = t * (data.length - 1), i = Math.floor(fi), f = fi - i
+    const v = (data[i] ?? 0) * (1 - f) + (data[Math.min(i + 1, data.length - 1)] ?? 0) * f
+    return base - (h * 0.6) * (v / max)
+  }
+  const lerp = (a: string, b: string, t: number) => {
+    const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16)
+    const r = Math.round(((A >> 16) * (1 - t)) + ((B >> 16) * t))
+    const g = Math.round((((A >> 8) & 255) * (1 - t)) + (((B >> 8) & 255) * t))
+    const bl = Math.round(((A & 255) * (1 - t)) + ((B & 255) * t))
+    return `#${((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1)}`
+  }
+  const dots: { x: number; y: number; r: number; c: string; o: number }[] = []
+  for (let x = 4; x < w; x += step) {
+    const top = ridgeAt(x)
+    for (let y = base; y > top; y -= step) {
+      const prog = x / w, seg = prog * (stops.length - 1), si = Math.floor(seg), sf = seg - si
+      const c = lerp(stops[si] ?? stops[0], stops[Math.min(si + 1, stops.length - 1)], sf)
+      const dens = (base - y) / Math.max(1, base - top)
+      dots.push({ x, y, r: 1.1 + dens * 1.7, c, o: 0.35 + dens * 0.5 })
+    }
+  }
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={w} height={h}>
+        {dots.map((d, i) => <Circle key={i} cx={d.x} cy={d.y} r={d.r} fill={withA(d.c, d.o)} />)}
+        {[0.33, 0.66].map((f, i) => <Line key={i} x1={w * f} x2={w * f} y1={12} y2={h * 0.4} stroke={colors.text} strokeWidth={1} />)}
+        {labels ? (
+          <>
+            <SvgText x={w * 0.16} y={20} fontSize={9} fill={colors.textMuted} textAnchor="middle" fontFamily={diffuseFont.mono}>{labels[0]}</SvgText>
+            <SvgText x={w * 0.5} y={20} fontSize={9} fill={colors.textMuted} textAnchor="middle" fontFamily={diffuseFont.mono}>{labels[1]}</SvgText>
+            <SvgText x={w * 0.84} y={20} fontSize={9} fill={colors.textMuted} textAnchor="middle" fontFamily={diffuseFont.mono}>{labels[2]}</SvgText>
+          </>
+        ) : null}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── AxesGlow ──── wellbeing profile: labeled axes + glowing connector thread
+export interface AxisRow { label: string; frac: number; watch?: boolean }
+export function AxesGlow({ rows, color, accent, height = 190 }: { rows: AxisRow[]; color: string; accent?: string; height?: number }) {
+  const { colors, font } = useTheme()
+  const dt = useDiffuseTheme()
+  if (rows.length === 0) return <EmptyChart height={height} />
+  const w = CW, h = height, lx = 58, rx = w - 20, n = rows.length, gap = (h - 24) / n
+  const acc = accent ?? '#8F5FC6'
+  const pts = rows.map((r, i) => ({ x: lx + (rx - lx) * Math.max(0, Math.min(1, r.frac)), y: 12 + gap * (i + 0.5), watch: r.watch }))
+  let thread = ''
+  pts.forEach((p, i) => { thread += (i ? 'L' : 'M') + p.x + ',' + p.y })
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={w} height={h}>
+        {rows.map((r, i) => { const y = 12 + gap * (i + 0.5); return (
+          <G key={r.label}>
+            <Line x1={lx} x2={rx} y1={y} y2={y} stroke={dt.colors.line} strokeWidth={1} />
+            <SvgText x={0} y={y + 3} fontSize={8.5} fontWeight="700" fill={colors.text} fontFamily={diffuseFont.mono}>{r.label}</SvgText>
+          </G>
+        )})}
+        {/* glow underlay then bright thread */}
+        <Path d={thread} stroke={withA(color, 0.28)} strokeWidth={12} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+        <Path d={thread} stroke={withA(color, 0.6)} strokeWidth={5} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+        {pts.map((p, i) => (
+          <G key={i}>
+            {p.watch ? <Circle cx={p.x} cy={p.y} r={12} fill={withA(acc, 0.3)} /> : null}
+            <Circle cx={p.x} cy={p.y} r={6 + rows[i].frac * 3} fill={p.watch ? acc : colors.text} />
+          </G>
+        ))}
+      </Svg>
     </View>
   )
 }
