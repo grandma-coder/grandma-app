@@ -29,17 +29,7 @@ import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import type { JourneyMode } from '../../types'
-
-interface Reminder {
-  id: string
-  text: string
-  done: boolean
-  dueDate?: string | null
-  dueTime?: string | null
-  notifId?: string | null
-  archivedAt?: string | null
-  flagged?: boolean
-}
+import { type Reminder, type ChecklistItem, storageKey as buildStorageKey, loadReminders, saveReminders } from '../../lib/reminders'
 
 interface Props {
   userId: string | null
@@ -91,20 +81,17 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
 
-  const storageKey = userId ? `grandma-reminders-${context}-${userId}` : null
+  const storageKey = buildStorageKey(userId, context)
 
   useEffect(() => {
-    if (!storageKey) return
-    AsyncStorage.getItem(storageKey).then((json) => {
-      if (json) {
-        try { setReminders(JSON.parse(json)) } catch {}
-      }
-    })
-  }, [storageKey])
+    let alive = true
+    loadReminders(userId, context).then((list) => { if (alive) setReminders(list) })
+    return () => { alive = false }
+  }, [userId, context])
 
   function persist(list: Reminder[]) {
     setReminders(list)
-    if (storageKey) AsyncStorage.setItem(storageKey, JSON.stringify(list))
+    void saveReminders(userId, context, list)
   }
 
   async function addReminder() {
