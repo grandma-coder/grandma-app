@@ -493,8 +493,17 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
             const label = tag === null ? t('reminders_filterAll') : tag
             return (
               <Pressable key={tag ?? '__all__'} onPress={() => setActiveFilter(tag)}
-                style={{ borderWidth: 1, borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.surfaceRaised : 'transparent', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
-                <Text style={{ fontFamily: font.bodyMedium, fontSize: 12, color: on ? colors.text : colors.textMuted }}>{label}</Text>
+                style={{
+                  borderWidth: 1,
+                  borderColor: diffuse ? (on ? dt.colors.ink : dt.colors.line) : (on ? colors.text : colors.border),
+                  backgroundColor: on ? (diffuse ? dt.colors.line2 : colors.surfaceRaised) : 'transparent',
+                  borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6,
+                }}>
+                <Text style={{
+                  fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium,
+                  fontSize: 12,
+                  color: diffuse ? (on ? dt.colors.ink : dt.colors.ink3) : (on ? colors.text : colors.textMuted),
+                }}>{label}</Text>
               </Pressable>
             )
           })}
