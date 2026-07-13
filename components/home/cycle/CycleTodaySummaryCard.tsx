@@ -9,7 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { ChevronRight } from 'lucide-react-native'
+import { ChevronRight, Pencil } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
@@ -28,6 +28,9 @@ import { LogSheet } from '../../calendar/LogSheet'
 import {
   MoodForm, SymptomsForm, BbtForm, LhForm, CmForm, IntimacyForm, PeriodStartForm,
 } from '../../calendar/CycleLogForms'
+import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
+import { DEFAULT_CYCLE_QUICK_LOG_KEYS } from '../../../lib/cycleQuickLogs'
+import { CycleQuickLogPicker } from './CycleQuickLogPicker'
 
 /** Chip key → the cycle_logs sheet it opens. */
 type CycleSheetType =
@@ -71,6 +74,13 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
   const [open, setOpen] = useState(false)
   // Which signal's log sheet is open (tap a chip to log it, like pregnancy).
   const [sheetType, setSheetType] = useState<CycleSheetType | null>(null)
+  // Customization: which chips the user has chosen (persisted). Falls back to
+  // the default set until the store rehydrates. `bare` (wallet-embedded) keeps
+  // the full fixed set; only the standalone card is user-customizable.
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const enabledKeys = useCycleQuickLogStore((s) => s.enabledKeys)
+  const quickHydrated = useCycleQuickLogStore((s) => s.hydrated)
+  const activeKeys = !bare && quickHydrated ? enabledKeys : DEFAULT_CYCLE_QUICK_LOG_KEYS
   const closeSheet = () => {
     setSheetType(null)
     void qc.invalidateQueries({ queryKey: ['cycleLogs'] })
@@ -192,6 +202,14 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
     },
   ]
 
+  // The chips actually shown, filtered + ordered by the user's enabled keys
+  // (standalone card) or the default set (wallet-embedded `bare`). An unknown
+  // key is skipped; an enabled key with no matching chip is dropped.
+  const chipByKey = new Map(chips.map((c) => [c.key, c]))
+  const visibleChips = activeKeys
+    .map((k) => chipByKey.get(k))
+    .filter((c): c is (typeof chips)[number] => !!c)
+
   const completed =
     (moodMeta ? 1 : 0) +
     (bbtValue ? 1 : 0) +
@@ -232,28 +250,50 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
     period_start: t('cycleCalendar_logSheet_periodStart'),
   }
 
+  // Diffuse rows follow the same enabled-keys filter + order as the chips.
+  const rowByKey = new Map(diffuseRows.map((r) => [r.key, r]))
+  const visibleRows = activeKeys
+    .map((k) => rowByKey.get(k))
+    .filter((r): r is (typeof diffuseRows)[number] => !!r)
+
   const inner = (
     <>
-      {/* Header — tap the chevron to open the full dashboard */}
-      <Pressable onPress={() => setOpen(true)} style={({ pressed }) => [styles.headerRow, { opacity: pressed ? 0.7 : 1 }]}>
-        <View style={{ flex: 1 }}>
+      {/* Header — tap the chevron to open the full dashboard; Edit opens the
+          chip picker (standalone card only). */}
+      <View style={styles.headerRow}>
+        <Pressable onPress={() => setOpen(true)} style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.7 : 1 }]}>
           <Display size={22} color={diffuse ? dt.colors.ink : ink}>{t('cycleDash_today')}</Display>
           <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.mono : font.italic, ...(diffuse ? { letterSpacing: 1, textTransform: 'uppercase' as const, fontSize: 10 } : null) }}>
             {summaryHint}
           </Body>
-        </View>
-        <ChevronRight size={20} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
-      </Pressable>
+        </Pressable>
+        {!bare ? (
+          <Pressable
+            onPress={() => setPickerOpen(true)}
+            hitSlop={10}
+            style={({ pressed }) => [styles.editBtn, { borderColor: diffuse ? dt.colors.line2 : colors.border, opacity: pressed ? 0.6 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('common_edit')}
+          >
+            <Pencil size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
+            <Text style={{ fontSize: 11, color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0 }}>
+              {t('common_edit')}
+            </Text>
+          </Pressable>
+        ) : (
+          <ChevronRight size={20} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+        )}
+      </View>
 
       {diffuse ? (
         <View style={styles.srows}>
-          {diffuseRows.map((r, i) => (
+          {visibleRows.map((r, i) => (
             <Pressable
               key={r.key}
               onPress={() => setSheetType(r.key as CycleSheetType)}
               style={({ pressed }) => [
                 styles.srow,
-                { borderBottomColor: dt.colors.line, borderBottomWidth: i === diffuseRows.length - 1 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.6 : 1 },
+                { borderBottomColor: dt.colors.line, borderBottomWidth: i === visibleRows.length - 1 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.6 : 1 },
               ]}
             >
               <Character name={r.char} size={26} color={r.color} />
@@ -268,7 +308,7 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
         </View>
       ) : (
         <View style={styles.chipsRow}>
-          {chips.map((c) => (
+          {visibleChips.map((c) => (
             <Pressable
               key={c.key}
               onPress={() => setSheetType(c.sheet)}
@@ -349,6 +389,11 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
       <LogSheet visible={sheetType === 'period_start'} title={sheetTitle.period_start} onClose={closeSheet}>
         <PeriodStartForm date={today} phase={phase} onSaved={closeSheet} />
       </LogSheet>
+
+      {/* Customize which chips show (standalone card only) */}
+      {!bare && (
+        <CycleQuickLogPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} />
+      )}
     </View>
   )
 }
@@ -365,6 +410,11 @@ function phaseColor(phase: CyclePhase, s: ReturnType<typeof useTheme>['stickers'
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 20, marginTop: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  editBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 999, borderWidth: 1,
+  },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

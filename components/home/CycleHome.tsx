@@ -18,8 +18,11 @@ import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
+import { MonoCaps } from '../ui/Typography'
 import { CycleJourneyRingFull } from './cycle/CycleJourneyRingFull'
+import { CycleTodaySummaryCard } from './cycle/CycleTodaySummaryCard'
 import { CycleWallet } from './cycle/CycleWallet'
+import { useTranslation } from '../../lib/i18n'
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -34,6 +37,7 @@ export function CycleHome() {
   const dt = useDiffuseTheme()
   const bg = diffuse ? dt.colors.bg : colors.bg
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const parentName = useJourneyStore((s) => s.parentName)
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
@@ -78,6 +82,12 @@ export function CycleHome() {
         </View>
 
         <CycleJourneyRingFull cycleConfig={cycleConfig} onSelectedDateChange={handleSelectedDateChange} />
+
+        {/* Standalone customizable quick-log card (mirrors the pregnancy home).
+            The card supplies its own horizontal padding (styles.wrap); the
+            eyebrow just needs to line up with it. */}
+        <MonoCaps style={{ marginTop: 20, marginBottom: 2, paddingHorizontal: 22 }}>{t('pregnancy_logSomething_label')}</MonoCaps>
+        <CycleTodaySummaryCard phase={info.phase as CyclePhase} />
 
         <View style={styles.cardWrap}>
           <CycleWallet
