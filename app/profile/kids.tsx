@@ -27,6 +27,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { searchCountries, countryByCode } from '../../lib/countries'
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
@@ -54,19 +55,6 @@ const SEX_OPTIONS = [
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
-const COUNTRY_OPTIONS = [
-  { code: 'US', flag: '🇺🇸', name: 'United States' },
-  { code: 'BR', flag: '🇧🇷', name: 'Brazil' },
-  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
-  { code: 'AU', flag: '🇦🇺', name: 'Australia' },
-  { code: 'CA', flag: '🇨🇦', name: 'Canada' },
-  { code: 'PT', flag: '🇵🇹', name: 'Portugal' },
-  { code: 'DE', flag: '🇩🇪', name: 'Germany' },
-  { code: 'FR', flag: '🇫🇷', name: 'France' },
-  { code: 'MX', flag: '🇲🇽', name: 'Mexico' },
-  { code: 'AR', flag: '🇦🇷', name: 'Argentina' },
-  { code: 'IN', flag: '🇮🇳', name: 'India' },
-]
 
 const COMMON_CHILD_ALLERGIES = [
   'Milk', 'Eggs', 'Peanuts', 'Tree nuts', 'Wheat', 'Soy', 'Fish',
@@ -502,7 +490,7 @@ function EditChildSheet({
   const [pedPhone, setPedPhone] = useState(child.pediatrician?.phone ?? '')
   const [pedClinic, setPedClinic] = useState(child.pediatrician?.clinic ?? '')
   const [countryCode, setCountryCode] = useState(child.countryCode ?? 'US')
-  const [countryQuery, setCountryQuery] = useState(COUNTRY_OPTIONS.find(c => c.code === (child.countryCode ?? 'US'))?.name ?? 'United States')
+  const [countryQuery, setCountryQuery] = useState(countryByCode(child.countryCode ?? 'US')?.name ?? 'United States')
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
   const [notes, setNotes] = useState(child.notes)
   const [dateModalOpen, setDateModalOpen] = useState(false)
@@ -675,16 +663,17 @@ function EditChildSheet({
               />
               {countryCode && (
                 <Text style={{ fontSize: 13, color: colors.text, fontFamily: font.bodySemiBold }}>
-                  {COUNTRY_OPTIONS.find(c => c.code === countryCode)?.code}
+                  {countryByCode(countryCode)?.code}
                 </Text>
               )}
             </View>
             {countryDropdownOpen && (() => {
-              const q = countryQuery.toLowerCase().trim()
-              const matches = COUNTRY_OPTIONS.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+              const matches = searchCountries(countryQuery)
               if (matches.length === 0) return null
               return (
-                <View
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
                   style={[
                     formStyles.dropdown,
                     {
@@ -708,7 +697,7 @@ function EditChildSheet({
                       </Text>
                     </Pressable>
                   ))}
-                </View>
+                </ScrollView>
               )
             })()}
           </View>

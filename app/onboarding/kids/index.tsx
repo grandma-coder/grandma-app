@@ -37,6 +37,7 @@ import { BloomChips } from '../../../components/ui/diffuse/pickers/BloomChips'
 import { AvatarBloomGrid } from '../../../components/ui/diffuse/pickers/AvatarBloomGrid'
 import { ChoiceTimeline } from '../../../components/ui/diffuse/pickers/ChoiceTimeline'
 import { useTranslation } from '../../../lib/i18n'
+import { searchCountries, countryByCode } from '../../../lib/countries'
 import { AvatarView, AvatarPickerModal, isIconAvatar, buildIconAvatarValue } from '../../../components/ui/AvatarPicker'
 import { PHOTO_BUCKETS } from '../../../lib/photoSigning'
 import {
@@ -793,20 +794,6 @@ function formatAge(birthDate: string): string {
 
 // ─── STEP: Child Country ──────────────────────────────────────────────────
 
-const COUNTRY_OPTIONS: { code: string; flag: string; name: string }[] = [
-  { code: 'US', flag: '🇺🇸', name: 'United States' },
-  { code: 'BR', flag: '🇧🇷', name: 'Brazil' },
-  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
-  { code: 'AU', flag: '🇦🇺', name: 'Australia' },
-  { code: 'CA', flag: '🇨🇦', name: 'Canada' },
-  { code: 'PT', flag: '🇵🇹', name: 'Portugal' },
-  { code: 'DE', flag: '🇩🇪', name: 'Germany' },
-  { code: 'FR', flag: '🇫🇷', name: 'France' },
-  { code: 'MX', flag: '🇲🇽', name: 'Mexico' },
-  { code: 'AR', flag: '🇦🇷', name: 'Argentina' },
-  { code: 'IN', flag: '🇮🇳', name: 'India' },
-]
-
 function StepChildCountry({
   step,
   total,
@@ -831,10 +818,15 @@ function StepChildCountry({
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
 
-  const selectedCountry = COUNTRY_OPTIONS.find(c => c.code === selected)
-  const filteredOptions = query.trim()
-    ? COUNTRY_OPTIONS.filter(c => c.name.toLowerCase().includes(query.toLowerCase()) || c.code.toLowerCase().includes(query.toLowerCase()))
-    : COUNTRY_OPTIONS
+  // Full world list; empty query shows the curated quick-picks, typing searches
+  // every country by name or ISO code. Always surface the selected country even
+  // when it isn't in the current results, so the choice stays visible.
+  const searchResults = searchCountries(query)
+  const filteredOptions = (() => {
+    if (searchResults.some((c) => c.code === selected)) return searchResults
+    const sel = countryByCode(selected)
+    return sel ? [sel, ...searchResults] : searchResults
+  })()
 
   return (
     <OnboardingStep
