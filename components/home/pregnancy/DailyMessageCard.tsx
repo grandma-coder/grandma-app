@@ -4,9 +4,10 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { ArrowRight, ArrowUpRight } from 'lucide-react-native'
 import { PaperCard } from '../../ui/PaperCard'
+import { MonoCaps } from '../../ui/Typography'
+import { CardSticker } from './CardSticker'
 import { useTheme, font, radius } from '../../../constants/theme'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
-import { cardTint, cardHairline } from '../../../lib/dailyMessage/cardTint'
 import { DailyMessageModal } from './DailyMessageModal'
 
 export function DailyMessageCard() {
@@ -15,26 +16,26 @@ export function DailyMessageCard() {
   const [open, setOpen] = useState(false)
   if (!todayQuestion) return null
 
-  const tint = todayCard ? cardTint(todayCard.color) : null
-
   return (
     <>
       <Pressable onPress={() => setOpen(true)}>
         <PaperCard>
-          <Text style={[styles.eyebrow, { color: colors.textMuted }]}>
+          <MonoCaps color={colors.textMuted}>
             DAILY MESSAGE{isAnswered ? `  ·  ${collection.length} CARD${collection.length === 1 ? '' : 'S'}` : ''}
-          </Text>
+          </MonoCaps>
 
-          {isAnswered && todayCard && tint ? (
-            <View style={[styles.mini, { backgroundColor: tint.soft, borderColor: cardHairline(todayCard.color) }]}>
-              <Text style={[styles.miniText, { color: tint.ink }]}>{todayCard.text}</Text>
+          {isAnswered && todayCard ? (
+            // Answered: paper surface, small sticker accent, ink serif on paper.
+            <View style={styles.answeredRow}>
+              <CardSticker color={todayCard.color} size={44} />
+              <Text style={[styles.miniText, { color: colors.text }]} numberOfLines={3}>{todayCard.text}</Text>
             </View>
           ) : (
             <>
               <Text style={[styles.prompt, { color: colors.text }]}>{todayQuestion.prompt}</Text>
               <View style={styles.answerRow}>
                 <Text style={[styles.answer, { color: colors.text }]}>Answer</Text>
-                <ArrowRight size={17} color={colors.text} strokeWidth={2} />
+                <ArrowRight size={16} color={colors.text} strokeWidth={2} />
               </View>
             </>
           )}
@@ -53,14 +54,11 @@ export function DailyMessageCard() {
 }
 
 const styles = StyleSheet.create({
-  eyebrow: { fontFamily: font.bodyMedium, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase' },
-  prompt: { fontFamily: font.display, fontSize: 23, lineHeight: 29, marginTop: 10 },
+  prompt: { fontFamily: font.display, fontSize: 23, lineHeight: 29, letterSpacing: -0.3, marginTop: 10 },
   answerRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 16 },
-  answer: { fontFamily: font.display, fontSize: 18 },
-  // Soft tint wash + hairline colored edge + Fraunces serif (matches the home's
-  // "a banana" / "Today at a glance" display face).
-  mini: { marginTop: 12, borderRadius: radius.lg, borderWidth: 1, paddingVertical: 20, paddingHorizontal: 18 },
-  miniText: { fontFamily: font.display, fontSize: 19, lineHeight: 26 },
+  answer: { fontFamily: font.bodySemiBold, fontSize: 15, letterSpacing: -0.2 },
+  answeredRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 14 },
+  miniText: { flex: 1, fontFamily: font.display, fontSize: 18, lineHeight: 25, letterSpacing: -0.2 },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 16 },
   link: { fontFamily: font.bodyMedium, fontSize: 12.5, letterSpacing: 0.2 },
 })

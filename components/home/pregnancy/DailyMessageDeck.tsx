@@ -1,8 +1,8 @@
 // components/home/pregnancy/DailyMessageDeck.tsx
 import { useRef, useState } from 'react'
 import { View, Text, StyleSheet, useWindowDimensions, Animated, PanResponder } from 'react-native'
-import { radius, font } from '../../../constants/theme'
-import { cardTint, cardHairline } from '../../../lib/dailyMessage/cardTint'
+import { useTheme, radius, font, shadows } from '../../../constants/theme'
+import { CardSticker } from './CardSticker'
 import type { DailyCard } from '../../../lib/dailyMessage/types'
 
 interface Props {
@@ -10,11 +10,11 @@ interface Props {
   onTopSwiped?: (card: DailyCard) => void
 }
 
-// Bold color-block deck: top card swipes horizontally to reveal the peek cards
-// stacked behind it (offset + scaled down). Message text is heavy sans on the
-// card's sticker color. Uses RN's built-in Animated + PanResponder (no
-// react-native-gesture-handler dependency).
+// Swipeable stacked deck: top card swipes to reveal the peek cards behind it.
+// Each card is a paper surface with a small sticker accent + ink serif on paper
+// (the app's card grammar), NOT a full-tint wash. RN Animated + PanResponder.
 export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
+  const { colors } = useTheme()
   const { width } = useWindowDimensions()
   const [index, setIndex] = useState(0)
   const pan = useRef(new Animated.ValueXY()).current
@@ -67,11 +67,10 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
         .reverse() // render back-to-front so the top card sits above
         .map(({ card, i }) => {
           const isTop = i === 0
-          const tint = cardTint(card.color)
           const body = (
-            <View style={[styles.card, { backgroundColor: tint.soft, borderColor: cardHairline(card.color) }]}>
-              <View style={[styles.dot, { backgroundColor: tint.ink }]} />
-              <Text style={[styles.cardText, { color: tint.ink }]}>{card.text}</Text>
+            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <CardSticker color={card.color} size={48} />
+              <Text style={[styles.cardText, { color: colors.text }]}>{card.text}</Text>
             </View>
           )
           if (!isTop) {
@@ -98,9 +97,8 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
 const styles = StyleSheet.create({
   wrap: { height: 420, alignItems: 'center', justifyContent: 'flex-start' },
   abs: { position: 'absolute', width: '86%', alignSelf: 'center' },
-  // Soft tint wash + hairline colored edge + Fraunces serif (matches the home
-  // display face; Instrument Serif italic is reserved for accent words only).
-  card: { minHeight: 380, borderRadius: radius.lg, borderWidth: 1, padding: 30, justifyContent: 'flex-start', gap: 22 },
-  dot: { width: 12, height: 12, borderRadius: 6, opacity: 0.8 },
-  cardText: { fontFamily: font.display, fontSize: 26, lineHeight: 35 },
+  // Paper surface + hairline + subtle shadow + small sticker accent + ink serif
+  // on paper — the app's card grammar (WeekCard / PaperCard), not a tint wash.
+  card: { minHeight: 360, borderRadius: radius.lg, borderWidth: 1, padding: 28, justifyContent: 'flex-start', gap: 24, ...shadows.card },
+  cardText: { fontFamily: font.display, fontSize: 25, lineHeight: 34, letterSpacing: -0.3 },
 })

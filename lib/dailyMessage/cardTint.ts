@@ -35,3 +35,21 @@ export function cardTint(color: StickerColorKey): CardTint {
 export function cardHairline(color: StickerColorKey): string {
   return cardTint(color).ink + '22'
 }
+
+// A sticker glyph name per card color, so each card gets a real sticker accent
+// (in a tinted socket) instead of a bare dot — matching the app's icon-chip
+// grammar. Names map to exports in components/stickers/BrandStickers.tsx.
+export type StickerGlyph = 'Heart' | 'Star' | 'Drop' | 'Moon' | 'Flower'
+const GLYPH: Record<StickerColorKey, StickerGlyph> = {
+  yellow: 'Star',
+  blue: 'Drop',
+  pink: 'Heart',
+  green: 'Flower',
+  lilac: 'Moon',
+  peach: 'Heart',
+  coral: 'Heart',
+  charcoal: 'Star',
+}
+export function cardGlyph(color: StickerColorKey): StickerGlyph {
+  return GLYPH[color]
+}

@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react'
 import { Modal, View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, ArrowRight } from 'lucide-react-native'
-import { useTheme, getModeColor, font, radius } from '../../../constants/theme'
+import { useTheme, font, radius } from '../../../constants/theme'
+import { MonoCaps } from '../../ui/Typography'
+import { PillButton } from '../../ui/PillButton'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
 import { matchCard } from '../../../lib/dailyMessage/matcher'
 import { DailyMessageDeck } from './DailyMessageDeck'
@@ -14,7 +16,7 @@ interface Props { visible: boolean; onClose: () => void }
 
 export function DailyMessageModal({ visible, onClose }: Props) {
   const insets = useSafeAreaInsets()
-  const { colors, isDark } = useTheme()
+  const { colors } = useTheme()
   const { todayQuestion, todayCard, isAnswered, answer, isSaving } = useDailyMessage()
   const [phase, setPhase] = useState<'question' | 'reveal'>('question')
   const [deck, setDeck] = useState<DailyCard[]>([])
@@ -44,7 +46,6 @@ export function DailyMessageModal({ visible, onClose }: Props) {
   }
 
   if (!todayQuestion) return null
-  const accent = getModeColor('preg', isDark) // lavender — used only as a hairline / eyebrow touch
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -55,7 +56,7 @@ export function DailyMessageModal({ visible, onClose }: Props) {
 
         {phase === 'question' ? (
           <ScrollView contentContainerStyle={styles.qBody} showsVerticalScrollIndicator={false}>
-            <Text style={[styles.qEyebrow, { color: accent }]}>DAILY MESSAGE</Text>
+            <MonoCaps color={colors.textMuted}>DAILY MESSAGE</MonoCaps>
             <Text style={[styles.qPrompt, { color: colors.text }]}>{todayQuestion.prompt}</Text>
             <View style={{ gap: 10, marginTop: 28 }}>
               {todayQuestion.options.map((o, i) => (
@@ -76,15 +77,17 @@ export function DailyMessageModal({ visible, onClose }: Props) {
           </ScrollView>
         ) : (
           <View style={{ flex: 1, paddingTop: 20 }}>
-            <Text style={[styles.revealEyebrow, { color: colors.textMuted }]}>TODAY'S MESSAGE</Text>
+            <View style={{ alignItems: 'center', marginBottom: 4 }}>
+              <MonoCaps color={colors.textMuted}>TODAY'S MESSAGE</MonoCaps>
+            </View>
             <DailyMessageDeck cards={deck} />
             <View style={styles.actions}>
-              <Pressable onPress={() => setShareCard(deck[0])} style={[styles.action, { borderColor: colors.border }]}>
-                <Text style={[styles.actionText, { color: colors.text }]}>Share</Text>
-              </Pressable>
-              <Pressable onPress={onClose} style={[styles.action, styles.actionFilled, { backgroundColor: colors.text }]}>
-                <Text style={[styles.actionText, { color: colors.bg }]}>Done</Text>
-              </Pressable>
+              <View style={{ flex: 1 }}>
+                <PillButton label="Share" variant="paper" onPress={() => setShareCard(deck[0])} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <PillButton label="Done" variant="ink" onPress={onClose} />
+              </View>
             </View>
           </View>
         )}
@@ -102,15 +105,10 @@ export function DailyMessageModal({ visible, onClose }: Props) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1, paddingHorizontal: 24 },
-  close: { alignSelf: 'flex-end', width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  close: { alignSelf: 'flex-end', width: 38, height: 38, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   qBody: { paddingTop: 20, paddingBottom: 40 },
-  qEyebrow: { fontFamily: font.bodyMedium, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' },
-  qPrompt: { fontFamily: font.display, fontSize: 32, lineHeight: 39, marginTop: 12 },
+  qPrompt: { fontFamily: font.display, fontSize: 30, lineHeight: 37, letterSpacing: -0.5, marginTop: 12 },
   option: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: radius.md, paddingVertical: 18, paddingHorizontal: 20 },
-  optionText: { fontFamily: font.display, fontSize: 19 },
-  revealEyebrow: { fontFamily: font.bodyMedium, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 4 },
+  optionText: { fontFamily: font.bodySemiBold, fontSize: 16, letterSpacing: -0.2 },
   actions: { flexDirection: 'row', gap: 12, justifyContent: 'center', paddingVertical: 20 },
-  action: { flex: 1, alignItems: 'center', paddingVertical: 15, borderRadius: radius.full, borderWidth: 1 },
-  actionFilled: { borderWidth: 0 },
-  actionText: { fontFamily: font.bodySemiBold, fontSize: 15 },
 })
