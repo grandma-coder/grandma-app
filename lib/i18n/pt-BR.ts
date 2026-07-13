@@ -2309,6 +2309,7 @@ export const ptBR: TranslationKeys = {
   childPicker_title: "Trocar criança",
   childPicker_avatarIcon: "👶",
   exams_title: "Exames",
+  exams_addExam: "Log an exam",
   exams_tabPrePreg: "Pré-concepção",
   exams_tabPregnancy: "Gravidez",
   exams_tabKids: "Crianças",

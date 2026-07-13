@@ -2547,6 +2547,7 @@ export interface TranslationKeys {
   childPicker_avatarIcon: string
   // ─── B6: Exams list ───────────────────────────────────────────────────────
   exams_title: string
+  exams_addExam: string
   exams_tabPrePreg: string
   exams_tabPregnancy: string
   exams_tabKids: string

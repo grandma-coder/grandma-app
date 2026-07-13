@@ -9,6 +9,7 @@
  */
 
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   View,
   Text,
@@ -19,12 +20,14 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { ChevronLeft } from 'lucide-react-native'
+import { ChevronLeft, Plus } from 'lucide-react-native'
+import { LogSheet } from '../../components/calendar/LogSheet'
+import { ExamForm } from '../../components/exams/ExamForm'
 
 import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
-import { DiffuseBloomIcon, DiffuseSegmentPill, DiffuseMetricTile, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
-import { FileText } from 'lucide-react-native'
+import { DiffuseSegmentPill, DiffuseMetricTile, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
+import { Character } from '../../components/characters/Characters'
 import { useChildStore } from '../../store/useChildStore'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
@@ -82,6 +85,8 @@ export default function ExamsListScreen() {
     return visibleBehaviors.includes(fromMode) ? fromMode : (visibleBehaviors[0] ?? fromMode)
   })
   const [childFilter, setChildFilter] = useState<string | 'all'>('all')
+  const [showAddForm, setShowAddForm] = useState(false)
+  const qc = useQueryClient()
 
   const { data: exams = [], isLoading } = useExams({
     behavior: behaviorFilter,
@@ -155,7 +160,24 @@ export default function ExamsListScreen() {
         ) : (
           <Display size={28} color={ink}>{t('exams_title')}</Display>
         )}
-        <View style={{ width: 36 }} />
+        {/* Add exam — opens the shared ExamForm scoped to the current behavior. */}
+        <Pressable
+          onPress={() => setShowAddForm(true)}
+          hitSlop={10}
+          accessibilityLabel={t('exams_addExam')}
+          style={({ pressed }) => [
+            styles.backChip,
+            diffuse
+              ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline, opacity: pressed ? 0.6 : 1 }
+              : {
+                  backgroundColor: paper, borderColor: isDark ? colors.border : '#141313',
+                  shadowColor: '#141313', shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                  shadowOpacity: 1, shadowRadius: 0, elevation: 4, transform: [{ translateY: pressed ? 2 : 0 }],
+                },
+          ]}
+        >
+          <Plus size={20} color={ink} strokeWidth={diffuse ? 1.6 : 2.2} />
+        </Pressable>
       </View>
 
       {/* Behavior segmented tabs — only the behaviors the user is enrolled in.
@@ -268,7 +290,7 @@ export default function ExamsListScreen() {
 
         {!isLoading && exams.length === 0 && diffuse && (
           <DiffuseEmptyState
-            icon={<FileText size={26} color={dt.colors.ink3} strokeWidth={1.4} />}
+            icon={<Character name="exam" size={40} color={behaviorAccent} />}
             title={t('exams_emptyTitle')}
             message={t('exams_emptyBody')}
             ctaLabel={t('exams_openCalendar')}
@@ -340,6 +362,23 @@ export default function ExamsListScreen() {
           </View>
         ))}
       </ScrollView>
+
+      {/* Add-exam sheet — the shared ExamForm, scoped to the current behavior
+          + child filter so the new exam lands in the tab the user is viewing. */}
+      <LogSheet visible={showAddForm} title={t('exams_addExam')} onClose={() => setShowAddForm(false)}>
+        <ExamForm
+          behavior={behaviorFilter}
+          childId={
+            behaviorFilter === 'kids'
+              ? (childFilter !== 'all' ? childFilter : (children[0]?.id ?? null))
+              : null
+          }
+          onSaved={() => {
+            void qc.invalidateQueries({ queryKey: ['exams'] })
+            setShowAddForm(false)
+          }}
+        />
+      </LogSheet>
     </View>
   )
 }
@@ -529,9 +568,7 @@ function ExamCard({
         {thumbUrl ? (
           <Image source={{ uri: thumbUrl }} style={{ width: 46, height: 46, borderRadius: 12 }} />
         ) : (
-          <DiffuseBloomIcon color={accent} size={40} intensity={0.45}>
-            <FileText size={19} color={dt.colors.ink3} strokeWidth={1.5} />
-          </DiffuseBloomIcon>
+          <Character name="exam" size={30} color={accent} />
         )}
         <View style={{ flex: 1, gap: 3 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

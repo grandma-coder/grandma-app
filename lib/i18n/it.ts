@@ -2309,6 +2309,7 @@ export const it: TranslationKeys = {
   childPicker_title: "Switch child",
   childPicker_avatarIcon: "👶",
   exams_title: "Exams",
+  exams_addExam: "Log an exam",
   exams_tabPrePreg: "Pre-preg",
   exams_tabPregnancy: "Pregnancy",
   exams_tabKids: "Kids",

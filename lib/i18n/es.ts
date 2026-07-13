@@ -2309,6 +2309,7 @@ export const es: TranslationKeys = {
   childPicker_title: "Cambiar niño",
   childPicker_avatarIcon: "👶",
   exams_title: "Exámenes",
+  exams_addExam: "Log an exam",
   exams_tabPrePreg: "Preconcepcional",
   exams_tabPregnancy: "Embarazo",
   exams_tabKids: "Niños",
