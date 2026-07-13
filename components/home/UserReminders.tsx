@@ -19,7 +19,6 @@ import {
   TextInput,
   Platform,
 } from 'react-native'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import {
   Plus, Bell, Clock, X, Check, Pencil, Flag, Trash2,
