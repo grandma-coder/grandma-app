@@ -142,16 +142,16 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
   const inner = (
     <>
       {/* Header — plain title + hint; Edit (picker) sits to the right.
-          The serif title carries a small negative optical inset so its cap
-          glyph lines up with the mono eyebrow above it. */}
+          Matches the Cycle card exactly (size 22, no inset) so both read
+          flush-left with their section eyebrow. */}
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
           {diffuse ? (
-            <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.3, color: titleColor, marginLeft: -1 }}>
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: titleColor }}>
               {t('pregnancy_todayAtGlance')}
             </Text>
           ) : (
-            <Display size={22} color={ink} style={{ marginLeft: -1 }}>{t('pregnancy_todayAtGlance')}</Display>
+            <Display size={22} color={ink}>{t('pregnancy_todayAtGlance')}</Display>
           )}
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor }}>
             {summaryHint}
