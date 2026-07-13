@@ -518,15 +518,13 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
   const mode = useModeStore((s) => s.mode)
   const modeConfig = getModeConfig(mode)
 
-  // Tab labels come from modeConfig so pregnancy shows "Documents" and
-  // pre-pregnancy shows "Planner" / hides the vault tab. Falls back to the
-  // i18n string if the modeConfig label is missing.
-  // The vault slot means different things per mode (pre-preg Analytics,
-  // pregnancy Documents, kids Health), so its icon must follow the mode rather
-  // than being hardcoded to BarChart3.
+  // Tab labels come from modeConfig. Falls back to the i18n string if the
+  // modeConfig label is missing.
+  // The vault slot means different things per mode: pre-preg + pregnancy both
+  // surface analytics (Analytics / Insights → chart icon), kids is the medical
+  // vault (Health → shield). Icon follows the mode.
   const vaultIcon: LucideIcon =
-    mode === 'pregnancy' ? FileText
-    : mode === 'kids' ? Shield
+    mode === 'kids' ? Shield
     : BarChart3
 
   const TAB_CFG: Record<string, TabStickerCfg> = {
