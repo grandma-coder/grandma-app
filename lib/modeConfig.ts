@@ -43,7 +43,7 @@ export interface ModeConfig {
 const PRE_PREGNANCY_CONFIG: ModeConfig = {
   tabs: {
     index: { visible: true, label: 'Home', icon: 'home-outline' },
-    agenda: { visible: true, label: 'Planner', icon: 'calendar-outline' },
+    agenda: { visible: true, label: 'Calendar', icon: 'calendar-outline' },
     library: { visible: true, label: 'Library', icon: 'book-outline' },
     // Re-purposed for pre-pregnancy: the "vault" slot surfaces cycle/hormone
     // analytics instead of documents. CLAUDE.md said "hidden in pre-pregnancy"
@@ -91,7 +91,7 @@ const PREGNANCY_CONFIG: ModeConfig = {
 const KIDS_CONFIG: ModeConfig = {
   tabs: {
     index: { visible: true, label: 'Home', icon: 'home-outline' },
-    agenda: { visible: true, label: 'Agenda', icon: 'calendar-outline' },
+    agenda: { visible: true, label: 'Calendar', icon: 'calendar-outline' },
     library: { visible: true, label: 'Library', icon: 'book-outline' },
     vault: { visible: true, label: 'Vault', icon: 'shield-outline' },
     exchange: { visible: true, label: 'Garage', icon: 'pricetag-outline' },
