@@ -531,46 +531,40 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
           <View {...panResponder.panHandlers} style={styles.ringStage}>
             {/* Animated layer: per-week fruit stickers rotate around SVG center */}
             <Animated.View style={[StyleSheet.absoluteFill, dotsAnimatedStyle]}>
-              {dots.map((d) => (
-                <View
-                  key={d.week}
-                  style={{
-                    position: 'absolute',
-                    left: d.bx - d.size / 2,
-                    top:  d.by - d.size / 2,
-                    width: d.size,
-                    height: d.size,
-                    opacity: d.opacity,
-                  }}
-                >
-                  <BabyIllustration
-                    week={d.week}
-                    size={d.size}
-                    character={false}
-                  />
-                </View>
-              ))}
+              {dots.map((d) => {
+                // Selected week grows 1.4× (no halo ring) — same logic as the
+                // Cycle ring. The anchored fruit reads as focused by size alone.
+                const isSelected = d.week === selectedWeek
+                const gSize = isSelected ? Math.round(d.size * 1.4) : d.size
+                return (
+                  <View
+                    key={d.week}
+                    style={{
+                      position: 'absolute',
+                      left: d.bx - gSize / 2,
+                      top:  d.by - gSize / 2,
+                      width: gSize,
+                      height: gSize,
+                      opacity: d.opacity,
+                      zIndex: isSelected ? 5 : undefined,
+                    }}
+                  >
+                    <BabyIllustration
+                      week={d.week}
+                      size={gSize}
+                      character={false}
+                    />
+                  </View>
+                )
+              })}
             </Animated.View>
-            {/* Static layer: hairline orbit track + accent anchor at 6 o'clock */}
+            {/* Static layer: hairline orbit track only (no selection halo) */}
             <Svg width={SVG_SIZE} height={SVG_SIZE} style={StyleSheet.absoluteFill}>
               <Circle
                 cx={CX} cy={CY} r={RING_R}
                 fill="none"
                 stroke={line}
                 strokeWidth={1}
-              />
-              {/* Soft inner halo so the framed illustration pops */}
-              <Circle
-                cx={CX} cy={CY + RING_R} r={14}
-                fill={dcol + '22'}
-                stroke="none"
-              />
-              {/* Outer ring — plum accent */}
-              <Circle
-                cx={CX} cy={CY + RING_R} r={16}
-                fill="none"
-                stroke={dcol}
-                strokeWidth={1.5}
               />
             </Svg>
 
@@ -658,47 +652,39 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         <View {...panResponder.panHandlers} style={styles.ringStage}>
           {/* Animated layer: per-week fruit stickers rotate around SVG center */}
           <Animated.View style={[StyleSheet.absoluteFill, dotsAnimatedStyle]}>
-            {dots.map((d) => (
-              <View
-                key={d.week}
-                style={{
-                  position: 'absolute',
-                  left: d.bx - d.size / 2,
-                  top:  d.by - d.size / 2,
-                  width: d.size,
-                  height: d.size,
-                  opacity: d.opacity,
-                }}
-              >
-                <BabyIllustration
-                  week={d.week}
-                  size={d.size}
-                  character={false}
-                />
-              </View>
-            ))}
+            {dots.map((d) => {
+              // Selected week grows 1.4× (no halo ring) — same as the Cycle ring.
+              const isSelected = d.week === selectedWeek
+              const gSize = isSelected ? Math.round(d.size * 1.4) : d.size
+              return (
+                <View
+                  key={d.week}
+                  style={{
+                    position: 'absolute',
+                    left: d.bx - gSize / 2,
+                    top:  d.by - gSize / 2,
+                    width: gSize,
+                    height: gSize,
+                    opacity: d.opacity,
+                    zIndex: isSelected ? 5 : undefined,
+                  }}
+                >
+                  <BabyIllustration
+                    week={d.week}
+                    size={gSize}
+                    character={false}
+                  />
+                </View>
+              )
+            })}
           </Animated.View>
-          {/* Static layer: orbit track + fixed anchor circle at 6 o'clock that
-              frames the currently-selected week's fruit illustration. */}
+          {/* Static layer: orbit track only (no selection halo) */}
           <Svg width={SVG_SIZE} height={SVG_SIZE} style={StyleSheet.absoluteFill}>
             <Circle
               cx={CX} cy={CY} r={RING_R}
               fill="none"
               stroke={orbitStroke}
               strokeWidth={1.5}
-            />
-            {/* Soft inner halo so the framed illustration pops on dark surfaces */}
-            <Circle
-              cx={CX} cy={CY + RING_R} r={14}
-              fill={col + '22'}
-              stroke="none"
-            />
-            {/* Outer ring — trimester color */}
-            <Circle
-              cx={CX} cy={CY + RING_R} r={16}
-              fill="none"
-              stroke={col}
-              strokeWidth={2}
             />
           </Svg>
 
