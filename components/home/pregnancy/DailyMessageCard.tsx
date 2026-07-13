@@ -56,10 +56,11 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: font.bodyMedium, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase' },
   prompt: { fontFamily: font.display, fontSize: 23, lineHeight: 29, marginTop: 10 },
   answerRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 16 },
-  answer: { fontFamily: font.italic, fontSize: 19 },
-  // Soft tint wash + hairline colored edge + ink serif italic — the cream idiom.
+  answer: { fontFamily: font.display, fontSize: 18 },
+  // Soft tint wash + hairline colored edge + Fraunces serif (matches the home's
+  // "a banana" / "Today at a glance" display face).
   mini: { marginTop: 12, borderRadius: radius.lg, borderWidth: 1, paddingVertical: 20, paddingHorizontal: 18 },
-  miniText: { fontFamily: font.italic, fontSize: 20, lineHeight: 26 },
+  miniText: { fontFamily: font.display, fontSize: 19, lineHeight: 26 },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 16 },
   link: { fontFamily: font.bodyMedium, fontSize: 12.5, letterSpacing: 0.2 },
 })

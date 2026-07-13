@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   qEyebrow: { fontFamily: font.bodyMedium, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' },
   qPrompt: { fontFamily: font.display, fontSize: 32, lineHeight: 39, marginTop: 12 },
   option: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: radius.md, paddingVertical: 18, paddingHorizontal: 20 },
-  optionText: { fontFamily: font.italic, fontSize: 20 },
+  optionText: { fontFamily: font.display, fontSize: 19 },
   revealEyebrow: { fontFamily: font.bodyMedium, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center', marginBottom: 4 },
   actions: { flexDirection: 'row', gap: 12, justifyContent: 'center', paddingVertical: 20 },
   action: { flex: 1, alignItems: 'center', paddingVertical: 15, borderRadius: radius.full, borderWidth: 1 },

@@ -98,8 +98,9 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
 const styles = StyleSheet.create({
   wrap: { height: 420, alignItems: 'center', justifyContent: 'flex-start' },
   abs: { position: 'absolute', width: '86%', alignSelf: 'center' },
-  // Soft tint wash + hairline colored edge + ink serif italic — the cream idiom.
+  // Soft tint wash + hairline colored edge + Fraunces serif (matches the home
+  // display face; Instrument Serif italic is reserved for accent words only).
   card: { minHeight: 380, borderRadius: radius.lg, borderWidth: 1, padding: 30, justifyContent: 'flex-start', gap: 22 },
   dot: { width: 12, height: 12, borderRadius: 6, opacity: 0.8 },
-  cardText: { fontFamily: font.italic, fontSize: 28, lineHeight: 36 },
+  cardText: { fontFamily: font.display, fontSize: 26, lineHeight: 35 },
 })

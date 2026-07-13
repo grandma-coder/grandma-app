@@ -44,14 +44,14 @@ export default function MyCardsScreen() {
     back: { width: 40, height: 40, justifyContent: 'center', marginLeft: -8 },
     eyebrow: { fontFamily: font.bodyMedium, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase', color: colors.textMuted, marginTop: 2 },
     title: { fontFamily: font.display, fontSize: 34, color: colors.text, marginTop: 2 },
-    // Soft tint wash + hairline colored edge + ink serif italic.
+    // Soft tint wash + hairline colored edge + Fraunces serif (home display face).
     tile: { flex: 1, borderRadius: radius.lg, borderWidth: 1, padding: 16, minHeight: 156, justifyContent: 'space-between' },
-    tileText: { fontFamily: font.italic, fontSize: 17, lineHeight: 22 },
+    tileText: { fontFamily: font.display, fontSize: 16, lineHeight: 22 },
     tileDate: { fontFamily: font.bodyMedium, fontSize: 9.5, letterSpacing: 1.5, marginTop: 12 },
     empty: { fontFamily: font.italic, fontSize: 18, color: colors.textMuted, textAlign: 'center', marginTop: 80 },
     overlay: { flex: 1, backgroundColor: colors.bg + 'F2', justifyContent: 'center', paddingHorizontal: 24 },
     big: { borderRadius: radius.lg, borderWidth: 1, padding: 30, minHeight: 260, justifyContent: 'center' },
-    bigText: { fontFamily: font.italic, fontSize: 27, lineHeight: 34 },
+    bigText: { fontFamily: font.display, fontSize: 26, lineHeight: 34 },
     bigDate: { fontFamily: font.bodyMedium, fontSize: 10, letterSpacing: 1.5, marginTop: 20 },
     close: { position: 'absolute', top: 14, right: 14, width: 38, height: 38, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   })
