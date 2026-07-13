@@ -672,7 +672,7 @@ export function KidsAnalytics() {
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 56 }]}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={diffuse ? getDiffuseAccent('kids', dt.isDark) : colors.primary} colors={[diffuse ? getDiffuseAccent('kids', dt.isDark) : colors.primary]} />}
