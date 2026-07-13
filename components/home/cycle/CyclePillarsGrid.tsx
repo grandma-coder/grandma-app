@@ -52,13 +52,26 @@ function diffuseTint(tint: PillarTile['tint'], field: [string, string, string, s
   }
 }
 
-export function CyclePillarsGrid() {
+interface CyclePillarsGridProps {
+  /** Rendered inside a pop-up sheet: drop the "Pillars / See all" header and
+   *  outer section padding (the sheet title owns the heading). */
+  bare?: boolean
+  /** Fired right before navigating to a pillar — lets a host sheet close. */
+  onNavigate?: () => void
+}
+
+export function CyclePillarsGrid({ bare = false, onNavigate }: CyclePillarsGridProps = {}) {
   const { colors, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const field = getModeField('pre-pregnancy', dt.isDark)
   const { t } = useTranslation()
   const ink = colors.text
+
+  const openPillar = (id: string) => {
+    onNavigate?.()
+    router.push(`/pillar/${id}` as any)
+  }
 
   function tintBg(tint: PillarTile['tint']): string {
     switch (tint) {
@@ -90,31 +103,33 @@ export function CyclePillarsGrid() {
   }
 
   return (
-    <View style={styles.section}>
-      <View style={styles.header}>
-        {diffuse ? (
-          <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, color: dt.colors.ink, letterSpacing: -0.3 }}>{t('home_pillarsGridTitle')}</Text>
-        ) : (
-          <Display size={24} color={ink}>{t('home_pillarsGridTitle')}</Display>
-        )}
-        <Pressable onPress={() => router.push('/cycle-pillars' as any)} hitSlop={8}>
-          <View style={styles.seeAllRow}>
-            {diffuse ? (
-              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
-                {t('common_seeAll')}
-              </Text>
-            ) : (
-              <Body size={12} color={colors.textMuted}>{t('common_seeAll')}</Body>
-            )}
-            <ChevronRight size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
-          </View>
-        </Pressable>
-      </View>
+    <View style={bare ? styles.sectionBare : styles.section}>
+      {!bare && (
+        <View style={styles.header}>
+          {diffuse ? (
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, color: dt.colors.ink, letterSpacing: -0.3 }}>{t('home_pillarsGridTitle')}</Text>
+          ) : (
+            <Display size={24} color={ink}>{t('home_pillarsGridTitle')}</Display>
+          )}
+          <Pressable onPress={() => router.push('/cycle-pillars' as any)} hitSlop={8}>
+            <View style={styles.seeAllRow}>
+              {diffuse ? (
+                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+                  {t('common_seeAll')}
+                </Text>
+              ) : (
+                <Body size={12} color={colors.textMuted}>{t('common_seeAll')}</Body>
+              )}
+              <ChevronRight size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+            </View>
+          </Pressable>
+        </View>
+      )}
       <View style={styles.grid}>
         {TILES.map((tile) => (
           <Pressable
             key={tile.id}
-            onPress={() => router.push(`/pillar/${tile.id}` as any)}
+            onPress={() => openPillar(tile.id)}
             style={({ pressed }) => [
               styles.card,
               diffuse
@@ -156,6 +171,10 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 20,
     paddingHorizontal: 20,
+    gap: 12,
+  },
+  // In a pop-up sheet the sheet body already provides padding + the title.
+  sectionBare: {
     gap: 12,
   },
   header: {

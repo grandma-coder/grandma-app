@@ -1,19 +1,18 @@
 /**
  * cycleWallet — pure builder for the pre-pregnancy (cycle) home wallet stack.
  *
- * Mirrors lib/weekWallet.ts / lib/kidsWallet.ts. The cycle home shows the phase
- * ring up top, then the Daily Message card and a standalone "Log something"
- * quick-log card; the wallet below now holds only the pillars grid.
+ * Mirrors lib/weekWallet.ts. Like the pregnancy Week Wallet, each card taps
+ * straight to a pop-up sheet / route — nothing expands inline. Holds:
+ *   • reminders — opens a sheet with the shared UserReminders (add + list)
+ *   • pillars   — opens a sheet with the cycle pillar grid (each → /pillar/[id])
  *
  * Evolution: 'today' → standalone quick-log card; 'nudge' → Daily Message
- * module; 'mood' (mood & symptoms) removed entirely — mood + symptoms are
- * already tappable signals inside the Today-at-a-glance card, so a separate
- * wallet card was redundant.
+ * module; 'mood' (mood & symptoms) → tappable signals in the Today card.
  */
 
 import type { WalletTone } from './wallet'
 
-export type CycleWalletCardId = 'pillars'
+export type CycleWalletCardId = 'reminders' | 'pillars'
 
 export interface CycleWalletCardDescriptor {
   id: CycleWalletCardId
@@ -23,6 +22,7 @@ export interface CycleWalletCardDescriptor {
 
 export function buildCycleWalletCards(): CycleWalletCardDescriptor[] {
   return [
-    { id: 'pillars', tone: 'lilac', linkOnly: false },
+    { id: 'reminders', tone: 'yellow', linkOnly: true },
+    { id: 'pillars', tone: 'lilac', linkOnly: true },
   ]
 }
