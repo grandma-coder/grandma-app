@@ -27,6 +27,7 @@ import { DiffuseBloomIcon, DiffuseSegmentPill, DiffuseMetricTile, DiffuseEmptySt
 import { FileText } from 'lucide-react-native'
 import { useChildStore } from '../../store/useChildStore'
 import { useModeStore } from '../../store/useModeStore'
+import { useBehaviorStore } from '../../store/useBehaviorStore'
 import {
   type Exam,
   type ExamBehavior,
@@ -62,12 +63,24 @@ export default function ExamsListScreen() {
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
   const activeMode = useModeStore((s) => s.mode)
+  const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
 
-  // Default to the user's active journey so the screen opens already filtered
-  // to the behavior they care about right now (no "All" mixing).
-  const [behaviorFilter, setBehaviorFilter] = useState<ExamBehavior>(() =>
-    modeToBehavior(activeMode),
-  )
+  // Only show tabs for the behaviors the user is actually enrolled in — a
+  // cycle-only user sees just Pre-preg, not all three. Preserve the canonical
+  // order (pre-preg → pregnancy → kids). Fall back to all three only if the
+  // enrolled list hasn't hydrated yet (empty).
+  const BEHAVIOR_ORDER: ExamBehavior[] = ['pre-pregnancy', 'pregnancy', 'kids']
+  const visibleBehaviors: ExamBehavior[] =
+    enrolledBehaviors.length > 0
+      ? BEHAVIOR_ORDER.filter((b) => enrolledBehaviors.includes(b))
+      : BEHAVIOR_ORDER
+
+  // Default to the user's active journey (if enrolled), else the first enrolled
+  // behavior, so the screen opens already filtered — no "All" mixing.
+  const [behaviorFilter, setBehaviorFilter] = useState<ExamBehavior>(() => {
+    const fromMode = modeToBehavior(activeMode)
+    return visibleBehaviors.includes(fromMode) ? fromMode : (visibleBehaviors[0] ?? fromMode)
+  })
   const [childFilter, setChildFilter] = useState<string | 'all'>('all')
 
   const { data: exams = [], isLoading } = useExams({
@@ -145,32 +158,35 @@ export default function ExamsListScreen() {
         <View style={{ width: 36 }} />
       </View>
 
-      {/* Behavior segmented tabs — hairline mono pills under Diffuse */}
+      {/* Behavior segmented tabs — only the behaviors the user is enrolled in.
+          Hidden entirely when there's just one (nothing to switch between). */}
+      {visibleBehaviors.length > 1 && (
       <View style={styles.segWrap}>
-        {diffuse ? (
-          <DiffuseSegmentPill
-            options={[
-              { key: 'pre-pregnancy', label: t('exams_tabPrePreg') },
-              { key: 'pregnancy', label: t('exams_tabPregnancy') },
-              { key: 'kids', label: t('exams_tabKids') },
-            ]}
-            value={behaviorFilter}
-            onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
-          />
-        ) : (
-          <SegmentedTabs
-            options={[
-              { key: 'pre-pregnancy', label: t('exams_tabPrePreg') },
-              { key: 'pregnancy', label: t('exams_tabPregnancy') },
-              { key: 'kids', label: t('exams_tabKids') },
-            ]}
-            value={behaviorFilter}
-            onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
-            activeBg={behaviorAccent}
-            activeFg="#141313"
-          />
-        )}
+        {(() => {
+          const labelFor: Record<ExamBehavior, string> = {
+            'pre-pregnancy': t('exams_tabPrePreg'),
+            pregnancy: t('exams_tabPregnancy'),
+            kids: t('exams_tabKids'),
+          }
+          const options = visibleBehaviors.map((b) => ({ key: b, label: labelFor[b] }))
+          return diffuse ? (
+            <DiffuseSegmentPill
+              options={options}
+              value={behaviorFilter}
+              onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
+            />
+          ) : (
+            <SegmentedTabs
+              options={options}
+              value={behaviorFilter}
+              onChange={(k) => setBehaviorFilter(k as ExamBehavior)}
+              activeBg={behaviorAccent}
+              activeFg="#141313"
+            />
+          )
+        })()}
       </View>
+      )}
 
       {/* Child filter — only shown when relevant */}
       {showChildRow && (
