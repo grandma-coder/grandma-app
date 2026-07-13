@@ -607,16 +607,8 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
                 transform={`rotate(-90 ${CX} ${CY})`}
               />
             ) : null}
-            {/* Stationary anchor frame at 6 o'clock — days rotate into it.
-                Sized to comfortably frame the enlarged focused-day glyph. */}
-            <Circle
-              cx={CX}
-              cy={CY + RING_R}
-              r={diffuse ? 20 : 18}
-              fill="none"
-              stroke={diffuse ? dt.colors.line2 : accent}
-              strokeWidth={diffuse ? 1 : 1.5}
-            />
+            {/* No selection frame — the focused day reads by size alone
+                (enlarged glyph at 6 o'clock), no ring / halo around it. */}
           </Svg>
 
           {/* Center overlay */}
