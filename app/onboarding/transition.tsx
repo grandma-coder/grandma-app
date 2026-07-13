@@ -11,7 +11,11 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { Moon, Heart, Star } from '../../components/ui/Stickers'
 import { PillButton } from '../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, stickers, getModeColor } from '../../constants/theme'
+import { useTheme, stickers, getModeColor, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { AuraField, type AuraBloom } from '../../components/ui/diffuse/AuraField'
+import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
+import { Character, type CharacterName } from '../../components/characters/Characters'
 import { useOnboardingStore } from '../../store/useOnboardingStore'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
@@ -22,30 +26,36 @@ const AUTO_ADVANCE_MS = 8000
 
 export default function TransitionScreen() {
   const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { next } = useLocalSearchParams<{ next: string }>()
 
   const BEHAVIOR_CONTENT: Record<Behavior, {
     sticker: React.ReactNode
+    char: CharacterName
     heading: string
     subtext: string
     route: string
   }> = {
     pregnancy: {
       sticker: <Heart size={96} fill={stickers.pink} />,
+      char: 'heart',
       heading: t('onboardingTransition_pregnancy_heading'),
       subtext: t('onboardingTransition_pregnancy_subtext'),
       route: '/onboarding/pregnancy',
     },
     kids: {
       sticker: <Star size={96} fill={stickers.blue} />,
+      char: 'star',
       heading: t('onboardingTransition_kids_heading'),
       subtext: t('onboardingTransition_kids_subtext'),
       route: '/onboarding/kids',
     },
     'pre-pregnancy': {
       sticker: <Moon size={96} fill={stickers.lilac} />,
+      char: 'night',
       heading: t('onboardingTransition_cycle_heading'),
       subtext: t('onboardingTransition_cycle_subtext'),
       route: '/onboarding/cycle',
@@ -144,6 +154,48 @@ export default function TransitionScreen() {
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
   })
+
+  // ── Diffuse variant (default): aura field + character hero, matching the
+  // onboarding shell so there's no cream-paper seam right before home. ────────
+  if (diffuse) {
+    const [g1, g2, g3] = getModeField(nextBehavior, dt.isDark)
+    const auraBlooms: AuraBloom[] = [
+      { color: g1, cx: '18%', cy: '16%', opacity: 0.42 },
+      { color: g2, cx: '84%', cy: '26%', opacity: 0.4 },
+      { color: g3, cx: '50%', cy: '100%', opacity: 0.4 },
+    ]
+    const accent = getDiffuseAccent(nextBehavior, dt.isDark)
+    return (
+      <AuraField blooms={auraBlooms} style={{ backgroundColor: dt.colors.bg }}>
+        <Animated.View
+          style={[
+            styles.content,
+            { paddingTop: insets.top + 80, opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
+          ]}
+        >
+          <View style={styles.iconWrap}>
+            <Character name={content.char} size={92} color={accent} />
+          </View>
+          <Text style={[styles.heading, { color: dt.colors.ink, fontFamily: diffuseFont.displayLight }]}>
+            {content.heading}
+          </Text>
+          <Text style={[styles.subtext, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]}>
+            {content.subtext}
+          </Text>
+        </Animated.View>
+
+        <View style={[styles.bottom, { paddingBottom: insets.bottom + 24 }]}>
+          <View style={styles.ctaWrap}>
+            <DiffuseSolidCTA label={t('onboardingTransition_cta').toUpperCase()} onPress={handleContinue} />
+          </View>
+          <DiffuseTextLink label={t('onboardingTransition_skip')} onPress={handleSkip} />
+          <View style={[styles.progressTrack, { backgroundColor: dt.colors.line }]}>
+            <Animated.View style={[styles.progressFill, { backgroundColor: accent, width: progressWidth }]} />
+          </View>
+        </View>
+      </AuraField>
+    )
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bgWarm }]}>
