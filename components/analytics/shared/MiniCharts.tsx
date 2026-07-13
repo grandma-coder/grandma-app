@@ -912,15 +912,27 @@ export function CrescentBars({ data, color, max, labels = [], height = 150 }: Cr
 
 // ─── ConcentricArcs ──── wellbeing: nested half-donut rings, one hue per pillar
 export interface ArcDatum { value: number; color: string } // value 0..10
-export function ConcentricArcs({ data, centerLabel, height = 180 }: { data: ArcDatum[]; centerLabel?: string; height?: number }) {
+export function ConcentricArcs({ data, centerLabel, height = 200 }: { data: ArcDatum[]; centerLabel?: string; height?: number }) {
   const { colors, font } = useTheme()
   const dt = useDiffuseTheme()
   if (data.length === 0) return <EmptyChart height={height} />
-  const w = CW, h = height, cx = w / 2, cy = h * 0.94
-  const base = Math.min(w * 0.42, h * 0.86), gap = (base - 16) / data.length, sw = gap * 0.72
-  // build a half-arc path (180°..180°+span) at radius rad
+  const n = data.length
+  const w = CW, h = height
+  const cx = w / 2, cy = h - 8 // baseline near the bottom of the SVG
+  const pad = 8
+  // Fit ALL rings (stroke included) inside the box: the widest half-circle must
+  // clear both the top (cy - outerR - sw/2 ≥ pad) and the sides (outerR + sw/2 ≤ w/2 - pad).
+  const inner = 14
+  // Solve outerR so outerR + sw/2 fits; sw scales with the per-ring gap.
+  const maxByHeight = cy - pad
+  const maxByWidth = w / 2 - pad
+  const outerR = Math.min(maxByHeight, maxByWidth)
+  const gap = (outerR - inner) / n
+  const sw = Math.max(4, gap * 0.62)
+  // Pull the outermost ring in by half a stroke so the round cap stays inside.
+  const radFor = (i: number) => inner + gap * (i + 0.5) - sw / 2
   const arcPath = (rad: number, frac: number) => {
-    const a0 = Math.PI, a1 = Math.PI + frac * Math.PI
+    const a0 = Math.PI, a1 = Math.PI + Math.max(0.02, frac) * Math.PI
     const x0 = cx + rad * Math.cos(a0), y0 = cy + rad * Math.sin(a0)
     const x1 = cx + rad * Math.cos(a1), y1 = cy + rad * Math.sin(a1)
     const large = frac > 0.5 ? 1 : 0
@@ -930,7 +942,7 @@ export function ConcentricArcs({ data, centerLabel, height = 180 }: { data: ArcD
     <View style={{ width: CW, alignSelf: 'center', height }}>
       <Svg width={w} height={h}>
         {data.map((d, i) => {
-          const rad = 16 + gap * (i + 0.5)
+          const rad = radFor(i)
           return (
             <G key={i}>
               <Path d={arcPath(rad, 1)} stroke={dt.colors.line} strokeWidth={sw} fill="none" strokeLinecap="round" />
@@ -938,7 +950,7 @@ export function ConcentricArcs({ data, centerLabel, height = 180 }: { data: ArcD
             </G>
           )
         })}
-        {centerLabel ? <SvgText x={cx} y={cy - 6} fontSize={22} fontWeight="800" fill={colors.text} textAnchor="middle" fontFamily={diffuseFont.display}>{centerLabel}</SvgText> : null}
+        {centerLabel ? <SvgText x={cx} y={cy - 8} fontSize={22} fontWeight="800" fill={colors.text} textAnchor="middle" fontFamily={diffuseFont.display}>{centerLabel}</SvgText> : null}
       </Svg>
     </View>
   )

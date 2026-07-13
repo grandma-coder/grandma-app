@@ -3,6 +3,7 @@
  * Paper pills with ink-filled active state, matches the 2026 redesign reference.
  */
 
+import { useEffect, useRef } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
@@ -31,8 +32,18 @@ export function PeriodSelector({ value, onChange, customLabel, showCustom = true
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const options = showCustom ? OPTIONS : OPTIONS.filter((o) => o.key !== 'custom')
+  // The custom pill (last, and widest when it shows a date range) can sit past
+  // the right edge — scroll it fully into view whenever it's the active choice.
+  const scrollRef = useRef<ScrollView>(null)
+  useEffect(() => {
+    if (value === 'custom') {
+      const id = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60)
+      return () => clearTimeout(id)
+    }
+  }, [value, customLabel])
   return (
     <ScrollView
+      ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
@@ -91,7 +102,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 6,
-    paddingHorizontal: 20,
+    paddingLeft: 20,
+    paddingRight: 24,
     paddingTop: 10,
     paddingBottom: 6,
   },
