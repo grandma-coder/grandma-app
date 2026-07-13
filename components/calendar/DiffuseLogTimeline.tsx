@@ -46,8 +46,9 @@ export const DIFFUSE_LOG_GLYPH: Record<string, typeof Utensils> = {
 }
 
 /** Log type → character-blob concept. Types not listed fall back to the Lucide
- *  glyph above (so nothing regresses). */
-const DIFFUSE_LOG_CHARACTER: Record<string, CharacterName> = {
+ *  glyph above (so nothing regresses). Exported so the month grid can render the
+ *  same blob per log type in day cells. */
+export const DIFFUSE_LOG_CHARACTER: Record<string, CharacterName> = {
   // kids
   feeding: 'feeding', food: 'nutrition', sleep: 'sleep', wake_up: 'sun',
   health: 'checkup', temperature: 'temperature', medicine: 'medicine', vaccine: 'vaccine',
