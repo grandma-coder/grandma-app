@@ -197,6 +197,8 @@ interface StripCellProps {
   isSelected: boolean
   isToday: boolean
   textColor: string
+  /** phase accent — used for the today (not-selected) ring outline */
+  accentColor: string
   fontSemiBold: string
   fontDisplay: string
   onPress: () => void
@@ -209,7 +211,7 @@ interface StripCellProps {
 }
 
 function StripCell({
-  weekday, day, ink, tint, isSelected, isToday, textColor,
+  weekday, day, ink, tint, isSelected, isToday, textColor, accentColor,
   fontSemiBold, fontDisplay, onPress,
   diffuse, diffuseLine, diffuseAccent, diffuseInk, diffuseInk3, diffuseMono,
 }: StripCellProps) {
@@ -225,8 +227,12 @@ function StripCell({
 
   // Selected = stronger tint + saturated ink outline so it pops; the label uses
   // ink too. Unselected = soft tint, no border, muted ink weekday.
+  // TODAY (when it is NOT the selected cell) = a subtle accent ring outline, so
+  // after scrubbing away the user can still spot the real "today" — filled
+  // (selected) vs outlined (today) distinguishes the two states.
   // Diffuse: hairline cell, transparent fill, accent ring when selected, mono
   // weekday + serif day (matches the dot-calendar language).
+  const todayRing = isToday && !isSelected
   return (
     <Animated.View
       style={[
@@ -235,10 +241,15 @@ function StripCell({
         diffuse
           ? {
               backgroundColor: 'transparent',
-              borderColor: isSelected ? diffuseAccent! : diffuseLine!,
+              borderColor: isSelected ? diffuseAccent! : todayRing ? diffuseAccent! : diffuseLine!,
               borderWidth: 1,
+              borderStyle: todayRing ? 'dashed' : 'solid',
             }
-          : { backgroundColor: tint, borderColor: isSelected ? ink : 'transparent' },
+          : {
+              backgroundColor: tint,
+              borderColor: isSelected ? ink : todayRing ? accentColor! : 'transparent',
+              borderStyle: todayRing ? 'dashed' : 'solid',
+            },
       ]}
     >
       <Pressable
@@ -367,11 +378,34 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
     })
   }, [rotationDeg, cycleLength])
 
+  // Auto-return to today: once the user scrubs to a different day and then
+  // stops interacting, the ring gently glides back to today after a short idle
+  // window. `interactingRef` pauses the timer while a drag is in flight; the
+  // effect re-arms on every selectedDay change (each interaction), so the
+  // countdown only completes once the wheel has settled off-today.
+  const interactingRef = useRef(false)
+  const autoReturnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const AUTO_RETURN_MS = 4000
+  useEffect(() => {
+    if (selectedDay === cycleDayToday) return
+    const arm = () => {
+      autoReturnTimer.current = setTimeout(() => {
+        if (interactingRef.current) { arm(); return }   // wait out an active drag
+        snapToDay(cycleDayToday)
+      }, interactingRef.current ? 600 : AUTO_RETURN_MS)
+    }
+    arm()
+    return () => {
+      if (autoReturnTimer.current) clearTimeout(autoReturnTimer.current)
+    }
+  }, [selectedDay, cycleDayToday, snapToDay])
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (e) => {
+        interactingRef.current = true
         cancelAnimation(rotationDeg)
         const lx = e.nativeEvent.locationX
         const ly = e.nativeEvent.locationY
@@ -404,6 +438,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
         lastAngleRef.current = ang
       },
       onPanResponderRelease: () => {
+        interactingRef.current = false
         if (totalMoveRef.current < 5) {
           // Tap — find nearest sticker to initial touch
           const lx = initLocRef.current.x
@@ -690,6 +725,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
             isSelected={s.isSelected}
             isToday={s.isToday}
             textColor={colors.text}
+            accentColor={phaseAccent(s.phase, stickers)}
             fontSemiBold={font.bodySemiBold}
             fontDisplay={font.display}
             onPress={() => onStripPress(s.day)}
