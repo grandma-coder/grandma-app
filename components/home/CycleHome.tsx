@@ -3,12 +3,12 @@
  *
  *   1. HomeGreeting
  *   2. CycleJourneyRingFull        (full-size phase-sticker ring + day panel)
- *   3. DailyNudgeCard              (phase-aware nudge)
- *   4. MoodSymptomStrip            (mood face + symptom chips)
- *   5. CyclePillarsGrid            (2×2 + See all → /cycle-pillars)
+ *   3. DailyMessageCard            (daily-question → collectible card, women's-general)
+ *   4. CycleTodaySummaryCard       (standalone customizable quick-log)
+ *   5. CycleWallet                 (mood & symptoms, pillars grid)
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme } from '../../constants/theme'
@@ -22,6 +22,7 @@ import { MonoCaps } from '../ui/Typography'
 import { CycleJourneyRingFull } from './cycle/CycleJourneyRingFull'
 import { CycleTodaySummaryCard } from './cycle/CycleTodaySummaryCard'
 import { CycleWallet } from './cycle/CycleWallet'
+import { DailyMessageCard } from './pregnancy/DailyMessageCard'
 import { useTranslation } from '../../lib/i18n'
 
 function getMicroLabel(): string {
@@ -59,11 +60,6 @@ export function CycleHome() {
 
   const info = getCycleInfo(cycleConfig, toDateStr(new Date()))
 
-  // The day the ring is scrubbed to — drives the daily nudge below. Starts on
-  // today; the ring lifts changes up via onSelectedDateChange.
-  const [selectedDate, setSelectedDate] = useState(() => toDateStr(new Date()))
-  const handleSelectedDateChange = useCallback((d: string) => setSelectedDate(d), [])
-
   if (historyPending) {
     return <View style={[styles.root, { backgroundColor: bg }]} />
   }
@@ -81,7 +77,14 @@ export function CycleHome() {
           <HomeGreeting name={displayName} microLabel={microLabel} />
         </View>
 
-        <CycleJourneyRingFull cycleConfig={cycleConfig} onSelectedDateChange={handleSelectedDateChange} />
+        <CycleJourneyRingFull cycleConfig={cycleConfig} />
+
+        {/* Daily Message — women's-general daily-question → collectible card.
+            Same mode-agnostic component the pregnancy home uses; it reads the
+            active mode and pulls from the pre-pregnancy question/card bank. */}
+        <View style={styles.section}>
+          <DailyMessageCard />
+        </View>
 
         {/* Standalone customizable quick-log card (mirrors the pregnancy home).
             The card supplies its own horizontal padding (styles.wrap); the
@@ -90,11 +93,7 @@ export function CycleHome() {
         <CycleTodaySummaryCard phase={info.phase as CyclePhase} />
 
         <View style={styles.cardWrap}>
-          <CycleWallet
-            cycleConfig={cycleConfig}
-            selectedDate={selectedDate}
-            phase={info.phase as CyclePhase}
-          />
+          <CycleWallet phase={info.phase as CyclePhase} />
         </View>
       </ScrollView>
     </View>
@@ -105,5 +104,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingBottom: 120 },
   greetingWrap: { paddingHorizontal: 20, marginBottom: 12 },
+  section: { paddingHorizontal: 20, marginTop: 24 },
   cardWrap: { paddingHorizontal: 20, marginTop: 12 },
 })

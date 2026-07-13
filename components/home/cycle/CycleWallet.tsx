@@ -2,10 +2,11 @@
  * CycleWallet — the pre-pregnancy (cycle) home collapsible card stack.
  *
  * Same wallet system as the pregnancy Week Wallet and the kids wallet (reuses
- * the shared WalletCard primitive). Replaces the run of sections below the
- * phase ring + standalone quick-log card: daily nudge, mood & symptoms, and the
- * pillars grid. Each card expands to its existing component as the body.
- * (Today's log summary was lifted into the standalone quick-log card.)
+ * the shared WalletCard primitive). Holds the run of sections below the phase
+ * ring + Daily Message card + standalone quick-log card: mood & symptoms, and
+ * the pillars grid. Each card expands to its existing component as the body.
+ * (Today's log summary → standalone quick-log card; the old daily nudge →
+ * Daily Message module, both above the wallet now.)
  */
 
 import React, { useState } from 'react'
@@ -13,31 +14,27 @@ import { View } from 'react-native'
 import { useTheme } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { buildCycleWalletCards, type CycleWalletCardId } from '../../../lib/cycleWallet'
-import type { CycleConfig, CyclePhase } from '../../../lib/cycleLogic'
+import type { CyclePhase } from '../../../lib/cycleLogic'
 import { WalletCard } from '../WalletCard'
-import { DailyNudgeCard } from './DailyNudgeCard'
 import { MoodSymptomStrip } from './MoodSymptomStrip'
 import { CyclePillarsGrid } from './CyclePillarsGrid'
-import { TipRead, MoodFace, LogOvulation } from '../../stickers/RewardStickers'
+import { MoodFace, LogOvulation } from '../../stickers/RewardStickers'
 
 interface CycleWalletProps {
-  cycleConfig: CycleConfig
-  selectedDate: string
   phase: CyclePhase
 }
 
-export function CycleWallet({ cycleConfig, selectedDate, phase }: CycleWalletProps) {
+export function CycleWallet({ phase }: CycleWalletProps) {
   const { stickers } = useTheme()
   const { t } = useTranslation()
 
-  const [openId, setOpenId] = useState<CycleWalletCardId | null>('nudge')
+  const [openId, setOpenId] = useState<CycleWalletCardId | null>('mood')
   const cards = buildCycleWalletCards()
 
   const toggle = (id: CycleWalletCardId) => setOpenId((cur) => (cur === id ? null : id))
 
   const iconFor = (id: CycleWalletCardId): React.ReactNode => {
     switch (id) {
-      case 'nudge': return <TipRead size={24} />
       case 'mood': return <MoodFace size={22} variant="okay" fill={stickers.pink} />
       case 'pillars': return <LogOvulation size={24} />
     }
@@ -45,7 +42,6 @@ export function CycleWallet({ cycleConfig, selectedDate, phase }: CycleWalletPro
 
   const titleFor = (id: CycleWalletCardId): string => {
     switch (id) {
-      case 'nudge': return t('cycle_wallet_nudge')
       case 'mood': return t('cycle_wallet_mood')
       case 'pillars': return t('cycle_wallet_pillars')
     }
@@ -53,7 +49,6 @@ export function CycleWallet({ cycleConfig, selectedDate, phase }: CycleWalletPro
 
   const bodyFor = (id: CycleWalletCardId): React.ReactNode => {
     switch (id) {
-      case 'nudge': return <DailyNudgeCard cycleConfig={cycleConfig} selectedDate={selectedDate} />
       case 'mood': return <MoodSymptomStrip phase={phase} />
       case 'pillars': return <CyclePillarsGrid />
     }

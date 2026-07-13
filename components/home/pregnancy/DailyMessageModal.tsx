@@ -96,7 +96,7 @@ export function DailyMessageModal({ visible, onClose }: Props) {
       <AffirmationShareModal
         visible={!!shareCard}
         phrase={shareCard?.text ?? ''}
-        mode="pregnancy"
+        mode={shareCard?.mode === 'pre-pregnancy' ? 'prePreg' : 'pregnancy'}
         onClose={() => setShareCard(null)}
       />
     </Modal>

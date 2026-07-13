@@ -509,15 +509,21 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
   }, [selectedInfo.conceptionProbability])
 
   // 7-day strip centered on the selected day (3 before, selected, 3 after).
+  // A weekday strip (MON/TUE/…) is a CALENDAR affordance, so the number under
+  // each weekday is the day-of-MONTH — not the cycle day. (The cycle day is the
+  // big number in the ring center.) `cycleDay` is kept separately purely to
+  // drive snapToDay on press, which rotates the wheel by cycle position.
   const strip = useMemo(() => {
-    const out: { date: string; day: number; weekday: string; phase: CyclePhase; isSelected: boolean; isToday: boolean }[] = []
+    const out: { date: string; dayOfMonth: number; cycleDay: number; weekday: string; phase: CyclePhase; isSelected: boolean; isToday: boolean }[] = []
     for (let offset = -3; offset <= 3; offset++) {
       const date = addDays(selectedDate, offset)
       const info = getCycleInfo(cycleConfig, date)
-      const wd = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' })
+      const jsDate = new Date(date + 'T12:00:00')
+      const wd = jsDate.toLocaleDateString('en-US', { weekday: 'short' })
       out.push({
         date,
-        day: info.cycleDay,
+        dayOfMonth: jsDate.getDate(),
+        cycleDay: info.cycleDay,
         weekday: wd,
         phase: info.phase as CyclePhase,
         isSelected: offset === 0,
@@ -527,7 +533,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
     return out
   }, [selectedDate, cycleConfig, todayStr])
 
-  const onStripPress = useCallback((day: number) => snapToDay(day), [snapToDay])
+  const onStripPress = useCallback((cycleDay: number) => snapToDay(cycleDay), [snapToDay])
 
   return (
     <View style={styles.container}>
@@ -719,7 +725,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
           <StripCell
             key={s.date}
             weekday={s.weekday}
-            day={s.day}
+            day={s.dayOfMonth}
             ink={phaseInk(s.phase, stickers)}
             tint={phaseTint(s.phase, stickers)}
             isSelected={s.isSelected}
@@ -728,7 +734,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
             accentColor={phaseAccent(s.phase, stickers)}
             fontSemiBold={font.bodySemiBold}
             fontDisplay={font.display}
-            onPress={() => onStripPress(s.day)}
+            onPress={() => onStripPress(s.cycleDay)}
             diffuse={diffuse}
             diffuseLine={dt.colors.line}
             diffuseAccent={diffuseAccent}
