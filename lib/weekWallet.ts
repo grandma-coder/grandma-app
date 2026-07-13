@@ -13,7 +13,7 @@ import type { WalletTone } from './wallet'
 export type { WalletTone }
 
 export type WalletCardId =
-  | 'today' | 'appointment' | 'week_tip' | 'kicks'
+  | 'appointment' | 'week_tip' | 'kicks'
   | 'reminders' | 'birth_guide' | 'ask_grandma'
 
 export interface WalletCardDescriptor {
@@ -38,9 +38,7 @@ const KICK_COUNT_FROM_WEEK = 28
 export function buildWalletCards(input: BuildWalletCardsInput): WalletCardDescriptor[] {
   const { weekNumber, todayLogs, hasWeekTip, upcomingAppointment } = input
 
-  const cards: WalletCardDescriptor[] = [
-    { id: 'today', tone: 'surface', linkOnly: false },
-  ]
+  const cards: WalletCardDescriptor[] = []
 
   if (upcomingAppointment) {
     cards.push({ id: 'appointment', tone: 'yellow', linkOnly: false, appointment: upcomingAppointment })

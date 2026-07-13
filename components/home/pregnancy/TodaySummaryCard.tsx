@@ -9,19 +9,22 @@
 
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { ChevronRight } from 'lucide-react-native'
+import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
 import { useTheme, radius, diffuseFont, useDiffuseTheme, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { Character } from '../../characters/Characters'
 import { useTranslation } from '../../../lib/i18n'
 import { PaperCard } from '../../ui/PaperCard'
-import { Display } from '../../ui/Typography'
+import { Display, MonoCaps } from '../../ui/Typography'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition,
 } from '../../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../../lib/moodFace'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
 import { TodayDashboardModal } from './TodayDashboardModal'
+import { QuickLogPicker } from './QuickLogPicker'
+import { PREG_QUICK_LOGS } from '../../../lib/pregnancyQuickLogs'
+import { useQuickLogStore } from '../../../store/useQuickLogStore'
 
 interface Props {
   todayLogs: Record<string, TodayLogEntry>
@@ -45,6 +48,8 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const enabledKeys = useQuickLogStore((s) => s.enabledKeys)
 
   const weightVal = todayLogs['weight']?.value ? parseFloat(todayLogs['weight'].value) : null
   const waterVal = todayLogs['water']?.value ? parseInt(todayLogs['water'].value, 10) : 0
@@ -66,62 +71,58 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
     done: boolean
   }
 
-  const pills: Pill[] = [
-    {
-      key: 'mood',
-      logType: 'mood',
+  // One pill definition per catalog key — the card renders whichever the user
+  // has enabled (in their chosen order), gated by pregnancy week.
+  const pillByKey: Record<string, Pill> = {
+    mood: {
+      key: 'mood', logType: 'mood',
       icon: moodKey
         ? <MoodFace size={20} variant={moodFaceVariant(moodKey)} fill={moodFaceFill(moodKey)} />
         : <MoodFace size={20} variant="okay" fill={stickers.yellowSoft} />,
       label: moodKey ? (MOOD_LABELS[moodKey] ?? moodKey) : '+',
       done: moodKey !== null,
     },
-    {
-      key: 'water',
-      logType: 'water',
+    water: {
+      key: 'water', logType: 'water',
       icon: diffuse ? <Character name="water" size={24} color={stickers.blue} /> : <LogWater size={22} />,
-      label: `${waterVal}/8`,
-      done: waterVal >= 8,
+      label: `${waterVal}/8`, done: waterVal >= 8,
     },
-    {
-      key: 'sleep',
-      logType: 'sleep',
+    sleep: {
+      key: 'sleep', logType: 'sleep',
       icon: diffuse ? <Character name="sleep" size={24} color={stickers.lilac} /> : <LogSleep size={22} />,
-      label: sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '+',
-      done: sleepVal !== null,
+      label: sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '+', done: sleepVal !== null,
     },
-    {
-      key: 'meals',
-      logType: 'nutrition',
+    meals: {
+      key: 'meals', logType: 'nutrition',
       icon: diffuse ? <Character name="nutrition" size={24} color={stickers.green} /> : <LogNutrition size={22} />,
-      label: `${nutritionVal}/3`,
-      done: nutritionVal >= 3,
+      label: `${nutritionVal}/3`, done: nutritionVal >= 3,
     },
-    {
-      key: 'weight',
-      logType: 'weight',
+    weight: {
+      key: 'weight', logType: 'weight',
       icon: diffuse ? <Character name="growth" size={24} color={stickers.peach} /> : <LogWeight size={22} />,
-      label: weightVal !== null ? `${weightVal.toFixed(1)}kg` : '+',
-      done: weightVal !== null,
+      label: weightVal !== null ? `${weightVal.toFixed(1)}kg` : '+', done: weightVal !== null,
     },
-    ...(weekNumber >= 28 ? [{
-      key: 'kicks',
-      logType: 'kick_count',
+    kicks: {
+      key: 'kicks', logType: 'kick_count',
       icon: diffuse ? <Character name="kick" size={24} color={stickers.coral} /> : <LogKicks size={22} />,
-      label: kicksVal !== null ? String(kicksVal) : '+',
-      done: kicksVal !== null,
-    }] : []),
-  ]
+      label: kicksVal !== null ? String(kicksVal) : '+', done: kicksVal !== null,
+    },
+  }
 
-  // Quick read on how complete today feels (mood / water / sleep / meals / weight).
-  const completed = [
-    moodKey !== null,
-    waterVal >= 8,
-    sleepVal !== null,
-    nutritionVal >= 3,
-    weightVal !== null,
-  ].filter(Boolean).length
-  const totalTrackable = 5
+  // Resolve the user's enabled keys → pills, keeping their order, dropping any
+  // that aren't in the catalog or are gated by a later week.
+  const pills: Pill[] = enabledKeys
+    .map((k) => {
+      const def = PREG_QUICK_LOGS.find((q) => q.key === k)
+      if (!def) return null
+      if (def.minWeek !== undefined && weekNumber < def.minWeek) return null
+      return pillByKey[k] ?? null
+    })
+    .filter((p): p is Pill => p !== null)
+
+  // Completion + progress compute over whatever the user is tracking.
+  const completed = pills.filter((p) => p.done).length
+  const totalTrackable = Math.max(pills.length, 1)
   const summaryHint =
     completed === totalTrackable
       ? t('pregnancy_summaryHint_balanced')
@@ -143,12 +144,9 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
 
   const inner = (
     <>
-      {/* Header — tapping the chevron opens the full dashboard */}
-      <Pressable
-        onPress={() => setOpen(true)}
-        style={({ pressed }) => [styles.headerRow, { opacity: pressed ? 0.7 : 1 }]}
-      >
-        <View style={{ flex: 1 }}>
+      {/* Header — title + Edit (opens the picker); chevron opens the dashboard */}
+      <View style={styles.headerRow}>
+        <Pressable onPress={() => setOpen(true)} style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.7 : 1 }]}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.3, color: titleColor }}>
               {t('pregnancy_todayAtGlance')}
@@ -159,9 +157,15 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor }}>
             {summaryHint}
           </Text>
-        </View>
+        </Pressable>
+        <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [styles.editBtn, { opacity: pressed ? 0.6 : 1 }]}>
+          <SlidersHorizontal size={15} color={chevronColor} strokeWidth={2} />
+          <Text style={{ fontFamily: labelFont, fontSize: 12, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
+            {t('pregnancy_quickLogs_edit')}
+          </Text>
+        </Pressable>
         <ChevronRight size={20} color={chevronColor} strokeWidth={2} />
-      </Pressable>
+      </View>
 
       {/* Tappable metric pills — each opens its log sheet directly */}
       <View style={styles.chipsRow}>
@@ -196,7 +200,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         })}
       </View>
 
-      {/* Subtle progress bar — completion of today's 5 core routines */}
+      {/* Subtle progress bar — completion over the user's tracked logs */}
       <View style={[styles.progressTrack, { backgroundColor: trackColor }]}>
         <View
           style={[
@@ -209,6 +213,11 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
             },
           ]}
         />
+      </View>
+
+      {/* Footer title — small label like the other home cards */}
+      <View style={[styles.footer, { borderTopColor: trackColor }]}>
+        <MonoCaps color={hintColor}>{t('pregnancy_quickLogs_footer')}</MonoCaps>
       </View>
     </>
   )
@@ -242,13 +251,17 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           userId={userId}
         />
       )}
+
+      <QuickLogPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} weekNumber={weekNumber} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 20 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  footer: { marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
   chipsRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },

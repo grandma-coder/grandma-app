@@ -22,10 +22,9 @@ import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 import { getWeekData } from '../../../lib/pregnancyData'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
 import { WalletCard } from '../WalletCard'
-import { TodaySummaryCard } from './TodaySummaryCard'
 import { PregnancyUserReminders } from './PregnancyUserReminders'
 import {
-  NotifyAppointmentDue, TipRead, LogKicks, LogHeartbeat, NotifyRoutine,
+  NotifyAppointmentDue, TipRead, LogKicks, NotifyRoutine,
 } from '../../stickers/RewardStickers'
 import { Leaf } from '../../ui/Stickers'
 import { GrandmaLogo } from '../../ui/GrandmaLogo'
@@ -49,7 +48,7 @@ export function WeekWallet({
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
-  const [openId, setOpenId] = useState<WalletCardId | null>('today')
+  const [openId, setOpenId] = useState<WalletCardId | null>('reminders')
 
   const appt = getUpcomingAppointment(weekNumber) ?? null
   const weekData = getWeekData(weekNumber)
@@ -99,7 +98,6 @@ export function WeekWallet({
 
   const iconFor = (id: WalletCardId): React.ReactNode => {
     switch (id) {
-      case 'today': return <LogHeartbeat size={26} />
       case 'appointment': return <NotifyAppointmentDue size={26} />
       case 'week_tip': return <TipRead size={26} />
       case 'kicks': return <LogKicks size={26} />
@@ -111,7 +109,6 @@ export function WeekWallet({
 
   const titleFor = (id: WalletCardId): string => {
     switch (id) {
-      case 'today': return t('pregnancy_todayAtGlance')
       case 'appointment': return appt?.name ?? ''
       case 'week_tip': return t('pregnancy_reminder_weekTip', { week: weekNumber })
       case 'kicks': return t('pregnancy_reminder_kickCountTitle')
@@ -130,16 +127,6 @@ export function WeekWallet({
 
   const bodyFor = (id: WalletCardId): React.ReactNode => {
     switch (id) {
-      case 'today':
-        return (
-          <TodaySummaryCard
-            todayLogs={todayLogs}
-            weekNumber={weekNumber}
-            userId={userId}
-            onLogMetric={onLogMetric}
-            bare
-          />
-        )
       case 'appointment':
         return (
           <View style={{ gap: 10 }}>

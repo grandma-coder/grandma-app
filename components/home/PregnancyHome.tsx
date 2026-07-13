@@ -54,6 +54,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { WeekCard } from './pregnancy/WeekCard'
 import { DailyMessageCard } from './pregnancy/DailyMessageCard'
 import { WeekWallet } from './pregnancy/WeekWallet'
+import { TodaySummaryCard } from './pregnancy/TodaySummaryCard'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
 import { BirthGuideModal } from '../pregnancy/BirthGuideModal'
 import { AppointmentDetailModal } from './pregnancy/AppointmentDetailModal'
@@ -331,7 +332,24 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         <DailyMessageCard />
       </View>
 
-      {/* 3. Week Wallet — collapsible stack (tracker + reminders + shortcuts) */}
+      {/* 3. Quick-log launcher — standalone, customizable */}
+      <View style={styles.section}>
+        {diffuse ? (
+          <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+            {t('pregnancy_logSomething_label')}
+          </Text>
+        ) : (
+          <MonoCaps style={{ marginBottom: 12 }}>{t('pregnancy_logSomething_label')}</MonoCaps>
+        )}
+        <TodaySummaryCard
+          todayLogs={todayLogs}
+          weekNumber={weekNumber}
+          userId={userId}
+          onLogMetric={(type) => setActiveLog(type as InlineLogType)}
+        />
+      </View>
+
+      {/* 4. Week Wallet — collapsible stack (reminders + shortcuts) */}
       <View style={styles.section}>
         {diffuse ? (
           <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
