@@ -47,7 +47,7 @@ export function AppointmentDetailModal({
   onMarkDone,
   onAddToLogs,
 }: Props) {
-  const { colors, stickers, isDark, brand: themeBrand } = useTheme()
+  const { colors, stickers, radius, brand: themeBrand } = useTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -121,7 +121,7 @@ export function AppointmentDetailModal({
               { backgroundColor: paper, borderColor: hairline, opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            <X size={15} color={muted} strokeWidth={2.5} />
+            <X size={16} color={muted} strokeWidth={2.5} />
           </Pressable>
 
           {appointment && (
@@ -133,7 +133,7 @@ export function AppointmentDetailModal({
               <View
                 style={[
                   styles.hero,
-                  { backgroundColor: accent.soft, borderColor: hairline },
+                  { backgroundColor: accent.soft, borderColor: hairline, borderRadius: radius.lg },
                   shadows.card,
                 ]}
               >
@@ -150,7 +150,7 @@ export function AppointmentDetailModal({
                   <Display size={24} color={inkText} style={{ marginTop: 4 }}>
                     {appointment.name}
                   </Display>
-                  <View style={[styles.statusChip, { backgroundColor: paper, borderColor: accent.ink + '33' }]}>
+                  <View style={[styles.statusChip, { backgroundColor: paper, borderColor: hairline, borderRadius: radius.full }]}>
                     <Text style={[styles.statusChipText, { color: accent.ink }]}>
                       {STATUS_LABEL[status]}
                     </Text>
@@ -184,7 +184,7 @@ export function AppointmentDetailModal({
                       key={i}
                       style={[
                         styles.questionRow,
-                        { backgroundColor: paper, borderColor: hairline },
+                        { backgroundColor: paper, borderColor: hairline, borderRadius: radius.md },
                       ]}
                     >
                       {/* Small violet dot — the "specific detail" accent. */}
@@ -204,7 +204,7 @@ export function AppointmentDetailModal({
                     onPress={onMarkDone}
                     style={({ pressed }) => [
                       styles.primaryBtn,
-                      { backgroundColor: inkText, opacity: pressed ? 0.85 : 1 },
+                      { backgroundColor: inkText, borderRadius: radius.full, opacity: pressed ? 0.85 : 1 },
                       shadows.subtle,
                     ]}
                   >
@@ -217,7 +217,7 @@ export function AppointmentDetailModal({
                     onPress={onAddToLogs}
                     style={({ pressed }) => [
                       styles.secondaryBtn,
-                      { backgroundColor: paper, borderColor: hairline, opacity: pressed ? 0.7 : 1 },
+                      { backgroundColor: paper, borderColor: hairline, borderRadius: radius.full, opacity: pressed ? 0.7 : 1 },
                     ]}
                   >
                     <Plus size={16} color={inkText} strokeWidth={2.5} />
@@ -258,8 +258,8 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    // Warm ink scrim (matches LogSheet + the other bottom sheets), not pure black.
-    backgroundColor: 'rgba(20,19,19,0.45)',
+    // Warm ink scrim, matching LogSheet's 0.55 (shared bottom-sheet convention).
+    backgroundColor: 'rgba(20,19,19,0.55)',
   },
   sheet: {
     borderTopLeftRadius: 32,
@@ -297,10 +297,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 14,
     padding: 18,
-    borderRadius: 24,
     borderWidth: 1,
     marginTop: 8,
     marginBottom: 8,
+    // borderRadius: radius.lg — applied inline (radius from useTheme)
   },
   heroIcon: {
     width: 56,
@@ -318,9 +318,9 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 999,
     borderWidth: 1,
     marginTop: 10,
+    // borderRadius: radius.full — applied inline
   },
   statusChipText: {
     fontSize: 11,
@@ -342,8 +342,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
     padding: 14,
-    borderRadius: 16,
     borderWidth: 1,
+    // borderRadius: radius.md — applied inline
   },
   questionDot: {
     width: 8,
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     height: 52,
-    borderRadius: 999,
+    // borderRadius: radius.full — applied inline
   },
   primaryBtnText: {
     fontSize: 14,
@@ -378,8 +378,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     height: 52,
-    borderRadius: 999,
     borderWidth: 1,
+    // borderRadius: radius.full — applied inline
   },
   secondaryBtnText: {
     fontSize: 14,
