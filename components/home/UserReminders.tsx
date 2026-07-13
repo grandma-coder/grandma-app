@@ -175,6 +175,10 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
     }
   }
 
+  function updateReminder(id: string, patch: Partial<Reminder>) {
+    persist(reminders.map((r) => (r.id === id ? { ...r, ...patch } : r)))
+  }
+
   const active = reminders.filter((r) => !r.done)
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const tagList = allTags(reminders)
@@ -521,6 +525,7 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
               onDelete={() => deleteReminder(r.id)}
               onEdit={editReminder}
               onFlag={() => flagReminder(r.id)}
+              onUpdate={updateReminder}
               colors={colors}
               isDark={isDark}
               stickers={stickers}
@@ -537,13 +542,14 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
 }
 
 function ReminderRow({
-  r, onToggle, onDelete, onEdit, onFlag, colors, isDark, stickers, accent, diffuse, dt, t,
+  r, onToggle, onDelete, onEdit, onFlag, onUpdate, colors, isDark, stickers, accent, diffuse, dt, t,
 }: {
   r: Reminder
   onToggle: () => void
   onDelete: () => void
   onEdit: (id: string, newText: string) => void
   onFlag: () => void
+  onUpdate: (id: string, patch: Partial<Reminder>) => void
   colors: any
   isDark: boolean
   stickers: any
@@ -576,6 +582,7 @@ function ReminderRow({
 
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(r.text)
+  const [showDetail, setShowDetail] = useState(false)
 
   function commitEdit() {
     const trimmed = editText.trim()
@@ -612,9 +619,6 @@ function ReminderRow({
       borderColor: cardBorder,
       paddingVertical: 12,
       paddingHorizontal: 14,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
     } : {
       backgroundColor: cardBg,
       borderRadius: 18,
@@ -622,14 +626,12 @@ function ReminderRow({
       borderColor: cardBorder,
       paddingVertical: 12,
       paddingHorizontal: 14,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
       shadowColor: '#141313',
       shadowOpacity: isDark ? 0 : 0.05,
       shadowRadius: 6,
       shadowOffset: { width: 0, height: 2 },
     }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Pressable
         onPress={onToggle}
         accessibilityRole="checkbox"
@@ -691,15 +693,17 @@ function ReminderRow({
             </Pressable>
           </View>
         ) : (
-          <Text
-            style={{
-              fontSize: 15,
-              fontFamily: diffuse ? diffuseFont.body : font.display,
-              color: diffuse ? dt.colors.ink : colors.text,
-              lineHeight: 21,
-            }}
-            numberOfLines={2}
-          >{r.text}</Text>
+          <Pressable onPress={() => setShowDetail((v) => !v)}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontFamily: diffuse ? diffuseFont.body : font.display,
+                color: diffuse ? dt.colors.ink : colors.text,
+                lineHeight: 21,
+              }}
+              numberOfLines={2}
+            >{r.text}</Text>
+          </Pressable>
         )}
 
         {dueDateLabel && (() => {
@@ -776,6 +780,61 @@ function ReminderRow({
         </Pressable>
       </View>
     </View>
+
+    {showDetail && (
+      <View style={{ marginTop: 12, gap: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: diffuse ? dt.colors.line : colors.border, paddingTop: 12 }}>
+        {/* Notes */}
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: diffuse ? dt.colors.ink3 : colors.textMuted }}>{t('reminders_notesLabel')}</Text>
+          <TextInput
+            defaultValue={r.notes ?? ''}
+            onEndEditing={(e) => onUpdate(r.id, { notes: e.nativeEvent.text })}
+            placeholder={t('reminders_notesPlaceholder')}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textFaint}
+            multiline
+            style={{ fontFamily: diffuse ? diffuseFont.body : font.body, fontSize: 14, color: diffuse ? dt.colors.ink : colors.text, borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 9, minHeight: 40 }}
+          />
+        </View>
+
+        {/* Checklist */}
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: diffuse ? dt.colors.ink3 : colors.textMuted }}>{t('reminders_checklistLabel')}</Text>
+          {(r.checklist ?? []).map((c) => (
+            <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Pressable onPress={() => onUpdate(r.id, { checklist: (r.checklist ?? []).map((x) => x.id === c.id ? { ...x, done: !x.done } : x) })}
+                style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: c.done ? colors.text : (diffuse ? dt.colors.line2 : colors.border), backgroundColor: c.done ? colors.text : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                {c.done ? <Check size={13} color={colors.bg} strokeWidth={3} /> : null}
+              </Pressable>
+              <Text style={{ flex: 1, fontFamily: diffuse ? diffuseFont.body : font.body, fontSize: 14, color: diffuse ? dt.colors.ink : colors.text, textDecorationLine: c.done ? 'line-through' : 'none', opacity: c.done ? 0.6 : 1 }}>{c.text}</Text>
+              <Pressable onPress={() => onUpdate(r.id, { checklist: (r.checklist ?? []).filter((x) => x.id !== c.id) })} hitSlop={8}>
+                <X size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
+              </Pressable>
+            </View>
+          ))}
+          <ChecklistAdder onAdd={(text) => onUpdate(r.id, { checklist: [...(r.checklist ?? []), { id: Date.now().toString(), text, done: false }] })} placeholder={t('reminders_addChecklistItem')} colors={colors} diffuse={diffuse} dt={dt} />
+        </View>
+      </View>
+    )}
+    </View>
+  )
+}
+
+function ChecklistAdder({ onAdd, placeholder, colors, diffuse, dt }: {
+  onAdd: (text: string) => void; placeholder: string
+  colors: ReturnType<typeof useTheme>['colors']; diffuse: boolean; dt: ReturnType<typeof useDiffuseTheme>
+}) {
+  const [text, setText] = useState('')
+  return (
+    <TextInput
+      value={text}
+      onChangeText={setText}
+      placeholder={placeholder}
+      placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textFaint}
+      returnKeyType="done"
+      blurOnSubmit={false}
+      onSubmitEditing={() => { const v = text.trim(); if (v) onAdd(v); setText('') }}
+      style={{ fontFamily: diffuse ? diffuseFont.body : font.body, fontSize: 14, color: diffuse ? dt.colors.ink : colors.text, borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 }}
+    />
   )
 }
 
