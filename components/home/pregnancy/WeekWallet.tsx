@@ -61,40 +61,6 @@ export function WeekWallet({
 
   const toggle = (id: WalletCardId) => setOpenId((cur) => (cur === id ? null : id))
 
-  const bodyText = (s: string) => (
-    <Text
-      style={{
-        fontSize: 13,
-        lineHeight: 19,
-        color: diffuse ? dt.colors.ink2 : colors.textMuted,
-        fontFamily: diffuse ? diffuseFont.body : f.body,
-      }}
-    >
-      {s}
-    </Text>
-  )
-
-  const linkBtn = (label: string, onPress: () => void) => (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.linkBtn,
-        { borderColor: diffuse ? dt.colors.line2 : colors.borderStrong, opacity: pressed ? 0.7 : 1 },
-      ]}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Text
-        style={{
-          fontSize: 12.5,
-          color: diffuse ? dt.colors.ink : colors.text,
-          fontFamily: diffuse ? diffuseFont.bodySemiBold : f.bodySemiBold,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  )
 
   const iconFor = (id: WalletCardId): React.ReactNode => {
     switch (id) {
@@ -118,42 +84,22 @@ export function WeekWallet({
     }
   }
 
+  // Tapping a card acts directly (opens a detail sheet / logs / routes) instead
+  // of expanding inline — except 'reminders', which is a genuine inline list.
   const onHeader = (id: WalletCardId, linkOnly: boolean) => {
     if (id === 'birth_guide') return onOpenBirthGuide()
     if (id === 'ask_grandma') return router.push('/grandma-talk')
+    if (id === 'appointment') return appt && onOpenAppointment(appt)
+    if (id === 'week_tip') return onOpenWeekDetail()
+    if (id === 'kicks') return onLogMetric('kick_count')
     if (linkOnly) return
-    toggle(id)
+    toggle(id) // reminders
   }
 
-  const bodyFor = (id: WalletCardId): React.ReactNode => {
-    switch (id) {
-      case 'appointment':
-        return (
-          <View style={{ gap: 10 }}>
-            {bodyText(`${t('pregnancy_week')} ${appt?.week} · ${appt?.prepNote ?? ''}`)}
-            {linkBtn(t('preg_weekCard_tapForDetails'), () => appt && onOpenAppointment(appt))}
-          </View>
-        )
-      case 'week_tip':
-        return (
-          <View style={{ gap: 10 }}>
-            {bodyText(weekData?.momTip ?? '')}
-            {linkBtn(t('preg_weekCard_tapForDetails'), onOpenWeekDetail)}
-          </View>
-        )
-      case 'kicks':
-        return (
-          <View style={{ gap: 10 }}>
-            {bodyText(t('pregnancy_reminder_kickCountSubtitle'))}
-            {linkBtn(t('pregnancy_logTitle_kicks'), () => onLogMetric('kick_count'))}
-          </View>
-        )
-      case 'reminders':
-        return <PregnancyUserReminders userId={userId ?? null} />
-      default:
-        return null
-    }
-  }
+  // Only 'reminders' renders an inline body now; every other card taps straight
+  // to its detail sheet / log / route (see onHeader).
+  const bodyFor = (id: WalletCardId): React.ReactNode =>
+    id === 'reminders' ? <PregnancyUserReminders userId={userId ?? null} /> : null
 
   return (
     <View>
@@ -168,6 +114,9 @@ export function WeekWallet({
             expanded={openId === c.id}
             linkOnly={c.linkOnly}
             last={isLast}
+            // Only 'reminders' keeps the inline body + chevron; every other card
+            // taps straight to a detail sheet / log / route (no arrow).
+            hideChevron={c.id !== 'reminders'}
             onPressHeader={() => onHeader(c.id, c.linkOnly)}
           >
             {bodyFor(c.id)}
@@ -178,12 +127,3 @@ export function WeekWallet({
   )
 }
 
-const styles = StyleSheet.create({
-  linkBtn: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-})

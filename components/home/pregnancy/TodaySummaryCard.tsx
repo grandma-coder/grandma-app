@@ -165,18 +165,15 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         <ChevronRight size={20} color={chevronColor} strokeWidth={2} />
       </View>
 
-      {/* Tappable metric pills — each opens its log sheet directly */}
+      {/* Tappable metric pills — neutral hairline; only a completed goal tints
+          soft green (no mode-accent violet). */}
       <View style={styles.chipsRow}>
         {pills.map((p) => {
-          const bg = p.done
-            ? (diffuse ? getDiffuseAccent('preg', dt.isDark) + '22' : stickers.greenSoft)
-            : neutralBg
+          const bg = p.done ? stickers.greenSoft : neutralBg
           const border = p.done
-            ? (diffuse ? dAccent : stickers.green)
+            ? stickers.green
             : (diffuse ? dt.colors.line : colors.border)
-          const textColor = p.done
-            ? (diffuse ? dAccent : stickers.greenInk)
-            : titleColor
+          const textColor = p.done ? stickers.greenInk : titleColor
           return (
             <Pressable
               key={p.key}
@@ -205,9 +202,8 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
             styles.progressFill,
             {
               width: `${(completed / totalTrackable) * 100}%`,
-              backgroundColor: diffuse
-                ? dAccent
-                : (completed === totalTrackable ? stickers.green : stickers.lilac),
+              // Neutral progress; turns green only when everything's done.
+              backgroundColor: completed === totalTrackable ? stickers.green : (diffuse ? dt.colors.ink3 : colors.textMuted),
             },
           ]}
         />
@@ -222,24 +218,9 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
 
   return (
     <View style={bare ? undefined : styles.wrap}>
-      {bare ? (
-        inner
-      ) : diffuse ? (
-        <DiffuseFieldSurface
-          mode="preg"
-          isDark={dt.isDark}
-          intensity={0.45}
-          radius={radius.lg}
-          style={{ padding: 18, borderWidth: 1, borderColor: dt.colors.line }}
-        >
-          {inner}
-        </DiffuseFieldSurface>
-      ) : (
-        // Containerless — sits on the cream canvas (no card block/border/shadow).
-        <View style={{ paddingHorizontal: 4 }}>
-          {inner}
-        </View>
-      )}
+      {/* Containerless in both variants — sits on the page canvas directly,
+          no card block / field surface / border / shadow. */}
+      {bare ? inner : <View style={{ paddingHorizontal: 4 }}>{inner}</View>}
 
       {userId && (
         <TodayDashboardModal

@@ -37,11 +37,14 @@ interface WalletCardProps {
   onPressHeader: () => void
   /** the "last" card drops the negative overlap margin. */
   last?: boolean
+  /** hide the trailing chevron/arrow entirely (tap acts directly, e.g. opens a
+   *  detail sheet). The card never expands inline when this is set. */
+  hideChevron?: boolean
   children?: React.ReactNode
 }
 
 export function WalletCard({
-  tone, icon, title, trailingValue, expanded, linkOnly, onPressHeader, last, children,
+  tone, icon, title, trailingValue, expanded, linkOnly, onPressHeader, last, hideChevron, children,
 }: WalletCardProps) {
   const { colors, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
@@ -133,7 +136,7 @@ export function WalletCard({
             {trailingValue}
           </Text>
         ) : null}
-        {linkOnly ? (
+        {hideChevron ? null : linkOnly ? (
           <ArrowUpRight size={20} color={ink} strokeWidth={2.2} style={{ opacity: 0.8 }} />
         ) : (
           <Animated.View style={arrowStyle}>
@@ -142,7 +145,7 @@ export function WalletCard({
         )}
       </Pressable>
 
-      {showBody ? <View style={styles.body}>{children}</View> : null}
+      {showBody && !hideChevron ? <View style={styles.body}>{children}</View> : null}
     </View>
   )
 }
