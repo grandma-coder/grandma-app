@@ -540,6 +540,7 @@ export const en: TranslationKeys = {
   pregnancy_appt_askGrandma: 'Ask Grandma',
   pregnancy_appt_weekTiming: 'Week {{week}} · {{timing}}',
   pregnancy_appt_prep: 'PREP',
+  pregnancy_appt_about: 'ABOUT',
   pregnancy_appt_questionsToAsk: 'QUESTIONS TO ASK',
   // ─── B7b: DevelopmentInsight.tsx residual strings ─────────────────────────
   devInsight_label: 'Development Insight',

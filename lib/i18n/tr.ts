@@ -477,6 +477,7 @@ export const tr: TranslationKeys = {
   pregnancy_appt_askGrandma: "Ask Grandma",
   pregnancy_appt_weekTiming: "Week {{week}} · {{timing}}",
   pregnancy_appt_prep: "PREP",
+  pregnancy_appt_about: "ABOUT",
   pregnancy_appt_questionsToAsk: "QUESTIONS TO ASK",
   devInsight_label: "Development Insight",
   devInsight_titleLine1: "Finding Their",

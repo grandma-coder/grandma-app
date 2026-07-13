@@ -538,6 +538,7 @@ export interface TranslationKeys {
   pregnancy_appt_askGrandma: string
   pregnancy_appt_weekTiming: string                // "Week {{week}} · {{timing}}"
   pregnancy_appt_prep: string
+  pregnancy_appt_about: string
   pregnancy_appt_questionsToAsk: string
   // ─── B7b: DevelopmentInsight.tsx residual strings ─────────────────────────
   devInsight_label: string

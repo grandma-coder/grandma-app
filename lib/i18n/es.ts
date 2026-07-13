@@ -477,6 +477,7 @@ export const es: TranslationKeys = {
   pregnancy_appt_askGrandma: "Preguntarle a Guru Grandma",
   pregnancy_appt_weekTiming: "Semana {{week}} · {{timing}}",
   pregnancy_appt_prep: "PREPARACIÓN",
+  pregnancy_appt_about: "ACERCA DE",
   pregnancy_appt_questionsToAsk: "PREGUNTAS PARA HACER",
   devInsight_label: "Perspectiva del Desarrollo",
   devInsight_titleLine1: "Encontrando Su",

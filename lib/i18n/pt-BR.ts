@@ -477,6 +477,7 @@ export const ptBR: TranslationKeys = {
   pregnancy_appt_askGrandma: "Perguntar à Grandma",
   pregnancy_appt_weekTiming: "Semana {{week}} · {{timing}}",
   pregnancy_appt_prep: "PREPARAÇÃO",
+  pregnancy_appt_about: "SOBRE",
   pregnancy_appt_questionsToAsk: "PERGUNTAS PARA FAZER",
   devInsight_label: "Insight de Desenvolvimento",
   devInsight_titleLine1: "Descobrindo Sua",

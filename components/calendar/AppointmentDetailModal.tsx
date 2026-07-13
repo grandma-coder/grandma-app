@@ -151,33 +151,33 @@ export function AppointmentDetailModal({
                     {appointment.name}
                   </Display>
                   <View style={[styles.statusChip, { backgroundColor: paper, borderColor: hairline, borderRadius: radius.full }]}>
-                    <Text style={[styles.statusChipText, { color: accent.ink }]}>
+                    <MonoCaps size={11} color={accent.ink}>
                       {STATUS_LABEL[status]}
-                    </Text>
+                    </MonoCaps>
                   </View>
                 </View>
               </View>
 
               {/* ─── Body sections ───────────────────────────────────── */}
-              <Section title="About" muted={muted}>
+              <Section title={t('pregnancy_appt_about')} muted={muted}>
                 <Body size={14} color={inkText}>
                   {description}
                 </Body>
               </Section>
 
-              <Section title="How to prep" muted={muted}>
+              <Section title={t('pregnancy_appt_prep')} muted={muted}>
                 <Body size={14} color={inkText}>
                   {prepNote}
                 </Body>
               </Section>
 
-              <Section title="What to expect" muted={muted}>
+              <Section title={t('pregnancy_appt_whatToExpect')} muted={muted}>
                 <Body size={14} color={inkText}>
                   {whatToExpect}
                 </Body>
               </Section>
 
-              <Section title="Questions to ask" muted={muted}>
+              <Section title={t('pregnancy_appt_questionsToAsk')} muted={muted}>
                 <View style={{ gap: 10 }}>
                   {appointment.questions.map((q, i) => (
                     <View
@@ -235,6 +235,10 @@ export function AppointmentDetailModal({
   )
 }
 
+// Section header uses the mono-caps "label voice" (MonoCaps) — the same eyebrow
+// grammar as the hero's WEEK · TYPE caption and the rest of the app's section
+// labels — so the sheet mixes Fraunces (titles) · DM Sans (prose) · mono-caps
+// (labels) instead of one flat sans everywhere.
 function Section({
   title,
   muted,
@@ -246,9 +250,9 @@ function Section({
 }) {
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: muted }]}>
-        {title.toUpperCase()}
-      </Text>
+      <MonoCaps size={11} color={muted}>
+        {title}
+      </MonoCaps>
       {children}
     </View>
   )
@@ -322,20 +326,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     // borderRadius: radius.full — applied inline
   },
-  statusChipText: {
-    fontSize: 11,
-    fontFamily: font.bodyBold,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
   section: {
     marginTop: 18,
     gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    letterSpacing: 1.4,
-    fontFamily: font.bodyBold,
   },
   questionRow: {
     flexDirection: 'row',
