@@ -17,27 +17,8 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import {
-  ArrowLeft,
-  Bell,
-  Heart,
-  AtSign,
-  MessageCircle,
-  Hash,
-  CheckCheck,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  CalendarClock,
-  Target,
-  Flame,
-  Sparkles,
-  FileBarChart,
-  Shield,
-  Activity,
-  Clock,
-  Zap,
-} from 'lucide-react-native'
+import { ArrowLeft, CheckCheck } from 'lucide-react-native'
+import { Character, type CharacterName } from '../components/characters/Characters'
 import {
   fetchNotifications,
   markNotificationRead,
@@ -81,48 +62,52 @@ type CategoryKey =
   | 'Other'
 
 interface TypeConfig {
-  Icon: React.ComponentType<{ size?: number; color?: string }>
+  character: CharacterName
   stickerKey: StickerKey
   category: CategoryKey
 }
 
+// Each notification type resolves to a Character-blob concept (the app-wide glyph
+// family) — no Lucide icons here. Concepts are chosen to preserve meaning:
+// wellness up/down → `activity` (a wellness-signal blob), goals/milestone → `star`
+// (achievement), reports → `note`, community types → `community`.
 const TYPE_CONFIG: Record<string, TypeConfig> = {
   // Wellness
-  wellness_drop:    { Icon: TrendingDown,   stickerKey: 'coral',  category: 'Wellness' },
-  wellness_improve: { Icon: TrendingUp,     stickerKey: 'green',  category: 'Wellness' },
-  missing_data:     { Icon: AlertTriangle,  stickerKey: 'peach',  category: 'Wellness' },
+  wellness_drop:    { character: 'activity',  stickerKey: 'coral',  category: 'Wellness' },
+  wellness_improve: { character: 'activity',  stickerKey: 'green',  category: 'Wellness' },
+  missing_data:     { character: 'warning',   stickerKey: 'peach',  category: 'Wellness' },
   // Routines
-  routine_reminder: { Icon: CalendarClock,  stickerKey: 'lilac',  category: 'Routines' },
-  routine_missed:   { Icon: Clock,          stickerKey: 'peach',  category: 'Routines' },
+  routine_reminder: { character: 'clock',     stickerKey: 'lilac',  category: 'Routines' },
+  routine_missed:   { character: 'clock',     stickerKey: 'peach',  category: 'Routines' },
   // Health
-  health_alert:     { Icon: Activity,       stickerKey: 'coral',  category: 'Health'   },
-  vaccine_due:      { Icon: Shield,         stickerKey: 'blue',   category: 'Health'   },
+  health_alert:     { character: 'health',    stickerKey: 'coral',  category: 'Health'   },
+  vaccine_due:      { character: 'vaccine',   stickerKey: 'blue',   category: 'Health'   },
   // Goals & streaks
-  goal_achieved:    { Icon: Target,         stickerKey: 'green',  category: 'Goals'    },
-  goal_missed:      { Icon: Target,         stickerKey: 'peach',  category: 'Goals'    },
-  streak:           { Icon: Flame,          stickerKey: 'yellow', category: 'Goals'    },
-  streak_broken:    { Icon: Flame,          stickerKey: 'coral',  category: 'Goals'    },
+  goal_achieved:    { character: 'star',      stickerKey: 'green',  category: 'Goals'    },
+  goal_missed:      { character: 'star',      stickerKey: 'peach',  category: 'Goals'    },
+  streak:           { character: 'streak',    stickerKey: 'yellow', category: 'Goals'    },
+  streak_broken:    { character: 'streak',    stickerKey: 'coral',  category: 'Goals'    },
   // Insights
-  insight:          { Icon: Sparkles,       stickerKey: 'lilac',  category: 'Insights' },
-  milestone:        { Icon: Zap,            stickerKey: 'yellow', category: 'Insights' },
-  daily_summary:    { Icon: FileBarChart,   stickerKey: 'blue',   category: 'Insights' },
-  weekly_report:    { Icon: FileBarChart,   stickerKey: 'lilac',  category: 'Insights' },
+  insight:          { character: 'sparkle',   stickerKey: 'lilac',  category: 'Insights' },
+  milestone:        { character: 'star',      stickerKey: 'yellow', category: 'Insights' },
+  daily_summary:    { character: 'note',      stickerKey: 'blue',   category: 'Insights' },
+  weekly_report:    { character: 'note',      stickerKey: 'lilac',  category: 'Insights' },
   // Community
-  mention:          { Icon: AtSign,         stickerKey: 'lilac',  category: 'Community' },
-  reply:            { Icon: MessageCircle,  stickerKey: 'lilac',  category: 'Community' },
-  like:             { Icon: Heart,          stickerKey: 'pink',   category: 'Community' },
-  channel:          { Icon: Hash,           stickerKey: 'blue',   category: 'Community' },
+  mention:          { character: 'community', stickerKey: 'lilac',  category: 'Community' },
+  reply:            { character: 'community', stickerKey: 'lilac',  category: 'Community' },
+  like:             { character: 'heart',     stickerKey: 'pink',   category: 'Community' },
+  channel:          { character: 'community', stickerKey: 'blue',   category: 'Community' },
   // Care circle
-  care_circle_invite:   { Icon: Heart,      stickerKey: 'pink',   category: 'Care Circle' },
-  care_circle_accepted: { Icon: Heart,      stickerKey: 'pink',   category: 'Care Circle' },
+  care_circle_invite:   { character: 'hug',   stickerKey: 'pink',   category: 'Care Circle' },
+  care_circle_accepted: { character: 'heart', stickerKey: 'pink',   category: 'Care Circle' },
   // Pregnancy
-  pregnancy_week:   { Icon: Sparkles,       stickerKey: 'lilac',  category: 'Pregnancy' },
-  appointment:      { Icon: CalendarClock,  stickerKey: 'lilac',  category: 'Pregnancy' },
+  pregnancy_week:   { character: 'sparkle',   stickerKey: 'lilac',  category: 'Pregnancy' },
+  appointment:      { character: 'clock',     stickerKey: 'lilac',  category: 'Pregnancy' },
   // Other
-  reminder:         { Icon: Bell,           stickerKey: 'yellow', category: 'Other'    },
+  reminder:         { character: 'bell',      stickerKey: 'yellow', category: 'Other'    },
 }
 
-const DEFAULT_CONFIG: TypeConfig = { Icon: Bell, stickerKey: 'lilac', category: 'Other' }
+const DEFAULT_CONFIG: TypeConfig = { character: 'bell', stickerKey: 'lilac', category: 'Other' }
 
 function getTypeConfig(type: string): TypeConfig {
   return TYPE_CONFIG[type] ?? DEFAULT_CONFIG
@@ -661,9 +646,9 @@ export default function NotificationsScreen() {
                     pressed && { opacity: 0.85 },
                   ]}
                 >
-                  {/* Lucide glyph over a soft bloom (accent-tinted) */}
+                  {/* Character blob over a soft bloom (accent-tinted) */}
                   <DiffuseBloomIcon color={accent} size={42} intensity={0.5}>
-                    <cfg.Icon size={18} color={dt.colors.ink3} />
+                    <Character name={cfg.character} size={26} color={accent} bg={dt.colors.bg} />
                   </DiffuseBloomIcon>
                   <View style={styles.rowContent}>
                     <View style={styles.rowTitleRow}>
@@ -729,14 +714,14 @@ export default function NotificationsScreen() {
                   pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
                 ]}
               >
-                {/* Sticker badge */}
+                {/* Character-blob badge — soft sticker-tinted circle holding the blob */}
                 <View
                   style={[styles.stickerBadge, {
-                    backgroundColor: stickerColor,
-                    borderColor: stickerInk,
+                    backgroundColor: stickerColor + (isDark ? '2E' : '26'),
+                    borderColor: stickerColor + (isDark ? '55' : '80'),
                   }]}
                 >
-                  <cfg.Icon size={18} color={isDark ? colors.textInverse : colors.text} />
+                  <Character name={cfg.character} size={28} color={stickerColor} bg={cardBg} />
                 </View>
                 <View style={styles.rowContent}>
                   <View style={styles.rowTitleRow}>
@@ -789,7 +774,7 @@ export default function NotificationsScreen() {
             <DiffuseEmptyState
               icon={
                 <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
-                  <Bell size={22} color={dt.colors.ink3} strokeWidth={1.6} />
+                  <Character name="bell" size={30} color={accent} bg={dt.colors.bg} />
                 </DiffuseBloomIcon>
               }
               title={activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
