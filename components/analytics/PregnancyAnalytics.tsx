@@ -61,6 +61,7 @@ import { Character, type CharacterName } from '../characters/Characters'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { AnalyticsTitle } from './shared/AnalyticsTitle'
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
+import { CustomRangeModal } from './shared/CustomRangeModal'
 import { BigChartCard } from './shared/BigChartCard'
 import { MiniStatTile } from './shared/MiniStatTile'
 import { MiniLineChart, MiniBarChart, PillDivergingChart, GlowAreaLine, BlobCluster, SipColumns, PetalBurst, StackedLozenges, BeadedThread, CrescentBars, ConcentricArcs, TieredLozenges, SplitMeters, CheckpointPills, NutrientMatrix, type LozengeDatum, type ArcDatum, type TierRow, type MeterRow, type CheckRow } from './shared/MiniCharts'
@@ -243,6 +244,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const dDays = daysToDue(dueDate)
 
   const [period, setPeriod] = useState<Period>('month')
+  const [customRange, setCustomRange] = useState<{ from: string; to: string } | null>(null)
+  const [showCustomModal, setShowCustomModal] = useState(false)
   const [userId, setUserId] = useState<string | undefined>(undefined)
   const [openPillar, setOpenPillar] = useState<PillarKey | null>(null)
   const [showInfo, setShowInfo] = useState(false)
@@ -255,19 +258,53 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
 
   const uid = userId ?? ''
 
-  // Hooks
-  const { data: weightHistory = [] } = usePregnancyWeightHistory(uid, 30)
+  // The selected period drives the analytics window. Every day-based hook reads
+  // from `windowDays`; hooks measured in weeks/points derive from it too, so the
+  // filter actually changes the data (not just the pill highlight).
+  const windowDays = useMemo(() => {
+    if (period === 'custom' && customRange) {
+      const from = new Date(customRange.from + 'T00:00:00')
+      const to = new Date(customRange.to + 'T00:00:00')
+      const d = Math.round((to.getTime() - from.getTime()) / 86400000) + 1
+      return Math.max(1, d)
+    }
+    return period === 'week' ? 7 : period === 'month' ? 30 : period === '3mo' ? 90 : period === 'year' ? 365 : 30
+  }, [period, customRange?.from, customRange?.to])
+  const windowWeeks = Math.max(1, Math.ceil(windowDays / 7))
+
+  const customLabel = customRange
+    ? (() => {
+        const f = new Date(customRange.from + 'T00:00:00')
+        const t = new Date(customRange.to + 'T00:00:00')
+        const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+        return `${f.toLocaleDateString('en-US', opts)} – ${t.toLocaleDateString('en-US', opts)}`
+      })()
+    : undefined
+
+  function handlePeriodChange(next: Period) {
+    if (next === 'custom') { setShowCustomModal(true); return }
+    setPeriod(next)
+  }
+  function handleCustomApply(from: string, to: string) {
+    // Guard inverted ranges — otherwise the .gte/.lte queries match nothing.
+    setCustomRange(from && to && from > to ? { from: to, to: from } : { from, to })
+    setPeriod('custom')
+    setShowCustomModal(false)
+  }
+
+  // Hooks — all windowed by the selected period.
+  const { data: weightHistory = [] } = usePregnancyWeightHistory(uid, windowDays)
   const { data: weightByWeek = [] } = usePregnancyWeightByWeek(uid, dueDate)
-  const { data: kickSessions = [] } = usePregnancyKickSessions(uid, 14)
-  const { data: kickHours = [] } = usePregnancyKickTimeOfDay(uid, 30)
+  const { data: kickSessions = [] } = usePregnancyKickSessions(uid, windowDays)
+  const { data: kickHours = [] } = usePregnancyKickTimeOfDay(uid, windowDays)
   const { data: symptomFreq = [] } = usePregnancySymptomFrequency(uid)
-  const { data: sleepHistory = [] } = usePregnancySleepHistory(uid, 4)
+  const { data: sleepHistory = [] } = usePregnancySleepHistory(uid, windowWeeks)
   const { data: wellbeing } = usePregnancyWellbeingScore(uid)
-  const { data: moodTrend = [] } = usePregnancyMoodTrend(uid, 4)
-  const { data: hydrationHistory = [] } = usePregnancyHydrationHistory(uid, 7)
-  const { data: nutritionMatrix } = usePregnancyNutritionMatrix(uid, 7)
-  const { data: exerciseHistory = [] } = usePregnancyExerciseHistory(uid, 14)
-  const { data: contractions = [] } = usePregnancyContractions(uid, 14)
+  const { data: moodTrend = [] } = usePregnancyMoodTrend(uid, windowWeeks)
+  const { data: hydrationHistory = [] } = usePregnancyHydrationHistory(uid, windowDays)
+  const { data: nutritionMatrix } = usePregnancyNutritionMatrix(uid, windowDays)
+  const { data: exerciseHistory = [] } = usePregnancyExerciseHistory(uid, windowDays)
+  const { data: contractions = [] } = usePregnancyContractions(uid, windowDays)
   const { data: birthReady } = usePregnancyBirthReadiness(uid)
 
   // Quick takeaways
@@ -376,7 +413,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         ) : null}
 
         {/* PeriodSelector self-gates to Diffuse segment pills. */}
-        <PeriodSelector value={period} onChange={setPeriod} showCustom={false} />
+        <PeriodSelector value={period} onChange={handlePeriodChange} customLabel={customLabel} />
 
         {/* Hero: Weight gain chart — tap to expand */}
         {diffuse ? (
@@ -733,6 +770,15 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         wellbeing={wellbeing ?? null}
         weekNumber={weekNumber}
         trimester={trimester}
+      />
+
+      {/* Custom date-range picker */}
+      <CustomRangeModal
+        visible={showCustomModal}
+        initialFrom={customRange?.from}
+        initialTo={customRange?.to}
+        onClose={() => setShowCustomModal(false)}
+        onApply={handleCustomApply}
       />
     </View>
   )
