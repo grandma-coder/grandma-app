@@ -17,7 +17,10 @@ import { Character } from '../characters/Characters'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
 import { toDateStr } from '../../lib/cycleLogic'
 
-const MAX_ICONS = 3
+// Show at most 2 blobs per day + a "+N" overflow; more than that turns the
+// cell into unreadable noise (esp. with "All kids" selected).
+const MAX_ICONS = 2
+const ICON_SIZE = 12
 
 interface Props {
   /** YYYY-MM-DD selected day. */
@@ -68,10 +71,10 @@ export function LogMonthGrid({
               {shown.map((type, i) => {
                 const char = DIFFUSE_LOG_CHARACTER[type]
                 if (!char) return <View key={i} style={[styles.fallbackDot, { backgroundColor: diffuseLogHue(type) }]} />
-                return <Character key={i} name={char} size={9} color={diffuseLogHue(type)} />
+                return <Character key={i} name={char} size={ICON_SIZE} color={diffuseLogHue(type)} />
               })}
               {overflow > 0 ? (
-                <Text style={[styles.overflow, { color: colors.ink3, fontFamily: diffuseFont.mono }]}>+{overflow}</Text>
+                <Text style={[styles.overflow, { color: colors.ink3, fontFamily: diffuseFont.monoBold }]}>+{overflow}</Text>
               ) : null}
             </View>
           )
@@ -92,16 +95,16 @@ const styles = StyleSheet.create({
   markerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 1.5,
+    gap: 2,
   },
   fallbackDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   overflow: {
-    fontSize: 8,
-    letterSpacing: 0.2,
+    fontSize: 9,
+    letterSpacing: 0,
     marginLeft: 1,
   },
 })
