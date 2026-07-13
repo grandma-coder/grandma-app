@@ -28,6 +28,8 @@ import {
 } from '../ui/Stickers'
 import { getBirthTopic } from '../../lib/birthGuideData'
 import type { BirthTopicKey, BirthSection, BirthCallout, BirthSource } from '../../lib/birthGuideData'
+import { Character } from '../characters/Characters'
+import { BIRTH_TOPIC_CHARACTER } from './BirthGuideModal'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -114,7 +116,7 @@ export function BirthDetailModal({
           radius={diffuseRadius.md}
           style={[styles.dHero, { borderWidth: 1, borderColor: dt.colors.line }]}
         >
-          <View style={styles.heroSticker}>{renderSticker(54)}</View>
+          <View style={styles.heroSticker}><Character name={BIRTH_TOPIC_CHARACTER[topicKey]} size={52} color={dAccent} /></View>
           <Text style={[styles.dHeroSub, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
             {topic.subtitle}
           </Text>

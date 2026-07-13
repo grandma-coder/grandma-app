@@ -16,7 +16,8 @@ import {
   useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius,
 } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
-import { DiffuseSheet, DiffuseSectionHeader, DiffuseListRow, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseSheet, DiffuseSectionHeader, DiffuseListRow } from '../ui/diffuse/DiffusePrimitives'
+import { Character, type CharacterName } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
 import { Display, MonoCaps, Body } from '../ui/Typography'
 import { BirthDetailModal } from './BirthDetailModal'
@@ -63,6 +64,16 @@ const EXTRA_TOPICS: ExtraTopicTile[] = [
   { key: 'partner-guide',  title: 'Birth Partner Guide',   subtitle: 'What your support person needs to know', tileBg: '#F2B2C7', sticker: (s) => <Heart size={s} fill="#EE7B6D" /> },
   { key: 'recovery',       title: 'Recovery & Postpartum', subtitle: 'First 24h, healing, emotional changes', tileBg: '#E0D5F0', sticker: (s) => <Moon size={s} fill="#C8B6E8" /> },
 ]
+
+// Birth topic → Character-blob concept (Diffuse). Cream-paper keeps the branded
+// stickers above; under Diffuse the whole grid renders as one blob family.
+// Exported so BirthDetailModal's hero uses the exact same mapping.
+export const BIRTH_TOPIC_CHARACTER: Record<BirthTopicKey, CharacterName> = {
+  natural: 'nutrition', csection: 'health', home: 'cloud', water: 'water',
+  'labor-stages': 'clock', 'warning-signs': 'warning', 'hospital-bag': 'key',
+  'pain-relief': 'medicine', positions: 'lungs', 'partner-guide': 'heart',
+  recovery: 'night',
+}
 
 export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const { colors, isDark } = useTheme()
@@ -119,7 +130,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                   style={[styles.dTypeCard, { borderWidth: 1, borderColor: dt.colors.line }]}
                 >
                   <View style={styles.typeStickerRow}>
-                    {item.sticker(38)}
+                    <Character name={BIRTH_TOPIC_CHARACTER[item.key]} size={38} color={getDiffuseAccent('preg', dt.isDark)} />
                   </View>
                   <Text style={[styles.dTypeTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
                     {item.title}
@@ -144,7 +155,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                 key={item.key}
                 title={item.title}
                 sub={item.subtitle}
-                icon={<DiffuseBloomIcon color={dAccent} size={30} intensity={0.45}>{item.sticker(24)}</DiffuseBloomIcon>}
+                icon={<Character name={BIRTH_TOPIC_CHARACTER[item.key]} size={26} color={dAccent} />}
                 onPress={() => setDetailTopic(item.key)}
                 showArrow
                 last={i === EXTRA_TOPICS.length - 1}
