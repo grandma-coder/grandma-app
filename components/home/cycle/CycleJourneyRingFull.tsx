@@ -26,7 +26,7 @@ import {
   getCycleInfo, toDateStr,
   type CycleConfig, type CyclePhase,
 } from '../../../lib/cycleLogic'
-import { DaySticker, TodayAura } from './dayStickers'
+import { DaySticker } from './dayStickers'
 
 // ─── Diffuse phase palette ────────────────────────────────────────────────
 // Under Diffuse the phase hues come from the cycle field (coral→rose→lilac→
@@ -518,75 +518,55 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
                 // in the static layer below); we don't ring the day itself, so
                 // the selection frame stays put as the wheel spins. Future days
                 // are softened.
-                const glyphSize = 22
-                const isTodayDot = d.state === 'today'
+                //
+                // The focused day (the one scrubbed into the anchor) simply
+                // grows a little larger than its neighbours — no halo, no dot.
+                const isSelected = d.day === selectedDay
+                const glyphSize = isSelected ? 30 : 22
                 return (
                   <View
                     key={d.day}
                     style={{
                       position: 'absolute',
+                      // Recenter the larger glyph on the same orbit point.
                       left: d.bx - glyphSize / 2,
                       top: d.by - glyphSize / 2,
                       width: glyphSize,
                       height: glyphSize,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      opacity: d.state === 'future' ? 0.65 : 1,
+                      opacity: d.state === 'future' && !isSelected ? 0.65 : 1,
+                      zIndex: isSelected ? 5 : undefined,
                     }}
                     pointerEvents="none"
                   >
                     <DaySticker phase={d.phase} size={glyphSize} bg={diffuseGlyphColor(d.phase, dt.isDark)} />
-                    {/* TODAY marker: one small tidy accent dot just under today's
-                        glyph — a clean "you are here", legible anywhere on the
-                        wheel and never crowding neighbouring glyphs. */}
-                    {isTodayDot ? (
-                      <View
-                        pointerEvents="none"
-                        style={{
-                          position: 'absolute',
-                          bottom: -8,
-                          left: glyphSize / 2 - 2.5,
-                          width: 5,
-                          height: 5,
-                          borderRadius: 2.5,
-                          backgroundColor: diffuseAccent,
-                        }}
-                      />
-                    ) : null}
                   </View>
                 )
               }
+              // The focused day (scrubbed into the anchor) grows a little
+              // larger than its neighbours — no halo ring, no dot.
+              const isSelected = d.day === selectedDay
+              const gSize = isSelected ? Math.round(d.size * 1.4) : d.size
               return (
                 <View
                   key={d.day}
                   style={{
                     position: 'absolute',
-                    left: d.bx - d.size / 2,
-                    top: d.by - d.size / 2,
-                    width: d.size,
-                    height: d.size,
+                    left: d.bx - gSize / 2,
+                    top: d.by - gSize / 2,
+                    width: gSize,
+                    height: gSize,
                     opacity: d.opacity,
                     alignItems: 'center',
                     justifyContent: 'center',
+                    zIndex: isSelected ? 5 : undefined,
                   }}
                   pointerEvents="none"
                 >
-                  {d.state === 'today' && selectedDay !== cycleDayToday ? (
-                    <View
-                      style={{
-                        position: 'absolute',
-                        width: d.size + 8,
-                        height: d.size + 8,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <TodayAura size={d.size + 8} color={accentBg} count={6} />
-                    </View>
-                  ) : null}
                   <DaySticker
                     phase={d.phase}
-                    size={d.size}
+                    size={gSize}
                     bg={accentBg}
                     glyph="#FFFEF8"
                   />
@@ -627,11 +607,12 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
                 transform={`rotate(-90 ${CX} ${CY})`}
               />
             ) : null}
-            {/* Stationary anchor frame at 6 o'clock — days rotate into it. */}
+            {/* Stationary anchor frame at 6 o'clock — days rotate into it.
+                Sized to comfortably frame the enlarged focused-day glyph. */}
             <Circle
               cx={CX}
               cy={CY + RING_R}
-              r={diffuse ? 17 : 14}
+              r={diffuse ? 20 : 18}
               fill="none"
               stroke={diffuse ? dt.colors.line2 : accent}
               strokeWidth={diffuse ? 1 : 1.5}
