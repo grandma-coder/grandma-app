@@ -3,8 +3,9 @@ import { View, Text, Pressable, StyleSheet, FlatList, Modal } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { X, ChevronLeft } from 'lucide-react-native'
-import { useTheme, shadows } from '../constants/theme'
-import { MonoCaps } from '../components/ui/Typography'
+import { useTheme, shadows, useDiffuseTheme, diffuseFont } from '../constants/theme'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { Display, MonoCaps } from '../components/ui/Typography'
 import { CardSticker } from '../components/home/pregnancy/CardSticker'
 import { useDailyMessage, type DailyMessageRow } from '../lib/dailyMessage/useDailyMessage'
 import { getCardById } from '../lib/dailyMessage'
@@ -26,7 +27,18 @@ function fmtDate(iso: string): string {
 
 export default function MyCardsScreen() {
   const insets = useSafeAreaInsets()
-  const { colors, font, radius } = useTheme()
+  const theme = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const { radius } = theme
+  // Under Diffuse, source the surface palette + serif from the v3 tokens; the
+  // component's styles read `colors`/`font` below, so we swap the source here.
+  const colors = diffuse
+    ? { ...theme.colors, bg: dt.colors.bg, surface: dt.colors.surface, border: dt.colors.line, text: dt.colors.ink, textMuted: dt.colors.ink3, textFaint: dt.colors.ink4 }
+    : theme.colors
+  const font = diffuse
+    ? { ...theme.font, display: diffuseFont.display, italic: diffuseFont.italic }
+    : theme.font
   const { collection } = useDailyMessage()
   const [openId, setOpenId] = useState<string | null>(null)
 
@@ -62,7 +74,7 @@ export default function MyCardsScreen() {
           <ChevronLeft size={22} color={colors.text} strokeWidth={2} />
         </Pressable>
         <MonoCaps color={colors.textMuted}>DAILY MESSAGE</MonoCaps>
-        <Text style={styles.title}>My Cards</Text>
+        <Display size={28} style={styles.title}>My Cards</Display>
       </View>
 
       <FlatList
@@ -76,7 +88,7 @@ export default function MyCardsScreen() {
           <Pressable style={{ flex: 1 }} onPress={() => setOpenId(item.card.id)}>
             <View style={styles.tile}>
               <CardSticker color={item.card.color} size={38} />
-              <Text style={styles.tileText} numberOfLines={4}>{item.card.text}</Text>
+              <Display size={16} style={styles.tileText} numberOfLines={4}>{item.card.text}</Display>
               <View style={styles.tileDate}>
                 <MonoCaps color={colors.textFaint} size={9}>{fmtDate(item.row.date)}</MonoCaps>
               </View>
