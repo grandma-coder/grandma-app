@@ -16,7 +16,7 @@ export function DailyMessageCard() {
   if (!todayQuestion) return null
 
   return (
-    <View style={styles.open}>
+    <View>
       <Pressable onPress={() => setOpen(true)}>
         <MonoCaps color={colors.textMuted}>
           DAILY MESSAGE{isAnswered ? `  ·  ${collection.length} CARD${collection.length === 1 ? '' : 'S'}` : ''}
@@ -53,7 +53,6 @@ export function DailyMessageCard() {
 }
 
 const styles = StyleSheet.create({
-  open: { paddingHorizontal: 4 },
   flex: { flex: 1 },
   prompt: { marginTop: 10 },
   answerRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 16 },

@@ -208,28 +208,28 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         />
       </View>
 
-      {/* Footer — label + an explicit "see results" affordance that opens the
-          daily dashboard (was an unlabeled title tap). */}
-      <Pressable
-        onPress={() => setOpen(true)}
-        style={({ pressed }) => [styles.footer, { borderTopColor: trackColor, opacity: pressed ? 0.6 : 1 }]}
-      >
+      {/* Footer — label on the left, a "see results" pill (opens the daily
+          dashboard) on the right. */}
+      <View style={[styles.footer, { borderTopColor: trackColor }]}>
         <MonoCaps color={hintColor}>{t('pregnancy_quickLogs_footer')}</MonoCaps>
-        <View style={styles.footerLink}>
+        <Pressable
+          onPress={() => setOpen(true)}
+          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, opacity: pressed ? 0.7 : 1 }]}
+        >
           <Text style={{ fontFamily: labelFont, fontSize: 12, color: titleColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
             {t('pregnancy_quickLogs_seeResults')}
           </Text>
-          <ChevronRight size={15} color={chevronColor} strokeWidth={2} />
-        </View>
-      </Pressable>
+          <ChevronRight size={14} color={chevronColor} strokeWidth={2} />
+        </Pressable>
+      </View>
     </>
   )
 
   return (
     <View style={bare ? undefined : styles.wrap}>
       {/* Containerless in both variants — sits on the page canvas directly,
-          no card block / field surface / border / shadow. */}
-      {bare ? inner : <View style={{ paddingHorizontal: 4 }}>{inner}</View>}
+          flush-left with the section eyebrow (no inset). */}
+      {bare ? inner : <View>{inner}</View>}
 
       {userId && (
         <TodayDashboardModal
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
-  footerLink: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  resultsPill: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 },
   chipsRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },
