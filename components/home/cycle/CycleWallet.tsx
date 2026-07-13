@@ -8,12 +8,14 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { View, Text } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, font } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
 import { buildCycleWalletCards, type CycleWalletCardId } from '../../../lib/cycleWallet'
+import { loadReminders, upcomingReminders, type Reminder } from '../../../lib/reminders'
 import { WalletCard } from '../WalletCard'
 import { LogSheet } from '../../calendar/LogSheet'
 import { UserReminders } from '../UserReminders'
@@ -23,6 +25,8 @@ import { Character } from '../../characters/Characters'
 
 export function CycleWallet() {
   const { colors, stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
   const [userId, setUserId] = useState<string | null>(null)
@@ -33,6 +37,13 @@ export function CycleWallet() {
   const [remindersOpen, setRemindersOpen] = useState(false)
   const [pillarsOpen, setPillarsOpen] = useState(false)
   const cards = buildCycleWalletCards()
+
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  useEffect(() => {
+    if (remindersOpen) return // don't refetch while editing
+    loadReminders(userId ?? null, 'pre-pregnancy').then(setReminders)
+  }, [userId, remindersOpen])
+  const upcoming = upcomingReminders(reminders, 2)
 
   const iconFor = (id: CycleWalletCardId): React.ReactNode => {
     switch (id) {
@@ -61,18 +72,37 @@ export function CycleWallet() {
     <View>
       {cards.map((c, i) => {
         const isLast = i === cards.length - 1
+        const showPreview = c.id === 'reminders' && upcoming.length > 0
         return (
           <WalletCard
             key={c.id}
             tone={c.tone}
             icon={iconFor(c.id)}
             title={titleFor(c.id)}
-            expanded={false}
-            linkOnly={c.linkOnly}
+            expanded={showPreview}
+            linkOnly={showPreview ? false : c.linkOnly}
             last={isLast}
-            hideChevron
+            hideChevron={!showPreview}
             onPressHeader={() => onHeader(c.id)}
-          />
+          >
+            {showPreview ? (
+              <View style={{ gap: 6 }}>
+                {upcoming.map((r) => (
+                  <Text
+                    key={r.id}
+                    numberOfLines={1}
+                    style={{
+                      fontFamily: diffuse ? diffuseFont.body : font.body,
+                      fontSize: 13,
+                      color: diffuse ? dt.colors.ink2 : colors.textMuted,
+                    }}
+                  >
+                    {`• ${r.text}${r.dueDate ? ` · ${r.dueDate}` : ''}`}
+                  </Text>
+                ))}
+              </View>
+            ) : undefined}
+          </WalletCard>
         )
       })}
 

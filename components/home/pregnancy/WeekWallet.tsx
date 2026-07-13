@@ -10,7 +10,7 @@
  * this component maps each descriptor to its glyph, title, body, and action.
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useTheme, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
@@ -22,6 +22,7 @@ import { getUpcomingAppointment } from '../../../lib/pregnancyAppointments'
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 import { getWeekData } from '../../../lib/pregnancyData'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
+import { loadReminders, upcomingReminders, type Reminder } from '../../../lib/reminders'
 import { WalletCard } from '../WalletCard'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PregnancyUserReminders } from './PregnancyUserReminders'
@@ -51,6 +52,13 @@ export function WeekWallet({
   const { t } = useTranslation()
 
   const [remindersOpen, setRemindersOpen] = useState(false)
+
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  useEffect(() => {
+    if (remindersOpen) return // don't refetch while editing
+    loadReminders(userId ?? null, 'pregnancy').then(setReminders)
+  }, [userId, remindersOpen])
+  const upcoming = upcomingReminders(reminders, 2)
 
   const appt = getUpcomingAppointment(weekNumber) ?? null
   const weekData = getWeekData(weekNumber)
@@ -103,18 +111,37 @@ export function WeekWallet({
     <View>
       {cards.map((c, i) => {
         const isLast = i === cards.length - 1
+        const showPreview = c.id === 'reminders' && upcoming.length > 0
         return (
           <WalletCard
             key={c.id}
             tone={c.tone}
             icon={iconFor(c.id)}
             title={titleFor(c.id)}
-            expanded={false}
+            expanded={showPreview}
             linkOnly={c.linkOnly}
             last={isLast}
-            hideChevron
+            hideChevron={!showPreview}
             onPressHeader={() => onHeader(c.id, c.linkOnly)}
-          />
+          >
+            {showPreview ? (
+              <View style={{ gap: 6 }}>
+                {upcoming.map((r) => (
+                  <Text
+                    key={r.id}
+                    numberOfLines={1}
+                    style={{
+                      fontFamily: diffuse ? diffuseFont.body : f.body,
+                      fontSize: 13,
+                      color: diffuse ? dt.colors.ink2 : colors.textMuted,
+                    }}
+                  >
+                    {`• ${r.text}${r.dueDate ? ` · ${r.dueDate}` : ''}`}
+                  </Text>
+                ))}
+              </View>
+            ) : undefined}
+          </WalletCard>
         )
       })}
 
