@@ -3,9 +3,9 @@
  * Paper-native SVG, no legends. Single color with accent on latest point.
  */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native'
-import Svg, { Path, Circle, Line, Rect } from 'react-native-svg'
+import Svg, { Path, Circle, Line, Rect, Defs, Pattern, G } from 'react-native-svg'
 import { useTheme } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -185,6 +185,148 @@ export function MiniBarChart({
 function formatBarValue(v: number): string {
   if (Number.isInteger(v)) return String(v)
   return v.toFixed(1)
+}
+
+// ─── PillDivergingChart ───────────────────────────────────────────────────────
+// A baseball-card style diverging chart: a center axis, a SOLID rounded capsule
+// rising above it for the value you hit, and a HATCHED capsule dropping below it
+// for the shortfall to target. Fully-capsule caps (rounded top+bottom). Editorial
+// and distinctive — nothing like a plain bar. Tap a column for its value.
+
+let hatchSeq = 0
+interface DivergingProps {
+  /** Daily values. */
+  data: number[]
+  /** Target per day (the axis represents "met target"). */
+  target: number
+  labels?: string[]
+  longLabels?: string[]
+  /** Solid (met) color + hatched (shortfall) color. */
+  upColor: string
+  downColor: string
+  height?: number
+  unit?: string
+}
+
+export function PillDivergingChart({
+  data, target, labels = [], longLabels, upColor, downColor, height = 200, unit,
+}: DivergingProps) {
+  const { colors, font } = useTheme()
+  const hatchId = useMemo(() => `hatch${hatchSeq++}`, [])
+  const [selected, setSelected] = useState<number | null>(null)
+  const tips = longLabels ?? labels
+
+  if (data.length === 0) return <EmptyChart height={height} />
+
+  const chartW = DEFAULT_CHART_W
+  const chartH = height
+  const padX = 4
+  const axisY = chartH * 0.42 // axis sits a bit above center → more room below
+  const upMax = axisY - 10
+  const downMax = chartH - axisY - 22 // leave room for labels
+
+  const slot = (chartW - padX * 2) / data.length
+  const barW = Math.min(26, Math.max(10, slot * 0.52))
+  const cap = barW / 2
+
+  // Above-axis height scales the portion of target met (capped at target);
+  // below-axis height scales the shortfall (0 when target met/exceeded).
+  const metFor = (v: number) => Math.min(v, target) / Math.max(1, target)
+  const gapFor = (v: number) => Math.max(0, target - v) / Math.max(1, target)
+
+  return (
+    <View style={{ width: '100%' }}>
+      <View style={{ width: chartW, height: chartH, alignSelf: 'center' }}>
+        <Svg width={chartW} height={chartH}>
+          <Defs>
+            {/* Diagonal hatch for the shortfall capsules */}
+            <Pattern id={hatchId} patternUnits="userSpaceOnUse" width={6} height={6} patternTransform="rotate(45)">
+              <Line x1={0} y1={0} x2={0} y2={6} stroke={downColor} strokeWidth={1.6} />
+            </Pattern>
+          </Defs>
+
+          {/* Center axis */}
+          <Line x1={padX} x2={chartW - padX} y1={axisY} y2={axisY} stroke={colors.text} strokeWidth={1.5} />
+
+          {data.map((v, i) => {
+            const cx = padX + slot * (i + 0.5)
+            const x = cx - barW / 2
+            const isSel = i === selected
+            const up = metFor(v) * upMax
+            const down = gapFor(v) * downMax
+            return (
+              <G key={i}>
+                {/* Solid capsule up — the value you hit */}
+                {up > cap * 0.4 ? (
+                  <Rect
+                    x={x}
+                    y={axisY - up}
+                    width={barW}
+                    height={up}
+                    rx={cap}
+                    ry={cap}
+                    fill={upColor}
+                    opacity={isSel ? 1 : 0.92}
+                  />
+                ) : null}
+                {/* Hatched capsule down — the shortfall to target */}
+                {down > cap * 0.4 ? (
+                  <G>
+                    <Rect x={x} y={axisY} width={barW} height={down} rx={cap} ry={cap} fill={downColor} opacity={0.12} />
+                    <Rect x={x} y={axisY} width={barW} height={down} rx={cap} ry={cap} fill={`url(#${hatchId})`} opacity={0.9} />
+                  </G>
+                ) : null}
+              </G>
+            )
+          })}
+        </Svg>
+
+        {/* Tap targets */}
+        {data.map((_, i) => {
+          const cx = padX + slot * (i + 0.5)
+          return (
+            <Pressable
+              key={i}
+              onPress={() => setSelected((s) => (s === i ? null : i))}
+              hitSlop={4}
+              style={{ position: 'absolute', left: cx - slot / 2, top: 0, width: slot, height: chartH }}
+            />
+          )
+        })}
+
+        {/* Tooltip */}
+        {selected !== null ? (
+          <BarTooltip
+            chartW={chartW}
+            cx={padX + slot * (selected + 0.5)}
+            top={Math.max(2, axisY - metFor(data[selected]) * upMax - 40)}
+            value={`${formatBarValue(data[selected])}${unit ? ` ${unit}` : ''}`}
+            label={tips[selected]}
+          />
+        ) : null}
+      </View>
+
+      {labels.length > 0 && (
+        <View style={[styles.labelRow, { width: chartW, alignSelf: 'center', marginTop: 4 }]}>
+          {labels.map((l, i) => (
+            <Text
+              key={i}
+              style={[
+                styles.barLabel,
+                {
+                  color: i === selected ? colors.text : colors.textMuted,
+                  fontFamily: i === selected ? font.bodySemiBold : font.body,
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {l}
+            </Text>
+          ))}
+        </View>
+      )}
+    </View>
+  )
 }
 
 function BarTooltip({

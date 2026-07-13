@@ -63,7 +63,7 @@ import { AnalyticsTitle } from './shared/AnalyticsTitle'
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { BigChartCard } from './shared/BigChartCard'
 import { MiniStatTile } from './shared/MiniStatTile'
-import { MiniLineChart, MiniBarChart } from './shared/MiniCharts'
+import { MiniLineChart, MiniBarChart, PillDivergingChart } from './shared/MiniCharts'
 import { Display, Body } from '../ui/Typography'
 import {
   Heart,
@@ -525,15 +525,28 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             <View style={[styles.chartCard, diffuse
               ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
               : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
-              <MiniBarChart
-                data={hydrationData}
-                labels={hydrationHistory.map((h) => shortDay(h.date))}
-                longLabels={hydrationHistory.map((h) => formatLogDate(h.date))}
-                color={stickers.blue}
-                palette={[stickers.blue, stickers.green, stickers.lilac]}
-                target={8}
-                unit="gl"
-              />
+              {diffuse ? (
+                // Baseball-card diverging pills: solid blue up = glasses hit,
+                // hatched coral down = shortfall to the 8-glass target.
+                <PillDivergingChart
+                  data={hydrationData}
+                  labels={hydrationHistory.map((h) => shortDay(h.date))}
+                  longLabels={hydrationHistory.map((h) => formatLogDate(h.date))}
+                  target={8}
+                  upColor={stickers.blue}
+                  downColor={stickers.coral}
+                  unit="gl"
+                />
+              ) : (
+                <MiniBarChart
+                  data={hydrationData}
+                  labels={hydrationHistory.map((h) => shortDay(h.date))}
+                  longLabels={hydrationHistory.map((h) => formatLogDate(h.date))}
+                  color={stickers.blue}
+                  target={8}
+                  unit="gl"
+                />
+              )}
             </View>
           </Section>
         )}
