@@ -1,13 +1,17 @@
-// CycleQuickLogPicker — bottom sheet to choose which quick-log chips show on
-// the cycle home "Log something" card. Reads the catalog (CYCLE_QUICK_LOGS) and
-// writes the user's selection to useCycleQuickLogStore (persisted). Mirrors the
-// pregnancy QuickLogPicker; cream-paper styling.
-import { Modal, View, Pressable, StyleSheet, ScrollView } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Check, X } from 'lucide-react-native'
+// CycleQuickLogPicker — choose which quick-log chips show on the cycle home
+// "Log something" card. Mirrors the pregnancy QuickLogPicker exactly: reuses the
+// shared LogSheet shell (so the cream background / handle / title match every
+// other sheet in both variants) and renders a sticker-in-a-socket per row.
+// Edits a local draft while open; Save commits it to useCycleQuickLogStore.
+import { useEffect, useState } from 'react'
+import { View, Pressable, StyleSheet } from 'react-native'
+import { Check } from 'lucide-react-native'
 import { useTheme, radius } from '../../../constants/theme'
-import { Display, Body, MonoCaps } from '../../ui/Typography'
+import { Body } from '../../ui/Typography'
+import { PillButton } from '../../ui/PillButton'
+import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
+import { Drop, Heart, Smiley } from '../../ui/Stickers'
 import { CYCLE_QUICK_LOGS } from '../../../lib/cycleQuickLogs'
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
 
@@ -16,67 +20,87 @@ interface Props {
   onClose: () => void
 }
 
+// Each cycle quick-log key → its sticker + a soft socket tint. Mirrors the
+// iconography the cycle Today-at-a-glance card already uses for these signals,
+// so the picker and the card read as the same family.
+function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers']): { node: React.ReactElement; soft: string } {
+  switch (key) {
+    case 'mood':         return { node: <Smiley size={24} fill={stickers.yellow} />, soft: stickers.yellowSoft }
+    case 'symptoms':     return { node: <Heart size={24} fill={stickers.pink} />, soft: stickers.pinkSoft }
+    case 'bbt':          return { node: <Drop size={24} fill={stickers.blue} />, soft: stickers.blueSoft }
+    case 'lh':           return { node: <Drop size={24} fill={stickers.yellow} />, soft: stickers.yellowSoft }
+    case 'cm':           return { node: <Drop size={24} fill={stickers.green} />, soft: stickers.greenSoft }
+    case 'intimacy':     return { node: <Heart size={24} fill={stickers.coral} />, soft: stickers.peachSoft }
+    case 'period_start': return { node: <Drop size={24} fill={stickers.coral} />, soft: stickers.peachSoft }
+    default:             return { node: <Smiley size={24} fill={stickers.yellow} />, soft: stickers.yellowSoft }
+  }
+}
+
 export function CycleQuickLogPicker({ visible, onClose }: Props) {
-  const insets = useSafeAreaInsets()
-  const { colors } = useTheme()
+  const { colors, stickers: themeStickers } = useTheme()
   const { t } = useTranslation()
   const enabledKeys = useCycleQuickLogStore((s) => s.enabledKeys)
-  const toggle = useCycleQuickLogStore((s) => s.toggle)
+  const setEnabled = useCycleQuickLogStore((s) => s.setEnabled)
+
+  // Local draft — edits stay uncommitted until Save. Re-seeded from the store
+  // each time the sheet opens (so Cancel/X discards).
+  const [draft, setDraft] = useState<string[]>(enabledKeys)
+  useEffect(() => {
+    if (visible) setDraft(enabledKeys)
+  }, [visible]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleDraft = (key: string) =>
+    setDraft((d) => (d.includes(key) ? d.filter((k) => k !== key) : [...d, key]))
+
+  const dirty = draft.length !== enabledKeys.length || draft.some((k) => !enabledKeys.includes(k))
+
+  const save = () => {
+    // Persist in catalog order so chips render consistently.
+    const ordered = CYCLE_QUICK_LOGS.filter((q) => draft.includes(q.key)).map((q) => q.key)
+    setEnabled(ordered)
+    onClose()
+  }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable
-          style={[styles.sheet, { backgroundColor: colors.bg, paddingBottom: insets.bottom + 20 }]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View style={styles.grip}>
-            <View style={[styles.gripBar, { backgroundColor: colors.border }]} />
-          </View>
-
-          <View style={styles.headerRow}>
-            <View style={{ flex: 1 }}>
-              <MonoCaps color={colors.textMuted}>QUICK LOGS</MonoCaps>
-              <Display size={24} style={{ marginTop: 4 }}>{t('pregnancy_quickLogs_pickTitle')}</Display>
-            </View>
-            <Pressable onPress={onClose} hitSlop={12} style={[styles.close, { borderColor: colors.border }]}>
-              <X size={18} color={colors.text} strokeWidth={2} />
+    <LogSheet visible={visible} title={t('pregnancy_quickLogs_pickTitle')} onClose={onClose}>
+      <View style={{ gap: 10 }}>
+        {CYCLE_QUICK_LOGS.map((q) => {
+          const on = draft.includes(q.key)
+          const s = stickerFor(q.key, themeStickers)
+          return (
+            <Pressable
+              key={q.key}
+              onPress={() => toggleDraft(q.key)}
+              style={({ pressed }) => [
+                styles.row,
+                { borderColor: on ? colors.text : colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 },
+              ]}
+            >
+              <View style={[styles.socket, { backgroundColor: s.soft }]}>{s.node}</View>
+              <Body size={16} color={colors.text} style={{ flex: 1 }}>{t(q.labelKey)}</Body>
+              <View style={[styles.checkbox, { borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.text : 'transparent' }]}>
+                {on ? <Check size={14} color={colors.bg} strokeWidth={3} /> : null}
+              </View>
             </Pressable>
-          </View>
+          )
+        })}
+      </View>
 
-          <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingTop: 8 }}>
-            {CYCLE_QUICK_LOGS.map((q) => {
-              const on = enabledKeys.includes(q.key)
-              return (
-                <Pressable
-                  key={q.key}
-                  onPress={() => toggle(q.key)}
-                  style={({ pressed }) => [
-                    styles.row,
-                    { borderColor: on ? colors.text : colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 },
-                  ]}
-                >
-                  <Body size={16} color={colors.text}>{t(q.labelKey)}</Body>
-                  <View style={[styles.checkbox, { borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.text : 'transparent' }]}>
-                    {on ? <Check size={14} color={colors.bg} strokeWidth={3} /> : null}
-                  </View>
-                </Pressable>
-              )
-            })}
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+      <View style={styles.saveWrap}>
+        <PillButton
+          label={dirty ? t('common_save') : t('common_done')}
+          variant="ink"
+          onPress={dirty ? save : onClose}
+          disabled={draft.length === 0}
+        />
+      </View>
+    </LogSheet>
   )
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(20,19,19,0.45)', justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 24, paddingTop: 8 },
-  grip: { alignItems: 'center', paddingVertical: 6 },
-  gripBar: { width: 40, height: 4, borderRadius: 2 },
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginTop: 4, marginBottom: 12 },
-  close: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: radius.md, paddingVertical: 16, paddingHorizontal: 18 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: radius.lg, paddingVertical: 14, paddingHorizontal: 16 },
+  socket: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
   checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  saveWrap: { marginTop: 16 },
 })
