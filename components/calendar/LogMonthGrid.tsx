@@ -20,7 +20,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 // Show at most 2 blobs per day + a "+N" overflow; more than that turns the
 // cell into unreadable noise (esp. with "All kids" selected).
 const MAX_ICONS = 2
-const ICON_SIZE = 11
+const ICON_SIZE = 10
 
 interface Props {
   /** YYYY-MM-DD selected day. */
@@ -64,7 +64,13 @@ export function LogMonthGrid({
         dayMarker={(date) => {
           const types = logsByDate.get(toDateStr(date))
           if (!types || types.length === 0) return null
-          const shown = types.slice(0, MAX_ICONS)
+          // The circle's inner chord at the marker row is narrow, so keep the
+          // content narrow enough to always fit: show 2 blobs ONLY when the day
+          // has exactly 2 distinct types (no "+N"); once it overflows, drop to a
+          // single blob + "+N" (icon + count) which reads cleanly and never
+          // spills past the ring.
+          const iconCount = types.length <= MAX_ICONS ? types.length : 1
+          const shown = types.slice(0, iconCount)
           const overflow = types.length - shown.length
           return (
             <View style={styles.markerRow}>
