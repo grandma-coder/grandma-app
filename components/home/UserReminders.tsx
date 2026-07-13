@@ -79,6 +79,10 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
   const [newTime, setNewTime] = useState<Date | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
+  const [newTags, setNewTags] = useState<string[]>([])
+  const [tagDraft, setTagDraft] = useState('')
+  const [newNotes, setNewNotes] = useState('')
+  const [newPriority, setNewPriority] = useState<'low' | 'med' | 'high' | null>(null)
 
   const storageKey = buildStorageKey(userId, context)
 
@@ -126,14 +130,14 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
       dueDate,
       dueTime,
       notifId,
+      ...(newTags.length ? { tags: newTags } : {}),
+      ...(newNotes.trim() ? { notes: newNotes.trim() } : {}),
+      ...(newPriority ? { priority: newPriority } : {}),
     }
     persist([...reminders, r])
-    setNewText('')
-    setNewDate(null)
-    setNewTime(null)
-    setShowDatePicker(false)
-    setShowTimePicker(false)
-    setShowInput(false)
+    setNewText(''); setNewDate(null); setNewTime(null)
+    setNewTags([]); setTagDraft(''); setNewNotes(''); setNewPriority(null)
+    setShowDatePicker(false); setShowTimePicker(false); setShowInput(false)
   }
 
   function toggleReminder(id: string) {
@@ -343,6 +347,56 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
                 : [styles.saveBtnText, { color: colors.textInverse }]}>{t('preg_reminders_save')}</Text>
             </Pressable>
           </View>
+
+          {/* Tags — neutral hairline chips + inline add */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+            {newTags.map((tag) => (
+              <Pressable key={tag} onPress={() => setNewTags((prev) => prev.filter((x) => x !== tag))}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: colors.text, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 }}>
+                <Text style={{ fontFamily: font.bodyMedium, fontSize: 12, color: colors.text }}>{tag}</Text>
+                <X size={11} color={colors.textMuted} strokeWidth={2.5} />
+              </Pressable>
+            ))}
+            <TextInput
+              value={tagDraft}
+              onChangeText={setTagDraft}
+              placeholder={t('reminders_addTag')}
+              placeholderTextColor={colors.textFaint}
+              onSubmitEditing={() => {
+                const v = tagDraft.trim().toLowerCase()
+                if (v && !newTags.includes(v)) setNewTags((prev) => [...prev, v])
+                setTagDraft('')
+              }}
+              returnKeyType="done"
+              blurOnSubmit={false}
+              style={{ minWidth: 90, fontFamily: font.bodyMedium, fontSize: 13, color: colors.text, borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}
+            />
+          </View>
+
+          {/* Priority — three neutral pills */}
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {(['low', 'med', 'high'] as const).map((p) => {
+              const on = newPriority === p
+              return (
+                <Pressable key={p} onPress={() => setNewPriority(on ? null : p)}
+                  style={{ borderWidth: 1, borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.surfaceRaised : 'transparent', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
+                  <Text style={{ fontFamily: font.bodyMedium, fontSize: 12, color: on ? colors.text : colors.textMuted }}>
+                    {p === 'low' ? t('reminders_priorityLow') : p === 'med' ? t('reminders_priorityMed') : t('reminders_priorityHigh')}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+
+          {/* Notes */}
+          <TextInput
+            value={newNotes}
+            onChangeText={setNewNotes}
+            placeholder={t('reminders_notesPlaceholder')}
+            placeholderTextColor={colors.textFaint}
+            multiline
+            style={{ fontFamily: font.body, fontSize: 14, color: colors.text, borderWidth: 1, borderColor: colors.border, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44 }}
+          />
 
           {showDatePicker && (
             <View style={{
