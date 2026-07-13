@@ -11,7 +11,7 @@ import { View, Text, Pressable, StyleSheet, PanResponder } from 'react-native'
 import Animated, { SlideInRight, SlideInLeft } from 'react-native-reanimated'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
-import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { MonoCaps, Body } from '../ui/Typography'
 import { toDateStr } from '../../lib/cycleLogic'
 
@@ -61,6 +61,9 @@ export function AgendaWeekStrip({
   const textMuted = diffuse ? dt.colors.ink3 : (isDark ? colors.textMuted : '#6E6763')
   const paper = diffuse ? dt.colors.surface : (isDark ? colors.surface : '#FFFEF8')
   const paperBorder = diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.08)')
+  // Diffuse accent for the selected-day bloom + ring (derived from the mode color
+  // passed in, falling back to the kids/preg field accent).
+  const bloomAccent = modeColor
 
   const todayStr = toDateStr(new Date())
   const days = getWeekDates(selectedDate)
@@ -102,10 +105,9 @@ export function AgendaWeekStrip({
       {...panResponder.panHandlers}
       style={[
         styles.container,
-        {
-          backgroundColor: paper,
-          borderColor: paperBorder,
-        },
+        diffuse
+          ? { backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 4 }
+          : { backgroundColor: paper, borderColor: paperBorder },
       ]}
     >
       <View style={styles.captionRow}>
@@ -155,27 +157,37 @@ export function AgendaWeekStrip({
           const isToday = dateStr === todayStr && !isSelected
           const dots = dotsByDate?.[dateStr] ?? []
           const selectedFill = modeColor || ST_YELLOW
-          // Selected-day text: dark ink on the bright cream fill; under Diffuse
-          // the soft accent fill still reads with ink text.
-          const labelColor = isSelected ? (diffuse ? dt.colors.ink : ST_INK) : textMuted
-          const numColor = isSelected ? (diffuse ? dt.colors.ink : ST_INK) : ink
+          const labelColor = isSelected ? ST_INK : textMuted
+          const numColor = isSelected ? ST_INK : ink
 
-          // Diffuse: soft accent fill + hairline, no hard black border/drop-shadow.
-          const selectedStyle = diffuse
-            ? { backgroundColor: selectedFill + '33', borderWidth: 1, borderColor: selectedFill }
-            : {
-                backgroundColor: selectedFill,
-                borderWidth: 1.5,
-                borderColor: ST_INK,
-                shadowColor: ST_INK,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 1,
-                shadowRadius: 0,
-                elevation: 4,
-              }
-          const todayStyle = diffuse
-            ? { borderWidth: 1, borderColor: dt.colors.line2 }
-            : { backgroundColor: TODAY_AMBER, borderWidth: 1.5, borderColor: ST_INK }
+          // ── Diffuse: borderless day cell — soft accent bloom behind a hairline
+          // ring for the selected day (matches the Kids DiffuseWeekStrip). ──
+          if (diffuse) {
+            return (
+              <Pressable key={dateStr} onPress={() => onSelectDate(dateStr)} style={styles.cell}>
+                <Text style={[styles.weekday, { color: dt.colors.ink3, fontFamily: isSelected ? diffuseFont.monoBold : diffuseFont.mono }]}>
+                  {DAY_INITIALS[date.getDay()]}
+                </Text>
+                <View style={styles.bubbleWrap}>
+                  {isSelected ? (
+                    <View pointerEvents="none" style={styles.bloom}>
+                      <SoftBloom color={bloomAccent} opacity={0.55} spread={0.34} radius="50%" />
+                    </View>
+                  ) : null}
+                  <View style={[styles.bubble, { borderWidth: 1, borderColor: isSelected ? bloomAccent : isToday ? dt.colors.hairline : dt.colors.line }]}>
+                    <Text style={{ fontFamily: isSelected ? diffuseFont.bodySemiBold : diffuseFont.body, fontSize: 14, color: isSelected ? dt.colors.ink : dt.colors.ink2 }}>
+                      {date.getDate()}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.dotRow}>
+                  {dots.slice(0, 3).map((_, i) => (
+                    <View key={i} style={[styles.dot, { backgroundColor: bloomAccent }]} />
+                  ))}
+                </View>
+              </Pressable>
+            )
+          }
 
           return (
             <Pressable
@@ -183,17 +195,26 @@ export function AgendaWeekStrip({
               onPress={() => onSelectDate(dateStr)}
               style={styles.cell}
             >
-              <Text style={[styles.weekday, { color: labelColor, fontFamily: diffuse ? diffuseFont.mono : (isSelected ? 'DMSans_700Bold' : 'DMSans_500Medium') }]}>
+              <Text style={[styles.weekday, { color: labelColor, fontFamily: isSelected ? 'DMSans_700Bold' : 'DMSans_500Medium' }]}>
                 {DAY_INITIALS[date.getDay()]}
               </Text>
               <View
                 style={[
                   styles.bubble,
-                  isSelected && selectedStyle,
-                  isToday && todayStyle,
+                  isSelected && {
+                    backgroundColor: selectedFill,
+                    borderWidth: 1.5,
+                    borderColor: ST_INK,
+                    shadowColor: ST_INK,
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 1,
+                    shadowRadius: 0,
+                    elevation: 4,
+                  },
+                  isToday && { backgroundColor: TODAY_AMBER, borderWidth: 1.5, borderColor: ST_INK },
                 ]}
               >
-                <Text style={[styles.num, { color: numColor, fontFamily: diffuse ? diffuseFont.display : undefined }]}>
+                <Text style={[styles.num, { color: numColor }]}>
                   {date.getDate()}
                 </Text>
               </View>
@@ -258,6 +279,17 @@ const styles = StyleSheet.create({
   weekday: {
     fontSize: 11,
     fontWeight: '500',
+  },
+  bubbleWrap: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bloom: {
+    position: 'absolute',
+    width: '132%',
+    height: '132%',
   },
   bubble: {
     width: 34,
