@@ -10,7 +10,8 @@ import { useRef } from 'react'
 import { View, Text, Pressable, StyleSheet, PanResponder } from 'react-native'
 import Animated, { SlideInRight, SlideInLeft } from 'react-native-reanimated'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react-native'
-import { useTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { MonoCaps, Body } from '../ui/Typography'
 import { toDateStr } from '../../lib/cycleLogic'
 
@@ -54,10 +55,12 @@ export function AgendaWeekStrip({
   modeColor,
 }: AgendaWeekStripProps) {
   const { colors, isDark } = useTheme()
-  const ink = isDark ? colors.text : '#141313'
-  const textMuted = isDark ? colors.textMuted : '#6E6763'
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
+  const textMuted = diffuse ? dt.colors.ink3 : (isDark ? colors.textMuted : '#6E6763')
+  const paper = diffuse ? dt.colors.surface : (isDark ? colors.surface : '#FFFEF8')
+  const paperBorder = diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.08)')
 
   const todayStr = toDateStr(new Date())
   const days = getWeekDates(selectedDate)
@@ -134,7 +137,7 @@ export function AgendaWeekStrip({
             hitSlop={8}
             style={styles.weekChip}
           >
-            <Body size={13} color={ink} style={styles.weekLabel}>
+            <Body size={13} color={ink} style={[styles.weekLabel, diffuse ? { fontFamily: diffuseFont.display } : null]}>
               {weekLabel}
             </Body>
             {onWeekTap ? <ArrowRight size={13} color={ink} strokeWidth={2.2} /> : null}
@@ -151,9 +154,28 @@ export function AgendaWeekStrip({
           const isSelected = dateStr === selectedDate
           const isToday = dateStr === todayStr && !isSelected
           const dots = dotsByDate?.[dateStr] ?? []
-          const labelColor = isSelected ? ST_INK : textMuted
-          const numColor = isSelected ? ST_INK : ink
           const selectedFill = modeColor || ST_YELLOW
+          // Selected-day text: dark ink on the bright cream fill; under Diffuse
+          // the soft accent fill still reads with ink text.
+          const labelColor = isSelected ? (diffuse ? dt.colors.ink : ST_INK) : textMuted
+          const numColor = isSelected ? (diffuse ? dt.colors.ink : ST_INK) : ink
+
+          // Diffuse: soft accent fill + hairline, no hard black border/drop-shadow.
+          const selectedStyle = diffuse
+            ? { backgroundColor: selectedFill + '33', borderWidth: 1, borderColor: selectedFill }
+            : {
+                backgroundColor: selectedFill,
+                borderWidth: 1.5,
+                borderColor: ST_INK,
+                shadowColor: ST_INK,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+                elevation: 4,
+              }
+          const todayStyle = diffuse
+            ? { borderWidth: 1, borderColor: dt.colors.line2 }
+            : { backgroundColor: TODAY_AMBER, borderWidth: 1.5, borderColor: ST_INK }
 
           return (
             <Pressable
@@ -161,26 +183,17 @@ export function AgendaWeekStrip({
               onPress={() => onSelectDate(dateStr)}
               style={styles.cell}
             >
-              <Text style={[styles.weekday, { color: labelColor, fontFamily: isSelected ? 'DMSans_700Bold' : 'DMSans_500Medium' }]}>
+              <Text style={[styles.weekday, { color: labelColor, fontFamily: diffuse ? diffuseFont.mono : (isSelected ? 'DMSans_700Bold' : 'DMSans_500Medium') }]}>
                 {DAY_INITIALS[date.getDay()]}
               </Text>
               <View
                 style={[
                   styles.bubble,
-                  isSelected && {
-                    backgroundColor: selectedFill,
-                    borderWidth: 1.5,
-                    borderColor: ST_INK,
-                    shadowColor: ST_INK,
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: 1,
-                    shadowRadius: 0,
-                    elevation: 4,
-                  },
-                  isToday && { backgroundColor: TODAY_AMBER, borderWidth: 1.5, borderColor: ST_INK },
+                  isSelected && selectedStyle,
+                  isToday && todayStyle,
                 ]}
               >
-                <Text style={[styles.num, { color: numColor }]}>
+                <Text style={[styles.num, { color: numColor, fontFamily: diffuse ? diffuseFont.display : undefined }]}>
                   {date.getDate()}
                 </Text>
               </View>
