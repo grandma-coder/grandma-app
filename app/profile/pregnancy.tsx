@@ -34,7 +34,8 @@ import { router } from 'expo-router'
 import { Edit2, Check, ChevronRight, X } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
@@ -71,6 +72,35 @@ interface BirthPreferences {
   lmpDate?: string            // ISO YYYY-MM-DD — last menstrual period
   conceptionType?: string     // Spontaneous / IVF / IUI / Other
   rhFactor?: string           // Positive / Negative / Unknown
+}
+
+// ─── Diffuse-aware theme accessor ───────────────────────────────────────────────
+// Under the Diffuse variant (now the default), source the canvas/surface palette +
+// serif from the v3 tokens; every consumer reads `colors`/`font` below, so we swap
+// the source here. The cream path is untouched for current-variant users.
+function usePregTheme() {
+  const theme = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const colors = diffuse
+    ? {
+        ...theme.colors,
+        bg: dt.colors.bg,
+        bgWarm: dt.colors.bg,
+        surface: dt.colors.surface,
+        surfaceRaised: dt.colors.surface,
+        border: dt.colors.line,
+        borderLight: dt.colors.line,
+        text: dt.colors.ink,
+        textSecondary: dt.colors.ink2,
+        textMuted: dt.colors.ink3,
+        textFaint: dt.colors.ink4,
+      }
+    : theme.colors
+  const font = diffuse
+    ? { ...theme.font, display: diffuseFont.display, body: diffuseFont.body, italic: diffuseFont.italic }
+    : theme.font
+  return { ...theme, diffuse, colors, font }
 }
 
 const TRIMESTER_LABEL = (week: number): string => {
@@ -167,7 +197,7 @@ interface EditFieldModalProps {
 }
 
 function EditFieldModal({ visible, label, value, onSave, onClose, multiline = false }: EditFieldModalProps) {
-  const { colors, font, isDark, stickers: st } = useTheme()
+  const { colors, font, isDark, stickers: st } = usePregTheme()
   const paper = colors.surface
   const paperBorder = colors.border
   const [text, setText] = useState(value)
@@ -273,7 +303,7 @@ function modalAccent(label: string, stickers: ReturnType<typeof useTheme>['stick
 }
 
 function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose: () => void; stickers: ReturnType<typeof useTheme>['stickers'] }) {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, isDark } = usePregTheme()
   const { t } = useTranslation()
   const ink = colors.text
   const accent = modalAccent(label, st)
@@ -305,7 +335,7 @@ function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose:
 }
 
 function OptionsSheet({ visible, label, value, options, onSave, onClose }: OptionsSheetProps) {
-  const { colors, font, isDark, stickers: st } = useTheme()
+  const { colors, font, isDark, stickers: st } = usePregTheme()
   const paper = colors.surface
   const paperBorder = colors.border
   const ink = colors.text
@@ -434,7 +464,7 @@ const WHEEL_VISIBLE = 5
 const WHEEL_PAD = ((WHEEL_VISIBLE - 1) / 2) * WHEEL_ITEM_HEIGHT
 
 function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: WheelSheetProps) {
-  const { colors, font, isDark, stickers: st } = useTheme()
+  const { colors, font, isDark, stickers: st } = usePregTheme()
   const paper = colors.surface
   const paperBorder = colors.border
   const initialIndex = Math.max(0, options.indexOf(value))
@@ -530,7 +560,7 @@ interface SectionCardProps {
 }
 
 function SectionCard({ title, subtitle, badge, badgeTint, children }: SectionCardProps) {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, isDark } = usePregTheme()
   const paper = colors.surface
   const paperBorder = colors.border
   const ink = colors.text
@@ -565,10 +595,10 @@ interface InfoRowProps {
 }
 
 function InfoRow({ label, value, onEdit, dotColor }: InfoRowProps) {
-  const { colors, font, isDark } = useTheme()
+  const { colors, font, isDark } = usePregTheme()
   const ink = colors.text
-  const inkSoft = isDark ? colors.textSecondary : '#3A3533'
-  const muted = isDark ? colors.textMuted : '#A69E93'
+  const inkSoft = colors.textSecondary
+  const muted = colors.textFaint
   return (
     <Pressable
       onPress={onEdit}
@@ -602,7 +632,7 @@ function InfoRow({ label, value, onEdit, dotColor }: InfoRowProps) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PregnancyProfileScreen() {
-  const { colors, font, stickers, isDark } = useTheme()
+  const { colors, font, stickers, isDark } = usePregTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -933,7 +963,7 @@ export default function PregnancyProfileScreen() {
       >
         {/* 1. Hero — sticker-on-paper with motion */}
         <PaperCard
-          tint={isDark ? colors.surface : '#FBF3E4'}
+          tint={isDark ? colors.surface : colors.bgWarm}
           radius={28}
           padding={24}
           style={styles.heroCard}
@@ -1448,7 +1478,7 @@ export default function PregnancyProfileScreen() {
             <Ionicons
               name="checkmark-circle"
               size={18}
-              color={isDark ? '#1A1713' : '#F3ECD9'}
+              color={isDark ? '#1A1713' : colors.bg}
             />
           }
           style={{ marginTop: 8, marginBottom: 16 }}
