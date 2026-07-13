@@ -632,7 +632,7 @@ const dp = StyleSheet.create({
   calBloom: { position: 'absolute', width: '128%', height: '128%', borderRadius: 999 },
   calFieldBloom: { position: 'absolute', width: '108%', height: '108%', borderRadius: 999 },
   calPeriodDot: { position: 'absolute', bottom: 6, width: 4, height: 4, borderRadius: 2 },
-  calMarker: { position: 'absolute', bottom: 3, alignItems: 'center', justifyContent: 'center' },
+  calMarker: { position: 'absolute', bottom: 5, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 })
 
 // ─── DiffuseBloomIcon ───────────────────────────────────────────────────────

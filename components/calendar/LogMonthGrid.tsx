@@ -20,7 +20,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 // Show at most 2 blobs per day + a "+N" overflow; more than that turns the
 // cell into unreadable noise (esp. with "All kids" selected).
 const MAX_ICONS = 2
-const ICON_SIZE = 12
+const ICON_SIZE = 11
 
 interface Props {
   /** YYYY-MM-DD selected day. */
@@ -95,7 +95,9 @@ const styles = StyleSheet.create({
   markerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    justifyContent: 'center',
+    gap: 1,
+    maxWidth: '100%',
   },
   fallbackDot: {
     width: 6,
@@ -103,8 +105,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   overflow: {
-    fontSize: 9,
-    letterSpacing: 0,
+    fontSize: 8.5,
+    letterSpacing: -0.2,
     marginLeft: 1,
   },
 })
