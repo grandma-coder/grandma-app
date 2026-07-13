@@ -18,7 +18,7 @@ import {
 } from 'react-native'
 import { X, Check, Plus, Stethoscope } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, font } from '../../constants/theme'
+import { useTheme, font, shadows } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useTranslatedContent } from '../../lib/useTranslatedContent'
 import { Display, Body, MonoCaps } from '../ui/Typography'
@@ -47,7 +47,7 @@ export function AppointmentDetailModal({
   onMarkDone,
   onAddToLogs,
 }: Props) {
-  const { colors, isDark } = useTheme()
+  const { colors, stickers, isDark, brand: themeBrand } = useTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -68,30 +68,27 @@ export function AppointmentDetailModal({
 
   const visible = appointment !== null
 
-  const ST_INK = '#141313'
-  const ST_PAPER = isDark ? colors.surface : '#FFFEF8'
-  const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
-  const ST_SHEET = isDark ? colors.bg : '#FAF6E8'
-  const ST_LAVENDER = isDark ? '#C4B5EF' : brand.pregnancy
-  const ST_GREEN = isDark ? '#9DD68A' : '#86C46F'
-  const ST_CORAL = isDark ? '#F2A088' : '#E58968'
-  const inkBorder = isDark ? colors.border : ST_INK
-  const inkText = isDark ? colors.text : ST_INK
-  const muted = isDark ? colors.textMuted : '#6E6763'
+  // Tokens-only, warm cream-paper. Violet is an ACCENT here (the "next/soon"
+  // status tint + the small question dots) — never a flooded surface. Cards are
+  // paper-white on the cream sheet with hairline borders + soft shadows; no
+  // heavy ink outlines or hard offset "sticker" shadows.
+  const sheetBg = colors.bg
+  const paper = colors.surface
+  const hairline = colors.border
+  const inkText = colors.text
+  const muted = colors.textMuted
 
-  // Hero color per status
-  const heroFill =
-    status === 'done' ? '#DDEBCB'
-    : status === 'next' ? '#FBE0DC'
-    : ST_CREAM
-  const heroIconBg =
-    status === 'done' ? ST_GREEN
-    : status === 'next' ? ST_CORAL
-    : ST_LAVENDER
-  const statusFill =
-    status === 'done' ? ST_GREEN
-    : status === 'next' ? ST_CORAL
-    : ST_LAVENDER
+  // Per-status accent, from the sticker palette (soft wash + dark ink). The
+  // "next/soon" status is the only place lavender appears as a fill, and even
+  // then it's the *soft* wash, not the saturated brand violet.
+  const accent =
+    status === 'done' ? { soft: stickers.greenSoft, ink: stickers.greenInk }
+    : status === 'next' ? { soft: stickers.lilacSoft, ink: stickers.lilacInk }
+    : { soft: stickers.peachSoft, ink: stickers.peachInk }
+
+  // Small violet detail — the question bullets carry the mode accent as a dot,
+  // the "specific detail" the brand is meant for.
+  const dotAccent = themeBrand.pregnancy
 
   return (
     <Modal
@@ -106,36 +103,25 @@ export function AppointmentDetailModal({
           style={[
             styles.sheet,
             {
-              backgroundColor: ST_SHEET,
-              borderTopWidth: 1.5,
-              borderLeftWidth: 1.5,
-              borderRightWidth: 1.5,
-              borderColor: inkBorder,
+              backgroundColor: sheetBg,
+              borderColor: hairline,
               paddingBottom: insets.bottom + 16,
             },
+            shadows.pop,
           ]}
         >
           {/* Drag handle */}
-          <View style={[styles.handle, { backgroundColor: isDark ? colors.border : '#14131340' }]} />
+          <View style={[styles.handle, { backgroundColor: hairline }]} />
 
-          {/* Sticker close */}
+          {/* Close — soft paper chip, hairline border */}
           <Pressable
             onPress={onClose}
             style={({ pressed }) => [
               styles.closeBtn,
-              {
-                backgroundColor: ST_CREAM,
-                borderColor: inkBorder,
-                shadowColor: ST_INK,
-                shadowOffset: { width: 0, height: pressed ? 1 : 2 },
-                shadowOpacity: 1,
-                shadowRadius: 0,
-                elevation: 3,
-                transform: [{ translateY: pressed ? 1 : 0 }],
-              },
+              { backgroundColor: paper, borderColor: hairline, opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            <X size={15} color={inkText} strokeWidth={2.5} />
+            <X size={15} color={muted} strokeWidth={2.5} />
           </Pressable>
 
           {appointment && (
@@ -143,33 +129,18 @@ export function AppointmentDetailModal({
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scroll}
             >
-              {/* ─── Hero (sticker paper card) ───────────────────────── */}
+              {/* ─── Hero — status-soft wash on paper, hairline, soft shadow ── */}
               <View
                 style={[
                   styles.hero,
-                  {
-                    backgroundColor: heroFill,
-                    borderColor: inkBorder,
-                    shadowColor: ST_INK,
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: isDark ? 0 : 0.10,
-                    shadowRadius: 0,
-                    elevation: 3,
-                  },
+                  { backgroundColor: accent.soft, borderColor: hairline },
+                  shadows.card,
                 ]}
               >
-                <View
-                  style={[
-                    styles.heroIcon,
-                    {
-                      backgroundColor: heroIconBg,
-                      borderColor: inkBorder,
-                    },
-                  ]}
-                >
+                <View style={[styles.heroIcon, { backgroundColor: paper, borderColor: hairline }]}>
                   {status === 'done'
-                    ? <Check size={26} color="#FFF" strokeWidth={3} />
-                    : <Stethoscope size={26} color={inkText} strokeWidth={2.2} />
+                    ? <Check size={24} color={accent.ink} strokeWidth={2.6} />
+                    : <Stethoscope size={24} color={accent.ink} strokeWidth={2.2} />
                   }
                 </View>
                 <View style={styles.heroText}>
@@ -179,16 +150,8 @@ export function AppointmentDetailModal({
                   <Display size={24} color={inkText} style={{ marginTop: 4 }}>
                     {appointment.name}
                   </Display>
-                  <View
-                    style={[
-                      styles.statusChip,
-                      {
-                        backgroundColor: statusFill,
-                        borderColor: inkBorder,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.statusChipText, { color: '#FFF' }]}>
+                  <View style={[styles.statusChip, { backgroundColor: paper, borderColor: accent.ink + '33' }]}>
+                    <Text style={[styles.statusChipText, { color: accent.ink }]}>
                       {STATUS_LABEL[status]}
                     </Text>
                   </View>
@@ -221,18 +184,11 @@ export function AppointmentDetailModal({
                       key={i}
                       style={[
                         styles.questionRow,
-                        {
-                          backgroundColor: ST_PAPER,
-                          borderColor: inkBorder,
-                        },
+                        { backgroundColor: paper, borderColor: hairline },
                       ]}
                     >
-                      <View
-                        style={[
-                          styles.questionDot,
-                          { backgroundColor: ST_LAVENDER, borderColor: inkBorder },
-                        ]}
-                      />
+                      {/* Small violet dot — the "specific detail" accent. */}
+                      <View style={[styles.questionDot, { backgroundColor: dotAccent }]} />
                       <Body size={14} color={inkText} style={{ flex: 1 }}>
                         {q}
                       </Body>
@@ -241,27 +197,19 @@ export function AppointmentDetailModal({
                 </View>
               </Section>
 
-              {/* ─── Actions (sticker buttons) ───────────────────────── */}
+              {/* ─── Actions — filled ink primary + paper secondary pill ── */}
               <View style={styles.actionsRow}>
                 {status !== 'done' && onMarkDone && (
                   <Pressable
                     onPress={onMarkDone}
                     style={({ pressed }) => [
                       styles.primaryBtn,
-                      {
-                        backgroundColor: ST_LAVENDER,
-                        borderColor: inkBorder,
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-                        shadowOpacity: 1,
-                        shadowRadius: 0,
-                        elevation: 5,
-                        transform: [{ translateY: pressed ? 2 : 0 }],
-                      },
+                      { backgroundColor: inkText, opacity: pressed ? 0.85 : 1 },
+                      shadows.subtle,
                     ]}
                   >
-                    <Check size={16} color="#FFF" strokeWidth={3} />
-                    <Text style={styles.primaryBtnText}>{t('kids_home_reminder_mark_done')}</Text>
+                    <Check size={16} color={colors.textInverse} strokeWidth={3} />
+                    <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>{t('kids_home_reminder_mark_done')}</Text>
                   </Pressable>
                 )}
                 {onAddToLogs && (
@@ -269,16 +217,7 @@ export function AppointmentDetailModal({
                     onPress={onAddToLogs}
                     style={({ pressed }) => [
                       styles.secondaryBtn,
-                      {
-                        backgroundColor: ST_CREAM,
-                        borderColor: inkBorder,
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                        shadowOpacity: 1,
-                        shadowRadius: 0,
-                        elevation: 4,
-                        transform: [{ translateY: pressed ? 2 : 0 }],
-                      },
+                      { backgroundColor: paper, borderColor: hairline, opacity: pressed ? 0.7 : 1 },
                     ]}
                   >
                     <Plus size={16} color={inkText} strokeWidth={2.5} />
@@ -319,11 +258,15 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    // Warm ink scrim (matches LogSheet + the other bottom sheets), not pure black.
+    backgroundColor: 'rgba(20,19,19,0.45)',
   },
   sheet: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
     maxHeight: '92%',
     paddingTop: 8,
   },
@@ -341,7 +284,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    borderWidth: 1.5,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -355,7 +298,7 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 18,
     borderRadius: 24,
-    borderWidth: 1.5,
+    borderWidth: 1,
     marginTop: 8,
     marginBottom: 8,
   },
@@ -365,7 +308,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
   },
   heroText: {
     flex: 1,
@@ -376,7 +319,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 999,
-    borderWidth: 1.5,
+    borderWidth: 1,
     marginTop: 10,
   },
   statusChipText: {
@@ -398,16 +341,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    padding: 12,
+    padding: 14,
     borderRadius: 16,
-    borderWidth: 1.5,
+    borderWidth: 1,
   },
   questionDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginTop: 6,
-    borderWidth: 1.2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 7,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -422,10 +364,8 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 52,
     borderRadius: 999,
-    borderWidth: 2,
   },
   primaryBtnText: {
-    color: '#FFF',
     fontSize: 14,
     fontFamily: font.bodyBold,
     letterSpacing: 0.6,
@@ -439,7 +379,7 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 52,
     borderRadius: 999,
-    borderWidth: 1.5,
+    borderWidth: 1,
   },
   secondaryBtnText: {
     fontSize: 14,
