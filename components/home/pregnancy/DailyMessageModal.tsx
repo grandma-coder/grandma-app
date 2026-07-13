@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { Modal, View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, ArrowRight } from 'lucide-react-native'
-import { useTheme, font, radius } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, font, diffuseFont, radius } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { Display, MonoCaps } from '../../ui/Typography'
 import { PillButton } from '../../ui/PillButton'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
@@ -16,7 +17,14 @@ interface Props { visible: boolean; onClose: () => void }
 
 export function DailyMessageModal({ visible, onClose }: Props) {
   const insets = useSafeAreaInsets()
-  const { colors } = useTheme()
+  const theme = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  // Under Diffuse the full-screen sheet must use the v3 cream (lighter) so it
+  // matches every other sheet; otherwise it looked like a different tone.
+  const colors = diffuse
+    ? { ...theme.colors, bg: dt.colors.bg, surface: dt.colors.surface, surfaceRaised: dt.colors.surfaceRaised, border: dt.colors.line, text: dt.colors.ink, textMuted: dt.colors.ink3 }
+    : theme.colors
   const { todayQuestion, todayCard, isAnswered, answer, isSaving } = useDailyMessage()
   const [phase, setPhase] = useState<'question' | 'reveal'>('question')
   const [deck, setDeck] = useState<DailyCard[]>([])

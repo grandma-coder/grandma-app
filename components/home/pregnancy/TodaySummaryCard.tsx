@@ -225,10 +225,11 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
   )
 
   return (
-    <View style={bare ? undefined : styles.wrap}>
-      {/* Containerless in both variants — sits on the page canvas directly,
-          flush-left with the section eyebrow (no inset). */}
-      {bare ? inner : <View>{inner}</View>}
+    // No wrapper padding: PregnancyHome already mounts this inside a section
+    // with paddingHorizontal 20. Adding styles.wrap here double-padded it, which
+    // pushed the whole card ~20px right of the "LOG SOMETHING" eyebrow.
+    <View>
+      {inner}
 
       {userId && (
         <TodayDashboardModal
@@ -246,7 +247,6 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   footer: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
