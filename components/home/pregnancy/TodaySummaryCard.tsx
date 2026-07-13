@@ -10,7 +10,7 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
-import { useTheme, radius, diffuseFont, useDiffuseTheme, getDiffuseAccent } from '../../../constants/theme'
+import { useTheme, radius, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { Character } from '../../characters/Characters'
 import { useTranslation } from '../../../lib/i18n'
@@ -131,7 +131,6 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           : t('pregnancy_summaryHint_empty')
 
   // ── Variant-resolved tokens (Diffuse vs current) ──
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const titleColor = diffuse ? dt.colors.ink : ink
   const hintColor = diffuse ? dt.colors.ink3 : colors.textMuted
   const hintFont = diffuse ? diffuseFont.italic : font.italic
@@ -142,15 +141,17 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
 
   const inner = (
     <>
-      {/* Header — plain title + hint; Edit (picker) sits to the right */}
+      {/* Header — plain title + hint; Edit (picker) sits to the right.
+          The serif title carries a small negative optical inset so its cap
+          glyph lines up with the mono eyebrow above it. */}
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
           {diffuse ? (
-            <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.3, color: titleColor }}>
+            <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.3, color: titleColor, marginLeft: -1 }}>
               {t('pregnancy_todayAtGlance')}
             </Text>
           ) : (
-            <Display size={22} color={ink}>{t('pregnancy_todayAtGlance')}</Display>
+            <Display size={22} color={ink} style={{ marginLeft: -1 }}>{t('pregnancy_todayAtGlance')}</Display>
           )}
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor }}>
             {summaryHint}
@@ -208,18 +209,16 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         />
       </View>
 
-      {/* Footer — label on the left, a "see results" pill (opens the daily
-          dashboard) on the right. */}
+      {/* Footer — a single "See results" pill (opens the daily dashboard),
+          same style as the Daily Message "View all cards" pill. */}
       <View style={[styles.footer, { borderTopColor: trackColor }]}>
-        <MonoCaps color={hintColor}>{t('pregnancy_quickLogs_footer')}</MonoCaps>
         <Pressable
           onPress={() => setOpen(true)}
-          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? dt.colors.surface : colors.surface, opacity: pressed ? 0.7 : 1 }]}
         >
-          <Text style={{ fontFamily: labelFont, fontSize: 12, color: titleColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
+          <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, fontSize: 13, letterSpacing: -0.1, color: titleColor }}>
             {t('pregnancy_quickLogs_seeResults')}
           </Text>
-          <ChevronRight size={14} color={chevronColor} strokeWidth={2} />
         </Pressable>
       </View>
     </>
@@ -250,8 +249,8 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
-  resultsPill: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 },
+  footer: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  resultsPill: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16 },
   chipsRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },

@@ -514,22 +514,24 @@ function ReminderRow({
   return (
     <View style={diffuse ? {
       backgroundColor: cardBg,
-      borderRadius: 20,
+      borderRadius: 18,
       borderWidth: 1,
       borderColor: cardBorder,
-      padding: 14,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 10,
+      alignItems: 'center',
+      gap: 12,
     } : {
       backgroundColor: cardBg,
-      borderRadius: 20,
+      borderRadius: 18,
       borderWidth: 1.5,
       borderColor: cardBorder,
-      padding: 14,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 10,
+      alignItems: 'center',
+      gap: 12,
       shadowColor: '#141313',
       shadowOpacity: isDark ? 0 : 0.05,
       shadowRadius: 6,
@@ -649,17 +651,19 @@ function ReminderRow({
         })()}
       </View>
 
-      <View style={{ alignItems: 'center', gap: 10, paddingTop: 4 }}>
+      {/* Actions in a horizontal row (was a vertical stack that made each
+          reminder tall) — keeps rows compact. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 2 }}>
         {!editing && (
-          <Pressable onPress={() => { setEditText(r.text); setEditing(true) }} hitSlop={12}>
-            <Pencil size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
+          <Pressable onPress={() => { setEditText(r.text); setEditing(true) }} hitSlop={10}>
+            <Pencil size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
           </Pressable>
         )}
-        <Pressable onPress={onFlag} hitSlop={12}>
-          <Flag size={13} color={r.flagged ? (diffuse ? ACCENT : '#F5D652') : (diffuse ? dt.colors.ink3 : colors.textMuted)} fill={r.flagged ? (diffuse ? ACCENT : '#F5D652') : 'transparent'} strokeWidth={2} />
+        <Pressable onPress={onFlag} hitSlop={10}>
+          <Flag size={14} color={r.flagged ? (diffuse ? ACCENT : '#F5D652') : (diffuse ? dt.colors.ink3 : colors.textMuted)} fill={r.flagged ? (diffuse ? ACCENT : '#F5D652') : 'transparent'} strokeWidth={2} />
         </Pressable>
-        <Pressable onPress={onDelete} hitSlop={12}>
-          <Trash2 size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
+        <Pressable onPress={onDelete} hitSlop={10}>
+          <Trash2 size={14} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
         </Pressable>
       </View>
     </View>

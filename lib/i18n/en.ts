@@ -496,6 +496,7 @@ export const en: TranslationKeys = {
   pregnancy_quickLogs_pickTitle: 'What do you want to track?',
   pregnancy_quickLogs_edit: 'Edit',
   pregnancy_quickLogs_seeResults: 'See results',
+  pregnancy_reminders_title: 'Reminders',
   pregnancy_summaryHint_balanced: 'Beautifully balanced day.',
   pregnancy_summaryHint_progress: '{{done}}/{{total}} routines logged today.',
   pregnancy_summaryHint_started: 'Started — {{remaining}} more to round out the day.',

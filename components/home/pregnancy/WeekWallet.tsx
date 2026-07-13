@@ -22,6 +22,7 @@ import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 import { getWeekData } from '../../../lib/pregnancyData'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
 import { WalletCard } from '../WalletCard'
+import { LogSheet } from '../../calendar/LogSheet'
 import { PregnancyUserReminders } from './PregnancyUserReminders'
 import {
   NotifyAppointmentDue, TipRead, LogKicks, NotifyRoutine,
@@ -48,7 +49,7 @@ export function WeekWallet({
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
-  const [openId, setOpenId] = useState<WalletCardId | null>('reminders')
+  const [remindersOpen, setRemindersOpen] = useState(false)
 
   const appt = getUpcomingAppointment(weekNumber) ?? null
   const weekData = getWeekData(weekNumber)
@@ -58,8 +59,6 @@ export function WeekWallet({
     hasWeekTip: !!weekData?.momTip,
     upcomingAppointment: appt,
   })
-
-  const toggle = (id: WalletCardId) => setOpenId((cur) => (cur === id ? null : id))
 
 
   const iconFor = (id: WalletCardId): React.ReactNode => {
@@ -84,22 +83,17 @@ export function WeekWallet({
     }
   }
 
-  // Tapping a card acts directly (opens a detail sheet / logs / routes) instead
-  // of expanding inline — except 'reminders', which is a genuine inline list.
+  // Every card taps straight to a detail sheet / log / route — nothing expands
+  // inline. Reminders opens its own full sheet.
   const onHeader = (id: WalletCardId, linkOnly: boolean) => {
     if (id === 'birth_guide') return onOpenBirthGuide()
     if (id === 'ask_grandma') return router.push('/grandma-talk')
     if (id === 'appointment') return appt && onOpenAppointment(appt)
     if (id === 'week_tip') return onOpenWeekDetail()
     if (id === 'kicks') return onLogMetric('kick_count')
+    if (id === 'reminders') return setRemindersOpen(true)
     if (linkOnly) return
-    toggle(id) // reminders
   }
-
-  // Only 'reminders' renders an inline body now; every other card taps straight
-  // to its detail sheet / log / route (see onHeader).
-  const bodyFor = (id: WalletCardId): React.ReactNode =>
-    id === 'reminders' ? <PregnancyUserReminders userId={userId ?? null} /> : null
 
   return (
     <View>
@@ -111,18 +105,19 @@ export function WeekWallet({
             tone={c.tone}
             icon={iconFor(c.id)}
             title={titleFor(c.id)}
-            expanded={openId === c.id}
+            expanded={false}
             linkOnly={c.linkOnly}
             last={isLast}
-            // Only 'reminders' keeps the inline body + chevron; every other card
-            // taps straight to a detail sheet / log / route (no arrow).
-            hideChevron={c.id !== 'reminders'}
+            hideChevron
             onPressHeader={() => onHeader(c.id, c.linkOnly)}
-          >
-            {bodyFor(c.id)}
-          </WalletCard>
+          />
         )
       })}
+
+      {/* Reminders — full pop-up sheet (compact list + add) */}
+      <LogSheet visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>
+        <PregnancyUserReminders userId={userId ?? null} />
+      </LogSheet>
     </View>
   )
 }
