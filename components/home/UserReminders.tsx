@@ -18,6 +18,7 @@ import {
   StyleSheet,
   TextInput,
   Platform,
+  ScrollView,
 } from 'react-native'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import {
@@ -28,7 +29,7 @@ import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import type { JourneyMode } from '../../types'
-import { type Reminder, type ChecklistItem, storageKey as buildStorageKey, loadReminders, saveReminders } from '../../lib/reminders'
+import { type Reminder, type ChecklistItem, storageKey as buildStorageKey, loadReminders, saveReminders, allTags } from '../../lib/reminders'
 
 interface Props {
   userId: string | null
@@ -175,6 +176,9 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
   }
 
   const active = reminders.filter((r) => !r.done)
+  const [activeFilter, setActiveFilter] = useState<string | null>(null)
+  const tagList = allTags(reminders)
+  const shownActive = activeFilter ? active.filter((r) => (r.tags ?? []).includes(activeFilter)) : active
 
   return (
     <View style={{ gap: 10 }}>
@@ -481,10 +485,26 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
         )}
       </View>
 
+      {/* Tag filter chips — neutral, only shown when tags exist */}
+      {tagList.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+          {[null, ...tagList].map((tag) => {
+            const on = activeFilter === tag
+            const label = tag === null ? t('reminders_filterAll') : tag
+            return (
+              <Pressable key={tag ?? '__all__'} onPress={() => setActiveFilter(tag)}
+                style={{ borderWidth: 1, borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.surfaceRaised : 'transparent', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
+                <Text style={{ fontFamily: font.bodyMedium, fontSize: 12, color: on ? colors.text : colors.textMuted }}>{label}</Text>
+              </Pressable>
+            )
+          })}
+        </ScrollView>
+      )}
+
       {/* Active list */}
-      {active.length > 0 && (
+      {shownActive.length > 0 && (
         <View style={{ gap: 8 }}>
-          {active.map((r) => (
+          {shownActive.map((r) => (
             <ReminderRow
               key={r.id}
               r={r}
@@ -713,6 +733,23 @@ function ReminderRow({
             </View>
           )
         })()}
+
+        {(r.tags ?? []).length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
+            {(r.tags ?? []).map((tag) => (
+              <View key={tag} style={{ borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
+                <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 10, color: diffuse ? dt.colors.ink3 : colors.textMuted }}>{tag}</Text>
+              </View>
+            ))}
+            {r.checklist && r.checklist.length > 0 && (
+              <View style={{ borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
+                <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 10, color: diffuse ? dt.colors.ink3 : colors.textMuted }}>
+                  {t('reminders_checklistCount', { done: r.checklist.filter((c) => c.done).length, total: r.checklist.length })}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Actions in a horizontal row — keeps rows compact. */}
