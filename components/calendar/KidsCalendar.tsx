@@ -2880,11 +2880,13 @@ export function KidsCalendar() {
                     logsByDate={monthGridByDate}
                   />
                 ) : (
-                  <DiffuseWeekStrip
-                    selectedDate={selectedDate}
-                    onSelectDate={handleDayPress}
-                    dotsByDate={dotsByDate}
-                  />
+                  <View style={[styles.weekStripCard, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
+                    <DiffuseWeekStrip
+                      selectedDate={selectedDate}
+                      onSelectDate={handleDayPress}
+                      dotsByDate={dotsByDate}
+                    />
+                  </View>
                 )}
               </>
             ) : (
@@ -4856,6 +4858,7 @@ const styles = StyleSheet.create({
   addLogBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 3 },
   addLogBtnDiffuse: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   toggleWrap: { marginBottom: 14 },
+  weekStripCard: { borderRadius: 24, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 14 },
   calViewToggle: { flexDirection: 'row', gap: 6, marginBottom: 10, alignSelf: 'flex-start' },
   calViewChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'transparent' },
   calViewChipText: { fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
