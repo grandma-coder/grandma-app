@@ -436,7 +436,7 @@ export const hi: TranslationKeys = {
   pregnancy_logTitle_kegel: "Log kegels",
   pregnancy_logTitle_nutrition: "Log meal",
   pregnancy_todayAtGlance: "Today at a glance",
-  pregnancy_logSomething_label: 'Log something',
+  pregnancy_logSomething_label: 'How are you today?',
   pregnancy_quickLogs_footer: 'Your daily logs',
   pregnancy_quickLogs_pickTitle: 'What do you want to track?',
   pregnancy_quickLogs_edit: 'Edit',

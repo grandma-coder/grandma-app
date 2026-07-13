@@ -436,7 +436,7 @@ export const ptBR: TranslationKeys = {
   pregnancy_logTitle_kegel: "Registrar exercícios de Kegel",
   pregnancy_logTitle_nutrition: "Registrar refeição",
   pregnancy_todayAtGlance: "Resumo de hoje",
-  pregnancy_logSomething_label: 'Log something',
+  pregnancy_logSomething_label: 'Como você está hoje?',
   pregnancy_quickLogs_footer: 'Your daily logs',
   pregnancy_quickLogs_pickTitle: 'What do you want to track?',
   pregnancy_quickLogs_edit: 'Edit',
