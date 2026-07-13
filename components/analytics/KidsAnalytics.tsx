@@ -126,6 +126,7 @@ import {
   Flower as StickerFlower,
 } from '../ui/Stickers'
 import { BrandedLoader } from '../ui/BrandedLoader'
+import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { useTranslation } from '../../lib/i18n'
 
 const SCREEN_W = Dimensions.get('window').width
@@ -876,20 +877,33 @@ export function KidsAnalytics() {
                   band={band}
                 />
                 {highlights.message ? (
-                  <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink2, borderLeftWidth: 2, borderLeftColor: dt.colors.line2, paddingLeft: 12, marginTop: 10, marginBottom: 18 }}>
+                  <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink2, borderLeftWidth: 2, borderLeftColor: dt.colors.line2, paddingLeft: 12, marginTop: 10, marginBottom: 12 }}>
                     {highlights.message}
                   </Text>
-                ) : <View style={{ height: 14 }} />}
+                ) : <View style={{ height: 10 }} />}
+                {/* Ask-Grandma pill — heart-eye logo + prompt. Replaces the old
+                    duplicate "GRANDMA SAYS" card (same text as the summary). */}
+                <Pressable
+                  onPress={() => {
+                    const ctx = buildGrandmaContext(s, analytics, childName, ageMonths)
+                    AsyncStorage.setItem('grandma-insight-context', ctx).catch(() => {})
+                    setTimeout(() => router.push({ pathname: '/grandma-talk', params: { hasInsightContext: '1' } } as any), 150)
+                  }}
+                  style={({ pressed }) => [{
+                    flexDirection: 'row', alignItems: 'center', gap: 10,
+                    alignSelf: 'flex-start',
+                    paddingLeft: 8, paddingRight: 14, paddingVertical: 7,
+                    borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2,
+                    marginBottom: 18, opacity: pressed ? 0.6 : 1,
+                  }]}
+                >
+                  <GrandmaLogo size={26} palette="sky" outline={dt.colors.ink} motion="default" />
+                  <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink }}>
+                    {t('kids_analytics_ask_grandma_tip')}
+                  </Text>
+                  <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, color: dt.colors.ink3 }}>→</Text>
+                </Pressable>
                 <KidsPillarBands items={bandItems} onPillarPress={(key) => setSelectedPillar(key as PillarKey)} />
-                <View style={{ marginTop: 14 }}>
-                  <GrandmaInsightCard
-                    scores={s}
-                    analytics={analytics}
-                    childName={childName}
-                    ageMonths={ageMonths}
-                    compact
-                  />
-                </View>
               </View>
             )
           }
