@@ -493,6 +493,7 @@ export interface TranslationKeys {
   pregnancy_quickLogs_footer: string
   pregnancy_quickLogs_pickTitle: string
   pregnancy_quickLogs_edit: string
+  pregnancy_quickLogs_seeResults: string
   pregnancy_summaryHint_balanced: string
   pregnancy_summaryHint_progress: string        // "{{done}}/{{total}} routines logged today."
   pregnancy_summaryHint_started: string         // "Started — {{remaining}} more to round out the day."

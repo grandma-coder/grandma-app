@@ -142,9 +142,9 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
 
   const inner = (
     <>
-      {/* Header — title + Edit (opens the picker); chevron opens the dashboard */}
+      {/* Header — plain title + hint; Edit (picker) sits to the right */}
       <View style={styles.headerRow}>
-        <Pressable onPress={() => setOpen(true)} style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.7 : 1 }]}>
+        <View style={{ flex: 1 }}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 24, letterSpacing: -0.3, color: titleColor }}>
               {t('pregnancy_todayAtGlance')}
@@ -155,14 +155,13 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor }}>
             {summaryHint}
           </Text>
-        </Pressable>
+        </View>
         <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [styles.editBtn, { opacity: pressed ? 0.6 : 1 }]}>
           <SlidersHorizontal size={15} color={chevronColor} strokeWidth={2} />
           <Text style={{ fontFamily: labelFont, fontSize: 12, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
             {t('pregnancy_quickLogs_edit')}
           </Text>
         </Pressable>
-        <ChevronRight size={20} color={chevronColor} strokeWidth={2} />
       </View>
 
       {/* Tappable metric pills — neutral hairline; only a completed goal tints
@@ -209,10 +208,20 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         />
       </View>
 
-      {/* Footer title — small label like the other home cards */}
-      <View style={[styles.footer, { borderTopColor: trackColor }]}>
+      {/* Footer — label + an explicit "see results" affordance that opens the
+          daily dashboard (was an unlabeled title tap). */}
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [styles.footer, { borderTopColor: trackColor, opacity: pressed ? 0.6 : 1 }]}
+      >
         <MonoCaps color={hintColor}>{t('pregnancy_quickLogs_footer')}</MonoCaps>
-      </View>
+        <View style={styles.footerLink}>
+          <Text style={{ fontFamily: labelFont, fontSize: 12, color: titleColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
+            {t('pregnancy_quickLogs_seeResults')}
+          </Text>
+          <ChevronRight size={15} color={chevronColor} strokeWidth={2} />
+        </View>
+      </Pressable>
     </>
   )
 
@@ -241,7 +250,8 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  footer: { marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  footerLink: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   chipsRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },

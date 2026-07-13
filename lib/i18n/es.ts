@@ -440,6 +440,7 @@ export const es: TranslationKeys = {
   pregnancy_quickLogs_footer: 'Your daily logs',
   pregnancy_quickLogs_pickTitle: 'What do you want to track?',
   pregnancy_quickLogs_edit: 'Edit',
+  pregnancy_quickLogs_seeResults: 'See results',
   pregnancy_summaryHint_balanced: "Día hermosamente equilibrado.",
   pregnancy_summaryHint_progress: "{{done}}/{{total}} rutinas registradas hoy.",
   pregnancy_summaryHint_started: "Iniciado — {{remaining}} más para completar el día.",
