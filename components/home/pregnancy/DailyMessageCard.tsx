@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { ArrowRight, ArrowUpRight } from 'lucide-react-native'
-import { PaperCard } from '../../ui/PaperCard'
 import { Display, MonoCaps } from '../../ui/Typography'
 import { CardSticker } from './CardSticker'
 import { useTheme, font } from '../../../constants/theme'
@@ -18,8 +17,7 @@ export function DailyMessageCard() {
 
   return (
     <>
-      <Pressable onPress={() => setOpen(true)}>
-        <PaperCard>
+      <Pressable onPress={() => setOpen(true)} style={styles.open}>
           <MonoCaps color={colors.textMuted}>
             DAILY MESSAGE{isAnswered ? `  ·  ${collection.length} CARD${collection.length === 1 ? '' : 'S'}` : ''}
           </MonoCaps>
@@ -45,7 +43,6 @@ export function DailyMessageCard() {
               <ArrowUpRight size={13} color={colors.textMuted} strokeWidth={2} />
             </Pressable>
           ) : null}
-        </PaperCard>
       </Pressable>
       <DailyMessageModal visible={open} onClose={() => setOpen(false)} />
     </>
@@ -53,6 +50,7 @@ export function DailyMessageCard() {
 }
 
 const styles = StyleSheet.create({
+  open: { paddingHorizontal: 4 },
   flex: { flex: 1 },
   prompt: { marginTop: 10 },
   answerRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 16 },

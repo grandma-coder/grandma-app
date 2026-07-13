@@ -14,7 +14,6 @@ import { useTheme, radius, diffuseFont, useDiffuseTheme, getDiffuseAccent } from
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { Character } from '../../characters/Characters'
 import { useTranslation } from '../../../lib/i18n'
-import { PaperCard } from '../../ui/PaperCard'
 import { Display, MonoCaps } from '../../ui/Typography'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition,
@@ -59,7 +58,6 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
   const nutritionVal = todayLogs['nutrition']?.value ? parseInt(todayLogs['nutrition'].value, 10) : 0
 
   const ink = colors.text
-  const paper = colors.surface
 
   // Each pill: sticker + value + the log type it opens when tapped.
   // `done` drives the green tint; `logType` maps to the inline log sheet.
@@ -237,9 +235,10 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           {inner}
         </DiffuseFieldSurface>
       ) : (
-        <PaperCard tint={paper} radius={radius.lg} padding={18}>
+        // Containerless — sits on the cream canvas (no card block/border/shadow).
+        <View style={{ paddingHorizontal: 4 }}>
           {inner}
-        </PaperCard>
+        </View>
       )}
 
       {userId && (
