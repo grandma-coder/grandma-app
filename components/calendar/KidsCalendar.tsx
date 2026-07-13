@@ -78,6 +78,8 @@ import {
   DiffuseLogIcon,
   DiffuseTimelineRow,
   DiffuseNowMarker,
+  DIFFUSE_LOG_CHARACTER,
+  diffuseLogHue,
 } from './DiffuseLogTimeline'
 import { Character, type CharacterName } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
@@ -654,10 +656,14 @@ function DiffuseWeekStrip({
   selectedDate,
   onSelectDate,
   dotsByDate,
+  logTypesByDate,
 }: {
   selectedDate: string
   onSelectDate: (date: string) => void
   dotsByDate?: Record<string, string[]>
+  /** date → distinct log types (priority-ordered). When provided, the strip
+   *  renders the same blob markers as the month grid instead of plain dots. */
+  logTypesByDate?: Map<string, string[]>
 }) {
   const { colors, isDark } = useDiffuseTheme()
   const acc = getDiffuseAccent('kids', isDark)
@@ -727,9 +733,31 @@ function DiffuseWeekStrip({
                 </View>
               </View>
               <View style={diffuseStripStyles.dotRow}>
-                {dots.slice(0, 3).map((_, i) => (
-                  <View key={i} style={[diffuseStripStyles.dot, { backgroundColor: acc }]} />
-                ))}
+                {(() => {
+                  // Same marker rule as LogMonthGrid: up to 2 blobs; on overflow
+                  // show 1 blob + "+N". Falls back to accent dots if no types.
+                  const types = logTypesByDate?.get(dateStr)
+                  if (types && types.length > 0) {
+                    const iconCount = types.length <= 2 ? types.length : 1
+                    const shown = types.slice(0, iconCount)
+                    const overflow = types.length - shown.length
+                    return (
+                      <>
+                        {shown.map((type, i) => {
+                          const char = DIFFUSE_LOG_CHARACTER[type]
+                          if (!char) return <View key={i} style={[diffuseStripStyles.dot, { backgroundColor: diffuseLogHue(type) }]} />
+                          return <Character key={i} name={char} size={11} color={diffuseLogHue(type)} />
+                        })}
+                        {overflow > 0 ? (
+                          <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 9, color: colors.ink3, marginLeft: 1 }}>+{overflow}</Text>
+                        ) : null}
+                      </>
+                    )
+                  }
+                  return dots.slice(0, 3).map((_, i) => (
+                    <View key={i} style={[diffuseStripStyles.dot, { backgroundColor: acc }]} />
+                  ))
+                })()}
               </View>
             </Pressable>
           )
@@ -2885,6 +2913,7 @@ export function KidsCalendar() {
                       selectedDate={selectedDate}
                       onSelectDate={handleDayPress}
                       dotsByDate={dotsByDate}
+                      logTypesByDate={monthGridByDate}
                     />
                   </View>
                 )}
