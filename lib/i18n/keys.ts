@@ -710,6 +710,18 @@ export interface TranslationKeys {
 
   // ─── PregnancyUserReminders (Wave 3) ──────────────────────────────────
   preg_reminders_addButton: string
+  reminders_tagsLabel: string
+  reminders_addTag: string
+  reminders_notesLabel: string
+  reminders_notesPlaceholder: string
+  reminders_checklistLabel: string
+  reminders_addChecklistItem: string
+  reminders_priorityLabel: string
+  reminders_priorityLow: string
+  reminders_priorityMed: string
+  reminders_priorityHigh: string
+  reminders_filterAll: string
+  reminders_checklistCount: string
   preg_reminders_inputPlaceholder: string
   preg_reminders_setDate: string
   preg_reminders_setTime: string

@@ -708,6 +708,18 @@ export const en: TranslationKeys = {
 
   // PregnancyUserReminders (Wave 3)
   preg_reminders_addButton: 'Add reminder',
+  reminders_tagsLabel: 'Tags',
+  reminders_addTag: 'Add tag',
+  reminders_notesLabel: 'Notes',
+  reminders_notesPlaceholder: 'Add a note…',
+  reminders_checklistLabel: 'Checklist',
+  reminders_addChecklistItem: 'Add item',
+  reminders_priorityLabel: 'Priority',
+  reminders_priorityLow: 'Low',
+  reminders_priorityMed: 'Medium',
+  reminders_priorityHigh: 'High',
+  reminders_filterAll: 'All',
+  reminders_checklistCount: '{{done}}/{{total}}',
   preg_reminders_inputPlaceholder: 'e.g. Take prenatal vitamins, schedule glucose test...',
   preg_reminders_setDate: 'Set date',
   preg_reminders_setTime: 'Set time',
@@ -2516,6 +2528,7 @@ export const en: TranslationKeys = {
   childPicker_avatarIcon: '👶',
   // ─── B6: Exams list ───────────────────────────────────────────────────────
   exams_title: 'Exams',
+  exams_addExam: 'Log an exam',
   exams_tabPrePreg: 'Pre-preg',
   exams_tabPregnancy: 'Pregnancy',
   exams_tabKids: 'Kids',
