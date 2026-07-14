@@ -756,8 +756,15 @@ function ReminderRow({
           )
         })()}
 
-        {(r.tags ?? []).length > 0 && (
+        {((r.tags ?? []).length > 0 || !!r.priority || !!(r.checklist && r.checklist.length > 0)) && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
+            {r.priority && (
+              <View style={{ borderWidth: 1, borderColor: diffuse ? dt.colors.ink : colors.text, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
+                <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 10, letterSpacing: 0.3, color: diffuse ? dt.colors.ink : colors.text }}>
+                  {r.priority === 'low' ? t('reminders_priorityLow') : r.priority === 'med' ? t('reminders_priorityMed') : t('reminders_priorityHigh')}
+                </Text>
+              </View>
+            )}
             {(r.tags ?? []).map((tag) => (
               <View key={tag} style={{ borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
                 <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 10, color: diffuse ? dt.colors.ink3 : colors.textMuted }}>{tag}</Text>
@@ -822,6 +829,52 @@ function ReminderRow({
           ))}
           <ChecklistAdder onAdd={(text) => onUpdate(r.id, { checklist: [...(r.checklist ?? []), { id: Date.now().toString(), text, done: false }] })} placeholder={t('reminders_addChecklistItem')} colors={colors} diffuse={diffuse} dt={dt} />
         </View>
+
+        {/* Priority — three neutral pills, editable */}
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: diffuse ? dt.colors.ink3 : colors.textMuted }}>{t('reminders_priorityLabel')}</Text>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {(['low', 'med', 'high'] as const).map((p) => {
+              const on = r.priority === p
+              return (
+                <Pressable key={p} onPress={() => onUpdate(r.id, { priority: on ? undefined : p })}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: diffuse ? (on ? dt.colors.ink : dt.colors.line) : (on ? colors.text : colors.border),
+                    backgroundColor: on ? (diffuse ? dt.colors.line2 : colors.surfaceRaised) : 'transparent',
+                    borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6,
+                  }}>
+                  <Text style={{
+                    fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium,
+                    fontSize: 12,
+                    color: diffuse ? (on ? dt.colors.ink : dt.colors.ink3) : (on ? colors.text : colors.textMuted),
+                  }}>
+                    {p === 'low' ? t('reminders_priorityLow') : p === 'med' ? t('reminders_priorityMed') : t('reminders_priorityHigh')}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        </View>
+
+        {/* Tags — neutral hairline chips (removable) + inline add */}
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: diffuse ? dt.colors.ink3 : colors.textMuted }}>{t('reminders_tagsLabel')}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+            {(r.tags ?? []).map((tag) => (
+              <Pressable key={tag} onPress={() => onUpdate(r.id, { tags: (r.tags ?? []).filter((x) => x !== tag) })}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: diffuse ? dt.colors.ink : colors.text, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 }}>
+                <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 12, color: diffuse ? dt.colors.ink : colors.text }}>{tag}</Text>
+                <X size={11} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2.5} />
+              </Pressable>
+            ))}
+            <TagAdder
+              onAdd={(tag) => { if (!(r.tags ?? []).includes(tag)) onUpdate(r.id, { tags: [...(r.tags ?? []), tag] }) }}
+              placeholder={t('reminders_addTag')}
+              colors={colors} diffuse={diffuse} dt={dt}
+            />
+          </View>
+        </View>
       </View>
     )}
     </View>
@@ -843,6 +896,25 @@ function ChecklistAdder({ onAdd, placeholder, colors, diffuse, dt }: {
       blurOnSubmit={false}
       onSubmitEditing={() => { const v = text.trim(); if (v) onAdd(v); setText('') }}
       style={{ fontFamily: diffuse ? diffuseFont.body : font.body, fontSize: 14, color: diffuse ? dt.colors.ink : colors.text, borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 }}
+    />
+  )
+}
+
+function TagAdder({ onAdd, placeholder, colors, diffuse, dt }: {
+  onAdd: (tag: string) => void; placeholder: string
+  colors: ReturnType<typeof useTheme>['colors']; diffuse: boolean; dt: ReturnType<typeof useDiffuseTheme>
+}) {
+  const [text, setText] = useState('')
+  return (
+    <TextInput
+      value={text}
+      onChangeText={setText}
+      placeholder={placeholder}
+      placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textFaint}
+      returnKeyType="done"
+      blurOnSubmit={false}
+      onSubmitEditing={() => { const v = text.trim().toLowerCase(); if (v) onAdd(v); setText('') }}
+      style={{ minWidth: 90, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 13, color: diffuse ? dt.colors.ink : colors.text, borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}
     />
   )
 }
