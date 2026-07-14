@@ -386,6 +386,25 @@ function buildMoodData(logs: ChildLog[], dates: string[], labels: string[]): Moo
   return { dailyCounts, dominantMoods, weekLabels: labels, hasData: true }
 }
 
+// Human-readable label for a health event row. Free-form "note" events store
+// their value as JSON (`{ eventType, description, routineId? }` — see
+// KidsLogForms), so a naive `log.value` render leaks raw JSON into the UI
+// (e.g. `{"eventType":"Injury","text":"Routine visit..."}`). Parse it and use
+// the description / eventType; fall back to the plain value or the type label.
+function healthEventLabel(log: ChildLog, typeLabel: string): string {
+  const parsed = parseValue(log.value)
+  const rec = asRecord(parsed)
+  if (rec) {
+    const desc = typeof rec.description === 'string' ? rec.description.trim() : ''
+    const evt = typeof rec.eventType === 'string' ? rec.eventType.trim() : ''
+    const text = typeof rec.text === 'string' ? rec.text.trim() : ''
+    return desc || text || evt || typeLabel
+  }
+  if (typeof parsed === 'string' && parsed.trim()) return parsed.trim()
+  const notes = typeof log.notes === 'string' ? log.notes.trim() : ''
+  return notes || typeLabel
+}
+
 function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): HealthData {
   const healthTypes = ['temperature', 'vaccine', 'medicine', 'note']
   const healthLogs = logs.filter((l) => healthTypes.includes(l.type))
@@ -400,8 +419,7 @@ function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): H
 
     const displayDate = new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     const typeLabel = log.type.charAt(0).toUpperCase() + log.type.slice(1)
-    const label = log.notes || log.value || typeLabel
-    recentEvents.push({ date: displayDate, type: typeLabel, label: typeof label === 'string' ? label : typeLabel })
+    recentEvents.push({ date: displayDate, type: typeLabel, label: healthEventLabel(log, typeLabel) })
 
     if (log.type === 'vaccine' && log.value) {
       vaccineNames.add(typeof log.value === 'string' ? log.value : '')

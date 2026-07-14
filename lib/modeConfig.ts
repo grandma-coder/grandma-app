@@ -93,7 +93,7 @@ const KIDS_CONFIG: ModeConfig = {
     index: { visible: true, label: 'Home', icon: 'home-outline' },
     agenda: { visible: true, label: 'Calendar', icon: 'calendar-outline' },
     library: { visible: true, label: 'Library', icon: 'book-outline' },
-    vault: { visible: true, label: 'Vault', icon: 'shield-outline' },
+    vault: { visible: true, label: 'Insights', icon: 'bar-chart-outline' },
     exchange: { visible: true, label: 'Garage', icon: 'pricetag-outline' },
     settings: { visible: true, label: 'Settings', icon: 'settings-outline' },
   },

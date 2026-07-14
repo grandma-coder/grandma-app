@@ -15,7 +15,6 @@ import { supabase } from '../../lib/supabase'
 import {
   Home, Calendar, BarChart3, User, Sparkles, Plus,
   MessageCircle, Lightbulb, ShoppingBag, Users, Gift,
-  FileText, Shield,
   LucideIcon,
 } from 'lucide-react-native'
 import Svg, { Path } from 'react-native-svg'
@@ -31,6 +30,7 @@ import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
 import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
+import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 
 // ─── Collage Strip constants ───────────────────────────────────────────────
 const STRIP_HEIGHT = 84
@@ -149,6 +149,9 @@ function CenterTabButton() {
   const overlayAnim = useRef(new Animated.Value(0)).current
   const spinAnim = useRef(new Animated.Value(0)).current
   const itemAnims = useRef(WHEEL_ITEMS.map(() => new Animated.Value(0))).current
+  // Diffuse FAB press feedback — a slight squish on touch-down that springs back
+  // on release, so the eye button feels tactile (the "little slight effect").
+  const fabPress = useRef(new Animated.Value(1)).current
 
   const animateOpen = useCallback(() => {
     setOpen(true)
@@ -200,27 +203,49 @@ function CenterTabButton() {
     <>
       {/* Tab bar button — Burst sticker, raised above the strip */}
       <View style={styles.centerWrapper}>
-        <Pressable onPress={open ? animateClose : animateOpen} hitSlop={12}>
+        <Pressable
+          onPress={open ? animateClose : animateOpen}
+          onPressIn={() =>
+            Animated.spring(fabPress, { toValue: 0.9, friction: 6, tension: 220, useNativeDriver: true }).start()
+          }
+          onPressOut={() =>
+            Animated.spring(fabPress, { toValue: 1, friction: 4, tension: 180, useNativeDriver: true }).start()
+          }
+          hitSlop={12}
+        >
           {diffuse ? (
+            // The center button IS the app icon — the heart-eye Grandma mark.
+            // Its motion is wired to the menu: idle it blinks softly; while the
+            // fan menu is open it does the heart "squeeze", so the button reads
+            // as the living entry point that opened the menu (not a static +).
+            // A contained accent bloom sits behind the eye and blooms brighter
+            // as the menu opens (driven by spinAnim). fabPress adds the tactile
+            // touch-down squish.
             <Animated.View
               style={[
                 diffuseFab.node,
                 {
                   backgroundColor: dt.colors.surface,
                   borderColor: dt.colors.line2,
-                  transform: [{ rotate: rotation }, { scale: pulse }],
+                  transform: [{ scale: Animated.multiply(pulse, fabPress) }],
                 },
               ]}
             >
-              {/* Soft accent glow CONTAINED inside the button: the bloom is a
-                  child of the rounded node, so its radial gradient is clipped to
-                  the circle and fades from a tinted center to the surface at the
-                  rim — a soft-filled node, not an outward halo. overflow:hidden
-                  guarantees the clip on Android too. */}
               <View pointerEvents="none" style={diffuseFab.bloom}>
-                <SoftBloom color={accentColor} opacity={dt.isDark ? 0.5 : 0.6} spread={0.55} radius="70%" />
+                <SoftBloom color={accentColor} opacity={dt.isDark ? 0.5 : 0.62} spread={0.55} radius="72%" />
               </View>
-              <Plus size={26} color={dt.colors.ink} strokeWidth={2} />
+              {/* Bloom intensifier — a second accent wash that fades in only
+                  while the menu is open, so opening the menu visibly lights up
+                  the eye. */}
+              <Animated.View pointerEvents="none" style={[diffuseFab.bloom, { opacity: spinAnim }]}>
+                <SoftBloom color={accentColor} opacity={dt.isDark ? 0.55 : 0.5} spread={0.35} radius="55%" />
+              </Animated.View>
+              <GrandmaLogo
+                size={42}
+                mode="auto"
+                motion={open ? 'squeeze' : 'blinkOnly'}
+                stroke={5}
+              />
             </Animated.View>
           ) : (
           <Animated.View
@@ -521,11 +546,10 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
   // Tab labels come from modeConfig. Falls back to the i18n string if the
   // modeConfig label is missing.
   // The vault slot means different things per mode: pre-preg + pregnancy both
-  // surface analytics (Analytics / Insights → chart icon), kids is the medical
-  // vault (Health → shield). Icon follows the mode.
-  const vaultIcon: LucideIcon =
-    mode === 'kids' ? Shield
-    : BarChart3
+  // Every mode's "vault" slot now surfaces analytics/insights (kids included —
+  // the tab renders KidsAnalytics, not a document vault), so it's the chart icon
+  // across the board.
+  const vaultIcon: LucideIcon = BarChart3
 
   const TAB_CFG: Record<string, TabStickerCfg> = {
     index:    { icon: Home,      label: modeConfig.tabs.index.label   || t('tab_home'),      color: StickerPalette.yellow },
@@ -646,10 +670,8 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
   const modeConfig = getModeConfig(mode)
   const accent = getDiffuseAccent(mode, isDark)
 
-  const vaultIcon: LucideIcon =
-    mode === 'pregnancy' ? FileText
-    : mode === 'kids' ? Shield
-    : BarChart3
+  // All modes surface analytics in the vault slot → chart icon everywhere.
+  const vaultIcon: LucideIcon = BarChart3
 
   const TAB_CFG: Record<string, TabStickerCfg> = {
     index:    { icon: Home,      label: modeConfig.tabs.index.label    || t('tab_home'),      color: StickerPalette.yellow },
@@ -675,8 +697,22 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
       ]}
     >
       {/* Floating capsule bar — inset from the edges, hairline paper pill. The
-          center FAB pops above the pill's top edge (raised via centerWrapper). */}
-      <View style={[diffuseNav.pill, { backgroundColor: colors.surface, borderColor: colors.line2 }]}>
+          center FAB pops above the pill's top edge (raised via centerWrapper).
+          Surface + shadow are theme-aware so the pill always separates from the
+          page: in light it's bright paper on a warmer canvas; in dark it lifts
+          to surfaceRaised (lighter than the canvas) since a drop shadow can't
+          read against near-black. Border strengthens to the visible hairline. */}
+      <View
+        style={[
+          diffuseNav.pill,
+          {
+            backgroundColor: isDark ? colors.surfaceRaised : colors.surface,
+            borderColor: colors.line,
+            shadowColor: isDark ? '#000000' : '#141313',
+            shadowOpacity: isDark ? 0.5 : 0.14,
+          },
+        ]}
+      >
         {visible.map((route) => {
           const isFocused = state.routes[state.index]?.key === route.key
 
@@ -738,6 +774,9 @@ const diffuseNav = StyleSheet.create({
     paddingTop: 8,
   },
   // Floating capsule: paper surface, fully rounded, hairline border, soft lift.
+  // shadowColor + shadowOpacity are set inline per-theme (a light-mode drop
+  // shadow is invisible in dark, so dark relies on a raised surface + deeper
+  // shadow instead).
   pill: {
     flexDirection: 'row',
     height: 66,
@@ -746,11 +785,9 @@ const diffuseNav = StyleSheet.create({
     paddingHorizontal: 6,
     borderRadius: 33,
     borderWidth: 1,
-    shadowColor: '#141313',
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
   },
   row: {
     flexDirection: 'row',
