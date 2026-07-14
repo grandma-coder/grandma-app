@@ -19,6 +19,7 @@ import {
 } from 'react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
+import { Character, type CharacterName } from '../characters/Characters'
 
 interface StepSliderProps {
   min: number
@@ -29,6 +30,9 @@ interface StepSliderProps {
   color: string
   /** Optional unit suffix shown next to the value (e.g. "hrs"). */
   unit?: string
+  /** Optional log-type Character blob that rides the thumb (e.g. 'sleep' → moon).
+   *  When set, the blob replaces the plain color dot for a more playful pick. */
+  blob?: CharacterName
 }
 
 const TRACK_HEIGHT = 10
@@ -42,6 +46,7 @@ export function StepSlider({
   onChange,
   color,
   unit,
+  blob,
 }: StepSliderProps) {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
@@ -187,9 +192,15 @@ export function StepSlider({
           ]}
           pointerEvents="none"
         >
-          <View style={[styles.thumbDot, { backgroundColor: color }]} />
-          {/* sticker highlight — small notch top-left (cream only) */}
-          {!diffuse && <View style={styles.thumbHighlight} />}
+          {blob ? (
+            <Character name={blob} size={THUMB_SIZE - 12} color={color} />
+          ) : (
+            <>
+              <View style={[styles.thumbDot, { backgroundColor: color }]} />
+              {/* sticker highlight — small notch top-left (cream only) */}
+              {!diffuse && <View style={styles.thumbHighlight} />}
+            </>
+          )}
         </Animated.View>
       </View>
 

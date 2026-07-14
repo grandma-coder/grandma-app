@@ -2698,6 +2698,8 @@ export interface TranslationKeys {
   examForm_allowPhoto: string
   examForm_allowCamera: string
   // ─── B6: PregnancyCalendar alerts ─────────────────────────────────────────
+  pregCal_viewMonth: string
+  pregCal_viewWeek: string
   pregCal_alertNameRequired: string
   pregCal_alertNameRequiredMsg: string
   pregCal_alertSaveError: string
@@ -2854,6 +2856,8 @@ export interface TranslationKeys {
   pregCal_delete_routine_desc: string
   pregCal_pending_count: string
   pregCal_tap_to_log: string
+  pregCal_now: string
+  pregCal_logged: string
   pregCal_logged_count: string
   pregCal_date_at_time: string
   pregCal_no_logs_day: string

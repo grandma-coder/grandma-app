@@ -19,10 +19,18 @@ import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 
+/** Cycle log types that have an editable form sheet (so a logged row of that
+ *  type can be tapped to re-open its form). lh / cervical_mucus / ovulation
+ *  have no form, so those rows stay non-tappable. */
+export type CycleLogFormType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse'
+const OPENABLE_TYPES = new Set<string>(['period_start', 'period_end', 'symptom', 'mood', 'basal_temp', 'intercourse'])
+
 interface Props {
   cycleConfig: CycleConfig
   date: string
   onAddLog: () => void
+  /** Tap a logged row → re-open that type's log form (edit/re-log). */
+  onOpenLog?: (type: CycleLogFormType) => void
 }
 
 type Row = { type: string; value: string | null; notes: string | null }
@@ -66,7 +74,7 @@ function formatLongDate(d: string): string {
   })
 }
 
-export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
+export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -118,7 +126,9 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
   }, [rows])
 
   return (
-    <View style={[styles.wrap, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={diffuse
+      ? styles.wrapBare
+      : [styles.wrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.headRow}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: diffuse ? dt.colors.ink : ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
@@ -163,6 +173,9 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog }: Props) {
                 compact
                 first={i === 0}
                 last={i === grouped.length - 1}
+                onPress={onOpenLog && OPENABLE_TYPES.has(g.type)
+                  ? () => onOpenLog(g.type as CycleLogFormType)
+                  : undefined}
               />
             ))}
           </View>
@@ -216,6 +229,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     padding: 16,
+    gap: 12,
+  },
+  // Diffuse: no card — the header + spine timeline + action sit bare on the
+  // canvas (matches the pregnancy agenda timeline). Only vertical rhythm kept.
+  wrapBare: {
     gap: 12,
   },
   headRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },

@@ -67,7 +67,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius, useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
-import { DiffuseTimelineRow, DiffuseLogIcon } from './DiffuseLogTimeline'
+import { DiffuseTimelineRow, DiffuseNowMarker, DiffuseLogIcon, DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
+import { Character } from '../characters/Characters'
+import { LogMonthGrid } from './LogMonthGrid'
 import { DiffuseListRow, DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
@@ -1284,7 +1286,6 @@ function LogDetailPopup({
   const { colors, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const s = isDark ? stickersDark : stickersLight
@@ -1379,24 +1380,45 @@ function LogDetailPopup({
         <LogFormSticker type={log.log_type} label={stickerCfg.label} tint={stickerTint} />
       )}
 
-      {/* Big metric card on paper */}
-      <View style={[styles.detailMetricCard, { backgroundColor: paper, borderColor: paperBorder, borderWidth: diffuse ? 1 : 1.5, overflow: 'hidden' }]}>
-        {diffuse ? <SoftBloom color={dAccent} cx="50%" cy="18%" opacity={dt.isDark ? 0.2 : 0.28} spread={0.5} /> : null}
-        {log.log_type === 'mood' ? (
-          <MoodFace size={64} variant={moodFaceVariant(rawValue.toLowerCase())} fill={moodFaceFill(rawValue.toLowerCase())} />
-        ) : (
-          <Icon size={26} color={diffuse ? dt.colors.ink2 : meta.color} strokeWidth={diffuse ? 1.6 : 2} />
-        )}
-        {isText ? (
-          <Text style={[styles.detailMetricText, { color: ink, fontFamily: diffuse ? diffuseFont.display : undefined }]}>{metric}</Text>
-        ) : (
-          <Text style={[styles.detailMetricBig, { color: diffuse ? dt.colors.ink : meta.color, fontFamily: diffuse ? diffuseFont.display : undefined }]}>
-            {metric}
-            {unit ? <Text style={[styles.detailMetricUnit, { color: diffuse ? dt.colors.ink3 : meta.color, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{` ${unit}`}</Text> : null}
-          </Text>
-        )}
-        <Text style={[styles.detailMetricLabel, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{sublabel}</Text>
-      </View>
+      {/* Big metric — Diffuse: bare on the sheet (no card / no gradient), with a
+          log-type Character blob; cream: the paper card with a bloom. */}
+      {diffuse ? (
+        <View style={styles.detailMetricBare}>
+          {log.log_type === 'mood' ? (
+            <MoodFace size={64} variant={moodFaceVariant(rawValue.toLowerCase())} fill={moodFaceFill(rawValue.toLowerCase())} />
+          ) : DIFFUSE_LOG_CHARACTER[log.log_type] ? (
+            <Character name={DIFFUSE_LOG_CHARACTER[log.log_type]} size={52} color={diffuseLogHue(log.log_type)} bg={dt.colors.bg} />
+          ) : (
+            <Icon size={26} color={dt.colors.ink2} strokeWidth={1.6} />
+          )}
+          {isText ? (
+            <Text style={[styles.detailMetricText, { color: ink, fontFamily: diffuseFont.display }]}>{metric}</Text>
+          ) : (
+            <Text style={[styles.detailMetricBig, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+              {metric}
+              {unit ? <Text style={[styles.detailMetricUnit, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>{` ${unit}`}</Text> : null}
+            </Text>
+          )}
+          <Text style={[styles.detailMetricLabel, { color: inkMuted, fontFamily: diffuseFont.mono }]}>{sublabel}</Text>
+        </View>
+      ) : (
+        <View style={[styles.detailMetricCard, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1.5, overflow: 'hidden' }]}>
+          {log.log_type === 'mood' ? (
+            <MoodFace size={64} variant={moodFaceVariant(rawValue.toLowerCase())} fill={moodFaceFill(rawValue.toLowerCase())} />
+          ) : (
+            <Icon size={26} color={meta.color} strokeWidth={2} />
+          )}
+          {isText ? (
+            <Text style={[styles.detailMetricText, { color: ink }]}>{metric}</Text>
+          ) : (
+            <Text style={[styles.detailMetricBig, { color: meta.color }]}>
+              {metric}
+              {unit ? <Text style={[styles.detailMetricUnit, { color: meta.color }]}>{` ${unit}`}</Text> : null}
+            </Text>
+          )}
+          <Text style={[styles.detailMetricLabel, { color: inkMuted }]}>{sublabel}</Text>
+        </View>
+      )}
 
       {/* Date pill row — paper chip with timer */}
       <View style={[styles.detailDateRow, { backgroundColor: diffuse ? 'transparent' : stickerTint, borderColor: diffuse ? dt.colors.line2 : paperBorder, borderWidth: diffuse ? 1 : 1.5 }]}>
@@ -1784,6 +1806,145 @@ function DayDetailPanel({
   )
 }
 
+// ─── Diffuse week strip ─────────────────────────────────────────────────────
+// The Diffuse counterpart to AgendaWeekStrip: a hairline day row. Each day is a
+// thin hairline circle; selected = accent ring + soft radial bloom behind. Days
+// with logs get the same blob markers as LogMonthGrid (up to 2 blobs, 1 blob +
+// "+N" on overflow), fed from monthGridByDate — so Month and Week views show
+// consistent per-day log icons. Falls back to accent dots when no types given.
+// Mirrors KidsCalendar.DiffuseWeekStrip (pregnancy accent).
+const DIFFUSE_DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+
+function DiffuseWeekStrip({
+  selectedDate,
+  onSelectDate,
+  dotsByDate,
+  logTypesByDate,
+}: {
+  selectedDate: string
+  onSelectDate: (date: string) => void
+  dotsByDate?: Record<string, string[]>
+  /** date → distinct log types (priority-ordered). When provided, the strip
+   *  renders the same blob markers as the month grid instead of plain dots. */
+  logTypesByDate?: Map<string, string[]>
+}) {
+  const { colors, isDark } = useDiffuseTheme()
+  const acc = getDiffuseAccent('preg', isDark)
+  const todayStr = toDateStr(new Date())
+
+  const center = new Date(selectedDate + 'T00:00:00')
+  const dow = center.getDay()
+  const offsetToMon = dow === 0 ? -6 : 1 - dow
+  const days: { date: Date; dateStr: string }[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(center)
+    d.setDate(center.getDate() + offsetToMon + i)
+    days.push({ date: d, dateStr: toDateStr(d) })
+  }
+  const monthLabel = days[0].date.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
+
+  const stepWeek = (delta: number) => {
+    const next = new Date(selectedDate + 'T00:00:00')
+    next.setDate(next.getDate() + delta)
+    onSelectDate(toDateStr(next))
+  }
+
+  return (
+    <View style={diffuseStripStyles.container}>
+      <View style={diffuseStripStyles.captionRow}>
+        <Text style={[diffuseStripStyles.month, { color: colors.ink3 }]}>{monthLabel}</Text>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          <Pressable onPress={() => stepWeek(-7)} hitSlop={8} style={[diffuseStripStyles.navBtn, { borderColor: colors.line2 }]}>
+            <ChevronLeft size={14} color={colors.ink3} strokeWidth={1.8} />
+          </Pressable>
+          <Pressable onPress={() => stepWeek(7)} hitSlop={8} style={[diffuseStripStyles.navBtn, { borderColor: colors.line2 }]}>
+            <ChevronRight size={14} color={colors.ink3} strokeWidth={1.8} />
+          </Pressable>
+        </View>
+      </View>
+      <View style={diffuseStripStyles.grid}>
+        {days.map(({ date, dateStr }) => {
+          const isSelected = dateStr === selectedDate
+          const isToday = dateStr === todayStr && !isSelected
+          const dots = dotsByDate?.[dateStr] ?? []
+          return (
+            <Pressable key={dateStr} onPress={() => onSelectDate(dateStr)} style={diffuseStripStyles.cell}>
+              <Text style={[diffuseStripStyles.dow, { color: colors.ink3, fontFamily: isSelected ? diffuseFont.monoBold : diffuseFont.mono }]}>
+                {DIFFUSE_DAY_INITIALS[date.getDay()]}
+              </Text>
+              <View style={diffuseStripStyles.bubbleWrap}>
+                {isSelected ? (
+                  <View pointerEvents="none" style={diffuseStripStyles.bloom}>
+                    <SoftBloom color={acc} opacity={0.55} spread={0.34} radius="50%" />
+                  </View>
+                ) : null}
+                <View
+                  style={[
+                    diffuseStripStyles.bubble,
+                    { borderColor: isSelected ? acc : isToday ? colors.hairline : colors.line },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      fontFamily: isSelected ? diffuseFont.bodySemiBold : diffuseFont.body,
+                      fontSize: 13,
+                      color: isSelected ? colors.ink : colors.ink2,
+                    }}
+                  >
+                    {date.getDate()}
+                  </Text>
+                </View>
+              </View>
+              <View style={diffuseStripStyles.dotRow}>
+                {(() => {
+                  // Same marker rule as LogMonthGrid: up to 2 blobs; on overflow
+                  // show 1 blob + "+N". Falls back to accent dots if no types.
+                  const types = logTypesByDate?.get(dateStr)
+                  if (types && types.length > 0) {
+                    const iconCount = types.length <= 2 ? types.length : 1
+                    const shown = types.slice(0, iconCount)
+                    const overflow = types.length - shown.length
+                    return (
+                      <>
+                        {shown.map((type, i) => {
+                          const char = DIFFUSE_LOG_CHARACTER[type]
+                          if (!char) return <View key={i} style={[diffuseStripStyles.dot, { backgroundColor: diffuseLogHue(type) }]} />
+                          return <Character key={i} name={char} size={11} color={diffuseLogHue(type)} />
+                        })}
+                        {overflow > 0 ? (
+                          <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 9, color: colors.ink3, marginLeft: 1 }}>+{overflow}</Text>
+                        ) : null}
+                      </>
+                    )
+                  }
+                  return dots.slice(0, 3).map((_, i) => (
+                    <View key={i} style={[diffuseStripStyles.dot, { backgroundColor: acc }]} />
+                  ))
+                })()}
+              </View>
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+const diffuseStripStyles = StyleSheet.create({
+  container: { paddingHorizontal: 4, paddingTop: 4, paddingBottom: 2 },
+  captionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 4 },
+  month: { fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' },
+  navBtn: { width: 26, height: 26, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  grid: { flexDirection: 'row', justifyContent: 'space-between' },
+  cell: { flex: 1, alignItems: 'center', gap: 5 },
+  dow: { fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' },
+  bubbleWrap: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  bloom: { position: 'absolute', width: '132%', height: '132%' },
+  bubble: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  dotRow: { flexDirection: 'row', gap: 3, height: 5, alignItems: 'center' },
+  dot: { width: 4, height: 4, borderRadius: 2 },
+})
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function PregnancyCalendar() {
@@ -1799,6 +1960,7 @@ export function PregnancyCalendar() {
   const weekNumber = dueDate ? getCurrentWeekFromDueDate(dueDate) : (storedWeek ?? 1)
 
   const [view, setView] = useState<ViewTab>('timeline')
+  const [calView, setCalView] = useState<'month' | 'week'>('month')
   const [viewDate, setViewDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [logForm, setLogForm] = useState<{ type: LogFormType; date: string } | null>(null)
@@ -2064,6 +2226,23 @@ export function PregnancyCalendar() {
     return out
   }, [calLogs, diffuse, dAccent])
 
+  // Month-grid adapter: date → distinct log types, ordered by significance so
+  // the blob(s) shown in each day cell are the meaningful ones (appointments +
+  // contractions before routine water/vitamins). Feeds <LogMonthGrid> in month
+  // view and the <DiffuseWeekStrip> markers in week view — same source, so both
+  // views show consistent per-day log icons. Mirrors KidsCalendar.monthGridByDate.
+  const monthGridByDate = useMemo(() => {
+    const PRIORITY = ['appointment', 'contraction', 'kick_count', 'symptom', 'weight', 'mood', 'sleep', 'nutrition', 'exercise', 'kegel', 'vitamins', 'water', 'note']
+    const rank = (tp: string) => { const i = PRIORITY.indexOf(tp); return i === -1 ? 99 : i }
+    const map = new Map<string, string[]>()
+    for (const [date, logs] of Object.entries(calLogs)) {
+      const seen = new Set<string>()
+      for (const l of logs) if (l.log_type !== 'skipped') seen.add(l.log_type)
+      map.set(date, [...seen].sort((a, b) => rank(a) - rank(b)))
+    }
+    return map
+  }, [calLogs])
+
   // ── Cards mode ────────────────────────────────────────────────────────────
 
   function renderTimelineCards() {
@@ -2078,10 +2257,15 @@ export function PregnancyCalendar() {
 
     interface Row {
       key: string
+      type: string
       time: string  // display label for left gutter (e.g. "08:00", "—")
       sortHours: number
       title: string
       subtitle?: string
+      /** Diffuse: short value (e.g. "13 kicks") shown as an italic accent on the title. */
+      accentValue?: string
+      /** Diffuse: free-text note shown as the sub line under a logged entry. */
+      note?: string
       tint: string
       icon: React.ReactNode
       onPress: () => void
@@ -2097,10 +2281,11 @@ export function PregnancyCalendar() {
       const sortHours = r.time ? timeStrToHours(r.time) : 25
       rows.push({
         key: `r-${r.id}`,
+        type: r.type,
         time: r.time ? fmtTime(r.time) : '—',
         sortHours,
         title: r.name,
-        subtitle: 'Tap to log',
+        subtitle: t('pregCal_tap_to_log'),
         tint: tintKey,
         icon: logSticker(r.type, 28, isDark),
         onPress: () => setLogForm({ type: r.type as LogFormType, date: selectedDate }),
@@ -2115,10 +2300,14 @@ export function PregnancyCalendar() {
       const summaryStr = formatLogValue(log)
       rows.push({
         key: `l-${log.id}`,
+        type: log.log_type,
         time: formatTime(log.created_at),
         sortHours,
         title: meta.label,
-        subtitle: summaryStr || 'Logged',
+        subtitle: summaryStr || t('pregCal_logged'),
+        // Diffuse: value summary → italic title accent; free-text note → sub line.
+        accentValue: summaryStr || undefined,
+        note: log.notes || undefined,
         tint: tintKey,
         icon: logSticker(log.log_type, 28, isDark),
         onPress: () => setSelectedLog(log),
@@ -2135,6 +2324,7 @@ export function PregnancyCalendar() {
       if (selDow !== 1) continue
       rows.push({
         key: `a-${appt.id}`,
+        type: 'appointment',
         time: `W${appt.week}`,
         sortHours: -1,  // pin to top
         title: appt.name,
@@ -2146,6 +2336,13 @@ export function PregnancyCalendar() {
     }
 
     rows.sort((a, b) => a.sortHours - b.sortHours)
+
+    // Index of the first not-yet-logged (pending) row on today's timeline — the
+    // "next up" entry the NOW marker sits above. Only shown for today.
+    const isToday = selectedDate === todayStr
+    const nowHours = new Date().getHours() + new Date().getMinutes() / 60
+    const nowInsertIdx = isToday ? rows.findIndex((r) => !r.logged && r.sortHours >= nowHours) : -1
+    const nowTimeLabel = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 
     return (
       <>
@@ -2180,18 +2377,34 @@ export function PregnancyCalendar() {
             </View>
           )
         ) : diffuse ? (
+          // Connector-spine timeline (v4 §06): a vertical spine threads every
+          // entry as a bloom-node; a "NOW · <time>" marker splits logged (past)
+          // from the next-up entry. Mirrors KidsCalendar.
           <View>
             {rows.map((r, idx) => (
-              <DiffuseListRow
-                key={r.key}
-                icon={r.icon}
-                title={r.title}
-                sub={[r.time !== '—' ? r.time : null, r.subtitle].filter(Boolean).join(' · ') || undefined}
-                onPress={r.onPress}
-                showArrow
-                last={idx === rows.length - 1}
-              />
+              <React.Fragment key={r.key}>
+                {idx === nowInsertIdx ? (
+                  <DiffuseNowMarker label={t('pregCal_now')} time={nowTimeLabel} mode="preg" />
+                ) : null}
+                <DiffuseTimelineRow
+                  type={r.type}
+                  time={r.time}
+                  title={r.title}
+                  accent={r.logged ? r.accentValue : undefined}
+                  sub={r.logged ? r.note : r.subtitle}
+                  logged={r.logged}
+                  active={idx === nowInsertIdx}
+                  compact
+                  first={idx === 0}
+                  last={idx === rows.length - 1}
+                  onPress={r.onPress}
+                />
+              </React.Fragment>
             ))}
+            {/* NOW after the last row (everything is in the past / already logged). */}
+            {isToday && nowInsertIdx === -1 && rows.some((r) => r.logged) ? (
+              <DiffuseNowMarker label={t('pregCal_now')} time={nowTimeLabel} mode="preg" />
+            ) : null}
           </View>
         ) : (
           <View style={{ gap: 10 }}>
@@ -2627,13 +2840,47 @@ export function PregnancyCalendar() {
       >
         {view === 'timeline' && (
           <>
-            <AgendaWeekStrip
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              dotsByDate={dotsByDate}
-              weekLabel={`Week ${weekNumber}`}
-              modeColor={diffuse ? dAccent : brand.pregnancy}
-            />
+            {diffuse ? (
+              <>
+                {/* Month grid (default) vs. compact week strip — toggle chip. */}
+                <View style={styles.calViewToggle}>
+                  <Pressable onPress={() => setCalView('month')} hitSlop={6} style={[styles.calViewChip, calView === 'month' && { backgroundColor: dt.colors.surface, borderColor: dt.colors.hairline }]}>
+                    <Text style={[styles.calViewChipText, { color: calView === 'month' ? dt.colors.ink : dt.colors.ink3, fontFamily: calView === 'month' ? diffuseFont.monoBold : diffuseFont.mono }]}>{t('pregCal_viewMonth')}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setCalView('week')} hitSlop={6} style={[styles.calViewChip, calView === 'week' && { backgroundColor: dt.colors.surface, borderColor: dt.colors.hairline }]}>
+                    <Text style={[styles.calViewChipText, { color: calView === 'week' ? dt.colors.ink : dt.colors.ink3, fontFamily: calView === 'week' ? diffuseFont.monoBold : diffuseFont.mono }]}>{t('pregCal_viewWeek')}</Text>
+                  </Pressable>
+                </View>
+                {calView === 'month' ? (
+                  <LogMonthGrid
+                    mode="preg"
+                    selectedDate={selectedDate}
+                    visibleMonth={{ year, month }}
+                    onSelectDate={setSelectedDate}
+                    onPrevMonth={() => setViewDate(new Date(year, month - 1, 1))}
+                    onNextMonth={() => setViewDate(new Date(year, month + 1, 1))}
+                    logsByDate={monthGridByDate}
+                  />
+                ) : (
+                  <View style={[styles.weekStripCard, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]}>
+                    <DiffuseWeekStrip
+                      selectedDate={selectedDate}
+                      onSelectDate={setSelectedDate}
+                      dotsByDate={dotsByDate}
+                      logTypesByDate={monthGridByDate}
+                    />
+                  </View>
+                )}
+              </>
+            ) : (
+              <AgendaWeekStrip
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                dotsByDate={dotsByDate}
+                weekLabel={`Week ${weekNumber}`}
+                modeColor={brand.pregnancy}
+              />
+            )}
             <View style={{ height: 12 }} />
             {renderTimelineCards()}
           </>
@@ -2769,6 +3016,12 @@ const styles = StyleSheet.create({
   segLabel: { fontSize: 12, fontFamily: font.bodyMedium, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
 
   scroll: { padding: 16 },
+
+  // Diffuse month/week view toggle + week-strip surface card (matches KidsCalendar)
+  weekStripCard: { borderRadius: 24, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 14 },
+  calViewToggle: { flexDirection: 'row', gap: 6, marginBottom: 10, alignSelf: 'flex-start' },
+  calViewChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'transparent' },
+  calViewChipText: { fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
 
   // Month grid
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
@@ -3013,6 +3266,10 @@ const styles = StyleSheet.create({
   detailMetricCard: {
     borderRadius: 24, borderWidth: 1.5, padding: 24,
     alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 12,
+  },
+  // Diffuse: same metric, no card/border/bloom — sits bare on the sheet.
+  detailMetricBare: {
+    alignItems: 'center', gap: 8, marginTop: 20, marginBottom: 18,
   },
   detailMetricBig: { fontSize: 56, fontFamily: font.displayBold, letterSpacing: -2 },
   detailMetricText: { fontSize: 22, fontFamily: font.displayBold, textAlign: 'center' },

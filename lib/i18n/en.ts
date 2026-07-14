@@ -2678,6 +2678,8 @@ export const en: TranslationKeys = {
   examForm_allowPhoto: 'Allow photo access to attach exam images.',
   examForm_allowCamera: 'Allow camera access to scan an exam.',
   // ─── B6: PregnancyCalendar alerts ─────────────────────────────────────────
+  pregCal_viewMonth: 'Month',
+  pregCal_viewWeek: 'Week',
   pregCal_alertNameRequired: 'Name required',
   pregCal_alertNameRequiredMsg: 'Please enter a routine name.',
   pregCal_alertSaveError: 'Error',
@@ -2834,6 +2836,8 @@ export const en: TranslationKeys = {
   pregCal_delete_routine_desc: "This routine will be removed and won't show up anymore. You can always add it back later.",
   pregCal_pending_count: '{{count}} pending',
   pregCal_tap_to_log: 'Tap to log',
+  pregCal_now: 'Now',
+  pregCal_logged: 'Logged',
   pregCal_logged_count: '{{count}} logged',
   pregCal_date_at_time: '{{date}} at {{time}}',
   pregCal_no_logs_day: 'No logs for this day',

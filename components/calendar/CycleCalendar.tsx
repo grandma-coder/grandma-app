@@ -221,6 +221,7 @@ export function CycleCalendar() {
               cycleConfig={cycleConfig}
               date={selectedDate}
               onAddLog={() => setLogSheetOpen(true)}
+              onOpenLog={(type) => setSheetType(type)}
             />
           </>
         )}
