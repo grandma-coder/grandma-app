@@ -87,6 +87,7 @@ import {
 import { toDateStr } from '../../lib/cycleLogic'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
+import { BrickColumns, DotCountRows, MilestoneTrail, type DotRow } from './shared/MiniCharts'
 import { FullScreenChart } from '../charts/FullScreenChart'
 import {
   useKidsAnalytics,
@@ -3413,7 +3414,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
   childName: string
   ageMonths: number
 }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers } = useTheme()
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -3459,7 +3460,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return nutr.hasData ? (
         <View style={styles.detailBody}>
           {/* Summary stats — differ by age mode */}
-          <View style={[styles.statRow]}>
+          <StatRow>
             {isMilkPhase ? (
               <>
                 <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
@@ -3483,7 +3484,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                 <StatPill label="Foods variety" value={`${variety}`} color={brand.secondary} />
               </>
             )}
-          </View>
+          </StatRow>
 
           {/* Explanation — different copy per mode */}
           <View style={[explainCardStyle]}>
@@ -3719,11 +3720,11 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return analytics.sleep.hasData ? (
         <View style={styles.detailBody}>
           {/* Stats at top */}
-          <View style={[styles.statRow]}>
+          <StatRow>
             <StatPill label="Avg/night" value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
             <StatPill label="Quality" value={getBestQuality(analytics.sleep.qualityCounts)} color={brand.success} />
             <StatPill label="Target" value={`${target}h`} color={colors.textMuted} />
-          </View>
+          </StatRow>
 
           {/* Explanation */}
           <View style={[explainCardStyle]}>
@@ -3865,11 +3866,11 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return (
         <View style={styles.detailBody}>
           {/* Summary card */}
-          <View style={[styles.statRow]}>
+          <StatRow>
             <StatPill label="Vaccines done" value={`${doneVaccines}/${totalVaccines}`} color={brand.success} />
             <StatPill label="Events this week" value={`${totalEvents}`} color={totalEvents === 0 ? brand.success : brand.accent} />
             <StatPill label="Completion" value={`${vaccinePct}%`} color={PILLAR_CONFIG.health.color} />
-          </View>
+          </StatRow>
 
           {/* Health score explanation */}
           <View style={[explainCardStyle]}>
@@ -3942,7 +3943,16 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {/* Weekly event frequency chart */}
           {analytics.health.hasData && (
             <ChartCard title="Health Events This Week" onExpand={() => onFullScreen('health_freq')}>
-              <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={PILLAR_CONFIG.health.color} width={chartW} />
+              {diffuse ? (
+                <BrickColumns
+                  data={analytics.health.weeklyFrequency}
+                  labels={analytics.health.weekLabels}
+                  color={stickers.blue}
+                  accent={getDiffuseAccent('kids', dt.isDark)}
+                />
+              ) : (
+                <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={PILLAR_CONFIG.health.color} width={chartW} />
+              )}
             </ChartCard>
           )}
 
@@ -4027,7 +4037,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             const lastHeight = analytics.growth.heights[analytics.growth.heights.length - 1]
             if (!lastWeight && !lastHeight) return null
             return (
-              <View style={[styles.statRow]}>
+              <StatRow>
                 {lastWeight && (
                   <StatPill
                     label={`Weight (${new Date(lastWeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
@@ -4042,33 +4052,51 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                     color={PILLAR_CONFIG.growth.color}
                   />
                 )}
-              </View>
+              </StatRow>
             )
           })()}
 
-          {/* Line charts when enough data */}
+          {/* Growth over time — Diffuse: Kids milestone-trail bubbles; else line */}
           {analytics.growth.weights.length >= 2 && (
             <ChartCard title="Weight over time (kg)" onExpand={() => onFullScreen('weight')}>
-              <LineChart
-                data={analytics.growth.weights.map((w) => w.value)}
-                labels={analytics.growth.weights.map((w) => { const d = new Date(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
-                color={PILLAR_CONFIG.health.color}
-                width={chartW}
-                unit="kg"
-                showAverage
-              />
+              {diffuse ? (
+                <MilestoneTrail
+                  data={analytics.growth.weights.map((w) => w.value)}
+                  labels={analytics.growth.weights.map((w) => { const d = new Date(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  color={stickers.yellow}
+                  accent={getDiffuseAccent('kids', dt.isDark)}
+                />
+              ) : (
+                <LineChart
+                  data={analytics.growth.weights.map((w) => w.value)}
+                  labels={analytics.growth.weights.map((w) => { const d = new Date(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  color={PILLAR_CONFIG.health.color}
+                  width={chartW}
+                  unit="kg"
+                  showAverage
+                />
+              )}
             </ChartCard>
           )}
           {analytics.growth.heights.length >= 2 && (
             <ChartCard title="Height over time (cm)" onExpand={() => onFullScreen('height')}>
-              <LineChart
-                data={analytics.growth.heights.map((h) => h.value)}
-                labels={analytics.growth.heights.map((h) => { const d = new Date(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
-                color={PILLAR_CONFIG.growth.color}
-                width={chartW}
-                unit="cm"
-                showAverage
-              />
+              {diffuse ? (
+                <MilestoneTrail
+                  data={analytics.growth.heights.map((h) => h.value)}
+                  labels={analytics.growth.heights.map((h) => { const d = new Date(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  color={stickers.green}
+                  accent={getDiffuseAccent('kids', dt.isDark)}
+                />
+              ) : (
+                <LineChart
+                  data={analytics.growth.heights.map((h) => h.value)}
+                  labels={analytics.growth.heights.map((h) => { const d = new Date(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  color={PILLAR_CONFIG.growth.color}
+                  width={chartW}
+                  unit="cm"
+                  showAverage
+                />
+              )}
             </ChartCard>
           )}
 
@@ -4117,11 +4145,11 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return (
         <View style={styles.detailBody}>
           {/* Stats */}
-          <View style={[styles.statRow]}>
+          <StatRow>
             <StatPill label="Active days" value={act.hasData ? `${act.activeDays}/7` : '—'} color={COLOR} />
             <StatPill label="Sessions" value={act.hasData ? `${act.totalSessions}` : '—'} color={brand.secondary} />
             <StatPill label="Types" value={act.hasData ? `${act.uniqueTypes.length}` : '—'} color={brand.accent} />
-          </View>
+          </StatRow>
 
           {/* Explanation */}
           <View style={[explainCardStyle]}>
@@ -4256,11 +4284,44 @@ function ChartCard({ title, children, onExpand }: { title: string; children: Rea
   )
 }
 
+// Container for a row of StatPills. In Diffuse it's the single hairline strip
+// (rounded, overflow-clipped so the cells' right-dividers read as interior
+// splits and the last one is clipped); in the legacy theme it's the plain gap
+// row of boxed pills.
+function StatRow({ children }: { children: React.ReactNode }) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  if (diffuse) {
+    return (
+      <View style={[styles.statStrip, { borderColor: dt.colors.line }]}>{children}</View>
+    )
+  }
+  return <View style={styles.statRow}>{children}</View>
+}
+
 function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
   const { colors, radius } = useTheme()
   const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   if (diffuse) {
-    return <DiffuseMetricTile value={value} label={label} />
+    // De-carded cell — value on top (serif) + mono caption. A right hairline
+    // divider makes it a segment of the one strip its parent `statRow` becomes
+    // (the container's rounded overflow:hidden clips the last cell's divider).
+    return (
+      <View style={[styles.statStripCell, { borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: dt.colors.line }]}>
+        <Text
+          style={[styles.statStripValue, { color: dt.colors.ink }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+        >
+          {value}
+        </Text>
+        <Text style={[styles.statStripLabel, { color: dt.colors.ink3 }]} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
+    )
   }
   return (
     <View style={[styles.statPill, {
@@ -4501,7 +4562,7 @@ function MealsLineChart({
   labels: string[]
   width: number
 }) {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const color = diffuse ? getDiffuseAccent('kids', dt.isDark) : PILLAR_CONFIG.nutrition.color
@@ -4510,6 +4571,20 @@ function MealsLineChart({
   const nodeStroke = diffuse ? dt.colors.line2 : colors.borderStrong
   const numFont = diffuse ? diffuseFont.mono : font.display
   const labelFont = diffuse ? diffuseFont.mono : font.body
+
+  // Diffuse: meals/feeds per day render as the Kids toy-brick columns.
+  if (diffuse) {
+    if (rawData.length === 0) return null
+    return (
+      <BrickColumns
+        data={rawData}
+        labels={rawLabels}
+        color={stickers.blue}
+        accent={getDiffuseAccent('kids', dt.isDark)}
+        height={150}
+      />
+    )
+  }
 
   // Bin to ≤ 14 points to keep wide windows legible
   const { data, labels } = binSeries(rawData, rawLabels, 14)
@@ -4585,7 +4660,7 @@ function HighlightBarChart({
   height?: number
   unit?: string
 }) {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -4605,6 +4680,21 @@ function HighlightBarChart({
           {t('kids_analytics_no_entries_window')}
         </Text>
       </View>
+    )
+  }
+
+  // Diffuse: render the distinct Kids toy-brick columns instead of bars.
+  // Resting bricks in the soft sticker powder-blue; "today" in the deeper Kids
+  // accent so the latest day pops.
+  if (diffuse) {
+    return (
+      <BrickColumns
+        data={rawData}
+        labels={rawLabels}
+        color={stickers.blue}
+        accent={getDiffuseAccent('kids', dt.isDark)}
+        height={Math.max(height, 150)}
+      />
     )
   }
 
@@ -4668,7 +4758,7 @@ function HighlightBarChart({
 }
 
 function SleepQualityChart({ counts }: { counts: { great: number; good: number; restless: number; poor: number } }) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, stickers } = useTheme()
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -4688,6 +4778,17 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
     { label: 'Restless', count: counts.restless, color: brand.accent, emoji: '😐' },
     { label: 'Poor', count: counts.poor, color: brand.error, emoji: '😣' },
   ]
+
+  // Diffuse: the distinct Kids dot-count rows (one row per quality level with a
+  // run of filled dots for its share). Sticker hues keep it playful.
+  if (diffuse) {
+    const hues = [stickers.green, stickers.blue, stickers.peach, stickers.coral]
+    const rows: DotRow[] = items
+      .map((it, i) => ({ label: it.label, pct: (it.count / total) * 100, color: hues[i] }))
+      .filter((r) => r.pct > 0)
+    return <DotCountRows rows={rows} />
+  }
+
   return (
     <View style={styles.qualityWrap}>
       {items.map((item, i) => {
@@ -5150,6 +5251,11 @@ const styles = StyleSheet.create({
   statPill: { flex: 1, alignItems: 'center', paddingVertical: 16, paddingHorizontal: 10, gap: 2 },
   statValue: { fontSize: 24, fontFamily: font.display, letterSpacing: -0.4, lineHeight: 28 },
   statLabel: { fontSize: 11, fontFamily: font.body, textAlign: 'center', lineHeight: 14, marginTop: 2 },
+  // Diffuse: the de-carded hairline stat strip (matches pregnancy's calloutRow).
+  statStrip: { flexDirection: 'row', borderWidth: StyleSheet.hairlineWidth, borderRadius: 18, overflow: 'hidden' },
+  statStripCell: { flex: 1, paddingVertical: 16, paddingHorizontal: 10, alignItems: 'center', gap: 5 },
+  statStripValue: { fontSize: 26, fontFamily: diffuseFont.display, letterSpacing: -0.5, textAlign: 'center' },
+  statStripLabel: { fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', fontFamily: diffuseFont.mono, textAlign: 'center' },
 
   // Loading / Error / Empty
   loadingWrap: { alignItems: 'center', gap: 10, paddingVertical: 32 },
