@@ -4543,6 +4543,12 @@ function EatQualityBubbles({
     { label: "Didn't eat", pct: pctNone, color: st.coral },
   ].filter((i) => i.pct > 0)
 
+  // Diffuse: the Kids dot-count rows — consistent with the sleep-quality
+  // breakdown, replacing the pair of donut rings.
+  if (diffuse) {
+    return <DotCountRows rows={items.map((i) => ({ label: i.label, pct: i.pct, color: i.color }))} />
+  }
+
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 24, paddingVertical: 12 }}>
       {items.map((item) => (
