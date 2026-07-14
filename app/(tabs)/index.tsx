@@ -11,7 +11,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useCaregiverStore } from '../../store/useCaregiverStore'
-import { useTheme, stickers } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, stickers } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { CycleHome } from '../../components/home/CycleHome'
 import { PregnancyHome } from '../../components/home/PregnancyHome'
 import { KidsHome } from '../../components/home/KidsHome'
@@ -28,11 +29,16 @@ export default function Home() {
   const activeChild = useChildStore((s) => s.activeChild)
   const caregiverHydrated = useCaregiverStore((s) => s.hydrated)
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
-  const bg = colors.bg
-  const ink = colors.text
-  const ink3 = colors.textMuted
+  // Under Diffuse the page canvas is the diffuse paper (matches the nav theme +
+  // every other Diffuse screen); the current-system cream would read warmer and
+  // clash. Ink stays from the active variant too.
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
 
   // Caregiver surface: when the active child is one the user is a caregiver for
   // (not their own), render the scoped caregiver home instead of the owner

@@ -2665,7 +2665,7 @@ export function KidsCalendar() {
   const fadeTransparent = fadeBg + '00'
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Sticky top: child selector + segmented tabs (always visible across tabs) */}
       <View style={{ paddingTop: insets.top + 12, paddingLeft: 16, paddingRight: 20 }}>
         {/* 1. Child Selector Row — pills + inline "+" add-log button */}

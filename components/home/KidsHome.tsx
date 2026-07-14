@@ -1597,7 +1597,7 @@ export function KidsHome() {
   // a blank screen.
   if (!child) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: diffuse ? dt.colors.bg : colors.bg, justifyContent: 'center' }}>
         <EmptyState
           icon={<HeartSticker size={36} fill={stickers.pink} />}
           iconBg={stickers.pinkSoft}
