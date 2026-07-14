@@ -64,7 +64,7 @@ import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { CustomRangeModal } from './shared/CustomRangeModal'
 import { BigChartCard } from './shared/BigChartCard'
 import { MiniStatTile } from './shared/MiniStatTile'
-import { MiniLineChart, MiniBarChart, PillDivergingChart, GlowAreaLine, BlobCluster, SipColumns, PetalBurst, StackedLozenges, BeadedThread, CrescentBars, ConcentricArcs, TieredLozenges, SplitMeters, CheckpointPills, NutrientMatrix, type LozengeDatum, type ArcDatum, type TierRow, type MeterRow, type CheckRow } from './shared/MiniCharts'
+import { MiniLineChart, MiniBarChart, PillDivergingChart, GlowAreaLine, BlobCluster, SipColumns, PetalBurst, BeadedThread, CrescentBars, ConcentricArcs, TieredLozenges, SplitMeters, CheckpointPills, NutrientMatrix, type ArcDatum, type TierRow, type MeterRow, type CheckRow } from './shared/MiniCharts'
 import { Display, Body } from '../ui/Typography'
 import {
   Heart,
@@ -187,7 +187,7 @@ function renderPillarGlyph(key: PillarKey, color: string, size = 18) {
 }
 
 // Ordered sticker-hue palette for the symptom list — the Insights "Top
-// Symptoms" card (StackedLozenges) and the detail-sheet breakdown share this so
+// Symptoms" card (its dot legend) and the detail-sheet breakdown share this so
 // the same symptom is the same colour in both, by rank. Takes the theme's
 // `stickers` (a hook value, so it can't live at module scope) and returns the
 // hue for a given row index.
@@ -655,17 +655,16 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             onPress={() => setOpenPillar('symptoms')}
           >
             {diffuse ? (
-              // Stacked lozenges — full-width bars float on the page (no card);
-              // each symptom its own sticker hue, count inside.
-              <View style={styles.chartBare}>
-                <StackedLozenges
-                  data={symptomFreq.slice(0, 5).map((s, i) => ({
-                    label: s.symptom,
-                    value: s.count,
-                    color: symptomHue(stickers, i),
-                  }))}
-                />
-              </View>
+              // Glance summary — the full ranked breakdown lives in the detail
+              // sheet (tap the card). Here we surface only what a glance needs:
+              // the most-common symptom as the headline + total logged, with the
+              // 5 rank-hue dots as a legend that ties to the sheet's coloured
+              // bars. Avoids duplicating the ranked list card↔sheet.
+              <SymptomsGlance
+                total={symptomFreq.reduce((a, b) => a + b.count, 0)}
+                mostCommon={symptomFreq[0]?.symptom ?? '—'}
+                hues={symptomFreq.slice(0, 5).map((_, i) => symptomHue(stickers, i))}
+              />
             ) : (
             <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
               {symptomFreq.map((s, i) => (
@@ -831,6 +830,34 @@ function Section({
         </View>
       </Pressable>
       {children}
+    </View>
+  )
+}
+
+// ─── Symptoms glance (Insights card body) ──────────────────────────────────
+// A compact summary for the "Top Symptoms" card. The full ranked breakdown
+// lives in the detail sheet (SymptomsDetail); this only surfaces the headline
+// (most-common symptom) + total, plus the 5 rank-hue dots as a legend tying to
+// the sheet's coloured bars — so the card previews rather than duplicates.
+function SymptomsGlance({ total, mostCommon, hues }: { total: number; mostCommon: string; hues: string[] }) {
+  const { colors } = useDiffuseTheme()
+  return (
+    <View style={styles.symptomsGlance}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.symptomsGlanceEyebrow, { color: colors.ink3 }]}>Most common</Text>
+        <Text style={[styles.symptomsGlanceValue, { color: colors.ink }]} numberOfLines={1}>
+          {mostCommon}
+        </Text>
+        <View style={styles.symptomsGlanceDots}>
+          {hues.map((h, i) => (
+            <View key={i} style={[styles.symptomsGlanceDot, { backgroundColor: h }]} />
+          ))}
+        </View>
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={[styles.symptomsGlanceTotal, { color: colors.ink }]}>{total}</Text>
+        <Text style={[styles.symptomsGlanceEyebrow, { color: colors.ink3 }]}>Logged</Text>
+      </View>
     </View>
   )
 }
@@ -1833,8 +1860,10 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
           <View style={{ gap: 8 }}>
             {sorted.map(([mood, n]) => {
               const pct = Math.round((n / moodTrend.length) * 100)
-              const color = positive.includes(mood) ? stickers.green : stickers.peach
-              const tint = positive.includes(mood) ? stickers.greenSoft : stickers.peachSoft
+              // Each mood carries its own hue — the same per-mood fill the Mood
+              // Mix bubbles use (moodFaceFill), so the distribution reads as the
+              // same color language instead of one flat accent for every row.
+              const color = moodFaceFill(mood)
               return (
                 <View key={mood}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -1843,8 +1872,8 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
                     </Text>
                     <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>{t('preg_analytics_stat_value_pct', { value: n, pct })}</Text>
                   </View>
-                  <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: diffuse ? dt.colors.line : tint, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: diffuse ? dAccent : color, borderRadius: 3 }} />
+                  <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: diffuse ? dt.colors.line : color + '33', overflow: 'hidden' }}>
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 3 }} />
                   </View>
                 </View>
               )
@@ -3647,6 +3676,43 @@ const styles = StyleSheet.create({
   chartBare: {
     paddingHorizontal: 4,
     paddingVertical: 8,
+  },
+  // Symptoms glance card body — headline (most common) + total, dot legend.
+  symptomsGlance: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    gap: 16,
+  },
+  symptomsGlanceEyebrow: {
+    fontSize: 9,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    fontFamily: diffuseFont.mono,
+  },
+  symptomsGlanceValue: {
+    fontSize: 26,
+    fontFamily: diffuseFont.display,
+    letterSpacing: -0.5,
+    marginTop: 4,
+    textTransform: 'capitalize',
+  },
+  symptomsGlanceDots: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 12,
+  },
+  symptomsGlanceDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 999,
+  },
+  symptomsGlanceTotal: {
+    fontSize: 32,
+    fontFamily: diffuseFont.display,
+    letterSpacing: -1,
   },
   listCard: {
     borderWidth: 1,
