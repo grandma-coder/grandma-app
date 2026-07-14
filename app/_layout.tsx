@@ -73,7 +73,13 @@ import type { ChildWithRole, CaregiverPermissions } from '../types'
 
 import { queryClient } from '../lib/queryClient'
 import { consumePendingInvite } from '../lib/pendingInvite'
-import { font } from '../constants/theme'
+import { font, useTheme, useDiffuseTheme } from '../constants/theme'
+import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import {
+  ThemeProvider as NavThemeProvider,
+  DefaultTheme as NavDefaultTheme,
+  DarkTheme as NavDarkTheme,
+} from '@react-navigation/native'
 
 /**
  * Set the default font family on every <Text> and <TextInput> once
@@ -112,6 +118,26 @@ export default function RootLayout() {
   // abandoning) the reset. While true, the route guard must NOT bounce the
   // recovery session into (tabs) — the user needs to stay on the reset screen.
   const [recoveryMode, setRecoveryMode] = useState(false)
+
+  // React Navigation's stock theme paints EVERY navigator surface with its
+  // default background (rgb 242,242,242 light / near-black dark) — including the
+  // per-tab `Background` inside bottom-tabs, which shows in the transparent
+  // floating tab bar's safe-area gutter. expo-router mounts its NavigationContainer
+  // with no theme, so we install one here whose `background`/`card` = the active
+  // variant's canvas; that reaches every `useTheme()` consumer (stack scenes AND
+  // the bottom-tabs Background). Hooks read from useThemeStore, valid at root.
+  const isDiffuseVariant = useIsDiffuse()
+  const current = useTheme()
+  const diffuseTheme = useDiffuseTheme()
+  const isDarkVariant = isDiffuseVariant ? diffuseTheme.isDark : current.isDark
+  const canvasBg = isDiffuseVariant ? diffuseTheme.colors.bg : current.colors.bg
+  const canvasCard = isDiffuseVariant ? diffuseTheme.colors.surface : current.colors.surface
+  const navBase = isDarkVariant ? NavDarkTheme : NavDefaultTheme
+  const navTheme = {
+    ...navBase,
+    colors: { ...navBase.colors, background: canvasBg, card: canvasCard },
+  }
+
   const [fontsLoaded] = Font.useFonts({
     Fraunces_600SemiBold,
     Fraunces_700Bold,
@@ -562,7 +588,8 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <DevPanelProvider>
         <SavedToastProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+        <NavThemeProvider value={navTheme}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: canvasBg } }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="onboarding" />
@@ -580,6 +607,7 @@ export default function RootLayout() {
           <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
           <Stack.Screen name="connections" />
         </Stack>
+        </NavThemeProvider>
         <DevModeBanner />
         </SavedToastProvider>
         </DevPanelProvider>
