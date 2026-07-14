@@ -910,47 +910,74 @@ export function CrescentBars({ data, color, max, labels = [], height = 150 }: Cr
   )
 }
 
-// ─── ConcentricArcs ──── wellbeing: nested half-donut rings, one hue per pillar
-export interface ArcDatum { value: number; color: string } // value 0..10
-export function ConcentricArcs({ data, centerLabel, height = 200 }: { data: ArcDatum[]; centerLabel?: string; height?: number }) {
-  const { colors, font } = useTheme()
+// ─── ConcentricArcs ──── wellbeing: radial spokes, one hue per pillar.
+// Five spokes radiate from a shared centre at fixed, evenly-spaced angles; each
+// spoke's length encodes its 0–10 score over a faint full-length "10" track.
+// Because every spoke sits on its own angle, nothing ever overlaps — unlike the
+// old nested half-rings, where a short outer arc crossed a long inner one.
+// (Name kept for the existing call site; the visual is a spoke burst.)
+export interface ArcDatum { value: number; color: string; label?: string } // value 0..10
+export function ConcentricArcs({ data, centerLabel, height = 236 }: { data: ArcDatum[]; centerLabel?: string; height?: number }) {
+  const { colors } = useTheme()
   const dt = useDiffuseTheme()
   if (data.length === 0) return <EmptyChart height={height} />
   const n = data.length
   const w = CW, h = height
-  const cx = w / 2, cy = h - 8 // baseline near the bottom of the SVG
-  const pad = 8
-  // Fit ALL rings (stroke included) inside the box: the widest half-circle must
-  // clear both the top (cy - outerR - sw/2 ≥ pad) and the sides (outerR + sw/2 ≤ w/2 - pad).
-  const inner = 14
-  // Solve outerR so outerR + sw/2 fits; sw scales with the per-ring gap.
-  const maxByHeight = cy - pad
-  const maxByWidth = w / 2 - pad
-  const outerR = Math.min(maxByHeight, maxByWidth)
-  const gap = (outerR - inner) / n
-  const sw = Math.max(4, gap * 0.62)
-  // Pull the outermost ring in by half a stroke so the round cap stays inside.
-  const radFor = (i: number) => inner + gap * (i + 0.5) - sw / 2
-  const arcPath = (rad: number, frac: number) => {
-    const a0 = Math.PI, a1 = Math.PI + Math.max(0.02, frac) * Math.PI
-    const x0 = cx + rad * Math.cos(a0), y0 = cy + rad * Math.sin(a0)
-    const x1 = cx + rad * Math.cos(a1), y1 = cy + rad * Math.sin(a1)
-    const large = frac > 0.5 ? 1 : 0
-    return `M ${x0} ${y0} A ${rad} ${rad} 0 ${large} 1 ${x1} ${y1}`
-  }
+  const cx = w / 2, cy = h / 2
+  // Leave room at the rim for the value chips that sit just past each tip.
+  const rimPad = 30
+  const maxLen = Math.min(cx, cy) - rimPad
+  const hub = 16 // spokes start just outside the centre hub
+  const sw = 12  // spoke thickness (round caps)
+
+  const angleFor = (i: number) => (-Math.PI / 2) + (i / n) * Math.PI * 2
+  const pointAt = (ang: number, r: number) => ({ x: cx + Math.cos(ang) * r, y: cy + Math.sin(ang) * r })
+
   return (
     <View style={{ width: CW, alignSelf: 'center', height }}>
       <Svg width={w} height={h}>
+        {/* Ghost "max" tracks first, then filled spokes on top. */}
         {data.map((d, i) => {
-          const rad = radFor(i)
+          const ang = angleFor(i)
+          const a = pointAt(ang, hub)
+          const b = pointAt(ang, maxLen)
           return (
-            <G key={i}>
-              <Path d={arcPath(rad, 1)} stroke={dt.colors.line} strokeWidth={sw} fill="none" strokeLinecap="round" />
-              <Path d={arcPath(rad, Math.max(0.02, d.value / 10))} stroke={d.color} strokeWidth={sw} fill="none" strokeLinecap="round" />
-            </G>
+            <Line key={`track-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={dt.colors.line} strokeWidth={sw} strokeLinecap="round" />
           )
         })}
-        {centerLabel ? <SvgText x={cx} y={cy - 8} fontSize={22} fontWeight="800" fill={colors.text} textAnchor="middle" fontFamily={diffuseFont.display}>{centerLabel}</SvgText> : null}
+        {data.map((d, i) => {
+          const ang = angleFor(i)
+          const frac = Math.max(0.04, Math.min(1, d.value / 10))
+          const a = pointAt(ang, hub)
+          const b = pointAt(ang, hub + (maxLen - hub) * frac)
+          return (
+            <Line key={`spoke-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={d.color} strokeWidth={sw} strokeLinecap="round" />
+          )
+        })}
+        {/* Value chip at each spoke tip. */}
+        {data.map((d, i) => {
+          const ang = angleFor(i)
+          const tip = pointAt(ang, maxLen + 12)
+          // Nudge anchor by quadrant so chips never clip the SVG edge.
+          const cosA = Math.cos(ang)
+          const anchor = cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle'
+          return (
+            <SvgText
+              key={`val-${i}`}
+              x={tip.x}
+              y={tip.y + 4}
+              fontSize={11}
+              fill={dt.colors.ink}
+              textAnchor={anchor}
+              fontFamily={diffuseFont.mono}
+            >
+              {d.value.toFixed(1)}
+            </SvgText>
+          )
+        })}
+        {/* Centre hub + optional overall label. */}
+        <Circle cx={cx} cy={cy} r={hub} fill={dt.colors.surface} stroke={dt.colors.line} strokeWidth={1} />
+        {centerLabel ? <SvgText x={cx} y={cy + 6} fontSize={15} fontWeight="800" fill={colors.text} textAnchor="middle" fontFamily={diffuseFont.display}>{centerLabel}</SvgText> : null}
       </Svg>
     </View>
   )
@@ -1128,6 +1155,177 @@ export function AxesGlow({ rows, color, accent, height = 190 }: { rows: AxisRow[
             <Circle cx={p.x} cy={p.y} r={6 + rows[i].frac * 3} fill={p.watch ? acc : colors.text} />
           </G>
         ))}
+      </Svg>
+    </View>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KIDS VOCABULARY — distinct from the pregnancy shapes above. Playful, block/
+// bubble-based. Used only by KidsAnalytics detail sheets.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── BrickColumns ──── kids daily series (meals/sleep/sessions per day).
+// Each day is a column of rounded "toy bricks" stacked bottom-up, one brick per
+// whole unit (a fractional remainder draws a short half-brick). The latest /
+// highlighted day paints in the deeper accent; an empty day shows a small dot.
+export function BrickColumns({
+  data, labels, color, accent, highlightIndex, maxBricks = 6, height = 150,
+}: {
+  data: number[]
+  labels?: string[]
+  color: string          // resting brick hue (soft)
+  accent: string         // highlighted-day hue (deeper)
+  highlightIndex?: number // which day is "today" (defaults to last)
+  maxBricks?: number     // cap the visible stack; overflow compresses
+  height?: number
+}) {
+  if (data.length === 0) return <EmptyChart height={height} />
+  const { colors } = useTheme()
+  const dt = useDiffuseTheme()
+  const w = CW, n = data.length
+  const labelH = labels ? 20 : 0
+  const plotH = height - labelH
+  const colGap = 10
+  const colW = Math.min(38, (w - colGap * (n - 1)) / n)
+  const slotW = (w - colGap * (n - 1)) / n
+  const max = Math.max(...data, 1)
+  // Brick unit: scale so the tallest column ~fills the plot, but never exceed
+  // maxBricks bricks (bigger values just make each brick represent more).
+  const unit = Math.max(1, Math.ceil(max / maxBricks))
+  const brickH = 15, brickGap = 2
+  const hi = highlightIndex ?? n - 1
+
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={w} height={height}>
+        {data.map((v, i) => {
+          const cx = i * (slotW + 0) + slotW / 2
+          const x = cx - colW / 2
+          const isHi = i === hi && v > 0
+          // Base hue is a #rrggbb (accent or the resting colour); derive both the
+          // brick fill and the fainter frac-brick fill FROM THE HEX so withA()
+          // gets a valid input. Passing an already-rgba string to withA() makes
+          // it fall through to black — the earlier charcoal-brick bug.
+          const baseHue = isHi ? accent : color
+          const fill = isHi ? accent : withA(color, 0.85)
+          if (v <= 0) {
+            return <Circle key={i} cx={cx} cy={plotH - 6} r={3} fill={withA(colors.textMuted, 0.5)} />
+          }
+          const whole = Math.floor(v / unit)
+          const frac = (v - whole * unit) / unit
+          const bricks: React.ReactNode[] = []
+          let by = plotH - brickH
+          for (let b = 0; b < whole; b++) {
+            bricks.push(<Rect key={`b${b}`} x={x} y={by} width={colW} height={brickH} rx={6} fill={fill} />)
+            by -= brickH + brickGap
+          }
+          if (frac > 0.15) {
+            const fh = Math.max(6, brickH * frac)
+            bricks.push(<Rect key="frac" x={x} y={by + (brickH - fh)} width={colW} height={fh} rx={5} fill={withA(baseHue, 0.5)} />)
+          }
+          return <G key={i}>{bricks}</G>
+        })}
+        {labels ? labels.map((l, i) => {
+          const cx = i * (slotW + 0) + slotW / 2
+          const isHi = i === hi
+          return (
+            <SvgText key={i} x={cx} y={height - 6} fontSize={10} textAnchor="middle"
+              fill={isHi ? accent : dt.colors.ink3} fontFamily={diffuseFont.mono}>{l}</SvgText>
+          )
+        }) : null}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── DotCountRows ──── kids distribution (sleep-quality / eat-quality).
+// Each category is a row: name (serif) · a run of filled dots proportional to
+// its share · the % (mono). Distinct from pregnancy's flat StackedLozenges.
+export interface DotRow { label: string; pct: number; color: string }
+export function DotCountRows({ rows, height }: { rows: DotRow[]; height?: number }) {
+  const dt = useDiffuseTheme()
+  const total = 10 // dots represent tenths of the whole
+  const rowH = 34
+  const h = height ?? rows.length * rowH + 4
+  if (rows.length === 0) return <EmptyChart height={h} />
+  const dotR = 4.5, dotGap = 14, dotsX = 116
+  return (
+    <View style={{ width: CW, alignSelf: 'center' }}>
+      <Svg width={CW} height={h}>
+        {rows.map((r, i) => {
+          const y = i * rowH + rowH / 2
+          const filled = Math.max(1, Math.round((r.pct / 100) * total))
+          const dots: React.ReactNode[] = []
+          for (let d = 0; d < total; d++) {
+            const on = d < filled
+            dots.push(
+              <Circle key={d} cx={dotsX + d * dotGap} cy={y} r={dotR}
+                fill={on ? r.color : withA(r.color, 0.18)} />,
+            )
+          }
+          return (
+            <G key={r.label}>
+              <SvgText x={0} y={y + 4} fontSize={13} fill={dt.colors.ink} fontFamily={diffuseFont.display}>{r.label}</SvgText>
+              {dots}
+              <SvgText x={CW} y={y + 4} fontSize={12} textAnchor="end" fill={dt.colors.ink3} fontFamily={diffuseFont.mono}>{`${Math.round(r.pct)}%`}</SvgText>
+            </G>
+          )
+        })}
+      </Svg>
+    </View>
+  )
+}
+
+// ─── MilestoneTrail ──── kids growth over time (weight / height).
+// Bubbles sized by value sit on a soft connecting thread; the latest reading is
+// ringed. A continuous, gentle "connect-the-dots" line — distinct from
+// pregnancy's GlowAreaLine while still reading as a trend.
+export function MilestoneTrail({
+  data, labels, color, accent, height = 150,
+}: {
+  data: number[]
+  labels?: string[]
+  color: string
+  accent: string
+  height?: number
+}) {
+  const clean = data.filter((v) => Number.isFinite(v))
+  if (clean.length < 2) return <EmptyChart height={height} />
+  const dt = useDiffuseTheme()
+  const w = CW, padX = 22, labelH = labels ? 20 : 0
+  const plotH = height - labelH
+  const top = 22, bottom = plotH - 14
+  const min = Math.min(...clean), max = Math.max(...clean)
+  const range = Math.max(0.001, max - min)
+  const n = data.length
+  const xAt = (i: number) => padX + (i * (w - padX * 2)) / (n - 1)
+  const yAt = (v: number) => bottom - ((v - min) / range) * (bottom - top)
+  let thread = ''
+  data.forEach((v, i) => { thread += (i ? 'L' : 'M') + xAt(i).toFixed(1) + ',' + yAt(v).toFixed(1) })
+  const lastI = n - 1
+
+  return (
+    <View style={{ width: CW, alignSelf: 'center', height }}>
+      <Svg width={w} height={height}>
+        <Path d={thread} stroke={withA(color, 0.5)} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        {data.map((v, i) => {
+          const isLast = i === lastI
+          const r = isLast ? 12 : 9
+          return (
+            <G key={i}>
+              {isLast ? <Circle cx={xAt(i)} cy={yAt(v)} r={r + 5} fill="none" stroke={withA(accent, 0.4)} strokeWidth={1.5} /> : null}
+              <Circle cx={xAt(i)} cy={yAt(v)} r={r} fill={isLast ? accent : withA(color, 0.9)} />
+              <SvgText x={xAt(i)} y={yAt(v) + (isLast ? 4 : 3.5)} fontSize={isLast ? 11 : 9} textAnchor="middle"
+                fill={isLast ? '#FFFFFF' : dt.colors.ink} fontFamily={diffuseFont.mono}>
+                {v % 1 === 0 ? String(v) : v.toFixed(1)}
+              </SvgText>
+            </G>
+          )
+        })}
+        {labels ? labels.map((l, i) => (
+          <SvgText key={i} x={xAt(i)} y={height - 6} fontSize={9} textAnchor="middle" fill={dt.colors.ink3} fontFamily={diffuseFont.mono}>{l}</SvgText>
+        )) : null}
       </Svg>
     </View>
   )
