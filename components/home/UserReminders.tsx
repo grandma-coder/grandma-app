@@ -29,7 +29,7 @@ import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import type { JourneyMode } from '../../types'
-import { type Reminder, type ChecklistItem, storageKey as buildStorageKey, loadReminders, saveReminders, allTags } from '../../lib/reminders'
+import { type Reminder, storageKey as buildStorageKey, loadReminders, saveReminders, allTags } from '../../lib/reminders'
 
 interface Props {
   userId: string | null
@@ -360,16 +360,16 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
             {newTags.map((tag) => (
               <Pressable key={tag} onPress={() => setNewTags((prev) => prev.filter((x) => x !== tag))}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: colors.text, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 }}>
-                <Text style={{ fontFamily: font.bodyMedium, fontSize: 12, color: colors.text }}>{tag}</Text>
-                <X size={11} color={colors.textMuted} strokeWidth={2.5} />
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: diffuse ? dt.colors.ink : colors.text, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 }}>
+                <Text style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 12, color: diffuse ? dt.colors.ink : colors.text }}>{tag}</Text>
+                <X size={11} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2.5} />
               </Pressable>
             ))}
             <TextInput
               value={tagDraft}
               onChangeText={setTagDraft}
               placeholder={t('reminders_addTag')}
-              placeholderTextColor={colors.textFaint}
+              placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textFaint}
               onSubmitEditing={() => {
                 const v = tagDraft.trim().toLowerCase()
                 if (v && !newTags.includes(v)) setNewTags((prev) => [...prev, v])
@@ -377,7 +377,7 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
               }}
               returnKeyType="done"
               blurOnSubmit={false}
-              style={{ minWidth: 90, fontFamily: font.bodyMedium, fontSize: 13, color: colors.text, borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}
+              style={{ minWidth: 90, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 13, color: diffuse ? dt.colors.ink : colors.text, borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}
             />
           </View>
 
@@ -387,8 +387,17 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
               const on = newPriority === p
               return (
                 <Pressable key={p} onPress={() => setNewPriority(on ? null : p)}
-                  style={{ borderWidth: 1, borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.surfaceRaised : 'transparent', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
-                  <Text style={{ fontFamily: font.bodyMedium, fontSize: 12, color: on ? colors.text : colors.textMuted }}>
+                  style={{
+                    borderWidth: 1,
+                    borderColor: diffuse ? (on ? dt.colors.ink : dt.colors.line) : (on ? colors.text : colors.border),
+                    backgroundColor: on ? (diffuse ? dt.colors.line2 : colors.surfaceRaised) : 'transparent',
+                    borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6,
+                  }}>
+                  <Text style={{
+                    fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium,
+                    fontSize: 12,
+                    color: diffuse ? (on ? dt.colors.ink : dt.colors.ink3) : (on ? colors.text : colors.textMuted),
+                  }}>
                     {p === 'low' ? t('reminders_priorityLow') : p === 'med' ? t('reminders_priorityMed') : t('reminders_priorityHigh')}
                   </Text>
                 </Pressable>
@@ -401,9 +410,9 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
             value={newNotes}
             onChangeText={setNewNotes}
             placeholder={t('reminders_notesPlaceholder')}
-            placeholderTextColor={colors.textFaint}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textFaint}
             multiline
-            style={{ fontFamily: font.body, fontSize: 14, color: colors.text, borderWidth: 1, borderColor: colors.border, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44 }}
+            style={{ fontFamily: diffuse ? diffuseFont.body : font.body, fontSize: 14, color: diffuse ? dt.colors.ink : colors.text, borderWidth: 1, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44 }}
           />
 
           {showDatePicker && (
@@ -802,8 +811,8 @@ function ReminderRow({
           {(r.checklist ?? []).map((c) => (
             <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Pressable onPress={() => onUpdate(r.id, { checklist: (r.checklist ?? []).map((x) => x.id === c.id ? { ...x, done: !x.done } : x) })}
-                style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: c.done ? colors.text : (diffuse ? dt.colors.line2 : colors.border), backgroundColor: c.done ? colors.text : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {c.done ? <Check size={13} color={colors.bg} strokeWidth={3} /> : null}
+                style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: c.done ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.line2 : colors.border), backgroundColor: c.done ? (diffuse ? dt.colors.ink : colors.text) : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                {c.done ? <Check size={13} color={diffuse ? dt.colors.bg : colors.bg} strokeWidth={3} /> : null}
               </Pressable>
               <Text style={{ flex: 1, fontFamily: diffuse ? diffuseFont.body : font.body, fontSize: 14, color: diffuse ? dt.colors.ink : colors.text, textDecorationLine: c.done ? 'line-through' : 'none', opacity: c.done ? 0.6 : 1 }}>{c.text}</Text>
               <Pressable onPress={() => onUpdate(r.id, { checklist: (r.checklist ?? []).filter((x) => x.id !== c.id) })} hitSlop={8}>

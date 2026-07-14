@@ -97,7 +97,7 @@ export function CycleWallet() {
                       color: diffuse ? dt.colors.ink2 : colors.textMuted,
                     }}
                   >
-                    {`• ${r.text}${r.dueDate ? ` · ${r.dueDate}` : ''}`}
+                    {`• ${r.text}${r.dueDate ? ` · ${new Date(r.dueDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}`}
                   </Text>
                 ))}
               </View>
