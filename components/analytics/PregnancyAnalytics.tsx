@@ -186,6 +186,16 @@ function renderPillarGlyph(key: PillarKey, color: string, size = 18) {
   return <Character name={PREG_PILLAR_CHARACTER[key]} size={size + 6} color={color} />
 }
 
+// Ordered sticker-hue palette for the symptom list — the Insights "Top
+// Symptoms" card (StackedLozenges) and the detail-sheet breakdown share this so
+// the same symptom is the same colour in both, by rank. Takes the theme's
+// `stickers` (a hook value, so it can't live at module scope) and returns the
+// hue for a given row index.
+const SYMPTOM_HUE_KEYS = ['coral', 'yellow', 'blue', 'green', 'lilac'] as const
+function symptomHue(stickers: Record<string, string>, i: number): string {
+  return stickers[SYMPTOM_HUE_KEYS[i % SYMPTOM_HUE_KEYS.length]]
+}
+
 // ─── Trimester / week helpers ──────────────────────────────────────────────
 
 function trimesterFor(week: number): 1 | 2 | 3 {
@@ -652,7 +662,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                   data={symptomFreq.slice(0, 5).map((s, i) => ({
                     label: s.symptom,
                     value: s.count,
-                    color: [stickers.coral, stickers.yellow, stickers.blue, stickers.green, stickers.lilac][i % 5],
+                    color: symptomHue(stickers, i),
                   }))}
                 />
               </View>
@@ -1852,7 +1862,6 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const ink = diffuse ? dt.colors.ink : colors.text
   const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
@@ -1875,39 +1884,84 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
         ]}
       />
 
-      <PaperCard title="Breakdown">
-        {symptomFreq.length > 0 ? (
-          <View style={{ gap: 8 }}>
-            {symptomFreq.map((s) => {
-              const pct = Math.round((s.count / Math.max(total, 1)) * 100)
-              return (
-                <View key={s.symptom}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium, textTransform: 'capitalize' }}>
-                      {s.symptom}
-                    </Text>
-                    <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
+      {diffuse ? (
+        // De-carded breakdown — hairline top rule + mono eyebrow, and each bar
+        // carries the SAME per-symptom sticker hue as the "Top Symptoms" card
+        // it was opened from (via symptomHue by rank), so the chart is
+        // consistent inside and outside instead of a monochrome accent version.
+        <View style={{ marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16 }}>
+          <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>Breakdown</Text>
+          {symptomFreq.length > 0 ? (
+            <View style={{ gap: 12 }}>
+              {symptomFreq.map((s, i) => {
+                const pct = Math.round((s.count / Math.max(total, 1)) * 100)
+                const hue = symptomHue(stickers, i)
+                return (
+                  <View key={s.symptom}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <Text style={{ color: ink, fontSize: 13, fontFamily: diffuseFont.body, textTransform: 'capitalize' }}>
+                        {s.symptom}
+                      </Text>
+                      <Text style={{ color: muted, fontSize: 12, fontFamily: diffuseFont.mono }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
+                    </View>
+                    <View style={{ height: 4, borderRadius: 999, backgroundColor: dt.colors.line, overflow: 'hidden' }}>
+                      <View style={{ width: `${pct}%`, height: '100%', backgroundColor: hue, borderRadius: 999 }} />
+                    </View>
                   </View>
-                  <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: diffuse ? dt.colors.line : stickers.yellowSoft, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: diffuse ? dAccent : stickers.yellow, borderRadius: 3 }} />
+                )
+              })}
+            </View>
+          ) : (
+            <Body size={13} color={muted}>{t('preg_analytics_no_symptoms')}</Body>
+          )}
+        </View>
+      ) : (
+        <PaperCard title="Breakdown">
+          {symptomFreq.length > 0 ? (
+            <View style={{ gap: 8 }}>
+              {symptomFreq.map((s, i) => {
+                const pct = Math.round((s.count / Math.max(total, 1)) * 100)
+                const hue = symptomHue(stickers, i)
+                return (
+                  <View key={s.symptom}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={{ color: ink, fontSize: 13, fontFamily: font.bodyMedium, textTransform: 'capitalize' }}>
+                        {s.symptom}
+                      </Text>
+                      <Text style={{ color: muted, fontSize: 12 }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
+                    </View>
+                    <View style={{ height: 6, borderRadius: 3, backgroundColor: hue + '33', overflow: 'hidden' }}>
+                      <View style={{ width: `${pct}%`, height: '100%', backgroundColor: hue, borderRadius: 3 }} />
+                    </View>
                   </View>
-                </View>
-              )
-            })}
-          </View>
-        ) : (
-          <Body size={13} color={muted}>{t('preg_analytics_no_symptoms')}</Body>
-        )}
-      </PaperCard>
+                )
+              })}
+            </View>
+          ) : (
+            <Body size={13} color={muted}>{t('preg_analytics_no_symptoms')}</Body>
+          )}
+        </PaperCard>
+      )}
 
       {severeHits.length > 0 ? (
-        <PaperCard title="Worth a call">
-          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-            You've logged{' '}
-            <Body size={13} color={ink}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
-            . These can be normal but warrant a call to your provider — especially if persistent or severe.
-          </Body>
-        </PaperCard>
+        diffuse ? (
+          <View style={{ marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16 }}>
+            <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>Worth a call</Text>
+            <Body size={13} color={sec} style={{ lineHeight: 20 }}>
+              You've logged{' '}
+              <Body size={13} color={ink}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
+              . These can be normal but warrant a call to your provider — especially if persistent or severe.
+            </Body>
+          </View>
+        ) : (
+          <PaperCard title="Worth a call">
+            <Body size={13} color={sec} style={{ lineHeight: 20 }}>
+              You've logged{' '}
+              <Body size={13} color={ink}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
+              . These can be normal but warrant a call to your provider — especially if persistent or severe.
+            </Body>
+          </PaperCard>
+        )
       ) : null}
 
       <TrimesterTip trimester={trimester} kind="symptoms" weekNumber={weekNumber} />
@@ -2860,13 +2914,39 @@ function StatTilesRow({
 }) {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const bg = tint ?? colors.surface
 
   if (diffuse) {
+    // De-carded: one hairline strip split by interior dividers, value on top +
+    // mono caption below — replaces three boxed DiffuseMetricTiles so the top of
+    // every detail sheet reads as one considered stat row, matching the
+    // de-carded sections below it.
     return (
-      <View style={styles.statTilesRow}>
+      <View style={[styles.calloutRow, { borderColor: dt.colors.line }]}>
         {items.map((it, i) => (
-          <DiffuseMetricTile key={it.label + i} value={it.value} label={it.label} />
+          <View
+            key={it.label + i}
+            style={[
+              styles.statStripCell,
+              i < items.length - 1 && {
+                borderRightWidth: StyleSheet.hairlineWidth,
+                borderRightColor: dt.colors.line,
+              },
+            ]}
+          >
+            <Text
+              style={[styles.statStripValue, { color: dt.colors.ink }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              {it.value}
+            </Text>
+            <Text style={[styles.statStripLabel, { color: dt.colors.ink3 }]} numberOfLines={1}>
+              {it.label}
+            </Text>
+          </View>
         ))}
       </View>
     )
@@ -3507,6 +3587,28 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontFamily: diffuseFont.display,
     letterSpacing: -0.3,
+  },
+  // Numeric stat strip (value on top, mono caption below) — shares the
+  // calloutRow hairline strip; used by every detail-sheet StatTilesRow.
+  statStripCell: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    gap: 5,
+  },
+  statStripValue: {
+    fontSize: 26,
+    fontFamily: diffuseFont.display,
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  statStripLabel: {
+    fontSize: 9,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    fontFamily: diffuseFont.mono,
+    textAlign: 'center',
   },
   // Bare section eyebrow (Diffuse) — mirrors PaperCard's diffuse title so
   // de-carded sections keep the same label rhythm without a box around them.
