@@ -26,7 +26,6 @@ import {
   useTheme,
   useDiffuseTheme,
   diffuseFont,
-  getDiffuseAccent,
   stickers as stickersLight,
   stickersDark,
   getModeColor,
@@ -45,6 +44,8 @@ import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } fro
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import { ExamForm } from '../exams/ExamForm'
 import { StepSlider } from '../ui/StepSlider'
+import { NumberStepper } from '../ui/NumberStepper'
+import { diffuseLogHue, DIFFUSE_LOG_CHARACTER } from './DiffuseLogTimeline'
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
@@ -176,7 +177,7 @@ export function PregnancyMoodForm({
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('mood')
   const s = isDark ? stickersDark : stickersLight
   const { t } = useTranslation()
   const [mood, setMood] = useState<string | null>(null)
@@ -300,7 +301,7 @@ export function PregnancySymptomsForm({
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('symptom')
   const s = isDark ? stickersDark : stickersLight
   const { t } = useTranslation()
   const [selected, setSelected] = useState<string[]>([])
@@ -429,7 +430,7 @@ export function AppointmentForm({
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('appointment')
   const s = isDark ? stickersDark : stickersLight
   const [type, setType] = useState<string | null>(null)
   const [customType, setCustomType] = useState('')
@@ -624,7 +625,7 @@ export function KickCountForm({
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('kick_count')
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [count, setCount] = useState(0)
@@ -828,7 +829,8 @@ function SaveButton({
 
   if (diffuse) {
     // Containerless action: mono-caps label + arrow on a top hairline rule.
-    const dAccent = getDiffuseAccent('preg', dt.isDark)
+    // The Save arrow is shared across every log form, so it stays neutral ink
+    // (not a behavior/log hue) to avoid clashing with each modal's own color.
     return (
       <Pressable
         onPress={saving || isDisabled ? undefined : onPress}
@@ -841,7 +843,7 @@ function SaveButton({
             <Text style={[dstyles.saveLabelD, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>
               {label ?? 'Save'}
             </Text>
-            <DiffuseArrow color={dAccent} size={18} />
+            <DiffuseArrow color={dt.colors.ink3} size={18} />
           </>
         )}
       </Pressable>
@@ -903,7 +905,9 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const sliderColor = diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)
+  // Diffuse: slider follows the log-type hue (sleep → lilac) instead of the
+  // pregnancy behavior accent, so each modal reads as its own thing.
+  const sliderColor = diffuse ? diffuseLogHue('sleep') : getModeColor('preg', isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [hours, setHours] = useState(7)
@@ -941,6 +945,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
         onChange={setHours}
         color={sliderColor}
         unit={hours === 1 ? 'hour' : 'hours'}
+        blob={diffuse ? DIFFUSE_LOG_CHARACTER['sleep'] : undefined}
       />
       {diffuse ? <DiffuseFieldLabel>{t('preg_form_sleep_qualityRange')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_qualityRange')}</Text>}
       <StepSlider
@@ -949,6 +954,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
         value={quality}
         onChange={setQuality}
         color={sliderColor}
+        blob={diffuse ? DIFFUSE_LOG_CHARACTER['sleep'] : undefined}
       />
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
@@ -963,7 +969,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('exercise')
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [exerciseType, setExerciseType] = useState<string | null>('Walk')
@@ -1054,8 +1060,9 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
         max={120}
         value={minutes}
         onChange={setMinutes}
-        color={diffuse ? dAccent : getModeColor('preg', isDark)}
+        color={diffuse ? diffuseLogHue('exercise') : getModeColor('preg', isDark)}
         unit="min"
+        blob={diffuse ? DIFFUSE_LOG_CHARACTER['exercise'] : undefined}
       />
       <SaveButton onPress={save} saving={saving} disabled={!canSave} />
     </View>
@@ -1070,7 +1077,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('nutrition')
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [tags, setTags] = useState<string[]>([])
@@ -1193,8 +1200,9 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
         max={20}
         value={sets}
         onChange={setSets}
-        color={diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)}
+        color={diffuse ? diffuseLogHue('kegel') : getModeColor('preg', isDark)}
         unit={sets === 1 ? 'set' : 'sets'}
+        blob={diffuse ? DIFFUSE_LOG_CHARACTER['kegel'] : undefined}
       />
       <SaveButton onPress={save} saving={saving} disabled={false} />
     </View>
@@ -1207,7 +1215,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
   const { colors, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('water')
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [glasses, setGlasses] = useState(1)
@@ -1321,17 +1329,25 @@ function Droplet({ filled, fill, stroke, muted }: { filled: boolean; fill: strin
 // ─── Vitamins Log Form ─────────────────────────────────────────────────────
 
 export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, isDark } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const dAccent = diffuseLogHue('vitamins')
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
+  const [taken, setTaken] = useState<boolean | null>(null)
   const [saving, setSaving] = useState(false)
 
+  const OPTIONS: { value: boolean; label: string }[] = [
+    { value: true, label: t('common_yes') },
+    { value: false, label: t('common_no') },
+  ]
+
   async function save() {
+    if (taken === null) return
     setSaving(true)
     try {
-      await savePregnancyLog(date, 'vitamins', '1', undefined)
+      await savePregnancyLog(date, 'vitamins', taken ? '1' : '0', undefined)
       onSaved()
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
@@ -1356,7 +1372,39 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
         : { color: colors.textSecondary, textAlign: 'center' }]}>
         {t('preg_form_vitamins_question')}
       </Text>
-      <SaveButton onPress={save} saving={saving} disabled={false} />
+      <View style={[styles.chipRow, { justifyContent: 'center' }]}>
+        {OPTIONS.map((opt) => {
+          const active = taken === opt.value
+          if (diffuse) {
+            return (
+              <DiffuseChip
+                key={opt.label}
+                label={opt.label}
+                selected={active}
+                accent={dAccent}
+                onPress={() => setTaken(opt.value)}
+              />
+            )
+          }
+          return (
+            <Pressable
+              key={opt.label}
+              onPress={() => setTaken(opt.value)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: active ? getModeColor('preg', isDark) + '24' : colors.surface,
+                  borderColor: active ? getModeColor('preg', isDark) : colors.border,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text style={[styles.chipText, { color: active ? getModeColor('preg', isDark) : colors.text }]}>{opt.label}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
+      <SaveButton onPress={save} saving={saving} disabled={taken === null} />
     </View>
   )
 }
@@ -1369,7 +1417,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('appointment')
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [nestingTitle, setNestingTitle] = useState('')
@@ -1482,7 +1530,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
+  const dAccent = diffuseLogHue('appointment')
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [birthPrepTitle, setBirthPrepTitle] = useState('')
@@ -1575,7 +1623,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
         max={42}
         value={dueWeek}
         onChange={setDueWeek}
-        color={diffuse ? dAccent : getModeColor('preg', isDark)}
+        color={diffuse ? diffuseLogHue('appointment') : getModeColor('preg', isDark)}
         unit={`week${dueWeek === 1 ? '' : 's'}`}
       />
       <Pressable
@@ -1602,7 +1650,8 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
   const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const sliderColor = diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)
+  // Diffuse: slider follows the contraction hue (coral) instead of the behavior accent.
+  const sliderColor = diffuse ? diffuseLogHue('contraction') : getModeColor('preg', isDark)
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
   const [durationSec, setDurationSec] = useState(45)
@@ -1641,6 +1690,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
         onChange={setDurationSec}
         color={sliderColor}
         unit="sec"
+        blob={diffuse ? DIFFUSE_LOG_CHARACTER['contraction'] : undefined}
       />
       {diffuse ? <DiffuseFieldLabel>{t('preg_form_contraction_intervalLabel')}</DiffuseFieldLabel> : <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('preg_form_contraction_intervalLabel')}</Text>}
       <StepSlider
@@ -1650,6 +1700,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
         onChange={setIntervalMin}
         color={sliderColor}
         unit={intervalMin === 1 ? 'minute' : 'minutes'}
+        blob={diffuse ? DIFFUSE_LOG_CHARACTER['contraction'] : undefined}
       />
       <TextInput
         value={contractionNotes}
@@ -1669,23 +1720,25 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
 // ─── Weight Log Form ──────────────────────────────────────────────────────
 
 export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => void }) {
-  const { colors, radius, isDark, font } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
-  const [weight, setWeight] = useState('70')
+  // Weight is dialed with a stepper (±0.1 kg) rather than typed — nudge up/down
+  // from a sensible default instead of erasing and retyping the number.
+  const [weight, setWeight] = useState(70)
   const [saving, setSaving] = useState(false)
+  const accent = diffuse ? diffuseLogHue('weight') : (isDark ? stickersDark.peach : stickersLight.peach)
 
   async function save() {
-    const parsed = parseFloat(weight)
-    if (isNaN(parsed) || parsed <= 0) {
+    if (isNaN(weight) || weight <= 0) {
       Alert.alert('Invalid', 'Please enter a valid weight.')
       return
     }
     setSaving(true)
     try {
-      await savePregnancyLog(date, 'weight', parsed.toString(), undefined)
+      await savePregnancyLog(date, 'weight', weight.toString(), undefined)
       onSaved()
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
@@ -1709,17 +1762,18 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
       <View style={[styles.weightCard, diffuse
         ? { backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 20 }
         : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
-        <TextInput
+        <NumberStepper
           value={weight}
-          onChangeText={setWeight}
-          keyboardType="decimal-pad"
-          placeholder="68.5"
-          placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
-          style={[styles.weightInput, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}
+          onChange={setWeight}
+          step={0.1}
+          min={20}
+          max={250}
+          precision={1}
+          unit={t('preg_form_weight_kgLabel')}
+          color={accent}
         />
-        <Text style={[styles.weightUnit, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('preg_form_weight_kgLabel')}</Text>
       </View>
-      <SaveButton onPress={save} saving={saving} disabled={weight.trim() === ''} />
+      <SaveButton onPress={save} saving={saving} disabled={weight <= 0} />
     </View>
   )
 }
@@ -1854,22 +1908,9 @@ const styles = StyleSheet.create({
   },
 
   weightCard: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
     borderWidth: 1,
-    paddingVertical: 24,
-    paddingHorizontal: 24,
-    gap: 8,
-  },
-  weightInput: {
-    fontSize: 48,
-    minWidth: 100,
-    textAlign: 'right',
-    padding: 0,
-  },
-  weightUnit: {
-    fontSize: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
 
   // ── Water log card ───────────────────────────────────────────────────────
