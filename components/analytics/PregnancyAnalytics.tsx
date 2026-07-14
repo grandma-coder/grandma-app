@@ -3039,9 +3039,26 @@ function Pill({ color, tint, label }: { color: string; tint: string; label: stri
 function TrimesterTip({
   trimester, kind, weekNumber,
 }: { trimester: 1 | 2 | 3; kind: PillarKey; weekNumber: number }) {
-  const { colors, stickers } = useTheme()
+  const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
   const tip = trimesterCopy(kind, trimester, weekNumber)
   if (!tip) return null
+
+  // Diffuse: a de-carded footnote — hairline rule + mono eyebrow + text on the
+  // page — so it matches the "How it's computed" note it follows instead of
+  // reintroducing a white box at the bottom of the sheet.
+  if (diffuse) {
+    return (
+      <View style={{ marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16 }}>
+        <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>{`Trimester ${trimester} note`}</Text>
+        <Body size={13} color={dt.colors.ink2} style={{ lineHeight: 20 }}>
+          {tip}
+        </Body>
+      </View>
+    )
+  }
+
   return (
     <PaperCard title={`Trimester ${trimester} note`}>
       <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
