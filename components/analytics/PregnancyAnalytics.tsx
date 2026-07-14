@@ -1421,36 +1421,49 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
         </View>
       )}
 
-      <StatTilesRow
-        tint={accentTint}
-        color={accentColor}
-        items={[
-          { label: 'Strongest', value: strongest.label },
-          { label: 'Watch', value: weakest.label },
-          { label: 'Trimester', value: String(trimester) },
-        ]}
-      />
+      {diffuse ? (
+        <WellbeingCallouts
+          strongest={{ label: strongest.label, color: strongest.color }}
+          watch={{ label: weakest.label, color: weakest.color }}
+          trimester={String(trimester)}
+        />
+      ) : (
+        <StatTilesRow
+          tint={accentTint}
+          color={accentColor}
+          items={[
+            { label: 'Strongest', value: strongest.label },
+            { label: 'Watch', value: weakest.label },
+            { label: 'Trimester', value: String(trimester) },
+          ]}
+        />
+      )}
 
-      <PaperCard title="Five pillars">
-        {diffuse ? (
-          // Concentric half-donut arcs — one ring per pillar, each its own hue,
-          // sweep = score. Replaces the five identical violet progress bars.
-          <>
-            <ConcentricArcs
-              data={pillars.map((p) => ({ value: wellbeing[p.key] as number, color: p.color } as ArcDatum))}
-            />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 6 }}>
-              {pillars.map((p) => (
-                <View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  <View style={{ width: 9, height: 9, borderRadius: 999, backgroundColor: p.color }} />
-                  <Text style={{ color: dt.colors.ink2, fontSize: 11, fontFamily: diffuseFont.mono }}>
-                    {p.label} {(wellbeing[p.key] as number).toFixed(1)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </>
-        ) : (
+      {diffuse ? (
+        // De-carded: the chart + legend breathe on the page under a plain
+        // eyebrow, so the sheet isn't a stack of nested white boxes.
+        <View style={{ marginTop: 4 }}>
+          <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>Five pillars</Text>
+          <ConcentricArcs
+            data={pillars.map((p) => ({ value: wellbeing[p.key] as number, color: p.color } as ArcDatum))}
+          />
+          {/* Legend key — each pillar's colour, name and score on its own row. */}
+          <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, marginTop: 16, paddingTop: 16, gap: 12 }}>
+            {pillars.map((p) => (
+              <View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 9, height: 9, borderRadius: 999, backgroundColor: p.color }} />
+                <Text style={{ flex: 1, color: dt.colors.ink2, fontSize: 12, fontFamily: diffuseFont.mono }}>
+                  {p.label}
+                </Text>
+                <Text style={{ color: dt.colors.ink, fontSize: 12, fontFamily: diffuseFont.mono }}>
+                  {(wellbeing[p.key] as number).toFixed(1)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      ) : (
+        <PaperCard title="Five pillars">
           <View style={{ gap: 12 }}>
             {pillars.map((p) => {
               const v = wellbeing[p.key] as number
@@ -1470,18 +1483,32 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
               )
             })}
           </View>
-        )}
-      </PaperCard>
+        </PaperCard>
+      )}
 
-      <PaperCard title="How it's computed">
-        <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-          Each pillar scores 0–10 from your last 7 days of logs.{' '}
-          <Body size={13} color={ink}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
-          <Body size={13} color={ink}>{'Mood'}</Body>{' '}counts positive entries.{' '}
-          <Body size={13} color={ink}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
-          logs-per-day against healthy pregnancy targets. Overall = average × 10.
-        </Body>
-      </PaperCard>
+      {diffuse ? (
+        // Footnote, not a card — a hairline rule + eyebrow, text on the page.
+        <View style={{ marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16 }}>
+          <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>How it's computed</Text>
+          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
+            Each pillar scores 0–10 from your last 7 days of logs.{' '}
+            <Body size={13} color={ink}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
+            <Body size={13} color={ink}>{'Mood'}</Body>{' '}counts positive entries.{' '}
+            <Body size={13} color={ink}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
+            logs-per-day against healthy pregnancy targets. Overall = average × 10.
+          </Body>
+        </View>
+      ) : (
+        <PaperCard title="How it's computed">
+          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
+            Each pillar scores 0–10 from your last 7 days of logs.{' '}
+            <Body size={13} color={ink}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
+            <Body size={13} color={ink}>{'Mood'}</Body>{' '}counts positive entries.{' '}
+            <Body size={13} color={ink}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
+            logs-per-day against healthy pregnancy targets. Overall = average × 10.
+          </Body>
+        </PaperCard>
+      )}
 
       <TrimesterTip trimester={trimester} kind="wellbeing" weekNumber={weekNumber} />
     </>
@@ -2770,6 +2797,60 @@ function PaperCard({
   )
 }
 
+// Wellbeing summary row — three read-outs that answer "which pillar is
+// strongest / needs watching / which trimester". Unlike DiffuseMetricTile
+// (number value on top), here the value is a *word* (a pillar name), so the
+// hierarchy is flipped: the category is the eyebrow on top and the answer sits
+// below at a single fixed size (no per-tile shrink jitter). The two pillar
+// cells carry the star chart's hue as a small dot so the row ties back to the
+// graph above it.
+function WellbeingCallouts({
+  strongest, watch, trimester,
+}: {
+  strongest: { label: string; color: string }
+  watch: { label: string; color: string }
+  trimester: string
+}) {
+  const dt = useDiffuseTheme()
+  const c = dt.colors
+  const cells: { eyebrow: string; value: string; dot?: string }[] = [
+    { eyebrow: 'Strongest', value: strongest.label, dot: strongest.color },
+    { eyebrow: 'Watch',     value: watch.label,     dot: watch.color },
+    { eyebrow: 'Trimester', value: trimester },
+  ]
+  return (
+    <View style={[styles.calloutRow, { borderColor: c.line }]}>
+      {cells.map((cell, i) => (
+        <View
+          key={cell.eyebrow}
+          style={[
+            styles.calloutCell,
+            i < cells.length - 1 && {
+              borderRightWidth: StyleSheet.hairlineWidth,
+              borderRightColor: c.line,
+            },
+          ]}
+        >
+          <Text style={[styles.calloutEyebrow, { color: c.ink3 }]} numberOfLines={1}>
+            {cell.eyebrow}
+          </Text>
+          <View style={styles.calloutValueRow}>
+            {cell.dot ? <View style={[styles.calloutDot, { backgroundColor: cell.dot }]} /> : null}
+            <Text
+              style={[styles.calloutValue, { color: c.ink }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
+              {cell.value}
+            </Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  )
+}
+
 function StatTilesRow({
   items, tint, color,
 }: {
@@ -3372,6 +3453,53 @@ const styles = StyleSheet.create({
   statTilesRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  // Wellbeing summary — a single hairline-bordered strip split into three
+  // cells by interior hairlines (no gap between boxes), so it reads as one
+  // considered read-out row rather than three floating cards.
+  calloutRow: {
+    flexDirection: 'row',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  calloutCell: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    gap: 7,
+  },
+  calloutEyebrow: {
+    fontSize: 9,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    fontFamily: diffuseFont.mono,
+  },
+  calloutValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  calloutDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+  },
+  calloutValue: {
+    fontSize: 19,
+    fontFamily: diffuseFont.display,
+    letterSpacing: -0.3,
+  },
+  // Bare section eyebrow (Diffuse) — mirrors PaperCard's diffuse title so
+  // de-carded sections keep the same label rhythm without a box around them.
+  // Colour is applied inline from dt.colors.ink3 (theme token).
+  diffuseEyebrow: {
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    fontFamily: diffuseFont.mono,
+    marginBottom: 12,
   },
   statTile: {
     flex: 1,
