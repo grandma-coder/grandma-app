@@ -1814,10 +1814,9 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
 }
 
 function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
-  const { colors, stickers, font } = useTheme()
+  const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
   const ink = diffuse ? dt.colors.ink : colors.text
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()

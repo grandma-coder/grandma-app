@@ -10,7 +10,8 @@ import Svg, {
   Circle, Rect, Line, Path, G,
   Text as SvgText,
 } from 'react-native-svg'
-import { useTheme, brand, font } from '../../constants/theme'
+import { useTheme, brand, font, diffuseFont } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 
@@ -659,6 +660,7 @@ const BUBBLE_MAX_SIZE = 140
 
 export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
   const { isDark, colors } = useTheme()
+  const diffuse = useIsDiffuse()
   const ink = isDark ? colors.text : '#141313'
   const inkMuted = isDark ? colors.textMuted : 'rgba(20,19,19,0.55)'
 
@@ -708,13 +710,37 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
                 stroke={stroke}
               />
             </View>
-            <Text style={[bubbleClusterStyles.bubbleCount, { color: ink }]}>
+            {/* Under Diffuse the sheet is Hanken (sans) + Space Mono (data);
+                the current variant's chunky Fraunces_800 serif reads as a
+                foreign face there. Repoint each glyph to the Diffuse type roles:
+                count → numHero (focal number), label → sans, pct → mono data. */}
+            <Text
+              style={[
+                bubbleClusterStyles.bubbleCount,
+                { color: ink },
+                // numHero role = diffuseFont.display (the focal-number face).
+                diffuse && { fontFamily: diffuseFont.display },
+              ]}
+            >
               {item.count}
             </Text>
-            <Text style={[bubbleClusterStyles.bubbleLabel, { color: ink }]} numberOfLines={1}>
+            <Text
+              style={[
+                bubbleClusterStyles.bubbleLabel,
+                { color: ink },
+                diffuse && { fontFamily: diffuseFont.bodySemiBold },
+              ]}
+              numberOfLines={1}
+            >
               {label}
             </Text>
-            <Text style={[bubbleClusterStyles.bubblePct, { color: inkMuted }]}>
+            <Text
+              style={[
+                bubbleClusterStyles.bubblePct,
+                { color: inkMuted },
+                diffuse && { fontFamily: diffuseFont.mono, fontStyle: 'normal' },
+              ]}
+            >
               {pct}%
             </Text>
           </View>
