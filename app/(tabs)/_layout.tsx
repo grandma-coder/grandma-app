@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, ReactElement } from 'react'
-import { View, Text, Pressable, Modal, Animated, StyleSheet, Dimensions } from 'react-native'
+import { View, Text, Pressable, Modal, Animated, StyleSheet, Dimensions, Easing } from 'react-native'
 import { Tabs, router } from 'expo-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getUnreadCount } from '../../lib/notifications'
@@ -149,6 +149,9 @@ function CenterTabButton() {
   const overlayAnim = useRef(new Animated.Value(0)).current
   const spinAnim = useRef(new Animated.Value(0)).current
   const itemAnims = useRef(WHEEL_ITEMS.map(() => new Animated.Value(0))).current
+  // Aurora swirl — a slow continuous rotation of the pastel bloom field behind
+  // the menu, so it drifts like the reference gradient instead of sitting flat.
+  const auroraSpin = useRef(new Animated.Value(0)).current
   // Diffuse FAB press feedback — a slight squish on touch-down that springs back
   // on release, so the eye button feels tactile (the "little slight effect").
   const fabPress = useRef(new Animated.Value(1)).current
@@ -158,6 +161,12 @@ function CenterTabButton() {
     setFocusedIdx(Math.floor(WHEEL_ITEMS.length / 2))
     Animated.timing(overlayAnim, { toValue: 1, duration: 260, useNativeDriver: true }).start()
     Animated.spring(spinAnim, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }).start()
+    // Kick off the slow aurora swirl loop (28s per full turn — barely
+    // perceptible frame-to-frame, dreamy over time).
+    auroraSpin.setValue(0)
+    Animated.loop(
+      Animated.timing(auroraSpin, { toValue: 1, duration: 28000, easing: Easing.linear, useNativeDriver: true }),
+    ).start()
     // Fan (leque) open — stagger per item, spring out from pivot
     itemAnims.forEach((anim, i) => {
       Animated.spring(anim, {
@@ -168,7 +177,7 @@ function CenterTabButton() {
         useNativeDriver: true,
       }).start()
     })
-  }, [overlayAnim, spinAnim, itemAnims])
+  }, [overlayAnim, spinAnim, itemAnims, auroraSpin])
 
   const animateClose = useCallback(() => {
     ;[...itemAnims].reverse().forEach((anim, i) => {
@@ -177,8 +186,9 @@ function CenterTabButton() {
     Animated.spring(spinAnim, { toValue: 0, friction: 6, tension: 80, useNativeDriver: true }).start()
     Animated.timing(overlayAnim, { toValue: 0, duration: 220, delay: 80, useNativeDriver: true }).start(() => {
       setOpen(false)
+      auroraSpin.stopAnimation()
     })
-  }, [overlayAnim, spinAnim, itemAnims])
+  }, [overlayAnim, spinAnim, itemAnims, auroraSpin])
 
   function handleItem(route: string) {
     animateClose()
@@ -276,21 +286,36 @@ function CenterTabButton() {
             subtitle; tap a word to focus, tap the focused word (or GO) to go. */}
         {diffuse ? (
           <>
-            {/* Aurora field — layered multi-hue blooms (pink · coral · peach ·
-                blue · lilac) drifting across the canvas, blended over the mode
-                accent. Each SoftBloom fades to transparent at its edge, so
-                overlapping them yields a soft pastel-gradient wash rather than
-                one flat mode tint. Opacities are lower in dark so it stays calm. */}
-            <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: overlayAnim }]}>
-              {/* Mode-accent anchor — keeps the menu feeling on-brand for the journey. */}
-              <SoftBloom color={accentColor} cx="50%" cy="44%" opacity={dt.isDark ? 0.34 : 0.42} spread={0.4} radius="62%" />
-              {/* Warm top-left pink → coral core, matching the reference aurora. */}
-              <SoftBloom color={StickerPalette.pink} cx="26%" cy="30%" opacity={dt.isDark ? 0.3 : 0.5} spread={0.45} radius="60%" />
-              <SoftBloom color={StickerPalette.coral} cx="42%" cy="58%" opacity={dt.isDark ? 0.26 : 0.4} spread={0.4} radius="52%" />
-              <SoftBloom color={StickerPalette.peach} cx="34%" cy="72%" opacity={dt.isDark ? 0.24 : 0.36} spread={0.42} radius="48%" />
-              {/* Cool sky-blue drift on the right edge for the pastel contrast. */}
-              <SoftBloom color={StickerPalette.blue} cx="82%" cy="34%" opacity={dt.isDark ? 0.3 : 0.46} spread={0.42} radius="56%" />
-              <SoftBloom color={StickerPalette.lilac} cx="74%" cy="70%" opacity={dt.isDark ? 0.24 : 0.34} spread={0.4} radius="50%" />
+            {/* Aurora swirl — a spiral of pastel blooms (pink · coral · peach
+                arms winding around a soft blue/lilac core) that slowly rotates
+                as one field, so it drifts like the reference gradient. The
+                container is scaled up ~1.7× so its corners never expose the bare
+                scrim while it turns. Each SoftBloom fades to transparent at its
+                edge; overlapping them yields the soft pastel-gradient wash.
+                Opacities scale down in dark to stay calm. */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  opacity: overlayAnim,
+                  transform: [
+                    { scale: 1.7 },
+                    { rotate: auroraSpin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) },
+                  ],
+                },
+              ]}
+            >
+              {/* Cool core — soft blue + lilac at the swirl's eye. */}
+              <SoftBloom color={StickerPalette.blue} cx="50%" cy="50%" opacity={dt.isDark ? 0.32 : 0.5} spread={0.32} radius="42%" />
+              <SoftBloom color={StickerPalette.lilac} cx="58%" cy="56%" opacity={dt.isDark ? 0.24 : 0.36} spread={0.34} radius="38%" />
+              {/* Mode-accent anchor — keeps the menu on-brand for the journey. */}
+              <SoftBloom color={accentColor} cx="44%" cy="42%" opacity={dt.isDark ? 0.3 : 0.4} spread={0.36} radius="46%" />
+              {/* Warm arms spiralling outward — pink → coral → peach. */}
+              <SoftBloom color={StickerPalette.pink} cx="24%" cy="26%" opacity={dt.isDark ? 0.34 : 0.56} spread={0.44} radius="54%" />
+              <SoftBloom color={StickerPalette.coral} cx="76%" cy="30%" opacity={dt.isDark ? 0.28 : 0.44} spread={0.4} radius="48%" />
+              <SoftBloom color={StickerPalette.peach} cx="72%" cy="76%" opacity={dt.isDark ? 0.28 : 0.46} spread={0.42} radius="50%" />
+              <SoftBloom color={StickerPalette.pink} cx="26%" cy="78%" opacity={dt.isDark ? 0.3 : 0.5} spread={0.42} radius="50%" />
             </Animated.View>
 
             {/* Prompt — lowercase Swiss, accent name. */}
