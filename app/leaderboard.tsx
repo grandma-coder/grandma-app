@@ -48,6 +48,7 @@ import {
   DiffuseEmptyState,
   DiffuseBloomIcon,
 } from '../components/ui/diffuse/DiffusePrimitives'
+import { Character } from '../components/characters/Characters'
 import { useModeStore } from '../store/useModeStore'
 import { useTranslation } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
@@ -1028,7 +1029,7 @@ function SoloCheer() {
       >
         <View style={{ marginBottom: 6 }} pointerEvents="none">
           <DiffuseBloomIcon color={acc} size={64} intensity={0.5}>
-            <Sparkles size={30} color={dt.colors.ink2} strokeWidth={1.6} />
+            <Character name="sparkle" size={34} color={acc} />
           </DiffuseBloomIcon>
         </View>
 
@@ -1154,7 +1155,7 @@ function EmptyState() {
   if (diffuse) {
     return (
       <DiffuseEmptyState
-        icon={<Trophy size={30} color={dt.colors.ink2} strokeWidth={1.6} />}
+        icon={<Character name="trophy" size={40} color={stickers.yellow} />}
         title={t('leaderboard_justYou')}
         message={t('leaderboard_justYouBody')}
       />
@@ -1279,7 +1280,7 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
           <ProfileStat
             label={t('leaderboard_statReactions')}
             value={entry.garage_likes + entry.channel_reactions}
-            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Heart size={17} color={dt.colors.ink2} strokeWidth={1.7} /></DiffuseBloomIcon>}
+            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Character name="heart" size={22} color={acc} /></DiffuseBloomIcon>}
             tint="transparent"
           />
           <ProfileStat

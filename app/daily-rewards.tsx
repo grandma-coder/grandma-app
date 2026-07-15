@@ -55,6 +55,7 @@ import {
 import {
   DiffuseBloomIcon,
 } from '../components/ui/diffuse/DiffusePrimitives'
+import { Character, type CharacterName } from '../components/characters/Characters'
 import { Display, DisplayItalic, Body, MonoCaps } from '../components/ui/Typography'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
 import { PaperCard } from '../components/ui/PaperCard'
@@ -106,16 +107,17 @@ const CATEGORY_CONFIG: {
   soft: keyof typeof stickerPalette        // its soft companion
   Sticker: (p: { size?: number; fill?: string }) => React.ReactElement
   Line: LucideIcon
+  char: CharacterName                       // Diffuse: the Character-blob concept
 }[] = [
-  { key: 'streak',    label: 'Streaks',    color: 'coral',  soft: 'pinkSoft',   Sticker: Flame,       Line: FlameLine },
-  { key: 'nutrition', label: 'Nutrition',  color: 'green',  soft: 'greenSoft',  Sticker: LogNutrition, Line: UtensilsLine },
-  { key: 'sleep',     label: 'Sleep',      color: 'lilac',  soft: 'lilacSoft',  Sticker: LogSleep,     Line: MoonLine },
-  { key: 'mood',      label: 'Mood',       color: 'pink',   soft: 'pinkSoft',   Sticker: (p) => <MoodFace {...p} variant="happy" />, Line: SmileLine },
-  { key: 'health',    label: 'Health',     color: 'blue',   soft: 'blueSoft',   Sticker: LogAppointment, Line: HeartPulseLine },
-  { key: 'growth',    label: 'Growth',     color: 'yellow', soft: 'yellowSoft', Sticker: (p) => <StarSticker {...p} />, Line: TrendingUpLine },
-  { key: 'community', label: 'Community',  color: 'lilac',  soft: 'lilacSoft',  Sticker: CircleDots,   Line: UsersLine },
-  { key: 'milestone', label: 'Milestones', color: 'peach',  soft: 'peachSoft',  Sticker: DayBadge,     Line: AwardLine },
-  { key: 'daily',     label: 'Daily',      color: 'yellow', soft: 'yellowSoft', Sticker: QuestRibbon,  Line: GiftLine },
+  { key: 'streak',    label: 'Streaks',    color: 'coral',  soft: 'pinkSoft',   Sticker: Flame,       Line: FlameLine, char: 'streak' },
+  { key: 'nutrition', label: 'Nutrition',  color: 'green',  soft: 'greenSoft',  Sticker: LogNutrition, Line: UtensilsLine, char: 'nutrition' },
+  { key: 'sleep',     label: 'Sleep',      color: 'lilac',  soft: 'lilacSoft',  Sticker: LogSleep,     Line: MoonLine, char: 'sleep' },
+  { key: 'mood',      label: 'Mood',       color: 'pink',   soft: 'pinkSoft',   Sticker: (p) => <MoodFace {...p} variant="happy" />, Line: SmileLine, char: 'mood' },
+  { key: 'health',    label: 'Health',     color: 'blue',   soft: 'blueSoft',   Sticker: LogAppointment, Line: HeartPulseLine, char: 'heartbeat' },
+  { key: 'growth',    label: 'Growth',     color: 'yellow', soft: 'yellowSoft', Sticker: (p) => <StarSticker {...p} />, Line: TrendingUpLine, char: 'growth' },
+  { key: 'community', label: 'Community',  color: 'lilac',  soft: 'lilacSoft',  Sticker: CircleDots,   Line: UsersLine, char: 'community' },
+  { key: 'milestone', label: 'Milestones', color: 'peach',  soft: 'peachSoft',  Sticker: DayBadge,     Line: AwardLine, char: 'badge' },
+  { key: 'daily',     label: 'Daily',      color: 'yellow', soft: 'yellowSoft', Sticker: QuestRibbon,  Line: GiftLine, char: 'reward' },
 ]
 
 // Map category key → i18n translation key for category labels.
@@ -389,7 +391,7 @@ export default function DailyRewardsScreen() {
               </>
             ) : (
               <>
-                <SparklesLine size={16} color={accent} strokeWidth={1.8} />
+                <Character name="sparkle" size={22} color={accent} />
                 <Text style={[styles.claimBtnTextDiffuse, { color: ink, fontFamily: diffuseFont.monoBold }]}>
                   {t('dailyRewards_claimReward')}
                 </Text>
@@ -434,7 +436,7 @@ export default function DailyRewardsScreen() {
             <View style={styles.revealHeader}>
               {diffuse ? (
                 <DiffuseBloomIcon color={accent} size={28} intensity={0.5}>
-                  <SparklesLine size={16} color={ink3} strokeWidth={1.8} />
+                  <Character name="sparkle" size={22} color={accent} />
                 </DiffuseBloomIcon>
               ) : (
                 <Sparkle size={22} fill={stickers.yellow} />
@@ -535,7 +537,7 @@ export default function DailyRewardsScreen() {
                       <Check size={18} color={diffuse ? accent : ink} strokeWidth={diffuse ? 1.8 : 2.5} />
                     ) : isToday ? (
                       diffuse ? (
-                        <StarLine size={16} color={accent} strokeWidth={1.8} />
+                        <Character name="star" size={22} color={accent} />
                       ) : (
                         <StarSticker size={20} fill={accent} />
                       )
@@ -575,7 +577,7 @@ export default function DailyRewardsScreen() {
               <SoftBloom color={accent} cx="88%" cy="80%" opacity={dt.isDark ? 0.28 : 0.38} spread={0.5} />
               <View style={styles.questGlyph} pointerEvents="none">
                 <DiffuseBloomIcon color={accent} size={40} intensity={0.5}>
-                  <GiftLine size={22} color={ink3} strokeWidth={1.6} />
+                  <Character name="reward" size={28} color={accent} />
                 </DiffuseBloomIcon>
               </View>
             </>
@@ -637,7 +639,7 @@ export default function DailyRewardsScreen() {
           <View style={styles.badgeHeader}>
             {diffuse ? (
               <DiffuseBloomIcon color={accent} size={32} intensity={0.5}>
-                <AwardLine size={18} color={ink3} strokeWidth={1.8} />
+                <Character name="badge" size={24} color={accent} />
               </DiffuseBloomIcon>
             ) : (
               <View style={[styles.badgeHeaderIcon, { backgroundColor: stickers.yellowSoft, borderColor: line }]}>
@@ -784,7 +786,7 @@ export default function DailyRewardsScreen() {
                     <View style={styles.categorySticker}>
                       {diffuse ? (
                         <DiffuseBloomIcon color={accent} size={38} intensity={0.5}>
-                          <cat.Line size={20} color={ink3} strokeWidth={1.7} />
+                          <Character name={cat.char} size={26} color={color} />
                         </DiffuseBloomIcon>
                       ) : (
                         <cat.Sticker size={38} fill={color} />
@@ -840,7 +842,7 @@ export default function DailyRewardsScreen() {
         >
           {diffuse ? (
             <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
-              <TrophyLine size={22} color={ink3} strokeWidth={1.7} />
+              <Character name="trophy" size={28} color={accent} />
             </DiffuseBloomIcon>
           ) : (
             <View style={[styles.leaderIcon, { backgroundColor: stickers.yellowSoft, borderColor: line }]}>
@@ -1040,7 +1042,7 @@ export default function DailyRewardsScreen() {
                     <View style={styles.catModalHeader}>
                       {diffuse ? (
                         <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
-                          <cat.Line size={22} color={ink3} strokeWidth={1.7} />
+                          <Character name={cat.char} size={28} color={color} />
                         </DiffuseBloomIcon>
                       ) : (
                         <View style={[styles.catModalSticker, { backgroundColor: soft, borderColor: line }]}>
