@@ -121,10 +121,17 @@ export async function uploadDocument(input: {
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {
+  // Scope every query to the signed-in user — defense-in-depth so a passed-in
+  // foreign document id can never read another family's file_path or delete
+  // their medical record, even if RLS on this table were ever misconfigured.
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not signed in')
+
   const { data: doc } = await supabase
     .from('vault_documents')
     .select('file_path')
     .eq('id', documentId)
+    .eq('user_id', user.id)
     .single()
 
   if (doc?.file_path) {
@@ -136,7 +143,7 @@ export async function deleteDocument(documentId: string): Promise<void> {
 
   // Throw on DB delete failure — otherwise the record reappears on refetch and
   // the user thinks the delete silently failed.
-  const { error } = await supabase.from('vault_documents').delete().eq('id', documentId)
+  const { error } = await supabase.from('vault_documents').delete().eq('id', documentId).eq('user_id', user.id)
   if (error) throw error
 }
 

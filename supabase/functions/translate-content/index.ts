@@ -56,6 +56,27 @@ serve(async (req) => {
   const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
+  // Authenticate the caller — an open Anthropic relay + shared-cache poison
+  // vector otherwise (writes go through the service-role client below and
+  // content_translations is world-readable). Verify the JWT before any work,
+  // matching the pattern in scan-image / food-ai / nana-chat.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const token = authHeader.replace(/^Bearer\s+/i, '')
+  if (!token) {
+    return new Response(
+      JSON.stringify({ error: 'Missing authorization token' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  const { data: authData, error: authError } = await supabase.auth.getUser(token)
+  if (authError || !authData?.user?.id) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid authorization token' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
+  }
+
   try {
     const { contentKey, sourceText, locale } = await req.json()
 
@@ -82,7 +103,6 @@ serve(async (req) => {
       )
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const hash = await sha256(sourceText)
 
     // Cache hit only if the SOURCE hasn't changed since we cached it.

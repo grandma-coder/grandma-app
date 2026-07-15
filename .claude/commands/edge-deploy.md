@@ -10,16 +10,26 @@ Ask the user:
 
 ## JWT verification matrix (memorize)
 
-| Function | `--no-verify-jwt`? | Why |
-|----------|---------------------|-----|
-| `nana-chat` | yes | Called from app, no JWT needed (uses anon key only) |
-| `scan-image` | yes | Same as nana-chat |
-| `generate-insights` | yes | Internal cron + app calls |
-| `revenuecat-webhook` | yes | RevenueCat servers can't send a JWT |
-| `invite-caregiver` | no | Requires authenticated caller |
-| `accept-invite` | no | Requires authenticated caller |
+> **`--no-verify-jwt` disables only the GATEWAY check — it does NOT mean "no auth."**
+> Every `yes` function below (except the webhook) still verifies the caller's JWT
+> *in code* (`supabase.auth.getUser(token)`, 401 on failure). The flag just lets us
+> return a clean 401 ourselves instead of a gateway 401. Deploying one of these
+> WITHOUT the internal check makes it an open Anthropic relay — that was the
+> `translate-content` bug (fixed 2026-07-14).
 
-If the user adds a new function, ASK which category it falls into. Default to `no-verify-jwt: no` (safer) and require justification to flip.
+| Function | `--no-verify-jwt`? | Auth model |
+|----------|---------------------|-----|
+| `nana-chat` | yes | Verifies JWT in code (`getUser`), 401 on failure |
+| `grandma-chat` | yes | Verifies JWT in code |
+| `scan-image` | yes | Verifies JWT in code + free-tier scan cap |
+| `food-ai` | yes | Verifies JWT in code |
+| `generate-insights` | yes | Verifies JWT in code (app + internal cron) |
+| `translate-content` | yes | Verifies JWT in code (added 2026-07-14) |
+| `revenuecat-webhook` | yes | No JWT — validates a shared webhook secret (constant-time) instead |
+| `invite-caregiver` | no | Gateway-verified authenticated caller |
+| `accept-invite` | no | Gateway-verified authenticated caller |
+
+If the user adds a new function, ASK which category it falls into. Default to `no-verify-jwt: no` (safer). To flip to `yes`, the function MUST do its own `getUser(token)` check (or validate a secret, like the webhook) — never ship a `yes` function that does no auth at all.
 
 ## Steps
 
