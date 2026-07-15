@@ -276,11 +276,21 @@ function CenterTabButton() {
             subtitle; tap a word to focus, tap the focused word (or GO) to go. */}
         {diffuse ? (
           <>
-            {/* Centered word-stack menu with a big calm breathing bloom, now
-                rendered in a Swiss-grotesque font (Hanken Bold) instead of the
-                Cormorant serif — evaluating a bolder sans header direction. */}
+            {/* Aurora field — layered multi-hue blooms (pink · coral · peach ·
+                blue · lilac) drifting across the canvas, blended over the mode
+                accent. Each SoftBloom fades to transparent at its edge, so
+                overlapping them yields a soft pastel-gradient wash rather than
+                one flat mode tint. Opacities are lower in dark so it stays calm. */}
             <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: overlayAnim }]}>
-              <SoftBloom color={accentColor} cx="50%" cy="46%" opacity={dt.isDark ? 0.42 : 0.5} spread={0.4} radius="58%" />
+              {/* Mode-accent anchor — keeps the menu feeling on-brand for the journey. */}
+              <SoftBloom color={accentColor} cx="50%" cy="44%" opacity={dt.isDark ? 0.34 : 0.42} spread={0.4} radius="62%" />
+              {/* Warm top-left pink → coral core, matching the reference aurora. */}
+              <SoftBloom color={StickerPalette.pink} cx="26%" cy="30%" opacity={dt.isDark ? 0.3 : 0.5} spread={0.45} radius="60%" />
+              <SoftBloom color={StickerPalette.coral} cx="42%" cy="58%" opacity={dt.isDark ? 0.26 : 0.4} spread={0.4} radius="52%" />
+              <SoftBloom color={StickerPalette.peach} cx="34%" cy="72%" opacity={dt.isDark ? 0.24 : 0.36} spread={0.42} radius="48%" />
+              {/* Cool sky-blue drift on the right edge for the pastel contrast. */}
+              <SoftBloom color={StickerPalette.blue} cx="82%" cy="34%" opacity={dt.isDark ? 0.3 : 0.46} spread={0.42} radius="56%" />
+              <SoftBloom color={StickerPalette.lilac} cx="74%" cy="70%" opacity={dt.isDark ? 0.24 : 0.34} spread={0.4} radius="50%" />
             </Animated.View>
 
             {/* Prompt — lowercase Swiss, accent name. */}
