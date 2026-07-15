@@ -8,10 +8,9 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { View, Text } from 'react-native'
+import { View } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme, useDiffuseTheme, diffuseFont, font } from '../../../constants/theme'
-import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { useTheme } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase'
 import { buildCycleWalletCards, type CycleWalletCardId } from '../../../lib/cycleWallet'
@@ -24,9 +23,7 @@ import { NotifyRoutine, LogOvulation } from '../../stickers/RewardStickers'
 import { Character } from '../../characters/Characters'
 
 export function CycleWallet() {
-  const { colors, stickers } = useTheme()
-  const diffuse = useIsDiffuse()
-  const dt = useDiffuseTheme()
+  const { stickers } = useTheme()
   const { t } = useTranslation()
 
   const [userId, setUserId] = useState<string | null>(null)
@@ -65,44 +62,29 @@ export function CycleWallet() {
   const onHeader = (id: CycleWalletCardId) => {
     if (id === 'reminders') return setRemindersOpen(true)
     if (id === 'pillars') return setPillarsOpen(true)
-    if (id === 'exams') return router.push('/exams')
+    if (id === 'exams') return router.push('/exams?behavior=pre-pregnancy')
   }
 
   return (
     <View>
       {cards.map((c, i) => {
         const isLast = i === cards.length - 1
-        const showPreview = c.id === 'reminders' && upcoming.length > 0
+        // Reminders card shows a notification-style count badge (upcoming) and
+        // taps straight to the sheet — no inline expanded body.
+        const reminderBadge = c.id === 'reminders' ? upcoming.length : undefined
         return (
           <WalletCard
             key={c.id}
             tone={c.tone}
             icon={iconFor(c.id)}
             title={titleFor(c.id)}
-            expanded={showPreview}
-            linkOnly={showPreview ? false : c.linkOnly}
+            badge={reminderBadge}
+            expanded={false}
+            linkOnly={c.linkOnly}
             last={isLast}
-            hideChevron={!showPreview}
+            hideChevron
             onPressHeader={() => onHeader(c.id)}
-          >
-            {showPreview ? (
-              <View style={{ gap: 6 }}>
-                {upcoming.map((r) => (
-                  <Text
-                    key={r.id}
-                    numberOfLines={1}
-                    style={{
-                      fontFamily: diffuse ? diffuseFont.body : font.body,
-                      fontSize: 13,
-                      color: diffuse ? dt.colors.ink2 : colors.textMuted,
-                    }}
-                  >
-                    {`• ${r.text}${r.dueDate ? ` · ${new Date(r.dueDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}`}
-                  </Text>
-                ))}
-              </View>
-            ) : undefined}
-          </WalletCard>
+          />
         )
       })}
 

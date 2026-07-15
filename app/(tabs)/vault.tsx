@@ -21,7 +21,10 @@ export default function VaultScreen() {
   const insets = useSafeAreaInsets()
   const { colors } = useTheme()
 
-  const handleExams = () => router.push('/exams')
+  // Exams are isolated per behavior — open the list locked to the active
+  // journey so the vault's Exams entry never mixes behaviors.
+  const examBehavior = mode === 'pre-pregnancy' ? 'pre-pregnancy' : mode === 'pregnancy' ? 'pregnancy' : 'kids'
+  const handleExams = () => router.push(`/exams?behavior=${examBehavior}`)
 
   let inner
   if (mode === 'pre-pregnancy') inner = <CycleAnalytics />

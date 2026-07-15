@@ -30,6 +30,8 @@ import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { LogFormSticker } from '../calendar/LogFormSticker'
 import { toDateStr } from '../../lib/cycleLogic'
+import { useChildStore } from '../../store/useChildStore'
+import { childColor } from '../ui/ChildPills'
 import {
   type ExamBehavior,
   type ExamExtracted,
@@ -64,6 +66,15 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
   const inkText = diffuse ? dt.colors.ink : (isDark ? colors.text : INK)
   const placeholderColor = diffuse ? dt.colors.ink4 : colors.textMuted
   const invalidate = useInvalidateExams()
+
+  // Which child this exam is for. Only relevant for kids; seeded from the
+  // incoming childId (the screen's active filter / first kid) and editable via
+  // an in-form picker when there are several children.
+  const children = useChildStore((s) => s.children)
+  const showChildPicker = behavior === 'kids' && children.length > 1
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(
+    childId ?? (behavior === 'kids' ? children[0]?.id ?? null : null),
+  )
 
   const [title, setTitle] = useState('')
   const [result, setResult] = useState('')
@@ -169,7 +180,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
     try {
       await createExam({
         behavior,
-        childId: childId ?? null,
+        childId: behavior === 'kids' ? (selectedChildId ?? childId ?? null) : null,
         title: title.trim(),
         result: result.trim() || null,
         notes: notes.trim() || null,
@@ -310,6 +321,51 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
         )
       )}
 
+      {/* Child selector — which kid this exam is for (kids + multiple children). */}
+      {showChildPicker && (
+        <View style={{ gap: 8 }}>
+          <Text style={[
+            styles.childPickerLabel,
+            diffuse
+              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+              : { color: colors.textMuted, fontFamily: font.bodySemiBold },
+          ]}>
+            {t('examForm_forChild')}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childPickerRow}>
+            {children.map((c, i) => {
+              const active = selectedChildId === c.id
+              return (
+                <Pressable
+                  key={c.id}
+                  onPress={() => setSelectedChildId(c.id)}
+                  style={({ pressed }) => [
+                    styles.childChip,
+                    diffuse
+                      ? { backgroundColor: active ? dt.colors.surface : 'transparent', borderColor: active ? dt.colors.hairline : dt.colors.line }
+                      : { backgroundColor: active ? childColor(i) : paper, borderColor: active ? INK : inkBorder },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <View style={[styles.childChipDot, { backgroundColor: childColor(i), borderColor: diffuse ? dt.colors.line : 'rgba(20,19,19,0.18)' }]} />
+                  <Text
+                    style={[
+                      styles.childChipText,
+                      diffuse
+                        ? { color: active ? dt.colors.ink : dt.colors.ink3, fontFamily: active ? diffuseFont.bodySemiBold : diffuseFont.body }
+                        : { color: active ? INK : colors.textMuted, fontFamily: active ? font.bodySemiBold : font.bodyMedium },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {c.name}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+        </View>
+      )}
+
       <TextInput
         value={title}
         onChangeText={setTitle}
@@ -448,6 +504,14 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
 
 const styles = StyleSheet.create({
   form: { gap: 14, paddingBottom: 12 },
+  childPickerLabel: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' },
+  childPickerRow: { gap: 8, paddingVertical: 2 },
+  childChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, borderWidth: 1,
+  },
+  childChipDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1 },
+  childChipText: { fontSize: 13.5 },
   photoStrip: { gap: 10, paddingVertical: 4 },
   photoWrap: {
     width: 96, height: 96, borderRadius: 14, borderWidth: 1, overflow: 'hidden',

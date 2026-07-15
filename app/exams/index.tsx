@@ -19,7 +19,7 @@ import {
   Image,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { ChevronLeft, Plus } from 'lucide-react-native'
 import { LogSheet } from '../../components/calendar/LogSheet'
 import { ExamForm } from '../../components/exams/ExamForm'
@@ -38,7 +38,10 @@ import {
   useExamPhotoUrls,
   formatExamDate,
   examBehaviorLabel,
+  buildExamInsights,
 } from '../../lib/examData'
+import { toDateStr } from '../../lib/cycleLogic'
+import { BeadedThread } from '../../components/analytics/shared/MiniCharts'
 import { Display, Body, MonoCaps } from '../../components/ui/Typography'
 import { logSticker } from '../../components/calendar/logStickers'
 import { childColor } from '../../components/ui/ChildPills'
@@ -68,6 +71,15 @@ export default function ExamsListScreen() {
   const activeMode = useModeStore((s) => s.mode)
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
 
+  // A `behavior` route param (passed by each behavior's wallet card) LOCKS the
+  // screen to that behavior — exams are isolated per behavior, so opening Exams
+  // from Pregnancy shows pregnancy exams only, with no tabs into other journeys.
+  const params = useLocalSearchParams<{ behavior?: string }>()
+  const lockedBehavior: ExamBehavior | null =
+    params.behavior === 'pre-pregnancy' || params.behavior === 'pregnancy' || params.behavior === 'kids'
+      ? params.behavior
+      : null
+
   // Only show tabs for the behaviors the user is actually enrolled in — a
   // cycle-only user sees just Pre-preg, not all three. Preserve the canonical
   // order (pre-preg → pregnancy → kids). Fall back to all three only if the
@@ -78,9 +90,11 @@ export default function ExamsListScreen() {
       ? BEHAVIOR_ORDER.filter((b) => enrolledBehaviors.includes(b))
       : BEHAVIOR_ORDER
 
-  // Default to the user's active journey (if enrolled), else the first enrolled
-  // behavior, so the screen opens already filtered — no "All" mixing.
+  // Default to the locked behavior (if the wallet passed one), else the user's
+  // active journey (if enrolled), else the first enrolled behavior — so the
+  // screen opens already filtered, no "All" mixing.
   const [behaviorFilter, setBehaviorFilter] = useState<ExamBehavior>(() => {
+    if (lockedBehavior) return lockedBehavior
     const fromMode = modeToBehavior(activeMode)
     return visibleBehaviors.includes(fromMode) ? fromMode : (visibleBehaviors[0] ?? fromMode)
   })
@@ -113,6 +127,9 @@ export default function ExamsListScreen() {
     }
     return { total: exams.length, flagged, yearCount }
   }, [exams])
+
+  // On-device insights over the (behavior + child) filtered set.
+  const insights = useMemo(() => buildExamInsights(exams, toDateStr(new Date())), [exams])
 
   // Cream-paper palette (mirrors WeekCard / LogSheet).
   // Under Diffuse these resolve to the diffuse ink/paper tokens so the shared
@@ -181,8 +198,9 @@ export default function ExamsListScreen() {
       </View>
 
       {/* Behavior segmented tabs — only the behaviors the user is enrolled in.
-          Hidden entirely when there's just one (nothing to switch between). */}
-      {visibleBehaviors.length > 1 && (
+          Hidden entirely when there's just one (nothing to switch between) OR
+          when the screen is locked to a single behavior (opened from a wallet). */}
+      {!lockedBehavior && visibleBehaviors.length > 1 && (
       <View style={styles.segWrap}>
         {(() => {
           const labelFor: Record<ExamBehavior, string> = {
@@ -282,6 +300,25 @@ export default function ExamsListScreen() {
           )
         )}
 
+        {/* Exams over time — a beaded thread (bead size = exams that month). */}
+        {!isLoading && insights.months.length > 1 && (
+          <View style={styles.chartBlock}>
+            <MonoCaps size={11} color={inkFaint} style={{ marginBottom: 12, letterSpacing: 1.8 }}>
+              {t('exams_insight_overTime')}
+            </MonoCaps>
+            <View style={diffuse ? undefined : [styles.chartCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <BeadedThread
+                data={insights.months.map((m) => m.count)}
+                labels={insights.months.map((m) => m.label)}
+                color={behaviorAccent}
+                accent={behaviorAccent}
+                height={130}
+                showValues
+              />
+            </View>
+          </View>
+        )}
+
         {isLoading && (
           <Body size={13} color={inkMuted} align="center" style={{ marginTop: 40 }}>
             {t('exams_loading')}
@@ -348,6 +385,9 @@ export default function ExamsListScreen() {
                   exam={exam}
                   childName={exam.childId ? children.find((c) => c.id === exam.childId)?.name : undefined}
                   childIndex={exam.childId ? children.findIndex((c) => c.id === exam.childId) : -1}
+                  // Only surface the child marker when viewing several kids at
+                  // once — when filtered to one kid it's redundant.
+                  showChild={showChildRow && childFilter === 'all'}
                   isDark={isDark}
                   ink={ink}
                   inkMuted={inkMuted}
@@ -530,6 +570,7 @@ function ExamCard({
   exam,
   childName,
   childIndex,
+  showChild,
   isDark,
   ink,
   inkMuted,
@@ -542,6 +583,8 @@ function ExamCard({
   exam: Exam
   childName?: string
   childIndex: number
+  /** show the child marker (only when several kids are mixed in one view). */
+  showChild?: boolean
   isDark: boolean
   ink: string
   inkMuted: string
@@ -558,6 +601,9 @@ function ExamCard({
   const [thumbUrl] = useExamPhotoUrls(firstPhotoPath ? [firstPhotoPath] : [])
   const flaggedCount = exam.extracted?.flagged?.length ?? 0
   const provider = exam.provider ?? exam.extracted?.provider
+  // Surface which kid this exam belongs to — but only when several kids are
+  // shown together (in "All kids"); when filtered to one it's redundant.
+  const markChild = !!showChild && !!childName && childIndex >= 0
 
   if (diffuse) {
     return (
@@ -568,7 +614,10 @@ function ExamCard({
         {thumbUrl ? (
           <Image source={{ uri: thumbUrl }} style={{ width: 46, height: 46, borderRadius: 12 }} />
         ) : (
-          <Character name="exam" size={30} color={accent} />
+          // Tint the exam blob by the child's color when it belongs to a
+          // specific kid (in "All kids") so the row reads at a glance; else the
+          // behavior accent.
+          <Character name="exam" size={30} color={markChild ? childColor(childIndex) : accent} />
         )}
         <View style={{ flex: 1, gap: 3 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -583,7 +632,15 @@ function ExamCard({
             <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dt.colors.ink2 }} numberOfLines={1}>{exam.result}</Text>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
-            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>{formatExamDate(exam.examDate)}</Text>
+            {/* Which child — colored dot + name (kids exams can belong to
+                different kids; matches the child pills at the top of the screen). */}
+            {markChild && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: childColor(childIndex) }} />
+                <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: dt.colors.ink2 }} numberOfLines={1}>{childName}</Text>
+              </View>
+            )}
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>{markChild ? `· ${formatExamDate(exam.examDate)}` : formatExamDate(exam.examDate)}</Text>
             {provider && (
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: dt.colors.ink3 }} numberOfLines={1}>{`· ${provider}`}</Text>
             )}
@@ -663,7 +720,7 @@ function ExamCard({
               {examBehaviorLabel(exam.behavior)}
             </Text>
           </View>
-          {childName && childIndex >= 0 && (
+          {markChild && (
             <View style={[styles.behaviorPill, { backgroundColor: childColor(childIndex) + '1A', borderColor: childColor(childIndex) + '50' }]}>
               <Text style={[styles.behaviorPillText, { color: childColor(childIndex), fontFamily: font.bodySemiBold }]}>
                 {childName}
@@ -713,6 +770,10 @@ const styles = StyleSheet.create({
   },
 
   segWrap: { paddingHorizontal: 16, marginBottom: 12 },
+
+  // Exams-over-time chart (inline in the list, below the stats)
+  chartBlock: { marginBottom: 22 },
+  chartCard: { borderWidth: 1, borderRadius: 22, padding: 14 },
 
   childRowWrap: { height: 48, marginBottom: 10 },
   childRow: {

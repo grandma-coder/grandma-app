@@ -856,8 +856,12 @@ export function StackedLozenges({ data, height = 190 }: { data: LozengeDatum[]; 
 }
 
 // ─── BeadedThread ──── kicks: wavy thread + beads sized by count, latest accented
-interface BeadProps { data: number[]; color: string; accent?: string; labels?: string[]; height?: number }
-export function BeadedThread({ data, color, accent, labels = [], height = 150 }: BeadProps) {
+interface BeadProps {
+  data: number[]; color: string; accent?: string; labels?: string[]; height?: number
+  /** print each value above its bead (0 hidden) so the chart is readable at rest. */
+  showValues?: boolean
+}
+export function BeadedThread({ data, color, accent, labels = [], height = 150, showValues = false }: BeadProps) {
   const dt = useDiffuseTheme()
   if (data.length === 0) return <EmptyChart height={height} />
   const w = CW, h = height, pad = 16, cy = h / 2, n = data.length, max = Math.max(...data, 1)
@@ -875,6 +879,19 @@ export function BeadedThread({ data, color, accent, labels = [], height = 150 }:
             <G key={i}>
               {last ? <Circle cx={x} cy={y} r={r + 3.5} fill="none" stroke={acc} strokeWidth={1.6} /> : null}
               <Circle cx={x} cy={y} r={r} fill={last ? color : withA(color, 0.55)} />
+              {showValues && v > 0 ? (
+                <SvgText
+                  x={x}
+                  y={y - r - 6}
+                  fontSize={11}
+                  fontWeight="700"
+                  fill={last ? acc : dt.colors.ink2}
+                  textAnchor="middle"
+                  fontFamily={diffuseFont.monoBold}
+                >
+                  {String(v)}
+                </SvgText>
+              ) : null}
             </G>
           )
         })}

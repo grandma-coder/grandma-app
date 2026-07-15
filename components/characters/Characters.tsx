@@ -31,6 +31,8 @@ export type CharacterName =
   | 'cloud' | 'key' | 'lungs' | 'warning'
   // rewards & achievements
   | 'trophy' | 'medal' | 'badge' | 'gift' | 'reward'
+  // development / growth-leap topics
+  | 'brain' | 'phase' | 'observe' | 'celebrate' | 'tip'
 
 // Mood expressions — one `mood` blob, a `face` prop varies the expression.
 // Kids: happy·calm·energetic·fussy·cranky. Pregnancy adds excited·anxious·nauseous.
@@ -108,6 +110,13 @@ const D: Record<CharacterName, string> = {
   badge: 'M24 6l4 3 5-1 1 5 4 3-2 5 2 5-4 3-1 5-5-1-4 3-4-3-5 1-1-5-4-3 2-5-2-5 4-3 1-5 5 1Z',
   gift: 'M9 20h30v18a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V20ZM7 14h34a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1ZM24 14c-3-6-9-4-9 0 0 2 4 3 9 0Zm0 0c3-6 9-4 9 0 0 2-4 3-9 0Z',
   reward: 'M8 18a10 10 0 0 1 10-10h12a10 10 0 0 1 10 10v12a10 10 0 0 1-10 10H18A10 10 0 0 1 8 30V18Z',
+  // development / growth-leap topics. brain = two lobes; phase = 3 rising steps;
+  // observe = eye (iris cut-out in FACE); celebrate = star-burst; tip = bulb.
+  brain: 'M18 10c-4 0-7 3-7 7 0 1 0 2 1 3-2 1-3 3-3 6 0 4 3 7 7 7 1 2 3 3 5 3V10c-2 0-4 1-6 1ZM30 10c4 0 7 3 7 7 0 1 0 2-1 3 2 1 3 3 3 6 0 4-3 7-7 7-1 2-3 3-5 3V10c2 0 4 1 6 1Z',
+  phase: 'M8 34a4 4 0 0 1 4-4 4 4 0 0 1 4 4v4H8ZM20 26a4 4 0 0 1 4-4 4 4 0 0 1 4 4v12h-8ZM32 16a4 4 0 0 1 4-4 4 4 0 0 1 4 4v22h-8Z',
+  observe: 'M4 24c6-11 34-11 40 0-6 11-34 11-40 0Z',
+  celebrate: 'M24 5l3.5 8.5 8.5-4.5-4.5 8.5 8.5 3.5-8.5 3.5 4.5 8.5-8.5-4.5-3.5 8.5-3.5-8.5-8.5 4.5 4.5-8.5-8.5-3.5 8.5-3.5-4.5-8.5 8.5 4.5Z',
+  tip: 'M24 6c-7 0-12 5-12 12 0 5 3 8 5 10 1 1 1 2 1 3h12c0-1 0-2 1-3 2-2 5-5 5-10 0-7-5-12-12-12ZM19 34h10v3a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-3Z',
 }
 
 // Face per concept. Eyes ONLY on creatures/subjects; object glyphs are faceless

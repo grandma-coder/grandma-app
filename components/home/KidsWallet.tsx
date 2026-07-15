@@ -1,18 +1,18 @@
 /**
- * KidsWallet — the kids-home collapsible card stack.
+ * KidsWallet — the kids-home wallet card stack.
  *
  * Same wallet system as the pregnancy Week Wallet (reuses the shared WalletCard
  * primitive). Replaces the run of sections below the 2×2 stat tiles: Set Goals,
  * Health & Care, Diaper, Growth Leap, Reminders, Ask Grandma, Rewards.
  *
- * The card list comes from lib/kidsWallet.buildKidsWalletCards (unit-tested);
- * this component maps each descriptor to its glyph, title, and action. Actions
- * that open modals / route are owned by KidsHome and passed in as callbacks;
- * the growth-leap inline body is passed in as a render prop so KidsWallet stays
- * decoupled from KidsHome's internal GrowthLeapCard.
+ * Follows the pregnancy pattern: every card taps straight to a route / pop-up
+ * sheet — nothing expands inline, and no trailing arrows (hideChevron). The card
+ * list comes from lib/kidsWallet.buildKidsWalletCards (unit-tested); this
+ * component maps each descriptor to its glyph, title, and action. All modals /
+ * routes are owned by KidsHome and passed in as callbacks.
  */
 
-import React, { useState } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 import { router } from 'expo-router'
 import { useTheme } from '../../constants/theme'
@@ -35,24 +35,21 @@ interface KidsWalletProps {
   onOpenGoals: () => void
   onOpenHealth: () => void
   onOpenDiaper: () => void
-  /** inline body for the growth-leap card (KidsHome's <GrowthLeapCard/>) */
-  growthLeapBody?: React.ReactNode
-  /** inline body for the reminders card (KidsHome's add-reminder input + view-all) */
-  remindersBody?: React.ReactNode
+  /** opens the growth-leap info pop-up sheet (owned by KidsHome) */
+  onOpenGrowthLeap: () => void
+  /** opens the reminders pop-up sheet (owned by KidsHome) */
+  onOpenReminders: () => void
 }
 
 export function KidsWallet({
   hasDiaper, hasGrowthLeap, growthLeapName,
-  onOpenGoals, onOpenHealth, onOpenDiaper, growthLeapBody, remindersBody,
+  onOpenGoals, onOpenHealth, onOpenDiaper, onOpenGrowthLeap, onOpenReminders,
 }: KidsWalletProps) {
   const { colors, stickers } = useTheme()
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
 
-  const [openId, setOpenId] = useState<KidsWalletCardId | null>(null)
   const cards = buildKidsWalletCards({ hasDiaper, hasGrowthLeap })
-
-  const toggle = (id: KidsWalletCardId) => setOpenId((cur) => (cur === id ? null : id))
 
   const iconFor = (id: KidsWalletCardId): React.ReactNode => {
     // Under Diffuse, the wallet rows use the unified Character-blob family
@@ -95,25 +92,18 @@ export function KidsWallet({
     }
   }
 
-  const onHeader = (id: KidsWalletCardId, linkOnly: boolean) => {
+  // Every card taps straight to a route / pop-up sheet — nothing expands inline.
+  const onHeader = (id: KidsWalletCardId) => {
     switch (id) {
       case 'goals': return onOpenGoals()
       case 'health': return onOpenHealth()
-      case 'exams': return router.push('/exams' as never)
+      case 'exams': return router.push('/exams?behavior=kids' as never)
       case 'diaper': return onOpenDiaper()
       case 'ask_grandma': return router.push('/grandma-talk' as never)
       case 'rewards': return router.push('/daily-rewards' as never)
-      case 'growth_leap':
-      case 'reminders':
-        if (!linkOnly) toggle(id)
-        return
+      case 'growth_leap': return onOpenGrowthLeap()
+      case 'reminders': return onOpenReminders()
     }
-  }
-
-  const bodyFor = (id: KidsWalletCardId): React.ReactNode => {
-    if (id === 'growth_leap') return growthLeapBody
-    if (id === 'reminders') return remindersBody
-    return null
   }
 
   return (
@@ -126,13 +116,12 @@ export function KidsWallet({
             tone={c.tone}
             icon={iconFor(c.id)}
             title={titleFor(c.id)}
-            expanded={openId === c.id}
+            expanded={false}
             linkOnly={c.linkOnly}
             last={isLast}
-            onPressHeader={() => onHeader(c.id, c.linkOnly)}
-          >
-            {bodyFor(c.id)}
-          </WalletCard>
+            hideChevron
+            onPressHeader={() => onHeader(c.id)}
+          />
         )
       })}
     </View>

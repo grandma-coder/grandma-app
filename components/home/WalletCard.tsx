@@ -31,6 +31,9 @@ interface WalletCardProps {
   icon: React.ReactNode
   title: string
   trailingValue?: string
+  /** notification-style count pill shown on the right (e.g. upcoming reminders).
+   *  Hidden when 0/undefined. */
+  badge?: number
   expanded: boolean
   /** true → header shows ↗ and press routes/opens a modal (no inline body). */
   linkOnly: boolean
@@ -44,7 +47,7 @@ interface WalletCardProps {
 }
 
 export function WalletCard({
-  tone, icon, title, trailingValue, expanded, linkOnly, onPressHeader, last, hideChevron, children,
+  tone, icon, title, trailingValue, badge, expanded, linkOnly, onPressHeader, last, hideChevron, children,
 }: WalletCardProps) {
   const { colors, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
@@ -136,6 +139,20 @@ export function WalletCard({
             {trailingValue}
           </Text>
         ) : null}
+        {badge && badge > 0 ? (
+          <View
+            style={[
+              styles.badge,
+              diffuse
+                ? { backgroundColor: getModeColor(mode, isDark) + '26', borderColor: getModeColor(mode, isDark) + '80', borderWidth: 1 }
+                : { backgroundColor: getModeColor(mode, isDark) },
+            ]}
+          >
+            <Text style={[styles.badgeText, { color: diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313'), fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }]}>
+              {badge}
+            </Text>
+          </View>
+        ) : null}
         {hideChevron ? null : linkOnly ? (
           <ArrowUpRight size={20} color={ink} strokeWidth={2.2} style={{ opacity: 0.8 }} />
         ) : (
@@ -162,5 +179,10 @@ const styles = StyleSheet.create({
   },
   title: { flex: 1, minWidth: 0, fontSize: 18, letterSpacing: -0.3 },
   trailing: { fontSize: 14 },
+  badge: {
+    minWidth: 24, height: 24, borderRadius: 12,
+    paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center',
+  },
+  badgeText: { fontSize: 12, letterSpacing: 0.2 },
   body: { paddingHorizontal: 16, paddingBottom: 18, paddingTop: 2 },
 })

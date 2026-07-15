@@ -11,10 +11,9 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
-import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { useTheme } from '../../../constants/theme'
 import { Character } from '../../characters/Characters'
 import { useTranslation } from '../../../lib/i18n'
 import { buildWalletCards, type WalletCardId } from '../../../lib/weekWallet'
@@ -46,9 +45,7 @@ export function WeekWallet({
   weekNumber, todayLogs, userId,
   onLogMetric, onOpenAppointment, onOpenWeekDetail, onOpenBirthGuide,
 }: WeekWalletProps) {
-  const { colors, stickers, font: f } = useTheme()
-  const diffuse = useIsDiffuse()
-  const dt = useDiffuseTheme()
+  const { colors, stickers } = useTheme()
   const { t } = useTranslation()
 
   const [remindersOpen, setRemindersOpen] = useState(false)
@@ -98,7 +95,7 @@ export function WeekWallet({
   // inline. Reminders opens its own full sheet.
   const onHeader = (id: WalletCardId, linkOnly: boolean) => {
     if (id === 'birth_guide') return onOpenBirthGuide()
-    if (id === 'exams') return router.push('/exams')
+    if (id === 'exams') return router.push('/exams?behavior=pregnancy')
     if (id === 'ask_grandma') return router.push('/grandma-talk')
     if (id === 'appointment') return appt && onOpenAppointment(appt)
     if (id === 'week_tip') return onOpenWeekDetail()
@@ -111,37 +108,22 @@ export function WeekWallet({
     <View>
       {cards.map((c, i) => {
         const isLast = i === cards.length - 1
-        const showPreview = c.id === 'reminders' && upcoming.length > 0
+        // Reminders card shows a notification-style count badge (upcoming) and
+        // taps straight to the sheet — no inline expanded body.
+        const reminderBadge = c.id === 'reminders' ? upcoming.length : undefined
         return (
           <WalletCard
             key={c.id}
             tone={c.tone}
             icon={iconFor(c.id)}
             title={titleFor(c.id)}
-            expanded={showPreview}
+            badge={reminderBadge}
+            expanded={false}
             linkOnly={c.linkOnly}
             last={isLast}
-            hideChevron={!showPreview}
+            hideChevron
             onPressHeader={() => onHeader(c.id, c.linkOnly)}
-          >
-            {showPreview ? (
-              <View style={{ gap: 6 }}>
-                {upcoming.map((r) => (
-                  <Text
-                    key={r.id}
-                    numberOfLines={1}
-                    style={{
-                      fontFamily: diffuse ? diffuseFont.body : f.body,
-                      fontSize: 13,
-                      color: diffuse ? dt.colors.ink2 : colors.textMuted,
-                    }}
-                  >
-                    {`• ${r.text}${r.dueDate ? ` · ${new Date(r.dueDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}`}
-                  </Text>
-                ))}
-              </View>
-            ) : undefined}
-          </WalletCard>
+          />
         )
       })}
 
