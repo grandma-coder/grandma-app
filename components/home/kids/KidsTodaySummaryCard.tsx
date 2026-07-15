@@ -162,10 +162,12 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
         />
       </View>
 
-      {/* Footer — "See results" routes to the Insights (analytics) tab. */}
+      {/* Footer — "See results" routes to the kids analytics tab (the "patterns /
+          thriving breakdown" view lives on the vault/Insights tab slot, which
+          renders KidsAnalytics for kids mode — NOT the /insights daily companion). */}
       <View style={[styles.footer, { borderTopColor: trackColor }]}>
         <Pressable
-          onPress={() => router.push('/insights')}
+          onPress={() => router.push('/vault')}
           style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? dt.colors.surface : colors.surface, opacity: pressed ? 0.7 : 1 }]}
         >
           <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, fontSize: 13, letterSpacing: -0.1, color: titleColor }}>

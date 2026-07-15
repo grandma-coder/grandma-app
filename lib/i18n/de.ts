@@ -450,6 +450,7 @@ export const de: TranslationKeys = {
   // Kids "Today at a glance" quick-log launcher
   kids_todayAtGlance: "Today at a glance",
   kids_logSomething_label: "How is your little one?",
+  kids_home_wallet_label: "QUICK ACCESS",
   kids_quickLogs_pickTitle: "What do you want to track?",
   kids_quickLogs_edit: "Edit",
   kids_quickLogs_seeResults: "See results",
@@ -2461,6 +2462,7 @@ export const de: TranslationKeys = {
   examForm_permNeeded: "Permission needed",
   examForm_allowPhoto: "Allow photo access to attach exam images.",
   examForm_allowCamera: "Allow camera access to scan an exam.",
+  examForm_forChild: "For which child?",
   pregCal_viewMonth: "Month",
   pregCal_viewWeek: "Week",
   pregCal_alertNameRequired: "Name required",

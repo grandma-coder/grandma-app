@@ -2191,6 +2191,16 @@ export function KidsHome() {
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
 
+      {/* Wallet eyebrow — small section title above the card stack, matching the
+          pregnancy home's "YOUR WEEK" label above its Week Wallet. */}
+      {diffuse ? (
+        <Text style={{ marginTop: 24, marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+          {t('kids_home_wallet_label')}
+        </Text>
+      ) : (
+        <MonoCaps style={{ marginTop: 24, marginBottom: 12 }}>{t('kids_home_wallet_label')}</MonoCaps>
+      )}
+
       {/* ─── Wallet stack (Set Goals → Rewards) ─────────────── */}
       {(() => {
         const growthLeapBody = growthLeap ? (<GrowthLeapCard leap={growthLeap} childName={child.name} />) : null

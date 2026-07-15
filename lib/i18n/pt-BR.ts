@@ -450,6 +450,7 @@ export const ptBR: TranslationKeys = {
   // Kids "Today at a glance" quick-log launcher
   kids_todayAtGlance: "Today at a glance",
   kids_logSomething_label: "How is your little one?",
+  kids_home_wallet_label: "QUICK ACCESS",
   kids_quickLogs_pickTitle: "What do you want to track?",
   kids_quickLogs_edit: "Edit",
   kids_quickLogs_seeResults: "See results",
@@ -2461,6 +2462,7 @@ export const ptBR: TranslationKeys = {
   examForm_permNeeded: "Permissão necessária",
   examForm_allowPhoto: "Permita acesso a fotos para anexar imagens de testes.",
   examForm_allowCamera: "Permita acesso à câmera para digitalizar um teste.",
+  examForm_forChild: "Para qual criança?",
   pregCal_viewMonth: "Mês",
   pregCal_viewWeek: "Semana",
   pregCal_alertNameRequired: "Nome obrigatório",

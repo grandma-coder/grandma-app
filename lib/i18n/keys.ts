@@ -503,6 +503,7 @@ export interface TranslationKeys {
   // ─── Kids "Today at a glance" quick-log launcher ──────────────────────
   kids_todayAtGlance: string
   kids_logSomething_label: string
+  kids_home_wallet_label: string
   kids_quickLogs_pickTitle: string
   kids_quickLogs_edit: string
   kids_quickLogs_seeResults: string
