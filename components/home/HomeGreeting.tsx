@@ -35,17 +35,24 @@ export function HomeGreeting({
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
+  // Page canvas behind the greeting — used as the logo's "empty" body so the
+  // black line-art heart stays legible instead of filling solid.
+  const canvas = diffuse ? dt.colors.bg : colors.bg
   const displayName = name?.trim().split(/\s+/)[0] || 'dear'
 
   return (
     <View style={styles.wrap}>
       {showLogo ? (
         <View style={styles.logo}>
+          {/* Monochrome line-art mark — ink outline + ink heart on an empty
+              (canvas-colored) body, no animation. A quiet static brand glyph. */}
           <GrandmaLogo
             size={logoSize}
-            mode="auto"
+            body={canvas}
+            accent={ink}
             outline={ink}
-            motion="default"
+            motion="none"
+            animate={false}
           />
         </View>
       ) : null}
