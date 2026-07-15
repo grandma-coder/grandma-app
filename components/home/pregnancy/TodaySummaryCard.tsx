@@ -18,7 +18,7 @@ import { Display, MonoCaps } from '../../ui/Typography'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition,
 } from '../../stickers/RewardStickers'
-import { moodFaceVariant, moodFaceFill } from '../../../lib/moodFace'
+import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
 import { TodayDashboardModal } from './TodayDashboardModal'
 import { QuickLogPicker } from './QuickLogPicker'
@@ -74,9 +74,11 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
   const pillByKey: Record<string, Pill> = {
     mood: {
       key: 'mood', logType: 'mood',
-      icon: moodKey
-        ? <MoodFace size={20} variant={moodFaceVariant(moodKey)} fill={moodFaceFill(moodKey)} />
-        : <MoodFace size={20} variant="okay" fill={stickers.yellowSoft} />,
+      icon: diffuse
+        ? <Character name="mood" size={24} face={moodExpression(moodKey)} color={moodKey ? moodBlobFill(moodKey) : stickers.yellow} />
+        : (moodKey
+            ? <MoodFace size={20} variant={moodFaceVariant(moodKey)} fill={moodFaceFill(moodKey)} />
+            : <MoodFace size={20} variant="okay" fill={stickers.yellowSoft} />),
       label: moodKey ? (MOOD_LABELS[moodKey] ?? moodKey) : '+',
       done: moodKey !== null,
     },

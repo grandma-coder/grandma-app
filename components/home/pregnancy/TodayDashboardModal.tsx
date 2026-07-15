@@ -25,7 +25,7 @@ import {
   Utensils as UtensilsLine, Activity as ActivityLine, Footprints as FootprintsLine,
   Scale as ScaleLine,
 } from 'lucide-react-native'
-import { moodFaceVariant, moodFaceFill } from '../../../lib/moodFace'
+import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
 
@@ -145,7 +145,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           </View>
           <View style={styles.moodRow}>
             {diffuse ? (
-              <Character name="mood" size={48} color={moodKey ? moodFaceFill(moodKey) : stickers.yellow} />
+              <Character name="mood" size={48} face={moodExpression(moodKey)} color={moodKey ? moodBlobFill(moodKey) : stickers.yellow} />
             ) : (
               <MoodFace
                 size={56}
