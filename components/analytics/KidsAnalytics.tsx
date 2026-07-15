@@ -102,7 +102,7 @@ import { runWellnessNotifications } from '../../lib/notificationEngine'
 import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from '../ui/ChildPills'
 import { AnalyticsTitle } from './shared/AnalyticsTitle'
 import { MoodFace } from '../stickers/RewardStickers'
-import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
 
 function EmojiSticker({ size = 20, children, style }: { size?: number; children: string | undefined; style?: any }) {
@@ -4868,6 +4868,7 @@ function MoodDistribution({ moods }: { moods: { mood: string; count: number }[] 
 
 function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<string, number[]>; labels: string[]; width: number }) {
   const { colors, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const days = labels.length
   const moods = Object.keys(dailyCounts)
@@ -4895,7 +4896,9 @@ function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<st
                 const fill = moodFaceFill(mood)
                 return (
                   <View key={mood} style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: fill + '55', borderWidth: 1.5, borderColor: ink, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    <MoodFace size={20} variant={moodFaceVariant(mood)} fill={fill} stroke={ink} />
+                    {diffuse
+                      ? <Character name="mood" size={22} face={moodExpression(mood)} color={moodBlobFill(mood)} />
+                      : <MoodFace size={20} variant={moodFaceVariant(mood)} fill={fill} stroke={ink} />}
                   </View>
                 )
               }) : (

@@ -82,7 +82,7 @@ import {
   Blob,
 } from '../ui/Stickers'
 import { MoodFace } from '../stickers/RewardStickers'
-import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -876,11 +876,15 @@ function MoodTrendStrip({ data }: { data: { log_date: string; value: string | nu
       <View style={styles.moodStripRow}>
         {entries.map((e, i) => (
           <View key={i} style={{ alignItems: 'center', gap: 4 }}>
-            <MoodFace
-              size={28}
-              variant={moodFaceVariant(e.value ?? undefined)}
-              fill={moodFaceFill(e.value ?? undefined)}
-            />
+            {diffuse ? (
+              <Character name="mood" size={28} face={moodExpression(e.value ?? undefined)} color={moodBlobFill(e.value ?? undefined)} />
+            ) : (
+              <MoodFace
+                size={28}
+                variant={moodFaceVariant(e.value ?? undefined)}
+                fill={moodFaceFill(e.value ?? undefined)}
+              />
+            )}
             <Text style={diffuse
               ? { fontSize: 9, color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4 }
               : { fontSize: 9, color: colors.textMuted, fontFamily: font.bodyMedium }}>

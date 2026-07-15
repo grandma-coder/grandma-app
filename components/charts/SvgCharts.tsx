@@ -13,7 +13,8 @@ import Svg, {
 import { useTheme, brand, font, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { MoodFace } from '../stickers/RewardStickers'
-import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { Character } from '../characters/Characters'
+import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
 
 const STICKER_INK = '#141313'
 const MOOD_STRIP_BASE_SIZE = 32
@@ -703,12 +704,21 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
                   the white-55% blob reads as a stray gray dot, not a sticker
                   highlight, so we drop it rather than fight the contrast. */}
               {!isDark && <View style={bubbleClusterStyles.shine} />}
-              <MoodFace
-                size={Math.round(size * 0.55)}
-                variant={variant}
-                fill={fill}
-                stroke={stroke}
-              />
+              {diffuse ? (
+                <Character
+                  name="mood"
+                  size={Math.round(size * 0.62)}
+                  face={moodExpression(item.mood)}
+                  color={moodBlobFill(item.mood)}
+                />
+              ) : (
+                <MoodFace
+                  size={Math.round(size * 0.55)}
+                  variant={variant}
+                  fill={fill}
+                  stroke={stroke}
+                />
+              )}
             </View>
             {/* Under Diffuse the sheet is Hanken (sans) + Space Mono (data);
                 the current variant's chunky Fraunces_800 serif reads as a
