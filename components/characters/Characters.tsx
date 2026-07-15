@@ -11,7 +11,7 @@
  * DESIGN_SYSTEM.md §0. Consumers pass a `color` (the hue) or accept the default.
  */
 
-import Svg, { Path, Circle } from 'react-native-svg'
+import Svg, { Path, Circle, Ellipse } from 'react-native-svg'
 
 export type CharacterName =
   // pillars & metrics
@@ -29,6 +29,15 @@ export type CharacterName =
   | 'soothe' | 'hug' | 'community' | 'note' | 'photo' | 'bell' | 'clock'
   // birth-guide topics
   | 'cloud' | 'key' | 'lungs' | 'warning'
+  // rewards & achievements
+  | 'trophy' | 'medal' | 'badge' | 'gift' | 'reward'
+
+// Mood expressions — one `mood` blob, a `face` prop varies the expression.
+// Kids: happy·calm·energetic·fussy·cranky. Pregnancy adds excited·anxious·nauseous.
+// Pass to <Character name="mood" face="fussy" /> (or via moodFace helpers).
+export type MoodExpression =
+  | 'happy' | 'calm' | 'energetic' | 'fussy' | 'cranky'
+  | 'excited' | 'anxious' | 'nauseous'
 
 // Default hue per concept (deepened sticker palette). Overridable via `color`.
 const HUE: Record<CharacterName, string> = {
@@ -42,6 +51,7 @@ const HUE: Record<CharacterName, string> = {
   soothe: '#8E72C9', hug: '#D98CA6', community: '#7A9D4A', note: '#E08A5A', photo: '#7FA8D8', bell: '#C9A02C',
   clock: '#8E72C9',
   cloud: '#7FA8D8', key: '#C9A02C', lungs: '#D98CA6', warning: '#D86A4F',
+  trophy: '#C9A02C', medal: '#C79A5B', badge: '#D87CA0', gift: '#EE7B6D', reward: '#F5D652',
 }
 
 // Blob silhouette (48×48) per concept, ported from the approved set.
@@ -90,6 +100,14 @@ const D: Record<CharacterName, string> = {
   key: 'M17 6a11 11 0 1 0 8 18l10 10 4-4-3-3 3-3-4-4-3 3-3-3a11 11 0 0 0-9-14ZM16 13a4.5 4.5 0 1 1 0 7 4.5 4.5 0 0 1 0-7Z',
   lungs: 'M23 6h2v10c0 2 2 3 4 3 4 0 6 3 6 9v8c0 3-2 5-5 5s-5-2-5-5V19h-2v17c0 3-2 5-5 5s-5-2-5-5v-8c0-6 2-9 6-9 2 0 4-1 4-3V6Z',
   warning: 'M21 6a4 4 0 0 1 6 0l16 30a4 4 0 0 1-3 6H8a4 4 0 0 1-3-6Z',
+  // rewards & achievements. Body only in D (hue fill); cut-out details (check,
+  // ribbon, star) live in FACE and render in the paper/bg colour, matching the
+  // rest of the family. Trophy handles are baked into its D as subpaths.
+  trophy: 'M14 8h20v6c0 6-3 11-8 12v4h5v4H17v-4h5v-4c-5-1-8-6-8-12V8ZM14 10c-4 0-6 2-6 5s2 6 6 7l1-3c-3-1-4-2-4-4s1-2 3-2ZM34 10c4 0 6 2 6 5s-2 6-6 7l-1-3c3-1 4-2 4-4s-1-2-3-2Z',
+  medal: 'M24 42a12 12 0 1 1 0-24 12 12 0 0 1 0 24ZM18 6l6 12-4 2-6-12ZM30 6l-6 12 4 2 6-12Z',
+  badge: 'M24 6l4 3 5-1 1 5 4 3-2 5 2 5-4 3-1 5-5-1-4 3-4-3-5 1-1-5-4-3 2-5-2-5 4-3 1-5 5 1Z',
+  gift: 'M9 20h30v18a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V20ZM7 14h34a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1ZM24 14c-3-6-9-4-9 0 0 2 4 3 9 0Zm0 0c3-6 9-4 9 0 0 2-4 3-9 0Z',
+  reward: 'M8 18a10 10 0 0 1 10-10h12a10 10 0 0 1 10 10v12a10 10 0 0 1-10 10H18A10 10 0 0 1 8 30V18Z',
 }
 
 // Face per concept. Eyes ONLY on creatures/subjects; object glyphs are faceless
@@ -97,6 +115,8 @@ const D: Record<CharacterName, string> = {
 // detail rendered in the surface/paper colour (pulse, target, wave, blip, lens,
 // or the community's four eyes).
 type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'blip' | 'lens' | 'quad' | 'check' | 'hands' | 'warn' | 'none'
+  // reward cut-outs (rendered in the paper/bg colour)
+  | 'sealCheck' | 'medalCheck' | 'ribbon' | 'starCut'
 const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, number] }> = {
   // subjects / creatures → eyes
   nutrition: { kind: 'dots', e: [19, 30, 29, 30] },
@@ -145,6 +165,26 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   note: { kind: 'none', e: [0, 0, 0, 0] },
   bell: { kind: 'none', e: [0, 0, 0, 0] },
   clock: { kind: 'hands', e: [0, 0, 0, 0] },
+  // rewards & achievements
+  trophy: { kind: 'none', e: [0, 0, 0, 0] },
+  medal: { kind: 'medalCheck', e: [0, 0, 0, 0] },
+  badge: { kind: 'sealCheck', e: [0, 0, 0, 0] },
+  gift: { kind: 'ribbon', e: [0, 0, 0, 0] },
+  reward: { kind: 'starCut', e: [0, 0, 0, 0] },
+}
+
+// Mood expression face recipes — drawn on the `mood` blob. Each returns the
+// eyes+mouth markup for a mood; `eye` is the ink colour. Distinct enough to read
+// at 24px (see the blob gallery). Used when <Character name="mood" face=... />.
+const MOOD_FACE: Record<MoodExpression, (eye: string) => React.ReactNode> = {
+  happy: (e) => (<><Circle cx={17} cy={21} r={2.3} fill={e} /><Circle cx={31} cy={21} r={2.3} fill={e} /><Path d="M17 28q7 7 14 0" stroke={e} strokeWidth={2} fill="none" strokeLinecap="round" /></>),
+  calm: (e) => (<><Path d="M15 22q2.4 2 4.6 0" stroke={e} strokeWidth={1.7} fill="none" strokeLinecap="round" /><Path d="M28 22q2.4 2 4.6 0" stroke={e} strokeWidth={1.7} fill="none" strokeLinecap="round" /><Path d="M19 29q5 3 10 0" stroke={e} strokeWidth={1.8} fill="none" strokeLinecap="round" /></>),
+  energetic: (e) => (<><Circle cx={17} cy={21} r={2.8} fill={e} /><Circle cx={31} cy={21} r={2.8} fill={e} /><Ellipse cx={24} cy={30} rx={4} ry={4.5} fill={e} /></>),
+  fussy: (e) => (<><Path d="M15 22q2 2.4 4 0" stroke={e} strokeWidth={1.7} fill="none" strokeLinecap="round" /><Path d="M29 22q2 2.4 4 0" stroke={e} strokeWidth={1.7} fill="none" strokeLinecap="round" /><Path d="M18 32q2-3 3 0 1.5 2.4 3 0 1-3 3 0" stroke={e} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" /></>),
+  cranky: (e) => (<><Circle cx={17} cy={24} r={2.2} fill={e} /><Circle cx={31} cy={24} r={2.2} fill={e} /><Path d="M13 19l7 3M35 19l-7 3" stroke={e} strokeWidth={2.1} fill="none" strokeLinecap="round" /><Path d="M18 34q6-5 12 0" stroke={e} strokeWidth={2.1} fill="none" strokeLinecap="round" /></>),
+  excited: (e) => (<><Circle cx={17} cy={21} r={2.6} fill={e} /><Circle cx={31} cy={21} r={2.6} fill={e} /><Path d="M16 28q8 8 16 0" stroke={e} strokeWidth={2.1} fill="none" strokeLinecap="round" /></>),
+  anxious: (e) => (<><Circle cx={17} cy={22} r={2} fill={e} /><Circle cx={31} cy={22} r={2} fill={e} /><Path d="M17 31l3-2 4 2 4-2 3 2" stroke={e} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" /></>),
+  nauseous: (e) => (<><Path d="M15 21q2 -2 4 0 2 2 4 0" stroke={e} strokeWidth={1.6} fill="none" strokeLinecap="round" /><Path d="M27 21q2 -2 4 0" stroke={e} strokeWidth={1.6} fill="none" strokeLinecap="round" /><Path d="M18 30q3 3 6 0 3 -3 6 0" stroke={e} strokeWidth={1.8} fill="none" strokeLinecap="round" /></>),
 }
 
 interface Props {
@@ -157,12 +197,25 @@ interface Props {
   /** Surface/paper colour for "cut-out" details (pulse, target, wave, lens).
    *  Defaults to the Diffuse light paper; pass dt.colors.bg to match dark. */
   bg?: string
+  /** Mood expression — only honoured when `name="mood"`. Overrides the default
+   *  smile with a specific expression (happy/fussy/cranky/…). */
+  face?: MoodExpression
 }
 
-export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1E8' }: Props) {
+export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1E8', face }: Props) {
   const fill = color ?? HUE[name]
   const f = FACE[name]
   const [a, b, c, d] = f.e
+  // Mood blob with an explicit expression → draw that face instead of the
+  // default smile.
+  if (name === 'mood' && face) {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 48 48">
+        <Path d={D.mood} fill={fill} />
+        {MOOD_FACE[face](eye)}
+      </Svg>
+    )
+  }
   return (
     <Svg width={size} height={size} viewBox="0 0 48 48">
       <Path d={D[name]} fill={fill} />
@@ -222,6 +275,25 @@ export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1
           <Path d="M24 19v9" stroke={bg} strokeWidth={3} fill="none" strokeLinecap="round" />
           <Circle cx={24} cy={35} r={2} fill={bg} />
         </>
+      )}
+      {/* medal — check on the medal disc (disc centre is at 24,30) */}
+      {f.kind === 'medalCheck' && (
+        <Path d="M20 30l3 3 6-6" stroke={bg} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+      {/* badge — seal ring + check */}
+      {f.kind === 'sealCheck' && (
+        <>
+          <Circle cx={24} cy={24} r={6} fill="none" stroke={bg} strokeWidth={2.2} />
+          <Path d="M21 24l2 2 4-4" stroke={bg} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      )}
+      {/* gift — vertical ribbon down the box */}
+      {f.kind === 'ribbon' && (
+        <Path d="M24 14v26" stroke={bg} strokeWidth={4} fill="none" strokeLinecap="butt" />
+      )}
+      {/* reward — star cut-out in the rounded tile */}
+      {f.kind === 'starCut' && (
+        <Path d="M24 14l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" fill={bg} />
       )}
     </Svg>
   )
