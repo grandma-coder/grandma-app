@@ -24,6 +24,7 @@ import { phaseHint, saveLabel } from '../../lib/cycleLogForms'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { SymptomSticker } from './symptomStickers'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../ui/Stickers'
+import { Character, type MoodExpression } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 
@@ -420,7 +421,7 @@ export function PeriodStartForm({
                   : { backgroundColor: on ? accent : tint, borderColor: '#141313' },
               ]}
             >
-              <Drop size={diffuse ? 26 : 36} fill={diffuse ? opt.dropColor : (on ? '#FFFEF8' : opt.dropColor)} />
+              {diffuse ? <Character name="period" size={30} color={opt.dropColor} /> : <Drop size={36} fill={on ? '#FFFEF8' : opt.dropColor} />}
               <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: on ? '#FFFEF8' : '#141313' }]}>
                 {t(opt.labelKey)}
               </Text>
@@ -484,7 +485,7 @@ export function PeriodEndForm({
           borderWidth: diffuse ? 1 : 2, borderColor: diffuse ? dt.colors.line2 : accent, borderStyle: 'dashed',
           alignItems: 'center', justifyContent: 'center',
         }}>
-          <Drop size={36} fill={diffuse ? stickers.coral : accent} />
+          {diffuse ? <Character name="period" size={40} color={stickers.coral} /> : <Drop size={36} fill={accent} />}
         </View>
       </View>
     </LogFormShell>
@@ -576,12 +577,13 @@ const MOOD_OPTIONS: {
   labelKey: keyof TranslationKeys
   Sticker: typeof Sad
   fill: string
+  face: MoodExpression   // Diffuse: the mood-blob expression
 }[] = [
-  { id: 'low',   labelKey: 'cycleLogForm_mood_low',   Sticker: Sad,    fill: '#EE7B6D' },
-  { id: 'down',  labelKey: 'cycleLogForm_mood_down',  Sticker: Sad,    fill: '#9DC3E8' },
-  { id: 'okay',  labelKey: 'cycleLogForm_mood_okay',  Sticker: Sleepy, fill: '#C8B6E8' },
-  { id: 'good',  labelKey: 'cycleLogForm_mood_good',  Sticker: Smiley, fill: '#F5D652' },
-  { id: 'great', labelKey: 'cycleLogForm_mood_great', Sticker: Smiley, fill: '#BDD48C' },
+  { id: 'low',   labelKey: 'cycleLogForm_mood_low',   Sticker: Sad,    fill: '#EE7B6D', face: 'cranky' },
+  { id: 'down',  labelKey: 'cycleLogForm_mood_down',  Sticker: Sad,    fill: '#9DC3E8', face: 'fussy' },
+  { id: 'okay',  labelKey: 'cycleLogForm_mood_okay',  Sticker: Sleepy, fill: '#C8B6E8', face: 'calm' },
+  { id: 'good',  labelKey: 'cycleLogForm_mood_good',  Sticker: Smiley, fill: '#F5D652', face: 'happy' },
+  { id: 'great', labelKey: 'cycleLogForm_mood_great', Sticker: Smiley, fill: '#BDD48C', face: 'excited' },
 ]
 
 export function MoodForm({
@@ -640,7 +642,9 @@ export function MoodForm({
                 borderColor: diffuse ? (active ? dt.colors.hairline : 'transparent') : 'transparent',
               }}
             >
-              <M size={40} fill={m.fill} />
+              {diffuse
+                ? <Character name="mood" size={40} face={m.face} color={m.fill} />
+                : <M size={40} fill={m.fill} />}
               <Text style={diffuse ? {
                 fontSize: 9, marginTop: 4, fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
                 letterSpacing: 0.6, textTransform: 'uppercase',
@@ -881,7 +885,7 @@ export function CmForm({
                   : { backgroundColor: on ? accent : tint, borderColor: '#141313' },
               ]}
             >
-              <Drop size={diffuse ? 22 : 28} fill={diffuse ? stickers.blue : (on ? '#FFFEF8' : accent)} />
+              {diffuse ? <Character name="water" size={26} color={stickers.blue} /> : <Drop size={28} fill={on ? '#FFFEF8' : accent} />}
               <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: on ? '#FFFEF8' : '#141313' }]}>
                 {t(opt.labelKey)}
               </Text>
@@ -948,7 +952,7 @@ export function IntimacyForm({
                   : { backgroundColor: on ? accent : tint, borderColor: '#141313' },
               ]}
             >
-              <Heart size={40} fill={diffuse ? stickers.pink : (on ? '#FFFEF8' : accent)} />
+              {diffuse ? <Character name="heart" size={40} color={stickers.pink} /> : <Heart size={40} fill={on ? '#FFFEF8' : accent} />}
               <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, marginTop: 6, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: on ? '#FFFEF8' : '#141313', marginTop: 6 }]}>
                 {t(opt === 'unprotected' ? 'cycleLogForm_unprotected' : 'cycleLogForm_protected')}
               </Text>
