@@ -461,7 +461,10 @@ function getRecommendedCalories(bd: string): number {
 // CHILD_COLORS imported from shared component
 import { CHILD_COLORS } from '../ui/ChildPills'
 import { LogSheet } from '../calendar/LogSheet'
-import { SleepForm, KidsMoodForm, FeedingForm, ActivityForm } from '../calendar/KidsLogForms'
+import { SleepForm, KidsMoodForm, FeedingForm, ActivityForm, DiaperForm } from '../calendar/KidsLogForms'
+import { useKidsTodayLogs } from '../../lib/analyticsData'
+import { KidsTodaySummaryCard } from './kids/KidsTodaySummaryCard'
+import { MonoCaps } from '../ui/Typography'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
@@ -720,6 +723,10 @@ export function KidsHome() {
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
   const child = activeChild ?? children[0]
 
+  // Today's logs for the active child → drives the "Today at a glance" quick-log
+  // chips (done state + progress). Auto-refetches on child switch + after saves.
+  const { data: todayCounts = {} } = useKidsTodayLogs(child?.id)
+
   const [dateRange, setDateRange] = useState<DateRange>('7days')
   const [customRange, setCustomRange] = useState<{ start: Date; end: Date } | undefined>(undefined)
   const [customPickerVisible, setCustomPickerVisible] = useState(false)
@@ -735,7 +742,7 @@ export function KidsHome() {
   const [activitiesDetailVisible, setActivitiesDetailVisible] = useState(false)
   const [diaperModalVisible, setDiaperModalVisible] = useState(false)
   const [goalsModalVisible, setGoalsModalVisible] = useState(false)
-  const [logSheetType, setLogSheetType] = useState<'sleep' | 'mood' | 'feeding' | 'activity' | null>(null)
+  const [logSheetType, setLogSheetType] = useState<'sleep' | 'mood' | 'feeding' | 'activity' | 'diaper' | null>(null)
 
   // Reminders
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -5487,7 +5494,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             <DiffuseListRow
               title={t('kids_home_health_activities_label')}
               value={activityCount.toLocaleString()}
-              icon={<Activity size={16} color={dCol.ink3} strokeWidth={1.5} />}
+              icon={<Character name="activity" size={22} color={PILLAR_COLORS.activity} />}
               onPress={() => setActivityBreakdownVisible(true)}
               showArrow
             />
@@ -5495,15 +5502,15 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
               title={nutritionLabel}
               value={nutritionValue}
               icon={stage === 'liquid' || stage === 'mixed'
-                ? <Droplets size={16} color={dCol.ink3} strokeWidth={1.5} />
-                : <Utensils size={16} color={dCol.ink3} strokeWidth={1.5} />}
+                ? <Character name="milk" size={22} color={PILLAR_COLORS.nutrition} />
+                : <Character name="nutrition" size={22} color={PILLAR_COLORS.nutrition} />}
               last={!((stage === 'liquid' || stage === 'mixed') && feedingMl > 0)}
             />
             {(stage === 'liquid' || stage === 'mixed') && feedingMl > 0 ? (
               <DiffuseListRow
                 title={t('kids_home_health_total_volume')}
                 value={`${feedingMl.toLocaleString()}ml`}
-                icon={<Droplets size={16} color={dCol.ink3} strokeWidth={1.5} />}
+                icon={<Character name="water" size={22} color={stickers.blue} />}
                 last
               />
             ) : null}
@@ -5545,7 +5552,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                   key={i}
                   title={m}
                   value={t('kids_home_health_medication_active')}
-                  icon={<Pill size={16} color={dCol.ink3} strokeWidth={1.5} />}
+                  icon={<Character name="medicine" size={22} color={brand.secondary} />}
                   last={i === child.medications.length - 1}
                 />
               ))}

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Character, type CharacterName } from '../../components/characters/Characters'
 import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useChildStore } from '../../store/useChildStore'
@@ -194,15 +195,15 @@ export default function HealthHistoryScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* ─── Quick Stats ──────────────────────────────────────────── */}
         <View style={styles.statsRow}>
-          <StatCard icon={Syringe} color={stickers.greenInk} bg={stickers.green} num={vaccines.length} label="Vaccines" onPress={() => setDetailSection('vaccine')} />
-          <StatCard icon={Pill} color={stickers.blueInk} bg={stickers.blue} num={medications.length} label="Meds" onPress={() => setDetailSection('medicine')} />
-          <StatCard icon={Thermometer} color={stickers.coralInk} bg={stickers.coral} num={temperatures.length} label="Temps" onPress={() => setDetailSection('temperature')} />
-          <StatCard icon={Star} color={stickers.yellowInk} bg={stickers.yellow} num={milestones.length} label="Milestones" onPress={() => setDetailSection('milestone')} />
+          <StatCard icon={Syringe} charName="vaccine" color={stickers.greenInk} bg={stickers.green} num={vaccines.length} label="Vaccines" onPress={() => setDetailSection('vaccine')} />
+          <StatCard icon={Pill} charName="medicine" color={stickers.blueInk} bg={stickers.blue} num={medications.length} label="Meds" onPress={() => setDetailSection('medicine')} />
+          <StatCard icon={Thermometer} charName="temperature" color={stickers.coralInk} bg={stickers.coral} num={temperatures.length} label="Temps" onPress={() => setDetailSection('temperature')} />
+          <StatCard icon={Star} charName="star" color={stickers.yellowInk} bg={stickers.yellow} num={milestones.length} label="Milestones" onPress={() => setDetailSection('milestone')} />
         </View>
 
         {/* ─── Vaccine Tracker ──────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('vaccine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
-          <SectionHeader icon={Syringe} color={stickers.greenInk} title="Vaccines" />
+          <SectionHeader icon={Syringe} charName="vaccine" color={stickers.greenInk} title="Vaccines" />
           {vaccines.length > 0 ? (
             <View style={styles.vaccineList}>
               {vaccines.slice(0, 3).map((v) => (
@@ -223,7 +224,7 @@ export default function HealthHistoryScreen() {
           ) : diffuse ? (
             <View style={[styles.emptyState, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
               <DiffuseBloomIcon color={stickers.green} size={30} intensity={0.4}>
-                <Syringe size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name="vaccine" size={20} color={stickers.green} />
               </DiffuseBloomIcon>
               <Text style={[styles.emptyText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>{t('healthHistory_noVaccinesYet')}</Text>
             </View>
@@ -246,7 +247,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Medications ──────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('medicine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
-          <SectionHeader icon={Pill} color={stickers.blueInk} title="Medications" />
+          <SectionHeader icon={Pill} charName="medicine" color={stickers.blueInk} title="Medications" />
           {medications.length > 0 ? (
             medications.slice(0, 3).map((m) => (
               <View key={m.id} style={styles.medItem}>
@@ -263,7 +264,7 @@ export default function HealthHistoryScreen() {
           ) : diffuse ? (
             <View style={[styles.emptyState, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
               <DiffuseBloomIcon color={stickers.blue} size={30} intensity={0.4}>
-                <Pill size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name="medicine" size={20} color={stickers.blue} />
               </DiffuseBloomIcon>
               <Text style={[styles.emptyText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>{t('healthHistory_noMedicationsLogged')}</Text>
             </View>
@@ -288,7 +289,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Growth ───────────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('growth')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
-          <SectionHeader icon={TrendingUp} color={stickers.blueInk} title="Growth" />
+          <SectionHeader icon={TrendingUp} charName="growth" color={stickers.blueInk} title="Growth" />
           {growthEntries.length > 0 ? (
             <>
               {/* Separate weight + height lines */}
@@ -354,7 +355,7 @@ export default function HealthHistoryScreen() {
           ) : diffuse ? (
             <View style={[styles.emptyState, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
               <DiffuseBloomIcon color={stickers.blue} size={30} intensity={0.4}>
-                <TrendingUp size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name="growth" size={20} color={stickers.blue} />
               </DiffuseBloomIcon>
               <Text style={[styles.emptyText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>{t('healthHistory_noGrowthEntries')}</Text>
             </View>
@@ -368,7 +369,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Milestones ───────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('milestone')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
-          <SectionHeader icon={Star} color={stickers.yellowInk} title="Milestones" />
+          <SectionHeader icon={Star} charName="star" color={stickers.yellowInk} title="Milestones" />
           {milestones.length > 0 ? (
             <View style={styles.milestoneList}>
               {milestones.slice(0, 4).map((m) => (
@@ -388,7 +389,7 @@ export default function HealthHistoryScreen() {
           ) : diffuse ? (
             <View style={[styles.emptyState, { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderStyle: 'solid' }]}>
               <DiffuseBloomIcon color={stickers.yellow} size={30} intensity={0.4}>
-                <Star size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name="star" size={20} color={stickers.yellow} />
               </DiffuseBloomIcon>
               <Text style={[styles.emptyText, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>{t('healthHistory_noMilestones')}</Text>
             </View>
@@ -412,7 +413,7 @@ export default function HealthHistoryScreen() {
           if (alertKids.length === 0) return null
           return (
           <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse && styles.diffuseCard]}>
-            <SectionHeader icon={AlertTriangle} color={stickers.coralInk} title="Allergies & Alerts" showChevron={false} />
+            <SectionHeader icon={AlertTriangle} charName="warning" color={stickers.coralInk} title="Allergies & Alerts" showChevron={false} />
             {alertKids.map((c) => (
               <View key={c.id} style={styles.refChild}>
                 <Text style={[styles.refChildName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: diffuse ? -0.5 : 0 }]}>{c.name}</Text>
@@ -467,7 +468,7 @@ export default function HealthHistoryScreen() {
 
 // ─── Section Header ───────────────────────────────────────────────────────
 
-function SectionHeader({ icon: Icon, color, title, showChevron = true }: { icon: any; color: string; title: string; showChevron?: boolean }) {
+function SectionHeader({ icon: Icon, charName, color, title, showChevron = true }: { icon: any; charName?: CharacterName; color: string; title: string; showChevron?: boolean }) {
   const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -477,7 +478,7 @@ function SectionHeader({ icon: Icon, color, title, showChevron = true }: { icon:
     return (
       <View style={styles.sectionHeader}>
         <DiffuseBloomIcon color={color} size={32} intensity={0.45}>
-          <Icon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+          {charName ? <Character name={charName} size={20} color={color} /> : <Icon size={16} color={dt.colors.ink3} strokeWidth={1.6} />}
         </DiffuseBloomIcon>
         <Text style={[styles.sectionTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.5 }]}>{title}</Text>
         {showChevron ? <ChevronRight size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : null}
@@ -497,7 +498,7 @@ function SectionHeader({ icon: Icon, color, title, showChevron = true }: { icon:
 
 // ─── Stat Card ────────────────────────────────────────────────────────────
 
-function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
+function StatCard({ icon: Icon, charName, color, bg, num, label, onPress }: any) {
   const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -517,7 +518,7 @@ function StatCard({ icon: Icon, color, bg, num, label, onPress }: any) {
         ]}
       >
         <DiffuseBloomIcon color={bg} size={30} intensity={0.45}>
-          <Icon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+          {charName ? <Character name={charName} size={20} color={bg} /> : <Icon size={16} color={dt.colors.ink3} strokeWidth={1.6} />}
         </DiffuseBloomIcon>
         <Text style={[styles.statNum, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>{num}</Text>
         <Text style={[styles.statLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 9 }]} numberOfLines={1}>{label}</Text>

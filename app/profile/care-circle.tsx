@@ -50,6 +50,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
+import { Character, type CharacterName } from '../../components/characters/Characters'
 import {
   DiffuseBloomIcon,
   DiffuseEmptyState,
@@ -208,30 +209,21 @@ function renderActivitySticker(kind: string, size: number, stickerColors: { cora
  */
 type IconCmp = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
 
-const ACTIVITY_LUCIDE: Record<string, IconCmp> = {
-  vaccine: Thermometer,
-  medicine: Thermometer,
-  health: Thermometer,
-  temperature: Thermometer,
-  diaper: Baby,
-  feeding: Utensils,
-  food: Utensils,
-  sleep: MoonIcon,
-  mood: Smile,
-  activity: Dumbbell,
-  memory: Camera,
-  photo: Camera,
-  growth: Heart,
-  milestone: Heart,
-  note: Heart,
+// Diffuse: each log kind → its Character concept. Replaces ACTIVITY_LUCIDE
+// (which mapped almost everything to a thermometer). One concept per kind.
+const ACTIVITY_CHARACTER: Record<string, CharacterName> = {
+  vaccine: 'vaccine', medicine: 'medicine', health: 'health', temperature: 'temperature',
+  diaper: 'diaper', feeding: 'feeding', food: 'nutrition', sleep: 'sleep', mood: 'mood',
+  activity: 'activity', memory: 'photo', photo: 'photo', growth: 'growth',
+  milestone: 'star', note: 'note',
 }
 
-/** Bloom-backed line glyph for a log kind, in Diffuse mode. */
+/** Bloom-backed Character blob for a log kind, in Diffuse mode. */
 function renderActivityDiffuseIcon(kind: string, glyphColor: string, bloomColor: string, size = 20) {
-  const Icon = ACTIVITY_LUCIDE[kind] ?? Heart
+  const name = ACTIVITY_CHARACTER[kind] ?? 'note'
   return (
     <DiffuseBloomIcon color={bloomColor} size={30} intensity={0.4}>
-      <Icon size={size} color={glyphColor} strokeWidth={1.6} />
+      <Character name={name} size={size + 6} color={glyphColor} />
     </DiffuseBloomIcon>
   )
 }
@@ -1239,7 +1231,7 @@ export default function CareCircleScreen() {
                     >
                       <View style={styles.activityStickerSlot}>
                         {diffuse
-                          ? renderActivityDiffuseIcon(a.type, dt.colors.ink3, EVENT_COLORS[a.type] ?? accent)
+                          ? renderActivityDiffuseIcon(a.type, EVENT_COLORS[a.type] ?? accent, EVENT_COLORS[a.type] ?? accent)
                           : renderActivitySticker(a.type, 38, stickers)}
                       </View>
                       <View style={{ flex: 1 }}>
