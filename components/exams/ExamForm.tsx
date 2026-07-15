@@ -208,11 +208,22 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
 
   return (
     <View style={styles.form}>
-      <LogFormSticker
-        type="exam_result"
-        label={extracting ? t('examForm_reading') : t('examForm_snapOrUpload')}
-        tint={s.lilacSoft}
-      />
+      {/* Under Diffuse the sheet title + the Scan/Upload tiles carry the header;
+          the saturated sticker banner belongs to the current cream system only.
+          Show a quiet mono status line when a photo is being read. */}
+      {diffuse ? (
+        extracting ? (
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: dt.colors.ink3, paddingBottom: 2 }}>
+            {t('examForm_reading')}
+          </Text>
+        ) : null
+      ) : (
+        <LogFormSticker
+          type="exam_result"
+          label={extracting ? t('examForm_reading') : t('examForm_snapOrUpload')}
+          tint={s.lilacSoft}
+        />
+      )}
 
       {/* Photo strip */}
       <View>
