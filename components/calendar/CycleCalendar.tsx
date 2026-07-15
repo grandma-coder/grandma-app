@@ -30,6 +30,8 @@ import { LogTile, LogTileGrid } from './LogTile'
 import { PaperCard } from '../ui/PaperCard'
 import { Display, Body } from '../ui/Typography'
 import { logSticker } from './logStickers'
+import { Character } from '../characters/Characters'
+import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
 import { MissingStickers } from '../stickers/MissingStickers'
 import {
   PeriodStartForm,
@@ -114,7 +116,9 @@ function LogActivitySheet({
                 key={e.id}
                 label={t(e.labelKey)}
                 tint={e.tint}
-                icon={logSticker(e.id, 36, isDark)}
+                icon={diffuse && DIFFUSE_LOG_CHARACTER[e.id]
+                  ? <Character name={DIFFUSE_LOG_CHARACTER[e.id]} size={34} color={diffuseLogHue(e.id)} />
+                  : logSticker(e.id, 36, isDark)}
                 onPress={() => handleSelect(e.id)}
               />
             ))}

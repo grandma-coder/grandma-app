@@ -199,7 +199,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.blueSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <ThermometerLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={stickers.blue} />}
+              {diffuse ? <Character name="temperature" size={18} color={stickers.blue} /> : <Drop size={16} fill={stickers.blue} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_bbt')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -212,7 +212,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <DropletLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={stickers.yellow} />}
+              {diffuse ? <Character name="water" size={18} color={stickers.yellow} /> : <Drop size={16} fill={stickers.yellow} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_lh')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -225,7 +225,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <DropletLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={stickers.green} />}
+              {diffuse ? <Character name="water" size={18} color={stickers.green} /> : <Drop size={16} fill={stickers.green} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_cm')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -241,7 +241,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.pinkSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <HeartLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Heart size={16} fill={intimacy ? stickers.pink : stickers.pinkSoft} />}
+              {diffuse ? <Character name="heart" size={18} color={stickers.pink} /> : <Heart size={16} fill={intimacy ? stickers.pink : stickers.pinkSoft} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_intimacy')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -254,7 +254,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.peachSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <DropletLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={periodStart ? stickers.coral : stickers.pinkSoft} />}
+              {diffuse ? <Character name="period" size={18} color={stickers.coral} /> : <Drop size={16} fill={periodStart ? stickers.coral : stickers.pinkSoft} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_period')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -297,7 +297,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         {/* 7-day BBT sparkline */}
         <PaperCard tint={diffuse ? undefined : colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            {diffuse ? <ThermometerLine size={14} color={dt.colors.ink3} strokeWidth={1.6} /> : <Drop size={16} fill={stickers.blue} />}
+            {diffuse ? <Character name="temperature" size={18} color={stickers.blue} /> : <Drop size={16} fill={stickers.blue} />}
             <MonoCaps size={10} color={muted}>{t('cycleDash_bbtLast7')}</MonoCaps>
           </View>
           {loading ? (

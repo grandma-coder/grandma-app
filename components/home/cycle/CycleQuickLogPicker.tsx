@@ -12,6 +12,8 @@ import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
 import { Drop, Heart, Smiley } from '../../ui/Stickers'
+import { Character, type CharacterName } from '../../characters/Characters'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { CYCLE_QUICK_LOGS } from '../../../lib/cycleQuickLogs'
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
 
@@ -23,7 +25,23 @@ interface Props {
 // Each cycle quick-log key → its sticker + a soft socket tint. Mirrors the
 // iconography the cycle Today-at-a-glance card already uses for these signals,
 // so the picker and the card read as the same family.
-function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers']): { node: React.ReactElement; soft: string } {
+// key → Character concept + hue + soft socket tint. Under Diffuse we render the
+// blob; legacy keeps the sticker. Concepts mirror CycleTodaySummaryCard.
+const CYCLE_LOG_META: Record<string, { char: CharacterName; hue: keyof ReturnType<typeof useTheme>['stickers']; soft: keyof ReturnType<typeof useTheme>['stickers'] }> = {
+  mood:         { char: 'mood',        hue: 'yellow', soft: 'yellowSoft' },
+  symptoms:     { char: 'activity',    hue: 'pink',   soft: 'pinkSoft' },
+  bbt:          { char: 'temperature', hue: 'blue',   soft: 'blueSoft' },
+  lh:           { char: 'water',       hue: 'yellow', soft: 'yellowSoft' },
+  cm:           { char: 'water',       hue: 'green',  soft: 'greenSoft' },
+  intimacy:     { char: 'heart',       hue: 'coral',  soft: 'peachSoft' },
+  period_start: { char: 'period',      hue: 'coral',  soft: 'peachSoft' },
+}
+
+function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers'], diffuse: boolean): { node: React.ReactElement; soft: string } {
+  const meta = CYCLE_LOG_META[key] ?? CYCLE_LOG_META.mood
+  if (diffuse) {
+    return { node: <Character name={meta.char} size={28} color={stickers[meta.hue]} />, soft: stickers[meta.soft] }
+  }
   switch (key) {
     case 'mood':         return { node: <Smiley size={24} fill={stickers.yellow} />, soft: stickers.yellowSoft }
     case 'symptoms':     return { node: <Heart size={24} fill={stickers.pink} />, soft: stickers.pinkSoft }
@@ -38,6 +56,7 @@ function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers
 
 export function CycleQuickLogPicker({ visible, onClose }: Props) {
   const { colors, stickers: themeStickers } = useTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const enabledKeys = useCycleQuickLogStore((s) => s.enabledKeys)
   const setEnabled = useCycleQuickLogStore((s) => s.setEnabled)
@@ -66,7 +85,7 @@ export function CycleQuickLogPicker({ visible, onClose }: Props) {
       <View style={{ gap: 10 }}>
         {CYCLE_QUICK_LOGS.map((q) => {
           const on = draft.includes(q.key)
-          const s = stickerFor(q.key, themeStickers)
+          const s = stickerFor(q.key, themeStickers, diffuse)
           return (
             <Pressable
               key={q.key}

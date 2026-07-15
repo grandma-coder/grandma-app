@@ -13,6 +13,8 @@ import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { Character } from '../../characters/Characters'
+import { moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { seedCycleData } from '../../../lib/devSeed'
@@ -146,53 +148,57 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
     {
       key: 'mood',
       sheet: 'mood',
-      icon: moodMeta
-        ? <moodMeta.Sticker size={22} fill={moodMeta.fill} />
-        : <Smiley size={22} fill={stickers.yellowSoft} />,
+      icon: diffuse
+        ? <Character name="mood" size={24} face={moodExpression(moodValue)} color={moodValue ? moodBlobFill(moodValue) : stickers.yellow} />
+        : (moodMeta
+            ? <moodMeta.Sticker size={22} fill={moodMeta.fill} />
+            : <Smiley size={22} fill={stickers.yellowSoft} />),
       label: moodMeta?.label ?? '+',
       done: !!moodMeta,
     },
     {
       key: 'symptoms',
       sheet: 'symptom',
-      icon: topSymptom
-        ? <SymptomSticker id={topSymptom} size={18} />
-        : <Heart size={22} fill={stickers.pinkSoft} />,
+      icon: diffuse
+        ? <Character name="activity" size={24} color={stickers.pink} />
+        : (topSymptom
+            ? <SymptomSticker id={topSymptom} size={18} />
+            : <Heart size={22} fill={stickers.pinkSoft} />),
       label: symptoms.length > 0 ? `${symptoms.length}` : '+',
       done: symptoms.length > 0,
     },
     {
       key: 'bbt',
       sheet: 'basal_temp',
-      icon: <Drop size={22} fill={stickers.blue} />,
+      icon: diffuse ? <Character name="temperature" size={24} color={stickers.blue} /> : <Drop size={22} fill={stickers.blue} />,
       label: bbtValue ? `${bbtValue}°` : '+',
       done: !!bbtValue,
     },
     {
       key: 'lh',
       sheet: 'lh',
-      icon: <Drop size={22} fill={stickers.yellow} />,
+      icon: diffuse ? <Character name="water" size={24} color={stickers.yellow} /> : <Drop size={22} fill={stickers.yellow} />,
       label: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '+',
       done: !!lhValue,
     },
     {
       key: 'cm',
       sheet: 'cm',
-      icon: <Drop size={22} fill={stickers.green} />,
+      icon: diffuse ? <Character name="water" size={24} color={stickers.green} /> : <Drop size={22} fill={stickers.green} />,
       label: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '+',
       done: !!cmValue,
     },
     {
       key: 'intimacy',
       sheet: 'intercourse',
-      icon: <Heart size={22} fill={intimacy ? stickers.pink : stickers.pinkSoft} />,
+      icon: diffuse ? <Character name="heart" size={24} color={intimacy ? stickers.pink : stickers.pinkSoft} /> : <Heart size={22} fill={intimacy ? stickers.pink : stickers.pinkSoft} />,
       label: intimacy ? '✓' : '+',
       done: !!intimacy,
     },
     {
       key: 'period_start',
       sheet: 'period_start',
-      icon: <Drop size={22} fill={periodStart ? stickers.coral : stickers.pinkSoft} />,
+      icon: diffuse ? <Character name="period" size={24} color={periodStart ? stickers.coral : stickers.pinkSoft} /> : <Drop size={22} fill={periodStart ? stickers.coral : stickers.pinkSoft} />,
       label: periodStart ? (periodStart === 'light' ? 'Lt' : periodStart === 'medium' ? 'Md' : periodStart === 'heavy' ? 'Hv' : '✓') : '+',
       done: !!periodStart,
     },
