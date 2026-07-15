@@ -100,6 +100,21 @@ export function WeekWallet({
     defaultCards.find((c) => c.id === id)?.linkOnly ?? true
 
   const iconFor = (id: PregCardId): React.ReactNode => {
+    // Diffuse: Character blobs per card. Legacy theme keeps the reward stickers.
+    if (diffuse) {
+      switch (id) {
+        case 'appointment': return <Character name="checkup" size={26} color={stickers.lilac} />
+        case 'week_tip': return <Character name="tip" size={26} color={stickers.yellow} />
+        case 'kicks': return <Character name="kick" size={26} color={stickers.coral} />
+        case 'reminders': return <Character name="bell" size={26} color={stickers.blue} />
+        case 'exams': return <Character name="exam" size={26} color={stickers.lilac} />
+        case 'birth_guide': return <Character name="nutrition" size={26} color={stickers.green} />
+        case 'ask_grandma': return <GrandmaLogo size={26} palette="lilac" outline={colors.text} />
+        case 'rewards': return <Character name="reward" size={26} color={stickers.yellow} />
+        case 'channels': return <Character name="community" size={26} color={stickers.peach} />
+        case 'village': return <Character name="community" size={26} color={stickers.green} />
+      }
+    }
     switch (id) {
       case 'appointment': return <NotifyAppointmentDue size={26} />
       case 'week_tip': return <TipRead size={26} />

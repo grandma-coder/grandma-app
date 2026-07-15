@@ -79,6 +79,18 @@ export function CycleWallet() {
     defaultCards.find((c) => c.id === id)?.linkOnly ?? true
 
   const iconFor = (id: CycleCardId): React.ReactNode => {
+    // Diffuse: Character blobs; legacy theme keeps the reward stickers.
+    if (diffuse) {
+      switch (id) {
+        case 'reminders': return <Character name="bell" size={26} color={stickers.blue} />
+        case 'pillars': return <Character name="sparkle" size={26} color={stickers.pink} />
+        case 'exams': return <Character name="exam" size={26} color={stickers.blue} />
+        case 'ask_grandma': return <GrandmaLogo size={26} palette="rose" outline={colors.text} />
+        case 'rewards': return <Character name="reward" size={26} color={stickers.yellow} />
+        case 'channels': return <Character name="community" size={26} color={stickers.peach} />
+        case 'village': return <Character name="community" size={26} color={stickers.green} />
+      }
+    }
     switch (id) {
       case 'reminders': return <NotifyRoutine size={26} />
       case 'pillars': return <LogOvulation size={24} />
