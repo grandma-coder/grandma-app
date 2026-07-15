@@ -53,6 +53,8 @@ import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
 import { MoodFace } from '../stickers/RewardStickers'
+import { Character } from '../characters/Characters'
+import { moodExpression, moodBlobFill } from '../../lib/moodFace'
 import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '../stickers/BrandStickers'
 import { Smiley, Sleepy, Sad } from '../ui/Stickers'
 import { ChildPill, childColor } from '../ui/ChildPills'
@@ -3011,7 +3013,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
             return (
               <Pressable key={m.id} onPress={() => setMood(m.id)} style={df.moodBtn}>
                 <View style={[df.moodCircle, { borderColor: active ? dTheme.colors.hairline : dTheme.colors.line2, backgroundColor: active ? m.fill + '22' : 'transparent' }]}>
-                  <MoodFace variant={m.id} fill={m.fill} size={40} />
+                  <Character name="mood" face={moodExpression(m.id)} color={moodBlobFill(m.id)} size={40} />
                 </View>
                 <Text style={[df.moodLabel, { color: active ? dTheme.colors.ink : dTheme.colors.ink3 }]}>{m.label}</Text>
               </Pressable>

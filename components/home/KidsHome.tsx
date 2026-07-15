@@ -59,7 +59,7 @@ function EmojiSticker({ size = 20, children, style }: { size?: number; children:
   return <View style={style}><S size={size} /></View>
 }
 import { MoodFace } from '../stickers/RewardStickers'
-import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
 import { useGoalsStore, getSuggestedGoals, getFeedingStage, getNutritionLabel, getAgeMonths, type MetricGoals, type FeedingStage } from '../../store/useGoalsStore'
 import { useBadgeStore } from '../../store/useBadgeStore'
 import { supabase } from '../../lib/supabase'
@@ -747,6 +747,10 @@ export function KidsHome() {
   const [showTimePicker, setShowTimePicker] = useState(false)
   const [newReminderChildId, setNewReminderChildId] = useState<string | null>(null)
   const [remindersModalVisible, setRemindersModalVisible] = useState(false)
+  // Wallet pop-up sheets (add-reminder body + growth-leap info) — the wallet
+  // cards open these instead of expanding inline (matches the pregnancy wallet).
+  const [remindersSheetVisible, setRemindersSheetVisible] = useState(false)
+  const [growthLeapSheetVisible, setGrowthLeapSheetVisible] = useState(false)
 
   // Health history
   const [healthHistory, setHealthHistory] = useState<HealthHistoryData>({
@@ -2544,16 +2548,29 @@ export function KidsHome() {
           </View>
         )
         return (
-          <KidsWallet
-            hasDiaper={rangeData.diaperCount > 0}
-            hasGrowthLeap={!!growthLeap}
-            growthLeapName={growthLeap?.name}
-            onOpenGoals={() => setGoalsModalVisible(true)}
-            onOpenHealth={() => setHealthModalVisible(true)}
-            onOpenDiaper={() => setDiaperModalVisible(true)}
-            growthLeapBody={growthLeapBody}
-            remindersBody={remindersBody}
-          />
+          <>
+            <KidsWallet
+              hasDiaper={rangeData.diaperCount > 0}
+              hasGrowthLeap={!!growthLeap}
+              growthLeapName={growthLeap?.name}
+              onOpenGoals={() => setGoalsModalVisible(true)}
+              onOpenHealth={() => setHealthModalVisible(true)}
+              onOpenDiaper={() => setDiaperModalVisible(true)}
+              onOpenGrowthLeap={() => setGrowthLeapSheetVisible(true)}
+              onOpenReminders={() => setRemindersSheetVisible(true)}
+            />
+
+            {/* Reminders — pop-up sheet (add + compact list; "see all" opens the
+                full manage modal). Mirrors the pregnancy wallet reminders sheet. */}
+            <LogSheet visible={remindersSheetVisible} title={t('kids_home_section_reminders')} onClose={() => setRemindersSheetVisible(false)}>
+              {remindersBody}
+            </LogSheet>
+
+            {/* Growth Leap — pop-up sheet with the leap info card. */}
+            <LogSheet visible={growthLeapSheetVisible} title={growthLeap?.name ?? t('kids_home_section_reminders')} onClose={() => setGrowthLeapSheetVisible(false)}>
+              {growthLeapBody}
+            </LogSheet>
+          </>
         )
       })()}
 
@@ -2792,7 +2809,7 @@ function DiffuseHeroTiles({
           sub={moodSub}
           accent={stickers.yellow}
           accent2={stickers.peach}
-          icon={hasMoods && dominantMood ? <MoodFace size={22} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} /> : <Character name="mood" size={26} color={stickers.pink} />}
+          icon={hasMoods && dominantMood ? <Character name="mood" size={26} face={moodExpression(dominantMood)} color={moodBlobFill(dominantMood)} /> : <Character name="mood" size={26} color={stickers.pink} />}
           iconNoBloom
           emptyLabel={t('kids_home_tile_mood_empty')}
           onPress={!hasMoods && onLogMood ? onLogMood : onPressMood}
@@ -4168,7 +4185,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
                 return (
                   <View key={m} style={{ gap: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <MoodFace size={18} variant={moodFaceVariant(m)} fill={moodFaceFill(m)} />
+                      <Character name="mood" size={20} face={moodExpression(m)} color={moodBlobFill(m)} />
                       <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 15, color: dCol.ink }}>{MOOD_LABELS[m]}</Text>
                       <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: on ? dCol.ink : dCol.ink3 }}>{cnt}</Text>
                     </View>
@@ -4182,7 +4199,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
 
             {/* Dominant summary — containerless, serif accent */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginTop: 22 }}>
-              <MoodFace size={26} variant={moodFaceVariant(dominantMood)} fill={moodFaceFill(dominantMood)} />
+              <Character name="mood" size={26} face={moodExpression(dominantMood)} color={moodBlobFill(dominantMood)} />
               <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink2 }}>
                 {'Mostly '}
                 <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dCol.ink }}>{MOOD_LABELS[dominantMood] || '—'}</Text>
@@ -4192,7 +4209,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
           </>
         ) : (
           <DiffuseEmptyState
-            icon={<MoodFace size={40} variant="okay" fill={moodFaceFill('calm')} />}
+            icon={<Character name="mood" size={40} face="calm" color={moodBlobFill('calm')} />}
             title={t('kids_home_mood_modal_empty_title')}
             message={t('kids_home_mood_modal_empty_hint')}
           />
