@@ -30,6 +30,7 @@ import {
   stickersDark,
   getModeColor,
   getModeColorSoft,
+  getDiffuseAccent,
   font,
 } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
@@ -41,7 +42,9 @@ import { LogFormSticker } from './LogFormSticker'
 import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
-import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
+import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
+import { Character, type CharacterName } from '../characters/Characters'
+import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { ExamForm } from '../exams/ExamForm'
 import { StepSlider } from '../ui/StepSlider'
 import { NumberStepper } from '../ui/NumberStepper'
@@ -107,11 +110,29 @@ async function savePregnancyLog(
 // accent-tinted "on" state. Used only inside the Diffuse render branches; the
 // current-system paths (LogFormSticker / colored chips) stay untouched.
 
-// Intentionally renders nothing. The enclosing LogSheet already shows the
-// "Log <Type>" title, so a second big title + sticker here was a pure
-// duplication. Kept as a no-op so the call sites don't need to change.
-function DiffuseFormHeader(_props: { type: string; title: string }) {
-  return null
+// A small centred concept blob above the form body. The LogSheet already shows
+// the "Log <Type>" title, so we don't repeat the title — just the blob, so the
+// pregnancy log sheets get their concept glyph under Diffuse (they previously
+// showed nothing here, only the legacy LogFormSticker in the current theme).
+const PREG_FORM_CHARACTER: Record<string, CharacterName> = {
+  mood: 'mood', symptom: 'activity', appointment: 'checkup', kick_count: 'kick',
+  sleep: 'sleep', exercise: 'activity', water: 'water', weight: 'growth',
+  nutrition: 'nutrition', vitamins: 'medicine', kegel: 'soothe', contraction: 'contraction',
+}
+function DiffuseFormHeader({ type }: { type: string; title: string }) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  if (!diffuse) return null
+  const name = PREG_FORM_CHARACTER[type]
+  if (!name) return null
+  const accent = getDiffuseAccent('preg', dt.isDark)
+  return (
+    <View style={{ alignItems: 'center', marginBottom: 6 }}>
+      <DiffuseBloomIcon color={accent} size={44} intensity={0.45}>
+        <Character name={name} size={28} color={accent} />
+      </DiffuseBloomIcon>
+    </View>
+  )
 }
 
 /** Hairline mono chip — accent-tinted surface + accent hairline when selected. */
@@ -230,11 +251,15 @@ export function PregnancyMoodForm({
                     },
               ]}
             >
-              <MoodFace
-                variant={moodFaceVariant(id)}
-                fill={moodFaceFill(id)}
-                size={44}
-              />
+              {diffuse ? (
+                <Character name="mood" size={44} face={moodExpression(id)} color={moodBlobFill(id)} />
+              ) : (
+                <MoodFace
+                  variant={moodFaceVariant(id)}
+                  fill={moodFaceFill(id)}
+                  size={44}
+                />
+              )}
               <Text
                 style={[
                   styles.moodLabel,
