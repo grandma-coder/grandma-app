@@ -509,6 +509,7 @@ export const en: TranslationKeys = {
   wallet_rewards_title: 'Rewards',
   wallet_channels_title: 'Channels',
   wallet_village_title: 'Village',
+  wallet_pickTitle: 'Customize your wallet',
 
   // Kids "Today at a glance" quick-log launcher
   kids_todayAtGlance: 'Today at a glance',

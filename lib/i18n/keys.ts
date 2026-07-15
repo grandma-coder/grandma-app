@@ -507,6 +507,7 @@ export interface TranslationKeys {
   wallet_rewards_title: string
   wallet_channels_title: string
   wallet_village_title: string
+  wallet_pickTitle: string
 
   // ─── Kids "Today at a glance" quick-log launcher ──────────────────────
   kids_todayAtGlance: string

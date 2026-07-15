@@ -358,6 +358,7 @@ export const ptBR: TranslationKeys = {
   wallet_rewards_title: "Recompensas",
   wallet_channels_title: "Canais",
   wallet_village_title: "Comunidade",
+  wallet_pickTitle: "Customize your wallet",
   cycle_nudge_from: "De",
   cycle_nudge_read_more: "Leia mais →",
   cycle_nudge_reflect_from: "Um momento para você",

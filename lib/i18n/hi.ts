@@ -358,6 +358,7 @@ export const hi: TranslationKeys = {
   wallet_rewards_title: "Rewards",
   wallet_channels_title: "Channels",
   wallet_village_title: "Village",
+  wallet_pickTitle: "Customize your wallet",
   cycle_nudge_from: "From",
   cycle_nudge_read_more: "Read more →",
   cycle_nudge_reflect_from: "A moment for you",
