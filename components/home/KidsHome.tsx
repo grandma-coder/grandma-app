@@ -2173,6 +2173,22 @@ export function KidsHome() {
         onLogActivity={() => setLogSheetType('activity')}
       />
 
+      {/* ─── Today at a glance — customizable quick-log launcher ─── */}
+      <View style={{ marginTop: 24 }}>
+        {diffuse ? (
+          <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
+            {t('kids_logSomething_label')}
+          </Text>
+        ) : (
+          <MonoCaps style={{ marginBottom: 12 }}>{t('kids_logSomething_label')}</MonoCaps>
+        )}
+        <KidsTodaySummaryCard
+          childId={child?.id}
+          todayCounts={todayCounts}
+          onLogMetric={(type) => setLogSheetType(type as 'sleep' | 'mood' | 'feeding' | 'activity' | 'diaper')}
+        />
+      </View>
+
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
 
       {/* ─── Wallet stack (Set Goals → Rewards) ─────────────── */}
@@ -2715,6 +2731,9 @@ export function KidsHome() {
       </LogSheet>
       <LogSheet visible={logSheetType === 'activity'} title={t('kids_home_log_activity_title')} onClose={() => setLogSheetType(null)}>
         <ActivityForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
+      </LogSheet>
+      <LogSheet visible={logSheetType === 'diaper'} title={t('kids_calendar_logSheet_diaper')} onClose={() => setLogSheetType(null)}>
+        <DiaperForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
       </LogSheet>
     </View>
   )

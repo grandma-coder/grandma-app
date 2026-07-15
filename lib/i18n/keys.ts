@@ -500,6 +500,17 @@ export interface TranslationKeys {
   pregnancy_summaryHint_started: string         // "Started — {{remaining}} more to round out the day."
   pregnancy_summaryHint_empty: string
 
+  // ─── Kids "Today at a glance" quick-log launcher ──────────────────────
+  kids_todayAtGlance: string
+  kids_logSomething_label: string
+  kids_quickLogs_pickTitle: string
+  kids_quickLogs_edit: string
+  kids_quickLogs_seeResults: string
+  kids_summaryHint_balanced: string
+  kids_summaryHint_progress: string            // "{{done}}/{{total}} routines logged today."
+  kids_summaryHint_started: string             // "Started — {{remaining}} more to round out the day."
+  kids_summaryHint_empty: string
+
   // ─── TodayDashboardModal (Wave 1) ─────────────────────────────────────
   pregnancy_todayDashboard: string
   pregnancy_dashboard_notLoggedYet: string
@@ -2564,6 +2575,7 @@ export interface TranslationKeys {
   exams_photoCount: string
   exams_photosCount: string
   exams_flaggedCount: string
+  exams_insight_overTime: string
   // ─── B6: Exam detail ──────────────────────────────────────────────────────
   examDetail_shareFailed: string
   examDetail_deleteFailed: string
@@ -2697,6 +2709,7 @@ export interface TranslationKeys {
   examForm_permNeeded: string
   examForm_allowPhoto: string
   examForm_allowCamera: string
+  examForm_forChild: string
   // ─── B6: PregnancyCalendar alerts ─────────────────────────────────────────
   pregCal_viewMonth: string
   pregCal_viewWeek: string

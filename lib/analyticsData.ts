@@ -1284,6 +1284,37 @@ export function usePregnancyTodayLogs(userId: string | undefined) {
   })
 }
 
+/**
+ * Returns today's child_logs for one child as a count-per-type map
+ * ({ sleep: 1, feeding: 3, ... }). The kids "Today at a glance" card uses it to
+ * mark chips done (count > 0) and compute the "X/Y logged today" progress. Keyed
+ * on child so it refetches when the active child switches; auto-invalidated by
+ * invalidateKidsLogQueries() after any save (the 'kids-' prefix matches).
+ */
+export function useKidsTodayLogs(childId: string | undefined) {
+  return useQuery({
+    queryKey: ['kids-today-logs', childId],
+    queryFn: async (): Promise<Record<string, number>> => {
+      if (!childId) return {}
+      const today = toDateStr(new Date())
+      const { data, error } = await supabase
+        .from('child_logs')
+        .select('type')
+        .eq('child_id', childId)
+        .eq('date', today)
+      if (error) throw error
+      const counts: Record<string, number> = {}
+      for (const row of data ?? []) {
+        const type = row.type as string
+        counts[type] = (counts[type] ?? 0) + 1
+      }
+      return counts
+    },
+    enabled: !!childId,
+    staleTime: 30_000,
+  })
+}
+
 // ─── Pregnancy — calendar month logs ─────────────────────────────────────────
 
 export interface PregnancyCalendarLog {
