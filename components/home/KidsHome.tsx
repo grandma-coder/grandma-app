@@ -792,9 +792,12 @@ export function KidsHome() {
     })
   }
 
-  // Sync goals from Supabase on mount
+  // Sync goals from Supabase on mount. syncFromSupabase now throws on a real
+  // fetch error (instead of silently keeping defaults) — swallow it here so a
+  // transient failure doesn't become an unhandled rejection; the store just
+  // keeps the current/suggested goals.
   useEffect(() => {
-    if (child) syncGoals(child.id)
+    if (child) syncGoals(child.id).catch(() => {})
   }, [child?.id])
 
   // Load reminders from Supabase. Backfills from AsyncStorage on first
@@ -1290,7 +1293,7 @@ export function KidsHome() {
     if (child) {
       loadRangeData(child, dateRange, customRange)
       loadHealthHistory(child.id)
-      syncGoals(child.id)
+      syncGoals(child.id).catch(() => {})
     }
   }, [child?.id, dateRange, customRange]))
 

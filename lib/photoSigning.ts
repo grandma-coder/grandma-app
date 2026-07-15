@@ -27,7 +27,10 @@ export const PHOTO_BUCKETS = {
 
 export type PhotoBucket = (typeof PHOTO_BUCKETS)[keyof typeof PHOTO_BUCKETS]
 
-const SIGNED_URL_TTL_SECONDS = 60 * 60 // 1 hour
+// 10 min — short exposure window for PHI/child photos if a signed URL leaks
+// (screenshot, proxy log, shared-device history). React Query re-signs at
+// TTL/2 (see staleTime below), so this shortens exposure at no UX cost.
+const SIGNED_URL_TTL_SECONDS = 10 * 60
 
 /** True when the value is a bare storage path that must be signed (not an icon sentinel or an http URL). */
 export function isStoragePath(value: string | null | undefined): boolean {

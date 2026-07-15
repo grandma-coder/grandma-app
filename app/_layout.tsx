@@ -103,6 +103,11 @@ function applyDefaultFontFamily() {
 
 const DEFAULT_PERMISSIONS: CaregiverPermissions = { view: true, log_activity: true, chat: true }
 
+// Dev-only trace logger for the auth boot flow. Informational flow/count logs
+// spam production on every cold boot + auth event, so gate them behind __DEV__.
+// Genuine failures stay on console.warn/console.error (always visible).
+const authLog = (...args: unknown[]) => { if (__DEV__) console.log(...args) }
+
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
@@ -262,7 +267,7 @@ export default function RootLayout() {
     async function loadUserData(uid: string) {
       const callId = ++callSeq
       // Truncate the uid — don't emit full auth UUIDs in production logs.
-      console.log(`[auth] loadUserData start #${callId} uid:`, uid.slice(0, 8))
+      authLog(`[auth] loadUserData start #${callId} uid:`, uid.slice(0, 8))
 
       // The three independent queries (profile, child_caregivers, behaviors)
       // fire in parallel. If one hangs, it doesn't block the others — each
@@ -330,7 +335,6 @@ export default function RootLayout() {
         // The full profile row carries PII (name, due_date, health notes) — only
         // dump it in dev; in prod just confirm the load succeeded.
         if (__DEV__) console.log('[auth] profile loaded:', profile)
-        else console.log('[auth] profile loaded')
       }
       if (profile?.user_role) setAccountRole(profile.user_role)
       // Active mode is resolved from useModeStore (persisted locally) +
@@ -350,7 +354,7 @@ export default function RootLayout() {
       if (behErr && behErr.code !== 'TIMEOUT') {
         console.warn('[auth] behaviors load failed:', behErr.message)
       } else if (!behErr) {
-        console.log(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
+        authLog(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
       }
       const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
       const serverTypes: ('pre-pregnancy' | 'pregnancy' | 'kids')[] =
@@ -372,7 +376,7 @@ export default function RootLayout() {
       if (linksErr && linksErr.code !== 'TIMEOUT') {
         console.warn('[auth] child_caregivers load failed:', linksErr.message)
       } else if (!linksErr) {
-        console.log(`[auth] child_caregivers found: ${links?.length ?? 0}`)
+        authLog(`[auth] child_caregivers found: ${links?.length ?? 0}`)
       }
 
       if (links && links.length > 0) {
@@ -438,9 +442,9 @@ export default function RootLayout() {
           }))
           setChildren(mapped)
           setHasChildren(true)
-          console.log(`[auth] fallback children loaded: ${ownChildren.length}`)
+          authLog(`[auth] fallback children loaded: ${ownChildren.length}`)
         } else {
-          console.log('[auth] no children found via fallback either — user has zero kids in this DB')
+          authLog('[auth] no children found via fallback either — user has zero kids in this DB')
         }
       }
       // (behaviors already handled in the parallel batch above)
@@ -452,7 +456,7 @@ export default function RootLayout() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log(`[auth] event=${event} hasSession=${!!newSession} uid=${newSession?.user?.id?.slice(0, 8) ?? 'null'}`)
+        authLog(`[auth] event=${event} hasSession=${!!newSession} uid=${newSession?.user?.id?.slice(0, 8) ?? 'null'}`)
         setSession(newSession)
         if (event === 'INITIAL_SESSION') sawInitialSession = true
 
@@ -468,7 +472,7 @@ export default function RootLayout() {
         }
 
         if (event === 'SIGNED_OUT' || !newSession) {
-          console.log('[auth] no session — unblock loading, route guard will send to /(auth)/welcome')
+          authLog('[auth] no session — unblock loading, route guard will send to /(auth)/welcome')
           // Clear flags so signing back in starts from a fresh load state.
           setRecoveryMode(false)
           inFlightUid = null
@@ -485,14 +489,14 @@ export default function RootLayout() {
         // the one that actually works. After we've seen INITIAL_SESSION
         // once, real sign-in events go through normally.
         if (event === 'SIGNED_IN' && !sawInitialSession) {
-          console.log('[auth] skip premature SIGNED_IN — waiting for INITIAL_SESSION')
+          authLog('[auth] skip premature SIGNED_IN — waiting for INITIAL_SESSION')
           return
         }
 
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           const uid = newSession.user.id
           if (inFlightUid === uid) {
-            console.log(`[auth] skip duplicate ${event} for uid=${uid.slice(0, 8)} — already loading`)
+            authLog(`[auth] skip duplicate ${event} for uid=${uid.slice(0, 8)} — already loading`)
             return
           }
           inFlightUid = uid

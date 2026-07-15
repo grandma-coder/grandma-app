@@ -119,10 +119,14 @@ export const useGoalsStore = create<GoalsState>()(
       },
 
       syncFromSupabase: async (childId) => {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('child_goals')
           .select('metric, daily_target')
           .eq('child_id', childId)
+
+        // Surface a real failure — dropping `error` made a failed fetch look
+        // identical to "no goals configured" and silently fall back to defaults.
+        if (error) throw error
 
         if (data && data.length > 0) {
           const current = get().goals[childId] || { ...DEFAULT_GOALS }

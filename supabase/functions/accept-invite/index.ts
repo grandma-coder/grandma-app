@@ -95,10 +95,13 @@ serve(async (req) => {
 
     if (updateError) throw updateError
 
-    // Return child info for navigation
+    // Return only the child's name for post-accept navigation — never PHI.
+    // (select('*') here would leak allergies/conditions/blood_type/pediatrician
+    // into the response regardless of the caregiver's granted permissions; the
+    // app's normal RLS-gated child fetch supplies anything they're allowed.)
     const { data: child } = await supabase
       .from('children')
-      .select('*')
+      .select('name')
       .eq('id', invite.child_id)
       .single()
 

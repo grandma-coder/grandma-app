@@ -1479,53 +1479,54 @@ export function usePregnancyBirthReadiness(userId: string) {
   return useQuery({
     queryKey: ['pregnancy_birth_readiness', userId],
     queryFn: async (): Promise<BirthReadiness> => {
-      const [logsRes, docsRes, emergencyRes] = await Promise.all([
+      // NOTE: this used to read `vault_documents` + `emergency_cards`, which
+      // never existed in the database — the queries threw on every run, so the
+      // birth-readiness card was broken in production. Rebuilt on the real
+      // tables: exam records live in `exams`, and the emergency card maps to a
+      // primary `emergency_contacts` row. The old hospital/insurance doc
+      // buckets had no backing table, so readiness is now 4 buckets.
+      const [logsRes, examsRes, emergencyRes] = await Promise.all([
         supabase
           .from('pregnancy_logs')
           .select('log_type')
           .eq('user_id', userId)
           .in('log_type', ['birth_prep', 'nesting']),
         supabase
-          .from('vault_documents')
-          .select('category')
+          .from('exams')
+          .select('id')
           .eq('user_id', userId),
         supabase
-          .from('emergency_cards')
-          .select('blood_type, allergies, primary_contact_name, primary_contact_phone')
+          .from('emergency_contacts')
+          .select('name, phone, is_primary')
           .eq('user_id', userId)
+          .eq('is_primary', true)
           .limit(1)
           .maybeSingle(),
       ])
       // Surface query failures as a real React Query error instead of silently
       // computing a false 0% readiness from empty data.
       if (logsRes.error) throw logsRes.error
-      if (docsRes.error) throw docsRes.error
+      if (examsRes.error) throw examsRes.error
       const logs = logsRes.data ?? []
-      const docs = docsRes.data ?? []
+      const examCount = examsRes.data?.length ?? 0
       const birthPlanCount = logs.filter((l) => l.log_type === 'birth_prep').length
       const nestingCount = logs.filter((l) => l.log_type === 'nesting').length
-      const hospitalDocs = docs.filter((d) => d.category === 'hospital').length
-      const insuranceDocs = docs.filter((d) => d.category === 'insurance').length
-      const examDocs = docs.filter((d) => d.category === 'exams').length
       const ec = emergencyRes.data
-      const emergencyCardComplete = !!(
-        ec && ec.blood_type && ec.primary_contact_name && ec.primary_contact_phone
-      )
-      // Score: 5 buckets, each up to 20%
+      const emergencyCardComplete = !!(ec && ec.name && ec.phone)
+      // Score: 4 buckets, each up to 25%
       const buckets = [
-        Math.min(birthPlanCount, 5) / 5,                  // birth plan items
-        Math.min(nestingCount + hospitalDocs, 8) / 8,     // hospital bag prep
-        Math.min(insuranceDocs, 2) / 2,                   // insurance ready
-        Math.min(examDocs, 4) / 4,                        // exam records
-        emergencyCardComplete ? 1 : 0,                    // emergency card
+        Math.min(birthPlanCount, 5) / 5,   // birth plan items
+        Math.min(nestingCount, 8) / 8,     // nesting / hospital-bag prep
+        Math.min(examCount, 4) / 4,        // exam records on file
+        emergencyCardComplete ? 1 : 0,     // primary emergency contact set
       ]
-      const pct = Math.round((buckets.reduce((a, b) => a + b, 0) / 5) * 100)
+      const pct = Math.round((buckets.reduce((a, b) => a + b, 0) / buckets.length) * 100)
       return {
         birthPlanCount,
         nestingCount,
-        hospitalDocs,
-        insuranceDocs,
-        examDocs,
+        hospitalDocs: 0,
+        insuranceDocs: 0,
+        examDocs: examCount,
         emergencyCardComplete,
         pct,
       }

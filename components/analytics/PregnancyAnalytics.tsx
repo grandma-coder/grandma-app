@@ -2564,17 +2564,10 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
     },
     {
       label: 'Hospital bag prep',
-      value: birthReady.nestingCount + birthReady.hospitalDocs,
+      value: birthReady.nestingCount,
       target: 8,
       color: stickers.coral,
       tint: stickers.peachSoft,
-    },
-    {
-      label: 'Insurance docs',
-      value: birthReady.insuranceDocs,
-      target: 2,
-      color: stickers.yellow,
-      tint: stickers.yellowSoft,
     },
     {
       label: 'Exam records',
