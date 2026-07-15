@@ -33,6 +33,8 @@ export type CharacterName =
   | 'trophy' | 'medal' | 'badge' | 'gift' | 'reward'
   // development / growth-leap topics
   | 'brain' | 'phase' | 'observe' | 'celebrate' | 'tip'
+  // insights & content
+  | 'calendar' | 'selfcare'
 
 // Mood expressions — one `mood` blob, a `face` prop varies the expression.
 // Kids: happy·calm·energetic·fussy·cranky. Pregnancy adds excited·anxious·nauseous.
@@ -55,6 +57,7 @@ const HUE: Record<CharacterName, string> = {
   cloud: '#7FA8D8', key: '#C9A02C', lungs: '#D98CA6', warning: '#D86A4F',
   trophy: '#C9A02C', medal: '#C79A5B', badge: '#D87CA0', gift: '#EE7B6D', reward: '#F5D652',
   brain: '#8E72C9', phase: '#5F8FC1', observe: '#7A9D4A', celebrate: '#D87CA0', tip: '#C9A02C',
+  calendar: '#5F8FC1', selfcare: '#D86A4F',
 }
 
 // Blob silhouette (48×48) per concept, ported from the approved set.
@@ -118,6 +121,10 @@ const D: Record<CharacterName, string> = {
   observe: 'M4 24c6-11 34-11 40 0-6 11-34 11-40 0Z',
   celebrate: 'M24 5l3.5 8.5 8.5-4.5-4.5 8.5 8.5 3.5-8.5 3.5 4.5 8.5-8.5-4.5-3.5 8.5-3.5-8.5-8.5 4.5 4.5-8.5-8.5-3.5 8.5-3.5-4.5-8.5 8.5 4.5Z',
   tip: 'M24 6c-7 0-12 5-12 12 0 5 3 8 5 10 1 1 1 2 1 3h12c0-1 0-2 1-3 2-2 5-5 5-10 0-7-5-12-12-12ZM19 34h10v3a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-3Z',
+  // insights & content. calendar = page + binding + dot-grid cut-out;
+  // selfcare = steaming mug (the "For You" / me-time concept).
+  calendar: 'M9 12h30a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2ZM14 8a2 2 0 0 1 4 0v8a2 2 0 0 1-4 0V8ZM30 8a2 2 0 0 1 4 0v8a2 2 0 0 1-4 0V8Z',
+  selfcare: 'M10 20h22v10a8 8 0 0 1-8 8h-6a8 8 0 0 1-8-8V20ZM32 22h4a4 4 0 0 1 0 8h-4Z',
 }
 
 // Face per concept. Eyes ONLY on creatures/subjects; object glyphs are faceless
@@ -129,6 +136,8 @@ type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'bli
   | 'sealCheck' | 'medalCheck' | 'ribbon' | 'starCut'
   // development cut-outs
   | 'brainFold' | 'iris' | 'filament'
+  // insights cut-outs
+  | 'calGrid' | 'steam'
 const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, number] }> = {
   // subjects / creatures → eyes
   nutrition: { kind: 'dots', e: [19, 30, 29, 30] },
@@ -189,6 +198,9 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   observe: { kind: 'iris', e: [0, 0, 0, 0] },
   celebrate: { kind: 'none', e: [0, 0, 0, 0] },
   tip: { kind: 'filament', e: [0, 0, 0, 0] },
+  // insights & content
+  calendar: { kind: 'calGrid', e: [0, 0, 0, 0] },
+  selfcare: { kind: 'steam', e: [0, 0, 0, 0] },
 }
 
 // Mood expression face recipes — drawn on the `mood` blob. Each returns the
@@ -330,6 +342,21 @@ export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1
       {/* tip — bulb filament */}
       {f.kind === 'filament' && (
         <Path d="M24 14v10M20 18l4-2 4 2" stroke={bg} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+      {/* calendar — header rule + dot grid */}
+      {f.kind === 'calGrid' && (
+        <>
+          <Path d="M7 19h34" stroke={bg} strokeWidth={2.4} fill="none" />
+          <Circle cx={16} cy={27} r={1.8} fill={bg} />
+          <Circle cx={24} cy={27} r={1.8} fill={bg} />
+          <Circle cx={32} cy={27} r={1.8} fill={bg} />
+          <Circle cx={16} cy={34} r={1.8} fill={bg} />
+          <Circle cx={24} cy={34} r={1.8} fill={bg} />
+        </>
+      )}
+      {/* selfcare — steam wisps rising off the mug */}
+      {f.kind === 'steam' && (
+        <Path d="M17 8q-2 3 0 6M24 8q-2 3 0 6" stroke={bg} strokeWidth={1.8} fill="none" strokeLinecap="round" />
       )}
     </Svg>
   )
