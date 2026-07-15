@@ -28,10 +28,13 @@ describe('dailyFertilityCurve', () => {
   it('peaks on the two days at and before ovulation', () => {
     const c = dailyFertilityCurve(28, 14)
     // ovulationDay = 28 - 14 = 14 (1-indexed). Indices: day N → c[N-1].
-    expect(c[13]).toBe(70) // day 14 (ovulation)
-    expect(c[12]).toBe(70) // day 13 (one before)
-    expect(c[14]).toBe(48) // day 15 (one after)
-    expect(c[11]).toBe(48) // day 12 (two before)
+    // Values follow the clinically-reviewed curve (Wilcox NEJM 1995): peak ~33%
+    // on ovulation & the day before, ~22% on the shoulders. (Earlier 70/48
+    // values overstated conception probability ~2x.)
+    expect(c[13]).toBe(33) // day 14 (ovulation)
+    expect(c[12]).toBe(33) // day 13 (one before)
+    expect(c[14]).toBe(22) // day 15 (one after)
+    expect(c[11]).toBe(22) // day 12 (two before)
   })
 
   it('clamps cycle length to medical range', () => {
