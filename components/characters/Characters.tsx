@@ -54,6 +54,7 @@ const HUE: Record<CharacterName, string> = {
   clock: '#8E72C9',
   cloud: '#7FA8D8', key: '#C9A02C', lungs: '#D98CA6', warning: '#D86A4F',
   trophy: '#C9A02C', medal: '#C79A5B', badge: '#D87CA0', gift: '#EE7B6D', reward: '#F5D652',
+  brain: '#8E72C9', phase: '#5F8FC1', observe: '#7A9D4A', celebrate: '#D87CA0', tip: '#C9A02C',
 }
 
 // Blob silhouette (48×48) per concept, ported from the approved set.
@@ -126,6 +127,8 @@ const D: Record<CharacterName, string> = {
 type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'blip' | 'lens' | 'quad' | 'check' | 'hands' | 'warn' | 'none'
   // reward cut-outs (rendered in the paper/bg colour)
   | 'sealCheck' | 'medalCheck' | 'ribbon' | 'starCut'
+  // development cut-outs
+  | 'brainFold' | 'iris' | 'filament'
 const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, number] }> = {
   // subjects / creatures → eyes
   nutrition: { kind: 'dots', e: [19, 30, 29, 30] },
@@ -180,6 +183,12 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   badge: { kind: 'sealCheck', e: [0, 0, 0, 0] },
   gift: { kind: 'ribbon', e: [0, 0, 0, 0] },
   reward: { kind: 'starCut', e: [0, 0, 0, 0] },
+  // development / growth-leap
+  brain: { kind: 'brainFold', e: [0, 0, 0, 0] },
+  phase: { kind: 'none', e: [0, 0, 0, 0] },
+  observe: { kind: 'iris', e: [0, 0, 0, 0] },
+  celebrate: { kind: 'none', e: [0, 0, 0, 0] },
+  tip: { kind: 'filament', e: [0, 0, 0, 0] },
 }
 
 // Mood expression face recipes — drawn on the `mood` blob. Each returns the
@@ -303,6 +312,24 @@ export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1
       {/* reward — star cut-out in the rounded tile */}
       {f.kind === 'starCut' && (
         <Path d="M24 14l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" fill={bg} />
+      )}
+      {/* brain — central seam + hemisphere folds */}
+      {f.kind === 'brainFold' && (
+        <>
+          <Path d="M24 16v18" stroke={bg} strokeWidth={1.6} fill="none" />
+          <Path d="M18 20q3 2 0 4M30 20q-3 2 0 4" stroke={bg} strokeWidth={1.4} fill="none" strokeLinecap="round" />
+        </>
+      )}
+      {/* observe — iris (paper ring + ink pupil) */}
+      {f.kind === 'iris' && (
+        <>
+          <Circle cx={24} cy={24} r={7} fill={bg} />
+          <Circle cx={24} cy={24} r={3} fill={eye} />
+        </>
+      )}
+      {/* tip — bulb filament */}
+      {f.kind === 'filament' && (
+        <Path d="M24 14v10M20 18l4-2 4 2" stroke={bg} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       )}
     </Svg>
   )
