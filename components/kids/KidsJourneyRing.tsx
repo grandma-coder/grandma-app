@@ -29,6 +29,7 @@ import { X, ChevronRight, Brain, Sparkles, Flame, Check } from 'lucide-react-nat
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { DiffuseSheet, DiffuseListRow, DiffuseSectionHeader, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
+import { Character } from '../characters/Characters'
 import { GROWTH_LEAPS, leapStatusForWeek, type GrowthLeap } from '../../lib/growthLeaps'
 import { useTranslation } from '../../lib/i18n'
 
@@ -647,14 +648,14 @@ function LeapDetailModal({
         </View>
 
         {/* Brain note */}
-        <DiffuseSection eyebrow={t('kids_journeyRing_whatsHappening')} icon={<Brain size={16} color={dt.colors.ink3} strokeWidth={1.6} />} accent={leap.color}>
+        <DiffuseSection eyebrow={t('kids_journeyRing_whatsHappening')} icon={<Character name="brain" size={20} color={leap.color} />} accent={leap.color}>
           <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22, color: dt.colors.ink }}>
             {leap.brainNote}
           </Text>
         </DiffuseSection>
 
         {/* Phases — hairline rows with mono index (no filled colored block) */}
-        <DiffuseSection eyebrow={t('kids_journeyRing_threePhases')} icon={<Flame size={16} color={dt.colors.ink3} strokeWidth={1.6} />} accent={leap.color}>
+        <DiffuseSection eyebrow={t('kids_journeyRing_threePhases')} icon={<Character name="phase" size={20} color={leap.color} />} accent={leap.color}>
           <View>
             {leap.phases.map((p, i) => (
               <View
@@ -700,7 +701,7 @@ function LeapDetailModal({
         }}>
           <SoftBloom color={dt.stickers.yellow} cx="12%" cy="24%" opacity={isDark ? 0.16 : 0.24} spread={0.5} />
           <DiffuseBloomIcon color={dt.stickers.yellow} size={30}>
-            <Sparkles size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+            <Character name="tip" size={20} color={dt.stickers.yellow} />
           </DiffuseBloomIcon>
           <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22, color: dt.colors.ink }}>
             {leap.tip}

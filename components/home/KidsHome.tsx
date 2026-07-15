@@ -8731,7 +8731,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             {/* 10-Leap Path row — bloom glyph + serif title + mono intensity dots */}
             <View style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <DiffuseBloomIcon color={acc} size={30} intensity={0.45}>
-                <Footprints size={17} color={dCol.ink3} strokeWidth={1.5} />
+                <Character name="growth" size={22} color={acc} />
               </DiffuseBloomIcon>
               <Text style={{ fontSize: 16, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.2 }}>{t('kids_home_leaps_path_title')}</Text>
               <View style={{ flex: 1 }} />
@@ -9164,7 +9164,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           <DiffuseMetricTile
             value={g.duration}
             label={t('kids_home_leaps_sheet_duration')}
-            icon={<DiffuseBloomIcon color={acc} size={28} intensity={0.42}><Clock size={14} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<DiffuseBloomIcon color={acc} size={28} intensity={0.42}><Character name="clock" size={20} color={acc} /></DiffuseBloomIcon>}
           />
         </View>
 
@@ -9172,7 +9172,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
         <View style={{ marginTop: 24 }}>
           <DiffuseSectionHeader
             title={t('kids_home_leaps_sheet_phases_title')}
-            icon={<DiffuseBloomIcon color={acc}><Waves size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<DiffuseBloomIcon color={acc}><Character name="phase" size={22} color={acc} /></DiffuseBloomIcon>}
           />
           {g.phases.map((phase, pi) => {
             const done = phaseDone[pi]
@@ -9194,7 +9194,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
         <View style={{ marginTop: 24 }}>
           <DiffuseSectionHeader
             title={isThisActive ? `Signs ${childName} may show` : 'Signs to watch for'}
-            icon={<DiffuseBloomIcon color={acc}><Eye size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<DiffuseBloomIcon color={acc}><Character name="observe" size={22} color={acc} /></DiffuseBloomIcon>}
           />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
             {g.signs.map((sign, i) => (
@@ -9209,7 +9209,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
         <View style={{ marginTop: 24 }}>
           <DiffuseSectionHeader
             title={isThisDone ? 'Skills gained' : isThisActive ? 'Skills emerging now' : 'Skills that will emerge'}
-            icon={<DiffuseBloomIcon color={acc}><Dumbbell size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<DiffuseBloomIcon color={acc}><Character name="activity" size={22} color={acc} /></DiffuseBloomIcon>}
           />
           <View style={{ gap: 12 }}>
             {g.skills.map((skill, i) => (
@@ -9225,7 +9225,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
         <View style={{ marginTop: 24 }}>
           <DiffuseSectionHeader
             title={t('kids_home_leaps_activities_title')}
-            icon={<DiffuseBloomIcon color={acc}><Target size={18} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<DiffuseBloomIcon color={acc}><Character name="star" size={22} color={acc} /></DiffuseBloomIcon>}
           />
           {g.activities.map((act, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 12, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, borderTopColor: dCol.line }}>
@@ -9241,7 +9241,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
         <View style={{ marginTop: 24, flexDirection: 'row', gap: 12, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
           <SoftBloom color={acc} cx="90%" cy="30%" opacity={dt.isDark ? 0.24 : 0.34} spread={0.5} />
           <DiffuseBloomIcon color={acc} size={34} intensity={0.5}>
-            <Lightbulb size={18} color={dCol.ink3} strokeWidth={1.5} />
+            <Character name="tip" size={22} color={acc} />
           </DiffuseBloomIcon>
           <Text style={{ fontSize: 13, fontFamily: diffuseFont.body, color: dCol.ink, flex: 1, lineHeight: 19 }}>{g.tip}</Text>
         </View>
@@ -9251,7 +9251,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           <View style={{ marginTop: 14, flexDirection: 'row', gap: 12, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 20, padding: 14, overflow: 'hidden' }}>
             <SoftBloom color={stickers.green} cx="90%" cy="30%" opacity={dt.isDark ? 0.26 : 0.4} spread={0.5} />
             <DiffuseBloomIcon color={stickers.green} size={34} intensity={0.5}>
-              <PartyPopper size={18} color={dCol.ink3} strokeWidth={1.5} />
+              <Character name="celebrate" size={22} color={stickers.green} />
             </DiffuseBloomIcon>
             <Text style={{ fontSize: 13, fontFamily: diffuseFont.display, color: dCol.ink, flex: 1, letterSpacing: -0.2 }}>
               {t('kids_home_leaps_completed', { childName })}
