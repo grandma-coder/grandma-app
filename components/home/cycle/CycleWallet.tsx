@@ -52,9 +52,9 @@ export function CycleWallet() {
 
   const titleFor = (id: CycleWalletCardId): string => {
     switch (id) {
-      case 'reminders': return t('preg_reminders_addButton')
+      case 'reminders': return t('wallet_reminders_title')
       case 'pillars': return t('cycle_wallet_pillars')
-      case 'exams': return t('kids_home_exams_title')
+      case 'exams': return t('wallet_exams_title')
     }
   }
 

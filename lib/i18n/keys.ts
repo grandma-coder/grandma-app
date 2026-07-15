@@ -500,6 +500,14 @@ export interface TranslationKeys {
   pregnancy_summaryHint_started: string         // "Started — {{remaining}} more to round out the day."
   pregnancy_summaryHint_empty: string
 
+  // ─── Wallet — standardized shortcut card titles (shared across behaviors) ──
+  wallet_reminders_title: string
+  wallet_exams_title: string
+  wallet_askGrandma_title: string
+  wallet_rewards_title: string
+  wallet_channels_title: string
+  wallet_village_title: string
+
   // ─── Kids "Today at a glance" quick-log launcher ──────────────────────
   kids_todayAtGlance: string
   kids_logSomething_label: string

@@ -83,12 +83,12 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return t('kids_home_set_goals_btn')
       case 'health': return t('kids_home_section_health_care')
-      case 'exams': return t('kids_home_exams_title')
+      case 'exams': return t('wallet_exams_title')
       case 'diaper': return t('kids_home_diaper_tracker_title')
-      case 'growth_leap': return growthLeapName ?? t('kids_home_section_reminders')
-      case 'reminders': return t('kids_home_section_reminders')
-      case 'ask_grandma': return t('kids_home_grandma_cta_title')
-      case 'rewards': return t('kids_home_rewards_title')
+      case 'growth_leap': return growthLeapName ?? t('kids_growthLeaps')
+      case 'reminders': return t('wallet_reminders_title')
+      case 'ask_grandma': return t('wallet_askGrandma_title')
+      case 'rewards': return t('wallet_rewards_title')
     }
   }
 

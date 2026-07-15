@@ -84,10 +84,10 @@ export function WeekWallet({
       case 'appointment': return appt?.name ?? ''
       case 'week_tip': return t('pregnancy_reminder_weekTip', { week: weekNumber })
       case 'kicks': return t('pregnancy_reminder_kickCountTitle')
-      case 'reminders': return t('preg_reminders_addButton')
-      case 'exams': return t('kids_home_exams_title')
+      case 'reminders': return t('wallet_reminders_title')
+      case 'exams': return t('wallet_exams_title')
       case 'birth_guide': return t('pregnancy_birthGuideTitle')
-      case 'ask_grandma': return t('pregnancy_appt_askGrandma')
+      case 'ask_grandma': return t('wallet_askGrandma_title')
     }
   }
 

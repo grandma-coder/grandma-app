@@ -502,6 +502,14 @@ export const en: TranslationKeys = {
   pregnancy_summaryHint_started: 'Started — {{remaining}} more to round out the day.',
   pregnancy_summaryHint_empty: 'Tap a routine above to log your first.',
 
+  // Wallet — standardized shortcut card titles (shared across behaviors)
+  wallet_reminders_title: 'Reminders',
+  wallet_exams_title: 'Exams',
+  wallet_askGrandma_title: 'Ask Grandma',
+  wallet_rewards_title: 'Rewards',
+  wallet_channels_title: 'Channels',
+  wallet_village_title: 'Village',
+
   // Kids "Today at a glance" quick-log launcher
   kids_todayAtGlance: 'Today at a glance',
   kids_logSomething_label: 'How is your little one?',
