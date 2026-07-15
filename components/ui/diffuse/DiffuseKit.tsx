@@ -31,9 +31,13 @@ export function useIsDiffuse(): boolean {
 
 // ─── Grain overlay ─────────────────────────────────────────────────────────
 // feTurbulence fractal-noise laid over a gradient field, matching --d-grain.
-// Rendered with react-native-svg so it works on both platforms without an
-// image asset. Absolutely-positioned; place as the LAST child of a field so
-// it sits on top. Pointer-events pass through.
+// NOTE: react-native-svg does NOT implement feTurbulence on native (iOS/Android)
+// — the filter is dropped, so the grain renders nothing there AND logs a
+// "filters not supported" warning on every mount. It only produces output on
+// web. So on native this is a no-op (removing the warning without changing what
+// the user sees); web still gets the real grain.
+// Absolutely-positioned; place as the LAST child of a field so it sits on top.
+// Pointer-events pass through.
 
 interface GrainProps {
   opacity?: number
@@ -43,6 +47,9 @@ interface GrainProps {
 export function DiffuseGrain({ opacity, radius = 0 }: GrainProps) {
   const { isDark } = useDiffuseTheme()
   const op = opacity ?? (isDark ? diffuseGrain.opacityDark : diffuseGrain.opacityLight)
+  // feTurbulence is unsupported on native — skip the SVG entirely (it would
+  // render nothing and spam the unsupported-filter warning).
+  if (Platform.OS !== 'web') return null
   return (
     <View
       pointerEvents="none"
