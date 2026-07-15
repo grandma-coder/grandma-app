@@ -3,29 +3,38 @@
  *
  * Same wallet system as the pregnancy Week Wallet (reuses the shared WalletCard
  * primitive). Replaces the run of sections below the 2×2 stat tiles: Set Goals,
- * Health & Care, Diaper, Growth Leap, Reminders, Ask Grandma, Rewards.
+ * Health & Care, Diaper, Growth Leap, Reminders, Ask Grandma, Rewards, plus the
+ * addable common shortcuts (Exams · Channels · Village).
  *
- * Follows the pregnancy pattern: every card taps straight to a route / pop-up
- * sheet — nothing expands inline, and no trailing arrows (hideChevron). The card
- * list comes from lib/kidsWallet.buildKidsWalletCards (unit-tested); this
- * component maps each descriptor to its glyph, title, and action. All modals /
- * routes are owned by KidsHome and passed in as callbacks.
+ * Editable: the default card list comes from lib/kidsWallet.buildKidsWalletCards
+ * (unit-tested, contextual). The user can customize which cards show + their
+ * order via the Edit picker (useKidsWalletStore). When the store hasn't been
+ * customized (enabledKeys null) the builder's default order is used. Every card
+ * taps straight to a route / pop-up sheet — nothing expands inline.
  */
 
-import React from 'react'
-import { View } from 'react-native'
+import React, { useState } from 'react'
+import { View, Pressable, Text } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme } from '../../constants/theme'
+import { useTheme, diffuseFont, useDiffuseTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { buildKidsWalletCards, type KidsWalletCardId } from '../../lib/kidsWallet'
+import { WALLET_SHORTCUTS } from '../../lib/walletCatalog'
+import { useKidsWalletStore } from '../../store/useWalletStore'
+import type { WalletTone } from '../../lib/wallet'
 import { WalletCard } from './WalletCard'
+import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { SlidersHorizontal } from 'lucide-react-native'
 import { Character } from '../characters/Characters'
 import {
   NotifyGoalAchieved, NotifyRoutine, LogDiaper, LogGrowth,
 } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Star as StarSticker } from '../ui/Stickers'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
+
+/** Superset of card ids the kids wallet can show (contextual + shortcuts). */
+type KidsCardId = KidsWalletCardId | 'channels' | 'village'
 
 interface KidsWalletProps {
   hasDiaper: boolean
@@ -41,6 +50,9 @@ interface KidsWalletProps {
   onOpenReminders: () => void
 }
 
+// Tone per shortcut-only card (contextual card tones come from the builder).
+const SHORTCUT_TONE: Record<string, WalletTone> = { channels: 'peach', village: 'green' }
+
 export function KidsWallet({
   hasDiaper, hasGrowthLeap, growthLeapName,
   onOpenGoals, onOpenHealth, onOpenDiaper, onOpenGrowthLeap, onOpenReminders,
@@ -48,13 +60,33 @@ export function KidsWallet({
   const { colors, stickers } = useTheme()
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const enabledKeys = useKidsWalletStore((s) => s.enabledKeys)
+  const setEnabled = useKidsWalletStore((s) => s.setEnabled)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
-  const cards = buildKidsWalletCards({ hasDiaper, hasGrowthLeap })
+  // Default (contextual) cards from the pure builder.
+  const defaultCards = buildKidsWalletCards({ hasDiaper, hasGrowthLeap })
+  const toneFor = (id: KidsCardId): WalletTone =>
+    defaultCards.find((c) => c.id === id)?.tone ?? SHORTCUT_TONE[id] ?? 'surface'
 
-  const iconFor = (id: KidsWalletCardId): React.ReactNode => {
-    // Under Diffuse, the wallet rows use the unified Character-blob family
-    // (ask_grandma keeps the brand mark). Current cream-paper keeps the
-    // branded / reward stickers.
+  // The full available superset = default cards + catalog shortcuts not already
+  // present (exams / ask_grandma / rewards are in the builder; add channels /
+  // village). Order: builder cards first, then the extra shortcuts.
+  const shortcutOnlyIds: KidsCardId[] = WALLET_SHORTCUTS
+    .map((s) => s.key)
+    .filter((k) => !defaultCards.some((c) => c.id === k)) as KidsCardId[]
+  const availableIds: KidsCardId[] = [...defaultCards.map((c) => c.id), ...shortcutOnlyIds]
+
+  // Displayed cards: builder order when uncustomized; else the user's enabled
+  // keys (in their order), dropping any key whose card isn't currently available
+  // (e.g. a contextual card with no data this session).
+  const displayedIds: KidsCardId[] =
+    enabledKeys === null
+      ? defaultCards.map((c) => c.id)
+      : enabledKeys.filter((k): k is KidsCardId => availableIds.includes(k as KidsCardId))
+
+  const iconFor = (id: KidsCardId): React.ReactNode => {
     if (diffuse) {
       switch (id) {
         case 'goals': return <Character name="star" size={26} color={stickers.yellow} />
@@ -65,6 +97,8 @@ export function KidsWallet({
         case 'reminders': return <Character name="clock" size={26} color={stickers.blue} />
         case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
         case 'rewards': return <Character name="crown" size={26} color={stickers.yellow} />
+        case 'channels': return <Character name="community" size={26} color={stickers.peach} />
+        case 'village': return <Character name="community" size={26} color={stickers.green} />
       }
     }
     switch (id) {
@@ -76,10 +110,12 @@ export function KidsWallet({
       case 'reminders': return <NotifyRoutine size={24} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
       case 'rewards': return <NotifyGoalAchieved size={24} />
+      case 'channels': return <Character name="community" size={24} color={stickers.peach} />
+      case 'village': return <Character name="community" size={24} color={stickers.green} />
     }
   }
 
-  const titleFor = (id: KidsWalletCardId): string => {
+  const titleFor = (id: KidsCardId): string => {
     switch (id) {
       case 'goals': return t('kids_home_set_goals_btn')
       case 'health': return t('kids_home_section_health_care')
@@ -89,11 +125,29 @@ export function KidsWallet({
       case 'reminders': return t('wallet_reminders_title')
       case 'ask_grandma': return t('wallet_askGrandma_title')
       case 'rewards': return t('wallet_rewards_title')
+      case 'channels': return t('wallet_channels_title')
+      case 'village': return t('wallet_village_title')
+    }
+  }
+
+  // Soft socket tint per card, for the picker rows.
+  const softFor = (id: KidsCardId): string => {
+    switch (id) {
+      case 'goals': return stickers.yellowSoft
+      case 'health': return stickers.peachSoft
+      case 'exams': return stickers.lilacSoft
+      case 'diaper': return stickers.peachSoft
+      case 'growth_leap': return stickers.greenSoft
+      case 'reminders': return stickers.blueSoft
+      case 'ask_grandma': return stickers.lilacSoft
+      case 'rewards': return stickers.yellowSoft
+      case 'channels': return stickers.peachSoft
+      case 'village': return stickers.greenSoft
     }
   }
 
   // Every card taps straight to a route / pop-up sheet — nothing expands inline.
-  const onHeader = (id: KidsWalletCardId) => {
+  const onHeader = (id: KidsCardId) => {
     switch (id) {
       case 'goals': return onOpenGoals()
       case 'health': return onOpenHealth()
@@ -103,27 +157,59 @@ export function KidsWallet({
       case 'rewards': return router.push('/daily-rewards' as never)
       case 'growth_leap': return onOpenGrowthLeap()
       case 'reminders': return onOpenReminders()
+      case 'channels': return router.push('/connections?tab=channels' as never)
+      case 'village': return router.push('/connections' as never)
     }
   }
 
+  const linkOnlyFor = (id: KidsCardId): boolean =>
+    defaultCards.find((c) => c.id === id)?.linkOnly ?? true
+
+  const pickerItems: WalletPickerItem[] = availableIds.map((id) => ({
+    key: id,
+    label: titleFor(id),
+    icon: iconFor(id),
+    soft: softFor(id),
+  }))
+
+  const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
+
   return (
     <View>
-      {cards.map((c, i) => {
-        const isLast = i === cards.length - 1
+      {/* Edit affordance — opens the wallet customization picker. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 }]}>
+          <SlidersHorizontal size={14} color={editColor} strokeWidth={2} />
+          <Text style={{ fontFamily: diffuse ? diffuseFont.mono : undefined, fontSize: 11, letterSpacing: diffuse ? 0.8 : 0, textTransform: diffuse ? 'uppercase' : 'none', color: editColor }}>
+            {t('kids_quickLogs_edit')}
+          </Text>
+        </Pressable>
+      </View>
+
+      {displayedIds.map((id, i) => {
+        const isLast = i === displayedIds.length - 1
         return (
           <WalletCard
-            key={c.id}
-            tone={c.tone}
-            icon={iconFor(c.id)}
-            title={titleFor(c.id)}
+            key={id}
+            tone={toneFor(id)}
+            icon={iconFor(id)}
+            title={titleFor(id)}
             expanded={false}
-            linkOnly={c.linkOnly}
+            linkOnly={linkOnlyFor(id)}
             last={isLast}
             hideChevron
-            onPressHeader={() => onHeader(c.id)}
+            onPressHeader={() => onHeader(id)}
           />
         )
       })}
+
+      <WalletPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        items={pickerItems}
+        enabledKeys={displayedIds}
+        onSave={setEnabled}
+      />
     </View>
   )
 }
