@@ -45,6 +45,7 @@ import type { BirthFocusCard } from '../../lib/pregnancyInsights'
 import { getUpcomingAppointment } from '../../lib/pregnancyAppointments'
 import { getFeaturedReadForWeek, getReadsByCategory } from '../../lib/pregnancyReads'
 import type { PregnancyRead } from '../../lib/pregnancyReads'
+import { Character, type CharacterName } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
 
 // ─── AI Insight Type Config ───────────────────────────────────────────────
@@ -55,30 +56,32 @@ const TYPE_CONFIG: Record<InsightType, {
   gradient: readonly [string, string]
   label: string
   detailIcon: typeof Brain
+  char: CharacterName          // Diffuse: blob for the type badge
+  detailChar: CharacterName    // Diffuse: blob for the detail hero
   tip: string
 }> = {
   pattern: {
     icon: Lightbulb, color: stickerPalette.yellowInk,
     gradient: [stickerPalette.yellowSoft, stickerPalette.yellowSoft + '00'],
-    label: 'Pattern', detailIcon: Brain,
+    label: 'Pattern', detailIcon: Brain, char: 'tip', detailChar: 'brain',
     tip: 'Patterns become clearer with consistent logging over time.',
   },
   trend: {
     icon: TrendingUp, color: stickerPalette.greenInk,
     gradient: [stickerPalette.greenSoft, stickerPalette.greenSoft + '00'],
-    label: 'Trend', detailIcon: Zap,
+    label: 'Trend', detailIcon: Zap, char: 'growth', detailChar: 'activity',
     tip: 'Trends are calculated from your recent 30-day activity window.',
   },
   upcoming: {
     icon: CalendarClock, color: stickerPalette.blueInk,
     gradient: [stickerPalette.blueSoft, stickerPalette.blueSoft + '00'],
-    label: 'Upcoming', detailIcon: CalendarClock,
+    label: 'Upcoming', detailIcon: CalendarClock, char: 'calendar', detailChar: 'calendar',
     tip: 'Predictions improve as we learn more about your unique rhythms.',
   },
   nudge: {
     icon: Sparkles, color: stickerPalette.pinkInk,
     gradient: [stickerPalette.pinkSoft, stickerPalette.pinkSoft + '00'],
-    label: 'Nudge', detailIcon: Heart,
+    label: 'Nudge', detailIcon: Heart, char: 'sparkle', detailChar: 'heart',
     tip: 'Small daily habits make the biggest difference over time.',
   },
 }
@@ -98,13 +101,13 @@ interface Article {
   ageMax: number
 }
 
-const CATEGORY_META: Record<ArticleCategory, { label: string; icon: typeof Moon; color: string }> = {
-  sleep:       { label: 'Sleep',       icon: Moon,    color: stickerPalette.lilacInk },
-  feeding:     { label: 'Feeding',     icon: Apple,   color: stickerPalette.greenInk },
-  development: { label: 'Development', icon: Brain,   color: stickerPalette.blueInk },
-  behavior:    { label: 'Behavior',    icon: Heart,   color: stickerPalette.pinkInk },
-  health:      { label: 'Health',      icon: Shield,  color: stickerPalette.yellowInk },
-  you:         { label: 'For You',     icon: Coffee,  color: stickerPalette.coralInk },
+const CATEGORY_META: Record<ArticleCategory, { label: string; icon: typeof Moon; color: string; char: CharacterName }> = {
+  sleep:       { label: 'Sleep',       icon: Moon,    color: stickerPalette.lilacInk,  char: 'sleep' },
+  feeding:     { label: 'Feeding',     icon: Apple,   color: stickerPalette.greenInk,  char: 'nutrition' },
+  development: { label: 'Development', icon: Brain,   color: stickerPalette.blueInk,   char: 'brain' },
+  behavior:    { label: 'Behavior',    icon: Heart,   color: stickerPalette.pinkInk,   char: 'heart' },
+  health:      { label: 'Health',      icon: Shield,  color: stickerPalette.yellowInk, char: 'health' },
+  you:         { label: 'For You',     icon: Coffee,  color: stickerPalette.coralInk,  char: 'selfcare' },
 }
 
 const ARTICLES: Article[] = [
@@ -1532,6 +1535,7 @@ function ArticleDetailModal({
   onAskGrandma: () => void
 }) {
   const { colors, ink } = useInsightsTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const meta = CATEGORY_META[article.category]
@@ -1565,7 +1569,7 @@ function ArticleDetailModal({
             </Pressable>
             <View style={s.modalHeader}>
               <View style={[s.modalIconWrap, { backgroundColor: meta.color + '30', borderColor: ink }]}>
-                <Icon size={22} color={ink} strokeWidth={2.5} />
+                {diffuse ? <Character name={meta.char} size={28} color={meta.color} /> : <Icon size={22} color={ink} strokeWidth={2.5} />}
               </View>
               <View style={[s.articleCatBadge, { backgroundColor: meta.color + '28' }]}>
                 <Text style={[s.articleCatText, { color: ink }]}>{meta.label}</Text>
@@ -1668,6 +1672,7 @@ function HistoryCard({
   onRestore: () => void
 }) {
   const { colors, ink } = useInsightsTheme()
+  const diffuse = useIsDiffuse()
   const Icon = config.icon
 
   return (
@@ -1679,7 +1684,7 @@ function HistoryCard({
     >
       <View style={[s.historyCard, { backgroundColor: colors.surface }]}>
         <View style={[s.historyIconWrap, { backgroundColor: config.gradient[0] }]}>
-          <Icon size={16} color={ink} strokeWidth={2.5} />
+          {diffuse ? <Character name={config.char} size={22} color={config.color} /> : <Icon size={16} color={ink} strokeWidth={2.5} />}
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={[s.historyTitle, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
@@ -1707,6 +1712,7 @@ function InsightDetailModal({
   onRestore: () => void
 }) {
   const { colors, ink } = useInsightsTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const config = TYPE_CONFIG[insight.type as InsightType] ?? TYPE_CONFIG.nudge
@@ -1743,7 +1749,7 @@ function InsightDetailModal({
               <View
                 style={[s.modalIconWrap, { backgroundColor: config.gradient[0], borderColor: ink }]}
               >
-                <Icon size={22} color={ink} strokeWidth={2.75} />
+                {diffuse ? <Character name={config.char} size={28} color={config.color} /> : <Icon size={22} color={ink} strokeWidth={2.75} />}
               </View>
               <View style={[s.modalTypeBadge, { backgroundColor: config.gradient[0], borderColor: ink }]}>
                 <Text style={[s.modalTypeText, { color: ink }]}>{config.label}</Text>
@@ -1759,7 +1765,7 @@ function InsightDetailModal({
             <View style={[s.modalDivider, { backgroundColor: ink + '15' }]} />
             <View style={[s.tipCard, { backgroundColor: config.gradient[0], borderColor: ink }]}>
               <View style={[s.tipIconDisc, { backgroundColor: colors.surface, borderColor: ink }]}>
-                <DetailIcon size={16} color={config.color} strokeWidth={2.75} />
+                {diffuse ? <Character name={config.detailChar} size={20} color={config.color} /> : <DetailIcon size={16} color={config.color} strokeWidth={2.75} />}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.tipLabel, { color: ink }]}>{t('insights_grandmasTip')}</Text>
