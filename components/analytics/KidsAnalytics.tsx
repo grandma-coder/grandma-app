@@ -3676,8 +3676,12 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             </ChartCard>
           )}
           {!isMilkPhase && analytics.nutrition.topFoods.length > 0 && (
-            <View style={[styles.card, diffuse ? cardStyle : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: chartTitleColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_analytics_most_logged_foods')}</Text>
+            <View style={diffuse
+              ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
+              : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <Text style={diffuse
+                ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
+                : [styles.chartTitle, { color: chartTitleColor, fontFamily: font.display }]}>{t('kids_analytics_most_logged_foods')}</Text>
               <View style={{ gap: 0 }}>
                 {analytics.nutrition.topFoods.map((food, i) => (
                   <View
@@ -3686,16 +3690,26 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                       flexDirection: 'row', alignItems: 'center', gap: 14,
                       paddingVertical: 12,
                       borderBottomWidth: i < analytics.nutrition.topFoods.length - 1 ? StyleSheet.hairlineWidth : 0,
-                      borderBottomColor: colors.border,
+                      borderBottomColor: diffuse ? dt.colors.line : colors.border,
                     }}
                   >
-                    <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: rankColor(i) + '25', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: rankColor(i), fontSize: 12, fontWeight: '900', fontFamily: font.display }}>#{i + 1}</Text>
-                    </View>
-                    <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: font.bodySemiBold, flex: 1 }}>{food.label}</Text>
-                    <View style={{ backgroundColor: PILLAR_CONFIG.nutrition.color + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 }}>
-                      <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800', fontFamily: font.display }}>{t('kids_analytics_times_prefix', { count: food.count })}</Text>
-                    </View>
+                    {diffuse ? (
+                      <View style={{ width: 24, alignItems: 'center' }}>
+                        <Text style={{ color: rankColor(i), fontSize: 12, fontFamily: diffuseFont.monoBold }}>{i + 1}</Text>
+                      </View>
+                    ) : (
+                      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: rankColor(i) + '25', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ color: rankColor(i), fontSize: 12, fontWeight: '900', fontFamily: font.display }}>#{i + 1}</Text>
+                      </View>
+                    )}
+                    <Text style={{ color: diffuse ? dt.colors.ink : colors.text, fontSize: 15, fontWeight: '600', fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold, flex: 1 }}>{food.label}</Text>
+                    {diffuse ? (
+                      <Text style={{ color: dt.colors.ink3, fontSize: 12, fontFamily: diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase' }}>{t('kids_analytics_times_prefix', { count: food.count })}</Text>
+                    ) : (
+                      <View style={{ backgroundColor: PILLAR_CONFIG.nutrition.color + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 }}>
+                        <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800', fontFamily: font.display }}>{t('kids_analytics_times_prefix', { count: food.count })}</Text>
+                      </View>
+                    )}
                   </View>
                 ))}
               </View>
@@ -3913,25 +3927,29 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Recent events by type */}
           {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
-            <View style={[styles.card, diffuse ? cardStyle : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
-              <Text style={[styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_analytics_health_recent_events')}</Text>
+            <View style={diffuse
+              ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
+              : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+              <Text style={diffuse
+                ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
+                : [styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: font.display }]}>{t('kids_analytics_health_recent_events')}</Text>
               {Object.entries(eventsByType).map(([type, events]) => (
                 <View key={type} style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
-                    <Text style={{ color: getEventColor(type), fontSize: 11, fontWeight: '600', fontFamily: font.bodySemiBold, letterSpacing: 1.4 }}>
+                    <Text style={{ color: getEventColor(type), fontSize: 11, fontWeight: '600', fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: 1.4 }}>
                       {getHealthEventLabel(type).toUpperCase()}
                     </Text>
                   </View>
                   {events.map((e, i) => (
                     <View
                       key={i}
-                      style={[styles.eventRow, { borderBottomColor: i < events.length - 1 ? colors.border : 'transparent' }]}
+                      style={[styles.eventRow, { borderBottomColor: i < events.length - 1 ? (diffuse ? dt.colors.line : colors.border) : 'transparent' }]}
                     >
                       <View style={[styles.eventDot, { backgroundColor: getEventColor(type) }]} />
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.eventLabel, { color: colors.text }]} numberOfLines={1}>{e.label}</Text>
-                        <Text style={[styles.eventDate, { color: colors.textMuted }]}>{e.date}</Text>
+                        <Text style={[styles.eventLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]} numberOfLines={1}>{e.label}</Text>
+                        <Text style={[styles.eventDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{e.date}</Text>
                       </View>
                     </View>
                   ))}
@@ -3957,16 +3975,22 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {/* Vaccine tracker */}
-          <View style={[styles.card, diffuse ? cardStyle : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+          <View style={diffuse
+            ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
+            : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
             <View style={[styles.row, { marginBottom: 4 }]}>
-              <Syringe size={18} color={PILLAR_CONFIG.health.color} strokeWidth={2} />
-              <Text style={[styles.chartTitle, { color: chartTitleColor, marginBottom: 0, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_analytics_vaccine_tracker_title')}</Text>
+              {diffuse
+                ? <Character name="vaccine" size={20} color={getDiffuseAccent('kids', dt.isDark)} />
+                : <Syringe size={18} color={PILLAR_CONFIG.health.color} strokeWidth={2} />}
+              <Text style={diffuse
+                ? [styles.diffuseEyebrow, { color: dt.colors.ink3, marginBottom: 0 }]
+                : [styles.chartTitle, { color: chartTitleColor, marginBottom: 0, fontFamily: font.display }]}>{t('kids_analytics_vaccine_tracker_title')}</Text>
             </View>
             {/* Progress bar */}
-            <View style={{ height: 8, borderRadius: 999, marginTop: 12, marginBottom: 12, overflow: 'hidden', backgroundColor: brand.success + '22' }}>
-              <View style={{ width: `${vaccinePct}%`, height: '100%', backgroundColor: brand.success, borderRadius: 999 }} />
+            <View style={{ height: diffuse ? 4 : 8, borderRadius: 999, marginTop: 12, marginBottom: 12, overflow: 'hidden', backgroundColor: diffuse ? dt.colors.line : brand.success + '22' }}>
+              <View style={{ width: `${vaccinePct}%`, height: '100%', backgroundColor: diffuse ? getDiffuseAccent('kids', dt.isDark) : brand.success, borderRadius: 999 }} />
             </View>
-            <Text style={[styles.detailExplain, { color: colors.textSecondary, marginBottom: 14 }]}>
+            <Text style={[styles.detailExplain, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, marginBottom: 14, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
               {`${doneVaccines}/${totalVaccines} logged as completed`}
             </Text>
             <View style={styles.vaccineGrid}>
@@ -3974,13 +3998,15 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                 <View
                   key={i}
                   style={[styles.vaccineChip, {
-                    backgroundColor: v.done ? brand.success + '1A' : colors.surfaceRaised,
-                    borderColor: v.done ? brand.success + '55' : colors.borderStrong,
+                    backgroundColor: v.done ? (diffuse ? getDiffuseAccent('kids', dt.isDark) + '22' : brand.success + '1A') : (diffuse ? 'transparent' : colors.surfaceRaised),
+                    borderColor: v.done ? (diffuse ? getDiffuseAccent('kids', dt.isDark) + '66' : brand.success + '55') : (diffuse ? dt.colors.line2 : colors.borderStrong),
                     borderRadius: radius.full,
                   }]}
                 >
-                  {v.done && <Shield size={14} color={brand.success} strokeWidth={2.5} />}
-                  <Text style={[styles.vaccineText, { color: v.done ? brand.success : colors.textSecondary }]}>{v.name}</Text>
+                  {v.done && (diffuse
+                    ? <Character name="vaccine" size={13} color={getDiffuseAccent('kids', dt.isDark)} />
+                    : <Shield size={14} color={brand.success} strokeWidth={2.5} />)}
+                  <Text style={[styles.vaccineText, { color: v.done ? (diffuse ? dt.colors.ink : brand.success) : (diffuse ? dt.colors.ink3 : colors.textSecondary), fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{v.name}</Text>
                 </View>
               ))}
             </View>
@@ -4206,40 +4232,61 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {/* Age-appropriate guide — RecSplit pattern from the mockup */}
-          <View style={[styles.card, diffuse ? { ...cardStyle, padding: 0 } : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
-            <Text style={[styles.chartTitle, { color: chartTitleColor, marginBottom: 6, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_analytics_activity_rec_split')}</Text>
-            {guideItems.map((item) => (
-              <View key={item.label} style={{ paddingVertical: 10 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 12 }}>{item.emoji}</Text>
+          {(() => {
+            const splitAccent = diffuse ? getDiffuseAccent('kids', dt.isDark) : COLOR
+            return (
+              <View style={diffuse
+                ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
+                : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
+                <Text style={diffuse
+                  ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
+                  : [styles.chartTitle, { color: chartTitleColor, marginBottom: 6, fontFamily: font.display }]}>{t('kids_analytics_activity_rec_split')}</Text>
+                {guideItems.map((item) => (
+                  <View key={item.label} style={{ paddingVertical: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      {!diffuse && (
+                        <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 12 }}>{item.emoji}</Text>
+                        </View>
+                      )}
+                      <Text style={{ flex: 1, color: diffuse ? dt.colors.ink : colors.text, fontSize: 14, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.1 }}>
+                        {item.label}
+                      </Text>
+                      <Text style={{ color: diffuse ? dt.colors.ink : COLOR, fontSize: 16, fontFamily: diffuse ? diffuseFont.mono : font.display, letterSpacing: -0.3 }}>
+                        {item.pct}%
+                      </Text>
+                    </View>
+                    <View style={{ height: diffuse ? 4 : 6, borderRadius: 999, backgroundColor: diffuse ? dt.colors.line : colors.surfaceRaised, marginTop: 6, overflow: 'hidden' }}>
+                      <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: splitAccent }} />
+                    </View>
+                    <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, fontFamily: diffuse ? diffuseFont.body : font.body, lineHeight: 14, marginTop: 4 }}>
+                      {item.tip}
+                    </Text>
                   </View>
-                  <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: font.display, letterSpacing: -0.1 }}>
-                    {item.label}
+                ))}
+                {diffuse ? (
+                  <Text style={{ color: dt.colors.ink3, fontSize: 12, fontFamily: diffuseFont.body, lineHeight: 17, marginTop: 10 }}>
+                    {ageMonths < 12
+                      ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
+                      : ageMonths < 36
+                      ? 'WHO recommends 180 min of activity/day for toddlers, spread throughout.'
+                      : 'WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
                   </Text>
-                  <Text style={{ color: COLOR, fontSize: 16, fontFamily: font.display, letterSpacing: -0.3 }}>
-                    {item.pct}%
-                  </Text>
-                </View>
-                <View style={{ height: 6, borderRadius: 999, backgroundColor: colors.surfaceRaised, marginTop: 6, overflow: 'hidden' }}>
-                  <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: COLOR }} />
-                </View>
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.body, lineHeight: 14, marginTop: 4 }}>
-                  {item.tip}
-                </Text>
+                ) : (
+                  <View style={{ backgroundColor: COLOR + '15', borderRadius: radius.md, padding: 12, marginTop: 8, borderWidth: 1, borderColor: COLOR + '30', flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                    <Text style={{ fontSize: 14, lineHeight: 16 }}>{'📋'}</Text>
+                    <Text style={{ color: COLOR, fontSize: 12, fontFamily: font.bodyMedium, flex: 1, lineHeight: 16 }}>
+                      {ageMonths < 12
+                        ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
+                        : ageMonths < 36
+                        ? 'WHO recommends 180 min of activity/day for toddlers, spread throughout.'
+                        : 'WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
+                    </Text>
+                  </View>
+                )}
               </View>
-            ))}
-            <View style={{ backgroundColor: COLOR + '15', borderRadius: radius.md, padding: 12, marginTop: 8, borderWidth: 1, borderColor: COLOR + '30', flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-              <Text style={{ fontSize: 14, lineHeight: 16 }}>{'📋'}</Text>
-              <Text style={{ color: COLOR, fontSize: 12, fontFamily: font.bodyMedium, flex: 1, lineHeight: 16 }}>
-                {ageMonths < 12
-                  ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
-                  : ageMonths < 36
-                  ? 'WHO recommends 180 min of activity/day for toddlers, spread throughout.'
-                  : 'WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
-              </Text>
-            </View>
-          </View>
+            )
+          })()}
         </View>
       )
     }
@@ -5257,6 +5304,8 @@ const styles = StyleSheet.create({
   statPill: { flex: 1, alignItems: 'center', paddingVertical: 16, paddingHorizontal: 10, gap: 2 },
   statValue: { fontSize: 24, fontFamily: font.display, letterSpacing: -0.4, lineHeight: 28 },
   statLabel: { fontSize: 11, fontFamily: font.body, textAlign: 'center', lineHeight: 14, marginTop: 2 },
+  // Diffuse: bare section eyebrow (mono caps) for de-carded list sections.
+  diffuseEyebrow: { fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', fontFamily: diffuseFont.mono, marginBottom: 12 },
   // Diffuse: the de-carded hairline stat strip (matches pregnancy's calloutRow).
   statStrip: { flexDirection: 'row', borderWidth: StyleSheet.hairlineWidth, borderRadius: 18, overflow: 'hidden' },
   statStripCell: { flex: 1, paddingVertical: 16, paddingHorizontal: 10, alignItems: 'center', gap: 5 },
