@@ -90,8 +90,18 @@ export default function AccountScreen() {
         {
           text: t('account_deleteConfirmBtn'),
           style: 'destructive',
-          onPress: () => {
-            Alert.alert(t('account_contactSupport'), t('account_contactSupportMsg'))
+          onPress: async () => {
+            setSaving(true)
+            try {
+              const { error } = await supabase.functions.invoke('delete-account')
+              if (error) throw error
+              // Account is gone — clear the local session and return to auth.
+              // signOut handles store resets + navigation to the welcome screen.
+              await signOut('global')
+            } catch (e: any) {
+              setSaving(false)
+              Alert.alert(t('common_error'), e.message ?? t('account_deleteFailedMsg'))
+            }
           },
         },
       ]

@@ -24,7 +24,7 @@ import { useFocusEffect } from 'expo-router'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, diffuseFont, useDiffuseTheme } from '../../constants/theme'
-import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
@@ -201,6 +201,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   const dt = useDiffuseTheme()
   const bg = diffuse ? dt.colors.bg : colors.bg
   const insets = useSafeAreaInsets()
+  const bottomInset = useScrollBottomInset(insets.bottom + 32)
   const queryClient = useQueryClient()
   const { t } = useTranslation()
 
@@ -309,7 +310,7 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
   return (
     <ScrollView
       style={[styles.root, { backgroundColor: bg }]}
-      contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: insets.bottom + 32 }}
+      contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: bottomInset }}
       showsVerticalScrollIndicator={false}
     >
       {/* Greeting */}

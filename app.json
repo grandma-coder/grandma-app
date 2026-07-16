@@ -35,6 +35,12 @@
       "expo-web-browser",
       "expo-apple-authentication",
       "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "color": "#E58BB4"
+        }
+      ],
       "@sentry/react-native",
       [
         "@sentry/react-native/expo",

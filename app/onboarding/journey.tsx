@@ -176,7 +176,13 @@ export default function JourneyScreen() {
     enroll(first)
     setMode(first)
     switchTo(first)
-    router.push(FIRST_ROUTE[first] as any)
+    // B5: capture name + DOB once, before the first per-mode flow. about-you
+    // persists to useJourneyStore (read by each saveAndFinish) then continues
+    // to the first mode's route.
+    router.push({
+      pathname: '/onboarding/about-you',
+      params: { next: FIRST_ROUTE[first] },
+    } as any)
   }
 
   // ─── Diffuse (v3) render — GENERAL 01 · journey picker ───────────────────

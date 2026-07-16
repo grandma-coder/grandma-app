@@ -1014,7 +1014,9 @@ export function TieredLozenges({ rows, min, max, color, height = 150 }: { rows: 
           const y = i * (bh + gap), val = Math.max(0, Math.min(1, (rw.value - min) / Math.max(0.01, max - min)))
           const bw = Math.max(bh, val * track), last = i === n - 1
           return (
-            <G key={rw.label}>
+            // Key by index — labels can repeat (e.g. two weight logs in the same
+            // pregnancy week both render as "W20"), and duplicate keys crash render.
+            <G key={`${rw.label}-${i}`}>
               <SvgText x={0} y={y + bh / 2 + 3} fontSize={9} fill={colors.textMuted} fontFamily={diffuseFont.mono}>{rw.label}</SvgText>
               <Rect x={x0} y={y} width={track} height={bh} rx={bh / 2} ry={bh / 2} fill={dt.colors.surfaceRaised} />
               <Rect x={x0} y={y} width={bw} height={bh} rx={bh / 2} ry={bh / 2} fill={last ? color : withA(color, 0.7)} />

@@ -200,14 +200,16 @@ export default function KidsOnboarding() {
 
       const userId = session.user.id
       const parentName = useJourneyStore.getState().parentName ?? null
+      const parentDob = useJourneyStore.getState().parentDob ?? null
 
-      // Profile: persist journey mode + parent name so cold restarts don't
+      // Profile: persist journey mode + parent name/dob so cold restarts don't
       // reset the user to the default mode.
       const profilePayload: Record<string, unknown> = {
         id: userId,
         journey_mode: 'kids',
       }
       if (parentName) profilePayload.name = parentName
+      if (parentDob) profilePayload.dob = parentDob
       const { error: profileErr } = await supabase
         .from('profiles')
         .upsert(profilePayload, { onConflict: 'id' })

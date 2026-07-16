@@ -81,7 +81,6 @@ const CAREGIVER_SCREENS: Array<[string, string]> = [
 // it still renders GarageScreen.tsx (Pastel neon palette). On backlog.
 const COMMUNITY_SCREENS: Array<[string, string]> = [
   ['Connections (Channels + Garage)', '/connections'],
-  ['Channels list', '/channels'],
   ['Channel · create', '/channel/create'],
   ['Garage · profile  ⚠ legacy design', '/garage/profile'],
   ['Garage · create  ⚠ legacy design', '/garage/create'],

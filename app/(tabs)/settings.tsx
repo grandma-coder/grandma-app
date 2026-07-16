@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Settings as SettingsIcon, LogOut } from 'lucide-react-native'
 import { NotificationBell } from '../../components/ui/NotificationBell'
 import { useTheme, brand, getModeColor, useDiffuseTheme, diffuseFont } from '../../constants/theme'
-import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseListRow } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
@@ -48,6 +48,7 @@ export default function ProfileScreen() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
+  const bottomInset = useScrollBottomInset()
   const { t } = useTranslation()
 
   const mode = useModeStore((s) => s.mode)
@@ -196,7 +197,7 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40 },
+          { paddingTop: insets.top + 8, paddingBottom: bottomInset },
         ]}
         showsVerticalScrollIndicator={false}
       >

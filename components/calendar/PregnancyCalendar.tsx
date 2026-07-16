@@ -66,12 +66,14 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius, useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius } from '../../constants/theme'
-import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { DiffuseTimelineRow, DiffuseNowMarker, DiffuseLogIcon, DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
 import { Character } from '../characters/Characters'
 import { LogMonthGrid } from './LogMonthGrid'
 import { DiffuseListRow, DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
+import { useUnitsStore } from '../../store/useUnitsStore'
+import { kgToDisplay, weightLabel } from '../../lib/units'
 import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
 import { pregnancyWeeks, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -1287,6 +1289,7 @@ function LogDetailPopup({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const weightUnit = useUnitsStore((st) => st.weightUnit)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const s = isDark ? stickersDark : stickersLight
   const meta = LOG_META[log.log_type] ?? { label: log.log_type, icon: Calendar, color: brand.pregnancy }
@@ -1317,7 +1320,7 @@ function LogDetailPopup({
     }
     switch (log.log_type) {
       case 'sleep':       return { metric: rawValue, unit: 'h', sublabel: 'SLEEP', isText: false }
-      case 'weight':      return { metric: rawValue, unit: 'kg', sublabel: 'WEIGHT', isText: false }
+      case 'weight':      return { metric: rawValue ? kgToDisplay(parseFloat(rawValue), weightUnit).toFixed(1) : rawValue, unit: weightLabel(weightUnit), sublabel: 'WEIGHT', isText: false }
       case 'water':       return { metric: rawValue, unit: 'gl', sublabel: 'WATER INTAKE', isText: false }
       case 'vitamins':    return { metric: '✓', unit: '', sublabel: 'VITAMINS TAKEN', isText: false }
       case 'kick_count':  return { metric: rawValue, unit: 'kicks', sublabel: 'KICK COUNT', isText: false }
@@ -1954,6 +1957,7 @@ export function PregnancyCalendar() {
   const dAccent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  const bottomInset = useScrollBottomInset(insets.bottom + 40)
 
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
@@ -2835,7 +2839,7 @@ export function PregnancyCalendar() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset }]}
         showsVerticalScrollIndicator={false}
       >
         {view === 'timeline' && (

@@ -286,36 +286,10 @@ function CenterTabButton() {
             subtitle; tap a word to focus, tap the focused word (or GO) to go. */}
         {diffuse ? (
           <>
-            {/* Aurora swirl — a spiral of pastel blooms (pink · coral · peach
-                arms winding around a soft blue/lilac core) that slowly rotates
-                as one field, so it drifts like the reference gradient. The
-                container is scaled up ~1.7× so its corners never expose the bare
-                scrim while it turns. Each SoftBloom fades to transparent at its
-                edge; overlapping them yields the soft pastel-gradient wash.
-                Opacities scale down in dark to stay calm. */}
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  opacity: overlayAnim,
-                  transform: [
-                    { scale: 1.7 },
-                    { rotate: auroraSpin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) },
-                  ],
-                },
-              ]}
-            >
-              {/* Cool core — soft blue + lilac at the swirl's eye. */}
-              <SoftBloom color={StickerPalette.blue} cx="50%" cy="50%" opacity={dt.isDark ? 0.32 : 0.5} spread={0.32} radius="42%" />
-              <SoftBloom color={StickerPalette.lilac} cx="58%" cy="56%" opacity={dt.isDark ? 0.24 : 0.36} spread={0.34} radius="38%" />
-              {/* Mode-accent anchor — keeps the menu on-brand for the journey. */}
-              <SoftBloom color={accentColor} cx="44%" cy="42%" opacity={dt.isDark ? 0.3 : 0.4} spread={0.36} radius="46%" />
-              {/* Warm arms spiralling outward — pink → coral → peach. */}
-              <SoftBloom color={StickerPalette.pink} cx="24%" cy="26%" opacity={dt.isDark ? 0.34 : 0.56} spread={0.44} radius="54%" />
-              <SoftBloom color={StickerPalette.coral} cx="76%" cy="30%" opacity={dt.isDark ? 0.28 : 0.44} spread={0.4} radius="48%" />
-              <SoftBloom color={StickerPalette.peach} cx="72%" cy="76%" opacity={dt.isDark ? 0.28 : 0.46} spread={0.42} radius="50%" />
-              <SoftBloom color={StickerPalette.pink} cx="26%" cy="78%" opacity={dt.isDark ? 0.3 : 0.5} spread={0.42} radius="50%" />
+            {/* Calm mode-accent bloom on the cream scrim — one soft radial wash,
+                no swirl, no multi-hue aurora. Just a little gradient over paper. */}
+            <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: overlayAnim }]}>
+              <SoftBloom color={accentColor} cx="50%" cy="46%" opacity={dt.isDark ? 0.42 : 0.5} spread={0.4} radius="58%" />
             </Animated.View>
 
             {/* Prompt — lowercase Swiss, accent name. */}

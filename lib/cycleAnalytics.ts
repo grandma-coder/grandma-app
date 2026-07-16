@@ -315,6 +315,160 @@ export function useMoodStats() {
   }
 }
 
+// ─── BBT (basal body temperature) ──────────────────────────────────────────
+//
+// BBT rises ~0.3–0.5°C after ovulation (progesterone). Charting the biphasic
+// shift is the classic at-home ovulation *confirmation*. We plot the current
+// cycle's daily readings and detect the thermal-shift day: the first day whose
+// temp exceeds the max of the previous 6 days by ≥ 0.2 and stays elevated.
+
+export interface BBTStats {
+  /** {day-of-cycle, temp} for the current (latest) cycle. */
+  series: Array<{ cycleDay: number; date: string; temp: number }>
+  /** cycle-day index of the detected thermal shift, or null. */
+  shiftDay: number | null
+  coverline: number | null
+}
+
+export function computeBBTStats(logs: CycleLogRow[], history: CycleHistory): BBTStats {
+  const empty: BBTStats = { series: [], shiftDay: null, coverline: null }
+  const latest = history.cycles[history.cycles.length - 1]
+  if (!latest) return empty
+  const start = new Date(latest.startDate + 'T00:00:00')
+
+  const series = logs
+    .filter((l) => l.type === 'basal_temp' && l.value != null)
+    .map((l) => ({ date: l.date, temp: Number(l.value) }))
+    .filter((r) => Number.isFinite(r.temp) && new Date(r.date + 'T00:00:00') >= start)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((r) => ({
+      ...r,
+      cycleDay: Math.round((new Date(r.date + 'T00:00:00').getTime() - start.getTime()) / 86400000) + 1,
+    }))
+
+  if (series.length < 3) return { series, shiftDay: null, coverline: null }
+
+  // Thermal shift: first reading > (max of prior 6) + 0.2 that holds.
+  let shiftDay: number | null = null
+  let coverline: number | null = null
+  for (let i = 6; i < series.length; i++) {
+    const prior = series.slice(Math.max(0, i - 6), i).map((r) => r.temp)
+    const priorMax = Math.max(...prior)
+    if (series[i].temp >= priorMax + 0.2) {
+      shiftDay = series[i].cycleDay
+      coverline = Math.round((priorMax + 0.1) * 10) / 10
+      break
+    }
+  }
+  return { series, shiftDay, coverline }
+}
+
+export function useBBTStats() {
+  const logsQuery = useCycleLogs()
+  const historyResult = useCycleHistory()
+  const isLoading = logsQuery.isLoading || historyResult.isLoading
+  const error = logsQuery.error ?? historyResult.error
+  if (!logsQuery.data || !historyResult.data) return { data: undefined, isLoading, error }
+  return { data: computeBBTStats(logsQuery.data, historyResult.data), isLoading, error }
+}
+
+// ─── Cervical mucus ─────────────────────────────────────────────────────────
+//
+// Mucus progresses dry → sticky → creamy → watery → egg-white toward ovulation;
+// egg-white/watery are the peak-fertility signals. We surface the current
+// cycle's daily observations + a count of fertile-quality days.
+
+export type MucusType = 'dry' | 'sticky' | 'creamy' | 'watery' | 'eggwhite'
+const MUCUS_ORDER: MucusType[] = ['dry', 'sticky', 'creamy', 'watery', 'eggwhite']
+const MUCUS_FERTILE: Set<MucusType> = new Set(['watery', 'eggwhite'])
+
+export interface MucusStats {
+  series: Array<{ cycleDay: number; date: string; type: MucusType }>
+  fertileDays: number
+  peakDay: number | null
+}
+
+export function computeMucusStats(logs: CycleLogRow[], history: CycleHistory): MucusStats {
+  const empty: MucusStats = { series: [], fertileDays: 0, peakDay: null }
+  const latest = history.cycles[history.cycles.length - 1]
+  if (!latest) return empty
+  const start = new Date(latest.startDate + 'T00:00:00')
+
+  const series = logs
+    .filter((l) => l.type === 'cervical_mucus' && l.value != null && (MUCUS_ORDER as string[]).includes(l.value))
+    .map((l) => ({ date: l.date, type: l.value as MucusType }))
+    .filter((r) => new Date(r.date + 'T00:00:00') >= start)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((r) => ({
+      ...r,
+      cycleDay: Math.round((new Date(r.date + 'T00:00:00').getTime() - start.getTime()) / 86400000) + 1,
+    }))
+
+  const fertileDays = series.filter((r) => MUCUS_FERTILE.has(r.type)).length
+  const eggwhite = series.filter((r) => r.type === 'eggwhite')
+  const peakDay = eggwhite.length ? eggwhite[eggwhite.length - 1].cycleDay : null
+  return { series, fertileDays, peakDay }
+}
+
+export function useCervicalMucusStats() {
+  const logsQuery = useCycleLogs()
+  const historyResult = useCycleHistory()
+  const isLoading = logsQuery.isLoading || historyResult.isLoading
+  const error = logsQuery.error ?? historyResult.error
+  if (!logsQuery.data || !historyResult.data) return { data: undefined, isLoading, error }
+  return { data: computeMucusStats(logsQuery.data, historyResult.data), isLoading, error }
+}
+
+// ─── Intercourse (TTC timing) ───────────────────────────────────────────────
+//
+// For trying-to-conceive, the useful read is: did intercourse land in the
+// fertile window? We count marks this cycle and how many fell inside the
+// predicted fertile days.
+
+export interface IntercourseStats {
+  thisCycleCount: number
+  inFertileWindow: number
+  recent: Array<{ date: string; protectedSex: boolean; inFertile: boolean }>
+}
+
+export function computeIntercourseStats(logs: CycleLogRow[], history: CycleHistory): IntercourseStats {
+  const empty: IntercourseStats = { thisCycleCount: 0, inFertileWindow: 0, recent: [] }
+  const latest = history.cycles[history.cycles.length - 1]
+  if (!latest) return empty
+  const start = new Date(latest.startDate + 'T00:00:00')
+  const avgLen = history.avg ?? 28
+
+  const info = getCycleInfo({ lastPeriodStart: latest.startDate, cycleLength: avgLen }, toDateStr(new Date()))
+  const fertileStartDate = new Date(start.getTime() + (info.fertileStart - 1) * 86400000)
+  const fertileEndDate = new Date(start.getTime() + (info.fertileEnd - 1) * 86400000)
+
+  const marks = logs
+    .filter((l) => l.type === 'intercourse')
+    .map((l) => ({ date: l.date, protectedSex: l.value === 'protected' }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+
+  const thisCycle = marks.filter((m) => new Date(m.date + 'T00:00:00') >= start)
+  const withFertile = thisCycle.map((m) => {
+    const d = new Date(m.date + 'T00:00:00')
+    return { ...m, inFertile: d >= fertileStartDate && d <= fertileEndDate }
+  })
+
+  return {
+    thisCycleCount: withFertile.length,
+    inFertileWindow: withFertile.filter((m) => m.inFertile).length,
+    recent: withFertile.slice(-8).reverse(),
+  }
+}
+
+export function useIntercourseStats() {
+  const logsQuery = useCycleLogs()
+  const historyResult = useCycleHistory()
+  const isLoading = logsQuery.isLoading || historyResult.isLoading
+  const error = logsQuery.error ?? historyResult.error
+  if (!logsQuery.data || !historyResult.data) return { data: undefined, isLoading, error }
+  return { data: computeIntercourseStats(logsQuery.data, historyResult.data), isLoading, error }
+}
+
 // ─── Cycle Intent (trying to conceive vs cycle health) ─────────────────────
 //
 // Onboarding stores `tryingToConceive` in the first period_start row's notes

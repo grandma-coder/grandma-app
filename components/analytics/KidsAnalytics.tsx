@@ -73,7 +73,7 @@ import {
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
-import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import {
   DiffuseBloomIcon,
   DiffuseSectionHeader,
@@ -556,6 +556,7 @@ export function KidsAnalytics() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
+  const bottomInset = useScrollBottomInset(insets.bottom + 56)
   const children = useChildStore((s) => s.children)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
 
@@ -673,7 +674,7 @@ export function KidsAnalytics() {
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 56 }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: bottomInset }]}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={diffuse ? getDiffuseAccent('kids', dt.isDark) : colors.primary} colors={[diffuse ? getDiffuseAccent('kids', dt.isDark) : colors.primary]} />}

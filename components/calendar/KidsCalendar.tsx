@@ -66,7 +66,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers, font, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../constants/theme'
-import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset, SoftBloom, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import {
   DiffuseSheet,
   DiffuseBloomIcon,
@@ -1235,6 +1235,7 @@ export function KidsCalendar() {
   const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  const bottomInset = useScrollBottomInset(insets.bottom + 40)
 
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -2880,7 +2881,7 @@ export function KidsCalendar() {
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingBottom: insets.bottom + 40 },
+            { paddingBottom: bottomInset },
           ]}
           showsVerticalScrollIndicator={false}
         >

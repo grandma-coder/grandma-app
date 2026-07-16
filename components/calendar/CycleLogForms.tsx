@@ -22,6 +22,8 @@ import {
 } from '../../lib/cycleSymptoms'
 import { phaseHint, saveLabel } from '../../lib/cycleLogForms'
 import type { CyclePhase } from '../../lib/cycleLogic'
+import { useUnitsStore } from '../../store/useUnitsStore'
+import { cToDisplay, tempLabel } from '../../lib/units'
 import { SymptomSticker } from './symptomStickers'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../ui/Stickers'
 import { Character, type MoodExpression } from '../characters/Characters'
@@ -682,10 +684,16 @@ export function BbtForm({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const tempUnit = useUnitsStore((s) => s.tempUnit)
+  // Internal state + storage stay canonical °C (tenths of a degree). Only the
+  // displayed number, unit label, and tick labels convert to the chosen unit.
   const [tenths, setTenths] = useState(364)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
   const { accent, tint, ink } = phaseColors(phase, stickers)
+
+  // A canonical tenths-°C value → the display string in the user's unit.
+  const showTemp = (t10: number) => cToDisplay(t10 / 10, tempUnit).toFixed(1)
 
   async function save() {
     setSaving(true)
@@ -702,7 +710,7 @@ export function BbtForm({
   }
 
   const pct = (tenths - BBT_MIN) / (BBT_MAX - BBT_MIN)
-  const wholeTemp = (tenths / 10).toFixed(1)
+  const wholeTemp = showTemp(tenths)
 
   return (
     <LogFormShell
@@ -720,7 +728,7 @@ export function BbtForm({
         <Text style={[styles.sliderNum, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
           {wholeTemp}
           <Text style={[styles.sliderUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal' } : { color: colors.textFaint, fontFamily: font.italic }]}>
-            {' °C'}
+            {' ' + tempLabel(tempUnit)}
           </Text>
         </Text>
         <View style={[styles.sliderTrack, diffuse ? { borderColor: dt.colors.line2, backgroundColor: dt.colors.line } : { borderColor: colors.border }]}>
@@ -735,7 +743,7 @@ export function BbtForm({
           {[BBT_MIN, BBT_MAX].map((v) => (
             <Pressable key={v} onPress={() => setTenths(v)} style={styles.sliderTickHit}>
               <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textFaint, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 10 }}>
-                {(v / 10).toFixed(1)}
+                {showTemp(v)}
               </Text>
             </Pressable>
           ))}

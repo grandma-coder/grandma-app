@@ -26,13 +26,15 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../constants/theme'
-import { useIsDiffuse, DiffuseFieldSurface, SoftBloom, DiffuseGrain } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset, DiffuseFieldSurface, SoftBloom, DiffuseGrain } from '../ui/diffuse/DiffuseKit'
 import { DiffuseSheet, DiffuseStatCard, DiffuseMetricTile, DiffuseSectionHeader } from '../ui/diffuse/DiffusePrimitives'
 import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
 import { useTranslation } from '../../lib/i18n'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
+import { useUnitsStore } from '../../store/useUnitsStore'
+import { kgToDisplay, weightLabel } from '../../lib/units'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { PregnancyJourneyRing } from '../pregnancy/PregnancyJourneyRing'
 import {
@@ -246,6 +248,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const accent = getDiffuseAccent('preg', dt.isDark)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  // Display unit for weight (B4). Data is canonical kg; convert for display only.
+  const prefWeightUnit = useUnitsStore((s) => s.weightUnit)
+  const prefWeightLabel = weightLabel(prefWeightUnit)
+  const bottomInset = useScrollBottomInset(insets.bottom + 100)
 
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate)
@@ -321,10 +327,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const tk = useMemo(() => buildTakeaways({
     weightHistory, kickSessions, sleepHistory, moodTrend, symptomFreq,
     hydrationHistory, exerciseHistory, contractions, wellbeing, nutritionMatrix,
-    birthReady, trimester,
+    birthReady, trimester, weightUnit: prefWeightUnit,
   }), [weightHistory, kickSessions, sleepHistory, moodTrend, symptomFreq,
        hydrationHistory, exerciseHistory, contractions, wellbeing, nutritionMatrix,
-       birthReady, trimester])
+       birthReady, trimester, prefWeightUnit])
 
   // Derived display values for stat tiles
   const weights = weightHistory.map((e) => e.weight).filter((w) => w > 0)
@@ -335,10 +341,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
       ? (latestWeight - firstWeight) / Math.max(1, weights.length - 1)
       : null
 
-  const weightValue = latestWeight ? latestWeight.toFixed(1) : '—'
+  const weightValue = latestWeight ? kgToDisplay(latestWeight, prefWeightUnit).toFixed(1) : '—'
   const weightUnit = weeklyGain !== null
-    ? `kg · ${weeklyGain >= 0 ? '+' : ''}${weeklyGain.toFixed(1)} / wk`
-    : 'kg'
+    ? `${prefWeightLabel} · ${weeklyGain >= 0 ? '+' : ''}${kgToDisplay(weeklyGain, prefWeightUnit).toFixed(1)} / wk`
+    : prefWeightLabel
 
   const avgKicks = kickSessions.length > 0
     ? Math.round(kickSessions.reduce((a, b) => a + b.kicks, 0) / kickSessions.length)
@@ -356,7 +362,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset }]}
         showsVerticalScrollIndicator={false}
       >
         <AnalyticsHeader hide />
@@ -1563,16 +1569,25 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
   const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   const { t } = useTranslation()
+  // Weights are canonical kg from the DB; convert to the user's chosen unit for
+  // display only (B4). A gain/delta converts by scale (offset cancels).
+  const weightUnit = useUnitsStore((s) => s.weightUnit)
+  const uLabel = weightLabel(weightUnit)
+  const toU = (kg: number) => kgToDisplay(kg, weightUnit)
   const validEntries = weightHistory.filter((e) => e.weight > 0)
-  const weights = validEntries.map((e) => e.weight)
+  const weights = validEntries.map((e) => toU(e.weight))
   const weightLabels = validEntries.map((e) => formatLogDate(e.date))
   const firstW = weights[0]
   const lastW = weights[weights.length - 1]
   const totalGain = firstW && lastW ? lastW - firstW : null
   const avgWeekly = totalGain !== null && weights.length > 1 ? totalGain / (weights.length - 1) : null
 
+  // Target-per-week thresholds are in kg; compare against the kg average.
+  const kgWeights = validEntries.map((e) => e.weight)
+  const kgGain = kgWeights.length > 1 ? kgWeights[kgWeights.length - 1] - kgWeights[0] : null
+  const kgAvgWeekly = kgGain !== null ? kgGain / (kgWeights.length - 1) : null
   const targetPerWeek = trimester === 1 ? 0.2 : trimester === 2 ? 0.4 : 0.3
-  const onTrack = avgWeekly !== null && Math.abs(avgWeekly - targetPerWeek) <= 0.25
+  const onTrack = kgAvgWeekly !== null && Math.abs(kgAvgWeekly - targetPerWeek) <= 0.25
 
   return (
     <>
@@ -1580,8 +1595,8 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: 'Latest', value: lastW ? `${lastW.toFixed(1)} kg` : '—' },
-          { label: 'Total gain', value: totalGain !== null ? `${totalGain >= 0 ? '+' : ''}${totalGain.toFixed(1)} kg` : '—' },
+          { label: 'Latest', value: lastW ? `${lastW.toFixed(1)} ${uLabel}` : '—' },
+          { label: 'Total gain', value: totalGain !== null ? `${totalGain >= 0 ? '+' : ''}${totalGain.toFixed(1)} ${uLabel}` : '—' },
           { label: 'Per week', value: avgWeekly !== null ? `${avgWeekly >= 0 ? '+' : ''}${avgWeekly.toFixed(2)}` : '—' },
         ]}
       />
@@ -1591,7 +1606,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
           <MiniLineChart
             data={weights}
             labels={weightLabels}
-            unit="kg"
+            unit={uLabel}
             color={accentColor ?? stickers.lilac}
             height={180}
           />
@@ -1607,19 +1622,19 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
           {diffuse ? (
             (() => {
               const rows = weightByWeek.slice(-8)
-              const min = Math.min(...rows.map((r) => r.weight))
-              const max = Math.max(...rows.map((r) => r.weight))
+              const min = Math.min(...rows.map((r) => toU(r.weight)))
+              const max = Math.max(...rows.map((r) => toU(r.weight)))
               return (
                 <TieredLozenges
                   color={accentColor ?? stickers.green}
                   min={min}
                   max={max}
-                  rows={rows.map((w) => ({ label: `W${w.week}`, value: w.weight, display: `${w.weight.toFixed(1)}kg` } as TierRow))}
+                  rows={rows.map((w) => ({ label: `W${w.week}`, value: toU(w.weight), display: `${toU(w.weight).toFixed(1)}${uLabel}` } as TierRow))}
                 />
               )
             })()
           ) : (
-            <WeightByWeekList rows={weightByWeek.slice(-8)} accent={accentColor ?? stickers.lilac} tint={accentTint ?? stickers.lilacSoft} />
+            <WeightByWeekList rows={weightByWeek.slice(-8)} accent={accentColor ?? stickers.lilac} tint={accentTint ?? stickers.lilacSoft} unit={uLabel} toDisplay={toU} />
           )}
         </PaperCard>
       ) : null}
@@ -3028,11 +3043,13 @@ function StatTilesRow({
 }
 
 function WeightByWeekList({
-  rows, accent, tint,
+  rows, accent, tint, unit = 'kg', toDisplay = (kg: number) => kg,
 }: {
   rows: PregnancyWeightByWeek[]
   accent: string
   tint: string
+  unit?: string
+  toDisplay?: (kg: number) => number
 }) {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
@@ -3093,7 +3110,7 @@ function WeightByWeekList({
                 textAlign: 'right',
               }}
             >
-              {w.weight.toFixed(1)}{' kg'}
+              {toDisplay(w.weight).toFixed(1)}{' ' + unit}
             </Text>
           </View>
         )
@@ -3224,11 +3241,14 @@ function buildTakeaways(args: {
   nutritionMatrix: { iron: boolean[]; folic: boolean[]; protein: boolean[]; calcium: boolean[]; dates: string[] } | null | undefined
   birthReady: BirthReadiness | null | undefined
   trimester: 1 | 2 | 3
+  weightUnit: import('../../store/useUnitsStore').WeightUnit
 }): Record<PillarKey, Takeaway> {
   const {
     weightHistory, kickSessions, sleepHistory, moodTrend, symptomFreq,
     hydrationHistory, exerciseHistory, contractions, wellbeing, nutritionMatrix, birthReady,
+    weightUnit,
   } = args
+  const wLabel = weightLabel(weightUnit)
 
   // Weight
   const weights = weightHistory.map((e) => e.weight).filter((w) => w > 0)
@@ -3283,9 +3303,9 @@ function buildTakeaways(args: {
         }
       : { headline: '—', takeaway: 'Log a few days to see your wellbeing.' },
     weight: {
-      headline: lastW ? `${lastW.toFixed(1)} kg` : '—',
+      headline: lastW ? `${kgToDisplay(lastW, weightUnit).toFixed(1)} ${wLabel}` : '—',
       takeaway: weeklyGain !== null
-        ? `${weeklyGain >= 0 ? '+' : ''}${weeklyGain.toFixed(2)} kg/wk on average`
+        ? `${weeklyGain >= 0 ? '+' : ''}${kgToDisplay(weeklyGain, weightUnit).toFixed(2)} ${wLabel}/wk on average`
         : 'Log weight weekly to track trend.',
       pct: weights.length > 0 ? Math.min(100, weights.length * 10) : 0,
       trend: weeklyGain !== null

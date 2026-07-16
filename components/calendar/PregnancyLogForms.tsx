@@ -37,6 +37,8 @@ import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
+import { useUnitsStore } from '../../store/useUnitsStore'
+import { kgToDisplay, displayToKg, weightLabel } from '../../lib/units'
 import { useTranslation } from '../../lib/i18n'
 import { LogFormSticker } from './LogFormSticker'
 import { logSticker } from './logStickers'
@@ -1750,9 +1752,10 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const s = isDark ? stickersDark : stickersLight
-  // Weight is dialed with a stepper (±0.1 kg) rather than typed — nudge up/down
-  // from a sensible default instead of erasing and retyping the number.
-  const [weight, setWeight] = useState(70)
+  // Weight is stored canonically in kg but dialed in the user's chosen unit.
+  const weightUnit = useUnitsStore((s) => s.weightUnit)
+  // Stepper default 70 kg, shown in the display unit.
+  const [weight, setWeight] = useState(() => Math.round(kgToDisplay(70, weightUnit) * 10) / 10)
   const [saving, setSaving] = useState(false)
   const accent = diffuse ? diffuseLogHue('weight') : (isDark ? stickersDark.peach : stickersLight.peach)
 
@@ -1763,7 +1766,9 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
     }
     setSaving(true)
     try {
-      await savePregnancyLog(date, 'weight', weight.toString(), undefined)
+      // Convert the displayed value back to canonical kg before saving.
+      const kg = displayToKg(weight, weightUnit)
+      await savePregnancyLog(date, 'weight', kg.toFixed(2), undefined)
       onSaved()
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
@@ -1790,11 +1795,11 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
         <NumberStepper
           value={weight}
           onChange={setWeight}
-          step={0.1}
-          min={20}
-          max={250}
+          step={weightUnit === 'lb' ? 0.2 : 0.1}
+          min={weightUnit === 'lb' ? 44 : 20}
+          max={weightUnit === 'lb' ? 550 : 250}
           precision={1}
-          unit={t('preg_form_weight_kgLabel')}
+          unit={weightLabel(weightUnit)}
           color={accent}
         />
       </View>

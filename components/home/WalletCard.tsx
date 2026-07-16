@@ -122,7 +122,25 @@ export function WalletCard({
         accessibilityLabel={title}
         accessibilityState={linkOnly ? undefined : { expanded }}
       >
-        <View style={[styles.chip, { backgroundColor: chipBg }]}>{icon}</View>
+        <View style={styles.chipWrap}>
+          <View style={[styles.chip, { backgroundColor: chipBg }]}>{icon}</View>
+          {/* iOS app-icon-style count badge on the chip's top-right corner. */}
+          {badge && badge > 0 ? (
+            <View
+              style={[
+                styles.chipBadge,
+                { backgroundColor: getModeColor(mode, isDark), borderColor: bg },
+              ]}
+            >
+              <Text
+                style={[styles.chipBadgeText, { color: '#2A2624', fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]}
+                numberOfLines={1}
+              >
+                {badge > 99 ? '99+' : badge}
+              </Text>
+            </View>
+          ) : null}
+        </View>
 
         <Text
           style={[styles.title, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}
@@ -138,20 +156,6 @@ export function WalletCard({
           >
             {trailingValue}
           </Text>
-        ) : null}
-        {badge && badge > 0 ? (
-          <View
-            style={[
-              styles.badge,
-              diffuse
-                ? { backgroundColor: getModeColor(mode, isDark) + '26', borderColor: getModeColor(mode, isDark) + '80', borderWidth: 1 }
-                : { backgroundColor: getModeColor(mode, isDark) },
-            ]}
-          >
-            <Text style={[styles.badgeText, { color: diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313'), fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }]}>
-              {badge}
-            </Text>
-          </View>
         ) : null}
         {hideChevron ? null : linkOnly ? (
           <ArrowUpRight size={20} color={ink} strokeWidth={2.2} style={{ opacity: 0.8 }} />
@@ -179,10 +183,13 @@ const styles = StyleSheet.create({
   },
   title: { flex: 1, minWidth: 0, fontSize: 18, letterSpacing: -0.3 },
   trailing: { fontSize: 14 },
-  badge: {
-    minWidth: 24, height: 24, borderRadius: 12,
-    paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center',
+  chipWrap: { flexShrink: 0 },
+  chipBadge: {
+    position: 'absolute', top: -5, right: -5,
+    minWidth: 20, height: 20, borderRadius: 10,
+    paddingHorizontal: 5, borderWidth: 2,
+    alignItems: 'center', justifyContent: 'center',
   },
-  badgeText: { fontSize: 12, letterSpacing: 0.2 },
+  chipBadgeText: { fontSize: 11, letterSpacing: 0.1, lineHeight: 13 },
   body: { paddingHorizontal: 16, paddingBottom: 18, paddingTop: 2 },
 })

@@ -11,6 +11,7 @@ import {
   View,
   Text,
   SectionList,
+  ScrollView,
   Pressable,
   StyleSheet,
   RefreshControl,
@@ -435,9 +436,15 @@ export default function NotificationsScreen() {
         </View>
       </View>
 
-      {/* Behavior filter pills — only when enrolled in 2+ behaviors */}
+      {/* Behavior filter pills — only when enrolled in 2+ behaviors.
+          Single-line horizontal scroll (never wraps) keeps the header short. */}
       {showBehaviorFilter && (
-        <View style={[styles.filterRow, styles.filterRowBehavior]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+          contentContainerStyle={[styles.filterRow, styles.filterRowBehavior]}
+        >
           {(['all', ...enrolledBehaviors] as BehaviorFilter[]).map((b) => {
             const isActive = activeBehavior === b
             const label = b === 'all' ? 'All' : BEHAVIOR_LABELS[b]
@@ -487,9 +494,9 @@ export default function NotificationsScreen() {
                       ? {
                           color: isActive ? dt.colors.ink : dt.colors.ink3,
                           fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono,
-                          letterSpacing: 1.2,
+                          letterSpacing: 1,
                           textTransform: 'uppercase',
-                          fontSize: 11,
+                          fontSize: 10,
                         }
                       : {
                           color: isActive
@@ -502,32 +509,25 @@ export default function NotificationsScreen() {
                   {label}
                 </Text>
                 {count > 0 && b !== 'all' && (
-                  <View
-                    style={[
-                      styles.filterCount,
-                      diffuse
-                        ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-                        : { backgroundColor: isActive ? colors.text : colors.surfaceRaised },
-                    ]}
-                  >
-                    <Text style={[styles.filterCountText, diffuse
-                      ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
-                      : {
-                          color: isActive ? colors.surface : colors.textSecondary,
-                          fontFamily: font.bodySemiBold,
-                        }]}>
-                      {count}
-                    </Text>
-                  </View>
+                  <Text style={[styles.filterCountText, diffuse
+                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                    : { color: isActive ? colors.text : colors.textMuted, fontFamily: font.bodyMedium }]}>
+                    {count}
+                  </Text>
                 )}
               </Pressable>
             )
           })}
-        </View>
+        </ScrollView>
       )}
 
-      {/* Category filter pills */}
-      <View style={styles.filterRow}>
+      {/* Category filter pills — single-line horizontal scroll */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+        contentContainerStyle={styles.filterRow}
+      >
         {FILTER_TABS.map((tab) => {
           const isActive = activeFilter === tab
           const count = tab === 'All'
@@ -564,9 +564,9 @@ export default function NotificationsScreen() {
                     ? {
                         color: isActive ? dt.colors.ink : dt.colors.ink3,
                         fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono,
-                        letterSpacing: 1.2,
+                        letterSpacing: 1,
                         textTransform: 'uppercase',
-                        fontSize: 11,
+                        fontSize: 10,
                       }
                     : {
                         color: isActive
@@ -579,28 +579,16 @@ export default function NotificationsScreen() {
                 {tab}
               </Text>
               {count > 0 && tab !== 'All' && (
-                <View
-                  style={[
-                    styles.filterCount,
-                    diffuse
-                      ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-                      : { backgroundColor: isActive ? colors.text : colors.surfaceRaised },
-                  ]}
-                >
-                  <Text style={[styles.filterCountText, diffuse
-                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
-                    : {
-                        color: isActive ? colors.surface : colors.textSecondary,
-                        fontFamily: font.bodySemiBold,
-                      }]}>
-                    {count}
-                  </Text>
-                </View>
+                <Text style={[styles.filterCountText, diffuse
+                  ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
+                  : { color: isActive ? colors.text : colors.textMuted, fontFamily: font.bodyMedium }]}>
+                  {count}
+                </Text>
               )}
             </Pressable>
           )
         })}
-      </View>
+      </ScrollView>
 
       {/* Notification list */}
       <SectionList
@@ -631,6 +619,9 @@ export default function NotificationsScreen() {
             : (isDark ? stickerColor + '40' : stickerColor + '70')
 
           if (diffuse) {
+            // Per-concept sticker hue — the Character family's own colors, not a
+            // flat accent wash — matching DiffuseLogIcon / DiffuseTimelineNode.
+            const hue = dt.stickers[cfg.stickerKey]
             return (
               <View style={styles.rowOuter}>
                 <Pressable
@@ -640,15 +631,16 @@ export default function NotificationsScreen() {
                     {
                       backgroundColor: dt.colors.surface,
                       borderColor: item.is_read ? dt.colors.line : dt.colors.line2,
+                      borderWidth: 1,
                       shadowOpacity: 0,
                       elevation: 0,
                     },
                     pressed && { opacity: 0.85 },
                   ]}
                 >
-                  {/* Character blob over a soft bloom (accent-tinted) */}
-                  <DiffuseBloomIcon color={accent} size={42} intensity={0.5}>
-                    <Character name={cfg.character} size={26} color={accent} bg={dt.colors.bg} />
+                  {/* Solid character glyphs sit clean — no bloom behind them. */}
+                  <DiffuseBloomIcon color={hue} size={36} noBloom>
+                    <Character name={cfg.character} size={24} color={hue} bg={dt.colors.surface} />
                   </DiffuseBloomIcon>
                   <View style={styles.rowContent}>
                     <View style={styles.rowTitleRow}>
@@ -674,26 +666,9 @@ export default function NotificationsScreen() {
                         {item.body}
                       </Text>
                     ) : null}
-                    <View style={styles.rowFooter}>
-                      <Text style={[styles.rowTime, {
-                        color: dt.colors.ink3,
-                        fontFamily: diffuseFont.mono,
-                        letterSpacing: 0.8,
-                        textTransform: 'uppercase',
-                      }]}>
-                        {timeAgo(item.created_at)}
-                      </Text>
-                      <Text
-                        style={[styles.categoryChip, {
-                          fontFamily: diffuseFont.mono,
-                          color: dt.colors.ink3,
-                          backgroundColor: 'transparent',
-                          borderColor: dt.colors.line2,
-                        }]}
-                      >
-                        {cfg.category.toUpperCase()}
-                      </Text>
-                    </View>
+                    <Text style={[styles.rowMeta, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                      {timeAgo(item.created_at)} · {cfg.category}
+                    </Text>
                   </View>
                 </Pressable>
               </View>
@@ -721,7 +696,7 @@ export default function NotificationsScreen() {
                     borderColor: stickerColor + (isDark ? '55' : '80'),
                   }]}
                 >
-                  <Character name={cfg.character} size={28} color={stickerColor} bg={cardBg} />
+                  <Character name={cfg.character} size={24} color={stickerColor} bg={cardBg} />
                 </View>
                 <View style={styles.rowContent}>
                   <View style={styles.rowTitleRow}>
@@ -773,8 +748,8 @@ export default function NotificationsScreen() {
           diffuse ? (
             <DiffuseEmptyState
               icon={
-                <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
-                  <Character name="bell" size={30} color={accent} bg={dt.colors.bg} />
+                <DiffuseBloomIcon color={dt.stickers.yellow} size={44} noBloom>
+                  <Character name="bell" size={34} color={dt.stickers.yellow} bg={dt.colors.bg} />
                 </DiffuseBloomIcon>
               }
               title={activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
@@ -861,48 +836,40 @@ const styles = StyleSheet.create({
   markAllText: { fontSize: 13 },
   markAllPlaceholder: { width: 0, height: 0 },
 
-  // Filter pills
+  // Filter pills — slim single-line scroll rows
+  filterScroll: { flexGrow: 0, flexShrink: 0 },
   filterRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.sm - 2,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 4,
+    paddingVertical: spacing.sm - 2,
   },
   filterRowBehavior: {
-    paddingBottom: spacing.xs,
+    paddingBottom: 0,
   },
   behaviorDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     borderWidth: 1,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
+    gap: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+    borderWidth: 1,
     borderRadius: radius.full,
   },
-  filterChipText: { fontSize: 13 },
-  filterCount: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterCountText: { fontSize: 11 },
+  filterChipText: { fontSize: 12 },
+  filterCountText: { fontSize: 10 },
 
   // Section headers
   sectionHeader: {
     paddingHorizontal: spacing.md + 4,
-    paddingTop: spacing.md - 2,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.sm + 2,
+    paddingBottom: spacing.sm - 2,
   },
   sectionHeaderText: {
     fontSize: 11,
@@ -913,13 +880,13 @@ const styles = StyleSheet.create({
   // Notification rows
   rowOuter: {
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.sm - 2,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: spacing.sm + 4,
-    padding: spacing.md - 2,
+    gap: spacing.sm + 2,
+    padding: spacing.sm + 4,
     borderRadius: radius.md + 2,
     borderWidth: 1.5,
     shadowColor: '#141313',
@@ -927,32 +894,39 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   stickerBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rowContent: { flex: 1 },
   rowTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  rowTitle: { fontSize: 15, flex: 1, lineHeight: 20, letterSpacing: -0.2 },
+  rowTitle: { fontSize: 14, flex: 1, lineHeight: 19, letterSpacing: -0.2 },
   unreadDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     borderWidth: 1,
-    marginTop: 6,
+    marginTop: 5,
   },
-  rowBody: { fontSize: 14, marginTop: 4, lineHeight: 20 },
+  rowBody: { fontSize: 13, marginTop: 3, lineHeight: 18 },
   rowFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.sm + 2,
+    marginTop: spacing.sm - 2,
     gap: spacing.sm,
   },
   rowTime: { fontSize: 12 },
+  // Diffuse: single merged meta line — "13H AGO · ROUTINES"
+  rowMeta: {
+    fontSize: 10,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginTop: spacing.sm - 2,
+  },
   categoryChip: {
     fontSize: 10,
     letterSpacing: 1.4,

@@ -6,9 +6,9 @@
  */
 
 import { useState, useEffect } from 'react'
-import { View, ScrollView, Switch, StyleSheet } from 'react-native'
+import { View, ScrollView, Switch, StyleSheet, Pressable, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import {
   Sun as SunLine,
   Sparkles as SparklesLine,
@@ -26,29 +26,53 @@ import { Sun, Sparkle, Star, Moon, Heart, Flower, Leaf } from '../../components/
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
-
-const STORAGE_KEY = 'grandma:notification_prefs:v1'
+import {
+  getNotificationPrefs,
+  saveNotificationPrefs,
+  DEFAULT_NOTIFICATION_PREFS,
+  type NotificationPrefs,
+} from '../../lib/pushNotifications'
 
 type StickerName = 'sun' | 'sparkle' | 'star' | 'moon' | 'heart' | 'flower' | 'leaf'
 
+// The toggle IDs are keys of NotificationPrefs (minus daily_reminder_time,
+// which is edited via the inline time picker under the Daily Log Reminder row).
+type ToggleId = Exclude<keyof NotificationPrefs, 'daily_reminder_time'>
+
 interface NotifToggle {
-  id: string
+  id: ToggleId
   label: string
   description: string
-  default: boolean
   group: 'daily' | 'health' | 'community'
   sticker: StickerName
 }
 
 const NOTIFICATION_SETTINGS: NotifToggle[] = [
-  { id: 'daily_reminder', label: 'Daily Log Reminder', description: 'Remind me to log each day', default: true, group: 'daily', sticker: 'sun' },
-  { id: 'insights', label: 'New Insights', description: 'When Grandma generates new insights', default: true, group: 'daily', sticker: 'sparkle' },
-  { id: 'weekly_summary', label: 'Weekly Summary', description: 'Weekly digest of activity and insights', default: false, group: 'daily', sticker: 'leaf' },
-  { id: 'appointments', label: 'Appointment Reminders', description: 'Before scheduled appointments', default: true, group: 'health', sticker: 'star' },
-  { id: 'cycle_predictions', label: 'Cycle Predictions', description: 'Period and fertile window alerts', default: true, group: 'health', sticker: 'moon' },
-  { id: 'milestones', label: 'Milestone Alerts', description: 'Upcoming developmental milestones', default: false, group: 'health', sticker: 'flower' },
-  { id: 'care_circle', label: 'Care Circle Updates', description: 'When caregivers log activities', default: true, group: 'community', sticker: 'heart' },
+  { id: 'daily_reminder', label: 'Daily Log Reminder', description: 'Remind me to log each day', group: 'daily', sticker: 'sun' },
+  { id: 'insights', label: 'New Insights', description: 'When Grandma generates new insights', group: 'daily', sticker: 'sparkle' },
+  { id: 'weekly_summary', label: 'Weekly Summary', description: 'Weekly digest of activity and insights', group: 'daily', sticker: 'leaf' },
+  { id: 'appointments', label: 'Appointment Reminders', description: 'Before scheduled appointments', group: 'health', sticker: 'star' },
+  { id: 'cycle_predictions', label: 'Cycle Predictions', description: 'Period and fertile window alerts', group: 'health', sticker: 'moon' },
+  { id: 'milestones', label: 'Milestone Alerts', description: 'Upcoming developmental milestones', group: 'health', sticker: 'flower' },
+  { id: 'care_circle', label: 'Care Circle Updates', description: 'When caregivers log activities', group: 'community', sticker: 'heart' },
 ]
+
+// "HH:MM" ↔ Date helpers for the daily-reminder time picker.
+function timeToDate(hhmm: string): Date {
+  const [h, m] = (hhmm || '20:00').split(':').map((n) => parseInt(n, 10))
+  const d = new Date()
+  d.setHours(Number.isFinite(h) ? h : 20, Number.isFinite(m) ? m : 0, 0, 0)
+  return d
+}
+function dateToTime(d: Date): string {
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
+  return `${h}:${m}`
+}
+function formatTime(hhmm: string): string {
+  const d = timeToDate(hhmm)
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
 
 const GROUPS: { id: NotifToggle['group']; label: string }[] = [
   { id: 'daily', label: 'Daily' },
@@ -111,42 +135,34 @@ export default function NotificationsScreen() {
   const mode = useModeStore((s) => s.mode)
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
 
-  const [toggles, setToggles] = useState<Record<string, boolean>>(
-    Object.fromEntries(NOTIFICATION_SETTINGS.map((n) => [n.id, n.default]))
-  )
+  // Prefs live in profiles.notification_prefs (server-readable so the command
+  // center + local scheduling both honor them). saveNotificationPrefs persists
+  // AND re-syncs on-device schedules.
+  const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS)
   const [hydrated, setHydrated] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState(false)
 
-  // Load persisted toggles on mount.
   useEffect(() => {
     let alive = true
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((raw) => {
-        if (!alive) return
-        if (raw) {
-          try {
-            const stored = JSON.parse(raw) as Record<string, boolean>
-            setToggles((prev) => ({ ...prev, ...stored }))
-          } catch {
-            // ignore parse errors — fall back to defaults
-          }
-        }
-        setHydrated(true)
-      })
-      .catch(() => setHydrated(true))
-    return () => {
-      alive = false
-    }
+    getNotificationPrefs()
+      .then((p) => { if (alive) { setPrefs(p); setHydrated(true) } })
+      .catch(() => { if (alive) setHydrated(true) })
+    return () => { alive = false }
   }, [])
 
-  // Persist whenever toggles change (only after first hydration so we don't
-  // overwrite stored prefs with defaults on mount).
-  useEffect(() => {
-    if (!hydrated) return
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toggles)).catch(() => {})
-  }, [toggles, hydrated])
+  // Apply a change optimistically, then persist (+ reschedule) in the background.
+  function apply(next: NotificationPrefs) {
+    setPrefs(next)
+    saveNotificationPrefs(next).catch(() => {})
+  }
 
-  function handleToggle(id: string) {
-    setToggles((prev) => ({ ...prev, [id]: !prev[id] }))
+  function handleToggle(id: ToggleId) {
+    apply({ ...prefs, [id]: !prefs[id] })
+  }
+
+  function handleTimeChange(_e: DateTimePickerEvent, date?: Date) {
+    if (Platform.OS !== 'ios') setShowTimePicker(false)
+    if (date) apply({ ...prefs, daily_reminder_time: dateToTime(date) })
   }
 
   return (
@@ -205,7 +221,7 @@ export default function NotificationsScreen() {
                         </Body>
                       </View>
                       <Switch
-                        value={toggles[notif.id]}
+                        value={prefs[notif.id]}
                         onValueChange={() => handleToggle(notif.id)}
                         trackColor={{ false: diffuse ? dt.colors.line2 : colors.borderStrong, true: accent }}
                         thumbColor={diffuse ? dt.colors.surface : colors.surface}
@@ -213,6 +229,42 @@ export default function NotificationsScreen() {
                         accessibilityLabel={notif.label}
                       />
                     </View>
+
+                    {/* Inline time picker for the daily log reminder */}
+                    {notif.id === 'daily_reminder' && prefs.daily_reminder && (
+                      <View style={styles.timeRow}>
+                        <Pressable
+                          onPress={() => setShowTimePicker((s) => !s)}
+                          style={[
+                            styles.timePill,
+                            {
+                              backgroundColor: diffuse ? 'transparent' : colors.surfaceRaised,
+                              borderColor: diffuse ? dt.colors.line2 : colors.border,
+                            },
+                          ]}
+                          accessibilityLabel="Set daily reminder time"
+                        >
+                          <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }}>
+                            {'Remind me at '}
+                          </Body>
+                          <Body size={14} color={diffuse ? dt.colors.ink : colors.text} style={{ fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }}>
+                            {formatTime(prefs.daily_reminder_time)}
+                          </Body>
+                        </Pressable>
+                        {showTimePicker && (
+                          <DateTimePicker
+                            value={timeToDate(prefs.daily_reminder_time)}
+                            mode="time"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            themeVariant={(diffuse ? dt.isDark : isDark) ? 'dark' : 'light'}
+                            accentColor={accent}
+                            style={{ height: 140 }}
+                            onChange={handleTimeChange}
+                          />
+                        )}
+                      </View>
+                    )}
+
                     {i < items.length - 1 && (
                       <View style={[styles.divider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
                     )}
@@ -257,4 +309,14 @@ const styles = StyleSheet.create({
   },
   rowText: { flex: 1, gap: 2 },
   divider: { height: 1, marginHorizontal: 20 },
+  timeRow: { paddingHorizontal: 18, paddingBottom: 14, paddingLeft: 68 },
+  timePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
 })

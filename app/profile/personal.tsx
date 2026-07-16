@@ -15,8 +15,6 @@ import {
   ScrollView,
   Alert,
   StyleSheet,
-  FlatList,
-  Modal,
   KeyboardAvoidingView,
   Platform,
   Image,
@@ -43,38 +41,6 @@ import { useSavedToast } from '../../components/ui/SavedToast'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 
 // ─── Constants ────────────────────────────────────────────────────────────
-
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'es', label: 'Español' },
-  { code: 'pt', label: 'Português' },
-  { code: 'fr', label: 'Français' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'it', label: 'Italiano' },
-  { code: 'nl', label: 'Nederlands' },
-  { code: 'ja', label: '日本語' },
-  { code: 'ko', label: '한국어' },
-  { code: 'zh', label: '中文' },
-  { code: 'ar', label: 'العربية' },
-  { code: 'hi', label: 'हिन्दी' },
-  { code: 'ru', label: 'Русский' },
-  { code: 'tr', label: 'Türkçe' },
-  { code: 'pl', label: 'Polski' },
-  { code: 'sv', label: 'Svenska' },
-  { code: 'da', label: 'Dansk' },
-  { code: 'no', label: 'Norsk' },
-  { code: 'fi', label: 'Suomi' },
-  { code: 'th', label: 'ไทย' },
-  { code: 'vi', label: 'Tiếng Việt' },
-  { code: 'id', label: 'Bahasa Indonesia' },
-  { code: 'ms', label: 'Bahasa Melayu' },
-  { code: 'he', label: 'עברית' },
-  { code: 'uk', label: 'Українська' },
-  { code: 'ro', label: 'Română' },
-  { code: 'cs', label: 'Čeština' },
-  { code: 'el', label: 'Ελληνικά' },
-  { code: 'hu', label: 'Magyar' },
-]
 
 const COMMON_ALLERGIES = [
   'Peanuts', 'Tree nuts', 'Milk', 'Eggs', 'Wheat', 'Soy', 'Fish',
@@ -240,7 +206,6 @@ export default function PersonalProfile() {
   const [name, setName] = useState('')
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [location, setLocation] = useState('')
-  const [language, setLanguage] = useState('en')
   const [healthNotes, setHealthNotes] = useState('')
   const [allergies, setAllergies] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
@@ -255,7 +220,7 @@ export default function PersonalProfile() {
 
     const { data } = await supabase
       .from('profiles')
-      .select('name, photo_url, location, language, health_notes, allergies')
+      .select('name, photo_url, location, health_notes, allergies')
       .eq('id', session.user.id)
       .single()
 
@@ -263,7 +228,6 @@ export default function PersonalProfile() {
       setName(data.name ?? '')
       setPhotoUrl(data.photo_url ?? null)
       setLocation(data.location ?? '')
-      setLanguage(data.language ?? 'en')
       setHealthNotes(data.health_notes ?? '')
       setAllergies(data.allergies ?? [])
     }
@@ -315,7 +279,6 @@ export default function PersonalProfile() {
         name: name || null,
         photo_url: photoUrl,
         location: location || null,
-        language,
         health_notes: healthNotes || null,
         allergies,
       }, { onConflict: 'id' })
@@ -395,8 +358,7 @@ export default function PersonalProfile() {
           {/* Location */}
           <LocationField value={location} onChange={setLocation} />
 
-          {/* Language */}
-          <LanguageField value={language} onChange={setLanguage} />
+          {/* Language is set in Settings (single source of truth: useLanguageStore) */}
 
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
@@ -611,142 +573,6 @@ function LocationField({
           ))}
         </View>
       )}
-    </View>
-  )
-}
-
-// ─── Language picker (modal) ──────────────────────────────────────────────
-
-function LanguageField({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (v: string) => void
-}) {
-  const { colors, font, isDark } = useTheme()
-  const diffuse = useIsDiffuse()
-  const dt = useDiffuseTheme()
-  const { t } = useTranslation()
-  const paper = diffuse ? dt.colors.surface : colors.surface
-  const border = diffuse ? dt.colors.line : colors.border
-  const insets = useSafeAreaInsets()
-
-  const [modalVisible, setModalVisible] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const current = LANGUAGES.find((l) => l.code === value)
-  const filtered = searchQuery
-    ? LANGUAGES.filter(
-        (l) =>
-          l.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          l.code.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : LANGUAGES
-
-  return (
-    <View style={styles.field}>
-      <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('personal_fieldLanguage')}</MonoCaps>
-      <Pressable
-        onPress={() => setModalVisible(true)}
-        style={[
-          styles.inputRow,
-          { backgroundColor: paper, borderColor: border },
-        ]}
-      >
-        <Ionicons name="globe-outline" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
-        <Body
-          size={15}
-          color={diffuse ? dt.colors.ink : colors.text}
-          style={{ flex: 1, fontFamily: diffuse ? diffuseFont.body : font.body }}
-        >
-          {current ? `${current.label} (${current.code})` : value}
-        </Body>
-        <Ionicons name="chevron-down" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
-      </Pressable>
-
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={[styles.modalRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
-            <Display size={20} color={diffuse ? dt.colors.ink : colors.text}>
-              {t('personal_languageModalTitle')}
-            </Display>
-            <Pressable
-              onPress={() => {
-                setModalVisible(false)
-                setSearchQuery('')
-              }}
-            >
-              <Ionicons name="close" size={24} color={diffuse ? dt.colors.ink : colors.text} />
-            </Pressable>
-          </View>
-
-          <View
-            style={[
-              styles.searchBar,
-              { backgroundColor: paper, borderColor: border },
-            ]}
-          >
-            <Ionicons name="search" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder={t('personal_languageSearchPlaceholder')}
-              placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
-              style={[
-                styles.inputInner,
-                { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body },
-              ]}
-              autoFocus
-            />
-          </View>
-
-          <FlatList
-            data={filtered}
-            keyExtractor={(item) => item.code}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
-            renderItem={({ item }) => {
-              const isSelected = item.code === value
-              return (
-                <Pressable
-                  onPress={() => {
-                    onChange(item.code)
-                    setModalVisible(false)
-                    setSearchQuery('')
-                  }}
-                  style={({ pressed }) => [
-                    styles.langRow,
-                    { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight },
-                    isSelected && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised },
-                    pressed && { opacity: 0.7 },
-                  ]}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Body size={16} color={diffuse ? dt.colors.ink : colors.text} style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }}>
-                      {item.label}
-                    </Body>
-                    <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
-                      {item.code}
-                    </Body>
-                  </View>
-                  {isSelected && (
-                    <Ionicons
-                      name="checkmark"
-                      size={20}
-                      color={diffuse ? dt.colors.ink : colors.text}
-                    />
-                  )}
-                </Pressable>
-              )
-            }}
-          />
-        </View>
-      </Modal>
     </View>
   )
 }

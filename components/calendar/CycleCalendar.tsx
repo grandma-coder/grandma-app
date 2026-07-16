@@ -13,7 +13,7 @@ import { X, Check, Circle as CircleIcon } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
-import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CyclePhase, type CycleConfig } from '../../lib/cycleLogic'
 import { useCycleHistory, useCycleChecklist, useToggleChecklistItem } from '../../lib/cycleAnalytics'
 import { useExams } from '../../lib/examData'
@@ -137,6 +137,7 @@ export function CycleCalendar() {
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  const bottomInset = useScrollBottomInset(insets.bottom + 40)
   // Ink/muted resolved per variant so shared Display/Body typography matches.
   const dInk = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
   const dMuted = diffuse ? dt.colors.ink3 : (isDark ? colors.textMuted : '#6E6763')
@@ -184,7 +185,7 @@ export function CycleCalendar() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 },
+          { paddingTop: insets.top + 12, paddingBottom: bottomInset },
         ]}
         showsVerticalScrollIndicator={false}
       >

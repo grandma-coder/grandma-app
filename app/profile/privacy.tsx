@@ -18,6 +18,8 @@ import {
   Leaf as LeafLine,
   Eye as EyeLine,
 } from 'lucide-react-native'
+import * as FileSystem from 'expo-file-system/legacy'
+import * as Sharing from 'expo-sharing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
@@ -39,6 +41,7 @@ interface PrivacySettings {
   share_photos: boolean
   ai_data_usage: boolean
   analytics: boolean
+  marketing: boolean
 }
 
 const DEFAULT_SETTINGS: PrivacySettings = {
@@ -47,6 +50,7 @@ const DEFAULT_SETTINGS: PrivacySettings = {
   share_photos: true,
   ai_data_usage: true,
   analytics: true,
+  marketing: false,
 }
 
 export default function PrivacyScreen() {
@@ -93,62 +97,65 @@ export default function PrivacyScreen() {
   }
 
   async function updateSetting(key: keyof PrivacySettings, value: boolean) {
+    const previous = settings
     const updated = { ...settings, [key]: value }
-    setSettings(updated)
+    setSettings(updated) // optimistic
 
-    // Persist to DB
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
-    try {
-      await supabase.from('profiles').update({
-        // Store as a JSON column — if the column doesn't exist, this silently fails
-        // In production, create a privacy_settings jsonb column
-      } as any).eq('id', session.user.id)
-    } catch { /* silently fail if column doesn't exist */ }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ privacy_settings: updated })
+      .eq('id', session.user.id)
+
+    if (error) {
+      // Roll back the optimistic toggle and let the user know it didn't stick.
+      setSettings(previous)
+      Alert.alert(t('common_error') ?? 'Error', error.message)
+    }
   }
 
   // ─── Data Actions ───────────────────────────────────────────────
 
-  async function handleExportData() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+  const [exporting, setExporting] = useState(false)
 
+  async function handleExportData() {
     Alert.alert(
       t('privacy_exportTitle'),
       t('privacy_exportMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel') ?? 'Cancel', style: 'cancel' },
         {
           text: t('privacy_exportNow'),
           onPress: async () => {
+            setExporting(true)
             try {
-              // Gather data summary
-              const childIds = children.map((c) => c.id)
-              const { count: logCount } = await supabase.from('child_logs').select('id', { count: 'exact', head: true }).in('child_id', childIds.length > 0 ? childIds : ['none'])
-              const { count: chatCount } = await supabase.from('chat_messages').select('id', { count: 'exact', head: true }).in('child_id', childIds.length > 0 ? childIds : ['none'])
+              // Server-side gather of the full data bundle (bypasses RLS/joins).
+              const { data, error } = await supabase.functions.invoke('export-user-data')
+              if (error) throw error
 
-              const summary = [
-                `grandma.app Data Export`,
-                `Date: ${new Date().toLocaleDateString()}`,
-                `Email: ${session.user.email}`,
-                ``,
-                `Children: ${children.length}`,
-                ...children.map((c) => `  - ${c.name} (born ${c.birthDate || 'N/A'})`),
-                ``,
-                `Activity Logs: ${logCount ?? 0}`,
-                `Chat Messages: ${chatCount ?? 0}`,
-                ``,
-                `Allergies:`,
-                ...children.map((c) => `  ${c.name}: ${c.allergies.length > 0 ? c.allergies.join(', ') : 'None'}`),
-                ``,
-                `Medications:`,
-                ...children.map((c) => `  ${c.name}: ${c.medications.length > 0 ? c.medications.join(', ') : 'None'}`),
-              ].join('\n')
+              // Write a real .json file, then share it as a document.
+              const json = JSON.stringify(data, null, 2)
+              const fileUri = `${FileSystem.cacheDirectory}grandma-data-export.json`
+              await FileSystem.writeAsStringAsync(fileUri, json, {
+                encoding: FileSystem.EncodingType.UTF8,
+              })
 
-              await import('react-native').then(({ Share }) =>
-                Share.share({ message: summary, title: 'grandma.app Data Export' })
-              )
-            } catch (e: any) { Alert.alert('Error', e.message) }
+              if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(fileUri, {
+                  mimeType: 'application/json',
+                  dialogTitle: t('privacy_exportTitle'),
+                  UTI: 'public.json',
+                })
+              } else {
+                Alert.alert(t('privacy_exportTitle'), t('privacy_exportSavedMsg'))
+              }
+            } catch (e: any) {
+              Alert.alert(t('common_error'), e.message ?? t('privacy_exportFailedMsg'))
+            } finally {
+              setExporting(false)
+            }
           },
         },
       ]
@@ -319,6 +326,9 @@ export default function PrivacyScreen() {
           <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ToggleRow stickerKind="star" label={t('privacy_toggleAnalytics')} desc={t('privacy_toggleAnalyticsDesc')}
             value={settings.analytics} onToggle={(v) => updateSetting('analytics', v)} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+          <ToggleRow stickerKind="heart" label={t('privacy_toggleMarketing')} desc={t('privacy_toggleMarketingDesc')}
+            value={settings.marketing} onToggle={(v) => updateSetting('marketing', v)} />
         </View>
 
         {/* Your Data */}
@@ -326,7 +336,7 @@ export default function PrivacyScreen() {
           <MonoCaps color={sectionLabelColor} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionYourData')}</MonoCaps>
         </View>
         <View style={[styles.card, diffuse && styles.cardFlat, cardStyle]}>
-          <ActionRow stickerKind="leaf" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} />
+          <ActionRow stickerKind="leaf" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} loading={exporting} />
           <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ActionRow stickerKind="crossCoral" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} danger />
           <View style={[styles.divider, { backgroundColor: dividerColor }]} />

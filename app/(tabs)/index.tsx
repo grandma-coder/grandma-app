@@ -12,7 +12,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { useCaregiverStore } from '../../store/useCaregiverStore'
 import { useTheme, useDiffuseTheme, stickers } from '../../constants/theme'
-import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset } from '../../components/ui/diffuse/DiffuseKit'
 import { CycleHome } from '../../components/home/CycleHome'
 import { PregnancyHome } from '../../components/home/PregnancyHome'
 import { KidsHome } from '../../components/home/KidsHome'
@@ -31,6 +31,7 @@ export default function Home() {
   const { colors } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const bottomInset = useScrollBottomInset()
   const { t } = useTranslation()
 
   // Under Diffuse the page canvas is the diffuse paper (matches the nav theme +
@@ -72,7 +73,7 @@ export default function Home() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 },
+          { paddingTop: insets.top + 16, paddingBottom: bottomInset },
         ]}
         showsVerticalScrollIndicator={false}
       >

@@ -14,6 +14,7 @@ import { Moon, Sun, Thermometer, Scale, Trash2, Globe, Check, ChevronRight, X, L
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useThemeStore } from '../../store/useThemeStore'
+import { useUnitsStore } from '../../store/useUnitsStore'
 import { useLanguageStore, SUPPORTED_LANGUAGES, type LanguageOption } from '../../store/useLanguageStore'
 import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -43,11 +44,18 @@ export default function SettingsScreen() {
   const off = diffuse ? dt.colors.line2 : colors.borderStrong
   const shadowInk = isDark ? CREAM : INK
 
-  const [tempUnit, setTempUnit] = useState<'celsius' | 'fahrenheit'>('celsius')
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
+  // Persisted unit preferences (B4). Store uses 'c'/'f' and 'kg'/'lb'; the
+  // UnitSwitch UI uses 'celsius'/'fahrenheit' and 'kg'/'lbs', mapped inline.
+  const tempUnitStore = useUnitsStore((s) => s.tempUnit)
+  const setTempUnitStore = useUnitsStore((s) => s.setTempUnit)
+  const weightUnitStore = useUnitsStore((s) => s.weightUnit)
+  const setWeightUnitStore = useUnitsStore((s) => s.setWeightUnit)
+  const tempUnit = tempUnitStore === 'f' ? 'fahrenheit' : 'celsius'
+  const weightUnit = weightUnitStore === 'lb' ? 'lbs' : 'kg'
   const [langModalVisible, setLangModalVisible] = useState(false)
   const [signOutModalVisible, setSignOutModalVisible] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   async function handleSignOut(global: boolean) {
     setSigningOut(true)
@@ -82,7 +90,16 @@ export default function SettingsScreen() {
           text: t('common_delete'),
           style: 'destructive',
           onPress: async () => {
-            Alert.alert(t('settings_deleteAccount'), t('settings_deleteContact'))
+            setDeleting(true)
+            try {
+              const { error } = await supabase.functions.invoke('delete-account')
+              if (error) throw error
+              // Account is gone — clear the local session and return to auth.
+              await signOut('global')
+            } catch (e: any) {
+              setDeleting(false)
+              Alert.alert(t('common_error'), e.message ?? t('settings_deleteFailedMsg'))
+            }
           },
         },
       ]
@@ -239,7 +256,7 @@ export default function SettingsScreen() {
               )}
               <Text style={[styles.rowLabel, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{t('settings_temperature')}</Text>
             </View>
-            <UnitSwitch options={['celsius', 'fahrenheit']} labels={['°C', '°F']} value={tempUnit} onChange={(v) => setTempUnit(v as any)} />
+            <UnitSwitch options={['celsius', 'fahrenheit']} labels={['°C', '°F']} value={tempUnit} onChange={(v) => setTempUnitStore(v === 'fahrenheit' ? 'f' : 'c')} />
           </View>
           <View style={styles.row}>
             <View style={styles.rowLeft}>
@@ -254,7 +271,7 @@ export default function SettingsScreen() {
               )}
               <Text style={[styles.rowLabel, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{t('settings_weight')}</Text>
             </View>
-            <UnitSwitch options={['kg', 'lbs']} labels={['kg', 'lbs']} value={weightUnit} onChange={(v) => setWeightUnit(v as any)} />
+            <UnitSwitch options={['kg', 'lbs']} labels={['kg', 'lbs']} value={weightUnit} onChange={(v) => setWeightUnitStore(v === 'lbs' ? 'lb' : 'kg')} />
           </View>
         </View>
 

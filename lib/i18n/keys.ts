@@ -162,6 +162,7 @@ export interface TranslationKeys {
   settings_deleteAccount: string
   settings_deleteConfirm: string
   settings_deleteContact: string
+  settings_deleteFailedMsg: string
   settings_signOutTitle: string
   settings_signOutEverywhereHint: string
 
@@ -1771,6 +1772,41 @@ export interface TranslationKeys {
   cycleDetail_titlePMS: string
   cycleDetail_titleFertile: string
   cycleDetail_titleMood: string
+  cycleAnalytics_lengthSub: string
+  cycleAnalytics_lengthTrendTitle: string
+  cycleAnalytics_avgDaysShort: string
+  cycleAnalytics_bbtSub_shift: string
+  cycleAnalytics_bbtSub_tracking: string
+  cycleAnalytics_bbtSub_log: string
+  cycleAnalytics_mucusSub_fertileDays: string
+  cycleAnalytics_mucusSub_tracking: string
+  cycleAnalytics_mucusSub_log: string
+  cycleAnalytics_intercourseSub_inWindow: string
+  cycleAnalytics_intercourseSub_log: string
+  cycleDetail_titleBBT: string
+  cycleDetail_titleMucus: string
+  cycleDetail_titleIntercourse: string
+  cycleDetail_bbtEmpty: string
+  cycleDetail_bbtLatest: string
+  cycleDetail_bbtShift: string
+  cycleDetail_bbtCoverline: string
+  cycleDetail_bbtReadings: string
+  cycleDetail_bbtThisCycle: string
+  cycleDetail_bbtShiftHint: string
+  cycleDetail_bbtNoShiftHint: string
+  cycleDetail_mucusEmpty: string
+  cycleDetail_mucusFertileDays: string
+  cycleDetail_mucusPeak: string
+  cycleDetail_mucusThisCycle: string
+  cycleDetail_intercourseEmpty: string
+  cycleDetail_intercourseThisCycle: string
+  cycleDetail_intercourseFertile: string
+  cycleDetail_intercourseInWindowHint: string
+  cycleDetail_intercourseNoWindowHint: string
+  cycleDetail_recent: string
+  cycleDetail_intercourseFertileTag: string
+  cycleDetail_intercourseProtected: string
+  cycleDetail_intercourseUnprotected: string
   cycleDetail_statMin: string
   cycleDetail_statMax: string
   cycleDetail_statCycles: string
@@ -1968,6 +2004,13 @@ export interface TranslationKeys {
   onboardingTransition_cta: string
   onboardingTransition_skip: string
 
+  // Onboarding — About You (name + DOB)
+  aboutYou_question: string
+  aboutYou_questionItalic: string
+  aboutYou_namePlaceholder: string
+  aboutYou_dobLabel: string
+  aboutYou_dobPlaceholder: string
+
   // Paywall — tier copy
   paywall_tierSolo: string
   paywall_tierSoloSeats: string
@@ -2054,6 +2097,7 @@ export interface TranslationKeys {
   account_deleteConfirmBtn: string
   account_contactSupport: string
   account_contactSupportMsg: string
+  account_deleteFailedMsg: string
 
   // ─── B6: Profile — Personal ───────────────────────────────────────────────
   personal_headerTitle: string
@@ -2171,6 +2215,8 @@ export interface TranslationKeys {
   privacy_toggleAIDesc: string
   privacy_toggleAnalytics: string
   privacy_toggleAnalyticsDesc: string
+  privacy_toggleMarketing: string
+  privacy_toggleMarketingDesc: string
   privacy_exportData: string
   privacy_exportDataDesc: string
   privacy_clearLogs: string
@@ -2189,6 +2235,8 @@ export interface TranslationKeys {
   privacy_exportTitle: string
   privacy_exportMsg: string
   privacy_exportNow: string
+  privacy_exportSavedMsg: string
+  privacy_exportFailedMsg: string
   privacy_clearLogsTitle: string
   privacy_clearChatTitle: string
   privacy_clearMemoriesTitle: string

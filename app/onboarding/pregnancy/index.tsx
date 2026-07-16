@@ -201,13 +201,15 @@ export default function PregnancyOnboarding() {
 
     const userId = session.user.id
     const parentName = useJourneyStore.getState().parentName ?? null
+    const parentDob = useJourneyStore.getState().parentDob ?? null
 
-    // ── 1. Profile: journey mode + parent name + optional health notes. ──
+    // ── 1. Profile: journey mode + parent name/dob + optional health notes. ──
     const profilePayload: Record<string, unknown> = {
       id: userId,
       journey_mode: 'pregnancy',
     }
     if (parentName) profilePayload.name = parentName
+    if (parentDob) profilePayload.dob = parentDob
     if (store.conditionsText) profilePayload.health_notes = store.conditionsText
     if (store.dueDate) profilePayload.due_date = store.dueDate
     const { error: profileErr } = await supabase

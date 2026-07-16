@@ -13,6 +13,7 @@ import { ReactNode, useEffect, useMemo, useRef } from 'react'
 import { View, Text, StyleSheet, ViewStyle, StyleProp, TextStyle, TextProps, Platform, Animated, Easing } from 'react-native'
 import Svg, { Defs, Filter, FeTurbulence, Rect, RadialGradient, Stop, Circle, Ellipse, ClipPath, G } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useThemeStore } from '../../../store/useThemeStore'
 import {
   useDiffuseTheme,
@@ -27,6 +28,39 @@ import {
 // unchanged.
 export function useIsDiffuse(): boolean {
   return useThemeStore((s) => s.variant) === 'diffuse'
+}
+
+// ─── Floating-nav clearance ─────────────────────────────────────────────────
+// The Diffuse tab bar is a FLOATING pill. React Navigation ALREADY reserves the
+// full tab-bar height for the scene, so a scroll surface's bottom edge already
+// sits at the top of the tab-bar wrap (pill + its paddings + safe area). That
+// means a screen must NOT re-add the pill height or safe-area inset — doing so
+// double-counts and leaves a huge gap (the bug this fixes: screens were guessing
+// insets.bottom + 32 … + 120, all of which stacked on top of the already-
+// reserved bar height).
+//
+// So the only value a Diffuse scroll surface needs is the small breathing gap
+// between its last element and the pill's top edge. This is the single source of
+// truth for that gap. "Snug" = a tight, standard floating-tab feel (~20pt).
+export const DIFFUSE_NAV_CONTENT_GAP = 20 // "snug" — space between last content + pill top
+
+/**
+ * Bottom padding a scroll container should reserve so its last element clears
+ * the floating nav pill by a consistent, standard gap.
+ *
+ * - Diffuse: just the snug content gap. The tab-bar height is already reserved
+ *   by the navigator, so this is the ONLY padding needed — and it's identical on
+ *   every screen (the whole point of centralizing it).
+ * - Current variant: the strip nav has different geometry, so callers keep their
+ *   prior per-screen behavior via the `currentPadding` arg.
+ *
+ * @param currentPadding value to use when NOT in Diffuse (defaults to a sane 40)
+ */
+export function useScrollBottomInset(currentPadding?: number): number {
+  const insets = useSafeAreaInsets()
+  const diffuse = useIsDiffuse()
+  if (diffuse) return DIFFUSE_NAV_CONTENT_GAP
+  return currentPadding ?? insets.bottom + 40
 }
 
 // ─── Grain overlay ─────────────────────────────────────────────────────────

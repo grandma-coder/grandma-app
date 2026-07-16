@@ -12,7 +12,7 @@ import { useMemo } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme } from '../../constants/theme'
-import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -38,6 +38,7 @@ export function CycleHome() {
   const dt = useDiffuseTheme()
   const bg = diffuse ? dt.colors.bg : colors.bg
   const insets = useSafeAreaInsets()
+  const bottomInset = useScrollBottomInset(insets.bottom + 120)
   const { t } = useTranslation()
   const parentName = useJourneyStore((s) => s.parentName)
   const { data: profile } = useProfile()
@@ -69,7 +70,7 @@ export function CycleHome() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 120 },
+          { paddingTop: insets.top + 12, paddingBottom: bottomInset },
         ]}
         showsVerticalScrollIndicator={false}
       >

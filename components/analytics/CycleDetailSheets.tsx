@@ -10,10 +10,12 @@ import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { LogSheet } from '../calendar/LogSheet'
 import { Body, Display } from '../ui/Typography'
-import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, type MoodId } from '../../lib/cycleAnalytics'
+import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, useBBTStats, useCervicalMucusStats, useIntercourseStats, type MoodId, type MucusType } from '../../lib/cycleAnalytics'
+import { useUnitsStore } from '../../store/useUnitsStore'
+import { cToDisplay, tempLabel } from '../../lib/units'
 import { Burst, Flower } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
-import { MiniBarChart } from './shared/MiniCharts'
+import { MiniBarChart, MiniLineChart } from './shared/MiniCharts'
 import { useTranslation } from '../../lib/i18n'
 
 export type CycleDetailType =
@@ -22,6 +24,9 @@ export type CycleDetailType =
   | 'pms'
   | 'fertile'
   | 'mood'
+  | 'bbt'
+  | 'mucus'
+  | 'intercourse'
 
 interface Props {
   type: CycleDetailType | null
@@ -38,6 +43,9 @@ export function CycleDetailSheet({ type, onClose }: Props) {
     pms: t('cycleDetail_titlePMS'),
     fertile: t('cycleDetail_titleFertile'),
     mood: t('cycleDetail_titleMood'),
+    bbt: t('cycleDetail_titleBBT'),
+    mucus: t('cycleDetail_titleMucus'),
+    intercourse: t('cycleDetail_titleIntercourse'),
   }
 
   const title = type ? TITLES[type] : ''
@@ -54,6 +62,9 @@ export function CycleDetailSheet({ type, onClose }: Props) {
         {type === 'pms' && <PMSDetail />}
         {type === 'fertile' && <FertileDetail />}
         {type === 'mood' && <MoodDetail />}
+        {type === 'bbt' && <BBTDetail />}
+        {type === 'mucus' && <MucusDetail />}
+        {type === 'intercourse' && <IntercourseDetail />}
       </ScrollView>
     </LogSheet>
   )
@@ -504,7 +515,7 @@ function MoodDetail() {
               <Body size={13} color={diffuse ? dt.colors.ink : colors.text} style={{ width: 80 }}>
                 {MOOD_LABELS[row.mood]}
               </Body>
-              <View style={moodStyles.barTrack}>
+              <View style={[moodStyles.barTrack, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]}>
                 <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink }]} />
               </View>
               <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={{ width: 30, textAlign: 'right' }}>
@@ -545,13 +556,174 @@ const moodStyles = StyleSheet.create({
   barTrack: {
     flex: 1,
     height: 10,
-    backgroundColor: 'transparent',
+    borderRadius: 5,
+    overflow: 'hidden',
   },
   barFill: {
     height: 10,
     borderRadius: 5,
   },
 })
+
+// ─── BBT (thermal shift) ───────────────────────────────────────────────────
+
+function BBTDetail() {
+  const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const { t } = useTranslation()
+  const { data, isLoading, error } = useBBTStats()
+  // BBT stored canonical °C; convert for display (B4).
+  const tempUnit = useUnitsStore((s) => s.tempUnit)
+  const tempU = (c: number) => cToDisplay(c, tempUnit)
+  const degLabel = tempLabel(tempUnit)
+
+  if (isLoading) return <Loading />
+  if (error) return <ErrorState />
+  if (!data || data.series.length < 2) {
+    return <EmptyState copy={t('cycleDetail_bbtEmpty')} />
+  }
+
+  const temps = data.series.map((s) => tempU(s.temp))
+  const labels = data.series.map((s) => `${s.cycleDay}`)
+  const latest = data.series[data.series.length - 1].temp
+
+  return (
+    <View style={{ gap: 18 }}>
+      <View style={detailStyles.heroRow}>
+        <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>{tempU(latest).toFixed(1)}{degLabel}</Display>
+        <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>
+          {t('cycleDetail_bbtLatest')}
+        </Text>
+      </View>
+
+      <View style={detailStyles.minMaxRow}>
+        <StatChip
+          label={t('cycleDetail_bbtShift')}
+          value={data.shiftDay ? t('cycleAnalytics_dayNumber', { currentDay: data.shiftDay }) : '—'}
+          tint={stickers.pinkSoft}
+        />
+        <StatChip label={t('cycleDetail_bbtCoverline')} value={data.coverline ? `${tempU(data.coverline).toFixed(1)}${degLabel}` : '—'} tint={stickers.blueSoft} />
+        <StatChip label={t('cycleDetail_bbtReadings')} value={String(data.series.length)} tint={stickers.yellowSoft} />
+      </View>
+
+      <View>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          {t('cycleDetail_bbtThisCycle')}
+        </Text>
+        <MiniLineChart data={temps} labels={labels} color={diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink} unit={degLabel} />
+      </View>
+
+      <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
+        {data.shiftDay ? t('cycleDetail_bbtShiftHint') : t('cycleDetail_bbtNoShiftHint')}
+      </Body>
+    </View>
+  )
+}
+
+// ─── Cervical mucus ─────────────────────────────────────────────────────────
+
+const MUCUS_LABELS: Record<MucusType, string> = {
+  dry: 'Dry', sticky: 'Sticky', creamy: 'Creamy', watery: 'Watery', eggwhite: 'Egg-white',
+}
+
+function MucusDetail() {
+  const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const { t } = useTranslation()
+  const { data, isLoading, error } = useCervicalMucusStats()
+
+  if (isLoading) return <Loading />
+  if (error) return <ErrorState />
+  if (!data || data.series.length === 0) {
+    return <EmptyState copy={t('cycleDetail_mucusEmpty')} />
+  }
+
+  const fertileHue = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink
+
+  return (
+    <View style={{ gap: 18 }}>
+      <View style={detailStyles.minMaxRow}>
+        <StatChip label={t('cycleDetail_mucusFertileDays')} value={String(data.fertileDays)} tint={stickers.pinkSoft} />
+        <StatChip label={t('cycleDetail_mucusPeak')} value={data.peakDay ? t('cycleAnalytics_dayNumber', { currentDay: data.peakDay }) : '—'} tint={stickers.greenSoft} />
+      </View>
+
+      <View style={{ gap: 6 }}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          {t('cycleDetail_mucusThisCycle')}
+        </Text>
+        {data.series.map((s, i) => {
+          const fertile = s.type === 'eggwhite' || s.type === 'watery'
+          return (
+            <View key={`${s.date}-${i}`} style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}>
+              <View style={mucusStyles.left}>
+                <View style={[mucusStyles.dot, { backgroundColor: fertile ? fertileHue : (diffuse ? dt.colors.line2 : stickers.blueSoft) }]} />
+                <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{t('cycleAnalytics_dayNumber', { currentDay: s.cycleDay })}</Body>
+              </View>
+              <Body size={13} color={fertile ? fertileHue : (diffuse ? dt.colors.ink3 : colors.textSecondary)}>
+                {MUCUS_LABELS[s.type]}
+              </Body>
+            </View>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+const mucusStyles = StyleSheet.create({
+  left: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+})
+
+// ─── Intercourse (TTC timing) ───────────────────────────────────────────────
+
+function IntercourseDetail() {
+  const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const { t } = useTranslation()
+  const { data, isLoading, error } = useIntercourseStats()
+
+  if (isLoading) return <Loading />
+  if (error) return <ErrorState />
+  if (!data || data.thisCycleCount === 0) {
+    return <EmptyState copy={t('cycleDetail_intercourseEmpty')} />
+  }
+
+  return (
+    <View style={{ gap: 18 }}>
+      <View style={detailStyles.minMaxRow}>
+        <StatChip label={t('cycleDetail_intercourseThisCycle')} value={String(data.thisCycleCount)} tint={stickers.pinkSoft} />
+        <StatChip label={t('cycleDetail_intercourseFertile')} value={String(data.inFertileWindow)} tint={stickers.greenSoft} />
+      </View>
+
+      <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
+        {data.inFertileWindow > 0
+          ? t('cycleDetail_intercourseInWindowHint', { n: data.inFertileWindow })
+          : t('cycleDetail_intercourseNoWindowHint')}
+      </Body>
+
+      <View style={{ gap: 6 }}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          {t('cycleDetail_recent')}
+        </Text>
+        {data.recent.map((r, i) => (
+          <View key={`${r.date}-${i}`} style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}>
+            <View style={mucusStyles.left}>
+              <View style={[mucusStyles.dot, { backgroundColor: r.inFertile ? (diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink) : (diffuse ? dt.colors.line2 : stickers.blueSoft) }]} />
+              <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{formatShort(r.date)}</Body>
+            </View>
+            <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
+              {r.inFertile ? t('cycleDetail_intercourseFertileTag') : (r.protectedSex ? t('cycleDetail_intercourseProtected') : t('cycleDetail_intercourseUnprotected'))}
+            </Body>
+          </View>
+        ))}
+      </View>
+    </View>
+  )
+}
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────
 
