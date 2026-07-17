@@ -327,7 +327,7 @@ export default function DevPanel() {
         {/* Design variant (v3 Diffuse migration toggle) */}
         <Section title="DESIGN VARIANT">
           <Body size={11} color={colors.textMuted}>
-            Switch between the current cream-paper system and the v3 "Diffuse" language. Default stays current; screens opt in during migration.
+            Switch between the v3 "Diffuse" language (the default) and the legacy cream-paper system. Diffuse ships to all users; cream-paper is kept as a team-only fallback and is not reachable in production.
           </Body>
           <View style={styles.row}>
             {(['current', 'diffuse'] as const).map((v) => {
