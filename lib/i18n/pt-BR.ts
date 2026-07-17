@@ -2152,6 +2152,9 @@ export const ptBR: TranslationKeys = {
   help_q_sell: "Do you sell my data?",
   help_a_sell: "Never. We do not sell your personal data, and we never use your private health or child data to train third-party AI.",
 
+  legal_contents: "Contents",
+  legal_hostedPrefix: "View the full policy at",
+
   badgeWallet_title: "Carteira de Distintivos",
   badgeWallet_earned: "Conquistados",
   badgeWallet_locked: "Bloqueados",

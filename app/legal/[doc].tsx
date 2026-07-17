@@ -13,6 +13,7 @@ import { useLocalSearchParams } from 'expo-router'
 import { AlertTriangle, ExternalLink } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, MonoCaps } from '../../components/ui/Typography'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
@@ -27,6 +28,7 @@ export default function LegalReaderScreen() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
 
   const scrollRef = useRef<ScrollView>(null)
   const offsets = useRef<Record<string, number>>({})
@@ -74,7 +76,7 @@ export default function LegalReaderScreen() {
 
         {/* Table of contents */}
         <View style={{ marginTop: 22 }}>
-          <MonoCaps color={inkMuted} style={{ letterSpacing: 1.5 }}>Contents</MonoCaps>
+          <MonoCaps color={inkMuted} style={{ letterSpacing: 1.5 }}>{t('legal_contents')}</MonoCaps>
         </View>
         <View style={[styles.tocCard, diffuse && styles.cardFlat, { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }]}>
           {document.sections.map((s, i) => (
@@ -113,7 +115,7 @@ export default function LegalReaderScreen() {
         <Pressable onPress={() => Linking.openURL(document.hostedUrl)} style={styles.hostedRow}>
           <ExternalLink size={15} color={linkColor} strokeWidth={1.8} />
           <Text style={[styles.hostedText, { color: linkColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-            View the full policy at {document.hostedUrl.replace('https://', '')}
+            {t('legal_hostedPrefix')} {document.hostedUrl.replace('https://', '')}
           </Text>
         </Pressable>
       </ScrollView>

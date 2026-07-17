@@ -68,7 +68,7 @@ export default function ConsentScreen() {
             },
           ]}
         >
-          {checked && <Check size={16} color={diffuse ? dt.colors.bg : '#FFFFFF'} strokeWidth={3} />}
+          {checked && <Check size={16} color={diffuse ? dt.colors.bg : colors.textInverse} strokeWidth={3} />}
         </View>
         <Text style={[styles.rowText, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {children}

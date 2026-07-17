@@ -187,8 +187,8 @@ export default function HelpScreen() {
             onPress={() => Linking.openURL('mailto:support@grandma.app')}
             style={[styles.contactBtn, { backgroundColor: accent, borderRadius: radius.full }]}
           >
-            <Mail size={16} color={diffuse ? dt.colors.bg : '#FFFFFF'} strokeWidth={2} />
-            <Text style={[styles.contactBtnText, { color: diffuse ? dt.colors.bg : '#FFFFFF', fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
+            <Mail size={16} color={diffuse ? dt.colors.bg : colors.textInverse} strokeWidth={2} />
+            <Text style={[styles.contactBtnText, { color: diffuse ? dt.colors.bg : colors.textInverse, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
               {t('help_contactUs')}
             </Text>
           </Pressable>

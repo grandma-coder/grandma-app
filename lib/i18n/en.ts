@@ -2355,6 +2355,10 @@ export const en: TranslationKeys = {
   help_q_sell: 'Do you sell my data?',
   help_a_sell: 'Never. We do not sell your personal data, and we never use your private health or child data to train third-party AI.',
 
+  // ─── Phase 1: In-app legal reader ─────────────────────────────────────────
+  legal_contents: 'Contents',
+  legal_hostedPrefix: 'View the full policy at',
+
   // ─── B6: Profile — Badge Wallet ───────────────────────────────────────────
   badgeWallet_title: 'Badge Wallet',
   badgeWallet_earned: 'Earned',

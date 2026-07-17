@@ -2358,6 +2358,8 @@ export interface TranslationKeys {
   help_a_dataSafe: string
   help_q_sell: string
   help_a_sell: string
+  legal_contents: string
+  legal_hostedPrefix: string
 
   // ─── B6: Profile — Badge Wallet ───────────────────────────────────────────
   badgeWallet_title: string

@@ -215,8 +215,8 @@ export default function DataInventoryScreen() {
         >
           {exporting
             ? <ActivityIndicator size="small" color="#FFFFFF" />
-            : <Download size={18} color={diffuse ? dt.colors.bg : '#FFFFFF'} strokeWidth={2} />}
-          <Text style={[styles.exportLabel, { color: diffuse ? dt.colors.bg : '#FFFFFF', fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
+            : <Download size={18} color={diffuse ? dt.colors.bg : colors.textInverse} strokeWidth={2} />}
+          <Text style={[styles.exportLabel, { color: diffuse ? dt.colors.bg : colors.textInverse, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
             {t('dataInv_exportBtn')}
           </Text>
         </Pressable>
