@@ -57,6 +57,7 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
+import { useConsentStore } from '../store/useConsentStore'
 import { useCaregiverStore } from '../store/useCaregiverStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { useDevStore } from '../store/useDevStore'
@@ -207,6 +208,9 @@ export default function RootLayout() {
   // once with the default mode ('kids') before AsyncStorage restores the real
   // one, flashing the wrong tabs/pillars for a frame.
   const modeHydrated = useModeStore((s) => s.hydrated)
+  // Phase 1 consent gate — has the user agreed to health-data processing?
+  const hasConsented = useConsentStore((s) => s.consentedAt !== null)
+  const consentHydrated = useConsentStore((s) => s.hydrated)
 
   // ─── Auth listener ────────────────────────────────────────────────────────
   //
@@ -579,15 +583,18 @@ export default function RootLayout() {
       // a returning user into onboarding here would either re-seed
       // duplicates or wipe their behavior store on continue.
       if (!loadFailed) {
-        router.replace('/onboarding/journey')
+        // Phase 1: consent gate BEFORE any data collection. Route to the
+        // consent step until the user has explicitly agreed; consent.tsx then
+        // continues to journey.
+        router.replace(hasConsented ? '/onboarding/journey' : '/onboarding/consent')
       }
     } else if (session && hasCompletedOnboarding && inAuth) {
       router.replace('/(tabs)')
     }
-  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode, devActive])
+  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode, devActive, hasConsented])
 
   // ─── Loading state ────────────────────────────────────────────────────────
-  if (loading || !behaviorHydrated || !modeHydrated || !fontsLoaded) {
+  if (loading || !behaviorHydrated || !modeHydrated || !consentHydrated || !fontsLoaded) {
     return <LoadingScreen />
   }
 

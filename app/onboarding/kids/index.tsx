@@ -46,6 +46,7 @@ import {
 } from '../../../store/useKidsOnboardingStore'
 import { useChildStore } from '../../../store/useChildStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
+import { useConsentStore } from '../../../store/useConsentStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
 import { provisionChildSpace } from '../../../lib/skeletonSync'
 import { isDevModeActive } from '../../../store/useDevStore'
@@ -210,6 +211,8 @@ export default function KidsOnboarding() {
       }
       if (parentName) profilePayload.name = parentName
       if (parentDob) profilePayload.dob = parentDob
+      const consentedAt = useConsentStore.getState().consentedAt
+      if (consentedAt) profilePayload.consented_at = consentedAt
       const { error: profileErr } = await supabase
         .from('profiles')
         .upsert(profilePayload, { onConflict: 'id' })

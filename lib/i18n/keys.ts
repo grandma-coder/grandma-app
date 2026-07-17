@@ -2004,6 +2004,16 @@ export interface TranslationKeys {
   onboardingTransition_cta: string
   onboardingTransition_skip: string
 
+  // Onboarding — Consent gate
+  consent_question: string
+  consent_questionItalic: string
+  consent_intro: string
+  consent_dataProcessing: string
+  consent_policyPrefix: string
+  consent_policyAnd: string
+  consent_footnote: string
+  consent_cta: string
+
   // Onboarding — About You (name + DOB)
   aboutYou_question: string
   aboutYou_questionItalic: string
@@ -2828,6 +2838,7 @@ export interface TranslationKeys {
   avatarPicker_remove: string
   avatarPicker_or_icon: string
   // ─── B7b: GrandmaTalk residual strings ────────────────────────────────────
+  grandmaTalk_disclaimer: string
   grandmaTalk_history_title: string
   grandmaTalk_history_empty_title: string
   grandmaTalk_history_empty_body: string

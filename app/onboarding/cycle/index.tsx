@@ -45,6 +45,7 @@ import { supabase } from '../../../lib/supabase'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { useModeStore } from '../../../store/useModeStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
+import { useConsentStore } from '../../../store/useConsentStore'
 import { useBehaviorStore, PRE_PREG_DB_TYPE } from '../../../store/useBehaviorStore'
 import { isDevModeActive } from '../../../store/useDevStore'
 
@@ -169,6 +170,8 @@ export default function CycleOnboarding() {
       }
       if (parentName) profilePayload.name = parentName
       if (parentDob) profilePayload.dob = parentDob
+      const consentedAt = useConsentStore.getState().consentedAt
+      if (consentedAt) profilePayload.consented_at = consentedAt
       const { error: profileErr } = await supabase
         .from('profiles')
         .upsert(profilePayload, { onConflict: 'id' })

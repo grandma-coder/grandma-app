@@ -40,6 +40,7 @@ import {
 import { useCycleOnboardingStore } from '../../../store/useCycleOnboardingStore'
 import { usePregnancyStore, type MoodType } from '../../../store/usePregnancyStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
+import { useConsentStore } from '../../../store/useConsentStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
 import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
@@ -210,6 +211,8 @@ export default function PregnancyOnboarding() {
     }
     if (parentName) profilePayload.name = parentName
     if (parentDob) profilePayload.dob = parentDob
+    const consentedAt = useConsentStore.getState().consentedAt
+    if (consentedAt) profilePayload.consented_at = consentedAt
     if (store.conditionsText) profilePayload.health_notes = store.conditionsText
     if (store.dueDate) profilePayload.due_date = store.dueDate
     const { error: profileErr } = await supabase

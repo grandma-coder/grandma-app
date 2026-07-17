@@ -1812,6 +1812,16 @@ export const ptBR: TranslationKeys = {
   onboardingTransition_cta: "Vamos lá, querida",
   onboardingTransition_skip: "Pular por enquanto",
 
+  // Onboarding — Consent gate
+  consent_question: "Before we begin,",
+  consent_questionItalic: "your privacy.",
+  consent_intro: "Grandma keeps sensitive health and family information. We only use it to power your experience — never sold, never shared without your say.",
+  consent_dataProcessing: "I agree to Grandma processing my health and family data to provide the app's features.",
+  consent_policyPrefix: "I have read and agree to the",
+  consent_policyAnd: "and",
+  consent_footnote: "You can export or delete your data anytime in Settings → Data & Privacy.",
+  consent_cta: "Agree & continue",
+
   // Onboarding — About You (name + DOB)
   aboutYou_question: "First, what should",
   aboutYou_questionItalic: "we call you?",
@@ -2571,6 +2581,7 @@ export const ptBR: TranslationKeys = {
   avatarPicker_upload_subtitle: "Escolha de sua biblioteca",
   avatarPicker_remove: "Remover atual",
   avatarPicker_or_icon: "Ou escolha um ícone",
+  grandmaTalk_disclaimer: "Grandma offers caring guidance, not medical diagnosis. Always consult your doctor for medical concerns.",
   grandmaTalk_history_title: "Conversas anteriores",
   grandmaTalk_history_empty_title: "Nenhum chat anterior ainda",
   grandmaTalk_history_empty_body: "Suas conversas com Grandma aparecerão aqui",

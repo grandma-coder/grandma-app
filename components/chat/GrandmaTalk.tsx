@@ -1759,7 +1759,7 @@ export function GrandmaTalk() {
         {/* Input bar — voice-first "Tap to talk" pill + mic */}
         <View style={[
           styles.inputBar,
-          { paddingBottom: Math.max(insets.bottom, 4), backgroundColor: pageBg },
+          { backgroundColor: pageBg },
           diffuse && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line },
         ]}>
           <View
@@ -1834,6 +1834,22 @@ export function GrandmaTalk() {
             </Pressable>
           )}
         </View>
+
+        {/* Medical liability caption — always visible under the composer.
+            Grandma gives education, not diagnosis (Phase 1 / AI safety framing). */}
+        <Text
+          style={[
+            styles.disclaimer,
+            {
+              color: diffuse ? dt.colors.ink4 : colors.textMuted,
+              fontFamily: diffuse ? diffuseFont.body : font.body,
+              paddingBottom: Math.max(insets.bottom, 4),
+              backgroundColor: pageBg,
+            },
+          ]}
+        >
+          {t('grandmaTalk_disclaimer')}
+        </Text>
       </KeyboardAvoidingView>
 
       {/* History overlay */}
@@ -2007,6 +2023,13 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 16,
     paddingTop: 10,
+  },
+  disclaimer: {
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 6,
   },
   input: {
     flex: 1,
