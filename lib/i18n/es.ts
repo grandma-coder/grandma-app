@@ -1777,6 +1777,17 @@ export const es: TranslationKeys = {
   savedPosts_emptyTitle: "Nothing saved yet",
   savedPosts_emptyBody: "Tap the bookmark on any post to keep it here for later.",
 
+  poll_composerTitle: "New poll",
+  poll_questionPlaceholder: "Ask the community…",
+  poll_optionsLabel: "Options",
+  poll_optionPlaceholder: "Option {{n}}",
+  poll_addOption: "Add option",
+  poll_create: "Create poll",
+  poll_createFailed: "Couldn’t create the poll. Please try again.",
+  poll_votesOne: "{{count}} vote",
+  poll_votesMany: "{{count}} votes",
+  poll_closed: "Closed",
+
   cycleOnboarding_predict_message: "Based on what you shared, here’s what Grandma already sees for your cycle:",
   cycleOnboarding_predict_fertile: "Fertile window",
   cycleOnboarding_predict_ovulation: "Ovulation",

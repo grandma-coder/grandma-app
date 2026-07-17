@@ -1951,6 +1951,17 @@ export interface TranslationKeys {
   savedPosts_emptyTitle: string
   savedPosts_emptyBody: string
 
+  poll_composerTitle: string
+  poll_questionPlaceholder: string
+  poll_optionsLabel: string
+  poll_optionPlaceholder: string
+  poll_addOption: string
+  poll_create: string
+  poll_createFailed: string
+  poll_votesOne: string
+  poll_votesMany: string
+  poll_closed: string
+
   cycleOnboarding_predict_message: string
   cycleOnboarding_predict_fertile: string
   cycleOnboarding_predict_ovulation: string

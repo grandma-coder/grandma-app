@@ -28,6 +28,7 @@ import {
   Heart,
   Bookmark,
   BadgeCheck,
+  BarChart3,
   MessageCircle,
   Send,
   Camera,
@@ -50,6 +51,8 @@ import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseK
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { ReactionPicker } from '../../components/channels/ReactionPicker'
+import { PollCard } from '../../components/channels/PollCard'
+import { PollComposer } from '../../components/channels/PollComposer'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { channelSticker } from '../../lib/channelSticker'
 import { getChannels, type Channel } from '../../lib/channels'
@@ -475,6 +478,7 @@ export default function ChannelChat() {
 
   // Reaction picker (Phase 3) — the post whose 4-emoji picker is open.
   const [reactionPickerPost, setReactionPickerPost] = useState<ChannelPost | null>(null)
+  const [showPollComposer, setShowPollComposer] = useState(false)
 
   // The reply / thread / delete / report / block action sheet (was the old
   // long-press target; now reached via the picker's "More" entry).
@@ -1040,13 +1044,22 @@ export default function ChannelChat() {
             item.message_type === 'system_join' || item.message_type === 'system_leave' ? (
               <SystemMessage message={item} />
             ) : (
-              <MessageBubble
-                message={item}
-                onReaction={() => handleReaction(item.id)}
-                onSave={() => handleSave(item.id)}
-                onLongPress={() => setReactionPickerPost(item)}
-                onThreadPress={() => router.push(`/channel/thread/${item.id}` as any)}
-              />
+              <View>
+                <MessageBubble
+                  message={item}
+                  onReaction={() => handleReaction(item.id)}
+                  onSave={() => handleSave(item.id)}
+                  onLongPress={() => setReactionPickerPost(item)}
+                  onThreadPress={() => router.push(`/channel/thread/${item.id}` as any)}
+                />
+                {/* Poll (Phase 3) — poll-messages are prefixed 📊; PollCard
+                    self-loads and renders null if there's no poll row. */}
+                {item.content.startsWith('📊') && (
+                  <View style={{ paddingHorizontal: 16, paddingLeft: 52 }}>
+                    <PollCard postId={item.id} />
+                  </View>
+                )}
+              </View>
             )
           }
         />
@@ -1153,6 +1166,9 @@ export default function ChannelChat() {
           >
             <Pressable onPress={pickPhoto} hitSlop={4} style={styles.inputIconBtn}>
               <Camera size={22} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.6 : 2} />
+            </Pressable>
+            <Pressable onPress={() => setShowPollComposer(true)} hitSlop={4} style={styles.inputIconBtn}>
+              <BarChart3 size={22} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
             <TextInput
               ref={inputRef}
@@ -1267,6 +1283,14 @@ export default function ChannelChat() {
           if (post) showMessageActions(post)
         }}
         onClose={() => setReactionPickerPost(null)}
+      />
+
+      {/* Poll composer (Phase 3) */}
+      <PollComposer
+        visible={showPollComposer}
+        channelId={id as string}
+        onClose={() => setShowPollComposer(false)}
+        onCreated={() => load()}
       />
 
       {/* Rating overlay */}
