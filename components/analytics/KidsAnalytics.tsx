@@ -72,7 +72,7 @@ import {
   X,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, font, useDiffuseTheme, diffuseFont, diffuseTypeRole, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, brand, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import {
   DiffuseBloomIcon,
@@ -965,10 +965,10 @@ export function KidsAnalytics() {
               <Character name="exam" size={26} color={diffuse ? getDiffuseAccent('kids', dt.isDark) : stickers.blue} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.reportTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseTypeRole.title : font.bodySemiBold }]}>
+              <Text style={[styles.reportTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
                 {t('report_cardTitle')}
               </Text>
-              <Text style={[styles.reportDesc, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseTypeRole.read : font.body }]}>
+              <Text style={[styles.reportDesc, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                 {t('report_cardDesc')}
               </Text>
             </View>
