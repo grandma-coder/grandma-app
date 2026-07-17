@@ -268,13 +268,19 @@ export async function sendMessage(
 
 // ─── Thread Replies ────────────────────────────────────────────────────────
 
-export async function fetchThreadReplies(parentId: string): Promise<ChannelPost[]> {
-  const { data } = await supabase
+export type ReplySort = 'newest' | 'top'
+
+export async function fetchThreadReplies(parentId: string, sort: ReplySort = 'newest'): Promise<ChannelPost[]> {
+  // 'top' ranks by reaction_count (with created_at as the tiebreaker so the
+  // order is stable); 'newest' is the original chronological ascending order.
+  let query = supabase
     .from('channel_posts')
     .select('*')
     .eq('reply_to_id', parentId)
-    .order('created_at', { ascending: true })
-    .limit(200)
+  query = sort === 'top'
+    ? query.order('reaction_count', { ascending: false }).order('created_at', { ascending: true })
+    : query.order('created_at', { ascending: true })
+  const { data } = await query.limit(200)
 
   const replies = (data ?? []) as ChannelPost[]
 

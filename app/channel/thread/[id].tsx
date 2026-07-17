@@ -31,6 +31,7 @@ import { DiffuseBloomIcon, DiffuseEmptyState } from '../../../components/ui/diff
 import { EmptyState } from '../../../components/ui/EmptyState'
 import {
   fetchThreadReplies,
+  type ReplySort,
   sendMessage,
   toggleReaction,
   type ChannelPost,
@@ -55,12 +56,13 @@ export default function ThreadView() {
   const [loading, setLoading] = useState(true)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [sort, setSort] = useState<ReplySort>('newest')
 
   useEffect(() => {
-    if (id) load()
-  }, [id])
+    if (id) load(sort)
+  }, [id, sort])
 
-  async function load() {
+  async function load(sortBy: ReplySort = sort) {
     setLoading(true)
     try {
       // Fetch parent message
@@ -72,7 +74,7 @@ export default function ThreadView() {
       if (parent) setParentMsg(parent as ChannelPost)
 
       // Fetch replies
-      const replyData = await fetchThreadReplies(id!)
+      const replyData = await fetchThreadReplies(id!, sortBy)
       setReplies(replyData)
     } catch {} finally {
       setLoading(false)
@@ -184,6 +186,38 @@ export default function ThreadView() {
                   : { color: colors.textMuted }]}>
                   {replies.length === 1 ? t('channelThread_replyCountOne', { count: replies.length }) : t('channelThread_replyCountMany', { count: replies.length })}
                 </Text>
+
+                {/* Sort toggle (Phase 3) — only when there's more than one reply */}
+                {replies.length > 1 && (
+                  <View style={s.sortRow}>
+                    {(['newest', 'top'] as ReplySort[]).map((opt) => {
+                      const on = sort === opt
+                      return (
+                        <Pressable
+                          key={opt}
+                          onPress={() => setSort(opt)}
+                          style={[
+                            s.sortPill,
+                            {
+                              backgroundColor: on ? (diffuse ? dt.colors.ink : colors.text) : 'transparent',
+                              borderColor: diffuse ? dt.colors.line : colors.border,
+                            },
+                          ]}
+                        >
+                          <Text style={[
+                            s.sortPillText,
+                            {
+                              color: on ? (diffuse ? dt.colors.bg : colors.bg) : (diffuse ? dt.colors.ink3 : colors.textMuted),
+                              fontFamily: diffuse ? diffuseFont.mono : undefined,
+                            },
+                          ]}>
+                            {opt === 'newest' ? t('channelThread_sortNewest') : t('channelThread_sortTop')}
+                          </Text>
+                        </Pressable>
+                      )
+                    })}
+                  </View>
+                )}
               </View>
             ) : null
           }
@@ -291,6 +325,9 @@ function formatTime(dateStr: string): string {
 const s = StyleSheet.create({
   root: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  sortRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  sortPill: { paddingVertical: 5, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
+  sortPillText: { fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: '600' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
   headerBtn: { width: 40, alignItems: 'center' },
   headerTitle: { fontSize: 20, fontFamily: font.display, fontWeight: '700', letterSpacing: -0.3 },

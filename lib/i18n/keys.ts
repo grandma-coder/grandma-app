@@ -2602,6 +2602,9 @@ export interface TranslationKeys {
   channelThread_memberFallback: string
   channelThread_replyCountOne: string
   channelThread_replyCountMany: string
+  channelThread_sortNewest: string
+  channelThread_sortTop: string
+
   channelThread_emptyTitle: string
   channelThread_emptySubtitle: string
   channelThread_replyPlaceholder: string

@@ -2390,6 +2390,9 @@ export const ptBR: TranslationKeys = {
   channelThread_memberFallback: "Membro",
   channelThread_replyCountOne: "{{count}} resposta",
   channelThread_replyCountMany: "{{count}} respostas",
+  channelThread_sortNewest: "Newest",
+  channelThread_sortTop: "Top",
+
   channelThread_emptyTitle: "Sem respostas ainda",
   channelThread_emptySubtitle: "Seja o primeiro a responder.",
   channelThread_replyPlaceholder: "Responder...",

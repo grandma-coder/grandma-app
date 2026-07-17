@@ -2611,6 +2611,8 @@ export const en: TranslationKeys = {
   channelThread_memberFallback: 'Member',
   channelThread_replyCountOne: '{{count}} reply',
   channelThread_replyCountMany: '{{count}} replies',
+  channelThread_sortNewest: 'Newest',
+  channelThread_sortTop: 'Top',
   channelThread_emptyTitle: 'No replies yet',
   channelThread_emptySubtitle: 'Be the first to reply.',
   channelThread_replyPlaceholder: 'Reply...',

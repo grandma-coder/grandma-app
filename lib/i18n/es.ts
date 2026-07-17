@@ -2390,6 +2390,9 @@ export const es: TranslationKeys = {
   channelThread_memberFallback: "Miembro",
   channelThread_replyCountOne: "{{count}} respuesta",
   channelThread_replyCountMany: "{{count}} respuestas",
+  channelThread_sortNewest: "Newest",
+  channelThread_sortTop: "Top",
+
   channelThread_emptyTitle: "Sin respuestas aún",
   channelThread_emptySubtitle: "Sé el primero en responder.",
   channelThread_replyPlaceholder: "Responder...",
