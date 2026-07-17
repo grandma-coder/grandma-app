@@ -1771,6 +1771,11 @@ export const es: TranslationKeys = {
   cycleOnboarding_complete_title: "¡Todo listo!",
   cycleOnboarding_complete_message: "Grandma tiene todo lo que necesita para guiarte en este hermoso camino. Tus insights del ciclo se están personalizando solo para ti.",
   cycleOnboarding_complete_btn: "Vamos",
+  cycleOnboarding_predict_message: "Based on what you shared, here’s what Grandma already sees for your cycle:",
+  cycleOnboarding_predict_fertile: "Fertile window",
+  cycleOnboarding_predict_ovulation: "Ovulation",
+  cycleOnboarding_predict_period: "Next period",
+
   cyclePillars_title: "Pilares del ciclo",
   cyclePillars_subtitle: "seis lugares por dónde empezar tu preparación",
   cyclePillars_back: "Atrás",

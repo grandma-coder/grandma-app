@@ -1771,6 +1771,11 @@ export const ptBR: TranslationKeys = {
   cycleOnboarding_complete_title: "Tudo pronto!",
   cycleOnboarding_complete_message: "Grandma tem tudo que precisa para guiar você nesta jornada linda. Seus insights de ciclo estão sendo personalizados só para você.",
   cycleOnboarding_complete_btn: "Vamos Lá",
+  cycleOnboarding_predict_message: "Based on what you shared, here’s what Grandma already sees for your cycle:",
+  cycleOnboarding_predict_fertile: "Fertile window",
+  cycleOnboarding_predict_ovulation: "Ovulation",
+  cycleOnboarding_predict_period: "Next period",
+
   cyclePillars_title: "Pilares do ciclo",
   cyclePillars_subtitle: "seis lugares para começar sua preparação",
   cyclePillars_back: "Voltar",

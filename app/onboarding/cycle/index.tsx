@@ -6,7 +6,7 @@
  * Saves answers to Supabase profiles + behaviors table at the end.
  */
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import {
   View,
   Text,
@@ -42,6 +42,7 @@ import {
   type TempUnit,
 } from '../../../store/useCycleOnboardingStore'
 import { supabase } from '../../../lib/supabase'
+import { getCycleInfo, toDateStr } from '../../../lib/cycleLogic'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { useModeStore } from '../../../store/useModeStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
@@ -928,18 +929,46 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
   const insets = useSafeAreaInsets()
   const { colors, radius, font, isDark } = useTheme()
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
+  const mode = getModeColor('pre-pregnancy', isDark)
+
+  // Prediction reward — compute the fertile window + next period from what the
+  // user just entered, so onboarding pays off immediately (Flo does this well).
+  const lastPeriod = useCycleOnboardingStore((s) => s.lastPeriodDate)
+  const cycleLen = useCycleOnboardingStore((s) => s.cycleLength)
+  const periodDur = useCycleOnboardingStore((s) => s.periodDuration)
+  const ttc = useCycleOnboardingStore((s) => s.tryingToConceive)
+
+  const prediction = useMemo(() => {
+    if (!lastPeriod) return null
+    try {
+      const info = getCycleInfo(
+        { lastPeriodStart: lastPeriod, cycleLength: cycleLen ?? 28, periodLength: periodDur ?? 5, lutealPhase: 14 },
+        toDateStr(new Date()),
+      )
+      const fmt = (iso: string) => {
+        const d = new Date(iso + 'T12:00:00')
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      }
+      // Fertile window dates ≈ ovulation − 5 … ovulation + 1.
+      const ov = new Date(info.ovulationDate + 'T12:00:00')
+      const fStart = new Date(ov); fStart.setDate(ov.getDate() - 5)
+      const fEnd = new Date(ov); fEnd.setDate(ov.getDate() + 1)
+      const fmtD = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      return {
+        fertileWindow: `${fmtD(fStart)} – ${fmtD(fEnd)}`,
+        ovulation: fmt(info.ovulationDate),
+        nextPeriod: fmt(info.nextPeriodDate),
+      }
+    } catch { return null }
+  }, [lastPeriod, cycleLen, periodDur])
 
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>
-      <View style={completeStyles.content}>
+      <ScrollView contentContainerStyle={completeStyles.content} showsVerticalScrollIndicator={false}>
         <View
           style={[
             completeStyles.iconCircle,
-            {
-              backgroundColor: modeSoft,
-              borderWidth: 1,
-              borderColor: colors.border,
-            },
+            { backgroundColor: modeSoft, borderWidth: 1, borderColor: colors.border },
           ]}
         >
           <Flower size={56} petal={stickers.pink} center={stickers.yellow} />
@@ -949,19 +978,40 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
           {t('cycleOnboarding_complete_title')}
         </Text>
 
-        <Text
-          style={[
-            completeStyles.message,
-            { color: colors.textSecondary, fontFamily: font.body },
-          ]}
-        >
-          {t('cycleOnboarding_complete_message')}
+        <Text style={[completeStyles.message, { color: colors.textSecondary, fontFamily: font.body }]}>
+          {prediction ? t('cycleOnboarding_predict_message') : t('cycleOnboarding_complete_message')}
         </Text>
-      </View>
+
+        {/* Prediction reward card */}
+        {prediction ? (
+          <View style={[completeStyles.predictCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+            {ttc ? (
+              <PredictRow icon={<Flower size={22} petal={stickers.green} center={stickers.yellow} />} label={t('cycleOnboarding_predict_fertile')} value={prediction.fertileWindow} accent={mode} colors={colors} font={font} />
+            ) : null}
+            <PredictRow icon={<Flower size={22} petal={stickers.lilac} center={stickers.pink} />} label={t('cycleOnboarding_predict_ovulation')} value={prediction.ovulation} accent={mode} colors={colors} font={font} />
+            <PredictRow icon={<Flower size={22} petal={stickers.coral} center={stickers.yellow} />} label={t('cycleOnboarding_predict_period')} value={prediction.nextPeriod} accent={mode} colors={colors} font={font} last />
+          </View>
+        ) : null}
+      </ScrollView>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
         <PillButton label={t('cycleOnboarding_complete_btn')} variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
       </View>
+    </View>
+  )
+}
+
+function PredictRow({
+  icon, label, value, accent, colors, font, last,
+}: {
+  icon: React.ReactNode; label: string; value: string; accent: string
+  colors: any; font: any; last?: boolean
+}) {
+  return (
+    <View style={[completeStyles.predictRow, !last && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}>
+      <View style={completeStyles.predictIcon}>{icon}</View>
+      <Text style={[completeStyles.predictLabel, { color: colors.textSecondary, fontFamily: font.body }]}>{label}</Text>
+      <Text style={[completeStyles.predictValue, { color: accent, fontFamily: font.display }]}>{value}</Text>
     </View>
   )
 }
@@ -1146,12 +1196,28 @@ const completeStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+    paddingVertical: 40,
     gap: 20,
   },
+  predictCard: {
+    width: '100%',
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    marginTop: 4,
+  },
+  predictRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 15,
+  },
+  predictIcon: { width: 26, alignItems: 'center' },
+  predictLabel: { flex: 1, fontSize: 14 },
+  predictValue: { fontSize: 16 },
   iconCircle: {
     width: 88,
     height: 88,

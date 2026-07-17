@@ -1945,6 +1945,11 @@ export interface TranslationKeys {
   cycleOnboarding_complete_message: string
   cycleOnboarding_complete_btn: string
 
+  cycleOnboarding_predict_message: string
+  cycleOnboarding_predict_fertile: string
+  cycleOnboarding_predict_ovulation: string
+  cycleOnboarding_predict_period: string
+
   // ─── Cycle Pillars Screen (Wave B4) ──────────────────────────────────────
   cyclePillars_title: string
   cyclePillars_subtitle: string
