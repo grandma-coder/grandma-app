@@ -363,9 +363,9 @@ export default function PrivacyScreen() {
           <MonoCaps color={sectionLabelColor} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionLegal')}</MonoCaps>
         </View>
         <View style={[styles.card, diffuse && styles.cardFlat, cardStyle]}>
-          <ActionRow stickerKind="star" label={t('privacy_privacyPolicy')} desc={t('privacy_privacyPolicyDesc')} onPress={() => Alert.alert(t('privacy_privacyPolicy'), 'Available at grandma.app/privacy')} />
+          <ActionRow stickerKind="star" label={t('privacy_privacyPolicy')} desc={t('privacy_privacyPolicyDesc')} onPress={() => router.push('/legal/privacy')} />
           <View style={[styles.divider, { backgroundColor: dividerColor }]} />
-          <ActionRow stickerKind="sparkle" label={t('privacy_termsOfService')} desc={t('privacy_termsOfServiceDesc')} onPress={() => Alert.alert(t('privacy_termsOfService'), 'Available at grandma.app/terms')} />
+          <ActionRow stickerKind="sparkle" label={t('privacy_termsOfService')} desc={t('privacy_termsOfServiceDesc')} onPress={() => router.push('/legal/terms')} />
         </View>
 
         <Text style={[styles.footer, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>

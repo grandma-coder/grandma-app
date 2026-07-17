@@ -343,6 +343,18 @@ export default function ProfileScreen() {
                 title={t('profile_subscription')}
                 value={isPremium ? 'Premium' : 'Upgrade'}
                 onPress={() => router.push('/paywall')}
+              />
+              <DiffuseListRow
+                icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
+                title={t('profile_help')}
+                showArrow
+                onPress={() => router.push('/profile/help')}
+              />
+              <DiffuseListRow
+                icon={<AnimatedSticker type="Star" size={18} fill="#F2B2C7" />}
+                title={t('profile_about')}
+                showArrow
+                onPress={() => router.push('/profile/about')}
                 last
               />
             </>
@@ -426,6 +438,16 @@ export default function ProfileScreen() {
                 label={t('profile_subscription')}
                 value={isPremium ? 'Premium' : 'Upgrade'}
                 onPress={() => router.push('/paywall')}
+              />
+              <StatRow
+                icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
+                label={t('profile_help')}
+                onPress={() => router.push('/profile/help')}
+              />
+              <StatRow
+                icon={<AnimatedSticker type="Star" size={18} fill="#F2B2C7" />}
+                label={t('profile_about')}
+                onPress={() => router.push('/profile/about')}
                 isLast
               />
             </>

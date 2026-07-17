@@ -148,6 +148,8 @@ export interface TranslationKeys {
   profile_signOut: string
   profile_signOutConfirm: string
   profile_version: string
+  profile_help: string
+  profile_about: string
 
   // ─── Settings Screen ───────────────────────────────────────────────────
   settings_title: string
@@ -2302,6 +2304,60 @@ export interface TranslationKeys {
   dataTrans_never3: string
   dataTrans_never4: string
   dataTrans_footer: string
+  about_title: string
+  about_tagline: string
+  about_missionTitle: string
+  about_missionBody: string
+  about_expertiseTitle: string
+  about_expertiseBody: string
+  about_privacyTitle: string
+  about_privacyBody: string
+  about_privacyPolicy: string
+  about_terms: string
+  about_help: string
+  about_contact: string
+  about_copyright: string
+  help_title: string
+  help_subtitle: string
+  help_searchPlaceholder: string
+  help_noResults: string
+  help_stillStuck: string
+  help_stillStuckBody: string
+  help_contactUs: string
+  help_catStart: string
+  help_catAccount: string
+  help_catCare: string
+  help_catAi: string
+  help_catBilling: string
+  help_catPrivacy: string
+  help_q_modes: string
+  help_a_modes: string
+  help_q_switchMode: string
+  help_a_switchMode: string
+  help_q_logging: string
+  help_a_logging: string
+  help_q_export: string
+  help_a_export: string
+  help_q_delete: string
+  help_a_delete: string
+  help_q_password: string
+  help_a_password: string
+  help_q_invite: string
+  help_a_invite: string
+  help_q_permissions: string
+  help_a_permissions: string
+  help_q_grandma: string
+  help_a_grandma: string
+  help_q_medical: string
+  help_a_medical: string
+  help_q_premium: string
+  help_a_premium: string
+  help_q_cancel: string
+  help_a_cancel: string
+  help_q_dataSafe: string
+  help_a_dataSafe: string
+  help_q_sell: string
+  help_a_sell: string
 
   // ─── B6: Profile — Badge Wallet ───────────────────────────────────────────
   badgeWallet_title: string
