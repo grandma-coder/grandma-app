@@ -37,6 +37,7 @@ const AUTH_FLOWS: Array<[string, string]> = [
 ]
 
 const ONBOARDING_FLOWS: Array<[string, string]> = [
+  ['Consent gate (Phase 1)', '/onboarding/consent'],
   ['Journey picker', '/onboarding/journey'],
   ['Journey picker (add mode)', '/onboarding/journey?addMode=true'],
   ['Pre-pregnancy onboarding', '/onboarding/cycle'],
@@ -53,6 +54,9 @@ const COMMON_SCREENS: Array<[string, string]> = [
   ['Grandma talk', '/grandma-talk'],
   ['Insights', '/insights'],
   ['Scan', '/scan'],
+  ['Legal · Privacy Policy (Phase 1)', '/legal/privacy'],
+  ['Legal · Terms of Use (Phase 1)', '/legal/terms'],
+  ['App lock · set PIN (Phase 1)', '/lock?mode=set'],
 ]
 
 const PROFILE_SCREENS: Array<[string, string]> = [
@@ -66,6 +70,11 @@ const PROFILE_SCREENS: Array<[string, string]> = [
   ['Profile · Emergency insurance', '/profile/emergency-insurance'],
   ['Profile · Notifications', '/profile/notifications'],
   ['Profile · Privacy', '/profile/privacy'],
+  ['Profile · Data we hold / DSAR (Phase 1)', '/profile/data-inventory'],
+  ['Profile · Data transparency (Phase 1)', '/profile/data-transparency'],
+  ['Profile · Community guidelines (Phase 1)', '/profile/community-guidelines'],
+  ['Profile · Help & FAQ (Phase 1)', '/profile/help'],
+  ['Profile · About (Phase 1)', '/profile/about'],
   ['Profile · Pregnancy', '/profile/pregnancy'],
   ['Profile · Settings', '/profile/settings'],
 ]
