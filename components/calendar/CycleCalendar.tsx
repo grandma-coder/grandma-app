@@ -16,6 +16,7 @@ import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from 
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CyclePhase, type CycleConfig } from '../../lib/cycleLogic'
 import { useCycleHistory, useCycleChecklist, useToggleChecklistItem } from '../../lib/cycleAnalytics'
+import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 import { useExams } from '../../lib/examData'
 import { PrePregChecklist } from '../agenda/PrePregChecklist'
 import { PillButton } from '../ui/PillButton'
@@ -161,16 +162,18 @@ export function CycleCalendar() {
   // Falls back to a 10-days-ago default so the UI still renders for users
   // who haven't logged anything yet.
   const { data: history } = useCycleHistory()
+  // User cycle settings override the measured average + hardcoded defaults.
+  const cs = useCycleSettingsStore()
   const cycleConfig: CycleConfig = useMemo(() => {
     const latest = history?.cycles[history.cycles.length - 1]
-    const avgLen = history?.avg ?? 28
+    const cycleLength = cs.cycleLength ?? history?.avg ?? 28
     if (latest) {
-      return { lastPeriodStart: latest.startDate, cycleLength: avgLen, periodLength: 5, lutealPhase: 14 }
+      return { lastPeriodStart: latest.startDate, cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
     }
     const d = new Date()
     d.setDate(d.getDate() - 10)
-    return { lastPeriodStart: toDateStr(d), cycleLength: 28, periodLength: 5, lutealPhase: 14 }
-  }, [history])
+    return { lastPeriodStart: toDateStr(d), cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
+  }, [history, cs.cycleLength, cs.periodLength, cs.lutealPhase])
 
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
   const modeColor = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : brand.prePregnancy

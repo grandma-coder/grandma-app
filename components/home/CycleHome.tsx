@@ -16,6 +16,7 @@ import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { MonoCaps } from '../ui/Typography'
@@ -48,15 +49,20 @@ export function CycleHome() {
   // every render (string formatting via toLocaleDateString twice per call).
   const microLabel = useMemo(() => getMicroLabel(), [])
 
+  // User cycle settings override the measured average + hardcoded defaults.
+  const cycleSettings = useCycleSettingsStore()
   const cycleConfig: CycleConfig = (() => {
     const latest = history?.cycles[history.cycles.length - 1]
-    const avgLen = history?.avg ?? 28
+    // Declared cycle length wins; else the measured average; else 28.
+    const cycleLength = cycleSettings.cycleLength ?? history?.avg ?? 28
+    const periodLength = cycleSettings.periodLength
+    const lutealPhase = cycleSettings.lutealPhase
     if (latest) {
-      return { lastPeriodStart: latest.startDate, cycleLength: avgLen, periodLength: 5, lutealPhase: 14 }
+      return { lastPeriodStart: latest.startDate, cycleLength, periodLength, lutealPhase }
     }
     const d = new Date()
     d.setDate(d.getDate() - 10)
-    return { lastPeriodStart: toDateStr(d), cycleLength: 28, periodLength: 5, lutealPhase: 14 }
+    return { lastPeriodStart: toDateStr(d), cycleLength, periodLength, lutealPhase }
   })()
 
   const info = getCycleInfo(cycleConfig, toDateStr(new Date()))

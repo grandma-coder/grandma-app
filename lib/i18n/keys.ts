@@ -1604,6 +1604,22 @@ export interface TranslationKeys {
   cycleCalendar_logSheet_sexDrive: string
   cycleCalendar_logSheet_clots: string
 
+  cycleSettings_rowTitle: string
+  cycleSettings_title: string
+  cycleSettings_subtitle: string
+  cycleSettings_intro: string
+  cycleSettings_sectionCycle: string
+  cycleSettings_sectionPhases: string
+  cycleSettings_autoLabel: string
+  cycleSettings_autoDesc: string
+  cycleSettings_cycleLength: string
+  cycleSettings_periodLength: string
+  cycleSettings_periodDesc: string
+  cycleSettings_lutealLength: string
+  cycleSettings_lutealDesc: string
+  cycleSettings_days: string
+  cycleSettings_footer: string
+
   cycleLogForm_cm_dry: string
   cycleLogForm_cm_sticky: string
   cycleLogForm_cm_creamy: string

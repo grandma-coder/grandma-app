@@ -289,6 +289,14 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/(tabs)')}
                 />
               )}
+              {isPrePregBehavior && (
+                <DiffuseListRow
+                  icon={<AnimatedSticker type="Flower" size={18} petal="#F2B2C7" center="#F5D652" />}
+                  title={t('cycleSettings_rowTitle')}
+                  showArrow
+                  onPress={() => router.push('/profile/cycle-settings')}
+                />
+              )}
 
               {showKidsItems && (
                 <DiffuseListRow
@@ -384,6 +392,13 @@ export default function ProfileScreen() {
                   label="Cycle"
                   value="Tracking"
                   onPress={() => router.push('/(tabs)')}
+                />
+              )}
+              {isPrePregBehavior && (
+                <StatRow
+                  icon={<AnimatedSticker type="Flower" size={18} petal="#F2B2C7" center="#F5D652" />}
+                  label={t('cycleSettings_rowTitle')}
+                  onPress={() => router.push('/profile/cycle-settings')}
                 />
               )}
 

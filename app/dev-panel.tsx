@@ -77,6 +77,7 @@ const PROFILE_SCREENS: Array<[string, string]> = [
   ['Profile · Help & FAQ (Phase 1)', '/profile/help'],
   ['Profile · About (Phase 1)', '/profile/about'],
   ['Profile · Pregnancy', '/profile/pregnancy'],
+  ['Profile · Cycle settings (Phase 2)', '/profile/cycle-settings'],
   ['Profile · Settings', '/profile/settings'],
 ]
 
