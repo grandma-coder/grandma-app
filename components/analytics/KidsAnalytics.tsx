@@ -70,6 +70,7 @@ import {
   SkipForward,
   Zap,
   X,
+  FileText,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
@@ -824,6 +825,35 @@ export function KidsAnalytics() {
             ))}
           </ScrollView>
         )}
+
+        {/* Report for doctor — pediatric PDF export (Phase 2). */}
+        {selectedChildId ? (
+          <Pressable
+            onPress={() => router.push(`/child-report?childId=${selectedChildId}`)}
+            style={({ pressed }) => [
+              styles.reportCard,
+              {
+                backgroundColor: diffuse ? dt.colors.surface : colors.surface,
+                borderColor: diffuse ? dt.colors.line : colors.border,
+                borderRadius: radius.lg,
+              },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <View style={[styles.reportIcon, { backgroundColor: diffuse ? dt.stickers.blueSoft : stickers.blueSoft }]}>
+              <FileText size={18} color={diffuse ? dt.stickers.blue : stickers.blue} strokeWidth={2} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.reportTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
+                {t('report_cardTitle')}
+              </Text>
+              <Text style={[styles.reportDesc, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+                {t('report_cardDesc')}
+              </Text>
+            </View>
+            <ChevronRight size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.5 : 2} />
+          </Pressable>
+        ) : null}
 
         {isLoading && (
           <View style={styles.loadingWrap}>
@@ -5318,6 +5348,10 @@ const styles = StyleSheet.create({
 
   // Loading / Error / Empty
   loadingWrap: { alignItems: 'center', gap: 10, paddingVertical: 32 },
+  reportCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, marginTop: 14, borderWidth: 1 },
+  reportIcon: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  reportTitle: { fontSize: 15 },
+  reportDesc: { fontSize: 12, marginTop: 2, lineHeight: 16 },
   loadingText: { fontSize: 14, fontFamily: font.bodyMedium },
   errorCard: { padding: 20, alignItems: 'center', gap: 10 },
   errorText: { fontSize: 15, fontFamily: font.bodySemiBold },

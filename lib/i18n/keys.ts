@@ -2904,6 +2904,28 @@ export interface TranslationKeys {
   healthHistory_weightKg: string
   healthHistory_heightCm: string
   healthHistory_headCm: string
+  report_cardTitle: string
+  report_cardDesc: string
+  report_title: string
+  report_intro: string
+  report_sectionGrowth: string
+  report_sectionVaccines: string
+  report_sectionRoutine: string
+  report_weight: string
+  report_height: string
+  report_head: string
+  report_growth: string
+  report_vaccines: string
+  report_feeding: string
+  report_sleep: string
+  report_none: string
+  report_percentileSuffix: string
+  report_generate: string
+  report_noChild: string
+  report_disclaimer: string
+  report_errorTitle: string
+  report_errorRebuild: string
+  report_errorGeneric: string
   healthHistory_noGrowthEntries: string
   healthHistory_noMilestones: string
   healthHistory_totalEntries: string

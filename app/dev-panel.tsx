@@ -57,6 +57,7 @@ const COMMON_SCREENS: Array<[string, string]> = [
   ['Legal · Privacy Policy (Phase 1)', '/legal/privacy'],
   ['Legal · Terms of Use (Phase 1)', '/legal/terms'],
   ['App lock · set PIN (Phase 1)', '/lock?mode=set'],
+  ['Pediatric report (Phase 2)', '/child-report'],
 ]
 
 const PROFILE_SCREENS: Array<[string, string]> = [

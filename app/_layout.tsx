@@ -664,6 +664,7 @@ export default function RootLayout() {
           <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
           <Stack.Screen name="connections" />
           <Stack.Screen name="lock" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
+          <Stack.Screen name="child-report" options={{ presentation: 'modal' }} />
         </Stack>
         </NavThemeProvider>
         {/* App-lock overlay (WS2d) — covers everything while locked. Rendered
