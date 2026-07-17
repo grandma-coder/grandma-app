@@ -58,6 +58,7 @@ export const DIFFUSE_LOG_CHARACTER: Record<string, CharacterName> = {
   basal_temp: 'temperature', lh: 'water', cervical_mucus: 'water',
   intercourse: 'heart', symptom: 'activity',
   period_start: 'period', period_end: 'period', ovulation: 'ovulation',
+  pregnancy_test: 'ovulation', sex_drive: 'heart', clots: 'period',
   // pregnancy
   weight: 'growth', kick_count: 'kick', contraction: 'contraction',
   water: 'water', exercise: 'activity', vitamins: 'medicine', kegel: 'soothe',
@@ -78,6 +79,7 @@ export function diffuseLogHue(type: string): string {
     basal_temp: stickers.blue, lh: stickers.yellow, cervical_mucus: stickers.green,
     intercourse: stickers.pink, symptom: stickers.peach,
     period_start: stickers.coral, period_end: stickers.coral, ovulation: stickers.peach,
+    pregnancy_test: stickers.peach, sex_drive: stickers.pink, clots: stickers.coral,
     // pregnancy
     weight: stickers.blue, kick_count: stickers.pink, contraction: stickers.coral,
     water: stickers.blue, exercise: stickers.green, vitamins: stickers.green,

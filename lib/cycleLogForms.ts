@@ -14,6 +14,9 @@ export type FormId =
   | 'cm'
   | 'intimacy'
   | 'ovulation'
+  | 'pregnancy_test'
+  | 'sex_drive'
+  | 'clots'
 
 const PHASE_PILL: Record<FormId, Record<CyclePhase, string>> = {
   period_start: {
@@ -70,6 +73,24 @@ const PHASE_PILL: Record<FormId, Record<CyclePhase, string>> = {
     ovulation:    'Fertile window peak',
     luteal:       'Late confirmation',
   },
+  pregnancy_test: {
+    menstruation: 'Most reliable after a missed period',
+    follicular:   'Most reliable after a missed period',
+    ovulation:    'Too early — wait until your period is due',
+    luteal:       'Most accurate once your period is late',
+  },
+  sex_drive: {
+    menstruation: 'Libido often dips',
+    follicular:   'Libido often rising',
+    ovulation:    'Libido often peaks',
+    luteal:       'Libido varies',
+  },
+  clots: {
+    menstruation: 'Common on heavier days',
+    follicular:   'Logged for your records',
+    ovulation:    'Unusual outside a period',
+    luteal:       'Logged for your records',
+  },
 }
 
 export function phaseHint(form: FormId, phase: CyclePhase): string {
@@ -86,6 +107,9 @@ const IDLE_LABEL: Record<FormId, string> = {
   cm:           'Save mucus',
   intimacy:     'Save',
   ovulation:    'Confirm ovulation',
+  pregnancy_test: 'Save result',
+  sex_drive:    'Save',
+  clots:        'Save',
 }
 
 export function saveLabel(

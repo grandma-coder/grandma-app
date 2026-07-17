@@ -1580,6 +1580,30 @@ export interface TranslationKeys {
   cycleLogForm_lh_faint: string
   cycleLogForm_lh_positive: string
   cycleLogForm_lh_peak: string
+  cycleLogForm_pregTestTitle: string
+  cycleLogForm_pregTest_negative: string
+  cycleLogForm_pregTest_faint: string
+  cycleLogForm_pregTest_positive: string
+  cycleLogForm_sexDriveTitle: string
+  cycleLogForm_sexDrive_none: string
+  cycleLogForm_sexDrive_low: string
+  cycleLogForm_sexDrive_medium: string
+  cycleLogForm_sexDrive_high: string
+  cycleLogForm_clotsTitle: string
+  cycleLogForm_clots_none: string
+  cycleLogForm_clots_small: string
+  cycleLogForm_clots_medium: string
+  cycleLogForm_clots_large: string
+  cycleCalendar_logEntry_pregTest: string
+  cycleCalendar_logEntry_pregTestSub: string
+  cycleCalendar_logEntry_sexDrive: string
+  cycleCalendar_logEntry_sexDriveSub: string
+  cycleCalendar_logEntry_clots: string
+  cycleCalendar_logEntry_clotsSub: string
+  cycleCalendar_logSheet_pregTest: string
+  cycleCalendar_logSheet_sexDrive: string
+  cycleCalendar_logSheet_clots: string
+
   cycleLogForm_cm_dry: string
   cycleLogForm_cm_sticky: string
   cycleLogForm_cm_creamy: string

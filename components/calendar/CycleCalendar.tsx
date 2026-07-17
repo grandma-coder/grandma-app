@@ -40,12 +40,15 @@ import {
   MoodForm,
   BbtForm,
   IntimacyForm,
+  PregnancyTestForm,
+  SexDriveForm,
+  ClotsForm,
 } from './CycleLogForms'
 import { ExamForm } from '../exams/ExamForm'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-type LogType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse' | 'exam'
+type LogType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse' | 'exam' | 'pregnancy_test' | 'sex_drive' | 'clots'
 type ViewTab = 'cycle' | 'checklist' | 'health'
 
 interface LogEntry {
@@ -62,6 +65,9 @@ const LOG_ENTRIES: LogEntry[] = [
   { id: 'intercourse',  labelKey: 'cycleCalendar_logEntry_intimacy',     subtitleKey: 'cycleCalendar_logEntry_intimacySub',    tint: 'intimacy' },
   { id: 'period_start', labelKey: 'cycleCalendar_logEntry_periodStart',  subtitleKey: 'cycleCalendar_logEntry_periodStartSub', tint: 'period' },
   { id: 'period_end',   labelKey: 'cycleCalendar_logEntry_periodEnd',    subtitleKey: 'cycleCalendar_logEntry_periodEndSub',   tint: 'period' },
+  { id: 'pregnancy_test', labelKey: 'cycleCalendar_logEntry_pregTest',   subtitleKey: 'cycleCalendar_logEntry_pregTestSub',   tint: 'ovulation' },
+  { id: 'sex_drive',    labelKey: 'cycleCalendar_logEntry_sexDrive',     subtitleKey: 'cycleCalendar_logEntry_sexDriveSub',   tint: 'intimacy' },
+  { id: 'clots',        labelKey: 'cycleCalendar_logEntry_clots',        subtitleKey: 'cycleCalendar_logEntry_clotsSub',      tint: 'period' },
   { id: 'exam',         labelKey: 'cycleCalendar_logEntry_exam',         subtitleKey: 'cycleCalendar_logEntry_examSub',        tint: 'exam' },
 ]
 
@@ -357,6 +363,15 @@ export function CycleCalendar() {
       </LogSheet>
       <LogSheet visible={sheetType === 'intercourse'} title={t('cycleCalendar_logSheet_intimacy')} onClose={() => setSheetType(null)}>
         <IntimacyForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'pregnancy_test'} title={t('cycleCalendar_logSheet_pregTest')} onClose={() => setSheetType(null)}>
+        <PregnancyTestForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'sex_drive'} title={t('cycleCalendar_logSheet_sexDrive')} onClose={() => setSheetType(null)}>
+        <SexDriveForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'clots'} title={t('cycleCalendar_logSheet_clots')} onClose={() => setSheetType(null)}>
+        <ClotsForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'exam'} title={t('cycleCalendar_logSheet_exam')} onClose={() => setSheetType(null)}>
         <ExamForm behavior="pre-pregnancy" date={selectedDate} onSaved={() => setSheetType(null)} />

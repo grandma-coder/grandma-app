@@ -85,6 +85,11 @@ export function logSticker(type: string, size: number, _isDark: boolean): ReactN
     case 'heartbeat':      return <StickerBox size={size}><LogHeartbeat size={size} /></StickerBox>
     case 'ultrasound':     return <StickerBox size={size}><LogUltrasound size={size} /></StickerBox>
 
+    // ─── cycle completeness (Phase 2) ─────────────────────────────
+    case 'pregnancy_test': return <StickerBox size={size}><LogOvulation size={size} /></StickerBox>
+    case 'sex_drive':      return <StickerBox size={size}><LogIntimacy size={size} /></StickerBox>
+    case 'clots':          return <StickerBox size={size}><LogPeriodStart size={size} /></StickerBox>
+
     // ─── fallback ─────────────────────────────────────────────────
     default:               return <StickerBox size={size}><LogNote size={size} /></StickerBox>
   }

@@ -33,6 +33,11 @@ export interface CycleLogRow {
     | 'energy'
     | 'weight'
     | 'note'
+    | 'lh'
+    | 'opk_scan'
+    | 'pregnancy_test'
+    | 'sex_drive'
+    | 'clots'
   value: string | null
   notes: string | null
   created_at: string

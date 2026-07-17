@@ -1051,6 +1051,194 @@ export function OvulationForm({
   )
 }
 
+// ─── PregnancyTestForm ──────────────────────────────────────────────────────
+const PREG_TEST_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
+  { id: 'negative', labelKey: 'cycleLogForm_pregTest_negative' },
+  { id: 'faint',    labelKey: 'cycleLogForm_pregTest_faint' },
+  { id: 'positive', labelKey: 'cycleLogForm_pregTest_positive' },
+]
+
+export function PregnancyTestForm({
+  date, phase, onSaved,
+}: { date: string; phase: CyclePhase; onSaved: () => void }) {
+  const { stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const { t } = useTranslation()
+  const [value, setValue] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const invalidate = useInvalidate()
+  const { accent, tint, ink } = phaseColors(phase, stickers)
+
+  async function save() {
+    if (!value) return
+    setSaving(true)
+    try {
+      await replaceSingleLog(date, 'pregnancy_test', value)
+      await invalidate()
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <LogFormShell
+      title={t('cycleLogForm_pregTestTitle')}
+      subline={formatDate(date)}
+      phaseHintText={phaseHint('pregnancy_test', phase)}
+      phaseAccent={accent}
+      phaseTint={tint}
+      phaseInk={ink}
+      saveLabel={saveLabel('pregnancy_test')}
+      saveDisabled={!value}
+      saving={saving}
+      onSave={save}
+    >
+      <View style={{ gap: 6 }}>
+        {PREG_TEST_OPTIONS.map((opt) => (
+          <StickerChip
+            key={opt.id}
+            sticker={<Character name="ovulation" size={22} color={diffuse ? dt.colors.ink3 : accent} />}
+            label={t(opt.labelKey)}
+            selected={value === opt.id}
+            accent={accent}
+            onPress={() => setValue(opt.id)}
+          />
+        ))}
+      </View>
+    </LogFormShell>
+  )
+}
+
+// ─── SexDriveForm ───────────────────────────────────────────────────────────
+const SEX_DRIVE_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
+  { id: 'none',   labelKey: 'cycleLogForm_sexDrive_none' },
+  { id: 'low',    labelKey: 'cycleLogForm_sexDrive_low' },
+  { id: 'medium', labelKey: 'cycleLogForm_sexDrive_medium' },
+  { id: 'high',   labelKey: 'cycleLogForm_sexDrive_high' },
+]
+
+export function SexDriveForm({
+  date, phase, onSaved,
+}: { date: string; phase: CyclePhase; onSaved: () => void }) {
+  const { stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const { t } = useTranslation()
+  const [value, setValue] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const invalidate = useInvalidate()
+  const { accent, tint, ink } = phaseColors(phase, stickers)
+
+  async function save() {
+    if (!value) return
+    setSaving(true)
+    try {
+      await replaceSingleLog(date, 'sex_drive', value)
+      await invalidate()
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <LogFormShell
+      title={t('cycleLogForm_sexDriveTitle')}
+      subline={formatDate(date)}
+      phaseHintText={phaseHint('sex_drive', phase)}
+      phaseAccent={accent}
+      phaseTint={tint}
+      phaseInk={ink}
+      saveLabel={saveLabel('sex_drive')}
+      saveDisabled={!value}
+      saving={saving}
+      onSave={save}
+    >
+      <View style={{ gap: 6 }}>
+        {SEX_DRIVE_OPTIONS.map((opt) => (
+          <StickerChip
+            key={opt.id}
+            sticker={<Character name="heart" size={22} color={diffuse ? dt.colors.ink3 : accent} />}
+            label={t(opt.labelKey)}
+            selected={value === opt.id}
+            accent={accent}
+            onPress={() => setValue(opt.id)}
+          />
+        ))}
+      </View>
+    </LogFormShell>
+  )
+}
+
+// ─── ClotsForm ──────────────────────────────────────────────────────────────
+const CLOTS_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
+  { id: 'none',   labelKey: 'cycleLogForm_clots_none' },
+  { id: 'small',  labelKey: 'cycleLogForm_clots_small' },
+  { id: 'medium', labelKey: 'cycleLogForm_clots_medium' },
+  { id: 'large',  labelKey: 'cycleLogForm_clots_large' },
+]
+
+export function ClotsForm({
+  date, phase, onSaved,
+}: { date: string; phase: CyclePhase; onSaved: () => void }) {
+  const { stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const { t } = useTranslation()
+  const [value, setValue] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const invalidate = useInvalidate()
+  const { accent, tint, ink } = phaseColors(phase, stickers)
+
+  async function save() {
+    if (!value) return
+    setSaving(true)
+    try {
+      await replaceSingleLog(date, 'clots', value)
+      await invalidate()
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <LogFormShell
+      title={t('cycleLogForm_clotsTitle')}
+      subline={formatDate(date)}
+      phaseHintText={phaseHint('clots', phase)}
+      phaseAccent={accent}
+      phaseTint={tint}
+      phaseInk={ink}
+      saveLabel={saveLabel('clots')}
+      saveDisabled={!value}
+      saving={saving}
+      onSave={save}
+    >
+      <View style={{ gap: 6 }}>
+        {CLOTS_OPTIONS.map((opt) => (
+          <StickerChip
+            key={opt.id}
+            sticker={<Character name="period" size={22} color={diffuse ? dt.colors.ink3 : accent} />}
+            label={t(opt.labelKey)}
+            selected={value === opt.id}
+            accent={accent}
+            onPress={() => setValue(opt.id)}
+          />
+        ))}
+      </View>
+    </LogFormShell>
+  )
+}
+
 // ─── Styles ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   shell: { padding: 0, gap: 12 },
