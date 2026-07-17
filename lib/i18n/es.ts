@@ -1910,6 +1910,11 @@ export const es: TranslationKeys = {
   lock_setSubtitle: "You’ll use this to unlock the app.",
   lock_biometricPrompt: "Unlock grandma.app",
 
+  lock_forgot: "Forgot your PIN?",
+  lock_forgotTitle: "Forgot your PIN?",
+  lock_forgotBody: "To reset it, sign out and sign back in. Your data stays safe — you can set a new PIN afterward.",
+  lock_forgotConfirm: "Sign out",
+
   account_emailPlaceholder: "Dirección de correo",
   account_newPasswordPlaceholder: "Nueva contraseña",
   account_minChars: "Mínimo 6 caracteres",

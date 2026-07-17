@@ -2108,6 +2108,10 @@ export interface TranslationKeys {
   lock_confirmPin: string
   lock_setSubtitle: string
   lock_biometricPrompt: string
+  lock_forgot: string
+  lock_forgotTitle: string
+  lock_forgotBody: string
+  lock_forgotConfirm: string
   account_emailPlaceholder: string
   account_newPasswordPlaceholder: string
   account_minChars: string

@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { View, Text, Pressable, StyleSheet, Vibration } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Vibration, Alert } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Delete, Fingerprint, ScanFace } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -19,8 +19,9 @@ import { Display, DisplayItalic } from '../components/ui/Typography'
 import { GrandmaLogo } from '../components/ui/GrandmaLogo'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { useAppLockStore } from '../store/useAppLockStore'
+import { signOut } from '../lib/signOut'
 import {
-  verifyPin, setPin, authenticateBiometric, isBiometricAvailable, biometricLabel,
+  verifyPin, setPin, clearPin, authenticateBiometric, isBiometricAvailable, biometricLabel,
 } from '../lib/appLock'
 
 const PIN_LENGTH = 4
@@ -120,6 +121,24 @@ export default function LockScreen() {
     setEntry((e) => e.slice(0, -1))
   }
 
+  // Escape hatch: forgot the PIN with no biometric. Signing out clears the lock
+  // and PIN; the account data stays protected behind login, and they can set a
+  // fresh PIN after re-authenticating.
+  function handleForgot() {
+    Alert.alert(t('lock_forgotTitle'), t('lock_forgotBody'), [
+      { text: t('common_cancel'), style: 'cancel' },
+      {
+        text: t('lock_forgotConfirm'), style: 'destructive',
+        onPress: async () => {
+          await clearPin()
+          setEnabled(false)
+          unlock()
+          await signOut()
+        },
+      },
+    ])
+  }
+
   const BioIcon = bioType === 'face' ? ScanFace : Fingerprint
 
   return (
@@ -158,17 +177,26 @@ export default function LockScreen() {
           </View>
         ))}
         <View style={styles.padRow}>
-          {/* biometric shortcut (verify mode only) */}
+          {/* biometric shortcut (verify mode only) — bare slot, no border */}
           {!isSet && bioType ? (
-            <Pressable onPress={tryBiometric} style={styles.padKey} hitSlop={6}>
-              <BioIcon size={26} color={accent} strokeWidth={1.8} />
+            <Pressable onPress={tryBiometric} style={({ pressed }) => [styles.padSlot, pressed && { opacity: 0.6 }]} hitSlop={6}>
+              <BioIcon size={28} color={accent} strokeWidth={1.8} />
             </Pressable>
-          ) : <View style={styles.padKey} />}
+          ) : <View style={styles.padSlot} />}
           <PadKey label="0" onPress={() => press('0')} ink={ink} keyBg={diffuse ? dt.colors.surface : colors.surface} border={diffuse ? dt.colors.line : colors.border} font={diffuse ? diffuseTypeRole.numHero : font.display} radius={radius.full} />
-          <Pressable onPress={backspace} style={styles.padKey} hitSlop={6}>
-            <Delete size={24} color={inkMuted} strokeWidth={1.8} />
+          <Pressable onPress={backspace} style={({ pressed }) => [styles.padSlot, pressed && { opacity: 0.6 }]} hitSlop={6}>
+            <Delete size={26} color={inkMuted} strokeWidth={1.8} />
           </Pressable>
         </View>
+
+        {/* Forgot PIN — escape hatch (verify mode only) */}
+        {!isSet && (
+          <Pressable onPress={handleForgot} hitSlop={8} style={({ pressed }) => [styles.forgot, pressed && { opacity: 0.6 }]}>
+            <Text style={[styles.forgotText, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+              {t('lock_forgot')}
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   )
@@ -200,5 +228,11 @@ const styles = StyleSheet.create({
     width: KEY, height: KEY, alignItems: 'center', justifyContent: 'center',
     borderWidth: 1,
   },
+  // Functional keys (backspace / biometric / empty) — same footprint, no chrome.
+  padSlot: {
+    width: KEY, height: KEY, alignItems: 'center', justifyContent: 'center',
+  },
   padKeyText: { fontSize: 28 },
+  forgot: { alignSelf: 'center', marginTop: 20, paddingVertical: 6, paddingHorizontal: 12 },
+  forgotText: { fontSize: 13, textDecorationLine: 'underline' },
 })
