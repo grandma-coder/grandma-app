@@ -2092,6 +2092,22 @@ export interface TranslationKeys {
   account_sectionPassword: string
   account_sectionSessions: string
   account_sectionDanger: string
+  account_sectionAppLock: string
+  account_appLockLabel: string
+  account_appLockDesc: string
+  account_changePin: string
+  account_biometricLabel: string
+  account_biometricDesc: string
+  account_lockDisableTitle: string
+  account_lockDisableBody: string
+  account_lockDisableConfirm: string
+  account_lockDisabledTitle: string
+  account_lockDisabledBody: string
+  lock_enterPin: string
+  lock_setPin: string
+  lock_confirmPin: string
+  lock_setSubtitle: string
+  lock_biometricPrompt: string
   account_emailPlaceholder: string
   account_newPasswordPlaceholder: string
   account_minChars: string

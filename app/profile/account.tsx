@@ -2,13 +2,13 @@
  * Account & Security — cream-paper redesign.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
-  View, TextInput, Pressable, ScrollView, Alert, StyleSheet, Text,
+  View, TextInput, Pressable, ScrollView, Alert, StyleSheet, Text, Switch,
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import {
-  Mail, Lock, Eye, EyeOff, ChevronRight, KeyRound, LogOut, Trash2,
+  Mail, Lock, Eye, EyeOff, ChevronRight, KeyRound, LogOut, Trash2, ShieldCheck,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
@@ -21,6 +21,8 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { Heart, Star, Moon, Cross, Sparkle } from '../../components/ui/Stickers'
+import { useAppLockStore } from '../../store/useAppLockStore'
+import { hasPin, clearPin, isBiometricAvailable } from '../../lib/appLock'
 
 export default function AccountScreen() {
   const { colors, font, stickers, isDark } = useTheme()
@@ -39,11 +41,44 @@ export default function AccountScreen() {
   const [showPassword, setShowPassword] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  // App-lock (WS2d)
+  const lockEnabled = useAppLockStore((s) => s.enabled)
+  const biometricEnabled = useAppLockStore((s) => s.biometricEnabled)
+  const setLockEnabled = useAppLockStore((s) => s.setEnabled)
+  const setBiometricEnabled = useAppLockStore((s) => s.setBiometricEnabled)
+  const [pinSet, setPinSet] = useState(false)
+  const [biometricAvail, setBiometricAvail] = useState(false)
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setEmail(session.user.email ?? '')
     })
+    isBiometricAvailable().then(setBiometricAvail)
   }, [])
+
+  // Re-read PIN state when returning from the set-PIN screen.
+  useFocusEffect(useCallback(() => { hasPin().then(setPinSet) }, []))
+
+  function handleToggleLock(next: boolean) {
+    if (next) {
+      // Enabling requires a PIN — send them to set one; the set screen flips
+      // `enabled` on success.
+      router.push('/lock?mode=set')
+    } else {
+      Alert.alert(t('account_lockDisableTitle'), t('account_lockDisableBody'), [
+        { text: t('common_cancel'), style: 'cancel' },
+        {
+          text: t('account_lockDisableConfirm'), style: 'destructive',
+          onPress: async () => {
+            await clearPin()
+            setLockEnabled(false)
+            setPinSet(false)
+            toast.show({ title: t('account_lockDisabledTitle'), message: t('account_lockDisabledBody') })
+          },
+        },
+      ])
+    }
+  }
 
   async function handleChangeEmail() {
     if (!email.trim() || !email.includes('@')) return Alert.alert('Invalid email')
@@ -239,6 +274,66 @@ export default function AccountScreen() {
           </Pressable>
         </View>
 
+        {/* App Lock (WS2d) */}
+        <SectionLabel
+          sticker={<Cross size={20} fill={stickers.blue} />}
+          diffuseIcon={<ShieldCheck size={12} color={dt.colors.ink3} strokeWidth={1.5} />}
+        >{t('account_sectionAppLock')}</SectionLabel>
+        <View style={[styles.card, diffuse && styles.cardFlat, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={styles.toggleRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.toggleLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
+                {t('account_appLockLabel')}
+              </Text>
+              <Text style={[styles.toggleDesc, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+                {t('account_appLockDesc')}
+              </Text>
+            </View>
+            <Switch
+              value={lockEnabled && pinSet}
+              onValueChange={handleToggleLock}
+              trackColor={{ false: diffuse ? dt.colors.line2 : colors.borderStrong, true: diffuse ? dt.colors.ink : stickers.blue }}
+              thumbColor={diffuse ? dt.colors.surface : '#FFFFFF'}
+              ios_backgroundColor={diffuse ? dt.colors.line2 : colors.borderStrong}
+            />
+          </View>
+
+          {lockEnabled && pinSet && (
+            <>
+              <View style={[styles.divider, { backgroundColor: paperBorder }]} />
+              <Pressable onPress={() => router.push('/lock?mode=set')} style={styles.linkRow}>
+                <Text style={[styles.toggleLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+                  {t('account_changePin')}
+                </Text>
+                <ChevronRight size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.5 : 2} />
+              </Pressable>
+
+              {biometricAvail && (
+                <>
+                  <View style={[styles.divider, { backgroundColor: paperBorder }]} />
+                  <View style={styles.toggleRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.toggleLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
+                        {t('account_biometricLabel')}
+                      </Text>
+                      <Text style={[styles.toggleDesc, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+                        {t('account_biometricDesc')}
+                      </Text>
+                    </View>
+                    <Switch
+                      value={biometricEnabled}
+                      onValueChange={setBiometricEnabled}
+                      trackColor={{ false: diffuse ? dt.colors.line2 : colors.borderStrong, true: diffuse ? dt.colors.ink : stickers.blue }}
+                      thumbColor={diffuse ? dt.colors.surface : '#FFFFFF'}
+                      ios_backgroundColor={diffuse ? dt.colors.line2 : colors.borderStrong}
+                    />
+                  </View>
+                </>
+              )}
+            </>
+          )}
+        </View>
+
         {/* Sessions */}
         <SectionLabel
           sticker={<Moon size={20} fill={stickers.lilac} />}
@@ -328,6 +423,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     elevation: 0,
   },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  toggleLabel: { fontSize: 15 },
+  toggleDesc: { fontSize: 12, marginTop: 2, lineHeight: 16 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  divider: { height: 1, marginHorizontal: -18 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',

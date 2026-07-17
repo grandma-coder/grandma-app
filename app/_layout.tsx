@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Text as RNText, TextInput as RNTextInput } from 'react-native'
+import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import * as Font from 'expo-font'
@@ -58,6 +58,9 @@ import { useChildStore } from '../store/useChildStore'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
 import { useConsentStore } from '../store/useConsentStore'
+import { useAppLockStore } from '../store/useAppLockStore'
+import { hasPin, isBiometricInFlight } from '../lib/appLock'
+import LockScreen from './lock'
 import { useCaregiverStore } from '../store/useCaregiverStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { useDevStore } from '../store/useDevStore'
@@ -211,6 +214,12 @@ export default function RootLayout() {
   // Phase 1 consent gate — has the user agreed to health-data processing?
   const hasConsented = useConsentStore((s) => s.consentedAt !== null)
   const consentHydrated = useConsentStore((s) => s.hydrated)
+
+  // Phase 1 WS2d — app-lock. When enabled, the lock overlay covers the app while
+  // `locked` is true; re-lock when the app returns from background.
+  const lockEnabled = useAppLockStore((s) => s.enabled)
+  const lockHydrated = useAppLockStore((s) => s.hydrated)
+  const isLocked = useAppLockStore((s) => s.locked)
 
   // ─── Auth listener ────────────────────────────────────────────────────────
   //
@@ -550,6 +559,39 @@ export default function RootLayout() {
   // journey types: kids, pregnancy, pre-pregnancy) OR has children in DB.
   const hasCompletedOnboarding = enrolledBehaviors.length > 0 || hasChildren
 
+  // ─── App-lock foreground gate (WS2d) ──────────────────────────────────────
+  // Re-lock whenever the app comes back to the foreground from background/inactive.
+  // Skip transitions caused by our own biometric prompt (the Face ID sheet
+  // backgrounds the app, which would otherwise re-lock right after unlock).
+  useEffect(() => {
+    if (!lockEnabled) return
+    let prev = AppState.currentState
+    const sub = AppState.addEventListener('change', (next) => {
+      if (
+        (prev === 'background' || prev === 'inactive') &&
+        next === 'active' &&
+        !isBiometricInFlight()
+      ) {
+        useAppLockStore.getState().lock()
+      }
+      prev = next
+    })
+    return () => sub.remove()
+  }, [lockEnabled])
+
+  // Lockout self-heal: if lock is enabled in the persisted config but no PIN
+  // actually exists in the keychain (e.g. reinstall / restore wiped it), clear
+  // the flag so the user isn't trapped behind a PIN pad that can never succeed.
+  useEffect(() => {
+    if (!lockHydrated || !lockEnabled) return
+    hasPin().then((exists) => {
+      if (!exists) {
+        useAppLockStore.getState().setEnabled(false)
+        useAppLockStore.getState().unlock()
+      }
+    })
+  }, [lockHydrated, lockEnabled])
+
   useEffect(() => {
     if (loading || !behaviorHydrated) return
 
@@ -594,7 +636,7 @@ export default function RootLayout() {
   }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode, devActive, hasConsented])
 
   // ─── Loading state ────────────────────────────────────────────────────────
-  if (loading || !behaviorHydrated || !modeHydrated || !consentHydrated || !fontsLoaded) {
+  if (loading || !behaviorHydrated || !modeHydrated || !consentHydrated || !lockHydrated || !fontsLoaded) {
     return <LoadingScreen />
   }
 
@@ -621,8 +663,16 @@ export default function RootLayout() {
           <Stack.Screen name="profile" />
           <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
           <Stack.Screen name="connections" />
+          <Stack.Screen name="lock" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
         </Stack>
         </NavThemeProvider>
+        {/* App-lock overlay (WS2d) — covers everything while locked. Rendered
+            outside the router so it can't be swiped away; verify mode by default. */}
+        {lockEnabled && isLocked && (
+          <View style={StyleSheet.absoluteFill}>
+            <LockScreen />
+          </View>
+        )}
         <DevModeBanner />
         </SavedToastProvider>
         </DevPanelProvider>
