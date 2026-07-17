@@ -1,5 +1,6 @@
 import { router, publicProcedure } from "../trpc"
 import { usersRouter } from "./users"
+import { metricsRouter } from "./metrics"
 
 /**
  * Root app router. Feature routers are added per phase.
@@ -8,6 +9,7 @@ import { usersRouter } from "./users"
 export const appRouter = router({
   ping: publicProcedure.query(() => "pong"),
   users: usersRouter,
+  metrics: metricsRouter,
 })
 
 export type AppRouter = typeof appRouter
