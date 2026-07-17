@@ -221,6 +221,20 @@ export default function JourneyScreen() {
             {isAddMode ? t('onboardingJourney_addSubtitle') : t('onboardingJourney_subtitle')}
           </Text>
 
+          {/* Social proof — hairline row, no fill (Diffuse aesthetic) */}
+          {!isAddMode && (
+            <View style={[dStyles.socialProof, { borderColor: dt.colors.line }]}>
+              <View style={dStyles.socialAvatars}>
+                <View style={[dStyles.avatarDot, { backgroundColor: dt.stickers.pink, borderColor: dt.colors.bg }]} />
+                <View style={[dStyles.avatarDot, { backgroundColor: dt.stickers.lilac, borderColor: dt.colors.bg, marginLeft: -8 }]} />
+                <View style={[dStyles.avatarDot, { backgroundColor: dt.stickers.blue, borderColor: dt.colors.bg, marginLeft: -8 }]} />
+              </View>
+              <Text style={[dStyles.socialText, { color: dt.colors.ink2, fontFamily: diffuseFont.body }]}>
+                {t('onboardingJourney_socialProof')}
+              </Text>
+            </View>
+          )}
+
           {/* Blob field — free-floating bloom circles via the shared BlobPicker
               primitive. Wired to the existing multi-select toggle: selectedKeys
               drives the bright/scaled state, disabledKeys dims already-enrolled
@@ -307,6 +321,20 @@ export default function JourneyScreen() {
         <Body size={15} color={ink3} style={styles.subtitle}>
           {isAddMode ? t('onboardingJourney_addSubtitle') : t('onboardingJourney_subtitle')}
         </Body>
+
+        {/* Social proof — trust cue before the first commitment (first-time only) */}
+        {!isAddMode && (
+          <View style={[styles.socialProof, { backgroundColor: getModeColorSoft('pre', isDark), borderColor: paperBorder, borderRadius: radius.md }]}>
+            <View style={styles.socialAvatars}>
+              <View style={[styles.avatarDot, { backgroundColor: stickers.pink, borderColor: paper }]} />
+              <View style={[styles.avatarDot, { backgroundColor: stickers.lilac, borderColor: paper, marginLeft: -8 }]} />
+              <View style={[styles.avatarDot, { backgroundColor: stickers.blue, borderColor: paper, marginLeft: -8 }]} />
+            </View>
+            <Text style={[styles.socialText, { color: ink, fontFamily: font.bodyMedium }]}>
+              {t('onboardingJourney_socialProof')}
+            </Text>
+          </View>
+        )}
 
         {/* Journey cards */}
         <View style={styles.cards}>
@@ -395,10 +423,24 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 24 },
 
   subtitle: {
-    marginBottom: 24,
+    marginBottom: 16,
     maxWidth: 300,
     lineHeight: 22,
   },
+
+  socialProof: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    marginBottom: 20,
+    alignSelf: 'flex-start',
+  },
+  socialAvatars: { flexDirection: 'row', alignItems: 'center' },
+  avatarDot: { width: 22, height: 22, borderRadius: 11, borderWidth: 2 },
+  socialText: { fontSize: 12.5, flexShrink: 1 },
 
   cards: { gap: 12 },
 
@@ -492,6 +534,20 @@ const dStyles = StyleSheet.create({
     maxWidth: 260,
     marginTop: 12,
   },
+  socialProof: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    marginTop: 18,
+    alignSelf: 'flex-start',
+  },
+  socialAvatars: { flexDirection: 'row', alignItems: 'center' },
+  avatarDot: { width: 20, height: 20, borderRadius: 10, borderWidth: 2 },
+  socialText: { fontSize: 12.5, flexShrink: 1 },
   // Free-layout blob field; the BlobPicker inside positions blobs by CENTER
   // anchor. This wrapper just reserves the field's footprint.
   blobfield: {

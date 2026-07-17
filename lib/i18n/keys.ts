@@ -1944,6 +1944,7 @@ export interface TranslationKeys {
   cycleOnboarding_complete_title: string
   cycleOnboarding_complete_message: string
   cycleOnboarding_complete_btn: string
+  onboardingJourney_socialProof: string
 
   cycleOnboarding_predict_message: string
   cycleOnboarding_predict_fertile: string

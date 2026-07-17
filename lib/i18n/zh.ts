@@ -1771,6 +1771,7 @@ export const zh: TranslationKeys = {
   cycleOnboarding_complete_title: "You're all set!",
   cycleOnboarding_complete_message: "Grandma's got everything she needs to guide you on this beautiful journey. Your cycle insights are being personalized just for you.",
   cycleOnboarding_complete_btn: "Let's Go",
+  onboardingJourney_socialProof: "Loved by thousands of parents like you",
   cycleOnboarding_predict_message: "Based on what you shared, here’s what Grandma already sees for your cycle:",
   cycleOnboarding_predict_fertile: "Fertile window",
   cycleOnboarding_predict_ovulation: "Ovulation",
