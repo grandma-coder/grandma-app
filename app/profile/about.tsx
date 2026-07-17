@@ -114,6 +114,8 @@ export default function AboutScreen() {
           <View style={[styles.divider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <LinkRow label={t('about_terms')} onPress={() => router.push('/legal/terms')} />
           <View style={[styles.divider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
+          <LinkRow label={t('guidelines_title')} onPress={() => router.push('/profile/community-guidelines')} />
+          <View style={[styles.divider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <LinkRow label={t('about_help')} onPress={() => router.push('/profile/help')} />
           <View style={[styles.divider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <LinkRow label={t('about_contact')} onPress={() => Linking.openURL('mailto:support@grandma.app')} />

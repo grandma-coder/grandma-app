@@ -74,6 +74,7 @@ import {
   type ChannelRequest,
 } from '../../lib/channelPosts'
 import { supabase } from '../../lib/supabase'
+import { reportContent, blockUser, REPORT_REASONS, type ReportReason } from '../../lib/communitySafety'
 import { checkPhotoSafety } from '../../lib/photoSafety'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { useTranslation } from '../../lib/i18n'
@@ -644,6 +645,50 @@ export default function ChannelChat() {
     ])
   }
 
+  // ─── Community safety: report + block (WS3) ────────────────────────────────
+  function handleReportMessage(msgId: string, authorId: string) {
+    Alert.alert(
+      t('safety_reportTitle'),
+      t('safety_reportBody'),
+      [
+        ...REPORT_REASONS.map((reason: ReportReason) => ({
+          text: t(`safety_reason_${reason}` as any),
+          onPress: async () => {
+            try {
+              await reportContent({ contentType: 'channel_post', contentId: msgId, authorId, reason })
+              toast.show({ title: t('safety_reportedTitle'), message: t('safety_reportedBody') })
+            } catch (e: any) {
+              Alert.alert(t('common_error'), e.message ?? '')
+            }
+          },
+        })),
+        { text: t('common_cancel'), style: 'cancel' as const },
+      ]
+    )
+  }
+
+  function handleBlockUser(authorId: string, authorName?: string) {
+    Alert.alert(
+      t('safety_blockTitle'),
+      t('safety_blockBody', { name: authorName ?? t('channelScreen_someoneLower') }),
+      [
+        { text: t('common_cancel'), style: 'cancel' },
+        {
+          text: t('safety_blockConfirm'), style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(authorId)
+              toast.show({ title: t('safety_blockedTitle'), message: t('safety_blockedBody') })
+              load() // RLS now hides their messages — refetch
+            } catch (e: any) {
+              Alert.alert(t('common_error'), e.message ?? '')
+            }
+          },
+        },
+      ]
+    )
+  }
+
   async function handleSubmitRating() {
     if (!id || myRating === 0) return
     setSavingRating(true)
@@ -934,7 +979,10 @@ export default function ChannelChat() {
                     { text: t('channelScreen_replyingTo'), onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
                     ...(item.author_id === currentUserId ? [
                       { text: t('common_delete'), style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
-                    ] : []),
+                    ] : [
+                      { text: t('safety_report'), onPress: () => handleReportMessage(item.id, item.author_id) },
+                      { text: t('safety_block'), style: 'destructive' as const, onPress: () => handleBlockUser(item.author_id, item.author_name) },
+                    ]),
                     { text: t('common_cancel'), style: 'cancel' as const },
                   ])
                 }}

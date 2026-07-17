@@ -2360,6 +2360,40 @@ export interface TranslationKeys {
   help_a_sell: string
   legal_contents: string
   legal_hostedPrefix: string
+  safety_report: string
+  safety_block: string
+  safety_reportTitle: string
+  safety_reportBody: string
+  safety_reportedTitle: string
+  safety_reportedBody: string
+  safety_blockTitle: string
+  safety_blockBody: string
+  safety_blockConfirm: string
+  safety_blockedTitle: string
+  safety_blockedBody: string
+  safety_reason_spam: string
+  safety_reason_harassment: string
+  safety_reason_hate: string
+  safety_reason_misinformation: string
+  safety_reason_inappropriate: string
+  safety_reason_self_harm: string
+  safety_reason_other: string
+  guidelines_title: string
+  guidelines_subtitle: string
+  guidelines_intro: string
+  guidelines_rule1Title: string
+  guidelines_rule1Body: string
+  guidelines_rule2Title: string
+  guidelines_rule2Body: string
+  guidelines_rule3Title: string
+  guidelines_rule3Body: string
+  guidelines_rule4Title: string
+  guidelines_rule4Body: string
+  guidelines_rule5Title: string
+  guidelines_rule5Body: string
+  guidelines_sectionReport: string
+  guidelines_reportBody: string
+  guidelines_footer: string
 
   // ─── B6: Profile — Badge Wallet ───────────────────────────────────────────
   badgeWallet_title: string
