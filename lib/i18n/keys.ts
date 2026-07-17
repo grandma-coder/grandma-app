@@ -2256,6 +2256,52 @@ export interface TranslationKeys {
   privacy_clearMemoriesBtn: string
   privacy_clearHealthBtn: string
   privacy_noData: string
+  privacy_sectionRights: string
+  privacy_dataInventory: string
+  privacy_dataInventoryDesc: string
+  privacy_transparency: string
+  privacy_transparencyDesc: string
+  dataInv_title: string
+  dataInv_subtitle: string
+  dataInv_intro: string
+  dataInv_sectionHolding: string
+  dataInv_sectionSupport: string
+  dataInv_profile: string
+  dataInv_children: string
+  dataInv_childLogs: string
+  dataInv_cycleLogs: string
+  dataInv_pregnancyLogs: string
+  dataInv_insights: string
+  dataInv_exams: string
+  dataInv_notifications: string
+  dataInv_community: string
+  dataInv_userId: string
+  dataInv_userIdHint: string
+  dataInv_copied: string
+  dataInv_copiedMsg: string
+  dataInv_exportBtn: string
+  dataTrans_title: string
+  dataTrans_subtitle: string
+  dataTrans_intro: string
+  dataTrans_sectionCollect: string
+  dataTrans_healthTitle: string
+  dataTrans_healthBody: string
+  dataTrans_childTitle: string
+  dataTrans_childBody: string
+  dataTrans_accountTitle: string
+  dataTrans_accountBody: string
+  dataTrans_aiTitle: string
+  dataTrans_aiBody: string
+  dataTrans_photosTitle: string
+  dataTrans_photosBody: string
+  dataTrans_usageTitle: string
+  dataTrans_usageBody: string
+  dataTrans_sectionNever: string
+  dataTrans_never1: string
+  dataTrans_never2: string
+  dataTrans_never3: string
+  dataTrans_never4: string
+  dataTrans_footer: string
 
   // ─── B6: Profile — Badge Wallet ───────────────────────────────────────────
   badgeWallet_title: string

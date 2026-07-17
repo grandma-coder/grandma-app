@@ -20,6 +20,7 @@ import {
 } from 'lucide-react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
+import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
@@ -329,6 +330,16 @@ export default function PrivacyScreen() {
           <View style={[styles.divider, { backgroundColor: dividerColor }]} />
           <ToggleRow stickerKind="heart" label={t('privacy_toggleMarketing')} desc={t('privacy_toggleMarketingDesc')}
             value={settings.marketing} onToggle={(v) => updateSetting('marketing', v)} />
+        </View>
+
+        {/* Your Rights — DSAR + transparency (Phase 1) */}
+        <View style={{ marginTop: 18 }}>
+          <MonoCaps color={sectionLabelColor} style={{ letterSpacing: 1.5 }}>{t('privacy_sectionRights')}</MonoCaps>
+        </View>
+        <View style={[styles.card, diffuse && styles.cardFlat, cardStyle]}>
+          <ActionRow stickerKind="eye" label={t('privacy_dataInventory')} desc={t('privacy_dataInventoryDesc')} onPress={() => router.push('/profile/data-inventory')} />
+          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+          <ActionRow stickerKind="leaf" label={t('privacy_transparency')} desc={t('privacy_transparencyDesc')} onPress={() => router.push('/profile/data-transparency')} />
         </View>
 
         {/* Your Data */}
