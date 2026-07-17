@@ -27,7 +27,7 @@ const PILLARS: NavLink[] = [
 
 // Which pillars are actually built yet (routes that exist). Others render
 // disabled so the nav reflects reality without dead links.
-const READY = new Set(["/", "/users", "/metrics"])
+const READY = new Set(["/", "/users", "/metrics", "/push"])
 
 export function CommandCenterSidebar() {
   const pathname = usePathname() ?? ""

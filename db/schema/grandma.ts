@@ -41,6 +41,8 @@ export const pushTokens = pgTable("push_tokens", {
   token: text("token"),
   platform: text("platform"),
   deviceName: text("device_name"),
+  isActive: boolean("is_active"),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }),
 })
 
