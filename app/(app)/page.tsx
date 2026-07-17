@@ -26,7 +26,7 @@ export default async function Home() {
     { name: "Users", href: "/users", ready: true, blurb: "Browse & search all app users" },
     { name: "Metrics", href: "/metrics", ready: true, blurb: "KPIs, funnels, retention" },
     { name: "Push", href: "/push", ready: true, blurb: "Compose & send notifications" },
-    { name: "Sentry", href: "/sentry", ready: false, blurb: "Crash triage" },
+    { name: "Sentry", href: "/sentry", ready: true, blurb: "Crash triage" },
   ]
 
   return (

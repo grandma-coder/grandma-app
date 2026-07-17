@@ -2,6 +2,7 @@ import { router, publicProcedure } from "../trpc"
 import { usersRouter } from "./users"
 import { metricsRouter } from "./metrics"
 import { pushRouter } from "./push"
+import { sentryRouter } from "./sentry"
 
 /**
  * Root app router. Feature routers are added per phase.
@@ -12,6 +13,7 @@ export const appRouter = router({
   users: usersRouter,
   metrics: metricsRouter,
   push: pushRouter,
+  sentry: sentryRouter,
 })
 
 export type AppRouter = typeof appRouter
