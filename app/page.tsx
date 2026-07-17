@@ -1,4 +1,5 @@
 import { UserButton } from "@clerk/nextjs"
+import Link from "next/link"
 import { createContext } from "@/server/context"
 
 /**
@@ -27,7 +28,7 @@ export default async function Home() {
   }
 
   const pillars = [
-    { name: "Users", href: "/users", ready: false, blurb: "Browse & search all app users" },
+    { name: "Users", href: "/users", ready: true, blurb: "Browse & search all app users" },
     { name: "Metrics", href: "/metrics", ready: false, blurb: "KPIs, funnels, retention" },
     { name: "Push", href: "/push", ready: false, blurb: "Compose & send notifications" },
     { name: "Sentry", href: "/sentry", ready: false, blurb: "Crash triage" },
@@ -46,20 +47,24 @@ export default async function Home() {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {pillars.map((p) => (
-          <div
-            key={p.name}
-            className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">{p.name}</h2>
-              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800">
-                {p.ready ? "ready" : "coming soon"}
-              </span>
+        {pillars.map((p) => {
+          const card = (
+            <div className="h-full rounded-xl border border-zinc-200 p-5 transition-colors dark:border-zinc-800 data-[ready=true]:hover:border-zinc-400 data-[ready=true]:cursor-pointer" data-ready={p.ready}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium">{p.name}</h2>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800">
+                  {p.ready ? "ready" : "coming soon"}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-zinc-500">{p.blurb}</p>
             </div>
-            <p className="mt-1 text-sm text-zinc-500">{p.blurb}</p>
-          </div>
-        ))}
+          )
+          return p.ready ? (
+            <Link key={p.name} href={p.href}>{card}</Link>
+          ) : (
+            <div key={p.name}>{card}</div>
+          )
+        })}
       </div>
     </main>
   )
