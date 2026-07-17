@@ -1772,6 +1772,11 @@ export const ptBR: TranslationKeys = {
   cycleOnboarding_complete_message: "Grandma tem tudo que precisa para guiar você nesta jornada linda. Seus insights de ciclo estão sendo personalizados só para você.",
   cycleOnboarding_complete_btn: "Vamos Lá",
   onboardingJourney_socialProof: "Loved by thousands of parents like you",
+  savedPosts_title: "Saved",
+  savedPosts_subtitle: "posts you bookmarked",
+  savedPosts_emptyTitle: "Nothing saved yet",
+  savedPosts_emptyBody: "Tap the bookmark on any post to keep it here for later.",
+
   cycleOnboarding_predict_message: "Based on what you shared, here’s what Grandma already sees for your cycle:",
   cycleOnboarding_predict_fertile: "Fertile window",
   cycleOnboarding_predict_ovulation: "Ovulation",

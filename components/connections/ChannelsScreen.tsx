@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Plus,
   Star,
+  Bookmark,
 } from 'lucide-react-native'
 import { useTheme, shadows, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
@@ -132,9 +133,22 @@ export function ChannelsScreen() {
     >
       {/* Header — editorial serif, matches The Village */}
       <View style={styles.header}>
-        <Text style={[styles.heading, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
-          {t('channelsDiscover_heading')}
-        </Text>
+        <View style={styles.headerRow}>
+          <Text style={[styles.heading, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+            {t('channelsDiscover_heading')}
+          </Text>
+          <Pressable
+            onPress={() => router.push('/channel/saved' as any)}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.savedBtn,
+              { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.line : colors.border },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <Bookmark size={18} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={2} />
+          </Pressable>
+        </View>
         <Text style={[styles.subheading, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('channelsDiscover_subheading')}
         </Text>
@@ -555,7 +569,9 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
   header: { marginBottom: 18 },
-  heading: { fontSize: 36, letterSpacing: -1, lineHeight: 40 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  heading: { fontSize: 36, letterSpacing: -1, lineHeight: 40, flex: 1 },
+  savedBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   subheading: { fontSize: 14, marginTop: 6, lineHeight: 18 },
 
   // Banner carousel

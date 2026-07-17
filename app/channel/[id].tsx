@@ -26,6 +26,7 @@ import {
   ArrowLeft,
   Users,
   Heart,
+  Bookmark,
   MessageCircle,
   Send,
   Camera,
@@ -54,6 +55,8 @@ import {
   sendMessage,
   fetchMessages,
   toggleReaction,
+  savePost,
+  unsavePost,
   isChannelMember,
   joinChannel,
   leaveChannel,
@@ -438,6 +441,25 @@ export default function ChannelChat() {
       await toggleReaction(postId)
     } catch {
       apply(true) // toggle back to revert
+    }
+  }, [])
+
+  // Bookmark toggle (Phase 3) — optimistic, reverts on failure.
+  const handleSave = useCallback(async (postId: string) => {
+    let willSave = false
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== postId) return m
+        willSave = !m.saved
+        return { ...m, saved: !m.saved }
+      })
+    )
+    try {
+      if (willSave) await savePost(postId)
+      else await unsavePost(postId)
+    } catch {
+      // revert
+      setMessages((prev) => prev.map((m) => (m.id === postId ? { ...m, saved: !m.saved } : m)))
     }
   }, [])
 
@@ -973,6 +995,7 @@ export default function ChannelChat() {
               <MessageBubble
                 message={item}
                 onReaction={() => handleReaction(item.id)}
+                onSave={() => handleSave(item.id)}
                 onLongPress={() => {
                   Alert.alert(t('channelScreen_messageActionsTitle'), '', [
                     { text: t('channelScreen_replyInThread'), onPress: () => router.push(`/channel/thread/${item.id}` as any) },
@@ -1489,6 +1512,7 @@ interface MessageBubbleProps {
   onReaction: () => void
   onLongPress: () => void
   onThreadPress: () => void
+  onSave: () => void
 }
 
 // Memoized so an incoming message / reaction elsewhere in the list doesn't
@@ -1500,6 +1524,7 @@ function MessageBubbleBase({
   onReaction,
   onLongPress,
   onThreadPress,
+  onSave,
 }: MessageBubbleProps) {
   const { colors, radius, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
@@ -1590,6 +1615,18 @@ function MessageBubbleBase({
             )}
           </Pressable>
 
+          {/* Bookmark (Phase 3) */}
+          {message.message_type === 'user' && (
+            <Pressable onPress={onSave} hitSlop={6} style={styles.reactionBtn}>
+              <Bookmark
+                size={14}
+                color={message.saved ? (diffuse ? dt.colors.ink : brand.primary) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+                strokeWidth={diffuse ? 1.6 : 2}
+                fill={message.saved ? (diffuse ? dt.colors.ink : brand.primary) : 'none'}
+              />
+            </Pressable>
+          )}
+
           {/* Reply count — tap to open thread */}
           {message.reply_count > 0 && (
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
@@ -1622,6 +1659,7 @@ const MessageBubble = memo(MessageBubbleBase, (a, b) => {
     m.content === n.content &&
     m.reaction_count === n.reaction_count &&
     m.user_reacted === n.user_reacted &&
+    m.saved === n.saved &&
     m.reply_count === n.reply_count &&
     m.is_pinned === n.is_pinned
   )

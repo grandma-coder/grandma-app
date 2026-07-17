@@ -22,6 +22,7 @@ export interface ChannelPost {
   message_type: 'user' | 'system_join' | 'system_leave'
   created_at: string
   user_reacted?: boolean
+  saved?: boolean // client-only — has the current user bookmarked this post
   // For thread preview
   reply_to_content?: string
   reply_to_author?: string
@@ -186,6 +187,17 @@ export async function fetchMessages(channelId: string): Promise<ChannelPost[]> {
     const reactedIds = new Set((reactions ?? []).map((r: any) => r.post_id))
     for (const post of posts) {
       post.user_reacted = reactedIds.has(post.id)
+    }
+
+    // Saved/bookmarked posts (Phase 3).
+    const { data: saves } = await supabase
+      .from('post_saves')
+      .select('post_id')
+      .eq('user_id', session.user.id)
+      .in('post_id', postIds)
+    const savedIds = new Set((saves ?? []).map((s: any) => s.post_id))
+    for (const post of posts) {
+      post.saved = savedIds.has(post.id)
     }
   }
 
@@ -533,6 +545,63 @@ export const saveChannel = favoriteChannel
 export const unsaveChannel = unfavoriteChannel
 /** @deprecated Use getMyFavoriteChannelIds */
 export const getMySavedChannelIds = getMyFavoriteChannelIds
+
+// ─── Post bookmarks (Phase 3) ─────────────────────────────────────────────
+// Per-post save/unsave (distinct from channel favorites above).
+
+export async function savePost(postId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+  // Idempotent — swallow the unique-violation if already saved.
+  const { error } = await supabase.from('post_saves').insert({ post_id: postId, user_id: session.user.id })
+  if (error && (error as any).code !== '23505') throw error
+}
+
+export async function unsavePost(postId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  await supabase.from('post_saves').delete().eq('post_id', postId).eq('user_id', session.user.id)
+}
+
+export async function getSavedPostIds(): Promise<string[]> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return []
+  const { data } = await supabase.from('post_saves').select('post_id').eq('user_id', session.user.id)
+  return (data ?? []).map((d: any) => d.post_id)
+}
+
+/** Full saved posts, newest-saved first, with author names resolved. */
+export async function getSavedPosts(): Promise<ChannelPost[]> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return []
+  const { data: saves } = await supabase
+    .from('post_saves')
+    .select('post_id, created_at')
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending: false })
+  const ids = (saves ?? []).map((s: any) => s.post_id)
+  if (ids.length === 0) return []
+
+  const { data: posts, error } = await supabase
+    .from('channel_posts')
+    .select('*')
+    .in('id', ids)
+  if (error) throw error
+
+  // Resolve author names via profiles_public (the cross-user read path).
+  const authorIds = [...new Set((posts ?? []).map((p: any) => p.author_id))]
+  const { data: profiles } = await supabase
+    .from('profiles_public')
+    .select('id, name')
+    .in('id', authorIds)
+  const nameById = new Map((profiles ?? []).map((pr: any) => [pr.id, pr.name]))
+
+  // Preserve the saved-order (newest saved first).
+  const orderIndex = new Map(ids.map((id: string, i: number) => [id, i]))
+  return (posts ?? [])
+    .map((p: any) => ({ ...p, author_name: p.author_name ?? nameById.get(p.author_id) ?? undefined, saved: true }))
+    .sort((a: ChannelPost, b: ChannelPost) => (orderIndex.get(a.id)! - orderIndex.get(b.id)!))
+}
 
 // ─── Channel Metrics (owner dashboard) ────────────────────────────────────
 

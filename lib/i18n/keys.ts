@@ -1946,6 +1946,11 @@ export interface TranslationKeys {
   cycleOnboarding_complete_btn: string
   onboardingJourney_socialProof: string
 
+  savedPosts_title: string
+  savedPosts_subtitle: string
+  savedPosts_emptyTitle: string
+  savedPosts_emptyBody: string
+
   cycleOnboarding_predict_message: string
   cycleOnboarding_predict_fertile: string
   cycleOnboarding_predict_ovulation: string

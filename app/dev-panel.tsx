@@ -93,6 +93,7 @@ const CAREGIVER_SCREENS: Array<[string, string]> = [
 const COMMUNITY_SCREENS: Array<[string, string]> = [
   ['Connections (Channels + Garage)', '/connections'],
   ['Channel · create', '/channel/create'],
+  ['Channel · saved posts (Phase 3)', '/channel/saved'],
   ['Garage · profile  ⚠ legacy design', '/garage/profile'],
   ['Garage · create  ⚠ legacy design', '/garage/create'],
   ['Garage · share  ⚠ legacy design', '/garage/share'],
