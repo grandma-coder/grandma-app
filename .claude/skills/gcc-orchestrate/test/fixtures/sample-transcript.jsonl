@@ -1,0 +1,6 @@
+{"type":"user","timestamp":"2026-07-06T10:00:00Z","message":{"content":"start"}}
+{"type":"assistant","timestamp":"2026-07-06T10:01:00Z","message":{"model":"claude-opus-4-8","usage":{"input_tokens":1000,"output_tokens":2000,"cache_read_input_tokens":10000,"cache_creation_input_tokens":4000}}}
+{"type":"assistant","timestamp":"2026-07-06T10:30:00Z","message":{"model":"claude-haiku-4-5-20251001","usage":{"input_tokens":500,"output_tokens":1000,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}
+{"type":"assistant","timestamp":"2026-07-06T12:00:00Z","message":{"model":"claude-opus-4-8","usage":{"input_tokens":100,"output_tokens":100,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}
+not json — transcript lines can be garbage, skip silently
+{"type":"assistant","timestamp":"2026-07-06T10:45:00Z","message":{"model":"some-unknown-model","usage":{"input_tokens":10,"output_tokens":10}}}
