@@ -2903,6 +2903,7 @@ export interface TranslationKeys {
   healthHistory_currentMedications: string
   healthHistory_weightKg: string
   healthHistory_heightCm: string
+  healthHistory_headCm: string
   healthHistory_noGrowthEntries: string
   healthHistory_noMilestones: string
   healthHistory_totalEntries: string

@@ -2662,6 +2662,7 @@ export const ar: TranslationKeys = {
   healthHistory_currentMedications: "Current Medications",
   healthHistory_weightKg: "Weight (kg)",
   healthHistory_heightCm: "Height (cm)",
+  healthHistory_headCm: "Head circumference (cm)",
   healthHistory_noGrowthEntries: "No growth entries. Log weight and height to track progress.",
   healthHistory_noMilestones: "No milestones yet. Celebrate every first!",
   healthHistory_totalEntries: "total {{label}} entries",

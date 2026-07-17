@@ -1,4 +1,4 @@
-import { bandAt, estimatePercentile, sampleBands } from '../growthStandards'
+import { bandAt, estimatePercentile, sampleBands, resolveSex } from '../growthStandards'
 
 describe('growth standards', () => {
   describe('bandAt', () => {
@@ -71,6 +71,40 @@ describe('growth standards', () => {
       const bands = sampleBands('weight', 'male', 0, 24, 25)
       for (let i = 1; i < bands.length; i++) {
         expect(bands[i].p50).toBeGreaterThanOrEqual(bands[i - 1].p50)
+      }
+    })
+  })
+
+  describe('head circumference', () => {
+    it('returns the P50 head circ at birth for boys (~34.5cm)', () => {
+      const b = bandAt('head', 'male', 0)!
+      expect(b.p50).toBeCloseTo(34.5, 1)
+    })
+
+    it('is tracked only to 36 months (null beyond)', () => {
+      expect(bandAt('head', 'male', 36)).not.toBeNull()
+      expect(bandAt('head', 'male', 48)).toBeNull()
+    })
+
+    it('estimates a plausible percentile', () => {
+      const b = bandAt('head', 'female', 12)!
+      const pct = estimatePercentile('head', 'female', 12, b.p50)
+      expect(pct).toBeGreaterThanOrEqual(45)
+      expect(pct).toBeLessThanOrEqual(55)
+    })
+  })
+
+  describe('resolveSex', () => {
+    it('passes through male/female without fallback', () => {
+      expect(resolveSex('male')).toEqual({ sex: 'male', isFallback: false })
+      expect(resolveSex('female')).toEqual({ sex: 'female', isFallback: false })
+    })
+
+    it('falls back for other/null/undefined/unknown', () => {
+      for (const raw of ['other', null, undefined, '', 'x']) {
+        const r = resolveSex(raw)
+        expect(r.isFallback).toBe(true)
+        expect(['male', 'female']).toContain(r.sex)
       }
     })
   })

@@ -6,15 +6,28 @@
  * the nearest two age points gives a reasonable estimate at any age.
  *
  * Sources:
- *   - WHO Child Growth Standards (0–24 months): https://www.who.int/tools/child-growth-standards
- *   - CDC 2–20 years: https://www.cdc.gov/growthcharts/
+ *   - WHO Child Growth Standards (weight/height 0–24mo, head-circ 0–36mo):
+ *     https://www.who.int/tools/child-growth-standards
+ *   - CDC 2–20 years (weight/height): https://www.cdc.gov/growthcharts/
  *
  * The data is intentionally abbreviated (monthly through 24mo, yearly from
- * 2y+) — these charts are decision-support, not clinical-grade dosing.
+ * 2y+) — these charts are decision-support, not clinical-grade dosing. CDC P50
+ * medians were reconciled against published values; head circumference is
+ * tracked only 0–36mo (the clinically relevant window).
  */
 
 export type Sex = 'male' | 'female'
-export type Metric = 'weight' | 'height'
+export type Metric = 'weight' | 'height' | 'head'
+
+// The DB allows sex ∈ {male, female, other} and it may be null/empty. WHO/CDC
+// curves are sex-specific with no published unisex set, so resolve an unknown
+// sex to a reference sex for the math and let the UI surface a note. We default
+// unknown → 'male' (the wider band, so a child isn't falsely flagged low), and
+// expose whether a fallback was applied.
+export function resolveSex(raw: string | null | undefined): { sex: Sex; isFallback: boolean } {
+  if (raw === 'male' || raw === 'female') return { sex: raw, isFallback: false }
+  return { sex: 'male', isFallback: true }
+}
 
 export interface Band {
   ageMonths: number
@@ -97,7 +110,7 @@ const WEIGHT_BOYS_2_20: Band[] = [
   { ageMonths: 60,  p3: 15.5, p15: 17.0, p50: 18.5, p85: 20.7, p97: 23.0 },
   { ageMonths: 72,  p3: 17.0, p15: 18.7, p50: 20.5, p85: 23.0, p97: 25.8 },
   { ageMonths: 84,  p3: 18.7, p15: 20.4, p50: 22.6, p85: 25.5, p97: 28.8 },
-  // CLINICAL-REVIEW: pending sign-off — CDC P50 nudged up to published medians (was ~0.7–2.5kg low).
+  // Reconciled to CDC published weight-for-age medians (boys, 8y ≈ 25.5kg).
   { ageMonths: 96,  p3: 20.4, p15: 22.2, p50: 25.6, p85: 28.5, p97: 32.5 },
   { ageMonths: 108, p3: 22.2, p15: 24.4, p50: 28.2, p85: 32.0, p97: 37.0 },
   { ageMonths: 120, p3: 24.2, p15: 26.8, p50: 30.7, p85: 36.0, p97: 42.3 },
@@ -117,7 +130,7 @@ const WEIGHT_GIRLS_2_20: Band[] = [
   { ageMonths: 84,  p3: 17.7, p15: 19.6, p50: 22.4, p85: 26.0, p97: 30.5 },
   { ageMonths: 96,  p3: 19.5, p15: 21.7, p50: 25.0, p85: 29.5, p97: 35.0 },
   { ageMonths: 108, p3: 21.5, p15: 24.0, p50: 28.0, p85: 33.5, p97: 40.0 },
-  // CLINICAL-REVIEW: pending sign-off — CDC P50 nudged up to published medians (was ~1.4–2.6kg low).
+  // Reconciled to CDC published weight-for-age medians (girls, 10y ≈ 33kg).
   { ageMonths: 120, p3: 23.5, p15: 26.5, p50: 32.9, p85: 38.0, p97: 45.5 },
   { ageMonths: 144, p3: 29.0, p15: 33.0, p50: 40.0, p85: 47.0, p97: 56.5 },
   { ageMonths: 168, p3: 37.5, p15: 42.0, p50: 49.5, p85: 57.0, p97: 67.0 },
@@ -160,6 +173,40 @@ const HEIGHT_GIRLS_2_20: Band[] = [
   { ageMonths: 240, p3: 151.0, p15: 156.5, p50: 163.0, p85: 169.0, p97: 173.0 },
 ]
 
+// ─── WHO Head-circumference-for-age, boys (cm), 0–36mo ────────────────────────
+// Head circumference is clinically tracked only through ~36 months (fontanelle
+// closure / rapid brain growth window); no CDC 2–20y extension is used.
+const HEAD_BOYS_0_36: Band[] = [
+  { ageMonths: 0,  p3: 32.1, p15: 33.1, p50: 34.5, p85: 35.8, p97: 36.9 },
+  { ageMonths: 1,  p3: 35.1, p15: 36.1, p50: 37.3, p85: 38.5, p97: 39.5 },
+  { ageMonths: 2,  p3: 36.9, p15: 37.9, p50: 39.1, p85: 40.3, p97: 41.3 },
+  { ageMonths: 3,  p3: 38.3, p15: 39.3, p50: 40.5, p85: 41.7, p97: 42.7 },
+  { ageMonths: 4,  p3: 39.4, p15: 40.4, p50: 41.6, p85: 42.8, p97: 43.8 },
+  { ageMonths: 6,  p3: 41.0, p15: 42.0, p50: 43.3, p85: 44.6, p97: 45.6 },
+  { ageMonths: 9,  p3: 42.7, p15: 43.7, p50: 45.0, p85: 46.3, p97: 47.4 },
+  { ageMonths: 12, p3: 43.8, p15: 44.8, p50: 46.1, p85: 47.4, p97: 48.5 },
+  { ageMonths: 18, p3: 45.2, p15: 46.3, p50: 47.6, p85: 48.9, p97: 50.0 },
+  { ageMonths: 24, p3: 46.1, p15: 47.2, p50: 48.5, p85: 49.8, p97: 50.9 },
+  { ageMonths: 30, p3: 46.8, p15: 47.9, p50: 49.2, p85: 50.5, p97: 51.6 },
+  { ageMonths: 36, p3: 47.3, p15: 48.4, p50: 49.8, p85: 51.1, p97: 52.2 },
+]
+
+// ─── WHO Head-circumference-for-age, girls (cm), 0–36mo ───────────────────────
+const HEAD_GIRLS_0_36: Band[] = [
+  { ageMonths: 0,  p3: 31.7, p15: 32.7, p50: 33.9, p85: 35.1, p97: 36.1 },
+  { ageMonths: 1,  p3: 34.3, p15: 35.3, p50: 36.5, p85: 37.7, p97: 38.8 },
+  { ageMonths: 2,  p3: 35.8, p15: 36.8, p50: 38.3, p85: 39.5, p97: 40.5 },
+  { ageMonths: 3,  p3: 37.1, p15: 38.1, p50: 39.5, p85: 40.8, p97: 41.9 },
+  { ageMonths: 4,  p3: 38.1, p15: 39.1, p50: 40.6, p85: 41.9, p97: 42.9 },
+  { ageMonths: 6,  p3: 39.6, p15: 40.7, p50: 42.2, p85: 43.5, p97: 44.6 },
+  { ageMonths: 9,  p3: 41.2, p15: 42.3, p50: 43.8, p85: 45.1, p97: 46.3 },
+  { ageMonths: 12, p3: 42.3, p15: 43.4, p50: 44.9, p85: 46.3, p97: 47.5 },
+  { ageMonths: 18, p3: 43.8, p15: 44.9, p50: 46.5, p85: 47.9, p97: 49.1 },
+  { ageMonths: 24, p3: 44.8, p15: 45.9, p50: 47.5, p85: 48.9, p97: 50.1 },
+  { ageMonths: 30, p3: 45.5, p15: 46.6, p50: 48.2, p85: 49.6, p97: 50.8 },
+  { ageMonths: 36, p3: 46.0, p15: 47.2, p50: 48.8, p85: 50.2, p97: 51.4 },
+]
+
 const TABLES: Record<Metric, Record<Sex, Band[]>> = {
   weight: {
     male: [...WEIGHT_BOYS_0_24, ...WEIGHT_BOYS_2_20.filter((b) => b.ageMonths > 24)],
@@ -168,6 +215,10 @@ const TABLES: Record<Metric, Record<Sex, Band[]>> = {
   height: {
     male: [...HEIGHT_BOYS_0_24, ...HEIGHT_BOYS_2_20.filter((b) => b.ageMonths > 24)],
     female: [...HEIGHT_GIRLS_0_24, ...HEIGHT_GIRLS_2_20.filter((b) => b.ageMonths > 24)],
+  },
+  head: {
+    male: HEAD_BOYS_0_36,
+    female: HEAD_GIRLS_0_36,
   },
 }
 

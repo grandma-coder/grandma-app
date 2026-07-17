@@ -689,12 +689,13 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
   const [value, setValue] = useState('')
   const [weight, setWeight] = useState('')
   const [height, setHeight] = useState('')
+  const [headCirc, setHeadCirc] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
   function reset() {
     setEventType(null); setSelectedChild(children.length === 1 ? children[0]?.id ?? '' : '')
-    setEventDate(new Date()); setValue(''); setWeight(''); setHeight(''); setNotes('')
+    setEventDate(new Date()); setValue(''); setWeight(''); setHeight(''); setHeadCirc(''); setNotes('')
     setShowDatePicker(Platform.OS === 'ios')
   }
 
@@ -702,9 +703,9 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
     if (!eventType) return Alert.alert('Missing Type', 'Please select a health event type (Vaccine, Medicine, etc.)')
     if (!selectedChild) return Alert.alert('Missing Child', 'Please select which child this is for.')
 
-    // Growth: need at least weight or height
+    // Growth: need at least weight, height, or head circumference
     if (eventType === 'growth') {
-      if (!weight.trim() && !height.trim()) return Alert.alert('Missing Data', 'Please enter weight, height, or both.')
+      if (!weight.trim() && !height.trim() && !headCirc.trim()) return Alert.alert('Missing Data', 'Please enter weight, height, or head circumference.')
     } else {
       if (!value.trim()) return Alert.alert('Missing Details', `Please describe the ${TYPE_CFG[eventType]?.label.toLowerCase() ?? 'event'}.`)
     }
@@ -731,6 +732,14 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
             child_id: selectedChild, user_id: session.user.id,
             date: dateStr, type: 'growth',
             value: `Height: ${height.trim()} cm`, notes: notes.trim() || null,
+            logged_by: session.user.id,
+          })
+        }
+        if (headCirc.trim()) {
+          entries.push({
+            child_id: selectedChild, user_id: session.user.id,
+            date: dateStr, type: 'growth',
+            value: `Head: ${headCirc.trim()} cm`, notes: notes.trim() || null,
             logged_by: session.user.id,
           })
         }
@@ -851,6 +860,15 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
                 value={height}
                 onChangeText={setHeight}
                 placeholder="e.g. 78"
+                placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
+                keyboardType="decimal-pad"
+                style={[formStyles.input, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+              />
+              <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('healthHistory_headCm')}</MonoCaps>
+              <TextInput
+                value={headCirc}
+                onChangeText={setHeadCirc}
+                placeholder="e.g. 44"
                 placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
                 keyboardType="decimal-pad"
                 style={[formStyles.input, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }]}

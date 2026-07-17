@@ -41,6 +41,7 @@ import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { KidsWallet } from './KidsWallet'
 import { GrowthPercentileChart } from '../kids/GrowthPercentileChart'
+import { resolveSex } from '../../lib/growthStandards'
 import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker, Star as StarSticker, Cross as CrossSticker, Moon as MoonSticker, Sparkle as SparkleSticker, Leaf as LeafSticker, Pill as PillSticker } from '../ui/Stickers'
 import { StickerPalette } from '../stickers/BrandStickers'
 import { Flame as FlameSticker } from '../stickers/RewardStickers'
@@ -5468,27 +5469,38 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
 
           {/* Growth percentile charts — shared chart component (kept) */}
           {showGrowthCharts ? (() => {
-            const sex = child.sex as 'male' | 'female'
+            // sex='other'/null falls back to a reference sex for the curves.
+            const { sex } = resolveSex(child.sex)
             const weightPts: { ageMonths: number; value: number; date: string }[] = []
             const heightPts: { ageMonths: number; value: number; date: string }[] = []
+            const headPts: { ageMonths: number; value: number; date: string }[] = []
             const birth = new Date(child.birthDate! + 'T00:00:00')
+            const num = '([0-9]+(?:[.,][0-9]+)?)'
+            // Keyword-anchored so "Head: 44 cm" can't be mis-parsed as height.
+            const wRe = new RegExp(`weight[:\\s]+${num}\\s*(kg|lbs?|lb)`, 'i')
+            const hRe = new RegExp(`height[:\\s]+${num}\\s*(cm|in|inches?|inch)`, 'i')
+            const headRe = new RegExp(`head(?:\\s*circumference)?[:\\s]+${num}\\s*(cm|in|inches?|inch)`, 'i')
             for (const g of healthHistory.growth) {
               if (!g.date) continue
               const measured = new Date(g.date + 'T00:00:00')
               if (isNaN(measured.getTime())) continue
               const ageMonths = (measured.getFullYear() - birth.getFullYear()) * 12 + (measured.getMonth() - birth.getMonth()) + (measured.getDate() - birth.getDate()) / 30
-              const wMatch = (g.value || '').match(/([0-9]+(?:[.,][0-9]+)?)\s*(kg|lbs?|lb)/i)
-              const hMatch = (g.value || '').match(/([0-9]+(?:[.,][0-9]+)?)\s*(cm|in|inches?|inch)/i)
+              const raw = g.value || ''
+              const wMatch = raw.match(wRe)
+              const hMatch = raw.match(hRe)
+              const headMatch = raw.match(headRe)
               if (wMatch) {
                 const n = parseFloat(wMatch[1].replace(',', '.'))
-                const unit = wMatch[2].toLowerCase()
-                const kg = unit === 'kg' ? n : n * 0.45359237
+                const kg = wMatch[2].toLowerCase() === 'kg' ? n : n * 0.45359237
                 if (Number.isFinite(kg) && kg > 0) weightPts.push({ ageMonths, value: kg, date: g.date })
               }
-              if (hMatch) {
+              if (headMatch) {
+                const n = parseFloat(headMatch[1].replace(',', '.'))
+                const cm = headMatch[2].toLowerCase() === 'cm' ? n : n * 2.54
+                if (Number.isFinite(cm) && cm > 0) headPts.push({ ageMonths, value: cm, date: g.date })
+              } else if (hMatch) {
                 const n = parseFloat(hMatch[1].replace(',', '.'))
-                const unit = hMatch[2].toLowerCase()
-                const cm = unit === 'cm' ? n : n * 2.54
+                const cm = hMatch[2].toLowerCase() === 'cm' ? n : n * 2.54
                 if (Number.isFinite(cm) && cm > 0) heightPts.push({ ageMonths, value: cm, date: g.date })
               }
             }
@@ -5498,6 +5510,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
               <View style={{ gap: 12, marginTop: 16 }}>
                 {weightPts.length > 0 ? <GrowthPercentileChart title="Weight-for-age" metric="weight" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={weightPts} width={chartWidth} /> : null}
                 {heightPts.length > 0 ? <GrowthPercentileChart title="Height-for-age" metric="height" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={heightPts} width={chartWidth} /> : null}
+                {headPts.length > 0 ? <GrowthPercentileChart title="Head-for-age" metric="head" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={headPts} width={chartWidth} /> : null}
               </View>
             )
           })() : null}
@@ -5699,17 +5712,21 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
 
             {/* WHO/CDC growth percentile charts.
                 Rendered before Latest Growth so the chart's context is
-                visible above the numeric summary.
-                Only shows for boys/girls (the standards don't have a
-                neutral table) and when at least one measurement exists. */}
-            {(child.sex === 'male' || child.sex === 'female') &&
-              healthHistory.growth.length > 0 &&
+                visible above the numeric summary. sex='other'/null falls back
+                to a reference sex (the standards have no neutral table). */}
+            {healthHistory.growth.length > 0 &&
               child.birthDate && (() => {
-                const sex = child.sex as 'male' | 'female'
-                // Build {ageMonths, value} arrays for weight + height.
+                const { sex } = resolveSex(child.sex)
+                // Build {ageMonths, value} arrays for weight + height + head.
                 const weightPts: { ageMonths: number; value: number; date: string }[] = []
                 const heightPts: { ageMonths: number; value: number; date: string }[] = []
+                const headPts: { ageMonths: number; value: number; date: string }[] = []
                 const birth = new Date(child.birthDate + 'T00:00:00')
+                const num = '([0-9]+(?:[.,][0-9]+)?)'
+                // Keyword-anchored so "Head: 44 cm" isn't mis-read as height.
+                const wRe = new RegExp(`weight[:\\s]+${num}\\s*(kg|lbs?|lb)`, 'i')
+                const hRe = new RegExp(`height[:\\s]+${num}\\s*(cm|in|inches?|inch)`, 'i')
+                const headRe = new RegExp(`head(?:\\s*circumference)?[:\\s]+${num}\\s*(cm|in|inches?|inch)`, 'i')
                 for (const g of healthHistory.growth) {
                   if (!g.date) continue
                   const measured = new Date(g.date + 'T00:00:00')
@@ -5718,20 +5735,22 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                     (measured.getFullYear() - birth.getFullYear()) * 12 +
                     (measured.getMonth() - birth.getMonth()) +
                     (measured.getDate() - birth.getDate()) / 30
-                  // Reuse parseGrowthValue but on the single entry. Cheaper:
-                  // pattern-match weight + height inline here.
-                  const wMatch = (g.value || '').match(/([0-9]+(?:[.,][0-9]+)?)\s*(kg|lbs?|lb)/i)
-                  const hMatch = (g.value || '').match(/([0-9]+(?:[.,][0-9]+)?)\s*(cm|in|inches?|inch)/i)
+                  const raw = g.value || ''
+                  const wMatch = raw.match(wRe)
+                  const hMatch = raw.match(hRe)
+                  const headMatch = raw.match(headRe)
                   if (wMatch) {
                     const n = parseFloat(wMatch[1].replace(',', '.'))
-                    const unit = wMatch[2].toLowerCase()
-                    const kg = unit === 'kg' ? n : n * 0.45359237
+                    const kg = wMatch[2].toLowerCase() === 'kg' ? n : n * 0.45359237
                     if (Number.isFinite(kg) && kg > 0) weightPts.push({ ageMonths, value: kg, date: g.date })
                   }
-                  if (hMatch) {
+                  if (headMatch) {
+                    const n = parseFloat(headMatch[1].replace(',', '.'))
+                    const cm = headMatch[2].toLowerCase() === 'cm' ? n : n * 2.54
+                    if (Number.isFinite(cm) && cm > 0) headPts.push({ ageMonths, value: cm, date: g.date })
+                  } else if (hMatch) {
                     const n = parseFloat(hMatch[1].replace(',', '.'))
-                    const unit = hMatch[2].toLowerCase()
-                    const cm = unit === 'cm' ? n : n * 2.54
+                    const cm = hMatch[2].toLowerCase() === 'cm' ? n : n * 2.54
                     if (Number.isFinite(cm) && cm > 0) heightPts.push({ ageMonths, value: cm, date: g.date })
                   }
                 }
@@ -5760,6 +5779,17 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
                         childAgeMonths={ageMonths}
                         childName={child.name}
                         points={heightPts}
+                        width={chartWidth}
+                      />
+                    )}
+                    {headPts.length > 0 && (
+                      <GrowthPercentileChart
+                        title="Head-for-age"
+                        metric="head"
+                        sex={sex}
+                        childAgeMonths={ageMonths}
+                        childName={child.name}
+                        points={headPts}
                         width={chartWidth}
                       />
                     )}

@@ -81,6 +81,7 @@ export interface DiaperData {
 export interface GrowthData {
   weights: { value: number; date: string }[]
   heights: { value: number; date: string }[]
+  heads: { value: number; date: string }[]
   hasData: boolean
 }
 
@@ -445,11 +446,12 @@ function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): H
 function buildGrowthData(logs: ChildLog[]): GrowthData {
   const growthLogs = logs.filter((l) => l.type === 'growth')
   if (growthLogs.length === 0) {
-    return { weights: [], heights: [], hasData: false }
+    return { weights: [], heights: [], heads: [], hasData: false }
   }
 
   const weights: GrowthData['weights'] = []
   const heights: GrowthData['heights'] = []
+  const heads: GrowthData['heads'] = []
 
   // The growth-event writer in app/profile/health-history.tsx produces
   // bare strings like "Weight: 7.5 kg" / "Height: 78 cm" (NOT JSON), so
@@ -461,7 +463,10 @@ function buildGrowthData(logs: ChildLog[]): GrowthData {
   const numPattern = '([0-9]+(?:[.,][0-9]+)?)'
   const wRe = new RegExp(`weight[:\\s]+${numPattern}\\s*(kg|lbs?|lb)`, 'i')
   const hRe = new RegExp(`height[:\\s]+${numPattern}\\s*(cm|in|inches?|inch)`, 'i')
+  // Head circumference — "Head: 44 cm" / "head circumference 44cm" / "44 in".
+  const headRe = new RegExp(`head(?:\\s*circumference)?[:\\s]+${numPattern}\\s*(cm|in|inches?|inch)`, 'i')
   const toNum = (raw: string) => parseFloat(raw.replace(',', '.'))
+  const toCm = (n: number, unit: string) => (unit === 'cm' ? n : n * 2.54)
 
   for (const log of growthLogs) {
     const raw = (log.value ?? '').toString()
@@ -471,10 +476,18 @@ function buildGrowthData(logs: ChildLog[]): GrowthData {
       if (val && typeof val === 'object') {
         if (val.weight) weights.push({ value: parseFloat(val.weight), date: log.date })
         if (val.height) heights.push({ value: parseFloat(val.height), date: log.date })
+        if (val.head) heads.push({ value: parseFloat(val.head), date: log.date })
         continue
       }
     } catch {}
-    // Bare-string fallback (current writer shape)
+    // Bare-string fallback (current writer shape). Check head BEFORE height so
+    // "head circumference" doesn't get mis-parsed — height requires the literal
+    // "height" token so there's no real collision, but order is defensive.
+    const headM = raw.match(headRe)
+    if (headM) {
+      const cm = toCm(toNum(headM[1]), headM[2].toLowerCase())
+      if (Number.isFinite(cm) && cm > 0) heads.push({ value: Number(cm.toFixed(1)), date: log.date })
+    }
     const wm = raw.match(wRe)
     if (wm) {
       const n = toNum(wm[1])
@@ -484,17 +497,16 @@ function buildGrowthData(logs: ChildLog[]): GrowthData {
     }
     const hm = raw.match(hRe)
     if (hm) {
-      const n = toNum(hm[1])
-      const unit = hm[2].toLowerCase()
-      const cm = unit === 'cm' ? n : n * 2.54
+      const cm = toCm(toNum(hm[1]), hm[2].toLowerCase())
       if (Number.isFinite(cm) && cm > 0) heights.push({ value: Number(cm.toFixed(1)), date: log.date })
     }
   }
 
   weights.sort((a, b) => a.date.localeCompare(b.date))
   heights.sort((a, b) => a.date.localeCompare(b.date))
+  heads.sort((a, b) => a.date.localeCompare(b.date))
 
-  return { weights, heights, hasData: weights.length > 0 || heights.length > 0 }
+  return { weights, heights, heads, hasData: weights.length > 0 || heights.length > 0 || heads.length > 0 }
 }
 
 function buildDiaperData(logs: ChildLog[], dates: string[], labels: string[]): DiaperData {

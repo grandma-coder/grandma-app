@@ -2662,6 +2662,7 @@ export const ptBR: TranslationKeys = {
   healthHistory_currentMedications: "Medicações Atuais",
   healthHistory_weightKg: "Peso (kg)",
   healthHistory_heightCm: "Altura (cm)",
+  healthHistory_headCm: "Head circumference (cm)",
   healthHistory_noGrowthEntries: "Nenhum registro de crescimento. Registre peso e altura para acompanhar o progresso.",
   healthHistory_noMilestones: "Nenhum marco ainda. Comemore cada primeiro!",
   healthHistory_totalEntries: "total de {{label}} registros",
