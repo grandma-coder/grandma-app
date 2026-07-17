@@ -22,11 +22,16 @@ export interface ChannelPost {
   message_type: 'user' | 'system_join' | 'system_leave'
   created_at: string
   user_reacted?: boolean
+  my_reaction?: ReactionType | null // client-only — which reaction the user gave
   saved?: boolean // client-only — has the current user bookmarked this post
   // For thread preview
   reply_to_content?: string
   reply_to_author?: string
 }
+
+// The 4 reaction types the schema supports (CHECK on post_reactions.reaction).
+export type ReactionType = 'heart' | 'like' | 'celebrate' | 'support'
+export const REACTION_TYPES: ReactionType[] = ['heart', 'like', 'celebrate', 'support']
 
 export interface ChannelRequest {
   id: string
@@ -180,13 +185,15 @@ export async function fetchMessages(channelId: string): Promise<ChannelPost[]> {
     const postIds = posts.map((p) => p.id)
     const { data: reactions } = await supabase
       .from('post_reactions')
-      .select('post_id')
+      .select('post_id, reaction')
       .eq('user_id', session.user.id)
       .in('post_id', postIds)
 
-    const reactedIds = new Set((reactions ?? []).map((r: any) => r.post_id))
+    const reactionByPost = new Map((reactions ?? []).map((r: any) => [r.post_id, r.reaction as ReactionType]))
     for (const post of posts) {
-      post.user_reacted = reactedIds.has(post.id)
+      const mine = reactionByPost.get(post.id) ?? null
+      post.my_reaction = mine
+      post.user_reacted = mine !== null
     }
 
     // Saved/bookmarked posts (Phase 3).
@@ -314,6 +321,36 @@ export async function toggleReaction(postId: string): Promise<boolean> {
     await supabase.from('post_reactions').insert({ post_id: postId, user_id: session.user.id })
     return true
   }
+}
+
+/**
+ * Set (or change/remove) the current user's reaction on a post to a specific
+ * type. Same type again = remove (toggle off). Different type = switch. None =
+ * add. Returns the resulting reaction type, or null if removed.
+ * One reaction per (post, user) — enforced by the table's UNIQUE constraint.
+ */
+export async function setReaction(postId: string, type: ReactionType): Promise<ReactionType | null> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+
+  const { data: existing, error } = await supabase
+    .from('post_reactions')
+    .select('id, reaction')
+    .eq('post_id', postId)
+    .eq('user_id', session.user.id)
+    .maybeSingle()
+  if (error) throw error
+
+  if (existing) {
+    if (existing.reaction === type) {
+      await supabase.from('post_reactions').delete().eq('id', existing.id)
+      return null
+    }
+    await supabase.from('post_reactions').update({ reaction: type }).eq('id', existing.id)
+    return type
+  }
+  await supabase.from('post_reactions').insert({ post_id: postId, user_id: session.user.id, reaction: type })
+  return type
 }
 
 // ─── Memberships ───────────────────────────────────────────────────────────

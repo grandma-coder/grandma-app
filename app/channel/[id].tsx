@@ -48,6 +48,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { ReactionPicker } from '../../components/channels/ReactionPicker'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { channelSticker } from '../../lib/channelSticker'
 import { getChannels, type Channel } from '../../lib/channels'
@@ -55,6 +56,8 @@ import {
   sendMessage,
   fetchMessages,
   toggleReaction,
+  setReaction,
+  type ReactionType,
   savePost,
   unsavePost,
   isChannelMember,
@@ -81,6 +84,12 @@ import { reportContent, blockUser, REPORT_REASONS, type ReportReason } from '../
 import { checkPhotoSafety } from '../../lib/photoSafety'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { useTranslation } from '../../lib/i18n'
+
+// Emoji per reaction type — for the footer indicator when a non-heart reaction
+// is chosen (the picker itself owns the full set).
+const REACTION_EMOJI: Record<ReactionType, string> = {
+  heart: '❤️', like: '👍', celebrate: '🎉', support: '🤗',
+}
 
 // ─── Main Component ───────────────────────────────────────────────────────
 
@@ -462,6 +471,44 @@ export default function ChannelChat() {
       setMessages((prev) => prev.map((m) => (m.id === postId ? { ...m, saved: !m.saved } : m)))
     }
   }, [])
+
+  // Reaction picker (Phase 3) — the post whose 4-emoji picker is open.
+  const [reactionPickerPost, setReactionPickerPost] = useState<ChannelPost | null>(null)
+
+  // The reply / thread / delete / report / block action sheet (was the old
+  // long-press target; now reached via the picker's "More" entry).
+  const showMessageActions = useCallback((item: ChannelPost) => {
+    Alert.alert(t('channelScreen_messageActionsTitle'), '', [
+      { text: t('channelScreen_replyInThread'), onPress: () => router.push(`/channel/thread/${item.id}` as any) },
+      { text: t('channelScreen_replyingTo'), onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
+      ...(item.author_id === currentUserId ? [
+        { text: t('common_delete'), style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
+      ] : [
+        { text: t('safety_report'), onPress: () => handleReportMessage(item.id, item.author_id) },
+        { text: t('safety_block'), style: 'destructive' as const, onPress: () => handleBlockUser(item.author_id, item.author_name) },
+      ]),
+      { text: t('common_cancel'), style: 'cancel' as const },
+    ])
+  }, [t, currentUserId])
+
+  const handleSetReaction = useCallback(async (postId: string, type: ReactionType) => {
+    // Optimistic — compute prev/next inside the updater to avoid a stale closure.
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== postId) return m
+        const prevType = m.my_reaction ?? null
+        const nextType = prevType === type ? null : type
+        const delta = (prevType === null ? 0 : -1) + (nextType === null ? 0 : 1)
+        return { ...m, my_reaction: nextType, user_reacted: nextType !== null, reaction_count: Math.max(0, m.reaction_count + delta) }
+      })
+    )
+    setReactionPickerPost(null)
+    try {
+      await setReaction(postId, type)
+    } catch {
+      load() // resync on failure
+    }
+  }, [load])
 
   // ─── Join/Leave ───────────────────────────────────────────────────────
 
@@ -996,19 +1043,7 @@ export default function ChannelChat() {
                 message={item}
                 onReaction={() => handleReaction(item.id)}
                 onSave={() => handleSave(item.id)}
-                onLongPress={() => {
-                  Alert.alert(t('channelScreen_messageActionsTitle'), '', [
-                    { text: t('channelScreen_replyInThread'), onPress: () => router.push(`/channel/thread/${item.id}` as any) },
-                    { text: t('channelScreen_replyingTo'), onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
-                    ...(item.author_id === currentUserId ? [
-                      { text: t('common_delete'), style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
-                    ] : [
-                      { text: t('safety_report'), onPress: () => handleReportMessage(item.id, item.author_id) },
-                      { text: t('safety_block'), style: 'destructive' as const, onPress: () => handleBlockUser(item.author_id, item.author_name) },
-                    ]),
-                    { text: t('common_cancel'), style: 'cancel' as const },
-                  ])
-                }}
+                onLongPress={() => setReactionPickerPost(item)}
                 onThreadPress={() => router.push(`/channel/thread/${item.id}` as any)}
               />
             )
@@ -1219,6 +1254,19 @@ export default function ChannelChat() {
           </View>
         )}
       </KeyboardAvoidingView>
+
+      {/* Reaction picker (Phase 3) — long-press a message → 4 reactions + More */}
+      <ReactionPicker
+        visible={reactionPickerPost !== null}
+        current={reactionPickerPost?.my_reaction}
+        onPick={(type) => reactionPickerPost && handleSetReaction(reactionPickerPost.id, type)}
+        onMore={() => {
+          const post = reactionPickerPost
+          setReactionPickerPost(null)
+          if (post) showMessageActions(post)
+        }}
+        onClose={() => setReactionPickerPost(null)}
+      />
 
       {/* Rating overlay */}
       {showRating && (
@@ -1593,14 +1641,19 @@ function MessageBubbleBase({
 
         {/* Bottom row: reactions + replies */}
         <View style={styles.bubbleFooter}>
-          {/* Reaction */}
-          <Pressable onPress={onReaction} hitSlop={6} style={styles.reactionBtn}>
-            <Heart
-              size={14}
-              color={message.user_reacted ? (diffuse ? dt.colors.ink : brand.error) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
-              strokeWidth={diffuse ? 1.6 : 2}
-              fill={message.user_reacted ? (diffuse ? dt.colors.ink : brand.error) : 'none'}
-            />
+          {/* Reaction — tap = quick heart, long-press (bubble) = picker.
+              Shows the chosen emoji when a non-heart reaction is set. */}
+          <Pressable onPress={onReaction} onLongPress={onLongPress} hitSlop={6} style={styles.reactionBtn}>
+            {message.my_reaction && message.my_reaction !== 'heart' ? (
+              <Text style={{ fontSize: 14 }}>{REACTION_EMOJI[message.my_reaction]}</Text>
+            ) : (
+              <Heart
+                size={14}
+                color={message.user_reacted ? (diffuse ? dt.colors.ink : brand.error) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+                strokeWidth={diffuse ? 1.6 : 2}
+                fill={message.user_reacted ? (diffuse ? dt.colors.ink : brand.error) : 'none'}
+              />
+            )}
             {message.reaction_count > 0 && (
               <Text
                 style={[
@@ -1659,6 +1712,7 @@ const MessageBubble = memo(MessageBubbleBase, (a, b) => {
     m.content === n.content &&
     m.reaction_count === n.reaction_count &&
     m.user_reacted === n.user_reacted &&
+    m.my_reaction === n.my_reaction &&
     m.saved === n.saved &&
     m.reply_count === n.reply_count &&
     m.is_pinned === n.is_pinned
