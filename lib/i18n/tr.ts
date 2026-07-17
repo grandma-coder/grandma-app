@@ -2686,6 +2686,7 @@ export const tr: TranslationKeys = {
   report_errorRebuild: "PDF export needs the latest app version. Please update the app and try again.",
   report_errorGeneric: "Something went wrong. Please try again.",
 
+  report_needsUpdate: "PDF export becomes available in the next app update. The summary above is ready to review now.",
   healthHistory_noGrowthEntries: "No growth entries. Log weight and height to track progress.",
   healthHistory_noMilestones: "No milestones yet. Celebrate every first!",
   healthHistory_totalEntries: "total {{label}} entries",

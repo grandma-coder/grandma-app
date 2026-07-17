@@ -2686,6 +2686,7 @@ export const ptBR: TranslationKeys = {
   report_errorRebuild: "PDF export needs the latest app version. Please update the app and try again.",
   report_errorGeneric: "Something went wrong. Please try again.",
 
+  report_needsUpdate: "PDF export becomes available in the next app update. The summary above is ready to review now.",
   healthHistory_noGrowthEntries: "Nenhum registro de crescimento. Registre peso e altura para acompanhar o progresso.",
   healthHistory_noMilestones: "Nenhum marco ainda. Comemore cada primeiro!",
   healthHistory_totalEntries: "total de {{label}} registros",

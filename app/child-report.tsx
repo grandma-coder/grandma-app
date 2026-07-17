@@ -26,7 +26,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../components/ui/Typography'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import {
-  generateAndShareReport, measurementPercentile,
+  generateAndShareReport, measurementPercentile, isPdfExportAvailable,
   type PediatricReportData, type ReportMeasurement, type ReportVaccine,
 } from '../lib/pediatricReport'
 import type { Metric } from '../lib/growthStandards'
@@ -81,6 +81,8 @@ export default function ChildReportScreen() {
 
   const analytics = useKidsAnalytics(child?.id ?? 'all', { kind: 'last', days: 14 })
   const [generating, setGenerating] = useState(false)
+  // PDF needs the native expo-print module — absent on un-rebuilt clients / Expo Go.
+  const pdfAvailable = isPdfExportAvailable()
 
   // Raw growth + vaccine logs for this child.
   const { data: logs } = useQuery({
@@ -251,8 +253,8 @@ export default function ChildReportScreen() {
         )}
 
         <Pressable
-          onPress={generating ? undefined : handleGenerate}
-          style={[styles.cta, { backgroundColor: accent, borderRadius: radius.full, opacity: generating ? 0.6 : 1 }]}
+          onPress={generating || !pdfAvailable ? undefined : handleGenerate}
+          style={[styles.cta, { backgroundColor: accent, borderRadius: radius.full, opacity: generating || !pdfAvailable ? 0.5 : 1 }]}
         >
           {generating
             ? <ActivityIndicator size="small" color={diffuse ? dt.colors.bg : colors.textInverse} />
@@ -261,6 +263,12 @@ export default function ChildReportScreen() {
             {t('report_generate')}
           </Text>
         </Pressable>
+
+        {!pdfAvailable && (
+          <Text style={[styles.unavailable, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+            {t('report_needsUpdate')}
+          </Text>
+        )}
 
         <View style={styles.disclaimerRow}>
           <FileText size={13} color={inkMuted} strokeWidth={1.6} />
@@ -291,6 +299,7 @@ const styles = StyleSheet.create({
   kvV: { fontSize: 14, flex: 1, lineHeight: 19 },
   cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, marginTop: 26 },
   ctaText: { fontSize: 15 },
+  unavailable: { fontSize: 12, textAlign: 'center', marginTop: 10, lineHeight: 17, paddingHorizontal: 20 },
   disclaimerRow: { flexDirection: 'row', gap: 8, marginTop: 18, paddingHorizontal: 4, alignItems: 'flex-start' },
   disclaimer: { fontSize: 11, lineHeight: 16, flex: 1 },
 })

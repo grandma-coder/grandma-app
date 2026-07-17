@@ -14,9 +14,36 @@
  * build). Model: Print.printToFileAsync({html}) → Sharing.shareAsync(uri, pdf).
  */
 
-import * as Print from 'expo-print'
 import * as Sharing from 'expo-sharing'
+import { requireOptionalNativeModule } from 'expo-modules-core'
 import { estimatePercentile, resolveSex, type Metric } from './growthStandards'
+import type * as PrintType from 'expo-print'
+
+// expo-print resolves its NATIVE module ('ExpoPrint') at IMPORT time, so a bare
+// top-level `import * as Print from 'expo-print'` crashes any client without the
+// native binary (Expo Go, or a dev client built before expo-print was added) —
+// the crash happens when this file is imported, before any try/catch can run.
+// Probe for the native module first, require the JS wrapper only when present.
+// Same pattern as lib/pushNotifications.ts and lib/appLock.ts.
+let _print: typeof PrintType | null | undefined
+
+function getPrint(): typeof PrintType | null {
+  if (_print !== undefined) return _print
+  _print = null
+  try {
+    if (requireOptionalNativeModule('ExpoPrint')) {
+      _print = require('expo-print')
+    }
+  } catch {
+    _print = null
+  }
+  return _print ?? null
+}
+
+/** True when PDF generation is available (native module present). */
+export function isPdfExportAvailable(): boolean {
+  return getPrint() !== null
+}
 
 export interface ReportMeasurement {
   metric: Metric
@@ -215,6 +242,11 @@ export function buildReportHtml(d: PediatricReportData): string {
 
 /** Generate the PDF from report data and open the OS share sheet. */
 export async function generateAndShareReport(d: PediatricReportData): Promise<void> {
+  const Print = getPrint()
+  if (!Print) {
+    // Recognized by the caller's catch → shows a "please update the app" message.
+    throw new Error('ExpoPrint native module unavailable')
+  }
   const html = buildReportHtml(d)
   const { uri } = await Print.printToFileAsync({ html })
   if (await Sharing.isAvailableAsync()) {

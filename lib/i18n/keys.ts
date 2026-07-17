@@ -2926,6 +2926,7 @@ export interface TranslationKeys {
   report_errorTitle: string
   report_errorRebuild: string
   report_errorGeneric: string
+  report_needsUpdate: string
   healthHistory_noGrowthEntries: string
   healthHistory_noMilestones: string
   healthHistory_totalEntries: string
