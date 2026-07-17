@@ -22,6 +22,7 @@ import {
   MessageCircle,
   Send,
   User,
+  BadgeCheck,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
@@ -169,6 +170,9 @@ export default function ThreadView() {
                     : { color: colors.text }]}>
                     {parentMsg.author_name ?? t('channelThread_memberFallback')}
                   </Text>
+                  {parentMsg.author_is_expert && (
+                    <BadgeCheck size={13} color={diffuse ? dt.stickers.blue : brand.primary} strokeWidth={2} />
+                  )}
                   <Text style={[s.time, diffuse
                     ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
                     : { color: colors.textMuted }]}>
@@ -235,6 +239,9 @@ export default function ThreadView() {
                     : { color: colors.text }]}>
                     {item.author_name ?? t('channelThread_memberFallback')}
                   </Text>
+                  {item.author_is_expert && (
+                    <BadgeCheck size={12} color={diffuse ? dt.stickers.blue : brand.primary} strokeWidth={2} />
+                  )}
                   <Text style={[s.replyTime, diffuse
                     ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
                     : { color: colors.textMuted }]}>

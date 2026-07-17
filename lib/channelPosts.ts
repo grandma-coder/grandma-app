@@ -11,6 +11,8 @@ export interface ChannelPost {
   channel_id: string
   author_id: string
   author_name?: string
+  author_is_expert?: boolean // client-only — verified-expert badge
+  author_expert_title?: string | null
   content: string
   photos: string[]
   is_pinned: boolean
@@ -159,22 +161,25 @@ export async function fetchMessages(channelId: string): Promise<ChannelPost[]> {
 
   const posts = (data ?? []) as ChannelPost[]
 
-  // Backfill author names (including those stored with email prefix)
-  const needsName = posts.filter((p) => !p.author_name || p.author_name.includes('@') || (!p.author_name.includes(' ') && p.author_name.length < 4))
-  if (needsName.length > 0) {
-    const authorIds = [...new Set(needsName.map((p) => p.author_id))]
+  // Fetch author profiles (names + expert badge) for ALL authors in one call.
+  if (posts.length > 0) {
+    const authorIds = [...new Set(posts.map((p) => p.author_id))]
     const { data: profiles } = await supabase
       .from('profiles_public')
-      .select('user_id, name')
+      .select('user_id, name, is_verified_expert, expert_title')
       .in('user_id', authorIds)
 
     if (profiles) {
-      const nameMap = new Map(profiles.map((p: any) => [p.user_id, p.name]))
+      const byId = new Map(profiles.map((p: any) => [p.user_id, p]))
       for (const post of posts) {
-        const profileName = nameMap.get(post.author_id)
-        if (profileName) {
-          post.author_name = profileName
+        const pr = byId.get(post.author_id)
+        if (!pr) continue
+        // Backfill the name only when the denormalized one looks stale.
+        if (pr.name && (!post.author_name || post.author_name.includes('@') || (!post.author_name.includes(' ') && post.author_name.length < 4))) {
+          post.author_name = pr.name
         }
+        post.author_is_expert = pr.is_verified_expert === true
+        post.author_expert_title = pr.expert_title ?? null
       }
     }
   }
@@ -284,19 +289,22 @@ export async function fetchThreadReplies(parentId: string, sort: ReplySort = 'ne
 
   const replies = (data ?? []) as ChannelPost[]
 
-  // Backfill names
-  const missing = replies.filter((r) => !r.author_name)
-  if (missing.length > 0) {
-    const authorIds = [...new Set(missing.map((r) => r.author_id))]
+  // Backfill names + expert badge for all reply authors.
+  if (replies.length > 0) {
+    const authorIds = [...new Set(replies.map((r) => r.author_id))]
     const { data: profiles } = await supabase
       .from('profiles_public')
-      .select('user_id, name')
+      .select('user_id, name, is_verified_expert, expert_title')
       .in('user_id', authorIds)
 
     if (profiles) {
-      const nameMap = new Map(profiles.map((p: any) => [p.user_id, p.name]))
+      const byId = new Map(profiles.map((p: any) => [p.user_id, p]))
       for (const r of replies) {
-        if (!r.author_name) r.author_name = nameMap.get(r.author_id) ?? null
+        const pr = byId.get(r.author_id)
+        if (!pr) continue
+        if (!r.author_name) r.author_name = pr.name ?? null
+        r.author_is_expert = pr.is_verified_expert === true
+        r.author_expert_title = pr.expert_title ?? null
       }
     }
   }

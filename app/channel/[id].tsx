@@ -27,6 +27,7 @@ import {
   Users,
   Heart,
   Bookmark,
+  BadgeCheck,
   MessageCircle,
   Send,
   Camera,
@@ -1621,6 +1622,17 @@ function MessageBubbleBase({
           <Text style={[styles.authorName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }]}>
             {message.author_name ?? t('channelScreen_memberFallback')}
           </Text>
+          {/* Verified-expert badge (Phase 3) */}
+          {message.author_is_expert && (
+            <View style={styles.expertBadge}>
+              <BadgeCheck size={13} color={diffuse ? dt.stickers.blue : brand.primary} strokeWidth={2} fill="none" />
+              {message.author_expert_title ? (
+                <Text style={[styles.expertTitle, { color: diffuse ? dt.stickers.blue : brand.primary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>
+                  {message.author_expert_title}
+                </Text>
+              ) : null}
+            </View>
+          )}
           <Text style={[styles.timestamp, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.body }]}>
             {formatTime(message.created_at)}
           </Text>
@@ -1710,6 +1722,8 @@ const MessageBubble = memo(MessageBubbleBase, (a, b) => {
   return (
     m.id === n.id &&
     m.content === n.content &&
+    m.author_name === n.author_name &&
+    m.author_is_expert === n.author_is_expert &&
     m.reaction_count === n.reaction_count &&
     m.user_reacted === n.user_reacted &&
     m.my_reaction === n.my_reaction &&
@@ -1979,8 +1993,10 @@ const styles = StyleSheet.create({
   inlineReplyRef: { paddingHorizontal: 10, paddingVertical: 6, borderLeftWidth: 3, borderRadius: 4, marginBottom: 4 },
   inlineReplyAuthor: { fontSize: 11, fontWeight: '700' },
   inlineReplyText: { fontSize: 12, fontWeight: '400', marginTop: 1 },
-  bubbleHeader: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  bubbleHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   authorName: { fontSize: 13, fontWeight: '700' },
+  expertBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  expertTitle: { fontSize: 10, letterSpacing: 0.3 },
   timestamp: { fontSize: 11, fontWeight: '400' },
   pinnedTag: {
     flexDirection: 'row',
