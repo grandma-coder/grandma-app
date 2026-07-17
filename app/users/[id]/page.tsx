@@ -15,9 +15,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
   if (!ctx.allowed || ctx.role !== "admin") {
     return (
       <main className="mx-auto max-w-3xl p-8">
-        <h1 className="text-xl font-semibold">Admin only</h1>
-        <p className="mt-2 text-zinc-600">User detail contains personal data and requires the admin role.</p>
-        <Link href="/users" className="mt-4 inline-block text-sm text-blue-600 hover:underline">← back to users</Link>
+        <h1 className="font-display text-xl font-semibold text-fg-primary">Admin only</h1>
+        <p className="mt-2 text-fg-secondary">User detail contains personal data and requires the admin role.</p>
+        <Link href="/users" className="mt-4 inline-block text-sm text-accent-500 hover:text-accent-600">← back to users</Link>
       </main>
     )
   }
@@ -48,26 +48,26 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <main className="mx-auto max-w-3xl p-8">
-      <Link href="/users" className="text-sm text-zinc-500 hover:underline">← back to users</Link>
-      <h1 className="mt-2 text-2xl font-semibold">{field("name") !== "—" ? field("name") : field("email")}</h1>
-      <p className="text-xs text-zinc-400">id: {id} · this view was audit-logged</p>
+      <Link href="/users" className="text-sm text-fg-tertiary hover:text-fg-secondary">← back to users</Link>
+      <h1 className="mt-2 font-display text-2xl font-semibold text-fg-primary">{field("name") !== "—" ? field("name") : field("email")}</h1>
+      <p className="text-xs text-fg-muted">id: {id} · this view was audit-logged</p>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <div className="mt-6 overflow-hidden rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
         <table className="w-full text-sm">
           <tbody>
             {rows.map(([k, v]) => (
-              <tr key={k} className="border-t border-zinc-100 first:border-t-0 dark:border-zinc-800">
-                <td className="w-40 bg-zinc-50 px-4 py-2 font-medium text-zinc-500 dark:bg-zinc-900">{k}</td>
-                <td className="px-4 py-2">{v}</td>
+              <tr key={k} className="border-t border-border-subtle first:border-t-0">
+                <td className="w-40 bg-deep px-4 py-2 font-medium text-fg-tertiary">{k}</td>
+                <td className="px-4 py-2 text-fg-primary">{v}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <details className="mt-4 rounded-xl border border-zinc-200 p-4 text-sm dark:border-zinc-800">
-        <summary className="cursor-pointer font-medium">Notification & privacy settings (JSON)</summary>
-        <pre className="mt-2 overflow-x-auto text-xs text-zinc-600 dark:text-zinc-400">
+      <details className="mt-4 rounded-xl border border-border-default bg-card p-4 text-sm">
+        <summary className="cursor-pointer font-medium text-fg-secondary">Notification & privacy settings (JSON)</summary>
+        <pre className="mt-2 overflow-x-auto text-xs text-fg-tertiary">
 {JSON.stringify({ notification_prefs: profile.notification_prefs, privacy_settings: profile.privacy_settings }, null, 2)}
         </pre>
       </details>

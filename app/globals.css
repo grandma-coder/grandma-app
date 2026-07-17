@@ -1,26 +1,180 @@
 @import "tailwindcss";
 
+/* ════════════════════════════════════════════════════════════════════════════
+   Design tokens — mirrored from mother-internal-dashboard.
+   Core token system only (shared + dark + light). The mother dashboard's extra
+   canvases (brand/navy/black/pink/mint), legacy-hex compat shims, and the
+   `central` skin are intentionally omitted — this is a clean, new app that
+   consumes the tokens directly.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Shared tokens (theme-independent) ─────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-sans:    var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), system-ui, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  /* Radii */
+  --radius-xs: 4px;  --radius-sm: 6px;  --radius-md: 8px;
+  --radius-lg: 10px; --radius-xl: 12px; --radius-2xl: 16px; --radius-full: 9999px;
+
+  /* Easing / motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms; --duration: 200ms; --duration-slow: 500ms;
+
+  /* Mother brand raw palette */
+  --mother-blue:      #5A5FFE;
+  --mother-blue-deep: #4A4FE4;
+  --mother-blue-soft: #7B7FFF;
+  --mother-green:     #00CC9A;
+  --brand-pink:       #FF52A4;
+  --brand-yellow:     #FED92A;
+  --brand-mint:       #04D7AB;
+  --brand-orange:     #FD7743;
 }
 
+/* ─── Dark theme ────────────────────────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-root:       #0d0e17;
+  --bg-sidebar:    #0a0b12;
+  --bg-card:       #14151f;
+  --bg-card-hover: #1a1b2e;
+  --bg-deep:       #0a0b14;
+  --bg-tooltip:    #1c1d2e;
+
+  --border-subtle:  rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.10);
+  --border-strong:  rgba(255,255,255,0.20);
+
+  --fg-primary:   #ffffff;
+  --fg-secondary: rgba(255,255,255,0.70);
+  --fg-tertiary:  rgba(255,255,255,0.40);
+  --fg-muted:     rgba(255,255,255,0.25);
+  --fg-inverse:   #0d0e17;
+
+  --accent-400: #7B7FFF; --accent-500: #5A5FFE; --accent-600: #4A4FE4;
+  --accent-glow: rgba(90,95,254,0.18);
+
+  --success-400: #04D7AB; --success-500: #00CC9A;
+  --warning-400: #FED92A; --warning-500: #FD7743;
+  --danger-400:  #FF52A4; --danger-500:  #FF006B;
+  --info-400:    #7B7FFF;
+
+  --pill-success-bg: rgba(0,204,154,0.15);  --pill-success-fg: #04D7AB;
+  --pill-warning-bg: rgba(253,119,67,0.15); --pill-warning-fg: #FD7743;
+  --pill-danger-bg:  rgba(255,0,107,0.15);  --pill-danger-fg:  #FF52A4;
+  --pill-info-bg:    rgba(90,95,254,0.15);  --pill-info-fg:    #7B7FFF;
+
+  --chart-1: #5A5FFE; --chart-2: #00CC9A; --chart-3: #FF52A4; --chart-4: #FED92A;
+  --chart-5: #04D7AB; --chart-6: #FD7743; --chart-7: #7B7FFF; --chart-8: #FF006B;
+  --chart-grid: rgba(255,255,255,0.05); --chart-axis: rgba(255,255,255,0.30);
+
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.30);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.35);
+  --shadow-xl:  0 20px 40px -10px rgba(0,0,0,0.50);
+  --scrollbar-thumb: rgba(255,255,255,0.10);
+  --scrollbar-track: transparent;
+}
+
+/* ─── Light theme (default for this app) ────────────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-root:       #f7f7fb;
+  --bg-sidebar:    #ffffff;
+  --bg-card:       #ffffff;
+  --bg-card-hover: #fafafd;
+  --bg-deep:       #f1f1f6;
+  --bg-tooltip:    #1c1d2e;
+
+  --border-subtle:  rgba(13,14,23,0.05);
+  --border-default: rgba(13,14,23,0.08);
+  --border-strong:  rgba(13,14,23,0.14);
+
+  --fg-primary:   #0d0e17;
+  --fg-secondary: rgba(13,14,23,0.72);
+  --fg-tertiary:  rgba(13,14,23,0.52);
+  --fg-muted:     rgba(13,14,23,0.38);
+  --fg-inverse:   #ffffff;
+
+  --accent-400: #5A5FFE; --accent-500: #4A4FE4; --accent-600: #3A3FC4;
+  --accent-glow: rgba(74,79,228,0.10);
+
+  --success-400: #00CC9A; --success-500: #00A77E;
+  --warning-400: #D9A800; --warning-500: #C05A20;
+  --danger-400:  #E63F87; --danger-500:  #D6004F;
+  --info-400:    #4A4FE4;
+
+  --pill-success-bg: rgba(0,167,126,0.12);  --pill-success-fg: #006B52;
+  --pill-warning-bg: rgba(192,90,32,0.12);  --pill-warning-fg: #8A3E10;
+  --pill-danger-bg:  rgba(214,0,79,0.12);   --pill-danger-fg:  #9E0038;
+  --pill-info-bg:    rgba(74,79,228,0.10);  --pill-info-fg:    #3A3FC4;
+
+  --chart-1: #4A4FE4; --chart-2: #00A77E; --chart-3: #D6004F; --chart-4: #D9A800;
+  --chart-5: #00A77E; --chart-6: #C05A20; --chart-7: #3C468F; --chart-8: #D6004F;
+  --chart-grid: rgba(13,14,23,0.06); --chart-axis: rgba(13,14,23,0.45);
+
+  --shadow-sm:  0 1px 2px rgba(13,14,23,0.04);
+  --shadow-md:  0 4px 12px rgba(13,14,23,0.06);
+  --shadow-xl:  0 20px 40px -10px rgba(13,14,23,0.10);
+  --scrollbar-thumb: rgba(13,14,23,0.14);
+  --scrollbar-track: transparent;
+}
+
+/* ─── Tailwind v4 theme mapping — exposes tokens as utility classes ──────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-root:        var(--bg-root);
+  --color-sidebar:     var(--bg-sidebar);
+  --color-card:        var(--bg-card);
+  --color-card-hover:  var(--bg-card-hover);
+  --color-deep:        var(--bg-deep);
+
+  --color-border-subtle:  var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong:  var(--border-strong);
+
+  --color-fg-primary:   var(--fg-primary);
+  --color-fg-secondary: var(--fg-secondary);
+  --color-fg-tertiary:  var(--fg-tertiary);
+  --color-fg-muted:     var(--fg-muted);
+
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+
+  --color-success: var(--success-400);
+  --color-warning: var(--warning-400);
+  --color-danger:  var(--danger-400);
+
+  --font-sans:    var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono:    var(--font-mono);
+
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
+html { background: var(--bg-root); }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-root);
+  color: var(--fg-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-default); }
+
+/* Reusable status pill (mirrors mother dashboard semantics) */
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 500; }
+.pill-success { background: var(--pill-success-bg); color: var(--pill-success-fg); }
+.pill-warning { background: var(--pill-warning-bg); color: var(--pill-warning-fg); }
+.pill-danger  { background: var(--pill-danger-bg);  color: var(--pill-danger-fg); }
+.pill-info    { background: var(--pill-info-bg);    color: var(--pill-info-fg); }

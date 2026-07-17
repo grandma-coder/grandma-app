@@ -18,12 +18,12 @@ export default async function UsersPage() {
     <main className="mx-auto max-w-6xl p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <Link href="/" className="text-sm text-zinc-500 hover:underline">
+          <Link href="/" className="text-sm text-fg-tertiary hover:text-fg-secondary">
             ← command center
           </Link>
-          <h1 className="text-2xl font-semibold">Users</h1>
+          <h1 className="font-display text-2xl font-semibold text-fg-primary">Users</h1>
         </div>
-        <span className="text-sm text-zinc-500">role: {ctx.role}</span>
+        <span className="text-sm text-fg-tertiary">role: <span className="text-accent-500">{ctx.role}</span></span>
       </div>
       <UsersTable isAdmin={isAdmin} />
     </main>

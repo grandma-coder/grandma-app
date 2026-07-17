@@ -38,8 +38,8 @@ export function UsersTable({ isAdmin }: { isAdmin: boolean }) {
       {/* Segment counts */}
       <div className="mb-4 flex flex-wrap gap-2">
         {segments.data?.map((s) => (
-          <span key={s.segment} className="rounded-full bg-zinc-100 px-3 py-1 text-xs dark:bg-zinc-800">
-            {s.segment}: <b>{s.count}</b>
+          <span key={s.segment} className="rounded-full bg-deep px-3 py-1 text-xs text-fg-secondary">
+            {s.segment}: <b className="text-fg-primary">{s.count}</b>
           </span>
         ))}
       </div>
@@ -50,49 +50,49 @@ export function UsersTable({ isAdmin }: { isAdmin: boolean }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name / email…"
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-lg border border-border-default bg-card px-3 py-1.5 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
         />
-        <select value={mode} onChange={(e) => setMode(e.target.value as (typeof MODES)[number])} className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <select value={mode} onChange={(e) => setMode(e.target.value as (typeof MODES)[number])} className="rounded-lg border border-border-default bg-card px-2 py-1.5 text-sm text-fg-secondary focus:border-accent-400 focus:outline-none">
           {MODES.map((m) => <option key={m} value={m}>{m || "all modes"}</option>)}
         </select>
-        <select value={tier} onChange={(e) => setTier(e.target.value as (typeof TIERS)[number])} className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <select value={tier} onChange={(e) => setTier(e.target.value as (typeof TIERS)[number])} className="rounded-lg border border-border-default bg-card px-2 py-1.5 text-sm text-fg-secondary focus:border-accent-400 focus:outline-none">
           {TIERS.map((t) => <option key={t} value={t}>{t || "all tiers"}</option>)}
         </select>
       </div>
 
-      {isLoading && <p className="text-sm text-zinc-500">Loading…</p>}
-      {error && <p className="text-sm text-red-600">Error: {error.message}</p>}
+      {isLoading && <p className="text-sm text-fg-tertiary">Loading…</p>}
+      {error && <p className="text-sm text-danger">Error: {error.message}</p>}
 
       {data && (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <div className="overflow-x-auto rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
           <table className="w-full text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500 dark:bg-zinc-900">
+            <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
               <tr>
-                <th className="px-4 py-2 font-medium">Name</th>
-                <th className="px-4 py-2 font-medium">Email</th>
-                <th className="px-4 py-2 font-medium">Mode</th>
-                <th className="px-4 py-2 font-medium">Tier</th>
-                <th className="px-4 py-2 font-medium">Lang</th>
-                <th className="px-4 py-2 font-medium">Logs</th>
-                <th className="px-4 py-2 font-medium">Last active</th>
-                <th className="px-4 py-2 font-medium">Joined</th>
-                {isAdmin && <th className="px-4 py-2" />}
+                <th className="px-4 py-2.5 font-medium">Name</th>
+                <th className="px-4 py-2.5 font-medium">Email</th>
+                <th className="px-4 py-2.5 font-medium">Mode</th>
+                <th className="px-4 py-2.5 font-medium">Tier</th>
+                <th className="px-4 py-2.5 font-medium">Lang</th>
+                <th className="px-4 py-2.5 font-medium">Logs</th>
+                <th className="px-4 py-2.5 font-medium">Last active</th>
+                <th className="px-4 py-2.5 font-medium">Joined</th>
+                {isAdmin && <th className="px-4 py-2.5" />}
               </tr>
             </thead>
             <tbody>
               {data.rows.map((u) => (
-                <tr key={u.id} className="border-t border-zinc-100 dark:border-zinc-800">
-                  <td className="px-4 py-2">{u.name ?? "—"}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{isAdmin ? u.email ?? "—" : maskEmail(u.email)}</td>
-                  <td className="px-4 py-2">{u.journeyMode ?? "—"}</td>
-                  <td className="px-4 py-2">{u.tier ?? "—"}</td>
-                  <td className="px-4 py-2">{u.language ?? "—"}</td>
-                  <td className="px-4 py-2">{u.logsCount}</td>
-                  <td className="px-4 py-2">{fmtDate(u.lastActive)}</td>
-                  <td className="px-4 py-2">{fmtDate(u.createdAt)}</td>
+                <tr key={u.id} className="border-t border-border-subtle text-fg-secondary transition-colors hover:bg-card-hover">
+                  <td className="px-4 py-2.5 text-fg-primary">{u.name ?? "—"}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs">{isAdmin ? u.email ?? "—" : maskEmail(u.email)}</td>
+                  <td className="px-4 py-2.5">{u.journeyMode ?? "—"}</td>
+                  <td className="px-4 py-2.5">{u.tier ?? "—"}</td>
+                  <td className="px-4 py-2.5">{u.language ?? "—"}</td>
+                  <td className="px-4 py-2.5">{u.logsCount}</td>
+                  <td className="px-4 py-2.5">{fmtDate(u.lastActive)}</td>
+                  <td className="px-4 py-2.5">{fmtDate(u.createdAt)}</td>
                   {isAdmin && (
-                    <td className="px-4 py-2">
-                      <Link href={`/users/${u.id}`} className="text-xs text-blue-600 hover:underline">
+                    <td className="px-4 py-2.5">
+                      <Link href={`/users/${u.id}`} className="text-xs font-medium text-accent-500 hover:text-accent-600">
                         detail →
                       </Link>
                     </td>
@@ -100,7 +100,7 @@ export function UsersTable({ isAdmin }: { isAdmin: boolean }) {
                 </tr>
               ))}
               {data.rows.length === 0 && (
-                <tr><td colSpan={9} className="px-4 py-6 text-center text-zinc-400">No users match.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-6 text-center text-fg-muted">No users match.</td></tr>
               )}
             </tbody>
           </table>
