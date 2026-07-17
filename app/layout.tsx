@@ -24,6 +24,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="light"
+      data-skin="central"
       suppressHydrationWarning
       className={`${inter.variable} ${spaceGrotesk.variable} h-full`}
     >

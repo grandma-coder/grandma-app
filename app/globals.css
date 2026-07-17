@@ -178,3 +178,88 @@ body {
 .pill-warning { background: var(--pill-warning-bg); color: var(--pill-warning-fg); }
 .pill-danger  { background: var(--pill-danger-bg);  color: var(--pill-danger-fg); }
 .pill-info    { background: var(--pill-info-bg);    color: var(--pill-info-fg); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   "Central" skin — the Mother internal-dashboard app shell.
+   Mirrored from mother-internal-dashboard's [data-skin="central"] block.
+   Navy accent (#14213D), grey sidebar, pill nav, bordered profile card.
+   Font swap: Mother's licensed Safiro → our Space Grotesk (display); Geist →
+   Inter (body). Applied via data-skin="central" on <html>.
+   ════════════════════════════════════════════════════════════════════════════ */
+[data-skin="central"] {
+  --c-accent:    #14213D;
+  --c-accent-fg: #FFFFFF;
+  --c-bg:        #FFFFFF;
+  --c-bg-2:      #FAFAFA;
+  --c-surface:   #FFFFFF;
+  --c-surface-2: #F7F7F7;
+  --c-line:      rgba(0,0,0,0.08);
+  --c-line-2:    rgba(0,0,0,0.14);
+  --c-fg:        #0B0B0B;
+  --c-fg-2:      #1F1F1F;
+  --c-fg-3:      #4A4A4A;
+  --c-fg-4:      #8A8A8A;
+  --c-fg-5:      #B5B5B5;
+
+  --c-font-display: var(--font-space-grotesk), system-ui, sans-serif;
+  --c-font-body:    var(--font-inter), system-ui, -apple-system, sans-serif;
+  --c-font-mono:    ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Re-bind the shared tokens so token utilities adopt the Central palette */
+  color-scheme: light;
+  --bg-root: var(--c-bg); --bg-sidebar: var(--c-bg-2);
+  --bg-card: var(--c-surface); --bg-card-hover: var(--c-surface-2); --bg-deep: var(--c-surface-2);
+  --border-subtle: rgba(0,0,0,0.04); --border-default: var(--c-line); --border-strong: var(--c-line-2);
+  --fg-primary: var(--c-fg); --fg-secondary: var(--c-fg-2); --fg-tertiary: var(--c-fg-3); --fg-muted: var(--c-fg-4);
+  --accent-400: #2A3760; --accent-500: var(--c-accent); --accent-600: #0E1729;
+  --pill-info-bg: rgba(20,33,61,0.08); --pill-info-fg: #14213D;
+  --chart-1: #14213D; --chart-2: #4A4FE4; --chart-3: #00A77E; --chart-4: #C05A20;
+  --chart-5: #D6004F; --chart-6: #7AA2F7; --chart-7: #BB9AF7; --chart-8: #E0AF68;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04); --shadow-md: 0 4px 16px rgba(0,0,0,0.05);
+  background: var(--c-bg); color: var(--c-fg-2);
+}
+[data-skin="central"] body { font-family: var(--c-font-body); }
+
+/* App shell — sidebar + content grid */
+[data-skin="central"] .central-app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; background: var(--c-bg); }
+
+[data-skin="central"] .central-sidebar {
+  background: var(--c-bg-2); border-right: 1px solid var(--c-line);
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow: hidden; padding-top: 12px;
+}
+[data-skin="central"] .central-sidebar .brand { display: flex; gap: 10px; align-items: center; height: 64px; padding: 0 16px; flex-shrink: 0; }
+[data-skin="central"] .central-sidebar .brand-mark {
+  width: 28px; height: 28px; border-radius: 999px; background: var(--c-accent); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+  font-family: var(--c-font-display); flex-shrink: 0;
+}
+[data-skin="central"] .central-sidebar .brand-name { font-family: var(--c-font-display); font-size: 15px; line-height: 1; color: var(--c-fg); letter-spacing: -0.01em; font-weight: 700; }
+[data-skin="central"] .central-nav { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+[data-skin="central"] .nav-section-header {
+  padding: 14px 10px 6px; font-family: var(--c-font-mono); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.10em; color: var(--c-fg-5);
+}
+[data-skin="central"] .central-sidebar .nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 999px;
+  color: var(--c-fg-3); font-size: 13px; font-weight: 500; letter-spacing: -0.005em;
+  transition: background 0.12s, color 0.12s; text-decoration: none;
+}
+[data-skin="central"] .central-sidebar .nav-item span { flex: 1; }
+[data-skin="central"] .central-sidebar .nav-item:hover { background: rgba(0,0,0,0.04); color: var(--c-fg); }
+[data-skin="central"] .central-sidebar .nav-item.on { background: var(--c-accent); color: var(--c-accent-fg); }
+[data-skin="central"] .central-sidebar .nav-item.on svg { color: var(--c-accent-fg); }
+[data-skin="central"] .central-sidebar .nav-item.disabled { color: var(--c-fg-5); pointer-events: none; }
+
+[data-skin="central"] .sidebar-foot {
+  flex-shrink: 0; padding: 10px 12px 14px; background: var(--c-bg-2);
+  border-top: 1px solid var(--c-line); display: flex; flex-direction: column; gap: 8px;
+}
+[data-skin="central"] .user-card {
+  padding: 4px 12px 4px 4px; border-radius: 999px; border: 1px solid var(--c-line);
+  display: flex; align-items: center; gap: 8px; width: fit-content; max-width: 100%;
+}
+[data-skin="central"] .user-card .uc-name { font-size: 12px; color: var(--c-fg); font-weight: 500; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-skin="central"] .user-card .uc-role { font-size: 10px; color: var(--c-fg-4); font-family: var(--c-font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+
+[data-skin="central"] .central-content { min-width: 0; }
+[data-skin="central"] .display { font-family: var(--c-font-display); }
