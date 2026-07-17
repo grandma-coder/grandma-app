@@ -21,6 +21,7 @@ import {
   ALL_SYMPTOMS, suggestedForPhase, symptomLabel, type SymptomId,
 } from '../../lib/cycleSymptoms'
 import { phaseHint, saveLabel } from '../../lib/cycleLogForms'
+import { askGrandmaAboutSymptoms } from '../../lib/symptomAssist'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
@@ -566,6 +567,33 @@ export function SymptomsForm({
             ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }
             : { color: accent, fontWeight: '600', fontSize: 12 }}>
             {t('cycleLogForm_showMore', { count: hiddenCount })}
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {/* Symptom-triggered Grandma — offer to ask about the selected symptoms. */}
+      {toggle.selectedCount > 0 ? (
+        <Pressable
+          onPress={async () => {
+            const labels = [...toggle.selected].map((id) => symptomLabel(id as SymptomId))
+            try { await toggle.commit() } catch { /* still offer chat */ }
+            askGrandmaAboutSymptoms(labels)
+            onSaved()
+          }}
+          style={({ pressed }) => [{
+            flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14,
+            paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999,
+            backgroundColor: diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft,
+            alignSelf: 'flex-start', opacity: pressed ? 0.7 : 1,
+          }]}
+        >
+          <Character name="heart" size={18} color={diffuse ? dt.stickers.lilac : stickers.lilac} />
+          <Text style={{
+            color: diffuse ? dt.colors.ink : stickers.charcoal,
+            fontFamily: diffuse ? diffuseFont.bodySemiBold : undefined,
+            fontWeight: diffuse ? undefined : '600', fontSize: 13,
+          }}>
+            {t('symptomAssist_ask')}
           </Text>
         </Pressable>
       ) : null}

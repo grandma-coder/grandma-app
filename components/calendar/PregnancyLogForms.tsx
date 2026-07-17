@@ -46,6 +46,7 @@ import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
 import { Character, type CharacterName } from '../characters/Characters'
+import { askGrandmaAboutSymptoms } from '../../lib/symptomAssist'
 import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { ExamForm } from '../exams/ExamForm'
 import { StepSlider } from '../ui/StepSlider'
@@ -426,6 +427,35 @@ export function PregnancySymptomsForm({
               },
         ]}
       />
+      {/* Symptom-triggered Grandma — offer to ask about the selected symptoms. */}
+      {selected.length > 0 ? (
+        <Pressable
+          onPress={async () => {
+            const labels = selected.map((id) => {
+              const opt = SYMPTOM_OPTIONS.find((o) => o.id === id)
+              return opt ? t(opt.key) : id
+            })
+            try { await savePregnancyLog(date, 'symptom', selected.join(', '), notes || undefined) } catch { /* still offer chat */ }
+            askGrandmaAboutSymptoms(labels)
+            onSaved()
+          }}
+          style={({ pressed }) => [{
+            flexDirection: 'row', alignItems: 'center', gap: 8,
+            paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999,
+            backgroundColor: diffuse ? dt.stickers.lilacSoft : stickersLight.lilacSoft,
+            alignSelf: 'flex-start', marginTop: 4, opacity: pressed ? 0.7 : 1,
+          }]}
+        >
+          <Character name="heart" size={18} color={diffuse ? dt.stickers.lilac : stickersLight.lilac} />
+          <Text style={{
+            color: diffuse ? dt.colors.ink : stickersLight.charcoal,
+            fontFamily: diffuse ? diffuseFont.bodySemiBold : undefined,
+            fontWeight: diffuse ? undefined : '600', fontSize: 13,
+          }}>
+            {t('symptomAssist_ask')}
+          </Text>
+        </Pressable>
+      ) : null}
       <SaveButton
         onPress={save}
         saving={saving}

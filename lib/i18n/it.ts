@@ -1483,6 +1483,7 @@ export const it: TranslationKeys = {
   cycleSettings_days: "days",
   cycleSettings_footer: "Predictions are estimates, not medical advice. For fertility concerns, talk to your doctor.",
 
+  symptomAssist_ask: "Ask Grandma about this",
   cycleLogForm_cm_dry: "Dry",
   cycleLogForm_cm_sticky: "Sticky",
   cycleLogForm_cm_creamy: "Creamy",

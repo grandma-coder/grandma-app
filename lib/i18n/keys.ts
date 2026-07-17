@@ -1619,6 +1619,7 @@ export interface TranslationKeys {
   cycleSettings_lutealDesc: string
   cycleSettings_days: string
   cycleSettings_footer: string
+  symptomAssist_ask: string
 
   cycleLogForm_cm_dry: string
   cycleLogForm_cm_sticky: string

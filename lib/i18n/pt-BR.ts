@@ -1483,6 +1483,7 @@ export const ptBR: TranslationKeys = {
   cycleSettings_days: "days",
   cycleSettings_footer: "Predictions are estimates, not medical advice. For fertility concerns, talk to your doctor.",
 
+  symptomAssist_ask: "Ask Grandma about this",
   cycleLogForm_cm_dry: "Seco",
   cycleLogForm_cm_sticky: "Pegajoso",
   cycleLogForm_cm_creamy: "Cremoso",
