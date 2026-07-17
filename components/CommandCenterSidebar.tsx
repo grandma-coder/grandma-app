@@ -1,5 +1,6 @@
 "use client"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useUser, UserButton } from "@clerk/nextjs"
 import {
@@ -60,7 +61,14 @@ export function CommandCenterSidebar() {
   return (
     <aside className="central-sidebar">
       <div className="brand">
-        <span className="brand-mark">g</span>
+        <Image
+          src="/grandma-icon.png"
+          alt="grandma.app"
+          width={28}
+          height={28}
+          className="brand-logo"
+          priority
+        />
         <span className="brand-name">Command Center</span>
       </div>
 

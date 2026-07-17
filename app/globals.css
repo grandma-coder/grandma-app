@@ -233,6 +233,7 @@ body {
   display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
   font-family: var(--c-font-display); flex-shrink: 0;
 }
+[data-skin="central"] .central-sidebar .brand-logo { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; }
 [data-skin="central"] .central-sidebar .brand-name { font-family: var(--c-font-display); font-size: 15px; line-height: 1; color: var(--c-fg); letter-spacing: -0.01em; font-weight: 700; }
 [data-skin="central"] .central-nav { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
 [data-skin="central"] .nav-section-header {
