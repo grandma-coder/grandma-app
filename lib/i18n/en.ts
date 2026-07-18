@@ -1983,6 +1983,10 @@ export const en: TranslationKeys = {
   circles_postingSoon: 'Anonymous posting is coming soon to Circles.',
   circles_composerPlaceholder: 'Share anonymously…',
   circles_composerHint: 'Posted anonymously as your circle handle — never your real name.',
+  circles_threadTitle: 'Thread',
+  circles_threadEmptyTitle: 'No replies yet',
+  circles_threadEmptyBody: 'Be the first to reply — anonymously.',
+  circles_replyPlaceholder: 'Reply anonymously…',
 
   // ─── Channel mute (gap #33) ───────────────────────────────────────────────
   channels_mute: 'Mute this topic',

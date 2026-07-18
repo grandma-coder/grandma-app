@@ -8,7 +8,7 @@
 
 import { useState, useCallback } from 'react'
 import { View, Text, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platform, StyleSheet, ActivityIndicator } from 'react-native'
-import { useLocalSearchParams, useFocusEffect } from 'expo-router'
+import { useLocalSearchParams, useFocusEffect, router } from 'expo-router'
 import { Heart, MessageCircle, ShieldCheck, Send } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
@@ -17,7 +17,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic } from '../../components/ui/Typography'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
-import { getCircle, getCirclePosts, createCirclePost, type Circle, type CirclePost } from '../../lib/circles'
+import { getCircle, getCirclePosts, createCirclePost, toggleReaction, type Circle, type CirclePost } from '../../lib/circles'
 
 export default function CircleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -60,6 +60,22 @@ export default function CircleScreen() {
     }
   }, [id, draft, sending])
 
+  const handleReact = useCallback((post: CirclePost) => {
+    const wasReacted = post.has_reacted
+    // Optimistic flip.
+    setPosts((prev) => prev.map((p) =>
+      p.id === post.id
+        ? { ...p, has_reacted: !wasReacted, reaction_count: Math.max(0, p.reaction_count + (wasReacted ? -1 : 1)) }
+        : p))
+    toggleReaction(post.id, wasReacted).catch(() => {
+      // Revert on failure.
+      setPosts((prev) => prev.map((p) =>
+        p.id === post.id
+          ? { ...p, has_reacted: wasReacted, reaction_count: Math.max(0, p.reaction_count + (wasReacted ? 1 : -1)) }
+          : p))
+    })
+  }, [])
+
   const ink = diffuse ? dt.colors.ink : colors.text
   const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
   const line = diffuse ? dt.colors.line : colors.borderLight
@@ -69,21 +85,34 @@ export default function CircleScreen() {
   const onAccent = diffuse ? dt.colors.surface : colors.surface // paper-white foreground on a filled accent pill
 
   function renderItem({ item }: { item: CirclePost }) {
+    const statFont = diffuse ? diffuseFont.mono : font.body
     return (
-      <View style={[styles.post, { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }]}>
+      <Pressable
+        onPress={() => router.push(`/circle/thread/${item.id}`)}
+        style={[styles.post, { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }]}
+      >
         <Text style={[styles.handle, { color: accent, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>{item.handle}</Text>
         <Text style={[styles.content, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{item.content}</Text>
         <View style={styles.postFooter}>
+          <Pressable
+            onPress={() => handleReact(item)}
+            hitSlop={8}
+            style={styles.stat}
+          >
+            <Heart
+              size={14}
+              color={item.has_reacted ? accent : inkMuted}
+              fill={item.has_reacted ? accent : 'transparent'}
+              strokeWidth={1.8}
+            />
+            <Text style={[styles.statText, { color: item.has_reacted ? accent : inkMuted, fontFamily: statFont }]}>{item.reaction_count}</Text>
+          </Pressable>
           <View style={styles.stat}>
-            <Heart size={13} color={inkMuted} strokeWidth={1.8} />
-            <Text style={[styles.statText, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>{item.reaction_count}</Text>
-          </View>
-          <View style={styles.stat}>
-            <MessageCircle size={13} color={inkMuted} strokeWidth={1.8} />
-            <Text style={[styles.statText, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>{item.reply_count}</Text>
+            <MessageCircle size={14} color={inkMuted} strokeWidth={1.8} />
+            <Text style={[styles.statText, { color: inkMuted, fontFamily: statFont }]}>{item.reply_count}</Text>
           </View>
         </View>
-      </View>
+      </Pressable>
     )
   }
 

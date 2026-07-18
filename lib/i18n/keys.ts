@@ -1989,6 +1989,10 @@ export interface TranslationKeys {
   circles_postingSoon: string
   circles_composerPlaceholder: string
   circles_composerHint: string
+  circles_threadTitle: string
+  circles_threadEmptyTitle: string
+  circles_threadEmptyBody: string
+  circles_replyPlaceholder: string
 
   channels_mute: string
   channels_unmute: string
