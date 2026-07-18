@@ -1988,6 +1988,9 @@ export interface TranslationKeys {
   circles_readEmptyBody: string
   circles_postingSoon: string
 
+  channels_mute: string
+  channels_unmute: string
+
   cycleOnboarding_predict_message: string
   cycleOnboarding_predict_fertile: string
   cycleOnboarding_predict_ovulation: string

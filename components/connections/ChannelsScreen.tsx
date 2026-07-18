@@ -14,6 +14,7 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
+  Alert,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import {
@@ -29,7 +30,7 @@ import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { BrandedLoader } from '../ui/BrandedLoader'
 import { getChannels, type Channel } from '../../lib/channels'
-import { getMyChannelIds, getMyFavoriteChannelIds } from '../../lib/channelPosts'
+import { getMyChannelIds, getMyFavoriteChannelIds, getMutedChannelIds, muteChannel, unmuteChannel } from '../../lib/channelPosts'
 import { useModeStore } from '../../store/useModeStore'
 import { useChannelsStore } from '../../store/useChannelsStore'
 import { channelSticker } from '../../lib/channelSticker'
@@ -65,6 +66,7 @@ export function ChannelsScreen() {
   const [channels, setChannels] = useState<Channel[]>([])
   const [myIds, setMyIds] = useState<string[]>([])
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
+  const [mutedIds, setMutedIds] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const unreadCounts = useChannelsStore((s) => s.unreadCounts)
@@ -73,19 +75,30 @@ export function ChannelsScreen() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [all, ids, favIds] = await Promise.all([
+      const [all, ids, favIds, mutes] = await Promise.all([
         getChannels(),
         getMyChannelIds(),
         getMyFavoriteChannelIds(),
+        getMutedChannelIds(),
       ])
       setChannels(all)
       setMyIds(ids)
       setFavoriteIds(favIds)
+      setMutedIds(mutes)
       fetchUnreadCounts()
     } catch {} finally {
       setLoading(false)
     }
   }, [fetchUnreadCounts])
+
+  async function handleMute(channelId: string) {
+    setMutedIds((prev) => [...prev, channelId]) // optimistic — drops from discovery
+    try { await muteChannel(channelId) } catch { load() }
+  }
+  async function handleUnmute(channelId: string) {
+    setMutedIds((prev) => prev.filter((id) => id !== channelId))
+    try { await unmuteChannel(channelId) } catch { load() }
+  }
 
   // useFocusEffect fires on mount too (screen is focused on mount), so a
   // separate mount useEffect would double-load. This single hook covers both.
@@ -95,10 +108,14 @@ export function ChannelsScreen() {
     }, [load])
   )
 
+  // Muted channels drop out of DISCOVERY (suggested/trending) but stay reachable
+  // via My channels / Favorites (a user can still open a channel they muted).
+  const isMuted = (id: string) => mutedIds.includes(id)
+  const discoverable = channels.filter((c) => !isMuted(c.id))
   const myChannels = channels.filter((c) => myIds.includes(c.id))
   const favoriteChannels = channels.filter((c) => favoriteIds.includes(c.id))
-  const trending = channels.slice(0, 5)
-  const suggested = channels.filter((c) => {
+  const trending = discoverable.slice(0, 5)
+  const suggested = discoverable.filter((c) => {
     const tags = BEHAVIOR_TAGS[mode] ?? []
     const name = c.name.toLowerCase()
     const desc = (c.description ?? '').toLowerCase()
@@ -184,7 +201,7 @@ export function ChannelsScreen() {
             />
           ) : (
             searchResults.map((c) => (
-              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} accent={accent} />
+              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} accent={accent} muted={isMuted(c.id)} onToggleMute={(id, m) => (m ? handleMute(id) : handleUnmute(id))} />
             ))
           )}
         </View>
@@ -209,7 +226,7 @@ export function ChannelsScreen() {
               <Text style={[styles.sectionTitle, { marginBottom: 0 }, sectionTitleStyle(diffuse, dt, colors, font)]}>{t('channelsDiscover_trending')}</Text>
             </View>
             {trending.map((c) => (
-              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} accent={accent} />
+              <ChannelCard key={c.id} channel={c} joined={myIds.includes(c.id)} unread={unreadCounts[c.id]} accent={accent} muted={isMuted(c.id)} onToggleMute={(id, m) => (m ? handleMute(id) : handleUnmute(id))} />
             ))}
           </View>
 
@@ -421,7 +438,7 @@ function EmptyState({ title, body }: { title: string; body: string }) {
 
 // ─── Channel Card (full) ───────────────────────────────────────────────────
 
-function ChannelCard({ channel, joined, unread, accent }: { channel: Channel; joined: boolean; unread?: number; accent: string }) {
+function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: { channel: Channel; joined: boolean; unread?: number; accent: string; muted?: boolean; onToggleMute?: (id: string, muted: boolean) => void }) {
   const { colors, radius, isDark, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -432,6 +449,16 @@ function ChannelCard({ channel, joined, unread, accent }: { channel: Channel; jo
   return (
     <Pressable
       onPress={() => router.push(`/channel/${channel.id}` as any)}
+      onLongPress={onToggleMute ? () => {
+        Alert.alert(
+          channel.name,
+          undefined,
+          [
+            { text: muted ? t('channels_unmute') : t('channels_mute'), onPress: () => onToggleMute(channel.id, !muted) },
+            { text: t('common_cancel'), style: 'cancel' as const },
+          ]
+        )
+      } : undefined}
       style={({ pressed }) => [
         styles.card,
         diffuse

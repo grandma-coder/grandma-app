@@ -590,6 +590,29 @@ export async function getMyFavoriteChannelIds(): Promise<string[]> {
   return (data ?? []).map((d: any) => d.channel_id)
 }
 
+// ─── Channel mute/hide (Phase 3, gap #33) ─────────────────────────────────
+// Follow = favoriteChannel above. Mute hides a topic from discovery/lists.
+
+export async function muteChannel(channelId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+  const { error } = await supabase.from('channel_mutes').insert({ channel_id: channelId, user_id: session.user.id })
+  if (error && (error as any).code !== '23505') throw error
+}
+
+export async function unmuteChannel(channelId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  await supabase.from('channel_mutes').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
+}
+
+export async function getMutedChannelIds(): Promise<string[]> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return []
+  const { data } = await supabase.from('channel_mutes').select('channel_id').eq('user_id', session.user.id)
+  return (data ?? []).map((d: any) => d.channel_id)
+}
+
 /** @deprecated Use favoriteChannel */
 export const saveChannel = favoriteChannel
 /** @deprecated Use unfavoriteChannel */
