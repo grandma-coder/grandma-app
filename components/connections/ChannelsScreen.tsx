@@ -39,10 +39,10 @@ import { useTranslation } from '../../lib/i18n'
 
 // ─── Member count copy ──────────────────────────────────────────────────────
 // Soften low/zero counts so seeded + brand-new channels don't read as empty.
-function memberLabel(n: number): string {
-  if (n <= 0) return '✨ Be the first'
-  if (n < 5) return `New · ${n} here`
-  return `${n} members`
+function memberLabel(n: number, t: (k: any, p?: any) => string): string {
+  if (n <= 0) return t('channelsDiscover_beFirst')
+  if (n < 5) return t('channelsDiscover_membersNew', { count: n })
+  return t('channelsDiscover_members', { count: n })
 }
 
 // ─── Behavior-based suggestions ────────────────────────────────────────────
@@ -353,7 +353,7 @@ function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myId
                   <Text style={[styles.bannerMembers, diffuse
                     ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
                     : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-                    {memberLabel(c.memberCount)}
+                    {memberLabel(c.memberCount, t)}
                   </Text>
                   {c.avgRating > 0 && (
                     <View style={styles.bannerRating}>
@@ -504,7 +504,7 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
             <Text style={[styles.memberCount, diffuse
               ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
               : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-              {channel.memberCount > 0 ? channel.memberCount : 'New'}
+              {channel.memberCount > 0 ? channel.memberCount : t('channelsDiscover_new')}
             </Text>
           </View>
         )}
@@ -563,7 +563,7 @@ function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joi
       <Text style={[styles.compactMembers, diffuse
         ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 0.8 }
         : { color: colors.textMuted, fontFamily: font.bodySemiBold }]} numberOfLines={1}>
-        {memberLabel(channel.memberCount)}
+        {memberLabel(channel.memberCount, t)}
       </Text>
       {joined ? (
         diffuse ? (

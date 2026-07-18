@@ -2946,6 +2946,10 @@ export const en: TranslationKeys = {
   channelsDiscover_joinBtn: 'Join',
   channelsDiscover_joinedBadge: 'Joined',
   channelsDiscover_joinConversation: 'Join the conversation',
+  channelsDiscover_beFirst: 'Be the first',
+  channelsDiscover_membersNew: 'New · {{count}} here',
+  channelsDiscover_members: '{{count}} members',
+  channelsDiscover_new: 'New',
   // ─── B6: Vault components ─────────────────────────────────────────────────
   vault_secureNewDoc: 'Secure New Document',
   vault_secureNewDocBody: 'Drop any medical file here or use your camera to scan physical records.',

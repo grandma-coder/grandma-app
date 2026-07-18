@@ -17,6 +17,8 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic } from '../../components/ui/Typography'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { Character } from '../../components/characters/Characters'
+import { circleBlob } from '../../lib/circleBlob'
 import { getCircle, getCirclePosts, createCirclePost, toggleReaction, type Circle, type CirclePost } from '../../lib/circles'
 
 export default function CircleScreen() {
@@ -89,7 +91,11 @@ export default function CircleScreen() {
     return (
       <Pressable
         onPress={() => router.push(`/circle/thread/${item.id}`)}
-        style={[styles.post, { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }]}
+        style={({ pressed }) => [
+          styles.post,
+          { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg },
+          pressed && { opacity: 0.7 },
+        ]}
       >
         <Text style={[styles.handle, { color: accent, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>{item.handle}</Text>
         <Text style={[styles.content, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{item.content}</Text>
@@ -134,7 +140,10 @@ export default function CircleScreen() {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={styles.head}>
-            <Text style={styles.emoji}>{circle?.emoji ?? '💬'}</Text>
+            <View style={[styles.headIcon, { backgroundColor: diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft }]}>
+              {/* bg = the bubble fill so blob cut-out details blend into the socket */}
+              <Character name={circleBlob(circle?.name ?? '')} size={44} bg={diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft} />
+            </View>
             <Display size={30} color={ink} align="center">{circle?.name ?? ''}</Display>
             {circle?.description ? (
               <DisplayItalic size={15} color={inkMuted} align="center" style={{ marginTop: 6 }}>
@@ -206,7 +215,7 @@ const styles = StyleSheet.create({
   headerWrap: { paddingHorizontal: 16 },
   list: { paddingHorizontal: 20, gap: 10 },
   head: { alignItems: 'center', paddingTop: 4, paddingBottom: 16 },
-  emoji: { fontSize: 40, marginBottom: 8 },
+  headIcon: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   anonPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 12, marginTop: 14 },
   anonText: { fontSize: 12 },
   center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },

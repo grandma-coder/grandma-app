@@ -2942,6 +2942,10 @@ export interface TranslationKeys {
   channelsDiscover_joinBtn: string
   channelsDiscover_joinedBadge: string
   channelsDiscover_joinConversation: string
+  channelsDiscover_beFirst: string
+  channelsDiscover_membersNew: string
+  channelsDiscover_members: string
+  channelsDiscover_new: string
   // ─── B6: Vault components ─────────────────────────────────────────────────
   vault_secureNewDoc: string
   vault_secureNewDocBody: string

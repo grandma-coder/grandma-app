@@ -12,6 +12,8 @@ import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useModeStore } from '../../store/useModeStore'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { Character } from '../characters/Characters'
+import { circleBlob } from '../../lib/circleBlob'
 import { getCircles, type Circle, type CircleJourney } from '../../lib/circles'
 
 export function CirclesTab() {
@@ -41,6 +43,7 @@ export function CirclesTab() {
   const cardBg = diffuse ? dt.colors.surface : colors.surface
   const cardBorder = diffuse ? dt.colors.line : colors.border
   const accent = diffuse ? dt.stickers.lilac : stickers.lilac
+  const iconTint = diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft
 
   function renderItem({ item }: { item: Circle }) {
     return (
@@ -52,7 +55,10 @@ export function CirclesTab() {
           pressed && { opacity: 0.7 },
         ]}
       >
-        <Text style={styles.emoji}>{item.emoji ?? '💬'}</Text>
+        <View style={[styles.iconBubble, { backgroundColor: iconTint }]}>
+          {/* bg = the bubble's own fill so cut-out details (e.g. selfcare's steam) blend into the socket */}
+          <Character name={circleBlob(item.name)} size={30} bg={iconTint} />
+        </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.name, { color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{item.name}</Text>
           {item.description ? (
@@ -101,7 +107,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 20, paddingBottom: 32, gap: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderWidth: 1 },
-  emoji: { fontSize: 26 },
+  iconBubble: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   name: { fontSize: 16 },
   desc: { fontSize: 13, marginTop: 2, lineHeight: 18 },
   empty: { fontSize: 14, textAlign: 'center', marginTop: 40 },
