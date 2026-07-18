@@ -33,8 +33,9 @@ import { getChannels, type Channel } from '../../lib/channels'
 import { getMyChannelIds, getMyFavoriteChannelIds, getMutedChannelIds, muteChannel, unmuteChannel } from '../../lib/channelPosts'
 import { useModeStore } from '../../store/useModeStore'
 import { useChannelsStore } from '../../store/useChannelsStore'
-import { channelSticker } from '../../lib/channelSticker'
+import { channelSticker, channelBlob } from '../../lib/channelSticker'
 import { Star as StarSticker } from '../ui/Stickers'
+import { Character } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
 
 // ─── Member count copy ──────────────────────────────────────────────────────
@@ -321,7 +322,7 @@ function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myId
         {channels.map((c) => {
           const joined = myIds.includes(c.id)
           const sticker = channelSticker(c.id, isDark, c.avatarUrl)
-          const StickerIcon = sticker.Component
+          const blob = channelBlob(c.name, c.category)
           return (
             <Pressable
               key={c.id}
@@ -334,12 +335,12 @@ function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myId
               {diffuse ? (
                 <View style={[styles.bannerIcon, { borderWidth: 1, borderColor: dt.colors.line2 }]}>
                   <DiffuseBloomIcon color={sticker.fill} size={40} intensity={0.45}>
-                    <StickerIcon size={28} fill={dt.colors.ink2} />
+                    <Character name={blob} size={30} bg={dt.colors.surface} />
                   </DiffuseBloomIcon>
                 </View>
               ) : (
                 <View style={[styles.bannerIcon, { backgroundColor: sticker.tint }]}>
-                  <StickerIcon size={34} fill={sticker.fill} />
+                  <Character name={blob} size={34} bg={sticker.tint} />
                 </View>
               )}
               <View style={styles.bannerContent}>
@@ -444,7 +445,7 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
-  const StickerIcon = sticker.Component
+  const blob = channelBlob(channel.name, channel.category)
 
   return (
     <Pressable
@@ -470,12 +471,12 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
       {diffuse ? (
         <View style={[styles.cardIcon, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
           <DiffuseBloomIcon color={sticker.fill} size={32} intensity={0.45}>
-            <StickerIcon size={22} fill={dt.colors.ink2} />
+            <Character name={blob} size={24} bg={dt.colors.surface} />
           </DiffuseBloomIcon>
         </View>
       ) : (
         <View style={[styles.cardIcon, { backgroundColor: sticker.tint }]}>
-          <StickerIcon size={26} fill={sticker.fill} />
+          <Character name={blob} size={26} bg={sticker.tint} />
         </View>
       )}
       <View style={styles.cardContent}>
@@ -533,7 +534,7 @@ function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joi
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
-  const StickerIcon = sticker.Component
+  const blob = channelBlob(channel.name, channel.category)
 
   return (
     <Pressable
@@ -549,12 +550,12 @@ function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joi
       {diffuse ? (
         <View style={[styles.compactIcon, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
           <DiffuseBloomIcon color={sticker.fill} size={34} intensity={0.45}>
-            <StickerIcon size={26} fill={dt.colors.ink2} />
+            <Character name={blob} size={26} bg={dt.colors.surface} />
           </DiffuseBloomIcon>
         </View>
       ) : (
         <View style={[styles.compactIcon, { backgroundColor: sticker.tint }]}>
-          <StickerIcon size={30} fill={sticker.fill} />
+          <Character name={blob} size={30} bg={sticker.tint} />
         </View>
       )}
       <Text style={[styles.compactName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]} numberOfLines={1}>

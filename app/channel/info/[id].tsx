@@ -49,7 +49,8 @@ import { useModeStore } from '../../../store/useModeStore'
 import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../../components/ui/diffuse/DiffusePrimitives'
 import { useSavedToast } from '../../../components/ui/SavedToast'
-import { channelSticker } from '../../../lib/channelSticker'
+import { channelSticker, channelBlob } from '../../../lib/channelSticker'
+import { Character } from '../../../components/characters/Characters'
 import { getChannels, type Channel } from '../../../lib/channels'
 import {
   isChannelMember,
@@ -429,12 +430,13 @@ export default function ChannelInfoScreen() {
         <View style={s.channelHeader}>
           {(() => {
             const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
-            const StickerIcon = sticker.Component
+            const blob = channelBlob(channel.name, channel.category)
+            const iconBg = diffuse ? dt.colors.surface : sticker.tint
             return (
               <View style={[s.channelIcon, diffuse
                 ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                 : { backgroundColor: sticker.tint }]}>
-                <StickerIcon size={52} fill={sticker.fill} />
+                <Character name={blob} size={52} bg={iconBg} />
               </View>
             )
           })()}

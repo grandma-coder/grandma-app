@@ -9,6 +9,7 @@
 import type { ComponentType } from 'react'
 import { Star, Heart, Leaf, Moon, Drop } from '../components/ui/Stickers'
 import { stickers as stickersLight, stickersDark } from '../constants/theme'
+import type { CharacterName } from '../components/characters/Characters'
 
 type StickerComponent = ComponentType<{ size?: number; fill?: string; stroke?: string }>
 
@@ -68,4 +69,63 @@ export function channelSticker(id: string, isDark: boolean, avatarUrl?: string |
 
   const idx = hashString(id) % STICKER_NAMES.length
   return stickerByNameColor(STICKER_NAMES[idx], COLOR_KEYS[idx], isDark)
+}
+
+// ─── Channel → Character blob ────────────────────────────────────────────────
+// Channels render a Character blob (the icon system) rather than the geometric
+// sticker glyph. Keyed by the channel's `category` (stable, semantic) so each
+// topic gets a meaningful blob; a few high-traffic names override the category
+// for extra nuance. Falls back to `community`.
+//
+// Keys MUST stay in sync with the lowercased CATEGORIES list in
+// app/channel/create.tsx — a new category with no entry here silently degrades
+// to `community`. `health` is not a create.tsx category today but is kept for
+// the seeded "Health & Vaccines" channel and future use.
+const CATEGORY_BLOB: Record<string, CharacterName> = {
+  parenting: 'baby',
+  pregnancy: 'heartbeat',
+  fertility: 'ovulation',
+  feeding: 'feeding',
+  sleep: 'sleep',
+  community: 'community',
+  wellness: 'selfcare',
+  milestones: 'growth',
+  other: 'community',
+  health: 'health',
+}
+const NAME_BLOB: Record<string, CharacterName> = {
+  'Trying to Conceive': 'ovulation',
+  'Fertility & Nutrition': 'nutrition',
+  'The Two-Week Wait': 'night',
+  'First Trimester': 'heartbeat',
+  'Second & Third Trimester': 'kick',
+  'Birth & Labor': 'contraction',
+  'Newborn Days': 'baby',
+  'Baby Sleep': 'sleep',
+  'Feeding & Weaning': 'feeding',
+  'Milestones & Development': 'growth',
+  'Health & Vaccines': 'vaccine',
+  'Ask the Village': 'community',
+}
+
+/** A channel's Character blob concept — name override first, then category, then community. */
+export function channelBlob(name: string, category?: string | null): CharacterName {
+  return NAME_BLOB[name] ?? (category ? CATEGORY_BLOB[category] : undefined) ?? 'community'
+}
+
+// The create-channel avatar picker offers the 5 sticker presets as its slots
+// (persisted as sticker://name/color so channelSticker's color logic is intact),
+// but renders each slot as a Character blob concept to match the icon system.
+const PRESET_BLOB: Record<StickerName, CharacterName> = {
+  star: 'star',
+  heart: 'heart',
+  leaf: 'nutrition',
+  moon: 'night',
+  drop: 'water',
+}
+
+/** Character blob concept for a sticker preset index (create-channel picker). */
+export function presetBlob(index: number): CharacterName {
+  const preset = STICKER_PRESETS[index] ?? STICKER_PRESETS[0]
+  return PRESET_BLOB[preset.name]
 }

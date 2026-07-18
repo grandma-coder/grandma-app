@@ -16,7 +16,9 @@ import {
   STICKER_PRESETS,
   stickerByNameColor,
   encodeStickerUrl,
+  presetBlob,
 } from '../../lib/channelSticker'
+import { Character } from '../../components/characters/Characters'
 
 const CREAM = '#F5EFE3'
 const INK = '#1A1430'
@@ -153,12 +155,12 @@ export default function CreateChannel() {
               }
               const preset = STICKER_PRESETS[icon.index]
               const s = stickerByNameColor(preset.name, preset.color, isDark)
-              const Icon = s.Component
+              const previewBg = diffuse ? dt.colors.surface : s.tint
               return (
                 <View style={[styles.iconPreview, diffuse
                   ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                   : { backgroundColor: s.tint }]}>
-                  <Icon size={48} fill={s.fill} />
+                  <Character name={presetBlob(icon.index)} size={48} bg={previewBg} />
                 </View>
               )
             })()}
@@ -168,8 +170,8 @@ export default function CreateChannel() {
           <View style={styles.stickerRow}>
             {STICKER_PRESETS.map((preset, i) => {
               const s = stickerByNameColor(preset.name, preset.color, isDark)
-              const Icon = s.Component
               const selected = icon.kind === 'sticker' && icon.index === i
+              const tileBg = diffuse ? dt.colors.surface : (selected ? s.tint : colors.bg)
               return (
                 <Pressable
                   key={preset.name}
@@ -187,7 +189,7 @@ export default function CreateChannel() {
                         },
                   ]}
                 >
-                  <Icon size={26} fill={s.fill} />
+                  <Character name={presetBlob(i)} size={26} bg={tileBg} />
                 </Pressable>
               )
             })}

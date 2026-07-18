@@ -54,7 +54,8 @@ import { ReactionPicker } from '../../components/channels/ReactionPicker'
 import { PollCard } from '../../components/channels/PollCard'
 import { PollComposer } from '../../components/channels/PollComposer'
 import { useSavedToast } from '../../components/ui/SavedToast'
-import { channelSticker } from '../../lib/channelSticker'
+import { channelSticker, channelBlob } from '../../lib/channelSticker'
+import { Character } from '../../components/characters/Characters'
 import { getChannels, type Channel } from '../../lib/channels'
 import {
   sendMessage,
@@ -849,11 +850,10 @@ export default function ChannelChat() {
             <Lock size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
           ) : channel ? (
             (() => {
-              const s = channelSticker(channel.id, isDark, channel.avatarUrl)
-              const Icon = s.Component
+              const blob = channelBlob(channel.name, channel.category)
               return (
                 <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={22} fill={s.fill} />
+                  <Character name={blob} size={22} bg={diffuse ? dt.colors.bg : colors.bg} />
                 </View>
               )
             })()
@@ -1007,12 +1007,12 @@ export default function ChannelChat() {
           }}
           ListEmptyComponent={
             (() => {
-              // Empty state wears the channel's own sticker identity + tint, and
+              // Empty state wears the channel's own blob identity + tint, and
               // the copy adapts to whether you've joined yet.
               const s = channel
                 ? channelSticker(channel.id, isDark, channel.avatarUrl)
                 : null
-              const EmptyIcon = s?.Component
+              const blob = channel ? channelBlob(channel.name, channel.category) : null
               const emptyTitle = isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')
               const emptyMsg = isMember
                 ? t('channelScreen_emptyMemberMsg')
@@ -1022,7 +1022,7 @@ export default function ChannelChat() {
                   <DiffuseEmptyState
                     icon={
                       <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
-                        {EmptyIcon ? <EmptyIcon size={22} fill={dt.colors.ink3} /> : <MessageCircle size={22} color={dt.colors.ink3} strokeWidth={1.6} />}
+                        {blob ? <Character name={blob} size={26} bg={dt.colors.surface} /> : <MessageCircle size={22} color={dt.colors.ink3} strokeWidth={1.6} />}
                       </DiffuseBloomIcon>
                     }
                     title={emptyTitle}
@@ -1032,7 +1032,7 @@ export default function ChannelChat() {
               }
               return (
                 <EmptyState
-                  icon={EmptyIcon ? <EmptyIcon size={40} fill={s!.fill} /> : undefined}
+                  icon={blob ? <Character name={blob} size={40} bg={s?.tint ?? stickers.lilacSoft} /> : undefined}
                   iconBg={s?.tint ?? stickers.lilacSoft}
                   title={emptyTitle}
                   message={emptyMsg}
@@ -1302,12 +1302,12 @@ export default function ChannelChat() {
             {/* Sticker accent — channel's own sticker */}
             {channel && (() => {
               const s = channelSticker(channel.id, isDark, channel.avatarUrl)
-              const Icon = s.Component
+              const blob = channelBlob(channel.name, channel.category)
               return (
                 <View style={[styles.ratingStickerBubble, diffuse
                   ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                   : { backgroundColor: s.tint }]}>
-                  <Icon size={34} fill={s.fill} />
+                  <Character name={blob} size={34} bg={diffuse ? dt.colors.bg : s.tint} />
                 </View>
               )
             })()}
