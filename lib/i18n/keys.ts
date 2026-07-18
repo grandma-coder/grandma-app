@@ -3130,6 +3130,12 @@ export interface TranslationKeys {
   garage_screen_gallery_empty: string
   garage_screen_keep_title: string
   garage_screen_keep_body: string
+  garage_screen_done_title: string
+  garage_screen_done_body: string
+  garage_screen_empty_title: string
+  garage_screen_empty_body: string
+  garage_screen_cta_refresh: string
+  garage_screen_cta_refresh_short: string
   // ─── B7b: AvatarPicker residual strings ───────────────────────────────────
   avatarPicker_title: string
   avatarPicker_subtitle: string

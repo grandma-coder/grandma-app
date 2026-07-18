@@ -21,13 +21,13 @@ import {
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { X, Heart, RotateCcw, MessageCircle, Plus, Search, User } from 'lucide-react-native'
+import { X, Heart, RotateCcw, MessageCircle, Plus, Search, User, LayoutGrid, Layers } from 'lucide-react-native'
 import { useTheme, shadows, getModeColor, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useSavedToast } from '../ui/SavedToast'
 import { PillButton } from '../ui/PillButton'
 import { BrandedLoader } from '../ui/BrandedLoader'
-import { Heart as HeartSticker, Drop, Star } from '../stickers/BrandStickers'
+import { Character } from '../characters/Characters'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import {
@@ -50,6 +50,13 @@ const SWIPE_THRESHOLD = SCREEN_W * 0.28
 
 const FEED_FILTERS = ['For You', 'Clothing', 'Gear', 'Toys', 'Furniture', 'Books']
 
+type ViewMode = 'deck' | 'gallery'
+
+// 3-column gallery grid geometry — screen gutter + inter-tile gap shared with
+// the deck's DECK_H_MARGIN so both views line up on the same left/right edge.
+const GRID_GAP = 10
+const GRID_TILE = (SCREEN_W - DECK_H_MARGIN * 2 - GRID_GAP * 2) / 3
+
 export function GarageScreen() {
   const { colors, radius, stickers, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
@@ -65,6 +72,7 @@ export function GarageScreen() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [activeFilter, setActiveFilter] = useState('For You')
+  const [viewMode, setViewMode] = useState<ViewMode>('deck')
   const lastSwipe = useRef<{ post: GaragePost; kept: boolean; saved: boolean } | null>(null)
 
   // ── Animated values for the top card ──────────────────────────────────────
@@ -126,12 +134,12 @@ export function GarageScreen() {
       lastSwipe.current = { post, kept: true, saved: didSave }
       if (didSave) toggleSave(post.id).catch(() => {})
       toast.show({
-        title: 'Kept for you 💛',
-        message: 'Saved to your Village.',
+        title: t('garage_screen_keep_title'),
+        message: t('garage_screen_keep_body'),
         autoDismiss: 1600,
       })
     },
-    [toast]
+    [toast, t]
   )
 
   const pass = useCallback((post: GaragePost) => {
@@ -233,6 +241,17 @@ export function GarageScreen() {
           </Text>
         </View>
         <View style={styles.headerActions}>
+          <CircleBtn
+            onPress={() => setViewMode((m) => (m === 'deck' ? 'gallery' : 'deck'))}
+            tint={stickers.lilacSoft}
+            radiusFull={radius.full}
+            border={colors.border}
+            accessibilityLabel={viewMode === 'deck' ? t('garage_screen_view_gallery') : t('garage_screen_view_deck')}
+          >
+            {viewMode === 'deck'
+              ? <LayoutGrid size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.2} />
+              : <Layers size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.2} />}
+          </CircleBtn>
           <CircleBtn onPress={() => {}} tint={stickers.blueSoft} radiusFull={radius.full} border={colors.border}>
             <Search size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.4} />
           </CircleBtn>
@@ -243,7 +262,7 @@ export function GarageScreen() {
             border={colors.border}
             accessibilityLabel="My Village"
           >
-            <HeartSticker size={18} fill={accent} />
+            <Character name="heart" size={20} color={accent} bg={diffuse ? 'transparent' : stickers.pinkSoft} />
           </CircleBtn>
           <CircleBtn
             onPress={() => router.push('/garage/create' as any)}
@@ -260,6 +279,25 @@ export function GarageScreen() {
       {/* ── Filters ─────────────────────────────────────────────────────── */}
       <FeedFilters active={activeFilter} onSelect={setActiveFilter} />
 
+      {/* ── Gallery grid ────────────────────────────────────────────────── */}
+      {viewMode === 'gallery' ? (
+        loading && posts.length === 0 ? (
+          <View style={styles.deckArea}><BrandedLoader /></View>
+        ) : loadError && posts.length === 0 ? (
+          <View style={styles.deckArea}><DeckError accent={accent} onRetry={loadFeed} /></View>
+        ) : (
+          <GalleryGrid
+            posts={posts}
+            insetsBottom={insets.bottom}
+            colors={colors}
+            radius={radius}
+            font={font}
+            stickers={stickers}
+            emptyText={t('garage_screen_gallery_empty')}
+          />
+        )
+      ) : (
+      <>
       {/* ── Deck ────────────────────────────────────────────────────────── */}
       <View style={styles.deckArea}>
         {loading && posts.length === 0 ? (
@@ -284,7 +322,7 @@ export function GarageScreen() {
                   },
                 ]}
               >
-                <SwipeCard post={next} colors={colors} radius={radius} font={font} stickers={stickers} />
+                <SwipeCard post={next} colors={colors} radius={radius} font={font} />
               </Animated.View>
             )}
 
@@ -308,7 +346,7 @@ export function GarageScreen() {
                   },
                 ]}
               >
-                <SwipeCard post={current} colors={colors} radius={radius} font={font} stickers={stickers} />
+                <SwipeCard post={current} colors={colors} radius={radius} font={font} />
 
                 {/* KEEP stamp */}
                 <Animated.View
@@ -363,7 +401,7 @@ export function GarageScreen() {
 
       {/* ── Action bar ──────────────────────────────────────────────────── */}
       {!deckDone && !loading && (
-        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]} key="deck-actionbar">
           <ActionButton
             label="Pass"
             tint={diffuse ? 'transparent' : colors.surface}
@@ -407,6 +445,8 @@ export function GarageScreen() {
           </ActionButton>
         </View>
       )}
+      </>
+      )}
     </View>
   )
 }
@@ -444,14 +484,117 @@ function CircleBtn({
   )
 }
 
-function SwipeCard({
-  post, colors, radius, font, stickers,
+// ─── Gallery grid (3-col, tap-to-open) ──────────────────────────────────────
+
+function GalleryGrid({
+  posts, insetsBottom, colors, radius, font, stickers, emptyText,
+}: {
+  posts: GaragePost[]
+  insetsBottom: number
+  colors: ReturnType<typeof useTheme>['colors']
+  radius: ReturnType<typeof useTheme>['radius']
+  font: ReturnType<typeof useTheme>['font']
+  stickers: ReturnType<typeof useTheme>['stickers']
+  emptyText: string
+}) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+
+  if (posts.length === 0) {
+    return (
+      <View style={styles.deckArea}>
+        <View style={styles.galleryEmpty}>
+          {diffuse ? (
+            <DiffuseBloomIcon size={52} intensity={0.5}>
+              <Character name="gift" size={30} bg={dt.colors.bg} />
+            </DiffuseBloomIcon>
+          ) : (
+            <View style={[styles.doneIconBubble, { backgroundColor: stickers.yellowSoft }]}>
+              <Character name="gift" size={40} bg={stickers.yellowSoft} />
+            </View>
+          )}
+          <Text style={[styles.galleryEmptyText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+            {emptyText}
+          </Text>
+        </View>
+      </View>
+    )
+  }
+
+  return (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={[styles.gridContent, { paddingBottom: Math.max(insetsBottom, 16) + 24 }]}
+    >
+      <View style={styles.gridWrap}>
+        {posts.map((post) => (
+          <GalleryTile key={post.id} post={post} colors={colors} radius={radius} font={font} />
+        ))}
+      </View>
+    </ScrollView>
+  )
+}
+
+function GalleryTile({
+  post, colors, radius, font,
 }: {
   post: GaragePost
   colors: ReturnType<typeof useTheme>['colors']
   radius: ReturnType<typeof useTheme>['radius']
   font: ReturnType<typeof useTheme>['font']
-  stickers: ReturnType<typeof useTheme>['stickers']
+}) {
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const cover = post.media[0]?.url
+  return (
+    <Pressable
+      onPress={() => router.push(`/garage/${post.id}` as any)}
+      style={({ pressed }) => [
+        styles.gridTile,
+        {
+          backgroundColor: diffuse ? dt.colors.surface : colors.surface,
+          borderColor: diffuse ? dt.colors.line : colors.border,
+          borderRadius: radius.md,
+        },
+        pressed && { opacity: 0.72 },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={post.caption?.split('\n')[0] ?? post.author_name ?? 'Listing'}
+    >
+      <View style={styles.gridImageWrap}>
+        {cover ? (
+          <Image source={{ uri: cover }} style={styles.gridImage} />
+        ) : (
+          <View style={[styles.gridImage, styles.gridImageEmpty, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}>
+            <Character name="gift" size={28} bg={diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised} />
+          </View>
+        )}
+        {post.like_count > 0 && (
+          <View style={styles.gridLikes}>
+            <Heart size={10} color="#FFFFFF" fill="#FFFFFF" />
+            <Text style={[styles.gridLikesText, { fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }]}>{post.like_count}</Text>
+          </View>
+        )}
+      </View>
+      {post.caption ? (
+        <Text
+          numberOfLines={1}
+          style={[styles.gridCaption, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}
+        >
+          {post.caption.split('\n')[0]}
+        </Text>
+      ) : null}
+    </Pressable>
+  )
+}
+
+function SwipeCard({
+  post, colors, radius, font,
+}: {
+  post: GaragePost
+  colors: ReturnType<typeof useTheme>['colors']
+  radius: ReturnType<typeof useTheme>['radius']
+  font: ReturnType<typeof useTheme>['font']
 }) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -464,10 +607,10 @@ function SwipeCard({
         <View style={[styles.cardImage, styles.cardImageEmpty, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}>
           {diffuse ? (
             <DiffuseBloomIcon size={56} intensity={0.5}>
-              <MessageCircle size={30} color={dt.colors.ink3} strokeWidth={1.6} />
+              <Character name="gift" size={34} bg={dt.colors.surfaceRaised} />
             </DiffuseBloomIcon>
           ) : (
-            <Drop size={56} fill={stickers.blue} />
+            <Character name="gift" size={56} bg={colors.surfaceRaised} />
           )}
         </View>
       )}
@@ -489,8 +632,8 @@ function SwipeCard({
       <View style={styles.cardFooter}>
         <View style={styles.cardScrim} />
         <View style={styles.cardFooterContent}>
-          <View style={[styles.footerAvatar, { backgroundColor: colors.surface }]}>
-            <User size={16} color={colors.textMuted} strokeWidth={2} />
+          <View style={[styles.footerAvatar, { backgroundColor: diffuse ? dt.colors.surface : colors.surface }]}>
+            <User size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
           </View>
           <View style={{ flex: 1 }}>
             <Text numberOfLines={1} style={[styles.footerName, { fontFamily: diffuse ? diffuseFont.display : font.bodySemiBold }]}>
@@ -610,18 +753,18 @@ function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefr
   const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const title = empty ? 'Nothing here yet' : 'That’s everyone for now'
-  const body = empty
-    ? 'No listings in the garage right now. Be the first to post — or check back soon.'
-    : 'You’ve been through the whole village. Check back later or pull in a new batch.'
+  const { t } = useTranslation()
+  const title = empty ? t('garage_screen_empty_title') : t('garage_screen_done_title')
+  const body = empty ? t('garage_screen_empty_body') : t('garage_screen_done_body')
+  const cta = empty ? t('garage_screen_cta_refresh_short') : t('garage_screen_cta_refresh')
 
   if (diffuse) {
     return (
       <DiffuseEmptyState
-        icon={<DiffuseBloomIcon size={56} intensity={0.5}><Heart size={30} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+        icon={<DiffuseBloomIcon size={56} intensity={0.5}><Character name={empty ? 'gift' : 'community'} size={30} bg={dt.colors.bg} /></DiffuseBloomIcon>}
         title={title}
         message={body}
-        ctaLabel={empty ? 'Refresh' : 'Refresh the deck'}
+        ctaLabel={cta}
         onCta={onRefresh}
         style={styles.doneWrap}
       />
@@ -630,9 +773,8 @@ function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefr
 
   return (
     <View style={styles.doneWrap}>
-      <View style={styles.doneStickers}>
-        <Star size={44} fill={stickers.yellow} />
-        <HeartSticker size={40} fill={stickers.coral} />
+      <View style={[styles.doneIconBubble, { backgroundColor: empty ? stickers.yellowSoft : stickers.pinkSoft }]}>
+        <Character name={empty ? 'gift' : 'community'} size={44} bg={empty ? stickers.yellowSoft : stickers.pinkSoft} />
       </View>
       <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display }]}>
         {title}
@@ -644,7 +786,7 @@ function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefr
         <PillButton
           variant="accent"
           accentColor={accent}
-          label={empty ? 'Refresh' : 'Refresh the deck'}
+          label={cta}
           onPress={onRefresh}
         />
       </View>
@@ -661,7 +803,7 @@ function DeckError({ accent, onRetry }: { accent: string; onRetry: () => void })
   if (diffuse) {
     return (
       <DiffuseEmptyState
-        icon={<DiffuseBloomIcon size={56} intensity={0.5}><X size={30} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+        icon={<DiffuseBloomIcon size={56} intensity={0.5}><Character name="cloud" size={30} bg={dt.colors.bg} /></DiffuseBloomIcon>}
         title={t('garage_screen_error_title')}
         message={t('garage_screen_error_body')}
         ctaLabel="Try again"
@@ -673,8 +815,8 @@ function DeckError({ accent, onRetry }: { accent: string; onRetry: () => void })
 
   return (
     <View style={styles.doneWrap}>
-      <View style={styles.doneStickers}>
-        <Drop size={42} fill={stickers.blue} />
+      <View style={[styles.doneIconBubble, { backgroundColor: stickers.blueSoft }]}>
+        <Character name="cloud" size={42} bg={stickers.blueSoft} />
       </View>
       <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display }]}>
         {t('garage_screen_error_title')}
@@ -812,9 +954,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // Gallery grid (3-col)
+  gridContent: { paddingHorizontal: DECK_H_MARGIN, paddingTop: 4 },
+  gridWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP },
+  gridTile: { width: GRID_TILE, borderWidth: 1, overflow: 'hidden' },
+  gridImageWrap: { width: '100%', height: GRID_TILE, position: 'relative' },
+  gridImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  gridImageEmpty: { alignItems: 'center', justifyContent: 'center' },
+  gridLikes: {
+    position: 'absolute', bottom: 6, right: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: 'rgba(20,19,19,0.42)', borderRadius: 999,
+    paddingHorizontal: 6, paddingVertical: 2,
+  },
+  gridLikesText: { fontSize: 10, color: '#FFFFFF' },
+  gridCaption: { fontSize: 11, lineHeight: 15, paddingHorizontal: 7, paddingVertical: 6 },
+  galleryEmpty: { alignItems: 'center', gap: 12, paddingHorizontal: 40 },
+  galleryEmptyText: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+
   // Done state
   doneWrap: { alignItems: 'center', paddingHorizontal: 40, gap: 10 },
-  doneStickers: { flexDirection: 'row', gap: 10, marginBottom: 6, alignItems: 'center' },
+  doneIconBubble: { width: 84, height: 84, borderRadius: 42, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
   doneTitle: { fontSize: 24, letterSpacing: -0.5, textAlign: 'center' },
   doneBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
   doneBtn: { marginTop: 16, alignSelf: 'stretch', paddingHorizontal: 8 },

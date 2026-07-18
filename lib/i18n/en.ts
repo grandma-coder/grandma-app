@@ -3136,6 +3136,12 @@ export const en: TranslationKeys = {
   garage_screen_gallery_empty: 'No listings in this category yet.',
   garage_screen_keep_title: 'Kept for you',
   garage_screen_keep_body: 'Saved to your Village.',
+  garage_screen_done_title: 'That\u2019s everyone for now',
+  garage_screen_done_body: 'You\u2019ve been through the whole village. Check back later or pull in a new batch.',
+  garage_screen_empty_title: 'Nothing here yet',
+  garage_screen_empty_body: 'No listings in the village right now. Be the first to post \u2014 or check back soon.',
+  garage_screen_cta_refresh: 'Refresh the deck',
+  garage_screen_cta_refresh_short: 'Refresh',
   // ─── B7b: AvatarPicker residual strings ───────────────────────────────────
   avatarPicker_title: 'Choose Avatar',
   avatarPicker_subtitle: 'Pick a photo from your library or choose a fun icon.',
