@@ -20,6 +20,7 @@ import Svg, { Line as SvgLine, Circle as SvgCircle, Path as SvgPath, Text as Svg
 
 import { useTheme, radius, shadows, useDiffuseTheme, diffuseFont, stickers as stickerPalette } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
+import { DiffuseStatCard } from '../ui/diffuse/DiffusePrimitives'
 import { Character } from '../characters/Characters'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { Moon, Burst, Flower, Heart, Drop, Star } from '../ui/Stickers'
@@ -231,6 +232,8 @@ export function CycleAnalytics() {
             diffuseIcon={<Character name="sparkle" size={26} color={stickerPalette.pink} />}
             value={avgLabel === '—' ? '—' : `${avgLabel}${t('cycle_ring_unit_d')}`}
             sub={t('cycleAnalytics_lengthSub')}
+            label={t('cycleAnalytics_tileLabel_length')}
+            accent={accent}
             onPress={() => setDetailType('cycleLength')}
           />
           <GridTile
@@ -239,6 +242,8 @@ export function CycleAnalytics() {
             diffuseIcon={<Character name="period" size={26} color={stickerPalette.lilac} />}
             value={regularLabel}
             sub={regularSub}
+            label={t('cycleAnalytics_tileLabel_regularity')}
+            accent={accent}
             onPress={() => setDetailType('regularity')}
           />
           <GridTile
@@ -247,6 +252,8 @@ export function CycleAnalytics() {
             diffuseIcon={<Character name="ovulation" size={26} color={stickerPalette.pink} />}
             value={fertileLabel}
             sub={fertileSub}
+            label={t('cycleAnalytics_tileLabel_fertile')}
+            accent={accent}
             onPress={() => setDetailType('fertile')}
           />
           <GridTile
@@ -255,6 +262,8 @@ export function CycleAnalytics() {
             diffuseIcon={<Character name="temperature" size={26} color={stickerPalette.blue} />}
             value={bbtLabel}
             sub={bbtSub}
+            label={t('cycleAnalytics_tileLabel_bbt')}
+            accent={accent}
             onPress={() => setDetailType('bbt')}
           />
           <GridTile
@@ -263,6 +272,8 @@ export function CycleAnalytics() {
             diffuseIcon={<Character name="water" size={26} color={stickerPalette.green} />}
             value={mucusLabel}
             sub={mucusSub}
+            label={t('cycleAnalytics_tileLabel_mucus')}
+            accent={accent}
             onPress={() => setDetailType('mucus')}
           />
           <GridTile
@@ -271,6 +282,8 @@ export function CycleAnalytics() {
             diffuseIcon={<Character name="activity" size={26} color={stickerPalette.coral} />}
             value={pmsLabel}
             sub={pmsSub}
+            label={t('cycleAnalytics_tileLabel_pms')}
+            accent={accent}
             onPress={() => setDetailType('pms')}
           />
           <GridTile
@@ -279,6 +292,8 @@ export function CycleAnalytics() {
             diffuseIcon={<Character name="mood" size={26} color={stickerPalette.coral} />}
             value={moodLabel}
             sub={moodSub}
+            label={t('cycleAnalytics_tileLabel_mood')}
+            accent={accent}
             onPress={() => setDetailType('mood')}
           />
           {isTTC && (
@@ -288,6 +303,8 @@ export function CycleAnalytics() {
               diffuseIcon={<Character name="heart" size={26} color={stickerPalette.pink} />}
               value={intercourseLabel}
               sub={intercourseSub}
+              label={t('cycleAnalytics_tileLabel_intercourse')}
+              accent={accent}
               onPress={() => setDetailType('intercourse')}
             />
           )}
@@ -387,42 +404,57 @@ function CycleLengthTrend({
 /** A uniform half-width stat tile: sticker + value + warm sub-line. No tilt —
  *  the grid reads as one calm system. Shares TiltChip's inner layout. */
 function GridTile({
-  tint, sticker, diffuseIcon, value, sub, onPress,
+  tint, sticker, diffuseIcon, value, sub, label, accent, onPress,
 }: {
   tint: string
   sticker: React.ReactNode
   diffuseIcon?: React.ReactNode
   value: string
   sub: string
+  label: string
+  accent: string
   onPress?: () => void
 }) {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+
+  if (diffuse) {
+    return (
+      <DiffuseStatCard
+        label={label}
+        value={value === '—' ? undefined : value}
+        sub={sub}
+        emptyLabel="—"
+        icon={diffuseIcon}
+        iconNoBloom
+        accent={accent}
+        onPress={onPress}
+        style={{ width: '47%', flexGrow: 1 }}
+      />
+    )
+  }
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.gridTile,
-        diffuse
-          ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, opacity: pressed ? 0.88 : 1 }
-          : { backgroundColor: tint, borderColor: colors.border, opacity: pressed ? 0.9 : 1 },
+        { backgroundColor: tint, borderColor: colors.border, opacity: pressed ? 0.9 : 1 },
       ]}
     >
-      {diffuse ? diffuseIcon : (
-        <View style={[styles.gridTileChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          {sticker}
-        </View>
-      )}
+      <View style={[styles.gridTileChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        {sticker}
+      </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text
-          style={[styles.chipValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}
+          style={[styles.chipValue, { color: colors.text, fontFamily: font.display }]}
           numberOfLines={1}
         >
           {value}
         </Text>
         <Text
-          style={[styles.chipSub, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase', fontSize: 9.5 } : { color: colors.textMuted, fontFamily: font.body }]}
+          style={[styles.chipSub, { color: colors.textMuted, fontFamily: font.body }]}
           numberOfLines={2}
         >
           {sub}

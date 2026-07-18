@@ -1844,6 +1844,14 @@ export interface TranslationKeys {
   cycleAnalytics_mucusSub_log: string
   cycleAnalytics_intercourseSub_inWindow: string
   cycleAnalytics_intercourseSub_log: string
+  cycleAnalytics_tileLabel_length: string
+  cycleAnalytics_tileLabel_regularity: string
+  cycleAnalytics_tileLabel_fertile: string
+  cycleAnalytics_tileLabel_bbt: string
+  cycleAnalytics_tileLabel_mucus: string
+  cycleAnalytics_tileLabel_pms: string
+  cycleAnalytics_tileLabel_mood: string
+  cycleAnalytics_tileLabel_intercourse: string
   cycleDetail_titleBBT: string
   cycleDetail_titleMucus: string
   cycleDetail_titleIntercourse: string
@@ -3117,6 +3125,11 @@ export interface TranslationKeys {
   garage_screen_stamp_pass: string
   garage_screen_error_title: string
   garage_screen_error_body: string
+  garage_screen_view_deck: string
+  garage_screen_view_gallery: string
+  garage_screen_gallery_empty: string
+  garage_screen_keep_title: string
+  garage_screen_keep_body: string
   // ─── B7b: AvatarPicker residual strings ───────────────────────────────────
   avatarPicker_title: string
   avatarPicker_subtitle: string
