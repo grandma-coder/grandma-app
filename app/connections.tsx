@@ -13,17 +13,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../constants/theme'
 import { GarageTab } from '../components/connections/GarageTab'
 import { ChannelsTab } from '../components/connections/ChannelsTab'
+import { CirclesTab } from '../components/connections/CirclesTab'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
+import { useTranslation } from '../lib/i18n'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+
+type ConnectionsTab = 'garage' | 'channels' | 'circles'
 
 export default function ConnectionsScreen() {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const params = useLocalSearchParams<{ tab?: string }>()
-  const [tab, setTab] = useState<'garage' | 'channels'>(
-    params.tab === 'channels' ? 'channels' : 'garage'
+  const [tab, setTab] = useState<ConnectionsTab>(
+    params.tab === 'channels' ? 'channels' : params.tab === 'circles' ? 'circles' : 'garage'
   )
   const [notifCount, setNotifCount] = useState(0)
 
@@ -59,10 +64,10 @@ export default function ConnectionsScreen() {
       <View style={[styles.tabBar, diffuse
         ? { backgroundColor: 'transparent', borderColor: dt.colors.line, gap: 8 }
         : { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        {(['garage', 'channels'] as const).map((t) => {
-          const active = tab === t
+        {(['garage', 'channels', 'circles'] as const).map((tk) => {
+          const active = tab === tk
           return (
-            <Pressable key={t} onPress={() => setTab(t)} style={styles.tabBtnWrap}>
+            <Pressable key={tk} onPress={() => setTab(tk)} style={styles.tabBtnWrap}>
               <View
                 style={[
                   styles.tabBtn,
@@ -92,7 +97,7 @@ export default function ConnectionsScreen() {
                         },
                   ]}
                 >
-                  {t === 'garage' ? 'Village' : 'Channels'}
+                  {tk === 'garage' ? 'Village' : tk === 'channels' ? 'Channels' : t('circles_tab')}
                 </Text>
               </View>
             </Pressable>
@@ -100,7 +105,7 @@ export default function ConnectionsScreen() {
         })}
       </View>
 
-      {tab === 'garage' ? <GarageTab /> : <ChannelsTab />}
+      {tab === 'garage' ? <GarageTab /> : tab === 'channels' ? <ChannelsTab /> : <CirclesTab />}
     </View>
   )
 }

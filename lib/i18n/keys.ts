@@ -1962,6 +1962,14 @@ export interface TranslationKeys {
   poll_votesMany: string
   poll_closed: string
 
+  circles_tab: string
+  circles_anonBanner: string
+  circles_anonPill: string
+  circles_empty: string
+  circles_readEmptyTitle: string
+  circles_readEmptyBody: string
+  circles_postingSoon: string
+
   cycleOnboarding_predict_message: string
   cycleOnboarding_predict_fertile: string
   cycleOnboarding_predict_ovulation: string

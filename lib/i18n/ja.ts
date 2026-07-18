@@ -1788,6 +1788,14 @@ export const ja: TranslationKeys = {
   poll_votesMany: "{{count}} votes",
   poll_closed: "Closed",
 
+  circles_tab: "Circles",
+  circles_anonBanner: "A safe, anonymous space. Your name is never shown here.",
+  circles_anonPill: "Posts here are anonymous",
+  circles_empty: "No circles yet for this journey.",
+  circles_readEmptyTitle: "Be the first to share",
+  circles_readEmptyBody: "This circle is quiet for now. Soon you’ll be able to post here anonymously.",
+  circles_postingSoon: "Anonymous posting is coming soon to Circles.",
+
   cycleOnboarding_predict_message: "Based on what you shared, here’s what Grandma already sees for your cycle:",
   cycleOnboarding_predict_fertile: "Fertile window",
   cycleOnboarding_predict_ovulation: "Ovulation",
