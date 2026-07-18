@@ -67,6 +67,8 @@ import { CustomRangeModal } from './shared/CustomRangeModal'
 import { BigChartCard } from './shared/BigChartCard'
 import { MiniStatTile } from './shared/MiniStatTile'
 import { Section } from './shared/Section'
+import { MoodStrip } from './shared/MoodStrip'
+import { pregMoodToStrip } from '../../lib/moodTrend'
 import { MiniLineChart, MiniBarChart, PillDivergingChart, GlowAreaLine, BlobCluster, SipColumns, PetalBurst, BeadedThread, CrescentBars, ConcentricArcs, TieredLozenges, SplitMeters, CheckpointPills, NutrientMatrix, type ArcDatum, type TierRow, type MeterRow, type CheckRow } from './shared/MiniCharts'
 import { Display, Body } from '../ui/Typography'
 import {
@@ -565,7 +567,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle={`Past 4 weeks — ${moodTrend.length} logged`}
             onPress={() => setOpenPillar('mood')}
           >
-            <MoodTrendStrip data={moodTrend} />
+            <MoodStrip data={pregMoodToStrip(moodTrend)} />
           </Section>
         )}
 
@@ -828,40 +830,6 @@ function SymptomsGlance({ total, mostCommon, hues }: { total: number; mostCommon
   )
 }
 
-// ─── Mood strip ────────────────────────────────────────────────────────────
-
-function MoodTrendStrip({ data }: { data: { log_date: string; value: string | null }[] }) {
-  const { colors, font } = useTheme()
-  const diffuse = useIsDiffuse()
-  const dt = useDiffuseTheme()
-  const entries = data.slice(-12)
-  return (
-    <View style={[styles.moodStripCard, diffuse
-      ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
-      : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
-      <View style={styles.moodStripRow}>
-        {entries.map((e, i) => (
-          <View key={i} style={{ alignItems: 'center', gap: 4 }}>
-            {diffuse ? (
-              <Character name="mood" size={28} face={moodExpression(e.value ?? undefined)} color={moodBlobFill(e.value ?? undefined)} />
-            ) : (
-              <MoodFace
-                size={28}
-                variant={moodFaceVariant(e.value ?? undefined)}
-                fill={moodFaceFill(e.value ?? undefined)}
-              />
-            )}
-            <Text style={diffuse
-              ? { fontSize: 9, color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4 }
-              : { fontSize: 9, color: colors.textMuted, fontFamily: font.bodyMedium }}>
-              {shortDay(e.log_date)}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  )
-}
 
 // ─── Nutrition mini grid (4 nutrients × 7 days) ────────────────────────────
 
@@ -3728,15 +3696,5 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 11,
     fontFamily: font.bodySemiBold,
-  },
-  moodStripCard: {
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: 14,
-  },
-  moodStripRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
   },
 })
