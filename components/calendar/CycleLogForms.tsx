@@ -24,7 +24,7 @@ import { phaseHint, saveLabel } from '../../lib/cycleLogForms'
 import { askGrandmaAboutSymptoms } from '../../lib/symptomAssist'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
-import { cToDisplay, tempLabel } from '../../lib/units'
+import { cToDisplay, tempLabel, kgToDisplay, displayToKg, weightLabel } from '../../lib/units'
 import { SymptomSticker } from './symptomStickers'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../ui/Stickers'
 import { Character, type MoodExpression } from '../characters/Characters'
@@ -1256,6 +1256,192 @@ export function ClotsForm({
           <StickerChip
             key={opt.id}
             sticker={<Character name="period" size={22} color={diffuse ? dt.colors.ink3 : accent} />}
+            label={t(opt.labelKey)}
+            selected={value === opt.id}
+            accent={accent}
+            onPress={() => setValue(opt.id)}
+          />
+        ))}
+      </View>
+    </LogFormShell>
+  )
+}
+
+// ─── Lifestyle: reusable +/- stepper ─────────────────────────────────────────
+function CycleStepper({
+  value, onChange, step, min, max, unit, decimals = 0, accent,
+}: {
+  value: number; onChange: (n: number) => void; step: number; min: number; max: number
+  unit: string; decimals?: number; accent: string
+}) {
+  const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const btn = (dir: -1 | 1) => {
+    const next = Math.min(max, Math.max(min, Number((value + dir * step).toFixed(2))))
+    const active = next !== value
+    return (
+      <Pressable
+        onPress={active ? () => onChange(next) : undefined}
+        style={{
+          width: 44, height: 44, borderRadius: 22, borderWidth: 1,
+          borderColor: diffuse ? dt.colors.line : colors.border,
+          alignItems: 'center', justifyContent: 'center', opacity: active ? 1 : 0.35,
+        }}
+      >
+        <Text style={{ fontSize: 22, color: diffuse ? dt.colors.ink : colors.text }}>{dir < 0 ? '−' : '+'}</Text>
+      </Pressable>
+    )
+  }
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20, paddingVertical: 12 }}>
+      {btn(-1)}
+      <Text style={{ fontSize: 32, color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, minWidth: 110, textAlign: 'center' }}>
+        {value.toFixed(decimals)}
+        <Text style={{ fontSize: 15, color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }}> {unit}</Text>
+      </Text>
+      {btn(1)}
+    </View>
+  )
+}
+
+// ─── WeightForm ───────────────────────────────────────────────────────────────
+export function WeightForm({
+  date, phase, onSaved,
+}: { date: string; phase: CyclePhase; onSaved: () => void }) {
+  const { stickers } = useTheme()
+  const { t } = useTranslation()
+  const weightUnit = useUnitsStore((s) => s.weightUnit)
+  const [display, setDisplay] = useState(() => Number(kgToDisplay(65, weightUnit).toFixed(1)))
+  const [saving, setSaving] = useState(false)
+  const invalidate = useInvalidate()
+  const { accent, tint, ink } = phaseColors(phase, stickers)
+
+  async function save() {
+    setSaving(true)
+    try {
+      // Store canonical kg regardless of the display unit.
+      const kg = displayToKg(display, weightUnit)
+      await replaceSingleLog(date, 'weight', kg.toFixed(2))
+      await invalidate()
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <LogFormShell
+      title={t('cycleLogForm_weightTitle')}
+      subline={formatDate(date)}
+      phaseHintText={phaseHint('weight', phase)}
+      phaseAccent={accent}
+      phaseTint={tint}
+      phaseInk={ink}
+      saveLabel={saveLabel('weight')}
+      saving={saving}
+      onSave={save}
+    >
+      <CycleStepper value={display} onChange={setDisplay} step={0.1} min={30} max={200} unit={weightLabel(weightUnit)} decimals={1} accent={accent} />
+    </LogFormShell>
+  )
+}
+
+// ─── WaterForm ────────────────────────────────────────────────────────────────
+export function WaterForm({
+  date, phase, onSaved,
+}: { date: string; phase: CyclePhase; onSaved: () => void }) {
+  const { stickers } = useTheme()
+  const { t } = useTranslation()
+  const [glasses, setGlasses] = useState(6)
+  const [saving, setSaving] = useState(false)
+  const invalidate = useInvalidate()
+  const { accent, tint, ink } = phaseColors(phase, stickers)
+
+  async function save() {
+    setSaving(true)
+    try {
+      await replaceSingleLog(date, 'water', String(glasses))
+      await invalidate()
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <LogFormShell
+      title={t('cycleLogForm_waterTitle')}
+      subline={formatDate(date)}
+      phaseHintText={phaseHint('water', phase)}
+      phaseAccent={accent}
+      phaseTint={tint}
+      phaseInk={ink}
+      saveLabel={saveLabel('water')}
+      saving={saving}
+      onSave={save}
+    >
+      <CycleStepper value={glasses} onChange={setGlasses} step={1} min={0} max={20} unit={t('cycleLogForm_water_glasses')} accent={accent} />
+    </LogFormShell>
+  )
+}
+
+// ─── ActivityForm ─────────────────────────────────────────────────────────────
+const ACTIVITY_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
+  { id: 'rest',     labelKey: 'cycleLogForm_activity_rest' },
+  { id: 'light',    labelKey: 'cycleLogForm_activity_light' },
+  { id: 'moderate', labelKey: 'cycleLogForm_activity_moderate' },
+  { id: 'intense',  labelKey: 'cycleLogForm_activity_intense' },
+]
+
+export function ActivityForm({
+  date, phase, onSaved,
+}: { date: string; phase: CyclePhase; onSaved: () => void }) {
+  const { stickers } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  const { t } = useTranslation()
+  const [value, setValue] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const invalidate = useInvalidate()
+  const { accent, tint, ink } = phaseColors(phase, stickers)
+
+  async function save() {
+    if (!value) return
+    setSaving(true)
+    try {
+      await replaceSingleLog(date, 'activity', value)
+      await invalidate()
+      onSaved()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <LogFormShell
+      title={t('cycleLogForm_activityTitle')}
+      subline={formatDate(date)}
+      phaseHintText={phaseHint('activity', phase)}
+      phaseAccent={accent}
+      phaseTint={tint}
+      phaseInk={ink}
+      saveLabel={saveLabel('activity')}
+      saveDisabled={!value}
+      saving={saving}
+      onSave={save}
+    >
+      <View style={{ gap: 6 }}>
+        {ACTIVITY_OPTIONS.map((opt) => (
+          <StickerChip
+            key={opt.id}
+            sticker={<Character name="activity" size={22} color={diffuse ? dt.colors.ink3 : accent} />}
             label={t(opt.labelKey)}
             selected={value === opt.id}
             accent={accent}

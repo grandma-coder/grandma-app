@@ -17,6 +17,9 @@ export type FormId =
   | 'pregnancy_test'
   | 'sex_drive'
   | 'clots'
+  | 'weight'
+  | 'water'
+  | 'activity'
 
 const PHASE_PILL: Record<FormId, Record<CyclePhase, string>> = {
   period_start: {
@@ -91,6 +94,24 @@ const PHASE_PILL: Record<FormId, Record<CyclePhase, string>> = {
     ovulation:    'Unusual outside a period',
     luteal:       'Logged for your records',
   },
+  weight: {
+    menstruation: 'Weight often dips after your period',
+    follicular:   'Track for your trend',
+    ovulation:    'Track for your trend',
+    luteal:       'Slight water retention is normal',
+  },
+  water: {
+    menstruation: 'Hydration helps with cramps',
+    follicular:   'Aim for steady hydration',
+    ovulation:    'Aim for steady hydration',
+    luteal:       'Extra water helps with bloating',
+  },
+  activity: {
+    menstruation: 'Gentle movement can ease cramps',
+    follicular:   'Energy often peaks — great for movement',
+    ovulation:    'Peak energy window',
+    luteal:       'Listen to your body',
+  },
 }
 
 export function phaseHint(form: FormId, phase: CyclePhase): string {
@@ -110,6 +131,9 @@ const IDLE_LABEL: Record<FormId, string> = {
   pregnancy_test: 'Save result',
   sex_drive:    'Save',
   clots:        'Save',
+  weight:       'Save weight',
+  water:        'Save water',
+  activity:     'Save',
 }
 
 export function saveLabel(

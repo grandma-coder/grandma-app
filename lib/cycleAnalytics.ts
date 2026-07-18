@@ -38,6 +38,8 @@ export interface CycleLogRow {
     | 'pregnancy_test'
     | 'sex_drive'
     | 'clots'
+    | 'water'
+    | 'activity'
   value: string | null
   notes: string | null
   created_at: string

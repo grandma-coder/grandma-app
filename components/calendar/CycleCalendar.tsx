@@ -44,12 +44,15 @@ import {
   PregnancyTestForm,
   SexDriveForm,
   ClotsForm,
+  WeightForm,
+  WaterForm,
+  ActivityForm,
 } from './CycleLogForms'
 import { ExamForm } from '../exams/ExamForm'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-type LogType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse' | 'exam' | 'pregnancy_test' | 'sex_drive' | 'clots'
+type LogType = 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp' | 'intercourse' | 'exam' | 'pregnancy_test' | 'sex_drive' | 'clots' | 'weight' | 'water' | 'activity'
 type ViewTab = 'cycle' | 'checklist' | 'health'
 
 interface LogEntry {
@@ -69,6 +72,9 @@ const LOG_ENTRIES: LogEntry[] = [
   { id: 'pregnancy_test', labelKey: 'cycleCalendar_logEntry_pregTest',   subtitleKey: 'cycleCalendar_logEntry_pregTestSub',   tint: 'ovulation' },
   { id: 'sex_drive',    labelKey: 'cycleCalendar_logEntry_sexDrive',     subtitleKey: 'cycleCalendar_logEntry_sexDriveSub',   tint: 'intimacy' },
   { id: 'clots',        labelKey: 'cycleCalendar_logEntry_clots',        subtitleKey: 'cycleCalendar_logEntry_clotsSub',      tint: 'period' },
+  { id: 'weight',       labelKey: 'cycleCalendar_logEntry_weight',       subtitleKey: 'cycleCalendar_logEntry_weightSub',     tint: 'growth' },
+  { id: 'water',        labelKey: 'cycleCalendar_logEntry_water',        subtitleKey: 'cycleCalendar_logEntry_waterSub',      tint: 'water' },
+  { id: 'activity',     labelKey: 'cycleCalendar_logEntry_activity',     subtitleKey: 'cycleCalendar_logEntry_activitySub',   tint: 'activity' },
   { id: 'exam',         labelKey: 'cycleCalendar_logEntry_exam',         subtitleKey: 'cycleCalendar_logEntry_examSub',        tint: 'exam' },
 ]
 
@@ -375,6 +381,15 @@ export function CycleCalendar() {
       </LogSheet>
       <LogSheet visible={sheetType === 'clots'} title={t('cycleCalendar_logSheet_clots')} onClose={() => setSheetType(null)}>
         <ClotsForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'weight'} title={t('cycleCalendar_logSheet_weight')} onClose={() => setSheetType(null)}>
+        <WeightForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'water'} title={t('cycleCalendar_logSheet_water')} onClose={() => setSheetType(null)}>
+        <WaterForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'activity'} title={t('cycleCalendar_logSheet_activity')} onClose={() => setSheetType(null)}>
+        <ActivityForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'exam'} title={t('cycleCalendar_logSheet_exam')} onClose={() => setSheetType(null)}>
         <ExamForm behavior="pre-pregnancy" date={selectedDate} onSaved={() => setSheetType(null)} />

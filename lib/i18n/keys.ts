@@ -1604,6 +1604,24 @@ export interface TranslationKeys {
   cycleCalendar_logSheet_sexDrive: string
   cycleCalendar_logSheet_clots: string
 
+  cycleLogForm_weightTitle: string
+  cycleLogForm_waterTitle: string
+  cycleLogForm_water_glasses: string
+  cycleLogForm_activityTitle: string
+  cycleLogForm_activity_rest: string
+  cycleLogForm_activity_light: string
+  cycleLogForm_activity_moderate: string
+  cycleLogForm_activity_intense: string
+  cycleCalendar_logEntry_weight: string
+  cycleCalendar_logEntry_weightSub: string
+  cycleCalendar_logEntry_water: string
+  cycleCalendar_logEntry_waterSub: string
+  cycleCalendar_logEntry_activity: string
+  cycleCalendar_logEntry_activitySub: string
+  cycleCalendar_logSheet_weight: string
+  cycleCalendar_logSheet_water: string
+  cycleCalendar_logSheet_activity: string
+
   cycleSettings_rowTitle: string
   cycleSettings_title: string
   cycleSettings_subtitle: string
