@@ -1987,6 +1987,8 @@ export interface TranslationKeys {
   circles_readEmptyTitle: string
   circles_readEmptyBody: string
   circles_postingSoon: string
+  circles_composerPlaceholder: string
+  circles_composerHint: string
 
   channels_mute: string
   channels_unmute: string

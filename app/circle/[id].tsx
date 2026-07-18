@@ -1,14 +1,15 @@
 /**
- * Circle read screen (community model: Option B) — anonymous topic feed.
- * FOUNDATION: read-only. Shows the circle's anonymous posts (from
- * circle_posts_public — handle, never a real name). Posting comes in a follow-up
- * (a disabled composer note marks where it lands).
+ * Circle screen (community model: Option B) — anonymous topic feed + composer.
+ * Shows the circle's anonymous posts (from circle_posts_public — handle, never a
+ * real name) and lets the user post anonymously. On first post a per-circle
+ * "Anonymous <Animal>" handle is minted (ensureHandle) so a user's posts link to
+ * each other within the circle but never to their real identity.
  */
 
 import { useState, useCallback } from 'react'
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platform, StyleSheet, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, useFocusEffect } from 'expo-router'
-import { Heart, MessageCircle, ShieldCheck } from 'lucide-react-native'
+import { Heart, MessageCircle, ShieldCheck, Send } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
@@ -16,7 +17,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic } from '../../components/ui/Typography'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
-import { getCircle, getCirclePosts, type Circle, type CirclePost } from '../../lib/circles'
+import { getCircle, getCirclePosts, createCirclePost, type Circle, type CirclePost } from '../../lib/circles'
 
 export default function CircleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -29,6 +30,8 @@ export default function CircleScreen() {
   const [circle, setCircle] = useState<Circle | null>(null)
   const [posts, setPosts] = useState<CirclePost[]>([])
   const [loading, setLoading] = useState(true)
+  const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
 
   const load = useCallback(() => {
     if (!id) return
@@ -41,12 +44,29 @@ export default function CircleScreen() {
 
   useFocusEffect(useCallback(() => { load() }, [load]))
 
+  const handleSend = useCallback(async () => {
+    const text = draft.trim()
+    if (!id || !text || sending) return
+    setSending(true)
+    try {
+      await createCirclePost(id, text)
+      setDraft('')
+      const fresh = await getCirclePosts(id)
+      setPosts(fresh)
+    } catch {
+      // keep the draft so the user doesn't lose their text
+    } finally {
+      setSending(false)
+    }
+  }, [id, draft, sending])
+
   const ink = diffuse ? dt.colors.ink : colors.text
   const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
   const line = diffuse ? dt.colors.line : colors.borderLight
   const cardBg = diffuse ? dt.colors.surface : colors.surface
   const cardBorder = diffuse ? dt.colors.line : colors.border
   const accent = diffuse ? dt.stickers.lilac : stickers.lilac
+  const onAccent = diffuse ? dt.colors.surface : colors.surface // paper-white foreground on a filled accent pill
 
   function renderItem({ item }: { item: CirclePost }) {
     return (
@@ -67,8 +87,14 @@ export default function CircleScreen() {
     )
   }
 
+  const canSend = draft.trim().length > 0 && !sending
+
   return (
-    <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
+    <KeyboardAvoidingView
+      style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : insets.top}
+    >
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
 
       <FlatList
@@ -108,13 +134,41 @@ export default function CircleScreen() {
         }
       />
 
-      {/* Posting foundation-note — composer lands here in a follow-up. */}
-      <View style={[styles.composerNote, { backgroundColor: cardBg, borderTopColor: line, paddingBottom: insets.bottom + 12 }]}>
-        <Text style={[styles.composerText, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-          {t('circles_postingSoon')}
+      {/* Anonymous composer */}
+      <View style={[styles.composer, { backgroundColor: cardBg, borderTopColor: line, paddingBottom: insets.bottom + 10 }]}>
+        <View style={styles.composerRow}>
+          <TextInput
+            value={draft}
+            onChangeText={setDraft}
+            placeholder={t('circles_composerPlaceholder')}
+            placeholderTextColor={inkMuted}
+            multiline
+            style={[
+              styles.input,
+              {
+                color: ink,
+                backgroundColor: diffuse ? dt.colors.bg : colors.bgWarm,
+                borderColor: cardBorder,
+                borderRadius: radius.md,
+                fontFamily: diffuse ? diffuseFont.body : font.body,
+              },
+            ]}
+          />
+          <Pressable
+            onPress={handleSend}
+            disabled={!canSend}
+            style={[styles.send, { backgroundColor: canSend ? accent : (diffuse ? dt.colors.line : colors.borderLight), borderRadius: radius.full }]}
+          >
+            {sending
+              ? <ActivityIndicator size="small" color={onAccent} />
+              : <Send size={17} color={canSend ? onAccent : inkMuted} strokeWidth={2} />}
+          </Pressable>
+        </View>
+        <Text style={[styles.composerHint, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+          {t('circles_composerHint')}
         </Text>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   )
 }
 
@@ -133,6 +187,9 @@ const styles = StyleSheet.create({
   postFooter: { flexDirection: 'row', gap: 16, marginTop: 12 },
   stat: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   statText: { fontSize: 12 },
-  composerNote: { paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1 },
-  composerText: { fontSize: 12, textAlign: 'center', lineHeight: 17 },
+  composer: { paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1, gap: 6 },
+  composerRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  input: { flex: 1, minHeight: 44, maxHeight: 120, borderWidth: 1, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 11, fontSize: 15, lineHeight: 20 },
+  send: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  composerHint: { fontSize: 11, textAlign: 'center', paddingHorizontal: 8 },
 })

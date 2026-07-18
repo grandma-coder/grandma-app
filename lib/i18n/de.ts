@@ -1813,6 +1813,8 @@ export const de: TranslationKeys = {
   circles_readEmptyTitle: "Be the first to share",
   circles_readEmptyBody: "This circle is quiet for now. Soon you’ll be able to post here anonymously.",
   circles_postingSoon: "Anonymous posting is coming soon to Circles.",
+  circles_composerPlaceholder: "Share anonymously…",
+  circles_composerHint: "Posted anonymously as your circle handle — never your real name.",
 
   channels_mute: "Mute this topic",
   channels_unmute: "Unmute",

@@ -49,6 +49,69 @@ export async function getCircle(circleId: string): Promise<Circle | null> {
   return (data as Circle) ?? null
 }
 
+// ─── Anonymous handles ──────────────────────────────────────────────────────
+// A stable "Anonymous <Animal>" alias per (circle, user), created on first post
+// so a user's posts are linkable to each other within a circle but never to
+// their real identity. Generated client-side; the reviewer flagged that a
+// handle MUST exist before posting or all handle-less users collapse to a
+// generic "Anonymous" — ensureHandle() guarantees it.
+const HANDLE_ANIMALS = [
+  'Owl', 'Fox', 'Wren', 'Deer', 'Otter', 'Robin', 'Hare', 'Finch', 'Lark', 'Dove',
+  'Heron', 'Sparrow', 'Bear', 'Swan', 'Moth', 'Bee', 'Fawn', 'Crane', 'Quail', 'Vole',
+]
+
+function pickAnimal(seed: string): string {
+  // Deterministic-ish from the id so re-tries pick the same one before insert.
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return HANDLE_ANIMALS[h % HANDLE_ANIMALS.length]
+}
+
+/** Get the user's handle for a circle, creating one if absent. Returns handle. */
+export async function ensureHandle(circleId: string): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+
+  const { data: existing } = await supabase
+    .from('circle_handles')
+    .select('handle')
+    .eq('circle_id', circleId)
+    .eq('user_id', session.user.id)
+    .maybeSingle()
+  if (existing?.handle) return existing.handle
+
+  const handle = `Anonymous ${pickAnimal(circleId + session.user.id)}`
+  const { error } = await supabase
+    .from('circle_handles')
+    .insert({ circle_id: circleId, user_id: session.user.id, handle })
+  // 23505 = someone else's concurrent insert / already exists — re-read.
+  if (error && (error as any).code !== '23505') throw error
+  if (error) {
+    const { data } = await supabase
+      .from('circle_handles').select('handle')
+      .eq('circle_id', circleId).eq('user_id', session.user.id).maybeSingle()
+    return data?.handle ?? handle
+  }
+  return handle
+}
+
+/** Post to a circle anonymously. Ensures a handle exists first. */
+export async function createCirclePost(circleId: string, content: string, replyToId?: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+  const text = content.trim()
+  if (!text) throw new Error('Post is empty')
+
+  await ensureHandle(circleId) // guarantee the alias exists before the post
+  const { error } = await supabase.from('circle_posts').insert({
+    circle_id: circleId,
+    author_id: session.user.id,
+    content: text,
+    reply_to_id: replyToId ?? null,
+  })
+  if (error) throw error
+}
+
 /** Top-level posts in a circle, anonymous (from circle_posts_public). */
 export async function getCirclePosts(circleId: string): Promise<CirclePost[]> {
   const { data, error } = await supabase
