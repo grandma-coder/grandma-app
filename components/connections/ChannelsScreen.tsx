@@ -332,13 +332,13 @@ function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myId
             >
               {diffuse && <SoftBloom color={sticker.fill} cx="90%" cy="20%" opacity={dt.isDark ? 0.22 : 0.3} spread={0.5} />}
               {diffuse ? (
-                <View style={styles.bannerIcon}>
-                  <DiffuseBloomIcon color={sticker.fill} size={44} intensity={0.5}>
-                    <StickerIcon size={30} fill={dt.colors.ink2} />
+                <View style={[styles.bannerIcon, { borderWidth: 1, borderColor: dt.colors.line2 }]}>
+                  <DiffuseBloomIcon color={sticker.fill} size={40} intensity={0.45}>
+                    <StickerIcon size={28} fill={dt.colors.ink2} />
                   </DiffuseBloomIcon>
                 </View>
               ) : (
-                <View style={[styles.bannerIcon, { backgroundColor: sticker.fill + '38' }]}>
+                <View style={[styles.bannerIcon, { backgroundColor: sticker.tint }]}>
                   <StickerIcon size={34} fill={sticker.fill} />
                 </View>
               )}
@@ -548,7 +548,7 @@ function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joi
     >
       {diffuse ? (
         <View style={[styles.compactIcon, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
-          <DiffuseBloomIcon color={sticker.fill} size={36} intensity={0.45}>
+          <DiffuseBloomIcon color={sticker.fill} size={34} intensity={0.45}>
             <StickerIcon size={26} fill={dt.colors.ink2} />
           </DiffuseBloomIcon>
         </View>
@@ -560,10 +560,13 @@ function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joi
       <Text style={[styles.compactName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]} numberOfLines={1}>
         {channel.name}
       </Text>
+      {/* For an empty channel the JOIN button below already carries the CTA, so
+          instead of repeating "Be the first" on every suggested card we show the
+          short "New" tag (same idiom as the full ChannelCard). */}
       <Text style={[styles.compactMembers, diffuse
         ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 0.8 }
         : { color: colors.textMuted, fontFamily: font.bodySemiBold }]} numberOfLines={1}>
-        {memberLabel(channel.memberCount, t)}
+        {channel.memberCount > 0 ? memberLabel(channel.memberCount, t) : t('channelsDiscover_new')}
       </Text>
       {joined ? (
         diffuse ? (
@@ -594,7 +597,7 @@ function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joi
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
-  scroll: { paddingHorizontal: 20, paddingBottom: 40 },
+  scroll: { paddingHorizontal: 20, paddingBottom: 96 }, // clears the absolute + FAB (bottom 24 + 56 tall)
   header: { marginBottom: 18 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   heading: { fontSize: 36, letterSpacing: -1, lineHeight: 40, flex: 1 },
@@ -660,10 +663,10 @@ const styles = StyleSheet.create({
   fab: { position: 'absolute', bottom: 24, right: 20, width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
 
   // Compact
-  compactCard: { width: 150, padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, ...shadows.subtle },
-  compactIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  compactCard: { width: 150, paddingVertical: 16, paddingHorizontal: 16, alignItems: 'center', gap: 8, borderWidth: 1, ...shadows.subtle },
+  compactIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
   compactName: { fontSize: 14, textAlign: 'center' },
-  compactMembers: { fontSize: 12 },
+  compactMembers: { fontSize: 11 },
   joinBtn: { paddingVertical: 7, paddingHorizontal: 22, marginTop: 4 },
   joinBtnText: { fontSize: 13 },
 })
