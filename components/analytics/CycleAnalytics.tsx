@@ -18,7 +18,7 @@ import { View, Text, ScrollView, StyleSheet, Pressable, Dimensions } from 'react
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Line as SvgLine, Circle as SvgCircle, Path as SvgPath, Text as SvgText } from 'react-native-svg'
 
-import { useTheme, radius, shadows, useDiffuseTheme, diffuseFont, getDiffuseAccent, stickers as stickerPalette } from '../../constants/theme'
+import { useTheme, radius, shadows, useDiffuseTheme, diffuseFont, stickers as stickerPalette } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { Character } from '../characters/Characters'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
@@ -43,6 +43,7 @@ import {
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { CycleDetailSheet, type CycleDetailType } from './CycleDetailSheets'
+import { GlowAreaLine } from './shared/MiniCharts'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
 
 /** Warm phase copy keyed by cycle phase — resolved through t() so it localizes. */
@@ -99,8 +100,8 @@ export function CycleAnalytics() {
     ovulation: stickers.pink,
     luteal: stickers.lilac,
   }
-  // Under diffuse the whole screen shares the one cycle accent (calm, not per-phase hues).
-  const accent = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : PHASE_ACCENT[info.phase]
+  // Phase accent drives both variants — the live phase hue, not a flat mode accent.
+  const accent = PHASE_ACCENT[info.phase]
   const ink = diffuse ? dt.colors.ink : colors.text
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
 
@@ -202,11 +203,21 @@ export function CycleAnalytics() {
                 {history?.avg != null ? t('cycleAnalytics_avgDaysShort', { n: history.avg }) : t('cycleAnalytics_noWindowYet')}
               </Text>
             </View>
-            <CycleLengthTrend
-              cycles={history?.cycles ?? []}
-              avg={history?.avg ?? null}
-              color={accent}
-            />
+            {diffuse ? (
+              <GlowAreaLine
+                data={(history?.cycles ?? [])
+                  .filter((c) => c.lengthDays != null)
+                  .slice(-8)
+                  .map((c) => c.lengthDays as number)}
+                color={accent}
+              />
+            ) : (
+              <CycleLengthTrend
+                cycles={history?.cycles ?? []}
+                avg={history?.avg ?? null}
+                color={accent}
+              />
+            )}
           </View>
         </Pressable>
 
