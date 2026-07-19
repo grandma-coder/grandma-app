@@ -9,11 +9,11 @@ import {
   radii,
   blurs,
   grain,
-  stickers,
   cssVarsExport,
   jsonExport,
   type Swatch,
 } from "@/lib/design-tokens"
+import { BLOBS, type Blob } from "@/lib/blobs"
 
 function useCopy() {
   const [copied, setCopied] = useState<string | null>(null)
@@ -56,13 +56,15 @@ function SwatchTile({ s, onCopy, copiedKey }: { s: Swatch; onCopy: (v: string, k
   )
 }
 
-/** Render one sticker as inline web SVG at a given size + fill. */
-function Sticker({ def, size = 56 }: { def: (typeof stickers)[number]; size?: number }) {
+/** Render one Character-blob as inline web SVG (48x48, hue fill + ink eyes). */
+function BlobIcon({ blob, size = 52 }: { blob: Blob; size?: number }) {
+  // Default eye positions — the app's FACE map places dot eyes for most concepts;
+  // this pair sits sensibly on the blob body for the catalog preview.
   return (
-    <svg width={size} height={size} viewBox={def.viewBox}>
-      {def.paths.map((d, i) => (
-        <path key={i} d={d} fill={i === 0 ? def.fill : "none"} stroke="#141313" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-      ))}
+    <svg width={size} height={size} viewBox="0 0 48 48">
+      <path d={blob.d} fill={blob.hue} stroke="#1A1916" strokeWidth={1.25} strokeLinejoin="round" />
+      <circle cx={19} cy={26} r={2} fill="#1A1916" />
+      <circle cx={29} cy={26} r={2} fill="#1A1916" />
     </svg>
   )
 }
@@ -231,23 +233,8 @@ export function TokensView() {
         </div>
       )}
 
-      {/* STICKERS */}
-      {tab === "Stickers" && (
-        <div className="space-y-4">
-          <p className="text-sm text-fg-tertiary">
-            The icon system — active under Diffuse (not legacy). A representative set rendered from the app&apos;s SVG
-            paths. Full set (52) lives in <span className="font-mono text-xs">grandma-app/components/ui/Stickers.tsx</span>.
-          </p>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {stickers.map((s) => (
-              <div key={s.name} className="flex flex-col items-center gap-2 rounded-xl border border-border-default bg-card p-4 shadow-[var(--shadow-sm)]">
-                <Sticker def={s} />
-                <span className="font-mono text-xs text-fg-secondary">{s.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* STICKERS — the current Character-blob system, grouped by behavior */}
+      {tab === "Stickers" && <BlobCatalog />}
 
       {/* BRAND — logo */}
       {tab === "Brand" && (
@@ -316,6 +303,59 @@ export function TokensView() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Blob catalog — the current Character-blob system, grouped by behavior ──────
+
+const BLOB_SECTIONS: { key: string; label: string; dot: string; gaps: string }[] = [
+  { key: "pre_pregnancy", label: "Pre-Pregnancy / Cycle", dot: "#E58BB4", gaps: "Missing dedicated blobs: cycle phases (follicular/luteal), hormones (E/P/LH), cervical fluid, a real BBT/thermometer (temperature reuses a droplet), fertile-window." },
+  { key: "pregnancy", label: "Pregnancy", dot: "#B7A6E8", gaps: "Missing: trimester / gestational-week, baby-size-by-week, birth plan & birth-type, labor phases (early/active/transition/golden-hour/postpartum), kegel / nesting / hospital-bag." },
+  { key: "kids", label: "Kids", dot: "#8BB8E8", gaps: "Missing: teeth / tooth, diaper sub-types (pee/poop/mixed), nursery gear (crib/rattle/stroller/pacifier/teddy), specific food types (fruit/veg)." },
+  { key: "general", label: "General", dot: "#BDD48C", gaps: "One bell covers 13 notification types; no per-mode blobs; no scan-type blobs; medicine ≈ health hue/shape; no dedicated vitamin/supplement blob." },
+]
+
+function BlobCatalog() {
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-fg-tertiary">
+        The current <span className="font-medium text-fg-secondary">Character-blob</span> icon system (active under
+        Diffuse) — <span className="font-mono text-xs">{BLOBS.length}</span> concepts rendered live from{" "}
+        <span className="font-mono text-xs">grandma-app/components/characters/Characters.tsx</span>, grouped by
+        behavior. Each is a 48×48 blob with a per-concept hue. Gaps per behavior are noted below each group.
+      </p>
+
+      {BLOB_SECTIONS.map((section) => {
+        const rows = BLOBS.filter((b) => b.behavior === section.key)
+        if (rows.length === 0) return null
+        return (
+          <section key={section.key}>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="inline-block size-2.5 rounded-full" style={{ background: section.dot }} />
+              <h2 className="display text-base font-semibold text-fg-primary">{section.label}</h2>
+              <span className="text-xs text-fg-muted">{rows.length} concepts</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+              {rows.map((b) => (
+                <div
+                  key={b.name}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-border-default bg-card p-3 text-center shadow-[var(--shadow-sm)]"
+                >
+                  <BlobIcon blob={b} />
+                  <div>
+                    <p className="font-mono text-[11px] text-fg-secondary">{b.name}</p>
+                    <p className="text-[10px] leading-tight text-fg-muted">{b.concept}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 rounded-lg border border-border-subtle bg-deep px-3 py-2 text-xs text-fg-tertiary">
+              <span className="font-medium text-fg-secondary">Gaps:</span> {section.gaps}
+            </div>
+          </section>
+        )
+      })}
     </div>
   )
 }

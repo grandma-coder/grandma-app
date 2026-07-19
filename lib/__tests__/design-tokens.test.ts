@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { cssVarsExport, jsonExport, diffuseFields, stickers } from "../design-tokens"
+import { cssVarsExport, jsonExport, diffuseFields } from "../design-tokens"
+import { BLOBS } from "../blobs"
 
 describe("diffuse design-tokens exports", () => {
   it("cssVarsExport emits a :root block with a Diffuse neutral + field accent", () => {
@@ -24,8 +25,11 @@ describe("diffuse design-tokens exports", () => {
     }
   })
 
-  it("stickers carry real SVG path data", () => {
-    expect(stickers.length).toBeGreaterThan(8)
-    expect(stickers.find((s) => s.name === "Heart")?.paths[0]).toContain("M50,88")
+  it("Character-blobs carry real SVG paths + behavior + hue", () => {
+    expect(BLOBS.length).toBeGreaterThanOrEqual(48)
+    const sleep = BLOBS.find((b) => b.name === "sleep")
+    expect(sleep?.hue).toMatch(/^#[0-9A-Fa-f]{6}$/)
+    expect(sleep?.d).toContain("M32 4")
+    expect(new Set(BLOBS.map((b) => b.behavior))).toContain("kids")
   })
 })

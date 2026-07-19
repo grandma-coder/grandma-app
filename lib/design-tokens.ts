@@ -131,26 +131,9 @@ export const grain = {
   opacityDark: 0.16,
 }
 
-// ── Stickers — the icon system (SVG paths lifted from Stickers.tsx) ───────────
-export interface StickerDef {
-  name: string
-  viewBox: string
-  fill: string
-  paths: string[]
-}
-export const stickers: StickerDef[] = [
-  { name: "Heart", viewBox: "0 0 100 100", fill: "#F2B2C7", paths: ["M50,88 C20,68 8,50 8,32 C8,18 20,10 32,10 C40,10 46,14 50,22 C54,14 60,10 68,10 C80,10 92,18 92,32 C92,50 80,68 50,88 Z"] },
-  { name: "Star", viewBox: "0 0 100 100", fill: "#F5D652", paths: ["M50,8 L61,38 L94,40 L68,60 L78,92 L50,72 L22,92 L32,60 L6,40 L39,38 Z"] },
-  { name: "Drop", viewBox: "0 0 100 100", fill: "#9DC3E8", paths: ["M50,8 C50,8 22,42 22,62 C22,80 36,94 50,94 C64,94 78,80 78,62 C78,42 50,8 50,8 Z"] },
-  { name: "Moon", viewBox: "0 0 100 100", fill: "#C8B6E8", paths: ["M68,14 C46,14 30,32 30,54 C30,74 46,88 66,88 C74,88 82,84 86,78 C74,78 62,68 58,54 C54,36 60,22 68,14 Z"] },
-  { name: "Leaf", viewBox: "0 0 100 100", fill: "#BDD48C", paths: ["M12,88 C12,50 42,12 88,12 C88,58 58,88 12,88 Z", "M20,82 Q50,54 84,18"] },
-  { name: "Cloud", viewBox: "0 0 120 80", fill: "#C8D4E8", paths: ["M20,60 C8,60 8,42 22,40 C22,22 48,18 52,36 C60,22 88,24 88,42 C104,42 106,60 92,62 Z"] },
-  { name: "Bolt", viewBox: "0 0 100 100", fill: "#F5D652", paths: ["M54,8 L22,54 L44,54 L38,92 L78,38 L54,38 Z"] },
-  { name: "Foot", viewBox: "0 0 100 100", fill: "#F2B2C7", paths: ["M30,80 C20,70 20,48 34,40 C48,32 60,44 58,62 C56,78 44,90 30,80 Z"] },
-  { name: "Smiley", viewBox: "0 0 100 100", fill: "#F5D652", paths: ["M34,60 Q50,74 66,60"] },
-  { name: "Apple", viewBox: "0 0 100 100", fill: "#EE4A3C", paths: ["M50,26 C42,18 24,22 22,44 C20,68 38,88 50,88 C62,88 80,68 78,44 C76,22 58,18 50,26 Z", "M50,26 C50,14 56,8 64,8", "M56,30 Q66,24 72,32"] },
-  { name: "Cupcake", viewBox: "0 0 100 100", fill: "#F2B2C7", paths: ["M22,56 L30,88 h40 l8,-32 z", "M20,58 C20,38 40,30 50,30 C60,30 80,38 80,58 Z"] },
-]
+// (The current icon system — Character-blobs — lives in lib/blobs.ts, extracted
+//  from grandma-app/components/characters/Characters.tsx and rendered on the
+//  Stickers tab grouped by behavior.)
 
 export const COLOR_GROUPS = [neutralsLight, neutralsDark, statusColors]
 
