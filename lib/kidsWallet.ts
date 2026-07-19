@@ -13,7 +13,7 @@
 import type { WalletTone } from './wallet'
 
 export type KidsWalletCardId =
-  | 'goals' | 'health' | 'exams' | 'diaper' | 'growth_leap'
+  | 'essentials' | 'goals' | 'health' | 'exams' | 'diaper' | 'growth_leap'
   | 'reminders' | 'ask_grandma' | 'rewards'
 
 export interface KidsWalletCardDescriptor {
@@ -34,6 +34,7 @@ export function buildKidsWalletCards(input: BuildKidsWalletCardsInput): KidsWall
   const { hasDiaper, hasGrowthLeap } = input
 
   const cards: KidsWalletCardDescriptor[] = [
+    { id: 'essentials', tone: 'blue', linkOnly: true },
     { id: 'goals', tone: 'yellow', linkOnly: true },
     { id: 'health', tone: 'green', linkOnly: true },
     { id: 'exams', tone: 'lilac', linkOnly: true },

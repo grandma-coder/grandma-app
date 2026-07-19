@@ -1,14 +1,14 @@
 import { buildKidsWalletCards } from '../kidsWallet'
 
 describe('buildKidsWalletCards', () => {
-  test('no diaper, no leap → goals, health, exams, reminders, ask_grandma, rewards', () => {
+  test('no diaper, no leap → essentials, goals, health, exams, reminders, ask_grandma, rewards', () => {
     const ids = buildKidsWalletCards({ hasDiaper: false, hasGrowthLeap: false }).map((c) => c.id)
-    expect(ids).toEqual(['goals', 'health', 'exams', 'reminders', 'ask_grandma', 'rewards'])
+    expect(ids).toEqual(['essentials', 'goals', 'health', 'exams', 'reminders', 'ask_grandma', 'rewards'])
   })
 
   test('diaper + leap appear in order after health/exams', () => {
     const ids = buildKidsWalletCards({ hasDiaper: true, hasGrowthLeap: true }).map((c) => c.id)
-    expect(ids).toEqual(['goals', 'health', 'exams', 'diaper', 'growth_leap', 'reminders', 'ask_grandma', 'rewards'])
+    expect(ids).toEqual(['essentials', 'goals', 'health', 'exams', 'diaper', 'growth_leap', 'reminders', 'ask_grandma', 'rewards'])
   })
 
   test('growth_leap + reminders expand inline; the rest are link-only', () => {
