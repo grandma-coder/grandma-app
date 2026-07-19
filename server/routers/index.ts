@@ -5,6 +5,8 @@ import { pushRouter } from "./push"
 import { sentryRouter } from "./sentry"
 import { communityRouter } from "./community"
 import { teamRouter } from "./team"
+import { notificationTemplatesRouter } from "./notificationTemplates"
+import { notificationCopyRouter } from "./notificationCopy"
 
 /**
  * Root app router. Feature routers are added per phase.
@@ -18,6 +20,8 @@ export const appRouter = router({
   sentry: sentryRouter,
   community: communityRouter,
   team: teamRouter,
+  notificationTemplates: notificationTemplatesRouter,
+  notificationCopy: notificationCopyRouter,
 })
 
 export type AppRouter = typeof appRouter

@@ -1,31 +1,72 @@
 import { z } from "zod"
-import { eq, desc, sql } from "drizzle-orm"
+import { eq, desc, sql, and, or, ilike } from "drizzle-orm"
 import { TRPCError } from "@trpc/server"
 import { router, protectedProcedure, sendProcedure } from "../trpc"
 import { db } from "@/db"
-import { pushCampaigns, pushRecipients } from "@/db/schema"
-import { resolveTokens, type PushCategory } from "@/lib/expo/resolve-tokens"
-import { sendPushBatch } from "@/lib/expo/send-push-batch"
-import { deactivateTokens } from "@/lib/expo/deactivate-tokens"
+import { pushCampaigns, pushRecipients, NOTIFICATION_STATUSES } from "@/db/schema"
+import { deliverCampaign } from "@/lib/notifications/deliver"
 import { writeAudit } from "@/lib/audit"
 
 const CATEGORIES = ["broadcast", "insights", "appointments", "cycle", "milestones", "care_circle", "reminder"] as const
 
-const createInput = z.object({
+// Deep-link options — where the app navigates on tap. Mirrors Aura's dropdown
+// (none/skill/products) adapted to grandma's surfaces. The value is stored on
+// deepLink and echoed into the push data payload as `url`.
+const DEEP_LINKS = [
+  { value: "", label: "None" },
+  { value: "/(tabs)", label: "Home" },
+  { value: "/(tabs)/agenda", label: "Agenda / Planner" },
+  { value: "/(tabs)/library", label: "Library" },
+  { value: "/channels", label: "Community / Channels" },
+  { value: "/grandma-talk", label: "Grandma chat" },
+  { value: "/insights", label: "Insights" },
+  { value: "/paywall", label: "Paywall (upgrade)" },
+] as const
+
+const baseFields = {
   title: z.string().min(1).max(120),
   body: z.string().min(1).max(400),
   category: z.enum(CATEGORIES).default("broadcast"),
   deepLink: z.string().max(200).optional(),
   targetType: z.enum(["all", "users"]).default("all"),
   targetUserIds: z.array(z.string().uuid()).default([]),
-})
+}
+
+// scheduled_at (ISO string) — when present + future, the campaign is scheduled;
+// otherwise it's a plain draft. Validated future-only, matching Aura.
+const scheduledAt = z.string().datetime().nullable().optional()
 
 export const pushRouter = router({
-  /** List campaigns, newest first. Viewer+ (no PII in campaign metadata). */
-  list: protectedProcedure.query(async () => {
-    const rows = await db.select().from(pushCampaigns).orderBy(desc(pushCampaigns.createdAt)).limit(50)
-    return rows
-  }),
+  /**
+   * List campaigns with optional search + status filter. Viewer+ (no PII in
+   * campaign metadata). Newest first.
+   */
+  list: protectedProcedure
+    .input(
+      z
+        .object({
+          search: z.string().max(120).optional(),
+          status: z.enum(NOTIFICATION_STATUSES).optional(),
+          limit: z.number().int().min(1).max(200).default(100),
+        })
+        .optional(),
+    )
+    .query(async ({ input }) => {
+      const conds = []
+      if (input?.status) conds.push(eq(pushCampaigns.status, input.status))
+      if (input?.search) {
+        const q = `%${input.search}%`
+        conds.push(or(ilike(pushCampaigns.title, q), ilike(pushCampaigns.body, q)))
+      }
+      const where = conds.length ? and(...conds) : undefined
+      const rows = await db
+        .select()
+        .from(pushCampaigns)
+        .where(where)
+        .orderBy(desc(pushCampaigns.createdAt))
+        .limit(input?.limit ?? 100)
+      return rows
+    }),
 
   /** Per-recipient outcomes for one campaign. Viewer+. */
   history: protectedProcedure.input(z.object({ campaignId: z.string().uuid() })).query(async ({ input }) => {
@@ -38,114 +79,153 @@ export const pushRouter = router({
     return { campaign: campaign ?? null, recipients }
   }),
 
-  /** Create a draft campaign. Admin (sendProcedure) — composing a send is privileged. */
-  createCampaign: sendProcedure.input(createInput).mutation(async ({ ctx, input }) => {
+  /**
+   * Create a campaign. Status is derived: a future scheduled_at → 'scheduled',
+   * otherwise 'draft'. Admin (sendProcedure) — composing a send is privileged.
+   */
+  createCampaign: sendProcedure
+    .input(z.object({ ...baseFields, scheduledAt }))
+    .mutation(async ({ ctx, input }) => {
+      const status = deriveStatus(input.scheduledAt)
+      const [row] = await db
+        .insert(pushCampaigns)
+        .values({
+          title: input.title,
+          body: input.body,
+          category: input.category,
+          deepLink: input.deepLink || null,
+          targetType: input.targetType,
+          targetUserIds: input.targetUserIds,
+          status,
+          scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : null,
+          createdBy: ctx.userEmail ?? "unknown",
+        })
+        .returning()
+      await writeAudit({
+        actorEmail: ctx.userEmail ?? "unknown",
+        action: status === "scheduled" ? "push.campaign.schedule" : "push.campaign.create",
+        target: row.id,
+        meta: { scheduledAt: input.scheduledAt ?? null },
+      })
+      return row
+    }),
+
+  /**
+   * Update a draft/scheduled campaign. Editing a sent/sending/failed campaign is
+   * rejected. scheduled_at: null reverts to draft; a future date → scheduled.
+   */
+  updateCampaign: sendProcedure
+    .input(z.object({ campaignId: z.string().uuid(), ...baseFields, scheduledAt }))
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await db.select().from(pushCampaigns).where(eq(pushCampaigns.id, input.campaignId))
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" })
+      if (existing.status !== "draft" && existing.status !== "scheduled") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Cannot edit a ${existing.status} campaign` })
+      }
+      const status = deriveStatus(input.scheduledAt)
+      const [row] = await db
+        .update(pushCampaigns)
+        .set({
+          title: input.title,
+          body: input.body,
+          category: input.category,
+          deepLink: input.deepLink || null,
+          targetType: input.targetType,
+          targetUserIds: input.targetUserIds,
+          status,
+          scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : null,
+        })
+        .where(eq(pushCampaigns.id, input.campaignId))
+        .returning()
+      await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "push.campaign.update", target: row.id })
+      return row
+    }),
+
+  /**
+   * Cancel or delete. A scheduled campaign is soft-cancelled (status→cancelled).
+   * A draft/cancelled/failed campaign is hard-deleted. A sent one can't be
+   * removed. A sending one is blocked unless it's been stuck > 2 min.
+   */
+  cancelCampaign: sendProcedure
+    .input(z.object({ campaignId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [c] = await db.select().from(pushCampaigns).where(eq(pushCampaigns.id, input.campaignId))
+      if (!c) throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" })
+
+      if (c.status === "sent") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "A sent campaign can't be removed" })
+      }
+      if (c.status === "sending") {
+        const stuckMs = Date.now() - new Date(c.createdAt).getTime()
+        if (stuckMs < 2 * 60 * 1000) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Campaign is currently sending" })
+        }
+      }
+      if (c.status === "scheduled") {
+        await db.update(pushCampaigns).set({ status: "cancelled" }).where(eq(pushCampaigns.id, c.id))
+        await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "push.campaign.cancel", target: c.id })
+        return { action: "cancelled" as const }
+      }
+      await db.delete(pushRecipients).where(eq(pushRecipients.campaignId, c.id))
+      await db.delete(pushCampaigns).where(eq(pushCampaigns.id, c.id))
+      await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "push.campaign.delete", target: c.id })
+      return { action: "deleted" as const }
+    }),
+
+  /**
+   * Send a draft/scheduled campaign now. Admin only + audited. Delegates to the
+   * shared deliverCampaign pipeline (atomic claim → resolve tokens with consent
+   * filter → Expo send → recipient rows + in-app feed → prune dead tokens →
+   * record counts).
+   */
+  sendCampaign: sendProcedure.input(z.object({ campaignId: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+    const result = await deliverCampaign(input.campaignId, { allowStatuses: ["draft", "scheduled", "sending"] })
+    await writeAudit({
+      actorEmail: ctx.userEmail ?? "unknown",
+      action: "push.campaign.send",
+      target: input.campaignId,
+      meta: { ...result },
+    })
+    return result
+  }),
+
+  /**
+   * Create + send in one shot ("Save & Send Now"). Forces scheduled_at null so
+   * it goes out immediately. Collapses Aura's client-side 2-step sequence.
+   */
+  createAndSend: sendProcedure.input(z.object(baseFields)).mutation(async ({ ctx, input }) => {
     const [row] = await db
       .insert(pushCampaigns)
       .values({
         title: input.title,
         body: input.body,
         category: input.category,
-        deepLink: input.deepLink ?? null,
+        deepLink: input.deepLink || null,
         targetType: input.targetType,
         targetUserIds: input.targetUserIds,
         status: "draft",
         createdBy: ctx.userEmail ?? "unknown",
       })
       .returning()
-    await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "push.campaign.create", target: row.id })
-    return row
+    const result = await deliverCampaign(row.id, { allowStatuses: ["draft"] })
+    await writeAudit({
+      actorEmail: ctx.userEmail ?? "unknown",
+      action: "push.campaign.create_and_send",
+      target: row.id,
+      meta: { ...result },
+    })
+    return { campaignId: row.id, ...result }
   }),
 
-  /**
-   * Send a draft campaign. Admin only + audited. The pipeline:
-   *   1. atomically flip draft → sending (guards double-send)
-   *   2. resolve audience tokens, applying the category consent filter
-   *   3. sendPushBatch to Expo
-   *   4. write a push_recipients row per token + a `notifications` row per
-   *      recipient (so it shows in the app's in-app feed)
-   *   5. deactivate any dead tokens Expo reported
-   *   6. record sent/failed/skipped counts, flip → sent (or failed)
-   */
-  sendCampaign: sendProcedure.input(z.object({ campaignId: z.string().uuid() })).mutation(async ({ ctx, input }) => {
-    // 1. Claim the campaign (only a draft can be sent).
-    const claimed = await db.execute<{ id: string; title: string; body: string; category: string; deep_link: string | null; target_type: string; target_user_ids: string[] }>(sql`
-      update push_campaigns
-      set status = 'sending'
-      where id = ${input.campaignId} and status = 'draft'
-      returning id, title, body, category, deep_link, target_type, target_user_ids
-    `)
-    const campaign = Array.from(claimed)[0]
-    if (!campaign) throw new TRPCError({ code: "BAD_REQUEST", message: "Campaign not found or not in draft state" })
-
-    try {
-      // 2. Resolve audience with consent filter.
-      const target =
-        campaign.target_type === "users"
-          ? { type: "users" as const, userIds: campaign.target_user_ids ?? [] }
-          : { type: "all" as const }
-      const { tokens, skippedOptOut } = await resolveTokens(target, campaign.category as PushCategory)
-
-      // 3. Send.
-      const data: Record<string, unknown> = { category: campaign.category }
-      if (campaign.deep_link) data.url = campaign.deep_link
-      const result = await sendPushBatch(
-        tokens.map((to) => ({ to, title: campaign.title, body: campaign.body, data })),
-      )
-
-      // 4. Log recipients (chunked insert) + in-app feed rows.
-      const recipientRows = tokens.map((token, i) => {
-        const tk = result.tickets[i]
-        return {
-          campaignId: campaign.id,
-          token,
-          status: (tk?.status === "ok" ? "ok" : "error") as "ok" | "error",
-          ticketId: tk?.id ?? null,
-          error: tk?.status === "error" ? tk.message ?? tk.details?.error ?? "error" : null,
-        }
-      })
-      if (recipientRows.length) {
-        for (let i = 0; i < recipientRows.length; i += 200) {
-          await db.insert(pushRecipients).values(recipientRows.slice(i, i + 200))
-        }
-      }
-      // In-app feed: one notifications row per targeted token's user.
-      await db.execute(sql`
-        insert into notifications (user_id, title, body, type)
-        select distinct t.user_id, ${campaign.title}, ${campaign.body}, 'push'
-        from push_tokens t
-        where t.is_active and t.token = any(${sql`array[${tokens.length ? sql.join(tokens.map((t) => sql`${t}`), sql`, `) : sql`null`}]::text[]`})
-      `)
-
-      // 5. Prune dead tokens.
-      if (result.terminalTokens.length) await deactivateTokens(result.terminalTokens)
-
-      // 6. Record + finalize.
-      await db
-        .update(pushCampaigns)
-        .set({
-          status: "sent",
-          sentCount: result.okCount,
-          failedCount: result.errorCount,
-          skippedOptoutCount: skippedOptOut,
-          sentAt: new Date(),
-        })
-        .where(eq(pushCampaigns.id, campaign.id))
-
-      await writeAudit({
-        actorEmail: ctx.userEmail ?? "unknown",
-        action: "push.campaign.send",
-        target: campaign.id,
-        meta: { sent: result.okCount, failed: result.errorCount, skipped: skippedOptOut },
-      })
-
-      return { sent: result.okCount, failed: result.errorCount, skipped: skippedOptOut }
-    } catch (err) {
-      await db
-        .update(pushCampaigns)
-        .set({ status: "failed", errorMessage: err instanceof Error ? err.message : "send failed" })
-        .where(eq(pushCampaigns.id, campaign.id))
-      throw err instanceof TRPCError ? err : new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "send failed" })
-    }
-  }),
+  /** Deep-link options for the composer dropdown. */
+  deepLinks: protectedProcedure.query(() => DEEP_LINKS),
 })
+
+/** future scheduled_at → 'scheduled'; else 'draft'. Rejects a past date. */
+function deriveStatus(scheduledAtIso: string | null | undefined): "draft" | "scheduled" {
+  if (!scheduledAtIso) return "draft"
+  const when = new Date(scheduledAtIso).getTime()
+  if (Number.isNaN(when)) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid schedule date" })
+  if (when <= Date.now()) throw new TRPCError({ code: "BAD_REQUEST", message: "Scheduled time must be in the future" })
+  return "scheduled"
+}

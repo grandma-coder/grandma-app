@@ -1,9 +1,13 @@
 // Expo Push API shared types. Terminal token errors mean the token is
 // permanently dead and should be deactivated (mirrors Aura's push types).
-
+//
+// NOTE: InvalidCredentials is deliberately EXCLUDED. It signals a project-wide
+// APNs/FCM credentials misconfig (the whole batch fails), NOT a dead device —
+// deactivating on it would wrongly kill every token when creds are simply
+// wrong. Fix the credentials and the same tokens work again. Only these three
+// codes mean "this specific device is gone."
 export const TERMINAL_TOKEN_ERRORS = [
   "DeviceNotRegistered",
-  "InvalidCredentials",
   "InvalidPushToken",
   "MismatchSenderId",
 ] as const

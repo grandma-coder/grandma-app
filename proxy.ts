@@ -7,6 +7,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
  *   - /sign-in        the only auth entry point (no public sign-up — invite/allowlist only)
  *   - /api/health     exposes only a count, no PII; used for uptime probes
  *   - /api/inngest    server-to-server; self-verified via Inngest signing key, no Clerk cookie
+ *   - /api/cron       server-to-server; self-verified via CRON_SECRET bearer, no Clerk cookie
  *
  * Everything else requires a signed-in Clerk user. Role/allowlist enforcement
  * layers on top of this at the tRPC layer (server/trpc.ts) — this gate only
@@ -16,6 +17,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/api/health",
   "/api/inngest(.*)",
+  "/api/cron(.*)",
 ])
 
 export default clerkMiddleware(async (auth, request) => {
