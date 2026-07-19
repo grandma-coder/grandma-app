@@ -32,6 +32,7 @@ import { useProfile } from '../../lib/useProfile'
 import type { CaregiverView } from '../../lib/caregiverPermissions'
 import { useTranslation } from '../../lib/i18n'
 import { HomeGreeting } from './HomeGreeting'
+import { CaregiverIdentityHeader } from '../caregiver/CaregiverIdentityHeader'
 import { MonoCaps } from '../ui/Typography'
 import { supabase } from '../../lib/supabase'
 import { pregnancyWeeks, getDaysToGo, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
@@ -332,12 +333,17 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: bottomInset }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Greeting */}
+      {/* Greeting — a caregiver sees a scoped identity header ("Caring for …" +
+          role badge + caregiver child switcher) instead of the owner greeting. */}
       <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
-        <HomeGreeting
-          name={displayName}
-          microLabel={t('pregnancy_weekDay', { week: weekNumber, weekday: weekdayLabel })}
-        />
+        {caregiverView ? (
+          <CaregiverIdentityHeader />
+        ) : (
+          <HomeGreeting
+            name={displayName}
+            microLabel={t('pregnancy_weekDay', { week: weekNumber, weekday: weekdayLabel })}
+          />
+        )}
       </View>
 
       {/* 0. Essentials — pinned above everything for a caregiver. */}
