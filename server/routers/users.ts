@@ -124,7 +124,7 @@ export const usersRouter = router({
         (select count(*) from channel_posts x where x.author_id = p.id)::int as posts_count,
         (select count(*) from post_comments x where x.author_id = p.id)::int as comments_count,
         (select count(*) from notifications n where n.user_id = p.id)::int as notifications_count,
-        (select count(*) from notifications n where n.user_id = p.id and n.read = false)::int as notifications_unread,
+        (select count(*) from notifications n where n.user_id = p.id and n.is_read = false)::int as notifications_unread,
         (select count(*) from care_circle cc where cc.owner_id = p.id and cc.status = 'accepted')::int as caregivers_count,
         (select count(*) from care_circle cc where cc.member_user_id = p.id and cc.status = 'accepted')::int as caregiver_for_count,
         (select count(*) from activity a where a.user_id = p.id and a.created_at >= now() - interval '7 days')::int as logs_7d,
