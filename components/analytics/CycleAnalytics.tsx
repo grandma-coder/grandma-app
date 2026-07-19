@@ -346,7 +346,7 @@ export function CycleAnalytics() {
         )}
       </ScrollView>
 
-      <CycleDetailSheet type={detailType} onClose={() => setDetailType(null)} />
+      <CycleDetailSheet type={detailType} accent={accent} onClose={() => setDetailType(null)} />
     </View>
   )
 }
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
   // Recent
   recentCard: {
     marginHorizontal: 20,
-    marginTop: 16,
+    marginTop: 24,
     borderRadius: radius.lg,
     paddingVertical: 18,
     paddingHorizontal: 20,
