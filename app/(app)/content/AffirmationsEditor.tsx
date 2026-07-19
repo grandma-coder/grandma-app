@@ -1,15 +1,31 @@
 "use client"
 import { useState } from "react"
 import { trpc, type RouterOutputs } from "@/lib/trpc"
+import { CollapsibleSection } from "./CollapsibleSection"
 
 type Affirmation = RouterOutputs["content"]["affirmations"][number]
+
+// Category → behavior-style accent dot (affirmations group by category, which
+// maps to a journey behavior). Unknown categories fall back to the general green.
+const CATEGORY_DOT: Record<string, string> = {
+  "pre-pregnancy": "#E58BB4",
+  cycle: "#E58BB4",
+  pregnancy: "#B7A6E8",
+  kids: "#8BB8E8",
+}
+function dotFor(category: string): string {
+  return CATEGORY_DOT[category] ?? "#BDD48C"
+}
+function labelFor(category: string): string {
+  return category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, " ")
+}
 
 function EditModal({
   a,
   onClose,
   onSaved,
 }: {
-  a: Affirmation | { new: true }
+  a: Affirmation | { new: true; category?: string }
   onClose: () => void
   onSaved: () => void
 }) {
@@ -24,7 +40,7 @@ function EditModal({
   })
 
   const [text, setText] = useState(isNew ? "" : (a as Affirmation).text)
-  const [category, setCategory] = useState(isNew ? "pregnancy" : (a as Affirmation).category)
+  const [category, setCategory] = useState(isNew ? (a as { category?: string }).category ?? "pregnancy" : (a as Affirmation).category)
   const [weekMin, setWeekMin] = useState(isNew ? "" : String((a as Affirmation).weekMin ?? ""))
   const [weekMax, setWeekMax] = useState(isNew ? "" : String((a as Affirmation).weekMax ?? ""))
   const [error, setError] = useState<string | null>(null)
@@ -89,58 +105,80 @@ function EditModal({
 export function AffirmationsEditor({ isAdmin }: { isAdmin: boolean }) {
   const utils = trpc.useUtils()
   const [search, setSearch] = useState("")
-  const [category, setCategory] = useState("")
-  const list = trpc.content.affirmations.useQuery({ search: search.trim() || undefined, category: category || undefined })
+  const list = trpc.content.affirmations.useQuery({ search: search.trim() || undefined })
   const categories = trpc.content.affirmationCategories.useQuery()
   const del = trpc.content.deleteAffirmation.useMutation({ onSuccess: () => utils.content.affirmations.invalidate() })
 
-  const [editing, setEditing] = useState<Affirmation | { new: true } | null>(null)
+  const [editing, setEditing] = useState<Affirmation | { new: true; category?: string } | null>(null)
   const rows = list.data ?? []
 
+  // Group by category (behavior-style), ordered by the known category list then
+  // any extras. Search filters within groups; empty groups drop out.
+  const known = ["pre-pregnancy", "cycle", "pregnancy", "kids"]
+  const present = Array.from(new Set([...(categories.data ?? []), ...rows.map((r) => r.category)]))
+  const ordered = [...known.filter((k) => present.includes(k)), ...present.filter((c) => !known.includes(c)).sort()]
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <p className="text-sm text-fg-tertiary">
-        The daily affirmations shown in the app. This table is read live by the app, so edits appear instantly —
-        no app update needed.
+        The daily affirmations shown in the app, grouped by category. This table is read live by the app, so edits
+        appear instantly — no app update needed.
       </p>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search affirmations…"
-          className="min-w-[200px] flex-1 rounded-lg border border-border-default bg-card px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none" />
-        <select value={category} onChange={(e) => setCategory(e.target.value)}
-          className="rounded-lg border border-border-default bg-card px-3 py-2 text-sm text-fg-secondary focus:border-accent-400 focus:outline-none">
-          <option value="">All categories</option>
-          {(categories.data ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        {isAdmin && (
-          <button onClick={() => setEditing({ new: true })} className="rounded-lg bg-accent-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-600">
-            + New affirmation
-          </button>
-        )}
-      </div>
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search affirmations…"
+        className="w-full rounded-lg border border-border-default bg-card px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none" />
 
-      <p className="text-xs text-fg-muted">{list.isLoading ? "Loading…" : `${rows.length} affirmation${rows.length === 1 ? "" : "s"}`}</p>
-
-      <div className="space-y-2">
-        {rows.map((a) => (
-          <div key={a.id} className="flex items-start justify-between gap-4 rounded-xl border border-border-default bg-card px-4 py-3 shadow-[var(--shadow-sm)]">
-            <div className="min-w-0">
-              <p className="text-sm text-fg-primary">{a.text}</p>
-              <p className="mt-0.5 text-xs text-fg-muted">
-                {a.category}
-                {a.weekMin || a.weekMax ? ` · weeks ${a.weekMin ?? "?"}–${a.weekMax ?? "?"}` : ""}
-              </p>
-            </div>
-            {isAdmin && (
-              <div className="flex shrink-0 items-center gap-3">
-                <button onClick={() => setEditing(a)} className="text-xs font-medium text-accent-500 hover:underline">Edit</button>
-                <button onClick={() => { if (window.confirm("Delete this affirmation?")) del.mutate({ id: a.id }) }}
-                  className="text-xs font-medium text-fg-tertiary hover:text-[var(--pill-danger-fg)]">Delete</button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      {list.isLoading ? (
+        <p className="text-sm text-fg-tertiary">Loading…</p>
+      ) : (
+        ordered.map((cat) => {
+          const items = rows.filter((r) => r.category === cat)
+          if (items.length === 0 && !search) {
+            // still render empty known groups so admins can add into them
+            if (!known.includes(cat)) return null
+          }
+          return (
+            <CollapsibleSection
+              key={cat}
+              dot={dotFor(cat)}
+              title={labelFor(cat)}
+              meta={`${items.length} affirmation${items.length === 1 ? "" : "s"}`}
+              collapsedSummary={`${items.length}`}
+              action={
+                isAdmin ? (
+                  <button onClick={() => setEditing({ new: true, category: cat })} className="rounded-lg bg-accent-500 px-3 py-1 text-xs font-medium text-white hover:bg-accent-600">
+                    + Add
+                  </button>
+                ) : undefined
+              }
+            >
+              {items.length === 0 ? (
+                <p className="rounded-xl border border-border-subtle bg-deep px-4 py-3 text-sm text-fg-muted">No affirmations in this category yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {items.map((a) => (
+                    <div key={a.id} className="flex items-start justify-between gap-4 rounded-xl border border-border-default bg-card px-4 py-3 shadow-[var(--shadow-sm)]">
+                      <div className="min-w-0">
+                        <p className="text-sm text-fg-primary">{a.text}</p>
+                        {(a.weekMin || a.weekMax) && (
+                          <p className="mt-0.5 text-xs text-fg-muted">weeks {a.weekMin ?? "?"}–{a.weekMax ?? "?"}</p>
+                        )}
+                      </div>
+                      {isAdmin && (
+                        <div className="flex shrink-0 items-center gap-3">
+                          <button onClick={() => setEditing(a)} className="text-xs font-medium text-accent-500 hover:underline">Edit</button>
+                          <button onClick={() => { if (window.confirm("Delete this affirmation?")) del.mutate({ id: a.id }) }}
+                            className="text-xs font-medium text-fg-tertiary hover:text-[var(--pill-danger-fg)]">Delete</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CollapsibleSection>
+          )
+        })
+      )}
 
       {isAdmin && editing && <EditModal a={editing} onClose={() => setEditing(null)} onSaved={() => setEditing(null)} />}
     </div>

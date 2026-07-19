@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { trpc, type RouterOutputs } from "@/lib/trpc"
+import { CollapsibleSection } from "./CollapsibleSection"
 
 type Question = RouterOutputs["content"]["dailyQuestions"][number]
 type Option = { label: string; tags: string[] }
@@ -146,18 +147,20 @@ export function DailyQuestionsEditor({ isAdmin }: { isAdmin: boolean }) {
         MODES.map((m) => {
           const qs = rows.filter((r) => r.mode === m.key)
           return (
-            <section key={m.key}>
-              <div className="mb-2 flex items-center gap-2">
-                <span className="inline-block size-2.5 rounded-full" style={{ background: m.dot }} />
-                <h2 className="display text-base font-semibold text-fg-primary">{m.label}</h2>
-                <span className="text-xs text-fg-muted">{qs.filter((q) => q.active).length}/{qs.length} active</span>
-                {isAdmin && (
-                  <button onClick={() => setEditing({ new: true, mode: m.key })} className="ml-auto rounded-lg bg-accent-500 px-3 py-1 text-xs font-medium text-white hover:bg-accent-600">
+            <CollapsibleSection
+              key={m.key}
+              dot={m.dot}
+              title={m.label}
+              meta={`${qs.filter((q) => q.active).length}/${qs.length} active`}
+              collapsedSummary={`${qs.length} questions`}
+              action={
+                isAdmin ? (
+                  <button onClick={() => setEditing({ new: true, mode: m.key })} className="rounded-lg bg-accent-500 px-3 py-1 text-xs font-medium text-white hover:bg-accent-600">
                     + Add
                   </button>
-                )}
-              </div>
-
+                ) : undefined
+              }
+            >
               {qs.length === 0 ? (
                 <p className="rounded-xl border border-border-subtle bg-deep px-4 py-3 text-sm text-fg-muted">No questions for this mode yet.</p>
               ) : (
@@ -195,7 +198,7 @@ export function DailyQuestionsEditor({ isAdmin }: { isAdmin: boolean }) {
                   </table>
                 </div>
               )}
-            </section>
+            </CollapsibleSection>
           )
         })
       )}
