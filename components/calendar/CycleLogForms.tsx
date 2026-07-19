@@ -25,7 +25,7 @@ import { askGrandmaAboutSymptoms } from '../../lib/symptomAssist'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel, kgToDisplay, displayToKg, weightLabel } from '../../lib/units'
-import { SymptomSticker } from './symptomStickers'
+import { SymptomSticker, CustomSymptomBlob } from './symptomStickers'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../ui/Stickers'
 import { Character, type MoodExpression } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
@@ -496,15 +496,19 @@ export function PeriodEndForm({
 }
 
 // ─── SymptomsForm ──────────────────────────────────────────────────────────
+const KNOWN_SYMPTOM_IDS = new Set<string>(ALL_SYMPTOMS.map((s) => s.id))
+
 export function SymptomsForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
-  const { stickers } = useTheme()
+  const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const toggle = useDayLogToggle(date, 'symptom')
   const [showAll, setShowAll] = useState(false)
+  const [addingCustom, setAddingCustom] = useState(false)
+  const [customText, setCustomText] = useState('')
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   const suggested = useMemo(() => suggestedForPhase(phase), [phase])
@@ -513,6 +517,28 @@ export function SymptomsForm({
     return suggested
   }, [showAll, suggested])
   const hiddenCount = ALL_SYMPTOMS.length - suggested.length
+
+  // Custom (free-text) symptoms already toggled in — anything selected that
+  // isn't one of the 14 known SymptomIds. Rendered as its own chip row so a
+  // committed custom entry shows up just like a built-in one.
+  const customSelected = useMemo(
+    () => [...toggle.selected].filter((v) => !KNOWN_SYMPTOM_IDS.has(v)),
+    [toggle.selected],
+  )
+
+  function addCustomSymptom() {
+    const cleaned = customText.trim().toLowerCase()
+    if (!cleaned) return
+    const alreadyExists =
+      KNOWN_SYMPTOM_IDS.has(cleaned) ||
+      [...toggle.selected].some((v) => v.toLowerCase() === cleaned)
+    if (alreadyExists) {
+      setCustomText('')
+      return
+    }
+    toggle.toggle(cleaned)
+    setCustomText('')
+  }
 
   async function save() {
     try {
@@ -550,6 +576,16 @@ export function SymptomsForm({
             onPress={() => toggle.toggle(id)}
           />
         ))}
+        {customSelected.map((custom) => (
+          <StickerChip
+            key={custom}
+            sticker={<CustomSymptomBlob size={16} />}
+            label={custom}
+            selected
+            accent={accent}
+            onPress={() => toggle.toggle(custom)}
+          />
+        ))}
       </View>
       {!showAll && hiddenCount > 0 ? (
         <Pressable
@@ -570,6 +606,53 @@ export function SymptomsForm({
           </Text>
         </Pressable>
       ) : null}
+
+      {/* "Other" — free-text symptom entry, stored the same as any other id. */}
+      {!addingCustom ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+          <StickerChip
+            sticker={<CustomSymptomBlob size={16} />}
+            label={t('cycleLogForm_symptomOther')}
+            selected={false}
+            accent={accent}
+            onPress={() => setAddingCustom(true)}
+          />
+        </View>
+      ) : (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+          <TextInput
+            value={customText}
+            onChangeText={setCustomText}
+            placeholder={t('cycleLogForm_symptomOtherPlaceholder')}
+            placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textFaint}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={addCustomSymptom}
+            style={[
+              styles.notesInput,
+              { flex: 1, marginTop: 0, paddingVertical: 10 },
+              diffuse
+                ? { backgroundColor: 'transparent', borderBottomWidth: 1.5, borderBottomColor: dt.colors.line2, borderRadius: 0, color: dt.colors.ink, fontFamily: diffuseFont.body, paddingHorizontal: 2 }
+                : { backgroundColor: colors.surfaceRaised, color: colors.text },
+            ]}
+          />
+          <Pressable
+            onPress={addCustomSymptom}
+            style={{
+              paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999,
+              backgroundColor: diffuse ? 'transparent' : accent,
+              borderWidth: diffuse ? 1 : 0,
+              borderColor: diffuse ? dt.colors.hairline : 'transparent',
+            }}
+          >
+            <Text style={diffuse
+              ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }
+              : { color: '#FFFEF8', fontWeight: '700', fontSize: 13 }}>
+              {'✓'}
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Symptom-triggered Grandma — offer to ask about the selected symptoms. */}
       {toggle.selectedCount > 0 ? (

@@ -1459,6 +1459,8 @@ export const es: TranslationKeys = {
   cycleLogForm_clots_small: "Small",
   cycleLogForm_clots_medium: "Medium",
   cycleLogForm_clots_large: "Large",
+  cycleLogForm_symptomOther: "Other",
+  cycleLogForm_symptomOtherPlaceholder: "Add your own…",
   cycleCalendar_logEntry_pregTest: "Pregnancy test",
   cycleCalendar_logEntry_pregTestSub: "Log a home test result",
   cycleCalendar_logEntry_sexDrive: "Sex drive",

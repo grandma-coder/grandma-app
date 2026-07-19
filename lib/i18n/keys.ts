@@ -1596,6 +1596,8 @@ export interface TranslationKeys {
   cycleLogForm_clots_small: string
   cycleLogForm_clots_medium: string
   cycleLogForm_clots_large: string
+  cycleLogForm_symptomOther: string
+  cycleLogForm_symptomOtherPlaceholder: string
   cycleCalendar_logEntry_pregTest: string
   cycleCalendar_logEntry_pregTestSub: string
   cycleCalendar_logEntry_sexDrive: string
