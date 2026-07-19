@@ -1148,3 +1148,53 @@ export async function wipeAllDemoData(): Promise<void> {
     if (clErr) throw new Error(`child_logs delete failed: ${formatSupabaseError(clErr)}`)
   }
 }
+
+// ─── Simulate caregiver ───────────────────────────────────────────────────
+
+import { useChildStore } from '../store/useChildStore'
+import { useCaregiverStore } from '../store/useCaregiverStore'
+import { roleDefaultCards, type CaregiverBehavior } from './caregiverCards'
+import type { CaregiverRole } from '../types'
+
+/** DEV ONLY — flip the active child into a caregiver relationship so the whole
+ * caregiver surface (filtered home, essentials card, decluttered tabs) renders
+ * without a second account. Local UX state only; RLS still governs real reads. */
+export function simulateCaregiver(opts: {
+  behavior: CaregiverBehavior
+  role: CaregiverRole
+  canLog: boolean
+  emergency: boolean
+  chat: boolean
+}): void {
+  const { activeChild, children, setChildren, setActiveChild } = useChildStore.getState()
+  if (!activeChild) return
+  const patched = {
+    ...activeChild,
+    caregiverRole: opts.role,
+    permissions: {
+      view: true,
+      log_activity: opts.canLog,
+      chat: opts.chat,
+      emergency: opts.emergency,
+      _shared_cards: { [opts.behavior]: roleDefaultCards(opts.behavior, opts.role) },
+    },
+  }
+  setChildren(children.map((c) => (c.id === patched.id ? patched : c)))
+  setActiveChild(patched)
+  useCaregiverStore.getState().setAccountRole(opts.role)
+}
+
+/** DEV ONLY — reset the active child back to a parent relationship, undoing
+ * `simulateCaregiver`. */
+export function resetToParentSim(): void {
+  const { activeChild, children, setChildren, setActiveChild } = useChildStore.getState()
+  if (!activeChild) return
+  const patched = {
+    ...activeChild,
+    caregiverRole: 'parent' as CaregiverRole,
+    permissions: { view: true, log_activity: true, chat: true, emergency: true },
+  }
+  setChildren(children.map((c) => (c.id === patched.id ? patched : c)))
+  setActiveChild(patched)
+  useCaregiverStore.getState().setAccountRole('parent')
+}

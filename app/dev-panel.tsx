@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../constants/theme'
 import { supabase } from '../lib/supabase'
 import { signOut } from '../lib/signOut'
-import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedAllData, wipeAllDemoData, repairBehaviorsFromData, backfillCaregiverLinks } from '../lib/devSeed'
+import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedAllData, wipeAllDemoData, repairBehaviorsFromData, backfillCaregiverLinks, simulateCaregiver, resetToParentSim } from '../lib/devSeed'
 import { useModeStore } from '../store/useModeStore'
 import { useThemeStore } from '../store/useThemeStore'
 import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
@@ -235,6 +235,27 @@ export default function DevPanel() {
     })
   }
 
+  async function handleSimulateCaregiver(
+    label: string,
+    opts: { behavior: 'kids' | 'pregnancy' | 'cycle'; role: 'nanny' | 'family'; canLog: boolean; emergency: boolean; chat: boolean }
+  ) {
+    await run(label, async () => {
+      if (!activeChild) return 'No active child — pick one under ACTIVE CHILD first.'
+      simulateCaregiver(opts)
+      router.replace('/(tabs)')
+      return `Now viewing ${activeChild.name} as ${opts.role} (${opts.behavior})`
+    })
+  }
+
+  async function handleResetToParent() {
+    await run('Reset to parent', async () => {
+      if (!activeChild) return 'No active child — pick one under ACTIVE CHILD first.'
+      resetToParentSim()
+      router.replace('/(tabs)')
+      return `${activeChild.name} restored to parent`
+    })
+  }
+
   async function handleWipeAll() {
     Alert.alert(
       'Wipe all demo data?',
@@ -423,6 +444,84 @@ export default function DevPanel() {
               })}
             </>
           )}
+        </Section>
+
+        {/* Simulate caregiver */}
+        <Section title="SIMULATE CAREGIVER">
+          <Body size={11} color={colors.textMuted}>
+            Flips the active child into a caregiver relationship (local UX state
+            only — RLS still governs real reads) so you can walk the whole
+            caregiver surface without a second device.
+          </Body>
+          <ActionRow
+            label="Become Nanny (Kids)"
+            sub="Requires an active child — logger + chat, no emergency card"
+            onPress={() =>
+              handleSimulateCaregiver('Become Nanny (Kids)', {
+                behavior: 'kids',
+                role: 'nanny',
+                canLog: true,
+                emergency: false,
+                chat: true,
+              })
+            }
+            busy={busy}
+          />
+          <ActionRow
+            label="Become Family (Kids, viewer)"
+            sub="Requires an active child — viewer only, no logging/chat"
+            onPress={() =>
+              handleSimulateCaregiver('Become Family (Kids, viewer)', {
+                behavior: 'kids',
+                role: 'family',
+                canLog: false,
+                emergency: false,
+                chat: false,
+              })
+            }
+            busy={busy}
+          />
+          <ActionRow
+            label="Become Pregnancy watcher"
+            sub="Requires an active child — viewer only, no logging/chat"
+            onPress={() =>
+              handleSimulateCaregiver('Become Pregnancy watcher', {
+                behavior: 'pregnancy',
+                role: 'family',
+                canLog: false,
+                emergency: false,
+                chat: false,
+              })
+            }
+            busy={busy}
+          />
+          <ActionRow
+            label="Become Cycle watcher"
+            sub="Requires an active child — viewer only, ring + essentials, no intimate signals"
+            onPress={() =>
+              handleSimulateCaregiver('Become Cycle watcher', {
+                behavior: 'cycle',
+                role: 'family',
+                canLog: false,
+                emergency: false,
+                chat: false,
+              })
+            }
+            busy={busy}
+          />
+          <ActionRow
+            label="Edit shared cards"
+            sub="Requires an active child — care-circle sharing UI"
+            onPress={() => navTo('/profile/care-circle')}
+            busy={busy}
+          />
+          <ActionRow
+            label="Reset to parent"
+            sub="Requires an active child — undoes the simulation above"
+            onPress={handleResetToParent}
+            busy={busy}
+            destructive
+          />
         </Section>
 
         {/* Seeds */}
