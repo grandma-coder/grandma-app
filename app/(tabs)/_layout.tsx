@@ -23,8 +23,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useChildStore } from '../../store/useChildStore'
+import { useCaregiverStore } from '../../store/useCaregiverStore'
 import { useProfile } from '../../lib/useProfile'
-import { getModeConfig } from '../../lib/modeConfig'
+import { getModeConfig, getCaregiverTabVisibility } from '../../lib/modeConfig'
+import { isCaregiver } from '../../lib/caregiverPermissions'
 import { useTheme, brand, getModeColor, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
@@ -833,6 +836,11 @@ export default function TabLayout() {
   const mode = useModeStore((s) => s.mode)
   const currentBehavior = useBehaviorStore((s) => s.currentBehavior)
   const config = getModeConfig(mode)
+  const activeChild = useChildStore((s) => s.activeChild)
+  const caregiverHydrated = useCaregiverStore((s) => s.hydrated)
+  const cg = isCaregiver(activeChild) && caregiverHydrated && activeChild
+    ? getCaregiverTabVisibility(activeChild.permissions)
+    : null
 
   // Fade transition on behavior switch
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -854,14 +862,29 @@ export default function TabLayout() {
         screenOptions={{ headerShown: false }}
         tabBar={(props) => <CollageStripTabBar {...props} />}
       >
-        <Tabs.Screen name="index" options={{ title: '' }} />
-        <Tabs.Screen name="agenda" options={{ title: '' }} />
-        <Tabs.Screen name="library" options={{ title: '' }} />
+        <Tabs.Screen
+          name="index"
+          options={{ title: '', href: cg ? (cg.index ? undefined : null) : undefined }}
+        />
+        <Tabs.Screen
+          name="agenda"
+          options={{ title: '', href: cg ? (cg.agenda ? undefined : null) : undefined }}
+        />
+        <Tabs.Screen
+          name="library"
+          options={{ title: '', href: cg ? (cg.library ? undefined : null) : undefined }}
+        />
         <Tabs.Screen
           name="vault"
-          options={{ title: '', href: config.tabs.vault.visible ? undefined : null }}
+          options={{
+            title: '',
+            href: cg ? (cg.vault ? undefined : null) : (config.tabs.vault.visible ? undefined : null),
+          }}
         />
-        <Tabs.Screen name="settings" options={{ title: '' }} />
+        <Tabs.Screen
+          name="settings"
+          options={{ title: '', href: cg ? (cg.settings ? undefined : null) : undefined }}
+        />
       </Tabs>
     </Animated.View>
   )

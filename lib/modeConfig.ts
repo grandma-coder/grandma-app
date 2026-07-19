@@ -1,4 +1,4 @@
-import type { JourneyMode, Pillar } from '../types'
+import type { CaregiverPermissions, JourneyMode, Pillar } from '../types'
 import { pillars as kidsPillars } from './pillars'
 import { pregnancyPillars } from './pregnancyPillars'
 import { prePregPillars } from './prePregPillars'
@@ -121,4 +121,21 @@ const MODE_CONFIGS: Record<JourneyMode, ModeConfig> = {
 
 export function getModeConfig(mode: JourneyMode): ModeConfig {
   return MODE_CONFIGS[mode]
+}
+
+/**
+ * Per-route tab visibility for a caregiver, applied on top of the existing
+ * 5-route tab bar via each route's `href` (href:null hides a tab). Caregivers
+ * get a decluttered bar: Home + You always; the calendar only if they can log;
+ * education (library) and analytics (vault) are hidden. Grandma + the essentials
+ * Card are home affordances, not tabs. UX-only; RLS is the boundary.
+ */
+export function getCaregiverTabVisibility(permissions: CaregiverPermissions) {
+  return {
+    index: true,
+    agenda: permissions.log_activity === true,
+    library: false,
+    vault: false,
+    settings: true,
+  }
 }
