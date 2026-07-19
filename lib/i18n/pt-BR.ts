@@ -1740,6 +1740,7 @@ export const ptBR: TranslationKeys = {
   cycleDetail_chip_thermal: "THERMAL",
   cycleDetail_chip_signs: "SIGNS",
   cycleDetail_chip_timing: "TIMING",
+  cycleDetail_emptyCta_gotIt: "Got it",
   cycleSignals_title: "SINAIS DE FERTILIDADE",
   cycleSignals_startTracking: "Começar a rastrear",
   cycleSignals_peakToday: "Pico hoje",

@@ -1740,6 +1740,7 @@ export const zh: TranslationKeys = {
   cycleDetail_chip_thermal: "THERMAL",
   cycleDetail_chip_signs: "SIGNS",
   cycleDetail_chip_timing: "TIMING",
+  cycleDetail_emptyCta_gotIt: "Got it",
   cycleSignals_title: "FERTILITY SIGNALS",
   cycleSignals_startTracking: "Start tracking",
   cycleSignals_peakToday: "Peak today",

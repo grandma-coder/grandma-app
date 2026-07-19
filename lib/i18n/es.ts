@@ -1740,6 +1740,7 @@ export const es: TranslationKeys = {
   cycleDetail_chip_thermal: "THERMAL",
   cycleDetail_chip_signs: "SIGNS",
   cycleDetail_chip_timing: "TIMING",
+  cycleDetail_emptyCta_gotIt: "Got it",
   cycleSignals_title: "SEÑALES DE FERTILIDAD",
   cycleSignals_startTracking: "Comienza a registrar",
   cycleSignals_peakToday: "Pico hoy",

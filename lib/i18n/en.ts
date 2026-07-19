@@ -1896,6 +1896,7 @@ export const en: TranslationKeys = {
   cycleDetail_chip_thermal: 'THERMAL',
   cycleDetail_chip_signs: 'SIGNS',
   cycleDetail_chip_timing: 'TIMING',
+  cycleDetail_emptyCta_gotIt: 'Got it',
 
   // ─── Fertility Signals Card (Wave B4) ─────────────────────────────────────
   cycleSignals_title: 'FERTILITY SIGNALS',

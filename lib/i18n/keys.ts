@@ -1903,6 +1903,7 @@ export interface TranslationKeys {
   cycleDetail_chip_thermal: string
   cycleDetail_chip_signs: string
   cycleDetail_chip_timing: string
+  cycleDetail_emptyCta_gotIt: string
 
   // ─── Fertility Signals Card (Wave B4) ─────────────────────────────────────
   cycleSignals_title: string

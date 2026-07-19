@@ -11,7 +11,7 @@ import Svg, { Rect, Line as SvgLine, Text as SvgText } from 'react-native-svg'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { LogSheet } from '../calendar/LogSheet'
-import { DiffuseSheet, DiffuseMetricTile } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseSheet, DiffuseMetricTile, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, useBBTStats, useCervicalMucusStats, useIntercourseStats, type MoodId, type MucusType } from '../../lib/cycleAnalytics'
 import type { CyclePhase } from '../../lib/cycleLogic'
@@ -50,6 +50,19 @@ function usePhaseAccent(): string {
   const ctx = useContext(AccentContext)
   const dt = useDiffuseTheme()
   return ctx ?? getDiffuseAccent('pre-pregnancy', dt.isDark)
+}
+
+// ─── Sheet-close context ───────────────────────────────────────────────────
+// Lets a detail body's empty state offer an honest "Got it" CTA that closes
+// the sheet, without prop-drilling `onClose` through every body component.
+// There's no lightweight route to open a log form from inside the sheet
+// (that needs LogSheet+CycleLogForms machinery — sheet-on-sheet, out of
+// scope), so the CTA simply dismisses back to the analytics grid.
+const SheetCloseContext = createContext<(() => void) | null>(null)
+
+function useSheetClose(): () => void {
+  const ctx = useContext(SheetCloseContext)
+  return ctx ?? (() => {})
 }
 
 export function CycleDetailSheet({ type, accent, onClose }: Props) {
@@ -98,7 +111,9 @@ export function CycleDetailSheet({ type, accent, onClose }: Props) {
     return (
       <DiffuseSheet visible={visible} title={title} chip={type ? CHIPS[type] : undefined} onClose={onClose}>
         <AccentContext.Provider value={accent ?? null}>
-          {bodySwitch}
+          <SheetCloseContext.Provider value={onClose}>
+            {bodySwitch}
+          </SheetCloseContext.Provider>
         </AccentContext.Provider>
       </DiffuseSheet>
     )
@@ -106,13 +121,15 @@ export function CycleDetailSheet({ type, accent, onClose }: Props) {
 
   return (
     <LogSheet visible={visible} title={title} onClose={onClose}>
-      <ScrollView
-        style={{ maxHeight: 540 }}
-        contentContainerStyle={styles.body}
-        showsVerticalScrollIndicator={false}
-      >
-        {bodySwitch}
-      </ScrollView>
+      <SheetCloseContext.Provider value={onClose}>
+        <ScrollView
+          style={{ maxHeight: 540 }}
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+        >
+          {bodySwitch}
+        </ScrollView>
+      </SheetCloseContext.Provider>
     </LogSheet>
   )
 }
@@ -125,12 +142,24 @@ function CycleLengthDetail() {
   const dt = useDiffuseTheme()
   const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
+  const closeSheet = useSheetClose()
   const { data, isLoading, error } = useCycleHistory()
 
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.avg === null || data.cycles.length === 0) {
-    return <EmptyState copy="Log your first period to start tracking cycle length." />
+    const copy = 'Log your first period to start tracking cycle length.'
+    return diffuse ? (
+      <DiffuseEmptyState
+        icon={<Character name="sparkle" size={40} color={stickers.pink} />}
+        title={t('cycleDetail_titleCycleLength')}
+        message={copy}
+        ctaLabel={t('cycleDetail_emptyCta_gotIt')}
+        onCta={closeSheet}
+      />
+    ) : (
+      <EmptyState copy={copy} />
+    )
   }
 
   const last12 = data.cycles
@@ -340,12 +369,24 @@ function RegularityDetail() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const closeSheet = useSheetClose()
   const { data, isLoading, error } = useRegularity()
 
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.percent === null) {
-    return <EmptyState copy="We need at least 3 complete cycles to measure regularity." />
+    const copy = 'We need at least 3 complete cycles to measure regularity.'
+    return diffuse ? (
+      <DiffuseEmptyState
+        icon={<Character name="period" size={40} color={stickers.lilac} />}
+        title={t('cycleDetail_titleRegularity')}
+        message={copy}
+        ctaLabel={t('cycleDetail_emptyCta_gotIt')}
+        onCta={closeSheet}
+      />
+    ) : (
+      <EmptyState copy={copy} />
+    )
   }
 
   return (
@@ -448,12 +489,24 @@ function PMSDetail() {
   const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
   const phaseWord = usePhaseWord()
+  const closeSheet = useSheetClose()
   const { data, isLoading, error } = usePMSStats()
 
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || (data.avgDays === null && data.topSymptoms.length === 0)) {
-    return <EmptyState copy="Log symptoms on the Agenda tab to start tracking PMS trends." />
+    const copy = 'Log symptoms on the Agenda tab to start tracking PMS trends.'
+    return diffuse ? (
+      <DiffuseEmptyState
+        icon={<Character name="activity" size={40} color={stickers.coral} />}
+        title={t('cycleDetail_titlePMS')}
+        message={copy}
+        ctaLabel={t('cycleDetail_emptyCta_gotIt')}
+        onCta={closeSheet}
+      />
+    ) : (
+      <EmptyState copy={copy} />
+    )
   }
 
   const maxCount = data.topSymptoms[0]?.count ?? 1
@@ -643,12 +696,24 @@ function FertileDetail() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const closeSheet = useSheetClose()
   const { data, isLoading, error } = useFertileWindow()
 
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || !data.current) {
-    return <EmptyState copy="Log your last period to see your fertile window predictions." />
+    const copy = 'Log your last period to see your fertile window predictions.'
+    return diffuse ? (
+      <DiffuseEmptyState
+        icon={<Character name="ovulation" size={40} color={stickers.pink} />}
+        title={t('cycleDetail_titleFertile')}
+        message={copy}
+        ctaLabel={t('cycleDetail_emptyCta_gotIt')}
+        onCta={closeSheet}
+      />
+    ) : (
+      <EmptyState copy={copy} />
+    )
   }
 
   const daysLeft = data.current.daysLeft
@@ -732,12 +797,24 @@ function MoodDetail() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const closeSheet = useSheetClose()
   const { data, isLoading, error } = useMoodStats()
 
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.avgScore === null) {
-    return <EmptyState copy="Log your mood on the Agenda tab to see mood trends." />
+    const copy = 'Log your mood on the Agenda tab to see mood trends.'
+    return diffuse ? (
+      <DiffuseEmptyState
+        icon={<Character name="mood" size={40} color={stickers.coral} />}
+        title={t('cycleDetail_titleMood')}
+        message={copy}
+        ctaLabel={t('cycleDetail_emptyCta_gotIt')}
+        onCta={closeSheet}
+      />
+    ) : (
+      <EmptyState copy={copy} />
+    )
   }
 
   const maxCount = Math.max(1, ...data.distribution.map((d) => d.count))
@@ -824,6 +901,7 @@ function BBTDetail() {
   const dt = useDiffuseTheme()
   const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
+  const closeSheet = useSheetClose()
   const { data, isLoading, error } = useBBTStats()
   // BBT stored canonical °C; convert for display (B4).
   const tempUnit = useUnitsStore((s) => s.tempUnit)
@@ -833,7 +911,17 @@ function BBTDetail() {
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.series.length < 2) {
-    return <EmptyState copy={t('cycleDetail_bbtEmpty')} />
+    return diffuse ? (
+      <DiffuseEmptyState
+        icon={<Character name="temperature" size={40} color={stickers.blue} />}
+        title={t('cycleDetail_titleBBT')}
+        message={t('cycleDetail_bbtEmpty')}
+        ctaLabel={t('cycleDetail_emptyCta_gotIt')}
+        onCta={closeSheet}
+      />
+    ) : (
+      <EmptyState copy={t('cycleDetail_bbtEmpty')} />
+    )
   }
 
   const temps = data.series.map((s) => tempU(s.temp))
@@ -889,12 +977,23 @@ function MucusDetail() {
   const dt = useDiffuseTheme()
   const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
+  const closeSheet = useSheetClose()
   const { data, isLoading, error } = useCervicalMucusStats()
 
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.series.length === 0) {
-    return <EmptyState copy={t('cycleDetail_mucusEmpty')} />
+    return diffuse ? (
+      <DiffuseEmptyState
+        icon={<Character name="water" size={40} color={stickers.green} />}
+        title={t('cycleDetail_titleMucus')}
+        message={t('cycleDetail_mucusEmpty')}
+        ctaLabel={t('cycleDetail_emptyCta_gotIt')}
+        onCta={closeSheet}
+      />
+    ) : (
+      <EmptyState copy={t('cycleDetail_mucusEmpty')} />
+    )
   }
 
   const fertileHue = diffuse ? phaseAccent : stickers.pink
@@ -942,12 +1041,23 @@ function IntercourseDetail() {
   const dt = useDiffuseTheme()
   const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
+  const closeSheet = useSheetClose()
   const { data, isLoading, error } = useIntercourseStats()
 
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.thisCycleCount === 0) {
-    return <EmptyState copy={t('cycleDetail_intercourseEmpty')} />
+    return diffuse ? (
+      <DiffuseEmptyState
+        icon={<Character name="heart" size={40} color={stickers.pink} />}
+        title={t('cycleDetail_titleIntercourse')}
+        message={t('cycleDetail_intercourseEmpty')}
+        ctaLabel={t('cycleDetail_emptyCta_gotIt')}
+        onCta={closeSheet}
+      />
+    ) : (
+      <EmptyState copy={t('cycleDetail_intercourseEmpty')} />
+    )
   }
 
   return (
