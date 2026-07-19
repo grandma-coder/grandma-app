@@ -43,6 +43,17 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
   const [editing, setEditing] = useState<string | null>(null)
   const [draftTitle, setDraftTitle] = useState("")
   const [draftBody, setDraftBody] = useState("")
+  // Sections are expanded by default; a set holds the collapsed ones.
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  function toggle(key: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
   const rows = list.data ?? []
 
@@ -54,12 +65,20 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-fg-tertiary">
-        Push copy sent automatically for each event, grouped by behavior. Use{" "}
-        <span className="font-mono text-xs">{"{{variable}}"}</span> placeholders — filled in when the notification is
-        sent. <span className="pill pill-success align-middle">live</span> = the app fires this today;{" "}
-        <span className="pill align-middle">planned</span> = ready to edit, not wired in the app yet.
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-sm text-fg-tertiary">
+          Push copy sent automatically for each event, grouped by behavior. Use{" "}
+          <span className="font-mono text-xs">{"{{variable}}"}</span> placeholders — filled in when the notification is
+          sent. <span className="pill pill-success align-middle">live</span> = the app fires this today;{" "}
+          <span className="pill align-middle">planned</span> = ready to edit, not wired in the app yet.
+        </p>
+        <button
+          onClick={() => setCollapsed((prev) => (prev.size ? new Set() : new Set(SECTIONS.map((s) => s.key))))}
+          className="shrink-0 rounded-lg border border-border-default px-3 py-1.5 text-xs font-medium text-fg-tertiary hover:text-fg-primary"
+        >
+          {collapsed.size ? "Expand all" : "Collapse all"}
+        </button>
+      </div>
 
       {list.isLoading ? (
         <p className="text-sm text-fg-tertiary">Loading…</p>
@@ -68,17 +87,39 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
           const sectionRows = rows.filter((r) => r.behavior === section.key)
           if (sectionRows.length === 0) return null
           const liveCount = sectionRows.filter((r) => r.status === "live").length
+          const isCollapsed = collapsed.has(section.key)
 
           return (
             <section key={section.key}>
-              <div className="mb-2 flex items-center gap-2">
+              <button
+                onClick={() => toggle(section.key)}
+                aria-expanded={!isCollapsed}
+                className="group mb-2 flex w-full items-center gap-2 text-left"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  className={`size-3.5 shrink-0 text-fg-muted transition-transform ${isCollapsed ? "-rotate-90" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 6l4 4 4-4" />
+                </svg>
                 <span className="inline-block size-2.5 rounded-full" style={{ background: section.dot }} />
-                <h2 className="display text-base font-semibold text-fg-primary">{section.label}</h2>
+                <h2 className="display text-base font-semibold text-fg-primary group-hover:text-accent-500">
+                  {section.label}
+                </h2>
                 <span className="text-xs text-fg-muted">
                   {section.blurb} · {liveCount}/{sectionRows.length} live
                 </span>
-              </div>
+                {isCollapsed && (
+                  <span className="ml-auto text-xs text-fg-muted">{sectionRows.length} templates</span>
+                )}
+              </button>
 
+              {!isCollapsed && (
               <div className="overflow-x-auto rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
                 <table className="w-full text-sm">
                   <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
@@ -178,6 +219,7 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
                   </tbody>
                 </table>
               </div>
+              )}
             </section>
           )
         })
