@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { eq, asc } from "drizzle-orm"
+import { eq, asc, sql } from "drizzle-orm"
 import { TRPCError } from "@trpc/server"
 import { router, protectedProcedure, adminProcedure } from "../trpc"
 import { db } from "@/db"
@@ -15,7 +15,12 @@ import { writeAudit } from "@/lib/audit"
  */
 export const notificationTemplatesRouter = router({
   list: protectedProcedure.query(async () => {
-    return db.select().from(notificationTemplates).orderBy(asc(notificationTemplates.type))
+    // live before planned within each behavior, then alphabetical by type — the
+    // client groups by behavior and this keeps the most-real rows on top.
+    return db
+      .select()
+      .from(notificationTemplates)
+      .orderBy(sql`case status when 'live' then 0 else 1 end`, asc(notificationTemplates.type))
   }),
 
   update: adminProcedure

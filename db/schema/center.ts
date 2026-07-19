@@ -53,6 +53,8 @@ export const notificationTemplates = pgTable("notification_templates", {
   bodyTemplate: text("body_template").notNull(),
   description: text("description"),
   variables: text("variables").array().notNull().default([]),
+  behavior: text("behavior").notNull().default("general"),
+  status: text("status").notNull().default("planned"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   updatedBy: text("updated_by"),
 })
