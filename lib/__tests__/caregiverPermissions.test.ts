@@ -1,4 +1,5 @@
-import { CAPABILITY, hasCapability, isCaregiver } from '../caregiverPermissions'
+import { CAPABILITY, hasCapability, isCaregiver, visibleCards } from '../caregiverPermissions'
+import { CAREGIVER_CARDS } from '../caregiverCards'
 import type { CaregiverPermissions, CaregiverRole, ChildWithRole } from '../../types'
 
 // Minimal ChildWithRole fixture — only the fields the helper reads matter.
@@ -68,5 +69,40 @@ describe('isCaregiver', () => {
 
   it('is false for a null child', () => {
     expect(isCaregiver(null)).toBe(false)
+  })
+})
+
+describe('visibleCards', () => {
+  it('returns every kids card for an owner', () => {
+    const owner = child('parent', {})
+    const set = visibleCards(owner, 'kids')
+    for (const c of CAREGIVER_CARDS.kids) expect(set.has(c.id)).toBe(true)
+  })
+
+  it('uses the explicit _shared_cards allowlist when present', () => {
+    const nanny = child('nanny', {
+      view: true,
+      _shared_cards: { kids: ['hero-tiles', 'essentials'] },
+    })
+    const set = visibleCards(nanny, 'kids')
+    expect(set.has('hero-tiles')).toBe(true)
+    expect(set.has('essentials')).toBe(true)
+    expect(set.has('diaper')).toBe(false)
+  })
+
+  it('falls back to role defaults when _shared_cards is absent', () => {
+    const nanny = child('nanny', { view: true })
+    const set = visibleCards(nanny, 'kids')
+    expect(set.has('diaper')).toBe(true) // nanny default
+    expect(set.has('health')).toBe(false)
+  })
+
+  it('returns an empty set for a paused caregiver', () => {
+    const paused = child('nanny', { view: true, _paused: true, _shared_cards: { kids: ['hero-tiles'] } })
+    expect(visibleCards(paused, 'kids').size).toBe(0)
+  })
+
+  it('returns an empty set for a null child', () => {
+    expect(visibleCards(null, 'kids').size).toBe(0)
   })
 })

@@ -14,6 +14,8 @@
  */
 
 import type { CaregiverCapability, ChildWithRole } from '../types'
+import { roleDefaultCards, type CaregiverBehavior } from './caregiverCards'
+import { CAREGIVER_CARDS } from './caregiverCards'
 
 /** The capability flags an owner can grant/withhold (excludes meta keys). */
 export const CAPABILITY: Record<Uppercase<CaregiverCapability>, CaregiverCapability> = {
@@ -49,4 +51,23 @@ export function hasCapability(
   if (perms._paused === true) return false
 
   return perms[flag] === true
+}
+
+/**
+ * The set of home card ids a caregiver's surface should render for `behavior`.
+ * UX-only (RLS still gates the underlying data). Owner → all; paused → none;
+ * else the explicit `_shared_cards` allowlist, or role defaults when absent.
+ */
+export function visibleCards(
+  child: ChildWithRole | null | undefined,
+  behavior: CaregiverBehavior,
+): Set<string> {
+  if (!child) return new Set()
+  if (child.caregiverRole === 'parent') {
+    return new Set(CAREGIVER_CARDS[behavior].map((c) => c.id))
+  }
+  const perms = child.permissions
+  if (!perms || perms._paused === true) return new Set()
+  const explicit = perms._shared_cards?.[behavior]
+  return new Set(explicit ?? roleDefaultCards(behavior, child.caregiverRole))
 }
