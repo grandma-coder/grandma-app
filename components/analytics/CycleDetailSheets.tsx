@@ -19,6 +19,7 @@ import { cToDisplay, tempLabel } from '../../lib/units'
 import { Burst, Flower } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
 import { MiniBarChart, MiniLineChart, BeadedThread } from './shared/MiniCharts'
+import { MoodBubbleCluster } from '../charts/SvgCharts'
 import { useTranslation } from '../../lib/i18n'
 
 export type CycleDetailType =
@@ -659,7 +660,6 @@ function MoodDetail() {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
   const { data, isLoading, error } = useMoodStats()
 
@@ -682,22 +682,28 @@ function MoodDetail() {
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_distribution')}
         </Text>
-        {data.distribution.map((row) => {
-          const pct = (row.count / maxCount) * 100
-          return (
-            <View key={row.mood} style={moodStyles.row}>
-              <Body size={13} color={diffuse ? dt.colors.ink : colors.text} style={{ width: 80 }}>
-                {MOOD_LABELS[row.mood]}
-              </Body>
-              <View style={[moodStyles.barTrack, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]}>
-                <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: diffuse ? phaseAccent : stickers.pink }]} />
+        {diffuse ? (
+          // Standardized mood viz — the same blob-cluster (labeled circles + %)
+          // used by Pregnancy + Kids mood sheets, via the shared MoodBubbleCluster.
+          <MoodBubbleCluster items={data.distribution} />
+        ) : (
+          data.distribution.map((row) => {
+            const pct = (row.count / maxCount) * 100
+            return (
+              <View key={row.mood} style={moodStyles.row}>
+                <Body size={13} color={colors.text} style={{ width: 80 }}>
+                  {MOOD_LABELS[row.mood]}
+                </Body>
+                <View style={[moodStyles.barTrack, { backgroundColor: colors.borderLight }]}>
+                  <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: stickers.pink }]} />
+                </View>
+                <Body size={13} color={colors.textSecondary} style={{ width: 30, textAlign: 'right' }}>
+                  {row.count}
+                </Body>
               </View>
-              <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={{ width: 30, textAlign: 'right' }}>
-                {row.count}
-              </Body>
-            </View>
-          )
-        })}
+            )
+          })
+        )}
       </View>
 
       {data.recent.length > 0 && (

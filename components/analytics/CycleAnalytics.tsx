@@ -44,7 +44,6 @@ import {
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { CycleDetailSheet, type CycleDetailType } from './CycleDetailSheets'
-import { BeadedThread } from './shared/MiniCharts'
 import { Section } from './shared/Section'
 import { MoodStrip } from './shared/MoodStrip'
 import { cycleMoodToStrip } from '../../lib/moodTrend'
@@ -263,16 +262,21 @@ export function CycleAnalytics() {
             hue={stickerPalette.blue}
             onPress={() => setDetailType('bbt')}
           />
-          <GridTile
-            tint={stickers.greenSoft}
-            sticker={<Drop size={24} fill={stickers.green} />}
-            diffuseIcon={<Character name="water" size={26} color={stickerPalette.green} />}
-            value={mucusLabel}
-            sub={mucusSub}
-            label={t('cycleAnalytics_tileLabel_mucus')}
-            hue={stickerPalette.green}
-            onPress={() => setDetailType('mucus')}
-          />
+          {/* Cervical mucus: cream-only tile. Under Diffuse it's dropped from
+              the surface (niche fertility sub-signal, usually empty) — its data
+              + sheet still exist, just not featured as a top-level tile. */}
+          {!diffuse && (
+            <GridTile
+              tint={stickers.greenSoft}
+              sticker={<Drop size={24} fill={stickers.green} />}
+              diffuseIcon={<Character name="water" size={26} color={stickerPalette.green} />}
+              value={mucusLabel}
+              sub={mucusSub}
+              label={t('cycleAnalytics_tileLabel_mucus')}
+              hue={stickerPalette.green}
+              onPress={() => setDetailType('mucus')}
+            />
+          )}
           <GridTile
             tint={stickers.pinkSoft}
             sticker={<Burst size={24} fill={stickers.coral} points={8} />}
@@ -283,16 +287,21 @@ export function CycleAnalytics() {
             hue={stickerPalette.coral}
             onPress={() => setDetailType('pms')}
           />
-          <GridTile
-            tint={stickers.greenSoft}
-            sticker={<Heart size={22} fill={stickers.pink} />}
-            diffuseIcon={<Character name="mood" size={26} color={stickerPalette.coral} />}
-            value={moodLabel}
-            sub={moodSub}
-            label={t('cycleAnalytics_tileLabel_mood')}
-            hue={stickerPalette.coral}
-            onPress={() => setDetailType('mood')}
-          />
+          {/* Mood: cream-only tile. Under Diffuse mood lives as the inline
+              "Mood This Cycle" section below (matches pregnancy — mood is never
+              a bare tile), which taps into the rich MoodBubbleCluster sheet. */}
+          {!diffuse && (
+            <GridTile
+              tint={stickers.greenSoft}
+              sticker={<Heart size={22} fill={stickers.pink} />}
+              diffuseIcon={<Character name="mood" size={26} color={stickerPalette.coral} />}
+              value={moodLabel}
+              sub={moodSub}
+              label={t('cycleAnalytics_tileLabel_mood')}
+              hue={stickerPalette.coral}
+              onPress={() => setDetailType('mood')}
+            />
+          )}
           {isTTC && (
             <GridTile
               tint={stickers.pinkSoft}
@@ -307,20 +316,10 @@ export function CycleAnalytics() {
           )}
         </View>
 
-        {diffuse && bbt?.series && bbt.series.length >= 2 && (
-          <Section
-            title={t('cycleAnalytics_section_rhythm_title')}
-            subtitle={t('cycleAnalytics_section_rhythm_sub')}
-            onPress={() => setDetailType('bbt')}
-          >
-            <BeadedThread
-              data={bbt.series.map((s) => s.temp)}
-              color={accent}
-              accent={accent}
-            />
-          </Section>
-        )}
-
+        {/* NOTE: the BBT "This Cycle's Rhythm" section was removed under Diffuse —
+            it duplicated the BASAL TEMP tile. BBT's BeadedThread now lives only
+            in the bbt detail sheet (tap the tile). Mood keeps its inline section
+            (mood is section-only under Diffuse, never a tile). */}
         {diffuse && mood?.recent && mood.recent.length > 0 && (
           <Section
             title={t('cycleAnalytics_section_mood_title')}
@@ -331,7 +330,10 @@ export function CycleAnalytics() {
           </Section>
         )}
 
-        <RecentCyclesCard cycles={history?.cycles ?? []} />
+        {/* Recent cycles: cream-only. Under Diffuse the per-cycle history lives
+            in the CYCLE LENGTH + REGULARITY detail sheets (matches pregnancy —
+            no standalone history list on the surface). */}
+        {!diffuse && <RecentCyclesCard cycles={history?.cycles ?? []} />}
 
         {!hasData && (
           <Text style={[styles.seedHint, diffuse ? { color: muted, fontFamily: diffuseFont.body } : { color: colors.textMuted, fontFamily: font.body }]}>
