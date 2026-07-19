@@ -3,13 +3,15 @@ import { useState } from "react"
 import { DailyQuestionsEditor } from "./DailyQuestionsEditor"
 import { AffirmationsEditor } from "./AffirmationsEditor"
 import { BirthGuideEditor } from "./BirthGuideEditor"
+import { SourcesEditor } from "./SourcesEditor"
 
-type Tab = "questions" | "affirmations" | "birth"
+type Tab = "questions" | "affirmations" | "birth" | "sources"
 
 const TABS: { id: Tab; label: string; ready: boolean }[] = [
   { id: "questions", label: "Daily questions", ready: true },
   { id: "affirmations", label: "Affirmations", ready: true },
   { id: "birth", label: "Birth guide", ready: true },
+  { id: "sources", label: "Sources", ready: true },
 ]
 
 export function ContentWorkspace({ isAdmin }: { isAdmin: boolean }) {
@@ -40,6 +42,7 @@ export function ContentWorkspace({ isAdmin }: { isAdmin: boolean }) {
       {tab === "questions" && <DailyQuestionsEditor isAdmin={isAdmin} />}
       {tab === "affirmations" && <AffirmationsEditor isAdmin={isAdmin} />}
       {tab === "birth" && <BirthGuideEditor isAdmin={isAdmin} />}
+      {tab === "sources" && <SourcesEditor isAdmin={isAdmin} />}
     </div>
   )
 }

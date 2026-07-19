@@ -93,6 +93,18 @@ export const contentBirthTopics = pgTable("content_birth_topics", {
   updatedBy: text("updated_by"),
 })
 
+export const contentSources = pgTable("content_sources", {
+  key: text("key").primaryKey(),
+  org: text("org").notNull(),
+  title: text("title").notNull(),
+  url: text("url").notNull(),
+  topic: text("topic"),
+  active: boolean("active").notNull().default(true),
+  sort: integer("sort").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: text("updated_by"),
+})
+
 export const betaTesters = pgTable("beta_testers", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),

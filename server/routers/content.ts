@@ -3,7 +3,7 @@ import { eq, asc, desc, ilike, and } from "drizzle-orm"
 import { TRPCError } from "@trpc/server"
 import { router, protectedProcedure, adminProcedure } from "../trpc"
 import { db } from "@/db"
-import { contentDailyQuestions, affirmations, contentBirthTopics } from "@/db/schema"
+import { contentDailyQuestions, affirmations, contentBirthTopics, contentSources } from "@/db/schema"
 import { writeAudit } from "@/lib/audit"
 
 const sourceSchema = z.object({
@@ -274,4 +274,58 @@ export const contentRouter = router({
       })
       return row
     }),
+
+  // ── Sources catalog — the app's managed medical evidence base ───────────────
+
+  /** All medical sources (ordered by org then sort). Viewer+. */
+  sources: protectedProcedure.query(async () => {
+    return db.select().from(contentSources).orderBy(asc(contentSources.org), asc(contentSources.sort))
+  }),
+
+  /** Create or update one source. key is the app SOURCES key (or a new slug). */
+  upsertSource: adminProcedure
+    .input(
+      z.object({
+        key: z.string().min(1).max(60),
+        org: z.string().min(1).max(120),
+        title: z.string().min(1).max(300),
+        url: z.string().url().max(600),
+        topic: z.string().max(40).nullable().optional(),
+        active: z.boolean().default(true),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .insert(contentSources)
+        .values({
+          key: input.key.trim(),
+          org: input.org.trim(),
+          title: input.title.trim(),
+          url: input.url.trim(),
+          topic: input.topic?.trim() || null,
+          active: input.active,
+          updatedBy: ctx.userEmail ?? "unknown",
+        })
+        .onConflictDoUpdate({
+          target: contentSources.key,
+          set: {
+            org: input.org.trim(),
+            title: input.title.trim(),
+            url: input.url.trim(),
+            topic: input.topic?.trim() || null,
+            active: input.active,
+            updatedAt: new Date(),
+            updatedBy: ctx.userEmail ?? "unknown",
+          },
+        })
+        .returning()
+      await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "content.source.upsert", target: input.key })
+      return row
+    }),
+
+  deleteSource: adminProcedure.input(z.object({ key: z.string() })).mutation(async ({ ctx, input }) => {
+    await db.delete(contentSources).where(eq(contentSources.key, input.key))
+    await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "content.source.delete", target: input.key })
+    return { ok: true }
+  }),
 })
