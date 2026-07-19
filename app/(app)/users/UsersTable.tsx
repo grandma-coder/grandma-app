@@ -6,6 +6,12 @@ import { trpc } from "@/lib/trpc"
 const MODES = ["", "pre_pregnancy", "pregnancy", "kids"] as const
 const TIERS = ["", "free", "premium_solo", "premium_family"] as const
 
+const MODE_DOT: Record<string, string> = { pre_pregnancy: "#E58BB4", pregnancy: "#B7A6E8", kids: "#8BB8E8" }
+const MODE_LABEL: Record<string, string> = { pre_pregnancy: "pre-preg", pregnancy: "pregnancy", kids: "kids" }
+function normalizeMode(m: string): string {
+  return m === "cycle" || m === "pre-pregnancy" ? "pre_pregnancy" : m
+}
+
 function maskEmail(email: string | null): string {
   if (!email) return "—"
   const [user, domain] = email.split("@")
@@ -84,7 +90,24 @@ export function UsersTable({ isAdmin }: { isAdmin: boolean }) {
                 <tr key={u.id} className="border-t border-border-subtle text-fg-secondary transition-colors hover:bg-card-hover">
                   <td className="px-4 py-2.5 text-fg-primary">{u.name ?? "—"}</td>
                   <td className="px-4 py-2.5 font-mono text-xs">{isAdmin ? u.email ?? "—" : maskEmail(u.email)}</td>
-                  <td className="px-4 py-2.5">{u.journeyMode ?? "—"}</td>
+                  <td className="px-4 py-2.5">
+                    {u.behaviors.length ? (
+                      <div className="flex flex-wrap gap-1">
+                        {u.behaviors.map((b) => (
+                          <span
+                            key={b}
+                            title={u.journeyMode && normalizeMode(u.journeyMode) === b ? "currently active" : undefined}
+                            className="inline-flex items-center gap-1 rounded-full border border-border-subtle px-2 py-0.5 text-xs"
+                          >
+                            <span className="inline-block size-1.5 rounded-full" style={{ background: MODE_DOT[b] ?? "#BDD48C" }} />
+                            {MODE_LABEL[b] ?? b}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td className="px-4 py-2.5">{u.tier ?? "—"}</td>
                   <td className="px-4 py-2.5">{u.language ?? "—"}</td>
                   <td className="px-4 py-2.5">{u.logsCount}</td>

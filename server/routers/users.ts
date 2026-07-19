@@ -11,12 +11,24 @@ export interface UserRow {
   id: string
   email: string | null
   name: string | null
+  /** The single currently-active mode (profiles.journey_mode). */
   journeyMode: string | null
+  /** ALL behaviors the user is enrolled in (behaviors table), normalized to
+   *  pre_pregnancy | pregnancy | kids. Falls back to [journeyMode] if the user
+   *  has no behaviors rows. */
+  behaviors: string[]
   tier: string | null
   language: string | null
   createdAt: string | null
   lastActive: string | null
   logsCount: number
+}
+
+// The behaviors table stores 'cycle' for the pre-pregnancy journey; the rest of
+// the app (journey_mode, filters) uses 'pre_pregnancy'. Normalize on read.
+function normalizeBehavior(b: string): string {
+  if (b === "cycle" || b === "pre-pregnancy") return "pre_pregnancy"
+  return b
 }
 
 const listInput = z.object({
@@ -36,12 +48,21 @@ export const usersRouter = router({
    */
   list: protectedProcedure.input(listInput).query(async ({ input }) => {
     const conds = [sql`true`]
-    if (input.mode) conds.push(sql`p.journey_mode = ${input.mode}`)
     if (input.tier) conds.push(sql`p.subscription_tier = ${input.tier}`)
     if (input.language) conds.push(sql`p.language = ${input.language}`)
     if (input.search) {
       const q = `%${input.search.toLowerCase()}%`
       conds.push(sql`(lower(p.email) like ${q} or lower(p.name) like ${q})`)
+    }
+    // Mode filter now matches ANY enrolled behavior (behaviors table), not just
+    // the single active journey_mode — a multi-behavior user shows under each.
+    // 'cycle' in behaviors == 'pre_pregnancy' everywhere else.
+    if (input.mode) {
+      const behaviorValue = input.mode === "pre_pregnancy" ? "cycle" : input.mode
+      conds.push(sql`(
+        exists (select 1 from behaviors b where b.user_id = p.id and b.active and b.type in (${behaviorValue}, ${input.mode}))
+        or p.journey_mode = ${input.mode}
+      )`)
     }
     const where = sql.join(conds, sql` and `)
 
@@ -50,6 +71,7 @@ export const usersRouter = router({
       email: string | null
       name: string | null
       journey_mode: string | null
+      behaviors: string[] | null
       subscription_tier: string | null
       language: string | null
       created_at: string | null
@@ -64,6 +86,7 @@ export const usersRouter = router({
       )
       select p.id, p.email, p.name, p.journey_mode, p.subscription_tier,
              p.language, p.created_at,
+             (select array_agg(b.type order by b.type) from behaviors b where b.user_id = p.id and b.active) as behaviors,
              (select max(a.created_at) from activity a where a.user_id = p.id) as last_active,
              (select count(*) from activity a where a.user_id = p.id)::int as logs_count
       from profiles p
@@ -73,17 +96,24 @@ export const usersRouter = router({
     `)
 
     // postgres-js returns the rows array directly (a RowList), not { rows }.
-    const mapped: UserRow[] = Array.from(rows).map((r) => ({
-      id: r.id,
-      email: r.email,
-      name: r.name,
-      journeyMode: r.journey_mode,
-      tier: r.subscription_tier,
-      language: r.language,
-      createdAt: r.created_at,
-      lastActive: r.last_active,
-      logsCount: Number(r.logs_count ?? 0),
-    }))
+    const mapped: UserRow[] = Array.from(rows).map((r) => {
+      const raw = Array.isArray(r.behaviors) ? r.behaviors : []
+      // normalized, de-duped; fall back to journey_mode when no behaviors rows
+      const behaviors = Array.from(new Set(raw.map(normalizeBehavior)))
+      const fallback = r.journey_mode ? [normalizeBehavior(r.journey_mode)] : []
+      return {
+        id: r.id,
+        email: r.email,
+        name: r.name,
+        journeyMode: r.journey_mode,
+        behaviors: behaviors.length ? behaviors : fallback,
+        tier: r.subscription_tier,
+        language: r.language,
+        createdAt: r.created_at,
+        lastActive: r.last_active,
+        logsCount: Number(r.logs_count ?? 0),
+      }
+    })
 
     return { rows: mapped, nextOffset: mapped.length === input.limit ? input.offset + input.limit : null }
   }),
@@ -248,10 +278,24 @@ export const usersRouter = router({
 
   /** Canned segments: quick counts for the common cohorts. Viewer+. */
   segments: protectedProcedure.query(async () => {
+    // Behavior counts are DISTINCT USERS enrolled in each behavior (behaviors
+    // table), so a multi-behavior user is counted in each — matching the list's
+    // multi-mode display. 'cycle' == pre_pregnancy. Users with no behaviors rows
+    // fall back to their journey_mode so nobody is missed. These segments
+    // intentionally overlap; `total` is distinct users.
     const res = await db.execute<{ segment: string; count: number }>(sql`
-      select 'pregnancy' as segment, count(*)::int as count from profiles where journey_mode = 'pregnancy'
-      union all select 'pre_pregnancy', count(*)::int from profiles where journey_mode = 'pre_pregnancy'
-      union all select 'kids', count(*)::int from profiles where journey_mode = 'kids'
+      with enrolled as (
+        select distinct p.id, case when b.type = 'cycle' then 'pre_pregnancy' else b.type end as mode
+        from profiles p join behaviors b on b.user_id = p.id and b.active
+        union
+        select p.id, p.journey_mode as mode
+        from profiles p
+        where p.journey_mode is not null
+          and not exists (select 1 from behaviors b where b.user_id = p.id and b.active)
+      )
+      select 'pregnancy' as segment, count(*)::int as count from enrolled where mode = 'pregnancy'
+      union all select 'pre_pregnancy', count(*)::int from enrolled where mode = 'pre_pregnancy'
+      union all select 'kids', count(*)::int from enrolled where mode = 'kids'
       union all select 'premium', count(*)::int from profiles where subscription_tier <> 'free'
       union all select 'total', count(*)::int from profiles
     `)
