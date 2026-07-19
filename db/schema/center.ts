@@ -66,6 +66,16 @@ export const notificationCopySettings = pgTable("notification_copy_settings", {
   updatedBy: text("updated_by"),
 })
 
+export const betaTesters = pgTable("beta_testers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  platform: text("platform").notNull().default("both"),
+  note: text("note"),
+  invitedBy: text("invited_by"),
+  invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const pushRecipients = pgTable("push_recipients", {
   id: uuid("id").primaryKey().defaultRandom(),
   campaignId: uuid("campaign_id").notNull(),

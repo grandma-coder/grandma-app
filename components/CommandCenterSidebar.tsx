@@ -11,6 +11,7 @@ import {
   Bug,
   MessagesSquare,
   Shield,
+  FlaskConical,
   type LucideIcon,
 } from "lucide-react"
 
@@ -29,12 +30,13 @@ const PILLARS: NavLink[] = [
 ]
 
 const MANAGE: NavLink[] = [
+  { href: "/beta", label: "Beta testers", icon: FlaskConical, adminOnly: true },
   { href: "/admin", label: "Admin", icon: Shield, adminOnly: true },
 ]
 
 // Which pillars are actually built yet (routes that exist). Others render
 // disabled so the nav reflects reality without dead links.
-const READY = new Set(["/", "/users", "/metrics", "/community", "/push", "/sentry", "/admin"])
+const READY = new Set(["/", "/users", "/metrics", "/community", "/push", "/sentry", "/admin", "/beta"])
 
 export function CommandCenterSidebar() {
   const pathname = usePathname() ?? ""

@@ -29,7 +29,10 @@ export default async function Home() {
     { name: "Push", href: "/push", ready: true, blurb: "Compose & send notifications" },
     { name: "Sentry", href: "/sentry", ready: true, blurb: "Crash triage" },
     ...(ctx.role === "admin"
-      ? [{ name: "Admin", href: "/admin", ready: true, blurb: "Invite teammates & manage roles" }]
+      ? [
+          { name: "Beta testers", href: "/beta", ready: true, blurb: "Invite & track app beta testers" },
+          { name: "Admin", href: "/admin", ready: true, blurb: "Invite teammates & manage roles" },
+        ]
       : []),
   ]
 

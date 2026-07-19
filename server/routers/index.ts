@@ -7,6 +7,7 @@ import { communityRouter } from "./community"
 import { teamRouter } from "./team"
 import { notificationTemplatesRouter } from "./notificationTemplates"
 import { notificationCopyRouter } from "./notificationCopy"
+import { betaRouter } from "./beta"
 
 /**
  * Root app router. Feature routers are added per phase.
@@ -22,6 +23,7 @@ export const appRouter = router({
   team: teamRouter,
   notificationTemplates: notificationTemplatesRouter,
   notificationCopy: notificationCopyRouter,
+  beta: betaRouter,
 })
 
 export type AppRouter = typeof appRouter
