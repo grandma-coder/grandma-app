@@ -15,4 +15,7 @@ describe('getCaregiverTabVisibility', () => {
     expect(getCaregiverTabVisibility({ view: true, log_activity: true, chat: false }).agenda).toBe(true)
     expect(getCaregiverTabVisibility({ view: true, log_activity: false, chat: false }).agenda).toBe(false)
   })
+  it('hides the agenda tab for a paused caregiver even if log_activity was granted', () => {
+    expect(getCaregiverTabVisibility({ view: true, log_activity: true, chat: true, _paused: true }).agenda).toBe(false)
+  })
 })

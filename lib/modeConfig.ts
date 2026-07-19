@@ -131,9 +131,12 @@ export function getModeConfig(mode: JourneyMode): ModeConfig {
  * Card are home affordances, not tabs. UX-only; RLS is the boundary.
  */
 export function getCaregiverTabVisibility(permissions: CaregiverPermissions) {
+  // A paused caregiver has all capabilities revoked (mirrors hasCapability's
+  // _paused gate), so the calendar tab hides too — logging is inert anyway.
+  const canLog = permissions._paused !== true && permissions.log_activity === true
   return {
     index: true,
-    agenda: permissions.log_activity === true,
+    agenda: canLog,
     library: false,
     vault: false,
     settings: true,
