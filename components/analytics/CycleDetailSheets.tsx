@@ -5,10 +5,12 @@
  * own internal body component that calls the matching cycleAnalytics hook.
  */
 
+import React, { createContext, useContext } from 'react'
 import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { LogSheet } from '../calendar/LogSheet'
+import { DiffuseSheet } from '../ui/diffuse/DiffusePrimitives'
 import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, useBBTStats, useCervicalMucusStats, useIntercourseStats, type MoodId, type MucusType } from '../../lib/cycleAnalytics'
 import { useUnitsStore } from '../../store/useUnitsStore'
@@ -30,11 +32,24 @@ export type CycleDetailType =
 
 interface Props {
   type: CycleDetailType | null
+  accent?: string
   onClose: () => void
 }
 
-export function CycleDetailSheet({ type, onClose }: Props) {
+// ─── Live cycle-phase accent context ───────────────────────────────────────
+// Presentational only — lets each detail body pick up the accent passed to
+// CycleDetailSheet without prop-drilling through every body component.
+const AccentContext = createContext<string | null>(null)
+
+function usePhaseAccent(): string {
+  const ctx = useContext(AccentContext)
+  const dt = useDiffuseTheme()
+  return ctx ?? getDiffuseAccent('pre-pregnancy', dt.isDark)
+}
+
+export function CycleDetailSheet({ type, accent, onClose }: Props) {
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   const visible = type !== null
 
   const TITLES: Record<CycleDetailType, string> = {
@@ -48,7 +63,41 @@ export function CycleDetailSheet({ type, onClose }: Props) {
     intercourse: t('cycleDetail_titleIntercourse'),
   }
 
+  const CHIPS: Record<CycleDetailType, string> = {
+    cycleLength: t('cycleDetail_chip_rhythm'),
+    regularity: t('cycleDetail_chip_steadiness'),
+    pms: t('cycleDetail_chip_symptoms'),
+    fertile: t('cycleDetail_chip_window'),
+    mood: t('cycleDetail_chip_feeling'),
+    bbt: t('cycleDetail_chip_thermal'),
+    mucus: t('cycleDetail_chip_signs'),
+    intercourse: t('cycleDetail_chip_timing'),
+  }
+
   const title = type ? TITLES[type] : ''
+
+  const bodySwitch = (
+    <>
+      {type === 'cycleLength' && <CycleLengthDetail />}
+      {type === 'regularity' && <RegularityDetail />}
+      {type === 'pms' && <PMSDetail />}
+      {type === 'fertile' && <FertileDetail />}
+      {type === 'mood' && <MoodDetail />}
+      {type === 'bbt' && <BBTDetail />}
+      {type === 'mucus' && <MucusDetail />}
+      {type === 'intercourse' && <IntercourseDetail />}
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <DiffuseSheet visible={visible} title={title} chip={type ? CHIPS[type] : undefined} onClose={onClose}>
+        <AccentContext.Provider value={accent ?? null}>
+          {bodySwitch}
+        </AccentContext.Provider>
+      </DiffuseSheet>
+    )
+  }
 
   return (
     <LogSheet visible={visible} title={title} onClose={onClose}>
@@ -57,14 +106,7 @@ export function CycleDetailSheet({ type, onClose }: Props) {
         contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}
       >
-        {type === 'cycleLength' && <CycleLengthDetail />}
-        {type === 'regularity' && <RegularityDetail />}
-        {type === 'pms' && <PMSDetail />}
-        {type === 'fertile' && <FertileDetail />}
-        {type === 'mood' && <MoodDetail />}
-        {type === 'bbt' && <BBTDetail />}
-        {type === 'mucus' && <MucusDetail />}
-        {type === 'intercourse' && <IntercourseDetail />}
+        {bodySwitch}
       </ScrollView>
     </LogSheet>
   )
@@ -76,6 +118,7 @@ function CycleLengthDetail() {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
   const { data, isLoading, error } = useCycleHistory()
 
@@ -110,7 +153,7 @@ function CycleLengthDetail() {
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_lastNCycles', { n: values.length })}
         </Text>
-        <MiniBarChart data={values} labels={labels} color={diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink} />
+        <MiniBarChart data={values} labels={labels} color={diffuse ? phaseAccent : stickers.pink} />
       </View>
 
       <View style={{ gap: 8 }}>
@@ -301,6 +344,7 @@ function PMSDetail() {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
   const { data, isLoading, error } = usePMSStats()
 
@@ -345,7 +389,7 @@ function PMSDetail() {
                   <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{s.name}</Body>
                 </View>
                 <View style={pmsStyles.symptomRight}>
-                  <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.peachSoft }]} />
+                  <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: diffuse ? phaseAccent : stickers.peachSoft }]} />
                   <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{s.count}</Body>
                 </View>
               </View>
@@ -486,6 +530,7 @@ function MoodDetail() {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
   const { data, isLoading, error } = useMoodStats()
 
@@ -516,7 +561,7 @@ function MoodDetail() {
                 {MOOD_LABELS[row.mood]}
               </Body>
               <View style={[moodStyles.barTrack, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]}>
-                <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink }]} />
+                <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: diffuse ? phaseAccent : stickers.pink }]} />
               </View>
               <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={{ width: 30, textAlign: 'right' }}>
                 {row.count}
@@ -571,6 +616,7 @@ function BBTDetail() {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
   const { data, isLoading, error } = useBBTStats()
   // BBT stored canonical °C; convert for display (B4).
@@ -611,7 +657,7 @@ function BBTDetail() {
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_bbtThisCycle')}
         </Text>
-        <MiniLineChart data={temps} labels={labels} color={diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink} unit={degLabel} />
+        <MiniLineChart data={temps} labels={labels} color={diffuse ? phaseAccent : stickers.pink} unit={degLabel} />
       </View>
 
       <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
@@ -631,6 +677,7 @@ function MucusDetail() {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
   const { data, isLoading, error } = useCervicalMucusStats()
 
@@ -640,7 +687,7 @@ function MucusDetail() {
     return <EmptyState copy={t('cycleDetail_mucusEmpty')} />
   }
 
-  const fertileHue = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink
+  const fertileHue = diffuse ? phaseAccent : stickers.pink
 
   return (
     <View style={{ gap: 18 }}>
@@ -683,6 +730,7 @@ function IntercourseDetail() {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
   const { data, isLoading, error } = useIntercourseStats()
 
@@ -712,7 +760,7 @@ function IntercourseDetail() {
         {data.recent.map((r, i) => (
           <View key={`${r.date}-${i}`} style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}>
             <View style={mucusStyles.left}>
-              <View style={[mucusStyles.dot, { backgroundColor: r.inFertile ? (diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.pink) : (diffuse ? dt.colors.line2 : stickers.blueSoft) }]} />
+              <View style={[mucusStyles.dot, { backgroundColor: r.inFertile ? (diffuse ? phaseAccent : stickers.pink) : (diffuse ? dt.colors.line2 : stickers.blueSoft) }]} />
               <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{formatShort(r.date)}</Body>
             </View>
             <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>

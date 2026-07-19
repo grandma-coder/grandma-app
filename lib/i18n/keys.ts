@@ -62,11 +62,13 @@ export interface TranslationKeys {
   menu_dailyRewards: string
   menu_garage: string
   menu_channels: string
+  menu_community: string
   menu_insights_sub: string
   menu_dailyRewards_sub: string
   menu_grandmaTalk_sub: string
   menu_garage_sub: string
   menu_channels_sub: string
+  menu_community_sub: string
   cycleRing_title_menstruation: string
   cycleRing_title_follicular: string
   cycleRing_title_ovulation: string
@@ -1883,6 +1885,14 @@ export interface TranslationKeys {
   cycleDetail_statMin: string
   cycleDetail_statMax: string
   cycleDetail_statCycles: string
+  cycleDetail_chip_rhythm: string
+  cycleDetail_chip_steadiness: string
+  cycleDetail_chip_symptoms: string
+  cycleDetail_chip_window: string
+  cycleDetail_chip_feeling: string
+  cycleDetail_chip_thermal: string
+  cycleDetail_chip_signs: string
+  cycleDetail_chip_timing: string
 
   // ─── Fertility Signals Card (Wave B4) ─────────────────────────────────────
   cycleSignals_title: string
@@ -1993,6 +2003,11 @@ export interface TranslationKeys {
   poll_closed: string
 
   circles_tab: string
+  community_title: string
+  community_tab_channels: string
+  community_tab_anon: string
+  community_channels_explainer: string
+  community_anon_explainer: string
   circles_anonBanner: string
   circles_anonPill: string
   circles_empty: string
