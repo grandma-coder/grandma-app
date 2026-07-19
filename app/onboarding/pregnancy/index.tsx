@@ -46,7 +46,6 @@ import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
-import { seedPregnancyData } from '../../../lib/pregnancySeeds'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -294,9 +293,11 @@ export default function PregnancyOnboarding() {
         pregnancyStore.setMood(store.mood as MoodType)
       }
 
-      // Seed 14 days of sample data in background — never blocks onboarding.
-      const seedWeek = calcWeekNumber(store.dueDate)
-      seedPregnancyData(userId, seedWeek, store.dueDate).catch(console.warn)
+      // No sample-data backfill. pregnancy_logs holds ONLY the real facts we
+      // just wrote (due date + optional mood) plus whatever the user logs from
+      // the UI. Week/size/appointments are DERIVED from the due date in code
+      // (see pregnancyWeeks + pregnancyAppointments) — we never fabricate
+      // backdated log history for a brand-new account.
     }
 
     store.clearAll()

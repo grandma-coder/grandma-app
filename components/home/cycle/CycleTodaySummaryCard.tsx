@@ -3,11 +3,13 @@
  *
  * Mirrors PregnancyHome's TodaySummaryCard pattern: chips are read-only
  * previews of today's cycle_logs and tapping anywhere on the card opens
- * the full CycleTodayDashboardModal with high-level metrics. If the user
- * has zero cycle_logs rows in total, we seed realistic sample data once
- * so the card has something to show.
+ * the full CycleTodayDashboardModal with high-level metrics. Chips only
+ * ever reflect rows the user logged from the UI — nothing is fabricated.
+ * The ring/phase/fertile-window is derived in code from the onboarding
+ * period date (see CycleHome + getCycleInfo), so an empty log day is a
+ * valid, honest state.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -17,7 +19,6 @@ import { Character } from '../../characters/Characters'
 import { moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
-import { seedCycleData } from '../../../lib/devSeed'
 import { Display } from '../../ui/Typography'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
 import { SymptomSticker } from '../../calendar/symptomStickers'
@@ -106,29 +107,10 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
     enabled: !!userId,
   })
 
-  // Auto-seed sample data the very first time (user has never logged anything).
-  // Runs at most once per session — re-guarded by a ref so a refetch can't trigger it again.
-  const seededRef = useRef(false)
-  useEffect(() => {
-    if (!userId || seededRef.current) return
-    // Flip the ref BEFORE any await so a remount during the async window
-    // (tab switch, etc.) can't re-enter and double-seed. The DB count
-    // check still gates the actual seedCycleData() call.
-    seededRef.current = true
-    void (async () => {
-      const { count, error } = await supabase
-        .from('cycle_logs')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-      if (error || count === null || count > 0) return
-      try {
-        await seedCycleData()
-        await qc.invalidateQueries({ queryKey: ['cycleLogs'] })
-      } catch {
-        // Silent — seeding is best-effort UI sugar.
-      }
-    })()
-  }, [userId, qc])
+  // No auto-seeding. cycle_logs holds ONLY what the user logs from the UI.
+  // The ring/phase/fertile-window is derived from the onboarding period date
+  // via getCycleInfo (see CycleHome), so a fresh account with no logs is a
+  // correct, honest empty state — not something to backfill with fake data.
 
   const moodValue = rows.find((r) => r.type === 'mood')?.value ?? null
   const bbtValue = rows.find((r) => r.type === 'basal_temp')?.value ?? null
