@@ -71,7 +71,7 @@ export function ComposerModal({
     setError(null)
     try {
       const res = await suggest.mutateAsync({
-        brief: brief.trim() || title.trim() || "A gentle notification for grandma.app users",
+        brief: brief.trim() || title.trim() || "A gentle notification for Grandma users",
         excludeTitles: lastTitles.slice(-5),
       })
       if (!res.available) {

@@ -40,7 +40,7 @@ export default async function Home() {
   return (
     <main className="mx-auto max-w-5xl px-8 py-10">
       <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Overview</p>
-      <h1 className="display text-3xl font-bold tracking-tight text-fg-primary">grandma.app</h1>
+      <h1 className="display text-3xl font-bold tracking-tight text-fg-primary">Grandma</h1>
       <p className="mt-2 max-w-2xl text-sm text-fg-tertiary">
         Internal console for users, metrics, push notifications, and crash triage.
         You&apos;re signed in as {ctx.userEmail} · <span className="text-accent-500">{ctx.role}</span>.
