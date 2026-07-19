@@ -132,6 +132,9 @@ interface StatCardProps {
   iconNoBloom?: boolean    // skip the icon halo (for solid character glyphs)
   trailing?: ReactNode     // e.g. a ring — replaces the icon slot on the right
   emptyLabel?: string      // shown in place of value when value is empty
+  locked?: boolean         // renders a LOCKED body (dimmed icon + padlock) instead of value/emptyLabel
+  lockProgress?: { current: number; target: number }  // optional progress track under the lock hint
+  lockHint?: string        // human copy shown in the locked body (caller-owned, e.g. "Log 3 cycles to unlock")
   progress?: number        // 0..1 → renders a hairline progress bar
   accent?: string          // the metric's hue — drives a soft per-card bloom
   accent2?: string         // optional second bloom stop (defaults to a warm wash)
@@ -151,6 +154,9 @@ export function DiffuseStatCard({
   iconNoBloom = false,
   trailing,
   emptyLabel = 'Tap to log',
+  locked = false,
+  lockProgress,
+  lockHint,
   progress,
   accent,
   accent2,
@@ -187,13 +193,47 @@ export function DiffuseStatCard({
 
       <View style={dp.statHeaderRow}>
         <Text style={[roleType.eyebrow, { color: colors.ink3 }]} numberOfLines={1}>{label}</Text>
-        {icon ? <DiffuseBloomIcon color={c1} size={30} intensity={0.45} noBloom={iconNoBloom}>{icon}</DiffuseBloomIcon> : null}
+        {icon ? (
+          locked ? (
+            <View style={{ opacity: 0.4 }}>
+              <DiffuseBloomIcon color={c1} size={30} intensity={0.45} noBloom={iconNoBloom}>{icon}</DiffuseBloomIcon>
+              <View style={{ position: 'absolute', bottom: -2, right: -2 }}>
+                <DiffuseLockGlyph color={colors.ink3} size={13} />
+              </View>
+            </View>
+          ) : (
+            <DiffuseBloomIcon color={c1} size={30} intensity={0.45} noBloom={iconNoBloom}>{icon}</DiffuseBloomIcon>
+          )
+        ) : null}
       </View>
 
       <View style={dp.statBodyRow}>
         {trailing ? <View style={{ marginRight: 12 }}>{trailing}</View> : null}
         <View style={{ flex: 1 }}>
-          {hasValue ? (
+          {locked ? (
+            <View>
+              {lockHint ? (
+                <Text style={[roleType.data, { fontSize: 11, color: colors.ink3 }]}>{lockHint}</Text>
+              ) : null}
+              {lockProgress && lockProgress.target > 1 ? (
+                <>
+                  <View style={[dp.progressTrack, { backgroundColor: colors.line, marginTop: 8 }]}>
+                    <View
+                      style={{
+                        width: `${Math.max(0, Math.min(lockProgress.current / lockProgress.target, 1)) * 100}%`,
+                        height: 3,
+                        borderRadius: 999,
+                        backgroundColor: colors.ink3,
+                      }}
+                    />
+                  </View>
+                  <Text style={[roleType.data, { fontSize: 9.5, color: colors.ink3, marginTop: 4 }]}>
+                    {`${lockProgress.current}/${lockProgress.target}`}
+                  </Text>
+                </>
+              ) : null}
+            </View>
+          ) : hasValue ? (
             <Text style={[roleType.serif, { fontSize: 30, color: colors.ink }]}>
               {value}
               {unit ? <Text style={[roleType.serif, { fontSize: 17, color: colors.ink2 }]}>{' ' + unit}</Text> : null}
@@ -203,11 +243,11 @@ export function DiffuseStatCard({
               {emptyLabel}
             </Text>
           )}
-          {sub ? <Text style={[roleType.data, { fontSize: 9.5, color: colors.ink3, marginTop: 4 }]} numberOfLines={1}>{sub}</Text> : null}
+          {!locked && sub ? <Text style={[roleType.data, { fontSize: 9.5, color: colors.ink3, marginTop: 4 }]} numberOfLines={1}>{sub}</Text> : null}
         </View>
       </View>
 
-      {progress !== undefined ? (
+      {!locked && progress !== undefined ? (
         <View style={[dp.progressTrack, { backgroundColor: colors.line }]}>
           <View style={{ width: `${Math.max(0, Math.min(progress, 1)) * 100}%`, height: 2, borderRadius: 999, backgroundColor: colors.ink3 }} />
         </View>
@@ -674,6 +714,34 @@ export function DiffuseBloomIcon({ children, color, size = 34, intensity = 0.55,
       )}
       <View style={{ zIndex: 1 }}>{children}</View>
     </View>
+  )
+}
+
+// ─── DiffuseLockGlyph ───────────────────────────────────────────────────────
+// A tiny inline padlock (body + shackle), used as the badge overlay on a
+// DiffuseStatCard icon when `locked` is set. Token-driven stroke/fill only —
+// no heavy sticker import needed for a ~13px glyph.
+
+interface LockGlyphProps {
+  color: string
+  size?: number
+}
+
+export function DiffuseLockGlyph({ color, size = 13 }: LockGlyphProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M7 10.5V8a5 5 0 0 1 10 0v2.5"
+        stroke={color}
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <Path
+        d="M6 10.5h12a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19v-7A1.5 1.5 0 0 1 6 10.5Z"
+        fill={color}
+      />
+    </Svg>
   )
 }
 
