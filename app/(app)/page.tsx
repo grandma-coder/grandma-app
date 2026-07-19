@@ -29,6 +29,7 @@ export default async function Home() {
     { name: "Push", href: "/push", ready: true, blurb: "Compose & send notifications" },
     { name: "Sentry", href: "/sentry", ready: true, blurb: "Crash triage" },
     { name: "Design tokens", href: "/tokens", ready: true, blurb: "Brand colors, type & email visuals" },
+    { name: "Content", href: "/content", ready: true, blurb: "Daily questions & app content" },
     ...(ctx.role === "admin"
       ? [
           { name: "Beta testers", href: "/beta", ready: true, blurb: "Invite & track app beta testers" },

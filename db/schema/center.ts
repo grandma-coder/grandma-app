@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, jsonb, integer } from "drizzle-orm/pg-core"
+import { pgTable, uuid, text, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core"
 
 export const NOTIFICATION_STATUSES = [
   "draft",
@@ -62,6 +62,17 @@ export const notificationTemplates = pgTable("notification_templates", {
 export const notificationCopySettings = pgTable("notification_copy_settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: text("updated_by"),
+})
+
+export const contentDailyQuestions = pgTable("content_daily_questions", {
+  id: text("id").primaryKey(),
+  mode: text("mode").notNull(),
+  prompt: text("prompt").notNull(),
+  options: jsonb("options").notNull().default([]),
+  active: boolean("active").notNull().default(true),
+  sort: integer("sort").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   updatedBy: text("updated_by"),
 })
