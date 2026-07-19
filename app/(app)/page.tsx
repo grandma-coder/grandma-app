@@ -28,6 +28,9 @@ export default async function Home() {
     { name: "Community", href: "/community", ready: true, blurb: "Channels & forum activity" },
     { name: "Push", href: "/push", ready: true, blurb: "Compose & send notifications" },
     { name: "Sentry", href: "/sentry", ready: true, blurb: "Crash triage" },
+    ...(ctx.role === "admin"
+      ? [{ name: "Admin", href: "/admin", ready: true, blurb: "Invite teammates & manage roles" }]
+      : []),
   ]
 
   return (

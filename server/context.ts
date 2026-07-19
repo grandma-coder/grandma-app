@@ -37,9 +37,10 @@ export async function createContext(): Promise<Context> {
     user?.emailAddresses?.[0]?.emailAddress ??
     null
 
-  const allowed = isAllowed(email)
-  // Default to the least-privileged role; admin must be granted explicitly.
+  // Role is stamped by an invite / the Admin panel. Its presence is what marks
+  // someone as a real team member in Clerk-managed mode.
   const metaRole = (user?.publicMetadata as { role?: Role } | undefined)?.role
+  const allowed = isAllowed(email, Boolean(metaRole))
   const role: Role | null = allowed ? metaRole ?? "viewer" : null
 
   return { userId, userEmail: email, role, allowed }

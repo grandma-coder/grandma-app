@@ -10,6 +10,7 @@ import {
   Send,
   Bug,
   MessagesSquare,
+  Shield,
   type LucideIcon,
 } from "lucide-react"
 
@@ -27,9 +28,13 @@ const PILLARS: NavLink[] = [
   { href: "/sentry", label: "Sentry", icon: Bug, adminOnly: true },
 ]
 
+const MANAGE: NavLink[] = [
+  { href: "/admin", label: "Admin", icon: Shield, adminOnly: true },
+]
+
 // Which pillars are actually built yet (routes that exist). Others render
 // disabled so the nav reflects reality without dead links.
-const READY = new Set(["/", "/users", "/metrics", "/community", "/push", "/sentry"])
+const READY = new Set(["/", "/users", "/metrics", "/community", "/push", "/sentry", "/admin"])
 
 export function CommandCenterSidebar() {
   const pathname = usePathname() ?? ""
@@ -78,6 +83,12 @@ export function CommandCenterSidebar() {
         <div>{PRIMARY.map(renderItem)}</div>
         <div className="nav-section-header">Pillars</div>
         <div>{PILLARS.map(renderItem)}</div>
+        {isAdmin && (
+          <>
+            <div className="nav-section-header">Manage</div>
+            <div>{MANAGE.map(renderItem)}</div>
+          </>
+        )}
       </nav>
 
       <div className="sidebar-foot">
