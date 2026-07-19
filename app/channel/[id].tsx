@@ -54,7 +54,7 @@ import { ReactionPicker } from '../../components/channels/ReactionPicker'
 import { PollCard } from '../../components/channels/PollCard'
 import { PollComposer } from '../../components/channels/PollComposer'
 import { useSavedToast } from '../../components/ui/SavedToast'
-import { channelSticker, channelBlob } from '../../lib/channelSticker'
+import { channelSticker, channelBlob, personBlob } from '../../lib/channelSticker'
 import { Character } from '../../components/characters/Characters'
 import { getChannels, type Channel } from '../../lib/channels'
 import {
@@ -1608,7 +1608,7 @@ function MessageBubbleBase({
   // person reads as a consistent sticker instead of a generic gray avatar.
   const authorKey = message.author_id ?? message.author_name ?? 'member'
   const s = channelSticker(authorKey, isDark)
-  const AvatarSticker = s.Component
+  const avatarBg = diffuse ? dt.colors.surface : s.tint
 
   return (
     <Pressable
@@ -1619,11 +1619,11 @@ function MessageBubbleBase({
         pressed && { backgroundColor: diffuse ? dt.colors.surface : colors.surfaceRaised },
       ]}
     >
-      {/* Avatar — author's sticker (hairline frame under diffuse) */}
+      {/* Avatar — author's person blob (hairline frame under diffuse) */}
       <View style={[styles.avatar, diffuse
         ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
         : { backgroundColor: s.tint }]}>
-        <AvatarSticker size={20} fill={s.fill} />
+        <Character name={personBlob(authorKey)} size={20} bg={avatarBg} />
       </View>
 
       <View style={styles.bubbleContent}>

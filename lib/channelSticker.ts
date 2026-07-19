@@ -129,3 +129,15 @@ export function presetBlob(index: number): CharacterName {
   const preset = STICKER_PRESETS[index] ?? STICKER_PRESETS[0]
   return PRESET_BLOB[preset.name]
 }
+
+// Person avatars (channel owner / members / join-requests / message authors).
+// There's no per-user blob concept, so we pick a stable, friendly, non-medical
+// blob from a neutral set keyed by the user id — each person keeps a consistent
+// identity, rendered through the blob icon system instead of the legacy
+// geometric sticker glyphs.
+const PERSON_BLOBS: CharacterName[] = ['star', 'heart', 'sparkle', 'sun', 'gem', 'crown']
+
+/** A stable person-avatar Character blob for a user id. */
+export function personBlob(seed: string): CharacterName {
+  return PERSON_BLOBS[hashString(seed) % PERSON_BLOBS.length]
+}

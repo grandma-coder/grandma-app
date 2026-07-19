@@ -49,7 +49,7 @@ import { useModeStore } from '../../../store/useModeStore'
 import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../../components/ui/diffuse/DiffusePrimitives'
 import { useSavedToast } from '../../../components/ui/SavedToast'
-import { channelSticker, channelBlob } from '../../../lib/channelSticker'
+import { channelSticker, channelBlob, personBlob } from '../../../lib/channelSticker'
 import { Character } from '../../../components/characters/Characters'
 import { getChannels, type Channel } from '../../../lib/channels'
 import {
@@ -556,17 +556,18 @@ export default function ChannelInfoScreen() {
           <View style={[s.ownerCard, diffuse
             ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
             : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-            {/* Owner's sticker identity with a gold crown badge marking the host. */}
+            {/* Owner's person-blob identity with a crown badge marking the host. */}
             {(() => {
               const os = channelSticker(channel.createdBy ?? 'owner', isDark)
-              const OwnerSticker = os.Component
+              const avatarBg = diffuse ? dt.colors.surface : os.tint
+              const crownColor = diffuse ? dt.colors.ink3 : brand.accent
               return (
                 <View style={[s.ownerAvatar, diffuse
                   ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                   : { backgroundColor: os.tint }]}>
-                  <OwnerSticker size={20} fill={os.fill} />
+                  <Character name={personBlob(channel.createdBy ?? 'owner')} size={20} bg={avatarBg} />
                   <View style={[s.ownerCrownBadge, { backgroundColor: diffuse ? dt.colors.bg : colors.surface }]}>
-                    <Crown size={11} color={brand.accent} strokeWidth={2} fill={brand.accent} />
+                    <Crown size={11} color={crownColor} strokeWidth={2} fill={crownColor} />
                   </View>
                 </View>
               )
@@ -596,19 +597,19 @@ export default function ChannelInfoScreen() {
           </Text>
           {members.slice(0, 10).map((m) => {
             const ms = channelSticker(m.user_id, isDark)
-            const MemberSticker = ms.Component
+            const memberBg = diffuse ? dt.colors.surface : ms.tint
             return (
               <View key={m.user_id} style={[s.memberRow, { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight }]}>
                 <View style={[s.memberAvatar, diffuse
                   ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                   : { backgroundColor: ms.tint }]}>
-                  <MemberSticker size={16} fill={ms.fill} />
+                  <Character name={personBlob(m.user_id)} size={16} bg={memberBg} />
                 </View>
                 <Text style={[s.memberName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>
                   {m.name ?? t('channelInfo_memberFallback')}
                 </Text>
                 {m.user_id === channel.createdBy && (
-                  <Crown size={14} color={brand.accent} strokeWidth={2} fill={brand.accent} />
+                  <Crown size={14} color={diffuse ? dt.colors.ink3 : brand.accent} strokeWidth={2} fill={diffuse ? dt.colors.ink3 : brand.accent} />
                 )}
               </View>
             )
@@ -717,13 +718,13 @@ export default function ChannelInfoScreen() {
                 </View>
                 {pendingRequests.map((req) => {
                   const rs = channelSticker(req.user_id, isDark)
-                  const ReqSticker = rs.Component
+                  const reqBg = diffuse ? dt.colors.surface : rs.tint
                   return (
                   <View key={req.id} style={[s.requestRow, { borderTopColor: diffuse ? dt.colors.line : colors.borderLight }]}>
                     <View style={[s.memberAvatar, diffuse
                       ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                       : { backgroundColor: rs.tint }]}>
-                      <ReqSticker size={16} fill={rs.fill} />
+                      <Character name={personBlob(req.user_id)} size={16} bg={reqBg} />
                     </View>
                     <Text style={[s.memberName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>
                       {req.user_name ?? t('channelInfo_memberFallback')}
