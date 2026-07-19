@@ -10,7 +10,6 @@ import {
   Pressable,
   FlatList,
   Image,
-  Alert,
   StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -89,6 +88,7 @@ import { reportContent, blockUser, REPORT_REASONS, type ReportReason } from '../
 import { hasAgreedToPhotoSafety, setPhotoSafetyAgreed } from '../../lib/photoSafety'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { useConfirmDialog } from '../../components/ui/useConfirm'
+import { PaperActionSheet, type ActionSheetItem } from '../../components/ui/PaperActionSheet'
 import { useTranslation } from '../../lib/i18n'
 
 // Emoji per reaction type — for the footer indicator when a non-heart reaction
@@ -152,6 +152,10 @@ export default function ChannelChat() {
 
   // Owner state
   const [isOwner, setIsOwner] = useState(false)
+
+  // Paper action sheet (multi-choice pickers: message actions, transfer,
+  // report reasons) — replaces the native Alert.alert multi-button sheets.
+  const [sheet, setSheet] = useState<{ title?: string; message?: string; items: ActionSheetItem[] } | null>(null)
 
   // Private channel request state
   const [myRequest, setMyRequest] = useState<ChannelRequest | null>(null)
@@ -494,17 +498,17 @@ export default function ChannelChat() {
   // The reply / thread / delete / report / block action sheet (was the old
   // long-press target; now reached via the picker's "More" entry).
   const showMessageActions = useCallback((item: ChannelPost) => {
-    Alert.alert(t('channelScreen_messageActionsTitle'), '', [
-      { text: t('channelScreen_replyInThread'), onPress: () => router.push(`/channel/thread/${item.id}` as any) },
-      { text: t('channelScreen_replyingTo'), onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
+    const items: ActionSheetItem[] = [
+      { label: t('channelScreen_replyInThread'), onPress: () => router.push(`/channel/thread/${item.id}` as any) },
+      { label: t('channelScreen_replyingTo'), onPress: () => { setReplyTo(item); inputRef.current?.focus() } },
       ...(item.author_id === currentUserId ? [
-        { text: t('common_delete'), style: 'destructive' as const, onPress: () => handleDeleteMessage(item.id, item.author_id) },
+        { label: t('common_delete'), danger: true, onPress: () => handleDeleteMessage(item.id, item.author_id) },
       ] : [
-        { text: t('safety_report'), onPress: () => handleReportMessage(item.id, item.author_id) },
-        { text: t('safety_block'), style: 'destructive' as const, onPress: () => handleBlockUser(item.author_id, item.author_name) },
+        { label: t('safety_report'), onPress: () => handleReportMessage(item.id, item.author_id) },
+        { label: t('safety_block'), danger: true, onPress: () => handleBlockUser(item.author_id, item.author_name) },
       ]),
-      { text: t('common_cancel'), style: 'cancel' as const },
-    ])
+    ]
+    setSheet({ title: t('channelScreen_messageActionsTitle'), items })
   }, [t, currentUserId])
 
   const handleSetReaction = useCallback(async (postId: string, type: ReactionType) => {
@@ -536,33 +540,30 @@ export default function ChannelChat() {
       await confirm({ title: t('channelScreen_noMembersTitle'), message: t('channelScreen_noMembersBodyDelete'), cancelLabel: null })
       return
     }
-    const buttons = others.slice(0, 8).map((m) => ({
-      text: m.name ?? t('channelScreen_memberFallback'),
-      onPress: () => {
-        Alert.alert(
-          t('channelScreen_confirmTransferTitle'),
-          t('channelScreen_confirmTransferBody', { channel: channel?.name ?? '', member: m.name ?? t('channelScreen_thisMember') }),
-          [
-            { text: t('common_cancel'), style: 'cancel' as const },
-            {
-              text: t('channelScreen_transferBtn'),
-              onPress: async () => {
-                try {
-                  await transferChannelOwnership(id, m.user_id)
-                  setIsOwner(false)
-                  toast.show({ title: t('channelScreen_doneTitle'), message: t('channelScreen_transferredMsg', { member: m.name ?? t('channelScreen_theNewHost') }) })
-                  load()
-                } catch (e: any) {
-                  Alert.alert(t('common_error'), e.message)
-                }
-              },
-            },
-          ]
-        )
+    const items: ActionSheetItem[] = others.slice(0, 8).map((m) => ({
+      label: m.name ?? t('channelScreen_memberFallback'),
+      onPress: async () => {
+        if (
+          await confirm({
+            title: t('channelScreen_confirmTransferTitle'),
+            message: t('channelScreen_confirmTransferBody', { channel: channel?.name ?? '', member: m.name ?? t('channelScreen_thisMember') }),
+            confirmLabel: t('channelScreen_transferBtn'),
+            cancelLabel: t('common_cancel'),
+            danger: true,
+          })
+        ) {
+          try {
+            await transferChannelOwnership(id, m.user_id)
+            setIsOwner(false)
+            toast.show({ title: t('channelScreen_doneTitle'), message: t('channelScreen_transferredMsg', { member: m.name ?? t('channelScreen_theNewHost') }) })
+            load()
+          } catch (e: any) {
+            await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+          }
+        }
       },
     }))
-    buttons.push({ text: t('common_cancel'), onPress: () => {} })
-    Alert.alert(t('channelScreen_transferOwnershipTitle'), t('channelScreen_transferOwnershipBody'), buttons as any)
+    setSheet({ title: t('channelScreen_transferOwnershipTitle'), message: t('channelScreen_transferOwnershipBody'), items })
   }
 
   async function handleJoinLeave() {
@@ -570,39 +571,35 @@ export default function ChannelChat() {
 
     if (isMember && isOwner) {
       // Creator cannot leave — offer delete or transfer
-      Alert.alert(
-        t('channelScreen_hostAlertTitle'),
-        t('channelScreen_hostAlertBody'),
-        [
-          { text: t('channelScreen_transferOwnershipTitle'), onPress: handleTransferOwnership },
+      setSheet({
+        title: t('channelScreen_hostAlertTitle'),
+        message: t('channelScreen_hostAlertBody'),
+        items: [
+          { label: t('channelScreen_transferOwnershipTitle'), onPress: handleTransferOwnership },
           {
-            text: t('channelScreen_deleteChannelBtn'),
-            style: 'destructive',
-            onPress: () => {
-              Alert.alert(
-                t('channelScreen_deleteChannelBtn'),
-                t('channelScreen_deleteChannelBody'),
-                [
-                  { text: t('common_cancel'), style: 'cancel' },
-                  {
-                    text: t('channelScreen_deleteForever'),
-                    style: 'destructive',
-                    onPress: async () => {
-                      try {
-                        await supabase.from('channels').delete().eq('id', id)
-                        router.replace('/community?tab=channels' as any)
-                      } catch (e: any) {
-                        Alert.alert(t('common_error'), e.message)
-                      }
-                    },
-                  },
-                ]
-              )
+            label: t('channelScreen_deleteChannelBtn'),
+            danger: true,
+            onPress: async () => {
+              if (
+                await confirm({
+                  title: t('channelScreen_deleteChannelBtn'),
+                  message: t('channelScreen_deleteChannelBody'),
+                  confirmLabel: t('channelScreen_deleteForever'),
+                  cancelLabel: t('common_cancel'),
+                  danger: true,
+                })
+              ) {
+                try {
+                  await supabase.from('channels').delete().eq('id', id)
+                  router.replace('/community?tab=channels' as any)
+                } catch (e: any) {
+                  await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+                }
+              }
             },
           },
-          { text: t('common_cancel'), style: 'cancel' },
-        ]
-      )
+        ],
+      })
       return
     }
 
@@ -728,24 +725,18 @@ export default function ChannelChat() {
 
   // ─── Community safety: report + block (WS3) ────────────────────────────────
   function handleReportMessage(msgId: string, authorId: string) {
-    Alert.alert(
-      t('safety_reportTitle'),
-      t('safety_reportBody'),
-      [
-        ...REPORT_REASONS.map((reason: ReportReason) => ({
-          text: t(`safety_reason_${reason}` as any),
-          onPress: async () => {
-            try {
-              await reportContent({ contentType: 'channel_post', contentId: msgId, authorId, reason })
-              toast.show({ title: t('safety_reportedTitle'), message: t('safety_reportedBody') })
-            } catch (e: any) {
-              Alert.alert(t('common_error'), e.message ?? '')
-            }
-          },
-        })),
-        { text: t('common_cancel'), style: 'cancel' as const },
-      ]
-    )
+    const items: ActionSheetItem[] = REPORT_REASONS.map((reason: ReportReason) => ({
+      label: t(`safety_reason_${reason}` as any),
+      onPress: async () => {
+        try {
+          await reportContent({ contentType: 'channel_post', contentId: msgId, authorId, reason })
+          toast.show({ title: t('safety_reportedTitle'), message: t('safety_reportedBody') })
+        } catch (e: any) {
+          await confirm({ title: t('common_error'), message: e.message ?? '', cancelLabel: null })
+        }
+      },
+    }))
+    setSheet({ title: t('safety_reportTitle'), message: t('safety_reportBody'), items })
   }
 
   async function handleBlockUser(authorId: string, authorName?: string) {
@@ -1379,6 +1370,17 @@ export default function ChannelChat() {
         leaving={leaving}
         onCancel={() => setShowLeave(false)}
         onConfirm={confirmLeave}
+      />
+
+      {/* Paper-styled multi-choice action sheets (message actions, transfer,
+          report reasons) */}
+      <PaperActionSheet
+        visible={!!sheet}
+        title={sheet?.title}
+        message={sheet?.message}
+        items={sheet?.items ?? []}
+        cancelLabel={t('common_cancel')}
+        onRequestClose={() => setSheet(null)}
       />
 
       {/* Paper-styled confirm/error dialogs */}
