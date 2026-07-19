@@ -3590,4 +3590,10 @@ export const en: TranslationKeys = {
   cyclePhase_ovulation_label: "Ovulation",
   cyclePhase_luteal_label: "Luteal Phase",
   cycleInsights_unlocked_toast: "Unlocked ✨ {{metric}} is ready",
+  cycleInsights_lock_period: "Log a period to unlock",
+  cycleInsights_lock_regularity: "Log 3 cycles to unlock",
+  cycleInsights_lock_temperature: "Log a temperature to unlock",
+  cycleInsights_lock_symptom: "Log a symptom to unlock",
+  cycleInsights_lock_mood: "Log your mood to unlock",
+  cycleInsights_lock_intimacy: "Log to unlock",
 }

@@ -13,7 +13,7 @@
  * previously collected but never shown. Intercourse is TTC-only.
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Line as SvgLine, Circle as SvgCircle, Path as SvgPath, Text as SvgText } from 'react-native-svg'
@@ -21,6 +21,7 @@ import Svg, { Line as SvgLine, Circle as SvgCircle, Path as SvgPath, Text as Svg
 import { useTheme, radius, shadows, useDiffuseTheme, diffuseFont, stickers as stickerPalette } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseStatCard } from '../ui/diffuse/DiffusePrimitives'
+import { UnlockToast } from '../ui/diffuse/UnlockToast'
 import { Character } from '../characters/Characters'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { Moon, Burst, Flower, Heart, Drop, Star } from '../ui/Stickers'
@@ -41,6 +42,8 @@ import {
   useIntercourseStats,
   useCycleIntent,
 } from '../../lib/cycleAnalytics'
+import { cycleUnlocks, type CycleMetricKey, type LockState } from '../../lib/cycleUnlocks'
+import { useUnlockStore } from '../../store/useUnlockStore'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { CycleDetailSheet, type CycleDetailType } from './CycleDetailSheets'
@@ -76,6 +79,59 @@ export function CycleAnalytics() {
   const { data: mucus } = useCervicalMucusStats()
   const { data: intercourse } = useIntercourseStats()
   const { data: intent } = useCycleIntent()
+
+  // ── Lock state — which metrics are still gated behind a logging threshold.
+  const closed = (history?.cycles ?? []).filter((c) => c.lengthDays != null).length
+  const unlocks = cycleUnlocks({
+    cyclesClosed: closed,
+    periodsLogged: history?.cycles.length ?? 0,
+    bbtReadings: bbt?.series?.length ?? 0,
+    symptomCount: pms?.topSymptoms?.reduce((a, s) => a + s.count, 0) ?? 0,
+    moodCount: mood?.recent?.length ?? 0,
+    intercourseCount: intercourse?.thisCycleCount ?? 0,
+  })
+
+  // ── One-time unlock celebration toast ───────────────────────────────────
+  // METRIC_LABEL maps each metric key to its human tile label (t()-resolved)
+  // so the toast can say "Unlocked ✨ Regularity is ready".
+  const METRIC_LABEL: Record<CycleMetricKey, string> = {
+    cycleLength: t('cycleAnalytics_tileLabel_length'),
+    regularity: t('cycleAnalytics_tileLabel_regularity'),
+    fertile: t('cycleAnalytics_tileLabel_fertile'),
+    bbt: t('cycleAnalytics_tileLabel_bbt'),
+    pms: t('cycleAnalytics_tileLabel_pms'),
+    mood: t('cycleAnalytics_tileLabel_mood'),
+    intercourse: t('cycleAnalytics_tileLabel_intercourse'),
+  }
+
+  const unlockHydrated = useUnlockStore((s) => s.hydrated)
+  const hasCelebrated = useUnlockStore((s) => s.hasCelebrated)
+  const markCelebrated = useUnlockStore((s) => s.markCelebrated)
+  const markManyCelebrated = useUnlockStore((s) => s.markManyCelebrated)
+  const [unlockToast, setUnlockToast] = useState<string | null>(null) // metric label to show
+  const seededRef = useRef(false)
+  const unlockedKeys = (Object.keys(unlocks) as CycleMetricKey[])
+    .filter((k) => !unlocks[k].locked)
+    .map((k) => `cycle:${k}`)
+  const unlockedSig = unlockedKeys.join(',')
+
+  useEffect(() => {
+    if (!unlockHydrated) return
+    if (!seededRef.current) {
+      // First hydrated render: whatever is already unlocked is "known", not
+      // "just happened" — seed it silently so we never spray toasts for
+      // metrics a returning user unlocked in a past session.
+      markManyCelebrated(unlockedKeys)
+      seededRef.current = true
+      return
+    }
+    const fresh = unlockedKeys.find((k) => !hasCelebrated(k))
+    if (fresh) {
+      markCelebrated(fresh)
+      setUnlockToast(METRIC_LABEL[fresh.split(':')[1] as CycleMetricKey])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlockHydrated, unlockedSig])
 
   // Live cycle config — same derivation CycleHome uses.
   const cycleConfig: CycleConfig = useMemo(() => {
@@ -231,6 +287,8 @@ export function CycleAnalytics() {
             label={t('cycleAnalytics_tileLabel_length')}
             hue={stickerPalette.pink}
             onPress={() => setDetailType('cycleLength')}
+            lock={unlocks.cycleLength}
+            lockHint={t('cycleInsights_lock_period')}
           />
           <GridTile
             tint={stickers.lilacSoft}
@@ -241,6 +299,8 @@ export function CycleAnalytics() {
             label={t('cycleAnalytics_tileLabel_regularity')}
             hue={stickerPalette.lilac}
             onPress={() => setDetailType('regularity')}
+            lock={unlocks.regularity}
+            lockHint={t('cycleInsights_lock_regularity')}
           />
           <GridTile
             tint={stickers.yellowSoft}
@@ -251,6 +311,8 @@ export function CycleAnalytics() {
             label={t('cycleAnalytics_tileLabel_fertile')}
             hue={stickerPalette.pink}
             onPress={() => setDetailType('fertile')}
+            lock={unlocks.fertile}
+            lockHint={t('cycleInsights_lock_period')}
           />
           <GridTile
             tint={stickers.blueSoft}
@@ -261,6 +323,8 @@ export function CycleAnalytics() {
             label={t('cycleAnalytics_tileLabel_bbt')}
             hue={stickerPalette.blue}
             onPress={() => setDetailType('bbt')}
+            lock={unlocks.bbt}
+            lockHint={t('cycleInsights_lock_temperature')}
           />
           {/* Cervical mucus: cream-only tile. Under Diffuse it's dropped from
               the surface (niche fertility sub-signal, usually empty) — its data
@@ -286,6 +350,8 @@ export function CycleAnalytics() {
             label={t('cycleAnalytics_tileLabel_pms')}
             hue={stickerPalette.coral}
             onPress={() => setDetailType('pms')}
+            lock={unlocks.pms}
+            lockHint={t('cycleInsights_lock_symptom')}
           />
           {/* Mood: cream-only tile. Under Diffuse mood lives as the inline
               "Mood This Cycle" section below (matches pregnancy — mood is never
@@ -312,6 +378,8 @@ export function CycleAnalytics() {
               label={t('cycleAnalytics_tileLabel_intercourse')}
               hue={stickerPalette.pink}
               onPress={() => setDetailType('intercourse')}
+              lock={unlocks.intercourse}
+              lockHint={t('cycleInsights_lock_intimacy')}
             />
           )}
         </View>
@@ -320,7 +388,18 @@ export function CycleAnalytics() {
             it duplicated the BASAL TEMP tile. BBT's BeadedThread now lives only
             in the bbt detail sheet (tap the tile). Mood keeps its inline section
             (mood is section-only under Diffuse, never a tile). */}
-        {diffuse && mood?.recent && mood.recent.length > 0 && (
+        {diffuse && unlocks.mood.locked && (
+          <Section
+            title={t('cycleAnalytics_section_mood_title')}
+            onPress={() => setDetailType('mood')}
+          >
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, color: dt.colors.ink3 }}>
+              {t('cycleInsights_lock_mood')}
+            </Text>
+          </Section>
+        )}
+
+        {diffuse && !unlocks.mood.locked && mood?.recent && mood.recent.length > 0 && (
           <Section
             title={t('cycleAnalytics_section_mood_title')}
             subtitle={t('cycleAnalytics_section_mood_sub')}
@@ -343,6 +422,10 @@ export function CycleAnalytics() {
       </ScrollView>
 
       <CycleDetailSheet type={detailType} accent={accent} onClose={() => setDetailType(null)} />
+
+      {unlockToast && (
+        <UnlockToast metricLabel={unlockToast} onDone={() => setUnlockToast(null)} />
+      )}
     </View>
   )
 }
@@ -427,7 +510,7 @@ function CycleLengthTrend({
 /** A uniform half-width stat tile: sticker + value + warm sub-line. No tilt —
  *  the grid reads as one calm system. Shares TiltChip's inner layout. */
 function GridTile({
-  tint, sticker, diffuseIcon, value, sub, label, hue, onPress,
+  tint, sticker, diffuseIcon, value, sub, label, hue, onPress, lock, lockHint,
 }: {
   tint: string
   sticker: React.ReactNode
@@ -437,6 +520,8 @@ function GridTile({
   label: string
   hue: string
   onPress?: () => void
+  lock?: LockState
+  lockHint?: string
 }) {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
@@ -454,6 +539,9 @@ function GridTile({
         tint={hue}
         bloomIntensity={0.55}
         onPress={onPress}
+        locked={lock?.locked}
+        lockProgress={lock && lock.target > 1 ? { current: lock.current, target: lock.target } : undefined}
+        lockHint={lockHint}
         style={{ width: '47%', flexGrow: 1 }}
       />
     )

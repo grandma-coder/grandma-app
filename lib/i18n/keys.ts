@@ -3584,4 +3584,10 @@ export interface TranslationKeys {
   cyclePhase_ovulation_label: string
   cyclePhase_luteal_label: string
   cycleInsights_unlocked_toast: string
+  cycleInsights_lock_period: string
+  cycleInsights_lock_regularity: string
+  cycleInsights_lock_temperature: string
+  cycleInsights_lock_symptom: string
+  cycleInsights_lock_mood: string
+  cycleInsights_lock_intimacy: string
 }

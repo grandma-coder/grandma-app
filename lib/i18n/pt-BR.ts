@@ -3304,4 +3304,10 @@ export const ptBR: TranslationKeys = {
   cyclePhase_ovulation_label: "Ovulação",
   cyclePhase_luteal_label: "Fase Lútea",
   cycleInsights_unlocked_toast: "Desbloqueado ✨ {{metric}} está pronto",
+  cycleInsights_lock_period: "Registre um período para desbloquear",
+  cycleInsights_lock_regularity: "Registre 3 ciclos para desbloquear",
+  cycleInsights_lock_temperature: "Registre uma temperatura para desbloquear",
+  cycleInsights_lock_symptom: "Registre um sintoma para desbloquear",
+  cycleInsights_lock_mood: "Registre seu humor para desbloquear",
+  cycleInsights_lock_intimacy: "Registre para desbloquear",
 }
