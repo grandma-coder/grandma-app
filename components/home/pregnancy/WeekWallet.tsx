@@ -39,17 +39,24 @@ import {
 import { Leaf } from '../../ui/Stickers'
 import { GrandmaLogo } from '../../ui/GrandmaLogo'
 
-/** Superset of card ids the week wallet can show (contextual + shortcuts). */
-type PregCardId = WalletCardId | 'rewards' | 'channels' | 'village'
+/**
+ * Superset of card ids the week wallet can render (contextual + shortcuts).
+ * `essentials` is intentionally excluded — it's pinned above the wallet by the
+ * home (EssentialsWalletCard), never listed inside the stack.
+ */
+type PregCardId = Exclude<WalletCardId, 'essentials'> | 'rewards' | 'channels' | 'village'
 
 interface WeekWalletProps {
   weekNumber: number
   todayLogs: Record<string, TodayLogEntry>
   userId: string | undefined
-  onLogMetric: (type: string) => void
+  /** Undefined for a view-only caregiver → the kick-count log card is inert. */
+  onLogMetric?: (type: string) => void
   onOpenAppointment: (appt: StandardAppointment) => void
   onOpenWeekDetail: () => void
   onOpenBirthGuide: () => void
+  /** Caregiver share allowlist (card ids). Null → owner: show every card. */
+  visibleCardIds?: Set<string> | null
 }
 
 const SHORTCUT_TONE: Record<string, WalletTone> = { rewards: 'coral', channels: 'peach', village: 'green' }
@@ -57,6 +64,7 @@ const SHORTCUT_TONE: Record<string, WalletTone> = { rewards: 'coral', channels: 
 export function WeekWallet({
   weekNumber, todayLogs, userId,
   onLogMetric, onOpenAppointment, onOpenWeekDetail, onOpenBirthGuide,
+  visibleCardIds = null,
 }: WeekWalletProps) {
   const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
@@ -76,22 +84,26 @@ export function WeekWallet({
 
   const appt = getUpcomingAppointment(weekNumber) ?? null
   const weekData = getWeekData(weekNumber)
+  // `essentials` is pinned by the home above the wallet (EssentialsWalletCard),
+  // so it never lives in the stack.
   const defaultCards = buildWalletCards({
     weekNumber,
     todayLogs,
     hasWeekTip: !!weekData?.momTip,
     upcomingAppointment: appt,
-  })
+  }).filter((c): c is typeof c & { id: PregCardId } => c.id !== 'essentials')
 
   const shortcutOnlyIds: PregCardId[] = WALLET_SHORTCUTS
     .map((s) => s.key)
     .filter((k) => !defaultCards.some((c) => c.id === k)) as PregCardId[]
   const availableIds: PregCardId[] = [...defaultCards.map((c) => c.id), ...shortcutOnlyIds]
 
-  const displayedIds: PregCardId[] =
+  // For a caregiver, restrict to the shared allowlist (owner → null → no filter).
+  const displayedIds: PregCardId[] = (
     enabledKeys === null
       ? defaultCards.map((c) => c.id)
       : enabledKeys.filter((k): k is PregCardId => availableIds.includes(k as PregCardId))
+  ).filter((id) => visibleCardIds === null || visibleCardIds.has(id))
 
   const toneFor = (id: PregCardId): WalletTone =>
     defaultCards.find((c) => c.id === id)?.tone ?? SHORTCUT_TONE[id] ?? 'surface'
@@ -170,7 +182,7 @@ export function WeekWallet({
     if (id === 'village') return router.push('/village')
     if (id === 'appointment') return appt && onOpenAppointment(appt)
     if (id === 'week_tip') return onOpenWeekDetail()
-    if (id === 'kicks') return onLogMetric('kick_count')
+    if (id === 'kicks') return onLogMetric?.('kick_count')
     if (id === 'reminders') return setRemindersOpen(true)
     if (linkOnly) return
   }

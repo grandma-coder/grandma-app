@@ -29,8 +29,9 @@ interface Props {
   todayLogs: Record<string, TodayLogEntry>
   weekNumber: number
   userId: string | undefined
-  /** Open the log sheet for a given metric. Maps pill key → InlineLogType. */
-  onLogMetric: (type: string) => void
+  /** Open the log sheet for a given metric. Maps pill key → InlineLogType.
+      Undefined for a view-only caregiver → the quick-log chips are inert. */
+  onLogMetric?: (type: string) => void
   /** Render just the inner content (no PaperCard/DiffuseFieldSurface chrome).
    *  Used when embedded inside another card, e.g. the Week Wallet. */
   bare?: boolean
@@ -179,7 +180,8 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           return (
             <Pressable
               key={p.key}
-              onPress={() => onLogMetric(p.logType)}
+              onPress={onLogMetric ? () => onLogMetric(p.logType) : undefined}
+              disabled={!onLogMetric}
               style={({ pressed }) => [
                 styles.chip,
                 { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, opacity: pressed ? 0.8 : 1 },

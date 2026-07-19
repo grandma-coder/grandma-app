@@ -27,7 +27,9 @@ import { useTheme, diffuseFont, useDiffuseTheme } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { useChildStore } from '../../store/useChildStore'
 import { useProfile } from '../../lib/useProfile'
+import type { CaregiverView } from '../../lib/caregiverPermissions'
 import { useTranslation } from '../../lib/i18n'
 import { HomeGreeting } from './HomeGreeting'
 import { MonoCaps } from '../ui/Typography'
@@ -54,6 +56,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { WeekCard } from './pregnancy/WeekCard'
 import { DailyMessageCard } from './pregnancy/DailyMessageCard'
 import { WeekWallet } from './pregnancy/WeekWallet'
+import { EssentialsWalletCard } from './EssentialsWalletCard'
 import { TodaySummaryCard } from './pregnancy/TodaySummaryCard'
 import { WeekDetailModal } from './pregnancy/WeekDetailModal'
 import { BirthGuideModal } from '../pregnancy/BirthGuideModal'
@@ -193,10 +196,26 @@ const INLINE_LOG_TITLE_KEY: Record<Exclude<InlineLogType, null>, string> = {
   nutrition: 'pregnancy_logTitle_nutrition',
 }
 
-interface PregnancyHomeProps { topInset?: number }
+interface PregnancyHomeProps {
+  topInset?: number
+  /** Non-null when a caregiver (not the owner) is viewing — filters cards,
+      keeps log entry points inert without log_activity, pins essentials. */
+  caregiverView?: CaregiverView | null
+}
 
-export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
+export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProps) {
   const { colors } = useTheme()
+  // Only read for the pinned essentials card's childId (caregiver path); owners
+  // pass no caregiverView so this is inert for them.
+  const activeChild = useChildStore((s) => s.activeChild)
+  // Owner (caregiverView null) sees every card; a caregiver sees only the shared
+  // cards. `readOnly` makes log entry points inert without log_activity.
+  const show = (id: string) => !caregiverView || caregiverView.visible.has(id)
+  const readOnly = !!caregiverView && !caregiverView.canLog
+  // Week Wallet holds these cards (essentials is pinned separately). Hide the
+  // whole wallet block for a caregiver whose share includes none of them.
+  const WALLET_CARD_IDS = ['appointment', 'week_tip', 'kicks', 'reminders', 'exams', 'birth_guide', 'ask_grandma']
+  const walletHasVisibleCard = !caregiverView || WALLET_CARD_IDS.some((id) => caregiverView.visible.has(id))
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const bg = diffuse ? dt.colors.bg : colors.bg
@@ -321,19 +340,36 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
         />
       </View>
 
+      {/* 0. Essentials — pinned above everything for a caregiver. */}
+      {caregiverView && caregiverView.visible.has('essentials') && activeChild?.id && (
+        <View style={styles.section}>
+          <EssentialsWalletCard
+            childId={activeChild.id}
+            ownerUserId={caregiverView.ownerUserId}
+            showFull={caregiverView.showFullEssentials}
+            pinned
+          />
+        </View>
+      )}
+
       {/* 1. Hero Carousel — full-width, tappable */}
+      {show('week-hero') && (
       <BabyHeroCarousel
         currentWeek={weekNumber}
         daysToGo={daysToGo}
         onPressWeek={handleHeroPress}
       />
+      )}
 
       {/* 2. Daily Message */}
+      {show('daily_message') && (
       <View style={styles.section}>
         <DailyMessageCard />
       </View>
+      )}
 
       {/* 3. Quick-log launcher — standalone, customizable */}
+      {show('today_summary') && (
       <View style={styles.section}>
         {diffuse ? (
           <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
@@ -346,11 +382,13 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
           todayLogs={todayLogs}
           weekNumber={weekNumber}
           userId={userId}
-          onLogMetric={(type) => setActiveLog(type as InlineLogType)}
+          onLogMetric={readOnly ? undefined : (type) => setActiveLog(type as InlineLogType)}
         />
       </View>
+      )}
 
       {/* 4. Week Wallet — collapsible stack (reminders + shortcuts) */}
+      {walletHasVisibleCard && (
       <View style={styles.section}>
         {diffuse ? (
           <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
@@ -363,15 +401,17 @@ export function PregnancyHome({ topInset = 0 }: PregnancyHomeProps) {
           weekNumber={weekNumber}
           todayLogs={todayLogs}
           userId={userId}
-          onLogMetric={(type) => setActiveLog(type as InlineLogType)}
+          onLogMetric={readOnly ? undefined : (type) => setActiveLog(type as InlineLogType)}
           onOpenAppointment={(appt) => setApptDetail(appt)}
           onOpenWeekDetail={() => {
             setDetailWeek(weekNumber)
             setWeekDetailVisible(true)
           }}
           onOpenBirthGuide={() => setBirthGuideVisible(true)}
+          visibleCardIds={caregiverView?.visible ?? null}
         />
       </View>
+      )}
 
       {/* Week detail modal */}
       <WeekDetailModal
