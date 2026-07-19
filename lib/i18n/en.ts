@@ -2568,6 +2568,10 @@ export const en: TranslationKeys = {
 
   // ─── B6: Community — channel/[id] ─────────────────────────────────────────
   channelScreen_nameFallback: 'Channel',
+  channelScreen_photoSafetyTitle: 'Photo Safety Guidelines',
+  channelScreen_photoSafetyBody: 'To protect children\u2019s privacy and safety:\n\n\u2022 Do NOT share photos showing children\u2019s faces\n\u2022 Blur or crop faces before sharing\n\u2022 No identifying information (school names, addresses)\n\u2022 Product and item photos are always welcome\n\nViolations will result in content removal and possible account suspension.',
+  channelScreen_photoSafetyAgree: 'I Agree',
+  channelScreen_photoSafetyDecline: 'I Decline',
   channelScreen_host: 'Host',
   channelScreen_leave: 'Leave',
   channelScreen_requested: 'Requested',

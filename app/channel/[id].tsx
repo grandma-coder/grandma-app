@@ -86,7 +86,7 @@ import {
 } from '../../lib/channelPosts'
 import { supabase } from '../../lib/supabase'
 import { reportContent, blockUser, REPORT_REASONS, type ReportReason } from '../../lib/communitySafety'
-import { checkPhotoSafety } from '../../lib/photoSafety'
+import { hasAgreedToPhotoSafety, setPhotoSafetyAgreed } from '../../lib/photoSafety'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { useConfirmDialog } from '../../components/ui/useConfirm'
 import { useTranslation } from '../../lib/i18n'
@@ -408,9 +408,17 @@ export default function ChannelChat() {
   // ─── Photo picker ─────────────────────────────────────────────────────
 
   async function pickPhoto() {
-    // Safety check before first photo upload
-    const safe = await checkPhotoSafety()
-    if (!safe) return
+    // Paper photo-safety guidelines gate before the first upload.
+    if (!(await hasAgreedToPhotoSafety())) {
+      const agreed = await confirm({
+        title: t('channelScreen_photoSafetyTitle'),
+        message: t('channelScreen_photoSafetyBody'),
+        confirmLabel: t('channelScreen_photoSafetyAgree'),
+        cancelLabel: t('channelScreen_photoSafetyDecline'),
+      })
+      if (!agreed) return
+      await setPhotoSafetyAgreed()
+    }
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({})

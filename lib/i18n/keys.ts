@@ -3424,6 +3424,10 @@ export interface TranslationKeys {
   channelScreen_joinChannelTitle: string
   channelScreen_joinChannelBody: string
   channelScreen_joinFailed: string
+  channelScreen_photoSafetyTitle: string
+  channelScreen_photoSafetyBody: string
+  channelScreen_photoSafetyAgree: string
+  channelScreen_photoSafetyDecline: string
   channelScreen_thisChannel: string
   channelScreen_privateChannelTitle: string
   channelScreen_privateChannelShareBody: string
