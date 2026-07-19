@@ -30,7 +30,11 @@ export interface CaregiverView {
   canLog: boolean
   /** emergency granted → essentials card shows the full (emergency + insurance) rows. */
   showFullEssentials: boolean
-  /** Owner user id, for fetching the child's essentials (childEssentials). */
+  /**
+   * Owner user id. Retained for the future caregiver emergency_contacts/insurance
+   * migration; the essentials card now reads the PHI-masked active child from the
+   * store (get_caregiver_children RPC) rather than fetching by owner id.
+   */
   ownerUserId: string
 }
 
