@@ -19,12 +19,10 @@ import { cToDisplay, tempLabel } from '../../lib/units'
 import { Burst, Flower } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
 import { SymptomBlob, CustomSymptomBlob } from '../calendar/symptomStickers'
-import { ALL_SYMPTOMS, symptomLabel, type SymptomId } from '../../lib/cycleSymptoms'
+import { symptomLabel, resolveSymptomId } from '../../lib/cycleSymptoms'
 import { MiniBarChart, MiniLineChart, BeadedThread } from './shared/MiniCharts'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import { useTranslation } from '../../lib/i18n'
-
-const KNOWN_SYMPTOM_IDS = new Set<string>(ALL_SYMPTOMS.map((s) => s.id))
 
 export type CycleDetailType =
   | 'cycleLength'
@@ -465,14 +463,16 @@ function PMSDetail() {
         ) : (
           data.topSymptoms.map((s) => {
             const pct = (s.count / maxCount) * 100
-            const isKnown = KNOWN_SYMPTOM_IDS.has(s.name)
-            const label = isKnown ? symptomLabel(s.name as SymptomId) : s.name
+            // Resolve the stored value (id, canonical label, or seed label) to a
+            // SymptomId. null → a genuine free-text 'Other' symptom.
+            const resolvedId = resolveSymptomId(s.name)
+            const label = resolvedId ? symptomLabel(resolvedId) : s.name
             return (
               <View key={s.name} style={pmsStyles.symptomRow}>
                 <View style={pmsStyles.symptomLeft}>
                   {diffuse ? (
-                    isKnown ? (
-                      <SymptomBlob id={s.name as SymptomId} size={40} />
+                    resolvedId ? (
+                      <SymptomBlob id={resolvedId} size={40} />
                     ) : (
                       <CustomSymptomBlob size={40} />
                     )

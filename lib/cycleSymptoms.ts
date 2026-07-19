@@ -51,3 +51,37 @@ export function suggestedForPhase(phase: CyclePhase): SymptomId[] {
 export function symptomLabel(id: SymptomId): string {
   return ALL_SYMPTOMS.find((s) => s.id === id)?.label ?? id
 }
+
+/**
+ * Resolve a raw stored symptom string to its SymptomId, tolerant of the
+ * several forms a value can take in `cycle_logs`:
+ *  - the id itself ('cravings', 'back-pain')   ← what SymptomsForm saves
+ *  - the canonical label ('Bloated', 'Tender') ← symptomLabel()
+ *  - legacy/seed display labels ('Bloating', 'Breast tenderness')
+ *    written by devSeed.ts, which don't match the canonical ids/labels.
+ * Matching is case-insensitive and ignores spaces/hyphens so 'Back pain',
+ * 'back-pain', and 'backpain' all resolve. Returns null for a genuinely
+ * unknown (free-text 'Other') symptom.
+ */
+const NORMALIZE = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, '')
+
+// Extra aliases for seed/legacy label variants that don't equal id or label.
+const SYMPTOM_ALIASES: Record<string, SymptomId> = {
+  bloating: 'bloated',
+  breasttenderness: 'tender-breasts',
+  tenderbreasts: 'tender-breasts',
+  lowmood: 'low-mood',
+  backpain: 'back-pain',
+}
+
+export function resolveSymptomId(raw: string): SymptomId | null {
+  const n = NORMALIZE(raw)
+  // 1. direct id match (normalized)
+  const byId = ALL_SYMPTOMS.find((s) => NORMALIZE(s.id) === n)
+  if (byId) return byId.id
+  // 2. canonical label match (normalized)
+  const byLabel = ALL_SYMPTOMS.find((s) => NORMALIZE(s.label) === n)
+  if (byLabel) return byLabel.id
+  // 3. known alias
+  return SYMPTOM_ALIASES[n] ?? null
+}
