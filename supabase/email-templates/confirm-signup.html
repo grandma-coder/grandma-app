@@ -2,8 +2,8 @@
   Supabase → Authentication → Email Templates → "Confirm signup"
   Suggested subject:  Welcome to grandma.app — confirm your email
   Diffuse (v3) styling: paper #F4F1E8, ink ramp, Hanken-style bold sans header,
-  Space-Mono eyebrow, pregnancy-field accent #8F5FC6. Replace {{LOGO_URL}} with a
-  hosted PNG or delete the <img> line.
+  Space-Mono eyebrow, pregnancy-field accent #8F5FC6. The app icon is served from
+  the command center's public URL; swap it for your own CDN/host if you prefer.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -12,15 +12,19 @@
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px; background-color:#FBFAF5; border-radius:28px; border:1px solid rgba(26,25,22,0.12); overflow:hidden;">
-            <!-- Field header strip (the Diffuse generative gradient) -->
+            <!-- Field header strip (the Diffuse generative gradient) + app icon -->
             <tr>
-              <td style="padding:0;">
+              <td style="padding:0; position:relative;">
                 <div style="height:96px; background:radial-gradient(120% 120% at 15% 20%, #F8C9A6 0%, rgba(248,201,166,0) 55%), radial-gradient(120% 120% at 85% 10%, #F2AEC6 0%, rgba(242,174,198,0) 55%), radial-gradient(120% 120% at 30% 95%, #BDA4E2 0%, rgba(189,164,226,0) 60%), radial-gradient(120% 120% at 95% 90%, #F8E1B2 0%, rgba(248,225,178,0) 55%), #F2AEC6;"></div>
               </td>
             </tr>
             <tr>
-              <td align="left" style="padding:24px 32px 4px 32px;">
-                <!-- <img src="{{LOGO_URL}}" width="44" height="44" alt="grandma.app" style="display:block; border-radius:12px; margin-bottom:12px;" /> -->
+              <td align="left" style="padding:0 32px;">
+                <img src="https://grandma-command-center.vercel.app/grandma-app-icon.png" width="64" height="64" alt="grandma.app" style="display:block; border-radius:16px; margin-top:-32px; border:3px solid #FBFAF5; box-shadow:0 6px 16px rgba(26,25,22,0.12);" />
+              </td>
+            </tr>
+            <tr>
+              <td align="left" style="padding:16px 32px 4px 32px;">
                 <div style="font-family:'Courier New',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#807A6E;">grandma.app · welcome</div>
               </td>
             </tr>
