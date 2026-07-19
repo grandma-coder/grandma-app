@@ -105,6 +105,22 @@ export const contentSources = pgTable("content_sources", {
   updatedBy: text("updated_by"),
 })
 
+export const contentNews = pgTable("content_news", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  summary: text("summary"),
+  body: text("body").notNull(),
+  topic: text("topic"),
+  mode: text("mode"),
+  sources: jsonb("sources").notNull().default([]),
+  status: text("status").notNull().default("draft"),
+  imageUrl: text("image_url"),
+  createdBy: text("created_by"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const betaTesters = pgTable("beta_testers", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),

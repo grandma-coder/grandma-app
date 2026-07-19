@@ -4,14 +4,16 @@ import { DailyQuestionsEditor } from "./DailyQuestionsEditor"
 import { AffirmationsEditor } from "./AffirmationsEditor"
 import { BirthGuideEditor } from "./BirthGuideEditor"
 import { SourcesEditor } from "./SourcesEditor"
+import { NewsEditor } from "./NewsEditor"
 
-type Tab = "questions" | "affirmations" | "birth" | "sources"
+type Tab = "questions" | "affirmations" | "birth" | "sources" | "news"
 
 const TABS: { id: Tab; label: string; ready: boolean }[] = [
   { id: "questions", label: "Daily questions", ready: true },
   { id: "affirmations", label: "Affirmations", ready: true },
   { id: "birth", label: "Birth guide", ready: true },
   { id: "sources", label: "Sources", ready: true },
+  { id: "news", label: "News", ready: true },
 ]
 
 export function ContentWorkspace({ isAdmin }: { isAdmin: boolean }) {
@@ -43,6 +45,7 @@ export function ContentWorkspace({ isAdmin }: { isAdmin: boolean }) {
       {tab === "affirmations" && <AffirmationsEditor isAdmin={isAdmin} />}
       {tab === "birth" && <BirthGuideEditor isAdmin={isAdmin} />}
       {tab === "sources" && <SourcesEditor isAdmin={isAdmin} />}
+      {tab === "news" && <NewsEditor isAdmin={isAdmin} />}
     </div>
   )
 }
