@@ -136,6 +136,7 @@ interface StatCardProps {
   accent?: string          // the metric's hue — drives a soft per-card bloom
   accent2?: string         // optional second bloom stop (defaults to a warm wash)
   tint?: string            // legacy alias for `accent`
+  bloomIntensity?: number  // multiplier on the bloom opacities (default 1 = unchanged)
   onPress?: () => void
   flex?: number
   style?: StyleProp<ViewStyle>
@@ -154,6 +155,7 @@ export function DiffuseStatCard({
   accent,
   accent2,
   tint,
+  bloomIntensity,
   onPress,
   flex,
   style,
@@ -165,6 +167,7 @@ export function DiffuseStatCard({
   // Reads as soft color (per the v3 reference), not a grey wash.
   const c1 = accent ?? tint ?? g1
   const c2 = accent2 ?? g2 ?? g3
+  const bi = bloomIntensity ?? 1
   const hasValue = value !== undefined && value !== '' && value !== '—'
 
   return (
@@ -178,8 +181,8 @@ export function DiffuseStatCard({
       ]}
     >
       {/* soft feathered corner bloom (herotile spec: radial wash top-right) */}
-      <SoftBloom color={c1} cx="82%" cy="12%" opacity={isDark ? 0.34 : 0.5} spread={0.55} />
-      <SoftBloom color={c2} cx="62%" cy="40%" opacity={isDark ? 0.22 : 0.32} spread={0.5} />
+      <SoftBloom color={c1} cx="82%" cy="12%" opacity={(isDark ? 0.34 : 0.5) * bi} spread={0.55} />
+      <SoftBloom color={c2} cx="62%" cy="40%" opacity={(isDark ? 0.22 : 0.32) * bi} spread={0.5} />
       <DiffuseGrain radius={dp.statCard.borderRadius} opacity={0.05} />
 
       <View style={dp.statHeaderRow}>

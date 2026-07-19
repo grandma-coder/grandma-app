@@ -236,7 +236,7 @@ export function CycleAnalytics() {
             value={avgLabel === '—' ? '—' : `${avgLabel}${t('cycle_ring_unit_d')}`}
             sub={t('cycleAnalytics_lengthSub')}
             label={t('cycleAnalytics_tileLabel_length')}
-            accent={accent}
+            hue={stickerPalette.pink}
             onPress={() => setDetailType('cycleLength')}
           />
           <GridTile
@@ -246,7 +246,7 @@ export function CycleAnalytics() {
             value={regularLabel}
             sub={regularSub}
             label={t('cycleAnalytics_tileLabel_regularity')}
-            accent={accent}
+            hue={stickerPalette.lilac}
             onPress={() => setDetailType('regularity')}
           />
           <GridTile
@@ -256,7 +256,7 @@ export function CycleAnalytics() {
             value={fertileLabel}
             sub={fertileSub}
             label={t('cycleAnalytics_tileLabel_fertile')}
-            accent={accent}
+            hue={stickerPalette.pink}
             onPress={() => setDetailType('fertile')}
           />
           <GridTile
@@ -266,7 +266,7 @@ export function CycleAnalytics() {
             value={bbtLabel}
             sub={bbtSub}
             label={t('cycleAnalytics_tileLabel_bbt')}
-            accent={accent}
+            hue={stickerPalette.blue}
             onPress={() => setDetailType('bbt')}
           />
           <GridTile
@@ -276,7 +276,7 @@ export function CycleAnalytics() {
             value={mucusLabel}
             sub={mucusSub}
             label={t('cycleAnalytics_tileLabel_mucus')}
-            accent={accent}
+            hue={stickerPalette.green}
             onPress={() => setDetailType('mucus')}
           />
           <GridTile
@@ -286,7 +286,7 @@ export function CycleAnalytics() {
             value={pmsLabel}
             sub={pmsSub}
             label={t('cycleAnalytics_tileLabel_pms')}
-            accent={accent}
+            hue={stickerPalette.coral}
             onPress={() => setDetailType('pms')}
           />
           <GridTile
@@ -296,7 +296,7 @@ export function CycleAnalytics() {
             value={moodLabel}
             sub={moodSub}
             label={t('cycleAnalytics_tileLabel_mood')}
-            accent={accent}
+            hue={stickerPalette.coral}
             onPress={() => setDetailType('mood')}
           />
           {isTTC && (
@@ -307,7 +307,7 @@ export function CycleAnalytics() {
               value={intercourseLabel}
               sub={intercourseSub}
               label={t('cycleAnalytics_tileLabel_intercourse')}
-              accent={accent}
+              hue={stickerPalette.pink}
               onPress={() => setDetailType('intercourse')}
             />
           )}
@@ -431,7 +431,7 @@ function CycleLengthTrend({
 /** A uniform half-width stat tile: sticker + value + warm sub-line. No tilt —
  *  the grid reads as one calm system. Shares TiltChip's inner layout. */
 function GridTile({
-  tint, sticker, diffuseIcon, value, sub, label, accent, onPress,
+  tint, sticker, diffuseIcon, value, sub, label, hue, onPress,
 }: {
   tint: string
   sticker: React.ReactNode
@@ -439,7 +439,7 @@ function GridTile({
   value: string
   sub: string
   label: string
-  accent: string
+  hue: string
   onPress?: () => void
 }) {
   const { colors, font } = useTheme()
@@ -455,7 +455,8 @@ function GridTile({
         emptyLabel="—"
         icon={diffuseIcon}
         iconNoBloom
-        accent={accent}
+        tint={hue}
+        bloomIntensity={0.55}
         onPress={onPress}
         style={{ width: '47%', flexGrow: 1 }}
       />
