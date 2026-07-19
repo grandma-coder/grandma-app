@@ -1,35 +1,36 @@
 /**
- * Connections (Apr 2026 redesign) — Garage / Channels tabs
+ * Community — Channels + Anonymous, split out of the old /connections shell.
  *
- * Cream canvas, ScreenHeader with bell, paper pill tab bar with ink-filled active.
+ * Two spaces that are both "people talking" (unlike the Village marketplace),
+ * so they live together here behind a 2-tab switcher, each with a one-line
+ * explainer so the difference is unmistakable:
+ *   • Channels  — topic groups you join and post in as yourself.
+ *   • Anonymous — a safe space where your name is never shown (was "Circles").
  */
 
 import { useState, useCallback } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { getUnreadNotificationCount } from '../lib/channelPosts'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../constants/theme'
-import { GarageTab } from '../components/connections/GarageTab'
 import { ChannelsTab } from '../components/connections/ChannelsTab'
 import { CirclesTab } from '../components/connections/CirclesTab'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
 import { useTranslation } from '../lib/i18n'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { getUnreadNotificationCount } from '../lib/channelPosts'
 
-type ConnectionsTab = 'garage' | 'channels' | 'circles'
+type CommunityTab = 'channels' | 'anonymous'
 
-export default function ConnectionsScreen() {
+export default function CommunityScreen() {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
   const params = useLocalSearchParams<{ tab?: string }>()
-  const [tab, setTab] = useState<ConnectionsTab>(
-    params.tab === 'channels' ? 'channels' : params.tab === 'circles' ? 'circles' : 'garage'
-  )
+  const [tab, setTab] = useState<CommunityTab>(params.tab === 'anonymous' ? 'anonymous' : 'channels')
   const [notifCount, setNotifCount] = useState(0)
 
   useFocusEffect(
@@ -38,11 +39,15 @@ export default function ConnectionsScreen() {
     }, [])
   )
 
+  const ink = diffuse ? dt.colors.ink : colors.text
+  const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
+  const explainer = tab === 'channels' ? t('community_channels_explainer') : t('community_anon_explainer')
+
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
         <ScreenHeader
-          title="Connections"
+          title={t('community_title')}
           right={
             <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8}>
               <View style={[styles.bellBtn, diffuse
@@ -60,11 +65,11 @@ export default function ConnectionsScreen() {
         />
       </View>
 
-      {/* Segmented pill tab bar */}
+      {/* Two-tab switcher: Channels | Anonymous */}
       <View style={[styles.tabBar, diffuse
         ? { backgroundColor: 'transparent', borderColor: dt.colors.line, gap: 8 }
         : { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        {(['garage', 'channels', 'circles'] as const).map((tk) => {
+        {(['channels', 'anonymous'] as const).map((tk) => {
           const active = tab === tk
           return (
             <Pressable key={tk} onPress={() => setTab(tk)} style={styles.tabBtnWrap}>
@@ -97,7 +102,7 @@ export default function ConnectionsScreen() {
                         },
                   ]}
                 >
-                  {tk === 'garage' ? 'Village' : tk === 'channels' ? 'Channels' : t('circles_tab')}
+                  {tk === 'channels' ? t('community_tab_channels') : t('community_tab_anon')}
                 </Text>
               </View>
             </Pressable>
@@ -105,50 +110,33 @@ export default function ConnectionsScreen() {
         })}
       </View>
 
-      {tab === 'garage' ? <GarageTab /> : tab === 'channels' ? <ChannelsTab /> : <CirclesTab />}
+      {/* One-line explainer so Channels vs Anonymous is unmistakable */}
+      <Text style={[styles.explainer, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+        {explainer}
+      </Text>
+
+      {tab === 'channels' ? <ChannelsTab /> : <CirclesTab />}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-
   bellBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    width: 34, height: 34, borderRadius: 999, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center', position: 'relative',
   },
   notifBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
+    position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16,
+    borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
   },
   notifBadgeText: { fontSize: 9, fontWeight: '800' },
-
   tabBar: {
-    flexDirection: 'row',
-    padding: 4,
-    marginHorizontal: 20,
-    marginTop: 12,
-    marginBottom: 12,
-    borderRadius: 999,
-    borderWidth: 1,
+    flexDirection: 'row', padding: 4, marginHorizontal: 20, marginTop: 12,
+    marginBottom: 10, borderRadius: 999, borderWidth: 1,
   },
   tabBtnWrap: { flex: 1 },
-  tabBtn: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: 999,
-  },
+  tabBtn: { alignItems: 'center', paddingVertical: 10, borderRadius: 999 },
   tabText: { fontSize: 14, letterSpacing: 0.1 },
+  explainer: { fontSize: 12.5, lineHeight: 17, textAlign: 'center', paddingHorizontal: 32, marginBottom: 12 },
 })

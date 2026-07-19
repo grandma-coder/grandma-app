@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react'
 import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
-import { ChevronRight, ShieldCheck } from 'lucide-react-native'
+import { ChevronRight } from 'lucide-react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useModeStore } from '../../store/useModeStore'
@@ -42,7 +42,6 @@ export function CirclesTab() {
   const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
   const cardBg = diffuse ? dt.colors.surface : colors.surface
   const cardBorder = diffuse ? dt.colors.line : colors.border
-  const accent = diffuse ? dt.stickers.lilac : stickers.lilac
   const iconTint = diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft
 
   function renderItem({ item }: { item: Circle }) {
@@ -74,14 +73,8 @@ export function CirclesTab() {
 
   return (
     <View style={styles.root}>
-      {/* Anonymity reassurance banner */}
-      <View style={[styles.banner, { backgroundColor: diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft, borderRadius: radius.md }]}>
-        <ShieldCheck size={16} color={accent} strokeWidth={2} />
-        <Text style={[styles.bannerText, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-          {t('circles_anonBanner')}
-        </Text>
-      </View>
-
+      {/* The anonymity reassurance now lives in the Community screen's per-tab
+          explainer (community_anon_explainer), so no banner is repeated here. */}
       {loading ? (
         <View style={styles.center}><ActivityIndicator color={inkMuted} /></View>
       ) : (
@@ -102,8 +95,6 @@ export function CirclesTab() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 12, paddingVertical: 10, paddingHorizontal: 14 },
-  bannerText: { fontSize: 12.5, flex: 1, lineHeight: 17 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 20, paddingBottom: 32, gap: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderWidth: 1 },

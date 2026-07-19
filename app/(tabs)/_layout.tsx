@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback, ReactElement } from 'react'
-import { View, Text, Pressable, Modal, Animated, StyleSheet, Dimensions, Easing } from 'react-native'
+import { View, Text, Pressable, Modal, Animated, StyleSheet, Dimensions, Easing, ScrollView } from 'react-native'
 import { Tabs, router } from 'expo-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getUnreadCount } from '../../lib/notifications'
@@ -54,8 +54,8 @@ const SWISS_MED = 'HankenGrotesk_500Medium'
 type StickerRenderer = (props: { size: number }) => ReactElement
 interface WheelItem {
   id: string
-  labelKey: 'menu_grandmaTalk' | 'menu_insights' | 'menu_dailyRewards' | 'menu_garage' | 'menu_channels'
-  subtitleKey: 'menu_insights_sub' | 'menu_dailyRewards_sub' | 'menu_grandmaTalk_sub' | 'menu_garage_sub' | 'menu_channels_sub'
+  labelKey: 'menu_grandmaTalk' | 'menu_insights' | 'menu_dailyRewards' | 'menu_garage' | 'menu_channels' | 'menu_community'
+  subtitleKey: 'menu_insights_sub' | 'menu_dailyRewards_sub' | 'menu_grandmaTalk_sub' | 'menu_garage_sub' | 'menu_channels_sub' | 'menu_community_sub'
   icon: LucideIcon
   route: string
   rotation: number // degrees of playful tilt
@@ -99,17 +99,17 @@ const WHEEL_ITEMS: WheelItem[] = [
     labelKey: 'menu_garage',
     subtitleKey: 'menu_garage_sub',
     icon: ShoppingBag,
-    route: '/connections',
+    route: '/village',
     rotation: 6,
     sticker: ({ size }) => <Squishy w={size * 1.15} h={size * 0.78} fill={StickerPalette.green} />,
     accent: StickerPalette.green,
   },
   {
-    id: 'channels',
-    labelKey: 'menu_channels',
-    subtitleKey: 'menu_channels_sub',
+    id: 'community',
+    labelKey: 'menu_community',
+    subtitleKey: 'menu_community_sub',
     icon: Users,
-    route: '/connections?tab=channels',
+    route: '/community',
     rotation: -4,
     sticker: ({ size }) => <Blob size={size} fill={StickerPalette.peach} variant={2} />,
     accent: StickerPalette.peach,
@@ -141,9 +141,6 @@ function CenterTabButton() {
   const fullName = (profile?.name ?? parentName ?? '').trim()
   const userName = fullName.split(/\s+/)[0] || 'dear'
   const [open, setOpen] = useState(false)
-  // Diffuse word-stack: which destination is focused (shows its subtitle + is
-  // the target of GO). Defaults to the middle item.
-  const [focusedIdx, setFocusedIdx] = useState(Math.floor(WHEEL_ITEMS.length / 2))
 
   // Animated values
   const overlayAnim = useRef(new Animated.Value(0)).current
@@ -158,7 +155,6 @@ function CenterTabButton() {
 
   const animateOpen = useCallback(() => {
     setOpen(true)
-    setFocusedIdx(Math.floor(WHEEL_ITEMS.length / 2))
     Animated.timing(overlayAnim, { toValue: 1, duration: 260, useNativeDriver: true }).start()
     Animated.spring(spinAnim, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }).start()
     // Kick off the slow aurora swirl loop (28s per full turn — barely
@@ -301,47 +297,41 @@ function CenterTabButton() {
               </Text>
             </Animated.View>
 
-            {/* Centered vertical word-stack. */}
-            <View style={styles.wordStack} pointerEvents="box-none">
+            {/* Scrollable vertical word-stack. Every word is equal-weight (full
+                ink + its subtitle beneath). One tap navigates — no focus step,
+                no GO pill. The ScrollView is bounded between the prompt header
+                and the FAB so it never clips as items are added; short lists
+                stay vertically centered via contentContainerStyle. */}
+            <ScrollView
+              style={[styles.wordScroll, { top: insets.top + 150, bottom: insets.bottom + 100 }]}
+              contentContainerStyle={styles.wordScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
               {WHEEL_ITEMS.map((item, i) => {
-                const focused = i === focusedIdx
                 const anim = itemAnims[i]
                 return (
                   <Animated.View
                     key={item.id}
                     style={{
-                      opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0, focused ? 1 : 0.3] }),
+                      opacity: anim,
                       transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
                     }}
                   >
                     <Pressable
-                      onPress={() => (focused ? handleItem(item.route) : setFocusedIdx(i))}
+                      onPress={() => handleItem(item.route)}
                       style={({ pressed }) => [styles.wordRow, { opacity: pressed ? 0.6 : 1 }]}
                     >
-                      <Text style={[styles.word, { color: focused ? inkColor : ink3Color, fontFamily: SWISS, letterSpacing: -0.8 }]}>
+                      <Text style={[styles.word, { color: inkColor, fontFamily: SWISS, letterSpacing: -0.8 }]}>
                         {t(item.labelKey).toLowerCase()}
                       </Text>
-                      {focused ? (
-                        <Text style={[styles.wordSub, { color: ink3Color, fontFamily: SWISS_MED, letterSpacing: 1.4 }]} numberOfLines={1}>
-                          {t(item.subtitleKey)}
-                        </Text>
-                      ) : null}
+                      <Text style={[styles.wordSub, { color: ink3Color, fontFamily: SWISS_MED, letterSpacing: 1.4 }]} numberOfLines={1}>
+                        {t(item.subtitleKey)}
+                      </Text>
                     </Pressable>
                   </Animated.View>
                 )
               })}
-            </View>
-
-            {/* GO CTA. */}
-            <Animated.View style={[styles.goWrap, { bottom: insets.bottom + 40, opacity: overlayAnim }]}>
-              <Pressable
-                onPress={() => handleItem(WHEEL_ITEMS[focusedIdx].route)}
-                style={({ pressed }) => [styles.goPill, { borderColor: dt.colors.line2, backgroundColor: dt.colors.surface, opacity: pressed ? 0.7 : 1 }]}
-              >
-                <Text style={[styles.goText, { color: dt.colors.ink, fontFamily: SWISS }]}>go</Text>
-                <DiffuseArrow color={accentColor} size={18} />
-              </Pressable>
-            </Animated.View>
+            </ScrollView>
           </>
         ) : (
         <>
@@ -954,11 +944,19 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   // ── Diffuse word-stack menu ──
-  wordStack: {
-    ...StyleSheet.absoluteFillObject,
+  // Absolute-positioned scroll band; top/bottom set inline from insets so it
+  // sits between the prompt header and the FAB. Short lists stay centered.
+  wordScroll: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
+  wordScrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingVertical: 24,
   },
   wordRow: {
     alignItems: 'center',
@@ -975,25 +973,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
     textTransform: 'uppercase',
     marginTop: 6,
-  },
-  goWrap: {
-    position: 'absolute',
-    right: 24,
-    alignItems: 'flex-end',
-  },
-  goPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  goText: {
-    fontSize: 12,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
   },
   promptRule: {
     width: 36,

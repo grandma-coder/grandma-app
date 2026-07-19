@@ -157,8 +157,8 @@ export function KidsWallet({
       case 'rewards': return router.push('/daily-rewards' as never)
       case 'growth_leap': return onOpenGrowthLeap()
       case 'reminders': return onOpenReminders()
-      case 'channels': return router.push('/connections?tab=channels' as never)
-      case 'village': return router.push('/connections' as never)
+      case 'channels': return router.push('/community?tab=channels' as never)
+      case 'village': return router.push('/village' as never)
     }
   }
 

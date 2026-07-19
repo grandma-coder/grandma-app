@@ -38,8 +38,8 @@ export const WALLET_SHORTCUTS: WalletShortcutDef[] = [
   { key: 'ask_grandma', labelKey: 'wallet_askGrandma_title', tone: 'lilac',  route: () => '/grandma-talk' },
   { key: 'rewards',     labelKey: 'wallet_rewards_title',     tone: 'coral',  route: () => '/daily-rewards' },
   { key: 'exams',       labelKey: 'wallet_exams_title',       tone: 'lilac',  route: (m) => `/exams?behavior=${behaviorParam(m)}` },
-  { key: 'channels',    labelKey: 'wallet_channels_title',    tone: 'peach',  route: () => '/connections?tab=channels' },
-  { key: 'village',     labelKey: 'wallet_village_title',     tone: 'green',  route: () => '/connections' },
+  { key: 'channels',    labelKey: 'wallet_channels_title',    tone: 'peach',  route: () => '/community?tab=channels' },
+  { key: 'village',     labelKey: 'wallet_village_title',     tone: 'green',  route: () => '/village' },
 ]
 
 export function walletShortcutByKey(key: string): WalletShortcutDef | undefined {

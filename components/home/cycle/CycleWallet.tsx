@@ -133,8 +133,8 @@ export function CycleWallet() {
     if (id === 'exams') return router.push('/exams?behavior=pre-pregnancy')
     if (id === 'ask_grandma') return router.push('/grandma-talk')
     if (id === 'rewards') return router.push('/daily-rewards')
-    if (id === 'channels') return router.push('/connections?tab=channels')
-    if (id === 'village') return router.push('/connections')
+    if (id === 'channels') return router.push('/community?tab=channels')
+    if (id === 'village') return router.push('/village')
   }
 
   const pickerItems: WalletPickerItem[] = availableIds.map((id) => ({

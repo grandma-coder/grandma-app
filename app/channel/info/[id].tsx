@@ -238,7 +238,7 @@ export default function ChannelInfoScreen() {
     try {
       await supabase.from('channels').delete().eq('id', id)
       setShowDelete(false)
-      router.replace('/connections' as any)
+      router.replace('/community?tab=channels' as any)
     } catch (e: any) {
       Alert.alert(t('common_error'), e.message)
     } finally {

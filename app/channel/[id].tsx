@@ -580,7 +580,7 @@ export default function ChannelChat() {
                     onPress: async () => {
                       try {
                         await supabase.from('channels').delete().eq('id', id)
-                        router.replace('/connections' as any)
+                        router.replace('/community?tab=channels' as any)
                       } catch (e: any) {
                         Alert.alert(t('common_error'), e.message)
                       }

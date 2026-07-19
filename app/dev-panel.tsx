@@ -88,11 +88,11 @@ const CAREGIVER_SCREENS: Array<[string, string]> = [
   ['Manage caregivers  ⚠ legacy design', '/manage-caregivers'],
 ]
 
-// ⚠ The /connections shell is current design but the Garage tab inside
-// it still renders GarageScreen.tsx (Pastel neon palette). On backlog.
+// The old /connections shell was split into standalone /village + /community.
 const COMMUNITY_SCREENS: Array<[string, string]> = [
-  ['Connections (Channels + Garage)', '/connections'],
-  ['Connections · Circles tab', '/connections?tab=circles'],
+  ['Village (marketplace)', '/village'],
+  ['Community · Channels', '/community?tab=channels'],
+  ['Community · Anonymous', '/community?tab=anonymous'],
   ['Channel · create', '/channel/create'],
   ['Channel · saved posts (Phase 3)', '/channel/saved'],
   ['Garage · profile  ⚠ legacy design', '/garage/profile'],
