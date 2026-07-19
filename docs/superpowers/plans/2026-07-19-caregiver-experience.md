@@ -749,33 +749,39 @@ Full visual verification happens after Task 8 (dev impersonation). Here, just co
 
 ---
 
-## Task 7: Caregiver tab bar (`getCaregiverTabConfig`)
+## Task 7: Caregiver tab visibility (low-risk `href:null` approach)
+
+**Decision (revised):** The tab bar is a 1106-line custom `CollageStripTabBar` with 5 FIXED routes (`index`, `agenda`, `library`, `vault`, `settings`), visibility controlled by `href: null` (expo-router turns that into a hidden tab). Rather than restructure the tab system into a new Home/Grandma/Card/You route set (large, collision-prone), we DECLUTTER for caregivers using the SAME `href:null` mechanism the owner tabs already use: **hide `library` (education) and `vault` (analytics) for caregivers; hide `agenda` unless they can log; keep `index` (Home) + `settings` (You) always.** Grandma + Card become home affordances (Grandma already reachable via chat; the Card = the pinned `EssentialsWalletCard` from Task 6), NOT new tabs.
 
 **Files:**
-- Modify: `lib/modeConfig.ts` (add `getCaregiverTabConfig`)
-- Modify: `app/(tabs)/_layout.tsx` (select caregiver tabs when active child is a non-owner caregiver relationship)
+- Modify: `lib/modeConfig.ts` (add `getCaregiverTabVisibility`)
+- Modify: `app/(tabs)/_layout.tsx` (apply caregiver visibility to the existing route `href`s)
 - Test: `lib/__tests__/caregiverTabs.test.ts`
 
 **Interfaces:**
-- Consumes: `CaregiverPermissions`, `hasCapability`.
-- Produces: `function getCaregiverTabConfig(permissions: CaregiverPermissions): { home: boolean; grandma: boolean; card: boolean; you: boolean }` — Home always, Grandma only if `chat`, Card always, You always.
+- Consumes: `CaregiverPermissions`.
+- Produces: `function getCaregiverTabVisibility(permissions: CaregiverPermissions): { index: boolean; agenda: boolean; library: boolean; vault: boolean; settings: boolean }` — `index` always true, `settings` always true, `library` always false (education clutter), `vault` always false (analytics clutter), `agenda` = `permissions.log_activity === true` (a viewer who can't log doesn't need the calendar).
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
 // lib/__tests__/caregiverTabs.test.ts
-import { getCaregiverTabConfig } from '../modeConfig'
+import { getCaregiverTabVisibility } from '../modeConfig'
 
-describe('getCaregiverTabConfig', () => {
-  it('shows Grandma only when chat is granted', () => {
-    expect(getCaregiverTabConfig({ view: true, log_activity: true, chat: true }).grandma).toBe(true)
-    expect(getCaregiverTabConfig({ view: true, log_activity: true, chat: false }).grandma).toBe(false)
+describe('getCaregiverTabVisibility', () => {
+  it('always shows Home (index) and You (settings)', () => {
+    const v = getCaregiverTabVisibility({ view: true, log_activity: false, chat: false })
+    expect(v.index).toBe(true)
+    expect(v.settings).toBe(true)
   })
-  it('always shows home, card, you', () => {
-    const c = getCaregiverTabConfig({ view: true, log_activity: false, chat: false })
-    expect(c.home).toBe(true)
-    expect(c.card).toBe(true)
-    expect(c.you).toBe(true)
+  it('always hides library (education) and vault (analytics) for caregivers', () => {
+    const v = getCaregiverTabVisibility({ view: true, log_activity: true, chat: true })
+    expect(v.library).toBe(false)
+    expect(v.vault).toBe(false)
+  })
+  it('shows the agenda tab only when the caregiver can log', () => {
+    expect(getCaregiverTabVisibility({ view: true, log_activity: true, chat: false }).agenda).toBe(true)
+    expect(getCaregiverTabVisibility({ view: true, log_activity: false, chat: false }).agenda).toBe(false)
   })
 })
 ```
@@ -785,7 +791,7 @@ describe('getCaregiverTabConfig', () => {
 Run: `npm test -- lib/__tests__/caregiverTabs.test.ts`
 Expected: FAIL — not exported.
 
-- [ ] **Step 3: Implement `getCaregiverTabConfig`**
+- [ ] **Step 3: Implement `getCaregiverTabVisibility`**
 
 Append to `lib/modeConfig.ts`:
 
@@ -793,15 +799,19 @@ Append to `lib/modeConfig.ts`:
 import type { CaregiverPermissions } from '../types'
 
 /**
- * The caregiver tab set: Home / Grandma / Card / You. Grandma is present only
- * when `chat` is granted. Distinct from the owner's 6-slot mode tab config.
+ * Per-route tab visibility for a caregiver, applied on top of the existing
+ * 5-route tab bar via each route's `href` (href:null hides a tab). Caregivers
+ * get a decluttered bar: Home + You always; the calendar only if they can log;
+ * education (library) and analytics (vault) are hidden. Grandma + the essentials
+ * Card are home affordances, not tabs. UX-only; RLS is the boundary.
  */
-export function getCaregiverTabConfig(permissions: CaregiverPermissions) {
+export function getCaregiverTabVisibility(permissions: CaregiverPermissions) {
   return {
-    home: true,
-    grandma: permissions.chat === true,
-    card: true,
-    you: true,
+    index: true,
+    agenda: permissions.log_activity === true,
+    library: false,
+    vault: false,
+    settings: true,
   }
 }
 ```
@@ -811,23 +821,20 @@ export function getCaregiverTabConfig(permissions: CaregiverPermissions) {
 Run: `npm test -- lib/__tests__/caregiverTabs.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Wire into `(tabs)/_layout.tsx`**
+- [ ] **Step 5: Apply in `(tabs)/_layout.tsx`**
 
-Read `app/(tabs)/_layout.tsx` first. When `isCaregiver(activeChild)` (gated on `useCaregiverStore.hydrated`), render the caregiver `Tabs.Screen` set (Home → `index`, Grandma → route to `grandma-talk` or a tab that pushes it, Card → a new lightweight `card` route/sheet, You → `settings`) and hide the owner tabs. Use `getCaregiverTabConfig(activeChild.permissions).grandma` to conditionally include the Grandma tab. Keep owner behavior unchanged when not a caregiver. Commit:
+Read `app/(tabs)/_layout.tsx` first (routes declared ~line 855–864 as `<Tabs.Screen name="..." options={{ ... href ... }}/>`; `vault` already uses `href: config.tabs.vault.visible ? undefined : null`). The `mode`/`config` are read from `useModeStore` + `getModeConfig(mode)` (~line 833–835). Add:
+- `const activeChild = useChildStore((s) => s.activeChild)` and `const caregiverHydrated = useCaregiverStore((s) => s.hydrated)` (import both stores + `isCaregiver` from `lib/caregiverPermissions`).
+- `const cg = isCaregiver(activeChild) && caregiverHydrated ? getCaregiverTabVisibility(activeChild!.permissions) : null`.
+- For EACH of the 5 `Tabs.Screen`s, compute its `href` as: caregiver → `cg[name] ? undefined : null`; owner → the EXISTING expression (unchanged). E.g. for `library`: `href: cg ? (cg.library ? undefined : null) : (config.tabs.library.visible ? undefined : null)`. Do the same for `index`/`agenda`/`vault`/`settings`, preserving each route's current owner href expression in the non-caregiver branch. **Owner path (cg null) must be byte-for-byte unchanged.**
 
+Commit:
 ```bash
 git add lib/modeConfig.ts lib/__tests__/caregiverTabs.test.ts app/\(tabs\)/_layout.tsx
-git commit -m "feat(caregiver): Home/Grandma/Card/You tab set gated by chat"
+git commit -m "feat(caregiver): declutter tabs (hide library+vault; agenda only if can-log)"
 ```
 
-- [ ] **Step 6: Create the Card tab target**
-
-Create `app/(tabs)/card.tsx` (or a route the Card tab points to) that renders a full-screen `EssentialsWalletCard` with `showFull={hasCapability(activeChild, CAPABILITY.EMERGENCY)}` and the active child. Commit:
-
-```bash
-git add app/\(tabs\)/card.tsx
-git commit -m "feat(caregiver): Card tab renders full essentials sheet"
-```
+(No new `card`/`grandma` routes — dropped in favor of the low-risk approach. The Card is the pinned essentials card on Home from Task 6; Grandma stays reachable as it is today.)
 
 ---
 
