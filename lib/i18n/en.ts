@@ -1912,9 +1912,18 @@ export const en: TranslationKeys = {
   cycleDash_footer: 'Your daily signals',
   cycleDash_seeResults: 'See results',
 
+  // ─── Cycle quick-log picker labels (Title Case, consistent) ───────────────
+  cycleQuickLog_mood: 'Mood',
+  cycleQuickLog_symptoms: 'Symptoms',
+  cycleQuickLog_bbt: 'Basal Temperature',
+  cycleQuickLog_lh: 'LH Test',
+  cycleQuickLog_cm: 'Cervical Mucus',
+  cycleQuickLog_intimacy: 'Intimacy',
+  cycleQuickLog_periodStart: 'Period Start',
+
   // ─── Cycle home tap-a-date logging + post-log confirmation ────────────────
   cycleLog_todayTitle: 'Log for today',
-  cycleLog_dateTitle: 'Log for {date}',
+  cycleLog_dateTitle: 'Log for {{date}}',
   cycleLog_hint: 'tap a signal to log this day',
   cycleLog_month: 'Month',
   cycleLog_pickDay: 'Pick a day',
@@ -3580,4 +3589,5 @@ export const en: TranslationKeys = {
   cyclePhase_follicular_label: "Follicular Phase",
   cyclePhase_ovulation_label: "Ovulation",
   cyclePhase_luteal_label: "Luteal Phase",
+  cycleInsights_unlocked_toast: "Unlocked ✨ {{metric}} is ready",
 }

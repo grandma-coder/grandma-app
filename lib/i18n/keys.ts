@@ -1919,6 +1919,15 @@ export interface TranslationKeys {
   cycleDash_footer: string
   cycleDash_seeResults: string
 
+  // ─── Cycle quick-log picker labels (Title Case, consistent) ───────────────
+  cycleQuickLog_mood: string
+  cycleQuickLog_symptoms: string
+  cycleQuickLog_bbt: string
+  cycleQuickLog_lh: string
+  cycleQuickLog_cm: string
+  cycleQuickLog_intimacy: string
+  cycleQuickLog_periodStart: string
+
   // ─── Cycle home tap-a-date logging + post-log confirmation ────────────────
   cycleLog_todayTitle: string
   cycleLog_dateTitle: string
@@ -3574,4 +3583,5 @@ export interface TranslationKeys {
   cyclePhase_follicular_label: string
   cyclePhase_ovulation_label: string
   cyclePhase_luteal_label: string
+  cycleInsights_unlocked_toast: string
 }
