@@ -77,6 +77,22 @@ export const contentDailyQuestions = pgTable("content_daily_questions", {
   updatedBy: text("updated_by"),
 })
 
+export const contentBirthTopics = pgTable("content_birth_topics", {
+  key: text("key").primaryKey(),
+  emoji: text("emoji").notNull().default(""),
+  title: text("title").notNull(),
+  subtitle: text("subtitle").notNull().default(""),
+  heroColor: text("hero_color"),
+  heroBorder: text("hero_border"),
+  disclaimer: text("disclaimer"),
+  sections: jsonb("sections").notNull().default([]),
+  sources: jsonb("sources").notNull().default([]),
+  active: boolean("active").notNull().default(true),
+  sort: integer("sort").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: text("updated_by"),
+})
+
 export const betaTesters = pgTable("beta_testers", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),

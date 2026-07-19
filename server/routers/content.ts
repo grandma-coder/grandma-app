@@ -3,8 +3,14 @@ import { eq, asc, desc, ilike, and } from "drizzle-orm"
 import { TRPCError } from "@trpc/server"
 import { router, protectedProcedure, adminProcedure } from "../trpc"
 import { db } from "@/db"
-import { contentDailyQuestions, affirmations } from "@/db/schema"
+import { contentDailyQuestions, affirmations, contentBirthTopics } from "@/db/schema"
 import { writeAudit } from "@/lib/audit"
+
+const sourceSchema = z.object({
+  label: z.string().min(1).max(200),
+  org: z.string().min(1).max(120),
+  url: z.string().url().max(500),
+})
 
 const MODES = ["pregnancy", "pre-pregnancy", "kids"] as const
 
@@ -173,5 +179,99 @@ export const contentRouter = router({
         target: input.id,
       })
       return { ok: true }
+    }),
+
+  // ── Birth guide topics + sources (Stage 3) ──────────────────────────────────
+
+  /** All birth topics (ordered). Viewer+. Sections/sources come through as jsonb. */
+  birthTopics: protectedProcedure.query(async () => {
+    return db.select().from(contentBirthTopics).orderBy(asc(contentBirthTopics.sort))
+  }),
+
+  /** Update a topic's top-level fields + disclaimer. Admin + audited. */
+  updateBirthTopicMeta: adminProcedure
+    .input(
+      z.object({
+        key: z.string().min(1).max(40),
+        emoji: z.string().max(8),
+        title: z.string().min(1).max(120),
+        subtitle: z.string().max(200),
+        disclaimer: z.string().max(600).nullable(),
+        active: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .update(contentBirthTopics)
+        .set({
+          emoji: input.emoji,
+          title: input.title.trim(),
+          subtitle: input.subtitle.trim(),
+          disclaimer: input.disclaimer?.trim() || null,
+          active: input.active,
+          updatedAt: new Date(),
+          updatedBy: ctx.userEmail ?? "unknown",
+        })
+        .where(eq(contentBirthTopics.key, input.key))
+        .returning()
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Topic not found" })
+      await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "content.birth_topic.meta", target: input.key })
+      return row
+    }),
+
+  /** Replace a topic's sources list (the medical citations). Admin + audited. */
+  updateBirthTopicSources: adminProcedure
+    .input(z.object({ key: z.string().min(1).max(40), sources: z.array(sourceSchema).max(30) }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .update(contentBirthTopics)
+        .set({ sources: input.sources, updatedAt: new Date(), updatedBy: ctx.userEmail ?? "unknown" })
+        .where(eq(contentBirthTopics.key, input.key))
+        .returning()
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Topic not found" })
+      await writeAudit({
+        actorEmail: ctx.userEmail ?? "unknown",
+        action: "content.birth_topic.sources",
+        target: input.key,
+        meta: { count: input.sources.length },
+      })
+      return row
+    }),
+
+  /**
+   * Replace a topic's full sections array (deeply-nested content) as validated
+   * JSON. The editor sends the whole sections[] — we sanity-check it's an array
+   * of objects with title/content before persisting so a malformed paste can't
+   * corrupt the topic. Admin + audited.
+   */
+  updateBirthTopicSections: adminProcedure
+    .input(z.object({ key: z.string().min(1).max(40), sections: z.string().max(200_000) }))
+    .mutation(async ({ ctx, input }) => {
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(input.sections)
+      } catch {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Sections is not valid JSON." })
+      }
+      if (!Array.isArray(parsed)) throw new TRPCError({ code: "BAD_REQUEST", message: "Sections must be a JSON array." })
+      for (const s of parsed) {
+        const sec = s as { title?: unknown; content?: unknown }
+        if (typeof sec?.title !== "string" || typeof sec?.content !== "string") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Each section needs a title and content string." })
+        }
+      }
+      const [row] = await db
+        .update(contentBirthTopics)
+        .set({ sections: parsed, updatedAt: new Date(), updatedBy: ctx.userEmail ?? "unknown" })
+        .where(eq(contentBirthTopics.key, input.key))
+        .returning()
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Topic not found" })
+      await writeAudit({
+        actorEmail: ctx.userEmail ?? "unknown",
+        action: "content.birth_topic.sections",
+        target: input.key,
+        meta: { count: parsed.length },
+      })
+      return row
     }),
 })
