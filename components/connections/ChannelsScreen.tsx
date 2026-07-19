@@ -14,7 +14,6 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
-  Alert,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import {
@@ -36,6 +35,7 @@ import { useChannelsStore } from '../../store/useChannelsStore'
 import { channelSticker, channelBlob } from '../../lib/channelSticker'
 import { Star as StarSticker } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
+import { useConfirmDialog } from '../ui/useConfirm'
 import { useTranslation } from '../../lib/i18n'
 
 // ─── Member count copy ──────────────────────────────────────────────────────
@@ -465,21 +465,24 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
   const blob = channelBlob(channel.name, channel.category)
 
   return (
+    <>
     <Pressable
       onPress={() => router.push(`/channel/${channel.id}` as any)}
-      onLongPress={onToggleMute ? () => {
-        Alert.alert(
-          channel.name,
-          undefined,
-          [
-            { text: muted ? t('channels_unmute') : t('channels_mute'), onPress: () => onToggleMute(channel.id, !muted) },
-            { text: t('common_cancel'), style: 'cancel' as const },
-          ]
-        )
+      onLongPress={onToggleMute ? async () => {
+        if (
+          await confirm({
+            title: channel.name,
+            confirmLabel: muted ? t('channels_unmute') : t('channels_mute'),
+            cancelLabel: t('common_cancel'),
+          })
+        ) {
+          onToggleMute(channel.id, !muted)
+        }
       } : undefined}
       style={({ pressed }) => [
         styles.card,
@@ -544,6 +547,8 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
         )}
       </View>
     </Pressable>
+    {confirmDialog}
+    </>
   )
 }
 

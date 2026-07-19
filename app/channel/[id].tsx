@@ -88,6 +88,7 @@ import { supabase } from '../../lib/supabase'
 import { reportContent, blockUser, REPORT_REASONS, type ReportReason } from '../../lib/communitySafety'
 import { checkPhotoSafety } from '../../lib/photoSafety'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
+import { useConfirmDialog } from '../../components/ui/useConfirm'
 import { useTranslation } from '../../lib/i18n'
 
 // Emoji per reaction type — for the footer indicator when a non-heart reaction
@@ -107,6 +108,7 @@ export default function ChannelChat() {
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const { id } = useLocalSearchParams<{ id: string }>()
 
   const flatListRef = useRef<FlatList<ChannelPost>>(null)
@@ -397,7 +399,7 @@ export default function ChannelChat() {
       setReplyTo(null)
       setMentionIds([])
     } catch (e: any) {
-      Alert.alert(t('common_error'), e.message ?? t('channelScreen_sendFailed'))
+      await confirm({ title: t('common_error'), message: e.message ?? t('channelScreen_sendFailed'), cancelLabel: null })
     } finally {
       setSending(false)
     }
@@ -429,7 +431,7 @@ export default function ChannelChat() {
           setPhotos((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4))
         }
       } catch {
-        Alert.alert(t('common_error'), t('channelScreen_photoLoadFailed'))
+        await confirm({ title: t('common_error'), message: t('channelScreen_photoLoadFailed'), cancelLabel: null })
       }
     }
   }
@@ -523,7 +525,7 @@ export default function ChannelChat() {
     const members = await getChannelMembers(id)
     const others = members.filter((m) => m.user_id !== currentUserId)
     if (others.length === 0) {
-      Alert.alert(t('channelScreen_noMembersTitle'), t('channelScreen_noMembersBodyDelete'))
+      await confirm({ title: t('channelScreen_noMembersTitle'), message: t('channelScreen_noMembersBodyDelete'), cancelLabel: null })
       return
     }
     const buttons = others.slice(0, 8).map((m) => ({
@@ -555,7 +557,7 @@ export default function ChannelChat() {
     Alert.alert(t('channelScreen_transferOwnershipTitle'), t('channelScreen_transferOwnershipBody'), buttons as any)
   }
 
-  function handleJoinLeave() {
+  async function handleJoinLeave() {
     if (!id) return
 
     if (isMember && isOwner) {
@@ -602,50 +604,44 @@ export default function ChannelChat() {
     } else if (channel?.channelType === 'private') {
       // Private channel: request to join
       if (myRequest?.status === 'pending') {
-        Alert.alert(t('channelScreen_requestPendingTitle'), t('channelScreen_requestPendingBody'))
+        await confirm({ title: t('channelScreen_requestPendingTitle'), message: t('channelScreen_requestPendingBody'), cancelLabel: null })
         return
       }
-      Alert.alert(
-        t('channelScreen_requestToJoinTitle'),
-        t('channelScreen_requestToJoinBody', { channel: channel.name }),
-        [
-          { text: t('common_cancel'), style: 'cancel' },
-          {
-            text: t('channelScreen_sendRequestBtn'),
-            onPress: async () => {
-              try {
-                await requestToJoinChannel(id)
-                const req = await getMyRequestStatus(id)
-                setMyRequest(req)
-                Alert.alert(t('channelScreen_requestSentTitle'), t('channelScreen_requestSentBody'))
-              } catch (e: any) {
-                Alert.alert(t('common_error'), e.message)
-              }
-            },
-          },
-        ]
-      )
+      if (
+        await confirm({
+          title: t('channelScreen_requestToJoinTitle'),
+          message: t('channelScreen_requestToJoinBody', { channel: channel.name }),
+          confirmLabel: t('channelScreen_sendRequestBtn'),
+          cancelLabel: t('common_cancel'),
+        })
+      ) {
+        try {
+          await requestToJoinChannel(id)
+          const req = await getMyRequestStatus(id)
+          setMyRequest(req)
+          await confirm({ title: t('channelScreen_requestSentTitle'), message: t('channelScreen_requestSentBody'), cancelLabel: null })
+        } catch (e: any) {
+          await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+        }
+      }
     } else {
       // Public channel: confirm join
-      Alert.alert(
-        t('channelScreen_joinChannelTitle'),
-        t('channelScreen_joinChannelBody', { channel: channel?.name ?? t('channelScreen_thisChannel') }),
-        [
-          { text: t('common_cancel'), style: 'cancel' },
-          {
-            text: t('channelScreen_join'),
-            onPress: async () => {
-              try {
-                await joinChannel(id)
-                setIsMember(true)
-                load()
-              } catch {
-                Alert.alert(t('common_error'), t('channelScreen_joinFailed'))
-              }
-            },
-          },
-        ]
-      )
+      if (
+        await confirm({
+          title: t('channelScreen_joinChannelTitle'),
+          message: t('channelScreen_joinChannelBody', { channel: channel?.name ?? t('channelScreen_thisChannel') }),
+          confirmLabel: t('channelScreen_join'),
+          cancelLabel: t('common_cancel'),
+        })
+      ) {
+        try {
+          await joinChannel(id)
+          setIsMember(true)
+          load()
+        } catch {
+          await confirm({ title: t('common_error'), message: t('channelScreen_joinFailed'), cancelLabel: null })
+        }
+      }
     }
   }
 
@@ -660,12 +656,12 @@ export default function ChannelChat() {
     }
   }
 
-  function handleShareChannel() {
+  async function handleShareChannel() {
     if (!id || !channel) return
 
     // Private channels: only members can share
     if (channel.channelType === 'private' && !isMember) {
-      Alert.alert(t('channelScreen_privateChannelTitle'), t('channelScreen_privateChannelShareBody'))
+      await confirm({ title: t('channelScreen_privateChannelTitle'), message: t('channelScreen_privateChannelShareBody'), cancelLabel: null })
       return
     }
 
@@ -690,7 +686,7 @@ export default function ChannelChat() {
       setShowLeave(false)
       load()
     } catch {
-      Alert.alert(t('common_error'), t('channelScreen_leaveFailed'))
+      await confirm({ title: t('common_error'), message: t('channelScreen_leaveFailed'), cancelLabel: null })
     } finally {
       setLeaving(false)
     }
@@ -706,18 +702,20 @@ export default function ChannelChat() {
     await Share.share({ message: shareMessage, title: `#${channel.name}` })
   }
 
-  function handleDeleteMessage(msgId: string, authorId: string) {
+  async function handleDeleteMessage(msgId: string, authorId: string) {
     if (authorId !== currentUserId) return
-    Alert.alert(t('channelScreen_deleteMessageTitle'), t('channelScreen_removeMessageBody'), [
-      { text: t('common_cancel'), style: 'cancel' },
-      {
-        text: t('common_delete'), style: 'destructive',
-        onPress: async () => {
-          setMessages((prev) => prev.filter((m) => m.id !== msgId))
-          await deleteMessage(msgId, authorId).catch(() => load())
-        },
-      },
-    ])
+    if (
+      await confirm({
+        title: t('channelScreen_deleteMessageTitle'),
+        message: t('channelScreen_removeMessageBody'),
+        confirmLabel: t('common_delete'),
+        cancelLabel: t('common_cancel'),
+        danger: true,
+      })
+    ) {
+      setMessages((prev) => prev.filter((m) => m.id !== msgId))
+      await deleteMessage(msgId, authorId).catch(() => load())
+    }
   }
 
   // ─── Community safety: report + block (WS3) ────────────────────────────────
@@ -742,26 +740,24 @@ export default function ChannelChat() {
     )
   }
 
-  function handleBlockUser(authorId: string, authorName?: string) {
-    Alert.alert(
-      t('safety_blockTitle'),
-      t('safety_blockBody', { name: authorName ?? t('channelScreen_someoneLower') }),
-      [
-        { text: t('common_cancel'), style: 'cancel' },
-        {
-          text: t('safety_blockConfirm'), style: 'destructive',
-          onPress: async () => {
-            try {
-              await blockUser(authorId)
-              toast.show({ title: t('safety_blockedTitle'), message: t('safety_blockedBody') })
-              load() // RLS now hides their messages — refetch
-            } catch (e: any) {
-              Alert.alert(t('common_error'), e.message ?? '')
-            }
-          },
-        },
-      ]
-    )
+  async function handleBlockUser(authorId: string, authorName?: string) {
+    if (
+      await confirm({
+        title: t('safety_blockTitle'),
+        message: t('safety_blockBody', { name: authorName ?? t('channelScreen_someoneLower') }),
+        confirmLabel: t('safety_blockConfirm'),
+        cancelLabel: t('common_cancel'),
+        danger: true,
+      })
+    ) {
+      try {
+        await blockUser(authorId)
+        toast.show({ title: t('safety_blockedTitle'), message: t('safety_blockedBody') })
+        load() // RLS now hides their messages — refetch
+      } catch (e: any) {
+        await confirm({ title: t('common_error'), message: e.message ?? '', cancelLabel: null })
+      }
+    }
   }
 
   async function handleSubmitRating() {
@@ -773,7 +769,7 @@ export default function ChannelChat() {
       toast.show({ title: t('channelScreen_thanksTitle'), message: t('channelScreen_ratingSubmittedMsg') })
       load() // Refresh to get updated avg
     } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+      await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
     } finally {
       setSavingRating(false)
     }
@@ -1376,6 +1372,9 @@ export default function ChannelChat() {
         onCancel={() => setShowLeave(false)}
         onConfirm={confirmLeave}
       />
+
+      {/* Paper-styled confirm/error dialogs */}
+      {confirmDialog}
     </View>
   )
 }

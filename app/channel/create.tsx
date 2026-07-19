@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  View, Text, TextInput, Pressable, ScrollView, Alert, StyleSheet,
+  View, Text, TextInput, Pressable, ScrollView, StyleSheet,
   KeyboardAvoidingView, Platform, Image, Modal, Animated, Easing,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
@@ -10,6 +10,7 @@ import { ArrowLeft, Check, Camera, Lock, Globe } from 'lucide-react-native'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
+import { useConfirmDialog } from '../../components/ui/useConfirm'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { createChannel } from '../../lib/channelPosts'
 import {
@@ -60,6 +61,7 @@ export default function CreateChannel() {
   const mode = useModeStore((s) => s.mode)
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : colors.primary
   const { t } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -90,11 +92,11 @@ export default function CreateChannel() {
   async function handleCreate() {
     const trimmedName = name.trim()
     if (!trimmedName) {
-      Alert.alert(t('channelCreate_nameRequired'))
+      await confirm({ title: t('channelCreate_nameRequired'), cancelLabel: null })
       return
     }
     if (!category) {
-      Alert.alert(t('channelCreate_categoryRequired'))
+      await confirm({ title: t('channelCreate_categoryRequired'), cancelLabel: null })
       return
     }
     const finalCategory = category === 'Other' ? (customCategory.trim() || 'other') : category
@@ -111,7 +113,7 @@ export default function CreateChannel() {
       setCreatedChannelId(id)
       setShowSuccess(true)
     } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+      await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
     } finally {
       setLoading(false)
     }
@@ -361,6 +363,9 @@ export default function CreateChannel() {
           if (createdChannelId) router.replace(`/channel/${createdChannelId}`)
         }}
       />
+
+      {/* Paper-styled validation/error dialogs */}
+      {confirmDialog}
     </View>
   )
 }
