@@ -54,11 +54,14 @@ describe('CAREGIVER_CARDS', () => {
     }
   })
 
-  it('marks cycle intimate signals as the intimate tier', () => {
+  it('marks the truly intimate cycle signals (today_summary) as intimate', () => {
     const cycleTodaySummary = CAREGIVER_CARDS.cycle.find((c) => c.id === 'today_summary')
     expect(cycleTodaySummary?.tier).toBe('intimate')
+  })
+
+  it('treats the cycle journey ring (phase + period timing) as child-health, not intimate', () => {
     const ring = CAREGIVER_CARDS.cycle.find((c) => c.id === 'journey_ring')
-    expect(ring?.tier).toBe('intimate')
+    expect(ring?.tier).toBe('child-health')
   })
 
   it('gives every card a non-empty human label', () => {
@@ -117,10 +120,13 @@ In `types/index.ts`, inside `CaregiverPermissions` (after `_photo_url?`), add:
 ```ts
 // lib/caregiverCards.ts
 /**
- * Card-id vocabulary for caregiver sharing. IDs mirror the ids already used by
- * the behavior homes + wallet builders (kidsWallet/weekWallet/cycleWallet), so
- * a shared-card allowlist maps 1:1 onto what those homes render. Plus the new
- * cross-behavior `essentials` card. UX metadata only — RLS is the boundary.
+ * Card-id vocabulary for caregiver sharing. These ids are the shared contract
+ * that later tasks wire into the behavior homes + wallet builders (Tasks 5–6):
+ * the top-level home card ids (hero-tiles, today-summary, week-hero,
+ * journey_ring, …) and the wallet builder ids (goals, health, diaper, …), plus
+ * the new cross-behavior `essentials` card. A shared-card allowlist maps 1:1
+ * onto what a caregiver's filtered home renders. UX metadata only — RLS is the
+ * security boundary; nothing here gates data.
  */
 import type { CaregiverRole } from '../types'
 
@@ -161,7 +167,9 @@ export const CAREGIVER_CARDS: Record<CaregiverBehavior, CaregiverCardMeta[]> = {
     { id: 'essentials', label: 'Essentials card', tier: 'safe' },
   ],
   cycle: [
-    { id: 'journey_ring', label: 'Cycle phase & period timing', tier: 'intimate' },
+    // Phase + period timing is the shareable baseline a watcher sees by default
+    // (child-health tier). The truly intimate signals live in today_summary.
+    { id: 'journey_ring', label: 'Cycle phase & period timing', tier: 'child-health' },
     { id: 'daily_message', label: 'Daily message', tier: 'safe' },
     { id: 'today_summary', label: 'Intimate signals (BBT · LH · intercourse)', tier: 'intimate' },
     { id: 'reminders', label: 'Reminders', tier: 'child-health' },
