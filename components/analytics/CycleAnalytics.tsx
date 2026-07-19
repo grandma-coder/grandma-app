@@ -44,7 +44,10 @@ import {
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { CycleDetailSheet, type CycleDetailType } from './CycleDetailSheets'
-import { GlowAreaLine } from './shared/MiniCharts'
+import { GlowAreaLine, BeadedThread } from './shared/MiniCharts'
+import { Section } from './shared/Section'
+import { MoodStrip } from './shared/MoodStrip'
+import { cycleMoodToStrip } from '../../lib/moodTrend'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
 
 /** Warm phase copy keyed by cycle phase — resolved through t() so it localizes. */
@@ -309,6 +312,30 @@ export function CycleAnalytics() {
             />
           )}
         </View>
+
+        {diffuse && bbt?.series && bbt.series.length >= 2 && (
+          <Section
+            title={t('cycleAnalytics_section_rhythm_title')}
+            subtitle={t('cycleAnalytics_section_rhythm_sub')}
+            onPress={() => setDetailType('bbt')}
+          >
+            <BeadedThread
+              data={bbt.series.map((s) => s.temp)}
+              color={accent}
+              accent={accent}
+            />
+          </Section>
+        )}
+
+        {diffuse && mood?.recent && mood.recent.length > 0 && (
+          <Section
+            title={t('cycleAnalytics_section_mood_title')}
+            subtitle={t('cycleAnalytics_section_mood_sub')}
+            onPress={() => setDetailType('mood')}
+          >
+            <MoodStrip data={cycleMoodToStrip(mood.recent)} />
+          </Section>
+        )}
 
         <RecentCyclesCard cycles={history?.cycles ?? []} />
 

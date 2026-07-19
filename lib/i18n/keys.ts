@@ -1811,6 +1811,10 @@ export interface TranslationKeys {
   cycleAnalytics_seed_hint: string
   cycleAnalytics_cycle_n: string
   cycleAnalytics_log_cycles_hint: string
+  cycleAnalytics_section_rhythm_title: string
+  cycleAnalytics_section_rhythm_sub: string
+  cycleAnalytics_section_mood_title: string
+  cycleAnalytics_section_mood_sub: string
   cycleDetail_lastNCycles: string
   cycleDetail_history: string
   cycleDetail_regular: string
