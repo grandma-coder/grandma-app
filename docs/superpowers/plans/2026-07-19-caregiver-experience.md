@@ -902,14 +902,17 @@ Build the toggle list from `CAREGIVER_CARDS[behavior]`. Current selection = `val
 Run: `npm test -- components/caregiver/__tests__/ShareCardsEditor.test.tsx`
 Expected: PASS.
 
-- [ ] **Step 5: Mount in `care-circle.tsx`**
+- [ ] **Step 5: Commit the standalone editor (mount DEFERRED)**
 
-In the member-edit flow of `app/profile/care-circle.tsx`, render `<ShareCardsEditor>` bound to the member's permissions, and on save persist the full `permissions` (capabilities + `_shared_cards`) via the existing `child_caregivers` update path. Confirm the write includes `_shared_cards`. Commit:
+**COLLISION NOTE:** `app/profile/care-circle.tsx` is currently being edited by a concurrent session (dirty working tree). To avoid clobbering their work, this task ships the standalone `ShareCardsEditor` component + test ONLY, and DEFERS mounting it into `care-circle.tsx`. The editor is self-contained and reviewable in isolation; the mount is a small follow-up once the tree is clean.
 
+Commit ONLY the new component + test:
 ```bash
-git add app/profile/care-circle.tsx components/caregiver/ShareCardsEditor.tsx components/caregiver/__tests__/ShareCardsEditor.test.tsx
-git commit -m "feat(caregiver): per-section share editor wired into care-circle"
+git add components/caregiver/ShareCardsEditor.tsx components/caregiver/__tests__/ShareCardsEditor.test.tsx
+git commit -m "feat(caregiver): ShareCardsEditor (per-section share toggles) — standalone"
 ```
+
+**Follow-up (deferred, not this task):** in the member-edit flow of `app/profile/care-circle.tsx`, render `<ShareCardsEditor>` bound to the member's permissions, and on save persist the full `permissions` (capabilities + `_shared_cards`) via the existing `child_caregivers` update path. Do this once `care-circle.tsx` is no longer dirty from the concurrent session.
 
 ---
 
