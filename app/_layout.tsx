@@ -66,6 +66,7 @@ import { usePregnancyStore } from '../store/usePregnancyStore'
 import { useDevStore } from '../store/useDevStore'
 import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
+import { hydrateDailyQuestions } from '../lib/dailyMessage'
 import { initNotifications } from '../lib/pushNotifications'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
@@ -465,6 +466,9 @@ export default function RootLayout() {
 
       initRevenueCat(uid).catch(() => {})
       runNotificationEngine().catch(() => {})
+      // Hydrate command-center-managed content (daily questions) DB-first;
+      // best-effort — falls back to bundled arrays if the fetch fails.
+      hydrateDailyQuestions().catch(() => {})
       // B3: register this device's push token + sync on-device local schedules
       // from the user's saved prefs. Best-effort; never blocks launch.
       initNotifications().catch(() => {})

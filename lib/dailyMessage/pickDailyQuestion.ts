@@ -11,11 +11,10 @@ function hash(s: string): number {
 
 // Deterministic per (date, user): same input → same question; rotates by day.
 export function pickDailyQuestion(date: string, userId: string, mode: JourneyMode): DailyQuestion {
-  // Pregnancy is the only populated question bank today ('kids' and
-  // 'pre-pregnancy' are empty arrays — see lib/dailyMessage/index.ts
-  // QUESTIONS_BY_MODE). Guard here with a clear, named error instead of
-  // letting an empty bank fall through to `hash(...) % 0 = NaN` and a
-  // silent `undefined` return.
+  // Pregnancy + pre-pregnancy banks are populated ('kids' is still an empty
+  // array — see lib/dailyMessage/index.ts QUESTIONS_BY_MODE). Guard here with a
+  // clear, named error instead of letting an empty bank fall through to
+  // `hash(...) % 0 = NaN` and a silent `undefined` return.
   const bank = getQuestionsForMode(mode)
   if (bank.length === 0) {
     throw new Error(`pickDailyQuestion: no questions for mode "${mode}"`)
