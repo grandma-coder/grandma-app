@@ -30,7 +30,7 @@ import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { BrandedLoader } from '../ui/BrandedLoader'
 import { getChannels, type Channel } from '../../lib/channels'
-import { getMyChannelIds, getMyFavoriteChannelIds, getMutedChannelIds, muteChannel, unmuteChannel } from '../../lib/channelPosts'
+import { getMyChannelIds, getMyFavoriteChannelIds, getMutedChannelIds, muteChannel, unmuteChannel, joinChannel } from '../../lib/channelPosts'
 import { useModeStore } from '../../store/useModeStore'
 import { useChannelsStore } from '../../store/useChannelsStore'
 import { channelSticker, channelBlob } from '../../lib/channelSticker'
@@ -99,6 +99,22 @@ export function ChannelsScreen() {
   async function handleUnmute(channelId: string) {
     setMutedIds((prev) => prev.filter((id) => id !== channelId))
     try { await unmuteChannel(channelId) } catch { load() }
+  }
+
+  // JOIN pill on a discovery card. Public channels join in place (optimistic,
+  // reverts on failure); private channels have a request-to-join gate, so we
+  // open the channel where that flow lives rather than instant-joining.
+  async function handleJoin(channel: Channel) {
+    if (channel.channelType === 'private') {
+      router.push(`/channel/${channel.id}` as any)
+      return
+    }
+    setMyIds((prev) => (prev.includes(channel.id) ? prev : [...prev, channel.id]))
+    try {
+      await joinChannel(channel.id)
+    } catch {
+      setMyIds((prev) => prev.filter((id) => id !== channel.id))
+    }
   }
 
   // useFocusEffect fires on mount too (screen is focused on mount), so a
@@ -174,7 +190,7 @@ export function ChannelsScreen() {
 
       {/* Auto-scrolling banner carousel */}
       {!search && suggested.length > 0 && (
-        <BannerCarousel channels={suggested} myIds={myIds} accent={accent} />
+        <BannerCarousel channels={suggested} myIds={myIds} accent={accent} onJoin={handleJoin} />
       )}
 
       {/* Search */}
@@ -214,7 +230,7 @@ export function ChannelsScreen() {
               <Text style={[styles.sectionTitle, sectionTitleStyle(diffuse, dt, colors, font)]}>{t('channelsDiscover_suggestedForYou')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
                 {suggested.map((c) => (
-                  <ChannelCardCompact key={c.id} channel={c} joined={myIds.includes(c.id)} accent={accent} />
+                  <ChannelCardCompact key={c.id} channel={c} joined={myIds.includes(c.id)} accent={accent} onJoin={() => handleJoin(c)} />
                 ))}
               </ScrollView>
             </View>
@@ -292,7 +308,7 @@ function sectionTitleStyle(
 
 const BANNER_W = Dimensions.get('window').width - 40 // padding 20 each side
 
-function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myIds: string[]; accent: string }) {
+function BannerCarousel({ channels, myIds, accent, onJoin }: { channels: Channel[]; myIds: string[]; accent: string; onJoin: (c: Channel) => void }) {
   const { colors, radius, isDark, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -369,13 +385,18 @@ function BannerCarousel({ channels, myIds, accent }: { channels: Channel[]; myId
                 </View>
               </View>
               {!joined && (
-                <View style={[styles.bannerJoin, diffuse
-                  ? { backgroundColor: 'transparent', borderRadius: radius.full, borderWidth: 1, borderColor: dt.colors.line2 }
-                  : { backgroundColor: accent, borderRadius: radius.full }]}>
+                <Pressable
+                  onPress={() => onJoin(c)}
+                  hitSlop={6}
+                  style={({ pressed }) => [styles.bannerJoin, diffuse
+                    ? { backgroundColor: 'transparent', borderRadius: radius.full, borderWidth: 1, borderColor: dt.colors.line2 }
+                    : { backgroundColor: accent, borderRadius: radius.full },
+                    pressed && { opacity: 0.7 }]}
+                >
                   <Text style={[styles.bannerJoinText, diffuse
                     ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, textTransform: 'uppercase', letterSpacing: 1 }
                     : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinBtn')}</Text>
-                </View>
+                </Pressable>
               )}
             </Pressable>
           )
@@ -528,7 +549,7 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
 
 // ─── Channel Card (compact, for horizontal scroll) ─────────────────────────
 
-function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joined: boolean; accent: string }) {
+function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Channel; joined: boolean; accent: string; onJoin: () => void }) {
   const { colors, radius, isDark, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -581,13 +602,13 @@ function ChannelCardCompact({ channel, joined, accent }: { channel: Channel; joi
         )
       ) : (
         diffuse ? (
-          <View style={[styles.joinBtn, { backgroundColor: 'transparent', borderRadius: radius.full, borderWidth: 1, borderColor: dt.colors.line2 }]}>
+          <Pressable onPress={onJoin} hitSlop={6} style={({ pressed }) => [styles.joinBtn, { backgroundColor: 'transparent', borderRadius: radius.full, borderWidth: 1, borderColor: dt.colors.line2 }, pressed && { opacity: 0.7 }]}>
             <Text style={[styles.joinBtnText, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, textTransform: 'uppercase', letterSpacing: 1 }]}>{t('channelsDiscover_joinBtn')}</Text>
-          </View>
+          </Pressable>
         ) : (
-          <View style={[styles.joinBtn, { backgroundColor: accent, borderRadius: radius.full }]}>
+          <Pressable onPress={onJoin} hitSlop={6} style={({ pressed }) => [styles.joinBtn, { backgroundColor: accent, borderRadius: radius.full }, pressed && { opacity: 0.7 }]}>
             <Text style={[styles.joinBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinBtn')}</Text>
-          </View>
+          </Pressable>
         )
       )}
     </Pressable>
