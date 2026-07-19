@@ -1,25 +1,31 @@
 import { describe, it, expect } from "vitest"
-import { cssVarsExport, jsonExport, brand } from "../design-tokens"
+import { cssVarsExport, jsonExport, diffuseFields, stickers } from "../design-tokens"
 
-describe("design-tokens exports", () => {
-  it("cssVarsExport emits a :root block with the primary color", () => {
+describe("diffuse design-tokens exports", () => {
+  it("cssVarsExport emits a :root block with a Diffuse neutral + field accent", () => {
     const css = cssVarsExport()
     expect(css).toContain(":root {")
-    expect(css).toContain("--gm-primary: #7048B8;")
-    expect(css).toContain("--gm-radius-full: 999px;")
+    expect(css).toContain("--d-bg: #F4F1E8;")
+    expect(css).toContain("--d-r-lg: 28px;")
+    expect(css).toContain("field-preg-accent")
   })
 
-  it("jsonExport is valid JSON with the primary color and radius", () => {
+  it("jsonExport is valid JSON with neutrals, fields and radius", () => {
     const parsed = JSON.parse(jsonExport())
-    expect(parsed.colors.primary).toBe("#7048B8")
-    expect(parsed.radius.full).toBe(999)
-    expect(parsed.spacing.md).toBe(16)
+    expect(parsed.neutrals.bg).toBe("#F4F1E8")
+    expect(parsed.fields.preg.accent).toBe("#8F5FC6")
+    expect(parsed.radius.lg).toBe(28)
   })
 
-  it("brand group carries the three mode colors", () => {
-    const names = brand.swatches.map((s) => s.name)
-    expect(names).toContain("prePregnancy")
-    expect(names).toContain("pregnancy")
-    expect(names).toContain("kids")
+  it("has all four behavior fields with 4 gradient stops each", () => {
+    expect(diffuseFields.map((f) => f.key)).toEqual(["pre", "preg", "kids", "care"])
+    for (const f of diffuseFields) {
+      expect([f.g1, f.g2, f.g3, f.g4].every((c) => /^#[0-9A-Fa-f]{6}$/.test(c))).toBe(true)
+    }
+  })
+
+  it("stickers carry real SVG path data", () => {
+    expect(stickers.length).toBeGreaterThan(8)
+    expect(stickers.find((s) => s.name === "Heart")?.paths[0]).toContain("M50,88")
   })
 })
