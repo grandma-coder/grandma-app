@@ -8,7 +8,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
-import { getCycleInfo, toDateStr } from './cycleLogic'
+import { getCycleInfo, toDateStr, type CyclePhase } from './cycleLogic'
 import {
   getChecklistItems,
   getChecklistTitle,
@@ -155,34 +155,151 @@ export function useRegularity() {
 }
 
 // ─── PMS Stats ────────────────────────────────────────────────────────────
+//
+// Beyond a flat symptom-frequency count, we tag each symptom occurrence with
+// the cycle phase it fell in (menstruation / follicular / ovulation / luteal)
+// so the PMS detail sheet can answer "WHEN do my symptoms tend to show up?"
+// rather than just "which symptoms are most common." Luteal-phase occurrences
+// (the classic PMS window) additionally feed a days-before-next-period read.
+
+const EMPTY_PHASE_COUNTS: Record<CyclePhase, number> = {
+  menstruation: 0,
+  follicular: 0,
+  ovulation: 0,
+  luteal: 0,
+}
+
+export interface SymptomPhaseStat {
+  name: string
+  count: number
+  /** How many occurrences of this symptom fell in each cycle phase. */
+  phaseCounts: Record<CyclePhase, number>
+  /** Phase with the most occurrences, or null if none were taggable. */
+  dominantPhase: CyclePhase | null
+}
 
 export interface PMSStats {
   avgDays: number | null
-  topSymptoms: Array<{ name: string; count: number }>
+  topSymptoms: SymptomPhaseStat[]
+  /** Dominant phase across ALL symptom occurrences (not just top 5). */
+  overallDominantPhase: CyclePhase | null
+  /** Typical days-before-next-period the symptoms land, from luteal occurrences. */
+  avgDaysBeforePeriod: { min: number; max: number } | null
 }
 
-function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMSStats {
+/**
+ * Phase boundaries, mirrored EXACTLY from `getCycleInfo` in cycleLogic.ts
+ * (periodLength=5, lutealPhase=14 app defaults) so a symptom logged on a
+ * given cycle day is tagged the same phase the live cycle ring would show.
+ */
+function phaseForCycleDay(cycleDay: number, cycleLength: number): CyclePhase {
+  const periodLength = 5
+  const lutealPhase = 14
+  const ovulationDay = cycleLength - lutealPhase
+  if (cycleDay <= periodLength) return 'menstruation'
+  if (cycleDay < ovulationDay - 1) return 'follicular'
+  if (cycleDay <= ovulationDay + 1) return 'ovulation'
+  return 'luteal'
+}
+
+/** Local Date-math day difference on 'YYYY-MM-DD' strings (daysBetween isn't exported from cycleLogic.ts). */
+function daysBetweenDates(dateA: string, dateB: string): number {
+  const a = new Date(dateA + 'T00:00:00')
+  const b = new Date(dateB + 'T00:00:00')
+  return Math.floor((b.getTime() - a.getTime()) / 86400000)
+}
+
+/** Finds the cycle (closed or the trailing open one) that contains `logDate`. */
+function findCycleForDate(history: CycleHistory, logDate: string): Cycle | null {
+  for (const cycle of history.cycles) {
+    if (logDate < cycle.startDate) continue
+    if (cycle.endDate === null) {
+      // Open cycle — any date on/after its start belongs here (checked last
+      // below since cycles are in chronological order, an open cycle is
+      // always the most recent one and dates within a later closed cycle
+      // are excluded by their own startDate check above).
+      return cycle
+    }
+    if (logDate <= cycle.endDate) return cycle
+  }
+  return null
+}
+
+export function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMSStats {
   const symptomLogs = logs.filter((l) => l.type === 'symptom')
 
-  // Top symptoms — split comma-separated values (SymptomsForm saves them joined)
-  const counts = new Map<string, number>()
+  // Top symptoms — split comma-separated values (SymptomsForm saves them joined),
+  // tagging each occurrence with the phase of the cycle it fell in.
+  const phaseCountsByName = new Map<string, Record<CyclePhase, number>>()
+  const countsByName = new Map<string, number>()
+  const overallPhaseCounts: Record<CyclePhase, number> = { ...EMPTY_PHASE_COUNTS }
+  const lutealDaysBeforePeriod: number[] = []
+
   for (const log of symptomLogs) {
     if (!log.value) continue
-    for (const raw of log.value.split(',')) {
-      const name = raw.trim()
-      if (!name) continue
-      counts.set(name, (counts.get(name) ?? 0) + 1)
+    const names = log.value.split(',').map((raw) => raw.trim()).filter(Boolean)
+    if (names.length === 0) continue
+
+    const cycle = findCycleForDate(history, log.date)
+    let phase: CyclePhase | null = null
+    if (cycle) {
+      const cycleLength = cycle.lengthDays ?? history.avg ?? 28
+      const cycleDay = daysBetweenDates(cycle.startDate, log.date) + 1
+      phase = phaseForCycleDay(cycleDay, cycleLength)
+      if (phase === 'luteal') {
+        lutealDaysBeforePeriod.push(cycleLength - cycleDay + 1)
+      }
+    }
+
+    for (const name of names) {
+      countsByName.set(name, (countsByName.get(name) ?? 0) + 1)
+      if (!phaseCountsByName.has(name)) phaseCountsByName.set(name, { ...EMPTY_PHASE_COUNTS })
+      if (phase) {
+        phaseCountsByName.get(name)![phase] += 1
+        overallPhaseCounts[phase] += 1
+      }
     }
   }
-  const topSymptoms = [...counts.entries()]
-    .map(([name, count]) => ({ name, count }))
+
+  const dominantPhaseOf = (counts: Record<CyclePhase, number>): CyclePhase | null => {
+    let best: CyclePhase | null = null
+    let bestCount = 0
+    for (const phase of ['menstruation', 'follicular', 'ovulation', 'luteal'] as CyclePhase[]) {
+      if (counts[phase] > bestCount) {
+        best = phase
+        bestCount = counts[phase]
+      }
+    }
+    return best
+  }
+
+  const topSymptoms: SymptomPhaseStat[] = [...countsByName.entries()]
+    .map(([name, count]) => {
+      const phaseCounts = phaseCountsByName.get(name) ?? { ...EMPTY_PHASE_COUNTS }
+      return { name, count, phaseCounts, dominantPhase: dominantPhaseOf(phaseCounts) }
+    })
     .sort((a, b) => b.count - a.count)
     .slice(0, 5)
+
+  const overallDominantPhase = dominantPhaseOf(overallPhaseCounts)
+
+  // Typical days-before-period the luteal (PMS) occurrences land — reported as
+  // a simple min..max range over the luteal occurrences (kept simple per spec;
+  // not a statistical percentile). null when no luteal occurrences exist.
+  const avgDaysBeforePeriod =
+    lutealDaysBeforePeriod.length > 0
+      ? {
+          min: Math.max(1, Math.min(...lutealDaysBeforePeriod)),
+          max: Math.max(...lutealDaysBeforePeriod),
+        }
+      : null
 
   // Avg PMS days: for each closed cycle, count distinct dates with a symptom log
   // in the last 7 days of the cycle.
   const closedCycles = history.cycles.filter((c) => c.lengthDays !== null && c.endDate !== null)
-  if (closedCycles.length === 0) return { avgDays: null, topSymptoms }
+  if (closedCycles.length === 0) {
+    return { avgDays: null, topSymptoms, overallDominantPhase, avgDaysBeforePeriod }
+  }
 
   let totalPmsDays = 0
   for (const cycle of closedCycles) {
@@ -198,7 +315,7 @@ function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMSStats {
 
   const avgDays = Math.round((totalPmsDays / closedCycles.length) * 10) / 10
 
-  return { avgDays, topSymptoms }
+  return { avgDays, topSymptoms, overallDominantPhase, avgDaysBeforePeriod }
 }
 
 export function usePMSStats() {
