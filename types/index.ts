@@ -76,6 +76,9 @@ export interface CaregiverPermissions {
   _paused?: boolean
   _display_name?: string
   _photo_url?: string
+  // Meta key: per-behavior UX allowlist of home card ids this caregiver sees.
+  // Absent → fall back to role defaults. Never a security gate (RLS is).
+  _shared_cards?: Partial<Record<'kids' | 'pregnancy' | 'cycle', string[]>>
 }
 
 /** Capability flags the owner can grant/withhold (excludes meta keys). */
