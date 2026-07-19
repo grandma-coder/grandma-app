@@ -3,6 +3,7 @@ import { usersRouter } from "./users"
 import { metricsRouter } from "./metrics"
 import { pushRouter } from "./push"
 import { sentryRouter } from "./sentry"
+import { communityRouter } from "./community"
 
 /**
  * Root app router. Feature routers are added per phase.
@@ -14,6 +15,7 @@ export const appRouter = router({
   metrics: metricsRouter,
   push: pushRouter,
   sentry: sentryRouter,
+  community: communityRouter,
 })
 
 export type AppRouter = typeof appRouter

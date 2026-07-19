@@ -9,6 +9,7 @@ import {
   BarChart3,
   Send,
   Bug,
+  MessagesSquare,
   type LucideIcon,
 } from "lucide-react"
 
@@ -21,13 +22,14 @@ const PRIMARY: NavLink[] = [
 const PILLARS: NavLink[] = [
   { href: "/users", label: "Users", icon: Users },
   { href: "/metrics", label: "Metrics", icon: BarChart3 },
+  { href: "/community", label: "Community", icon: MessagesSquare },
   { href: "/push", label: "Push", icon: Send },
   { href: "/sentry", label: "Sentry", icon: Bug, adminOnly: true },
 ]
 
 // Which pillars are actually built yet (routes that exist). Others render
 // disabled so the nav reflects reality without dead links.
-const READY = new Set(["/", "/users", "/metrics", "/push", "/sentry"])
+const READY = new Set(["/", "/users", "/metrics", "/community", "/push", "/sentry"])
 
 export function CommandCenterSidebar() {
   const pathname = usePathname() ?? ""

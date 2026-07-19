@@ -25,6 +25,7 @@ export default async function Home() {
   const pillars = [
     { name: "Users", href: "/users", ready: true, blurb: "Browse & search all app users" },
     { name: "Metrics", href: "/metrics", ready: true, blurb: "KPIs, funnels, retention" },
+    { name: "Community", href: "/community", ready: true, blurb: "Channels & forum activity" },
     { name: "Push", href: "/push", ready: true, blurb: "Compose & send notifications" },
     { name: "Sentry", href: "/sentry", ready: true, blurb: "Crash triage" },
   ]
