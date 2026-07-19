@@ -6,7 +6,8 @@
  */
 
 import React, { createContext, useContext } from 'react'
-import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Dimensions } from 'react-native'
+import Svg, { Rect, Line as SvgLine, Text as SvgText } from 'react-native-svg'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { LogSheet } from '../calendar/LogSheet'
@@ -17,7 +18,7 @@ import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { Burst, Flower } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
-import { MiniBarChart, MiniLineChart, GlowAreaLine, BeadedThread } from './shared/MiniCharts'
+import { MiniBarChart, MiniLineChart, BeadedThread } from './shared/MiniCharts'
 import { useTranslation } from '../../lib/i18n'
 
 export type CycleDetailType =
@@ -198,7 +199,7 @@ function CycleLengthDetail() {
           {t('cycleDetail_lastNCycles', { n: values.length })}
         </Text>
         {diffuse ? (
-          <GlowAreaLine data={values} color={phaseAccent} />
+          <CycleLengthBars values={values} avg={data.avg} color={phaseAccent} />
         ) : (
           <MiniBarChart data={values} labels={labels} color={stickers.pink} />
         )}
@@ -222,6 +223,81 @@ function CycleLengthDetail() {
           </View>
         ))}
       </View>
+    </View>
+  )
+}
+
+// ─── Cycle length bars (Diffuse-only, honest chart) ───────────────────────
+// GlowAreaLine drew a dramatic smoothed peak/valley curve for what is
+// actually a tight cycle-length range (e.g. 27–30 days) — visually
+// exaggerating variation, showing no per-cycle values, no axis, and just
+// repeating the surface hero chart. This renders one bar per recent cycle
+// with the Y-axis zoomed to the actual data range (not 0-based), so a
+// steady cycle reads as steady while small deviations stay visible, plus a
+// dashed average baseline and a day-value label on every bar.
+function CycleLengthBars({ values, avg, color }: { values: number[]; avg: number; color: string }) {
+  const dt = useDiffuseTheme()
+
+  if (values.length === 0) return null
+
+  const W = Dimensions.get('window').width - 40 - 36 // screen − sheet margins − sheet padding (matches CycleLengthTrend)
+  const H = 150
+  const padX = 14
+  const padTop = 22
+  const padBottom = 24
+
+  const floor = Math.min(...values, avg) - 2
+  const ceil = Math.max(...values, avg) + 2
+  const span = Math.max(1, ceil - floor)
+
+  const slot = (W - padX * 2) / values.length
+  const barWidth = Math.min(28, slot * 0.6)
+  const chartBottom = H - padBottom
+  const chartTop = padTop
+  const yFor = (v: number) => chartTop + (1 - (v - floor) / span) * (chartBottom - chartTop)
+  const avgY = yFor(avg)
+
+  return (
+    <View>
+      <Svg width={W} height={H}>
+        {/* dashed average baseline */}
+        <SvgLine x1={padX} y1={avgY} x2={W - padX} y2={avgY} stroke={dt.colors.line} strokeWidth={1.5} strokeDasharray="3 4" />
+        <SvgText x={W - padX} y={avgY - 6} fontSize={9} fontWeight="700" fill={dt.colors.ink3} textAnchor="end" fontFamily={diffuseFont.mono}>
+          {`AVG ${avg}`}
+        </SvgText>
+
+        {/* one bar per cycle, zoomed to [floor, ceil] */}
+        {values.map((v, i) => {
+          const last = i === values.length - 1
+          const cx = padX + slot * i + slot / 2
+          const barY = yFor(v)
+          const barH = Math.max(2, chartBottom - barY)
+          return (
+            <React.Fragment key={i}>
+              <Rect
+                x={cx - barWidth / 2}
+                y={barY}
+                width={barWidth}
+                height={barH}
+                rx={8}
+                fill={color}
+                opacity={last ? 1 : 0.55}
+              />
+              <SvgText
+                x={cx}
+                y={barY - 8}
+                fontSize={10}
+                fontWeight="700"
+                fill={last ? dt.colors.ink : dt.colors.ink2}
+                textAnchor="middle"
+                fontFamily={diffuseFont.monoBold}
+              >
+                {String(v)}
+              </SvgText>
+            </React.Fragment>
+          )
+        })}
+      </Svg>
     </View>
   )
 }
