@@ -10,14 +10,14 @@ import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-nat
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { LogSheet } from '../calendar/LogSheet'
-import { DiffuseSheet } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseSheet, DiffuseMetricTile } from '../ui/diffuse/DiffusePrimitives'
 import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, useBBTStats, useCervicalMucusStats, useIntercourseStats, type MoodId, type MucusType } from '../../lib/cycleAnalytics'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { Burst, Flower } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
-import { MiniBarChart, MiniLineChart } from './shared/MiniCharts'
+import { MiniBarChart, MiniLineChart, GlowAreaLine, BeadedThread } from './shared/MiniCharts'
 import { useTranslation } from '../../lib/i18n'
 
 export type CycleDetailType =
@@ -153,7 +153,11 @@ function CycleLengthDetail() {
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_lastNCycles', { n: values.length })}
         </Text>
-        <MiniBarChart data={values} labels={labels} color={diffuse ? phaseAccent : stickers.pink} />
+        {diffuse ? (
+          <GlowAreaLine data={values} color={phaseAccent} />
+        ) : (
+          <MiniBarChart data={values} labels={labels} color={stickers.pink} />
+        )}
       </View>
 
       <View style={{ gap: 8 }}>
@@ -183,11 +187,15 @@ function CycleLengthDetail() {
 function StatChip({ label, value, tint }: { label: string; value: string; tint: string }) {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
-  const dt = useDiffuseTheme()
+
+  if (diffuse) {
+    return <DiffuseMetricTile value={value} label={label} style={{ flex: 1 }} />
+  }
+
   return (
-    <View style={[detailStyles.statChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line } : { backgroundColor: tint, borderColor: colors.border }]}>
-      <Text style={[detailStyles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
-      <Text style={[detailStyles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{value}</Text>
+    <View style={[detailStyles.statChip, { backgroundColor: tint, borderColor: colors.border }]}>
+      <Text style={[detailStyles.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
+      <Text style={[detailStyles.statValue, { color: colors.text, fontFamily: font.display }]}>{value}</Text>
     </View>
   )
 }
@@ -657,7 +665,11 @@ function BBTDetail() {
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('cycleDetail_bbtThisCycle')}
         </Text>
-        <MiniLineChart data={temps} labels={labels} color={diffuse ? phaseAccent : stickers.pink} unit={degLabel} />
+        {diffuse ? (
+          <BeadedThread data={temps} color={phaseAccent} accent={phaseAccent} labels={labels} showValues />
+        ) : (
+          <MiniLineChart data={temps} labels={labels} color={stickers.pink} unit={degLabel} />
+        )}
       </View>
 
       <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
