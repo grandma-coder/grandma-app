@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, date, jsonb, boolean } from "drizzle-orm/pg-core"
+import { pgTable, uuid, text, timestamp, date, jsonb, boolean, integer } from "drizzle-orm/pg-core"
 
 /**
  * Drizzle definitions for grandma-app's EXISTING tables that the command center
@@ -79,4 +79,16 @@ export const children = pgTable("children", {
   name: text("name"),
   birthDate: date("birth_date"),
   createdAt: timestamp("created_at", { withTimezone: true }),
+})
+
+// Daily affirmations — grandma-owned content table (already in the DB + read by
+// the app via a public-read RLS policy). The command center edits it in place;
+// no migration or app change needed.
+export const affirmations = pgTable("affirmations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  text: text("text").notNull(),
+  category: text("category").notNull().default("pregnancy"),
+  weekMin: integer("week_min"),
+  weekMax: integer("week_max"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 })

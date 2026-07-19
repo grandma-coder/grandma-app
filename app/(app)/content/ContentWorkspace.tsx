@@ -1,12 +1,13 @@
 "use client"
 import { useState } from "react"
 import { DailyQuestionsEditor } from "./DailyQuestionsEditor"
+import { AffirmationsEditor } from "./AffirmationsEditor"
 
 type Tab = "questions" | "affirmations" | "birth"
 
 const TABS: { id: Tab; label: string; ready: boolean }[] = [
   { id: "questions", label: "Daily questions", ready: true },
-  { id: "affirmations", label: "Affirmations", ready: false },
+  { id: "affirmations", label: "Affirmations", ready: true },
   { id: "birth", label: "Birth guide", ready: false },
 ]
 
@@ -36,6 +37,7 @@ export function ContentWorkspace({ isAdmin }: { isAdmin: boolean }) {
       </div>
 
       {tab === "questions" && <DailyQuestionsEditor isAdmin={isAdmin} />}
+      {tab === "affirmations" && <AffirmationsEditor isAdmin={isAdmin} />}
     </div>
   )
 }

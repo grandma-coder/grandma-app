@@ -1,9 +1,9 @@
 import { z } from "zod"
-import { eq, asc } from "drizzle-orm"
+import { eq, asc, desc, ilike, and } from "drizzle-orm"
 import { TRPCError } from "@trpc/server"
 import { router, protectedProcedure, adminProcedure } from "../trpc"
 import { db } from "@/db"
-import { contentDailyQuestions } from "@/db/schema"
+import { contentDailyQuestions, affirmations } from "@/db/schema"
 import { writeAudit } from "@/lib/audit"
 
 const MODES = ["pregnancy", "pre-pregnancy", "kids"] as const
@@ -101,6 +101,75 @@ export const contentRouter = router({
       await writeAudit({
         actorEmail: ctx.userEmail ?? "unknown",
         action: "content.daily_question.delete",
+        target: input.id,
+      })
+      return { ok: true }
+    }),
+
+  // ── Affirmations (already a live DB table; edits flow to the app instantly) ──
+
+  /** List affirmations with optional search + category filter. Viewer+. */
+  affirmations: protectedProcedure
+    .input(z.object({ search: z.string().max(120).optional(), category: z.string().max(40).optional() }).optional())
+    .query(async ({ input }) => {
+      const conds = []
+      if (input?.category) conds.push(eq(affirmations.category, input.category))
+      if (input?.search) conds.push(ilike(affirmations.text, `%${input.search}%`))
+      const where = conds.length ? and(...conds) : undefined
+      return db.select().from(affirmations).where(where).orderBy(desc(affirmations.createdAt)).limit(500)
+    }),
+
+  /** Distinct categories for the filter dropdown. Viewer+. */
+  affirmationCategories: protectedProcedure.query(async () => {
+    const rows = await db
+      .selectDistinct({ category: affirmations.category })
+      .from(affirmations)
+      .orderBy(asc(affirmations.category))
+    return rows.map((r) => r.category)
+  }),
+
+  /** Create or update one affirmation. Admin + audited. */
+  upsertAffirmation: adminProcedure
+    .input(
+      z.object({
+        id: z.string().uuid().optional(),
+        text: z.string().min(1).max(400),
+        category: z.string().min(1).max(40).default("pregnancy"),
+        weekMin: z.number().int().min(1).max(45).nullable().optional(),
+        weekMax: z.number().int().min(1).max(45).nullable().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const values = {
+        text: input.text.trim(),
+        category: input.category.trim(),
+        weekMin: input.weekMin ?? null,
+        weekMax: input.weekMax ?? null,
+      }
+      let row
+      if (input.id) {
+        ;[row] = await db.update(affirmations).set(values).where(eq(affirmations.id, input.id)).returning()
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Affirmation not found" })
+      } else {
+        ;[row] = await db.insert(affirmations).values(values).returning()
+      }
+      await writeAudit({
+        actorEmail: ctx.userEmail ?? "unknown",
+        action: input.id ? "content.affirmation.update" : "content.affirmation.create",
+        target: row.id,
+        meta: { category: values.category },
+      })
+      return row
+    }),
+
+  /** Delete an affirmation. Admin + audited. */
+  deleteAffirmation: adminProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.delete(affirmations).where(eq(affirmations.id, input.id))
+      await writeAudit({
+        actorEmail: ctx.userEmail ?? "unknown",
+        action: "content.affirmation.delete",
         target: input.id,
       })
       return { ok: true }
