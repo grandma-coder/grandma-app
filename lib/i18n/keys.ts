@@ -518,6 +518,7 @@ export interface TranslationKeys {
   kids_todayAtGlance: string
   kids_logSomething_label: string
   kids_home_wallet_label: string
+  home_wallet_label: string
   kids_quickLogs_pickTitle: string
   kids_quickLogs_edit: string
   kids_quickLogs_seeResults: string
@@ -3591,4 +3592,10 @@ export interface TranslationKeys {
   cycleInsights_lock_symptom: string
   cycleInsights_lock_mood: string
   cycleInsights_lock_intimacy: string
+
+  // ─── Cycle Memories wallet card + sheet ────────────────────────────────
+  wallet_memories_title: string
+  wallet_memories_chip: string
+  cycleMemories_emptyMsg: string
+  cycleMemories_addCta: string
 }

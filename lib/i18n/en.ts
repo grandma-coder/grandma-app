@@ -475,7 +475,7 @@ export const en: TranslationKeys = {
   // Pregnancy home (Wave 1)
   pregnancy_todaysRoutines: "TODAY'S ROUTINES",
   pregnancy_reminders: 'REMINDERS',
-  pregnancy_weekWallet_label: 'YOUR WEEK',
+  pregnancy_weekWallet_label: 'Your week',
   pregnancy_birthGuideTitle: 'Birth Guide',
   pregnancy_birthGuideSubtitle: 'Natural · C-Section · Home · Water',
   pregnancy_grandmaCtaSubtitle: 'Questions, worries, or just need a pep talk',
@@ -520,6 +520,8 @@ export const en: TranslationKeys = {
   kids_todayAtGlance: 'Today at a glance',
   kids_logSomething_label: 'How is your little one?',
   kids_home_wallet_label: 'QUICK ACCESS',
+  // Shared wallet-section heading across all 3 homes (cycle · pregnancy · kids).
+  home_wallet_label: 'Quick access',
   kids_quickLogs_pickTitle: 'What do you want to track?',
   kids_quickLogs_edit: 'Edit',
   kids_quickLogs_seeResults: 'See results',
@@ -1656,7 +1658,7 @@ export const en: TranslationKeys = {
   // ─── Cycle Calendar (Wave B4) ─────────────────────────────────────────────
   cycleCalendar_tabCycle: 'Cycle',
   cycleCalendar_tabChecklist: 'Checklist',
-  cycleCalendar_tabHealth: 'Health',
+  cycleCalendar_tabHealth: 'Exams',
   cycleCalendar_tabVisits: 'Visits',
   cycleCalendar_logActivity: 'Log Activity',
   cycleCalendar_checklist_title: 'Fertility checklist',
@@ -3597,4 +3599,10 @@ export const en: TranslationKeys = {
   cycleInsights_lock_symptom: "Log a symptom to unlock",
   cycleInsights_lock_mood: "Log your mood to unlock",
   cycleInsights_lock_intimacy: "Log to unlock",
+
+  // Cycle Memories wallet card + sheet
+  wallet_memories_title: "Memories",
+  wallet_memories_chip: "KEEPSAKES",
+  cycleMemories_emptyMsg: "Save a photo memory from this chapter of your cycle.",
+  cycleMemories_addCta: "Add a memory",
 }

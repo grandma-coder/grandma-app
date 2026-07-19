@@ -5,6 +5,7 @@
  * straight to a pop-up sheet / route — nothing expands inline. Holds:
  *   • reminders — opens a sheet with the shared UserReminders (add + list)
  *   • pillars   — opens a sheet with the cycle pillar grid (each → /pillar/[id])
+ *   • memories  — opens a sheet with cycle photo memories (grid + add)
  *
  * Evolution: 'today' → standalone quick-log card; 'nudge' → Daily Message
  * module; 'mood' (mood & symptoms) → tappable signals in the Today card.
@@ -12,7 +13,7 @@
 
 import type { WalletTone } from './wallet'
 
-export type CycleWalletCardId = 'essentials' | 'reminders' | 'pillars' | 'exams'
+export type CycleWalletCardId = 'essentials' | 'reminders' | 'pillars' | 'memories' | 'exams'
 
 export interface CycleWalletCardDescriptor {
   id: CycleWalletCardId
@@ -25,6 +26,7 @@ export function buildCycleWalletCards(): CycleWalletCardDescriptor[] {
     { id: 'essentials', tone: 'yellow', linkOnly: true },
     { id: 'reminders', tone: 'yellow', linkOnly: true },
     { id: 'pillars', tone: 'lilac', linkOnly: true },
+    { id: 'memories', tone: 'pink', linkOnly: true },
     { id: 'exams', tone: 'blue', linkOnly: true },
   ]
 }

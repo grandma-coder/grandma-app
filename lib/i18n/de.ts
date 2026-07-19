@@ -464,6 +464,7 @@ export const de: TranslationKeys = {
   kids_todayAtGlance: "Today at a glance",
   kids_logSomething_label: "How is your little one?",
   kids_home_wallet_label: "QUICK ACCESS",
+  home_wallet_label: 'Quick access',
   kids_quickLogs_pickTitle: "What do you want to track?",
   kids_quickLogs_edit: "Edit",
   kids_quickLogs_seeResults: "See results",
@@ -1518,7 +1519,7 @@ export const de: TranslationKeys = {
   cycleLogForm_mood_great: "Great",
   cycleCalendar_tabCycle: "Cycle",
   cycleCalendar_tabChecklist: "Checklist",
-  cycleCalendar_tabHealth: "Health",
+  cycleCalendar_tabHealth: "Exams",
   cycleCalendar_tabVisits: "Visits",
   cycleCalendar_logActivity: "Log Activity",
   cycleCalendar_checklist_title: "Fertility checklist",
@@ -3311,4 +3312,10 @@ export const de: TranslationKeys = {
   cycleInsights_lock_symptom: "Log a symptom to unlock",
   cycleInsights_lock_mood: "Log your mood to unlock",
   cycleInsights_lock_intimacy: "Log to unlock",
+
+  // Cycle Memories wallet card + sheet
+  wallet_memories_title: "Memories",
+  wallet_memories_chip: "KEEPSAKES",
+  cycleMemories_emptyMsg: "Save a photo memory from this chapter of your cycle.",
+  cycleMemories_addCta: "Add a memory",
 }

@@ -26,6 +26,7 @@ import { WalletPicker, type WalletPickerItem } from '../WalletPicker'
 import { LogSheet } from '../../calendar/LogSheet'
 import { UserReminders } from '../UserReminders'
 import { CyclePillarsGrid } from './CyclePillarsGrid'
+import { CycleMemoriesSheet } from './CycleMemoriesSheet'
 import { NotifyRoutine, LogOvulation, NotifyGoalAchieved } from '../../stickers/RewardStickers'
 import { Character } from '../../characters/Characters'
 import { GrandmaLogo } from '../../ui/GrandmaLogo'
@@ -62,6 +63,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
 
   const [remindersOpen, setRemindersOpen] = useState(false)
   const [pillarsOpen, setPillarsOpen] = useState(false)
+  const [showMemories, setShowMemories] = useState(false)
   // `essentials` is pinned by the home above the wallet (EssentialsWalletCard),
   // so it never lives in the stack.
   const defaultCards = buildCycleWalletCards()
@@ -98,6 +100,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
       switch (id) {
         case 'reminders': return <Character name="bell" size={26} color={stickers.blue} />
         case 'pillars': return <Character name="sparkle" size={26} color={stickers.pink} />
+        case 'memories': return <Character name="photo" size={26} color={stickers.pink} />
         case 'exams': return <Character name="exam" size={26} color={stickers.blue} />
         case 'ask_grandma': return <GrandmaLogo size={26} palette="rose" outline={colors.text} />
         case 'rewards': return <Character name="reward" size={26} color={stickers.yellow} />
@@ -108,6 +111,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
     switch (id) {
       case 'reminders': return <NotifyRoutine size={26} />
       case 'pillars': return <LogOvulation size={24} />
+      case 'memories': return <Character name="photo" size={26} color={stickers.pink} />
       case 'exams': return <Character name="exam" size={26} color={stickers.blue} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="rose" outline={colors.text} />
       case 'rewards': return <NotifyGoalAchieved size={24} />
@@ -120,6 +124,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
     switch (id) {
       case 'reminders': return t('wallet_reminders_title')
       case 'pillars': return t('cycle_wallet_pillars')
+      case 'memories': return t('wallet_memories_title')
       case 'exams': return t('wallet_exams_title')
       case 'ask_grandma': return t('wallet_askGrandma_title')
       case 'rewards': return t('wallet_rewards_title')
@@ -132,6 +137,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
     switch (id) {
       case 'reminders': return stickers.blueSoft
       case 'pillars': return stickers.pinkSoft
+      case 'memories': return stickers.pinkSoft
       case 'exams': return stickers.blueSoft
       case 'ask_grandma': return stickers.lilacSoft
       case 'rewards': return stickers.peachSoft
@@ -144,6 +150,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
   const onHeader = (id: CycleCardId) => {
     if (id === 'reminders') return setRemindersOpen(true)
     if (id === 'pillars') return setPillarsOpen(true)
+    if (id === 'memories') return setShowMemories(true)
     if (id === 'exams') return router.push('/exams?behavior=pre-pregnancy')
     if (id === 'ask_grandma') return router.push('/grandma-talk')
     if (id === 'rewards') return router.push('/daily-rewards')
@@ -201,6 +208,9 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
       <LogSheet visible={pillarsOpen} title={t('cycle_wallet_pillars')} onClose={() => setPillarsOpen(false)}>
         <CyclePillarsGrid bare onNavigate={() => setPillarsOpen(false)} />
       </LogSheet>
+
+      {/* Memories — pop-up sheet with cycle photo memories (grid + add) */}
+      <CycleMemoriesSheet visible={showMemories} onClose={() => setShowMemories(false)} />
 
       <WalletPicker
         visible={pickerOpen}
