@@ -62,7 +62,10 @@ import { POSITIONS_TOPIC } from './birthGuide/positions'
 import { PARTNER_GUIDE_TOPIC } from './birthGuide/partner-guide'
 import { RECOVERY_TOPIC } from './birthGuide/recovery'
 
-export const BIRTH_TOPICS: BirthTopic[] = [
+import { getRemoteBirthTopic, getAllRemoteBirthTopics } from './birthGuide/remote'
+export { hydrateBirthTopics } from './birthGuide/remote'
+
+const BUNDLED_BIRTH_TOPICS: BirthTopic[] = [
   NATURAL_TOPIC,
   CSECTION_TOPIC,
   HOME_TOPIC,
@@ -76,8 +79,19 @@ export const BIRTH_TOPICS: BirthTopic[] = [
   RECOVERY_TOPIC,
 ]
 
+// DB-first: command-center-managed topics (content_birth_topics) take precedence
+// when hydrated; otherwise the bundled topics. See birthGuide/remote.ts.
+export const BIRTH_TOPICS: BirthTopic[] = BUNDLED_BIRTH_TOPICS
+
 export function getBirthTopic(key: BirthTopicKey): BirthTopic {
-  const topic = BIRTH_TOPICS.find((t) => t.key === key)
+  const remote = getRemoteBirthTopic(key)
+  if (remote) return remote
+  const topic = BUNDLED_BIRTH_TOPICS.find((t) => t.key === key)
   if (!topic) throw new Error(`Birth topic "${key}" not found`)
   return topic
+}
+
+/** All topics — DB-hydrated set when available, else the bundled list. */
+export function getBirthTopics(): BirthTopic[] {
+  return getAllRemoteBirthTopics() ?? BUNDLED_BIRTH_TOPICS
 }
