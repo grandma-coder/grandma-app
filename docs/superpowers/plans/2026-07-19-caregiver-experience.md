@@ -674,31 +674,45 @@ git commit -m "feat(caregiver): add pinned essentials card to all wallet builder
 - Modify: `components/home/CycleHome.tsx` (same)
 - Modify: `app/(tabs)/index.tsx:47-61` (pass caregiver context instead of routing to thin `CaregiverHome`)
 
+**RECON-CONFIRMED FACTS (use these exact names):**
+- Behavior comes from `const mode = useModeStore((s) => s.mode)` in `index.tsx`. Values `'pregnancy' | 'pre-pregnancy' | 'kids'`. Map: `'kids'→'kids'`, `'pregnancy'→'pregnancy'`, **`'pre-pregnancy'→'cycle'`** (CycleHome IS the pre-pregnancy home).
+- Home branch: `index.tsx` lines 66–80. Caregiver branch to REPLACE: lines 44–61 (`isCaregiverContext` → `<CaregiverHome/>`, gated on `caregiverHydrated = useCaregiverStore((s)=>s.hydrated)`). KEEP the hydration gate; render the real behavior home with `caregiverView` instead.
+- **Owner id = `activeChild.parentId`** (EXISTS on `Child`; NO `ownerId`). Populated from `c.parent_id` in `_layout.tsx` both boot paths AND returned unmasked by the `get_caregiver_children` RPC (verified). Do NOT reference `activeChild.ownerId`.
+- **PHI masking:** the RPC masks `allergies`/`pediatrician`/`conditions` to empty/NULL for caregivers without `emergency`/`edit_child`. So EssentialsWalletCard's lite rows may be empty for a view-only caregiver — Task 4's card already null-guards each row, degrading to just the name. Correct/desired; don't un-mask.
+- **ADJACENT GAP this task ALSO closes:** Task 5 made builders emit `essentials`, but the wallet COMPONENTS don't render it yet. Render `EssentialsWalletCard` directly in each home ABOVE the wallet stack when `caregiverView && visible.has('essentials')`, and FILTER `essentials` OUT of the wallet component's displayed list. For the OWNER (caregiverView null), leave the wallet as-is (owner essentials rendering is a follow-up — out of scope here).
+
 **Interfaces:**
-- Consumes: `visibleCards`, `hasCapability`, `CAPABILITY` (Tasks 1–2), `useChildStore.activeChild`, `EssentialsWalletCard`.
-- Produces: each home accepts an optional prop `caregiverView?: { visible: Set<string>; canLog: boolean; showFullEssentials: boolean; ownerUserId: string } | null`. When non-null: (a) render only cards whose id is in `visible`; (b) render log entry points inert unless `canLog`; (c) pin `EssentialsWalletCard` at top when `visible.has('essentials')`.
+- Consumes: `visibleCards`, `hasCapability`, `CAPABILITY`, `isCaregiver` (`lib/caregiverPermissions`), `useChildStore.activeChild`, `EssentialsWalletCard` (`components/home/EssentialsWalletCard`).
+- Produces: each home accepts `caregiverView?: CaregiverView | null` where `interface CaregiverView { visible: Set<string>; canLog: boolean; showFullEssentials: boolean; ownerUserId: string }`. Define `CaregiverView` ONCE (export from `lib/caregiverPermissions.ts`) and import everywhere — do NOT redeclare inline per file. When non-null: (a) render only cards whose id is in `visible`; (b) log entry points inert unless `canLog`; (c) render pinned `EssentialsWalletCard` above the wallet when `visible.has('essentials')`, excluding `essentials` from the wallet's own list.
 
-**Approach:** this is the largest task. Each home already computes a card list. Thread the prop and gate each card's render. Do **one home per commit** so a reviewer can approve incrementally — but keep it as one task (shared interface).
+**Approach:** largest task. One home per commit for incremental review — one task (shared `CaregiverView`).
 
-- [ ] **Step 1: Establish the caregiver-view selector in `app/(tabs)/index.tsx`**
+- [ ] **Step 1: Define `CaregiverView` + selector in `app/(tabs)/index.tsx`**
 
-Replace the current `caregiverRole !== 'parent'` → `<CaregiverHome/>` branch (lines ~47-61) with logic that keeps rendering the behavior home but passes a `caregiverView`:
-
+Add to `lib/caregiverPermissions.ts`:
+```ts
+export interface CaregiverView {
+  visible: Set<string>
+  canLog: boolean
+  showFullEssentials: boolean
+  ownerUserId: string
+}
+```
+In `index.tsx`, replace the lines 44–61 branch. KEEP the `caregiverHydrated` gate (return the `BrandedLoader` when `isCaregiverContext && !caregiverHydrated`). When hydrated + caregiver, do NOT return `CaregiverHome`; compute `caregiverView` and fall through to the normal `mode` render, passing the prop:
 ```tsx
-import { visibleCards } from '../../lib/caregiverPermissions'
-import { hasCapability, CAPABILITY, isCaregiver } from '../../lib/caregiverPermissions'
-// behavior derived from active mode/child as already done in this file
-const activeChild = useChildStore((s) => s.activeChild)
-const caregiverView = isCaregiver(activeChild)
+import { visibleCards, hasCapability, CAPABILITY, isCaregiver, type CaregiverView } from '../../lib/caregiverPermissions'
+
+const behavior = mode === 'kids' ? 'kids' : mode === 'pregnancy' ? 'pregnancy' : 'cycle' // pre-pregnancy → cycle
+const caregiverView: CaregiverView | null = isCaregiver(activeChild) && activeChild
   ? {
-      visible: visibleCards(activeChild, behavior), // behavior: 'kids'|'pregnancy'|'cycle'
+      visible: visibleCards(activeChild, behavior),
       canLog: hasCapability(activeChild, CAPABILITY.LOG_ACTIVITY),
       showFullEssentials: hasCapability(activeChild, CAPABILITY.EMERGENCY),
-      ownerUserId: activeChild.parentId ?? activeChild.ownerId, // use the real owner id field on Child
+      ownerUserId: activeChild.parentId,
     }
   : null
 ```
-Then pass `caregiverView={caregiverView}` into `KidsHome`/`PregnancyHome`/`CycleHome`. Verify the owner-id field name by reading `types/index.ts` `Child` interface + how boot sets it in `app/_layout.tsx`.
+Pass `caregiverView={caregiverView}` into `<KidsHome/>`, `<PregnancyHome/>`, `<CycleHome/>` (only the active mode's home renders, so only it gets a non-null value).
 
 - [ ] **Step 2: Gate cards in `KidsHome.tsx`**
 
