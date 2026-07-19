@@ -20,8 +20,6 @@ import {
 } from '../../lib/channelSticker'
 import { Character } from '../../components/characters/Characters'
 
-const CREAM = '#F5EFE3'
-const INK = '#1A1430'
 
 const CATEGORIES = [
   'Parenting',
@@ -204,7 +202,7 @@ export default function CreateChannel() {
                     }
                   : {
                       backgroundColor: icon.kind === 'photo' ? colors.surfaceRaised : 'transparent',
-                      borderColor: icon.kind === 'photo' ? CREAM : colors.border,
+                      borderColor: icon.kind === 'photo' ? colors.primary : colors.border,
                     },
               ]}
             >
@@ -471,9 +469,9 @@ function ChannelCreatedModal({
             onPress={onGo}
             style={[modalStyles.cta, diffuse
               ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2, flexDirection: 'row', justifyContent: 'center', gap: 8 }
-              : { backgroundColor: CREAM, borderRadius: radius.full }]}
+              : { backgroundColor: colors.text, borderRadius: radius.full }]}
           >
-            <Text style={[modalStyles.ctaText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4 } : { color: INK }]}>{t('channelCreate_goToChannel')}</Text>
+            <Text style={[modalStyles.ctaText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4 } : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelCreate_goToChannel')}</Text>
             {diffuse && <DiffuseArrow color={dt.colors.ink} size={16} />}
           </Pressable>
         </View>
@@ -625,7 +623,7 @@ function makeStyles(
       borderTopColor: colors.borderLight,
     },
     createBtn: {
-      backgroundColor: CREAM,
+      backgroundColor: colors.text, // ink-filled primary pill
       paddingVertical: 16,
       borderRadius: radius.full,
       alignItems: 'center',
@@ -635,8 +633,8 @@ function makeStyles(
     },
     createBtnText: {
       fontSize: 16,
-      fontWeight: '800',
-      color: INK,
+      fontFamily: font.bodyBold,
+      color: colors.textInverse,
       letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
