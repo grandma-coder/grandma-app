@@ -14,6 +14,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { DiffuseSheet, DiffuseMetricTile } from '../ui/diffuse/DiffusePrimitives'
 import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, useBBTStats, useCervicalMucusStats, useIntercourseStats, type MoodId, type MucusType } from '../../lib/cycleAnalytics'
+import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { Burst, Flower } from '../ui/Stickers'
@@ -427,12 +428,26 @@ const regStyles = StyleSheet.create({
   },
 })
 
+/** Human phase label lookup — used by the PMS headline + "mostly {phase}" caption. */
+function usePhaseWord(): (phase: CyclePhase) => string {
+  const { t } = useTranslation()
+  return (phase: CyclePhase) => {
+    switch (phase) {
+      case 'menstruation': return t('cycleDetail_phase_menstruation')
+      case 'follicular': return t('cycleDetail_phase_follicular')
+      case 'ovulation': return t('cycleDetail_phase_ovulation')
+      case 'luteal': return t('cycleDetail_phase_luteal')
+    }
+  }
+}
+
 function PMSDetail() {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const phaseAccent = usePhaseAccent()
   const { t } = useTranslation()
+  const phaseWord = usePhaseWord()
   const { data, isLoading, error } = usePMSStats()
 
   if (isLoading) return <Loading />
@@ -443,6 +458,21 @@ function PMSDetail() {
 
   const maxCount = data.topSymptoms[0]?.count ?? 1
 
+  // Warm headline: only surfaced in Diffuse when there's a dominant phase to
+  // report. Falls back to a gentle nudge when there isn't enough data yet
+  // (e.g. < 2 cycles logged, or no taggable symptom occurrences).
+  const headline = diffuse && data.overallDominantPhase
+    ? data.avgDaysBeforePeriod
+      ? t('cycleDetail_pmsHeadline', {
+          phase: phaseWord(data.overallDominantPhase),
+          min: data.avgDaysBeforePeriod.min,
+          max: data.avgDaysBeforePeriod.max,
+        })
+      : t('cycleDetail_pmsHeadlineNoWindow', { phase: phaseWord(data.overallDominantPhase) })
+    : diffuse
+      ? t('cycleDetail_pmsHeadlineEmpty')
+      : null
+
   return (
     <View style={{ gap: 18 }}>
       {data.avgDays !== null && (
@@ -452,6 +482,12 @@ function PMSDetail() {
             {t('cycleDetail_daysOfSymptomsPerCycle')}
           </Text>
         </View>
+      )}
+
+      {headline && (
+        <Text style={[pmsStyles.headline, { color: dt.colors.ink2, fontFamily: diffuseFont.italic }]}>
+          {headline}
+        </Text>
       )}
 
       <View style={{ gap: 8 }}>
@@ -467,6 +503,7 @@ function PMSDetail() {
             // SymptomId. null → a genuine free-text 'Other' symptom.
             const resolvedId = resolveSymptomId(s.name)
             const label = resolvedId ? symptomLabel(resolvedId) : s.name
+            const hasPhaseData = diffuse && s.dominantPhase !== null
             return (
               <View key={s.name} style={pmsStyles.symptomRow}>
                 <View style={pmsStyles.symptomLeft}>
@@ -481,10 +518,21 @@ function PMSDetail() {
                       <Burst size={20} fill={stickers.peach} points={8} wobble={0.2} />
                     </View>
                   )}
-                  <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{label}</Body>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{label}</Body>
+                    {hasPhaseData && (
+                      <Text style={[pmsStyles.mostlyCaption, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                        {t('cycleDetail_pmsMostly', { phase: phaseWord(s.dominantPhase as CyclePhase) })}
+                      </Text>
+                    )}
+                  </View>
                 </View>
                 <View style={pmsStyles.symptomRight}>
-                  <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: diffuse ? phaseAccent : stickers.peachSoft }]} />
+                  {hasPhaseData ? (
+                    <PhaseStrip phaseCounts={s.phaseCounts} />
+                  ) : (
+                    <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: diffuse ? phaseAccent : stickers.peachSoft }]} />
+                  )}
                   <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{s.count}</Body>
                 </View>
               </View>
@@ -492,6 +540,48 @@ function PMSDetail() {
           })
         )}
       </View>
+    </View>
+  )
+}
+
+// ─── Phase strip (Diffuse-only) ────────────────────────────────────────────
+// A thin 4-segment bar showing WHEN a symptom clustered across the cycle —
+// one segment per phase, width ∝ occurrence count, zero-count phases
+// collapse entirely. The dominant segment reads at full opacity; the rest
+// are dimmed so the eye lands on the phase that matters.
+const PHASE_ORDER: CyclePhase[] = ['menstruation', 'follicular', 'ovulation', 'luteal']
+
+function PhaseStrip({ phaseCounts, height = 8 }: { phaseCounts: Record<CyclePhase, number>; height?: number }) {
+  const { stickers } = useTheme()
+  const hueForPhase: Record<CyclePhase, string> = {
+    menstruation: stickers.coral,
+    follicular: stickers.green,
+    ovulation: stickers.pink,
+    luteal: stickers.lilac,
+  }
+  const total = PHASE_ORDER.reduce((sum, p) => sum + phaseCounts[p], 0)
+  if (total === 0) return null
+
+  const maxCount = Math.max(...PHASE_ORDER.map((p) => phaseCounts[p]))
+
+  return (
+    <View style={[pmsStyles.phaseStrip, { height, borderRadius: height / 2 }]}>
+      {PHASE_ORDER.map((phase) => {
+        const count = phaseCounts[phase]
+        if (count === 0) return null
+        return (
+          <View
+            key={phase}
+            style={{
+              flex: count,
+              minWidth: 4,
+              height,
+              backgroundColor: hueForPhase[phase],
+              opacity: count === maxCount ? 1 : 0.5,
+            }}
+          />
+        )
+      })}
     </View>
   )
 }
@@ -527,6 +617,22 @@ const pmsStyles = StyleSheet.create({
   bar: {
     height: 8,
     borderRadius: 4,
+    flex: 1,
+    maxWidth: 80,
+  },
+  headline: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontStyle: 'italic',
+  },
+  mostlyCaption: {
+    fontSize: 9,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  phaseStrip: {
+    flexDirection: 'row',
+    overflow: 'hidden',
     flex: 1,
     maxWidth: 80,
   },

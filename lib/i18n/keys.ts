@@ -1828,6 +1828,14 @@ export interface TranslationKeys {
   cycleDetail_onAvg: string
   cycleDetail_daysOfSymptomsPerCycle: string
   cycleDetail_topSymptoms: string
+  cycleDetail_pmsHeadline: string
+  cycleDetail_pmsHeadlineNoWindow: string
+  cycleDetail_pmsHeadlineEmpty: string
+  cycleDetail_pmsMostly: string
+  cycleDetail_phase_menstruation: string
+  cycleDetail_phase_follicular: string
+  cycleDetail_phase_ovulation: string
+  cycleDetail_phase_luteal: string
   cycleDetail_thisCycle: string
   cycleDetail_windowClosed: string
   cycleDetail_pastWindows: string
@@ -1910,6 +1918,17 @@ export interface TranslationKeys {
   cycleDash_today: string
   cycleDash_footer: string
   cycleDash_seeResults: string
+
+  // ─── Cycle home tap-a-date logging + post-log confirmation ────────────────
+  cycleLog_todayTitle: string
+  cycleLog_dateTitle: string
+  cycleLog_hint: string
+  cycleLog_month: string
+  cycleLog_pickDay: string
+  cycleConfirm_updatingTitle: string
+  cycleConfirm_updatingCaption: string
+  cycleConfirm_doneTitle: string
+  cycleConfirm_doneCaption: string
   cycleDash_mood: string
   cycleDash_bbt: string
   cycleDash_lh: string
