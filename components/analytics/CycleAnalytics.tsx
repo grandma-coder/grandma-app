@@ -44,7 +44,7 @@ import {
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { CycleDetailSheet, type CycleDetailType } from './CycleDetailSheets'
-import { GlowAreaLine, BeadedThread } from './shared/MiniCharts'
+import { BeadedThread } from './shared/MiniCharts'
 import { Section } from './shared/Section'
 import { MoodStrip } from './shared/MoodStrip'
 import { cycleMoodToStrip } from '../../lib/moodTrend'
@@ -190,40 +190,34 @@ export function CycleAnalytics() {
           </Text>
         </View>
 
-        {/* ── Flowing fertility curve (the "audience flow" hero) ──────── */}
-        {/* Cycle-length trend — the analytical read home doesn't show: are my
-            cycles stable, lengthening, or erratic? Tap → cycle-length detail. */}
-        <Pressable
-          onPress={() => setDetailType('cycleLength')}
-          accessibilityRole="button"
-          accessibilityLabel={t('cycleAnalytics_viewLengthDetail')}
-        >
-          <View style={[styles.flowCard, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, shadowOpacity: 0, elevation: 0 } : { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
-            <View style={styles.flowHead}>
-              <Text style={[styles.cardKicker, diffuse ? { color: muted, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-                {t('cycleAnalytics_lengthTrendTitle')}
-              </Text>
-              <Text style={[styles.flowFertile, diffuse ? { color: ink, fontFamily: diffuseFont.monoBold, letterSpacing: 0.4, textTransform: 'uppercase', fontSize: 12 } : { color: accent, fontFamily: font.bodySemiBold }]}>
-                {history?.avg != null ? t('cycleAnalytics_avgDaysShort', { n: history.avg }) : t('cycleAnalytics_noWindowYet')}
-              </Text>
-            </View>
-            {diffuse ? (
-              <GlowAreaLine
-                data={(history?.cycles ?? [])
-                  .filter((c) => c.lengthDays != null)
-                  .slice(-8)
-                  .map((c) => c.lengthDays as number)}
-                color={accent}
-              />
-            ) : (
+        {/* Cycle-length trend hero — CREAM/current variant only. Under Diffuse
+            this card is intentionally omitted: it duplicated the CYCLE LENGTH
+            stat tile + Recent Cycles (both below), so the informative content
+            sits higher without a decorative repeat. The cycleLength detail
+            sheet is still reachable via the CYCLE LENGTH tile. */}
+        {!diffuse && (
+          <Pressable
+            onPress={() => setDetailType('cycleLength')}
+            accessibilityRole="button"
+            accessibilityLabel={t('cycleAnalytics_viewLengthDetail')}
+          >
+            <View style={[styles.flowCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
+              <View style={styles.flowHead}>
+                <Text style={[styles.cardKicker, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+                  {t('cycleAnalytics_lengthTrendTitle')}
+                </Text>
+                <Text style={[styles.flowFertile, { color: accent, fontFamily: font.bodySemiBold }]}>
+                  {history?.avg != null ? t('cycleAnalytics_avgDaysShort', { n: history.avg }) : t('cycleAnalytics_noWindowYet')}
+                </Text>
+              </View>
               <CycleLengthTrend
                 cycles={history?.cycles ?? []}
                 avg={history?.avg ?? null}
                 color={accent}
               />
-            )}
-          </View>
-        </Pressable>
+            </View>
+          </Pressable>
+        )}
 
         {/* ── Uniform stat grid — one tappable tile per signal, no random
             tilts so the whole board reads as one system. Intercourse only
