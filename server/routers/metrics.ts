@@ -29,7 +29,50 @@ export interface Totals {
   modeSplit: { pre: number; pregnancy: number; kids: number }
 }
 
+// Monthly price per tier (USD) for the estimated-MRR proxy. Actual billing lives
+// in RevenueCat; this is a DB-derived estimate, clearly labeled in the UI.
+const TIER_PRICE: Record<string, number> = { premium_solo: 9.99, premium_family: 9.99 }
+
 export const metricsRouter = router({
+  /**
+   * Executive overview — one blob of top-line app health for the home dashboard.
+   * Users/growth, engagement (DAU/WAU/MAU), lifecycle, correct multi-behavior
+   * counts, subscription mix, community + content totals. Plus a derived
+   * estimated MRR (tier price × paid count — a proxy, not RevenueCat truth) and
+   * a 30-day daily activity series for the chart.
+   */
+  overview: protectedProcedure.query(async () => {
+    const res = await db.execute<{ o: Record<string, unknown> }>(sql`select cc_get_overview() as o`)
+    const o = Array.from(res)[0]?.o as {
+      subscription?: { premium_solo?: number; premium_family?: number }
+    } | undefined
+
+    const solo = Number(o?.subscription?.premium_solo ?? 0)
+    const family = Number(o?.subscription?.premium_family ?? 0)
+    const estMrr = solo * TIER_PRICE.premium_solo + family * TIER_PRICE.premium_family
+
+    // 30-day daily activity (all log tables), gap-filled.
+    const series = await db.execute<{ day: string; count: number }>(sql`
+      with activity as (
+        select created_at::date d from child_logs
+        union all select created_at::date from cycle_logs
+        union all select created_at::date from pregnancy_logs
+      ),
+      days as (
+        select generate_series((now() - make_interval(days => 29))::date, now()::date, make_interval(days => 1))::date as day
+      )
+      select to_char(days.day, 'YYYY-MM-DD') as day,
+             coalesce((select count(*) from activity a where a.d = days.day), 0)::int as count
+      from days order by days.day
+    `)
+
+    return {
+      ...(o ?? {}),
+      estMrr,
+      activity: Array.from(series).map((r) => ({ day: r.day, count: Number(r.count) })),
+    }
+  }),
+
   /** Headline totals + a signups/DAU timeseries (gap-filled) with WoW deltas. */
   kpis: protectedProcedure.input(range).query(async ({ input }) => {
     const prior = priorWindow(input.since, input.until)
