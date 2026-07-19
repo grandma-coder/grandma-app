@@ -40,6 +40,8 @@ import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
 import { KidsWallet } from './KidsWallet'
+import { EssentialsWalletCard } from './EssentialsWalletCard'
+import type { CaregiverView } from '../../lib/caregiverPermissions'
 import { GrowthPercentileChart } from '../kids/GrowthPercentileChart'
 import { resolveSex } from '../../lib/growthStandards'
 import { Heart as HeartSticker, Flower as FlowerSticker, Burst as BurstSticker, Star as StarSticker, Cross as CrossSticker, Moon as MoonSticker, Sparkle as SparkleSticker, Leaf as LeafSticker, Pill as PillSticker } from '../ui/Stickers'
@@ -706,7 +708,13 @@ interface HealthHistoryData {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export function KidsHome() {
+interface KidsHomeProps {
+  /** Non-null when a caregiver (not the owner) is viewing — filters cards,
+      keeps log chips inert without log_activity, and pins the essentials card. */
+  caregiverView?: CaregiverView | null
+}
+
+export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   const { colors, radius, isDark, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -723,6 +731,16 @@ export function KidsHome() {
   const totalPoints = useBadgeStore((s) => s.totalPoints)
   const earnedBadges = useBadgeStore((s) => s.earnedBadges)
   const child = activeChild ?? children[0]
+
+  // Caregiver filtering: owner (caregiverView null) sees every card; a caregiver
+  // sees only the cards the owner shared. `readOnly` makes log entry points inert
+  // when log_activity isn't granted (owner is never read-only).
+  const show = (id: string) => !caregiverView || caregiverView.visible.has(id)
+  const readOnly = !!caregiverView && !caregiverView.canLog
+  // The wallet holds these cards (essentials is pinned separately). Hide the
+  // whole wallet block for a caregiver whose share includes none of them.
+  const WALLET_CARD_IDS = ['goals', 'health', 'exams', 'diaper', 'growth_leap', 'reminders', 'ask_grandma', 'rewards']
+  const walletHasVisibleCard = !caregiverView || WALLET_CARD_IDS.some((id) => caregiverView.visible.has(id))
 
   // Today's logs for the active child → drives the "Today at a glance" quick-log
   // chips (done state + progress). Auto-refetches on child switch + after saves.
@@ -2147,7 +2165,19 @@ export function KidsHome() {
           repetitive and the seven empty rings looked broken when there was no
           recent data. */}
 
+      {/* ─── Essentials — pinned above everything for a caregiver (child card:
+          name · allergies · pediatrician, + emergency rows when granted). ─── */}
+      {caregiverView && caregiverView.visible.has('essentials') && child?.id && (
+        <EssentialsWalletCard
+          childId={child.id}
+          ownerUserId={caregiverView.ownerUserId}
+          showFull={caregiverView.showFullEssentials}
+          pinned
+        />
+      )}
+
       {/* ─── Hero tiles: LAST SLEEP / MOOD / CALORIES / ACTIVITIES ─── */}
+      {show('hero-tiles') && (
       <HeroTiles
         sleepTotal={rangeData.sleepTotal}
         sleepTarget={rangeData.sleepTarget}
@@ -2171,13 +2201,16 @@ export function KidsHome() {
         onPressMood={() => setMoodModalVisible(true)}
         onPressCalories={() => setActivityModalVisible(true)}
         onPressActivity={() => setActivitiesDetailVisible(true)}
-        onLogSleep={() => setLogSheetType('sleep')}
-        onLogMood={() => setLogSheetType('mood')}
-        onLogFeeding={() => setLogSheetType('feeding')}
-        onLogActivity={() => setLogSheetType('activity')}
+        // Log entry points are inert for a view-only caregiver (no log_activity).
+        onLogSleep={readOnly ? undefined : () => setLogSheetType('sleep')}
+        onLogMood={readOnly ? undefined : () => setLogSheetType('mood')}
+        onLogFeeding={readOnly ? undefined : () => setLogSheetType('feeding')}
+        onLogActivity={readOnly ? undefined : () => setLogSheetType('activity')}
       />
+      )}
 
       {/* ─── Today at a glance — customizable quick-log launcher ─── */}
+      {show('today-summary') && (
       <View style={{ marginTop: 24 }}>
         {diffuse ? (
           <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
@@ -2189,24 +2222,26 @@ export function KidsHome() {
         <KidsTodaySummaryCard
           childId={child?.id}
           todayCounts={todayCounts}
-          onLogMetric={(type) => setLogSheetType(type as 'sleep' | 'mood' | 'feeding' | 'activity' | 'diaper')}
+          onLogMetric={readOnly ? undefined : (type) => setLogSheetType(type as 'sleep' | 'mood' | 'feeding' | 'activity' | 'diaper')}
         />
       </View>
+      )}
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
 
       {/* Wallet eyebrow — small section title above the card stack, matching the
-          pregnancy home's "YOUR WEEK" label above its Week Wallet. */}
-      {diffuse ? (
+          pregnancy home's "YOUR WEEK" label above its Week Wallet. Hidden with
+          the stack when a caregiver has none of the wallet's cards shared. */}
+      {walletHasVisibleCard && (diffuse ? (
         <Text style={{ marginTop: 24, marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
           {t('kids_home_wallet_label')}
         </Text>
       ) : (
         <MonoCaps style={{ marginTop: 24, marginBottom: 12 }}>{t('kids_home_wallet_label')}</MonoCaps>
-      )}
+      ))}
 
       {/* ─── Wallet stack (Set Goals → Rewards) ─────────────── */}
-      {(() => {
+      {walletHasVisibleCard && (() => {
         const growthLeapBody = growthLeap ? (<GrowthLeapCard leap={growthLeap} childName={child.name} />) : null
         const remindersBody = (
           <View style={{ gap: 12 }}>
@@ -2595,6 +2630,8 @@ export function KidsHome() {
               onOpenDiaper={() => setDiaperModalVisible(true)}
               onOpenGrowthLeap={() => setGrowthLeapSheetVisible(true)}
               onOpenReminders={() => setRemindersSheetVisible(true)}
+              // Caregiver → wallet renders only the shared cards (excl. essentials).
+              visibleCardIds={caregiverView?.visible ?? null}
             />
 
             {/* Reminders — pop-up sheet (add + compact list; "see all" opens the

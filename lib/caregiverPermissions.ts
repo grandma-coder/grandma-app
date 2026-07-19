@@ -17,6 +17,23 @@ import type { CaregiverCapability, ChildWithRole } from '../types'
 import { roleDefaultCards, type CaregiverBehavior } from './caregiverCards'
 import { CAREGIVER_CARDS } from './caregiverCards'
 
+/**
+ * A caregiver's resolved home view. Computed once in app/(tabs)/index.tsx and
+ * threaded into whichever behavior home renders, so the home can (a) show only
+ * the shared cards, (b) keep log entry points inert without `log_activity`, and
+ * (c) pin the essentials card. Null for owners (the normal, unfiltered case).
+ */
+export interface CaregiverView {
+  /** Card ids the caregiver's surface may render (UX-only; RLS still gates data). */
+  visible: Set<string>
+  /** log_activity granted → log chips fire; else they're inert. */
+  canLog: boolean
+  /** emergency granted → essentials card shows the full (emergency + insurance) rows. */
+  showFullEssentials: boolean
+  /** Owner user id, for fetching the child's essentials (childEssentials). */
+  ownerUserId: string
+}
+
 /** The capability flags an owner can grant/withhold (excludes meta keys). */
 export const CAPABILITY: Record<Uppercase<CaregiverCapability>, CaregiverCapability> = {
   VIEW: 'view',

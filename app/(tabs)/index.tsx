@@ -16,7 +16,11 @@ import { useIsDiffuse, useScrollBottomInset } from '../../components/ui/diffuse/
 import { CycleHome } from '../../components/home/CycleHome'
 import { PregnancyHome } from '../../components/home/PregnancyHome'
 import { KidsHome } from '../../components/home/KidsHome'
-import { CaregiverHome } from '../../components/caregiver/CaregiverHome'
+import {
+  visibleCards, hasCapability, CAPABILITY, isCaregiver,
+  type CaregiverView,
+} from '../../lib/caregiverPermissions'
+import type { CaregiverBehavior } from '../../lib/caregiverCards'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
@@ -42,32 +46,44 @@ export default function Home() {
   const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
 
   // Caregiver surface: when the active child is one the user is a caregiver for
-  // (not their own), render the scoped caregiver home instead of the owner
-  // dashboard. Gate on hydration so the persona never flashes on cold start.
+  // (not their own), the SAME behavior home renders — but filtered to the cards
+  // the owner shared, with log entry points inert unless log_activity is granted
+  // and the essentials card pinned. Gate on hydration so the caregiver's
+  // permission-derived view never flashes the owner's full home on cold start.
   const isCaregiverContext = !!activeChild && activeChild.caregiverRole !== 'parent'
-  if (isCaregiverContext) {
-    if (!caregiverHydrated) {
-      return (
-        <View style={[styles.root, styles.loaderRoot, { backgroundColor: bg }]}>
-          <BrandedLoader label="Loading" />
-        </View>
-      )
-    }
+  if (isCaregiverContext && !caregiverHydrated) {
     return (
-      <View style={[styles.root, { backgroundColor: bg }]}>
-        <CaregiverHome />
+      <View style={[styles.root, styles.loaderRoot, { backgroundColor: bg }]}>
+        <BrandedLoader label="Loading" />
       </View>
     )
   }
 
+  // The active journey mode maps 1:1 to a caregiver behavior; pre-pregnancy is
+  // the cycle behavior (CycleHome IS the pre-pregnancy home).
+  const behavior: CaregiverBehavior =
+    mode === 'kids' ? 'kids' : mode === 'pregnancy' ? 'pregnancy' : 'cycle'
+
+  // Non-null only for a real caregiver relationship; owners get null → every
+  // home renders exactly as before (its show() helper is true when this is null).
+  const caregiverView: CaregiverView | null =
+    isCaregiver(activeChild) && activeChild
+      ? {
+          visible: visibleCards(activeChild, behavior),
+          canLog: hasCapability(activeChild, CAPABILITY.LOG_ACTIVITY),
+          showFullEssentials: hasCapability(activeChild, CAPABILITY.EMERGENCY),
+          ownerUserId: activeChild.parentId,
+        }
+      : null
+
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
       {/* Pregnancy gets its own full-width scroll (hero carousel needs SCREEN_W) */}
-      {mode === 'pregnancy' && <PregnancyHome topInset={insets.top} />}
+      {mode === 'pregnancy' && <PregnancyHome topInset={insets.top} caregiverView={caregiverView} />}
 
       {/* Cycle brings its own ScrollView — render it standalone (like pregnancy)
           rather than nesting it inside the outer one. */}
-      {mode === 'pre-pregnancy' && <CycleHome />}
+      {mode === 'pre-pregnancy' && <CycleHome caregiverView={caregiverView} />}
 
       {mode !== 'pregnancy' && mode !== 'pre-pregnancy' && (
       <ScrollView
@@ -77,7 +93,7 @@ export default function Home() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {mode === 'kids' && <KidsHome />}
+        {mode === 'kids' && <KidsHome caregiverView={caregiverView} />}
 
         {/* Empty state — no behavior enrolled */}
         {!mode && (

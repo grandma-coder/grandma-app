@@ -33,8 +33,12 @@ import {
 import { Heart as HeartSticker, Star as StarSticker } from '../ui/Stickers'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 
-/** Superset of card ids the kids wallet can show (contextual + shortcuts). */
-type KidsCardId = KidsWalletCardId | 'channels' | 'village'
+/**
+ * Superset of card ids the kids wallet can render (contextual + shortcuts).
+ * `essentials` is intentionally excluded — it's pinned above the wallet by the
+ * home (EssentialsWalletCard), never listed inside the stack.
+ */
+type KidsCardId = Exclude<KidsWalletCardId, 'essentials'> | 'channels' | 'village'
 
 interface KidsWalletProps {
   hasDiaper: boolean
@@ -48,6 +52,8 @@ interface KidsWalletProps {
   onOpenGrowthLeap: () => void
   /** opens the reminders pop-up sheet (owned by KidsHome) */
   onOpenReminders: () => void
+  /** Caregiver share allowlist (card ids). Null → owner: show every card. */
+  visibleCardIds?: Set<string> | null
 }
 
 // Tone per shortcut-only card (contextual card tones come from the builder).
@@ -56,6 +62,7 @@ const SHORTCUT_TONE: Record<string, WalletTone> = { channels: 'peach', village: 
 export function KidsWallet({
   hasDiaper, hasGrowthLeap, growthLeapName,
   onOpenGoals, onOpenHealth, onOpenDiaper, onOpenGrowthLeap, onOpenReminders,
+  visibleCardIds = null,
 }: KidsWalletProps) {
   const { colors, stickers } = useTheme()
   const { t } = useTranslation()
@@ -65,8 +72,10 @@ export function KidsWallet({
   const setEnabled = useKidsWalletStore((s) => s.setEnabled)
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  // Default (contextual) cards from the pure builder.
+  // Default (contextual) cards from the pure builder. `essentials` is pinned by
+  // the home above the wallet (EssentialsWalletCard), so it never lives here.
   const defaultCards = buildKidsWalletCards({ hasDiaper, hasGrowthLeap })
+    .filter((c): c is typeof c & { id: KidsCardId } => c.id !== 'essentials')
   const toneFor = (id: KidsCardId): WalletTone =>
     defaultCards.find((c) => c.id === id)?.tone ?? SHORTCUT_TONE[id] ?? 'surface'
 
@@ -80,11 +89,13 @@ export function KidsWallet({
 
   // Displayed cards: builder order when uncustomized; else the user's enabled
   // keys (in their order), dropping any key whose card isn't currently available
-  // (e.g. a contextual card with no data this session).
-  const displayedIds: KidsCardId[] =
+  // (e.g. a contextual card with no data this session). For a caregiver, further
+  // restrict to the shared allowlist (owner → visibleCardIds null → no filter).
+  const displayedIds: KidsCardId[] = (
     enabledKeys === null
       ? defaultCards.map((c) => c.id)
       : enabledKeys.filter((k): k is KidsCardId => availableIds.includes(k as KidsCardId))
+  ).filter((id) => visibleCardIds === null || visibleCardIds.has(id))
 
   const iconFor = (id: KidsCardId): React.ReactNode => {
     if (diffuse) {

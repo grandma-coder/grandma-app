@@ -28,8 +28,9 @@ interface Props {
   childId: string | undefined
   /** Count-per-type map for today (from useKidsTodayLogs). */
   todayCounts: Record<string, number>
-  /** Open the log sheet for a given metric key (KidsHome logSheetType). */
-  onLogMetric: (type: string) => void
+  /** Open the log sheet for a given metric key (KidsHome logSheetType).
+      Undefined for a view-only caregiver → the quick-log chips are inert. */
+  onLogMetric?: (type: string) => void
 }
 
 // Character glyph + hue per quick-log key.
@@ -131,7 +132,8 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
           return (
             <Pressable
               key={p.key}
-              onPress={() => onLogMetric(p.logType)}
+              onPress={onLogMetric ? () => onLogMetric(p.logType) : undefined}
+              disabled={!onLogMetric}
               style={({ pressed }) => [
                 styles.chip,
                 { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, opacity: pressed ? 0.8 : 1 },
