@@ -1,0 +1,60 @@
+<!--
+  Supabase → Authentication → Email Templates → "Confirm signup"
+  Suggested subject:  Welcome to grandma.app 💛 confirm your email
+  Replace {{LOGO_URL}} below with a hosted PNG of the grandma logo, or delete
+  the <img> line to fall back to the text wordmark.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <body style="margin:0; padding:0; background-color:#F3ECD9; font-family:Helvetica,Arial,sans-serif; color:#2A2624;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3ECD9; padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px; background-color:#FFFEF8; border-radius:28px; border:1px solid rgba(20,19,19,0.08); overflow:hidden;">
+            <!-- Header -->
+            <tr>
+              <td align="center" style="padding:36px 32px 8px 32px;">
+                <!-- <img src="{{LOGO_URL}}" width="56" height="56" alt="grandma.app" style="display:block; border-radius:16px;" /> -->
+                <div style="font-family:Georgia,'Times New Roman',serif; font-size:26px; font-weight:600; color:#7048B8; letter-spacing:-0.02em;">grandma<span style="color:#E58BB4;">.app</span></div>
+              </td>
+            </tr>
+            <!-- Body -->
+            <tr>
+              <td style="padding:16px 36px 8px 36px;">
+                <h1 style="margin:0 0 12px 0; font-family:Georgia,'Times New Roman',serif; font-size:24px; font-weight:600; color:#2A2624; line-height:1.25;">Welcome, love 💛</h1>
+                <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6; color:#4A4640;">
+                  You're one tap away from your grandma.app companion — for trying to conceive, expecting, or raising little ones. Confirm your email and we'll get you started.
+                </p>
+              </td>
+            </tr>
+            <!-- CTA -->
+            <tr>
+              <td align="center" style="padding:8px 36px 8px 36px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block; background-color:#7048B8; color:#FFFEF8; text-decoration:none; font-size:15px; font-weight:600; padding:15px 32px; border-radius:999px;">Confirm my email</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 36px 4px 36px;">
+                <p style="margin:0; font-size:13px; line-height:1.6; color:#8A857C;">
+                  If the button doesn't work, copy and paste this link into your browser:
+                </p>
+                <p style="margin:6px 0 0 0; font-size:12px; line-height:1.5; word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#7048B8;">{{ .ConfirmationURL }}</a>
+                </p>
+              </td>
+            </tr>
+            <!-- Footer -->
+            <tr>
+              <td style="padding:24px 36px 32px 36px; border-top:1px solid rgba(20,19,19,0.08);">
+                <p style="margin:16px 0 0 0; font-size:12px; line-height:1.6; color:#A39E94;">
+                  You're receiving this because someone signed up for grandma.app with this email. If it wasn't you, you can safely ignore this message — no account will be created.
+                </p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:16px 0 0 0; font-size:11px; color:#A39E94;">grandma.app · made with care for parents</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
