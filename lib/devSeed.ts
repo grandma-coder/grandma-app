@@ -1153,12 +1153,22 @@ export async function wipeAllDemoData(): Promise<void> {
 
 import { useChildStore } from '../store/useChildStore'
 import { useCaregiverStore } from '../store/useCaregiverStore'
+import { useDevStore } from '../store/useDevStore'
 import { roleDefaultCards, type CaregiverBehavior } from './caregiverCards'
 import type { CaregiverRole } from '../types'
 
+// The real account role captured before a caregiver simulation, so exiting
+// restores it. useDevStore snapshots the child store but NOT the caregiver
+// store, so we track this one field ourselves.
+let preSimAccountRole: string | null = null
+
 /** DEV ONLY — flip the active child into a caregiver relationship so the whole
  * caregiver surface (filtered home, essentials card, decluttered tabs) renders
- * without a second account. Local UX state only; RLS still governs real reads. */
+ * without a second account. Local UX state only; RLS still governs real reads.
+ *
+ * Enters dev mode first: this shows the persistent DEV banner (so you always
+ * know you're simulating) and snapshots useChildStore, so the banner's EXIT —
+ * or resetToParentSim() — restores your real parent state in one step. */
 export function simulateCaregiver(opts: {
   behavior: CaregiverBehavior
   role: CaregiverRole
@@ -1168,6 +1178,15 @@ export function simulateCaregiver(opts: {
 }): void {
   const { activeChild, children, setChildren, setActiveChild } = useChildStore.getState()
   if (!activeChild) return
+
+  // Snapshot real state for a clean exit + surface the DEV banner. If already
+  // simulating, keep the originally-captured accountRole (enter() is a no-op
+  // when active, so we must not overwrite the snapshot).
+  if (!useDevStore.getState().active) {
+    preSimAccountRole = useCaregiverStore.getState().accountRole
+  }
+  useDevStore.getState().enter()
+
   const patched = {
     ...activeChild,
     caregiverRole: opts.role,
@@ -1184,17 +1203,11 @@ export function simulateCaregiver(opts: {
   useCaregiverStore.getState().setAccountRole(opts.role)
 }
 
-/** DEV ONLY — reset the active child back to a parent relationship, undoing
- * `simulateCaregiver`. */
+/** DEV ONLY — undo `simulateCaregiver`: exits dev mode (restores the snapshotted
+ * child store + clears the banner) and restores the pre-sim account role. */
 export function resetToParentSim(): void {
-  const { activeChild, children, setChildren, setActiveChild } = useChildStore.getState()
-  if (!activeChild) return
-  const patched = {
-    ...activeChild,
-    caregiverRole: 'parent' as CaregiverRole,
-    permissions: { view: true, log_activity: true, chat: true, emergency: true },
-  }
-  setChildren(children.map((c) => (c.id === patched.id ? patched : c)))
-  setActiveChild(patched)
-  useCaregiverStore.getState().setAccountRole('parent')
+  // exit() restores useChildStore from the enter() snapshot and clears active.
+  useDevStore.getState().exit()
+  useCaregiverStore.getState().setAccountRole(preSimAccountRole ?? 'parent')
+  preSimAccountRole = null
 }
