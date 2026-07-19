@@ -18,9 +18,13 @@ import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { Burst, Flower } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
+import { SymptomBlob, CustomSymptomBlob } from '../calendar/symptomStickers'
+import { ALL_SYMPTOMS, symptomLabel, type SymptomId } from '../../lib/cycleSymptoms'
 import { MiniBarChart, MiniLineChart, BeadedThread } from './shared/MiniCharts'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import { useTranslation } from '../../lib/i18n'
+
+const KNOWN_SYMPTOM_IDS = new Set<string>(ALL_SYMPTOMS.map((s) => s.id))
 
 export type CycleDetailType =
   | 'cycleLength'
@@ -31,50 +35,6 @@ export type CycleDetailType =
   | 'bbt'
   | 'mucus'
   | 'intercourse'
-
-// ─── PMS symptom → Character concept map ───────────────────────────────────
-// `usePMSStats().topSymptoms[].name` is NOT a localized display label — it's
-// the raw symptom id as stored in `cycle_logs.value` (see lib/cycleSymptoms.ts
-// `SymptomId`, e.g. 'back-pain', 'tender-breasts', 'cravings'). There is no
-// separate `.id` field on the topSymptoms entries, so we key this map on a
-// normalized form of `.name` itself. Also covers the older CycleTracker.tsx
-// id vocabulary (e.g. 'mood_swings', 'cm_eggwhite') in case that source ever
-// feeds the same log rows, so the mapping is robust either way. Unknown
-// values fall back to the original generic 'activity'/peach — never crash.
-const SYMPTOM_CHARACTER_MAP: Record<string, { name: import('../characters/Characters').CharacterName; color: (s: ReturnType<typeof useTheme>['stickers']) => string }> = {
-  // lib/cycleSymptoms.ts SymptomId vocabulary (the real, wired-up source)
-  cramps: { name: 'period', color: (s) => s.coral },
-  bloated: { name: 'activity', color: (s) => s.peach },
-  headache: { name: 'brain', color: (s) => s.yellow },
-  fatigue: { name: 'sleep', color: (s) => s.blue },
-  nausea: { name: 'water', color: (s) => s.green },
-  'back-pain': { name: 'heart', color: (s) => s.pink },
-  'tender-breasts': { name: 'heart', color: (s) => s.pink },
-  acne: { name: 'sparkle', color: (s) => s.coral },
-  insomnia: { name: 'sleep', color: (s) => s.blue },
-  cravings: { name: 'nutrition', color: (s) => s.peach },
-  'low-mood': { name: 'mood', color: (s) => s.lilac },
-  spotting: { name: 'period', color: (s) => s.coral },
-  energetic: { name: 'sparkle', color: (s) => s.coral },
-  restless: { name: 'activity', color: (s) => s.peach },
-  // Older CycleTracker.tsx id vocabulary (defensive — kept in sync per spec)
-  bloating: { name: 'activity', color: (s) => s.peach },
-  mood_swings: { name: 'mood', color: (s) => s.lilac },
-  breast_tenderness: { name: 'heart', color: (s) => s.pink },
-  back_pain: { name: 'heart', color: (s) => s.pink },
-  cm_eggwhite: { name: 'water', color: (s) => s.green },
-  cm_creamy: { name: 'water', color: (s) => s.green },
-  cm_sticky: { name: 'water', color: (s) => s.green },
-  cm_dry: { name: 'water', color: (s) => s.green },
-}
-
-function symptomToCharacter(rawName: string, stickers: ReturnType<typeof useTheme>['stickers']) {
-  const key = rawName.trim().toLowerCase().replace(/\s+/g, '_')
-  const dashKey = rawName.trim().toLowerCase().replace(/\s+/g, '-')
-  const entry = SYMPTOM_CHARACTER_MAP[key] ?? SYMPTOM_CHARACTER_MAP[dashKey] ?? SYMPTOM_CHARACTER_MAP[rawName]
-  if (entry) return { name: entry.name, color: entry.color(stickers) }
-  return { name: 'activity' as const, color: stickers.peach }
-}
 
 interface Props {
   type: CycleDetailType | null
@@ -505,18 +465,23 @@ function PMSDetail() {
         ) : (
           data.topSymptoms.map((s) => {
             const pct = (s.count / maxCount) * 100
-            const symptomGlyph = symptomToCharacter(s.name, stickers)
+            const isKnown = KNOWN_SYMPTOM_IDS.has(s.name)
+            const label = isKnown ? symptomLabel(s.name as SymptomId) : s.name
             return (
               <View key={s.name} style={pmsStyles.symptomRow}>
                 <View style={pmsStyles.symptomLeft}>
                   {diffuse ? (
-                    <Character name={symptomGlyph.name} size={24} color={symptomGlyph.color} />
+                    isKnown ? (
+                      <SymptomBlob id={s.name as SymptomId} size={40} />
+                    ) : (
+                      <CustomSymptomBlob size={40} />
+                    )
                   ) : (
                     <View style={[pmsStyles.chip, { backgroundColor: stickers.peachSoft, borderColor: colors.border }]}>
                       <Burst size={20} fill={stickers.peach} points={8} wobble={0.2} />
                     </View>
                   )}
-                  <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{s.name}</Body>
+                  <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{label}</Body>
                 </View>
                 <View style={pmsStyles.symptomRight}>
                   <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: diffuse ? phaseAccent : stickers.peachSoft }]} />

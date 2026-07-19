@@ -149,3 +149,62 @@ function Restless({ size }: { size: number }) {
     </Wrap>
   )
 }
+
+// ─── SymptomBlob — soft-tinted round chip wrapping the existing glyph ──────
+// Per-symptom hue, reused from the glyph functions above (same hex values).
+// The blob tint is the hue at ~22% alpha (hex `38` suffix) so the glyph on
+// top renders at full opacity.
+export const SYMPTOM_HUE: Record<SymptomId, string> = {
+  cramps: '#EE7B6D',
+  headache: '#F5B896',
+  bloated: '#C8B6E8',
+  fatigue: '#9DC3E8',
+  nausea: '#BDD48C',
+  'back-pain': '#EE7B6D',
+  'tender-breasts': '#F2B2C7',
+  acne: '#EE7B6D',
+  insomnia: '#C8B6E8',
+  cravings: '#F5D652',
+  'low-mood': '#9DC3E8',
+  spotting: '#EE7B6D',
+  energetic: '#F5D652',
+  restless: '#7048B8',
+}
+
+export function SymptomBlob({ id, size = 40 }: { id: SymptomId; size?: number }) {
+  const hue = SYMPTOM_HUE[id]
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 999,
+        backgroundColor: `${hue}38`,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <SymptomSticker id={id} size={Math.round(size * 0.55)} />
+    </View>
+  )
+}
+
+// Neutral fallback blob for free-text 'Other' symptoms that have no glyph.
+export function CustomSymptomBlob({ size = 40 }: { size?: number }) {
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 999,
+        backgroundColor: `${INK}38`,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Svg width={Math.round(size * 0.4)} height={Math.round(size * 0.4)} viewBox="0 0 24 24">
+        <Circle cx={12} cy={12} r={4} fill={INK} />
+      </Svg>
+    </View>
+  )
+}
