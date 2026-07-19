@@ -1,8 +1,8 @@
 /**
- * Card-id vocabulary for caregiver sharing. IDs mirror the ids already used by
- * the behavior homes + wallet builders (kidsWallet/weekWallet/cycleWallet), so
- * a shared-card allowlist maps 1:1 onto what those homes render. Plus the new
- * cross-behavior `essentials` card. UX metadata only — RLS is the boundary.
+ * Card-id vocabulary for caregiver sharing. These ids form a shared contract
+ * that behavior homes + wallet builders (kidsWallet/weekWallet/cycleWallet)
+ * wire into, so a shared-card allowlist maps 1:1 onto what those homes render.
+ * Plus the new cross-behavior `essentials` card. UX metadata only — RLS is the boundary.
  */
 import type { CaregiverRole } from '../types'
 
@@ -43,7 +43,7 @@ export const CAREGIVER_CARDS: Record<CaregiverBehavior, CaregiverCardMeta[]> = {
     { id: 'essentials', label: 'Essentials card', tier: 'safe' },
   ],
   cycle: [
-    { id: 'journey_ring', label: 'Cycle phase & period timing', tier: 'intimate' },
+    { id: 'journey_ring', label: 'Cycle phase & period timing', tier: 'child-health' },
     { id: 'daily_message', label: 'Daily message', tier: 'safe' },
     { id: 'today_summary', label: 'Intimate signals (BBT · LH · intercourse)', tier: 'intimate' },
     { id: 'reminders', label: 'Reminders', tier: 'child-health' },

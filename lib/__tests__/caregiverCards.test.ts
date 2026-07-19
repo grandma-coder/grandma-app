@@ -7,11 +7,14 @@ describe('CAREGIVER_CARDS', () => {
     }
   })
 
-  it('marks cycle intimate signals as the intimate tier', () => {
+  it('marks the truly intimate cycle signals (today_summary) as intimate', () => {
     const cycleTodaySummary = CAREGIVER_CARDS.cycle.find((c) => c.id === 'today_summary')
     expect(cycleTodaySummary?.tier).toBe('intimate')
+  })
+
+  it('treats the cycle journey ring (phase + period timing) as child-health, not intimate', () => {
     const ring = CAREGIVER_CARDS.cycle.find((c) => c.id === 'journey_ring')
-    expect(ring?.tier).toBe('intimate')
+    expect(ring?.tier).toBe('child-health')
   })
 
   it('gives every card a non-empty human label', () => {
