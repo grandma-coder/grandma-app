@@ -30,14 +30,23 @@ import { NotifyRoutine, LogOvulation, NotifyGoalAchieved } from '../../stickers/
 import { Character } from '../../characters/Characters'
 import { GrandmaLogo } from '../../ui/GrandmaLogo'
 
-/** Superset of card ids the cycle wallet can show (default + shortcuts). */
-type CycleCardId = CycleWalletCardId | 'ask_grandma' | 'rewards' | 'channels' | 'village'
+/**
+ * Superset of card ids the cycle wallet can render (default + shortcuts).
+ * `essentials` is intentionally excluded — it's pinned above the wallet by the
+ * home (EssentialsWalletCard), never listed inside the stack.
+ */
+type CycleCardId = Exclude<CycleWalletCardId, 'essentials'> | 'ask_grandma' | 'rewards' | 'channels' | 'village'
 
 const SHORTCUT_TONE: Record<string, WalletTone> = {
   ask_grandma: 'lilac', rewards: 'coral', channels: 'peach', village: 'green',
 }
 
-export function CycleWallet() {
+interface CycleWalletProps {
+  /** Caregiver share allowlist (card ids). Null → owner: show every card. */
+  visibleCardIds?: Set<string> | null
+}
+
+export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
   const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -53,7 +62,10 @@ export function CycleWallet() {
 
   const [remindersOpen, setRemindersOpen] = useState(false)
   const [pillarsOpen, setPillarsOpen] = useState(false)
+  // `essentials` is pinned by the home above the wallet (EssentialsWalletCard),
+  // so it never lives in the stack.
   const defaultCards = buildCycleWalletCards()
+    .filter((c): c is typeof c & { id: CycleCardId } => c.id !== 'essentials')
 
   const [reminders, setReminders] = useState<Reminder[]>([])
   useEffect(() => {
@@ -67,10 +79,12 @@ export function CycleWallet() {
     .filter((k) => !defaultCards.some((c) => c.id === k)) as CycleCardId[]
   const availableIds: CycleCardId[] = [...defaultCards.map((c) => c.id), ...shortcutOnlyIds]
 
-  const displayedIds: CycleCardId[] =
+  // For a caregiver, restrict to the shared allowlist (owner → null → no filter).
+  const displayedIds: CycleCardId[] = (
     enabledKeys === null
       ? defaultCards.map((c) => c.id)
       : enabledKeys.filter((k): k is CycleCardId => availableIds.includes(k as CycleCardId))
+  ).filter((id) => visibleCardIds === null || visibleCardIds.has(id))
 
   const toneFor = (id: CycleCardId): WalletTone =>
     defaultCards.find((c) => c.id === id)?.tone ?? SHORTCUT_TONE[id] ?? 'surface'
