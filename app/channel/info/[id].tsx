@@ -20,8 +20,6 @@ import {
 import { router, useLocalSearchParams } from 'expo-router'
 import {
   ArrowLeft,
-  Users,
-  Star,
   Settings,
   Trash2,
   LogOut,
@@ -497,13 +495,13 @@ export default function ChannelInfoScreen() {
           ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
           : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
           <View style={s.stat}>
-            <Users size={18} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+            <Character name="community" size={18} color={diffuse ? dt.colors.ink3 : colors.primary} />
             <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{channel.memberCount}</Text>
             <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statMembers')}</Text>
           </View>
           <View style={[s.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <View style={s.stat}>
-            <Star size={18} color={diffuse ? dt.colors.ink3 : stickers.yellow} strokeWidth={diffuse ? 1.6 : 2} fill={!diffuse && channel.avgRating > 0 ? stickers.yellow : 'none'} />
+            <Character name="star" size={18} color={diffuse ? dt.colors.ink3 : stickers.yellow} />
             <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{channel.avgRating > 0 ? channel.avgRating.toFixed(1) : '—'}</Text>
             <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statRating')}</Text>
           </View>
@@ -648,7 +646,7 @@ export default function ChannelInfoScreen() {
                 </View>
                 <View style={s.metricsGrid}>
                   <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <Users size={16} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Character name="community" size={16} color={diffuse ? dt.colors.ink3 : colors.primary} />
                     <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{metrics.totalMembers}</Text>
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMembers')}</Text>
                   </View>
