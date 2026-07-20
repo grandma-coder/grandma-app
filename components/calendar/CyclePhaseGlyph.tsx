@@ -12,7 +12,7 @@
  */
 
 import { View } from 'react-native'
-import { DaySticker } from '../home/cycle/dayStickers'
+import { DaySticker, DayCharacter } from '../home/cycle/dayStickers'
 import type { CyclePhase } from '../../lib/cycleLogic'
 
 interface Props {
@@ -21,9 +21,14 @@ interface Props {
   color: string
   /** Glyph size in px. Default 11 — small enough not to crowd the hairline grid. */
   size?: number
+  /** When true, render the Diffuse Character blob instead of the legacy sticker. */
+  diffuse?: boolean
+  /** Blob background (used only when `diffuse` is true). */
+  bg?: string
 }
 
-export function CyclePhaseGlyph({ phase, color, size = 11 }: Props) {
+export function CyclePhaseGlyph({ phase, color, size = 11, diffuse = false, bg }: Props) {
+  if (diffuse) return <DayCharacter phase={phase} size={size} color={color} bg={bg} />
   return <DaySticker phase={phase} size={size} bg={color} />
 }
 

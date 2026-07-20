@@ -26,7 +26,7 @@ import {
   getCycleInfo, toDateStr,
   type CycleConfig, type CyclePhase,
 } from '../../../lib/cycleLogic'
-import { DaySticker } from './dayStickers'
+import { DaySticker, DayCharacter } from './dayStickers'
 
 // ─── Diffuse phase palette ────────────────────────────────────────────────
 // Under Diffuse the phase hues come from the cycle field (coral→rose→lilac→
@@ -614,7 +614,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
                     }}
                     pointerEvents="none"
                   >
-                    <DaySticker phase={d.phase} size={glyphSize} bg={diffuseGlyphColor(d.phase, dt.isDark)} />
+                    <DayCharacter phase={d.phase} size={glyphSize} color={diffuseGlyphColor(d.phase, dt.isDark)} bg={dt.colors.surface} />
                   </View>
                 )
               }

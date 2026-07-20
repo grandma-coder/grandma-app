@@ -10,6 +10,7 @@ import { View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { Drop, Moon, Leaf } from '../../ui/Stickers'
 import { LogOvulation } from '../../stickers/RewardStickers'
+import { Character, type CharacterName } from '../../characters/Characters'
 import type { CyclePhase } from '../../../lib/cycleLogic'
 
 interface Props {
@@ -29,6 +30,22 @@ export function DaySticker({ phase, size, bg }: Props) {
       {phase === 'follicular'   && <Leaf size={size} fill={bg} />}
       {phase === 'ovulation'    && <LogOvulation size={size} fill={bg} />}
       {phase === 'luteal'       && <Moon size={size} fill={bg} />}
+    </View>
+  )
+}
+
+const PHASE_CHARACTER: Record<CyclePhase, CharacterName> = {
+  menstruation: 'period',
+  follicular: 'sparkle',
+  ovulation: 'ovulation',
+  luteal: 'night',
+}
+
+/** Diffuse per-day phase glyph — Character blob (matches CycleAnalytics). */
+export function DayCharacter({ phase, size, color, bg }: { phase: CyclePhase; size: number; color: string; bg?: string }) {
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Character name={PHASE_CHARACTER[phase]} size={size} color={color} bg={bg} />
     </View>
   )
 }

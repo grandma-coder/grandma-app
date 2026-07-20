@@ -186,7 +186,7 @@ export function CycleMonthGrid({
           }}
           dayMarker={(date) => {
             const phase = getCycleInfo(cycleConfig, toDateStr(date)).phase as CyclePhase
-            return <CyclePhaseGlyph phase={phase} color={phaseAccent(phase, stickers)} size={11} />
+            return <CyclePhaseGlyph phase={phase} color={phaseAccent(phase, stickers)} size={11} diffuse bg={dt.colors.surface} />
           }}
           onMonthChange={(d) => {
             // Keep the parent's visibleMonth (→ log fetch + period-day derivation) in sync.
@@ -200,7 +200,7 @@ export function CycleMonthGrid({
         <View style={styles.legendRow}>
           {CYCLE_PHASE_ORDER.map((phase) => (
             <View key={phase} style={styles.legendItem}>
-              <CyclePhaseGlyph phase={phase} color={phaseAccent(phase, stickers)} size={12} />
+              <CyclePhaseGlyph phase={phase} color={phaseAccent(phase, stickers)} size={12} diffuse bg={dt.colors.surface} />
               <Text style={[styles.legendLabel, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
                 {t(PHASE_LEGEND_KEY[phase])}
               </Text>
