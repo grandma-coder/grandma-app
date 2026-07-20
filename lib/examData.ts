@@ -358,6 +358,27 @@ export function useInvalidateExams() {
   }
 }
 
+// ─── Recent + Flagged Exam Insights (simplified read-only API) ──────────────
+
+/** Lightweight insights: recent N exams + those with flagged findings. */
+export interface RecentFlaggedExamInsights {
+  recent: Exam[]
+  flagged: Exam[]
+}
+
+/** Pure derivation — `exams` is expected already sorted date-desc (useExams does). */
+export function deriveExamInsights(exams: Exam[], recentLimit = 3): RecentFlaggedExamInsights {
+  return {
+    recent: exams.slice(0, recentLimit),
+    flagged: exams.filter((e) => (e.extracted?.flagged?.length ?? 0) > 0),
+  }
+}
+
+export function useKidsExamInsights(childId: string | null | undefined) {
+  const { data: exams = [], isLoading } = useExams({ behavior: 'kids', childId: childId ?? undefined })
+  return { data: deriveExamInsights(exams), isLoading }
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 /** Format helpers used by list / detail screens. */
