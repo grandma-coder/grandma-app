@@ -27,7 +27,7 @@ import { QuietPill } from '../../ui/QuietPill'
 import { LogSheet } from '../../calendar/LogSheet'
 import { UserReminders } from '../UserReminders'
 import { CyclePillarsGrid } from './CyclePillarsGrid'
-import { CycleMemoriesSheet } from './CycleMemoriesSheet'
+import { MemoriesSheet } from '../MemoriesSheet'
 import { NotifyRoutine, LogOvulation, NotifyGoalAchieved } from '../../stickers/RewardStickers'
 import { Character } from '../../characters/Characters'
 import { GrandmaLogo } from '../../ui/GrandmaLogo'
@@ -210,7 +210,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
       </LogSheet>
 
       {/* Memories — pop-up sheet with cycle photo memories (grid + add) */}
-      <CycleMemoriesSheet visible={showMemories} onClose={() => setShowMemories(false)} />
+      <MemoriesSheet behavior="cycle" visible={showMemories} onClose={() => setShowMemories(false)} />
 
       <WalletPicker
         visible={pickerOpen}
