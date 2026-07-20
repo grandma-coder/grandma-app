@@ -35,6 +35,9 @@ export type CharacterName =
   | 'brain' | 'phase' | 'observe' | 'celebrate' | 'tip'
   // insights & content
   | 'calendar' | 'selfcare'
+  // communication · commerce · misc (migration finish)
+  | 'chat' | 'book' | 'chart' | 'scan' | 'person'
+  | 'trending' | 'marketplace' | 'channel' | 'skip' | 'poll' | 'empty'
 
 // Mood expressions — one `mood` blob, a `face` prop varies the expression.
 // Kids: happy·calm·energetic·fussy·cranky. Pregnancy adds excited·anxious·nauseous.
@@ -58,6 +61,8 @@ const HUE: Record<CharacterName, string> = {
   trophy: '#C9A02C', medal: '#C79A5B', badge: '#D87CA0', gift: '#EE7B6D', reward: '#F5D652',
   brain: '#8E72C9', phase: '#5F8FC1', observe: '#7A9D4A', celebrate: '#D87CA0', tip: '#C9A02C',
   calendar: '#5F8FC1', selfcare: '#D86A4F',
+  chat: '#7A9D4A', book: '#5F8FC1', chart: '#8E72C9', scan: '#5F8FC1', person: '#D98CA6',
+  trending: '#D86A4F', marketplace: '#E08A5A', channel: '#7A9D4A', skip: '#8E72C9', poll: '#C9A02C', empty: '#8E72C9',
 }
 
 // Blob silhouette (48×48) per concept, ported from the approved set.
@@ -125,6 +130,22 @@ const D: Record<CharacterName, string> = {
   // selfcare = steaming mug (the "For You" / me-time concept).
   calendar: 'M9 12h30a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2ZM14 8a2 2 0 0 1 4 0v8a2 2 0 0 1-4 0V8ZM30 8a2 2 0 0 1 4 0v8a2 2 0 0 1-4 0V8Z',
   selfcare: 'M10 20h22v10a8 8 0 0 1-8 8h-6a8 8 0 0 1-8-8V20ZM32 22h4a4 4 0 0 1 0 8h-4Z',
+  // communication · commerce · misc. chat = speech bubble w/ tail; book = open
+  // spread; chart = rounded panel (bars cut-out); scan = corner brackets +
+  // scan line; person = head+body; trending = panel (rising arrow cut-out);
+  // marketplace = shopping bag w/ handle; channel = disc (hash cut-out); skip =
+  // two triangles; poll = panel (bars cut-out); empty = disc (dashed cut-out).
+  chat: 'M10 10h28a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H22l-9 7 2-7h-1a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4Z',
+  book: 'M6 11c5-3 12-3 18 1 6-4 13-4 18-1v25c-5-3-12-3-18 1-6-4-13-4-18-1V11Z',
+  chart: 'M8 10a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V10Z',
+  scan: 'M10 6a4 4 0 0 0-4 4v6h4v-6h6V6h-6ZM32 6v4h6v6h4v-6a4 4 0 0 0-4-4h-6ZM6 32v6a4 4 0 0 0 4 4h6v-4h-6v-6H6ZM38 32v6h-6v4h6a4 4 0 0 0 4-4v-6h-4Z',
+  person: 'M24 7a8 8 0 1 1 0 16 8 8 0 0 1 0-16ZM9 42c0-8 7-14 15-14s15 6 15 14Z',
+  trending: 'M8 10a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V10Z',
+  marketplace: 'M11 17h26l1.6 21a2 2 0 0 1-2 2.1H11.4a2 2 0 0 1-2-2.1ZM17 17a7 7 0 0 1 14 0',
+  channel: 'M24 6a18 18 0 1 1 0 36 18 18 0 0 1 0-36Z',
+  skip: 'M9 13c0-1.3 1.5-2.1 2.5-1.2L23 21.8c.7.6.7 1.7 0 2.3L11.5 33.2C10.5 34.1 9 33.3 9 32V13ZM25 13c0-1.3 1.5-2.1 2.5-1.2L39 21.8c.7.6.7 1.7 0 2.3L27.5 33.2C26.5 34.1 25 33.3 25 32V13Z',
+  poll: 'M10 8a4 4 0 0 0-4 4v24a4 4 0 0 0 4 4h28a4 4 0 0 0 4-4V12a4 4 0 0 0-4-4H10Z',
+  empty: 'M24 7a17 17 0 1 1 0 34 17 17 0 0 1 0-34Z',
 }
 
 // Face per concept. Eyes ONLY on creatures/subjects; object glyphs are faceless
@@ -138,6 +159,9 @@ type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'bli
   | 'brainFold' | 'iris' | 'filament'
   // insights cut-outs
   | 'calGrid' | 'steam'
+  // communication · commerce · misc cut-outs
+  | 'chatDots' | 'bookSpine' | 'bars' | 'scanLine' | 'trendArrow'
+  | 'tagHole' | 'hash' | 'pollBars' | 'emptyDash'
 const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, number] }> = {
   // subjects / creatures → eyes
   nutrition: { kind: 'dots', e: [19, 30, 29, 30] },
@@ -201,6 +225,18 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   // insights & content
   calendar: { kind: 'calGrid', e: [0, 0, 0, 0] },
   selfcare: { kind: 'steam', e: [0, 0, 0, 0] },
+  // communication · commerce · misc
+  chat: { kind: 'chatDots', e: [0, 0, 0, 0] },
+  book: { kind: 'bookSpine', e: [0, 0, 0, 0] },
+  chart: { kind: 'bars', e: [0, 0, 0, 0] },
+  scan: { kind: 'scanLine', e: [0, 0, 0, 0] },
+  person: { kind: 'none', e: [0, 0, 0, 0] },
+  trending: { kind: 'trendArrow', e: [0, 0, 0, 0] },
+  marketplace: { kind: 'tagHole', e: [0, 0, 0, 0] },
+  channel: { kind: 'hash', e: [0, 0, 0, 0] },
+  skip: { kind: 'none', e: [0, 0, 0, 0] },
+  poll: { kind: 'pollBars', e: [0, 0, 0, 0] },
+  empty: { kind: 'emptyDash', e: [0, 0, 0, 0] },
 }
 
 // Mood expression face recipes — drawn on the `mood` blob. Each returns the
@@ -358,6 +394,46 @@ export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1
       {f.kind === 'steam' && (
         <Path d="M17 8q-2 3 0 6M24 8q-2 3 0 6" stroke={bg} strokeWidth={1.8} fill="none" strokeLinecap="round" />
       )}
+      {/* chat — three dots inside the speech bubble */}
+      {f.kind === 'chatDots' && (
+        <>
+          <Circle cx={18} cy={22} r={2.3} fill={bg} />
+          <Circle cx={24} cy={22} r={2.3} fill={bg} />
+          <Circle cx={30} cy={22} r={2.3} fill={bg} />
+        </>
+      )}
+      {/* book — centre spine */}
+      {f.kind === 'bookSpine' && (
+        <Path d="M24 12v27" stroke={bg} strokeWidth={2.2} fill="none" strokeLinecap="round" />
+      )}
+      {/* chart — rising bar trio */}
+      {f.kind === 'bars' && (
+        <Path d="M16 33V23M24 33V15M32 33v-5" stroke={bg} strokeWidth={3.2} fill="none" strokeLinecap="round" />
+      )}
+      {/* scan — horizontal scan line */}
+      {f.kind === 'scanLine' && (
+        <Path d="M13 24h22" stroke={bg} strokeWidth={2.8} fill="none" strokeLinecap="round" />
+      )}
+      {/* trending — rising arrow */}
+      {f.kind === 'trendArrow' && (
+        <Path d="M14 31l7-7 5 5 8-9M31 15h5v5" stroke={bg} strokeWidth={2.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+      {/* marketplace — bag handle arc */}
+      {f.kind === 'tagHole' && (
+        <Path d="M18 20v-3a6 6 0 0 1 12 0v3" stroke={bg} strokeWidth={2.2} fill="none" strokeLinecap="round" />
+      )}
+      {/* channel — hash mark */}
+      {f.kind === 'hash' && (
+        <Path d="M20 15l-3 18M31 15l-3 18M15 22h19M14 30h19" stroke={bg} strokeWidth={2.4} fill="none" strokeLinecap="round" />
+      )}
+      {/* poll — left-aligned bar chart */}
+      {f.kind === 'pollBars' && (
+        <Path d="M16 32h7M16 24h15M16 16h11" stroke={bg} strokeWidth={2.8} fill="none" strokeLinecap="round" />
+      )}
+      {/* empty — dashed placeholder rule */}
+      {f.kind === 'emptyDash' && (
+        <Path d="M17 24h14" stroke={bg} strokeWidth={2.8} fill="none" strokeLinecap="round" strokeDasharray="3.5 3.5" />
+      )}
     </Svg>
   )
 }
@@ -391,6 +467,15 @@ const ALIAS: Record<string, CharacterName> = {
   // wellness / misc
   HandHeart: 'soothe', Hugs: 'hug', Users: 'community', LogNote: 'note', FileText: 'note',
   Camera: 'photo', LogPhoto: 'photo', Bell: 'bell',
+  // communication · commerce · misc
+  MessageCircle: 'chat', MessageSquare: 'chat', Chat: 'chat',
+  BookOpen: 'book', Book: 'book',
+  BarChart3: 'chart', ChartBar: 'chart', BarChart: 'chart',
+  ScanLine: 'scan', Scan: 'scan',
+  User: 'person', UserIcon: 'person',
+  ShoppingBag: 'marketplace',
+  Hash: 'channel',
+  SkipForward: 'skip',
 }
 
 /** Resolve a legacy name / concept string to a CharacterName, or null if none. */
