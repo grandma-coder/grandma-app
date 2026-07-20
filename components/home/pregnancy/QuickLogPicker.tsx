@@ -12,6 +12,8 @@ import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
 import {
   MoodFace, LogWater, LogSleep, LogNutrition, LogWeight, LogKicks,
+  LogSymptom, LogExercise, LogVitamins, LogKegel, LogContraction,
+  LogAppointment, LogExamResult, LogNesting, LogBirthPrep,
 } from '../../stickers/RewardStickers'
 import { PREG_QUICK_LOGS } from '../../../lib/pregnancyQuickLogs'
 import { useQuickLogStore } from '../../../store/useQuickLogStore'
@@ -31,6 +33,15 @@ function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers
     case 'meals':  return { node: <LogNutrition size={24} fill={stickers.green} />, soft: stickers.greenSoft }
     case 'weight': return { node: <LogWeight size={24} fill={stickers.peach} />, soft: stickers.peachSoft }
     case 'kicks':  return { node: <LogKicks size={24} fill={stickers.pink} />, soft: stickers.pinkSoft }
+    case 'symptom':     return { node: <LogSymptom size={24} fill={stickers.pink} />, soft: stickers.pinkSoft }
+    case 'exercise':    return { node: <LogExercise size={24} fill={stickers.green} />, soft: stickers.greenSoft }
+    case 'vitamins':    return { node: <LogVitamins size={24} fill={stickers.lilac} />, soft: stickers.lilacSoft }
+    case 'kegel':       return { node: <LogKegel size={24} fill={stickers.peach} />, soft: stickers.peachSoft }
+    case 'contraction': return { node: <LogContraction size={24} fill={stickers.coral} />, soft: stickers.peachSoft }
+    case 'appointment': return { node: <LogAppointment size={24} fill={stickers.blue} />, soft: stickers.blueSoft }
+    case 'exam_result': return { node: <LogExamResult size={24} fill={stickers.lilac} />, soft: stickers.lilacSoft }
+    case 'nesting':     return { node: <LogNesting size={24} fill={stickers.green} />, soft: stickers.greenSoft }
+    case 'birth_prep':  return { node: <LogBirthPrep size={24} fill={stickers.yellow} />, soft: stickers.yellowSoft }
     default:       return { node: <MoodFace size={24} variant="okay" fill={stickers.yellow} />, soft: stickers.yellowSoft }
   }
 }

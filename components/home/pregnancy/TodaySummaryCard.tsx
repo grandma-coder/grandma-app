@@ -18,6 +18,8 @@ import { useTranslation } from '../../../lib/i18n'
 import { Display, MonoCaps } from '../../ui/Typography'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition,
+  LogSymptom, LogExercise, LogVitamins, LogKegel, LogContraction,
+  LogAppointment, LogExamResult, LogNesting, LogBirthPrep,
 } from '../../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
@@ -58,6 +60,15 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
   const kicksVal = todayLogs['kick_count']?.value ? parseInt(todayLogs['kick_count'].value, 10) : null
   const moodKey = (todayLogs['mood']?.notes ?? todayLogs['mood']?.value ?? null) as string | null
   const nutritionVal = todayLogs['nutrition']?.value ? parseInt(todayLogs['nutrition'].value, 10) : 0
+  const symptomDone = todayLogs['symptom'] !== undefined
+  const exerciseVal = todayLogs['exercise']?.value ? parseInt(todayLogs['exercise'].value, 10) : null
+  const vitaminsDone = todayLogs['vitamins'] !== undefined
+  const kegelVal = todayLogs['kegel']?.value ? parseInt(todayLogs['kegel'].value, 10) : null
+  const contractionDone = todayLogs['contraction'] !== undefined
+  const appointmentDone = todayLogs['appointment'] !== undefined
+  const examResultDone = todayLogs['exam_result'] !== undefined
+  const nestingDone = todayLogs['nesting'] !== undefined
+  const birthPrepDone = todayLogs['birth_prep'] !== undefined
 
   const ink = colors.text
 
@@ -108,6 +119,51 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
       key: 'kicks', logType: 'kick_count',
       icon: diffuse ? <Character name="kick" size={24} color={stickers.coral} /> : <LogKicks size={22} />,
       label: kicksVal !== null ? String(kicksVal) : '+', done: kicksVal !== null,
+    },
+    symptom: {
+      key: 'symptom', logType: 'symptom',
+      icon: diffuse ? <Character name="activity" size={24} color={stickers.pink} /> : <LogSymptom size={22} />,
+      label: symptomDone ? '✓' : '+', done: symptomDone,
+    },
+    exercise: {
+      key: 'exercise', logType: 'exercise',
+      icon: diffuse ? <Character name="activity" size={24} color={stickers.green} /> : <LogExercise size={22} />,
+      label: exerciseVal !== null ? `${exerciseVal}m` : '+', done: exerciseVal !== null,
+    },
+    vitamins: {
+      key: 'vitamins', logType: 'vitamins',
+      icon: diffuse ? <Character name="medicine" size={24} color={stickers.lilac} /> : <LogVitamins size={22} />,
+      label: vitaminsDone ? '✓' : '+', done: vitaminsDone,
+    },
+    kegel: {
+      key: 'kegel', logType: 'kegel',
+      icon: diffuse ? <Character name="soothe" size={24} color={stickers.peach} /> : <LogKegel size={22} />,
+      label: kegelVal !== null ? String(kegelVal) : '+', done: kegelVal !== null,
+    },
+    contraction: {
+      key: 'contraction', logType: 'contraction',
+      icon: diffuse ? <Character name="contraction" size={24} color={stickers.coral} /> : <LogContraction size={22} />,
+      label: contractionDone ? '✓' : '+', done: contractionDone,
+    },
+    appointment: {
+      key: 'appointment', logType: 'appointment',
+      icon: diffuse ? <Character name="checkup" size={24} color={stickers.blue} /> : <LogAppointment size={22} />,
+      label: appointmentDone ? '✓' : '+', done: appointmentDone,
+    },
+    exam_result: {
+      key: 'exam_result', logType: 'exam_result',
+      icon: diffuse ? <Character name="exam" size={24} color={stickers.lilac} /> : <LogExamResult size={22} />,
+      label: examResultDone ? '✓' : '+', done: examResultDone,
+    },
+    nesting: {
+      key: 'nesting', logType: 'nesting',
+      icon: diffuse ? <Character name="soothe" size={24} color={stickers.green} /> : <LogNesting size={22} />,
+      label: nestingDone ? '✓' : '+', done: nestingDone,
+    },
+    birth_prep: {
+      key: 'birth_prep', logType: 'birth_prep',
+      icon: diffuse ? <Character name="note" size={24} color={stickers.yellow} /> : <LogBirthPrep size={22} />,
+      label: birthPrepDone ? '✓' : '+', done: birthPrepDone,
     },
   }
 

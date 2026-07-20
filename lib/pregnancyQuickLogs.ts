@@ -17,6 +17,16 @@ export const PREG_QUICK_LOGS: QuickLogDef[] = [
   { key: 'meals',  logType: 'nutrition',  labelKey: 'preg_form_nutrition_title' },
   { key: 'weight', logType: 'weight',     labelKey: 'preg_form_weight_title' },
   { key: 'kicks',  logType: 'kick_count', labelKey: 'preg_form_kick_title', minWeek: 28 },
+  // Gap types — full calendar parity. OFF by default (see DEFAULT_QUICK_LOG_KEYS).
+  { key: 'symptom',     logType: 'symptom',     labelKey: 'pregnancy_logTitle_symptom' },
+  { key: 'exercise',    logType: 'exercise',    labelKey: 'pregnancy_logTitle_exercise' },
+  { key: 'vitamins',    logType: 'vitamins',    labelKey: 'pregnancy_logTitle_vitamins' },
+  { key: 'kegel',       logType: 'kegel',       labelKey: 'pregnancy_logTitle_kegel' },
+  { key: 'contraction', logType: 'contraction', labelKey: 'pregnancy_logTitle_contraction', minWeek: 32 },
+  { key: 'appointment', logType: 'appointment', labelKey: 'pregnancy_logTitle_appointment' },
+  { key: 'exam_result', logType: 'exam_result', labelKey: 'pregnancy_logTitle_examResult' },
+  { key: 'nesting',     logType: 'nesting',     labelKey: 'pregnancy_logTitle_nesting',    minWeek: 28 },
+  { key: 'birth_prep',  logType: 'birth_prep',  labelKey: 'pregnancy_logTitle_birthPrep',  minWeek: 28 },
 ]
 
 // The default chips a new user sees before they customize.
