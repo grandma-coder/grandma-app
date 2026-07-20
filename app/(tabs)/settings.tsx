@@ -42,6 +42,7 @@ import { MyJourneyPillGrid } from '../../components/profile/MyJourneyPillGrid'
 import { StatRow } from '../../components/ui/StatRow'
 import { childColor } from '../../components/ui/ChildPills'
 import { Character } from '../../components/characters/Characters'
+import { MemoriesSheet } from '../../components/home/MemoriesSheet'
 
 export default function ProfileScreen() {
   const { colors, radius, isDark } = useTheme()
@@ -68,6 +69,7 @@ export default function ProfileScreen() {
   const [joinedYear, setJoinedYear] = useState<number | null>(null)
   const [careCircleCount, setCareCircleCount] = useState<number>(0)
   const [isPremium, setIsPremium] = useState(false)
+  const [showMemories, setShowMemories] = useState(false)
 
   // Dev-panel 5-tap trigger on the version text (bottom of screen)
   const { openDevPanel } = useDevPanel()
@@ -164,6 +166,13 @@ export default function ProfileScreen() {
   const isPregnancyBehavior = currentBehavior === 'pregnancy'
   const isPrePregBehavior = currentBehavior === 'pre-pregnancy'
   const showKidsItems = isKidsBehavior && hasChildren
+
+  // Memories are available in every behavior (kids per-child, pregnancy + cycle
+  // per-user). The row opens the behavior-scoped inline MemoriesSheet. Kids
+  // needs a child to scope photos to, so it still requires hasChildren.
+  const memoriesBehavior: 'kids' | 'pregnancy' | 'cycle' =
+    isKidsBehavior ? 'kids' : isPregnancyBehavior ? 'pregnancy' : 'cycle'
+  const showMemoriesRow = isKidsBehavior ? hasChildren : true
 
   // Hide the per-child sticker pills in the hero unless the user is
   // actually in the kids journey — a pregnant user seeing kid pills
@@ -306,12 +315,12 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/profile/kids')}
                 />
               )}
-              {showKidsItems && (
+              {showMemoriesRow && (
                 <DiffuseListRow
                   icon={<Character name="photo" size={18} />}
                   title={t('profile_memories')}
                   value="—"
-                  onPress={() => router.push('/profile/memories')}
+                  onPress={() => setShowMemories(true)}
                 />
               )}
               {showKidsItems && (
@@ -411,12 +420,12 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/profile/kids')}
                 />
               )}
-              {showKidsItems && (
+              {showMemoriesRow && (
                 <StatRow
                   icon={<Character name="photo" size={18} />}
                   label={t('profile_memories')}
                   value="—"
-                  onPress={() => router.push('/profile/memories')}
+                  onPress={() => setShowMemories(true)}
                 />
               )}
               {showKidsItems && (
@@ -511,6 +520,12 @@ export default function ProfileScreen() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      <MemoriesSheet
+        behavior={memoriesBehavior}
+        visible={showMemories}
+        onClose={() => setShowMemories(false)}
+      />
     </View>
   )
 }
