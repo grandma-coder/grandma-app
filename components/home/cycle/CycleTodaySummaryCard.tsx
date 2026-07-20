@@ -15,6 +15,7 @@ import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { QuietPill } from '../../ui/QuietPill'
 import { Character } from '../../characters/Characters'
 import { moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
@@ -298,25 +299,16 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
         </View>
         {!bare ? (
           <>
-            {/* Compact "See results" pill on the header row (replaces the old
-                footer band that left dead space). Sits left of EDIT. Matches
-                the pregnancy card exactly. */}
-            <Pressable
+            <QuietPill
+              label={t('cycleDash_seeResults')}
               onPress={() => setOpen(true)}
-              hitSlop={8}
-              style={({ pressed }) => [styles.headerResultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? 'transparent' : colors.surface, opacity: pressed ? 0.6 : 1 }]}
-              accessibilityRole="button"
               accessibilityLabel={t('cycleDash_seeResults')}
-            >
-              <Text style={{ fontFamily: labelFont, fontSize: 11, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
-                {t('cycleDash_seeResults')}
-              </Text>
-            </Pressable>
-            {/* Icon-only edit (customize chips) — standardized with the wallet
-                edit control; the label is dropped so it reads as a quiet glyph. */}
-            <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button" accessibilityLabel={t('common_edit')}>
-              <SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />
-            </Pressable>
+            />
+            <QuietPill
+              leading={<SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />}
+              onPress={() => setPickerOpen(true)}
+              accessibilityLabel={t('common_edit')}
+            />
           </>
         ) : (
           <ChevronRight size={20} color={chevronColor} strokeWidth={diffuse ? 1.6 : 2} />
@@ -446,5 +438,4 @@ const styles = StyleSheet.create({
   chipLabel: { fontSize: 12, maxWidth: 70 },
   progressTrack: { height: 4, borderRadius: 2, marginTop: 14, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 2 },
-  headerResultsPill: { borderWidth: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
 })
