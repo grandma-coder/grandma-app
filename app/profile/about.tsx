@@ -19,7 +19,7 @@ import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic } from '../../components/ui/Typography'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
-import { Heart, Cross, Leaf } from '../../components/ui/Stickers'
+import { Character, type CharacterName } from '../../components/characters/Characters'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 
 interface Pillar {
@@ -27,6 +27,14 @@ interface Pillar {
   titleKey: string
   bodyKey: string
   onPress?: () => void
+}
+
+// Pillar sticker → Character concept, by meaning: mission=heart, medical
+// expertise=checkup, privacy stance=key (trust).
+const PILLAR_CHARACTER: Record<Pillar['sticker'], CharacterName> = {
+  heart: 'heart',
+  cross: 'checkup',
+  leaf: 'key',
 }
 
 export default function AboutScreen() {
@@ -50,12 +58,7 @@ export default function AboutScreen() {
   ]
 
   function StickerFor({ kind }: { kind: Pillar['sticker'] }) {
-    const size = 30
-    switch (kind) {
-      case 'heart': return <Heart size={size} fill={diffuse ? dt.stickers.pink : stickers.pink} />
-      case 'cross': return <Cross size={size} fill={diffuse ? dt.stickers.coral : stickers.coral} />
-      case 'leaf': return <Leaf size={size} fill={diffuse ? dt.stickers.green : stickers.green} />
-    }
+    return <Character name={PILLAR_CHARACTER[kind]} size={30} />
   }
 
   return (

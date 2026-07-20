@@ -37,7 +37,6 @@ import {
   Link2,
   ChevronRight,
   User,
-  Users,
   Utensils,
   Moon as MoonIcon,
   Heart,
@@ -842,7 +841,7 @@ export default function CareCircleScreen() {
           {members.length === 0 && !loading && (
             diffuse ? (
               <DiffuseEmptyState
-                icon={<Users size={26} color={dt.colors.ink3} strokeWidth={1.4} />}
+                icon={<Character name="community" size={30} />}
                 title={t('careCircle_no_caregivers')}
                 message={t('careCircle_invite_partner_desc')}
               />

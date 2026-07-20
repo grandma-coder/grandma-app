@@ -9,15 +9,7 @@ import { useState, useEffect } from 'react'
 import {
   View, Text, Pressable, ScrollView, Switch, Alert, StyleSheet, ActivityIndicator,
 } from 'react-native'
-import {
-  ChevronRight,
-  Heart as HeartLine,
-  Cross as CrossLine,
-  Sparkles as SparklesLine,
-  Star as StarLine,
-  Leaf as LeafLine,
-  Eye as EyeLine,
-} from 'lucide-react-native'
+import { ChevronRight } from 'lucide-react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
 import { router } from 'expo-router'
@@ -30,6 +22,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { Heart, Cross, Sparkle, Star, Leaf, GrandmaEye } from '../../components/ui/Stickers'
+import { Character, type CharacterName } from '../../components/characters/Characters'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 
@@ -376,16 +369,17 @@ export default function PrivacyScreen() {
   )
 }
 
-// Lucide line-icon + bloom hue per sticker kind, for the Diffuse branch. The
-// glyph reads quiet (ink3); the bloom carries the sticker's semantic hue.
-const DIFFUSE_ICON: Record<StickerKind, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
-  heart: HeartLine,
-  crossPink: CrossLine,
-  crossCoral: CrossLine,
-  sparkle: SparklesLine,
-  star: StarLine,
-  leaf: LeafLine,
-  eye: EyeLine,
+// Character-blob concept per sticker kind, for the Diffuse branch — chosen for
+// the row's meaning, not the legacy sticker shape. The blob sits inside the
+// bloom (which carries the sticker's semantic hue).
+const DIFFUSE_CHARACTER: Record<StickerKind, CharacterName> = {
+  heart: 'community',   // share with care circle
+  crossPink: 'health',  // share health data
+  crossCoral: 'warning',// clear-data danger rows
+  sparkle: 'photo',     // share photos
+  star: 'star',         // analytics / policy
+  leaf: 'observe',      // transparency / export
+  eye: 'observe',       // AI data usage / inventory
 }
 
 function StickerGlyph({ kind, size = 34 }: { kind: StickerKind; size?: number }) {
@@ -394,7 +388,6 @@ function StickerGlyph({ kind, size = 34 }: { kind: StickerKind; size?: number })
   const dt = useDiffuseTheme()
 
   if (diffuse) {
-    const Glyph = DIFFUSE_ICON[kind]
     const bloom: Record<StickerKind, string> = {
       heart: dt.stickers.pink,
       crossPink: dt.stickers.pink,
@@ -406,7 +399,7 @@ function StickerGlyph({ kind, size = 34 }: { kind: StickerKind; size?: number })
     }
     return (
       <DiffuseBloomIcon color={bloom[kind]} size={size} intensity={0.5}>
-        <Glyph size={Math.round(size * 0.56)} color={dt.colors.ink3} strokeWidth={1.6} />
+        <Character name={DIFFUSE_CHARACTER[kind]} size={Math.round(size * 0.62)} />
       </DiffuseBloomIcon>
     )
   }

@@ -13,6 +13,7 @@ import { router } from 'expo-router'
 import { Moon, Sun, Thermometer, Scale, Trash2, Globe, Check, ChevronRight, X, LogOut } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { Character } from '../../components/characters/Characters'
 import { useThemeStore } from '../../store/useThemeStore'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { useLanguageStore, SUPPORTED_LANGUAGES, type LanguageOption } from '../../store/useLanguageStore'
@@ -247,7 +248,7 @@ export default function SettingsScreen() {
             <View style={styles.rowLeft}>
               {diffuse ? (
                 <DiffuseBloomIcon color={dt.colors.ink} size={32} intensity={0.4}>
-                  <Thermometer size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                  <Character name="temperature" size={20} />
                 </DiffuseBloomIcon>
               ) : (
                 <StickerIcon fill="#F2B2C7" isDark={isDark}>

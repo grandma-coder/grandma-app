@@ -9,20 +9,12 @@ import { useState, useEffect } from 'react'
 import { View, ScrollView, Switch, StyleSheet, Pressable, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
-import {
-  Sun as SunLine,
-  Sparkles as SparklesLine,
-  Star as StarLine,
-  Moon as MoonLine,
-  Heart as HeartLine,
-  Flower as FlowerLine,
-  Leaf as LeafLine,
-} from 'lucide-react-native'
 import { useTheme, getModeColor, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, Body, MonoCaps } from '../../components/ui/Typography'
 import { Sun, Sparkle, Star, Moon, Heart, Flower, Leaf } from '../../components/ui/Stickers'
+import { Character, type CharacterName } from '../../components/characters/Characters'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
@@ -80,16 +72,17 @@ const GROUPS: { id: NotifToggle['group']; label: string }[] = [
   { id: 'community', label: 'Community' },
 ]
 
-// Lucide line-icon + bloom hue per sticker, for the Diffuse branch. The glyph
-// reads quiet (ink3); the bloom carries the sticker's semantic hue.
-const DIFFUSE_ICON: Record<StickerName, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
-  sun: SunLine,
-  sparkle: SparklesLine,
-  star: StarLine,
-  moon: MoonLine,
-  heart: HeartLine,
-  flower: FlowerLine,
-  leaf: LeafLine,
+// Character-blob concept per sticker, for the Diffuse branch — chosen for the
+// row's meaning, not the legacy sticker shape. The blob sits inside the bloom
+// (which carries the sticker's semantic hue).
+const DIFFUSE_CHARACTER: Record<StickerName, CharacterName> = {
+  sun: 'sun',          // daily reminder
+  sparkle: 'sparkle',  // new insights
+  star: 'calendar',    // appointment reminders
+  moon: 'period',      // cycle predictions
+  heart: 'community',  // care-circle updates
+  flower: 'growth',    // milestone alerts
+  leaf: 'calendar',    // weekly summary
 }
 
 function StickerFor({ name, size = 34 }: { name: StickerName; size?: number }) {
@@ -98,7 +91,6 @@ function StickerFor({ name, size = 34 }: { name: StickerName; size?: number }) {
   const dt = useDiffuseTheme()
 
   if (diffuse) {
-    const Glyph = DIFFUSE_ICON[name]
     const bloom: Record<StickerName, string> = {
       sun: dt.stickers.yellow,
       sparkle: dt.stickers.yellow,
@@ -110,7 +102,7 @@ function StickerFor({ name, size = 34 }: { name: StickerName; size?: number }) {
     }
     return (
       <DiffuseBloomIcon color={bloom[name]} size={size} intensity={0.5}>
-        <Glyph size={Math.round(size * 0.56)} color={dt.colors.ink3} strokeWidth={1.6} />
+        <Character name={DIFFUSE_CHARACTER[name]} size={Math.round(size * 0.62)} />
       </DiffuseBloomIcon>
     )
   }

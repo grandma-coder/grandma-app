@@ -41,7 +41,7 @@ import { BadgesStrip, type BadgeEntry } from '../../components/profile/BadgesStr
 import { MyJourneyPillGrid } from '../../components/profile/MyJourneyPillGrid'
 import { StatRow } from '../../components/ui/StatRow'
 import { childColor } from '../../components/ui/ChildPills'
-import { AnimatedSticker } from '../../components/ui/AnimatedSticker'
+import { Character } from '../../components/characters/Characters'
 
 export default function ProfileScreen() {
   const { colors, radius, isDark } = useTheme()
@@ -266,7 +266,7 @@ export default function ProfileScreen() {
           {diffuse ? (
             <>
               <DiffuseListRow
-                icon={<AnimatedSticker type="Heart" size={18} fill="#F2B2C7" />}
+                icon={<Character name="community" size={18} />}
                 title={t('profile_careCircle')}
                 value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
                 onPress={() => router.push('/profile/care-circle')}
@@ -274,7 +274,7 @@ export default function ProfileScreen() {
 
               {isPregnancyBehavior && (
                 <DiffuseListRow
-                  icon={<AnimatedSticker type="Heart" size={18} fill="#C8B6E8" />}
+                  icon={<Character name="heartbeat" size={18} />}
                   title="Pregnancy"
                   value={pregnancySummary}
                   onPress={() => router.push('/profile/pregnancy')}
@@ -283,7 +283,7 @@ export default function ProfileScreen() {
 
               {isPrePregBehavior && (
                 <DiffuseListRow
-                  icon={<AnimatedSticker type="Moon" size={18} fill="#F2B2C7" />}
+                  icon={<Character name="period" size={18} />}
                   title="Cycle"
                   value="Tracking"
                   onPress={() => router.push('/(tabs)')}
@@ -291,7 +291,7 @@ export default function ProfileScreen() {
               )}
               {isPrePregBehavior && (
                 <DiffuseListRow
-                  icon={<AnimatedSticker type="Flower" size={18} petal="#F2B2C7" center="#F5D652" />}
+                  icon={<Character name="calendar" size={18} />}
                   title={t('cycleSettings_rowTitle')}
                   showArrow
                   onPress={() => router.push('/profile/cycle-settings')}
@@ -300,7 +300,7 @@ export default function ProfileScreen() {
 
               {showKidsItems && (
                 <DiffuseListRow
-                  icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
+                  icon={<Character name="baby" size={18} />}
                   title="Kids Profile"
                   value={children.length === 1 ? '1 child' : `${children.length} children`}
                   onPress={() => router.push('/profile/kids')}
@@ -308,7 +308,7 @@ export default function ProfileScreen() {
               )}
               {showKidsItems && (
                 <DiffuseListRow
-                  icon={<AnimatedSticker type="Star" size={18} fill="#F5D652" />}
+                  icon={<Character name="photo" size={18} />}
                   title={t('profile_memories')}
                   value="—"
                   onPress={() => router.push('/profile/memories')}
@@ -316,50 +316,50 @@ export default function ProfileScreen() {
               )}
               {showKidsItems && (
                 <DiffuseListRow
-                  icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
+                  icon={<Character name="health" size={18} />}
                   title={t('profile_healthHistory')}
                   value={joinedYear ? `Since ${joinedYear}` : '—'}
                   onPress={() => router.push('/profile/health-history')}
                 />
               )}
               <DiffuseListRow
-                icon={<AnimatedSticker type="Cross" size={18} fill="#EE7B6D" />}
+                icon={<Character name="warning" size={18} />}
                 title={t('profile_emergencyInsurance')}
                 value={hasEmergency ? 'Ready' : 'Not set'}
                 onPress={() => router.push('/profile/emergency-insurance')}
               />
               <DiffuseListRow
-                icon={<AnimatedSticker type="Drop" size={18} fill="#F5D652" />}
+                icon={<Character name="bell" size={18} />}
                 title={t('profile_notifications')}
                 showArrow
                 onPress={() => router.push('/profile/notifications')}
               />
               <DiffuseListRow
-                icon={<AnimatedSticker type="Moon" size={18} fill="#C8B6E8" />}
+                icon={<Character name="key" size={18} />}
                 title={t('profile_accountSecurity')}
                 showArrow
                 onPress={() => router.push('/profile/account')}
               />
               <DiffuseListRow
-                icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
+                icon={<Character name="note" size={18} />}
                 title={t('profile_dataPrivacy')}
                 showArrow
                 onPress={() => router.push('/profile/privacy')}
               />
               <DiffuseListRow
-                icon={<AnimatedSticker type="Burst" size={18} fill="#C8B6E8" />}
+                icon={<Character name="gem" size={18} />}
                 title={t('profile_subscription')}
                 value={isPremium ? 'Premium' : 'Upgrade'}
                 onPress={() => router.push('/paywall')}
               />
               <DiffuseListRow
-                icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
+                icon={<Character name="tip" size={18} />}
                 title={t('profile_help')}
                 showArrow
                 onPress={() => router.push('/profile/help')}
               />
               <DiffuseListRow
-                icon={<AnimatedSticker type="Star" size={18} fill="#F2B2C7" />}
+                icon={<Character name="star" size={18} />}
                 title={t('profile_about')}
                 showArrow
                 onPress={() => router.push('/profile/about')}
@@ -369,7 +369,7 @@ export default function ProfileScreen() {
           ) : (
             <>
               <StatRow
-                icon={<AnimatedSticker type="Heart" size={18} fill="#F2B2C7" />}
+                icon={<Character name="community" size={18} />}
                 label={t('profile_careCircle')}
                 value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
                 onPress={() => router.push('/profile/care-circle')}
@@ -378,7 +378,7 @@ export default function ProfileScreen() {
               {/* Pregnancy-only row — surfaces current week / due date */}
               {isPregnancyBehavior && (
                 <StatRow
-                  icon={<AnimatedSticker type="Heart" size={18} fill="#C8B6E8" />}
+                  icon={<Character name="heartbeat" size={18} />}
                   label="Pregnancy"
                   value={pregnancySummary}
                   onPress={() => router.push('/profile/pregnancy')}
@@ -388,7 +388,7 @@ export default function ProfileScreen() {
               {/* Pre-pregnancy-only row — cycle tracking entry point */}
               {isPrePregBehavior && (
                 <StatRow
-                  icon={<AnimatedSticker type="Moon" size={18} fill="#F2B2C7" />}
+                  icon={<Character name="period" size={18} />}
                   label="Cycle"
                   value="Tracking"
                   onPress={() => router.push('/(tabs)')}
@@ -396,7 +396,7 @@ export default function ProfileScreen() {
               )}
               {isPrePregBehavior && (
                 <StatRow
-                  icon={<AnimatedSticker type="Flower" size={18} petal="#F2B2C7" center="#F5D652" />}
+                  icon={<Character name="calendar" size={18} />}
                   label={t('cycleSettings_rowTitle')}
                   onPress={() => router.push('/profile/cycle-settings')}
                 />
@@ -405,7 +405,7 @@ export default function ProfileScreen() {
               {/* Kids-only rows — hidden in pregnancy / pre-pregnancy modes */}
               {showKidsItems && (
                 <StatRow
-                  icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
+                  icon={<Character name="baby" size={18} />}
                   label="Kids Profile"
                   value={children.length === 1 ? '1 child' : `${children.length} children`}
                   onPress={() => router.push('/profile/kids')}
@@ -413,7 +413,7 @@ export default function ProfileScreen() {
               )}
               {showKidsItems && (
                 <StatRow
-                  icon={<AnimatedSticker type="Star" size={18} fill="#F5D652" />}
+                  icon={<Character name="photo" size={18} />}
                   label={t('profile_memories')}
                   value="—"
                   onPress={() => router.push('/profile/memories')}
@@ -421,46 +421,46 @@ export default function ProfileScreen() {
               )}
               {showKidsItems && (
                 <StatRow
-                  icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
+                  icon={<Character name="health" size={18} />}
                   label={t('profile_healthHistory')}
                   value={joinedYear ? `Since ${joinedYear}` : '—'}
                   onPress={() => router.push('/profile/health-history')}
                 />
               )}
               <StatRow
-                icon={<AnimatedSticker type="Cross" size={18} fill="#EE7B6D" />}
+                icon={<Character name="warning" size={18} />}
                 label={t('profile_emergencyInsurance')}
                 value={hasEmergency ? 'Ready' : 'Not set'}
                 onPress={() => router.push('/profile/emergency-insurance')}
               />
               <StatRow
-                icon={<AnimatedSticker type="Drop" size={18} fill="#F5D652" />}
+                icon={<Character name="bell" size={18} />}
                 label={t('profile_notifications')}
                 onPress={() => router.push('/profile/notifications')}
               />
               <StatRow
-                icon={<AnimatedSticker type="Moon" size={18} fill="#C8B6E8" />}
+                icon={<Character name="key" size={18} />}
                 label={t('profile_accountSecurity')}
                 onPress={() => router.push('/profile/account')}
               />
               <StatRow
-                icon={<AnimatedSticker type="Leaf" size={18} fill="#BDD48C" />}
+                icon={<Character name="note" size={18} />}
                 label={t('profile_dataPrivacy')}
                 onPress={() => router.push('/profile/privacy')}
               />
               <StatRow
-                icon={<AnimatedSticker type="Burst" size={18} fill="#C8B6E8" />}
+                icon={<Character name="gem" size={18} />}
                 label={t('profile_subscription')}
                 value={isPremium ? 'Premium' : 'Upgrade'}
                 onPress={() => router.push('/paywall')}
               />
               <StatRow
-                icon={<AnimatedSticker type="Flower" size={18} petal="#9DC3E8" center="#F5D652" />}
+                icon={<Character name="tip" size={18} />}
                 label={t('profile_help')}
                 onPress={() => router.push('/profile/help')}
               />
               <StatRow
-                icon={<AnimatedSticker type="Star" size={18} fill="#F2B2C7" />}
+                icon={<Character name="star" size={18} />}
                 label={t('profile_about')}
                 onPress={() => router.push('/profile/about')}
                 isLast

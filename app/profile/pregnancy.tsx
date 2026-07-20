@@ -47,8 +47,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display } from '../../components/ui/Typography'
 import {
   Heart as HeartSticker, Squishy, Star as StarSticker, Flower as FlowerSticker,
-  Sparkle, Squiggle, CircleDashed, ClockFace, Drop, Cross, Moon, Bear,
-  Key, Leaf,
+  Sparkle, Squiggle, CircleDashed,
 } from '../../components/ui/Stickers'
 import { Character, type CharacterName } from '../../components/characters/Characters'
 import { PaperCard } from '../../components/ui/PaperCard'
@@ -1055,7 +1054,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Pregnancy Info"
           subtitle="your pregnancy at a glance"
-          badge={<ClockFace size={26} fill={stickers.lilac} />}
+          badge={<Character name="clock" size={26} />}
           badgeTint={stickers.lilacSoft}
         >
           <InfoRow
@@ -1166,7 +1165,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Birth Planning"
           subtitle="plan how you want to welcome baby"
-          badge={<Leaf size={26} fill={stickers.green} />}
+          badge={<Character name="calendar" size={26} />}
           badgeTint={stickers.greenSoft}
         >
           <Pressable
@@ -1185,7 +1184,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Birth Preferences"
           subtitle="the way you'd love it to feel"
-          badge={<HeartSticker size={26} fill={stickers.pink} />}
+          badge={<Character name="heart" size={26} />}
           badgeTint={stickers.pinkSoft}
         >
           <InfoRow
@@ -1244,7 +1243,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Birth Team"
           subtitle="people in your corner"
-          badge={<StarSticker size={26} fill={stickers.blue} />}
+          badge={<Character name="community" size={26} />}
           badgeTint={stickers.blueSoft}
         >
           <Pressable
@@ -1263,7 +1262,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Health Flags"
           subtitle="anything your team should know"
-          badge={<Cross size={26} fill={stickers.peach} />}
+          badge={<Character name="health" size={26} />}
           badgeTint={stickers.peachSoft}
         >
           <InfoRow
@@ -1284,7 +1283,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Baby Info"
           subtitle="the little one we're waiting for"
-          badge={<Bear size={28} fill={stickers.yellow} />}
+          badge={<Character name="baby" size={28} />}
           badgeTint={stickers.yellowSoft}
         >
           <InfoRow
@@ -1341,7 +1340,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Emergency Contacts"
           subtitle="who to reach if it's urgent"
-          badge={<Key size={26} fill={stickers.coral} />}
+          badge={<Character name="key" size={26} />}
           badgeTint={stickers.peachSoft}
         >
           <Pressable
@@ -1360,7 +1359,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Postpartum Prep"
           subtitle="things future-you will thank you for"
-          badge={<Sparkle size={24} fill={stickers.lilac} />}
+          badge={<Character name="selfcare" size={24} />}
           badgeTint={stickers.lilacSoft}
         >
           {POSTPARTUM_ITEMS.map((item) => (
@@ -1399,7 +1398,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Breastfeeding Plan"
           subtitle="how you'd like to feed baby"
-          badge={<Drop size={26} fill={stickers.pink} />}
+          badge={<Character name="milk" size={26} />}
           badgeTint={stickers.pinkSoft}
         >
           <InfoRow
@@ -1438,7 +1437,7 @@ export default function PregnancyProfileScreen() {
         <SectionCard
           title="Nesting Checklist"
           subtitle="getting your nest baby-ready"
-          badge={<Moon size={26} fill={stickers.blue} />}
+          badge={<Character name="night" size={26} />}
           badgeTint={stickers.blueSoft}
         >
           {NESTING_ITEMS.map((item) => (

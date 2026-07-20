@@ -61,6 +61,7 @@ import {
   Drop as DropSticker,
   Burst as BurstSticker,
 } from '../../components/ui/Stickers'
+import { Character } from '../../components/characters/Characters'
 
 import { useEmergencyInsuranceStore } from '../../store/useEmergencyInsuranceStore'
 import {
@@ -252,7 +253,7 @@ export default function EmergencyInsuranceScreen() {
             <View style={styles.sectionLabelRow}>
               {diffuse ? (
                 <DiffuseBloomIcon color={dt.colors.ink} size={26} intensity={0.4}>
-                  <Heart size={15} color={dt.colors.ink3} strokeWidth={1.6} />
+                  <Character name="community" size={17} />
                 </DiffuseBloomIcon>
               ) : (
                 <HeartSticker size={16} fill={stickers.coral} />
@@ -979,8 +980,8 @@ function PlanFormModal({
               const chipColor = diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? coral : colors.textMuted)
               const chipFill = diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? coral : stickers.peach)
               let icon = null
-              if (t.id === 'health') icon = <CrossSticker size={18} fill={chipFill} stroke={chipColor} />
-              else if (t.id === 'dental') icon = <SparkleSticker size={18} fill={chipFill} stroke={chipColor} />
+              if (t.id === 'health') icon = <Character name="health" size={18} color={chipColor} />
+              else if (t.id === 'dental') icon = <Character name="exam" size={18} color={chipColor} />
               else if (t.id === 'vision') icon = <DropSticker size={18} fill={chipFill} stroke={chipColor} />
               return (
                 <Pressable

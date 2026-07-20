@@ -52,6 +52,7 @@ import { PillButton } from '../../components/ui/PillButton'
 import { PaperAlert } from '../../components/ui/PaperAlert'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { Heart as HeartSticker, Flower as FlowerSticker, Star as StarSticker } from '../../components/ui/Stickers'
+import { Character } from '../../components/characters/Characters'
 import { ChildPill, childColor } from '../../components/ui/ChildPills'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
@@ -454,7 +455,7 @@ export default function MemoriesScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {!loading && filtered.length === 0 && diffuse && (
           <DiffuseEmptyState
-            icon={<HeartSticker size={30} fill={stickers.pink} />}
+            icon={<Character name="photo" size={30} />}
             title={t('memories_emptyTitle')}
             message={t('memories_emptySubtitle')}
             ctaLabel={t('memories_addFirst')}

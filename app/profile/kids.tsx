@@ -37,13 +37,13 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import {
-  Flower as FlowerSticker,
   Heart as HeartSticker,
   Star as StarSticker,
   Cross as CrossSticker,
   Drop as DropSticker,
   Squishy,
 } from '../../components/ui/Stickers'
+import { Character } from '../../components/characters/Characters'
 import type { ChildWithRole } from '../../types'
 
 // ─── Theme (Diffuse-aware) ──────────────────────────────────────────────────
@@ -214,7 +214,7 @@ export default function KidsProfileScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {children.length === 0 && (
           <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
-            <FlowerSticker size={64} petal={stickers.pink} center={stickers.yellow} />
+            <Character name="baby" size={64} />
             <Display size={20} align="center" color={colors.text}>
               {t('profKids_noChildren')}
             </Display>
@@ -316,7 +316,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
             { backgroundColor: accent + '40', borderColor: colors.text },
           ]}
         >
-          <FlowerSticker size={28} petal={accent} center={stickers.yellow} />
+          <Character name="baby" size={28} />
         </View>
         <View style={styles.childInfo}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

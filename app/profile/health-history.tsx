@@ -56,13 +56,13 @@ interface HealthEvent {
   date: string; type: string; value: string; notes: string
 }
 
-const TYPE_CFG: Record<string, { label: string; icon: typeof Syringe; color: string; placeholder: string }> = {
-  vaccine:     { label: 'Vaccine',     icon: Syringe,     color: brand.success,        placeholder: 'e.g. MMR, DTaP, Hepatitis B' },
-  medicine:    { label: 'Medicine',    icon: Pill,         color: brand.secondary,      placeholder: 'e.g. Ibuprofen 5ml, Amoxicillin' },
-  temperature: { label: 'Temperature', icon: Thermometer, color: brand.error,           placeholder: 'e.g. 38.5°C / 101.3°F' },
-  growth:      { label: 'Growth',      icon: TrendingUp,  color: brand.kids,            placeholder: 'e.g. Weight: 10.2kg, Height: 78cm' },
-  milestone:   { label: 'Milestone',   icon: Star,        color: brand.accent,          placeholder: 'e.g. First steps, First word' },
-  note:        { label: 'Health Note', icon: FileText,     color: brand.phase.luteal,   placeholder: 'e.g. Doctor visit, diagnosis' },
+const TYPE_CFG: Record<string, { label: string; icon: typeof Syringe; charName: CharacterName; color: string; placeholder: string }> = {
+  vaccine:     { label: 'Vaccine',     icon: Syringe,     charName: 'vaccine',     color: brand.success,        placeholder: 'e.g. MMR, DTaP, Hepatitis B' },
+  medicine:    { label: 'Medicine',    icon: Pill,         charName: 'medicine',    color: brand.secondary,      placeholder: 'e.g. Ibuprofen 5ml, Amoxicillin' },
+  temperature: { label: 'Temperature', icon: Thermometer, charName: 'temperature', color: brand.error,           placeholder: 'e.g. 38.5°C / 101.3°F' },
+  growth:      { label: 'Growth',      icon: TrendingUp,  charName: 'growth',      color: brand.kids,            placeholder: 'e.g. Weight: 10.2kg, Height: 78cm' },
+  milestone:   { label: 'Milestone',   icon: Star,        charName: 'star',        color: brand.accent,          placeholder: 'e.g. First steps, First word' },
+  note:        { label: 'Health Note', icon: FileText,     charName: 'note',        color: brand.phase.luteal,   placeholder: 'e.g. Doctor visit, diagnosis' },
 }
 
 // Common vaccine schedule for reference
@@ -588,7 +588,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
   const insets = useSafeAreaInsets()
   const paper = diffuse ? dt.colors.surface : colors.surface
   const paperBorder = diffuse ? dt.colors.line : colors.border
-  const cfg = TYPE_CFG[section] ?? { label: section, icon: FileText, color: colors.textMuted, placeholder: '' }
+  const cfg = TYPE_CFG[section] ?? { label: section, icon: FileText, charName: 'note' as CharacterName, color: colors.textMuted, placeholder: '' }
   const Icon = cfg.icon
 
   return (
@@ -598,7 +598,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {diffuse ? (
               <DiffuseBloomIcon color={cfg.color} size={30} intensity={0.45}>
-                <Icon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name={cfg.charName} size={19} color={cfg.color} />
               </DiffuseBloomIcon>
             ) : (
               <Icon size={20} color={cfg.color} strokeWidth={2} />
@@ -789,7 +789,11 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
                         },
                   ]}
                 >
-                  <t.icon size={20} color={diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? colors.text : colors.textMuted)} strokeWidth={diffuse ? 1.6 : 2} />
+                  {diffuse ? (
+                    <Character name={t.charName} size={22} color={active ? dt.colors.ink : dt.colors.ink3} />
+                  ) : (
+                    <t.icon size={20} color={active ? colors.text : colors.textMuted} strokeWidth={2} />
+                  )}
                   <Text style={[formStyles.typeLabel, diffuse
                     ? { color: active ? dt.colors.ink : dt.colors.ink3, fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 10 }
                     : { color: active ? colors.text : colors.textSecondary, fontFamily: active ? font.bodySemiBold : font.bodyMedium }]}>{t.label}</Text>
