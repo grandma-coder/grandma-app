@@ -23,12 +23,11 @@ import {
   ChevronLeft,
   Share2,
   Trash2,
-  Calendar as CalendarIcon,
-  User,
   Sparkles,
   X,
 } from 'lucide-react-native'
 
+import { Character } from '../../components/characters/Characters'
 import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
@@ -170,9 +169,9 @@ export default function ExamDetailScreen() {
             <Text style={[styles.heroResult, { color: diffuse ? dt.colors.ink : accent, fontFamily: diffuse ? diffuseFont.italic : undefined, fontWeight: diffuse ? '400' : '700' }]}>{exam.result}</Text>
           )}
           <View style={styles.metaChipRow}>
-            <MetaChip icon={<CalendarIcon size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.5 : 2} />} label={formatExamDate(exam.examDate)} colors={colors} diffuse={diffuse} />
+            <MetaChip icon={<Character name="calendar" size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} />} label={formatExamDate(exam.examDate)} colors={colors} diffuse={diffuse} />
             {exam.provider && (
-              <MetaChip icon={<User size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.5 : 2} />} label={exam.provider} colors={colors} diffuse={diffuse} />
+              <MetaChip icon={<Character name="person" size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} />} label={exam.provider} colors={colors} diffuse={diffuse} />
             )}
             {child && childIdx >= 0 && (
               diffuse ? (
@@ -225,7 +224,7 @@ export default function ExamDetailScreen() {
           <View style={[styles.section, diffuse ? { backgroundColor: 'transparent', borderColor: 'transparent', borderTopWidth: 1, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.sectionHead}>
               {diffuse ? (
-                <DiffuseBloomIcon color={getDiffuseAccent(exam.behavior, dt.isDark)} size={24} intensity={0.4}><Sparkles size={13} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>
+                <DiffuseBloomIcon color={getDiffuseAccent(exam.behavior, dt.isDark)} size={24} intensity={0.4}><Character name="sparkle" size={13} color={dt.colors.ink3} /></DiffuseBloomIcon>
               ) : (
                 <Sparkles size={14} color={colors.primary} strokeWidth={2} />
               )}

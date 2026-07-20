@@ -24,6 +24,7 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import { Camera, ImagePlus, Sparkles, X } from 'lucide-react-native'
 
+import { Character } from '../characters/Characters'
 import { useTheme, brand, stickers as stickersLight, stickersDark, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
@@ -306,7 +307,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       {extracted && (
         diffuse ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
-            <DiffuseBloomIcon color={getDiffuseAccent(behavior, dt.isDark)} size={24} intensity={0.4}><Sparkles size={13} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>
+            <DiffuseBloomIcon color={getDiffuseAccent(behavior, dt.isDark)} size={24} intensity={0.4}><Character name="sparkle" size={13} color={dt.colors.ink3} /></DiffuseBloomIcon>
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: dt.colors.ink3 }}>
               {t('examForm_aiPrefilled')}
             </Text>

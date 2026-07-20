@@ -21,7 +21,6 @@ import { Ionicons } from '@expo/vector-icons'
 import {
   Pencil,
   Trash2,
-  Stethoscope,
   Search,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -393,7 +392,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
 
       {child.pediatrician?.name ? (
         <View style={styles.pedRow}>
-          <Stethoscope size={12} color={colors.textMuted} strokeWidth={2} />
+          <Character name="checkup" size={12} color={colors.textMuted} />
           <Text style={[styles.pedText, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
             {child.pediatrician.name}{child.pediatrician.phone ? ` · ${child.pediatrician.phone}` : ''}
           </Text>

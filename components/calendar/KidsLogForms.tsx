@@ -1577,7 +1577,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     {scanningPlate ? t('kids_logForm_readingPlate') : t('kids_logForm_scanPlate')}
                   </Text>
                 </View>
-                <Sparkles size={14} color={dc.ink3} strokeWidth={2} />
+                <Character name="sparkle" size={14} color={dc.ink3} />
               </Pressable>
 
               {/* Food tag input + live calorie estimate */}
@@ -1634,7 +1634,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 {calorieMatches.length > 0 && (
                   <View style={{ paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: dc.line, gap: 6 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Utensils size={13} color={dc.ink3} strokeWidth={2} />
+                      <Character name="nutrition" size={13} color={dc.ink3} />
                       <Text style={[df.eyebrow, { color: dc.ink2 }]}>
                         {t('kids_logForm_kcalEstimated', { count: totalEstimatedCals })}
                       </Text>
@@ -1716,7 +1716,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   active={isNewFood}
                   onPress={() => setIsNewFood(!isNewFood)}
                   hue={dTheme.stickers.blue}
-                  leading={<Baby size={14} color={isNewFood ? dc.ink : dc.ink3} strokeWidth={2} />}
+                  leading={<Character name="baby" size={14} color={isNewFood ? dc.ink : dc.ink3} />}
                 />
                 <DiffuseChip
                   label={t('kids_logForm_reaction')}
@@ -2637,7 +2637,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         <DiffuseFormHeader kind="sleep" />
         {autoDuration !== '' && (
           <View style={[df.banner, { borderColor: dTheme.colors.line }]}>
-            <Moon size={18} color={dTheme.colors.ink3} strokeWidth={2} />
+            <Character name="sleep" size={18} color={dTheme.colors.ink3} />
             <Text style={[df.bannerLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_sleepSession')}</Text>
             <Text style={[df.bannerValue, { color: dTheme.colors.ink }]}>{autoDuration}</Text>
           </View>
@@ -3352,7 +3352,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
           <DiffuseFormHeader kind="activity" />
           {autoDuration !== '' && (
             <View style={[df.banner, { borderColor: dTheme.colors.line }]}>
-              <Dumbbell size={18} color={dTheme.colors.ink3} strokeWidth={2} />
+              <Character name="activity" size={18} color={dTheme.colors.ink3} />
               <Text style={[df.bannerLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_duration')}</Text>
               <Text style={[df.bannerValue, { color: dTheme.colors.ink }]}>{autoDuration}</Text>
             </View>
@@ -3875,7 +3875,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
             {/* Bedtime summary — hairline row */}
             <View style={{ gap: 6, paddingVertical: 14, borderTopWidth: 1, borderBottomWidth: 1, borderColor: dTheme.colors.line }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Moon size={15} color={dTheme.colors.ink3} strokeWidth={2} />
+                <Character name="sleep" size={15} color={dTheme.colors.ink3} />
                 <Text style={{ color: dTheme.colors.ink, fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' }}>
                   {openLog.routineName ?? t('kids_logForm_sleepSession')}{t('kids_logForm_separator')}{formatTimeLabel(openLog.startTime)}
                 </Text>
@@ -3905,7 +3905,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
         ) : (
           <View style={{ paddingVertical: 28, alignItems: 'center', gap: 12 }}>
             <View style={[df.headerIcon, { width: 64, height: 64, borderRadius: 32, borderColor: dTheme.colors.line2 }]}>
-              <Moon size={28} color={dTheme.colors.ink3} strokeWidth={1.5} />
+              <Character name="sleep" size={28} color={dTheme.colors.ink3} />
             </View>
             <Text style={{ color: dTheme.colors.ink, fontFamily: diffuseFont.display, fontSize: 20, textAlign: 'center', letterSpacing: -0.3 }}>
               {t('kids_logForm_noBedtimeFound')}

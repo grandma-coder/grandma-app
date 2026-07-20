@@ -67,7 +67,6 @@ import {
   ArrowDownRight,
   Info,
   MinusCircle,
-  SkipForward,
   Zap,
   X,
 } from 'lucide-react-native'
@@ -931,7 +930,7 @@ export function KidsAnalytics() {
         {analytics && analytics.totalLogs === 0 && !isLoading && (
           diffuse ? (
             <DiffuseEmptyState
-              icon={<DiffuseBloomIcon color={getDiffuseAccent('kids', dt.isDark)} size={48} intensity={0.5}><FileQuestion size={24} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>}
+              icon={<DiffuseBloomIcon color={getDiffuseAccent('kids', dt.isDark)} size={48} intensity={0.5}><Character name="empty" size={24} color={dt.colors.ink3} /></DiffuseBloomIcon>}
               title={t('kids_analytics_no_data_title')}
               message={t('kids_analytics_no_data_hint')}
             />
@@ -2074,7 +2073,7 @@ function GrandmaInsightDetailSheet({
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginBottom: 10 }}>{t('kids_analytics_insight_next_steps_label')}</Text>
             {highlights.actions.map((a, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
-                <DiffuseBloomIcon color={accent} size={26} intensity={0.4}><Lightbulb size={15} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>
+                <DiffuseBloomIcon color={accent} size={26} intensity={0.4}><Character name="tip" size={15} color={dt.colors.ink3} /></DiffuseBloomIcon>
                 <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink }}>{a}</Text>
               </View>
             ))}
@@ -2304,7 +2303,7 @@ function DiscussConfirmSheet({
     return (
       <DiffuseSheet visible title={t('kids_analytics_confirm_share_title')} onClose={onClose} scroll={false}>
         <View style={{ alignItems: 'center', paddingTop: 4, paddingBottom: 8 }}>
-          <DiffuseBloomIcon color={accent} size={48} intensity={0.5}><Sparkles size={24} color={dt.colors.ink3} strokeWidth={1.4} /></DiffuseBloomIcon>
+          <DiffuseBloomIcon color={accent} size={48} intensity={0.5}><Character name="sparkle" size={24} color={dt.colors.ink3} /></DiffuseBloomIcon>
         </View>
         <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, lineHeight: 22, color: dt.colors.ink2, textAlign: 'center', marginBottom: 20 }}>
           {t('kids_analytics_confirm_share_body', { childName })}
@@ -2482,7 +2481,7 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <DiffuseBloomIcon color={stickers.coral} size={30} intensity={0.45}>
-              <SkipForward size={16} color={dt.colors.ink3} strokeWidth={1.5} />
+              <Character name="skip" size={16} color={dt.colors.ink3} />
             </DiffuseBloomIcon>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dt.colors.ink }}>{t('kids_analytics_routine_compliance_title')}</Text>
@@ -4159,7 +4158,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {analytics.growth.weights.length < 2 && analytics.growth.heights.length < 2 && (
             <View style={[styles.card, diffuse ? { ...cardStyle, alignItems: 'center', paddingVertical: 20 } : { backgroundColor: colors.surface, borderRadius: radius.xl, alignItems: 'center', paddingVertical: 20 }]}>
-              <TrendingUp size={24} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={1.5} />
+              <Character name="growth" size={24} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
               <Text style={[styles.emptyText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, marginTop: 8, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>
                 {t('kids_analytics_add_measurements_hint')}
               </Text>

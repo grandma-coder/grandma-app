@@ -2367,7 +2367,7 @@ export function KidsCalendar() {
 
           {rows.length === 0 ? (
             <DiffuseEmptyState
-              icon={<DiffuseBloomIcon color={stickers.blue} size={48}><Calendar size={22} color={dt.colors.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+              icon={<DiffuseBloomIcon color={stickers.blue} size={48}><Character name="calendar" size={22} color={dt.colors.ink3} /></DiffuseBloomIcon>}
               title={t('kids_calendar_nothingPlanned')}
               message={t('kids_calendar_tapToLog')}
             />
@@ -2951,7 +2951,7 @@ export function KidsCalendar() {
             title={t('kids_calendar_allKids')}
             sub={t('kids_calendar_nKids', { n: children.length })}
             onPress={() => { setSelectedChildId('all'); setKidPickerOpen(false) }}
-            icon={<DiffuseBloomIcon color={stickers.lilac} size={34}><Baby size={17} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+            icon={<DiffuseBloomIcon color={stickers.lilac} size={34}><Character name="baby" size={17} color={dt.colors.ink3} /></DiffuseBloomIcon>}
             trailing={selectedChildId === 'all' ? <Check size={16} color={dt.colors.success} strokeWidth={2} /> : <DiffuseArrow color={dt.colors.ink3} size={15} />}
           />
           {children.map((c, i) => {
@@ -2961,7 +2961,7 @@ export function KidsCalendar() {
                 key={c.id}
                 title={c.name}
                 onPress={() => { setSelectedChildId(c.id); setActiveChild(c); setKidPickerOpen(false) }}
-                icon={<DiffuseBloomIcon color={childColor(i)} size={34}><Baby size={17} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+                icon={<DiffuseBloomIcon color={childColor(i)} size={34}><Character name="baby" size={17} color={dt.colors.ink3} /></DiffuseBloomIcon>}
                 last={i === children.length - 1}
                 trailing={active ? <Check size={16} color={dt.colors.success} strokeWidth={2} /> : <DiffuseArrow color={dt.colors.ink3} size={15} />}
               />
@@ -4636,7 +4636,7 @@ export function KidsCalendar() {
               <View style={{ backgroundColor: dt.colors.bg, borderRadius: 28, borderWidth: 1, borderColor: dt.colors.line, padding: 28, alignItems: 'center', overflow: 'hidden' }}>
                 <SoftBloom color={getDiffuseAccent('kids', isDark)} cx="50%" cy="8%" opacity={isDark ? 0.3 : 0.4} spread={0.5} />
                 <DiffuseBloomIcon color={stickers.yellow} size={64}>
-                  <Sparkles size={30} color={dt.colors.ink3} strokeWidth={1.5} />
+                  <Character name="celebrate" size={30} color={dt.colors.ink3} />
                 </DiffuseBloomIcon>
                 <Text style={{ fontFamily: diffuseFont.display, fontSize: 30, letterSpacing: -0.6, color: dt.colors.ink, marginTop: 12, textAlign: 'center' }}>
                   {t('kids_calendar_congrats_title')}

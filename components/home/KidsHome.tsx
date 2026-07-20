@@ -27,7 +27,7 @@ import {
   Brain, Rocket, Check, Sparkles, Activity, X, TrendingUp,
   Zap, Droplets, Clock, Settings, Minus, Milk, Hand,
   Bell, Trash2, Syringe, Pill, Pencil, GripVertical, Flag, Trophy, Flame, Star,
-  Footprints, Calendar, Waves, Eye, Dumbbell, Target, Lightbulb, PartyPopper, Layers,
+  Footprints, Waves, Eye, Dumbbell, Target, Lightbulb, PartyPopper, Layers,
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
 import { useTheme, brand, stickers, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
@@ -5606,7 +5606,7 @@ function HealthDetailModal({ visible, onClose, sleepQuality, sleepTotal, sleepTa
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {child.allergies.map((a, i) => (
                 <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderColor: dCol.line2, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 }}>
-                  <AlertCircle size={11} color={dCol.ink3} strokeWidth={1.8} />
+                  <Character name="warning" size={11} color={dCol.ink3} />
                   <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, color: dCol.ink }}>{a}</Text>
                 </View>
               ))}
@@ -6117,7 +6117,7 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
         </View>
         {/* Grandma's italic remark */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, marginLeft: 28 }}>
-          <Sparkles size={11} color={dCol.ink3} strokeWidth={1.6} />
+          <Character name="sparkle" size={11} color={dCol.ink3} />
           <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12.5, color: dCol.ink3, flex: 1 }}>
             {note}
           </Text>
@@ -6373,7 +6373,7 @@ function BreastfeedingInsights({
           <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 16, gap: 10 }}>
             {notes.map((n, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                <Sparkles size={12} color={dCol.ink3} strokeWidth={1.6} style={{ marginTop: 3 }} />
+                <View style={{ marginTop: 3 }}><Character name="sparkle" size={12} color={dCol.ink3} /></View>
                 <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dCol.ink3, flex: 1, lineHeight: 19 }}>
                   {n}
                 </Text>
@@ -6747,7 +6747,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
             {/* Insight — Grandma's read */}
             {feedingCount > 0 && feedingInsight ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 }}>
-                <Sparkles size={13} color={dCol.ink3} strokeWidth={1.6} />
+                <Character name="sparkle" size={13} color={dCol.ink3} />
                 <Text style={{ fontFamily: diffuseFont.italic, fontSize: 14, color: dCol.ink3 }}>
                   {feedingInsight}
                 </Text>
@@ -7632,7 +7632,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
 
             {/* Suggested banner — hairline mono row */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14, alignSelf: 'flex-start', marginTop: 14 }}>
-              <Sparkles size={12} color={dCol.ink3} strokeWidth={1.8} />
+              <Character name="sparkle" size={12} color={dCol.ink3} />
               <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1, textTransform: 'uppercase' }}>
                 {t('kids_home_goals_suggested_banner', { ageLabel })}
               </Text>
@@ -7693,7 +7693,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                 onPress={handleReset}
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 7, opacity: pressed ? 0.6 : 1 })}
               >
-                <Sparkles size={13} color={dCol.ink3} strokeWidth={1.8} />
+                <Character name="sparkle" size={13} color={dCol.ink3} />
                 <Text style={{ fontSize: 11, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>{t('kids_home_goals_use_suggested')}</Text>
               </Pressable>
               <View style={{ flex: 1 }} />
@@ -9225,7 +9225,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
           <DiffuseMetricTile
             value={g.ageRange}
             label={t('kids_home_leaps_sheet_typical_age')}
-            icon={<DiffuseBloomIcon color={acc} size={28} intensity={0.42}><Calendar size={14} color={dCol.ink3} strokeWidth={1.5} /></DiffuseBloomIcon>}
+            icon={<DiffuseBloomIcon color={acc} size={28} intensity={0.42}><Character name="calendar" size={14} color={dCol.ink3} /></DiffuseBloomIcon>}
           />
           <DiffuseMetricTile
             value={g.duration}
