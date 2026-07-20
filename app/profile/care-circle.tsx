@@ -1192,7 +1192,7 @@ export default function CareCircleScreen() {
             if (filtered.length === 0) {
               return diffuse ? (
                 <DiffuseEmptyState
-                  icon={<Clock size={26} color={dt.colors.ink3} strokeWidth={1.4} />}
+                  icon={<Character name="clock" size={26} color={dt.colors.ink3} />}
                   title={t('careCircle_no_activity_title')}
                   message={t('careCircle_activity_log_desc')}
                 />

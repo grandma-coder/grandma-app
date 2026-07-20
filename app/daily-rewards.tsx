@@ -22,7 +22,6 @@ import {
   Lock,
   Info,
   Flame as FlameLine,
-  Star as StarLine,
   Sparkles as SparklesLine,
   Gift as GiftLine,
   Utensils as UtensilsLine,
@@ -267,7 +266,7 @@ export default function DailyRewardsScreen() {
               ]}
             >
               {diffuse ? (
-                <StarLine size={13} color={accent} strokeWidth={1.8} />
+                <Character name="star" size={13} color={accent} />
               ) : (
                 <StarSticker size={14} fill={stickers.yellow} />
               )}

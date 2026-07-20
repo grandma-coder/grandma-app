@@ -32,6 +32,7 @@ import { useTranslation } from '../../lib/i18n'
 import { deletePost, toggleSave, type GaragePost } from '../../lib/garagePosts'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
+import { Character } from '../../components/characters/Characters'
 
 const SCREEN_W = Dimensions.get('window').width
 const THUMB_SIZE = (SCREEN_W - 4) / 3 // 3 columns, 2px gaps
@@ -241,7 +242,7 @@ export default function GarageProfileScreen() {
         diffuse ? (
           tab === 'posts' ? (
             <DiffuseEmptyState
-              icon={<DiffuseBloomIcon size={72} intensity={0.5}><ShoppingBag size={34} color={dt.colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>}
+              icon={<DiffuseBloomIcon size={72} intensity={0.5}><Character name="marketplace" size={34} color={dt.colors.ink3} /></DiffuseBloomIcon>}
               title={t('garage_profile_emptyPostsTitle')}
               message={t('garage_profile_emptyPostsBody')}
               ctaLabel={t('garage_profile_createFirst')}

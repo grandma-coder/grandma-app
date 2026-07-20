@@ -434,7 +434,7 @@ export default function HealthHistoryScreen() {
                       <View key={m} style={[styles.refChip, diffuse
                         ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                         : { backgroundColor: stickers.blue + (isDark ? '28' : '32') }]}>
-                        <Pill size={10} color={diffuse ? dt.colors.ink3 : stickers.blueInk} strokeWidth={diffuse ? 1.6 : 2} />
+                        <Character name="medicine" size={10} color={diffuse ? dt.colors.ink3 : stickers.blueInk} />
                         <Text style={[styles.refChipText, { color: diffuse ? dt.colors.ink2 : stickers.blueInk, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{m}</Text>
                       </View>
                     ))}

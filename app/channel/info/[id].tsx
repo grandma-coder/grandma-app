@@ -22,8 +22,6 @@ import {
   ArrowLeft,
   Users,
   Star,
-  Crown,
-  Image as ImageIcon,
   Settings,
   Trash2,
   LogOut,
@@ -38,9 +36,6 @@ import {
   Share2,
   Copy,
   Link,
-  MessageSquare,
-  ChartBar,
-  Zap,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, getModeColor, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
@@ -514,7 +509,7 @@ export default function ChannelInfoScreen() {
           </View>
           <View style={[s.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <View style={s.stat}>
-            <ImageIcon size={18} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+            <Character name="photo" size={18} color={diffuse ? dt.colors.ink3 : colors.primary} />
             <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{sharedMedia.length}</Text>
             <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_statMedia')}</Text>
           </View>
@@ -569,7 +564,7 @@ export default function ChannelInfoScreen() {
                   : { backgroundColor: os.tint }]}>
                   <Character name={personBlob(channel.createdBy ?? 'owner')} size={20} bg={avatarBg} />
                   <View style={[s.ownerCrownBadge, { backgroundColor: diffuse ? dt.colors.bg : colors.surface }]}>
-                    <Crown size={11} color={crownColor} strokeWidth={2} fill={crownColor} />
+                    <Character name="crown" size={11} color={crownColor} />
                   </View>
                 </View>
               )
@@ -611,7 +606,7 @@ export default function ChannelInfoScreen() {
                   {m.name ?? t('channelInfo_memberFallback')}
                 </Text>
                 {m.user_id === channel.createdBy && (
-                  <Crown size={14} color={diffuse ? dt.colors.ink3 : brand.accent} strokeWidth={2} fill={diffuse ? dt.colors.ink3 : brand.accent} />
+                  <Character name="crown" size={14} color={diffuse ? dt.colors.ink3 : brand.accent} />
                 )}
               </View>
             )
@@ -648,7 +643,7 @@ export default function ChannelInfoScreen() {
                 ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
                 : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
                 <View style={s.metricsHeader}>
-                  <ChartBar size={16} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+                  <Character name="chart" size={16} color={diffuse ? dt.colors.ink3 : colors.primary} />
                   <Text style={[s.metricsTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontSize: 18 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_metricsTitle')}</Text>
                 </View>
                 <View style={s.metricsGrid}>
@@ -658,17 +653,17 @@ export default function ChannelInfoScreen() {
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMembers')}</Text>
                   </View>
                   <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <MessageSquare size={16} color={diffuse ? dt.colors.ink3 : colors.secondary} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Character name="chat" size={16} color={diffuse ? dt.colors.ink3 : colors.secondary} />
                     <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{metrics.totalMessages}</Text>
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMessages')}</Text>
                   </View>
                   <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <ImageIcon size={16} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Character name="photo" size={16} color={diffuse ? dt.colors.ink3 : colors.primary} />
                     <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{metrics.totalMedia}</Text>
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricMedia')}</Text>
                   </View>
                   <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <Zap size={16} color={diffuse ? dt.colors.ink3 : colors.success} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Character name="activity" size={16} color={diffuse ? dt.colors.ink3 : colors.success} />
                     <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.display }]}>{metrics.activeToday}</Text>
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{t('channelInfo_metricActiveToday')}</Text>
                   </View>

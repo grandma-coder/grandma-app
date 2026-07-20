@@ -14,11 +14,10 @@ import {
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import {
-  ArrowLeft, Sparkles, Clock, Brain, Heart, Zap,
-  Lightbulb, TrendingUp, CalendarClock, X, MessageCircle,
-  RefreshCw, AlertTriangle, ChevronRight, BookOpen, RotateCcw,
-  Moon, Apple, Shield, Flame, BarChart3, Activity, Coffee,
-  MessageSquare, Sun,
+  ArrowLeft, Sparkles, Brain, Heart, Zap,
+  Lightbulb, TrendingUp, CalendarClock, X,
+  RefreshCw, AlertTriangle, ChevronRight, RotateCcw,
+  Moon, Apple, Shield, Activity, Coffee,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -1129,7 +1128,7 @@ export function InsightsScreen() {
           {(['today', 'reads', 'history'] as Tab[]).map((tabKey) => {
             const active = tab === tabKey
             const label = tabKey === 'today' ? t('insights_tabToday') : tabKey === 'reads' ? t('insights_tabReads') : t('insights_tabHistory')
-            const Icon = tabKey === 'today' ? Sun : tabKey === 'reads' ? BookOpen : Clock
+            const iconName = tabKey === 'today' ? 'sun' : tabKey === 'reads' ? 'book' : 'clock'
             // getModeColor accepts the full mode string for all three journeys
             // — pass it straight through. The old 'pre' | 'kids' mapping gave
             // pregnancy users the kids accent.
@@ -1149,7 +1148,7 @@ export function InsightsScreen() {
                   },
                 ]}
               >
-                <Icon size={13} color={active ? modeAccent : colors.textMuted} strokeWidth={2.5} />
+                <Character name={iconName} size={13} color={active ? modeAccent : colors.textMuted} />
                 <Text style={[s.tabText, { color: active ? ink : colors.textMuted }]}>
                   {label}
                 </Text>
@@ -1178,12 +1177,12 @@ export function InsightsScreen() {
                   <Text style={[s.dailyName, { color: ink }]}>{greeting}</Text>
                 </View>
                 <View style={[s.sunIcon, { backgroundColor: stickerPalette.yellow }]}>
-                  <Sun size={22} color={ink} strokeWidth={2.5} />
+                  <Character name="sun" size={22} color={ink} />
                 </View>
               </View>
               <View style={[s.tipBox, { backgroundColor: colors.surface, borderColor: ink + '18' }]}>
                 <View style={s.tipBoxHeader}>
-                  <Sparkles size={12} color={colors.accent} strokeWidth={2.5} />
+                  <Character name="sparkle" size={12} color={colors.accent} />
                   <Text style={[s.tipBoxLabel, { color: colors.accent }]}>{t('insights_todaysTip')}</Text>
                   {child?.birthDate && (
                     <View style={[s.agePill, { backgroundColor: stickerPalette.yellowSoft }]}>
@@ -1202,12 +1201,12 @@ export function InsightsScreen() {
               <View style={[s.weekCard, { backgroundColor: colors.surface }]}>
                 <View style={s.weekHeader}>
                   <View style={[s.weekIconWrap, { backgroundColor: stickerPalette.blueSoft }]}>
-                    <BarChart3 size={15} color={ink} strokeWidth={2.5} />
+                    <Character name="chart" size={15} color={ink} />
                   </View>
                   <Text style={[s.weekTitle, { color: colors.text }]}>{t('insights_thisWeek')}</Text>
                   {metrics.logStreak > 0 && (
                     <View style={[s.streakBadge, { backgroundColor: stickerPalette.peachSoft }]}>
-                      <Flame size={11} color={stickerPalette.peachInk} strokeWidth={2.5} />
+                      <Character name="streak" size={11} color={stickerPalette.peachInk} />
                       <Text style={[s.streakText, { color: stickerPalette.peachInk }]}>{t('common_nDays', { n: metrics.logStreak })}</Text>
                     </View>
                   )}
@@ -1282,14 +1281,14 @@ export function InsightsScreen() {
 
             {!isLoading && !generating && insights.length === 0 && (
               <View style={[s.noInsightsCard, { backgroundColor: colors.surface }]}>
-                <Sparkles size={26} color={colors.textMuted} strokeWidth={1.5} />
+                <Character name="sparkle" size={26} color={colors.textMuted} />
                 <Text style={[s.noInsightsTitle, { color: colors.text }]}>{t('insights_noAiTitle')}</Text>
                 <Text style={[s.noInsightsBody, { color: colors.textMuted }]}>
                   {t('insights_noAiBody')}
                 </Text>
                 <Pressable onPress={handleGenerate} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
                   <View style={[s.generateBtn, { backgroundColor: stickerPalette.yellow }]}>
-                    <Sparkles size={15} color={ink} strokeWidth={2.5} />
+                    <Character name="sparkle" size={15} color={ink} />
                     <Text style={[s.generateBtnText, { color: ink }]}>{t('insights_generateBtn')}</Text>
                   </View>
                 </Pressable>
@@ -1300,7 +1299,7 @@ export function InsightsScreen() {
               <View style={s.insightSection}>
                 <View style={s.sectionHeader}>
                   <View style={[s.sectionLabelPill, { backgroundColor: colors.accentSoft }]}>
-                    <Sparkles size={12} color={colors.accent} strokeWidth={2.5} />
+                    <Character name="sparkle" size={12} color={colors.accent} />
                     <Text style={[s.sectionLabel, { color: colors.accent }]}>{t('insights_grandmasInsights')}</Text>
                   </View>
                   <View style={[s.sectionLine, { backgroundColor: ink + '15' }]} />
@@ -1337,7 +1336,7 @@ export function InsightsScreen() {
               style={[s.quoteCard, { backgroundColor: stickerPalette.yellowSoft }]}
             >
               <View style={[s.quoteIconWrap, { backgroundColor: stickerPalette.yellow }]}>
-                <MessageSquare size={18} color={ink} strokeWidth={2.5} />
+                <Character name="chat" size={18} color={ink} />
               </View>
               <Text style={[s.quoteText, { color: ink }]}>{t('insights_quotedText', { text: quote.text })}</Text>
               <Text style={[s.quoteAuthor, { color: colors.textMuted }]}>{t('insights_quoteAuthor', { author: quote.author })}</Text>
@@ -1349,7 +1348,7 @@ export function InsightsScreen() {
               style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}
             >
               <View style={[s.grandmaCta, { backgroundColor: colors.accent }]}>
-                <MessageCircle size={18} color={ink} strokeWidth={2.5} />
+                <Character name="chat" size={18} color={ink} />
                 <Text style={[s.grandmaCtaText, { color: ink }]}>{t('insights_askGrandma')}</Text>
                 <ChevronRight size={18} color={ink} strokeWidth={2.5} />
               </View>
@@ -1410,7 +1409,7 @@ export function InsightsScreen() {
 
             {filteredArticles.length === 0 && (
               <View style={[s.noArticlesWrap, { backgroundColor: colors.surface }]}>
-                <BookOpen size={24} color={colors.textMuted} strokeWidth={1.5} />
+                <Character name="book" size={24} color={colors.textMuted} />
                 <Text style={[s.noArticlesText, { color: colors.textMuted }]}>
                   {t('insights_noArticlesAge', { name: childName })}
                 </Text>
@@ -1437,7 +1436,7 @@ export function InsightsScreen() {
             )}
             {!isLoadingHistory && archivedInsights.length === 0 && (
               <View style={[s.historyEmpty, { backgroundColor: colors.surface }]}>
-                <Clock size={26} color={colors.textMuted} strokeWidth={1.5} />
+                <Character name="clock" size={26} color={colors.textMuted} />
                 <Text style={[s.historyEmptyTitle, { color: colors.text }]}>{t('insights_history_noHistory')}</Text>
                 <Text style={[s.historyEmptyBody, { color: colors.textMuted }]}>
                   {t('insights_historyEmptyBody')}
@@ -1586,7 +1585,7 @@ function ArticleDetailModal({
             <View style={[s.modalDivider, { backgroundColor: ink + '15', marginVertical: 20 }]} />
             <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
               <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
-                <MessageCircle size={18} color={ink} strokeWidth={2.5} />
+                <Character name="chat" size={18} color={ink} />
                 <Text style={[s.askBtnText, { color: ink }]}>{t('insights_askGrandma')}</Text>
               </View>
             </Pressable>
@@ -1785,7 +1784,7 @@ function InsightDetailModal({
             <View style={s.modalActions}>
               <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ flex: 1, transform: [{ translateY: pressed ? 2 : 0 }] }]}>
                 <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
-                  <MessageCircle size={18} color={ink} strokeWidth={2.5} />
+                  <Character name="chat" size={18} color={ink} />
                   <Text style={[s.askBtnText, { color: ink }]}>{t('insights_askGrandma')}</Text>
                 </View>
               </Pressable>

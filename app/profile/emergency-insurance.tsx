@@ -39,7 +39,6 @@ import {
   FileText,
   Camera,
   ImageIcon,
-  Heart,
 } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -284,7 +283,7 @@ export default function EmergencyInsuranceScreen() {
               <View style={styles.emptyIllustration}>
                 {diffuse ? (
                   <DiffuseBloomIcon color={dt.colors.ink} size={64} intensity={0.4}>
-                    <Heart size={30} color={dt.colors.ink3} strokeWidth={1.4} />
+                    <Character name="heart" size={30} color={dt.colors.ink3} />
                   </DiffuseBloomIcon>
                 ) : (
                   <CrossSticker size={140} fill={stickers.coral} />
@@ -313,7 +312,7 @@ export default function EmergencyInsuranceScreen() {
                 >
                   {diffuse ? (
                     <View style={[styles.contactAvatar, styles.contactAvatarDiffuse, { borderColor: dt.colors.line2 }]}>
-                      <Heart size={18} color={dt.colors.ink3} strokeWidth={1.6} />
+                      <Character name="heart" size={18} color={dt.colors.ink3} />
                     </View>
                   ) : (
                     <View style={[styles.contactAvatar, { backgroundColor: stickers.coral + (isDark ? '32' : '40') }]}>
@@ -359,7 +358,7 @@ export default function EmergencyInsuranceScreen() {
             <View style={styles.sectionLabelRow}>
               {diffuse ? (
                 <DiffuseBloomIcon color={dt.colors.ink} size={26} intensity={0.4}>
-                  <Shield size={15} color={dt.colors.ink3} strokeWidth={1.6} />
+                  <Character name="health" size={15} color={dt.colors.ink3} />
                 </DiffuseBloomIcon>
               ) : (
                 <StarSticker size={16} fill={stickers.peach} />
@@ -390,7 +389,7 @@ export default function EmergencyInsuranceScreen() {
               <View style={[styles.emptyIllustration, !diffuse && { transform: [{ rotate: '-6deg' }] }]}>
                 {diffuse ? (
                   <DiffuseBloomIcon color={dt.colors.ink} size={64} intensity={0.4}>
-                    <Shield size={30} color={dt.colors.ink3} strokeWidth={1.4} />
+                    <Character name="health" size={30} color={dt.colors.ink3} />
                   </DiffuseBloomIcon>
                 ) : (
                   <Squishy w={140} h={94} fill={stickers.peach} />

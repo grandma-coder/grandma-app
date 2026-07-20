@@ -19,7 +19,6 @@ import { router, useFocusEffect } from 'expo-router'
 import {
   Search,
   Users,
-  TrendingUp,
   Plus,
   Star,
   Bookmark,
@@ -239,7 +238,7 @@ export function ChannelsScreen() {
           {/* Trending */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <TrendingUp size={16} color={diffuse ? dt.colors.ink3 : accent} strokeWidth={2.4} />
+              <Character name="trending" size={16} color={diffuse ? dt.colors.ink3 : accent} />
               <Text style={[styles.sectionTitle, { marginBottom: 0 }, sectionTitleStyle(diffuse, dt, colors, font)]}>{t('channelsDiscover_trending')}</Text>
             </View>
             {trending.map((c) => (

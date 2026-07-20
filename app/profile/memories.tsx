@@ -32,7 +32,6 @@ import {
   Calendar,
   X,
   Check,
-  Baby,
   Search,
   Pencil,
   Trash2,
@@ -569,7 +568,7 @@ export default function MemoriesScreen() {
                   {viewPost.notes ? <Text style={styles.viewerCaption}>{viewPost.notes}</Text> : null}
                   <View style={styles.viewerMeta}>
                     <View style={styles.viewerChildBadge}>
-                      <Baby size={12} color="#FFF" strokeWidth={2} />
+                      <Character name="baby" size={12} color="#FFF" />
                       <Text style={styles.viewerChildText}>{viewPost.childName}</Text>
                     </View>
                     <Text style={styles.viewerDate}>

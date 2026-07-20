@@ -36,10 +36,6 @@ import {
   Heart,
   Calendar,
   Hash,
-  Trophy,
-  Crown,
-  Medal,
-  Award,
   Sparkles,
 } from 'lucide-react-native'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
@@ -490,7 +486,7 @@ export default function LeaderboardScreen() {
                     },
                   ]}
                 >
-                  <Trophy size={13} color={dt.colors.ink3} strokeWidth={1.8} />
+                  <Character name="trophy" size={13} color={dt.colors.ink3} />
                   <Text style={[styles.rankPillText, { color: ink, fontFamily: diffuseFont.monoBold }]}>
                     #{myEntry.rank}
                   </Text>
@@ -723,10 +719,10 @@ function Podium({
   // the mode accent bloom instead of filled sticker sockets.
   const rankBloomIcon = (rank: 1 | 2 | 3, size: number) => {
     const acc = getDiffuseAccent(mode, dt.isDark)
-    const Glyph = rank === 1 ? Crown : rank === 2 ? Medal : Award
+    const glyphName = rank === 1 ? 'crown' : rank === 2 ? 'medal' : 'badge'
     return (
       <DiffuseBloomIcon color={acc} size={size} intensity={0.5}>
-        <Glyph size={size * 0.62} color={dt.colors.ink2} strokeWidth={1.7} />
+        <Character name={glyphName} size={size * 0.62} color={dt.colors.ink2} />
       </DiffuseBloomIcon>
     )
   }
@@ -861,10 +857,10 @@ function LeaderRow({
   if (diffuse) {
     const acc = getDiffuseAccent(mode, dt.isDark)
     const statParts: { icon: React.ReactNode; value: number }[] = []
-    if (entry.child_logs > 0) statParts.push({ icon: <Calendar size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.child_logs })
-    if (entry.garage_posts + entry.channel_posts > 0) statParts.push({ icon: <MessageCircle size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.garage_posts + entry.channel_posts })
+    if (entry.child_logs > 0) statParts.push({ icon: <Character name="calendar" size={9} color={dt.colors.ink3} />, value: entry.child_logs })
+    if (entry.garage_posts + entry.channel_posts > 0) statParts.push({ icon: <Character name="chat" size={9} color={dt.colors.ink3} />, value: entry.garage_posts + entry.channel_posts })
     if (entry.garage_likes + entry.channel_reactions > 0) statParts.push({ icon: <Character name="heart" size={9} color={dt.colors.ink3} />, value: entry.garage_likes + entry.channel_reactions })
-    if (entry.channels_joined > 0) statParts.push({ icon: <Hash size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.channels_joined })
+    if (entry.channels_joined > 0) statParts.push({ icon: <Character name="channel" size={9} color={dt.colors.ink3} />, value: entry.channels_joined })
 
     return (
       <Pressable
@@ -1201,7 +1197,7 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
 
   if (diffuse) {
     const acc = getDiffuseAccent(mode, dt.isDark)
-    const RankGlyph = entry.rank === 1 ? Crown : entry.rank === 2 ? Medal : entry.rank === 3 ? Award : Trophy
+    const rankGlyphName = entry.rank === 1 ? 'crown' : entry.rank === 2 ? 'medal' : entry.rank === 3 ? 'badge' : 'trophy'
     return (
       <>
         <Pressable onPress={onClose} style={[styles.diffuseProfileClose, { borderColor: dt.colors.hairline }]} hitSlop={12}>
@@ -1255,7 +1251,7 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
             },
           ]}
         >
-          <Trophy size={15} color={dt.colors.ink3} strokeWidth={1.8} />
+          <Character name="trophy" size={15} color={dt.colors.ink3} />
           <Text style={[styles.diffuseProfilePointsText, { color: ink, fontFamily: diffuseFont.monoBold }]}>
             {entry.total_points}
           </Text>
@@ -1268,13 +1264,13 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
           <ProfileStat
             label={t('leaderboard_statChildLogs')}
             value={entry.child_logs}
-            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Calendar size={17} color={dt.colors.ink2} strokeWidth={1.7} /></DiffuseBloomIcon>}
+            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Character name="calendar" size={17} color={dt.colors.ink2} /></DiffuseBloomIcon>}
             tint="transparent"
           />
           <ProfileStat
             label={t('leaderboard_statPosts')}
             value={entry.garage_posts + entry.channel_posts}
-            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><MessageCircle size={17} color={dt.colors.ink2} strokeWidth={1.7} /></DiffuseBloomIcon>}
+            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Character name="chat" size={17} color={dt.colors.ink2} /></DiffuseBloomIcon>}
             tint="transparent"
           />
           <ProfileStat
@@ -1286,7 +1282,7 @@ function ProfileSheet({ entry, onClose }: { entry: LeaderEntry; onClose: () => v
           <ProfileStat
             label={t('leaderboard_statChannels')}
             value={entry.channels_joined}
-            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Hash size={17} color={dt.colors.ink2} strokeWidth={1.7} /></DiffuseBloomIcon>}
+            sticker={<DiffuseBloomIcon color={acc} size={30} intensity={0.45}><Character name="channel" size={17} color={dt.colors.ink2} /></DiffuseBloomIcon>}
             tint="transparent"
           />
         </View>
