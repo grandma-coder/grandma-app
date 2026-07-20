@@ -19,6 +19,7 @@ import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { Character, type CharacterName } from '../../characters/Characters'
 import { useTranslation } from '../../../lib/i18n'
 import { Display } from '../../ui/Typography'
+import { QuietPill } from '../../ui/QuietPill'
 import { KIDS_QUICK_LOGS } from '../../../lib/kidsQuickLogs'
 import { useKidsQuickLogStore } from '../../../store/useKidsQuickLogStore'
 import { KidsQuickLogPicker } from './KidsQuickLogPicker'
@@ -118,18 +119,16 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
         {/* Compact "See results" pill + icon-only edit on the header row
             (replaces the old footer band that left dead space). Matches the
             cycle + pregnancy cards exactly. See results → kids analytics tab. */}
-        <Pressable
+        <QuietPill
+          label={t('kids_quickLogs_seeResults')}
           onPress={() => router.push('/vault')}
-          hitSlop={8}
-          style={({ pressed }) => [styles.headerResultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? 'transparent' : colors.surface, opacity: pressed ? 0.6 : 1 }]}
-        >
-          <Text style={{ fontFamily: labelFont, fontSize: 11, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
-            {t('kids_quickLogs_seeResults')}
-          </Text>
-        </Pressable>
-        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
-          <SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />
-        </Pressable>
+          accessibilityLabel={t('kids_quickLogs_seeResults')}
+        />
+        <QuietPill
+          leading={<SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />}
+          onPress={() => setPickerOpen(true)}
+          accessibilityLabel={t('kids_quickLogs_edit')}
+        />
       </View>
 
       {/* Tappable log chips — neutral hairline; a completed log tints soft green. */}
@@ -184,7 +183,6 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  headerResultsPill: { borderWidth: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
