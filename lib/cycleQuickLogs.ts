@@ -16,13 +16,13 @@ export interface CycleQuickLogDef {
 }
 
 export const CYCLE_QUICK_LOGS: CycleQuickLogDef[] = [
-  { key: 'mood',         sheet: 'mood',         labelKey: 'cycleDash_mood' },
-  { key: 'symptoms',     sheet: 'symptom',      labelKey: 'cycleDash_symptoms' },
-  { key: 'bbt',          sheet: 'basal_temp',   labelKey: 'cycleDash_bbt' },
-  { key: 'lh',           sheet: 'lh',           labelKey: 'cycleDash_lh' },
-  { key: 'cm',           sheet: 'cm',           labelKey: 'cycleDash_cervicalMucus' },
-  { key: 'intimacy',     sheet: 'intercourse',  labelKey: 'cycleDash_intimacy' },
-  { key: 'period_start', sheet: 'period_start', labelKey: 'cycleCalendar_logSheet_periodStart' },
+  { key: 'mood',         sheet: 'mood',         labelKey: 'cycleQuickLog_mood' },
+  { key: 'symptoms',     sheet: 'symptom',      labelKey: 'cycleQuickLog_symptoms' },
+  { key: 'bbt',          sheet: 'basal_temp',   labelKey: 'cycleQuickLog_bbt' },
+  { key: 'lh',           sheet: 'lh',           labelKey: 'cycleQuickLog_lh' },
+  { key: 'cm',           sheet: 'cm',           labelKey: 'cycleQuickLog_cm' },
+  { key: 'intimacy',     sheet: 'intercourse',  labelKey: 'cycleQuickLog_intimacy' },
+  { key: 'period_start', sheet: 'period_start', labelKey: 'cycleQuickLog_periodStart' },
 ]
 
 // The default chips a new user sees before they customize.

@@ -32,6 +32,7 @@ import {
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
 import { DEFAULT_CYCLE_QUICK_LOG_KEYS } from '../../../lib/cycleQuickLogs'
 import { CycleQuickLogPicker } from './CycleQuickLogPicker'
+import { CycleLogConfirm } from './CycleLogConfirm'
 
 /** Chip key → the cycle_logs sheet it opens. */
 type CycleSheetType =
@@ -41,6 +42,20 @@ interface Props {
   phase: CyclePhase
   /** Embedded inside the Cycle wallet card: skip the outer PaperCard chrome. */
   bare?: boolean
+  /**
+   * The day being logged (YYYY-MM-DD). Defaults to today. When the user scrubs
+   * the ring / taps a strip date, the home passes that date here so every log
+   * sheet writes to the selected day — the tap-a-date-to-log flow.
+   */
+  date?: string
+  /**
+   * Reports whether a log sheet (or the confirm overlay) is currently open, so
+   * the host can freeze the ring's auto-return-to-today while the user logs.
+   */
+  onLoggingActiveChange?: (active: boolean) => void
+  /** Fired after the post-log confirm animation finishes, so the host can glide
+   *  the ring back to today (closing the pick-past-day → log → done loop). */
+  onLogConfirmed?: () => void
 }
 
 type Row = { type: string; value: string | null }
@@ -61,7 +76,7 @@ const LH_LABEL: Record<string, string> = {
   negative: 'Neg', faint: 'Faint', positive: 'Pos', peak: 'Peak',
 }
 
-export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
+export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActiveChange, onLogConfirmed }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -73,6 +88,8 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
   const [open, setOpen] = useState(false)
   // Which signal's log sheet is open (tap a chip to log it, like pregnancy).
   const [sheetType, setSheetType] = useState<CycleSheetType | null>(null)
+  // Post-log confirmation overlay ("Updating your cycle… → Cycle updated").
+  const [confirmVisible, setConfirmVisible] = useState(false)
   // Customization: which chips the user has chosen (persisted). Falls back to
   // the default set until the store rehydrates. `bare` (wallet-embedded) keeps
   // the full fixed set; only the standalone card is user-customizable.
@@ -80,27 +97,47 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
   const enabledKeys = useCycleQuickLogStore((s) => s.enabledKeys)
   const quickHydrated = useCycleQuickLogStore((s) => s.hydrated)
   const activeKeys = !bare && quickHydrated ? enabledKeys : DEFAULT_CYCLE_QUICK_LOG_KEYS
-  const closeSheet = () => {
-    setSheetType(null)
-    void qc.invalidateQueries({ queryKey: ['cycleLogs'] })
-  }
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session } }) =>
       setUserId(session?.user.id),
     )
   }, [])
 
-  const today = toDateStr(new Date())
+  // Tell the host when we're actively logging (a sheet or the confirm overlay is
+  // up) so it can freeze the ring's auto-return-to-today mid-log.
+  useEffect(() => {
+    onLoggingActiveChange?.(sheetType !== null || confirmVisible)
+  }, [sheetType, confirmVisible, onLoggingActiveChange])
+
+  const todayStr = toDateStr(new Date())
+  // The day we read/write. Defaults to today; the home passes the ring/strip
+  // selected date so chips log for that specific day (tap-a-date-to-log).
+  const logDate = date ?? todayStr
+  const isToday = logDate === todayStr
+
+  // A chip's log form succeeded: close the sheet, refresh the queries (so the
+  // home + chips reflect the new row), then play the confirm overlay. Recalc is
+  // just the query invalidation; the overlay covers it and auto-dismisses.
+  const onLogSaved = () => {
+    setSheetType(null)
+    void qc.invalidateQueries({ queryKey: ['cycleLogs'] })
+    setConfirmVisible(true)
+  }
+  // Sheet dismissed without saving (backdrop / close X): no confirm animation.
+  const closeSheet = () => {
+    setSheetType(null)
+    void qc.invalidateQueries({ queryKey: ['cycleLogs'] })
+  }
 
   const { data: rows = [] } = useQuery({
-    queryKey: ['cycleLogs', 'today-summary', userId, today],
+    queryKey: ['cycleLogs', 'today-summary', userId, logDate],
     queryFn: async (): Promise<Row[]> => {
       if (!userId) return []
       const { data, error } = await supabase
         .from('cycle_logs')
         .select('type, value')
         .eq('user_id', userId)
-        .eq('date', today)
+        .eq('date', logDate)
       if (error) throw error
       return (data ?? []) as Row[]
     },
@@ -202,14 +239,23 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
     (symptoms.length > 0 ? 1 : 0)
   const totalTrackable = 5
 
+  // Title reads as an explicit call to log for the chosen day — "Log for today"
+  // when it's today, otherwise "Log for Thu, Jul 24". This is the primary,
+  // obvious logging entry point (replaces the vague "Today at a glance").
+  const logTitle = isToday
+    ? t('cycleLog_todayTitle')
+    : t('cycleLog_dateTitle', {
+        date: new Date(logDate + 'T12:00:00').toLocaleDateString('en-US', {
+          weekday: 'short', month: 'short', day: 'numeric',
+        }),
+      })
+
   const summaryHint =
     completed === totalTrackable
-      ? 'all signals logged today'
-      : completed >= 3
-        ? `${completed} of ${totalTrackable} signals logged`
-        : completed >= 1
-          ? `${totalTrackable - completed} signals left for today`
-          : 'tap to see today’s signals'
+      ? t('cycleLog_hint')
+      : completed >= 1
+        ? `${completed} of ${totalTrackable} logged · ${t('cycleLog_hint')}`
+        : t('cycleLog_hint')
 
   const sheetTitle: Record<CycleSheetType, string> = {
     mood: t('cycleCalendar_logSheet_mood'),
@@ -241,22 +287,37 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
         <View style={{ flex: 1 }}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: titleColor }}>
-              {t('cycleDash_today')}
+              {logTitle}
             </Text>
           ) : (
-            <Display size={22} color={ink}>{t('cycleDash_today')}</Display>
+            <Display size={22} color={ink}>{logTitle}</Display>
           )}
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor, ...(diffuse ? { letterSpacing: 1, textTransform: 'uppercase' as const, fontSize: 10 } : null) }}>
             {summaryHint}
           </Text>
         </View>
         {!bare ? (
-          <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [styles.editBtn, { opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button" accessibilityLabel={t('common_edit')}>
-            <SlidersHorizontal size={15} color={chevronColor} strokeWidth={2} />
-            <Text style={{ fontFamily: labelFont, fontSize: 12, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
-              {t('common_edit')}
-            </Text>
-          </Pressable>
+          <>
+            {/* Compact "See results" pill on the header row (replaces the old
+                footer band that left dead space). Sits left of EDIT. Matches
+                the pregnancy card exactly. */}
+            <Pressable
+              onPress={() => setOpen(true)}
+              hitSlop={8}
+              style={({ pressed }) => [styles.headerResultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? 'transparent' : colors.surface, opacity: pressed ? 0.6 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel={t('cycleDash_seeResults')}
+            >
+              <Text style={{ fontFamily: labelFont, fontSize: 11, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
+                {t('cycleDash_seeResults')}
+              </Text>
+            </Pressable>
+            {/* Icon-only edit (customize chips) — standardized with the wallet
+                edit control; the label is dropped so it reads as a quiet glyph. */}
+            <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button" accessibilityLabel={t('common_edit')}>
+              <SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />
+            </Pressable>
+          </>
         ) : (
           <ChevronRight size={20} color={chevronColor} strokeWidth={diffuse ? 1.6 : 2} />
         )}
@@ -303,18 +364,9 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
         />
       </View>
 
-      {/* Footer — a single "see results" pill (matches the pregnancy card:
-          no label, no chevron, plain paper pill). */}
-      <View style={[styles.footer, { borderTopColor: trackColor }]}>
-        <Pressable
-          onPress={() => setOpen(true)}
-          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? dt.colors.surface : colors.surface, opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, fontSize: 13, letterSpacing: -0.1, color: titleColor }}>
-            {t('cycleDash_seeResults')}
-          </Text>
-        </Pressable>
-      </View>
+      {/* (See results moved to the header row; no footer band — it left dead
+          space between this card and the Daily Message below. Matches the
+          pregnancy card.) */}
     </>
   )
 
@@ -333,28 +385,41 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
         />
       )}
 
-      {/* Tap-to-log sheets — one per signal, like PregnancyHome */}
+      {/* Tap-to-log sheets — one per signal, like PregnancyHome. All write to
+          `logDate` (today by default, or the ring/strip-selected day), and a
+          successful save triggers the confirm overlay via onLogSaved. */}
       <LogSheet visible={sheetType === 'mood'} title={sheetTitle.mood} onClose={closeSheet}>
-        <MoodForm date={today} phase={phase} onSaved={closeSheet} />
+        <MoodForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'symptom'} title={sheetTitle.symptom} onClose={closeSheet}>
-        <SymptomsForm date={today} phase={phase} onSaved={closeSheet} />
+        <SymptomsForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'basal_temp'} title={sheetTitle.basal_temp} onClose={closeSheet}>
-        <BbtForm date={today} phase={phase} onSaved={closeSheet} />
+        <BbtForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'lh'} title={sheetTitle.lh} onClose={closeSheet}>
-        <LhForm date={today} phase={phase} onSaved={closeSheet} />
+        <LhForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'cm'} title={sheetTitle.cm} onClose={closeSheet}>
-        <CmForm date={today} phase={phase} onSaved={closeSheet} />
+        <CmForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'intercourse'} title={sheetTitle.intercourse} onClose={closeSheet}>
-        <IntimacyForm date={today} phase={phase} onSaved={closeSheet} />
+        <IntimacyForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'period_start'} title={sheetTitle.period_start} onClose={closeSheet}>
-        <PeriodStartForm date={today} phase={phase} onSaved={closeSheet} />
+        <PeriodStartForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
+
+      {/* Post-log "updating your cycle → updated" confirmation. When it finishes
+          we tell the host, which glides the ring back to today. */}
+      <CycleLogConfirm
+        visible={confirmVisible}
+        phase={phase}
+        onDone={() => {
+          setConfirmVisible(false)
+          onLogConfirmed?.()
+        }}
+      />
 
       {/* Customize which chips show (standalone card only) */}
       {!bare && (
@@ -366,7 +431,7 @@ export function CycleTodaySummaryCard({ phase, bare = false }: Props) {
 
 const styles = StyleSheet.create({
   // Matches pregnancy TodaySummaryCard: containerless, horizontal chips, footer.
-  wrap: { paddingHorizontal: 20, marginTop: 12 },
+  wrap: { paddingHorizontal: 20, marginTop: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -381,6 +446,5 @@ const styles = StyleSheet.create({
   chipLabel: { fontSize: 12, maxWidth: 70 },
   progressTrack: { height: 4, borderRadius: 2, marginTop: 14, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 2 },
-  footer: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
-  resultsPill: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16 },
+  headerResultsPill: { borderWidth: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
 })

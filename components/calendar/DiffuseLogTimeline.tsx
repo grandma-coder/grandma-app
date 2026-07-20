@@ -57,8 +57,10 @@ export const DIFFUSE_LOG_CHARACTER: Record<string, CharacterName> = {
   // cycle
   basal_temp: 'temperature', lh: 'water', cervical_mucus: 'water',
   intercourse: 'heart', symptom: 'activity',
+  // period_start/end share the droplet but differ by hue (see diffuseLogHue);
+  // clots is a flow SYMPTOM, not the flow itself → distinct 'warning' blob.
   period_start: 'period', period_end: 'period', ovulation: 'ovulation',
-  pregnancy_test: 'ovulation', sex_drive: 'heart', clots: 'period',
+  pregnancy_test: 'ovulation', sex_drive: 'heart', clots: 'warning',
   // pregnancy
   weight: 'growth', kick_count: 'kick', contraction: 'contraction',
   water: 'water', exercise: 'activity', vitamins: 'medicine', kegel: 'soothe',
@@ -78,7 +80,7 @@ export function diffuseLogHue(type: string): string {
     // cycle
     basal_temp: stickers.blue, lh: stickers.yellow, cervical_mucus: stickers.green,
     intercourse: stickers.pink, symptom: stickers.peach,
-    period_start: stickers.coral, period_end: stickers.coral, ovulation: stickers.peach,
+    period_start: stickers.coral, period_end: stickers.pink, ovulation: stickers.peach,
     pregnancy_test: stickers.peach, sex_drive: stickers.pink, clots: stickers.coral,
     // pregnancy
     weight: stickers.blue, kick_count: stickers.pink, contraction: stickers.coral,

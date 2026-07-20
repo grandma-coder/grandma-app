@@ -183,6 +183,20 @@ interface Props {
   /** Fired (YYYY-MM-DD) whenever the scrubbed/selected ring day changes, so the
    *  host can keep sibling surfaces (e.g. the daily nudge) in sync. */
   onSelectedDateChange?: (date: string) => void
+  /** When true, suspend the "glide back to today" auto-return — set by the host
+   *  while a log/month sheet is open so the wheel doesn't snap away mid-log. */
+  freezeAutoReturn?: boolean
+  /** Programmatically select a date (YYYY-MM-DD) — used by the month sheet to
+   *  jump the ring to a picked day. Only dates within the current cycle window
+   *  map to a ring position; out-of-window dates are clamped to today. */
+  selectDate?: string | null
+  /** Open the full-month picker sheet (host-owned). When set, a small "month"
+   *  affordance renders under the 7-day strip. */
+  onOpenMonth?: () => void
+  /** Fired (YYYY-MM-DD) when the user TAPS a strip date — an intent to log that
+   *  day. The host opens the log launcher (same flow as the Calendar tab). This
+   *  is distinct from onSelectedDateChange, which also fires on passive scrub. */
+  onDatePress?: (date: string) => void
 }
 
 // ─── Week-strip cell ──────────────────────────────────────────────────────
@@ -289,7 +303,7 @@ function StripCell({
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
-export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Props) {
+export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freezeAutoReturn, selectDate, onOpenMonth, onDatePress }: Props) {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -378,6 +392,22 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
     })
   }, [rotationDeg, cycleLength])
 
+  // Month sheet picked a day → jump the ring to it. The ring only shows the
+  // current cycle window (days 1..cycleLength anchored on today), so we convert
+  // the picked date to a cycle day via its offset from today and clamp into the
+  // window. Out-of-window picks land on the nearest end (honest: the wheel can't
+  // show a day it isn't rendering).
+  useEffect(() => {
+    if (!selectDate) return
+    const dayDiff = Math.round(
+      (new Date(selectDate + 'T00:00:00').getTime() - new Date(todayStr + 'T00:00:00').getTime())
+        / 86400000,
+    )
+    const targetCycleDay = Math.min(cycleLength, Math.max(1, cycleDayToday + dayDiff))
+    snapToDay(targetCycleDay)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectDate])
+
   // Auto-return to today: once the user scrubs to a different day and then
   // stops interacting, the ring gently glides back to today after a short idle
   // window. `interactingRef` pauses the timer while a drag is in flight; the
@@ -388,9 +418,12 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
   const AUTO_RETURN_MS = 4000
   useEffect(() => {
     if (selectedDay === cycleDayToday) return
+    // Suspended while the host has a log/month sheet open (freezeAutoReturn), so
+    // the wheel never snaps back to today mid-log. Re-arms once logging closes.
+    if (freezeAutoReturn) return
     const arm = () => {
       autoReturnTimer.current = setTimeout(() => {
-        if (interactingRef.current) { arm(); return }   // wait out an active drag
+        if (interactingRef.current || freezeAutoReturn) { arm(); return }   // wait out an active drag / open sheet
         snapToDay(cycleDayToday)
       }, interactingRef.current ? 600 : AUTO_RETURN_MS)
     }
@@ -398,7 +431,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
     return () => {
       if (autoReturnTimer.current) clearTimeout(autoReturnTimer.current)
     }
-  }, [selectedDay, cycleDayToday, snapToDay])
+  }, [selectedDay, cycleDayToday, snapToDay, freezeAutoReturn])
 
   const panResponder = useRef(
     PanResponder.create({
@@ -692,31 +725,65 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
         {t('cycle_ring_drag_hint')}
       </Text>
 
-      {/* ── Legend (inline, single row) ── */}
-      <View style={styles.legendRowInline}>
-        {LEGEND.map((item) => {
-          const bg = diffuse ? diffuseGlyphColor(item.phase, dt.isDark) : phaseAccent(item.phase, stickers)
-          return (
-            <View key={item.phase} style={styles.legendInlineItem}>
-              {diffuse ? (
-                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: bg }} />
-              ) : (
-                <DaySticker phase={item.phase} size={18} bg={bg} />
-              )}
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.legendInlineText,
-                  diffuse
-                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 }
-                    : { color: colors.textMuted, fontFamily: font.bodySemiBold },
-                ]}
-              >
-                {phaseLabel(item.phase, t)}
-              </Text>
-            </View>
-          )
-        })}
+      {/* ── Legend + Month affordance on one row ──
+          The legend flows on the left; the "month" pill sits at the right edge
+          of the SAME row (rather than a separate band below the strip that left
+          an empty gap before the panel). */}
+      <View style={styles.legendMonthRow}>
+        <View style={styles.legendRowInline}>
+          {LEGEND.map((item) => {
+            const bg = diffuse ? diffuseGlyphColor(item.phase, dt.isDark) : phaseAccent(item.phase, stickers)
+            return (
+              <View key={item.phase} style={styles.legendInlineItem}>
+                {diffuse ? (
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: bg }} />
+                ) : (
+                  <DaySticker phase={item.phase} size={18} bg={bg} />
+                )}
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.legendInlineText,
+                    diffuse
+                      ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 }
+                      : { color: colors.textMuted, fontFamily: font.bodySemiBold },
+                  ]}
+                >
+                  {phaseLabel(item.phase, t)}
+                </Text>
+              </View>
+            )
+          })}
+        </View>
+        {onOpenMonth ? (
+          <Pressable
+            onPress={onOpenMonth}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.monthPill,
+              {
+                borderColor: diffuse ? dt.colors.line2 : colors.border,
+                backgroundColor: diffuse ? 'transparent' : colors.surface,
+                opacity: pressed ? 0.6 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('cycleLog_pickDay')}
+          >
+            <Text
+              style={{
+                color: diffuse ? dt.colors.ink3 : colors.textMuted,
+                fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold,
+                fontSize: diffuse ? 10 : 12,
+                letterSpacing: diffuse ? 1.4 : 0,
+                textTransform: diffuse ? 'uppercase' : 'none',
+              }}
+            >
+              {t('cycleLog_month')}
+            </Text>
+            <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, marginLeft: 5 }}>▾</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {/* ── 7-day strip ── */}
@@ -734,7 +801,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange }: Prop
             accentColor={phaseAccent(s.phase, stickers)}
             fontSemiBold={font.bodySemiBold}
             fontDisplay={font.display}
-            onPress={() => onStripPress(s.cycleDay)}
+            onPress={() => { onStripPress(s.cycleDay); onDatePress?.(s.date) }}
             diffuse={diffuse}
             diffuseLine={dt.colors.line}
             diffuseAccent={diffuseAccent}
@@ -845,6 +912,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Legend (left, flexes) + Month pill (right) share one row above the strip,
+  // so the pill no longer needs its own band below (which left an empty gap
+  // before the panel).
+  legendMonthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: 6,
+    gap: 10,
+  },
+  monthPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+  },
 
   panel: { },
   panelContent: { paddingHorizontal: 24, paddingTop: 12, gap: 18 },
@@ -869,13 +955,12 @@ const styles = StyleSheet.create({
   sectionLabel: { fontSize: 9.5, letterSpacing: 1.8 },
 
   legendRowInline: {
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 10,
-    paddingHorizontal: 16,
-    marginTop: 6,
   },
   legendInlineItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendInlineText: {
