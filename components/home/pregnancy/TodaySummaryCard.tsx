@@ -12,6 +12,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
 import { useTheme, radius, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
+import { QuietPill } from '../../ui/QuietPill'
 import { Character } from '../../characters/Characters'
 import { useTranslation } from '../../../lib/i18n'
 import { Display, MonoCaps } from '../../ui/Typography'
@@ -162,20 +163,18 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         </View>
         {/* Compact "See results" pill on the header row (replaces the old
             footer band that left dead space). Sits left of EDIT. */}
-        <Pressable
+        <QuietPill
+          label={t('pregnancy_quickLogs_seeResults')}
           onPress={() => setOpen(true)}
-          hitSlop={8}
-          style={({ pressed }) => [styles.headerResultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? 'transparent' : colors.surface, opacity: pressed ? 0.6 : 1 }]}
-        >
-          <Text style={{ fontFamily: labelFont, fontSize: 11, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
-            {t('pregnancy_quickLogs_seeResults')}
-          </Text>
-        </Pressable>
+          accessibilityLabel={t('pregnancy_quickLogs_seeResults')}
+        />
         {/* Icon-only edit (customize chips) — standardized with the wallet
             edit control; the label is dropped so it reads as a quiet glyph. */}
-        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
-          <SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />
-        </Pressable>
+        <QuietPill
+          leading={<SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />}
+          onPress={() => setPickerOpen(true)}
+          accessibilityLabel={t('common_edit')}
+        />
       </View>
 
       {/* Tappable metric pills — neutral hairline; only a completed goal tints
@@ -253,7 +252,6 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  headerResultsPill: { borderWidth: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
   chipsRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },
