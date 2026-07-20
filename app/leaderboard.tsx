@@ -863,7 +863,7 @@ function LeaderRow({
     const statParts: { icon: React.ReactNode; value: number }[] = []
     if (entry.child_logs > 0) statParts.push({ icon: <Calendar size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.child_logs })
     if (entry.garage_posts + entry.channel_posts > 0) statParts.push({ icon: <MessageCircle size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.garage_posts + entry.channel_posts })
-    if (entry.garage_likes + entry.channel_reactions > 0) statParts.push({ icon: <Heart size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.garage_likes + entry.channel_reactions })
+    if (entry.garage_likes + entry.channel_reactions > 0) statParts.push({ icon: <Character name="heart" size={9} color={dt.colors.ink3} />, value: entry.garage_likes + entry.channel_reactions })
     if (entry.channels_joined > 0) statParts.push({ icon: <Hash size={9} color={dt.colors.ink3} strokeWidth={1.8} />, value: entry.channels_joined })
 
     return (

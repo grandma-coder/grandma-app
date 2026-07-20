@@ -263,7 +263,7 @@ export default function SettingsScreen() {
             <View style={styles.rowLeft}>
               {diffuse ? (
                 <DiffuseBloomIcon color={dt.colors.ink} size={32} intensity={0.4}>
-                  <Scale size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                  <Character name="growth" size={20} />
                 </DiffuseBloomIcon>
               ) : (
                 <StickerIcon fill="#BDD48C" isDark={isDark}>

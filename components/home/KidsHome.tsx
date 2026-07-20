@@ -2263,7 +2263,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           {/* Header row */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             {diffuse ? (
-              <View style={{ opacity: 0.8 }}><Bell size={16} color={dt.colors.ink3} strokeWidth={1.6} /></View>
+              <View style={{ opacity: 0.8 }}><Character name="bell" size={16} color={dt.colors.ink3} /></View>
             ) : (
               <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: stickers.yellow, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
                 <Bell size={13} color="#141313" strokeWidth={2.5} />
@@ -2367,7 +2367,11 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                     : (isDark ? colors.surfaceRaised : stickers.peach + '22'),
                 }}
               >
-                <Bell size={11} color={diffuse ? (newReminderTime ? dt.colors.ink : dt.colors.ink3) : (newReminderTime ? '#C06030' : colors.textSecondary)} strokeWidth={diffuse ? 1.6 : 2} />
+                {diffuse ? (
+                  <Character name="bell" size={11} color={newReminderTime ? dt.colors.ink : dt.colors.ink3} />
+                ) : (
+                  <Bell size={11} color={newReminderTime ? '#C06030' : colors.textSecondary} strokeWidth={2} />
+                )}
                 <Text style={{ fontSize: 11, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0, color: diffuse ? (newReminderTime ? dt.colors.ink : dt.colors.ink3) : (newReminderTime ? '#C06030' : colors.textSecondary) }}>
                   {newReminderTime
                     ? formatTime12h(`${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`)
@@ -2517,7 +2521,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   {diffuse ? (
                     <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center' }}>
-                      <Bell size={10} color={dt.colors.ink3} strokeWidth={1.8} />
+                      <Character name="bell" size={10} color={dt.colors.ink3} />
                     </View>
                   ) : (
                     <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stickers.peach, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
@@ -8299,7 +8303,7 @@ function RemindersModal({
             {/* Bell */}
             {diffuse ? (
               <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center' }}>
-                <Bell size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name="bell" size={16} color={dt.colors.ink3} />
               </View>
             ) : (
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5D652', borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>

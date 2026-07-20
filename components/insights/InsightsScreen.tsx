@@ -1494,6 +1494,7 @@ export function InsightsScreen() {
 
 function ArticleCard({ article, onTap }: { article: Article; onTap: () => void }) {
   const { colors, ink } = useInsightsTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const meta = CATEGORY_META[article.category]
   const Icon = meta.icon
@@ -1510,7 +1511,7 @@ function ArticleCard({ article, onTap }: { article: Article; onTap: () => void }
         <View style={s.articleContent}>
           <View style={s.articleMeta}>
             <View style={[s.articleCatBadge, { backgroundColor: meta.color + '28' }]}>
-              <Icon size={10} color={ink} strokeWidth={2.5} />
+              {diffuse ? <Character name={meta.char} size={10} color={ink} /> : <Icon size={10} color={ink} strokeWidth={2.5} />}
               <Text style={[s.articleCatText, { color: ink }]}>{meta.label}</Text>
             </View>
             <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{t('insights_reads_minRead', { n: article.readMinutes })}</Text>
@@ -1608,6 +1609,7 @@ function InsightCard({
   onArchive: () => void
 }) {
   const { colors, ink } = useInsightsTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const Icon = config.icon
   const tilt = index % 2 === 0 ? '-0.6deg' : '0.6deg'
@@ -1625,7 +1627,7 @@ function InsightCard({
         <View style={s.cardInner}>
           <View style={s.cardTop}>
             <View style={[s.typeBadge, { backgroundColor: paper, borderColor: ink }]}>
-              <Icon size={12} color={config.color} strokeWidth={2.75} />
+              {diffuse ? <Character name={config.char} size={12} color={config.color} /> : <Icon size={12} color={config.color} strokeWidth={2.75} />}
               <Text style={[s.typeBadgeText, { color: ink }]}>{config.label}</Text>
             </View>
             <Pressable
