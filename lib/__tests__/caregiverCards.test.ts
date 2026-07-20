@@ -1,4 +1,4 @@
-import { CAREGIVER_CARDS, roleDefaultCards } from '../caregiverCards'
+import { CAREGIVER_CARDS, roleDefaultCards, modeToBehavior } from '../caregiverCards'
 
 describe('CAREGIVER_CARDS', () => {
   it('includes the unified essentials card in every behavior', () => {
@@ -49,5 +49,17 @@ describe('roleDefaultCards', () => {
   it('a parent role default returns every card id for the behavior', () => {
     const all = CAREGIVER_CARDS.kids.map((c) => c.id)
     expect(roleDefaultCards('kids', 'parent').sort()).toEqual([...all].sort())
+  })
+})
+
+describe('modeToBehavior', () => {
+  it('maps kids to kids', () => {
+    expect(modeToBehavior('kids')).toBe('kids')
+  })
+  it('maps pregnancy to pregnancy', () => {
+    expect(modeToBehavior('pregnancy')).toBe('pregnancy')
+  })
+  it('maps pre-pregnancy to cycle', () => {
+    expect(modeToBehavior('pre-pregnancy')).toBe('cycle')
   })
 })

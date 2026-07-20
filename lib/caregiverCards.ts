@@ -4,7 +4,7 @@
  * wire into, so a shared-card allowlist maps 1:1 onto what those homes render.
  * Plus the new cross-behavior `essentials` card. UX metadata only — RLS is the boundary.
  */
-import type { CaregiverRole } from '../types'
+import type { CaregiverRole, JourneyMode } from '../types'
 
 export type CaregiverBehavior = 'kids' | 'pregnancy' | 'cycle'
 export type SensitivityTier = 'safe' | 'child-health' | 'intimate'
@@ -69,4 +69,15 @@ export function roleDefaultCards(behavior: CaregiverBehavior, role: CaregiverRol
   if (behavior === 'kids') return role === 'nanny' ? [...NANNY_KIDS] : [...FAMILY_KIDS]
   if (behavior === 'pregnancy') return [...PREGNANCY_WATCHER]
   return [...CYCLE_WATCHER]
+}
+
+/**
+ * The CaregiverBehavior a home renders for a given journey mode. Pre-pregnancy
+ * IS the cycle behavior (CycleHome is the pre-pregnancy home). Single source of
+ * truth — mirrors the inline mapping in app/(tabs)/index.tsx.
+ */
+export function modeToBehavior(mode: JourneyMode): CaregiverBehavior {
+  if (mode === 'kids') return 'kids'
+  if (mode === 'pregnancy') return 'pregnancy'
+  return 'cycle'
 }
