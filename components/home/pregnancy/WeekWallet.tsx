@@ -31,6 +31,7 @@ import type { TodayLogEntry } from '../../../lib/analyticsData'
 import { loadReminders, upcomingReminders, type Reminder } from '../../../lib/reminders'
 import { WalletCard } from '../WalletCard'
 import { WalletPicker, type WalletPickerItem } from '../WalletPicker'
+import { MemoriesSheet } from '../MemoriesSheet'
 import { QuietPill } from '../../ui/QuietPill'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PregnancyUserReminders } from './PregnancyUserReminders'
@@ -76,6 +77,7 @@ export function WeekWallet({
   const [pickerOpen, setPickerOpen] = useState(false)
 
   const [remindersOpen, setRemindersOpen] = useState(false)
+  const [showMemories, setShowMemories] = useState(false)
   const [reminders, setReminders] = useState<Reminder[]>([])
   useEffect(() => {
     if (remindersOpen) return // don't refetch while editing
@@ -120,6 +122,7 @@ export function WeekWallet({
         case 'week_tip': return <Character name="tip" size={26} color={stickers.yellow} />
         case 'kicks': return <Character name="kick" size={26} color={stickers.coral} />
         case 'reminders': return <Character name="bell" size={26} color={stickers.blue} />
+        case 'memories': return <Character name="photo" size={26} color={stickers.pink} />
         case 'exams': return <Character name="exam" size={26} color={stickers.lilac} />
         case 'birth_guide': return <Character name="nutrition" size={26} color={stickers.green} />
         case 'ask_grandma': return <GrandmaLogo size={26} palette="lilac" outline={colors.text} />
@@ -133,6 +136,7 @@ export function WeekWallet({
       case 'week_tip': return <TipRead size={26} />
       case 'kicks': return <LogKicks size={26} />
       case 'reminders': return <NotifyRoutine size={26} />
+      case 'memories': return <Character name="photo" size={26} color={stickers.pink} />
       case 'exams': return <Character name="exam" size={26} color={stickers.lilac} />
       case 'birth_guide': return <Leaf size={24} fill={stickers.green} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="lilac" outline={colors.text} />
@@ -148,6 +152,7 @@ export function WeekWallet({
       case 'week_tip': return t('pregnancy_reminder_weekTip', { week: weekNumber })
       case 'kicks': return t('pregnancy_reminder_kickCountTitle')
       case 'reminders': return t('wallet_reminders_title')
+      case 'memories': return t('wallet_memories_title')
       case 'exams': return t('wallet_exams_title')
       case 'birth_guide': return t('pregnancy_birthGuideTitle')
       case 'ask_grandma': return t('wallet_askGrandma_title')
@@ -163,6 +168,7 @@ export function WeekWallet({
       case 'week_tip': return stickers.lilacSoft
       case 'kicks': return stickers.greenSoft
       case 'reminders': return stickers.blueSoft
+      case 'memories': return stickers.pinkSoft
       case 'exams': return stickers.lilacSoft
       case 'birth_guide': return stickers.greenSoft
       case 'ask_grandma': return stickers.lilacSoft
@@ -185,6 +191,7 @@ export function WeekWallet({
     if (id === 'week_tip') return onOpenWeekDetail()
     if (id === 'kicks') return onLogMetric?.('kick_count')
     if (id === 'reminders') return setRemindersOpen(true)
+    if (id === 'memories') return setShowMemories(true)
     if (linkOnly) return
   }
 
@@ -232,6 +239,8 @@ export function WeekWallet({
       <LogSheet visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>
         <PregnancyUserReminders userId={userId ?? null} />
       </LogSheet>
+
+      <MemoriesSheet behavior="pregnancy" visible={showMemories} onClose={() => setShowMemories(false)} />
 
       <WalletPicker
         visible={pickerOpen}
