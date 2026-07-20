@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { trpc, type RouterOutputs } from "@/lib/trpc"
+import { CollapsibleSection } from "../content/CollapsibleSection"
 
 type Note = RouterOutputs["releases"]["notes"][number]
 
@@ -107,6 +108,10 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
   const [publishing, setPublishing] = useState<{ id: string; version: string } | null>(null)
 
   const noteByVersion = new Map((notes.data ?? []).map((n) => [n.version, n]))
+  // Match a note to an App Store build by build number (the `build` column),
+  // falling back to the version string. The App Store builds table keys on the
+  // build number (e.g. "13"), which is what the backfilled notes store in build.
+  const noteByBuild = new Map((notes.data ?? []).filter((n) => n.build).map((n) => [n.build as string, n]))
   const configured = status.data?.ascConfigured
   const canPublish = status.data?.ascWriteEnabled ?? false
 
@@ -138,8 +143,7 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
     <div className="space-y-6">
       {/* EAS builds (git changelog source) */}
       {status.data?.easConfigured && (
-        <section>
-          <h2 className="display mb-2 text-base font-semibold text-fg-primary">EAS builds — what shipped (git)</h2>
+        <CollapsibleSection dot="#8BB8E8" title="EAS builds — what shipped (git)" meta={`${easBuilds.data?.length ?? 0}`} collapsedSummary={`${easBuilds.data?.length ?? 0}`}>
           <div className="overflow-hidden rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
             <table className="w-full text-sm">
               <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
@@ -182,12 +186,11 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
               </tbody>
             </table>
           </div>
-        </section>
+        </CollapsibleSection>
       )}
 
       {/* App Store versions */}
-      <section>
-        <h2 className="display mb-2 text-base font-semibold text-fg-primary">App Store versions</h2>
+      <CollapsibleSection dot="#B7A6E8" title="App Store versions" meta={`${versions.data?.length ?? 0}`} collapsedSummary={`${versions.data?.length ?? 0}`}>
         {versions.isLoading ? (
           <p className="text-sm text-fg-tertiary">Loading…</p>
         ) : (
@@ -205,11 +208,10 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
             ))}
           </div>
         )}
-      </section>
+      </CollapsibleSection>
 
       {/* Builds */}
-      <section>
-        <h2 className="display mb-2 text-base font-semibold text-fg-primary">Builds ({builds.data?.length ?? 0})</h2>
+      <CollapsibleSection dot="#BDD48C" title="App Store builds" meta={`${builds.data?.length ?? 0}`} collapsedSummary={`${builds.data?.length ?? 0}`}>
         <div className="overflow-hidden rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
           <table className="w-full text-sm">
             <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
@@ -228,7 +230,8 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
                 <tr><td colSpan={isAdmin ? 5 : 4} className="px-4 py-6 text-center text-fg-muted">No builds found.</td></tr>
               ) : (
                 (builds.data ?? []).map((b) => {
-                  const note = noteByVersion.get(b.version)
+                  // On the App Store side, b.version IS the build number; match on it.
+                  const note = noteByBuild.get(b.version)
                   return (
                     <tr key={b.id} className="border-t border-border-subtle text-fg-secondary hover:bg-card-hover">
                       <td className="px-4 py-2.5 font-mono text-fg-primary">build {b.version}</td>
@@ -246,7 +249,7 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
                       </td>
                       {isAdmin && (
                         <td className="px-4 py-2.5 text-right">
-                          <button onClick={() => setEditing({ version: b.version, build: b.version })} className="text-xs font-medium text-accent-500 hover:underline">
+                          <button onClick={() => setEditing({ version: note?.version ?? b.version, build: b.version })} className="text-xs font-medium text-accent-500 hover:underline">
                             {note ? "Edit" : "Add changelog"}
                           </button>
                         </td>
@@ -258,13 +261,12 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
             </tbody>
           </table>
         </div>
-      </section>
+      </CollapsibleSection>
 
       {/* All documented changelogs */}
-      <section>
-        <h2 className="display mb-2 text-base font-semibold text-fg-primary">Documented changelogs</h2>
+      <CollapsibleSection dot="#F5D652" title="Documented changelogs" meta={`${notes.data?.length ?? 0}`} collapsedSummary={`${notes.data?.length ?? 0}`}>
         <ChangelogList notes={notes.data ?? []} isAdmin={isAdmin} onEdit={(v) => setEditing({ version: v, build: noteByVersion.get(v)?.build ?? null })} />
-      </section>
+      </CollapsibleSection>
 
       {isAdmin && editing && <NoteModal version={editing.version} build={editing.build} existing={noteByVersion.get(editing.version)} prefill={editing.prefill} onClose={() => setEditing(null)} onSaved={() => setEditing(null)} />}
       {isAdmin && canPublish && publishing && (
