@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm"
 import { router, protectedProcedure, adminProcedure } from "../trpc"
 import { db } from "@/db"
 import { contentReleases } from "@/db/schema"
-import { ascConfigured, ascWriteEnabled, fetchBuilds, fetchVersions, setVersionWhatsNew } from "@/lib/asc/client"
+import { ascConfigured, ascWriteEnabled, fetchBuilds, fetchVersions, setVersionWhatsNew, setBuildWhatToTest } from "@/lib/asc/client"
 import { easConfigured, fetchEasBuilds } from "@/lib/eas/client"
 import { draftChangelog, isChangelogAiAvailable } from "@/lib/content/changelog"
 import { writeAudit } from "@/lib/audit"
@@ -41,6 +41,51 @@ export const releasesRouter = router({
   }),
 
   /**
+   * ONE unified builds view — every App Store build joined with its matching EAS
+   * build (git commit) and our changelog note. This is the single table the
+   * Releases page renders; no more separate EAS / ASC / notes lists.
+   */
+  buildsMerged: protectedProcedure.query(async () => {
+    const [ascBuilds, easBuilds, notes] = await Promise.all([
+      fetchBuilds(40),
+      easConfigured ? fetchEasBuilds(100) : Promise.resolve([]),
+      db.select().from(contentReleases),
+    ])
+    // Match EAS build by build number (appBuildVersion == ASC build.version),
+    // preferring a production/finished one when there are duplicates.
+    const easByNum = new Map<string, (typeof easBuilds)[number]>()
+    for (const e of easBuilds) {
+      if (!e.buildNumber) continue
+      const cur = easByNum.get(e.buildNumber)
+      const better = !cur || (e.profile === "production" && cur.profile !== "production") || (e.status === "FINISHED" && cur.status !== "FINISHED")
+      if (better) easByNum.set(e.buildNumber, e)
+    }
+    const noteByBuild = new Map(notes.filter((n) => n.build).map((n) => [n.build as string, n]))
+
+    return ascBuilds.map((b) => {
+      const eas = easByNum.get(b.version)
+      const note = noteByBuild.get(b.version)
+      return {
+        buildId: b.id,
+        buildNumber: b.version,
+        appVersion: eas?.appVersion ?? null,
+        processingState: b.processingState,
+        expired: b.expired,
+        uploadedDate: b.uploadedDate,
+        commitHash: eas?.gitCommitHash ?? null,
+        commitMessage: eas?.gitCommitMessage ?? null,
+        profile: eas?.profile ?? null,
+        // our changelog note
+        noteVersion: note?.version ?? null,
+        title: note?.title ?? null,
+        changelog: note?.changelog ?? null,
+        highlights: (note?.highlights as string[] | null) ?? [],
+        noteStatus: note?.status ?? null,
+      }
+    })
+  }),
+
+  /**
    * Push "What's New" release notes to an App Store version — WRITES to Apple
    * (changes what users see). Admin only + audited. Gated by APPSTORE_WRITE=1
    * at the client layer; a leaked/read-only key can't publish.
@@ -54,6 +99,23 @@ export const releasesRouter = router({
         action: "release.whatsnew.publish",
         target: input.versionString,
         meta: { ok: result.ok, updated: result.updated, error: result.error ?? null },
+      })
+      return result
+    }),
+
+  /**
+   * Push a build's changelog to its TestFlight "What to Test" note — WRITES to
+   * Apple (what testers see). Admin only + audited. Gated by APPSTORE_WRITE=1.
+   */
+  pushToTestFlight: adminProcedure
+    .input(z.object({ buildId: z.string().min(1), buildNumber: z.string().max(40), whatsNew: z.string().min(1).max(4000) }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await setBuildWhatToTest(input.buildId, input.whatsNew.trim())
+      await writeAudit({
+        actorEmail: ctx.userEmail ?? "unknown",
+        action: "release.testflight.push",
+        target: input.buildNumber,
+        meta: { ok: result.ok, error: result.error ?? null },
       })
       return result
     }),

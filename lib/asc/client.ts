@@ -88,18 +88,18 @@ async function ascGet<T>(path: string): Promise<T | null> {
   }
 }
 
-async function ascPatch(path: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
+async function ascWrite(method: "PATCH" | "POST", path: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
   if (!ascConfigured) return { ok: false, error: "not configured" }
   try {
     const token = await mintToken()
     const res = await fetch(`${BASE}${path}`, {
-      method: "PATCH",
+      method,
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     })
     if (!res.ok) {
       const text = await res.text().catch(() => "")
-      console.error("[asc] PATCH failed", path, res.status, text.slice(0, 300))
+      console.error(`[asc] ${method} failed`, path, res.status, text.slice(0, 300))
       return { ok: false, error: `Apple returned ${res.status}` }
     }
     return { ok: true }
@@ -107,6 +107,7 @@ async function ascPatch(path: string, body: unknown): Promise<{ ok: boolean; err
     return { ok: false, error: err instanceof Error ? err.message : "request error" }
   }
 }
+const ascPatch = (path: string, body: unknown) => ascWrite("PATCH", path, body)
 
 interface ListResp {
   data: { id: string; attributes: Record<string, unknown> }[]
@@ -210,4 +211,37 @@ export async function setVersionWhatsNew(
     else if (updated === 0) return { ok: false, updated, error: r.error }
   }
   return { ok: updated > 0, updated }
+}
+
+/**
+ * Set a build's TestFlight "What to Test" note (betaBuildLocalizations.whatsNew).
+ * Creates the en-US localization if the build has none yet, else updates it.
+ * Writes to Apple → what testers see. Gated by ascWriteEnabled. Returns outcome
+ * for the caller to report + audit.
+ */
+export async function setBuildWhatToTest(
+  buildId: string,
+  whatsNew: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!ascWriteEnabled) return { ok: false, error: "Writing to App Store is disabled (set APPSTORE_WRITE=1)" }
+
+  const locs = await ascGet<{ data: { id: string; attributes: Record<string, unknown> }[] }>(
+    `/builds/${buildId}/betaBuildLocalizations?fields[betaBuildLocalizations]=locale,whatsNew`,
+  )
+  const existing = locs?.data ?? []
+  const enUs = existing.find((l) => l.attributes.locale === "en-US") ?? existing[0]
+
+  if (enUs) {
+    return ascPatch(`/betaBuildLocalizations/${enUs.id}`, {
+      data: { type: "betaBuildLocalizations", id: enUs.id, attributes: { whatsNew } },
+    })
+  }
+  // No localization yet → create one for en-US linked to the build.
+  return ascWrite("POST", `/betaBuildLocalizations`, {
+    data: {
+      type: "betaBuildLocalizations",
+      attributes: { locale: "en-US", whatsNew },
+      relationships: { build: { data: { type: "builds", id: buildId } } },
+    },
+  })
 }
