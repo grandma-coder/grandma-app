@@ -28,6 +28,7 @@ export default async function Home() {
     { name: "Community", href: "/community", blurb: "Channels & forum activity" },
     { name: "Push", href: "/push", blurb: "Compose & send notifications" },
     { name: "Content", href: "/content", blurb: "Questions, affirmations, birth guide, news" },
+    { name: "Releases", href: "/releases", blurb: "App Store builds & changelogs" },
     { name: "Design tokens", href: "/tokens", blurb: "Brand colors, type & email visuals" },
     { name: "Sentry", href: "/sentry", blurb: "Crash triage" },
     ...(ctx.role === "admin"

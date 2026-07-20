@@ -14,6 +14,7 @@ import {
   FlaskConical,
   Palette,
   BookOpen,
+  Rocket,
   type LucideIcon,
 } from "lucide-react"
 
@@ -31,6 +32,7 @@ const PILLARS: NavLink[] = [
   { href: "/sentry", label: "Sentry", icon: Bug, adminOnly: true },
   { href: "/tokens", label: "Design tokens", icon: Palette },
   { href: "/content", label: "Content", icon: BookOpen },
+  { href: "/releases", label: "Releases", icon: Rocket },
 ]
 
 const MANAGE: NavLink[] = [
@@ -40,7 +42,7 @@ const MANAGE: NavLink[] = [
 
 // Which pillars are actually built yet (routes that exist). Others render
 // disabled so the nav reflects reality without dead links.
-const READY = new Set(["/", "/users", "/metrics", "/community", "/push", "/sentry", "/tokens", "/content", "/admin", "/beta"])
+const READY = new Set(["/", "/users", "/metrics", "/community", "/push", "/sentry", "/tokens", "/content", "/releases", "/admin", "/beta"])
 
 export function CommandCenterSidebar() {
   const pathname = usePathname() ?? ""
