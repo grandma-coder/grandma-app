@@ -3,7 +3,8 @@ import { eq, desc } from "drizzle-orm"
 import { router, protectedProcedure, adminProcedure } from "../trpc"
 import { db } from "@/db"
 import { contentReleases } from "@/db/schema"
-import { ascConfigured, fetchBuilds, fetchVersions } from "@/lib/asc/client"
+import { ascConfigured, ascWriteEnabled, fetchBuilds, fetchVersions, setVersionWhatsNew } from "@/lib/asc/client"
+import { easConfigured, fetchEasBuilds } from "@/lib/eas/client"
 import { writeAudit } from "@/lib/audit"
 
 /**
@@ -13,8 +14,31 @@ import { writeAudit } from "@/lib/audit"
  * editing is admin + audited.
  */
 export const releasesRouter = router({
-  /** Whether ASC credentials are configured (drives the setup card). */
-  status: protectedProcedure.query(() => ({ ascConfigured })),
+  /** Connection state — drives setup cards + whether Publish-to-Apple shows. */
+  status: protectedProcedure.query(() => ({ ascConfigured, ascWriteEnabled, easConfigured })),
+
+  /** Live EAS builds (prod profile) with git commit/message. Empty when dormant. */
+  easBuilds: protectedProcedure.query(async () => {
+    return fetchEasBuilds(40)
+  }),
+
+  /**
+   * Push "What's New" release notes to an App Store version — WRITES to Apple
+   * (changes what users see). Admin only + audited. Gated by APPSTORE_WRITE=1
+   * at the client layer; a leaked/read-only key can't publish.
+   */
+  publishWhatsNew: adminProcedure
+    .input(z.object({ versionId: z.string().min(1), versionString: z.string().max(40), whatsNew: z.string().min(1).max(4000) }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await setVersionWhatsNew(input.versionId, input.whatsNew.trim())
+      await writeAudit({
+        actorEmail: ctx.userEmail ?? "unknown",
+        action: "release.whatsnew.publish",
+        target: input.versionString,
+        meta: { ok: result.ok, updated: result.updated, error: result.error ?? null },
+      })
+      return result
+    }),
 
   /** Live builds from App Store Connect (newest first). Empty when dormant. */
   builds: protectedProcedure.query(async () => {

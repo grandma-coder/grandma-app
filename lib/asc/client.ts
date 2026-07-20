@@ -29,6 +29,12 @@ const APP_ID_ENV = process.env.APPSTORE_APP_ID ?? process.env.ASC_APP_ID
 // Credentials are enough to talk to ASC; the app id is auto-discovered if unset.
 export const ascConfigured = Boolean(ISSUER && KEY_ID && PRIVATE_KEY)
 
+// Writing to Apple (setting release notes on a version → what users see) is a
+// separate, explicit opt-in on top of having a key: set APPSTORE_WRITE=1. This
+// keeps the connection read-only by default so a leaked/mis-scoped key can't
+// silently change the live store listing.
+export const ascWriteEnabled = ascConfigured && process.env.APPSTORE_WRITE === "1"
+
 const BASE = "https://api.appstoreconnect.apple.com/v1"
 
 export interface AscBuild {
@@ -79,6 +85,26 @@ async function ascGet<T>(path: string): Promise<T | null> {
   } catch (err) {
     console.error("[asc] request error", path, err)
     return null
+  }
+}
+
+async function ascPatch(path: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
+  if (!ascConfigured) return { ok: false, error: "not configured" }
+  try {
+    const token = await mintToken()
+    const res = await fetch(`${BASE}${path}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const text = await res.text().catch(() => "")
+      console.error("[asc] PATCH failed", path, res.status, text.slice(0, 300))
+      return { ok: false, error: `Apple returned ${res.status}` }
+    }
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "request error" }
   }
 }
 
@@ -154,4 +180,34 @@ export async function fetchVersions(limit = 20): Promise<AscVersion[]> {
     createdDate: (v.attributes.createdDate as string) ?? null,
     whatsNew: null, // localized notes require a second call per version; kept lazy
   }))
+}
+
+/**
+ * Set the "What's New" release notes on an App Store version (writes to Apple —
+ * changes what users see). Applies to every editable localization of the
+ * version. Gated by ascWriteEnabled (APPSTORE_WRITE=1). Returns per-locale
+ * outcome so the caller can report + audit.
+ */
+export async function setVersionWhatsNew(
+  versionId: string,
+  whatsNew: string,
+): Promise<{ ok: boolean; updated: number; error?: string }> {
+  if (!ascWriteEnabled) return { ok: false, updated: 0, error: "Writing to App Store is disabled (set APPSTORE_WRITE=1)" }
+
+  // Find the version's localizations (release notes are per-locale).
+  const locs = await ascGet<{ data: { id: string; attributes: Record<string, unknown> }[] }>(
+    `/appStoreVersions/${versionId}/appStoreVersionLocalizations?fields[appStoreVersionLocalizations]=locale,whatsNew`,
+  )
+  const list = locs?.data ?? []
+  if (list.length === 0) return { ok: false, updated: 0, error: "No editable localizations on this version" }
+
+  let updated = 0
+  for (const loc of list) {
+    const r = await ascPatch(`/appStoreVersionLocalizations/${loc.id}`, {
+      data: { type: "appStoreVersionLocalizations", id: loc.id, attributes: { whatsNew } },
+    })
+    if (r.ok) updated++
+    else if (updated === 0) return { ok: false, updated, error: r.error }
+  }
+  return { ok: updated > 0, updated }
 }

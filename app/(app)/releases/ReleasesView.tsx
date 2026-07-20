@@ -18,17 +18,18 @@ function stateColor(state: string | null): string {
   return ""
 }
 
-function NoteModal({ version, build, existing, onClose, onSaved }: {
+function NoteModal({ version, build, existing, prefill, onClose, onSaved }: {
   version: string
   build: string | null
   existing: Note | undefined
+  prefill?: string
   onClose: () => void
   onSaved: () => void
 }) {
   const utils = trpc.useUtils()
   const upsert = trpc.releases.upsertNote.useMutation({ onSuccess: () => { utils.releases.notes.invalidate(); onSaved() }, onError: (e) => setError(e.message) })
   const [title, setTitle] = useState(existing?.title ?? "")
-  const [changelog, setChangelog] = useState(existing?.changelog ?? "")
+  const [changelog, setChangelog] = useState(existing?.changelog ?? prefill ?? "")
   const [highlights, setHighlights] = useState((existing?.highlights as string[] | null)?.join("\n") ?? "")
   const [status, setStatus] = useState<"draft" | "shipped">((existing?.status as "draft" | "shipped") ?? "draft")
   const [error, setError] = useState<string | null>(null)
@@ -78,11 +79,14 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
   const status = trpc.releases.status.useQuery()
   const builds = trpc.releases.builds.useQuery(undefined, { enabled: status.data?.ascConfigured })
   const versions = trpc.releases.versions.useQuery(undefined, { enabled: status.data?.ascConfigured })
+  const easBuilds = trpc.releases.easBuilds.useQuery(undefined, { enabled: status.data?.easConfigured })
   const notes = trpc.releases.notes.useQuery()
-  const [editing, setEditing] = useState<{ version: string; build: string | null } | null>(null)
+  const [editing, setEditing] = useState<{ version: string; build: string | null; prefill?: string } | null>(null)
+  const [publishing, setPublishing] = useState<{ id: string; version: string } | null>(null)
 
   const noteByVersion = new Map((notes.data ?? []).map((n) => [n.version, n]))
   const configured = status.data?.ascConfigured
+  const canPublish = status.data?.ascWriteEnabled ?? false
 
   if (status.isLoading) return <p className="text-sm text-fg-tertiary">Loading…</p>
 
@@ -110,18 +114,72 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="space-y-6">
+      {/* EAS builds (git changelog source) */}
+      {status.data?.easConfigured && (
+        <section>
+          <h2 className="display mb-2 text-base font-semibold text-fg-primary">EAS builds — what shipped (git)</h2>
+          <div className="overflow-hidden rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Version</th>
+                  <th className="px-4 py-2 font-medium">Profile</th>
+                  <th className="px-4 py-2 font-medium">Commit</th>
+                  <th className="px-4 py-2 font-medium">Status</th>
+                  {isAdmin && <th className="px-4 py-2"></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {easBuilds.isLoading ? (
+                  <tr><td colSpan={isAdmin ? 5 : 4} className="px-4 py-6 text-center text-fg-tertiary">Loading EAS builds…</td></tr>
+                ) : (easBuilds.data ?? []).length === 0 ? (
+                  <tr><td colSpan={isAdmin ? 5 : 4} className="px-4 py-6 text-center text-fg-muted">No EAS builds.</td></tr>
+                ) : (
+                  (easBuilds.data ?? []).map((b) => (
+                    <tr key={b.id} className="border-t border-border-subtle text-fg-secondary hover:bg-card-hover">
+                      <td className="px-4 py-2.5 font-mono text-fg-primary">v{b.appVersion ?? "?"}{b.buildNumber ? ` (${b.buildNumber})` : ""} <span className="text-fg-muted">{b.platform?.toLowerCase()}</span></td>
+                      <td className="px-4 py-2.5 text-xs">{b.profile ?? "—"}</td>
+                      <td className="px-4 py-2.5">
+                        <span className="font-mono text-[11px] text-fg-tertiary">{b.gitCommitHash ?? "—"}</span>
+                        {b.gitCommitMessage && <div className="max-w-[320px] truncate text-xs text-fg-secondary">{b.gitCommitMessage.split("\n")[0]}</div>}
+                      </td>
+                      <td className="px-4 py-2.5"><span className={`pill ${stateColor(b.status)}`}>{(b.status ?? "—").toLowerCase()}</span></td>
+                      {isAdmin && (
+                        <td className="px-4 py-2.5 text-right">
+                          <button
+                            onClick={() => setEditing({ version: b.appVersion ?? "", build: b.buildNumber, prefill: b.gitCommitMessage ?? "" })}
+                            className="text-xs font-medium text-accent-500 hover:underline whitespace-nowrap"
+                          >
+                            → changelog
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {/* App Store versions */}
       <section>
         <h2 className="display mb-2 text-base font-semibold text-fg-primary">App Store versions</h2>
         {versions.isLoading ? (
           <p className="text-sm text-fg-tertiary">Loading…</p>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
             {(versions.data ?? []).map((v) => (
-              <span key={v.id} className="inline-flex items-center gap-2 rounded-full border border-border-default bg-card px-3 py-1 text-sm shadow-[var(--shadow-sm)]">
+              <div key={v.id} className="flex items-center gap-2 rounded-xl border border-border-default bg-card px-4 py-2.5 text-sm shadow-[var(--shadow-sm)]">
                 <span className="font-medium text-fg-primary">v{v.versionString}</span>
                 <span className={`pill ${stateColor(v.appStoreState)}`}>{(v.appStoreState ?? "—").replace(/_/g, " ").toLowerCase()}</span>
-              </span>
+                {isAdmin && canPublish && (
+                  <button onClick={() => setPublishing({ id: v.id, version: v.versionString })} className="ml-auto text-xs font-medium text-accent-500 hover:underline">
+                    Publish notes &rarr;
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -186,7 +244,58 @@ export function ReleasesView({ isAdmin }: { isAdmin: boolean }) {
         <ChangelogList notes={notes.data ?? []} isAdmin={isAdmin} onEdit={(v) => setEditing({ version: v, build: noteByVersion.get(v)?.build ?? null })} />
       </section>
 
-      {isAdmin && editing && <NoteModal version={editing.version} build={editing.build} existing={noteByVersion.get(editing.version)} onClose={() => setEditing(null)} onSaved={() => setEditing(null)} />}
+      {isAdmin && editing && <NoteModal version={editing.version} build={editing.build} existing={noteByVersion.get(editing.version)} prefill={editing.prefill} onClose={() => setEditing(null)} onSaved={() => setEditing(null)} />}
+      {isAdmin && canPublish && publishing && (
+        <PublishModal
+          versionId={publishing.id}
+          versionString={publishing.version}
+          defaultText={noteByVersion.get(publishing.version)?.highlights as string[] | undefined}
+          onClose={() => setPublishing(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function PublishModal({ versionId, versionString, defaultText, onClose }: {
+  versionId: string
+  versionString: string
+  defaultText?: string[]
+  onClose: () => void
+}) {
+  const publish = trpc.releases.publishWhatsNew.useMutation({
+    onSuccess: (r) => setResult(r.ok ? `Published to ${r.updated} localization(s).` : `Failed: ${r.error}`),
+    onError: (e) => setResult(`Failed: ${e.message}`),
+  })
+  const [text, setText] = useState((defaultText ?? []).join("\n"))
+  const [confirm, setConfirm] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-border-default bg-card p-6 shadow-[var(--shadow-xl)]" onClick={(e) => e.stopPropagation()}>
+        <h2 className="display text-lg font-semibold text-fg-primary">Publish “What’s New” — v{versionString}</h2>
+        <p className="mt-2 rounded-lg bg-[var(--pill-warning-bg)] px-3 py-2 text-xs text-[var(--pill-warning-fg)]">
+          This writes to App Store Connect — it changes the release notes real users will see for v{versionString}.
+        </p>
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={8} maxLength={4000} placeholder="What's new in this version…"
+          className="mt-3 w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary focus:border-accent-400 focus:outline-none" />
+        <label className="mt-3 flex items-center gap-2 text-sm text-fg-secondary">
+          <input type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} />
+          I understand this updates the live App Store listing.
+        </label>
+        {result && <p className="mt-3 text-sm text-accent-500">{result}</p>}
+        <div className="mt-5 flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-fg-tertiary hover:text-fg-primary">Close</button>
+          <button
+            onClick={() => publish.mutate({ versionId, versionString, whatsNew: text.trim() })}
+            disabled={publish.isPending || !confirm || text.trim().length < 1}
+            className="rounded-lg bg-accent-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-600 disabled:opacity-40"
+          >
+            {publish.isPending ? "Publishing…" : "Publish to App Store"}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
