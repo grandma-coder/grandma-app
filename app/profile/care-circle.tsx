@@ -696,6 +696,10 @@ export default function CareCircleScreen() {
         : ((PERMISSION_LEVELS.find((p) => p.id === updates.permLevel)?.perms ?? ['view']) as CaregiverCapability[])
 
       const permObj = buildPermissionsObject({
+        // Safe cast: CareCircleMember.permissions is loose Record<string, any> from
+        // untyped Supabase JSONB, but buildPermissionsObject only reads the optional
+        // meta keys (_photo_url / _paused) off `existing` — never the required
+        // capability booleans — so missing/absent keys degrade to undefined harmlessly.
         existing: member.permissions as CaregiverPermissions,
         displayName: updates.displayName ?? member.displayName,
         photoUrl: resolvedPhoto,
