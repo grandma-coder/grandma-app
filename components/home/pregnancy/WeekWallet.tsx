@@ -13,9 +13,9 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { View, Pressable, Text } from 'react-native'
+import { View } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { SlidersHorizontal } from 'lucide-react-native'
 import { Character } from '../../characters/Characters'
@@ -31,6 +31,7 @@ import type { TodayLogEntry } from '../../../lib/analyticsData'
 import { loadReminders, upcomingReminders, type Reminder } from '../../../lib/reminders'
 import { WalletCard } from '../WalletCard'
 import { WalletPicker, type WalletPickerItem } from '../WalletPicker'
+import { QuietPill } from '../../ui/QuietPill'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PregnancyUserReminders } from './PregnancyUserReminders'
 import {
@@ -200,12 +201,11 @@ export function WeekWallet({
     <View>
       {/* Edit affordance — opens the wallet customization picker. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
-        <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 }]}>
-          <SlidersHorizontal size={14} color={editColor} strokeWidth={2} />
-          <Text style={{ fontFamily: diffuse ? diffuseFont.mono : undefined, fontSize: 11, letterSpacing: diffuse ? 0.8 : 0, textTransform: diffuse ? 'uppercase' : 'none', color: editColor }}>
-            {t('kids_quickLogs_edit')}
-          </Text>
-        </Pressable>
+        <QuietPill
+          leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
+          onPress={() => setPickerOpen(true)}
+          accessibilityLabel={t('kids_quickLogs_edit')}
+        />
       </View>
 
       {displayedIds.map((id, i) => {

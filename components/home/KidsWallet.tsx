@@ -14,9 +14,9 @@
  */
 
 import React, { useState } from 'react'
-import { View, Pressable, Text } from 'react-native'
+import { View } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme, diffuseFont, useDiffuseTheme } from '../../constants/theme'
+import { useTheme, useDiffuseTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { buildKidsWalletCards, type KidsWalletCardId } from '../../lib/kidsWallet'
 import { WALLET_SHORTCUTS } from '../../lib/walletCatalog'
@@ -24,6 +24,7 @@ import { useKidsWalletStore } from '../../store/useWalletStore'
 import type { WalletTone } from '../../lib/wallet'
 import { WalletCard } from './WalletCard'
 import { WalletPicker, type WalletPickerItem } from './WalletPicker'
+import { QuietPill } from '../ui/QuietPill'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { SlidersHorizontal } from 'lucide-react-native'
 import { Character } from '../characters/Characters'
@@ -190,9 +191,11 @@ export function KidsWallet({
       {/* Edit affordance — icon-only (no "EDIT" text), standardized with the
           summary card + cycle wallet edit controls. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 6 }}>
-        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button" accessibilityLabel={t('kids_quickLogs_edit')}>
-          <SlidersHorizontal size={16} color={editColor} strokeWidth={2} />
-        </Pressable>
+        <QuietPill
+          leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
+          onPress={() => setPickerOpen(true)}
+          accessibilityLabel={t('kids_quickLogs_edit')}
+        />
       </View>
 
       {displayedIds.map((id, i) => {
