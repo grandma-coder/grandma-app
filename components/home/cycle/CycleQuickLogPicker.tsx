@@ -35,6 +35,13 @@ const CYCLE_LOG_META: Record<string, { char: CharacterName; hue: keyof ReturnTyp
   cm:           { char: 'water',       hue: 'green',  soft: 'greenSoft' },
   intimacy:     { char: 'heart',       hue: 'coral',  soft: 'peachSoft' },
   period_start: { char: 'period',      hue: 'coral',  soft: 'peachSoft' },
+  period_end:     { char: 'period',      hue: 'coral',  soft: 'peachSoft' },
+  pregnancy_test: { char: 'ovulation',   hue: 'yellow', soft: 'yellowSoft' },
+  sex_drive:      { char: 'heart',       hue: 'pink',   soft: 'pinkSoft' },
+  clots:          { char: 'warning',     hue: 'coral',  soft: 'peachSoft' },
+  weight:         { char: 'growth',      hue: 'peach',  soft: 'peachSoft' },
+  water:          { char: 'water',       hue: 'blue',   soft: 'blueSoft' },
+  activity:       { char: 'activity',    hue: 'green',  soft: 'greenSoft' },
 }
 
 function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers'], diffuse: boolean): { node: React.ReactElement; soft: string } {
@@ -50,6 +57,13 @@ function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers
     case 'cm':           return { node: <Drop size={24} fill={stickers.green} />, soft: stickers.greenSoft }
     case 'intimacy':     return { node: <Heart size={24} fill={stickers.coral} />, soft: stickers.peachSoft }
     case 'period_start': return { node: <Drop size={24} fill={stickers.coral} />, soft: stickers.peachSoft }
+    case 'period_end':     return { node: <Drop size={24} fill={stickers.coral} />, soft: stickers.peachSoft }
+    case 'pregnancy_test': return { node: <Drop size={24} fill={stickers.yellow} />, soft: stickers.yellowSoft }
+    case 'sex_drive':      return { node: <Heart size={24} fill={stickers.pink} />, soft: stickers.pinkSoft }
+    case 'clots':          return { node: <Drop size={24} fill={stickers.coral} />, soft: stickers.peachSoft }
+    case 'weight':         return { node: <Drop size={24} fill={stickers.peach} />, soft: stickers.peachSoft }
+    case 'water':          return { node: <Drop size={24} fill={stickers.blue} />, soft: stickers.blueSoft }
+    case 'activity':       return { node: <Heart size={24} fill={stickers.green} />, soft: stickers.greenSoft }
     default:             return { node: <Smiley size={24} fill={stickers.yellow} />, soft: stickers.yellowSoft }
   }
 }

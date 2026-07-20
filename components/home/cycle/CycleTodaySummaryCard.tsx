@@ -29,6 +29,7 @@ import { useTranslation } from '../../../lib/i18n'
 import { LogSheet } from '../../calendar/LogSheet'
 import {
   MoodForm, SymptomsForm, BbtForm, LhForm, CmForm, IntimacyForm, PeriodStartForm,
+  PeriodEndForm, PregnancyTestForm, SexDriveForm, ClotsForm, WeightForm, WaterForm, ActivityForm,
 } from '../../calendar/CycleLogForms'
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
 import { DEFAULT_CYCLE_QUICK_LOG_KEYS } from '../../../lib/cycleQuickLogs'
@@ -38,6 +39,7 @@ import { CycleLogConfirm } from './CycleLogConfirm'
 /** Chip key → the cycle_logs sheet it opens. */
 type CycleSheetType =
   | 'mood' | 'symptom' | 'basal_temp' | 'lh' | 'cm' | 'intercourse' | 'period_start'
+  | 'period_end' | 'pregnancy_test' | 'sex_drive' | 'clots' | 'weight' | 'water' | 'activity'
 
 interface Props {
   phase: CyclePhase
@@ -156,6 +158,13 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
   const cmValue = rows.find((r) => r.type === 'cervical_mucus')?.value ?? null
   const intimacy = rows.find((r) => r.type === 'intercourse')?.value ?? null
   const periodStart = rows.find((r) => r.type === 'period_start')?.value ?? null
+  const periodEnd = rows.find((r) => r.type === 'period_end')?.value ?? null
+  const pregTest = rows.find((r) => r.type === 'pregnancy_test')?.value ?? null
+  const sexDrive = rows.find((r) => r.type === 'sex_drive')?.value ?? null
+  const clots = rows.find((r) => r.type === 'clots')?.value ?? null
+  const weight = rows.find((r) => r.type === 'weight')?.value ?? null
+  const water = rows.find((r) => r.type === 'water')?.value ?? null
+  const activity = rows.find((r) => r.type === 'activity')?.value ?? null
   const symptoms = useMemo(
     () => rows.filter((r) => r.type === 'symptom').map((r) => r.value).filter((v): v is string => !!v),
     [rows],
@@ -222,6 +231,41 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
       label: periodStart ? (periodStart === 'light' ? 'Lt' : periodStart === 'medium' ? 'Md' : periodStart === 'heavy' ? 'Hv' : '✓') : '+',
       done: !!periodStart,
     },
+    {
+      key: 'period_end', sheet: 'period_end',
+      icon: diffuse ? <Character name="period" size={24} color={periodEnd ? stickers.coral : stickers.pinkSoft} /> : <Drop size={22} fill={periodEnd ? stickers.coral : stickers.pinkSoft} />,
+      label: periodEnd ? '✓' : '+', done: !!periodEnd,
+    },
+    {
+      key: 'pregnancy_test', sheet: 'pregnancy_test',
+      icon: diffuse ? <Character name="ovulation" size={24} color={stickers.yellow} /> : <Drop size={22} fill={stickers.yellow} />,
+      label: pregTest ? (pregTest === 'positive' ? 'Pos' : pregTest === 'negative' ? 'Neg' : '✓') : '+', done: !!pregTest,
+    },
+    {
+      key: 'sex_drive', sheet: 'sex_drive',
+      icon: diffuse ? <Character name="heart" size={24} color={sexDrive ? stickers.pink : stickers.pinkSoft} /> : <Heart size={22} fill={sexDrive ? stickers.pink : stickers.pinkSoft} />,
+      label: sexDrive ?? '+', done: !!sexDrive,
+    },
+    {
+      key: 'clots', sheet: 'clots',
+      icon: diffuse ? <Character name="warning" size={24} color={stickers.coral} /> : <Drop size={22} fill={stickers.coral} />,
+      label: clots ?? '+', done: !!clots,
+    },
+    {
+      key: 'weight', sheet: 'weight',
+      icon: diffuse ? <Character name="growth" size={24} color={stickers.peach} /> : <Drop size={22} fill={stickers.peach} />,
+      label: weight ? `${weight}` : '+', done: !!weight,
+    },
+    {
+      key: 'water', sheet: 'water',
+      icon: diffuse ? <Character name="water" size={24} color={stickers.blue} /> : <Drop size={22} fill={stickers.blue} />,
+      label: water ? `${water}` : '+', done: !!water,
+    },
+    {
+      key: 'activity', sheet: 'activity',
+      icon: diffuse ? <Character name="activity" size={24} color={stickers.green} /> : <Heart size={22} fill={stickers.green} />,
+      label: activity ? '✓' : '+', done: !!activity,
+    },
   ]
 
   // The chips actually shown, filtered + ordered by the user's enabled keys
@@ -266,6 +310,13 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     cm: t('cycleDash_cervicalMucus'),
     intercourse: t('cycleCalendar_logSheet_intimacy'),
     period_start: t('cycleCalendar_logSheet_periodStart'),
+    period_end: t('cycleCalendar_logSheet_periodEnd'),
+    pregnancy_test: t('cycleCalendar_logSheet_pregTest'),
+    sex_drive: t('cycleCalendar_logSheet_sexDrive'),
+    clots: t('cycleCalendar_logSheet_clots'),
+    weight: t('cycleCalendar_logSheet_weight'),
+    water: t('cycleCalendar_logSheet_water'),
+    activity: t('cycleCalendar_logSheet_activity'),
   }
 
   // ── Variant-resolved tokens (matches pregnancy TodaySummaryCard) ──
@@ -400,6 +451,27 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
       </LogSheet>
       <LogSheet visible={sheetType === 'period_start'} title={sheetTitle.period_start} onClose={closeSheet}>
         <PeriodStartForm date={logDate} phase={phase} onSaved={onLogSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'period_end'} title={sheetTitle.period_end} onClose={closeSheet}>
+        <PeriodEndForm date={logDate} phase={phase} onSaved={onLogSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'pregnancy_test'} title={sheetTitle.pregnancy_test} onClose={closeSheet}>
+        <PregnancyTestForm date={logDate} phase={phase} onSaved={onLogSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'sex_drive'} title={sheetTitle.sex_drive} onClose={closeSheet}>
+        <SexDriveForm date={logDate} phase={phase} onSaved={onLogSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'clots'} title={sheetTitle.clots} onClose={closeSheet}>
+        <ClotsForm date={logDate} phase={phase} onSaved={onLogSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'weight'} title={sheetTitle.weight} onClose={closeSheet}>
+        <WeightForm date={logDate} phase={phase} onSaved={onLogSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'water'} title={sheetTitle.water} onClose={closeSheet}>
+        <WaterForm date={logDate} phase={phase} onSaved={onLogSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'activity'} title={sheetTitle.activity} onClose={closeSheet}>
+        <ActivityForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
 
       {/* Post-log "updating your cycle → updated" confirmation. When it finishes
