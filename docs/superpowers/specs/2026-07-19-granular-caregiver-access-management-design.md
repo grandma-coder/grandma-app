@@ -126,14 +126,18 @@ no rebuild.
 
 1. After the existing name / photo / role inputs, an **"Access & sharing"** block
    (replacing the `PERMISSION_LEVELS` preset list for the ON path).
-2. A member can span multiple children across behaviors (kids / pregnancy /
-   cycle). The editor renders **one `ShareCardsEditor` per behavior the member has
-   children in**, derived from `member.childIds` → each child's behavior. A
-   member with only kids children sees only the kids editor.
-   - Behavior for a child is resolved from the child records already loaded in
-     `useChildStore` (the same source `care-circle.tsx` uses for
-     `getChildNames`). If a behavior can't be resolved for any child, fall back
-     to the active `mode` for that grouping.
+2. **Behavior is derived from the owner's active journey mode**, not from the
+   child record. A `Child` has no behavior field; the app resolves the
+   `CaregiverBehavior` for a home from the *viewer's* `useModeStore.mode`
+   (verified at `app/(tabs)/index.tsx:62-65`: `kids → kids`,
+   `pregnancy → pregnancy`, else `cycle`). So the editor renders **one
+   `ShareCardsEditor` for the owner's current active behavior** — the same
+   behavior whose `_shared_cards[behavior]` key the caregiver's app reads when
+   rendering that home. This matches the real read path exactly and avoids
+   inventing a per-child behavior that doesn't exist.
+   - The mode→behavior mapping is factored into a tiny exported helper
+     `modeToBehavior(mode)` in `lib/caregiverCards.ts` so the care-circle editor
+     and `app/(tabs)/index.tsx` share one definition (DRY).
 3. **`edit_child`** is added as a **4th capability row** in the "What can they
    do?" section of `ShareCardsEditor` (currently log / emergency / chat), with a
    caption like "can edit child profile & health info".
@@ -168,7 +172,9 @@ true boundary throughout — the editor is UX only.
     completely untouched. **No regression when the flag is off.**
 - **Multi-child members:** the same merged permissions object is written to every
   `rowId` for the member (consistent with how `_paused` is written to all rows
-  today).
+  today). `_shared_cards` is a per-behavior map, so editing the owner's active
+  behavior only touches that behavior's key and leaves other behaviors' shared
+  cards intact.
 - **`edit_child`:** granting it is honored by existing RLS on `children` +
   PHI-gating; no new migration. Consuming it in a caregiver-side child-edit UI is
   out of scope (see non-goals).
@@ -196,6 +202,7 @@ true boundary throughout — the editor is UX only.
 | `store/useFeatureFlags.ts` | **New** — persisted flag store with hydration gate |
 | `app/dev-panel.tsx` | Add `granularCaregiverAccess` toggle row |
 | `app/profile/care-circle.tsx` | Flag-gated branch in `EditMemberSheet`; mount `ShareCardsEditor` per behavior; extend `updateMember` to accept + write full permissions object |
+| `lib/caregiverCards.ts` | Add `modeToBehavior(mode: JourneyMode): CaregiverBehavior` helper |
 | `components/caregiver/ShareCardsEditor.tsx` | Add `edit_child` capability row |
 | `components/caregiver/__tests__/ShareCardsEditor.test.tsx` | Cover `edit_child` row |
 | (test) | New `updateMember` granular-path + flag-off regression tests |
