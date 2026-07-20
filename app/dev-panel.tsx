@@ -21,6 +21,7 @@ import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
 import { useChildStore } from '../store/useChildStore'
 import { useJourneyStore } from '../store/useJourneyStore'
 import { useDevStore } from '../store/useDevStore'
+import { useFeatureFlags } from '../store/useFeatureFlags'
 import { pillars } from '../lib/pillars'
 import { pregnancyPillars } from '../lib/pregnancyPillars'
 import { prePregPillars } from '../lib/prePregPillars'
@@ -134,6 +135,8 @@ export default function DevPanel() {
   const setMode = useModeStore((s) => s.setModeUnsafe)
   const variant = useThemeStore((s) => s.variant)
   const setVariant = useThemeStore((s) => s.setVariant)
+  const granularCaregiverAccess = useFeatureFlags((s) => s.granularCaregiverAccess)
+  const setGranularCaregiverAccess = useFeatureFlags((s) => s.setGranularCaregiverAccess)
   const enrolled = useBehaviorStore((s) => s.enrolledBehaviors)
   const enroll = useBehaviorStore((s) => s.enroll)
   const unenroll = useBehaviorStore((s) => s.unenroll)
@@ -383,6 +386,27 @@ export default function DevPanel() {
               )
             })}
           </View>
+        </Section>
+
+        {/* Feature flags */}
+        <Section title="FEATURE FLAGS">
+          <Body size={11} color={colors.textMuted}>
+            Master gates for surfaces that ship dark. Persisted across app restarts.
+          </Body>
+          <Pressable
+            onPress={() => setGranularCaregiverAccess(!granularCaregiverAccess)}
+            style={({ pressed }) => [
+              styles.actionRow,
+              { borderColor: granularCaregiverAccess ? colors.primary : colors.borderLight, opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <Body size={14} color={colors.text} style={{ fontWeight: '600', flex: 1 }}>
+              Granular caregiver access
+            </Body>
+            <Body size={12} color={granularCaregiverAccess ? colors.primary : colors.textMuted}>
+              {granularCaregiverAccess ? '✓ on' : 'off'}
+            </Body>
+          </Pressable>
         </Section>
 
         {/* Enrollment */}
