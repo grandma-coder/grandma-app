@@ -10,11 +10,12 @@ import "server-only"
  * [] instead of throwing (Sentry/ASC pattern).
  *
  * Env:
- *   EXPO_TOKEN      — an Expo access token (expo.dev → Account → Access Tokens)
+ *   EXPO_TOKEN / EXPO_ACCESS_TOKEN — an Expo access token (expo.dev → Account
+ *                    settings → Access tokens). Either name works.
  *   EAS_PROJECT_ID  — the app's EAS project id (defaults to grandma-app's)
  */
 
-const TOKEN = process.env.EXPO_TOKEN
+const TOKEN = process.env.EXPO_TOKEN ?? process.env.EXPO_ACCESS_TOKEN
 const PROJECT_ID = process.env.EAS_PROJECT_ID ?? "3e90f69b-67ad-4c0e-82b5-12677de0e331"
 const ENDPOINT = "https://api.expo.dev/graphql"
 
