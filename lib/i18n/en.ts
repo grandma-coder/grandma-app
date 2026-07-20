@@ -3607,5 +3607,7 @@ export const en: TranslationKeys = {
   wallet_memories_title: "Memories",
   wallet_memories_chip: "KEEPSAKES",
   cycleMemories_emptyMsg: "Save a photo memory from this chapter of your cycle.",
+  pregnancyMemories_emptyMsg: "Save a photo memory from this chapter of your pregnancy.",
+  kidsMemories_emptyMsg: "Save a photo memory from this chapter with your little one.",
   cycleMemories_addCta: "Add a memory",
 }

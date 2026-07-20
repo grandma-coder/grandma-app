@@ -3600,5 +3600,7 @@ export interface TranslationKeys {
   wallet_memories_title: string
   wallet_memories_chip: string
   cycleMemories_emptyMsg: string
+  pregnancyMemories_emptyMsg: string
+  kidsMemories_emptyMsg: string
   cycleMemories_addCta: string
 }
