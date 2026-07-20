@@ -39,19 +39,7 @@ import { pregnancyWeeks, getDaysToGo, getCurrentWeekFromDueDate } from '../../li
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import { toDateStr } from '../../lib/cycleLogic'
-import {
-  PregnancyMoodForm,
-  PregnancySymptomsForm,
-  AppointmentForm,
-  KickCountForm,
-  SleepLogForm,
-  WeightLogForm,
-  WaterLogForm,
-  ExerciseLogForm,
-  VitaminsLogForm,
-  KegelLogForm,
-} from '../calendar/PregnancyLogForms'
-import { PregnancyMealForm } from '../calendar/PregnancyMealForm'
+import { PregnancyLogRouter, type PregnancyLogType } from '../calendar/PregnancyLogRouter'
 import { LogSheet } from '../calendar/LogSheet'
 
 import { WeekCard } from './pregnancy/WeekCard'
@@ -177,16 +165,12 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-type InlineLogType =
-  | 'mood' | 'symptom' | 'appointment' | 'kick_count'
-  | 'vitamins' | 'water' | 'weight' | 'sleep' | 'exercise' | 'kegel' | 'nutrition'
-  | null
-
-// Map InlineLogType → translation key for the inline log sheet title.
-const INLINE_LOG_TITLE_KEY: Record<Exclude<InlineLogType, null>, string> = {
+// Map PregnancyLogType → translation key for the inline log sheet title.
+const INLINE_LOG_TITLE_KEY: Record<PregnancyLogType, string> = {
   mood: 'pregnancy_logTitle_mood',
   symptom: 'pregnancy_logTitle_symptom',
   appointment: 'pregnancy_logTitle_appointment',
+  exam_result: 'pregnancy_logTitle_examResult',
   kick_count: 'pregnancy_logTitle_kicks',
   vitamins: 'pregnancy_logTitle_vitamins',
   water: 'pregnancy_logTitle_water',
@@ -195,6 +179,9 @@ const INLINE_LOG_TITLE_KEY: Record<Exclude<InlineLogType, null>, string> = {
   exercise: 'pregnancy_logTitle_exercise',
   kegel: 'pregnancy_logTitle_kegel',
   nutrition: 'pregnancy_logTitle_nutrition',
+  nesting: 'pregnancy_logTitle_nesting',
+  birth_prep: 'pregnancy_logTitle_birthPrep',
+  contraction: 'pregnancy_logTitle_contraction',
 }
 
 interface PregnancyHomeProps {
@@ -235,7 +222,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
 
-  const [activeLog, setActiveLog] = useState<InlineLogType>(null)
+  const [activeLog, setActiveLog] = useState<PregnancyLogType | null>(null)
   const [weekDetailVisible, setWeekDetailVisible] = useState(false)
   const [detailWeek, setDetailWeek] = useState(weekNumber)
   const [apptDetail, setApptDetail] = useState<StandardAppointment | null>(null)
@@ -285,32 +272,6 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   const handleHeroPress = (week: number) => {
     setDetailWeek(week)
     setWeekDetailVisible(true)
-  }
-
-  const renderInlineForm = (): React.ReactElement | null => {
-    if (activeLog === null) return null
-    const today = toDateStr(new Date())
-    const onClose = () => {
-      setActiveLog(null)
-      queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs', userId] })
-      queryClient.invalidateQueries({ queryKey: ['pregnancy-latest-weight', userId] })
-    }
-
-    if (activeLog === 'mood') return <PregnancyMoodForm date={today} onSaved={onClose} />
-    if (activeLog === 'symptom') return <PregnancySymptomsForm date={today} onSaved={onClose} />
-    if (activeLog === 'appointment') return <AppointmentForm date={today} onSaved={onClose} />
-    if (activeLog === 'kick_count') return <KickCountForm date={today} onSaved={onClose} />
-
-    if (activeLog === 'nutrition') {
-      return <PregnancyMealForm userId={userId} onSaved={onClose} />
-    }
-    if (activeLog === 'sleep') return <SleepLogForm date={today} onSaved={onClose} />
-    if (activeLog === 'weight') return <WeightLogForm date={today} onSaved={onClose} />
-    if (activeLog === 'water') return <WaterLogForm date={today} onSaved={onClose} />
-    if (activeLog === 'exercise') return <ExerciseLogForm date={today} onSaved={onClose} />
-    if (activeLog === 'vitamins') return <VitaminsLogForm date={today} onSaved={onClose} />
-    if (activeLog === 'kegel') return <KegelLogForm date={today} onSaved={onClose} />
-    return null
   }
 
   // Uses the device locale instead of forcing en-US so the weekday name
@@ -382,7 +343,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
           todayLogs={todayLogs}
           weekNumber={weekNumber}
           userId={userId}
-          onLogMetric={readOnly ? undefined : (type) => setActiveLog(type as InlineLogType)}
+          onLogMetric={readOnly ? undefined : (type) => setActiveLog(type as PregnancyLogType)}
         />
       </View>
       )}
@@ -403,7 +364,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
           weekNumber={weekNumber}
           todayLogs={todayLogs}
           userId={userId}
-          onLogMetric={readOnly ? undefined : (type) => setActiveLog(type as InlineLogType)}
+          onLogMetric={readOnly ? undefined : (type) => setActiveLog(type as PregnancyLogType)}
           onOpenAppointment={(appt) => setApptDetail(appt)}
           onOpenWeekDetail={() => {
             setDetailWeek(weekNumber)
@@ -440,9 +401,23 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
       <LogSheet
         visible={activeLog !== null}
         title={activeLog ? t(INLINE_LOG_TITLE_KEY[activeLog] as any) : ''}
-        onClose={() => setActiveLog(null)}
+        onClose={() => {
+          setActiveLog(null)
+          queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs', userId] })
+          queryClient.invalidateQueries({ queryKey: ['pregnancy-latest-weight', userId] })
+        }}
       >
-        {renderInlineForm()}
+        {activeLog !== null && (
+          <PregnancyLogRouter
+            type={activeLog}
+            date={toDateStr(new Date())}
+            onSaved={() => {
+              setActiveLog(null)
+              queryClient.invalidateQueries({ queryKey: ['pregnancy-today-logs', userId] })
+              queryClient.invalidateQueries({ queryKey: ['pregnancy-latest-weight', userId] })
+            }}
+          />
+        )}
       </LogSheet>
     </ScrollView>
   )

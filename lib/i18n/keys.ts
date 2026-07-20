@@ -491,6 +491,10 @@ export interface TranslationKeys {
   pregnancy_logTitle_exercise: string
   pregnancy_logTitle_kegel: string
   pregnancy_logTitle_nutrition: string
+  pregnancy_logTitle_examResult: string
+  pregnancy_logTitle_nesting: string
+  pregnancy_logTitle_birthPrep: string
+  pregnancy_logTitle_contraction: string
 
   // ─── TodaySummaryCard (Wave 1) ────────────────────────────────────────
   pregnancy_todayAtGlance: string

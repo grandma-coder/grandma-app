@@ -493,6 +493,10 @@ export const en: TranslationKeys = {
   pregnancy_logTitle_exercise: 'Log movement',
   pregnancy_logTitle_kegel: 'Log kegels',
   pregnancy_logTitle_nutrition: 'Log meal',
+  pregnancy_logTitle_examResult: 'Log Exam Result',
+  pregnancy_logTitle_nesting: 'Nesting Task',
+  pregnancy_logTitle_birthPrep: 'Birth Prep',
+  pregnancy_logTitle_contraction: 'Log Contraction',
 
   // TodaySummaryCard (Wave 1)
   pregnancy_todayAtGlance: 'Today at a glance',
