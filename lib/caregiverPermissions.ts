@@ -13,7 +13,7 @@
  * the child record and are not gated by the permissions JSONB.
  */
 
-import type { CaregiverCapability, ChildWithRole } from '../types'
+import type { CaregiverCapability, CaregiverPermissions, ChildWithRole } from '../types'
 import { roleDefaultCards, type CaregiverBehavior } from './caregiverCards'
 import { CAREGIVER_CARDS } from './caregiverCards'
 
@@ -91,4 +91,41 @@ export function visibleCards(
   if (!perms || perms._paused === true) return new Set()
   const explicit = perms._shared_cards?.[behavior]
   return new Set(explicit ?? roleDefaultCards(behavior, child.caregiverRole))
+}
+
+/**
+ * Build the `child_caregivers.permissions` JSONB to persist for a member edit.
+ * Pure — no screen constants, no Supabase. Two paths:
+ *   - granular (flag ON): capability booleans + _shared_cards come verbatim from
+ *     the editor's working object.
+ *   - preset  (flag OFF): capabilities expanded from the passed `presetPerms`
+ *     array; no _shared_cards (coarse path, unchanged legacy behavior).
+ * Meta keys (_display_name / _photo_url / _paused) are always preserved on top.
+ * `photoUrl` must already be a stored path/url — local-file upload happens in the
+ * caller before this runs.
+ */
+export function buildPermissionsObject(args: {
+  existing: CaregiverPermissions
+  displayName: string
+  photoUrl?: string
+  presetPerms?: CaregiverCapability[]
+  granular?: CaregiverPermissions
+}): CaregiverPermissions {
+  const { existing, displayName, photoUrl, presetPerms, granular } = args
+  let out: CaregiverPermissions
+
+  if (granular) {
+    out = { ...granular }
+  } else {
+    const perms = presetPerms ?? ['view']
+    out = { view: false, log_activity: false, chat: false }
+    for (const p of perms) (out as unknown as Record<string, unknown>)[p] = true
+  }
+
+  out._display_name = displayName
+  const resolvedPhoto = photoUrl ?? existing._photo_url
+  if (resolvedPhoto) out._photo_url = resolvedPhoto
+  if (existing._paused === true) out._paused = true
+
+  return out
 }
