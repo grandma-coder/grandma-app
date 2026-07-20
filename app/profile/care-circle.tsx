@@ -82,6 +82,8 @@ import {
   Bear as BearSticker,
 } from '../../components/ui/Stickers'
 import { useTranslation } from '../../lib/i18n'
+import type { CaregiverPermissions, CaregiverCapability } from '../../types'
+import { buildPermissionsObject } from '../../lib/caregiverPermissions'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -661,35 +663,45 @@ export default function CareCircleScreen() {
     loadMembers()
   }
 
-  async function updateMember(member: CareCircleMember, updates: { displayName?: string; photoUrl?: string; role?: string; permLevel?: string; childIds?: string[] }) {
+  async function updateMember(
+    member: CareCircleMember,
+    updates: {
+      displayName?: string
+      photoUrl?: string
+      role?: string
+      permLevel?: string
+      permissions?: CaregiverPermissions
+      childIds?: string[]
+    },
+  ) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const perms = updates.permLevel
-        ? PERMISSION_LEVELS.find((p) => p.id === updates.permLevel)?.perms ?? ['view']
-        : Object.keys(member.permissions).filter((k) => !k.startsWith('_') && member.permissions[k])
 
-      const permObj: Record<string, any> = {}
-      for (const p of perms) permObj[p] = true
-      permObj._display_name = updates.displayName ?? member.displayName
-
-      // Upload new photo only if it's a freshly-picked LOCAL file. A stored
-      // value is now a private-bucket storage PATH (or a legacy http URL, or an
-      // icon: sentinel) — all of those pass through unchanged.
+      // Resolve a freshly-picked LOCAL photo to a stored path first.
       const isLocalFile = (v?: string) => !!v && (v.startsWith('file:') || v.startsWith('content:'))
+      let resolvedPhoto: string | undefined
       if (updates.photoUrl && isLocalFile(updates.photoUrl) && session) {
         try {
-          const url = await uploadCaregiverPhoto(updates.photoUrl, session.user.id)
-          permObj._photo_url = url
+          resolvedPhoto = await uploadCaregiverPhoto(updates.photoUrl, session.user.id)
         } catch (e) {
           console.warn('Photo upload failed:', e)
-          permObj._photo_url = updates.photoUrl // fallback to local URI
+          resolvedPhoto = updates.photoUrl // fallback to local URI
         }
       } else if (updates.photoUrl) {
-        permObj._photo_url = updates.photoUrl
-      } else if (member.photoUrl) {
-        permObj._photo_url = member.photoUrl
+        resolvedPhoto = updates.photoUrl
       }
-      if (member.permissions._paused) permObj._paused = true
+
+      const presetPerms = updates.permissions
+        ? undefined
+        : ((PERMISSION_LEVELS.find((p) => p.id === updates.permLevel)?.perms ?? ['view']) as CaregiverCapability[])
+
+      const permObj = buildPermissionsObject({
+        existing: member.permissions as CaregiverPermissions,
+        displayName: updates.displayName ?? member.displayName,
+        photoUrl: resolvedPhoto,
+        presetPerms,
+        granular: updates.permissions,
+      })
 
       const selectedRole = ROLES.find((r) => r.id === updates.role)
       const dbRole = updates.role ? ((selectedRole as any)?.dbRole ?? selectedRole?.id ?? member.role) : member.role
