@@ -82,8 +82,11 @@ import {
   Bear as BearSticker,
 } from '../../components/ui/Stickers'
 import { useTranslation } from '../../lib/i18n'
-import type { CaregiverPermissions, CaregiverCapability } from '../../types'
+import type { CaregiverPermissions, CaregiverCapability, CaregiverRole } from '../../types'
 import { buildPermissionsObject } from '../../lib/caregiverPermissions'
+import { useFeatureFlags } from '../../store/useFeatureFlags'
+import { modeToBehavior } from '../../lib/caregiverCards'
+import { ShareCardsEditor } from '../../components/caregiver/ShareCardsEditor'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -1900,7 +1903,13 @@ function InviteButton({ icon: Icon, label, color, onPress, saving }: { icon: typ
 function EditMemberSheet({ member, onClose, onSaved }: {
   member: CareCircleMember
   onClose: () => void
-  onSaved: (updates: { displayName?: string; photoUrl?: string; role?: string; permLevel?: string }) => void
+  onSaved: (updates: {
+    displayName?: string
+    photoUrl?: string
+    role?: string
+    permLevel?: string
+    permissions?: CaregiverPermissions
+  }) => void
 }) {
   const { colors, font, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
@@ -1927,6 +1936,13 @@ function EditMemberSheet({ member, onClose, onSaved }: {
     if (perms.length >= 3) return 'contributor'
     return 'view'
   })
+
+  const granularEnabled = useFeatureFlags((s) => s.granularCaregiverAccess)
+  const flagsHydrated = useFeatureFlags((s) => s.hydrated)
+  const mode = useModeStore((s) => s.mode)
+  const behavior = modeToBehavior(mode)
+  const [workingPerms, setWorkingPerms] = useState<CaregiverPermissions>(() => ({ ...member.permissions } as CaregiverPermissions))
+  const showGranular = flagsHydrated && granularEnabled
 
   return (
     <LogSheet visible title={`Edit ${member.displayName || 'Member'}`} onClose={onClose}>
@@ -1970,26 +1986,41 @@ function EditMemberSheet({ member, onClose, onSaved }: {
           </View>
 
           <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_permission_level')}</MonoCaps></View>
-          {PERMISSION_LEVELS.map((p) => {
-            const active = editPermLevel === p.id
-            return (
-              <Pressable
-                key={p.id}
-                onPress={() => setEditPermLevel(p.id)}
-                style={[sheetStyles.permCard, {
-                  backgroundColor: active ? inkActiveBg : paper,
-                  borderColor: active ? inkActiveBorder : paperBorder,
-                }]}
-              >
-                <Text style={[sheetStyles.permLabel, { color: active ? inkActiveText : textColor, fontFamily: displayFont }]}>{p.label}</Text>
-                <Text style={[sheetStyles.permDesc, { color: mutedColor, fontFamily: bodyFont }]}>{p.desc}</Text>
-              </Pressable>
-            )
-          })}
+          {showGranular ? (
+            <ShareCardsEditor
+              behavior={behavior}
+              role={member.role as CaregiverRole}
+              value={workingPerms}
+              onChange={setWorkingPerms}
+            />
+          ) : (
+            PERMISSION_LEVELS.map((p) => {
+              const active = editPermLevel === p.id
+              return (
+                <Pressable
+                  key={p.id}
+                  onPress={() => setEditPermLevel(p.id)}
+                  style={[sheetStyles.permCard, {
+                    backgroundColor: active ? inkActiveBg : paper,
+                    borderColor: active ? inkActiveBorder : paperBorder,
+                  }]}
+                >
+                  <Text style={[sheetStyles.permLabel, { color: active ? inkActiveText : textColor, fontFamily: displayFont }]}>{p.label}</Text>
+                  <Text style={[sheetStyles.permDesc, { color: mutedColor, fontFamily: bodyFont }]}>{p.desc}</Text>
+                </Pressable>
+              )
+            })
+          )}
 
           <SheetButton
             label="Save Changes"
-            onPress={() => onSaved({ displayName: editName.trim(), photoUrl: editPhotoUri, role: editRole, permLevel: editPermLevel })}
+            onPress={() =>
+              onSaved(
+                showGranular
+                  ? { displayName: editName.trim(), photoUrl: editPhotoUri, role: editRole, permissions: workingPerms }
+                  : { displayName: editName.trim(), photoUrl: editPhotoUri, role: editRole, permLevel: editPermLevel },
+              )
+            }
           />
         </View>
       </ScrollView>
