@@ -30,4 +30,16 @@ describe('ShareCardsEditor', () => {
     )
     expect(getByText(/sensitive/i)).toBeTruthy()
   })
+
+  it('renders an edit-child capability row and toggling it writes edit_child', () => {
+    const onChange = jest.fn()
+    const { getByText } = render(
+      <ShareCardsEditor behavior="kids" role="nanny"
+        value={{ view: true, log_activity: true, chat: false, edit_child: false }}
+        onChange={onChange} />,
+    )
+    fireEvent.press(getByText(/edit child profile/i))
+    const next = onChange.mock.calls[0][0]
+    expect(next.edit_child).toBe(true)
+  })
 })

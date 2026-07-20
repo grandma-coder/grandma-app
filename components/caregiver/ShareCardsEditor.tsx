@@ -23,7 +23,7 @@ interface ShareCardsEditorProps {
 }
 
 interface CapabilityRow {
-  key: 'log_activity' | 'emergency' | 'chat'
+  key: 'log_activity' | 'emergency' | 'chat' | 'edit_child'
   label: string
 }
 
@@ -31,6 +31,7 @@ const CAPABILITY_ROWS: CapabilityRow[] = [
   { key: 'log_activity', label: 'Can log activity' },
   { key: 'emergency', label: 'Can view emergency info' },
   { key: 'chat', label: 'Can chat' },
+  { key: 'edit_child', label: 'Can edit child profile & health info' },
 ]
 
 export function ShareCardsEditor({ behavior, role, value, onChange }: ShareCardsEditorProps) {
