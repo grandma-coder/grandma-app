@@ -28,18 +28,40 @@ function NoteModal({ version, build, existing, prefill, onClose, onSaved }: {
 }) {
   const utils = trpc.useUtils()
   const upsert = trpc.releases.upsertNote.useMutation({ onSuccess: () => { utils.releases.notes.invalidate(); onSaved() }, onError: (e) => setError(e.message) })
+  const status_ = trpc.releases.status.useQuery()
+  const draft = trpc.releases.draftChangelog.useMutation({
+    onSuccess: (d) => {
+      if (!d.available) { setError("AI changelog isn't configured (set ANTHROPIC_API_KEY)."); return }
+      if (d.title) setTitle(d.title)
+      if (d.highlights.length) setHighlights(d.highlights.join("\n"))
+      if (d.changelog) setChangelog(d.changelog)
+    },
+    onError: (e) => setError(e.message),
+  })
   const [title, setTitle] = useState(existing?.title ?? "")
   const [changelog, setChangelog] = useState(existing?.changelog ?? prefill ?? "")
   const [highlights, setHighlights] = useState((existing?.highlights as string[] | null)?.join("\n") ?? "")
   const [status, setStatus] = useState<"draft" | "shipped">((existing?.status as "draft" | "shipped") ?? "draft")
   const [error, setError] = useState<string | null>(null)
+  const aiAvailable = status_.data?.changelogAi ?? false
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border-default bg-card p-6 shadow-[var(--shadow-xl)]" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-4 flex items-start justify-between gap-3">
           <h2 className="display text-lg font-semibold text-fg-primary">Changelog — v{version}{build ? ` (build ${build})` : ""}</h2>
-          <button onClick={onClose} className="text-fg-muted hover:text-fg-primary">✕</button>
+          <div className="flex items-center gap-2">
+            {aiAvailable && (
+              <button
+                onClick={() => { setError(null); draft.mutate({ commitText: changelog || title || `Release ${version}`, version }) }}
+                disabled={draft.isPending}
+                className="whitespace-nowrap rounded-lg border border-border-default px-2.5 py-1 text-xs font-medium text-accent-500 hover:border-accent-400 disabled:opacity-50"
+              >
+                {draft.isPending ? "Drafting…" : "✨ Draft with AI"}
+              </button>
+            )}
+            <button onClick={onClose} className="text-fg-muted hover:text-fg-primary">✕</button>
+          </div>
         </div>
         <label className="mb-1 block text-xs font-medium text-fg-tertiary">Headline</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={160} placeholder="e.g. Cycle insights + faster home"

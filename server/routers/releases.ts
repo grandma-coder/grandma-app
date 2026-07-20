@@ -5,6 +5,7 @@ import { db } from "@/db"
 import { contentReleases } from "@/db/schema"
 import { ascConfigured, ascWriteEnabled, fetchBuilds, fetchVersions, setVersionWhatsNew } from "@/lib/asc/client"
 import { easConfigured, fetchEasBuilds } from "@/lib/eas/client"
+import { draftChangelog, isChangelogAiAvailable } from "@/lib/content/changelog"
 import { writeAudit } from "@/lib/audit"
 
 /**
@@ -15,7 +16,24 @@ import { writeAudit } from "@/lib/audit"
  */
 export const releasesRouter = router({
   /** Connection state — drives setup cards + whether Publish-to-Apple shows. */
-  status: protectedProcedure.query(() => ({ ascConfigured, ascWriteEnabled, easConfigured })),
+  status: protectedProcedure.query(() => ({
+    ascConfigured,
+    ascWriteEnabled,
+    easConfigured,
+    changelogAi: isChangelogAiAvailable(),
+  })),
+
+  /**
+   * Draft a clean changelog from raw commit text with Claude (does not save —
+   * the UI prefills the editor for review). Admin only.
+   */
+  draftChangelog: adminProcedure
+    .input(z.object({ commitText: z.string().min(1).max(8000), version: z.string().max(40) }))
+    .mutation(async ({ input }) => {
+      if (!isChangelogAiAvailable()) return { available: false as const, title: "", highlights: [] as string[], changelog: "" }
+      const d = await draftChangelog(input.commitText, input.version)
+      return { available: true as const, ...d }
+    }),
 
   /** Live EAS builds (prod profile) with git commit/message. Empty when dormant. */
   easBuilds: protectedProcedure.query(async () => {
