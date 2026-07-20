@@ -101,23 +101,7 @@ import { MoodFace } from '../stickers/RewardStickers'
 import { WeekDetailModal } from '../home/pregnancy/WeekDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
-import {
-  PregnancyMoodForm,
-  PregnancySymptomsForm,
-  AppointmentForm,
-  ExamResultForm,
-  KickCountForm,
-  WeightLogForm,
-  SleepLogForm,
-  ExerciseLogForm,
-  KegelLogForm,
-  WaterLogForm,
-  VitaminsLogForm,
-  NestingTaskForm,
-  BirthPrepTaskForm,
-  ContractionTimerLogForm,
-} from './PregnancyLogForms'
-import { PregnancyMealForm } from './PregnancyMealForm'
+import { PregnancyLogRouter, type PregnancyLogType } from './PregnancyLogRouter'
 import { useTranslation } from '../../lib/i18n'
 
 // Enable LayoutAnimation on Android
@@ -150,12 +134,8 @@ const TRIMESTER_COLOR: Record<1 | 2 | 3, string> = {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ViewTab = 'timeline' | 'appointments'
-type LogFormType =
-  | 'mood' | 'weight' | 'symptom' | 'appointment' | 'exam_result' | 'kick_count'
-  | 'sleep' | 'exercise' | 'nutrition' | 'kegel' | 'water' | 'vitamins'
-  | 'nesting' | 'birth_prep' | 'contraction'
 
-const LOG_FORM_TITLE: Record<LogFormType, string> = {
+const LOG_FORM_TITLE: Record<PregnancyLogType, string> = {
   mood: 'Log Mood',
   weight: 'Log Weight',
   symptom: 'Log Symptoms',
@@ -225,7 +205,7 @@ function softTintFor(c: string): string {
   }
 }
 
-const ALL_LOG_TYPES: LogFormType[] = [
+const ALL_LOG_TYPES: PregnancyLogType[] = [
   'mood', 'symptom', 'vitamins', 'water', 'sleep', 'exercise',
   'kick_count', 'weight', 'appointment', 'exam_result', 'nutrition',
   'kegel', 'nesting', 'birth_prep', 'contraction',
@@ -338,35 +318,6 @@ function formatLogValue(log: PregnancyCalendarLog): string {
   return log.value
 }
 
-// ─── LogFormRouter ────────────────────────────────────────────────────────────
-
-function LogFormRouter({
-  type,
-  date,
-  onSaved,
-}: {
-  type: LogFormType
-  date: string
-  onSaved: () => void
-}): React.ReactElement | null {
-  if (type === 'mood')        return <PregnancyMoodForm date={date} onSaved={onSaved} />
-  if (type === 'weight')      return <WeightLogForm date={date} onSaved={onSaved} />
-  if (type === 'symptom')     return <PregnancySymptomsForm date={date} onSaved={onSaved} />
-  if (type === 'appointment') return <AppointmentForm date={date} onSaved={onSaved} />
-  if (type === 'exam_result') return <ExamResultForm date={date} onSaved={onSaved} />
-  if (type === 'kick_count')  return <KickCountForm date={date} onSaved={onSaved} />
-  if (type === 'sleep')       return <SleepLogForm date={date} onSaved={onSaved} />
-  if (type === 'exercise')    return <ExerciseLogForm date={date} onSaved={onSaved} />
-  if (type === 'nutrition')   return <PregnancyMealForm date={date} onSaved={onSaved} />
-  if (type === 'kegel')       return <KegelLogForm date={date} onSaved={onSaved} />
-  if (type === 'water')       return <WaterLogForm date={date} onSaved={onSaved} />
-  if (type === 'vitamins')    return <VitaminsLogForm date={date} onSaved={onSaved} />
-  if (type === 'nesting')     return <NestingTaskForm date={date} onSaved={onSaved} />
-  if (type === 'birth_prep')  return <BirthPrepTaskForm date={date} onSaved={onSaved} />
-  if (type === 'contraction') return <ContractionTimerLogForm date={date} onSaved={onSaved} />
-  return null
-}
-
 // ─── Quick Log Sheet + FAB ────────────────────────────────────────────────────
 
 function QuickLogSheet({
@@ -377,7 +328,7 @@ function QuickLogSheet({
 }: {
   visible: boolean
   onClose: () => void
-  onSelect: (type: LogFormType) => void
+  onSelect: (type: PregnancyLogType) => void
   onManageRoutines: () => void
 }) {
   const { colors, isDark, font } = useTheme()
@@ -1522,7 +1473,7 @@ function DayDetailPanel({
   pendingRoutines: PregnancyRoutine[]
   onOpenLog: (log: PregnancyCalendarLog) => void
   onDeleteLog: (log: PregnancyCalendarLog) => void
-  onOpenRoutine: (type: LogFormType) => void
+  onOpenRoutine: (type: PregnancyLogType) => void
 }) {
   const { colors } = useTheme()
   const diffuse = useIsDiffuse()
@@ -1615,7 +1566,7 @@ function DayDetailPanel({
             title: meta.label,
             sub: t('pregCal_tap_to_log'),
             logged: false,
-            onPress: () => onOpenRoutine(r.type as LogFormType),
+            onPress: () => onOpenRoutine(r.type as PregnancyLogType),
           })
         }
         for (const log of nonEmptyLogs) {
@@ -1693,7 +1644,7 @@ function DayDetailPanel({
                 {isExpanded && routines.map((routine) => (
                   <Pressable
                     key={routine.id}
-                    onPress={() => onOpenRoutine(routine.type as LogFormType)}
+                    onPress={() => onOpenRoutine(routine.type as PregnancyLogType)}
                     style={({ pressed }) => [
                       styles.routineItem,
                       { borderColor: meta.color + '40', backgroundColor: meta.color + '08', marginTop: 3 },
@@ -1966,7 +1917,7 @@ export function PregnancyCalendar() {
   const [calView, setCalView] = useState<'month' | 'week'>('month')
   const [viewDate, setViewDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
-  const [logForm, setLogForm] = useState<{ type: LogFormType; date: string } | null>(null)
+  const [logForm, setLogForm] = useState<{ type: PregnancyLogType; date: string } | null>(null)
   const [showQuickLog, setShowQuickLog] = useState(false)
   const [showRoutineManager, setShowRoutineManager] = useState(false)
   const [selectedLog, setSelectedLog] = useState<PregnancyCalendarLog | null>(null)
@@ -2291,7 +2242,7 @@ export function PregnancyCalendar() {
         subtitle: t('pregCal_tap_to_log'),
         tint: tintKey,
         icon: logSticker(r.type, 28, isDark),
-        onPress: () => setLogForm({ type: r.type as LogFormType, date: selectedDate }),
+        onPress: () => setLogForm({ type: r.type as PregnancyLogType, date: selectedDate }),
       })
     }
 
@@ -2920,7 +2871,7 @@ export function PregnancyCalendar() {
           contentContainerStyle={styles.logFormScroll}
         >
           {logForm !== null && (
-            <LogFormRouter type={logForm.type} date={logForm.date} onSaved={handleSaved} />
+            <PregnancyLogRouter type={logForm.type} date={logForm.date} onSaved={handleSaved} />
           )}
         </ScrollView>
       </LogSheet>
@@ -2937,7 +2888,7 @@ export function PregnancyCalendar() {
             onEdit={() => {
               const logToEdit = selectedLog
               setSelectedLog(null)
-              setLogForm({ type: logToEdit.log_type as LogFormType, date: logToEdit.log_date })
+              setLogForm({ type: logToEdit.log_type as PregnancyLogType, date: logToEdit.log_date })
             }}
             onDeleted={() => {
               setSelectedLog(null)
