@@ -25,7 +25,7 @@ import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
 export type LogType =
   | 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp'
   | 'intercourse' | 'exam' | 'pregnancy_test' | 'sex_drive' | 'clots'
-  | 'weight' | 'water' | 'activity'
+  | 'weight' | 'water' | 'activity' | 'lh' | 'cm'
 
 interface LogEntry {
   id: LogType
@@ -36,6 +36,8 @@ interface LogEntry {
 
 export const LOG_ENTRIES: LogEntry[] = [
   { id: 'basal_temp',   labelKey: 'cycleCalendar_logEntry_temperature',  subtitleKey: 'cycleCalendar_logEntry_temperatureSub', tint: 'temperature' },
+  { id: 'lh',           labelKey: 'cycleCalendar_logEntry_lh',           subtitleKey: 'cycleCalendar_logEntry_lhSub',           tint: 'ovulation' },
+  { id: 'cm',           labelKey: 'cycleCalendar_logEntry_cm',           subtitleKey: 'cycleCalendar_logEntry_cmSub',           tint: 'symptom' },
   { id: 'symptom',      labelKey: 'cycleCalendar_logEntry_symptoms',     subtitleKey: 'cycleCalendar_logEntry_symptomsSub',    tint: 'symptom' },
   { id: 'mood',         labelKey: 'cycleCalendar_logEntry_mood',         subtitleKey: 'cycleCalendar_logEntry_moodSub',        tint: 'mood' },
   { id: 'intercourse',  labelKey: 'cycleCalendar_logEntry_intimacy',     subtitleKey: 'cycleCalendar_logEntry_intimacySub',    tint: 'intimacy' },

@@ -14,7 +14,7 @@ import type { LogType } from './LogActivitySheet'
 import {
   PeriodStartForm, PeriodEndForm, SymptomsForm, MoodForm, BbtForm,
   IntimacyForm, PregnancyTestForm, SexDriveForm, ClotsForm, WeightForm,
-  WaterForm, ActivityForm,
+  WaterForm, ActivityForm, LhForm, CmForm,
 } from './CycleLogForms'
 import { ExamForm } from '../exams/ExamForm'
 
@@ -49,6 +49,12 @@ export function CycleLogRouter({ sheetType, date, cycleConfig, onClose, onSaved 
       </LogSheet>
       <LogSheet visible={sheetType === 'basal_temp'} title={t('cycleCalendar_logSheet_temperature')} onClose={onClose}>
         <BbtForm date={date} phase={phase} onSaved={onSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'lh'} title={t('cycleDash_lh')} onClose={onClose}>
+        <LhForm date={date} phase={phase} onSaved={onSaved} />
+      </LogSheet>
+      <LogSheet visible={sheetType === 'cm'} title={t('cycleDash_cervicalMucus')} onClose={onClose}>
+        <CmForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
       <LogSheet visible={sheetType === 'intercourse'} title={t('cycleCalendar_logSheet_intimacy')} onClose={onClose}>
         <IntimacyForm date={date} phase={phase} onSaved={onSaved} />

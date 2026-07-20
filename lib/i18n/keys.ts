@@ -1672,6 +1672,10 @@ export interface TranslationKeys {
   cycleCalendar_logExam: string
   cycleCalendar_logEntry_temperature: string
   cycleCalendar_logEntry_temperatureSub: string
+  cycleCalendar_logEntry_lh: string
+  cycleCalendar_logEntry_lhSub: string
+  cycleCalendar_logEntry_cm: string
+  cycleCalendar_logEntry_cmSub: string
   cycleCalendar_logEntry_symptoms: string
   cycleCalendar_logEntry_symptomsSub: string
   cycleCalendar_logEntry_mood: string

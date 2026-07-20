@@ -44,6 +44,8 @@ export function logSticker(type: string, size: number, _isDark: boolean): ReactN
     case 'period_end':     return <StickerBox size={size}><LogPeriodEnd size={size} /></StickerBox>
     case 'ovulation':      return <StickerBox size={size}><LogOvulation size={size} /></StickerBox>
     case 'cervical_fluid': return <StickerBox size={size}><LogCervicalFluid size={size} /></StickerBox>
+    case 'lh':             return <StickerBox size={size}><LogOvulation size={size} /></StickerBox>
+    case 'cm':             return <StickerBox size={size}><LogCervicalFluid size={size} /></StickerBox>
 
     // ─── kids ─────────────────────────────────────────────────────
     case 'feeding':

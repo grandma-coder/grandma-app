@@ -55,7 +55,7 @@ export const DIFFUSE_LOG_CHARACTER: Record<string, CharacterName> = {
   mood: 'mood', memory: 'photo', photo: 'photo', diaper: 'diaper',
   growth: 'growth', milestone: 'sparkle', activity: 'activity', note: 'note', exam: 'exam',
   // cycle
-  basal_temp: 'temperature', lh: 'water', cervical_mucus: 'water',
+  basal_temp: 'temperature', lh: 'water', cm: 'water', cervical_mucus: 'water',
   intercourse: 'heart', symptom: 'activity',
   // period_start/end share the droplet but differ by hue (see diffuseLogHue);
   // clots is a flow SYMPTOM, not the flow itself → distinct 'warning' blob.
