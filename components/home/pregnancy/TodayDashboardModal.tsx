@@ -20,11 +20,6 @@ import { PaperCard } from '../../ui/PaperCard'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition, LogExercise,
 } from '../../stickers/RewardStickers'
-import {
-  Droplet as DropletLine, Moon as MoonLine,
-  Utensils as UtensilsLine, Activity as ActivityLine, Footprints as FootprintsLine,
-  Scale as ScaleLine,
-} from 'lucide-react-native'
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
@@ -167,7 +162,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         {/* Hydration — full-width with 8 droplets */}
         <PaperCard tint={tileTint(stickers.blueSoft)} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            {diffuse ? <DropletLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogWater size={20} />}
+            {diffuse ? <Character name="water" size={16} color={dt.colors.ink3} /> : <LogWater size={20} />}
             <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelHydration')}</MonoCaps>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
@@ -185,7 +180,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.lilacSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <MoonLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogSleep size={18} />}
+              {diffuse ? <Character name="sleep" size={16} color={dt.colors.ink3} /> : <LogSleep size={18} />}
               <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelSleep')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -208,7 +203,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
 
           <PaperCard tint={tileTint(stickers.peachSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <UtensilsLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogNutrition size={18} />}
+              {diffuse ? <Character name="nutrition" size={16} color={dt.colors.ink3} /> : <LogNutrition size={18} />}
               <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelMeals')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>{nutritionVal}/3</Display>
@@ -228,7 +223,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.pinkSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <ActivityLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogExercise size={18} />}
+              {diffuse ? <Character name="activity" size={16} color={dt.colors.ink3} /> : <LogExercise size={18} />}
               <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelExercise')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -242,7 +237,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           {weekNumber >= 28 ? (
             <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
               <View style={styles.tileHeader}>
-                {diffuse ? <FootprintsLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogKicks size={18} />}
+                {diffuse ? <Character name="kick" size={16} color={dt.colors.ink3} /> : <LogKicks size={18} />}
                 <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelKicks')}</MonoCaps>
               </View>
               <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -255,7 +250,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           ) : (
             <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
               <View style={styles.tileHeader}>
-                {diffuse ? <ScaleLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogWeight size={18} />}
+                {diffuse ? <Character name="growth" size={16} color={dt.colors.ink3} /> : <LogWeight size={18} />}
                 <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelWeight')}</MonoCaps>
               </View>
               <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -274,7 +269,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         {/* 7-day weight sparkline */}
         <PaperCard tint={diffuse ? undefined : colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            {diffuse ? <ScaleLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogWeight size={18} />}
+            {diffuse ? <Character name="growth" size={16} color={dt.colors.ink3} /> : <LogWeight size={18} />}
             <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelWeightLast7')}</MonoCaps>
           </View>
           {loading ? (
@@ -293,7 +288,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
         {/* 7-day hydration bars */}
         <PaperCard tint={diffuse ? undefined : colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            {diffuse ? <DropletLine size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <LogWater size={18} />}
+            {diffuse ? <Character name="water" size={16} color={dt.colors.ink3} /> : <LogWater size={18} />}
             <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelHydrationLast7')}</MonoCaps>
           </View>
           {loading ? (

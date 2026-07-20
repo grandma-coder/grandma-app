@@ -16,7 +16,8 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native'
-import { X, Check, Plus, Stethoscope } from 'lucide-react-native'
+import { X, Check, Plus } from 'lucide-react-native'
+import { Character } from '../characters/Characters'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, font, shadows } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
@@ -140,7 +141,7 @@ export function AppointmentDetailModal({
                 <View style={[styles.heroIcon, { backgroundColor: paper, borderColor: hairline }]}>
                   {status === 'done'
                     ? <Check size={24} color={accent.ink} strokeWidth={2.6} />
-                    : <Stethoscope size={24} color={accent.ink} strokeWidth={2.2} />
+                    : <Character name="checkup" size={24} color={accent.ink} />
                   }
                 </View>
                 <View style={styles.heroText}>

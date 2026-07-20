@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { ArrowLeft, Check, ClipboardList, Heart as HeartIcon, Baby, Sparkles } from 'lucide-react-native'
+import { ArrowLeft, Check } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { BirthTypeCard } from '../components/pregnancy/BirthTypeCard'
@@ -14,6 +14,7 @@ import type { BirthTopicKey } from '../lib/birthGuideData'
 import { useTheme, spacing, radius, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
+import { Character } from '../components/characters/Characters'
 import { useTranslation } from '../lib/i18n'
 
 const BIRTH_TYPE_TO_TOPIC: Record<string, BirthTopicKey> = {
@@ -114,7 +115,7 @@ export default function BirthPlan() {
         <View style={{ alignItems: 'center', marginBottom: 8 }}>
           {diffuse ? (
             <DiffuseBloomIcon color={accent} size={96} intensity={0.5}>
-              <ClipboardList size={52} color={dt.colors.ink3} strokeWidth={1.4} />
+              <Character name="note" size={52} color={dt.colors.ink3} />
             </DiffuseBloomIcon>
           ) : (
             <MissingStickers.PregnancyBirthPlanHero size={120} />
@@ -187,11 +188,11 @@ export default function BirthPlan() {
           const Sticker = diffuse ? (
             <DiffuseBloomIcon color={accent} size={26} intensity={0.45}>
               {isMom ? (
-                <HeartIcon size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name="heart" size={16} color={dt.colors.ink3} />
               ) : isBaby ? (
-                <Baby size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name="baby" size={16} color={dt.colors.ink3} />
               ) : (
-                <Sparkles size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                <Character name="sparkle" size={16} color={dt.colors.ink3} />
               )}
             </DiffuseBloomIcon>
           ) : isMom ? (

@@ -19,7 +19,6 @@ import {
 } from 'react-native'
 import {
   Check,
-  Hand,
 } from 'lucide-react-native'
 import Svg, { Path } from 'react-native-svg'
 import {
@@ -796,7 +795,7 @@ export function KickCountForm({
               justifyContent: 'center',
               gap: 4,
             }}>
-              <Hand size={42} color={diffuse ? dInk : ink} strokeWidth={2} />
+              <Character name="kick" size={42} color={diffuse ? dInk : ink} />
               <Text style={{ fontSize: 12, fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold, color: diffuse ? dInk : ink, letterSpacing: 2 }}>{t('preg_form_kick_tap')}</Text>
             </View>
           </Pressable>

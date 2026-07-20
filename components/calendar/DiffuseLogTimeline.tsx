@@ -65,6 +65,7 @@ export const DIFFUSE_LOG_CHARACTER: Record<string, CharacterName> = {
   weight: 'growth', kick_count: 'kick', contraction: 'contraction',
   water: 'water', exercise: 'activity', vitamins: 'medicine', kegel: 'soothe',
   nutrition: 'nutrition', appointment: 'checkup', bath: 'bath', potty: 'potty', milk: 'milk',
+  nesting: 'soothe', birth_prep: 'note',
 }
 
 /** Soft bloom hue per log type (from the sticker palette). */

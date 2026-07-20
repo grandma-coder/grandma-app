@@ -15,8 +15,9 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
-import { Camera, ImagePlus, ScanLine, X } from 'lucide-react-native'
+import { X } from 'lucide-react-native'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, brand, stickers as stickerPalette, font } from '../../constants/theme'
+import { Character } from '../characters/Characters'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
@@ -245,7 +246,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
                 ? { backgroundColor: dAccent + '1F', borderColor: dAccent, borderWidth: 1 }
                 : { backgroundColor: brand.pregnancy }]}
             >
-              <Camera size={18} color={diffuse ? dAccent : colors.textInverse} strokeWidth={2} />
+              <Character name="photo" size={18} color={diffuse ? dAccent : colors.textInverse} />
               <Text style={[styles.pickBtnText, { color: diffuse ? dAccent : colors.textInverse, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 12 : 15 }]}>{t('kids_logForm_alertTakePhoto')}</Text>
             </Pressable>
             <Pressable
@@ -254,7 +255,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
                 ? { backgroundColor: 'transparent', borderColor: dt.colors.line, borderWidth: 1 }
                 : { backgroundColor: colors.surfaceGlass, borderColor: colors.border, borderWidth: 1 }]}
             >
-              <ImagePlus size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2} />
+              <Character name="photo" size={18} color={diffuse ? dt.colors.ink : colors.text} />
               <Text style={[styles.pickBtnText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 12 : 15 }]}>{t('kids_foodDash_gallery')}</Text>
             </Pressable>
           </View>
@@ -271,7 +272,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
               <View style={[styles.totalChip, diffuse
                 ? { backgroundColor: dAccent + '1F', borderWidth: 1, borderColor: dAccent }
                 : { backgroundColor: stickerPalette.yellowSoft }]}>
-                <ScanLine size={12} color={diffuse ? dAccent : '#141313'} strokeWidth={2.4} />
+                <Character name="scan" size={12} color={diffuse ? dAccent : '#141313'} />
                 <Text style={[styles.totalChipText, diffuse ? { color: dAccent, fontFamily: diffuseFont.monoBold, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 12 } : null]}>{t('pregMeal_approx_kcal', { count: totalCals })}</Text>
               </View>
             </View>
@@ -291,7 +292,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
             onPress={() => scan(photoUri)}
             style={[styles.scanAgainBtn, { borderColor: diffuse ? dt.colors.line : colors.border }]}
           >
-            <ScanLine size={16} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2} />
+            <Character name="scan" size={16} color={diffuse ? dt.colors.ink : colors.text} />
             <Text style={[styles.scanAgainText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, letterSpacing: diffuse ? 0.5 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{t('pregMeal_scan_again')}</Text>
           </Pressable>
         )}

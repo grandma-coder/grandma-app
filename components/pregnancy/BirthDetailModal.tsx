@@ -172,7 +172,7 @@ export function BirthDetailModal({
           accessibilityLabel="Ask Grandma anything about this topic"
           style={({ pressed }) => [styles.dCta, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
         >
-          <MessageCircle size={16} color={dt.colors.ink} strokeWidth={2} />
+          <Character name="chat" size={16} color={dt.colors.ink} />
           <Text style={[styles.dCtaLabel, { color: dt.colors.ink, fontFamily: diffuseFont.mono }]}>
             {t('preg_birthDetail_askGrandma')}
           </Text>
@@ -666,7 +666,7 @@ function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label, diffu
           accessibilityLabel={`${label}, ${sources.length} ${sources.length === 1 ? 'source' : 'sources'}`}
           style={({ pressed }) => [styles.sourcesHeader, { opacity: pressed ? 0.7 : 1 }]}
         >
-          <BookOpen size={13} color={dt.colors.ink3} strokeWidth={2} />
+          <Character name="book" size={13} color={dt.colors.ink3} />
           <Text style={[styles.dSourcesLabel, { flex: 1, color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
             {`${label} (${sources.length})`}
           </Text>

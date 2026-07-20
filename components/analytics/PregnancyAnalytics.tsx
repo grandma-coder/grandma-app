@@ -384,7 +384,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                       style={[styles.infoBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}
                       accessibilityLabel="Exams"
                     >
-                      <FlaskConical size={16} color={dt.colors.ink3} strokeWidth={1.6} />
+                      <Character name="exam" size={16} color={dt.colors.ink3} />
                     </Pressable>
                   ) : null}
                   <Pressable

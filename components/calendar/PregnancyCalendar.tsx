@@ -62,7 +62,6 @@ import {
   Minus,
   Pencil,
   Clock,
-  Camera,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius, useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius } from '../../constants/theme'
@@ -761,7 +760,7 @@ function RoutineManager({
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 6, paddingBottom: 14, gap: 12 }}>
               {diffuse ? (
                 <DiffuseBloomIcon color={ST_LAVENDER} size={44} intensity={0.5}>
-                  <Calendar size={20} color={dt.colors.ink2} strokeWidth={1.7} />
+                  <Character name="calendar" size={20} color={dt.colors.ink2} />
                 </DiffuseBloomIcon>
               ) : (
                 <View style={{
@@ -894,7 +893,7 @@ function RoutineManager({
                           }}
                         >
                           <DiffuseBloomIcon color={getDiffuseAccent('preg', dt.isDark)} size={32} intensity={0.45}>
-                            <Icon size={14} color={dt.colors.ink2} strokeWidth={1.7} />
+                            <Character name={DIFFUSE_LOG_CHARACTER[r.type] ?? 'note'} size={20} color={dt.colors.ink2} />
                           </DiffuseBloomIcon>
                           <View style={{ flex: 1, gap: 3 }}>
                             <Text style={{ color: dt.colors.ink, fontSize: 15, fontFamily: diffuseFont.body }}>
@@ -2805,7 +2804,7 @@ export function PregnancyCalendar() {
               transform: [{ translateY: pressed ? 2 : 0 }],
             })}
           >
-            <Camera size={16} color={diffuse ? dt.colors.ink3 : ST_INK} strokeWidth={diffuse ? 1.8 : 2.5} />
+            <Character name="photo" size={16} color={diffuse ? dt.colors.ink3 : ST_INK} />
             <Text style={diffuse
               ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' }
               : { color: ST_INK, fontFamily: font.bodyBold, fontSize: 12.5, letterSpacing: 0.6, textTransform: 'uppercase' }}>
