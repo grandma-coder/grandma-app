@@ -14,14 +14,14 @@ describe('buildWalletCards', () => {
     const ids = buildWalletCards({
       weekNumber: 12, todayLogs: {}, hasWeekTip: false, upcomingAppointment: null,
     }).map((c) => c.id)
-    expect(ids).toEqual(['essentials', 'reminders', 'exams', 'birth_guide', 'ask_grandma'])
+    expect(ids).toEqual(['essentials', 'reminders', 'memories', 'exams', 'birth_guide', 'ask_grandma'])
   })
 
   test('appointment + tip appear in order at the top', () => {
     const ids = buildWalletCards({
       weekNumber: 20, todayLogs: {}, hasWeekTip: true, upcomingAppointment: appt,
     }).map((c) => c.id)
-    expect(ids).toEqual(['essentials', 'appointment', 'week_tip', 'reminders', 'exams', 'birth_guide', 'ask_grandma'])
+    expect(ids).toEqual(['essentials', 'appointment', 'week_tip', 'reminders', 'memories', 'exams', 'birth_guide', 'ask_grandma'])
   })
 
   test('reminders card is always present and expandable (not linkOnly)', () => {

@@ -14,7 +14,7 @@ import type { WalletTone } from './wallet'
 
 export type KidsWalletCardId =
   | 'essentials' | 'goals' | 'health' | 'exams' | 'diaper' | 'growth_leap'
-  | 'reminders' | 'ask_grandma' | 'rewards'
+  | 'reminders' | 'memories' | 'ask_grandma' | 'rewards'
 
 export interface KidsWalletCardDescriptor {
   id: KidsWalletCardId
@@ -50,6 +50,7 @@ export function buildKidsWalletCards(input: BuildKidsWalletCardsInput): KidsWall
   // Reminders expands to the add-reminder input inline (with a "view all"
   // link to the manage modal).
   cards.push({ id: 'reminders', tone: 'lilac', linkOnly: false })
+  cards.push({ id: 'memories', tone: 'pink', linkOnly: true })
   cards.push({ id: 'ask_grandma', tone: 'mode', linkOnly: true })
   cards.push({ id: 'rewards', tone: 'coral', linkOnly: true })
 
