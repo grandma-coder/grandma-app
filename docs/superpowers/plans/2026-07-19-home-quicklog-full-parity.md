@@ -17,6 +17,8 @@
 - **Typecheck** with `npm run typecheck` (this repo wraps `tsc`; do NOT rely on raw `npx tsc --noEmit` line numbers — they can be stale from incremental cache; if in doubt delete `*.tsbuildinfo` first).
 - **Tests** with `npm test`.
 - **Work on `main`** — no worktrees/branches.
+- **i18n keys go in ALL locale files, not just en.ts.** Every locale (`lib/i18n/{en,ar,de,es,fr,hi,it,ja,ko,pt-BR,tr,zh}.ts`) is typed against `TranslationKeys` (`lib/i18n/keys.ts`), so a new key must be added to the `keys.ts` type AND to every one of the 12 locale files (English fallback string is fine for non-en locales — matches the codebase convention). Adding to only `en.ts` + `keys.ts` WILL fail typecheck. Wherever a task step says "add to `lib/i18n/en.ts` + `keys.ts`", read it as "add to `keys.ts` + all 12 locale files." Prefer reusing an existing key (no new key) whenever the calendar already names the type — that avoids the locale sweep entirely.
+- **Concurrent workstream is active on `main`.** Another stream commits between our tasks (e.g. `VaccineTrackerSheet`, MemoriesSheet i18n) and leaves unrelated working-tree edits (`app/daily-rewards.tsx`, `app/leaderboard.tsx`, `components/insights/InsightsScreen.tsx`). Stage ONLY your task's files; never `git add -A`. When generating a review package, a task's BASE is its commit's actual parent (`git rev-parse <commit>^`), which may be a concurrent commit, not the previous task's commit.
 - **Router contracts (exact):**
   - Cycle forms: `{ date, phase, onSaved }`. `CycleLogRouter` already computes `phase`.
   - Pregnancy forms: `{ date, onSaved }` uniformly (the `nutrition`/`PregnancyMealForm` case is reconciled to `{ date, onSaved }`).
