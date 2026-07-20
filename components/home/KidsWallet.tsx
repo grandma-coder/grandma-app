@@ -187,13 +187,11 @@ export function KidsWallet({
 
   return (
     <View>
-      {/* Edit affordance — opens the wallet customization picker. */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
-        <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 }]}>
-          <SlidersHorizontal size={14} color={editColor} strokeWidth={2} />
-          <Text style={{ fontFamily: diffuse ? diffuseFont.mono : undefined, fontSize: 11, letterSpacing: diffuse ? 0.8 : 0, textTransform: diffuse ? 'uppercase' : 'none', color: editColor }}>
-            {t('kids_quickLogs_edit')}
-          </Text>
+      {/* Edit affordance — icon-only (no "EDIT" text), standardized with the
+          summary card + cycle wallet edit controls. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 6 }}>
+        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button" accessibilityLabel={t('kids_quickLogs_edit')}>
+          <SlidersHorizontal size={16} color={editColor} strokeWidth={2} />
         </Pressable>
       </View>
 

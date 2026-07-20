@@ -106,20 +106,29 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
         <View style={{ flex: 1 }}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: titleColor }}>
-              {t('kids_todayAtGlance')}
+              {t('cycleLog_todayTitle')}
             </Text>
           ) : (
-            <Display size={22} color={ink}>{t('kids_todayAtGlance')}</Display>
+            <Display size={22} color={ink}>{t('cycleLog_todayTitle')}</Display>
           )}
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor }}>
-            {summaryHint}
+            {t('cycleLog_hint')}
           </Text>
         </View>
-        <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [styles.editBtn, { opacity: pressed ? 0.6 : 1 }]}>
-          <SlidersHorizontal size={15} color={chevronColor} strokeWidth={2} />
-          <Text style={{ fontFamily: labelFont, fontSize: 12, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
-            {t('kids_quickLogs_edit')}
+        {/* Compact "See results" pill + icon-only edit on the header row
+            (replaces the old footer band that left dead space). Matches the
+            cycle + pregnancy cards exactly. See results → kids analytics tab. */}
+        <Pressable
+          onPress={() => router.push('/vault')}
+          hitSlop={8}
+          style={({ pressed }) => [styles.headerResultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? 'transparent' : colors.surface, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={{ fontFamily: labelFont, fontSize: 11, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
+            {t('kids_quickLogs_seeResults')}
           </Text>
+        </Pressable>
+        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
+          <SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -164,19 +173,8 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
         />
       </View>
 
-      {/* Footer — "See results" routes to the kids analytics tab (the "patterns /
-          thriving breakdown" view lives on the vault/Insights tab slot, which
-          renders KidsAnalytics for kids mode — NOT the /insights daily companion). */}
-      <View style={[styles.footer, { borderTopColor: trackColor }]}>
-        <Pressable
-          onPress={() => router.push('/vault')}
-          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? dt.colors.surface : colors.surface, opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, fontSize: 13, letterSpacing: -0.1, color: titleColor }}>
-            {t('kids_quickLogs_seeResults')}
-          </Text>
-        </Pressable>
-      </View>
+      {/* (See results moved to the header row; no footer band — it left dead
+          space. Matches the cycle + pregnancy cards.) */}
 
       <KidsQuickLogPicker visible={pickerOpen} onClose={() => setPickerOpen(false)} />
     </View>
@@ -186,8 +184,7 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  footer: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
-  resultsPill: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16 },
+  headerResultsPill: { borderWidth: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

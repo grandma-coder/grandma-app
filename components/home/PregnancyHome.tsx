@@ -33,7 +33,7 @@ import type { CaregiverView } from '../../lib/caregiverPermissions'
 import { useTranslation } from '../../lib/i18n'
 import { HomeGreeting } from './HomeGreeting'
 import { CaregiverIdentityHeader } from '../caregiver/CaregiverIdentityHeader'
-import { MonoCaps } from '../ui/Typography'
+import { MonoCaps, Display } from '../ui/Typography'
 import { supabase } from '../../lib/supabase'
 import { pregnancyWeeks, getDaysToGo, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
@@ -374,16 +374,10 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
       </View>
       )}
 
-      {/* 3. Quick-log launcher — standalone, customizable */}
+      {/* 3. Quick-log launcher — standalone, customizable. No eyebrow above it:
+          the card's own "Log for today" title heads the section (matches cycle). */}
       {show('today_summary') && (
       <View style={styles.section}>
-        {diffuse ? (
-          <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
-            {t('pregnancy_logSomething_label')}
-          </Text>
-        ) : (
-          <MonoCaps style={{ marginBottom: 12 }}>{t('pregnancy_logSomething_label')}</MonoCaps>
-        )}
         <TodaySummaryCard
           todayLogs={todayLogs}
           weekNumber={weekNumber}
@@ -393,15 +387,17 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
       </View>
       )}
 
-      {/* 4. Week Wallet — collapsible stack (reminders + shortcuts) */}
+      {/* 4. Week Wallet — collapsible stack. Heading is a real display-font
+          title (same size/weight as the "Log for today" card title) rather than
+          a small mono eyebrow, matching the kids home. */}
       {walletHasVisibleCard && (
       <View style={styles.section}>
         {diffuse ? (
-          <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
-            {t('pregnancy_weekWallet_label')}
+          <Text style={{ marginBottom: 12, fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: dt.colors.ink }}>
+            {t('home_wallet_label')}
           </Text>
         ) : (
-          <MonoCaps style={{ marginBottom: 12 }}>{t('pregnancy_weekWallet_label')}</MonoCaps>
+          <Display size={22} style={{ marginBottom: 12 }}>{t('home_wallet_label')}</Display>
         )}
         <WeekWallet
           weekNumber={weekNumber}

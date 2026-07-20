@@ -467,7 +467,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { SleepForm, KidsMoodForm, FeedingForm, ActivityForm, DiaperForm } from '../calendar/KidsLogForms'
 import { useKidsTodayLogs } from '../../lib/analyticsData'
 import { KidsTodaySummaryCard } from './kids/KidsTodaySummaryCard'
-import { MonoCaps } from '../ui/Typography'
+import { MonoCaps, Display } from '../ui/Typography'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
@@ -2209,16 +2209,10 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       />
       )}
 
-      {/* ─── Today at a glance — customizable quick-log launcher ─── */}
+      {/* ─── Today at a glance — customizable quick-log launcher. No eyebrow:
+          the card's own "Log for today" title heads the section (matches cycle). */}
       {show('today-summary') && (
-      <View style={{ marginTop: 24 }}>
-        {diffuse ? (
-          <Text style={{ marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
-            {t('kids_logSomething_label')}
-          </Text>
-        ) : (
-          <MonoCaps style={{ marginBottom: 12 }}>{t('kids_logSomething_label')}</MonoCaps>
-        )}
+      <View style={{ marginTop: 16 }}>
         <KidsTodaySummaryCard
           childId={child?.id}
           todayCounts={todayCounts}
@@ -2229,15 +2223,16 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}
 
-      {/* Wallet eyebrow — small section title above the card stack, matching the
-          pregnancy home's "YOUR WEEK" label above its Week Wallet. Hidden with
-          the stack when a caregiver has none of the wallet's cards shared. */}
+      {/* Wallet heading — a real display-font title (same size/weight as the
+          "Log for today" card title) rather than a small mono eyebrow, so the
+          section reads as a proper heading. Hidden when a caregiver has none of
+          the wallet's cards shared. */}
       {walletHasVisibleCard && (diffuse ? (
-        <Text style={{ marginTop: 24, marginBottom: 12, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dt.colors.ink3 }}>
-          {t('kids_home_wallet_label')}
+        <Text style={{ marginTop: 16, marginBottom: 12, fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: dt.colors.ink }}>
+          {t('home_wallet_label')}
         </Text>
       ) : (
-        <MonoCaps style={{ marginTop: 24, marginBottom: 12 }}>{t('kids_home_wallet_label')}</MonoCaps>
+        <Display size={22} style={{ marginTop: 16, marginBottom: 12 }}>{t('home_wallet_label')}</Display>
       ))}
 
       {/* ─── Wallet stack (Set Goals → Rewards) ─────────────── */}

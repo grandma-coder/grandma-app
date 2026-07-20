@@ -151,20 +151,30 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         <View style={{ flex: 1 }}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: titleColor }}>
-              {t('pregnancy_todayAtGlance')}
+              {t('cycleLog_todayTitle')}
             </Text>
           ) : (
-            <Display size={22} color={ink}>{t('pregnancy_todayAtGlance')}</Display>
+            <Display size={22} color={ink}>{t('cycleLog_todayTitle')}</Display>
           )}
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor }}>
-            {summaryHint}
+            {t('cycleLog_hint')}
           </Text>
         </View>
-        <Pressable onPress={() => setPickerOpen(true)} hitSlop={10} style={({ pressed }) => [styles.editBtn, { opacity: pressed ? 0.6 : 1 }]}>
-          <SlidersHorizontal size={15} color={chevronColor} strokeWidth={2} />
-          <Text style={{ fontFamily: labelFont, fontSize: 12, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
-            {t('pregnancy_quickLogs_edit')}
+        {/* Compact "See results" pill on the header row (replaces the old
+            footer band that left dead space). Sits left of EDIT. */}
+        <Pressable
+          onPress={() => setOpen(true)}
+          hitSlop={8}
+          style={({ pressed }) => [styles.headerResultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? 'transparent' : colors.surface, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={{ fontFamily: labelFont, fontSize: 11, color: chevronColor, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.8 : 0 }}>
+            {t('pregnancy_quickLogs_seeResults')}
           </Text>
+        </Pressable>
+        {/* Icon-only edit (customize chips) — standardized with the wallet
+            edit control; the label is dropped so it reads as a quiet glyph. */}
+        <Pressable onPress={() => setPickerOpen(true)} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
+          <SlidersHorizontal size={16} color={chevronColor} strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -213,18 +223,8 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         />
       </View>
 
-      {/* Footer — a single "See results" pill (opens the daily dashboard),
-          same style as the Daily Message "View all cards" pill. */}
-      <View style={[styles.footer, { borderTopColor: trackColor }]}>
-        <Pressable
-          onPress={() => setOpen(true)}
-          style={({ pressed }) => [styles.resultsPill, { borderColor: diffuse ? dt.colors.line2 : colors.border, backgroundColor: diffuse ? dt.colors.surface : colors.surface, opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Text style={{ fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold, fontSize: 13, letterSpacing: -0.1, color: titleColor }}>
-            {t('pregnancy_quickLogs_seeResults')}
-          </Text>
-        </Pressable>
-      </View>
+      {/* (See results moved to the header row; no footer band — it left dead
+          space between this card and the Daily Message below.) */}
     </>
   )
 
@@ -253,8 +253,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  footer: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
-  resultsPill: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16 },
+  headerResultsPill: { borderWidth: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
   chipsRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },
