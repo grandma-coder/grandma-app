@@ -28,6 +28,7 @@ import { QuietPill } from '../ui/QuietPill'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { SlidersHorizontal } from 'lucide-react-native'
 import { Character } from '../characters/Characters'
+import { MemoriesSheet } from './MemoriesSheet'
 import {
   NotifyGoalAchieved, NotifyRoutine, LogDiaper, LogGrowth,
 } from '../stickers/RewardStickers'
@@ -72,6 +73,7 @@ export function KidsWallet({
   const enabledKeys = useKidsWalletStore((s) => s.enabledKeys)
   const setEnabled = useKidsWalletStore((s) => s.setEnabled)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [showMemories, setShowMemories] = useState(false)
 
   // Default (contextual) cards from the pure builder. `essentials` is pinned by
   // the home above the wallet (EssentialsWalletCard), so it never lives here.
@@ -107,6 +109,7 @@ export function KidsWallet({
         case 'diaper': return <Character name="diaper" size={26} color={stickers.peach} />
         case 'growth_leap': return <Character name="growth" size={26} color={stickers.green} />
         case 'reminders': return <Character name="clock" size={26} color={stickers.blue} />
+        case 'memories': return <Character name="photo" size={26} color={stickers.pink} />
         case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
         case 'rewards': return <Character name="crown" size={26} color={stickers.yellow} />
         case 'channels': return <Character name="community" size={26} color={stickers.peach} />
@@ -120,6 +123,7 @@ export function KidsWallet({
       case 'diaper': return <LogDiaper size={24} />
       case 'growth_leap': return <LogGrowth size={24} />
       case 'reminders': return <NotifyRoutine size={24} />
+      case 'memories': return <Character name="photo" size={24} color={stickers.pink} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
       case 'rewards': return <NotifyGoalAchieved size={24} />
       case 'channels': return <Character name="community" size={24} color={stickers.peach} />
@@ -135,6 +139,7 @@ export function KidsWallet({
       case 'diaper': return t('kids_home_diaper_tracker_title')
       case 'growth_leap': return growthLeapName ?? t('kids_growthLeaps')
       case 'reminders': return t('wallet_reminders_title')
+      case 'memories': return t('wallet_memories_title')
       case 'ask_grandma': return t('wallet_askGrandma_title')
       case 'rewards': return t('wallet_rewards_title')
       case 'channels': return t('wallet_channels_title')
@@ -151,6 +156,7 @@ export function KidsWallet({
       case 'diaper': return stickers.peachSoft
       case 'growth_leap': return stickers.greenSoft
       case 'reminders': return stickers.blueSoft
+      case 'memories': return stickers.pinkSoft
       case 'ask_grandma': return stickers.lilacSoft
       case 'rewards': return stickers.yellowSoft
       case 'channels': return stickers.peachSoft
@@ -169,6 +175,7 @@ export function KidsWallet({
       case 'rewards': return router.push('/daily-rewards' as never)
       case 'growth_leap': return onOpenGrowthLeap()
       case 'reminders': return onOpenReminders()
+      case 'memories': return setShowMemories(true)
       case 'channels': return router.push('/community?tab=channels' as never)
       case 'village': return router.push('/village' as never)
     }
@@ -222,6 +229,8 @@ export function KidsWallet({
         enabledKeys={displayedIds}
         onSave={setEnabled}
       />
+
+      <MemoriesSheet behavior="kids" visible={showMemories} onClose={() => setShowMemories(false)} />
     </View>
   )
 }
