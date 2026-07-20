@@ -16,6 +16,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import * as ImageManipulator from 'expo-image-manipulator'
 import { supabase } from './supabase'
 import { useChildStore } from '../store/useChildStore'
 
@@ -119,10 +120,77 @@ export function useMemories(behavior: MemoryBehavior) {
   })
 }
 
+// ─── Photo upload ─────────────────────────────────────────────────────────
+// Memory photos must be uploaded to a PRIVATE bucket and stored as a bare
+// storage PATH (signed at read time via lib/photoSigning.ts) — NOT the raw
+// local picker URI, which invalidates when the OS clears the picker cache and
+// never syncs across devices. Each URI is re-encoded to a compressed JPEG
+// first: this also sidesteps iOS "Cannot load representation of type
+// public.jpeg" errors on iCloud-optimized / HEIC originals, since manipulate
+// materializes a plain local JPEG that fetch() can always read.
+
+/** Bucket + path scope for a behavior's memory photos. */
+function memoryPhotoTarget(
+  behavior: MemoryBehavior,
+  userId: string,
+  childId: string | null,
+): { bucket: 'cycle-photos' | 'pregnancy-nutrition' | 'child-photos'; folder: string } {
+  switch (behavior) {
+    case 'cycle':
+      return { bucket: 'cycle-photos', folder: userId }
+    case 'pregnancy':
+      return { bucket: 'pregnancy-nutrition', folder: userId }
+    case 'kids':
+      return { bucket: 'child-photos', folder: childId ?? userId }
+  }
+}
+
+/**
+ * Re-encode + upload each local URI to the behavior's private bucket. Returns
+ * the stored storage paths (in order). Throws if every upload fails, so the
+ * caller never persists a memory row with zero durable photos.
+ */
+async function uploadMemoryPhotos(
+  behavior: MemoryBehavior,
+  uris: string[],
+  userId: string,
+  childId: string | null,
+): Promise<string[]> {
+  const { bucket, folder } = memoryPhotoTarget(behavior, userId, childId)
+  const paths: string[] = []
+
+  for (const uri of uris) {
+    try {
+      // Force a local, readable JPEG (fixes HEIC / iCloud representation errors).
+      const { uri: jpegUri } = await ImageManipulator.manipulateAsync(
+        uri,
+        [],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+      )
+      const res = await fetch(jpegUri)
+      const buf = await res.arrayBuffer()
+      const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
+      const { error } = await supabase.storage.from(bucket).upload(path, buf, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      })
+      if (!error) paths.push(path)
+    } catch {
+      // Skip a single unreadable photo rather than failing the whole save.
+    }
+  }
+
+  if (uris.length > 0 && paths.length === 0) {
+    throw new Error('Photo upload failed — check your connection and try again.')
+  }
+  return paths
+}
+
 // ─── Mutations ──────────────────────────────────────────────────────────────
 
 interface AddMemoryInput {
   date: string
+  /** Local picker URIs — uploaded to a private bucket; stored as paths. */
   photos: string[]
   caption: string
 }
@@ -137,6 +205,9 @@ export function useAddMemory(behavior: MemoryBehavior) {
       const userId = await fetchUserId()
       if (!userId) throw new Error('No active session')
 
+      // Upload local URIs → durable storage paths before persisting the row.
+      const storedPaths = await uploadMemoryPhotos(behavior, photos, userId, activeChild?.id ?? null)
+
       const row: Record<string, unknown> =
         behavior === 'kids'
           ? {
@@ -144,7 +215,7 @@ export function useAddMemory(behavior: MemoryBehavior) {
               child_id: activeChild?.id ?? null,
               [dateCol]: date,
               [typeCol]: typeValue,
-              photos,
+              photos: storedPaths,
               notes: caption,
               logged_by: userId,
             }
@@ -152,7 +223,7 @@ export function useAddMemory(behavior: MemoryBehavior) {
               user_id: userId,
               [dateCol]: date,
               [typeCol]: typeValue,
-              photos,
+              photos: storedPaths,
               notes: caption,
             }
 

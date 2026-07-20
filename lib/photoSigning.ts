@@ -23,6 +23,9 @@ export const PHOTO_BUCKETS = {
   child: 'child-photos',
   avatar: 'profile-avatars',
   pregnancyMeal: 'pregnancy-nutrition',
+  // Cycle memory photos — private, owner-only (migration 20260719220000).
+  // Pregnancy memories reuse the owner-only pregnancyMeal bucket.
+  cycle: 'cycle-photos',
 } as const
 
 export type PhotoBucket = (typeof PHOTO_BUCKETS)[keyof typeof PHOTO_BUCKETS]

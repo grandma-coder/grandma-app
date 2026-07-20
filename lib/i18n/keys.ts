@@ -2378,6 +2378,9 @@ export interface TranslationKeys {
   memories_captionPlaceholder: string
   memories_addBtn: string
   memories_uploading: string
+  memories_permissionDenied: string
+  memories_pickFailed: string
+  memories_saveFailed: string
   memories_saveMemory: string
   memories_editCaptionPlaceholder: string
   memories_deleteTitle: string

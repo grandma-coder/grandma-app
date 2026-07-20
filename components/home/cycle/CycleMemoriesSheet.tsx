@@ -30,6 +30,7 @@ import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 import { useMemories, useAddMemory, type Memory } from '../../../lib/memories'
+import { SignedImage, PHOTO_BUCKETS } from '../../../lib/photoSigning'
 import { toDateStr } from '../../../lib/cycleLogic'
 import { LogSheet } from '../../calendar/LogSheet'
 import { DiffuseSheet, DiffuseEmptyState } from '../../ui/diffuse/DiffusePrimitives'
@@ -78,23 +79,41 @@ function CycleMemoriesBody() {
   const [pendingPhotos, setPendingPhotos] = useState<string[]>([])
   const [caption, setCaption] = useState('')
 
+  const [pickError, setPickError] = useState<string | null>(null)
+
   async function pickPhotos() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== 'granted') return
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.8, selectionLimit: 10,
-    })
-    if (result.canceled || result.assets.length === 0) return
-    setPendingPhotos(result.assets.map((a) => a.uri))
-    setCaption('')
-    setAdding(true)
+    setPickError(null)
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (status !== 'granted') {
+        setPickError(t('memories_permissionDenied'))
+        return
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.8, selectionLimit: 10,
+      })
+      if (result.canceled || result.assets.length === 0) return
+      setPendingPhotos(result.assets.map((a) => a.uri))
+      setCaption('')
+      setAdding(true)
+    } catch {
+      // iOS can throw "Cannot load representation of type public.jpeg" for
+      // iCloud-optimized / HEIC originals. Surface a friendly message instead
+      // of an uncaught promise rejection (red error toast). The upload path
+      // re-encodes to JPEG, so most photos still work if re-picked.
+      setPickError(t('memories_pickFailed'))
+    }
   }
 
   function handleSave() {
     if (pendingPhotos.length === 0) return
+    setPickError(null)
     addMemory.mutate(
       { date: toDateStr(new Date()), photos: pendingPhotos, caption: caption.trim() },
-      { onSuccess: () => { setAdding(false); setPendingPhotos([]); setCaption('') } }
+      {
+        onSuccess: () => { setAdding(false); setPendingPhotos([]); setCaption('') },
+        onError: (e) => setPickError(e instanceof Error ? e.message : t('memories_saveFailed')),
+      }
     )
   }
 
@@ -137,7 +156,7 @@ function CycleMemoriesBody() {
               {memories.map((m: Memory) => (
                 <View key={m.id} style={styles.gridItem}>
                   {m.photos[0] ? (
-                    <Image source={{ uri: m.photos[0] }} style={[styles.gridImage, { borderColor: paperBorder }]} resizeMode="cover" />
+                    <SignedImage value={m.photos[0]} bucket={PHOTO_BUCKETS.cycle} style={[styles.gridImage, { borderColor: paperBorder }]} resizeMode="cover" />
                   ) : (
                     <View style={[styles.gridImage, styles.gridImagePlaceholder, { backgroundColor: stickers.pinkSoft, borderColor: paperBorder }]}>
                       <Character name="photo" size={22} color={stickers.pink} />
@@ -193,6 +212,10 @@ function CycleMemoriesBody() {
           )}
         </>
       )}
+
+      {pickError ? (
+        <Text style={[styles.errorText, { color: stickers.coral }]}>{pickError}</Text>
+      ) : null}
 
       {adding && (
         <View style={[styles.addPanel, { borderColor: paperBorder, backgroundColor: paper }]}>
@@ -259,4 +282,5 @@ const styles = StyleSheet.create({
   captionInput: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, minHeight: 44 },
   addPanelActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 12 },
   cancelBtn: { paddingHorizontal: 8, paddingVertical: 10 },
+  errorText: { fontSize: 13, textAlign: 'center', lineHeight: 18 },
 })
