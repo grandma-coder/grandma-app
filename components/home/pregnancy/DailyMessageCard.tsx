@@ -1,12 +1,13 @@
 // components/home/pregnancy/DailyMessageCard.tsx
 import { useState } from 'react'
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Display, MonoCaps } from '../../ui/Typography'
 import { CardSticker } from './CardSticker'
-import { useTheme, font } from '../../../constants/theme'
+import { useTheme } from '../../../constants/theme'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
 import { DailyMessageModal } from './DailyMessageModal'
+import { QuietPill } from '../../ui/QuietPill'
 
 export function DailyMessageCard() {
   const { colors } = useTheme()
@@ -32,20 +33,22 @@ export function DailyMessageCard() {
             {/* Answer sits as a small pill beside the question (bottom-aligned,
                 next to the "?") rather than on its own line below — removes the
                 empty gap under the prompt. */}
-            <View style={[styles.answerPill, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-              <Text style={[styles.pillText, { color: colors.text }]}>Answer</Text>
-            </View>
+            <QuietPill
+              label="Answer"
+              onPress={() => setOpen(true)}
+              accessibilityLabel="Answer"
+            />
           </View>
         )}
       </Pressable>
 
       {isAnswered ? (
-        <Pressable
+        <QuietPill
+          label="View all cards"
           onPress={() => router.push('/my-cards')}
-          style={({ pressed }) => [styles.pill, { borderColor: colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Text style={[styles.pillText, { color: colors.text }]}>View all cards</Text>
-        </Pressable>
+          accessibilityLabel="View all cards"
+          style={{ alignSelf: 'flex-start', marginTop: 16 }}
+        />
       ) : null}
 
       <DailyMessageModal visible={open} onClose={() => setOpen(false)} />
@@ -60,8 +63,5 @@ const styles = StyleSheet.create({
   // sits beside the end of the question.
   promptRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, marginTop: 10 },
   promptFlex: { flex: 1 },
-  answerPill: { borderWidth: 1, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 16 },
   answeredRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 14 },
-  pill: { alignSelf: 'flex-start', marginTop: 16, borderWidth: 1, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16 },
-  pillText: { fontFamily: font.bodySemiBold, fontSize: 13, letterSpacing: -0.1 },
 })
