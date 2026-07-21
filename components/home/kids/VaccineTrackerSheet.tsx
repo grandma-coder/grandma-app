@@ -17,7 +17,7 @@
  */
 import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, font, useDiffuseTheme, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { DiffuseSectionHeader, DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
@@ -62,6 +62,7 @@ export function VaccineTrackerSheet({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
 
   // The tree derives per-dose "done" status from the child's recorded vaccine
   // history (child_logs, type='vaccine'). HealthDetailModal received this as a
@@ -104,6 +105,14 @@ export function VaccineTrackerSheet({
 
   const stickerInk = isDark ? 'rgba(255,255,255,0.18)' : '#141313'
 
+  // Marking a dose given writes to child_logs but the parent's mutation can't
+  // invalidate THIS sheet's self-fetched query — so refresh it here after the
+  // given-write resolves, otherwise the tree stays stale until reopened.
+  const handleMarkGiven = async (name: string, date: string, key: string) => {
+    await onMarkVaccineGiven(name, date, key)
+    queryClient.invalidateQueries({ queryKey: ['vaccine-tracker-history', child.id] })
+  }
+
   if (diffuse) {
     const acc = getDiffuseAccent('kids', dt.isDark)
     return (
@@ -122,7 +131,7 @@ export function VaccineTrackerSheet({
           healthHistory={healthHistory}
           scheduledVaccines={scheduledVaccines}
           onSetVaccineDate={onSetVaccineDate}
-          onMarkVaccineGiven={onMarkVaccineGiven}
+          onMarkVaccineGiven={handleMarkGiven}
         />
       </DiffuseSheet>
     )
@@ -147,7 +156,7 @@ export function VaccineTrackerSheet({
         healthHistory={healthHistory}
         scheduledVaccines={scheduledVaccines}
         onSetVaccineDate={onSetVaccineDate}
-        onMarkVaccineGiven={onMarkVaccineGiven}
+        onMarkVaccineGiven={handleMarkGiven}
       />
     </LogSheet>
   )

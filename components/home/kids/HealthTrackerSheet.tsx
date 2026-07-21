@@ -207,8 +207,8 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
             <DiffuseListRow
               key={`flag-${e.id}`}
               title={e.title}
-              sub={t(KIDS_HEALTH_EXAMS_FLAGGED_KEY)}
               icon={<Character name="warning" size={22} color={warn} />}
+              value={t(KIDS_HEALTH_EXAMS_FLAGGED_KEY)}
               valueColor={warn}
               last
             />
