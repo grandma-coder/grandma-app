@@ -2,6 +2,7 @@
 // @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { logAiUsage } from '../_shared/aiUsage.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -77,6 +78,7 @@ serve(async (req) => {
 
     const systemPrompt = buildSystemPrompt(childContext, pillarId, mode, weekNumber)
 
+    const startedAt = Date.now()
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -94,6 +96,16 @@ serve(async (req) => {
     })
 
     const data = await response.json()
+
+    // Log token spend to ai_usage (command center AI-cost pillar). Fire-and-forget.
+    await logAiUsage(supabase, {
+      fn: 'nana-chat',
+      model: 'claude-sonnet-4-5',
+      userId: authData.user.id,
+      usage: data.usage,
+      ok: response.ok,
+      latencyMs: Date.now() - startedAt,
+    })
 
     if (!response.ok) {
       throw new Error(data.error?.message || 'Claude API error')

@@ -1,6 +1,7 @@
 // deno-lint-ignore-file
 // @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { logAiUsage } from '../_shared/aiUsage.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -220,6 +221,7 @@ She may ask about any of them. Answer using whichever context is most relevant t
     })
 
     // ─── Call Claude API ───────────────────────────────────────────────
+    const startedAt = Date.now()
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -242,6 +244,17 @@ She may ask about any of them. Answer using whichever context is most relevant t
     }
 
     const data = await response.json()
+
+    // Log token spend to ai_usage (command center AI-cost pillar). Fire-and-forget.
+    await logAiUsage(supabase, {
+      fn: 'grandma-chat',
+      model: 'claude-sonnet-4-5',
+      userId: user_id,
+      usage: data.usage,
+      ok: true,
+      latencyMs: Date.now() - startedAt,
+    })
+
     const rawReply = data.content[0].text
 
     // ─── Parse reply and suggestions ──────────────────────────────────

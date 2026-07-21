@@ -2,6 +2,7 @@
 // @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { logAiUsage } from '../_shared/aiUsage.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -195,6 +196,7 @@ serve(async (req) => {
     const systemPrompt = buildSystemPrompt(behavior)
     const userMessage = `Here are the user's logs from the last 30 days:\n\n${logSummary}\n\nGenerate 3-5 personalized insights based on this data. Return ONLY a valid JSON array.`
 
+    const startedAt = Date.now()
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -216,6 +218,17 @@ serve(async (req) => {
     }
 
     const aiResponse = await response.json()
+
+    // Log token spend to ai_usage (command center AI-cost pillar). Fire-and-forget.
+    await logAiUsage(supabase, {
+      fn: 'generate-insights',
+      model: 'claude-sonnet-4-5',
+      userId: user_id,
+      usage: aiResponse.usage,
+      ok: true,
+      latencyMs: Date.now() - startedAt,
+    })
+
     const aiText = aiResponse.content?.[0]?.text ?? '[]'
 
     // Parse JSON from response — handle markdown code blocks too

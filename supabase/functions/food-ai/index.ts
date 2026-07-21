@@ -3,6 +3,7 @@
 // Returns structured JSON so the caller (FeedingForm) can auto-populate tags.
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { logAiUsage } from '../_shared/aiUsage.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -138,6 +139,12 @@ serve(async (req) => {
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
+  const userId = authData.user.id
+
+  // Track model + timing across the try/catch so both the success and error
+  // paths can log a row to ai_usage (command center's AI-cost pillar).
+  let usageModel = TEXT_MODEL
+  const startedAt = Date.now()
 
   try {
     const body: RequestBody = await req.json()
@@ -174,6 +181,8 @@ serve(async (req) => {
     }
     content.push({ type: 'text', text: userText })
 
+    usageModel = body.mode === 'image' ? VISION_MODEL : TEXT_MODEL
+
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -182,7 +191,7 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: body.mode === 'image' ? VISION_MODEL : TEXT_MODEL,
+        model: usageModel,
         max_tokens: 800,
         system: systemPrompt,
         messages: [{ role: 'user', content }],
@@ -190,6 +199,15 @@ serve(async (req) => {
     })
 
     const raw = await resp.json()
+    // Log token spend (usage present even on some non-2xx). Fire-and-forget.
+    await logAiUsage(supabase, {
+      fn: 'food-ai',
+      model: usageModel,
+      userId,
+      usage: raw.usage,
+      ok: resp.ok,
+      latencyMs: Date.now() - startedAt,
+    })
     if (!resp.ok) throw new Error(raw.error?.message || 'Claude API error')
 
     const reply: string = raw.content?.[0]?.text ?? ''
