@@ -88,7 +88,6 @@ type TranslationKey = keyof TranslationKeys
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
-import { LogSheet } from './LogSheet'
 import { SegmentedTabs } from './SegmentedTabs'
 import { ActivityPillCard } from './ActivityPillCard'
 import { LogTile, LogTileGrid } from './LogTile'
@@ -98,18 +97,10 @@ import { LogMonthGrid } from './LogMonthGrid'
 import { Display, Body } from '../ui/Typography'
 import { logSticker } from './logStickers'
 import {
-  FeedingForm,
-  SleepForm,
-  WakeUpForm,
-  HealthEventForm,
-  KidsMoodForm,
-  MemoryForm,
-  ActivityForm,
-  DiaperForm,
   type RoutinePrefill,
   type EditLog,
 } from './KidsLogForms'
-import { ExamForm } from '../exams/ExamForm'
+import { KidsLogRouter, type KidsLogType } from './KidsLogRouter'
 import { KidsJourneyRing } from '../kids/KidsJourneyRing'
 
 // Enable layout animations on Android
@@ -131,7 +122,7 @@ interface ChildLog {
   logged_by: string | null
 }
 
-type LogType = 'feeding' | 'sleep' | 'wake_up' | 'health' | 'mood' | 'memory' | 'activity' | 'diaper' | 'exam'
+type LogType = KidsLogType
 
 interface ChildRoutine {
   id: string
@@ -3085,46 +3076,20 @@ export function KidsCalendar() {
 
       {/* ─── Bottom Sheets ────────────────────────────────────────────── */}
 
-      <LogSheet visible={sheetType === 'feeding'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_feeding'))} onClose={closeSheet}>
-        <FeedingForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'feeding', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
-      </LogSheet>
-
-      <LogSheet visible={sheetType === 'sleep'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_sleep'))} onClose={closeSheet}>
-        <SleepForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'sleep', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
-      </LogSheet>
-
-      <LogSheet visible={sheetType === 'wake_up'} title={routinePrefill?.name ?? t('kids_calendar_logSheet_wakeUp')} onClose={closeSheet}>
-        <WakeUpForm onSaved={handleSaved} prefill={routinePrefill ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'wake_up', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
-      </LogSheet>
-
-      <LogSheet visible={sheetType === 'health'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_health'))} onClose={closeSheet}>
-        <HealthEventForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'health', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
-      </LogSheet>
-
-      <LogSheet visible={sheetType === 'mood'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_mood'))} onClose={closeSheet}>
-        <KidsMoodForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'mood', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
-      </LogSheet>
-
-      <LogSheet visible={sheetType === 'activity'} title={editingLog ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_activity'))} onClose={closeSheet}>
-        <ActivityForm onSaved={handleSaved} initialDate={selectedDate} prefill={routinePrefill ?? undefined} editLog={editingLog ?? undefined} onSkip={routinePrefill?.routineId ? () => { skipRoutine({ id: routinePrefill!.routineId!, child_id: routinePrefill!.childId, name: routinePrefill!.name ?? '', type: 'activity', value: routinePrefill!.value ?? null, days_of_week: [], time: routinePrefill!.time ?? null, active: true }); closeSheet() } : undefined} />
-      </LogSheet>
-
-      <LogSheet visible={sheetType === 'memory'} title={t('kids_calendar_logSheet_memory')} onClose={closeSheet}>
-        <MemoryForm onSaved={handleSaved} initialDate={selectedDate} />
-      </LogSheet>
-
-      <LogSheet visible={sheetType === 'diaper'} title={editingLog ? t('kids_calendar_logSheet_editDiaper') : t('kids_calendar_logSheet_diaper')} onClose={closeSheet}>
-        <DiaperForm onSaved={handleSaved} initialDate={selectedDate} editLog={editingLog ?? undefined} />
-      </LogSheet>
-
-      <LogSheet visible={sheetType === 'exam'} title={t('kids_calendar_logSheet_exam')} onClose={closeSheet}>
-        <ExamForm
-          behavior="kids"
-          childId={selectedChildId !== 'all' ? selectedChildId : (activeChild?.id ?? children[0]?.id ?? null)}
-          date={selectedDate}
-          onSaved={handleSaved}
-        />
-      </LogSheet>
+      <KidsLogRouter
+        sheetType={sheetType}
+        date={selectedDate}
+        childId={selectedChildId !== 'all' ? selectedChildId : (activeChild?.id ?? children[0]?.id ?? null)}
+        onClose={closeSheet}
+        onSaved={handleSaved}
+        editingLog={editingLog}
+        routinePrefill={routinePrefill}
+        onSkipRoutine={(type) => {
+          if (!routinePrefill?.routineId) return
+          skipRoutine({ id: routinePrefill.routineId, child_id: routinePrefill.childId, name: routinePrefill.name ?? '', type, value: routinePrefill.value ?? null, days_of_week: [], time: routinePrefill.time ?? null, active: true })
+          closeSheet()
+        }}
+      />
 
       {/* ─── Routine Manager (Diffuse) ─────────────────────────────── */}
       {diffuse && (
