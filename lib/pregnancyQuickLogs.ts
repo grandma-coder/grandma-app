@@ -24,6 +24,9 @@ export const PREG_QUICK_LOGS: QuickLogDef[] = [
   { key: 'kegel',       logType: 'kegel',       labelKey: 'pregnancy_logTitle_kegel' },
   { key: 'contraction', logType: 'contraction', labelKey: 'pregnancy_logTitle_contraction', minWeek: 32 },
   { key: 'appointment', logType: 'appointment', labelKey: 'pregnancy_logTitle_appointment' },
+  // exam_result opens the working exam form but its chip never lights "done":
+  // ExamResultForm delegates to ExamForm, which writes the separate `exams`
+  // table (not pregnancy_logs), so todayLogs['exam_result'] is never populated.
   { key: 'exam_result', logType: 'exam_result', labelKey: 'pregnancy_logTitle_examResult' },
   { key: 'nesting',     logType: 'nesting',     labelKey: 'pregnancy_logTitle_nesting',    minWeek: 28 },
   { key: 'birth_prep',  logType: 'birth_prep',  labelKey: 'pregnancy_logTitle_birthPrep',  minWeek: 28 },

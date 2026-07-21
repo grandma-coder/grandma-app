@@ -3,7 +3,7 @@ import { PREG_QUICK_LOGS } from '../pregnancyQuickLogs'
 import { KIDS_QUICK_LOGS } from '../kidsQuickLogs'
 
 describe('home quick-log catalogs reach full calendar parity', () => {
-  it('cycle offers all 13 calendar log types (as sheet ids)', () => {
+  it('cycle offers all 14 calendar log types (as sheet ids)', () => {
     const sheets = new Set(CYCLE_QUICK_LOGS.map((q) => q.sheet))
     for (const s of ['mood','symptom','basal_temp','lh','cm','intercourse','period_start','period_end','pregnancy_test','sex_drive','clots','weight','water','activity']) {
       expect(sheets.has(s as never)).toBe(true)
