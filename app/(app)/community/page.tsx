@@ -18,7 +18,7 @@ export default async function CommunityPage() {
     <main className="mx-auto max-w-6xl px-8 py-10">
       <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Community</p>
       <h1 className="display mb-6 text-3xl font-bold tracking-tight text-fg-primary">Channels</h1>
-      <CommunityDashboard defaultSince={fmt(since)} defaultUntil={fmt(until)} />
+      <CommunityDashboard defaultSince={fmt(since)} defaultUntil={fmt(until)} isAdmin={ctx.role === "admin"} />
     </main>
   )
 }
