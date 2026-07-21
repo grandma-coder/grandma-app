@@ -11,7 +11,7 @@ import { Body } from '../../ui/Typography'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
-import { Character } from '../../characters/Characters'
+import { Character, CharacterName } from '../../characters/Characters'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogTimeline'
 import { CYCLE_QUICK_LOGS } from '../../../lib/cycleQuickLogs'
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
@@ -36,14 +36,26 @@ function softForHue(hue: string, stickers: ReturnType<typeof useTheme>['stickers
   return map[hue] ?? stickers.blueSoft
 }
 
+// Local per-row overrides where the shared DIFFUSE_LOG_CHARACTER map would
+// otherwise collide two cycle rows on the same concept+hue (e.g. sex_drive vs
+// intimacy both → heart/pink). Kept local to avoid editing the shared
+// DiffuseLogTimeline map (owned by a concurrent workstream). Hue is keyed by
+// sticker token name (not resolved here) since `stickers` only exists inside
+// the component via useTheme().
+const CYCLE_BLOB_OVERRIDE: Record<string, { char: CharacterName; hue: keyof ReturnType<typeof useTheme>['stickers'] }> = {
+  sex_drive: { char: 'sparkle', hue: 'lilac' },
+}
+
 // Each cycle def → its Character concept-blob + soft socket tint, pulled from
 // the SHARED canonical map the Diffuse variant + calendar timeline use (keyed by
 // the def's cycle log type). One source of truth = the picker, the home card,
 // and the calendar all show the same icon; distinctness is concept + hue.
 function blobFor(logType: string, stickers: ReturnType<typeof useTheme>['stickers']): { node: React.ReactElement; soft: string } {
-  const hue = diffuseLogHue(logType)
+  const override = CYCLE_BLOB_OVERRIDE[logType]
+  const name = override?.char ?? DIFFUSE_LOG_CHARACTER[logType] ?? 'note'
+  const hue = override ? stickers[override.hue] : diffuseLogHue(logType)
   return {
-    node: <Character name={DIFFUSE_LOG_CHARACTER[logType] ?? 'note'} size={22} color={hue} />,
+    node: <Character name={name} size={22} color={hue} />,
     soft: softForHue(hue, stickers),
   }
 }
