@@ -23,6 +23,9 @@ interface LogSheetProps {
   chipColor?: string
   /** Replace default title with a custom node */
   titleRight?: ReactNode
+  /** Optional pinned action bar rendered below the scroll area (not scrolled).
+   *  Used by the quick-log pickers to keep SAVE always visible. */
+  footer?: ReactNode
 }
 
 export function LogSheet(props: LogSheetProps) {
@@ -30,7 +33,7 @@ export function LogSheet(props: LogSheetProps) {
   return diffuse ? <DiffuseLogSheet {...props} /> : <CurrentLogSheet {...props} />
 }
 
-function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight }: LogSheetProps) {
+function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight, footer }: LogSheetProps) {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
 
@@ -84,6 +87,12 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
           >
             {children}
           </ScrollView>
+
+          {footer ? (
+            <View style={[styles.footer, { borderTopColor: paperBorder }]}>
+              {footer}
+            </View>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -92,7 +101,7 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
 
 // ─── Diffuse — softer sheet, serif title, hairline chip + close node ────────
 
-function DiffuseLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight }: LogSheetProps) {
+function DiffuseLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight, footer }: LogSheetProps) {
   const { colors } = useDiffuseTheme()
   const insets = useSafeAreaInsets()
 
@@ -135,6 +144,12 @@ function DiffuseLogSheet({ visible, title, onClose, children, chip, chipColor, t
           >
             {children}
           </ScrollView>
+
+          {footer ? (
+            <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
+              {footer}
+            </View>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -202,6 +217,11 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
     paddingBottom: 16,
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
 })
 
