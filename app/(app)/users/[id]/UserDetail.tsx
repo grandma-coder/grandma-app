@@ -59,6 +59,51 @@ function Kpi({ label, value, sub, tone }: { label: string; value: string | numbe
   )
 }
 
+/**
+ * Real RevenueCat subscription state for this user — what Apple/Google actually
+ * charged, distinct from the in-app tier grant above. Renders nothing when
+ * RevenueCat is dormant so the Account card stays clean until it's wired.
+ * The query is admin-gated + audit-logged at the router.
+ */
+function RevenueCatPanel({ userId }: { userId: string }) {
+  const { data, isLoading } = trpc.revenue.customer.useQuery({ appUserId: userId }, { staleTime: 60_000, retry: false })
+
+  if (isLoading || !data || !data.configured) return null
+
+  if (!data.found) {
+    return (
+      <div className="mb-4 rounded-lg border border-border-subtle bg-deep p-3 text-xs text-fg-tertiary">
+        <span className="font-medium text-fg-secondary">RevenueCat:</span> no billing record — never subscribed.
+      </div>
+    )
+  }
+
+  return (
+    <div className="mb-4 rounded-lg border border-border-subtle bg-deep p-3">
+      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.1em] text-fg-muted">RevenueCat — real billing</p>
+      {data.entitlements.length === 0 ? (
+        <p className="text-xs text-fg-tertiary">Known customer, no active subscription.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {data.entitlements.map((e) => (
+            <div key={e.identifier} className="flex items-center justify-between gap-2 text-xs">
+              <div className="min-w-0">
+                <span className="font-medium text-fg-primary">{e.productId ?? e.identifier}</span>
+                {e.store && <span className="ml-1.5 text-fg-muted">{e.store}</span>}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {e.isTrial && <span className="pill pill-info">trial</span>}
+                <span className={`pill ${e.isActive ? "pill-success" : "pill-danger"}`}>{e.isActive ? "active" : "expired"}</span>
+                <span className="text-fg-tertiary">{e.willRenew ? "renews" : "ends"} {fmtDate(e.expiresAt)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function UserDetail({ userId, profile }: { userId: string; profile: Profile }) {
   const utils = trpc.useUtils()
   const metrics = trpc.users.detailMetrics.useQuery({ userId, days: 90 })
@@ -249,6 +294,7 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
               </p>
             </div>
           )}
+          <RevenueCatPanel userId={userId} />
           {notice && <p className="mb-3 text-sm text-accent-500">{notice}</p>}
 
           <dl className="divide-y divide-border-subtle text-sm">

@@ -15,6 +15,9 @@ import {
   Palette,
   BookOpen,
   Rocket,
+  DollarSign,
+  Sparkles,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react"
 
@@ -27,8 +30,11 @@ const PRIMARY: NavLink[] = [
 const PILLARS: NavLink[] = [
   { href: "/users", label: "Users", icon: Users },
   { href: "/metrics", label: "Metrics", icon: BarChart3 },
+  { href: "/revenue", label: "Revenue", icon: DollarSign },
   { href: "/community", label: "Community", icon: MessagesSquare },
   { href: "/push", label: "Push", icon: Send },
+  { href: "/ai", label: "AI cost", icon: Sparkles, adminOnly: true },
+  { href: "/support", label: "Support", icon: LifeBuoy },
   { href: "/sentry", label: "Sentry", icon: Bug, adminOnly: true },
   { href: "/tokens", label: "Design tokens", icon: Palette },
   { href: "/content", label: "Content", icon: BookOpen },
@@ -42,7 +48,7 @@ const MANAGE: NavLink[] = [
 
 // Which pillars are actually built yet (routes that exist). Others render
 // disabled so the nav reflects reality without dead links.
-const READY = new Set(["/", "/users", "/metrics", "/community", "/push", "/sentry", "/tokens", "/content", "/releases", "/admin", "/beta"])
+const READY = new Set(["/", "/users", "/metrics", "/revenue", "/community", "/push", "/ai", "/support", "/sentry", "/tokens", "/content", "/releases", "/admin", "/beta"])
 
 export function CommandCenterSidebar() {
   const pathname = usePathname() ?? ""

@@ -143,6 +143,45 @@ export const betaTesters = pgTable("beta_testers", {
   invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const SUPPORT_STATUSES = ["open", "in_progress", "resolved", "closed"] as const
+export type SupportStatus = (typeof SUPPORT_STATUSES)[number]
+
+export const supportTickets = pgTable("support_tickets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id"),
+  email: text("email"),
+  kind: text("kind").notNull().default("feedback"),
+  subject: text("subject"),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("open"),
+  priority: text("priority").notNull().default("normal"),
+  source: text("source").notNull().default("in_app"),
+  rating: integer("rating"),
+  appVersion: text("app_version"),
+  platform: text("platform"),
+  assignee: text("assignee"),
+  adminNotes: text("admin_notes"),
+  reply: text("reply"),
+  repliedAt: timestamp("replied_at", { withTimezone: true }),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const aiUsage = pgTable("ai_usage", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  fn: text("fn").notNull(),
+  model: text("model").notNull(),
+  userId: uuid("user_id"),
+  inputTokens: integer("input_tokens").notNull().default(0),
+  outputTokens: integer("output_tokens").notNull().default(0),
+  cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
+  cacheWriteTokens: integer("cache_write_tokens").notNull().default(0),
+  ok: boolean("ok").notNull().default(true),
+  latencyMs: integer("latency_ms"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const pushRecipients = pgTable("push_recipients", {
   id: uuid("id").primaryKey().defaultRandom(),
   campaignId: uuid("campaign_id").notNull(),
