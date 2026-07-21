@@ -505,7 +505,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
           </View>
         ))}
         <Pressable
-          onPress={() => { onClose(); router.push('/exams?behavior=kids' as any) }}
+          onPress={() => { onClose(); router.push('/exams?behavior=kids') }}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 4, opacity: pressed ? 0.6 : 1 })}
         >
           <Text style={{ fontSize: 13, fontFamily: font.bodySemiBold, color: brand.secondary }}>{t(KIDS_HEALTH_EXAMS_SEE_ALL_KEY)}</Text>
