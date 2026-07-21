@@ -21,6 +21,21 @@ export const KIDS_QUICK_LOGS: KidsQuickLogDef[] = [
   { key: 'feeding',  logType: 'feeding',  labelKey: 'kids_logForm_labelFeeding',  doneTypes: ['feeding', 'food'] },
   { key: 'activity', logType: 'activity', labelKey: 'kids_logForm_labelActivity', doneTypes: ['activity'] },
   { key: 'diaper',   logType: 'diaper',   labelKey: 'kids_logForm_labelDiaper',   doneTypes: ['diaper'] },
+  // wake_up: WakeUpForm never inserts a `type: 'wake_up'` row — it stamps
+  // `endTime` onto the still-open `sleep` row it started at bedtime
+  // (components/calendar/KidsLogForms.tsx WakeUpForm.save). 'sleep' is the
+  // closest observable signal via the type-count map (matches the calendar's
+  // own LOG_TO_SHEET bucket, which also treats wake_up as sleep).
+  { key: 'wake_up',  logType: 'wake_up',  labelKey: 'kids_calendar_labelWakeUp', doneTypes: ['sleep'] },
+  { key: 'health',   logType: 'health',   labelKey: 'kids_calendar_labelHealth', doneTypes: ['temperature', 'vaccine', 'medicine', 'note', 'health'] },
+  // memory: MemoryForm saves with `type: 'photo'` (the literal string 'memory'
+  // goes into the `value` column, not `type`) — see KidsLogForms.tsx MemoryForm.save.
+  { key: 'memory',   logType: 'memory',   labelKey: 'kids_calendar_labelMemory', doneTypes: ['photo'] },
+  // exam: ExamForm writes to the separate `exams` table, not `child_logs` —
+  // this doneTypes entry can never match via todayCounts (child_logs-only).
+  // Kept as a harmless placeholder; the exam chip will never show "done"
+  // until today-log aggregation also reads the exams table (out of scope here).
+  { key: 'exam',     logType: 'exam',     labelKey: 'kids_calendar_labelExam',   doneTypes: ['exam'] },
 ]
 
 // The default chips a new user sees before they customize (the 4 hero metrics).

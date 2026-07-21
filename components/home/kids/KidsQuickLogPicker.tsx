@@ -31,6 +31,10 @@ function characterFor(
     case 'feeding':  return { name: 'feeding',  hue: stickers.blue,  soft: stickers.blueSoft }
     case 'activity': return { name: 'activity', hue: stickers.green, soft: stickers.greenSoft }
     case 'diaper':   return { name: 'diaper',   hue: stickers.blue,  soft: stickers.blueSoft }
+    case 'wake_up':  return { name: 'sun',      hue: stickers.yellow, soft: stickers.yellowSoft }
+    case 'health':   return { name: 'checkup',  hue: stickers.coral, soft: stickers.peachSoft }
+    case 'memory':   return { name: 'photo',    hue: stickers.lilac, soft: stickers.lilacSoft }
+    case 'exam':     return { name: 'exam',     hue: stickers.green, soft: stickers.greenSoft }
     default:         return { name: 'activity', hue: stickers.green, soft: stickers.greenSoft }
   }
 }

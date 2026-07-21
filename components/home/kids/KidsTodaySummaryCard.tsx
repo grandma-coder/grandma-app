@@ -41,6 +41,10 @@ const CHAR_FOR: Record<string, { name: CharacterName; hue: keyof ReturnType<type
   feeding:  { name: 'feeding',  hue: 'blue' },
   activity: { name: 'activity', hue: 'green' },
   diaper:   { name: 'diaper',   hue: 'blue' },
+  wake_up:  { name: 'sun',      hue: 'yellow' },
+  health:   { name: 'checkup',  hue: 'coral' },
+  memory:   { name: 'photo',    hue: 'lilac' },
+  exam:     { name: 'exam',     hue: 'green' },
 }
 
 export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Props) {
