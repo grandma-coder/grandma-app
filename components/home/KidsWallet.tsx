@@ -18,6 +18,7 @@ import { View } from 'react-native'
 import { router } from 'expo-router'
 import { useTheme, useDiffuseTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import type { TranslationKeys } from '../../lib/i18n/keys'
 import { buildKidsWalletCards, type KidsWalletCardId } from '../../lib/kidsWallet'
 import { WALLET_SHORTCUTS } from '../../lib/walletCatalog'
 import { useKidsWalletStore } from '../../store/useWalletStore'
@@ -49,6 +50,7 @@ interface KidsWalletProps {
   growthLeapName?: string
   onOpenGoals: () => void
   onOpenHealth: () => void
+  onOpenVaccines: () => void
   onOpenDiaper: () => void
   /** opens the growth-leap info pop-up sheet (owned by KidsHome) */
   onOpenGrowthLeap: () => void
@@ -63,7 +65,7 @@ const SHORTCUT_TONE: Record<string, WalletTone> = { channels: 'peach', village: 
 
 export function KidsWallet({
   hasDiaper, hasGrowthLeap, growthLeapName,
-  onOpenGoals, onOpenHealth, onOpenDiaper, onOpenGrowthLeap, onOpenReminders,
+  onOpenGoals, onOpenHealth, onOpenVaccines, onOpenDiaper, onOpenGrowthLeap, onOpenReminders,
   visibleCardIds = null,
 }: KidsWalletProps) {
   const { colors, stickers } = useTheme()
@@ -105,6 +107,7 @@ export function KidsWallet({
       switch (id) {
         case 'goals': return <Character name="star" size={26} color={stickers.yellow} />
         case 'health': return <Character name="health" size={26} color={stickers.coral} />
+        case 'vaccines': return <Character name="vaccine" size={26} color={stickers.blue} />
         case 'exams': return <Character name="exam" size={26} color={stickers.lilac} />
         case 'diaper': return <Character name="diaper" size={26} color={stickers.peach} />
         case 'growth_leap': return <Character name="growth" size={26} color={stickers.green} />
@@ -119,6 +122,7 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return <StarSticker size={24} fill={stickers.yellow} stroke="#141313" />
       case 'health': return <HeartSticker size={24} fill={stickers.coral} />
+      case 'vaccines': return <Character name="vaccine" size={24} color={stickers.blue} />
       case 'exams': return <Character name="exam" size={24} color={stickers.lilac} />
       case 'diaper': return <LogDiaper size={24} />
       case 'growth_leap': return <LogGrowth size={24} />
@@ -135,6 +139,7 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return t('kids_home_set_goals_btn')
       case 'health': return t('kids_home_section_health_care')
+      case 'vaccines': return t('kids_vaccines_title' as keyof TranslationKeys)
       case 'exams': return t('wallet_exams_title')
       case 'diaper': return t('kids_home_diaper_tracker_title')
       case 'growth_leap': return growthLeapName ?? t('kids_growthLeaps')
@@ -152,6 +157,7 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return stickers.yellowSoft
       case 'health': return stickers.peachSoft
+      case 'vaccines': return stickers.blueSoft
       case 'exams': return stickers.lilacSoft
       case 'diaper': return stickers.peachSoft
       case 'growth_leap': return stickers.greenSoft
@@ -169,6 +175,7 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return onOpenGoals()
       case 'health': return onOpenHealth()
+      case 'vaccines': return onOpenVaccines()
       case 'exams': return router.push('/exams?behavior=kids' as never)
       case 'diaper': return onOpenDiaper()
       case 'ask_grandma': return router.push('/grandma-talk' as never)
