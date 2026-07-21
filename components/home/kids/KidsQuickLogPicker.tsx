@@ -65,7 +65,19 @@ export function KidsQuickLogPicker({ visible, onClose }: Props) {
   }
 
   return (
-    <LogSheet visible={visible} title={t('kids_quickLogs_pickTitle')} onClose={onClose}>
+    <LogSheet
+      visible={visible}
+      title={t('kids_quickLogs_pickTitle')}
+      onClose={onClose}
+      footer={
+        <PillButton
+          label={dirty ? t('common_save') : t('common_done')}
+          variant="ink"
+          onPress={dirty ? save : onClose}
+          disabled={draft.length === 0}
+        />
+      }
+    >
       <View style={{ gap: 10 }}>
         {KIDS_QUICK_LOGS.map((q) => {
           const on = draft.includes(q.key)
@@ -80,7 +92,7 @@ export function KidsQuickLogPicker({ visible, onClose }: Props) {
               ]}
             >
               <View style={[styles.socket, { backgroundColor: c.soft }]}>
-                <Character name={c.name} size={24} color={c.hue} />
+                <Character name={c.name} size={22} color={c.hue} />
               </View>
               <Body size={16} color={colors.text} style={{ flex: 1 }}>{t(q.labelKey)}</Body>
               <View style={[styles.checkbox, { borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.text : 'transparent' }]}>
@@ -90,22 +102,12 @@ export function KidsQuickLogPicker({ visible, onClose }: Props) {
           )
         })}
       </View>
-
-      <View style={styles.saveWrap}>
-        <PillButton
-          label={dirty ? t('common_save') : t('common_done')}
-          variant="ink"
-          onPress={dirty ? save : onClose}
-          disabled={draft.length === 0}
-        />
-      </View>
     </LogSheet>
   )
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: radius.lg, paddingVertical: 14, paddingHorizontal: 16 },
-  socket: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
+  socket: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  saveWrap: { marginTop: 16 },
 })
