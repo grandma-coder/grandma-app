@@ -464,7 +464,7 @@ function getRecommendedCalories(bd: string): number {
 // CHILD_COLORS imported from shared component
 import { CHILD_COLORS } from '../ui/ChildPills'
 import { LogSheet } from '../calendar/LogSheet'
-import { SleepForm, KidsMoodForm, FeedingForm, ActivityForm, DiaperForm } from '../calendar/KidsLogForms'
+import { KidsLogRouter, type KidsLogType } from '../calendar/KidsLogRouter'
 import { useKidsTodayLogs } from '../../lib/analyticsData'
 import { KidsTodaySummaryCard } from './kids/KidsTodaySummaryCard'
 import { MonoCaps, Display } from '../ui/Typography'
@@ -761,7 +761,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   const [activitiesDetailVisible, setActivitiesDetailVisible] = useState(false)
   const [diaperModalVisible, setDiaperModalVisible] = useState(false)
   const [goalsModalVisible, setGoalsModalVisible] = useState(false)
-  const [logSheetType, setLogSheetType] = useState<'sleep' | 'mood' | 'feeding' | 'activity' | 'diaper' | null>(null)
+  const [logSheetType, setLogSheetType] = useState<KidsLogType | null>(null)
 
   // Reminders
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -2216,7 +2216,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         <KidsTodaySummaryCard
           childId={child?.id}
           todayCounts={todayCounts}
-          onLogMetric={readOnly ? undefined : (type) => setLogSheetType(type as 'sleep' | 'mood' | 'feeding' | 'activity' | 'diaper')}
+          onLogMetric={readOnly ? undefined : (type) => setLogSheetType(type as KidsLogType)}
         />
       </View>
       )}
@@ -2770,21 +2770,13 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       )}
 
       {/* ─── Log Sheets (open from empty hero tiles) ─────────────────── */}
-      <LogSheet visible={logSheetType === 'sleep'} title={t('kids_home_log_sleep_title')} onClose={() => setLogSheetType(null)}>
-        <SleepForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
-      </LogSheet>
-      <LogSheet visible={logSheetType === 'mood'} title={t('kids_home_log_mood_title')} onClose={() => setLogSheetType(null)}>
-        <KidsMoodForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
-      </LogSheet>
-      <LogSheet visible={logSheetType === 'feeding'} title={t('kids_home_log_feeding_title')} onClose={() => setLogSheetType(null)}>
-        <FeedingForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
-      </LogSheet>
-      <LogSheet visible={logSheetType === 'activity'} title={t('kids_home_log_activity_title')} onClose={() => setLogSheetType(null)}>
-        <ActivityForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
-      </LogSheet>
-      <LogSheet visible={logSheetType === 'diaper'} title={t('kids_calendar_logSheet_diaper')} onClose={() => setLogSheetType(null)}>
-        <DiaperForm onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }} />
-      </LogSheet>
+      <KidsLogRouter
+        sheetType={logSheetType}
+        date={toDateStr(new Date())}
+        childId={child?.id ?? null}
+        onClose={() => setLogSheetType(null)}
+        onSaved={() => { setLogSheetType(null); if (child) loadRangeData(child, dateRange) }}
+      />
     </View>
   )
 }
