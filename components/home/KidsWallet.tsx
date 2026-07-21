@@ -18,7 +18,6 @@ import { View } from 'react-native'
 import { router } from 'expo-router'
 import { useTheme, useDiffuseTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
-import type { TranslationKeys } from '../../lib/i18n/keys'
 import { buildKidsWalletCards, type KidsWalletCardId } from '../../lib/kidsWallet'
 import { WALLET_SHORTCUTS } from '../../lib/walletCatalog'
 import { useKidsWalletStore } from '../../store/useWalletStore'
@@ -139,7 +138,7 @@ export function KidsWallet({
     switch (id) {
       case 'goals': return t('kids_home_set_goals_btn')
       case 'health': return t('kids_home_section_health_care')
-      case 'vaccines': return t('kids_vaccines_title' as keyof TranslationKeys)
+      case 'vaccines': return t('kids_vaccines_title')
       case 'exams': return t('wallet_exams_title')
       case 'diaper': return t('kids_home_diaper_tracker_title')
       case 'growth_leap': return growthLeapName ?? t('kids_growthLeaps')

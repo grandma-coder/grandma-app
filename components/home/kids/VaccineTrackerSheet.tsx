@@ -27,14 +27,11 @@ import { LogSheet } from '../../calendar/LogSheet'
 import { supabase } from '../../../lib/supabase'
 import type { ChildWithRole } from '../../../types'
 import { useTranslation } from '../../../lib/i18n'
-import type { TranslationKeys } from '../../../lib/i18n/keys'
 import { VaccineScheduleTree } from './VaccineScheduleTree'
 import type { HealthRecord, HealthHistoryData } from '../../../lib/vaccineSchedule'
 
-// `kids_vaccines_title` is added by Task 7. Referenced verbatim here (do not
-// substitute another key); cast so the file typechecks before the key lands.
-// Until then t() returns the key name at runtime, per the Task 2 brief.
-const KIDS_VACCINES_TITLE_KEY = 'kids_vaccines_title' as keyof TranslationKeys
+// i18n key alias for the sheet title (kept as a named const for readability).
+const KIDS_VACCINES_TITLE_KEY = 'kids_vaccines_title'
 
 // ─── VaccineTrackerSheet — exported shell ───────────────────────────────────
 

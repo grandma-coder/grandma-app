@@ -25,7 +25,6 @@ import { GrowthPercentileChart } from '../../kids/GrowthPercentileChart'
 import { resolveSex } from '../../../lib/growthStandards'
 import type { ChildWithRole } from '../../../types'
 import { useTranslation } from '../../../lib/i18n'
-import type { TranslationKeys } from '../../../lib/i18n/keys'
 import {
   formatHealthDate,
   parseGrowthValue,
@@ -35,14 +34,12 @@ import { useKidsExamInsights } from '../../../lib/examData'
 
 const SW = Dimensions.get('window').width
 
-// These keys are added by Task 7. Referenced verbatim here (do not substitute
-// other keys); cast so the file typechecks before the keys land. Until then
-// t() returns the key name at runtime, per the task brief.
-const KIDS_HEALTH_TITLE_KEY = 'kids_health_title' as keyof TranslationKeys
-const KIDS_HEALTH_EXAMS_SECTION_KEY = 'kids_health_exams_section' as keyof TranslationKeys
-const KIDS_HEALTH_EXAMS_EMPTY_KEY = 'kids_health_exams_empty' as keyof TranslationKeys
-const KIDS_HEALTH_EXAMS_SEE_ALL_KEY = 'kids_health_exams_seeAll' as keyof TranslationKeys
-const KIDS_HEALTH_EXAMS_FLAGGED_KEY = 'kids_health_exams_flagged' as keyof TranslationKeys
+// i18n key aliases for this sheet's copy (kept as named consts for readability).
+const KIDS_HEALTH_TITLE_KEY = 'kids_health_title'
+const KIDS_HEALTH_EXAMS_SECTION_KEY = 'kids_health_exams_section'
+const KIDS_HEALTH_EXAMS_EMPTY_KEY = 'kids_health_exams_empty'
+const KIDS_HEALTH_EXAMS_SEE_ALL_KEY = 'kids_health_exams_seeAll'
+const KIDS_HEALTH_EXAMS_FLAGGED_KEY = 'kids_health_exams_flagged'
 
 // ─── HealthTrackerSheet — exported shell ────────────────────────────────────
 
