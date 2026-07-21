@@ -413,3 +413,54 @@ export function getNextDueVaccines(birthDate: string, givenVaccines: HealthRecor
 
   return result
 }
+
+/**
+ * Parse a child's growth-history entries into the latest weight + height.
+ * Accepts any of:
+ *   "Weight: 7.5 kg"  (the canonical writer at health-history.tsx)
+ *   "weight 7.5kg"     (legacy / imported, no colon)
+ *   "7.5 kg"           (just the number + unit)
+ *   "7,5 kg"           (European comma decimal — normalize on read)
+ *   "16.5 lbs"         (imperial — convert to kg)
+ *   "33 in" / "33.5 inches" (imperial height — convert to cm)
+ * Shared by KidsHome's HealthCard and the Health tracker sheet so both read
+ * the "latest growth" identically.
+ */
+export function parseGrowthValue(entries: HealthRecord[]): { weight: string | null; height: string | null } {
+  let weight: string | null = null
+  let height: string | null = null
+
+  const numPattern = '([0-9]+(?:[.,][0-9]+)?)'
+  const toNum = (raw: string) => parseFloat(raw.replace(',', '.'))
+
+  for (const e of entries) {
+    const v = (e.value || '').trim()
+    if (!weight) {
+      // Prefer labeled match first ("weight: X kg" or "weight X kg"), then
+      // fall back to a unit-only match ("X kg" or "X lbs"). lbs → kg.
+      const labeled = v.match(new RegExp(`weight[:\\s]+${numPattern}\\s*(kg|lbs?|lb)`, 'i'))
+      const bare = !labeled && v.match(new RegExp(`^${numPattern}\\s*(kg|lbs?|lb)$`, 'i'))
+      const m = labeled || bare || null
+      if (m) {
+        const n = toNum(m[1])
+        const unit = m[2].toLowerCase()
+        const kg = unit === 'kg' ? n : n * 0.45359237
+        weight = `${kg.toFixed(kg < 10 ? 2 : 1)} kg`
+      }
+    }
+    if (!height) {
+      const labeled = v.match(new RegExp(`height[:\\s]+${numPattern}\\s*(cm|in|inches?|inch)`, 'i'))
+      const bare = !labeled && v.match(new RegExp(`^${numPattern}\\s*(cm|in|inches?|inch)$`, 'i'))
+      const m = labeled || bare || null
+      if (m) {
+        const n = toNum(m[1])
+        const unit = m[2].toLowerCase()
+        const cm = unit === 'cm' ? n : n * 2.54
+        height = `${cm.toFixed(1)} cm`
+      }
+    }
+    if (weight && height) break
+  }
+
+  return { weight, height }
+}

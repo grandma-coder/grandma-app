@@ -28,7 +28,7 @@ import { useTranslation } from '../../../lib/i18n'
 import type { TranslationKeys } from '../../../lib/i18n/keys'
 import {
   formatHealthDate,
-  type HealthRecord,
+  parseGrowthValue,
   type HealthHistoryData,
 } from '../../../lib/vaccineSchedule'
 import { useKidsExamInsights } from '../../../lib/examData'
@@ -43,46 +43,6 @@ const KIDS_HEALTH_EXAMS_SECTION_KEY = 'kids_health_exams_section' as keyof Trans
 const KIDS_HEALTH_EXAMS_EMPTY_KEY = 'kids_health_exams_empty' as keyof TranslationKeys
 const KIDS_HEALTH_EXAMS_SEE_ALL_KEY = 'kids_health_exams_seeAll' as keyof TranslationKeys
 const KIDS_HEALTH_EXAMS_FLAGGED_KEY = 'kids_health_exams_flagged' as keyof TranslationKeys
-
-// Inlined copy of KidsHome's local `parseGrowthValue` helper (not exported from
-// KidsHome). Kept byte-for-byte in sync with the source so the "Latest growth"
-// tiles read identically to the retired modal.
-function parseGrowthValue(entries: HealthRecord[]): { weight: string | null; height: string | null } {
-  let weight: string | null = null
-  let height: string | null = null
-
-  const numPattern = '([0-9]+(?:[.,][0-9]+)?)'
-  const toNum = (raw: string) => parseFloat(raw.replace(',', '.'))
-
-  for (const e of entries) {
-    const v = (e.value || '').trim()
-    if (!weight) {
-      const labeled = v.match(new RegExp(`weight[:\\s]+${numPattern}\\s*(kg|lbs?|lb)`, 'i'))
-      const bare = !labeled && v.match(new RegExp(`^${numPattern}\\s*(kg|lbs?|lb)$`, 'i'))
-      const m = labeled || bare || null
-      if (m) {
-        const n = toNum(m[1])
-        const unit = m[2].toLowerCase()
-        const kg = unit === 'kg' ? n : n * 0.45359237
-        weight = `${kg.toFixed(kg < 10 ? 2 : 1)} kg`
-      }
-    }
-    if (!height) {
-      const labeled = v.match(new RegExp(`height[:\\s]+${numPattern}\\s*(cm|in|inches?|inch)`, 'i'))
-      const bare = !labeled && v.match(new RegExp(`^${numPattern}\\s*(cm|in|inches?|inch)$`, 'i'))
-      const m = labeled || bare || null
-      if (m) {
-        const n = toNum(m[1])
-        const unit = m[2].toLowerCase()
-        const cm = unit === 'cm' ? n : n * 2.54
-        height = `${cm.toFixed(1)} cm`
-      }
-    }
-    if (weight && height) break
-  }
-
-  return { weight, height }
-}
 
 // ─── HealthTrackerSheet — exported shell ────────────────────────────────────
 
