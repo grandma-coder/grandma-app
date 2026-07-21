@@ -27,18 +27,41 @@ const PRIMARY: NavLink[] = [
   { href: "/", label: "Command Center", icon: LayoutGrid },
 ]
 
-const PILLARS: NavLink[] = [
-  { href: "/users", label: "Users", icon: Users },
-  { href: "/metrics", label: "Metrics", icon: BarChart3 },
-  { href: "/revenue", label: "Revenue", icon: DollarSign },
-  { href: "/community", label: "Community", icon: MessagesSquare },
-  { href: "/push", label: "Push", icon: Send },
-  { href: "/ai", label: "AI cost", icon: Sparkles, adminOnly: true },
-  { href: "/support", label: "Support", icon: LifeBuoy },
-  { href: "/sentry", label: "Sentry", icon: Bug, adminOnly: true },
-  { href: "/tokens", label: "Design tokens", icon: Palette },
-  { href: "/content", label: "Content", icon: BookOpen },
-  { href: "/releases", label: "Releases", icon: Rocket },
+// Pillars grouped by intent — how you'd navigate the business, not a flat list.
+type NavSection = { title: string; items: NavLink[]; adminOnly?: boolean }
+
+const SECTIONS: NavSection[] = [
+  {
+    title: "Audience",
+    items: [
+      { href: "/users", label: "Users", icon: Users },
+      { href: "/metrics", label: "Metrics", icon: BarChart3 },
+      { href: "/revenue", label: "Revenue", icon: DollarSign },
+    ],
+  },
+  {
+    title: "Engage",
+    items: [
+      { href: "/community", label: "Community", icon: MessagesSquare },
+      { href: "/push", label: "Push", icon: Send },
+      { href: "/support", label: "Support", icon: LifeBuoy },
+    ],
+  },
+  {
+    title: "Product",
+    items: [
+      { href: "/content", label: "Content", icon: BookOpen },
+      { href: "/releases", label: "Releases", icon: Rocket },
+      { href: "/tokens", label: "Design tokens", icon: Palette },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { href: "/ai", label: "AI cost", icon: Sparkles, adminOnly: true },
+      { href: "/sentry", label: "Sentry", icon: Bug, adminOnly: true },
+    ],
+  },
 ]
 
 const MANAGE: NavLink[] = [
@@ -95,8 +118,18 @@ export function CommandCenterSidebar() {
 
       <nav className="central-nav">
         <div>{PRIMARY.map(renderItem)}</div>
-        <div className="nav-section-header">Pillars</div>
-        <div>{PILLARS.map(renderItem)}</div>
+        {SECTIONS.map((section) => {
+          // Hide a whole section (header included) when every item in it is
+          // admin-only and the viewer isn't an admin — no empty labels.
+          const visible = section.items.filter((i) => !(i.adminOnly && !isAdmin))
+          if (visible.length === 0) return null
+          return (
+            <div key={section.title}>
+              <div className="nav-section-header">{section.title}</div>
+              <div>{visible.map(renderItem)}</div>
+            </div>
+          )
+        })}
         {isAdmin && (
           <>
             <div className="nav-section-header">Manage</div>
