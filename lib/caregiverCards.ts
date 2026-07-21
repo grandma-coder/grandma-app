@@ -19,7 +19,8 @@ export const CAREGIVER_CARDS: Record<CaregiverBehavior, CaregiverCardMeta[]> = {
   kids: [
     { id: 'hero-tiles', label: 'Daily stats (sleep · mood · feeding)', tier: 'child-health' },
     { id: 'today-summary', label: 'Today at a glance', tier: 'child-health' },
-    { id: 'health', label: 'Health & care (vaccines, meds)', tier: 'child-health' },
+    { id: 'vaccines', label: 'Vaccine schedule', tier: 'child-health' },
+    { id: 'health', label: 'Health & care', tier: 'child-health' },
     { id: 'exams', label: 'Exams & lab results', tier: 'child-health' },
     { id: 'diaper', label: 'Diaper tracker', tier: 'child-health' },
     { id: 'growth_leap', label: 'Growth leaps', tier: 'child-health' },
