@@ -1076,6 +1076,12 @@ export interface TranslationKeys {
   kids_home_health_medication_active: string
   kids_home_health_vaccine_schedule: string
   kids_home_health_view_history: string
+  kids_vaccines_title: string
+  kids_health_title: string
+  kids_health_exams_section: string
+  kids_health_exams_empty: string
+  kids_health_exams_seeAll: string
+  kids_health_exams_flagged: string
   kids_home_breastfeeding_insights_title: string
   kids_home_breastfeeding_side_balance: string
   kids_home_breastfeeding_time_of_day: string
