@@ -10,11 +10,12 @@
  * - Logged in, has enrolled behaviors or children → (tabs)
  */
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import * as Font from 'expo-font'
+import * as SplashScreen from 'expo-splash-screen'
 import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces/600SemiBold'
 import { Fraunces_700Bold } from '@expo-google-fonts/fraunces/700Bold'
 import { Fraunces_800ExtraBold } from '@expo-google-fonts/fraunces/800ExtraBold'
@@ -71,7 +72,6 @@ import { hydrateBirthTopics } from '../lib/birthGuideData'
 import { initNotifications } from '../lib/pushNotifications'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
-import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { DevPanelProvider } from '../context/DevPanelContext'
 import { SavedToastProvider } from '../components/ui/SavedToast'
 import { DevModeBanner } from '../components/ui/DevModeBanner'
@@ -109,6 +109,15 @@ function applyDefaultFontFamily() {
 }
 
 const DEFAULT_PERMISSIONS: CaregiverPermissions = { view: true, log_activity: true, chat: true }
+
+// Hold the native splash from the very first module tick until the JS app is
+// actually ready to render its first screen (fonts + store hydration + auth
+// resolved). Without this the native splash auto-hides immediately on launch —
+// before the bundle/fonts/auth are ready — leaving a blank/mismatched frame
+// between the splash and the first real screen. Called at module scope so it
+// runs before React ever mounts. A short cross-fade smooths the hand-off.
+SplashScreen.preventAutoHideAsync().catch(() => {})
+SplashScreen.setOptions({ duration: 260, fade: true })
 
 // Dev-only trace logger for the auth boot flow. Informational flow/count logs
 // spam production on every cold boot + auth event, so gate them behind __DEV__.
@@ -642,11 +651,34 @@ export default function RootLayout() {
   }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode, devActive, hasConsented])
 
   // ─── Loading state ────────────────────────────────────────────────────────
-  if (loading || !behaviorHydrated || !modeHydrated || !consentHydrated || !lockHydrated || !fontsLoaded) {
-    return <LoadingScreen />
+  // While the app isn't ready we render nothing and let the NATIVE splash keep
+  // covering the screen (held open by preventAutoHideAsync above). This removes
+  // the old native-splash → blank → BrandedLoader flash on cold boot: the
+  // native splash now hands off directly to the first real screen. BrandedLoader
+  // is still used elsewhere (in-app loaders, per-screen gates).
+  const appReady =
+    !loading && behaviorHydrated && modeHydrated && consentHydrated && lockHydrated && fontsLoaded
+
+  // Hide the native splash once the first real frame has laid out. onLayout
+  // guarantees the tree below has painted, so the splash cross-fades straight
+  // into content with no intermediate blank frame.
+  const onRootLayout = useCallback(() => {
+    if (appReady) SplashScreen.hideAsync().catch(() => {})
+  }, [appReady])
+
+  // Safety net: also hide on the appReady transition in case onLayout never
+  // fires (hideAsync is idempotent — a no-op once the splash is already hidden),
+  // so a stuck splash can never brick the launch.
+  useEffect(() => {
+    if (appReady) SplashScreen.hideAsync().catch(() => {})
+  }, [appReady])
+
+  if (!appReady) {
+    return null
   }
 
   return (
+    <View style={styles.flex} onLayout={onRootLayout}>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <DevPanelProvider>
@@ -685,9 +717,10 @@ export default function RootLayout() {
         </DevPanelProvider>
       </QueryClientProvider>
     </ThemeProvider>
+    </View>
   )
 }
 
-function LoadingScreen() {
-  return <BrandedLoader fullscreen />
-}
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+})

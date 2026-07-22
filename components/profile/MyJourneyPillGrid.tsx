@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react'
-import { View, Text, Pressable, Animated, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, brand, getModeColor } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColor } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
@@ -43,10 +42,6 @@ export function MyJourneyPillGrid() {
       : p
   )
 
-  const [overlayActive, setOverlayActive] = useState(false)
-  const [overlayColor, setOverlayColor] = useState<string>(brand.primary)
-  const fade = useRef(new Animated.Value(0)).current
-
   function handlePress(b: Behavior) {
     if (b === currentBehavior) return
 
@@ -59,23 +54,17 @@ export function MyJourneyPillGrid() {
       return
     }
 
-    const accent = getModeColor(b, isDark)
-    setOverlayColor(accent)
-    setOverlayActive(true)
-
-    Animated.sequence([
-      Animated.timing(fade, { toValue: 1, duration: 150, useNativeDriver: true }),
-      Animated.timing(fade, { toValue: 0, duration: 150, useNativeDriver: true }),
-    ]).start(() => setOverlayActive(false))
-
-    setTimeout(() => {
-      switchTo(b)
-      setMode(b)
-    }, 100)
+    // Flip the active behavior + mode, then jump to Home so the change is
+    // actually visible (the switcher lives on the Profile tab). The single
+    // crossfade that smooths the swap is owned by (tabs)/_layout, which watches
+    // currentBehavior — no competing overlay/timer here, so the two animations
+    // can't fight and flash a blank/colored frame.
+    switchTo(b)
+    setMode(b)
+    router.navigate('/(tabs)')
   }
 
   return (
-    <>
       <View
         style={[
           styles.card,
@@ -151,17 +140,6 @@ export function MyJourneyPillGrid() {
           })}
         </View>
       </View>
-
-      {overlayActive && (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFillObject,
-            { backgroundColor: overlayColor, opacity: fade, zIndex: 1000 },
-          ]}
-        />
-      )}
-    </>
   )
 }
 

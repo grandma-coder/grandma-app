@@ -660,11 +660,15 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
                 </LinearGradient>
               </Defs>
             ) : null}
+            {/* Orbit guide — a hairline the day-glyphs sit on. Kept very faint
+                (low opacity + hairline width) so it whispers the circular path
+                behind the icons instead of cutting a hard line through them. */}
             <Circle
               cx={CX} cy={CY} r={RING_R}
               fill="none"
               stroke={diffuse ? dt.colors.line : colors.border}
-              strokeWidth={diffuse ? 1 : 1.5}
+              strokeWidth={diffuse ? 0.75 : 1}
+              opacity={diffuse ? 0.35 : 0.4}
             />
             {diffuse ? (
               // Subtle progress arc = fraction of cycle elapsed (today). Thin +

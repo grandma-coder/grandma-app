@@ -842,19 +842,26 @@ export default function TabLayout() {
     ? getCaregiverTabVisibility(activeChild.permissions)
     : null
 
-  // Fade transition on behavior switch
+  // Crossfade on behavior switch. This is the SINGLE animation that smooths a
+  // journey swap — the switcher (MyJourneyPillGrid) no longer runs its own
+  // overlay/timer, so nothing competes with it. We dim to a soft partial
+  // opacity (not 0) with gentle easing so the new home fades in cleanly rather
+  // than blinking through a blank frame. Fires whenever currentBehavior changes.
   const fadeAnim = useRef(new Animated.Value(1)).current
   const prevBehavior = useRef(currentBehavior)
 
   useEffect(() => {
     if (prevBehavior.current !== currentBehavior && prevBehavior.current !== null) {
-      Animated.sequence([
-        Animated.timing(fadeAnim, { toValue: 0, duration: 125, useNativeDriver: true }),
-        Animated.timing(fadeAnim, { toValue: 1, duration: 125, useNativeDriver: true }),
-      ]).start()
+      fadeAnim.setValue(0.4)
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 320,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start()
     }
     prevBehavior.current = currentBehavior
-  }, [currentBehavior])
+  }, [currentBehavior, fadeAnim])
 
   return (
     <Animated.View style={{ flex: 1, opacity: fadeAnim }}>

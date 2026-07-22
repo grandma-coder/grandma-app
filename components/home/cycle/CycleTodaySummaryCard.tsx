@@ -17,6 +17,7 @@ import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { QuietPill } from '../../ui/QuietPill'
 import { Character } from '../../characters/Characters'
+import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogTimeline'
 import { moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
@@ -173,12 +174,24 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
   const moodMeta = moodValue ? MOOD_META[moodValue] : null
   const topSymptom = symptoms[0] as SymptomId | undefined
 
+  // Diffuse blob for a signal, pulled from the SHARED canonical map the Calendar
+  // sheet + log timeline use (DIFFUSE_LOG_CHARACTER / diffuseLogHue), keyed by
+  // the cycle_logs type. Keeping this card on the single source of truth stops
+  // the home grid drifting from the calendar (which had left period_start/end
+  // looking identical and mis-hued pregnancy_test/weight/symptoms).
+  const diffuseBlob = (logType: string) => (
+    <Character name={DIFFUSE_LOG_CHARACTER[logType] ?? 'note'} size={24} color={diffuseLogHue(logType)} />
+  )
+
   const chips: { key: string; sheet: CycleSheetType; icon: React.ReactNode; label: string; done: boolean }[] = [
     {
       key: 'mood',
       sheet: 'mood',
+      // Mood is the one value-driven blob: its face + fill reflect the logged
+      // mood (moodExpression/moodBlobFill), not a static concept color. Empty →
+      // the canonical mood blob.
       icon: diffuse
-        ? <Character name="mood" size={24} face={moodExpression(moodValue)} color={moodValue ? moodBlobFill(moodValue) : stickers.yellow} />
+        ? <Character name="mood" size={24} face={moodExpression(moodValue)} color={moodValue ? moodBlobFill(moodValue) : diffuseLogHue('mood')} />
         : (moodMeta
             ? <moodMeta.Sticker size={22} fill={moodMeta.fill} />
             : <Smiley size={22} fill={stickers.yellowSoft} />),
@@ -189,7 +202,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
       key: 'symptoms',
       sheet: 'symptom',
       icon: diffuse
-        ? <Character name="activity" size={24} color={stickers.pink} />
+        ? diffuseBlob('symptom')
         : (topSymptom
             ? <SymptomSticker id={topSymptom} size={18} />
             : <Heart size={22} fill={stickers.pinkSoft} />),
@@ -199,71 +212,71 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     {
       key: 'bbt',
       sheet: 'basal_temp',
-      icon: diffuse ? <Character name="temperature" size={24} color={stickers.blue} /> : <Drop size={22} fill={stickers.blue} />,
+      icon: diffuse ? diffuseBlob('basal_temp') : <Drop size={22} fill={stickers.blue} />,
       label: bbtValue ? `${bbtValue}°` : '+',
       done: !!bbtValue,
     },
     {
       key: 'lh',
       sheet: 'lh',
-      icon: diffuse ? <Character name="water" size={24} color={stickers.yellow} /> : <Drop size={22} fill={stickers.yellow} />,
+      icon: diffuse ? diffuseBlob('lh') : <Drop size={22} fill={stickers.yellow} />,
       label: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '+',
       done: !!lhValue,
     },
     {
       key: 'cm',
       sheet: 'cm',
-      icon: diffuse ? <Character name="water" size={24} color={stickers.green} /> : <Drop size={22} fill={stickers.green} />,
+      icon: diffuse ? diffuseBlob('cm') : <Drop size={22} fill={stickers.green} />,
       label: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '+',
       done: !!cmValue,
     },
     {
       key: 'intimacy',
       sheet: 'intercourse',
-      icon: diffuse ? <Character name="heart" size={24} color={intimacy ? stickers.pink : stickers.pinkSoft} /> : <Heart size={22} fill={intimacy ? stickers.pink : stickers.pinkSoft} />,
+      icon: diffuse ? diffuseBlob('intercourse') : <Heart size={22} fill={intimacy ? stickers.pink : stickers.pinkSoft} />,
       label: intimacy ? '✓' : '+',
       done: !!intimacy,
     },
     {
       key: 'period_start',
       sheet: 'period_start',
-      icon: diffuse ? <Character name="period" size={24} color={periodStart ? stickers.coral : stickers.pinkSoft} /> : <Drop size={22} fill={periodStart ? stickers.coral : stickers.pinkSoft} />,
+      icon: diffuse ? diffuseBlob('period_start') : <Drop size={22} fill={periodStart ? stickers.coral : stickers.pinkSoft} />,
       label: periodStart ? (periodStart === 'light' ? 'Lt' : periodStart === 'medium' ? 'Md' : periodStart === 'heavy' ? 'Hv' : '✓') : '+',
       done: !!periodStart,
     },
     {
       key: 'period_end', sheet: 'period_end',
-      icon: diffuse ? <Character name="period" size={24} color={periodEnd ? stickers.coral : stickers.pinkSoft} /> : <Drop size={22} fill={periodEnd ? stickers.coral : stickers.pinkSoft} />,
+      icon: diffuse ? diffuseBlob('period_end') : <Drop size={22} fill={periodEnd ? stickers.coral : stickers.pinkSoft} />,
       label: periodEnd ? '✓' : '+', done: !!periodEnd,
     },
     {
       key: 'pregnancy_test', sheet: 'pregnancy_test',
-      icon: diffuse ? <Character name="ovulation" size={24} color={stickers.yellow} /> : <Drop size={22} fill={stickers.yellow} />,
+      icon: diffuse ? diffuseBlob('pregnancy_test') : <Drop size={22} fill={stickers.yellow} />,
       label: pregTest ? (pregTest === 'positive' ? 'Pos' : pregTest === 'negative' ? 'Neg' : '✓') : '+', done: !!pregTest,
     },
     {
       key: 'sex_drive', sheet: 'sex_drive',
-      icon: diffuse ? <Character name="heart" size={24} color={sexDrive ? stickers.pink : stickers.pinkSoft} /> : <Heart size={22} fill={sexDrive ? stickers.pink : stickers.pinkSoft} />,
+      icon: diffuse ? diffuseBlob('sex_drive') : <Heart size={22} fill={sexDrive ? stickers.pink : stickers.pinkSoft} />,
       label: sexDrive ?? '+', done: !!sexDrive,
     },
     {
       key: 'clots', sheet: 'clots',
-      icon: diffuse ? <Character name="warning" size={24} color={stickers.coral} /> : <Drop size={22} fill={stickers.coral} />,
+      icon: diffuse ? diffuseBlob('clots') : <Drop size={22} fill={stickers.coral} />,
       label: clots ?? '+', done: !!clots,
     },
     {
       key: 'weight', sheet: 'weight',
-      icon: diffuse ? <Character name="growth" size={24} color={stickers.peach} /> : <Drop size={22} fill={stickers.peach} />,
+      icon: diffuse ? diffuseBlob('weight') : <Drop size={22} fill={stickers.peach} />,
       label: weight ? `${weight}` : '+', done: !!weight,
     },
     {
       key: 'water', sheet: 'water',
-      icon: diffuse ? <Character name="water" size={24} color={stickers.blue} /> : <Drop size={22} fill={stickers.blue} />,
+      icon: diffuse ? diffuseBlob('water') : <Drop size={22} fill={stickers.blue} />,
       label: water ? `${water}` : '+', done: !!water,
     },
     {
       key: 'activity', sheet: 'activity',
-      icon: diffuse ? <Character name="activity" size={24} color={stickers.green} /> : <Heart size={22} fill={stickers.green} />,
+      icon: diffuse ? diffuseBlob('activity') : <Heart size={22} fill={stickers.green} />,
       label: activity ? '✓' : '+', done: !!activity,
     },
   ]

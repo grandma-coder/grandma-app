@@ -71,7 +71,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   const parentName = useJourneyStore((s) => s.parentName)
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
-  const { data: history, isPending: historyPending } = useCycleHistory()
+  const { data: history } = useCycleHistory()
   // Date-based label only changes day-to-day; memo it so it isn't rebuilt on
   // every render (string formatting via toLocaleDateString twice per call).
   const microLabel = useMemo(() => getMicroLabel(), [])
@@ -122,9 +122,8 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
 
   const handleDatePress = useCallback((date: string) => {
     setSelectedDate(date)
-    setDateLocked(date !== todayStr)
     setLauncherOpen(true)
-  }, [todayStr])
+  }, [])
 
   const handleLogSaved = useCallback(() => {
     setLogSheetType(null)
@@ -132,15 +131,15 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
     setLogConfirmVisible(true)
   }, [qc])
 
-  // Stable callback so the ring's emit effect doesn't re-run every render. Also
-  // latches "a non-today day is selected" so auto-return doesn't yank a
-  // deliberately-picked day back to today mid-log (the log-a-past-day case).
-  // Clears automatically when the selection returns to today.
-  const [dateLocked, setDateLocked] = useState(false)
+  // Stable callback so the ring's emit effect doesn't re-run every render.
+  // This only lifts the scrubbed day up to the log card — it must NOT freeze
+  // auto-return. (The log flow itself freezes it via launcherOpen / logSheetType
+  // / logConfirmVisible below.) A previous `dateLocked` latch here fired on every
+  // scrub, which permanently froze the wheel off-today and killed the
+  // idle-return-to-today behavior.
   const handleRingDate = useCallback((d: string) => {
     setSelectedDate(d)
-    setDateLocked(d !== todayStr)
-  }, [todayStr])
+  }, [])
 
   // Phase for the *selected* day (not just today), so the log card + forms use
   // the correct phase-aware copy/colors for the day being logged.
@@ -156,9 +155,14 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
     setMonthOpen(false)
   }
 
-  if (historyPending) {
-    return <View style={[styles.root, { backgroundColor: bg }]} />
-  }
+  // NOTE: we intentionally do NOT blank the whole screen while `history` is
+  // pending. `useCycleHistory()` is a Supabase round-trip (~1–2s); withholding
+  // the entire home behind it left the user staring at an empty cream screen on
+  // every cold open. Every consumer below reads the fallback-safe `cycleConfig`
+  // (declared length → measured avg → 28) and `selectedInfo` derived from it —
+  // none dereference `history` directly — so the home renders instantly with
+  // sensible defaults and the ring simply glides to the real day once the query
+  // resolves. No blank, no crash.
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
@@ -198,7 +202,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
           selectDate={monthPick}
           onOpenMonth={() => setMonthOpen(true)}
           onDatePress={readOnly ? undefined : handleDatePress}
-          freezeAutoReturn={monthOpen || cardLogging || dateLocked || launcherOpen || logSheetType !== null || logConfirmVisible}
+          freezeAutoReturn={monthOpen || cardLogging || launcherOpen || logSheetType !== null || logConfirmVisible}
         />
         )}
 

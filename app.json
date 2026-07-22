@@ -32,6 +32,18 @@
       "expo-dev-client",
       "expo-secure-store",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3ECD9",
+          "dark": {
+            "backgroundColor": "#1A1713"
+          }
+        }
+      ],
+      [
         "expo-local-authentication",
         {
           "faceIDPermission": "Unlock grandma.app with Face ID."

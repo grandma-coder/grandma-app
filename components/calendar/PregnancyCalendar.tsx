@@ -331,7 +331,7 @@ function QuickLogSheet({
   onSelect: (type: PregnancyLogType) => void
   onManageRoutines: () => void
 }) {
-  const { colors, isDark, font } = useTheme()
+  const { colors, isDark, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -396,19 +396,7 @@ function QuickLogSheet({
               },
             ]}
           >
-            <View style={diffuse ? {
-              width: 30, height: 30, borderRadius: 15,
-              backgroundColor: 'transparent',
-              borderWidth: 1, borderColor: dt.colors.line2,
-              alignItems: 'center', justifyContent: 'center',
-            } : {
-              width: 30, height: 30, borderRadius: 15,
-              backgroundColor: paper,
-              borderWidth: 1.5, borderColor: ink,
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Calendar size={15} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={diffuse ? 1.7 : 2.4} />
-            </View>
+            <Character name="bell" size={30} color={stickers.lilac} />
             {diffuse ? (
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: dt.colors.ink, flex: 1 }}>
                 {t('pregCal_manage_routines')}
@@ -620,13 +608,7 @@ function RoutineManager({
 
       {/* Time */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{
-          width: 32, height: 32, borderRadius: radius.full,
-          backgroundColor: diffuse ? 'transparent' : ST_CREAM, borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? dt.colors.line2 : ST_INK,
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Clock size={14} color={diffuse ? dt.colors.ink3 : ST_INK} strokeWidth={diffuse ? 1.7 : 2.2} />
-        </View>
+        <Character name="clock" size={32} color={stickers.yellow} />
         <TextInput
           value={form.time}
           onChangeText={(t) => setForm((p) => ({ ...p, time: t }))}
@@ -843,9 +825,11 @@ function RoutineManager({
                             borderWidth: 1, borderColor: dt.colors.line,
                           }}
                         >
-                          <DiffuseBloomIcon color={getDiffuseAccent('preg', dt.isDark)} size={32} intensity={0.45}>
-                            <Character name={DIFFUSE_LOG_CHARACTER[r.type] ?? 'note'} size={20} color={dt.colors.ink2} />
-                          </DiffuseBloomIcon>
+                          {/* Per-concept bloom + hue via the shared resolver —
+                              matches the "Log something" grid + day timeline.
+                              (Was hardcoded to the mode-lilac accent for every
+                              routine, so all rows read as the same washed purple.) */}
+                          <DiffuseLogIcon type={r.type} size={32} inkColor={dt.colors.ink3} />
                           <View style={{ flex: 1, gap: 3 }}>
                             <Text style={{ color: dt.colors.ink, fontSize: 15, fontFamily: diffuseFont.body }}>
                               {r.name}
