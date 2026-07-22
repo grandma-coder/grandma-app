@@ -19,7 +19,7 @@ import { DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
 import { Character } from '../../characters/Characters'
 import { Cross as CrossSticker } from '../../ui/Stickers'
 import { getVaccineInfo, type VaccineInfo } from '../../../lib/vaccineInfo'
-import { MEDICAL_DISCLAIMER, VACCINE_SCHEDULE_NOTE, VACCINE_DISCLAIMER } from '../../../lib/medicalSources'
+import { MEDICAL_DISCLAIMER, VACCINE_SCHEDULE_NOTE } from '../../../lib/medicalSources'
 import type { ChildWithRole } from '../../../types'
 import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import {
@@ -243,8 +243,6 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
   const PARTIAL_BG = ST_YELLOW
   const PARTIAL_BORDER = ST_INK
   const PARTIAL_INK = ST_INK
-  const OVERDUE_BG = ST_PEACH
-  const OVERDUE_BORDER = ST_INK
   const FUTURE_BG = ST_CREAM
   const FUTURE_BORDER = ST_LINE
 
@@ -337,6 +335,12 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                     const doseTint = vax.status === 'done' ? dCol.ink
                       : vax.status === 'upcoming' ? acc
                       : dCol.ink3            // no red; "not yet logged" is neutral, not an alarm
+                    // Neutral timing copy — only for upcoming/overdue; done has
+                    // no label (mapper returns null) and future's timing shows
+                    // on the right already.
+                    const timingLabel = vax.status === 'upcoming' || vax.status === 'overdue'
+                      ? vaccineStatusLabel(vax.status, vax.dueAge)
+                      : null
                     return (
                       <View key={vax.scheduleKey}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}>
@@ -352,7 +356,14 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                             <View style={{ flexShrink: 0 }}>
                               <Character name={doseBlob} size={19} color={doseTint} bg={dCol.bg} />
                             </View>
-                            <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink }}>{fullName}</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink }}>{fullName}</Text>
+                              {timingLabel ? (
+                                <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10.5, color: dCol.ink3, marginTop: 2 }}>
+                                  {t(timingLabel.key as TranslationKey, timingLabel.params)}
+                                </Text>
+                              ) : null}
+                            </View>
                           </Pressable>
                           {vax.status === 'done' ? (
                             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, color: dCol.ink3 }}>{vax.givenDate ? formatHealthDate(vax.givenDate) : ''}</Text>
@@ -441,7 +452,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
             {t('kids_home_vaccine_source', { title: resolved.source.title, reviewed: resolved.source.reviewed })}
           </Text>
           <Text style={{ fontFamily: diffuseFont.body, fontSize: 11, lineHeight: 16, color: dCol.ink3 }}>
-            {VACCINE_DISCLAIMER}
+            {t('kids_home_vaccine_disclaimer_banner')}
           </Text>
         </View>
         <VaccineInfoModal
@@ -547,10 +558,16 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                   const stickerFill = vax.status === 'done' ? ST_GREEN
                     : vax.status === 'upcoming' ? ST_YELLOW
                     : ST_CREAM
-                  const stickerStroke = vax.status === 'future' ? ST_LINE : ST_INK
+                  const stickerStroke = vax.status === 'future' || vax.status === 'overdue' ? ST_LINE : ST_INK
                   const metaColor = vax.status === 'done' ? (isDark ? ST_GREEN : '#3A7A28')
                     : vax.status === 'upcoming' ? (isDark ? ST_YELLOW : '#7A6100')
                     : ink3
+                  // Neutral timing copy — only for upcoming/overdue; done has
+                  // no label (mapper returns null) and future's timing shows
+                  // on the right already.
+                  const timingLabel = vax.status === 'upcoming' || vax.status === 'overdue'
+                    ? vaccineStatusLabel(vax.status, vax.dueAge)
+                    : null
 
                   return (
                     <View key={vax.scheduleKey}>
@@ -585,9 +602,16 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                             )}
                           </View>
                           {/* Name */}
-                          <Text style={{ flex: 1, fontSize: 13, fontFamily: font.bodyMedium, color: ink }}>
-                            {fullName}
-                          </Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontFamily: font.bodyMedium, color: ink }}>
+                              {fullName}
+                            </Text>
+                            {timingLabel ? (
+                              <Text style={{ fontSize: 11, fontFamily: font.body, color: ink3, marginTop: 2 }}>
+                                {t(timingLabel.key as TranslationKey, timingLabel.params)}
+                              </Text>
+                            ) : null}
+                          </View>
                         </Pressable>
                         {/* Meta / actions */}
                         {vax.status === 'done' ? (
@@ -751,7 +775,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
           {t('kids_home_vaccine_source', { title: resolved.source.title, reviewed: resolved.source.reviewed })}
         </Text>
         <Text style={{ fontFamily: font.body, fontSize: 11, lineHeight: 16, color: ink3 }}>
-          {VACCINE_DISCLAIMER}
+          {t('kids_home_vaccine_disclaimer_banner')}
         </Text>
       </View>
       <VaccineInfoModal
