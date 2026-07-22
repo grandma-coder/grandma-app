@@ -2759,6 +2759,17 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
 
 const HEALTH_EVENTS = ['Temperature', 'Vaccine', 'Medicine', 'Doctor visit', 'Injury', 'Other']
 
+// Event label → { Character blob concept, hue }, per the canonical log-type
+// map in DiffuseLogTimeline (kept in sync with HEALTH_EVENTS ids below).
+const HEALTH_EVENT_CONCEPT: Record<string, string> = {
+  Temperature: 'temperature',
+  Vaccine: 'vaccine',
+  Medicine: 'medicine',
+  'Doctor visit': 'checkup',
+  Injury: 'health',
+  Other: 'note',
+}
+
 export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
   const diffuse = useIsDiffuse()
   const { t } = useTranslation()
@@ -2766,8 +2777,12 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
   const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
+  const HEALTH_OPTS: ChoiceOption[] = HEALTH_EVENTS.map((e) => {
+    const concept = HEALTH_EVENT_CONCEPT[e]
+    return { id: e, label: e, blob: concept as ChoiceOption['blob'], color: diffuseLogHue(concept) }
+  })
 
-  const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
+  const [childId, setChildId] = useState(prefill?.childId ?? editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
   const [startTime, setStartTime] = useState(() => prefill?.time ?? toTimeStr(new Date()))
   const [eventType, setEventType] = useState<string | null>(null)
@@ -2871,61 +2886,25 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
     }
   }
 
-  if (diffuse) {
-    return (
-      <View style={df.form}>
-        <View style={df.topRow}>
-          <ChildSelector selected={childId} onSelect={setChildId} />
-          <View style={df.dateTimeRow}>
-            <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
-          </View>
-        </View>
-        <DiffuseFormHeader kind="health" />
-        <View style={df.chipGrid}>
-          {HEALTH_EVENTS.map((e, i) => (
-            <DiffuseChip key={e} label={e} active={eventType === e} onPress={() => setEventType(e)} hue={chipHueAt(dTheme, i)} />
-          ))}
-        </View>
-        <DiffuseField
-          value={value}
-          onChangeText={setValue}
-          placeholder={eventType === 'Temperature' ? t('kids_logForm_placeholderTemp') : t('kids_logForm_placeholderDetails')}
-          keyboardType={eventType === 'Temperature' ? 'decimal-pad' : 'default'}
-        />
-        <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
-        <SaveButton onPress={save} saving={saving} disabled={!childId || !eventType} onSkip={prefill?.routineId ? onSkip : undefined} />
+  const moreFields = diffuse ? (
+    <>
+      <View style={df.dateTimeRow}>
+        <DateChip value={logDate} onChange={setLogDate} />
+        <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
       </View>
-    )
-  }
-
-  return (
-    <View style={styles.form}>
-      <View style={styles.topRow}>
-        <ChildSelector selected={childId} onSelect={setChildId} />
-        <View style={styles.dateTimeRow}>
-          <DateChip value={logDate} onChange={setLogDate} />
-          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
-        </View>
-      </View>
-      <FormHeaderSticker kind="health" />
-      <View style={styles.chipGrid}>
-        {HEALTH_EVENTS.map((e) => {
-          const active = eventType === e
-          return (
-            <Pressable
-              key={e}
-              onPress={() => setEventType(e)}
-              style={[styles.chip, {
-                backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                borderColor: active ? ACCENT : (isDark ? colors.border : INK),
-                borderRadius: radius.full,
-              }]}
-            >
-              <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{e}</Text>
-            </Pressable>
-          )
-        })}
+      <DiffuseField
+        value={value}
+        onChangeText={setValue}
+        placeholder={eventType === 'Temperature' ? t('kids_logForm_placeholderTemp') : t('kids_logForm_placeholderDetails')}
+        keyboardType={eventType === 'Temperature' ? 'decimal-pad' : 'default'}
+      />
+      <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
+    </>
+  ) : (
+    <>
+      <View style={styles.dateTimeRow}>
+        <DateChip value={logDate} onChange={setLogDate} />
+        <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
       </View>
       <TextInput
         value={value}
@@ -2942,6 +2921,35 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         placeholderTextColor={colors.textMuted}
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <View style={df.form}>
+        <ActiveChildChip childId={childId} onChange={setChildId} />
+        <DiffuseFormHeader kind="health" />
+
+        {/* Event type — large tappable choice blobs */}
+        <ChoiceStep options={HEALTH_OPTS} value={eventType ? [eventType] : []} onChange={(ids) => setEventType(ids[0])} />
+
+        <MoreSection label={t('kids_logForm_time')}>{moreFields}</MoreSection>
+
+        <SaveButton onPress={save} saving={saving} disabled={!childId || !eventType} onSkip={prefill?.routineId ? onSkip : undefined} />
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.form}>
+      <ActiveChildChip childId={childId} onChange={setChildId} />
+      <FormHeaderSticker kind="health" />
+
+      {/* Event type — large tappable choice blobs */}
+      <ChoiceStep options={HEALTH_OPTS} value={eventType ? [eventType] : []} onChange={(ids) => setEventType(ids[0])} />
+
+      <MoreSection label={t('kids_logForm_time')}>{moreFields}</MoreSection>
+
       <SaveButton onPress={save} saving={saving} disabled={!childId || !eventType} onSkip={prefill?.routineId ? onSkip : undefined} />
     </View>
   )
