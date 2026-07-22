@@ -11,9 +11,10 @@ function seed({
   enrolled = ['pre-pregnancy', 'pregnancy'],
   current = 'pre-pregnancy',
   caregiverRole,
-}: { enrolled?: string[]; current?: string | null; caregiverRole?: string } = {}) {
+  cycleIntent = 'tracking',
+}: { enrolled?: string[]; current?: string | null; caregiverRole?: string; cycleIntent?: string } = {}) {
   useBehaviorStore.setState({ enrolledBehaviors: enrolled as never, currentBehavior: current as never })
-  useModeStore.setState({ mode: (current ?? 'kids') as never, cycleIntent: 'tracking' })
+  useModeStore.setState({ mode: (current ?? 'kids') as never, cycleIntent: cycleIntent as never })
   useChildStore.setState({ activeChild: caregiverRole ? ({ id: 'c1', caregiverRole } as never) : null })
 }
 
@@ -29,6 +30,12 @@ describe('HomeJourneySwitcher', () => {
     seed({ current: 'pre-pregnancy' })
     const { queryByLabelText } = render(<HomeJourneySwitcher />)
     expect(queryByLabelText(/Switch journey, currently Cycle/)).toBeTruthy()
+  })
+
+  it('labels the pre-pregnancy journey "Dreaming" when cycleIntent is ttc', () => {
+    seed({ current: 'pre-pregnancy', cycleIntent: 'ttc' })
+    const { queryByLabelText } = render(<HomeJourneySwitcher />)
+    expect(queryByLabelText(/Switch journey, currently Dreaming/)).toBeTruthy()
   })
 
   it('renders null in a caregiver context', () => {
