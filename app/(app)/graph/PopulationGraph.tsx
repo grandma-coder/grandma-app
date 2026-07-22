@@ -2,6 +2,7 @@
 import { useMemo, useRef, useState, type ComponentType, type Ref } from "react"
 import dynamic from "next/dynamic"
 import type { ForceGraphProps, NodeObject, ForceGraphMethods } from "react-force-graph-2d"
+import { useContainerSize } from "./useContainerSize"
 
 // react-force-graph-2d uses window/canvas → client-only (no SSR). next/dynamic
 // drops the lib's generics, so we re-assert the prop type (keeps callbacks typed
@@ -47,6 +48,7 @@ export function PopulationGraph({
   onPickUser: (id: string, label: string) => void
 }) {
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined)
+  const { ref: containerRef, w, h } = useContainerSize<HTMLDivElement>()
   const [focusId, setFocusId] = useState<string | null>(null)
   const [hoverId, setHoverId] = useState<string | null>(null)
 
@@ -137,11 +139,17 @@ export function PopulationGraph({
         </span>
       </div>
 
-      <div className="relative overflow-hidden rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]" style={{ height: 600 }}>
+      <div
+        ref={containerRef}
+        className="relative w-full overflow-hidden rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]"
+        style={{ height: "72vh", minHeight: 560 }}
+      >
+        {w > 0 && h > 0 && (
         <ForceGraph2D
           ref={fgRef}
           graphData={graphData}
-          height={600}
+          width={w}
+          height={h}
           backgroundColor="#FBFAF5"
           nodeRelSize={5}
           cooldownTicks={90}
@@ -205,6 +213,7 @@ export function PopulationGraph({
           }}
           onBackgroundClick={() => setFocusId(null)}
         />
+        )}
 
         {activeNode && (
           <div className="pointer-events-none absolute left-3 top-3 rounded-lg border border-border-default bg-card/95 px-3 py-2 text-xs shadow-[var(--shadow-sm)]">

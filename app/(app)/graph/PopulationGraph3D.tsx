@@ -1,6 +1,7 @@
 "use client"
 import { useMemo, useRef } from "react"
 import dynamic from "next/dynamic"
+import { useContainerSize } from "./useContainerSize"
 
 // react-force-graph-3d touches window/WebGL → must be client-only (no SSR).
 // Lazy-loaded so three.js only downloads when the 3D view is actually opened.
@@ -23,6 +24,7 @@ export function PopulationGraph3D({
   data: { nodes: PopNode[]; edges: PopEdge[]; totalUsers: number; shown: number; capped: boolean }
   onPickUser: (id: string, label: string) => void
 }) {
+  const { ref: containerRef, w, h } = useContainerSize<HTMLDivElement>()
   const maxDeg = Math.max(1, ...data.nodes.map((n) => n.degree))
   // Map to the library's { nodes, links } shape.
   const graphData = useMemo(
@@ -55,10 +57,16 @@ export function PopulationGraph3D({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border-default bg-[#0b0b10] shadow-[var(--shadow-sm)]">
+    <div
+      ref={containerRef}
+      className="w-full overflow-hidden rounded-xl border border-border-default bg-[#0b0b10] shadow-[var(--shadow-sm)]"
+      style={{ height: "72vh", minHeight: 560 }}
+    >
+      {w > 0 && h > 0 && (
       <ForceGraph3D
         graphData={graphData}
-        height={600}
+        width={w}
+        height={h}
         backgroundColor="#0b0b10"
         nodeColor="color"
         nodeVal="val"
@@ -74,6 +82,7 @@ export function PopulationGraph3D({
           if (node.id) onPickUser(node.id, node.label ?? node.id.slice(0, 8))
         }}
       />
+      )}
     </div>
   )
 }
