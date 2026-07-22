@@ -3282,9 +3282,19 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
   const { colors, radius, isDark } = useTheme()
   const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
+  const activeChild = useChildStore((s) => s.activeChild)
   const ACTIVITY_TYPES = ACTIVITY_TYPE_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  // All 13 activity types share the same `activity` blob concept (there's no
+  // per-type Character) — vary the color by cycling the shared sticker-hue
+  // rotation (CHIP_HUE_CYCLE) so the grid isn't 13 identical blobs.
+  const ACTIVITY_OPTS: ChoiceOption[] = ACTIVITY_TYPES.map((a, i) => ({
+    id: a.id,
+    label: a.label,
+    blob: 'activity',
+    color: stickerPalette[CHIP_HUE_CYCLE[i % CHIP_HUE_CYCLE.length]],
+  }))
 
-  const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
+  const [childId, setChildId] = useState(prefill?.childId ?? editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
   const [startTime, setStartTime] = useState(() => prefill?.time ?? toTimeStr(new Date()))
   const [endTime, setEndTime] = useState('')
@@ -3373,41 +3383,85 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
     }
   }
 
+  const moreFields = diffuse ? (
+    <>
+      <View style={df.dateTimeRow}>
+        <DateChip value={logDate} onChange={setLogDate} />
+        <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
+        {endTime ? (
+          <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
+        ) : (
+          <Pressable onPress={() => setEndTime(toTimeStr(new Date()))} style={[df.pill, { borderColor: dTheme.colors.line }]}>
+            <Plus size={12} color={dTheme.colors.ink3} strokeWidth={2} />
+            <Text style={[df.pillLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_end')}</Text>
+          </Pressable>
+        )}
+      </View>
+      {autoDuration !== '' && (
+        <View style={[df.banner, { borderColor: dTheme.colors.line }]}>
+          <Character name="activity" size={18} color={dTheme.colors.ink3} />
+          <Text style={[df.bannerLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_duration')}</Text>
+          <Text style={[df.bannerValue, { color: dTheme.colors.ink }]}>{autoDuration}</Text>
+        </View>
+      )}
+      <DiffuseField label={t('kids_logForm_placeholderActivityName')} value={name} onChangeText={setName} placeholder={t('kids_logForm_placeholderActivityName')} />
+      <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
+      <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+    </>
+  ) : (
+    <>
+      <View style={styles.dateTimeRow}>
+        <DateChip value={logDate} onChange={setLogDate} />
+        <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
+        {endTime ? (
+          <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
+        ) : (
+          <Pressable
+            onPress={() => setEndTime(toTimeStr(new Date()))}
+            style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
+          >
+            <Plus size={12} color={colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{t('kids_logForm_end')}</Text>
+          </Pressable>
+        )}
+      </View>
+      {autoDuration !== '' && (
+        <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
+          <Dumbbell size={20} color={ACCENT} strokeWidth={2} />
+          <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('kids_logForm_duration')}</Text>
+          <Text style={[styles.autoDuration, { color: INK, fontFamily: font.displayBold }]}>{autoDuration}</Text>
+        </View>
+      )}
+      <TextInput
+        value={name}
+        onChangeText={setName}
+        placeholder={t('kids_logForm_placeholderActivityName')}
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+      />
+      <TextInput
+        value={notes}
+        onChangeText={setNotes}
+        placeholder={t('kids_logForm_placeholderNotes')}
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+      />
+      <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+    </>
+  )
+
   if (diffuse) {
     return (
       <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false}>
         <View style={df.form}>
-          <View style={df.topRow}>
-            <ChildSelector selected={childId} onSelect={setChildId} />
-            <View style={df.dateTimeRow}>
-              <DateChip value={logDate} onChange={setLogDate} />
-              <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
-              {endTime ? (
-                <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
-              ) : (
-                <Pressable onPress={() => setEndTime(toTimeStr(new Date()))} style={[df.pill, { borderColor: dTheme.colors.line }]}>
-                  <Plus size={12} color={dTheme.colors.ink3} strokeWidth={2} />
-                  <Text style={[df.pillLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_end')}</Text>
-                </Pressable>
-              )}
-            </View>
-          </View>
+          <ActiveChildChip childId={childId} onChange={setChildId} />
           <DiffuseFormHeader kind="activity" />
-          {autoDuration !== '' && (
-            <View style={[df.banner, { borderColor: dTheme.colors.line }]}>
-              <Character name="activity" size={18} color={dTheme.colors.ink3} />
-              <Text style={[df.bannerLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_duration')}</Text>
-              <Text style={[df.bannerValue, { color: dTheme.colors.ink }]}>{autoDuration}</Text>
-            </View>
-          )}
-          <View style={df.chipGrid}>
-            {ACTIVITY_TYPES.map((a, i) => (
-              <DiffuseChip key={a.id} label={a.label} active={activityType === a.id} onPress={() => setActivityType(a.id)} hue={chipHueAt(dTheme, i)} />
-            ))}
-          </View>
-          <DiffuseField label={t('kids_logForm_placeholderActivityName')} value={name} onChangeText={setName} placeholder={t('kids_logForm_placeholderActivityName')} />
-          <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
-          <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+
+          {/* Activity type — large tappable choice blobs */}
+          <ChoiceStep options={ACTIVITY_OPTS} value={activityType ? [activityType] : []} onChange={(ids) => setActivityType(ids[0])} />
+
+          <MoreSection label={t('kids_logForm_start')}>{moreFields}</MoreSection>
+
           <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} onSkip={prefill?.routineId ? onSkip : undefined} />
         </View>
       </ScrollView>
@@ -3417,68 +3471,14 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
   return (
     <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false}>
       <View style={styles.form}>
-        <View style={styles.topRow}>
-          <ChildSelector selected={childId} onSelect={setChildId} />
-          <View style={styles.dateTimeRow}>
-            <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
-            {endTime ? (
-              <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
-            ) : (
-              <Pressable
-                onPress={() => setEndTime(toTimeStr(new Date()))}
-                style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
-              >
-                <Plus size={12} color={colors.textMuted} strokeWidth={2} />
-                <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{t('kids_logForm_end')}</Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
+        <ActiveChildChip childId={childId} onChange={setChildId} />
         <FormHeaderSticker kind="activity" />
-        {autoDuration !== '' && (
-          <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
-            <Dumbbell size={20} color={ACCENT} strokeWidth={2} />
-            <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('kids_logForm_duration')}</Text>
-            <Text style={[styles.autoDuration, { color: INK, fontFamily: font.displayBold }]}>{autoDuration}</Text>
-          </View>
-        )}
 
-        {/* Activity type chips */}
-        <View style={styles.chipGrid}>
-          {ACTIVITY_TYPES.map((a) => {
-            const active = activityType === a.id
-            return (
-              <Pressable
-                key={a.id}
-                onPress={() => setActivityType(a.id)}
-                style={[styles.chip, {
-                  backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                  borderColor: active ? ACCENT : (isDark ? colors.border : INK),
-                  borderRadius: radius.full,
-                }]}
-              >
-                <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{a.label}</Text>
-              </Pressable>
-            )
-          })}
-        </View>
+        {/* Activity type — large tappable choice blobs */}
+        <ChoiceStep options={ACTIVITY_OPTS} value={activityType ? [activityType] : []} onChange={(ids) => setActivityType(ids[0])} />
 
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder={t('kids_logForm_placeholderActivityName')}
-          placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
-        />
-        <TextInput
-          value={notes}
-          onChangeText={setNotes}
-          placeholder={t('kids_logForm_placeholderNotes')}
-          placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
-        />
-        <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+        <MoreSection label={t('kids_logForm_start')}>{moreFields}</MoreSection>
+
         <SaveButton onPress={save} saving={saving} disabled={!childId || !activityType} onSkip={prefill?.routineId ? onSkip : undefined} />
       </View>
     </ScrollView>
