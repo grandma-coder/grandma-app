@@ -3,6 +3,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { trpc } from "@/lib/trpc"
 import { PopulationGraph } from "./PopulationGraph"
+import { PopulationGraph3D } from "./PopulationGraph3D"
 
 type NodeKind = "user" | "child" | "caregiver" | "owner" | "behavior" | "subscription" | "community"
 
@@ -210,6 +211,7 @@ function NodeDetail({ node }: { node: GNode }) {
 
 export function RelationshipExplorer() {
   const [mode, setMode] = useState<"ego" | "population">("ego")
+  const [viz, setViz] = useState<"2d" | "3d">("2d")
   const [picked, setPicked] = useState<{ id: string; label: string } | null>(null)
   const [selected, setSelected] = useState<GNode | null>(null)
 
@@ -250,10 +252,27 @@ export function RelationshipExplorer() {
 
       {mode === "population" && (
         <>
+          <div className="flex gap-2">
+            {(["2d", "3d"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setViz(v)}
+                className={`rounded-full px-3 py-1 text-xs font-medium uppercase transition-colors ${
+                  viz === v ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+            {viz === "3d" && <span className="self-center text-xs text-fg-muted">drag to orbit · scroll to zoom · click a node to open it</span>}
+          </div>
           {population.isLoading && <p className="text-sm text-fg-tertiary">Building the population graph…</p>}
-          {population.data && (
-            <PopulationGraph key={population.data.shown} data={population.data} onPickUser={goToUser} />
-          )}
+          {population.data &&
+            (viz === "3d" ? (
+              <PopulationGraph3D key={"3d-" + population.data.shown} data={population.data} onPickUser={goToUser} />
+            ) : (
+              <PopulationGraph key={population.data.shown} data={population.data} onPickUser={goToUser} />
+            ))}
         </>
       )}
 
