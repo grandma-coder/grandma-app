@@ -29,3 +29,17 @@ describe('ChoiceStep', () => {
     expect(onChange).toHaveBeenCalledWith(['pee', 'poop'])
   })
 })
+
+import { MoreSection } from '../QuickLogKit'
+import { Text as RNText } from 'react-native'
+
+describe('MoreSection', () => {
+  it('hides its children until the toggle is pressed', () => {
+    const { queryByText, getByText } = render(
+      <MoreSection label="More"><RNText>HIDDEN_FIELD</RNText></MoreSection>,
+    )
+    expect(queryByText('HIDDEN_FIELD')).toBeNull()
+    fireEvent.press(getByText('More'))
+    expect(queryByText('HIDDEN_FIELD')).toBeTruthy()
+  })
+})
