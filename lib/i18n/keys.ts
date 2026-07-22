@@ -1022,6 +1022,7 @@ export interface TranslationKeys {
   kids_home_nutrition_no_feeds: string
   kids_home_nutrition_tap_breakdown: string
   kids_home_vaccine_up_to_date: string
+  kids_home_vaccine_reference_only: string
   kids_home_vaccine_overdue: string
   kids_home_vaccine_next: string
   kids_home_vaccine_last: string

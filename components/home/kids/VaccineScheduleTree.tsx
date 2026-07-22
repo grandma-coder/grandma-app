@@ -19,7 +19,7 @@ import { DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
 import { Character } from '../../characters/Characters'
 import { Cross as CrossSticker } from '../../ui/Stickers'
 import { getVaccineInfo, type VaccineInfo } from '../../../lib/vaccineInfo'
-import { MEDICAL_DISCLAIMER, VACCINE_SCHEDULE_NOTE } from '../../../lib/medicalSources'
+import { countryByCode } from '../../../lib/countries'
 import type { ChildWithRole } from '../../../types'
 import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import {
@@ -78,8 +78,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
               </View>
             ) : null}
             <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3, textAlign: 'center', marginTop: 4 }}>{t('kids_home_vaccine_info_disclaimer')}</Text>
-            <Text style={{ fontFamily: diffuseFont.body, fontSize: 11, lineHeight: 16, color: dCol.ink3, textAlign: 'center' }}>{MEDICAL_DISCLAIMER}</Text>
-            <Text style={{ fontFamily: diffuseFont.body, fontSize: 11, lineHeight: 16, color: dCol.ink3, textAlign: 'center' }}>{VACCINE_SCHEDULE_NOTE}</Text>
+            <Text style={{ fontFamily: diffuseFont.body, fontSize: 11, lineHeight: 16, color: dCol.ink3, textAlign: 'center' }}>{t('kids_home_vaccine_disclaimer_banner')}</Text>
           </View>
         ) : (
           <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 22, color: dCol.ink3 }}>{t('kids_home_vaccine_no_info')}</Text>
@@ -165,10 +164,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
                   {t('kids_home_vaccine_info_disclaimer')}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11, marginTop: 12, textAlign: 'center', lineHeight: 16 }}>
-                  {MEDICAL_DISCLAIMER}
-                </Text>
-                <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 11, marginTop: 6, textAlign: 'center', lineHeight: 16 }}>
-                  {VACCINE_SCHEDULE_NOTE}
+                  {t('kids_home_vaccine_disclaimer_banner')}
                 </Text>
               </>
             ) : (
@@ -205,6 +201,12 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
   // catalogued, else an honest WHO reference (never a silent US substitution).
   const resolved = useMemo(
     () => getScheduleForCountry(child.countryCode ?? 'US'),
+    [child.countryCode],
+  )
+  // Friendly name for the reference banner — falls back to the raw code if
+  // it isn't in our country list.
+  const referenceCountryName = useMemo(
+    () => countryByCode(child.countryCode ?? '')?.name ?? child.countryCode ?? '',
     [child.countryCode],
   )
 
@@ -278,7 +280,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
       <View>
         {resolved.provenance === 'who-reference' ? (
           <Text style={{ fontFamily: diffuseFont.body, fontSize: 12, lineHeight: 18, color: dCol.ink2, marginBottom: 12 }}>
-            {t('kids_home_vaccine_reference_banner', { country: child.countryCode ?? '' })}
+            {t('kids_home_vaccine_reference_banner', { country: referenceCountryName })}
           </Text>
         ) : null}
         {milestones.map((milestone, idx) => {
@@ -471,7 +473,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
     <View>
       {resolved.provenance === 'who-reference' ? (
         <Text style={{ fontFamily: font.body, fontSize: 12, lineHeight: 18, color: colors.textMuted, marginBottom: 12 }}>
-          {t('kids_home_vaccine_reference_banner', { country: child.countryCode ?? '' })}
+          {t('kids_home_vaccine_reference_banner', { country: referenceCountryName })}
         </Text>
       ) : null}
       {milestones.map((milestone, idx) => {

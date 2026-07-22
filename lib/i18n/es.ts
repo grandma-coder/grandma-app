@@ -913,6 +913,7 @@ export const es: TranslationKeys = {
   kids_home_nutrition_no_feeds: "Sin alimentaciones aún",
   kids_home_nutrition_tap_breakdown: "Toca para desglose",
   kids_home_vaccine_up_to_date: "Al día",
+  kids_home_vaccine_reference_only: "Reference schedule — tap to view",
   kids_home_vaccine_overdue: "Not yet logged",
   kids_home_vaccine_next: "Próxima vacuna",
   kids_home_vaccine_last: "Última vacuna",

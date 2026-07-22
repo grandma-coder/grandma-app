@@ -913,6 +913,7 @@ export const ptBR: TranslationKeys = {
   kids_home_nutrition_no_feeds: "Nenhuma alimentação ainda",
   kids_home_nutrition_tap_breakdown: "Toque para detalhamento",
   kids_home_vaccine_up_to_date: "Em dia",
+  kids_home_vaccine_reference_only: "Reference schedule — tap to view",
   kids_home_vaccine_overdue: "Not yet logged",
   kids_home_vaccine_next: "Próxima vacina",
   kids_home_vaccine_last: "Última vacina",

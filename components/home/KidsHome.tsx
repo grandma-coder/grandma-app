@@ -73,6 +73,7 @@ import { VaccineTrackerSheet } from './kids/VaccineTrackerSheet'
 import { HealthTrackerSheet } from './kids/HealthTrackerSheet'
 import {
   getNextDueVaccines,
+  getScheduleForCountry,
   formatHealthDate,
   parseGrowthValue,
   type HealthRecord,
@@ -3437,6 +3438,14 @@ function HealthCard({ reminders, healthHistory, child }: {
   const upcomingCount = nextVaccines.length
   const overdueCount = nextVaccines.filter(v => v.overdue).length
   const nextVaccine = nextVaccines[0]
+  // Uncatalogued country → WHO reference only. Never claim a per-child
+  // verdict ("Up to date") when we can't confirm this is the child's
+  // actual schedule.
+  const vaccineProvenance = useMemo(
+    () => getScheduleForCountry(child.countryCode ?? 'US').provenance,
+    [child.countryCode],
+  )
+  const isReferenceOnly = vaccineProvenance === 'who-reference'
 
   const tileBg = diffuse ? dt.colors.surface : colors.surface
   const tileBorder = diffuse ? dt.colors.line : colors.border
@@ -3446,17 +3455,27 @@ function HealthCard({ reminders, healthHistory, child }: {
 
   // Diffuse: hairline status chip (no filled pill); current: soft-tinted pill.
   // Neutral records-language only — no clinical "overdue"/"due soon" verdict, no red alarm color.
-  const statusBg = diffuse ? 'transparent' : (upcomingCount > 0
-    ? (isDark ? '#3A2E00' : '#FFFAE0')
-    : (isDark ? '#1A2810' : '#EEF7E4'))
+  // Reference-only mode always gets the neutral (non-verdict) treatment —
+  // never the green "up to date" tint.
+  const statusBg = diffuse
+    ? 'transparent'
+    : isReferenceOnly
+      ? colors.surfaceRaised
+      : (upcomingCount > 0
+        ? (isDark ? '#3A2E00' : '#FFFAE0')
+        : (isDark ? '#1A2810' : '#EEF7E4'))
   const statusColor = diffuse
     ? dt.colors.ink3
-    : (upcomingCount > 0 ? (isDark ? '#F5D652' : '#6B5800') : (isDark ? '#BDD48C' : '#3A6020'))
-  const statusLabel = overdueCount > 0
-    ? t('kids_home_vaccine_count_unlogged', { count: overdueCount })
-    : upcomingCount > 0
-      ? t('kids_home_vaccine_count_upcoming', { count: upcomingCount })
-      : t('kids_home_vaccine_up_to_date')
+    : isReferenceOnly
+      ? colors.textMuted
+      : (upcomingCount > 0 ? (isDark ? '#F5D652' : '#6B5800') : (isDark ? '#BDD48C' : '#3A6020'))
+  const statusLabel = isReferenceOnly
+    ? t('kids_home_vaccine_reference_only')
+    : overdueCount > 0
+      ? t('kids_home_vaccine_count_unlogged', { count: overdueCount })
+      : upcomingCount > 0
+        ? t('kids_home_vaccine_count_upcoming', { count: upcomingCount })
+        : t('kids_home_vaccine_up_to_date')
 
   return (
     <View style={[s.hcCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
@@ -3473,7 +3492,11 @@ function HealthCard({ reminders, healthHistory, child }: {
 
       {/* Content */}
       <View style={{ flex: 1, gap: 4 }}>
-        {nextVaccine ? (
+        {isReferenceOnly ? (
+          <Text style={[s.hcPrimary, { color: ink3 }, diffuse && { fontFamily: diffuseFont.display, letterSpacing: -0.2 }]} numberOfLines={1}>
+            {t('kids_home_vaccine_reference_only')}
+          </Text>
+        ) : nextVaccine ? (
           <>
             <Text style={[s.hcEyebrow, { color: ink3 }, diffuse && { fontFamily: diffuseFont.mono, letterSpacing: 1.6 }]}>
               {overdueCount > 0 ? t('kids_home_vaccine_overdue') : t('kids_home_vaccine_next')}

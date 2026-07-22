@@ -10,9 +10,6 @@ export const MEDICAL_DISCLAIMER =
 
 export const VACCINE_SCHEDULE_NOTE = "Follow your country's official immunization schedule and your pediatrician."
 
-export const VACCINE_DISCLAIMER =
-  "General information, not medical advice. Timing varies by country — always confirm your child's schedule with your pediatrician."
-
 export const SOURCES = {
   acogPrenatalScreening:
     'https://www.acog.org/womens-health/faqs/prenatal-genetic-screening-tests',
