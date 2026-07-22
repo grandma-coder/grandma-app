@@ -210,7 +210,7 @@ function NodeDetail({ node }: { node: GNode }) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export function RelationshipExplorer() {
-  const [mode, setMode] = useState<"ego" | "population">("ego")
+  const [mode, setMode] = useState<"ego" | "population">("population")
   const [viz, setViz] = useState<"2d" | "3d">("2d")
   const [picked, setPicked] = useState<{ id: string; label: string } | null>(null)
   const [selected, setSelected] = useState<GNode | null>(null)
@@ -271,7 +271,7 @@ export function RelationshipExplorer() {
             (viz === "3d" ? (
               <PopulationGraph3D key={"3d-" + population.data.shown} data={population.data} onPickUser={goToUser} />
             ) : (
-              <PopulationGraph key={population.data.shown} data={population.data} onPickUser={goToUser} />
+              <PopulationGraph key={population.data.shown} data={population.data} onPickUser={goToUser} onExploreOne={() => setMode("ego")} />
             ))}
         </>
       )}

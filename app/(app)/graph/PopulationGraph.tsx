@@ -45,9 +45,11 @@ interface GNode {
 export function PopulationGraph({
   data,
   onPickUser,
+  onExploreOne,
 }: {
   data: { nodes: PopNode[]; edges: PopEdge[]; totalUsers: number; shown: number; capped: boolean }
   onPickUser: (id: string, label: string) => void
+  onExploreOne?: () => void
 }) {
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined)
   const { ref: containerRef, w, h } = useContainerSize<HTMLDivElement>()
@@ -117,8 +119,14 @@ export function PopulationGraph({
       <div className="rounded-xl border border-border-default bg-card p-6 text-sm text-fg-secondary shadow-[var(--shadow-sm)]">
         <p className="mb-1 font-medium text-fg-primary">No connections yet</p>
         <p className="text-fg-tertiary">
-          The population graph shows users linked by care-circle or shared channels. Once users start connecting, the network appears here.
+          The population graph links users who share a care-circle or a channel. With{" "}
+          <span className="font-semibold text-fg-primary">{data.totalUsers}</span> user{data.totalUsers === 1 ? "" : "s"} and no cross-links yet, there&apos;s no network to draw — it fills in as your user base grows and connects.
         </p>
+        {onExploreOne && (
+          <button onClick={onExploreOne} className="mt-3 rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-600">
+            Explore one user&apos;s graph instead →
+          </button>
+        )}
       </div>
     )
   }

@@ -25,7 +25,7 @@ export default async function GraphPage() {
       <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Relationships</p>
       <h1 className="display mb-1 text-3xl font-bold tracking-tight text-fg-primary">Relationship explorer</h1>
       <p className="mb-6 text-sm text-fg-tertiary">
-        Pick a user to map their world — children, care-circle, caregivers, behaviors, subscription, and community. Click any node to inspect it or jump to its pillar.
+        The whole user network — linked by care-circle and shared channels, colored by behavior, sized by connections. Search or click a node for details, or switch to <span className="font-medium">One User</span> to map a single person&apos;s world.
       </p>
       <RelationshipExplorer />
     </main>
