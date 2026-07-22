@@ -192,7 +192,10 @@ function isRoutineSkipped(routine: ChildRoutine, dayLogs: ChildLog[] | undefined
 const QUICK_LOG_DEFS: { id: LogType; labelKey: TranslationKey; icon: typeof Utensils; color: string }[] = [
   { id: 'feeding', labelKey: 'kids_calendar_labelFeeding', icon: Utensils, color: brand.kids },
   { id: 'sleep', labelKey: 'kids_calendar_labelSleep', icon: Moon, color: brand.pregnancy },
-  { id: 'wake_up', labelKey: 'kids_calendar_labelWakeUp', icon: Sun, color: brand.accent },
+  // Wake Up removed as a standalone tile — Sleep Log's end time captures wake, so
+  // a separate "log wake" entry point was redundant (and dead-ended when there was
+  // no open bedtime). LOG_META keeps its 'wake_up' entry so historical wake_up
+  // logs still render; WakeUpForm stays in the codebase for any routine trigger.
   { id: 'diaper', labelKey: 'kids_calendar_labelDiaper', icon: Baby, color: brand.secondary },
   { id: 'health', labelKey: 'kids_calendar_labelHealth', icon: Heart, color: brand.error },
   { id: 'activity', labelKey: 'kids_calendar_labelActivity', icon: Dumbbell, color: brand.phase.ovulation },
@@ -550,9 +553,7 @@ function LogActivitySheet({
             { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 },
           ]}
         >
-          <DiffuseBloomIcon color={stickers.lilac} size={30}>
-            <Repeat size={16} color={dt.colors.ink3} strokeWidth={1.6} />
-          </DiffuseBloomIcon>
+          <Character name="bell" size={30} color={stickers.lilac} />
           <Text style={diffuseSheetStyles.manageLabel(dt.colors.ink)}>{t('kids_calendar_manageRoutines')}</Text>
           <DiffuseArrow color={dt.colors.ink3} size={16} />
         </Pressable>
@@ -885,7 +886,7 @@ function DiffuseRoutineManager({
       </ScrollView>
       {/* Time */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <DiffuseBloomIcon color={stickers.yellow} size={30}><Clock size={15} color={colors.ink3} strokeWidth={1.6} /></DiffuseBloomIcon>
+        <Character name="clock" size={30} color={stickers.yellow} />
         <View style={{ flex: 1 }}>
           {input(routineForm.time, (v) => setRoutineForm((f) => ({ ...f, time: v })), 'HH:MM', 'numbers-and-punctuation')}
         </View>

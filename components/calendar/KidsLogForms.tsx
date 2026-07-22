@@ -2967,8 +2967,11 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const MOODS = MOOD_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  // Each mood id (happy/calm/fussy/cranky/energetic) IS a MoodExpression, so we
+  // pass it as `face` for a distinct expression per blob, and use the mood's own
+  // `fill` as the color — otherwise all five render the same default peach face.
   const MOOD_OPTS: ChoiceOption[] = MOOD_DEFS.map((m) => ({
-    id: m.id, label: t(m.labelKey), blob: 'mood', color: diffuseLogHue('mood'),
+    id: m.id, label: t(m.labelKey), blob: 'mood', color: m.fill, face: m.id,
   }))
 
   const [childId, setChildId] = useState(prefill?.childId ?? editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')

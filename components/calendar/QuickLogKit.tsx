@@ -2,11 +2,19 @@ import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useTheme, useDiffuseTheme, diffuseFont, radius } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
-import { Character, type CharacterName } from '../characters/Characters'
+import { Character, type CharacterName, type MoodExpression } from '../characters/Characters'
 import { useChildStore } from '../../store/useChildStore'
 import { ChevronDown } from 'lucide-react-native'
 
-export interface ChoiceOption { id: string; label: string; blob: CharacterName; color: string }
+export interface ChoiceOption {
+  id: string
+  label: string
+  blob: CharacterName
+  color: string
+  /** Optional expression for the `mood` blob (happy/fussy/…), so an expressive
+   *  choice log renders a distinct face per option instead of one default face. */
+  face?: MoodExpression
+}
 export interface ChoiceStepProps {
   options: ChoiceOption[]
   value: string[]
@@ -50,7 +58,7 @@ export function ChoiceStep({ options, value, onChange, multi = false, testID }: 
               },
             ]}
           >
-            <Character name={o.blob} size={40} color={o.color} />
+            <Character name={o.blob} size={40} color={o.color} face={o.face} />
             <Text style={[kitStyles.choiceLabel, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>
               {o.label}
             </Text>

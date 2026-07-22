@@ -17,11 +17,13 @@ describe('home quick-log catalogs reach full calendar parity', () => {
     }
   })
 
-  it('kids offers all 9 calendar log types', () => {
+  it('kids offers the 8 calendar log types (wake_up folded into sleep)', () => {
     const types = new Set(KIDS_QUICK_LOGS.map((q) => q.logType))
-    for (const t of ['feeding','sleep','wake_up','health','mood','memory','activity','diaper','exam']) {
+    for (const t of ['feeding','sleep','health','mood','memory','activity','diaper','exam']) {
       expect(types.has(t)).toBe(true)
     }
+    // wake_up is intentionally NOT offered — Sleep Log captures wake time.
+    expect(types.has('wake_up')).toBe(false)
   })
 
   it('every entry has a unique key', () => {
