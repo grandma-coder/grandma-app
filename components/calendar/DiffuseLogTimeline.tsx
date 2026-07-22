@@ -65,7 +65,13 @@ export const DIFFUSE_LOG_CHARACTER: Record<string, CharacterName> = {
   weight: 'growth', kick_count: 'kick', contraction: 'contraction',
   water: 'water', exercise: 'activity', vitamins: 'medicine', kegel: 'soothe',
   nutrition: 'nutrition', appointment: 'checkup', bath: 'bath', potty: 'potty', milk: 'milk',
-  nesting: 'soothe', birth_prep: 'note',
+  nesting: 'soothe', birth_prep: 'note', exam_result: 'exam',
+  // aliases — legacy / duplicate log-type spellings that must resolve to the
+  // same concept blob (used by the shared logSticker() resolver across all
+  // current-variant surfaces, not just Diffuse).
+  intimacy: 'heart', cervical_fluid: 'water', solid: 'nutrition', nap: 'sleep',
+  fever: 'temperature', temp: 'temperature', tooth: 'checkup',
+  heartbeat: 'heartbeat', ultrasound: 'ultrasound',
 }
 
 /** Soft bloom hue per log type (from the sticker palette). */
@@ -74,12 +80,13 @@ export function diffuseLogHue(type: string): string {
     // kids
     feeding: stickers.blue, food: stickers.blue, sleep: stickers.lilac,
     wake_up: stickers.yellow, health: stickers.pink, temperature: stickers.pink,
-    medicine: stickers.pink, vaccine: stickers.pink, mood: stickers.peach,
+    medicine: stickers.pink, vaccine: stickers.pink, checkup: stickers.pink, mood: stickers.peach,
     memory: stickers.lilac, photo: stickers.lilac, diaper: stickers.blue,
     growth: stickers.green, milestone: stickers.lilac, activity: stickers.green,
     note: stickers.peach, exam: stickers.green, skipped: stickers.charcoal,
-    // cycle
-    basal_temp: stickers.blue, lh: stickers.yellow, cervical_mucus: stickers.green,
+    // cycle — `cm` is the home/quick-log alias for `cervical_mucus`; keep both
+    // so either key resolves to the same green (avoids a silent blue fallback).
+    basal_temp: stickers.blue, lh: stickers.yellow, cervical_mucus: stickers.green, cm: stickers.green,
     intercourse: stickers.pink, symptom: stickers.peach,
     period_start: stickers.coral, period_end: stickers.pink, ovulation: stickers.peach,
     pregnancy_test: stickers.peach, sex_drive: stickers.pink, clots: stickers.coral,
@@ -87,8 +94,30 @@ export function diffuseLogHue(type: string): string {
     weight: stickers.blue, kick_count: stickers.pink, contraction: stickers.coral,
     water: stickers.blue, exercise: stickers.green, vitamins: stickers.green,
     kegel: stickers.lilac, nutrition: stickers.yellow, appointment: stickers.lilac,
+    exam_result: stickers.lilac, nesting: stickers.peach, birth_prep: stickers.lilac,
+    heartbeat: stickers.pink, ultrasound: stickers.lilac,
+    // aliases + remaining kids types (mirror their canonical concept's hue)
+    intimacy: stickers.pink, cervical_fluid: stickers.green, solid: stickers.blue,
+    nap: stickers.lilac, fever: stickers.pink, temp: stickers.pink, tooth: stickers.pink,
+    milk: stickers.blue, potty: stickers.blue, bath: stickers.blue,
   }
   return map[type] ?? stickers.blue
+}
+
+/** Soft companion of a log type's hue — for socket / chip backgrounds that want
+ *  a tinted well behind the icon (matches the sticker palette's `*Soft` set). */
+export function diffuseLogSoftHue(type: string): string {
+  const hue = diffuseLogHue(type)
+  const softByHue: Record<string, string> = {
+    [stickers.yellow]: stickers.yellowSoft,
+    [stickers.blue]: stickers.blueSoft,
+    [stickers.pink]: stickers.pinkSoft,
+    [stickers.green]: stickers.greenSoft,
+    [stickers.lilac]: stickers.lilacSoft,
+    [stickers.peach]: stickers.peachSoft,
+    [stickers.coral]: stickers.peachSoft,
+  }
+  return softByHue[hue] ?? stickers.blueSoft
 }
 
 /** A Diffuse bloom-icon for a log type — the shared icon treatment (no spine).
