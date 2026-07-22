@@ -52,9 +52,7 @@ import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
-import { MoodFace } from '../stickers/RewardStickers'
 import { Character } from '../characters/Characters'
-import { moodExpression, moodBlobFill } from '../../lib/moodFace'
 import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '../stickers/BrandStickers'
 import { Smiley, Sleepy, Sad } from '../ui/Stickers'
 import { ChildPill, childColor } from '../ui/ChildPills'
@@ -63,6 +61,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { supabase } from '../../lib/supabase'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { ChoiceStep, MoreSection, ActiveChildChip, type ChoiceOption } from './QuickLogKit'
+import { diffuseLogHue } from './DiffuseLogTimeline'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
 import type { CalorieMatch } from '../../lib/foodCalories'
 import { estimateFromText, estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
@@ -2926,8 +2925,11 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
   const MOODS = MOOD_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  const MOOD_OPTS: ChoiceOption[] = MOOD_DEFS.map((m) => ({
+    id: m.id, label: t(m.labelKey), blob: 'mood', color: diffuseLogHue('mood'),
+  }))
 
-  const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
+  const [childId, setChildId] = useState(prefill?.childId ?? editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
   const [startTime, setStartTime] = useState(() => prefill?.time ?? toTimeStr(new Date()))
   const [mood, setMood] = useState<string | null>(null)
@@ -2997,31 +2999,36 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
     }
   }
 
+  const moreTimeAndNotes = diffuse ? (
+    <DiffuseField label={t('kids_logForm_placeholderWhatHappened')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderWhatHappened')} />
+  ) : (
+    <TextInput
+      value={notes}
+      onChangeText={setNotes}
+      placeholder={t('kids_logForm_placeholderWhatHappened')}
+      placeholderTextColor={colors.textMuted}
+      style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+    />
+  )
+
   if (diffuse) {
     return (
       <View style={df.form}>
+        <ActiveChildChip childId={childId} onChange={setChildId} />
         <View style={df.topRow}>
-          <ChildSelector selected={childId} onSelect={setChildId} />
-          <View style={df.dateTimeRow}>
-            <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
-          </View>
+          <DateChip value={logDate} onChange={setLogDate} />
         </View>
+
         <DiffuseFormHeader kind="mood" />
-        <View style={df.moodRow}>
-          {MOODS.map((m) => {
-            const active = mood === m.id
-            return (
-              <Pressable key={m.id} onPress={() => setMood(m.id)} style={df.moodBtn}>
-                <View style={[df.moodCircle, { borderColor: active ? dTheme.colors.hairline : dTheme.colors.line2, backgroundColor: active ? m.fill + '22' : 'transparent' }]}>
-                  <Character name="mood" face={moodExpression(m.id)} color={moodBlobFill(m.id)} size={40} />
-                </View>
-                <Text style={[df.moodLabel, { color: active ? dTheme.colors.ink : dTheme.colors.ink3 }]}>{m.label}</Text>
-              </Pressable>
-            )
-          })}
-        </View>
-        <DiffuseField label={t('kids_logForm_placeholderWhatHappened')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderWhatHappened')} />
+
+        {/* Mood — large tappable choice blobs */}
+        <ChoiceStep options={MOOD_OPTS} value={mood ? [mood] : []} onChange={(ids) => setMood(ids[0])} />
+
+        <MoreSection label={t('kids_logForm_time')}>
+          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
+          {moreTimeAndNotes}
+        </MoreSection>
+
         <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
         <SaveButton onPress={save} saving={saving} disabled={!childId || !mood} onSkip={prefill?.routineId ? onSkip : undefined} />
       </View>
@@ -3030,39 +3037,21 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
 
   return (
     <View style={styles.form}>
+      <ActiveChildChip childId={childId} onChange={setChildId} />
       <View style={styles.topRow}>
-        <ChildSelector selected={childId} onSelect={setChildId} />
-        <View style={styles.dateTimeRow}>
-          <DateChip value={logDate} onChange={setLogDate} />
-          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
-        </View>
+        <DateChip value={logDate} onChange={setLogDate} />
       </View>
+
       <FormHeaderSticker kind="mood" />
-      <View style={styles.moodRow}>
-        {MOODS.map((m) => {
-          const active = mood === m.id
-          return (
-            <Pressable
-              key={m.id}
-              onPress={() => setMood(m.id)}
-              style={[styles.moodBtn, {
-                backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                borderRadius: radius.lg,
-              }]}
-            >
-              <MoodFace variant={m.id} fill={m.fill} size={44} />
-              <Text style={[styles.moodLabel, { color: active ? INK : colors.textMuted }]}>{m.label}</Text>
-            </Pressable>
-          )
-        })}
-      </View>
-      <TextInput
-        value={notes}
-        onChangeText={setNotes}
-        placeholder={t('kids_logForm_placeholderWhatHappened')}
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
-      />
+
+      {/* Mood — large tappable choice blobs */}
+      <ChoiceStep options={MOOD_OPTS} value={mood ? [mood] : []} onChange={(ids) => setMood(ids[0])} />
+
+      <MoreSection label={t('kids_logForm_time')}>
+        <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
+        {moreTimeAndNotes}
+      </MoreSection>
+
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
       <SaveButton onPress={save} saving={saving} disabled={!childId || !mood} onSkip={prefill?.routineId ? onSkip : undefined} />
     </View>
