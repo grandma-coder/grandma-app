@@ -3,20 +3,14 @@
 // other sheet, in both variants). Edits a local draft while open; an explicit
 // Save commits it to the store and closes — so it's clear the choice was saved.
 import { useEffect, useState } from 'react'
-import { View, Pressable, StyleSheet } from 'react-native'
-import { Check } from 'lucide-react-native'
-import { useTheme, radius } from '../../../constants/theme'
-import { Body } from '../../ui/Typography'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
-import {
-  MoodFace, LogWater, LogSleep, LogNutrition, LogWeight, LogKicks,
-  LogSymptom, LogExercise, LogVitamins, LogKegel, LogContraction,
-  LogAppointment, LogExamResult, LogNesting, LogBirthPrep,
-} from '../../stickers/RewardStickers'
+import { Character } from '../../characters/Characters'
+import { DIFFUSE_LOG_CHARACTER, diffuseLogHue, diffuseLogSoftHue } from '../../calendar/DiffuseLogTimeline'
 import { PREG_QUICK_LOGS } from '../../../lib/pregnancyQuickLogs'
 import { useQuickLogStore } from '../../../store/useQuickLogStore'
+import { QuickLogPickerGrid, type QuickLogGridItem } from '../QuickLogPickerGrid'
 
 interface Props {
   visible: boolean
@@ -24,31 +18,20 @@ interface Props {
   weekNumber: number
 }
 
-// Each quick-log key → its sticker + a soft socket tint.
-function stickerFor(key: string, stickers: ReturnType<typeof useTheme>['stickers']): { node: React.ReactElement; soft: string } {
-  switch (key) {
-    case 'mood':   return { node: <MoodFace size={24} variant="happy" fill={stickers.yellow} />, soft: stickers.yellowSoft }
-    case 'water':  return { node: <LogWater size={24} fill={stickers.blue} />, soft: stickers.blueSoft }
-    case 'sleep':  return { node: <LogSleep size={24} fill={stickers.lilac} />, soft: stickers.lilacSoft }
-    case 'meals':  return { node: <LogNutrition size={24} fill={stickers.green} />, soft: stickers.greenSoft }
-    case 'weight': return { node: <LogWeight size={24} fill={stickers.peach} />, soft: stickers.peachSoft }
-    case 'kicks':  return { node: <LogKicks size={24} fill={stickers.pink} />, soft: stickers.pinkSoft }
-    case 'symptom':     return { node: <LogSymptom size={24} fill={stickers.pink} />, soft: stickers.pinkSoft }
-    case 'exercise':    return { node: <LogExercise size={24} fill={stickers.green} />, soft: stickers.greenSoft }
-    case 'vitamins':    return { node: <LogVitamins size={24} fill={stickers.lilac} />, soft: stickers.lilacSoft }
-    case 'kegel':       return { node: <LogKegel size={24} fill={stickers.peach} />, soft: stickers.peachSoft }
-    case 'contraction': return { node: <LogContraction size={24} fill={stickers.coral} />, soft: stickers.peachSoft }
-    case 'appointment': return { node: <LogAppointment size={24} fill={stickers.blue} />, soft: stickers.blueSoft }
-    case 'exam_result': return { node: <LogExamResult size={24} fill={stickers.lilac} />, soft: stickers.lilacSoft }
-    case 'nesting':     return { node: <LogNesting size={24} fill={stickers.green} />, soft: stickers.greenSoft }
-    case 'birth_prep':  return { node: <LogBirthPrep size={24} fill={stickers.yellow} />, soft: stickers.yellowSoft }
-    default:       return { node: <MoodFace size={24} variant="okay" fill={stickers.yellow} />, soft: stickers.yellowSoft }
+// Each quick-log def → its Character concept-blob + a soft socket tint, pulled
+// from the SHARED canonical map the Diffuse variant + calendar timeline use
+// (keyed by the def's cycle/pregnancy log type). Keeping this on one source of
+// truth means both variants read the same icon and no concept collides on a
+// generic star/leaf shape any more.
+function blobFor(logType: string): { node: React.ReactElement; soft: string } {
+  const hue = diffuseLogHue(logType)
+  return {
+    node: <Character name={DIFFUSE_LOG_CHARACTER[logType] ?? 'note'} size={26} color={hue} />,
+    soft: diffuseLogSoftHue(logType),
   }
 }
 
 export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
-  const { colors } = useTheme()
-  const themeStickers = useTheme().stickers
   const { t } = useTranslation()
   const enabledKeys = useQuickLogStore((s) => s.enabledKeys)
   const setEnabled = useQuickLogStore((s) => s.setEnabled)
@@ -74,46 +57,33 @@ export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
     onClose()
   }
 
-  return (
-    <LogSheet visible={visible} title={t('pregnancy_quickLogs_pickTitle')} onClose={onClose}>
-      <View style={{ gap: 10 }}>
-        {available.map((q) => {
-          const on = draft.includes(q.key)
-          const s = stickerFor(q.key, themeStickers)
-          return (
-            <Pressable
-              key={q.key}
-              onPress={() => toggleDraft(q.key)}
-              style={({ pressed }) => [
-                styles.row,
-                { borderColor: on ? colors.text : colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 },
-              ]}
-            >
-              <View style={[styles.socket, { backgroundColor: s.soft }]}>{s.node}</View>
-              <Body size={16} color={colors.text} style={{ flex: 1 }}>{t(q.labelKey)}</Body>
-              <View style={[styles.checkbox, { borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.text : 'transparent' }]}>
-                {on ? <Check size={14} color={colors.bg} strokeWidth={3} /> : null}
-              </View>
-            </Pressable>
-          )
-        })}
-      </View>
+  const items: QuickLogGridItem[] = available.map((q) => {
+    const s = blobFor(q.logType)
+    return {
+      key: q.key,
+      label: t(q.labelKey),
+      icon: s.node,
+      socketTint: s.soft,
+      selected: draft.includes(q.key),
+      onToggle: () => toggleDraft(q.key),
+    }
+  })
 
-      <View style={styles.saveWrap}>
+  return (
+    <LogSheet
+      visible={visible}
+      title={t('kids_quickLogs_pickTitle')}
+      onClose={onClose}
+      footer={
         <PillButton
           label={dirty ? t('common_save') : t('common_done')}
           variant="ink"
           onPress={dirty ? save : onClose}
           disabled={draft.length === 0}
         />
-      </View>
+      }
+    >
+      <QuickLogPickerGrid items={items} />
     </LogSheet>
   )
 }
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: radius.lg, paddingVertical: 14, paddingHorizontal: 16 },
-  socket: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
-  checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  saveWrap: { marginTop: 16 },
-})
