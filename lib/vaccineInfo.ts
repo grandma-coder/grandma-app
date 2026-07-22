@@ -255,9 +255,10 @@ const ALIASES: Record<string, string> = {
   'varizellen': 'varizellen',
   'varicela': 'varicela',
   'varicella': 'varicella',
-  // Polio variants
+  // Polio variants — OPV/VOP are the oral form; VIP (vacina inativada
+  // poliomielite) is the injected inactivated form, i.e. IPV.
   'opv': 'oral',
-  'vip': 'oral',
+  'vip': 'ipv',
   // Accented and alternate spellings
   'tríplice': 'triplice',
   'dpt': 'dtp',
