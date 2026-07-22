@@ -39,7 +39,7 @@ function characterFor(
 }
 
 export function KidsQuickLogPicker({ visible, onClose }: Props) {
-  const { colors, stickers } = useTheme()
+  const { stickers } = useTheme()
   const { t } = useTranslation()
   const enabledKeys = useKidsQuickLogStore((s) => s.enabledKeys)
   const setEnabled = useKidsQuickLogStore((s) => s.setEnabled)
