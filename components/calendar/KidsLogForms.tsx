@@ -62,6 +62,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { useModeStore } from '../../store/useModeStore'
 import { supabase } from '../../lib/supabase'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
+import { ChoiceStep, MoreSection, ActiveChildChip, type ChoiceOption } from './QuickLogKit'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
 import type { CalorieMatch } from '../../lib/foodCalories'
 import { estimateFromText, estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
@@ -3448,12 +3449,6 @@ type DiaperType = 'pee' | 'poop' | 'mixed'
 type DiaperColor = 'yellow' | 'green' | 'brown' | 'black' | 'red' | 'orange'
 type DiaperConsistency = 'liquid' | 'soft' | 'normal' | 'hard'
 
-const DIAPER_TYPE_DEFS: { id: DiaperType; labelKey: TranslationKey; emoji: string }[] = [
-  { id: 'pee', labelKey: 'kids_logForm_diaperPee', emoji: '💧' },
-  { id: 'poop', labelKey: 'kids_logForm_diaperPoop', emoji: '💩' },
-  { id: 'mixed', labelKey: 'kids_logForm_diaperBoth', emoji: '🔄' },
-]
-
 const DIAPER_COLOR_DEFS: { id: DiaperColor; labelKey: TranslationKey; hex: string }[] = [
   { id: 'yellow', labelKey: 'kids_logForm_diaperColorYellow', hex: '#F4D03F' },
   { id: 'green', labelKey: 'kids_logForm_diaperColorGreen', hex: '#58D68D' },
@@ -3476,11 +3471,16 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
   const { colors, radius, isDark } = useTheme()
   const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
-  const DIAPER_TYPES = DIAPER_TYPE_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  const activeChild = useChildStore((s) => s.activeChild)
   const DIAPER_COLORS = DIAPER_COLOR_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
   const DIAPER_CONSISTENCIES = DIAPER_CONSISTENCY_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  const DIAPER_OPTS: ChoiceOption[] = [
+    { id: 'pee', label: t('kids_logForm_diaperPee'), blob: 'diaper', color: stickerPalette.blue },
+    { id: 'poop', label: t('kids_logForm_diaperPoop'), blob: 'diaper', color: stickerPalette.peach },
+    { id: 'mixed', label: t('kids_logForm_diaperBoth'), blob: 'diaper', color: stickerPalette.green },
+  ]
 
-  const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
+  const [childId, setChildId] = useState(editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
   const [logTime, setLogTime] = useState(toTimeStr(new Date()))
   const [diaperType, setDiaperType] = useState<DiaperType | null>(null)
@@ -3556,69 +3556,147 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
     }
   }
 
+  const poopDetails = showPooDetails && (
+    diffuse ? (
+      <>
+        <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_color')}</Text>
+        <View style={df.chipGrid}>
+          {DIAPER_COLORS.map((c) => (
+            <DiffuseChip
+              key={c.id}
+              label={c.label}
+              active={color === c.id}
+              onPress={() => setColor(c.id)}
+              hue={c.hex}
+              leading={<View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.hex }} />}
+            />
+          ))}
+        </View>
+
+        <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_consistency')}</Text>
+        <View style={df.chipGrid}>
+          {DIAPER_CONSISTENCIES.map((c, i) => (
+            <DiffuseChip key={c.id} label={c.label} active={consistency === c.id} onPress={() => setConsistency(c.id)} hue={chipHueAt(dTheme, i)} />
+          ))}
+        </View>
+      </>
+    ) : (
+      <>
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('kids_logForm_color')}</Text>
+        <View style={[styles.chipGrid, { gap: 8 }]}>
+          {DIAPER_COLORS.map((c) => {
+            const active = color === c.id
+            return (
+              <Pressable
+                key={c.id}
+                onPress={() => setColor(c.id)}
+                style={[styles.chip, {
+                  backgroundColor: active ? c.hex + '25' : colors.surface,
+                  borderColor: active ? c.hex : (isDark ? colors.border : INK),
+                  borderRadius: radius.full,
+                  gap: 6,
+                }]}
+              >
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.hex }} />
+                <Text style={[styles.chipText, { color: active ? c.hex : colors.text }]}>{c.label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('kids_logForm_consistency')}</Text>
+        <View style={styles.chipGrid}>
+          {DIAPER_CONSISTENCIES.map((c) => {
+            const active = consistency === c.id
+            return (
+              <Pressable
+                key={c.id}
+                onPress={() => setConsistency(c.id)}
+                style={[styles.chip, {
+                  backgroundColor: active ? ACCENT_SOFT : colors.surface,
+                  borderColor: active ? ACCENT : (isDark ? colors.border : INK),
+                  borderRadius: radius.full,
+                }]}
+              >
+                <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{c.label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      </>
+    )
+  )
+
+  const morePhotoAndNotes = diffuse ? (
+    <>
+      <DiffusePhotoRow
+        photos={photos}
+        onRemove={(i) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+        onCamera={takePhoto}
+        onGallery={pickPhoto}
+        max={1}
+      />
+      <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
+    </>
+  ) : (
+    <>
+      <View style={styles.photoRow}>
+        {photos.map((uri, i) => (
+          <View key={i} style={{ position: 'relative' }}>
+            <Image source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
+            <Pressable
+              onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
+              style={styles.photoDeleteBtn}
+              hitSlop={4}
+            >
+              <X size={14} color="#FFFFFF" strokeWidth={3} />
+            </Pressable>
+          </View>
+        ))}
+        {photos.length === 0 && (
+          <View style={styles.photoButtons}>
+            <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
+              <Camera size={24} color={INK} strokeWidth={2} />
+            </Pressable>
+            <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
+              <Plus size={20} color={colors.textMuted} strokeWidth={2} />
+            </Pressable>
+          </View>
+        )}
+      </View>
+
+      <TextInput
+        value={notes}
+        onChangeText={setNotes}
+        placeholder={t('kids_logForm_placeholderNotes')}
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+      />
+    </>
+  )
+
   if (diffuse) {
     return (
       <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
         <View style={df.form}>
+          <ActiveChildChip childId={childId} onChange={setChildId} />
           <View style={df.topRow}>
-            <ChildSelector selected={childId} onSelect={setChildId} />
-            <View style={df.dateTimeRow}>
-              <DateChip value={logDate} onChange={setLogDate} />
-              <TimeChip value={logTime} onChange={setLogTime} label={t('kids_logForm_time')} />
-            </View>
+            <DateChip value={logDate} onChange={setLogDate} />
           </View>
 
           <DiffuseFormHeader kind="diaper" />
 
-          {/* Diaper type */}
-          <View style={df.chipGrid}>
-            {DIAPER_TYPES.map((dt) => (
-              <DiffuseChip
-                key={dt.id}
-                label={dt.label}
-                active={diaperType === dt.id}
-                onPress={() => setDiaperType(dt.id)}
-                leading={<Text style={{ fontSize: 14 }}>{dt.emoji}</Text>}
-              />
-            ))}
-          </View>
+          {/* Diaper type — large tappable choice blobs */}
+          <ChoiceStep options={DIAPER_OPTS} value={diaperType ? [diaperType] : []} onChange={(ids) => setDiaperType(ids[0] as DiaperType)} />
 
           {/* Poop details */}
-          {showPooDetails && (
-            <>
-              <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_color')}</Text>
-              <View style={df.chipGrid}>
-                {DIAPER_COLORS.map((c) => (
-                  <DiffuseChip
-                    key={c.id}
-                    label={c.label}
-                    active={color === c.id}
-                    onPress={() => setColor(c.id)}
-                    hue={c.hex}
-                    leading={<View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.hex }} />}
-                  />
-                ))}
-              </View>
+          {poopDetails}
 
-              <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_consistency')}</Text>
-              <View style={df.chipGrid}>
-                {DIAPER_CONSISTENCIES.map((c, i) => (
-                  <DiffuseChip key={c.id} label={c.label} active={consistency === c.id} onPress={() => setConsistency(c.id)} hue={chipHueAt(dTheme, i)} />
-                ))}
-              </View>
-            </>
-          )}
+          <MoreSection label={t('kids_logForm_time')}>
+            <TimeChip value={logTime} onChange={setLogTime} label={t('kids_logForm_time')} />
+            {morePhotoAndNotes}
+          </MoreSection>
 
-          {/* Optional photo */}
-          <DiffusePhotoRow
-            photos={photos}
-            onRemove={(i) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
-            onCamera={takePhoto}
-            onGallery={pickPhoto}
-            max={1}
-          />
-
-          <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
           <SaveButton onPress={save} saving={saving} disabled={!childId || !diaperType} />
         </View>
       </ScrollView>
@@ -3628,118 +3706,24 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
   return (
     <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
       <View style={styles.form}>
+        <ActiveChildChip childId={childId} onChange={setChildId} />
         <View style={styles.topRow}>
-          <ChildSelector selected={childId} onSelect={setChildId} />
-          <View style={styles.dateTimeRow}>
-            <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={logTime} onChange={setLogTime} label={t('kids_logForm_time')} />
-          </View>
+          <DateChip value={logDate} onChange={setLogDate} />
         </View>
 
         <FormHeaderSticker kind="diaper" />
 
-        {/* Diaper type */}
-        <View style={styles.chipGrid}>
-          {DIAPER_TYPES.map((t) => {
-            const active = diaperType === t.id
-            return (
-              <Pressable
-                key={t.id}
-                onPress={() => setDiaperType(t.id)}
-                style={[styles.chip, {
-                  backgroundColor: active ? brand.secondary + '25' : colors.surface,
-                  borderColor: active ? brand.secondary : (isDark ? colors.border : INK),
-                  borderRadius: radius.full,
-                  gap: 4,
-                }]}
-              >
-                <Text style={{ fontSize: 14 }}>{t.emoji}</Text>
-                <Text style={[styles.chipText, { color: active ? brand.secondary : colors.text }]}>{t.label}</Text>
-              </Pressable>
-            )
-          })}
-        </View>
+        {/* Diaper type — large tappable choice blobs */}
+        <ChoiceStep options={DIAPER_OPTS} value={diaperType ? [diaperType] : []} onChange={(ids) => setDiaperType(ids[0] as DiaperType)} />
 
         {/* Poop details */}
-        {showPooDetails && (
-          <>
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('kids_logForm_color')}</Text>
-            <View style={[styles.chipGrid, { gap: 8 }]}>
-              {DIAPER_COLORS.map((c) => {
-                const active = color === c.id
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => setColor(c.id)}
-                    style={[styles.chip, {
-                      backgroundColor: active ? c.hex + '25' : colors.surface,
-                      borderColor: active ? c.hex : (isDark ? colors.border : INK),
-                      borderRadius: radius.full,
-                      gap: 6,
-                    }]}
-                  >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.hex }} />
-                    <Text style={[styles.chipText, { color: active ? c.hex : colors.text }]}>{c.label}</Text>
-                  </Pressable>
-                )
-              })}
-            </View>
+        {poopDetails}
 
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('kids_logForm_consistency')}</Text>
-            <View style={styles.chipGrid}>
-              {DIAPER_CONSISTENCIES.map((c) => {
-                const active = consistency === c.id
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => setConsistency(c.id)}
-                    style={[styles.chip, {
-                      backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                      borderColor: active ? ACCENT : (isDark ? colors.border : INK),
-                      borderRadius: radius.full,
-                    }]}
-                  >
-                    <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{c.label}</Text>
-                  </Pressable>
-                )
-              })}
-            </View>
-          </>
-        )}
+        <MoreSection label={t('kids_logForm_time')}>
+          <TimeChip value={logTime} onChange={setLogTime} label={t('kids_logForm_time')} />
+          {morePhotoAndNotes}
+        </MoreSection>
 
-        {/* Optional photo */}
-        <View style={styles.photoRow}>
-          {photos.map((uri, i) => (
-            <View key={i} style={{ position: 'relative' }}>
-              <Image source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
-              <Pressable
-                onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
-                style={styles.photoDeleteBtn}
-                hitSlop={4}
-              >
-                <X size={14} color="#FFFFFF" strokeWidth={3} />
-              </Pressable>
-            </View>
-          ))}
-          {photos.length === 0 && (
-            <View style={styles.photoButtons}>
-              <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
-                <Camera size={24} color={INK} strokeWidth={2} />
-              </Pressable>
-              <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
-                <Plus size={20} color={colors.textMuted} strokeWidth={2} />
-              </Pressable>
-            </View>
-          )}
-        </View>
-
-        <TextInput
-          value={notes}
-          onChangeText={setNotes}
-          placeholder={t('kids_logForm_placeholderNotes')}
-          placeholderTextColor={colors.textMuted}
-          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
-        />
         <SaveButton onPress={save} saving={saving} disabled={!childId || !diaperType} />
       </View>
     </ScrollView>
