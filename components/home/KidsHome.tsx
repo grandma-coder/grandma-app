@@ -39,6 +39,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
+import { HomeJourneySwitcher } from './HomeJourneySwitcher'
 import { KidsWallet } from './KidsWallet'
 import { EssentialsWalletCard } from './EssentialsWalletCard'
 import type { CaregiverView } from '../../lib/caregiverPermissions'
@@ -1515,6 +1516,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         <HomeGreeting
           name={firstName}
           microLabel={subtitleForRange(dateRange, child.name, customRange)?.toUpperCase?.()}
+          trailing={<HomeJourneySwitcher />}
         />
       </View>
 

@@ -32,6 +32,7 @@ import { useProfile } from '../../lib/useProfile'
 import type { CaregiverView } from '../../lib/caregiverPermissions'
 import { useTranslation } from '../../lib/i18n'
 import { HomeGreeting } from './HomeGreeting'
+import { HomeJourneySwitcher } from './HomeJourneySwitcher'
 import { CaregiverIdentityHeader } from '../caregiver/CaregiverIdentityHeader'
 import { MonoCaps, Display } from '../ui/Typography'
 import { supabase } from '../../lib/supabase'
@@ -303,6 +304,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
           <HomeGreeting
             name={displayName}
             microLabel={t('pregnancy_weekDay', { week: weekNumber, weekday: weekdayLabel })}
+            trailing={<HomeJourneySwitcher />}
           />
         )}
       </View>

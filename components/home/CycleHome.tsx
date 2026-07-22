@@ -23,6 +23,7 @@ import { EssentialsWalletCard } from './EssentialsWalletCard'
 import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 import { useProfile } from '../../lib/useProfile'
 import { HomeGreeting } from './HomeGreeting'
+import { HomeJourneySwitcher } from './HomeJourneySwitcher'
 import { CycleJourneyRingFull } from './cycle/CycleJourneyRingFull'
 import { CycleTodaySummaryCard } from './cycle/CycleTodaySummaryCard'
 import { CycleWallet } from './cycle/CycleWallet'
@@ -169,7 +170,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.greetingWrap}>
-          <HomeGreeting name={displayName} microLabel={microLabel} />
+          <HomeGreeting name={displayName} microLabel={microLabel} trailing={<HomeJourneySwitcher />} />
         </View>
 
         {/* Essentials — pinned above the ring for a caregiver. */}
