@@ -3053,7 +3053,7 @@ export const en: TranslationKeys = {
   vault_noVaccinesYet: 'No vaccines recorded yet',
   vault_vaccineDose: '{{name}} — Dose {{n}}',
   vault_vaccineGiven: 'Given: {{date}}',
-  vault_vaccineDue: 'Due: {{date}}',
+  vault_vaccineDue: 'Expected around: {{date}}',
   vault_vaccineNotScheduled: 'Not yet scheduled',
   vault_filesCount: '{{count}} Files',
   vault_noDocuments2: 'No documents yet',
