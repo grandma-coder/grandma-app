@@ -255,6 +255,13 @@ const ALIASES: Record<string, string> = {
   'varizellen': 'varizellen',
   'varicela': 'varicela',
   'varicella': 'varicella',
+  // Polio variants
+  'opv': 'oral',
+  'vip': 'oral',
+  // Accented and alternate spellings
+  'tríplice': 'triplice',
+  'dpt': 'dtp',
+  'pentavalent': 'pentavalente',
 }
 
 /** Resolve a vaccine info entry from the schedule's display name (e.g. "Hepatitis B"). */
