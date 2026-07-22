@@ -290,7 +290,7 @@ export function buildVaccineScheduleTree(
 ): AgeMilestone[] {
   if (!birthDate) return []
   const ageMonths = getAgeMonths(birthDate)
-  const schedule = getScheduleForCountry(countryCode)
+  const schedule = getScheduleForCountry(countryCode).entries
   const milestoneMap = new Map<number, AgeMilestone>()
 
   const normalize = (s: string) => s.trim().toLowerCase()
@@ -408,7 +408,12 @@ export function getNextDueVaccines(birthDate: string, givenVaccines: HealthRecor
   if (!birthDate) return []
   const ageMonths = getAgeMonths(birthDate)
   const result: UpcomingVaccine[] = []
-  const schedule = getScheduleForCountry(countryCode)
+  const resolved = getScheduleForCountry(countryCode)
+  // Reference-mode (uncatalogued country): show the schedule in the sheet, but
+  // never push a personalized "next due" nudge — that would be advice about a
+  // specific child on a schedule we can't confirm is theirs.
+  if (resolved.provenance === 'who-reference') return []
+  const schedule = resolved.entries
 
   const normalize = (s: string) => s.trim().toLowerCase()
   for (const v of schedule) {

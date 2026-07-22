@@ -1,4 +1,4 @@
-import { getScheduleForCountry, VACCINE_SCHEDULES } from '../vaccineSchedule'
+import { getScheduleForCountry, VACCINE_SCHEDULES, getNextDueVaccines, buildVaccineScheduleTree } from '../vaccineSchedule'
 
 describe('getScheduleForCountry', () => {
   it('returns a national schedule with source for a catalogued country', () => {
@@ -25,5 +25,18 @@ describe('getScheduleForCountry', () => {
       const r = getScheduleForCountry(code)
       expect(r.source?.url).toMatch(/^https?:\/\//)
     }
+  })
+})
+
+describe('getNextDueVaccines nudge gating', () => {
+  const oldBirth = '2024-01-01' // ~2y old relative to 2026 — would trigger nudges
+
+  it('returns no personalized nudges for a WHO-reference (uncatalogued) country', () => {
+    expect(getNextDueVaccines(oldBirth, [], 'ZZ')).toEqual([])
+  })
+
+  it('still builds a schedule tree for an uncatalogued country (reference view)', () => {
+    const tree = buildVaccineScheduleTree(oldBirth, [], 'ZZ')
+    expect(tree.length).toBeGreaterThan(0) // WHO reference is shown, just not nudged
   })
 })
