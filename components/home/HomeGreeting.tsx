@@ -6,6 +6,7 @@
  *       MONO-CAPS    ← ink-3, 10px, uppercase
  */
 
+import type { ReactNode } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
@@ -21,6 +22,8 @@ interface HomeGreetingProps {
   /** Show the animated heart-eye logo to the left of the greeting */
   showLogo?: boolean
   logoSize?: number
+  /** Optional right-aligned control (e.g. the journey switcher). */
+  trailing?: ReactNode
 }
 
 export function HomeGreeting({
@@ -29,6 +32,7 @@ export function HomeGreeting({
   size = 30,
   showLogo = true,
   logoSize = 44,
+  trailing,
 }: HomeGreetingProps) {
   const { colors, isDark } = useTheme()
   const diffuse = useIsDiffuse()
@@ -81,6 +85,7 @@ export function HomeGreeting({
             : <MonoCaps style={{ marginTop: 2 }}>{microLabel}</MonoCaps>
         ) : null}
       </View>
+      {trailing ? <View style={{ flexShrink: 0 }}>{trailing}</View> : null}
     </View>
   )
 }
