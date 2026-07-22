@@ -251,7 +251,9 @@ export function RelationshipExplorer() {
       {mode === "population" && (
         <>
           {population.isLoading && <p className="text-sm text-fg-tertiary">Building the population graph…</p>}
-          {population.data && <PopulationGraph data={population.data} onPickUser={goToUser} />}
+          {population.data && (
+            <PopulationGraph key={population.data.shown} data={population.data} onPickUser={goToUser} />
+          )}
         </>
       )}
 
