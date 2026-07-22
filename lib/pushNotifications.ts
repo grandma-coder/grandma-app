@@ -261,6 +261,53 @@ export async function syncLocalSchedules(prefs: NotificationPrefs): Promise<void
   }
 }
 
+// ─── Open tracking (feeds the command center's Push → Analytics funnel) ──────
+//
+// The command center stamps each remote push's data payload with an opaque
+// `recipientId`. When the user taps the notification, we POST that id to the
+// `notification-opened` edge function, which marks the recipient opened + bumps
+// the campaign's opened_count. Best-effort + idempotent (only the first tap
+// counts, server-side). Never blocks or throws into the app.
+
+async function reportNotificationOpen(data: unknown): Promise<void> {
+  try {
+    const recipientId = (data as { recipientId?: unknown } | null)?.recipientId
+    if (typeof recipientId !== 'string' || !recipientId) return
+    await supabase.functions.invoke('notification-opened', { body: { recipientId } })
+  } catch {
+    // best-effort — analytics must never affect the tap's navigation
+  }
+}
+
+let openTrackingSet = false
+
+/**
+ * Report notification taps for analytics: a live listener for taps while the app
+ * is running, plus a one-shot check for the notification that cold-launched the
+ * app. Guarded + lazy so a missing native module can't crash launch. Idempotent
+ * — safe to call once from initNotifications().
+ */
+function registerOpenTracking(): void {
+  if (openTrackingSet) return
+  const Notifications = getNotifs()
+  if (!Notifications) return
+  try {
+    // Live taps (foreground/background, app already running).
+    Notifications.addNotificationResponseReceivedListener((response) => {
+      void reportNotificationOpen(response.notification.request.content.data)
+    })
+    // Cold start: the tap that launched the app isn't delivered to the listener.
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) void reportNotificationOpen(response.notification.request.content.data)
+      })
+      .catch(() => {})
+    openTrackingSet = true
+  } catch {
+    // native module unavailable — degrade silently
+  }
+}
+
 let handlerSet = false
 
 /**
@@ -295,6 +342,7 @@ function ensureForegroundHandler(): void {
 export async function initNotifications(): Promise<void> {
   try {
     ensureForegroundHandler()
+    registerOpenTracking()
     await registerPushToken()
     const prefs = await getNotificationPrefs()
     await syncLocalSchedules(prefs)
