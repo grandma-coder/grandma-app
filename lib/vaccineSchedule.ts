@@ -182,10 +182,73 @@ export const VACCINE_SCHEDULES: Record<string, VaccineEntry[]> = {
     { name: 'Japanese Encephalitis', ages: ['9-12 months', '16-24 months'],                      monthRanges: [[9,12],[16,24]] },
     { name: 'Vitamin A',        ages: ['9 months (every 6mo)'],                                  monthRanges: [[9,999]] },
   ],
+
+  // ── WHO EPI essential schedule (global reference baseline) ──────────────
+  // CLINICAL-REVIEW: pending sign-off. Source: WHO recommended routine
+  // immunizations for children. Used only as a reference for countries not in
+  // this catalog — see VACCINE_SCHEDULE_SOURCES['WHO'].
+  WHO: [
+    { name: 'BCG',            ages: ['Birth'],                                 monthRanges: [[0,1]] },
+    { name: 'Hepatitis B',    ages: ['Birth'],                                 monthRanges: [[0,1]] },
+    { name: 'OPV (Polio)',    ages: ['Birth', '6 weeks', '10 weeks', '14 weeks'], monthRanges: [[0,1],[1,1],[2,2],[3,3]] },
+    { name: 'IPV',            ages: ['14 weeks'],                              monthRanges: [[3,3]] },
+    { name: 'Pentavalent',    ages: ['6 weeks', '10 weeks', '14 weeks'],       monthRanges: [[1,1],[2,2],[3,3]] },
+    { name: 'Pneumococcal',   ages: ['6 weeks', '10 weeks', '14 weeks'],       monthRanges: [[1,1],[2,2],[3,3]] },
+    { name: 'Rotavirus',      ages: ['6 weeks', '10 weeks'],                   monthRanges: [[1,1],[2,2]] },
+    { name: 'Measles (MR)',   ages: ['9 months', '15-18 months'],             monthRanges: [[9,9],[15,18]] },
+  ],
 }
 
-export function getScheduleForCountry(countryCode: string): VaccineEntry[] {
-  return VACCINE_SCHEDULES[countryCode] ?? VACCINE_SCHEDULES['US']
+export interface VaccineScheduleSource {
+  authority: string   // e.g. "US CDC/ACIP"
+  title: string       // e.g. "CDC childhood immunization schedule"
+  url: string
+  reviewed: string    // ISO-ish "2026-07" — forcing-function against silent drift
+}
+
+export type ScheduleProvenance = 'national' | 'who-reference'
+
+export interface ResolvedSchedule {
+  entries: VaccineEntry[]
+  provenance: ScheduleProvenance
+  countryCode: string
+  source: VaccineScheduleSource
+}
+
+// CLINICAL-REVIEW: pending sign-off — titles/URLs to be confirmed against each
+// authority's current published schedule.
+export const VACCINE_SCHEDULE_SOURCES: Record<string, VaccineScheduleSource> = {
+  US: { authority: 'US CDC/ACIP', title: 'CDC childhood immunization schedule', url: 'https://www.cdc.gov/vaccines/schedules/', reviewed: '2026-07' },
+  BR: { authority: 'Brasil PNI', title: 'Calendário Nacional de Vacinação (PNI)', url: 'https://www.gov.br/saude/pt-br/vacinacao', reviewed: '2026-07' },
+  GB: { authority: 'UK NHS', title: 'NHS routine immunisation schedule', url: 'https://www.nhs.uk/vaccinations/nhs-vaccinations-and-when-to-have-them/', reviewed: '2026-07' },
+  AU: { authority: 'Australia NIP', title: 'National Immunisation Program schedule', url: 'https://www.health.gov.au/topics/immunisation/nip', reviewed: '2026-07' },
+  CA: { authority: 'PHAC Canada', title: 'Canadian Immunization Guide', url: 'https://www.canada.ca/en/public-health/services/canadian-immunization-guide.html', reviewed: '2026-07' },
+  PT: { authority: 'Portugal DGS', title: 'Programa Nacional de Vacinação', url: 'https://www.sns.gov.pt/', reviewed: '2026-07' },
+  DE: { authority: 'Germany STIKO', title: 'STIKO-Impfkalender', url: 'https://www.rki.de/impfen', reviewed: '2026-07' },
+  FR: { authority: 'France', title: 'Calendrier vaccinal', url: 'https://sante.gouv.fr/', reviewed: '2026-07' },
+  MX: { authority: 'México CENSIA', title: 'Cartilla Nacional de Vacunación', url: 'https://www.gob.mx/salud/censia', reviewed: '2026-07' },
+  AR: { authority: 'Argentina MSAL', title: 'Calendario Nacional de Vacunación', url: 'https://www.argentina.gob.ar/salud', reviewed: '2026-07' },
+  IN: { authority: 'India UIP', title: 'Universal Immunization Programme', url: 'https://www.nhp.gov.in/universal-immunisation-programme_pg', reviewed: '2026-07' },
+  WHO: { authority: 'WHO', title: 'WHO recommended routine immunizations', url: 'https://immunizationdata.who.int/', reviewed: '2026-07' },
+}
+
+export function getScheduleForCountry(countryCode: string): ResolvedSchedule {
+  const national = VACCINE_SCHEDULES[countryCode]
+  if (national) {
+    return {
+      entries: national,
+      provenance: 'national',
+      countryCode,
+      source: VACCINE_SCHEDULE_SOURCES[countryCode] ?? VACCINE_SCHEDULE_SOURCES['WHO'],
+    }
+  }
+  // Uncatalogued country → honest WHO reference, NEVER a silent US substitution.
+  return {
+    entries: VACCINE_SCHEDULES['WHO'],
+    provenance: 'who-reference',
+    countryCode,
+    source: VACCINE_SCHEDULE_SOURCES['WHO'],
+  }
 }
 
 // Sentinel monthMax used in the schedule for annual / recurring vaccines
