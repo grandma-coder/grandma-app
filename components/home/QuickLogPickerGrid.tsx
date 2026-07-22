@@ -5,7 +5,7 @@
  * one screen. Each picker supplies per-item icon + tint; this owns the rest.
  */
 import React from 'react'
-import { View, Pressable, Text, StyleSheet } from 'react-native'
+import { View, Pressable, StyleSheet } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { useTheme, radius } from '../../constants/theme'
 import { Body } from '../ui/Typography'
