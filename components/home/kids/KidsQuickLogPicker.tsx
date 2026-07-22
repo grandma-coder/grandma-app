@@ -4,14 +4,13 @@
 // the shared LogSheet shell (correct cream in both variants). No week gating —
 // every kids log type is always available to pick.
 import { useEffect, useState } from 'react'
-import { View, Pressable, StyleSheet } from 'react-native'
-import { Check } from 'lucide-react-native'
-import { useTheme, radius } from '../../../constants/theme'
-import { Body } from '../../ui/Typography'
+import { View } from 'react-native'
+import { useTheme } from '../../../constants/theme'
+import { Character, type CharacterName } from '../../characters/Characters'
+import { QuickLogPickerGrid, type QuickLogGridItem } from '../QuickLogPickerGrid'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
-import { Character, type CharacterName } from '../../characters/Characters'
 import { KIDS_QUICK_LOGS } from '../../../lib/kidsQuickLogs'
 import { useKidsQuickLogStore } from '../../../store/useKidsQuickLogStore'
 
@@ -64,6 +63,18 @@ export function KidsQuickLogPicker({ visible, onClose }: Props) {
     onClose()
   }
 
+  const items: QuickLogGridItem[] = KIDS_QUICK_LOGS.map((q) => {
+    const c = characterFor(q.key, stickers)
+    return {
+      key: q.key,
+      label: t(q.labelKey),
+      icon: <Character name={c.name} size={24} color={c.hue} />,
+      socketTint: c.soft,
+      selected: draft.includes(q.key),
+      onToggle: () => toggleDraft(q.key),
+    }
+  })
+
   return (
     <LogSheet
       visible={visible}
@@ -78,36 +89,7 @@ export function KidsQuickLogPicker({ visible, onClose }: Props) {
         />
       }
     >
-      <View style={{ gap: 10 }}>
-        {KIDS_QUICK_LOGS.map((q) => {
-          const on = draft.includes(q.key)
-          const c = characterFor(q.key, stickers)
-          return (
-            <Pressable
-              key={q.key}
-              onPress={() => toggleDraft(q.key)}
-              style={({ pressed }) => [
-                styles.row,
-                { borderColor: on ? colors.text : colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 },
-              ]}
-            >
-              <View style={[styles.socket, { backgroundColor: c.soft }]}>
-                <Character name={c.name} size={22} color={c.hue} />
-              </View>
-              <Body size={16} color={colors.text} style={{ flex: 1 }}>{t(q.labelKey)}</Body>
-              <View style={[styles.checkbox, { borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.text : 'transparent' }]}>
-                {on ? <Check size={14} color={colors.bg} strokeWidth={3} /> : null}
-              </View>
-            </Pressable>
-          )
-        })}
-      </View>
+      <QuickLogPickerGrid items={items} />
     </LogSheet>
   )
 }
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
-  socket: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-})
