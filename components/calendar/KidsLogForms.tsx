@@ -75,6 +75,12 @@ const ACCENT = brand.kids            // #8BB8E8 powder blue
 const ACCENT_SOFT = brand.kidsSoft   // #D4E3F3
 const INK = '#141313'
 
+// Bottle amount slider range (ml) — covers a single-feed span from a token
+// sip to a large toddler bottle. Stored value is unaffected by this range;
+// it only bounds/steps what the slider can express.
+const BOTTLE_AMOUNT_MIN = 0
+const BOTTLE_AMOUNT_MAX = 300
+
 // ─── FormHeaderSticker — decorative per-form accent shown under the title ─
 // Each log form gets its own hand-drawn sticker so the sheet reads as a
 // purpose-built page rather than a generic input.
@@ -1024,10 +1030,11 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
   const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
+  const sliderColor = diffuse ? diffuseLogHue('feeding') : ACCENT
   const MEAL_MOMENTS = MEAL_MOMENT_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
   const EAT_QUALITIES = EAT_QUALITY_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
 
-  const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
+  const [childId, setChildId] = useState(prefill?.childId ?? editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
   // Seed startTime directly from prefill so the activity time is the routine's time, not "now"
   const [startTime, setStartTime] = useState(() => prefill?.time ?? toTimeStr(new Date()))
@@ -1067,8 +1074,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
   const [leftSeconds, setLeftSeconds] = useState(0)
   const [rightSeconds, setRightSeconds] = useState(0)
 
-  // Bottle fields
+  // Bottle fields — `amount` stays the exact stored representation (a plain
+  // numeric string in ml, or '' for "not recorded"). The slider only ever
+  // reads/writes through the two helpers below so the save/prefill/editLog
+  // paths keep working with the same string shape they always have.
   const [amount, setAmount] = useState('')
+  const bottleAmountNum = amount ? Math.max(BOTTLE_AMOUNT_MIN, Math.min(BOTTLE_AMOUNT_MAX, Math.round(parseFloat(amount)) || 0)) : 0
+  const setBottleAmountNum = (n: number) => setAmount(n > 0 ? String(n) : '')
 
   // AI enrichment state — tracks tags currently being estimated by the backend
   // (for unknown foods not in local FOOD_DB) + plate-photo scanning
@@ -1509,6 +1521,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     return (
       <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
         <View style={df.form}>
+          <ActiveChildChip childId={childId} onChange={setChildId} />
           <View style={df.topRow}>
             <ChildSelector selected={childId} onSelect={setChildId} />
             <View style={df.dateTimeRow}>
@@ -1910,7 +1923,15 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             </>
           ) : (
             /* Bottle */
-            <DiffuseField value={amount} onChangeText={setAmount} placeholder={t('kids_logForm_placeholderAmount')} keyboardType="number-pad" />
+            <StepSlider
+              min={BOTTLE_AMOUNT_MIN}
+              max={BOTTLE_AMOUNT_MAX}
+              value={bottleAmountNum}
+              onChange={setBottleAmountNum}
+              color={sliderColor}
+              unit="ml"
+              blob="feeding"
+            />
           )}
 
           <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
@@ -1923,6 +1944,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
   return (
     <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
       <View style={styles.form}>
+        <ActiveChildChip childId={childId} onChange={setChildId} />
         <View style={styles.topRow}>
           <ChildSelector selected={childId} onSelect={setChildId} />
           <View style={styles.dateTimeRow}>
@@ -2490,13 +2512,14 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         ) : (
           <>
             {/* ── Bottle ── */}
-            <TextInput
-              value={amount}
-              onChangeText={setAmount}
-              placeholder={t('kids_logForm_placeholderAmount')}
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-              style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+            <StepSlider
+              min={BOTTLE_AMOUNT_MIN}
+              max={BOTTLE_AMOUNT_MAX}
+              value={bottleAmountNum}
+              onChange={setBottleAmountNum}
+              color={sliderColor}
+              unit="ml"
+              blob="feeding"
             />
           </>
         )}
