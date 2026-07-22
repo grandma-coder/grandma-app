@@ -40,8 +40,13 @@ const FIRST = ["Ana", "Bea", "Cara", "Dora", "Eve", "Fay", "Gia", "Hana", "Isa",
 const LAST = ["R.", "M.", "S.", "L.", "K.", "P.", "B.", "T."]
 
 async function currentDemoIds() {
-  const rows = await sql`select id from profiles where email like ${"%" + DEMO_SUFFIX}`
-  return Array.from(rows).map((r) => r.id)
+  // Union of profile ids AND orphaned auth-only ids (a prior partial seed may
+  // have created an auth.users row whose profile insert failed) — both carry the
+  // demo email suffix, so clean up by BOTH so stale rows can't collide next seed.
+  const prof = await sql`select id from profiles where email like ${"%" + DEMO_SUFFIX}`
+  const auth = await sql`select id from auth.users where email like ${"%" + DEMO_SUFFIX}`
+  const ids = new Set([...Array.from(prof).map((r) => r.id), ...Array.from(auth).map((r) => r.id)])
+  return Array.from(ids)
 }
 
 async function wipe() {
@@ -57,8 +62,9 @@ async function wipe() {
   await sql`delete from children where parent_id = any(${ids})`
   await sql`delete from behaviors where user_id = any(${ids})`
   await sql`delete from profiles where id = any(${ids})`
-  // profiles.id → auth.users(id): remove the backing auth rows too.
-  await sql`delete from auth.users where id = any(${ids})`
+  // profiles.id → auth.users(id): remove the backing auth rows too (by id AND by
+  // email suffix, to sweep any orphaned auth-only rows).
+  await sql`delete from auth.users where id = any(${ids}) or email like ${"%" + DEMO_SUFFIX}`
   console.log(`Wiped ${ids.length} demo users and all their linked rows.`)
 }
 
