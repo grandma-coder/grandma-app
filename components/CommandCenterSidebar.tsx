@@ -18,6 +18,7 @@ import {
   DollarSign,
   Sparkles,
   LifeBuoy,
+  Share2,
   type LucideIcon,
 } from "lucide-react"
 
@@ -37,6 +38,7 @@ const SECTIONS: NavSection[] = [
       { href: "/users", label: "Users", icon: Users },
       { href: "/metrics", label: "Metrics", icon: BarChart3 },
       { href: "/revenue", label: "Revenue", icon: DollarSign },
+      { href: "/graph", label: "Relationships", icon: Share2, adminOnly: true },
     ],
   },
   {
@@ -71,7 +73,7 @@ const MANAGE: NavLink[] = [
 
 // Which pillars are actually built yet (routes that exist). Others render
 // disabled so the nav reflects reality without dead links.
-const READY = new Set(["/", "/users", "/metrics", "/revenue", "/community", "/push", "/ai", "/support", "/sentry", "/tokens", "/content", "/releases", "/admin", "/beta"])
+const READY = new Set(["/", "/users", "/metrics", "/revenue", "/graph", "/community", "/push", "/ai", "/support", "/sentry", "/tokens", "/content", "/releases", "/admin", "/beta"])
 
 export function CommandCenterSidebar() {
   const pathname = usePathname() ?? ""
