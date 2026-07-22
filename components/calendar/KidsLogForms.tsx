@@ -1523,7 +1523,6 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         <View style={df.form}>
           <ActiveChildChip childId={childId} onChange={setChildId} />
           <View style={df.topRow}>
-            <ChildSelector selected={childId} onSelect={setChildId} />
             <View style={df.dateTimeRow}>
               <DateChip value={logDate} onChange={setLogDate} />
               <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
@@ -1946,7 +1945,6 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       <View style={styles.form}>
         <ActiveChildChip childId={childId} onChange={setChildId} />
         <View style={styles.topRow}>
-          <ChildSelector selected={childId} onSelect={setChildId} />
           <View style={styles.dateTimeRow}>
             <DateChip value={logDate} onChange={setLogDate} />
             <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
