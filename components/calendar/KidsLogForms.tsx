@@ -61,6 +61,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { supabase } from '../../lib/supabase'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { ChoiceStep, MoreSection, ActiveChildChip, type ChoiceOption } from './QuickLogKit'
+import { StepSlider } from '../ui/StepSlider'
 import { diffuseLogHue } from './DiffuseLogTimeline'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
 import type { CalorieMatch } from '../../lib/foodCalories'
@@ -2509,6 +2510,30 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
 // ─── 2. SLEEP FORM ─────────────────────────────────────────────────────────
 
+// Quality is stored as the SAME translated string label the old chip UI wrote
+// (t('kids_logForm_sleepQualityGreat') etc.) so `formatLogDisplay('sleep', …)`
+// and the Kids sleep analytics reader (`buildSleepData` in lib/analyticsData.ts,
+// which lowercases `value.quality` and matches 'great'|'good'|'restless'|'poor')
+// keep working with zero reader changes. The numeric 1–10 slider is mapped to
+// one of those 4 labels on save, and reverse-mapped to a representative number
+// on prefill/editLog.
+const SLEEP_QUALITY_DEFAULT = 7
+
+function sleepQualityNumToLabel(n: number, t: (key: TranslationKey) => string): string {
+  if (n <= 2) return t('kids_logForm_sleepQualityPoor')
+  if (n <= 5) return t('kids_logForm_sleepQualityRestless')
+  if (n <= 8) return t('kids_logForm_sleepQualityGood')
+  return t('kids_logForm_sleepQualityGreat')
+}
+
+function sleepQualityLabelToNum(label: string, t: (key: TranslationKey) => string): number {
+  if (label === t('kids_logForm_sleepQualityPoor')) return 2
+  if (label === t('kids_logForm_sleepQualityRestless')) return 4
+  if (label === t('kids_logForm_sleepQualityGood')) return 7
+  if (label === t('kids_logForm_sleepQualityGreat')) return 10
+  return SLEEP_QUALITY_DEFAULT
+}
+
 export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
   const diffuse = useIsDiffuse()
   const { t } = useTranslation()
@@ -2516,8 +2541,9 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
   const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
+  const sliderColor = diffuse ? diffuseLogHue('sleep') : ACCENT
 
-  const [childId, setChildId] = useState(children.length <= 1 ? (children[0]?.id ?? '') : '')
+  const [childId, setChildId] = useState(prefill?.childId ?? editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
   // Seed startTime directly from prefill so the activity time is the routine's time, not "now"
   const [startTime, setStartTime] = useState(() => {
@@ -2532,7 +2558,8 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
     }
     return ''
   })
-  const [quality, setQuality] = useState<string | null>(null)
+  const [hours, setHours] = useState(8)
+  const [quality, setQuality] = useState(SLEEP_QUALITY_DEFAULT)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [routineEnabled, setRoutineEnabled] = useState(!!prefill)
@@ -2547,9 +2574,16 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
     if (prefill.value) {
       try {
         const p = JSON.parse(prefill.value)
-        if (p.quality) setQuality(p.quality)
+        if (p.quality) setQuality(sleepQualityLabelToNum(p.quality, t))
         if (p.startTime) setStartTime(p.startTime)
         if (p.endTime) setEndTime(p.endTime)
+        if (p.duration) {
+          const m = String(p.duration).match(/(?:(\d+(?:\.\d+)?)h)?\s*(?:(\d+)m)?/)
+          if (m) {
+            const h = parseFloat(m[1] || '0') + (parseInt(m[2] || '0', 10) / 60)
+            if (h > 0) setHours(Math.round(h))
+          }
+        }
       } catch {}
     }
   }, [prefill])
@@ -2564,13 +2598,22 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       const p = JSON.parse(editLog.value ?? '{}')
       if (p.startTime) setStartTime(p.startTime)
       if (p.endTime) setEndTime(p.endTime)
-      if (p.quality) setQuality(p.quality)
+      if (p.quality) setQuality(sleepQualityLabelToNum(p.quality, t))
+      if (p.duration) {
+        const m = String(p.duration).match(/(?:(\d+(?:\.\d+)?)h)?\s*(?:(\d+)m)?/)
+        if (m) {
+          const h = parseFloat(m[1] || '0') + (parseInt(m[2] || '0', 10) / 60)
+          if (h > 0) setHours(Math.round(h))
+        }
+      }
     } catch {}
   }, [editLog?.id])
 
+  // Duration shown/stored: prefer the explicit hours slider. If start+end
+  // time are both set (via MoreSection) and produce a real span, that auto
+  // duration wins — it reflects an actual logged session over the manual pick.
   const autoDuration = useMemo(() => calcDuration(startTime, endTime, true), [startTime, endTime])
-
-  const qualities = [t('kids_logForm_sleepQualityGreat'), t('kids_logForm_sleepQualityGood'), t('kids_logForm_sleepQualityRestless'), t('kids_logForm_sleepQualityPoor')]
+  const durationLabel = autoDuration || `${hours}h`
 
   async function save() {
     if (!childId) return
@@ -2585,7 +2628,8 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
           if (orig.routineId) routineMeta = { routineId: orig.routineId, routineName: orig.routineName }
         } catch {}
       }
-      const valueObj: Record<string, unknown> = { duration: autoDuration || undefined, quality, startTime, endTime: endTime || undefined, ...routineMeta }
+      const qualityLabel = sleepQualityNumToLabel(quality, t)
+      const valueObj: Record<string, unknown> = { duration: durationLabel || undefined, quality: qualityLabel, startTime, endTime: endTime || undefined, ...routineMeta }
       const value = JSON.stringify(valueObj)
       const taggedValue = tagWithRoutine(value, prefill) ?? value
       if (editLog) {
@@ -2598,15 +2642,15 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         // Nap vs Bedtime classifier.
         // Previously: any sleep starting before 4pm became "Nap" — but
         // afternoon naps starting at 4–5pm got misclassified as bedtime.
-        // Now: parse autoDuration (format "8h", "8h 30m", or "45m") into
+        // Now: parse durationLabel (format "8h", "8h 30m", or "45m") into
         // minutes, then call it bedtime when duration >= 4h OR start hour
         // is past 6pm.
         const startHour = parseInt(startTime.split(':')[0])
-        const m = autoDuration.match(/(?:(\d+)h)?\s*(?:(\d+)m)?/)
+        const m = durationLabel.match(/(?:(\d+)h)?\s*(?:(\d+)m)?/)
         const durMins = m ? (parseInt(m[1] || '0') * 60 + parseInt(m[2] || '0')) : 0
         const longSleep = durMins >= 240 // 4h
         const isNap = !longSleep && startHour < 18
-        await saveAsRoutine(childId, 'sleep', isNap ? 'Nap' : 'Bedtime', JSON.stringify({ startTime, quality }), startTime, routineDays)
+        await saveAsRoutine(childId, 'sleep', isNap ? 'Nap' : 'Bedtime', JSON.stringify({ startTime, quality: qualityLabel }), startTime, routineDays)
       }
       onSaved()
     } catch (e: any) {
@@ -2616,89 +2660,39 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
     }
   }
 
-  if (diffuse) {
-    return (
-      <View style={df.form}>
-        <View style={df.topRow}>
-          <ChildSelector selected={childId} onSelect={setChildId} />
-          <View style={df.dateTimeRow}>
-            <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
-            {endTime ? (
-              <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
-            ) : (
-              <Pressable onPress={() => setEndTime(toTimeStr(new Date()))} style={[df.pill, { borderColor: dTheme.colors.line }]}>
-                <Plus size={12} color={dTheme.colors.ink3} strokeWidth={2} />
-                <Text style={[df.pillLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_end')}</Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
-        <DiffuseFormHeader kind="sleep" />
-        {autoDuration !== '' && (
-          <View style={[df.banner, { borderColor: dTheme.colors.line }]}>
-            <Character name="sleep" size={18} color={dTheme.colors.ink3} />
-            <Text style={[df.bannerLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_sleepSession')}</Text>
-            <Text style={[df.bannerValue, { color: dTheme.colors.ink }]}>{autoDuration}</Text>
-          </View>
+  const moreFields = diffuse ? (
+    <>
+      <View style={df.dateTimeRow}>
+        <DateChip value={logDate} onChange={setLogDate} />
+        <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
+        {endTime ? (
+          <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
+        ) : (
+          <Pressable onPress={() => setEndTime(toTimeStr(new Date()))} style={[df.pill, { borderColor: dTheme.colors.line }]}>
+            <Plus size={12} color={dTheme.colors.ink3} strokeWidth={2} />
+            <Text style={[df.pillLabel, { color: dTheme.colors.ink3 }]}>{t('kids_logForm_end')}</Text>
+          </Pressable>
         )}
-        <View style={df.chipGrid}>
-          {qualities.map((q, i) => (
-            <DiffuseChip key={q} label={q} active={quality === q} onPress={() => setQuality(q)} hue={chipHueAt(dTheme, i)} />
-          ))}
-        </View>
-        <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
-        <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
-        <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
       </View>
-    )
-  }
-
-  return (
-    <View style={styles.form}>
-      <View style={styles.topRow}>
-        <ChildSelector selected={childId} onSelect={setChildId} />
-        <View style={styles.dateTimeRow}>
-          <DateChip value={logDate} onChange={setLogDate} />
-          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
-          {endTime ? (
-            <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
-          ) : (
-            <Pressable
-              onPress={() => setEndTime(toTimeStr(new Date()))}
-              style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
-            >
-              <Plus size={12} color={colors.textMuted} strokeWidth={2} />
-              <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{t('kids_logForm_end')}</Text>
-            </Pressable>
-          )}
-        </View>
-      </View>
-      <FormHeaderSticker kind="sleep" />
-      {autoDuration !== '' && (
-        <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
-          <Moon size={20} color={ACCENT} strokeWidth={2} />
-          <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('kids_logForm_sleepSession')}</Text>
-          <Text style={[styles.autoDuration, { color: INK, fontFamily: font.displayBold }]}>{autoDuration}</Text>
-        </View>
-      )}
-      <View style={styles.chipGrid}>
-        {qualities.map((q) => {
-          const active = quality === q
-          return (
-            <Pressable
-              key={q}
-              onPress={() => setQuality(q)}
-              style={[styles.chip, {
-                backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                borderColor: active ? ACCENT : (isDark ? colors.border : INK),
-                borderRadius: radius.full,
-              }]}
-            >
-              <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{q}</Text>
-            </Pressable>
-          )
-        })}
+      <DiffuseField label={t('kids_logForm_placeholderNotes')} value={notes} onChangeText={setNotes} placeholder={t('kids_logForm_placeholderNotes')} />
+      <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+    </>
+  ) : (
+    <>
+      <View style={styles.dateTimeRow}>
+        <DateChip value={logDate} onChange={setLogDate} />
+        <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_start')} />
+        {endTime ? (
+          <TimeChip value={endTime} onChange={setEndTime} label={t('kids_logForm_end')} />
+        ) : (
+          <Pressable
+            onPress={() => setEndTime(toTimeStr(new Date()))}
+            style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
+          >
+            <Plus size={12} color={colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{t('kids_logForm_end')}</Text>
+          </Pressable>
+        )}
       </View>
       <TextInput
         value={notes}
@@ -2708,6 +2702,33 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <View style={df.form}>
+        <ActiveChildChip childId={childId} onChange={setChildId} />
+        <DiffuseFormHeader kind="sleep" />
+        <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('preg_form_sleep_hoursSlept')}</Text>
+        <StepSlider min={0} max={16} value={hours} onChange={setHours} color={sliderColor} unit={hours === 1 ? t('preg_form_sleep_hoursLabel').replace(/s$/, '') : t('preg_form_sleep_hoursLabel')} blob="sleep" />
+        <Text style={[df.eyebrow, { color: dTheme.colors.ink3 }]}>{t('preg_form_sleep_qualityRange')}</Text>
+        <StepSlider min={1} max={10} value={quality} onChange={setQuality} color={sliderColor} blob="sleep" />
+        <MoreSection>{moreFields}</MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.form}>
+      <ActiveChildChip childId={childId} onChange={setChildId} />
+      <FormHeaderSticker kind="sleep" />
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_hoursSlept')}</Text>
+      <StepSlider min={0} max={16} value={hours} onChange={setHours} color={sliderColor} unit={hours === 1 ? t('preg_form_sleep_hoursLabel').replace(/s$/, '') : t('preg_form_sleep_hoursLabel')} blob="sleep" />
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_qualityRange')}</Text>
+      <StepSlider min={1} max={10} value={quality} onChange={setQuality} color={sliderColor} blob="sleep" />
+      <MoreSection>{moreFields}</MoreSection>
       <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
     </View>
   )
