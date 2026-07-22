@@ -67,28 +67,40 @@ export async function deliverCampaign(campaignId: string, opts: DeliverOpts): Pr
         : { type: "all" as const }
     const { tokens, skippedOptOut } = await resolveTokens(target, campaign.category as PushCategory)
 
-    // 3. Send.
-    const data: Record<string, unknown> = { category: campaign.category }
-    if (campaign.deep_link) data.url = campaign.deep_link
+    // 3. Pre-create a recipient row per token (before sending) so each push can
+    //    carry its own recipientId in the data payload — that's the handle the
+    //    app reports back on tap (notification-opened) to close the open funnel.
+    let recipients: { id: string; token: string | null }[] = []
+    if (tokens.length) {
+      recipients = await db
+        .insert(pushRecipients)
+        .values(tokens.map((token) => ({ campaignId: campaign.id, token, status: "ok" as const })))
+        .returning({ id: pushRecipients.id, token: pushRecipients.token })
+    }
+
+    // 4. Send — each message tagged with its recipientId for open-tracking.
+    const baseData: Record<string, unknown> = { category: campaign.category }
+    if (campaign.deep_link) baseData.url = campaign.deep_link
     const result = await sendPushBatch(
-      tokens.map((to) => ({ to, title: campaign.title, body: campaign.body, data })),
+      recipients.map((r) => ({
+        to: r.token ?? "",
+        title: campaign.title,
+        body: campaign.body,
+        data: { ...baseData, recipientId: r.id },
+      })),
     )
 
-    // 4. Log recipients (chunked insert) + in-app feed rows.
-    const recipientRows = tokens.map((token, i) => {
+    // 4b. Backfill each recipient with its ticket outcome.
+    for (let i = 0; i < recipients.length; i++) {
       const tk = result.tickets[i]
-      return {
-        campaignId: campaign.id,
-        token,
-        status: (tk?.status === "ok" ? "ok" : "error") as "ok" | "error",
-        ticketId: tk?.id ?? null,
-        error: tk?.status === "error" ? tk.message ?? tk.details?.error ?? "error" : null,
-      }
-    })
-    if (recipientRows.length) {
-      for (let i = 0; i < recipientRows.length; i += 200) {
-        await db.insert(pushRecipients).values(recipientRows.slice(i, i + 200))
-      }
+      await db
+        .update(pushRecipients)
+        .set({
+          status: tk?.status === "ok" ? "ok" : "error",
+          ticketId: tk?.id ?? null,
+          error: tk?.status === "error" ? tk.message ?? tk.details?.error ?? "error" : null,
+        })
+        .where(eq(pushRecipients.id, recipients[i].id))
     }
     // In-app feed: one notifications row per targeted token's user.
     await db.execute(sql`

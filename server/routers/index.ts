@@ -15,6 +15,7 @@ import { revenueRouter } from "./revenue"
 import { aiRouter } from "./ai"
 import { supportRouter } from "./support"
 import { moderationRouter } from "./moderation"
+import { pushAnalyticsRouter } from "./pushAnalytics"
 
 /**
  * Root app router. Feature routers are added per phase.
@@ -38,6 +39,7 @@ export const appRouter = router({
   ai: aiRouter,
   support: supportRouter,
   moderation: moderationRouter,
+  pushAnalytics: pushAnalyticsRouter,
 })
 
 export type AppRouter = typeof appRouter
