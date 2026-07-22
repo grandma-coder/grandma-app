@@ -122,6 +122,10 @@ export const graphRouter = router({
       }
 
       // 4. Hydrate the kept nodes with label + behavior + tier.
+      // Build the id array explicitly (array[...]::uuid[]) — Drizzle's sql
+      // template doesn't serialize a raw JS array into a Postgres array, so
+      // `any(${jsArray})` throws. Mirrors lib/expo/resolve-tokens.ts.
+      const idArray = sql`array[${sql.join(topIds.map((id) => sql`${id}::uuid`), sql`, `)}]`
       const profRows = await db.execute<{
         id: string
         email: string | null
@@ -132,7 +136,7 @@ export const graphRouter = router({
         select p.id, p.email, p.name, p.subscription_tier,
                (select b.type from behaviors b where b.user_id = p.id and b.active order by b.created_at limit 1) as behavior
         from profiles p
-        where p.id = any(${topIds})
+        where p.id = any(${idArray})
       `)
       const nodes: PopNode[] = Array.from(profRows).map((p) => ({
         id: p.id,
