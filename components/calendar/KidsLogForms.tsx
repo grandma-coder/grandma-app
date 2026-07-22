@@ -474,7 +474,7 @@ async function launchCameraSafe(t: (key: TranslationKey) => string): Promise<str
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
-async function saveChildLog(
+export async function saveChildLog(
   childId: string,
   type: string,
   value?: string,
@@ -506,7 +506,7 @@ async function saveChildLog(
   await invalidateKidsLogQueries()
 }
 
-async function updateChildLog(
+export async function updateChildLog(
   id: string,
   value?: string | null,
   notes?: string | null,
@@ -528,7 +528,7 @@ async function updateChildLog(
 
 // ─── Save as Routine helper ────────────────────────────────────────────────
 
-async function saveAsRoutine(
+export async function saveAsRoutine(
   childId: string,
   type: string,
   name: string,
