@@ -3,6 +3,8 @@ import { useMemo, useRef, useState, type ComponentType, type Ref } from "react"
 import dynamic from "next/dynamic"
 import type { ForceGraphProps, NodeObject, ForceGraphMethods } from "react-force-graph-2d"
 import { useContainerSize } from "./useContainerSize"
+import { GraphSearch } from "./GraphSearch"
+import { NodeSidePanel } from "./NodeSidePanel"
 
 // react-force-graph-2d uses window/canvas → client-only (no SSR). next/dynamic
 // drops the lib's generics, so we re-assert the prop type (keeps callbacks typed
@@ -51,6 +53,7 @@ export function PopulationGraph({
   const { ref: containerRef, w, h } = useContainerSize<HTMLDivElement>()
   const [focusId, setFocusId] = useState<string | null>(null)
   const [hoverId, setHoverId] = useState<string | null>(null)
+  const [panelId, setPanelId] = useState<string | null>(null) // node whose side panel is open
 
   const maxDeg = Math.max(1, ...data.nodes.map((n) => n.degree))
 
@@ -86,7 +89,8 @@ export function PopulationGraph({
     [data, maxDeg],
   )
 
-  const active = hoverId ?? focusId
+  // Spotlight follows hover, else the panel-selected node, else click-focus.
+  const active = hoverId ?? panelId ?? focusId
   const activeSet = useMemo(() => {
     if (!active) return null
     const s = new Set<string>([active])
@@ -96,6 +100,17 @@ export function PopulationGraph({
 
   const behaviorsPresent = Array.from(new Set(data.nodes.map((n) => n.behavior)))
   const radiusOf = (deg: number) => 4 + (deg / maxDeg) * 12
+
+  // Open a node's side panel + center the camera on it (used by click AND search).
+  const selectNode = (id: string) => {
+    setPanelId(id)
+    setFocusId(id)
+    const gn = graphData.nodes.find((n) => n.id === id) as (GNode & { x?: number; y?: number }) | undefined
+    if (gn && typeof gn.x === "number" && typeof gn.y === "number") {
+      fgRef.current?.centerAt(gn.x, gn.y, 600)
+      fgRef.current?.zoom(2.2, 600)
+    }
+  }
 
   if (data.nodes.length === 0) {
     return (
@@ -112,24 +127,20 @@ export function PopulationGraph({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3 text-xs text-fg-tertiary">
-        <span>
-          Showing <span className="font-semibold text-fg-primary">{data.shown}</span> most-connected of{" "}
-          <span className="font-semibold text-fg-primary">{data.totalUsers}</span> users
+      <div className="flex flex-wrap items-center gap-3">
+        <GraphSearch nodes={data.nodes} onSelect={selectNode} />
+        <span className="text-xs text-fg-tertiary">
+          Showing <span className="font-semibold text-fg-primary">{data.shown}</span> of{" "}
+          <span className="font-semibold text-fg-primary">{data.totalUsers}</span>
         </span>
         {data.capped && <span className="pill pill-warning">capped</span>}
-        {focusId && (
-          <button onClick={() => setFocusId(null)} className="pill pill-info hover:opacity-80">
-            focused: {nodeById.get(focusId)?.label} · clear ✕
-          </button>
-        )}
         <button
           onClick={() => fgRef.current?.zoomToFit(400, 40)}
-          className="rounded-full border border-border-default px-2.5 py-0.5 text-fg-tertiary hover:text-fg-primary"
+          className="rounded-full border border-border-default px-2.5 py-0.5 text-xs text-fg-tertiary hover:text-fg-primary"
         >
           fit view
         </button>
-        <span className="ml-auto flex flex-wrap gap-x-3 gap-y-1">
+        <span className="ml-auto flex flex-wrap gap-x-3 gap-y-1 text-xs text-fg-tertiary">
           {behaviorsPresent.map((b) => (
             <span key={b} className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: BEHAVIOR_COLOR[b] }} />
@@ -207,28 +218,39 @@ export function PopulationGraph({
           onNodeHover={(n: NodeObject | null) => setHoverId(n ? ((n as unknown as GNode).id ?? null) : null)}
           onNodeClick={(n: NodeObject) => {
             const id = (n as unknown as GNode).id
-            if (!id) return
-            if (focusId === id) onPickUser(id, (n as unknown as GNode).label)
-            else setFocusId(id)
+            if (id) selectNode(id)
           }}
-          onBackgroundClick={() => setFocusId(null)}
+          onBackgroundClick={() => {
+            setPanelId(null)
+            setFocusId(null)
+          }}
         />
         )}
 
-        {activeNode && (
+        {panelId && nodeById.get(panelId) && (
+          <NodeSidePanel
+            node={nodeById.get(panelId)!}
+            onClose={() => {
+              setPanelId(null)
+              setFocusId(null)
+            }}
+            onOpenGraph={onPickUser}
+          />
+        )}
+
+        {hoverId && activeNode && (
           <div className="pointer-events-none absolute left-3 top-3 rounded-lg border border-border-default bg-card/95 px-3 py-2 text-xs shadow-[var(--shadow-sm)]">
             <p className="font-semibold text-fg-primary">{activeNode.label}</p>
             <p className="text-fg-tertiary">
               {activeNode.degree} connection{activeNode.degree === 1 ? "" : "s"} · {activeNode.tier} · {BEHAVIOR_LABEL[activeNode.behavior] ?? activeNode.behavior}
             </p>
-            {focusId === activeNode.id && <p className="mt-0.5 text-accent-500">click again → open full graph</p>}
           </div>
         )}
       </div>
 
       <p className="text-xs text-fg-muted">
-        <span className="font-medium text-fg-tertiary">Hover</span> a node to spotlight its connections ·{" "}
-        <span className="font-medium text-fg-tertiary">click</span> to isolate its network (click again to open that user) ·{" "}
+        <span className="font-medium text-fg-tertiary">Search</span> or <span className="font-medium text-fg-tertiary">click</span> a node to open its details ·{" "}
+        <span className="font-medium text-fg-tertiary">hover</span> to spotlight connections ·{" "}
         <span className="font-medium text-fg-tertiary">scroll</span> to zoom · <span className="font-medium text-fg-tertiary">drag</span> to pan or move a node.
         Node size = connections; purple edges = care-circle, grey = shared channels.
       </p>
