@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { trpc } from "@/lib/trpc"
+import { PopulationGraph } from "./PopulationGraph"
 
 type NodeKind = "user" | "child" | "caregiver" | "owner" | "behavior" | "subscription" | "community"
 
@@ -208,13 +209,21 @@ function NodeDetail({ node }: { node: GNode }) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export function RelationshipExplorer() {
+  const [mode, setMode] = useState<"ego" | "population">("ego")
   const [picked, setPicked] = useState<{ id: string; label: string } | null>(null)
   const [selected, setSelected] = useState<GNode | null>(null)
 
   const graph = trpc.graph.ego.useQuery(picked ? { userId: picked.id } : { userId: "00000000-0000-0000-0000-000000000000" }, {
-    enabled: !!picked,
+    enabled: !!picked && mode === "ego",
     staleTime: 30_000,
   })
+  const population = trpc.graph.population.useQuery({ limit: 150 }, { enabled: mode === "population", staleTime: 60_000 })
+
+  const goToUser = (id: string, label: string) => {
+    setPicked({ id, label })
+    setSelected(null)
+    setMode("ego")
+  }
 
   const kinds = useMemo(() => {
     const set = new Set<NodeKind>()
@@ -224,12 +233,31 @@ export function RelationshipExplorer() {
 
   return (
     <div className="space-y-4">
-      <UserPicker
-        onPick={(id, label) => {
-          setPicked({ id, label })
-          setSelected(null)
-        }}
-      />
+      {/* Ego | Population toggle */}
+      <div className="flex gap-2">
+        {(["ego", "population"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium capitalize transition-colors ${
+              mode === m ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
+            }`}
+          >
+            {m === "ego" ? "One user" : "All users"}
+          </button>
+        ))}
+      </div>
+
+      {mode === "population" && (
+        <>
+          {population.isLoading && <p className="text-sm text-fg-tertiary">Building the population graph…</p>}
+          {population.data && <PopulationGraph data={population.data} onPickUser={goToUser} />}
+        </>
+      )}
+
+      {mode === "ego" && (
+      <>
+      <UserPicker onPick={goToUser} />
 
       {!picked && <p className="text-sm text-fg-muted">Search and pick a user above to render their relationship graph.</p>}
 
@@ -272,6 +300,8 @@ export function RelationshipExplorer() {
             )}
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   )

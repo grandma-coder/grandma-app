@@ -41,7 +41,127 @@ export interface EgoGraph {
   edges: GraphEdge[]
 }
 
+export interface PopNode {
+  id: string
+  label: string
+  behavior: string // primary behavior (pre_pregnancy | pregnancy | kids | none)
+  tier: string
+  degree: number // connection count → node size + god-node ranking
+}
+export interface PopEdge {
+  source: string
+  target: string
+  kind: "care_circle" | "shared_channel"
+  weight: number
+}
+export interface PopulationGraph {
+  nodes: PopNode[]
+  edges: PopEdge[]
+  totalUsers: number
+  shown: number
+  capped: boolean
+}
+
 export const graphRouter = router({
+  /**
+   * Population graph — many users at once. Nodes are users (colored by primary
+   * behavior, sized by connection degree); edges connect users who share a
+   * care-circle link or co-occur in a channel. Capped at the top-N most-connected
+   * users so the view stays readable + the query bounded — `capped`/`shown`/
+   * `totalUsers` report exactly what's included (never a silent truncation).
+   * PII (the whole social graph) → piiProcedure (admin) + audited.
+   */
+  population: piiProcedure
+    .input(z.object({ limit: z.number().int().min(10).max(400).default(150) }))
+    .query(async ({ ctx, input }): Promise<PopulationGraph> => {
+      // 1. Undirected user↔user edges from two sources, de-duped + weighted.
+      //    (a) care-circle: owner ↔ member
+      //    (b) shared channel: two authors/members in the same channel
+      const edgeRows = await db.execute<{ a: string; b: string; kind: string; weight: number }>(sql`
+        with cc as (
+          select least(owner_id, member_user_id) as a, greatest(owner_id, member_user_id) as b
+          from care_circle
+          where member_user_id is not null and owner_id <> member_user_id
+        ),
+        chan_users as (
+          select distinct channel_id, user_id from channel_members where user_id is not null
+          union
+          select distinct channel_id, author_id as user_id from channel_posts where author_id is not null
+        ),
+        shared as (
+          select least(u1.user_id, u2.user_id) as a, greatest(u1.user_id, u2.user_id) as b, count(*)::int as w
+          from chan_users u1
+          join chan_users u2 on u1.channel_id = u2.channel_id and u1.user_id < u2.user_id
+          group by 1, 2
+        )
+        select a, b, 'care_circle' as kind, count(*)::int as weight from cc group by a, b
+        union all
+        select a, b, 'shared_channel' as kind, w as weight from shared
+      `)
+      const rawEdges = Array.from(edgeRows)
+
+      // 2. Degree per user (weighted by edge count, care+channel combined).
+      const degree = new Map<string, number>()
+      for (const e of rawEdges) {
+        degree.set(e.a, (degree.get(e.a) ?? 0) + 1)
+        degree.set(e.b, (degree.get(e.b) ?? 0) + 1)
+      }
+
+      // 3. Total user count + the top-N connected users to actually render.
+      const totalRes = await db.execute<{ n: number }>(sql`select count(*)::int as n from profiles`)
+      const totalUsers = Number(Array.from(totalRes)[0]?.n ?? 0)
+
+      const topIds = Array.from(degree.entries())
+        .sort((x, y) => y[1] - x[1])
+        .slice(0, input.limit)
+        .map(([id]) => id)
+      const keep = new Set(topIds)
+
+      if (keep.size === 0) {
+        return { nodes: [], edges: [], totalUsers, shown: 0, capped: false }
+      }
+
+      // 4. Hydrate the kept nodes with label + behavior + tier.
+      const profRows = await db.execute<{
+        id: string
+        email: string | null
+        name: string | null
+        subscription_tier: string | null
+        behavior: string | null
+      }>(sql`
+        select p.id, p.email, p.name, p.subscription_tier,
+               (select b.type from behaviors b where b.user_id = p.id and b.active order by b.created_at limit 1) as behavior
+        from profiles p
+        where p.id = any(${topIds})
+      `)
+      const nodes: PopNode[] = Array.from(profRows).map((p) => ({
+        id: p.id,
+        label: p.name ?? p.email ?? p.id.slice(0, 8),
+        behavior: (p.behavior === "cycle" ? "pre_pregnancy" : p.behavior) ?? "none",
+        tier: p.subscription_tier ?? "free",
+        degree: degree.get(p.id) ?? 0,
+      }))
+
+      // 5. Keep only edges between two kept nodes.
+      const edges: PopEdge[] = rawEdges
+        .filter((e) => keep.has(e.a) && keep.has(e.b))
+        .map((e) => ({ source: e.a, target: e.b, kind: e.kind as PopEdge["kind"], weight: Number(e.weight) }))
+
+      await writeAudit({
+        actorEmail: ctx.userEmail ?? "unknown",
+        action: "graph.population.view",
+        meta: { totalUsers, shown: nodes.length, edges: edges.length, limit: input.limit },
+      })
+
+      return {
+        nodes,
+        edges,
+        totalUsers,
+        shown: nodes.length,
+        capped: degree.size > input.limit,
+      }
+    }),
+
   ego: piiProcedure.input(z.object({ userId: z.string().uuid() })).query(async ({ ctx, input }): Promise<EgoGraph> => {
     const uid = input.userId
     const nodes: GraphNode[] = []
