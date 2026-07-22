@@ -270,6 +270,32 @@ export interface MilestoneVaccineItem {
   scheduleKey: string // unique key: "<name>-<doseIndex>"
 }
 
+// Status → neutral display copy. The engine's state names (overdue/upcoming)
+// are internal ordering only and MUST NOT be printed; every user-facing label
+// comes from here so "overdue"/"due soon" can never leak into the UI.
+export function vaccineStatusLabel(
+  status: MilestoneVaccineItem['status'],
+  dueAge: string,
+): { key: string; params?: Record<string, string> } | null {
+  switch (status) {
+    case 'done': return null // caller shows the given date instead
+    case 'upcoming': return { key: 'kids_home_vaccine_status_typical_now' }
+    case 'overdue': return { key: 'kids_home_vaccine_status_not_logged', params: { age: dueAge } }
+    case 'future': return { key: 'kids_home_vaccine_status_typical_around', params: { age: dueAge } }
+  }
+}
+
+export function vaccineMilestoneBadge(
+  milestoneStatus: AgeMilestone['milestoneStatus'],
+  done: number,
+  total: number,
+): { key: string; params: Record<string, string> } {
+  const params = { done: String(done), total: String(total) }
+  if (milestoneStatus === 'done') return { key: 'kids_home_vaccine_badge_done', params }
+  if (milestoneStatus === 'partial') return { key: 'kids_home_vaccine_badge_partial', params }
+  return { key: 'kids_home_vaccine_badge_ahead', params }
+}
+
 export interface AgeMilestone {
   key: string                 // stringified monthMin e.g. "0", "2", "4"
   label: string               // display label e.g. "Birth", "2 Months"

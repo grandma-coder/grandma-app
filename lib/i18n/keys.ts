@@ -1050,6 +1050,15 @@ export interface TranslationKeys {
   kids_home_vaccine_mark_given: string
   kids_home_vaccine_set_date: string
   kids_home_vaccine_no_info: string
+  kids_home_vaccine_status_typical_now: string
+  kids_home_vaccine_status_not_logged: string
+  kids_home_vaccine_status_typical_around: string
+  kids_home_vaccine_badge_done: string
+  kids_home_vaccine_badge_partial: string
+  kids_home_vaccine_badge_ahead: string
+  kids_home_vaccine_reference_banner: string
+  kids_home_vaccine_source: string
+  kids_home_vaccine_disclaimer_banner: string
   kids_home_sleep_modal_total_range: string
   kids_home_sleep_modal_hours_unit: string
   kids_home_sleep_modal_past7: string
