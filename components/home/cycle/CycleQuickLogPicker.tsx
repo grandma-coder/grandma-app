@@ -1,13 +1,11 @@
 // CycleQuickLogPicker — choose which quick-log chips show on the cycle home
 // "Log something" card. Mirrors the pregnancy QuickLogPicker exactly: reuses the
 // shared LogSheet shell (so the cream background / handle / title match every
-// other sheet in both variants) and renders a sticker-in-a-socket per row.
+// other sheet in both variants) and renders a 2-column grid of log options.
 // Edits a local draft while open; Save commits it to useCycleQuickLogStore.
 import { useEffect, useState } from 'react'
-import { View, Pressable, StyleSheet } from 'react-native'
-import { Check } from 'lucide-react-native'
-import { useTheme, radius } from '../../../constants/theme'
-import { Body } from '../../ui/Typography'
+import { View } from 'react-native'
+import { useTheme } from '../../../constants/theme'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
@@ -15,6 +13,7 @@ import { Character, CharacterName } from '../../characters/Characters'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogTimeline'
 import { CYCLE_QUICK_LOGS } from '../../../lib/cycleQuickLogs'
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
+import { QuickLogPickerGrid, type QuickLogGridItem } from '../QuickLogPickerGrid'
 
 interface Props {
   visible: boolean
@@ -61,7 +60,7 @@ function blobFor(logType: string, stickers: ReturnType<typeof useTheme>['sticker
 }
 
 export function CycleQuickLogPicker({ visible, onClose }: Props) {
-  const { colors, stickers: themeStickers } = useTheme()
+  const { stickers: themeStickers } = useTheme()
   const { t } = useTranslation()
   const enabledKeys = useCycleQuickLogStore((s) => s.enabledKeys)
   const setEnabled = useCycleQuickLogStore((s) => s.setEnabled)
@@ -85,6 +84,18 @@ export function CycleQuickLogPicker({ visible, onClose }: Props) {
     onClose()
   }
 
+  const items: QuickLogGridItem[] = CYCLE_QUICK_LOGS.map((q) => {
+    const s = blobFor(q.sheet, themeStickers)
+    return {
+      key: q.key,
+      label: t(q.labelKey),
+      icon: s.node,
+      socketTint: s.soft,
+      selected: draft.includes(q.key),
+      onToggle: () => toggleDraft(q.key),
+    }
+  })
+
   return (
     <LogSheet
       visible={visible}
@@ -99,34 +110,7 @@ export function CycleQuickLogPicker({ visible, onClose }: Props) {
         />
       }
     >
-      <View style={{ gap: 10 }}>
-        {CYCLE_QUICK_LOGS.map((q) => {
-          const on = draft.includes(q.key)
-          const s = blobFor(q.sheet, themeStickers)
-          return (
-            <Pressable
-              key={q.key}
-              onPress={() => toggleDraft(q.key)}
-              style={({ pressed }) => [
-                styles.row,
-                { borderColor: on ? colors.text : colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 },
-              ]}
-            >
-              <View style={[styles.socket, { backgroundColor: s.soft }]}>{s.node}</View>
-              <Body size={16} color={colors.text} style={{ flex: 1 }}>{t(q.labelKey)}</Body>
-              <View style={[styles.checkbox, { borderColor: on ? colors.text : colors.border, backgroundColor: on ? colors.text : 'transparent' }]}>
-                {on ? <Check size={14} color={colors.bg} strokeWidth={3} /> : null}
-              </View>
-            </Pressable>
-          )
-        })}
-      </View>
+      <QuickLogPickerGrid items={items} />
     </LogSheet>
   )
 }
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
-  socket: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-})
