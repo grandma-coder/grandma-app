@@ -19,10 +19,17 @@ import { DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
 import { Character } from '../../characters/Characters'
 import { Cross as CrossSticker } from '../../ui/Stickers'
 import { getVaccineInfo, type VaccineInfo } from '../../../lib/vaccineInfo'
-import { MEDICAL_DISCLAIMER, VACCINE_SCHEDULE_NOTE } from '../../../lib/medicalSources'
+import { MEDICAL_DISCLAIMER, VACCINE_SCHEDULE_NOTE, VACCINE_DISCLAIMER } from '../../../lib/medicalSources'
 import type { ChildWithRole } from '../../../types'
-import { useTranslation } from '../../../lib/i18n'
-import { buildVaccineScheduleTree, formatHealthDate, type HealthHistoryData } from '../../../lib/vaccineSchedule'
+import { useTranslation, type TranslationKey } from '../../../lib/i18n'
+import {
+  buildVaccineScheduleTree,
+  formatHealthDate,
+  getScheduleForCountry,
+  vaccineStatusLabel,
+  vaccineMilestoneBadge,
+  type HealthHistoryData,
+} from '../../../lib/vaccineSchedule'
 
 // ─── VaccineInfoModal (private — only VaccineScheduleTree renders it) ─────────
 
@@ -194,6 +201,13 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
     [child.birthDate, healthHistory.vaccines, child.countryCode],
   )
 
+  // Resolved once so the whole tree cites ONE source: national schedule when
+  // catalogued, else an honest WHO reference (never a silent US substitution).
+  const resolved = useMemo(
+    () => getScheduleForCountry(child.countryCode ?? 'US'),
+    [child.countryCode],
+  )
+
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(() => {
     const set = new Set<string>()
     for (const m of milestones) {
@@ -264,6 +278,11 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
     // Node states: done = filled ink ring; partial/upcoming = hollow accent ring; future = faint hollow.
     return (
       <View>
+        {resolved.provenance === 'who-reference' ? (
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 12, lineHeight: 18, color: dCol.ink2, marginBottom: 12 }}>
+            {t('kids_home_vaccine_reference_banner', { country: child.countryCode ?? '' })}
+          </Text>
+        ) : null}
         {milestones.map((milestone, idx) => {
           const isExpanded = expandedMilestones.has(milestone.key)
           const isLast = idx === milestones.length - 1
@@ -271,11 +290,8 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
           const isPartialMilestone = milestone.milestoneStatus === 'partial'
           const doneCount = milestone.vaccines.filter((v) => v.status === 'done').length
           const totalCount = milestone.vaccines.length
-          const badgeText = isDoneMilestone
-            ? `${doneCount}/${totalCount} done`
-            : isPartialMilestone
-            ? `${doneCount}/${totalCount} · due soon`
-            : `${totalCount} ahead`
+          const badge = vaccineMilestoneBadge(milestone.milestoneStatus, doneCount, totalCount)
+          const badgeText = t(badge.key as TranslationKey, badge.params)
           // milestone node blob — checkup(✓) when done · syringe (accent) when
           // partial/in-progress · faint syringe when future. Single-tint keeps
           // the Diffuse monochrome restraint.
@@ -312,16 +328,15 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                     const isPickerOpen = expandedKey === vax.scheduleKey
                     const fullName = vax.name + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
                     // vaccine dose blob — status-expressive silhouette, single-tint:
-                    // done → checkup(✓) ink · overdue → warning(!) red ·
-                    // upcoming → clock accent · future → faint syringe.
+                    // done → checkup(✓) ink · upcoming → clock accent ·
+                    // overdue + future → neutral syringe (no red alarm — an
+                    // unlogged past-window dose is a records gap, not a warning).
                     const doseBlob = vax.status === 'done' ? 'checkup'
-                      : vax.status === 'overdue' ? 'warning'
                       : vax.status === 'upcoming' ? 'clock'
-                      : 'vaccine'
+                      : 'vaccine'            // overdue + future both read as a neutral syringe
                     const doseTint = vax.status === 'done' ? dCol.ink
-                      : vax.status === 'overdue' ? dCol.error
                       : vax.status === 'upcoming' ? acc
-                      : dCol.ink3
+                      : dCol.ink3            // no red; "not yet logged" is neutral, not an alarm
                     return (
                       <View key={vax.scheduleKey}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}>
@@ -365,7 +380,9 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                               </Pressable>
                             )
                           ) : (
-                            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.5, color: dCol.ink3 }}>{vax.dueAge}</Text>
+                            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.5, color: dCol.ink3 }}>
+                              {(() => { const l = vaccineStatusLabel(vax.status, vax.dueAge); return l ? t(l.key as TranslationKey, l.params) : vax.dueAge })()}
+                            </Text>
                           )}
                         </View>
 
@@ -419,6 +436,14 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
             </View>
           )
         })}
+        <View style={{ marginTop: 14, gap: 6 }}>
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 0.5, color: dCol.ink3 }}>
+            {t('kids_home_vaccine_source', { title: resolved.source.title, reviewed: resolved.source.reviewed })}
+          </Text>
+          <Text style={{ fontFamily: diffuseFont.body, fontSize: 11, lineHeight: 16, color: dCol.ink3 }}>
+            {VACCINE_DISCLAIMER}
+          </Text>
+        </View>
         <VaccineInfoModal
           visible={infoVaccine !== null}
           onClose={() => setInfoVaccine(null)}
@@ -433,6 +458,11 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
 
   return (
     <View>
+      {resolved.provenance === 'who-reference' ? (
+        <Text style={{ fontFamily: font.body, fontSize: 12, lineHeight: 18, color: colors.textMuted, marginBottom: 12 }}>
+          {t('kids_home_vaccine_reference_banner', { country: child.countryCode ?? '' })}
+        </Text>
+      ) : null}
       {milestones.map((milestone, idx) => {
         const isExpanded = expandedMilestones.has(milestone.key)
         const isLast = idx === milestones.length - 1
@@ -446,11 +476,8 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
 
         const doneCount = milestone.vaccines.filter((v) => v.status === 'done').length
         const totalCount = milestone.vaccines.length
-        const badgeText = isDoneMilestone
-          ? `${doneCount}/${totalCount} done`
-          : isPartialMilestone
-          ? `${doneCount}/${totalCount} · due soon`
-          : `${totalCount} ahead`
+        const badge = vaccineMilestoneBadge(milestone.milestoneStatus, doneCount, totalCount)
+        const badgeText = t(badge.key as TranslationKey, badge.params)
 
         return (
           <View key={milestone.key} style={{ marginBottom: 4 }}>
@@ -515,13 +542,13 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                   const isPickerOpen = expandedKey === vax.scheduleKey
                   const fullName = vax.name + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
 
+                  // overdue + future both read as neutral cream/ink3 — an
+                  // unlogged past-window dose is a records gap, not a red alarm.
                   const stickerFill = vax.status === 'done' ? ST_GREEN
-                    : vax.status === 'overdue' ? ST_PEACH
                     : vax.status === 'upcoming' ? ST_YELLOW
                     : ST_CREAM
                   const stickerStroke = vax.status === 'future' ? ST_LINE : ST_INK
                   const metaColor = vax.status === 'done' ? (isDark ? ST_GREEN : '#3A7A28')
-                    : vax.status === 'overdue' ? (isDark ? ST_PEACH : '#8A3A00')
                     : vax.status === 'upcoming' ? (isDark ? ST_YELLOW : '#7A6100')
                     : ink3
 
@@ -603,7 +630,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                           )
                         ) : (
                           <Text style={{ fontSize: 10, fontFamily: font.body, color: ink3 }}>
-                            {vax.dueAge}
+                            {(() => { const l = vaccineStatusLabel(vax.status, vax.dueAge); return l ? t(l.key as TranslationKey, l.params) : vax.dueAge })()}
                           </Text>
                         )}
                       </View>
@@ -719,6 +746,14 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
           </View>
         )
       })}
+      <View style={{ marginTop: 14, gap: 6 }}>
+        <Text style={{ fontFamily: font.body, fontSize: 9.5, letterSpacing: 0.5, color: ink3 }}>
+          {t('kids_home_vaccine_source', { title: resolved.source.title, reviewed: resolved.source.reviewed })}
+        </Text>
+        <Text style={{ fontFamily: font.body, fontSize: 11, lineHeight: 16, color: ink3 }}>
+          {VACCINE_DISCLAIMER}
+        </Text>
+      </View>
       <VaccineInfoModal
         visible={infoVaccine !== null}
         onClose={() => setInfoVaccine(null)}
