@@ -3445,15 +3445,18 @@ function HealthCard({ reminders, healthHistory, child }: {
   const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
 
   // Diffuse: hairline status chip (no filled pill); current: soft-tinted pill.
-  const statusBg = diffuse ? 'transparent' : (overdueCount > 0
-    ? (isDark ? brand.error + '22' : brand.error + '15')
-    : upcomingCount > 0
-      ? (isDark ? '#3A2E00' : '#FFFAE0')
-      : (isDark ? '#1A2810' : '#EEF7E4'))
+  // Neutral records-language only — no clinical "overdue"/"due soon" verdict, no red alarm color.
+  const statusBg = diffuse ? 'transparent' : (upcomingCount > 0
+    ? (isDark ? '#3A2E00' : '#FFFAE0')
+    : (isDark ? '#1A2810' : '#EEF7E4'))
   const statusColor = diffuse
-    ? (overdueCount > 0 ? dt.colors.error : dt.colors.ink3)
-    : (overdueCount > 0 ? brand.error : upcomingCount > 0 ? (isDark ? '#F5D652' : '#6B5800') : (isDark ? '#BDD48C' : '#3A6020'))
-  const statusLabel = overdueCount > 0 ? `${overdueCount} overdue` : upcomingCount > 0 ? `${upcomingCount} due soon` : t('kids_home_vaccine_up_to_date')
+    ? dt.colors.ink3
+    : (upcomingCount > 0 ? (isDark ? '#F5D652' : '#6B5800') : (isDark ? '#BDD48C' : '#3A6020'))
+  const statusLabel = overdueCount > 0
+    ? t('kids_home_vaccine_count_unlogged', { count: overdueCount })
+    : upcomingCount > 0
+      ? t('kids_home_vaccine_count_upcoming', { count: upcomingCount })
+      : t('kids_home_vaccine_up_to_date')
 
   return (
     <View style={[s.hcCard, { backgroundColor: tileBg, borderColor: tileBorder }]}>
@@ -3478,8 +3481,10 @@ function HealthCard({ reminders, healthHistory, child }: {
             <Text style={[s.hcPrimary, { color: ink }, diffuse && { fontFamily: diffuseFont.display, letterSpacing: -0.2 }]} numberOfLines={1}>
               {nextVaccine.name}{nextVaccine.doseLabel ? ` · ${nextVaccine.doseLabel}` : ''}
             </Text>
-            <Text style={[s.hcSecondary, { color: overdueCount > 0 ? (diffuse ? dt.colors.error : brand.error) : ink3 }, diffuse && { fontFamily: diffuseFont.body }]}>
-              {overdueCount > 0 ? 'Overdue · ' : 'Due: '}{nextVaccine.dueAge}
+            <Text style={[s.hcSecondary, { color: ink3 }, diffuse && { fontFamily: diffuseFont.body }]}>
+              {overdueCount > 0
+                ? t('kids_home_vaccine_status_not_logged', { age: nextVaccine.dueAge })
+                : t('kids_home_vaccine_status_typical_around', { age: nextVaccine.dueAge })}
             </Text>
           </>
         ) : lastVaccine ? (
@@ -3513,7 +3518,7 @@ function HealthCard({ reminders, healthHistory, child }: {
 
       {/* Status + chevron */}
       <View style={{ alignItems: 'flex-end', gap: 8 }}>
-        <View style={[s.healthStatusPill, { backgroundColor: statusBg }, diffuse && { borderWidth: 1, borderColor: overdueCount > 0 ? dt.colors.error + '55' : dt.colors.line2 }]}>
+        <View style={[s.healthStatusPill, { backgroundColor: statusBg }, diffuse && { borderWidth: 1, borderColor: dt.colors.line2 }]}>
           <Text style={[s.healthStatusText, { color: statusColor }, diffuse && { fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 9.5 }]}>{statusLabel}</Text>
         </View>
         <ChevronRight size={14} color={ink3} strokeWidth={diffuse ? 1.6 : 2} />

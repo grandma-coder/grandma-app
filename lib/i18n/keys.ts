@@ -1026,6 +1026,8 @@ export interface TranslationKeys {
   kids_home_vaccine_next: string
   kids_home_vaccine_last: string
   kids_home_vaccine_none_logged: string
+  kids_home_vaccine_count_unlogged: string
+  kids_home_vaccine_count_upcoming: string
   kids_home_card_diapers: string
   kids_home_diaper_pee: string
   kids_home_diaper_poop: string
