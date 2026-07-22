@@ -276,26 +276,26 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
             : isPartialMilestone
             ? `${doneCount}/${totalCount} · due soon`
             : `${totalCount} ahead`
-          // milestone node ring
-          const nodeFill = isDoneMilestone ? dCol.ink : dCol.bg
-          const nodeStroke = isDoneMilestone ? dCol.ink : isPartialMilestone ? acc : dCol.line2
+          // milestone node blob — checkup(✓) when done · syringe (accent) when
+          // partial/in-progress · faint syringe when future. Single-tint keeps
+          // the Diffuse monochrome restraint.
+          const milestoneBlob = isDoneMilestone ? 'checkup' : 'vaccine'
+          const milestoneTint = isDoneMilestone ? dCol.ink : isPartialMilestone ? acc : dCol.ink3
 
           return (
             <View key={milestone.key} style={{ position: 'relative' }}>
               {/* connector line */}
               {!isLast ? (
-                <View pointerEvents="none" style={{ position: 'absolute', left: 12, top: 24, bottom: 0, width: StyleSheet.hairlineWidth, backgroundColor: dCol.line2 }} />
+                <View pointerEvents="none" style={{ position: 'absolute', left: 12, top: 36, bottom: 0, width: StyleSheet.hairlineWidth, backgroundColor: dCol.line2 }} />
               ) : null}
               {/* milestone row */}
               <Pressable
                 onPress={() => toggleMilestone(milestone.key)}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 }}
               >
-                {/* ring node */}
+                {/* blob node */}
                 <View style={{ width: 25, alignItems: 'center' }}>
-                  <View style={{ width: 15, height: 15, borderRadius: 999, borderWidth: 1.5, borderColor: nodeStroke, backgroundColor: nodeFill, alignItems: 'center', justifyContent: 'center' }}>
-                    {isDoneMilestone ? <Check size={9} color={dCol.bg} strokeWidth={3} /> : null}
-                  </View>
+                  <Character name={milestoneBlob} size={22} color={milestoneTint} bg={dCol.bg} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dCol.ink, letterSpacing: -0.3 }}>{milestone.label}</Text>
@@ -311,12 +311,17 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                     const apptDate = scheduledVaccines[vax.scheduleKey] ?? null
                     const isPickerOpen = expandedKey === vax.scheduleKey
                     const fullName = vax.name + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
-                    // vaccine dot ring
-                    const dotFill = vax.status === 'done' ? dCol.ink : dCol.bg
-                    const dotStroke = vax.status === 'done' ? dCol.ink
+                    // vaccine dose blob — status-expressive silhouette, single-tint:
+                    // done → checkup(✓) ink · overdue → warning(!) red ·
+                    // upcoming → clock accent · future → faint syringe.
+                    const doseBlob = vax.status === 'done' ? 'checkup'
+                      : vax.status === 'overdue' ? 'warning'
+                      : vax.status === 'upcoming' ? 'clock'
+                      : 'vaccine'
+                    const doseTint = vax.status === 'done' ? dCol.ink
                       : vax.status === 'overdue' ? dCol.error
                       : vax.status === 'upcoming' ? acc
-                      : dCol.line2
+                      : dCol.ink3
                     return (
                       <View key={vax.scheduleKey}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}>
@@ -329,7 +334,9 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                             })}
                             style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.6 : 1 })}
                           >
-                            <View style={{ width: 12, height: 12, borderRadius: 999, borderWidth: 1.5, borderColor: dotStroke, backgroundColor: dotFill, flexShrink: 0 }} />
+                            <View style={{ flexShrink: 0 }}>
+                              <Character name={doseBlob} size={19} color={doseTint} bg={dCol.bg} />
+                            </View>
                             <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink }}>{fullName}</Text>
                           </Pressable>
                           {vax.status === 'done' ? (
