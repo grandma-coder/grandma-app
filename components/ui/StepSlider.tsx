@@ -66,9 +66,15 @@ export function StepSlider({
 
   const stepCount = max - min
   const clamp = (n: number) => Math.max(min, Math.min(max, n))
+  // The touchable (trackHit) is pulled OUTWARD by THUMB_SIZE/2 on each side via
+  // negative margin and pads the visible track back IN by the same amount, so
+  // the thumb has room to sit centered at the extremes without clipping. Map a
+  // touch x from the padded content area (THUMB_SIZE/2 … width-THUMB_SIZE/2), not
+  // the raw full width — otherwise taps read ~half a thumb off at each end.
   const fromX = (x: number) => {
-    if (widthRef.current <= 0) return valueRef.current
-    const ratio = x / widthRef.current
+    const usable = widthRef.current - THUMB_SIZE
+    if (usable <= 0) return valueRef.current
+    const ratio = (x - THUMB_SIZE / 2) / usable
     return clamp(Math.round(min + ratio * stepCount))
   }
 
@@ -106,8 +112,13 @@ export function StepSlider({
   useEffect(() => () => dragAnim.stopAnimation(), [dragAnim])
 
   const ratio = stepCount > 0 ? (value - min) / stepCount : 0
-  const fillWidth = Math.max(0, ratio * width)
-  const thumbLeft = Math.max(0, Math.min(width - THUMB_SIZE, ratio * width - THUMB_SIZE / 2))
+  // Usable travel is the visible track (full width minus the THUMB_SIZE/2 pad on
+  // each side). The thumb's left slides 0…usable so its CENTER lines up with the
+  // fill end and it never clips past the padded edges (was: ratio*width - half,
+  // which hung the thumb off the left edge at value 0).
+  const usable = Math.max(0, width - THUMB_SIZE)
+  const fillWidth = ratio * usable
+  const thumbLeft = ratio * usable
 
   // Animated transforms — sticker lifts and tilts as user drags.
   // Note: shadowOffset can't be animated by the native driver, so we fake the
