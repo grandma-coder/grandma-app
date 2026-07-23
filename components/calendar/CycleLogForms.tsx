@@ -1197,7 +1197,6 @@ export function PregnancyTestForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_pregTestTitle')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('pregnancy_test', phase)}
       phaseAccent={accent}
@@ -1260,7 +1259,6 @@ export function SexDriveForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_sexDriveTitle')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('sex_drive', phase)}
       phaseAccent={accent}
@@ -1323,7 +1321,6 @@ export function ClotsForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_clotsTitle')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('clots', phase)}
       phaseAccent={accent}
@@ -1417,7 +1414,6 @@ export function WeightForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_weightTitle')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('weight', phase)}
       phaseAccent={accent}
@@ -1458,7 +1454,6 @@ export function WaterForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_waterTitle')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('water', phase)}
       phaseAccent={accent}
@@ -1509,7 +1504,6 @@ export function ActivityForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_activityTitle')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('activity', phase)}
       phaseAccent={accent}
