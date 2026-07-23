@@ -14,7 +14,10 @@ import {
   ScrollView,
   Alert,
   StyleSheet,
+  Image,
 } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
+import * as ImageManipulator from 'expo-image-manipulator'
 import { StickerDateModal } from '../../components/ui/StickerDateModal'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -43,6 +46,8 @@ import {
   Squishy,
 } from '../../components/ui/Stickers'
 import { Character } from '../../components/characters/Characters'
+import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../components/ui/AvatarPicker'
+import { PHOTO_BUCKETS } from '../../lib/photoSigning'
 import type { ChildWithRole } from '../../types'
 
 // ─── Theme (Diffuse-aware) ──────────────────────────────────────────────────
@@ -143,10 +148,106 @@ function mapDbChild(c: any): ChildWithRole {
     dislikedFoods: c.disliked_foods ?? [],
     pediatrician: c.pediatrician ?? null,
     notes: c.notes ?? '',
+    photoUrl: c.photo_url ?? null,
     countryCode: c.country_code ?? 'US',
     caregiverRole: 'parent',
     permissions: { view: true, log_activity: true, chat: true },
   }
+}
+
+// ─── Photo helpers (mirror app/onboarding/kids) ─────────────────────────────
+
+/** A freshly-picked local image URI (not yet uploaded / signed). */
+function isLocalPhotoUri(v: string | null | undefined): boolean {
+  return !!v && (v.startsWith('file:') || v.startsWith('content:') || v.startsWith('ph://') || v.startsWith('assets-library:'))
+}
+
+/**
+ * What to store in `photo_url` at INSERT time. Icon sentinels + remote URLs
+ * pass through; a local file uploads AFTER insert (needs the child id), so
+ * store null for now; null stays null.
+ */
+function photoToStoreAtInsert(uri: string | null | undefined): string | null {
+  if (!uri) return null
+  if (isIconAvatar(uri)) return uri
+  if (isLocalPhotoUri(uri)) return null
+  return uri
+}
+
+/** Upload a local child photo to child-photos/{childId}/… → storage path, or null. */
+async function uploadChildPhoto(childId: string, photoUri: string): Promise<string | null> {
+  try {
+    // Compress before upload (the <1MB rule) — matches lib/vault.ts + onboarding.
+    const compressed = await ImageManipulator.manipulateAsync(
+      photoUri,
+      [{ resize: { width: 1600 } }],
+      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+    )
+    const path = `${childId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`
+    const res = await fetch(compressed.uri)
+    const buf = await res.arrayBuffer()
+    const { error } = await supabase.storage
+      .from('child-photos')
+      .upload(path, buf, { contentType: 'image/jpeg', upsert: true })
+    if (error) { console.warn('[kids] child photo upload failed:', error.message); return null }
+    return path
+  } catch (e) {
+    console.warn('[kids] child photo upload exception:', e)
+    return null
+  }
+}
+
+async function pickChildImage(): Promise<string | null> {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.8,
+  })
+  if (!result.canceled && result.assets[0]) return result.assets[0].uri
+  return null
+}
+
+// ─── Avatar Field (photo / sticker-icon picker) ─────────────────────────────
+
+function AvatarField({ value, onChange, accent, initial }: {
+  value: string | null
+  onChange: (v: string | null) => void
+  accent: string
+  initial: string
+}) {
+  const { colors } = useKidsTheme()
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const local = isLocalPhotoUri(value)
+  return (
+    <View style={{ alignItems: 'center', gap: 8, marginBottom: 4 }}>
+      <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" accessibilityLabel="Change photo">
+        {local ? (
+          // AvatarView would try to sign a local file:// URI as a storage path
+          // (and fail) — render the freshly-picked file directly for preview.
+          <Image
+            source={{ uri: value as string }}
+            style={{ width: 88, height: 88, borderRadius: 999, borderWidth: 3, borderColor: colors.text }}
+          />
+        ) : (
+          <AvatarView value={value} size={88} accent={accent} initial={initial} bucket={PHOTO_BUCKETS.child} />
+        )}
+      </Pressable>
+      <Pressable onPress={() => setPickerOpen(true)} hitSlop={8}>
+        <MonoCaps color={colors.textMuted}>{value ? 'Change photo' : 'Add photo'}</MonoCaps>
+      </Pressable>
+      <AvatarPickerModal
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPickPhoto={async () => {
+          setPickerOpen(false)
+          const uri = await pickChildImage()
+          if (uri) onChange(uri)
+        }}
+        onPickIcon={(v) => { onChange(v); setPickerOpen(false) }}
+      />
+    </View>
+  )
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────
@@ -284,10 +385,12 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
   const visibleTags = uniqueTags.slice(0, 5)
   const extraCount = uniqueTags.length - visibleTags.length
 
-  // Food summary
+  // Food summary — dedupe first (legacy rows can hold e.g. ['beans','beans']).
   const foodParts: string[] = []
-  if (child.preferredFoods.length > 0) foodParts.push(`Loves: ${child.preferredFoods.slice(0, 3).join(', ')}`)
-  if (child.dislikedFoods.length > 0) foodParts.push(`Avoids: ${child.dislikedFoods.slice(0, 3).join(', ')}`)
+  const uniqPreferred = Array.from(new Set(child.preferredFoods))
+  const uniqDisliked = Array.from(new Set(child.dislikedFoods))
+  if (uniqPreferred.length > 0) foodParts.push(`Loves: ${uniqPreferred.slice(0, 3).join(', ')}`)
+  if (uniqDisliked.length > 0) foodParts.push(`Avoids: ${uniqDisliked.slice(0, 3).join(', ')}`)
   const foodSummary = foodParts.join(' · ')
 
   const sexLabel = child.sex === 'male' ? 'Boy' : child.sex === 'female' ? 'Girl' : 'Other'
@@ -309,14 +412,26 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
     >
       {/* Row 1: Sticker avatar + Name + Age + actions */}
       <View style={styles.childHeader}>
-        <View
-          style={[
-            styles.childAvatar,
-            { backgroundColor: accent + '40', borderColor: colors.text },
-          ]}
-        >
-          <Character name="baby" size={28} />
-        </View>
+        {child.photoUrl ? (
+          <AvatarView
+            value={child.photoUrl}
+            size={48}
+            accent={accent}
+            initial={(child.name?.[0] ?? '?').toUpperCase()}
+            borderColor={colors.text}
+            borderWidth={1.5}
+            bucket={PHOTO_BUCKETS.child}
+          />
+        ) : (
+          <View
+            style={[
+              styles.childAvatar,
+              { backgroundColor: accent + '40', borderColor: colors.text },
+            ]}
+          >
+            <Character name="baby" size={28} />
+          </View>
+        )}
         <View style={styles.childInfo}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text
@@ -514,6 +629,7 @@ function EditChildSheet({
   const { colors, font, stickers, isDark, paper, hairline } = useKidsTheme()
   const { t } = useTranslation()
 
+  const [photo, setPhoto] = useState<string | null>(child.photoUrl ?? null)
   const [name, setName] = useState(child.name)
   const [birthDate, setBirthDate] = useState(child.birthDate)
   const [sex, setSex] = useState(child.sex)
@@ -559,6 +675,13 @@ function EditChildSheet({
       const cleanPreferred = uniq(preferredFoods)
       const cleanDisliked = uniq(dislikedFoods)
 
+      // Resolve avatar: upload a freshly-picked local photo (the child id
+      // exists here), else keep the icon sentinel / existing path / null.
+      let photoUrl = photo
+      if (isLocalPhotoUri(photo)) {
+        photoUrl = (await uploadChildPhoto(child.id, photo as string)) ?? child.photoUrl ?? null
+      }
+
       const { error } = await supabase.from('children').update({
         name: name.trim(),
         birth_date: birthDate || null,
@@ -572,6 +695,7 @@ function EditChildSheet({
         disliked_foods: cleanDisliked,
         pediatrician,
         notes: notes.trim() || null,
+        photo_url: photoUrl,
         country_code: countryCode,
       }).eq('id', child.id)
 
@@ -584,6 +708,7 @@ function EditChildSheet({
         sex,
         bloodType,
         countryCode,
+        photoUrl,
         allergies: cleanAllergies,
         medications: cleanMedications,
         conditions: cleanConditions,
@@ -604,6 +729,12 @@ function EditChildSheet({
     <LogSheet visible title={`Edit ${child.name}`} onClose={onClose}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
+          <AvatarField
+            value={photo}
+            onChange={setPhoto}
+            accent={stickers.blue}
+            initial={(name.trim()[0] ?? '?').toUpperCase()}
+          />
           <SectionHeader label="Basic Info" />
           <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child name" />
 
@@ -790,10 +921,14 @@ function AddChildSheet({
   const { colors, font, stickers, isDark, paper, hairline } = useKidsTheme()
   const { t } = useTranslation()
 
+  const [photo, setPhoto] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState<string | null>(null)
   const [sex, setSex] = useState('')
   const [bloodType, setBloodType] = useState('')
+  const [countryCode, setCountryCode] = useState('US')
+  const [countryQuery, setCountryQuery] = useState('United States')
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
   const [allergies, setAllergies] = useState<string[]>([])
   const [medications, setMedications] = useState<string[]>([])
   const [conditions, setConditions] = useState<string[]>([])
@@ -814,7 +949,9 @@ function AddChildSheet({
   }
 
   function reset() {
+    setPhoto(null)
     setName(''); setBirthDate(null); setSex(''); setBloodType('')
+    setCountryCode('US'); setCountryQuery('United States'); setCountryDropdownOpen(false)
     setAllergies([]); setMedications([]); setConditions([])
     setDietaryRestrictions([]); setPreferredFoods([]); setDislikedFoods([])
     setPedName(''); setPedPhone(''); setPedClinic(''); setNotes('')
@@ -848,11 +985,22 @@ function AddChildSheet({
         disliked_foods: dislikedFoods,
         pediatrician,
         notes: notes.trim() || null,
+        country_code: countryCode,
+        photo_url: photoToStoreAtInsert(photo),
       }).select().single()
 
       if (error) throw error
 
-      const newChild = mapDbChild(data)
+      let newChild = mapDbChild(data)
+      // A freshly-picked local photo uploads now that we have the child id,
+      // then we persist the returned storage path.
+      if (isLocalPhotoUri(photo)) {
+        const path = await uploadChildPhoto(newChild.id, photo as string)
+        if (path) {
+          await supabase.from('children').update({ photo_url: path }).eq('id', newChild.id)
+          newChild = { ...newChild, photoUrl: path }
+        }
+      }
       reset()
       onAdded(newChild)
     } catch (e: any) {
@@ -866,6 +1014,12 @@ function AddChildSheet({
     <LogSheet visible={visible} title="Add a Child" onClose={() => { reset(); onClose() }}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
+          <AvatarField
+            value={photo}
+            onChange={setPhoto}
+            accent={stickers.blue}
+            initial={(name.trim()[0] ?? '?').toUpperCase()}
+          />
           <SectionHeader label="Basic Info" />
           <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child's name" />
 
@@ -939,6 +1093,67 @@ function AddChildSheet({
                 <Text style={[formStyles.bloodText, { color: bloodType === bt ? stickers.coral : colors.text, fontFamily: font.bodySemiBold }]}>{bt}</Text>
               </Pressable>
             ))}
+          </View>
+
+          <View style={{ marginTop: 8 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelCountryVaccine')}</MonoCaps></View>
+          <View>
+            <View
+              style={[
+                formStyles.inputRow,
+                {
+                  backgroundColor: paper,
+                  borderColor: countryDropdownOpen ? colors.text : hairline,
+                },
+              ]}
+            >
+              <Search size={16} color={colors.textMuted} strokeWidth={2} />
+              <TextInput
+                value={countryQuery}
+                onChangeText={(txt) => { setCountryQuery(txt); setCountryDropdownOpen(true) }}
+                onFocus={() => setCountryDropdownOpen(true)}
+                placeholder="Search country..."
+                placeholderTextColor={colors.textMuted}
+                style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }]}
+              />
+              {countryCode && (
+                <Text style={{ fontSize: 13, color: colors.text, fontFamily: font.bodySemiBold }}>
+                  {countryByCode(countryCode)?.code}
+                </Text>
+              )}
+            </View>
+            {countryDropdownOpen && (() => {
+              const matches = searchCountries(countryQuery)
+              if (matches.length === 0) return null
+              return (
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                  style={[
+                    formStyles.dropdown,
+                    {
+                      backgroundColor: paper,
+                      borderColor: hairline,
+                    },
+                  ]}
+                >
+                  {matches.map((c) => (
+                    <Pressable
+                      key={c.code}
+                      onPress={() => {
+                        setCountryCode(c.code)
+                        setCountryQuery(c.name)
+                        setCountryDropdownOpen(false)
+                      }}
+                      style={[formStyles.dropdownItem, { backgroundColor: c.code === countryCode ? colors.surfaceRaised : 'transparent' }]}
+                    >
+                      <Text style={[formStyles.dropdownText, { color: colors.text, fontFamily: c.code === countryCode ? font.bodySemiBold : font.body }]}>
+                        {c.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              )
+            })()}
           </View>
 
           <SectionHeader label="Health & Medical" />
