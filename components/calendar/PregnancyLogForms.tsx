@@ -29,7 +29,6 @@ import {
   stickersDark,
   getModeColor,
   getModeColorSoft,
-  getDiffuseAccent,
   font,
 } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
@@ -44,9 +43,8 @@ import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
-import { Character, type CharacterName } from '../characters/Characters'
+import { Character } from '../characters/Characters'
 import { askGrandmaAboutSymptoms } from '../../lib/symptomAssist'
-import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { ExamForm } from '../exams/ExamForm'
 import { StepSlider } from '../ui/StepSlider'
 import { NumberStepper } from '../ui/NumberStepper'
@@ -112,29 +110,12 @@ async function savePregnancyLog(
 // accent-tinted "on" state. Used only inside the Diffuse render branches; the
 // current-system paths (LogFormSticker / colored chips) stay untouched.
 
-// A small centred concept blob above the form body. The LogSheet already shows
-// the "Log <Type>" title, so we don't repeat the title — just the blob, so the
-// pregnancy log sheets get their concept glyph under Diffuse (they previously
-// showed nothing here, only the legacy LogFormSticker in the current theme).
-const PREG_FORM_CHARACTER: Record<string, CharacterName> = {
-  mood: 'mood', symptom: 'activity', appointment: 'checkup', kick_count: 'kick',
-  sleep: 'sleep', exercise: 'activity', water: 'water', weight: 'growth',
-  nutrition: 'nutrition', vitamins: 'medicine', kegel: 'soothe', contraction: 'contraction',
-}
-function DiffuseFormHeader({ type }: { type: string; title: string }) {
-  const diffuse = useIsDiffuse()
-  const dt = useDiffuseTheme()
-  if (!diffuse) return null
-  const name = PREG_FORM_CHARACTER[type]
-  if (!name) return null
-  const accent = getDiffuseAccent('preg', dt.isDark)
-  return (
-    <View style={{ alignItems: 'center', marginBottom: 6 }}>
-      <DiffuseBloomIcon color={accent} size={44} noBloom>
-        <Character name={name} size={28} color={accent} />
-      </DiffuseBloomIcon>
-    </View>
-  )
+// Diffuse header — intentionally renders nothing. The enclosing LogSheet
+// already shows the "Log <Type>" title, so a second centred concept blob here
+// was pure decoration (it read as an out-of-place violet glyph). Kept as a
+// no-op so the ~14 call sites don't need to change — matches KidsLogForms.
+function DiffuseFormHeader(_props: { type: string; title: string }) {
+  return null
 }
 
 /** Hairline mono chip — accent-tinted surface + accent hairline when selected. */
