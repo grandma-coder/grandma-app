@@ -130,7 +130,7 @@ function DiffuseFormHeader({ type }: { type: string; title: string }) {
   const accent = getDiffuseAccent('preg', dt.isDark)
   return (
     <View style={{ alignItems: 'center', marginBottom: 6 }}>
-      <DiffuseBloomIcon color={accent} size={44} intensity={0.45}>
+      <DiffuseBloomIcon color={accent} size={44} noBloom>
         <Character name={name} size={28} color={accent} />
       </DiffuseBloomIcon>
     </View>

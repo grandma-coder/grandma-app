@@ -158,7 +158,9 @@ function useDayLogToggle(date: string, type: string) {
 
 // ─── LogFormShell ───────────────────────────────────────────────────────────
 interface LogFormShellProps {
-  title: string
+  /** Optional — omit when the sheet chrome already titles this form (avoids a
+   *  redundant title stacked under the LogSheet title). */
+  title?: string
   subline: string
   phaseHintText: string
   phaseAccent: string
@@ -182,9 +184,11 @@ function LogFormShell({
   return (
     <View style={styles.shell}>
       <View style={styles.headRow}>
-        <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
-          {title}
-        </Text>
+        {title ? (
+          <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+            {title}
+          </Text>
+        ) : null}
         <Text style={[styles.subline, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
           {subline}
         </Text>
@@ -398,7 +402,6 @@ export function PeriodStartForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_periodStarted')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('period_start', phase)}
       phaseAccent={accent}
@@ -472,7 +475,6 @@ export function PeriodEndForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_periodEnded')}
       subline={formatDate(date)}
       phaseHintText={phaseHint('period_end', phase)}
       phaseAccent={accent}
@@ -551,7 +553,6 @@ export function SymptomsForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_symptoms')}
       subline={`${formatDate(date)} · ${phaseTitle(phase)}`}
       phaseHintText={phaseHint('symptoms', phase)}
       phaseAccent={accent}
@@ -1046,7 +1047,6 @@ export function IntimacyForm({
 
   return (
     <LogFormShell
-      title={t('cycleLogForm_intimacyTitle')}
       subline={`${formatDate(date)} · ${phaseTitle(phase)}`}
       phaseHintText={phaseHint('intimacy', phase)}
       phaseAccent={accent}

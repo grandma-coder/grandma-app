@@ -1710,12 +1710,12 @@ export const en: TranslationKeys = {
   cycleCalendar_logEntry_periodEndSub: 'Close out your flow',
   cycleCalendar_logEntry_exam: 'Exam result',
   cycleCalendar_logEntry_examSub: 'Lab or fertility test',
-  cycleCalendar_logSheet_periodStart: 'Log Period Start',
-  cycleCalendar_logSheet_periodEnd: 'Log Period End',
-  cycleCalendar_logSheet_symptoms: 'Log Symptoms',
+  cycleCalendar_logSheet_periodStart: 'Period Start',
+  cycleCalendar_logSheet_periodEnd: 'Period End',
+  cycleCalendar_logSheet_symptoms: 'Symptoms',
   cycleCalendar_logSheet_mood: 'Log Mood',
   cycleCalendar_logSheet_temperature: 'Log Temperature',
-  cycleCalendar_logSheet_intimacy: 'Log Intimacy',
+  cycleCalendar_logSheet_intimacy: 'Intimacy',
   cycleCalendar_logSheet_exam: 'Log Exam Result',
 
   // ─── Pre-Preg Health Dashboard (Wave B4) ─────────────────────────────────
