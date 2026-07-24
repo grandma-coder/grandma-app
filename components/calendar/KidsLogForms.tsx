@@ -1997,62 +1997,32 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               })}
             </View>
 
-            {/* Photo area */}
-            <View style={styles.photoRow}>
-              {photos.map((uri, i) => (
-                <View key={i} style={{ position: 'relative' }}>
-                  <Image source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
-                  <Pressable
-                    onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
-                    style={styles.photoDeleteBtn}
-                    hitSlop={4}
-                  >
-                    <X size={14} color="#FFFFFF" strokeWidth={3} />
-                  </Pressable>
-                </View>
-              ))}
-              {photos.length < 4 && (
-                <View style={styles.photoButtons}>
-                  <Pressable
-                    onPress={takePhoto}
-                    style={[styles.cameraBtn, { backgroundColor: ACCENT, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
-                  >
-                    <Camera size={24} color={INK} strokeWidth={2} />
-                  </Pressable>
-                  <Pressable
-                    onPress={pickPhoto}
-                    style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
-                  >
-                    <Plus size={20} color={colors.textMuted} strokeWidth={2} />
-                  </Pressable>
-                </View>
-              )}
-            </View>
+            {/* Captured scan photos — evidence, removable */}
+            {photos.length > 0 && (
+              <View style={styles.photoRow}>
+                {photos.map((uri, i) => (
+                  <View key={i} style={{ position: 'relative' }}>
+                    <Image source={{ uri }} style={[styles.photoThumb, { borderRadius: radius.lg }]} />
+                    <Pressable
+                      onPress={() => setPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                      style={styles.photoDeleteBtn}
+                      hitSlop={4}
+                    >
+                      <X size={14} color="#FFFFFF" strokeWidth={3} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            )}
 
-            {/* Scan plate — Claude Vision identifies every food + estimates kcal */}
-            <Pressable
-              onPress={() =>
-                Alert.alert(t('kids_logForm_alertScanPlate'), t('kids_logForm_alertScanPlate'), [
-                  { text: t('kids_logForm_cancel'), style: 'cancel' },
-                  { text: t('kids_logForm_alertTakePhoto'), onPress: () => scanPlate('camera') },
-                  { text: t('kids_logForm_alertFromLibrary'), onPress: () => scanPlate('library') },
-                ])
-              }
-              disabled={scanningPlate}
-              style={({ pressed }) => [
-                styles.scanPlateBtn,
-                { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '66', borderRadius: 999 },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              {scanningPlate
-                ? <ActivityIndicator size="small" color={ACCENT} />
-                : <ScanLine size={18} color={ACCENT} strokeWidth={2.2} />}
-              <Text style={[styles.scanPlateText, { color: INK }]}>
-                {scanningPlate ? t('kids_logForm_readingPlate') : t('kids_logForm_scanPlate')}
-              </Text>
-              <Sparkles size={14} color={ACCENT} strokeWidth={2} />
-            </Pressable>
+            {/* One clear scan control */}
+            <ScanSourceButtons
+              variant="current"
+              accent={ACCENT}
+              accentText={INK}
+              scanning={scanningPlate}
+              onPick={scanPlate}
+            />
 
             {/* Food tag input + live calorie estimate */}
             <View>
