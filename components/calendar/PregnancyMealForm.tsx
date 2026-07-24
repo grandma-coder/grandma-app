@@ -24,6 +24,7 @@ import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClien
 import { toDateStr } from '../../lib/cycleLogic'
 import { estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import { LogFormSticker } from './LogFormSticker'
+import { ScanSourceButtons } from './ScanSourceButtons'
 import { logSticker } from './logStickers'
 import { useSavedToast } from '../ui/SavedToast'
 import { useTranslation } from '../../lib/i18n'
@@ -239,26 +240,13 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
             )}
           </View>
         ) : (
-          <View style={styles.pickRow}>
-            <Pressable
-              onPress={() => pick('camera')}
-              style={[styles.pickBtn, diffuse
-                ? { backgroundColor: dAccent + '1F', borderColor: dAccent, borderWidth: 1 }
-                : { backgroundColor: brand.pregnancy }]}
-            >
-              <Character name="photo" size={18} color={diffuse ? dAccent : colors.textInverse} />
-              <Text style={[styles.pickBtnText, { color: diffuse ? dAccent : colors.textInverse, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 12 : 15 }]}>{t('kids_logForm_alertTakePhoto')}</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => pick('library')}
-              style={[styles.pickBtn, diffuse
-                ? { backgroundColor: 'transparent', borderColor: dt.colors.line, borderWidth: 1 }
-                : { backgroundColor: colors.surfaceGlass, borderColor: colors.border, borderWidth: 1 }]}
-            >
-              <Character name="photo" size={18} color={diffuse ? dt.colors.ink : colors.text} />
-              <Text style={[styles.pickBtnText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold, letterSpacing: diffuse ? 0.5 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 12 : 15 }]}>{t('kids_foodDash_gallery')}</Text>
-            </Pressable>
-          </View>
+          <ScanSourceButtons
+            variant={diffuse ? 'diffuse' : 'current'}
+            accent={diffuse ? dAccent : brand.pregnancy}
+            accentText={colors.textInverse}
+            scanning={scanning}
+            onPick={pick}
+          />
         )}
 
         {foods.length > 0 && (
@@ -385,9 +373,6 @@ const styles = StyleSheet.create({
   form: { padding: 24, gap: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   title: { fontSize: 20, fontFamily: font.display, textAlign: 'center' },
-  pickRow: { flexDirection: 'row', gap: 10 },
-  pickBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 16 },
-  pickBtnText: { fontSize: 15, fontFamily: font.bodySemiBold },
   photoBox: { position: 'relative', borderRadius: 20, overflow: 'hidden' },
   photo: { width: '100%', height: 200, resizeMode: 'cover' },
   photoClear: {
