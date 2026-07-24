@@ -66,11 +66,11 @@ export function StepSlider({
 
   const stepCount = max - min
   const clamp = (n: number) => Math.max(min, Math.min(max, n))
-  // The touchable (trackHit) is pulled OUTWARD by THUMB_SIZE/2 on each side via
-  // negative margin and pads the visible track back IN by the same amount, so
-  // the thumb has room to sit centered at the extremes without clipping. Map a
-  // touch x from the padded content area (THUMB_SIZE/2 … width-THUMB_SIZE/2), not
-  // the raw full width — otherwise taps read ~half a thumb off at each end.
+  // The visible track is inset by THUMB_SIZE/2 on each side (trackHit padding), so
+  // the thumb sits centered at the extremes while staying inside the component's
+  // own width — nothing overhangs the parent to be clipped. Map a touch x from the
+  // padded content area (THUMB_SIZE/2 … width-THUMB_SIZE/2), not the raw full
+  // width — otherwise taps read ~half a thumb off at each end.
   const fromX = (x: number) => {
     const usable = widthRef.current - THUMB_SIZE
     if (usable <= 0) return valueRef.current
@@ -263,8 +263,11 @@ const styles = StyleSheet.create({
   trackHit: {
     height: THUMB_HIT,
     justifyContent: 'center',
+    // Inset the track by half a thumb on each side so the thumb sits centered at
+    // the extremes WITHOUT overhanging the parent. (Was: negative marginHorizontal
+    // pulling the hit area outward, which parked the value=0 thumb's left half
+    // past the form edge where the sheet's scroll view clipped it.)
     paddingHorizontal: THUMB_SIZE / 2,
-    marginHorizontal: -THUMB_SIZE / 2,
   },
   track: {
     height: TRACK_HEIGHT,
