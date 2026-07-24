@@ -53,6 +53,7 @@ import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
 import { Character } from '../characters/Characters'
+import { ScanSourceButtons } from './ScanSourceButtons'
 import { Heart as HeartSticker, Moon as MoonSticker, Flower, Drop, Star } from '../stickers/BrandStickers'
 import { Smiley, Sleepy, Sad } from '../ui/Stickers'
 import { ChildPill, childColor } from '../ui/ChildPills'
@@ -1564,34 +1565,27 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 ))}
               </View>
 
-              {/* Photo area */}
-              <DiffusePhotoRow
-                photos={photos}
-                onRemove={(i) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
-                onCamera={takePhoto}
-                onGallery={pickPhoto}
-              />
-
-              {/* Scan plate — containerless mono action on a hairline rule */}
-              <Pressable
-                onPress={() =>
-                  Alert.alert(t('kids_logForm_alertScanPlate'), t('kids_logForm_alertScanPlate'), [
-                    { text: t('kids_logForm_cancel'), style: 'cancel' },
-                    { text: t('kids_logForm_alertTakePhoto'), onPress: () => scanPlate('camera') },
-                    { text: t('kids_logForm_alertFromLibrary'), onPress: () => scanPlate('library') },
-                  ])
-                }
-                disabled={scanningPlate}
-                style={({ pressed }) => [df.saveCta, { borderTopColor: dc.line2, opacity: pressed ? 0.6 : 1 }]}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  {scanningPlate ? <ActivityIndicator size="small" color={dc.ink} /> : <ScanLine size={16} color={dc.ink} strokeWidth={2.2} />}
-                  <Text style={[df.saveCtaLabel, { color: dc.ink }]}>
-                    {scanningPlate ? t('kids_logForm_readingPlate') : t('kids_logForm_scanPlate')}
-                  </Text>
+              {/* Captured scan photos — evidence, removable */}
+              {photos.length > 0 && (
+                <View style={df.photoRow}>
+                  {photos.map((uri, i) => (
+                    <View key={i} style={{ position: 'relative' }}>
+                      <Image source={{ uri }} style={[df.photoThumb, { borderWidth: 1, borderColor: dc.line2 }]} />
+                      <Pressable onPress={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))} style={[df.photoDelete, { backgroundColor: dc.ink }]} hitSlop={4}>
+                        <X size={13} color={dc.bg} strokeWidth={3} />
+                      </Pressable>
+                    </View>
+                  ))}
                 </View>
-                <Character name="sparkle" size={14} color={dc.ink3} />
-              </Pressable>
+              )}
+
+              {/* One clear scan control */}
+              <ScanSourceButtons
+                variant="diffuse"
+                accent={getDiffuseAccent('kids', dTheme.isDark)}
+                scanning={scanningPlate}
+                onPick={scanPlate}
+              />
 
               {/* Food tag input + live calorie estimate */}
               <View style={{ gap: 10 }}>
