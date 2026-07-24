@@ -43,8 +43,6 @@ import {
   Dumbbell,
   Repeat,
   MinusCircle,
-  Sparkles,
-  ScanLine,
   X,
 } from 'lucide-react-native'
 import { useTheme, brand, stickers as stickerPalette, font, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent } from '../../constants/theme'
@@ -1248,28 +1246,6 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
     [foodTags]
   )
   const totalEstimatedCals = useMemo(() => calorieMatches.reduce((s, m) => s + m.cals, 0), [calorieMatches])
-
-  async function pickPhoto() {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsMultipleSelection: true,
-        quality: 0.7,
-        selectionLimit: 4,
-      })
-      if (!result.canceled) {
-        const stable = await Promise.all(result.assets.map((a) => stabiliseUri(a.uri)))
-        setPhotos((prev) => [...prev, ...stable].slice(0, 4))
-      }
-    } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), t('kids_logForm_alertCouldNotOpenLibrary'))
-    }
-  }
-
-  async function takePhoto() {
-    const uri = await launchCameraSafe(t)
-    if (uri) setPhotos((prev) => [...prev, uri].slice(0, 4))
-  }
 
   /** Convert an AI food item to the tag shape used by FeedingForm */
   function aiItemToTag(item: AiFoodItem): { name: string; match: CalorieMatch; manualCals: null } {
@@ -4151,10 +4127,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   saveBtnGhostText: { fontSize: 14, fontFamily: font.bodyMedium },
-
-  // Scan plate (AI vision)
-  scanPlateBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, marginBottom: 12 },
-  scanPlateText: { flex: 1, fontSize: 14, fontFamily: font.bodySemiBold },
 
   // Calorie banner
   foodTag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5 },
