@@ -38,13 +38,13 @@ describe('kidsScoring extraction (characterization)', () => {
     expect(getAgeSleepTarget(26)).toBe(12)
   })
   it('scoreSleep returns a 0..10 value for real data', () => {
-    const s = scoreSleep(sleep())
+    const s = scoreSleep(sleep(), 26)
     expect(s.hasData).toBe(true)
     expect(s.value).toBeGreaterThanOrEqual(0)
     expect(s.value).toBeLessThanOrEqual(10)
   })
   it('no-data pillars report hasData false', () => {
-    expect(scoreSleep(sleep({ hasData: false })).hasData).toBe(false)
+    expect(scoreSleep(sleep({ hasData: false }), 26).hasData).toBe(false)
   })
 })
 
@@ -58,7 +58,7 @@ describe('dataConfidence', () => {
     expect(dataConfidence(10, 7)).toBe(1) // clamps at 1
   })
   it('every scored pillar carries a confidence in 0..1', () => {
-    const s = scoreSleep(sleep())
+    const s = scoreSleep(sleep(), 26)
     expect(s.confidence).toBeGreaterThan(0)
     expect(s.confidence).toBeLessThanOrEqual(1)
   })
@@ -66,7 +66,7 @@ describe('dataConfidence', () => {
 
 describe('confidence — no-data returns are 0', () => {
   it('scoreSleep with no data has confidence 0', () => {
-    expect(scoreSleep(sleep({ hasData: false })).confidence).toBe(0)
+    expect(scoreSleep(sleep({ hasData: false }), 26).confidence).toBe(0)
   })
   it('scoreNutrition with no data has confidence 0', () => {
     expect(scoreNutrition(nutrition({ hasData: false })).confidence).toBe(0)
@@ -103,8 +103,26 @@ describe('buildScores overallConfidence', () => {
       health(),
       { weights: [{ value: 10, date: '2026-07-20' }], heights: [], heads: [], hasData: true },
       { activeDays: 3, totalSessions: 3, totalMinutes: 30, uniqueTypes: ['walk'], dailySessions: [1, 1, 1, 0, 0, 0, 0], weekLabels: ['M','T','W','T','F','S','S'], hasData: true },
+      26,
+      null,
     )
     expect(scores.overallConfidence).toBeGreaterThan(0)
     expect(scores.overallConfidence).toBeLessThanOrEqual(1)
+  })
+})
+
+describe('scoreSleep folds in hours vs target', () => {
+  const good = sleep({ dailyHours: [12,12,12,12,12,12,12], avgHours: 12,
+    qualityCounts: { great: 7, good: 0, restless: 0, poor: 0 } })
+  const deficit = sleep({ dailyHours: [5,5,6,5,5,5,5], avgHours: 5.3,
+    qualityCounts: { great: 7, good: 0, restless: 0, poor: 0 } }) // all "great" but far under target
+
+  it('a large deficit scores well below an at-target child, even with great quality', () => {
+    const g = scoreSleep(good, 26)      // target 12h, meets it
+    const d = scoreSleep(deficit, 26)   // ~6.7h short
+    expect(d.value).toBeLessThan(g.value - 2)
+  })
+  it('meeting the target scores high', () => {
+    expect(scoreSleep(good, 26).value).toBeGreaterThanOrEqual(8)
   })
 })

@@ -3,6 +3,10 @@ import type {
   NutritionData, NutritionMode, SleepData, MoodData,
   HealthData, GrowthData, ActivityData, PillarScore, WellnessScores,
 } from './analyticsData'
+// Type-only import: `sex` is threaded through `buildScores` now so the
+// signature is stable, but it's unused until Task 6 wires `scoreGrowth` to
+// resolve percentiles — don't import `estimatePercentile`/`resolveSex` yet.
+import type { Sex } from './growthStandards'
 
 // Local (non-UTC) YYYY-MM-DD — kept private so this module has no runtime
 // dependency back on analyticsData (avoids an import cycle).
@@ -121,7 +125,7 @@ export function scoreNutrition(data: NutritionData): PillarScore {
   return { value, label: scoreLabel(value), trend, hasData: true, confidence }
 }
 
-export function scoreSleep(data: SleepData): PillarScore {
+export function scoreSleep(data: SleepData, ageMonths: number): PillarScore {
   if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   const total = data.qualityCounts.great + data.qualityCounts.good + data.qualityCounts.restless + data.qualityCounts.poor
@@ -135,12 +139,20 @@ export function scoreSleep(data: SleepData): PillarScore {
     data.qualityCounts.poor * 1
   ) / total
 
-  // Consistency bonus: days-with-sleep rate scaled to the window size
+  // Hours vs age target: full credit within a small band below target, ramps
+  // down with the deficit; mild over-target stays near full (not penalized to 0).
+  const target = getAgeSleepTarget(ageMonths)
+  const tolerance = 1.0 // hours below target still considered fine
+  const deficit = Math.max(0, target - tolerance - data.avgHours)
+  const hoursScore = Math.max(0, 10 - (deficit / target) * 12) // steep enough that a 6.6h/12h gap is severe
+
+  // Consistency: days-with-sleep rate scaled to the window size
   const windowDays = Math.max(1, data.dailyHours.length)
   const daysWithSleep = data.dailyHours.filter((h) => h > 0).length
-  const consistencyBonus = Math.min(daysWithSleep / windowDays, 1) * 1.5
+  const consistencyScore = Math.min(daysWithSleep / windowDays, 1) * 10
 
-  const raw = Math.min(qualityScore * 0.85 + consistencyBonus, 10)
+  // Hours-vs-target is now the dominant term: 50% hours, 30% quality, 20% consistency.
+  const raw = Math.min(hoursScore * 0.5 + qualityScore * 0.3 + consistencyScore * 0.2, 10)
   const value = Math.round(raw * 10) / 10
 
   // Trend: average of the second half vs the first half of the window.
@@ -272,12 +284,16 @@ export function scoreActivity(data: ActivityData): PillarScore {
   return { value, label: scoreLabel(value), trend: 0, hasData: true, confidence }
 }
 
-export function buildScores(nutrition: NutritionData, sleep: SleepData, mood: MoodData, health: HealthData, growth: GrowthData, activity: ActivityData): WellnessScores {
+export function buildScores(
+  nutrition: NutritionData, sleep: SleepData, mood: MoodData,
+  health: HealthData, growth: GrowthData, activity: ActivityData,
+  ageMonths: number, sex: Sex | null,
+): WellnessScores {
   const ns = scoreNutrition(nutrition)
-  const ss = scoreSleep(sleep)
+  const ss = scoreSleep(sleep, ageMonths)
   const ms = scoreMood(mood)
   const hs = scoreHealth(health)
-  const gs = scoreGrowth(growth)
+  const gs = scoreGrowth(growth) // sex/ageMonths wired in Task 6
 
   const as = scoreActivity(activity)
 

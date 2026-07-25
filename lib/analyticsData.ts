@@ -718,7 +718,9 @@ export function useKidsAnalytics(
       const growth = buildGrowthData(allLogs)
       const activity = buildActivityData(allLogs, dates, labels)
       const routineCompliance = buildRoutineComplianceData(allLogs, dates, labels)
-      const scores = buildScores(nutrition, sleep, mood, health, growth, activity)
+      // sex is resolved from the child profile starting in Task 6 — pass
+      // `null` for now so buildScores' unused `sex` param has a real caller.
+      const scores = buildScores(nutrition, sleep, mood, health, growth, activity, ageMonths, null)
 
       return {
         nutrition,
