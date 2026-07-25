@@ -1,4 +1,5 @@
 import { scoreSleep, scoreHealth, scoreNutrition, buildScores, getAgeSleepTarget, dataConfidence } from '../kidsScoring'
+import { buildHealthData } from '../analyticsData'
 import type { SleepData, HealthData, NutritionData } from '../analyticsData'
 
 const sleep = (over: Partial<SleepData> = {}): SleepData => ({
@@ -10,6 +11,7 @@ const sleep = (over: Partial<SleepData> = {}): SleepData => ({
 const health = (over: Partial<HealthData> = {}): HealthData => ({
   recentEvents: [],
   weeklyFrequency: [0, 1, 0, 0, 0, 0, 0],
+  concernEvents: 0,
   vaccines: [{ name: 'MMR', done: true }, { name: 'Polio', done: false }],
   weekLabels: ['M','T','W','T','F','S','S'],
   hasData: true, ...over,
@@ -84,6 +86,53 @@ describe('scoreHealth confidence — vaccine floor', () => {
   it('reflects logged-day coverage when it exceeds the vaccine floor', () => {
     const h = scoreHealth(health({ weeklyFrequency: [1, 1, 1, 1, 1, 1, 1] }))
     expect(h.confidence).toBe(1)
+  })
+})
+
+describe('scoreHealth is not perverse', () => {
+  it('routine logging (no concern events) does NOT lower the score', () => {
+    const quiet = scoreHealth(health({ weeklyFrequency: [0, 0, 0, 0, 0, 0, 0], concernEvents: 0 }))
+    const logged = scoreHealth(health({ weeklyFrequency: [3, 2, 1, 0, 0, 0, 0], concernEvents: 0 }))
+    expect(logged.value).toBeGreaterThanOrEqual(quiet.value)
+  })
+  it('genuine concern events DO lower the score', () => {
+    const calm = scoreHealth(health({ concernEvents: 0 }))
+    const sick = scoreHealth(health({ concernEvents: 4 }))
+    expect(sick.value).toBeLessThan(calm.value)
+  })
+})
+
+describe('buildHealthData classifies concern events from raw logs', () => {
+  const dates = ['2026-07-20', '2026-07-21']
+  const labels = ['Mon', 'Tue']
+  const mkLog = (overrides: Partial<{ type: string; value: string | null; date: string }>) => ({
+    id: 'l1',
+    child_id: 'c1',
+    date: dates[0],
+    type: 'note',
+    value: null as string | null,
+    notes: null as string | null,
+    photos: [] as string[],
+    created_at: '2026-07-20T00:00:00.000Z',
+    ...overrides,
+  })
+
+  it('a normal temperature reading and a routine medicine log are NOT concern events', () => {
+    const logs = [
+      mkLog({ type: 'temperature', value: '37.2' }),
+      mkLog({ type: 'medicine', value: 'Tylenol' }),
+    ]
+    const data = buildHealthData(logs, dates, labels)
+    expect(data.concernEvents).toBe(0)
+  })
+
+  it('a fever-range temperature and an injury note ARE counted as concern events', () => {
+    const logs = [
+      mkLog({ type: 'temperature', value: '38.6' }),
+      mkLog({ type: 'note', value: JSON.stringify({ eventType: 'Injury', description: 'Fell off the bed' }) }),
+    ]
+    const data = buildHealthData(logs, dates, labels)
+    expect(data.concernEvents).toBe(2)
   })
 })
 

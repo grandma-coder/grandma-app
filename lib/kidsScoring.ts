@@ -220,21 +220,22 @@ export function scoreMood(data: MoodData): PillarScore {
 }
 
 export function scoreHealth(data: HealthData): PillarScore {
-  if (!data.hasData && data.vaccines.every((v) => !v.done)) {
+  const doneVaccines = data.vaccines.filter((v) => v.done).length
+  if (!data.hasData && doneVaccines === 0) {
     return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
   }
 
   // Vaccine completion score (0-10)
-  const doneVaccines = data.vaccines.filter((v) => v.done).length
   const vaccineScore = data.vaccines.length > 0 ? (doneVaccines / data.vaccines.length) * 10 : 5
 
-  // Less health incidents is better (temperature, medicine = concerning)
-  const totalEvents = data.weeklyFrequency.reduce((a, b) => a + b, 0)
-  const eventPenalty = Math.min(totalEvents * 0.8, 5) // max 5 points penalty
-  const eventScore = Math.max(10 - eventPenalty, 2)
+  // Wellness starts high; only genuine concern signals (fever-range temp,
+  // injury/doctor/sick notes — see `concernEvents` in buildHealthData) reduce
+  // it. Routine logging (a normal temp reading, a medicine dose, a vaccine
+  // shot) is neutral and must NOT lower the score — logging more should never
+  // read as "less healthy."
+  const wellnessScore = Math.max(10 - data.concernEvents * 1.5, 3)
 
-  const raw = (vaccineScore * 0.6 + eventScore * 0.4)
-  const value = Math.round(Math.min(raw, 10) * 10) / 10
+  const value = Math.round(Math.min(vaccineScore * 0.5 + wellnessScore * 0.5, 10) * 10) / 10
 
   // Confidence: window-coverage from logged days, with a floor so having any
   // vaccine on record never reads as zero-confidence (it's real data, just

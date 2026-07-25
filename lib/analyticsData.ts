@@ -65,6 +65,10 @@ export interface MoodData {
 export interface HealthData {
   recentEvents: { date: string; type: string; label: string }[]
   weeklyFrequency: number[]
+  /** Genuine concern signals only (fever-range temperature, injury/doctor/sick
+   * notes) — routine logging (a normal temp reading, a routine medicine dose)
+   * does NOT count here. `scoreHealth` penalizes this, never `weeklyFrequency`. */
+  concernEvents: number
   vaccines: { name: string; done: boolean }[]
   weekLabels: string[]
   hasData: boolean
@@ -393,13 +397,35 @@ function healthEventLabel(log: ChildLog, typeLabel: string): string {
   return notes || typeLabel
 }
 
-function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): HealthData {
+// Kids temperature logs are entered in Celsius — HealthEventForm's placeholder
+// reads "Temperature (e.g. 37.5°C)" (see components/calendar/KidsLogForms.tsx),
+// so the fever threshold below is Celsius too (~100.4°F). A plain reading (no
+// fever) is routine and must NOT count as a concern event.
+const FEVER_THRESHOLD_C = 38.0
+
+function isFeverTemperature(value: string | null): boolean {
+  if (!value) return false
+  const t = parseFloat(String(value).replace(',', '.'))
+  return !isNaN(t) && t >= FEVER_THRESHOLD_C
+}
+
+// Free-form health notes (Doctor visit / Injury / Other) pack their subtype
+// into a JSON `eventType` — see HealthEventForm's `save()`. Only genuine
+// concern subtypes count; a routine "Other" note does not.
+function isConcernNote(value: string | null): boolean {
+  const rec = asRecord(parseValue(value))
+  const kind = String(rec?.eventType ?? '').toLowerCase()
+  return kind.includes('injur') || kind.includes('doctor') || kind.includes('sick')
+}
+
+export function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): HealthData {
   const healthTypes = ['temperature', 'vaccine', 'medicine', 'note']
   const healthLogs = logs.filter((l) => healthTypes.includes(l.type))
 
   const weeklyFreq = new Array(dates.length).fill(0)
   const recentEvents: HealthData['recentEvents'] = []
   const vaccineNames = new Set<string>()
+  let concernEvents = 0
 
   for (const log of healthLogs) {
     const dayIdx = dates.indexOf(log.date)
@@ -411,6 +437,10 @@ function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): H
 
     if (log.type === 'vaccine' && log.value) {
       vaccineNames.add(typeof log.value === 'string' ? log.value : '')
+    } else if (log.type === 'temperature' && isFeverTemperature(log.value)) {
+      concernEvents++
+    } else if (log.type === 'note' && isConcernNote(log.value)) {
+      concernEvents++
     }
   }
 
@@ -424,6 +454,7 @@ function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): H
   return {
     recentEvents: recentEvents.slice(0, 5),
     weeklyFrequency: weeklyFreq,
+    concernEvents,
     vaccines,
     weekLabels: labels,
     hasData: healthLogs.length > 0,
