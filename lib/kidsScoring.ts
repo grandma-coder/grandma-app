@@ -44,14 +44,25 @@ export function scoreLabel(score: number): string {
   return 'low'
 }
 
+/**
+ * Coverage of a scoring window — how much data backs a score, 0..1.
+ * `loggedUnits` / `expectedUnits`, clamped. `expectedUnits <= 0` → 0
+ * (no window to measure against means no confidence, not full confidence).
+ */
+export function dataConfidence(loggedUnits: number, expectedUnits: number): number {
+  if (expectedUnits <= 0) return 0
+  return Math.max(0, Math.min(loggedUnits / expectedUnits, 1))
+}
+
 export function scoreNutrition(data: NutritionData): PillarScore {
-  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   const totalMeals = data.mealFrequency.reduce((a, b) => a + b, 0)
-  if (totalMeals === 0) return { value: 0, label: 'no data', trend: 0, hasData: false }
+  if (totalMeals === 0) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   const windowDays = Math.max(1, data.mealFrequency.length)
   const daysWithData = data.mealFrequency.filter((m) => m > 0).length
+  const confidence = dataConfidence(daysWithData, windowDays)
 
   // ── MILK phase: score purely on feeding frequency vs age-appropriate target.
   // Quality/variety don't apply to breast/bottle feeds.
@@ -69,7 +80,7 @@ export function scoreNutrition(data: NutritionData): PillarScore {
     const first = data.mealFrequency.slice(0, half).reduce((a, b) => a + b, 0)
     const second = data.mealFrequency.slice(half).reduce((a, b) => a + b, 0)
     const trend = first > 0 ? Math.round(((second - first) / first) * 100) : 0
-    return { value, label: scoreLabel(value), trend, hasData: true }
+    return { value, label: scoreLabel(value), trend, hasData: true, confidence }
   }
 
   // ── MIXED phase (6–12mo): milk frequency (60%) + solid introduction variety (40%).
@@ -88,7 +99,7 @@ export function scoreNutrition(data: NutritionData): PillarScore {
     const first = data.mealFrequency.slice(0, half).reduce((a, b) => a + b, 0)
     const second = data.mealFrequency.slice(half).reduce((a, b) => a + b, 0)
     const trend = first > 0 ? Math.round(((second - first) / first) * 100) : 0
-    return { value, label: scoreLabel(value), trend, hasData: true }
+    return { value, label: scoreLabel(value), trend, hasData: true, confidence }
   }
 
   // ── SOLIDS phase (12+mo): current quality + frequency + variety logic.
@@ -107,14 +118,14 @@ export function scoreNutrition(data: NutritionData): PillarScore {
   const secondHalf = data.eatQuality.good.slice(half).reduce((a, b) => a + b, 0)
   const trend = firstHalf > 0 ? Math.round(((secondHalf - firstHalf) / firstHalf) * 100) : 0
 
-  return { value, label: scoreLabel(value), trend, hasData: true }
+  return { value, label: scoreLabel(value), trend, hasData: true, confidence }
 }
 
 export function scoreSleep(data: SleepData): PillarScore {
-  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   const total = data.qualityCounts.great + data.qualityCounts.good + data.qualityCounts.restless + data.qualityCounts.poor
-  if (total === 0) return { value: 0, label: 'no data', trend: 0, hasData: false }
+  if (total === 0) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   // Quality score: great=10, good=7.5, restless=4, poor=1
   const qualityScore = (
@@ -146,15 +157,16 @@ export function scoreSleep(data: SleepData): PillarScore {
   const firstAvg = firstHalf.length > 0 ? firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length : 0
   const lastAvg = secondHalf.length > 0 ? secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length : 0
   const trend = firstAvg > 0 ? Math.round(((lastAvg - firstAvg) / firstAvg) * 100) : 0
+  const confidence = dataConfidence(daysWithSleep, windowDays)
 
-  return { value, label: scoreLabel(value), trend, hasData: true }
+  return { value, label: scoreLabel(value), trend, hasData: true, confidence }
 }
 
 export function scoreMood(data: MoodData): PillarScore {
-  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   const totalMoods = data.dominantMoods.reduce((a, m) => a + m.count, 0)
-  if (totalMoods === 0) return { value: 0, label: 'no data', trend: 0, hasData: false }
+  if (totalMoods === 0) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   // Mood weights: happy=10, calm=9, energetic=8, fussy=3, cranky=1
   const moodWeights: Record<string, number> = { happy: 10, calm: 9, energetic: 8, fussy: 3, cranky: 1 }
@@ -183,12 +195,21 @@ export function scoreMood(data: MoodData): PillarScore {
   const secondAvg = secondHalfCount > 0 ? secondHalfScore / secondHalfCount : 0
   const trend = firstAvg > 0 ? Math.round(((secondAvg - firstAvg) / firstAvg) * 100) : 0
 
-  return { value, label: scoreLabel(value), trend, hasData: true }
+  // Confidence: fraction of the window with at least one logged mood entry.
+  const windowDays = Math.max(1, data.weekLabels.length)
+  let daysWithMood = 0
+  for (let i = 0; i < windowDays; i++) {
+    const hasAnyMood = Object.values(data.dailyCounts).some((counts) => (counts[i] ?? 0) > 0)
+    if (hasAnyMood) daysWithMood++
+  }
+  const confidence = dataConfidence(daysWithMood, windowDays)
+
+  return { value, label: scoreLabel(value), trend, hasData: true, confidence }
 }
 
 export function scoreHealth(data: HealthData): PillarScore {
   if (!data.hasData && data.vaccines.every((v) => !v.done)) {
-    return { value: 0, label: 'no data', trend: 0, hasData: false }
+    return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
   }
 
   // Vaccine completion score (0-10)
@@ -203,11 +224,19 @@ export function scoreHealth(data: HealthData): PillarScore {
   const raw = (vaccineScore * 0.6 + eventScore * 0.4)
   const value = Math.round(Math.min(raw, 10) * 10) / 10
 
-  return { value, label: scoreLabel(value), trend: 0, hasData: data.hasData || doneVaccines > 0 }
+  // Confidence: window-coverage from logged days, with a floor so having any
+  // vaccine on record never reads as zero-confidence (it's real data, just
+  // not this-week data).
+  const windowDays = Math.max(1, data.weeklyFrequency.length)
+  const loggedDays = data.weeklyFrequency.filter((n) => n > 0).length
+  const vaccineFloor = doneVaccines > 0 ? 0.5 : 0
+  const confidence = Math.max(vaccineFloor, dataConfidence(loggedDays, windowDays))
+
+  return { value, label: scoreLabel(value), trend: 0, hasData: data.hasData || doneVaccines > 0, confidence }
 }
 
 export function scoreGrowth(data: GrowthData): PillarScore {
-  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   // Growth is tracked by having measurements — more regular = higher score
   const totalMeasurements = data.weights.length + data.heights.length
@@ -221,11 +250,17 @@ export function scoreGrowth(data: GrowthData): PillarScore {
   const recencyBonus = hasRecent ? 3 : 1
 
   const value = Math.round(Math.min(measureScore + recencyBonus, 10) * 10) / 10
-  return { value, label: scoreLabel(value), trend: 0, hasData: true }
+
+  // Confidence: measurement density, halved when nothing is recent — a
+  // handful of old measurements shouldn't read as a confident current score.
+  const measurementCoverage = Math.min(totalMeasurements / 4, 1)
+  const confidence = hasRecent ? measurementCoverage : measurementCoverage * 0.5
+
+  return { value, label: scoreLabel(value), trend: 0, hasData: true, confidence }
 }
 
 export function scoreActivity(data: ActivityData): PillarScore {
-  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false }
+  if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
 
   // Base: active-day rate → 0–9 pts. dailySessions.length is the window size.
   const windowDays = Math.max(1, data.dailySessions.length)
@@ -233,7 +268,8 @@ export function scoreActivity(data: ActivityData): PillarScore {
   // Variety bonus: up to +1 for logging 3+ different activity types
   const varietyBonus = Math.min(data.uniqueTypes.length / 3, 1)
   const value = Math.round(Math.min(base + varietyBonus, 10) * 10) / 10
-  return { value, label: scoreLabel(value), trend: 0, hasData: true }
+  const confidence = dataConfidence(data.activeDays, windowDays)
+  return { value, label: scoreLabel(value), trend: 0, hasData: true, confidence }
 }
 
 export function buildScores(nutrition: NutritionData, sleep: SleepData, mood: MoodData, health: HealthData, growth: GrowthData, activity: ActivityData): WellnessScores {
@@ -263,5 +299,12 @@ export function buildScores(nutrition: NutritionData, sleep: SleepData, mood: Mo
   }
   overall = Math.round(overall * 10) / 10
 
-  return { overall, nutrition: ns, sleep: ss, mood: ms, health: hs, growth: gs, activity: as }
+  // overallConfidence: data-weighted mean of pillar confidences, using the
+  // same pillar weights as `overall` (they sum to 1, so no renormalizing).
+  const overallConfidence = Math.max(0, Math.min(
+    pillars.reduce((a, p) => a + p.score.confidence * p.weight, 0),
+    1,
+  ))
+
+  return { overall, overallConfidence, nutrition: ns, sleep: ss, mood: ms, health: hs, growth: gs, activity: as }
 }

@@ -100,6 +100,7 @@ export interface PillarScore {
   label: string       // e.g. 'excellent', 'good', 'needs attention'
   trend: number       // percentage change from prior week (-100 to +100)
   hasData: boolean
+  confidence: number  // 0..1 — how much data backs this score
 }
 
 export interface ActivityData {
@@ -114,6 +115,7 @@ export interface ActivityData {
 
 export interface WellnessScores {
   overall: number     // weighted average 0-10
+  overallConfidence: number  // 0..1 aggregate
   nutrition: PillarScore
   sleep: PillarScore
   mood: PillarScore
