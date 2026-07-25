@@ -96,6 +96,7 @@ import {
   type WellnessScores,
   type RoutineComplianceData,
 } from '../../lib/analyticsData'
+import { getAgeSleepTarget } from '../../lib/kidsScoring'
 import { supabase } from '../../lib/supabase'
 import { runWellnessNotifications } from '../../lib/notificationEngine'
 import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from '../ui/ChildPills'
@@ -253,13 +254,6 @@ function getAgeLabel(ageMonths: number): string {
   const y = Math.floor(ageMonths / 12)
   const m = ageMonths % 12
   return m > 0 ? `${y}y ${m}mo` : `${y}y`
-}
-
-function getAgeSleepTarget(ageMonths: number): number {
-  if (ageMonths < 4) return 15
-  if (ageMonths < 12) return 13
-  if (ageMonths < 36) return 12
-  return 10.5
 }
 
 // Module-level helpers can't access useTheme(); use the light sticker-palette
