@@ -160,6 +160,32 @@ describe('buildScores overallConfidence', () => {
   })
 })
 
+describe('nutrition small-sample guard', () => {
+  it('one perfect meal does not score near 10', () => {
+    const one = nutrition({
+      mealFrequency: [1, 0, 0, 0, 0, 0, 0],
+      eatQuality: { good: [1, 0, 0, 0, 0, 0, 0], little: new Array(7).fill(0), none: new Array(7).fill(0) },
+      topFoods: [{ label: 'cheese', count: 1 }],
+    })
+    const s = scoreNutrition(one)
+    expect(s.value).toBeLessThan(8)
+    expect(s.confidence).toBeLessThan(0.5)
+  })
+  it('a full week of good meals scores high with high confidence', () => {
+    const full = nutrition({
+      mealFrequency: [3, 3, 3, 3, 3, 3, 3],
+      eatQuality: { good: [3, 3, 3, 3, 3, 3, 3], little: new Array(7).fill(0), none: new Array(7).fill(0) },
+      topFoods: [
+        { label: 'a', count: 5 }, { label: 'b', count: 5 }, { label: 'c', count: 5 },
+        { label: 'd', count: 5 }, { label: 'e', count: 5 },
+      ],
+    })
+    const s = scoreNutrition(full)
+    expect(s.value).toBeGreaterThanOrEqual(8)
+    expect(s.confidence).toBeGreaterThan(0.9)
+  })
+})
+
 describe('scoreSleep folds in hours vs target', () => {
   const good = sleep({ dailyHours: [12,12,12,12,12,12,12], avgHours: 12,
     qualityCounts: { great: 7, good: 0, restless: 0, poor: 0 } })

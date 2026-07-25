@@ -68,6 +68,16 @@ export function scoreNutrition(data: NutritionData): PillarScore {
   const daysWithData = data.mealFrequency.filter((m) => m > 0).length
   const confidence = dataConfidence(daysWithData, windowDays)
 
+  // Small-sample guard: a score built from very little data (e.g. one logged
+  // meal) is shrunk toward a neutral baseline instead of reading as a
+  // confident 10/10 or 0/10. Coverage-1 (a full window) leaves `raw`
+  // unchanged; coverage-0 collapses to NEUTRAL.
+  const NEUTRAL = 5
+  const guardValue = (raw: number): number => {
+    const guarded = NEUTRAL + (raw - NEUTRAL) * confidence
+    return Math.round(Math.min(guarded, 10) * 10) / 10
+  }
+
   // ── MILK phase: score purely on feeding frequency vs age-appropriate target.
   // Quality/variety don't apply to breast/bottle feeds.
   if (data.mode === 'milk') {
@@ -78,7 +88,7 @@ export function scoreNutrition(data: NutritionData): PillarScore {
     // Consistency bonus: logging rate across the window (max 2 pts).
     const consistencyBonus = Math.min(daysWithData / windowDays, 1) * 2
     const raw = Math.min(freqScore + consistencyBonus, 10)
-    const value = Math.round(raw * 10) / 10
+    const value = guardValue(raw)
     // Trend: compare first vs second half of the window.
     const half = Math.floor(windowDays / 2)
     const first = data.mealFrequency.slice(0, half).reduce((a, b) => a + b, 0)
@@ -97,7 +107,7 @@ export function scoreNutrition(data: NutritionData): PillarScore {
     const varietyScore = Math.min(data.topFoods.length / 3, 1) * 10
 
     const raw = Math.min(freqScore * 0.6 + varietyScore * 0.4, 10)
-    const value = Math.round(raw * 10) / 10
+    const value = guardValue(raw)
 
     const half = Math.floor(windowDays / 2)
     const first = data.mealFrequency.slice(0, half).reduce((a, b) => a + b, 0)
@@ -115,7 +125,7 @@ export function scoreNutrition(data: NutritionData): PillarScore {
   const varietyBonus = Math.min(data.topFoods.length / 5, 1) * 1.0
 
   const raw = Math.min(qualityScore + freqBonus + varietyBonus, 10)
-  const value = Math.round(raw * 10) / 10
+  const value = guardValue(raw)
 
   const half = Math.floor(windowDays / 2)
   const firstHalf = data.eatQuality.good.slice(0, half).reduce((a, b) => a + b, 0)
