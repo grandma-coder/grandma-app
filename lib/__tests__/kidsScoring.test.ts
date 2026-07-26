@@ -189,23 +189,37 @@ describe('nutrition small-sample guard', () => {
 describe('scoreGrowth uses WHO percentiles', () => {
   const growth = (over: Partial<GrowthData> = {}): GrowthData => ({ weights: [], heights: [], heads: [], hasData: true, ...over })
 
+  // Dates computed RELATIVE to today (local, mirroring the private
+  // `localDateStr` in lib/kidsScoring.ts) so these tests don't depend on the
+  // wall-clock date: scoreGrowth's recency bonus uses a rolling 7-day-from-now
+  // window, so hardcoded absolute dates would silently go stale once the
+  // newest measurement fell outside that window.
+  const daysAgo = (n: number): string => {
+    const d = new Date()
+    d.setDate(d.getDate() - n)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
   it('a stable curve scores well regardless of percentile level', () => {
     const stable = growth({ weights: [
-      { value: 12.0, date: '2026-06-01' }, { value: 12.4, date: '2026-07-01' }, { value: 12.8, date: '2026-07-20' },
+      { value: 12.0, date: daysAgo(55) }, { value: 12.4, date: daysAgo(30) }, { value: 12.8, date: daysAgo(2) },
     ] })
     expect(scoreGrowth(stable, 26, 'male').value).toBeGreaterThanOrEqual(7)
   })
   it('a large percentile crossing lowers the score', () => {
     const crossing = growth({ weights: [
-      { value: 15.5, date: '2026-06-01' }, { value: 12.0, date: '2026-07-01' }, { value: 10.5, date: '2026-07-20' },
+      { value: 15.5, date: daysAgo(55) }, { value: 12.0, date: daysAgo(30) }, { value: 10.5, date: daysAgo(2) },
     ] })
     const stable = growth({ weights: [
-      { value: 12.0, date: '2026-06-01' }, { value: 12.4, date: '2026-07-01' }, { value: 12.8, date: '2026-07-20' },
+      { value: 12.0, date: daysAgo(55) }, { value: 12.4, date: daysAgo(30) }, { value: 12.8, date: daysAgo(2) },
     ] })
     expect(scoreGrowth(crossing, 26, 'male').value).toBeLessThan(scoreGrowth(stable, 26, 'male').value)
   })
   it('unknown sex lowers confidence', () => {
-    const s = growth({ weights: [{ value: 12, date: '2026-07-20' }, { value: 12.4, date: '2026-07-21' }] })
+    const s = growth({ weights: [{ value: 12, date: daysAgo(2) }, { value: 12.4, date: daysAgo(1) }] })
     expect(scoreGrowth(s, 26, null).confidence).toBeLessThan(scoreGrowth(s, 26, 'male').confidence)
   })
 })
