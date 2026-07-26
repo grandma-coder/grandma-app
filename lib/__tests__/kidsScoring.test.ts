@@ -1,6 +1,6 @@
 import { scoreSleep, scoreHealth, scoreNutrition, scoreGrowth, buildScores, getAgeSleepTarget, dataConfidence } from '../kidsScoring'
 import { buildHealthData } from '../analyticsData'
-import type { SleepData, HealthData, NutritionData, GrowthData } from '../analyticsData'
+import type { SleepData, HealthData, NutritionData, GrowthData, MoodData, ActivityData } from '../analyticsData'
 
 const sleep = (over: Partial<SleepData> = {}): SleepData => ({
   dailyHours: [5, 5, 6, 5, 5, 0, 0],
@@ -221,6 +221,59 @@ describe('scoreGrowth uses WHO percentiles', () => {
   it('unknown sex lowers confidence', () => {
     const s = growth({ weights: [{ value: 12, date: daysAgo(2) }, { value: 12.4, date: daysAgo(1) }] })
     expect(scoreGrowth(s, 26, null).confidence).toBeLessThan(scoreGrowth(s, 26, 'male').confidence)
+  })
+})
+
+describe('confidence-weighted overall', () => {
+  it('a high-value low-confidence pillar contributes little', () => {
+    const nutritionData = nutrition({
+      mealFrequency: [3, 3, 3, 3, 3, 3, 3],
+      eatQuality: { good: [3, 3, 3, 3, 3, 3, 3], little: new Array(7).fill(0), none: new Array(7).fill(0) },
+      topFoods: [
+        { label: 'a', count: 5 }, { label: 'b', count: 5 }, { label: 'c', count: 5 },
+        { label: 'd', count: 5 }, { label: 'e', count: 5 },
+      ],
+    })
+    const sleepData = sleep({ dailyHours: [5, 5, 5, 5, 5, 0, 0], avgHours: 5 }) // low sleep, decent confidence
+    const moodData: MoodData = { dailyCounts: {}, dominantMoods: [], weekLabels: [], hasData: false }
+    const healthData = health({ concernEvents: 0 })
+    const growthData: GrowthData = { weights: [], heights: [], heads: [], hasData: true }
+    const activityData: ActivityData = {
+      activeDays: 0, totalSessions: 0, totalMinutes: 0, uniqueTypes: [],
+      dailySessions: [0, 0, 0, 0, 0, 0, 0], weekLabels: [], hasData: false,
+    }
+
+    const full = buildScores(nutritionData, sleepData, moodData, healthData, growthData, activityData, 26, 'male')
+
+    expect(full.overallConfidence).toBeGreaterThan(0)
+    expect(full.overallConfidence).toBeLessThanOrEqual(1)
+    expect(full.overall).toBeGreaterThanOrEqual(0)
+    expect(full.overall).toBeLessThanOrEqual(10)
+
+    // Directional check: hand-derive both the plain weight-normalized average
+    // and the effective-weight (weight × confidence) average from the actual
+    // per-pillar scores buildScores used, and confirm `overall` tracks the
+    // confidence-weighted one — proving the low-confidence, low-value sleep
+    // pillar (avgHours 5 vs a 12h target at 26mo) doesn't drag the composite
+    // down as hard as plain weight-normalization would.
+    const ns = scoreNutrition(nutritionData)
+    const ss = scoreSleep(sleepData, 26)
+    const hs = scoreHealth(healthData)
+    const gs = scoreGrowth(growthData, 26, 'male')
+    const pillars = [
+      { score: ns, weight: 0.27 }, { score: ss, weight: 0.22 },
+      { score: hs, weight: 0.13 }, { score: gs, weight: 0.09 },
+    ]
+    const present = pillars.filter((p) => p.score.hasData)
+    const plainWTotal = present.reduce((a, p) => a + p.weight, 0)
+    const plainOverall = present.reduce((a, p) => a + p.score.value * (p.weight / plainWTotal), 0)
+    const effTotal = present.reduce((a, p) => a + p.weight * p.score.confidence, 0)
+    const confOverall = present.reduce((a, p) => a + p.score.value * ((p.weight * p.score.confidence) / effTotal), 0)
+
+    // Sanity: this scenario must actually distinguish the two formulas,
+    // otherwise the assertion below would pass trivially.
+    expect(Math.abs(confOverall - plainOverall)).toBeGreaterThan(0.05)
+    expect(full.overall).toBeCloseTo(Math.round(confOverall * 10) / 10, 1)
   })
 })
 

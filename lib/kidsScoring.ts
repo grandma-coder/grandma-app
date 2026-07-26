@@ -329,20 +329,26 @@ export function buildScores(
     { score: as, weight: 0.11 },
   ]
 
-  const withData = pillars.filter((p) => p.score.hasData)
+  // Effective weight per pillar = weight × confidence, so thin-data pillars
+  // (low confidence) pull the overall less even if their raw value is high.
+  const present = pillars.filter((p) => p.score.hasData)
   let overall = 0
-  if (withData.length > 0) {
-    const totalWeight = withData.reduce((a, p) => a + p.weight, 0)
-    overall = withData.reduce((a, p) => a + p.score.value * (p.weight / totalWeight), 0)
+  let overallConfidence = 0
+  if (present.length > 0) {
+    const effTotal = present.reduce((a, p) => a + p.weight * p.score.confidence, 0)
+    if (effTotal > 0) {
+      overall = present.reduce((a, p) => a + p.score.value * ((p.weight * p.score.confidence) / effTotal), 0)
+    } else {
+      // All present pillars have 0 confidence — fall back to plain weight
+      // normalization to avoid a divide-by-zero collapsing `overall` to 0.
+      const wTotal = present.reduce((a, p) => a + p.weight, 0)
+      overall = present.reduce((a, p) => a + p.score.value * (p.weight / wTotal), 0)
+    }
+    const wTotal = present.reduce((a, p) => a + p.weight, 0)
+    overallConfidence = present.reduce((a, p) => a + p.score.confidence * (p.weight / wTotal), 0)
   }
   overall = Math.round(overall * 10) / 10
-
-  // overallConfidence: data-weighted mean of pillar confidences, using the
-  // same pillar weights as `overall` (they sum to 1, so no renormalizing).
-  const overallConfidence = Math.max(0, Math.min(
-    pillars.reduce((a, p) => a + p.score.confidence * p.weight, 0),
-    1,
-  ))
+  overallConfidence = Math.round(overallConfidence * 100) / 100
 
   return { overall, overallConfidence, nutrition: ns, sleep: ss, mood: ms, health: hs, growth: gs, activity: as }
 }
