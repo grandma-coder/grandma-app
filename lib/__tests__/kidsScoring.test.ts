@@ -1,6 +1,6 @@
-import { scoreSleep, scoreHealth, scoreNutrition, buildScores, getAgeSleepTarget, dataConfidence } from '../kidsScoring'
+import { scoreSleep, scoreHealth, scoreNutrition, scoreGrowth, buildScores, getAgeSleepTarget, dataConfidence } from '../kidsScoring'
 import { buildHealthData } from '../analyticsData'
-import type { SleepData, HealthData, NutritionData } from '../analyticsData'
+import type { SleepData, HealthData, NutritionData, GrowthData } from '../analyticsData'
 
 const sleep = (over: Partial<SleepData> = {}): SleepData => ({
   dailyHours: [5, 5, 6, 5, 5, 0, 0],
@@ -183,6 +183,30 @@ describe('nutrition small-sample guard', () => {
     const s = scoreNutrition(full)
     expect(s.value).toBeGreaterThanOrEqual(8)
     expect(s.confidence).toBeGreaterThan(0.9)
+  })
+})
+
+describe('scoreGrowth uses WHO percentiles', () => {
+  const growth = (over: Partial<GrowthData> = {}): GrowthData => ({ weights: [], heights: [], heads: [], hasData: true, ...over })
+
+  it('a stable curve scores well regardless of percentile level', () => {
+    const stable = growth({ weights: [
+      { value: 12.0, date: '2026-06-01' }, { value: 12.4, date: '2026-07-01' }, { value: 12.8, date: '2026-07-20' },
+    ] })
+    expect(scoreGrowth(stable, 26, 'male').value).toBeGreaterThanOrEqual(7)
+  })
+  it('a large percentile crossing lowers the score', () => {
+    const crossing = growth({ weights: [
+      { value: 15.5, date: '2026-06-01' }, { value: 12.0, date: '2026-07-01' }, { value: 10.5, date: '2026-07-20' },
+    ] })
+    const stable = growth({ weights: [
+      { value: 12.0, date: '2026-06-01' }, { value: 12.4, date: '2026-07-01' }, { value: 12.8, date: '2026-07-20' },
+    ] })
+    expect(scoreGrowth(crossing, 26, 'male').value).toBeLessThan(scoreGrowth(stable, 26, 'male').value)
+  })
+  it('unknown sex lowers confidence', () => {
+    const s = growth({ weights: [{ value: 12, date: '2026-07-20' }, { value: 12.4, date: '2026-07-21' }] })
+    expect(scoreGrowth(s, 26, null).confidence).toBeLessThan(scoreGrowth(s, 26, 'male').confidence)
   })
 })
 

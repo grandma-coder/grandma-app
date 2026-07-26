@@ -3,10 +3,7 @@ import type {
   NutritionData, NutritionMode, SleepData, MoodData,
   HealthData, GrowthData, ActivityData, PillarScore, WellnessScores,
 } from './analyticsData'
-// Type-only import: `sex` is threaded through `buildScores` now so the
-// signature is stable, but it's unused until Task 6 wires `scoreGrowth` to
-// resolve percentiles — don't import `estimatePercentile`/`resolveSex` yet.
-import type { Sex } from './growthStandards'
+import { estimatePercentile, type Sex } from './growthStandards'
 
 // Local (non-UTC) YYYY-MM-DD — kept private so this module has no runtime
 // dependency back on analyticsData (avoids an import cycle).
@@ -258,27 +255,41 @@ export function scoreHealth(data: HealthData): PillarScore {
   return { value, label: scoreLabel(value), trend: 0, hasData: data.hasData || doneVaccines > 0, confidence }
 }
 
-export function scoreGrowth(data: GrowthData): PillarScore {
+/**
+ * Growth score: rewards having recent measurements + tracking along a WHO
+ * percentile curve. A large percentile *crossing* between the first and
+ * last measurement (e.g. dropping from the 90th to the 10th) lowers the
+ * score — informational only, never a diagnostic verdict. Unknown sex
+ * (`null`) can't be placed on a sex-specific curve, so it skips the
+ * curve-tracking bonus/penalty and reports lower confidence.
+ */
+export function scoreGrowth(data: GrowthData, ageMonths: number, sex: Sex | null): PillarScore {
   if (!data.hasData) return { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 }
+  const series = data.weights.length >= data.heights.length ? data.weights : data.heights
+  const metric = data.weights.length >= data.heights.length ? 'weight' as const : 'height' as const
+  const count = series.length
 
-  // Growth is tracked by having measurements — more regular = higher score
-  const totalMeasurements = data.weights.length + data.heights.length
-  const measureScore = Math.min(totalMeasurements / 4, 1) * 7 // up to 7 for having data
+  // Base: having measurements + recency.
+  const seven = new Date(); seven.setDate(seven.getDate() - 7)
+  const recentDate = localDateStr(seven)
+  const hasRecent = series.some((m) => m.date >= recentDate)
+  let value = Math.min(count / 3, 1) * 6 + (hasRecent ? 2 : 0)
 
-  // Bonus for recent measurements (within last 7 days)
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-  const recentDate = localDateStr(sevenDaysAgo)
-  const hasRecent = data.weights.some((w) => w.date >= recentDate) || data.heights.some((h) => h.date >= recentDate)
-  const recencyBonus = hasRecent ? 3 : 1
+  // Curve tracking: penalize large percentile crossings between first and last.
+  let crossingPenalty = 0
+  if (sex && count >= 2) {
+    const first = estimatePercentile(metric, sex, ageMonths, series[0].value)
+    const last = estimatePercentile(metric, sex, ageMonths, series[series.length - 1].value)
+    if (first != null && last != null) {
+      const jump = Math.abs(last - first) // percentile points
+      crossingPenalty = Math.min(jump / 10, 4) // up to −4 for a big crossing
+      value += 2 // reward that we could place it on a curve at all
+    }
+  }
+  value = Math.round(Math.max(Math.min(value - crossingPenalty, 10), 0) * 10) / 10
 
-  const value = Math.round(Math.min(measureScore + recencyBonus, 10) * 10) / 10
-
-  // Confidence: measurement density, halved when nothing is recent — a
-  // handful of old measurements shouldn't read as a confident current score.
-  const measurementCoverage = Math.min(totalMeasurements / 4, 1)
-  const confidence = hasRecent ? measurementCoverage : measurementCoverage * 0.5
-
+  const sexCertainty = sex ? 1 : 0.4
+  const confidence = Math.min((count / 3) * (hasRecent ? 1 : 0.7) * sexCertainty, 1)
   return { value, label: scoreLabel(value), trend: 0, hasData: true, confidence }
 }
 
@@ -304,7 +315,7 @@ export function buildScores(
   const ss = scoreSleep(sleep, ageMonths)
   const ms = scoreMood(mood)
   const hs = scoreHealth(health)
-  const gs = scoreGrowth(growth) // sex/ageMonths wired in Task 6
+  const gs = scoreGrowth(growth, ageMonths, sex)
 
   const as = scoreActivity(activity)
 

@@ -8,6 +8,7 @@ import { supabase } from './supabase'
 import { useChildStore } from '../store/useChildStore'
 import { toDateStr } from './cycleLogic'
 import { getNutritionModeForAge, buildScores } from './kidsScoring'
+import { resolveSex, type Sex } from './growthStandards'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -749,9 +750,13 @@ export function useKidsAnalytics(
       const growth = buildGrowthData(allLogs)
       const activity = buildActivityData(allLogs, dates, labels)
       const routineCompliance = buildRoutineComplianceData(allLogs, dates, labels)
-      // sex is resolved from the child profile starting in Task 6 — pass
-      // `null` for now so buildScores' unused `sex` param has a real caller.
-      const scores = buildScores(nutrition, sleep, mood, health, growth, activity, ageMonths, null)
+      // Resolve sex from the child profile for WHO-percentile growth scoring.
+      // An unresolved/unknown sex (`isFallback`) can't be placed on a
+      // sex-specific curve with confidence, so pass `null` — scoreGrowth
+      // treats that as lower confidence, never a silent fallback value.
+      const resolvedSex = resolveSex(selectedChild?.sex)
+      const sex: Sex | null = resolvedSex.isFallback ? null : resolvedSex.sex
+      const scores = buildScores(nutrition, sleep, mood, health, growth, activity, ageMonths, sex)
 
       return {
         nutrition,
