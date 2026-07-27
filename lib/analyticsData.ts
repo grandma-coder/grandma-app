@@ -12,7 +12,7 @@ import { resolveSex, type Sex } from './growthStandards'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface ChildLog {
+export interface ChildLog {
   id: string
   child_id: string
   date: string
@@ -141,6 +141,8 @@ export interface AnalyticsData {
   scores: WellnessScores
   totalLogs: number
   dateRange: { from: string; to: string }
+  /** Raw fetched logs for this window — feeds `computeCrossInsights` (Task 8). */
+  logs: ChildLog[]
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -770,6 +772,7 @@ export function useKidsAnalytics(
         scores,
         totalLogs: allLogs.filter((l) => l.type !== 'skipped').length,
         dateRange: { from: window.sinceDate, to: window.toDate },
+        logs: allLogs,
       }
     },
     staleTime: 60 * 1000,        // 1 min — charts feel live

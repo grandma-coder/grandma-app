@@ -1071,6 +1071,7 @@ export const ptBR: TranslationKeys = {
   kids_analytics_caption_needs_care: "precisa de cuidado",
   kids_analytics_tap_info_hint: "Toque ℹ para ver o guia de pontuação",
   kids_analytics_grandma_says_label: "A AVÓ DIZ",
+  kids_analytics_grandma_noticed_label: "A AVÓ NOTOU",
   kids_analytics_discuss_btn: "Vamos conversar →",
   kids_analytics_insight_strength_label: "FORÇA",
   kids_analytics_insight_concern_label: "ÁREA PARA MELHORAR",

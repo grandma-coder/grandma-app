@@ -1071,6 +1071,7 @@ export const es: TranslationKeys = {
   kids_analytics_caption_needs_care: "requiere atención",
   kids_analytics_tap_info_hint: "Toca ℹ para ver la guía de puntuación",
   kids_analytics_grandma_says_label: "GRANDMA DICE",
+  kids_analytics_grandma_noticed_label: "GRANDMA NOTÓ",
   kids_analytics_discuss_btn: "Hablemos →",
   kids_analytics_insight_strength_label: "FORTALEZA",
   kids_analytics_insight_concern_label: "ÁREA PARA MEJORAR",

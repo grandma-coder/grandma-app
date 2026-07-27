@@ -1182,6 +1182,7 @@ export interface TranslationKeys {
   kids_analytics_caption_needs_care: string
   kids_analytics_tap_info_hint: string
   kids_analytics_grandma_says_label: string
+  kids_analytics_grandma_noticed_label: string
   kids_analytics_discuss_btn: string
   kids_analytics_insight_strength_label: string
   kids_analytics_insight_concern_label: string

@@ -97,6 +97,11 @@ import {
   type RoutineComplianceData,
 } from '../../lib/analyticsData'
 import { getAgeSleepTarget } from '../../lib/kidsScoring'
+import { computeCrossInsights } from '../../lib/kidsCrossInsights'
+import {
+  buildInsightHighlights,
+  type InsightHighlights,
+} from '../../lib/kidsInsightHighlights'
 import { supabase } from '../../lib/supabase'
 import { runWellnessNotifications } from '../../lib/notificationEngine'
 import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from '../ui/ChildPills'
@@ -837,6 +842,11 @@ export function KidsAnalytics() {
         {analytics && (() => {
           const tips = getHealthTips(analytics.scores, analytics, ageMonths, childName)
           const tipMap = tipByPillar(tips)
+          // Task 8's cross-log pattern engine — surface only the single
+          // most-important observation (most-important-first per
+          // computeCrossInsights' own sort) on the main screen.
+          const cross = computeCrossInsights(analytics.logs, ageMonths)
+          const crossLine = cross[0]?.line ?? null
 
           if (diffuse) {
             // ── Editorial dashboard (Diffuse): hero stat → Grandma one-liner →
@@ -848,7 +858,7 @@ export function KidsAnalytics() {
               : overall >= 7 ? t('kids_analytics_caption_on_track')
               : overall >= 5 ? t('kids_analytics_caption_developing')
               : t('kids_analytics_caption_needs_care')
-            const highlights = buildInsightHighlights(s, analytics, childName, ageMonths)
+            const highlights = buildInsightHighlights(s, analytics, childName, ageMonths, crossLine)
             const softFor: Record<PillarKey, string> = {
               nutrition: stickers.greenSoft, sleep: stickers.lilacSoft, mood: stickers.pinkSoft,
               health: stickers.blueSoft, growth: stickers.yellowSoft, activity: stickers.peachSoft,
@@ -876,6 +886,16 @@ export function KidsAnalytics() {
                     {highlights.message}
                   </Text>
                 ) : <View style={{ height: 10 }} />}
+                {highlights.crossLine && (
+                  <View style={{ marginTop: -4, marginBottom: 14 }}>
+                    <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginBottom: 4 }}>
+                      {t('kids_analytics_grandma_noticed_label')}
+                    </Text>
+                    <Text style={{ fontFamily: diffuseFont.display, fontSize: 16, lineHeight: 22, color: dt.colors.ink }}>
+                      {highlights.crossLine}
+                    </Text>
+                  </View>
+                )}
                 {/* Ask-Grandma pill — heart-eye logo + prompt. Replaces the old
                     duplicate "GRANDMA SAYS" card (same text as the summary). */}
                 <Pressable
@@ -907,7 +927,7 @@ export function KidsAnalytics() {
           return (
             <>
               <KidsWellnessRingCard scores={analytics.scores} onPillarPress={setSelectedPillar} />
-              <GrandmaInsightCard scores={analytics.scores} analytics={analytics} childName={childName} ageMonths={ageMonths} />
+              <GrandmaInsightCard scores={analytics.scores} analytics={analytics} childName={childName} ageMonths={ageMonths} crossLine={crossLine} />
               <View style={styles.pillarSection}>
                 <Text style={[styles.pillarSectionTitle, { color: colors.text, fontFamily: font.display }]}>
                   {t('kids_analytics_thriving_breakdown')}
@@ -1683,154 +1703,19 @@ function WellnessScoreArc({
 // GRANDMA AI INSIGHT CARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type InsightHighlight = { pillar: PillarKey; score: number; reason: string }
-type InsightTrend = { pillar: PillarKey; direction: 'improving' | 'declining'; delta: number }
-type InsightHighlights = {
-  message: string
-  overallLabel: string
-  overallScore: number
-  strength: InsightHighlight | null
-  concern: InsightHighlight | null
-  trend: InsightTrend | null
-  actions: string[]
-}
-
-function buildInsightHighlights(
-  scores: WellnessScores,
-  analytics: AnalyticsData,
-  childName: string,
-  ageMonths: number,
-): InsightHighlights {
-  const lowest = PILLAR_ORDER.reduce<PillarKey | null>((min, key) => {
-    if (!scores[key].hasData) return min
-    if (!min || scores[key].value < scores[min].value) return key
-    return min
-  }, null)
-
-  const highest = PILLAR_ORDER.reduce<PillarKey | null>((max, key) => {
-    if (!scores[key].hasData) return max
-    if (!max || scores[key].value > scores[max].value) return key
-    return max
-  }, null)
-
-  const overallLabel =
-    scores.overall >= 8.5 ? 'excellent' :
-    scores.overall >= 7 ? 'on track' :
-    scores.overall >= 5 ? 'developing' :
-    'needs attention'
-
-  const parts: string[] = [`${childName} is ${overallLabel} at ${scores.overall.toFixed(1)}/10 overall.`]
-
-  let concern: InsightHighlight | null = null
-  if (lowest && scores[lowest].value < 7) {
-    let reason = `${PILLAR_CONFIG[lowest].label} is the main area to work on at ${scores[lowest].value.toFixed(1)}/10.`
-    if (lowest === 'sleep' && analytics.sleep.hasData) {
-      const target = getAgeSleepTarget(ageMonths)
-      const deficit = (target - analytics.sleep.avgHours).toFixed(1)
-      reason = `Sleep is the main focus — averaging ${analytics.sleep.avgHours.toFixed(1)}h vs ${target}h target (${deficit}h short).`
-    } else if (lowest === 'nutrition' && analytics.nutrition.hasData) {
-      const total = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
-      const good = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
-      const pct = total > 0 ? Math.round((good / total) * 100) : 0
-      reason = `Nutrition needs attention — ${pct}% of meals eaten well this week (score: ${scores.nutrition.value.toFixed(1)}/10).`
-    }
-    parts.push(reason)
-    concern = { pillar: lowest, score: scores[lowest].value, reason }
-  }
-
-  let strength: InsightHighlight | null = null
-  if (highest && scores[highest].value >= 8 && highest !== lowest) {
-    let reason = `${PILLAR_CONFIG[highest].label} is a strength at ${scores[highest].value.toFixed(1)}/10.`
-    if (highest === 'sleep' && analytics.sleep.hasData) {
-      reason = `Sleep is a strength — ${analytics.sleep.avgHours.toFixed(1)}h avg with great consistency!`
-    } else if (highest === 'nutrition' && analytics.nutrition.hasData) {
-      const total = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
-      const good = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
-      const pct = total > 0 ? Math.round((good / total) * 100) : 0
-      reason = `Nutrition is a strength — ${pct}% of meals eaten well (${scores.nutrition.value.toFixed(1)}/10).`
-    }
-    parts.push(reason)
-    strength = { pillar: highest, score: scores[highest].value, reason }
-  }
-
-  let trend: InsightTrend | null = null
-  // Pick the pillar with the largest absolute trend (≥10%), not the first
-  // one that crosses 10% in PILLAR_ORDER. The old find() hid a 40% activity
-  // decline behind a 12% nutrition wobble simply because nutrition came
-  // earlier in the array.
-  const trendPillar = PILLAR_ORDER
-    .filter((k) => scores[k].hasData && Math.abs(scores[k].trend) >= 10)
-    .reduce<PillarKey | null>(
-      (best, k) => (best === null || Math.abs(scores[k].trend) > Math.abs(scores[best].trend) ? k : best),
-      null,
-    )
-  if (trendPillar) {
-    const direction: 'improving' | 'declining' = scores[trendPillar].trend > 0 ? 'improving' : 'declining'
-    const delta = Math.abs(scores[trendPillar].trend)
-    parts.push(`${PILLAR_CONFIG[trendPillar].label} ${direction} ${delta}% this week.`)
-    trend = { pillar: trendPillar, direction, delta }
-  }
-
-  return {
-    message: parts.join(' '),
-    overallLabel,
-    overallScore: scores.overall,
-    strength,
-    concern,
-    trend,
-    actions: buildInsightActions(concern, trend, analytics, ageMonths),
-  }
-}
-
-function buildInsightActions(
-  concern: InsightHighlight | null,
-  trend: InsightTrend | null,
-  analytics: AnalyticsData,
-  ageMonths: number,
-): string[] {
-  const actions: string[] = []
-  if (concern) {
-    switch (concern.pillar) {
-      case 'sleep': {
-        const target = getAgeSleepTarget(ageMonths)
-        actions.push(`Aim for ${target}h tonight — try bringing bedtime 30 min earlier.`)
-        actions.push('Keep the last hour calm: dim lights, wind-down routine, no screens.')
-        break
-      }
-      case 'nutrition':
-        actions.push('Offer a protein + veg combo at the next meal — small portions, no pressure.')
-        actions.push('Plan 2 snack windows between meals so appetite is stronger at mealtime.')
-        break
-      case 'activity':
-        actions.push('Fit in 30 min of outdoor play — even a short walk counts.')
-        actions.push('Break up screen time with active bursts: dancing, stretches, chase games.')
-        break
-      case 'mood':
-        actions.push('Look for patterns — tired, hungry, overstimulated? Address the trigger first.')
-        actions.push('Carve out 15 min of one-on-one connection time today.')
-        break
-      case 'health':
-        actions.push('Log any symptoms in the calendar so the pattern is easy to spot.')
-        actions.push('If anything persists beyond 48h, book a pediatrician check-in.')
-        break
-      case 'growth':
-        actions.push('Keep logging weight + height weekly — trend matters more than a single point.')
-        break
-    }
-  }
-  if (trend && trend.direction === 'declining' && (!concern || trend.pillar !== concern.pillar)) {
-    actions.push(`${PILLAR_CONFIG[trend.pillar].label} dropped ${trend.delta}% this week — worth a closer look.`)
-  }
-  return actions.slice(0, 2)
-}
+// buildInsightHighlights / buildInsightActions / InsightHighlights (+
+// InsightHighlight / InsightTrend) now live in lib/kidsInsightHighlights.ts —
+// extracted so the narrative + honesty-gating logic is unit-testable without
+// pulling React Native into the test (see honest-scores spec, Task 9).
 
 function GrandmaInsightCard({
-  scores, analytics, childName, ageMonths, compact = false,
+  scores, analytics, childName, ageMonths, crossLine = null, compact = false,
 }: {
   scores: WellnessScores
   analytics: AnalyticsData
   childName: string
   ageMonths: number
+  crossLine?: string | null
   compact?: boolean
 }) {
   const { t } = useTranslation()
@@ -1840,7 +1725,7 @@ function GrandmaInsightCard({
   const [detailOpen, setDetailOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const highlights = buildInsightHighlights(scores, analytics, childName, ageMonths)
+  const highlights = buildInsightHighlights(scores, analytics, childName, ageMonths, crossLine)
 
   function handleDiscussPress() {
     setConfirmOpen(true)
@@ -1888,6 +1773,16 @@ function GrandmaInsightCard({
           >
             {highlights.message}
           </Text>
+          {highlights.crossLine && !compact && (
+            <View style={{ marginTop: 10 }}>
+              <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3, marginBottom: 4 }}>
+                {t('kids_analytics_grandma_noticed_label')}
+              </Text>
+              <Text style={{ fontFamily: diffuseFont.display, fontSize: 16, lineHeight: 22, color: dt.colors.ink }}>
+                {highlights.crossLine}
+              </Text>
+            </View>
+          )}
           <Pressable
             onPress={(e) => { e.stopPropagation?.(); handleDiscussPress() }}
             hitSlop={8}
@@ -1976,6 +1871,30 @@ function GrandmaInsightCard({
             {highlights.message}
           </Text>
         </Animated.View>
+
+        {highlights.crossLine && (
+          <Animated.View
+            entering={FadeIn.duration(400).delay(300)}
+            style={styles.grandmaInsightCrossWrap}
+          >
+            <Text
+              style={[
+                styles.grandmaInsightLabel,
+                { color: colors.textMuted, fontFamily: font.bodySemiBold, marginBottom: 4 },
+              ]}
+            >
+              {t('kids_analytics_grandma_noticed_label')}
+            </Text>
+            <Text
+              style={[
+                styles.grandmaInsightMessage,
+                { color: colors.text, fontFamily: font.display },
+              ]}
+            >
+              {highlights.crossLine}
+            </Text>
+          </Animated.View>
+        )}
 
         {/* "Let's discuss →" ink-dark pill button — opens confirm sheet */}
         <Animated.View entering={FadeIn.duration(400).delay(500)}>
@@ -5114,6 +5033,10 @@ const styles = StyleSheet.create({
   grandmaInsightMessage: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  grandmaInsightCrossWrap: {
+    marginBottom: 14,
+    maxWidth: SCREEN_W * 0.68,
   },
   grandmaInsightBtn: {
     alignSelf: 'flex-start',

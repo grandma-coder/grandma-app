@@ -1071,6 +1071,7 @@ export const de: TranslationKeys = {
   kids_analytics_caption_needs_care: "needs care",
   kids_analytics_tap_info_hint: "Tap ℹ for score guide",
   kids_analytics_grandma_says_label: "GRANDMA SAYS",
+  kids_analytics_grandma_noticed_label: "GRANDMA NOTICED",
   kids_analytics_discuss_btn: "Let's discuss →",
   kids_analytics_insight_strength_label: "STRENGTH",
   kids_analytics_insight_concern_label: "AREA TO WORK ON",
