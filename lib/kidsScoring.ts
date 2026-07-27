@@ -270,16 +270,33 @@ export function scoreGrowth(data: GrowthData, ageMonths: number, sex: Sex | null
   const count = series.length
 
   // Base: having measurements + recency.
-  const seven = new Date(); seven.setDate(seven.getDate() - 7)
+  const today = new Date()
+  const seven = new Date(today); seven.setDate(seven.getDate() - 7)
   const recentDate = localDateStr(seven)
   const hasRecent = series.some((m) => m.date >= recentDate)
   let value = Math.min(count / 3, 1) * 6 + (hasRecent ? 2 : 0)
 
+  // Each measurement's own age at the time it was taken — NOT the child's
+  // current age. `series` spans a window (e.g. 30/90 days), so an older
+  // measurement reflects a younger child; scoring it against today's
+  // percentile band would read ordinary weight/height GAIN as a false
+  // "crossing" (a 26mo who gained normally from 24mo would look like they
+  // dropped from the ~70th to the ~35th percentile, when really they never
+  // left ~p50 for their age at each point). Approximates months-elapsed as
+  // days-elapsed / 30.44 — decision-support precision, not clinical.
+  const ageAtMeasurement = (dateStr: string): number => {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    if (!y || !m || !d) return ageMonths
+    const measuredAt = new Date(y, m - 1, d)
+    const daysElapsed = (today.getTime() - measuredAt.getTime()) / (1000 * 60 * 60 * 24)
+    return ageMonths - daysElapsed / 30.44
+  }
+
   // Curve tracking: penalize large percentile crossings between first and last.
   let crossingPenalty = 0
   if (sex && count >= 2) {
-    const first = estimatePercentile(metric, sex, ageMonths, series[0].value)
-    const last = estimatePercentile(metric, sex, ageMonths, series[series.length - 1].value)
+    const first = estimatePercentile(metric, sex, ageAtMeasurement(series[0].date), series[0].value)
+    const last = estimatePercentile(metric, sex, ageAtMeasurement(series[series.length - 1].date), series[series.length - 1].value)
     if (first != null && last != null) {
       const jump = Math.abs(last - first) // percentile points
       crossingPenalty = Math.min(jump / 10, 4) // up to −4 for a big crossing

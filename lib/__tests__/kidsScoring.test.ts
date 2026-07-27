@@ -204,19 +204,33 @@ describe('scoreGrowth uses WHO percentiles', () => {
   }
 
   it('a stable curve scores well regardless of percentile level', () => {
+    // Tracks the ~85th-percentile weight-for-age curve, evaluated at EACH
+    // measurement's own age-at-measurement (not today's age): 13.65kg at
+    // ~24.2mo, 13.85kg at ~25.0mo, 14.07kg at ~25.9mo all land on ~p85 for
+    // the age they were actually taken at. This is normal age-appropriate
+    // GAIN along a single percentile band and must NOT be scored as a
+    // "crossing" just because the raw kilograms went up over time.
     const stable = growth({ weights: [
-      { value: 12.0, date: daysAgo(55) }, { value: 12.4, date: daysAgo(30) }, { value: 12.8, date: daysAgo(2) },
+      { value: 13.65, date: daysAgo(55) }, { value: 13.85, date: daysAgo(30) }, { value: 14.07, date: daysAgo(2) },
     ] })
-    expect(scoreGrowth(stable, 26, 'male').value).toBeGreaterThanOrEqual(7)
+    expect(scoreGrowth(stable, 26, 'male').value).toBeGreaterThanOrEqual(9)
   })
-  it('a large percentile crossing lowers the score', () => {
+  it('a real percentile crossing (abnormal for its own age-at-measurement) still lowers the score', () => {
+    // Same dates as the stable curve above, but each value is now abnormal
+    // for the age the child actually was on that date: 15.5kg at ~24.2mo is
+    // far above the curve (~p99) and 10.5kg at ~25.9mo is far below it
+    // (~p7) — a genuine crossing, not just growth. Confirms the penalty
+    // still fires once age-at-measurement (not current age) is used.
     const crossing = growth({ weights: [
       { value: 15.5, date: daysAgo(55) }, { value: 12.0, date: daysAgo(30) }, { value: 10.5, date: daysAgo(2) },
     ] })
     const stable = growth({ weights: [
-      { value: 12.0, date: daysAgo(55) }, { value: 12.4, date: daysAgo(30) }, { value: 12.8, date: daysAgo(2) },
+      { value: 13.65, date: daysAgo(55) }, { value: 13.85, date: daysAgo(30) }, { value: 14.07, date: daysAgo(2) },
     ] })
-    expect(scoreGrowth(crossing, 26, 'male').value).toBeLessThan(scoreGrowth(stable, 26, 'male').value)
+    const crossingScore = scoreGrowth(crossing, 26, 'male')
+    const stableScore = scoreGrowth(stable, 26, 'male')
+    expect(crossingScore.value).toBeLessThan(stableScore.value)
+    expect(crossingScore.value).toBeLessThan(7) // a real crossing should read as a genuine dip
   })
   it('unknown sex lowers confidence', () => {
     const s = growth({ weights: [{ value: 12, date: daysAgo(2) }, { value: 12.4, date: daysAgo(1) }] })
