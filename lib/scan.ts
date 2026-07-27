@@ -25,7 +25,7 @@ interface ScanParams {
   pregnancy?: PregnancyScanContext | null
   /** Active journey mode — lets the edge fn pick the right persona when both
    *  child and pregnancy context are absent/ambiguous. */
-  mode?: 'pre-pregnancy' | 'pregnancy' | 'kids'
+  mode?: 'pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause'
 }
 
 function getAgeInMonths(birthDate: string): number {

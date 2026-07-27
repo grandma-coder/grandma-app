@@ -61,10 +61,12 @@ const PALETTES: Record<GrandmaLogoPalette, PaletteColors> = {
 }
 
 // Mode → palette. 'auto' reads the current useModeStore.
-const MODE_PALETTE: Record<'pre-pregnancy' | 'pregnancy' | 'kids', GrandmaLogoPalette> = {
+const MODE_PALETTE: Record<'pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause', GrandmaLogoPalette> = {
   'pre-pregnancy': 'rose',
   pregnancy: 'lilac',
   kids: 'sky',
+  // Menopause (U1): warm sunset 'ember' palette matches the mode's ember accent.
+  menopause: 'ember',
 }
 
 // ---- Motion variants ----

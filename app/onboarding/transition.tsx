@@ -60,6 +60,15 @@ export default function TransitionScreen() {
       subtext: t('onboardingTransition_cycle_subtext'),
       route: '/onboarding/cycle',
     },
+    // Menopause (U1): placeholder content (reuses cycle copy/keys) so the map
+    // stays total. A later E1 task adds the real screen, copy, and queue entry.
+    menopause: {
+      sticker: <Moon size={96} fill={stickers.peach} />,
+      char: 'night',
+      heading: t('onboardingTransition_cycle_heading'),
+      subtext: t('onboardingTransition_cycle_subtext'),
+      route: '/onboarding/menopause',
+    },
 }
 
   const skipCurrentFlow = useOnboardingStore((s) => s.skipCurrentFlow)

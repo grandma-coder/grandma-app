@@ -14,11 +14,12 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { Behavior } from './useBehaviorStore'
 
-/** Priority order: pregnancy first, kids second, cycle last */
+/** Priority order: pregnancy first, kids second, cycle, menopause last */
 const PRIORITY: Record<Behavior, number> = {
   pregnancy: 0,
   kids: 1,
   'pre-pregnancy': 2,
+  menopause: 3,
 }
 
 interface OnboardingStore {

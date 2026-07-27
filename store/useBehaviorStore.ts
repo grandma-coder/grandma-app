@@ -10,7 +10,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-export type Behavior = 'pre-pregnancy' | 'pregnancy' | 'kids'
+export type Behavior = 'pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause'
 
 /**
  * The `behaviors` table CHECK constraint stores pre-pregnancy as `'cycle'`,

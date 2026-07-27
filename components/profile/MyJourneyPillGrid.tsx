@@ -11,6 +11,9 @@ const ICON_BY_BEHAVIOR = {
   'pre-pregnancy': ModeTrying,
   pregnancy: ModePregnant,
   kids: ModeParent,
+  // Menopause (U1): placeholder icon; PILL_ORDER below still lists only the 3
+  // wired journeys, so this is type-completeness only until a later E1 task.
+  menopause: ModeTrying,
 } as const
 
 const PILL_ORDER: Array<{ behavior: Behavior; label: string }> = [

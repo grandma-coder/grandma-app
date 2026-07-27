@@ -72,6 +72,8 @@ const GLYPH_BY_MODE: Record<JourneyMode, Record<StickerColorKey, StickerGlyph>> 
   pregnancy: GLYPH_PREGNANCY,
   'pre-pregnancy': GLYPH_PREPREGNANCY,
   kids: GLYPH_PREGNANCY, // no kids bank yet; safe default keeps the type total
+  // Menopause (U1): reuse the cycle/women's glyph bank — closest match; keeps total.
+  menopause: GLYPH_PREPREGNANCY,
 }
 
 export function cardGlyph(color: StickerColorKey, mode: JourneyMode = 'pregnancy'): StickerGlyph {

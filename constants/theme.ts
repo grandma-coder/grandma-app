@@ -36,11 +36,13 @@ export const brand = {
   prePregnancy: '#E58BB4',   // rose
   pregnancy: '#B7A6E8',      // lavender
   kids: '#8BB8E8',           // powder blue
+  menopause: '#E8975A',      // warm ember
 
   // Journey mode soft tints
   prePregnancySoft: '#F7CFDD',
   pregnancySoft: '#E0D5F3',
   kidsSoft: '#D4E3F3',
+  menopauseSoft: '#F7E3D2',
 
   // Cycle phase colors
   phase: {
@@ -332,10 +334,11 @@ export function useTheme() {
 
 // ─── MODE COLOR HELPERS ────────────────────────────────────────────────────
 
-export function getModeColor(mode: 'pre' | 'preg' | 'kids' | 'care' | string, isDark = false): string {
+export function getModeColor(mode: 'pre' | 'preg' | 'kids' | 'care' | 'meno' | string, isDark = false): string {
   if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#EFA2C2' : brand.prePregnancy
   if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#C4B5EF' : brand.pregnancy
   if (mode === 'kids') return isDark ? '#A5C9F0' : brand.kids
+  if (mode === 'meno' || mode === 'menopause') return isDark ? '#F0B074' : brand.menopause
   // Caregiver — scaffold. Uses the Diffuse care accent so a caller passing
   // 'care' gets a sensible color instead of the pregnancy fallback. No screens
   // pass 'care' yet; existing callers are unaffected.
@@ -343,10 +346,11 @@ export function getModeColor(mode: 'pre' | 'preg' | 'kids' | 'care' | string, is
   return isDark ? '#C4B5EF' : brand.pregnancy
 }
 
-export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | 'care' | string, isDark = false): string {
+export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | 'care' | 'meno' | string, isDark = false): string {
   if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#3A2730' : brand.prePregnancySoft
   if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#2D2842' : brand.pregnancySoft
   if (mode === 'kids') return isDark ? '#1F2A3A' : brand.kidsSoft
+  if (mode === 'meno' || mode === 'menopause') return isDark ? '#3A2C1E' : brand.menopauseSoft
   if (mode === 'care' || mode === 'caregiver') return isDark ? '#18302F' : '#D2EAEE'
   return isDark ? '#2D2842' : brand.pregnancySoft
 }
@@ -649,7 +653,7 @@ export interface DiffuseField {
   accentSoft: string
 }
 
-export const diffuseFields: Record<'pre' | 'preg' | 'kids' | 'care', DiffuseField> = {
+export const diffuseFields: Record<'pre' | 'preg' | 'kids' | 'care' | 'meno', DiffuseField> = {
   // CYCLE — coral → rose → lilac → peach
   pre: { g1: '#F0A99A', g2: '#F0B8C8', g3: '#C9B7E6', g4: '#F7DCC0', accent: '#C25872', accentSoft: '#F6DCE4' },
   // PREGNANCY — peach → blush → plum → gold
@@ -658,16 +662,19 @@ export const diffuseFields: Record<'pre' | 'preg' | 'kids' | 'care', DiffuseFiel
   kids: { g1: '#F4D888', g2: '#A2D8B4', g3: '#A6BCE6', g4: '#F4B396', accent: '#4C79CE', accentSoft: '#CBDCF7' },
   // CAREGIVER — teal → blue → mint → sky  (scaffold)
   care: { g1: '#A6D6DC', g2: '#B0C0E4', g3: '#C6E7D9', g4: '#D4E1F0', accent: '#4A8496', accentSoft: '#D2EAEE' },
+  // MENOPAUSE — warm ember: peach → apricot → amber → cream
+  meno: { g1: '#F5C89A', g2: '#F0B27A', g3: '#E8975A', g4: '#F7DCC0', accent: '#C2703A', accentSoft: '#F7E3D2' },
 } as const
 
 // ─── DIFFUSE MODE HELPERS ──────────────────────────────────────────────────
-// Maps the app's JourneyMode keys ('pre-pregnancy' | 'pregnancy' | 'kids')
-// and the short v3 keys ('pre'|'preg'|'kids'|'care') onto a field.
+// Maps the app's JourneyMode keys ('pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause')
+// and the short v3 keys ('pre'|'preg'|'kids'|'care'|'meno') onto a field.
 
-function resolveFieldKey(mode: string): 'pre' | 'preg' | 'kids' | 'care' {
+function resolveFieldKey(mode: string): 'pre' | 'preg' | 'kids' | 'care' | 'meno' {
   if (mode === 'pre' || mode === 'pre-pregnancy') return 'pre'
   if (mode === 'preg' || mode === 'pregnancy') return 'preg'
   if (mode === 'kids') return 'kids'
+  if (mode === 'meno' || mode === 'menopause') return 'meno'
   if (mode === 'care' || mode === 'caregiver') return 'care'
   return 'preg'
 }

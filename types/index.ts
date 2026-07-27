@@ -28,7 +28,7 @@ export interface Message {
   createdAt: string
 }
 
-export type JourneyMode = 'pre-pregnancy' | 'pregnancy' | 'kids'
+export type JourneyMode = 'pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause'
 
 // Kids pillars
 export type KidsPillarId = 'milk' | 'food' | 'nutrition' | 'vaccines' | 'clothes' | 'recipes' | 'habits' | 'medicine' | 'milestones'

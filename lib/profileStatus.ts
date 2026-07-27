@@ -64,5 +64,9 @@ export function getSubtitleFor(behavior: Behavior): string {
       return getPregnancySubtitle()
     case 'kids':
       return getKidsSubtitle()
+    // Menopause foundation (U1): no dedicated subtitle helper yet (E1 later
+    // tasks add the home surface). Neutral placeholder keeps the switch total.
+    case 'menopause':
+      return ''
   }
 }

@@ -20,6 +20,7 @@ export function ModeSwitcher() {
     { id: 'pre-pregnancy', label: cycleIntent === 'ttc' ? 'Dreaming' : 'Cycle' },
     { id: 'pregnancy', label: 'Expecting' },
     { id: 'kids', label: 'Raising' },
+    { id: 'menopause', label: 'Menopause' },
   ]
 
   function handlePress(m: JourneyMode) {

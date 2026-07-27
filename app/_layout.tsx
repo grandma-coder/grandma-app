@@ -382,7 +382,7 @@ export default function RootLayout() {
         authLog(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
       }
       const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
-      const serverTypes: ('pre-pregnancy' | 'pregnancy' | 'kids')[] =
+      const serverTypes: ('pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause')[] =
         dbBehaviors?.map((b: any) => behaviorFromDbType(b.type)) ?? []
       if (localBehaviors.length === 0 && serverTypes.length > 0) {
         useBehaviorStore.getState().setBehaviors(serverTypes)

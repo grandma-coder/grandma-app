@@ -113,10 +113,31 @@ const KIDS_CONFIG: ModeConfig = {
   aiContextLabel: 'kids',
 }
 
+const MENOPAUSE_CONFIG: ModeConfig = {
+  tabs: {
+    index: { visible: true, label: 'Home', icon: 'home-outline' },
+    agenda: { visible: true, label: 'Calendar', icon: 'calendar-outline' },
+    // E3 adds education; hidden for now.
+    library: { visible: false, label: 'Library', icon: 'book-outline' },
+    // Vault slot repurposed as Analytics, exactly like the cycle mode.
+    vault: { visible: true, label: 'Insights', icon: 'bar-chart-outline' },
+    exchange: { visible: false, label: 'Garage', icon: 'pricetag-outline' },
+    settings: { visible: true, label: 'Settings', icon: 'settings-outline' },
+  },
+  agendaTabs: [
+    { id: 'symptoms', label: 'Symptoms', icon: 'pulse-outline' },
+  ],
+  pillars: [],
+  vaultSections: [],
+  exchangeFilters: [],
+  aiContextLabel: 'menopause',
+}
+
 const MODE_CONFIGS: Record<JourneyMode, ModeConfig> = {
   'pre-pregnancy': PRE_PREGNANCY_CONFIG,
   'pregnancy': PREGNANCY_CONFIG,
   'kids': KIDS_CONFIG,
+  'menopause': MENOPAUSE_CONFIG,
 }
 
 export function getModeConfig(mode: JourneyMode): ModeConfig {

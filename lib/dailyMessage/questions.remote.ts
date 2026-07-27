@@ -58,7 +58,7 @@ export async function hydrateDailyQuestions(): Promise<void> {
       .order('sort', { ascending: true })
     if (error || !data) return
 
-    const next: Bank = { 'pre-pregnancy': [], pregnancy: [], kids: [] }
+    const next: Bank = { 'pre-pregnancy': [], pregnancy: [], kids: [], menopause: [] }
     for (const row of data as Row[]) {
       const q = toQuestion(row)
       if (q) next[q.mode].push(q)

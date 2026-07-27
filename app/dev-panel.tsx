@@ -117,6 +117,8 @@ const PILLARS_BY_MODE: Record<JourneyMode, Array<{ id: string; name: string }>> 
   'pre-pregnancy': prePregPillars.map((p) => ({ id: p.id, name: p.name })),
   pregnancy: pregnancyPillars.map((p) => ({ id: p.id, name: p.name })),
   kids: pillars.map((p) => ({ id: p.id, name: p.name })),
+  // Menopause (U1): no pillars in E1 (MENOPAUSE_CONFIG.pillars is []).
+  menopause: [],
 }
 
 export default function DevPanel() {

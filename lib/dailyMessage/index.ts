@@ -7,10 +7,10 @@ import { PREPREGNANCY_CARDS } from './cards.prePregnancy'
 import { getRemoteQuestionsForMode, getAllRemoteQuestions } from './questions.remote'
 
 const QUESTIONS_BY_MODE: Record<JourneyMode, DailyQuestion[]> = {
-  'pre-pregnancy': PREPREGNANCY_QUESTIONS, pregnancy: PREGNANCY_QUESTIONS, kids: [],
+  'pre-pregnancy': PREPREGNANCY_QUESTIONS, pregnancy: PREGNANCY_QUESTIONS, kids: [], menopause: [],
 }
 const CARDS_BY_MODE: Record<JourneyMode, DailyCard[]> = {
-  'pre-pregnancy': PREPREGNANCY_CARDS, pregnancy: PREGNANCY_CARDS, kids: [],
+  'pre-pregnancy': PREPREGNANCY_CARDS, pregnancy: PREGNANCY_CARDS, kids: [], menopause: [],
 }
 
 // Lookups search every populated bank — a saved daily_messages row references a

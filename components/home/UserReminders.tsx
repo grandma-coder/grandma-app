@@ -43,10 +43,11 @@ interface Props {
 
 // getModeColor / getDiffuseAccent take slightly different mode ids than
 // JourneyMode; map here so a single `context` prop drives both.
-const DIFFUSE_MODE: Record<JourneyMode, 'preg' | 'prePreg' | 'kids'> = {
+const DIFFUSE_MODE: Record<JourneyMode, 'preg' | 'prePreg' | 'kids' | 'meno'> = {
   pregnancy: 'preg',
   'pre-pregnancy': 'prePreg',
   kids: 'kids',
+  menopause: 'meno',
 }
 
 function formatTime12h(hhmm: string): string {

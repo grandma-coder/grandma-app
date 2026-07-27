@@ -293,6 +293,7 @@ const BEHAVIOR_LABELS: Record<Behavior, string> = {
   'pre-pregnancy': 'Pre-Preg',
   pregnancy: 'Pregnancy',
   kids: 'Kids',
+  menopause: 'Menopause',
 }
 
 // Map Behavior → mode key used by getModeColor()

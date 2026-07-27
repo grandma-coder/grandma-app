@@ -42,6 +42,8 @@ const FIRST_ROUTE: Record<Behavior, string> = {
   'pre-pregnancy': '/onboarding/cycle',
   pregnancy: '/onboarding/pregnancy',
   kids: '/onboarding/kids',
+  // Menopause (U1): route stub; the JOURNEYS option + screen land in a later E1 task.
+  menopause: '/onboarding/menopause',
 }
 
 export default function JourneyScreen() {
