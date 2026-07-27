@@ -87,3 +87,68 @@ describe('buildInsightHighlights honesty', () => {
     expect(h.message).toMatch(/strength/i)
   })
 })
+
+// The 4 tests above never isolate the PER-PILLAR confidence gate from the
+// OVERALL (master) gate — every low-confidence-pillar fixture also happened
+// to have a low `overallConfidence`, so the master gate alone explains the
+// suppressed output. A regression that deleted the individual
+// `scores[highest].confidence >= LOW_CONF` / `scores[lowest].confidence >=
+// LOW_CONF` checks (leaving only the overall gate) would still pass all 4 —
+// exactly the "Nutrition is a strength off one meal while the rest of the
+// week is well-logged" scenario the honest-scores spec cares about. These
+// two tests hold `overallConfidence` >= LOW_CONF (computed from the actual
+// confidence-weighted formula in `buildScores`, not guessed) while a single
+// pillar's OWN confidence stays below LOW_CONF, so only the per-pillar gate
+// can explain the suppression.
+describe('buildInsightHighlights — per-pillar gate isolated from the overall gate', () => {
+  it('does not call a high-value pillar a strength when only its OWN confidence is low (overallConfidence clears the bar)', () => {
+    // Present pillars: nutrition (highest value, LOW confidence), sleep,
+    // health. buildScores' confidence-weighted overallConfidence formula is
+    // sum(confidence_i * weight_i) / sum(weight_i) over present pillars
+    // (weights: nutrition .27, sleep .22, health .13):
+    //   (0.2*0.27 + 0.9*0.22 + 0.9*0.13) / (0.27 + 0.22 + 0.13)
+    //   = (0.054 + 0.198 + 0.117) / 0.62 = 0.369 / 0.62 = 0.59516...  → 0.60
+    // 0.60 >= LOW_CONF (0.4), so the master/overall gate does NOT suppress —
+    // only nutrition's own 0.2 confidence can explain it being withheld.
+    const scores = {
+      overall: 7,
+      overallConfidence: 0.6,
+      nutrition: { value: 10, label: 'excellent', trend: 0, hasData: true, confidence: 0.2 },
+      sleep: { value: 5, label: 'needs attention', trend: 0, hasData: true, confidence: 0.9 },
+      mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      health: { value: 6, label: 'fair', trend: 0, hasData: true, confidence: 0.9 },
+      growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    }
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Zoe', 24, null)
+    expect(h.strength).toBeNull()
+    expect(h.message).not.toMatch(/strength/i)
+  })
+
+  it('does not call a low-value pillar a concern when only its OWN confidence is low (overallConfidence clears the bar)', () => {
+    // Present pillars: nutrition, health (both confident), sleep (lowest
+    // value, LOW confidence). Same formula (weights: nutrition .27,
+    // health .13, sleep .22):
+    //   (0.9*0.27 + 0.9*0.13 + 0.2*0.22) / (0.27 + 0.13 + 0.22)
+    //   = (0.243 + 0.117 + 0.044) / 0.62 = 0.404 / 0.62 = 0.65161...  → 0.65
+    // 0.65 >= LOW_CONF, so the master gate does NOT suppress — only sleep's
+    // own 0.2 confidence can explain the concern being withheld. Nutrition's
+    // strength (confidence 0.9) firing alongside proves this isn't a global
+    // misfire — only the concern branch is gated.
+    const scores = {
+      overall: 6,
+      overallConfidence: 0.65,
+      nutrition: { value: 9, label: 'excellent', trend: 0, hasData: true, confidence: 0.9 },
+      sleep: { value: 2, label: 'low', trend: 0, hasData: true, confidence: 0.2 },
+      mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      health: { value: 8, label: 'good', trend: 0, hasData: true, confidence: 0.9 },
+      growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    }
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Theo', 28, null)
+    expect(h.concern).toBeNull()
+    expect(h.message).not.toMatch(/main area to work on|main focus/i)
+    expect(h.strength).not.toBeNull()
+    expect(h.strength?.pillar).toBe('nutrition')
+  })
+})
