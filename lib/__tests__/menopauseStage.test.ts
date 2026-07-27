@@ -6,6 +6,11 @@ describe('menopauseStage', () => {
   it('returns null months when no date', () => {
     expect(monthsSinceDate(null, NOW)).toBeNull()
   })
+  it('returns null for out-of-range / malformed dates', () => {
+    expect(monthsSinceDate('2026-13-01', NOW)).toBeNull()
+    expect(monthsSinceDate('2026-02-30', NOW)).toBeNull()
+    expect(monthsSinceDate('garbage', NOW)).toBeNull()
+  })
   it('counts whole months since a date', () => {
     expect(monthsSinceDate('2026-04-25', NOW)).toBe(3)
     expect(monthsSinceDate('2025-07-25', NOW)).toBe(12)

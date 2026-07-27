@@ -5,6 +5,14 @@ export function monthsSinceDate(fromISO: string | null, now: Date): number | nul
   if (!fromISO) return null
   const [y, m, d] = fromISO.split('-').map(Number)
   if (!y || !m || !d) return null
+  // Reject impossible dates (e.g. '2026-13-01', '2026-02-30') via a round-trip:
+  // a valid Y-M-D reconstructs to the same components, an invalid one rolls over.
+  // Guards shouldOfferMenopauseUpdate against a corrupted stored date producing
+  // a bogus month count instead of null.
+  const probe = new Date(Date.UTC(y, m - 1, d))
+  if (probe.getUTCFullYear() !== y || probe.getUTCMonth() !== m - 1 || probe.getUTCDate() !== d) {
+    return null
+  }
   let months = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m)
   if (now.getDate() < d) months -= 1 // not yet a full month into the current one
   return Math.max(0, months)
