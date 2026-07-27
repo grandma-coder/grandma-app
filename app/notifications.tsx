@@ -297,9 +297,10 @@ const BEHAVIOR_LABELS: Record<Behavior, string> = {
 }
 
 // Map Behavior → mode key used by getModeColor()
-function behaviorToMode(b: Behavior): 'pre' | 'preg' | 'kids' {
+function behaviorToMode(b: Behavior): 'pre' | 'preg' | 'kids' | 'meno' {
   if (b === 'pre-pregnancy') return 'pre'
   if (b === 'pregnancy') return 'preg'
+  if (b === 'menopause') return 'meno'   // Menopause (U1): ember, not kids-blue
   return 'kids'
 }
 
