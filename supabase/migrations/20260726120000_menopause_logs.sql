@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS menopause_logs (
   value      text,                          -- free/enum text (e.g. flow level)
   severity   smallint,                      -- 1..5 for symptoms, null for events
   notes      text,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 ALTER TABLE menopause_logs ENABLE ROW LEVEL SECURITY;
@@ -21,9 +22,17 @@ CREATE POLICY "menopause_logs owner" ON menopause_logs
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE INDEX IF NOT EXISTS menopause_logs_user_id_idx    ON menopause_logs (user_id);
-CREATE INDEX IF NOT EXISTS menopause_logs_date_idx       ON menopause_logs (date);
-CREATE INDEX IF NOT EXISTS menopause_logs_created_at_idx ON menopause_logs (created_at);
+-- Composite index serves the analytics hot path (WHERE user_id = ? AND date
+-- BETWEEN ? AND ?), mirroring cycle_logs/pregnancy_logs; created_at for recency.
+CREATE INDEX IF NOT EXISTS idx_menopause_logs_user_date  ON menopause_logs (user_id, date);
+CREATE INDEX IF NOT EXISTS idx_menopause_logs_created_at ON menopause_logs (created_at);
+
+-- Keep updated_at fresh on edits, reusing the shared trigger fn
+-- (20260617140000_log_updated_at.sql) — matches cycle_logs/pregnancy_logs.
+DROP TRIGGER IF EXISTS set_menopause_logs_updated_at ON menopause_logs;
+CREATE TRIGGER set_menopause_logs_updated_at
+  BEFORE UPDATE ON menopause_logs
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- Stage machine source of truth (single location — profiles).
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS menopause_stage  text;   -- 'peri' | 'meno' | 'post'
