@@ -56,6 +56,7 @@ export function KidsPillarBands({ items, onPillarPress }: Props) {
     <View style={[styles.wrap, { borderColor: colors.line, backgroundColor: colors.surface }]}>
       {sorted.map((item, i) => {
         const has = !!item.score?.hasData
+        const low = has && (item.score!.confidence ?? 1) < 0.4
         const focus = i === 0 // top row = needs-attention focus
         const ink = colors.ink
         return (
@@ -78,11 +79,15 @@ export function KidsPillarBands({ items, onPillarPress }: Props) {
               </Text>
               {item.takeaway ? (
                 <Text style={[styles.takeaway, { color: colors.ink2 }]} numberOfLines={1}>
-                  {item.takeaway}
+                  {item.takeaway}{low ? '  ·  low data' : ''}
+                </Text>
+              ) : low ? (
+                <Text style={[styles.takeaway, { color: colors.ink3 }]} numberOfLines={1}>
+                  low data
                 </Text>
               ) : null}
             </View>
-            <Text style={[styles.value, focus && styles.valueFocus, { color: has ? ink : colors.ink3 }]}>
+            <Text style={[styles.value, focus && styles.valueFocus, { color: has ? (low ? colors.ink3 : ink) : colors.ink3 }]}>
               {has ? item.score!.value.toFixed(1) : '—'}
             </Text>
           </Pressable>
