@@ -101,6 +101,7 @@ import { computeCrossInsights } from '../../lib/kidsCrossInsights'
 import {
   buildInsightHighlights,
   type InsightHighlights,
+  LOW_CONF,
 } from '../../lib/kidsInsightHighlights'
 import { supabase } from '../../lib/supabase'
 import { runWellnessNotifications } from '../../lib/notificationEngine'
@@ -880,6 +881,7 @@ export function KidsAnalytics() {
                   caption={`${t('kids_analytics_thriving_breakdown')} · ${band}`.toUpperCase()}
                   childName={childName}
                   band={band}
+                  lowConfidence={s.overallConfidence < LOW_CONF}
                 />
                 {highlights.message ? (
                   <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 20, color: dt.colors.ink2, borderLeftWidth: 2, borderLeftColor: dt.colors.line2, paddingLeft: 12, marginTop: 10, marginBottom: 12 }}>

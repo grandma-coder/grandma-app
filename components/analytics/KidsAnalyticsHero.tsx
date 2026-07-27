@@ -18,13 +18,18 @@ interface Props {
   /** Serif read line, e.g. "Bahia is developing." — `emphasis` renders bold. */
   childName: string
   band: string          // the plain band word: "thriving" | "on track" | "developing" | "needs care"
+  /** True when overall confidence is thin — appends a "LOW DATA" tag so the score doesn't read as authoritative. */
+  lowConfidence?: boolean
 }
 
-export function KidsAnalyticsHero({ overall, hasData, caption, childName, band }: Props) {
+export function KidsAnalyticsHero({ overall, hasData, caption, childName, band, lowConfidence }: Props) {
   const { colors } = useDiffuseTheme()
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.cap, { color: colors.ink3 }]}>{caption}</Text>
+      <Text style={[styles.cap, { color: colors.ink3 }]}>
+        {caption}
+        {lowConfidence && ' · LOW DATA'}
+      </Text>
       <Text style={[styles.hero, { color: colors.ink }]}>
         {hasData ? overall.toFixed(1) : '—'}
         <Text style={[styles.slash, { color: colors.ink3 }]}> / 10</Text>
