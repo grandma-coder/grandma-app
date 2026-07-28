@@ -153,6 +153,7 @@ export async function fetchBehaviorMetrics(behavior: string): Promise<BehaviorMe
   const table =
     behavior === 'pre-pregnancy' ? 'cycle_logs'
     : behavior === 'pregnancy' ? 'pregnancy_logs'
+    : behavior === 'menopause' ? 'menopause_logs'
     : 'child_logs'
 
   const { data: logs, error } = await supabase
