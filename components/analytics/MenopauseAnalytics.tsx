@@ -83,8 +83,11 @@ export function MenopauseAnalytics() {
 
   const hydrated = useMenopauseStore((s) => s.hydrated)
   const storeStage = useMenopauseStore((s) => s.stage)
-  const lastPeriodDate = useMenopauseStore((s) => s.lastPeriodDate)
+  const storeLastPeriodDate = useMenopauseStore((s) => s.lastPeriodDate)
+  // Gate BOTH store fields on hydration — reading lastPeriodDate before the
+  // AsyncStorage rehydrate lands would flash a wrong "months since" value.
   const stage = hydrated ? storeStage : null
+  const lastPeriodDate = hydrated ? storeLastPeriodDate : null
 
   const vaso = useMemo(() => computeVasomotorFrequency(rows), [rows])
   const symptomStats = useMemo(() => computeSymptomStats(rows), [rows])
