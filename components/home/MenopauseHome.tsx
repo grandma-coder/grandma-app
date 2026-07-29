@@ -32,6 +32,10 @@ import { PillButton } from '../ui/PillButton'
 import { BrandedLoader } from '../ui/BrandedLoader'
 import { LogSheet } from '../calendar/LogSheet'
 import { Character } from '../characters/Characters'
+import { HomeGreeting } from './HomeGreeting'
+import { HomeJourneySwitcher } from './HomeJourneySwitcher'
+import { useProfile } from '../../lib/useProfile'
+import { useJourneyStore } from '../../store/useJourneyStore'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
 import { MenopauseSymptomForm, MenopausePeriodForm } from '../menopause/MenopauseLogForms'
@@ -101,6 +105,10 @@ export function MenopauseHome() {
   const stage = useMenopauseStore((s) => s.stage)
   const lastPeriodDate = useMenopauseStore((s) => s.lastPeriodDate)
 
+  const parentName = useJourneyStore((s) => s.parentName)
+  const { data: profile } = useProfile()
+  const displayName = profile?.name ?? parentName
+
   const { data } = useMenopauseLogs()
   const rows = useMemo<MenopauseLogRow[]>(() => data ?? [], [data])
 
@@ -121,6 +129,8 @@ export function MenopauseHome() {
 
   // Which log sheet (if any) is open. Both reuse U7's forms verbatim.
   const [activeSheet, setActiveSheet] = useState<'symptom' | 'period' | null>(null)
+  // The symptom a quick-log chip pre-selects, so the sheet opens on severity.
+  const [pendingSymptom, setPendingSymptom] = useState<MenopauseSymptomId | null>(null)
   // The 12-month offer is dismissible for the session only (never persisted —
   // it re-surfaces next launch until the user updates their stage).
   const [offerDismissed, setOfferDismissed] = useState(false)
@@ -183,6 +193,8 @@ export function MenopauseHome() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <HomeGreeting name={displayName} microLabel={microLabel} trailing={<HomeJourneySwitcher />} />
+
         {/* ─── Hero — stage + months-since-last-period counter ─────────────── */}
         <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={20} style={styles.section}>
           <View style={styles.heroTop}>
@@ -261,7 +273,7 @@ export function MenopauseHome() {
           </Text>
           <View style={styles.chipWrap}>
             {trackedIds.map((id) => (
-              <QuickChip key={id} id={id} pal={pal} onPress={() => setActiveSheet('symptom')} />
+              <QuickChip key={id} id={id} pal={pal} onPress={() => { setPendingSymptom(id); setActiveSheet('symptom') }} />
             ))}
           </View>
         </PaperCard>
@@ -329,7 +341,7 @@ export function MenopauseHome() {
         title="Log a symptom"
         onClose={() => setActiveSheet(null)}
       >
-        <MenopauseSymptomForm onSaved={() => setActiveSheet(null)} />
+        <MenopauseSymptomForm initialId={pendingSymptom ?? undefined} onSaved={() => { setActiveSheet(null); setPendingSymptom(null) }} />
       </LogSheet>
       <LogSheet
         visible={activeSheet === 'period'}

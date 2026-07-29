@@ -55,9 +55,10 @@ const COPY = {
 // Symptom form
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function MenopauseSymptomForm({ onSaved }: { onSaved: () => void }) {
+export function MenopauseSymptomForm({ onSaved, initialId }: { onSaved: () => void; initialId?: MenopauseSymptomId }) {
   const pal = useMenoPalette()
-  const [symptomId, setSymptomId] = useState<MenopauseSymptomId | null>(null)
+  // Pre-select when opened from a home quick-log chip (skips straight to severity).
+  const [symptomId, setSymptomId] = useState<MenopauseSymptomId | null>(initialId ?? null)
   const [severity, setSeverity] = useState(3)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
