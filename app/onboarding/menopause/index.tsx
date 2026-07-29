@@ -45,8 +45,10 @@ import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
 import { useMenopauseOnboardingStore } from '../../../store/useMenopauseOnboardingStore'
 import { useMenopauseStore } from '../../../store/useMenopauseStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
-import { useModeStore } from '../../../store/useModeStore'
 import { supabase } from '../../../lib/supabase'
+import { useJourneyStore } from '../../../store/useJourneyStore'
+import { isDevModeActive } from '../../../store/useDevStore'
+import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import type { MenopauseStage } from '../../../lib/menopauseStage'
 import {
   ALL_MENOPAUSE_SYMPTOMS,
@@ -102,7 +104,9 @@ function useMenoPalette() {
   if (diffuse) {
     return {
       diffuse: true,
-      radius,
+      // Diffuse must never borrow current-system radius — use dt.radius so the
+      // whole palette stays inside one token set (no current+Diffuse mixing).
+      radius: dt.radius,
       accent: getDiffuseAccent('menopause', dt.isDark),
       accentSoft: getDiffuseAccentSoft('menopause', dt.isDark),
       bg: dt.colors.bg,
@@ -152,6 +156,7 @@ function getSteps(stage: MenopauseStage | null): StepId[] {
 
 export default function MenopauseOnboarding() {
   const store = useMenopauseOnboardingStore()
+  const { handleComplete: onboardingComplete } = useOnboardingComplete()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -184,17 +189,39 @@ export default function MenopauseOnboarding() {
     const stage = store.stage
     const lastPeriodDate = store.lastPeriodDate
 
+    // Dev mode: dry run — skip every DB write AND the durable-store mutations
+    // below (useMenopauseStore is NOT in the dev snapshot, so writing it here
+    // would leak past exit()). Just clear the ephemeral buffer + advance the
+    // shared queue, exactly like the cycle flow's dev short-circuit.
+    if (isDevModeActive()) {
+      useMenopauseOnboardingStore.getState().reset()
+      return onboardingComplete('menopause')
+    }
+
     // DB writes are best-effort — a failure still enrolls locally + navigates so
     // the user is never stranded (mirrors the cycle flow's non-blocking finish).
     try {
       const { data } = await supabase.auth.getSession()
       const userId = data.session?.user.id
       if (userId) {
+        // upsert (NOT update): a menopause-first user has no profiles row yet,
+        // and .update() matches 0 rows — silently losing stage + last period.
+        // Persist journey mode + the shared name/dob (captured in the earlier
+        // "About you" step) alongside so a cold restart doesn't reset the mode.
+        const parentName = useJourneyStore.getState().parentName ?? null
+        const parentDob = useJourneyStore.getState().parentDob ?? null
+        const profilePayload: Record<string, unknown> = {
+          id: userId,
+          journey_mode: 'menopause',
+          menopause_stage: stage,
+          last_period_date: lastPeriodDate,
+        }
+        if (parentName) profilePayload.name = parentName
+        if (parentDob) profilePayload.dob = parentDob
         const { error: profileErr } = await supabase
           .from('profiles')
-          .update({ menopause_stage: stage, last_period_date: lastPeriodDate })
-          .eq('id', userId)
-        if (profileErr) console.warn('[menopause onboarding] profile update failed:', profileErr.message)
+          .upsert(profilePayload, { onConflict: 'id' })
+        if (profileErr) console.warn('[menopause onboarding] profile upsert failed:', profileErr.message)
 
         // 1:1 db behavior type (no alias, unlike pre-pregnancy → 'cycle').
         const { error: behaviorErr } = await supabase.from('behaviors').upsert(
@@ -210,9 +237,12 @@ export default function MenopauseOnboarding() {
     if (stage) useMenopauseStore.getState().setStage(stage)
     useMenopauseStore.getState().setLastPeriodDate(lastPeriodDate)
     useBehaviorStore.getState().enroll('menopause')
-    useModeStore.getState().setMode('menopause')
     useMenopauseOnboardingStore.getState().reset()
-    router.replace('/(tabs)')
+    // Shared onboarding-complete contract: advances the persisted onboarding
+    // queue (routes to the transition screen if more flows are queued) and flips
+    // the active mode via setModeUnsafe once the enroll above has landed.
+    // Replaces the old hardcoded setMode('menopause') + router.replace('/(tabs)').
+    onboardingComplete('menopause')
   }
 
   if (currentStep === 'complete') {
@@ -287,6 +317,7 @@ function StepStage({ step, total, onContinue }: { step: number; total: number; o
               onPress={() => setStage(opt.id)}
               style={[
                 styles.optionCard,
+                !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
                 {
                   backgroundColor: selected ? pal.accentSoft : pal.surface,
                   borderColor: selected ? pal.accent : pal.border,
@@ -410,10 +441,13 @@ function StepSymptoms({
                       onPress={() => toggle(s.id)}
                       style={[
                         styles.chip,
+                        !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
                         {
                           backgroundColor: selected ? pal.accentSoft : pal.surface,
                           borderColor: selected ? pal.accent : pal.border,
-                          borderRadius: pal.radius.full,
+                          // Diffuse has no `full` pill token — use its xl outline
+                          // shape; current keeps the sticker pill.
+                          borderRadius: pal.diffuse ? pal.radius.xl : pal.radius.full,
                         },
                       ]}
                     >
@@ -470,6 +504,7 @@ function TogglePill({ label, active, onPress }: { label: string; active: boolean
       onPress={onPress}
       style={[
         styles.togglePill,
+        !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
         {
           backgroundColor: active ? pal.accentSoft : pal.surface,
           borderColor: active ? pal.accent : pal.border,
@@ -547,6 +582,17 @@ function SummaryRow({
 }
 
 // ─── Styles (layout only — all colors/fonts injected from tokens) ────────────
+
+// Canonical hard-offset sticker shadow — CURRENT variant only (Diffuse stays
+// shadowless per the design brief). Geometry lives here; shadowColor is injected
+// per-call from the resolved palette ink. Mirrors cycle/index.tsx's
+// durationChip/conditionChip/togglePill sticker shadow.
+const STICKER_SHADOW = {
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 1,
+  shadowRadius: 0,
+  elevation: 3,
+} as const
 
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center', flex: 1 },
