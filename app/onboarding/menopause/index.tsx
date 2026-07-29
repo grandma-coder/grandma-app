@@ -31,6 +31,10 @@ import { Ionicons } from '@expo/vector-icons'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { PillButton } from '../../../components/ui/PillButton'
 import DatePickerField from '../../../components/ui/DatePickerField'
+import { BloomChips } from '../../../components/ui/diffuse/pickers/BloomChips'
+import { ChoiceTimeline } from '../../../components/ui/diffuse/pickers/ChoiceTimeline'
+import { PoleField } from '../../../components/ui/diffuse/pickers/PoleField'
+import { DiffuseDotCalendar } from '../../../components/ui/diffuse/DiffusePrimitives'
 import { Character, type CharacterName } from '../../../components/characters/Characters'
 import {
   useTheme,
@@ -40,6 +44,7 @@ import {
   getDiffuseAccent,
   getDiffuseAccentSoft,
   diffuseFont,
+  diffuseFields,
 } from '../../../constants/theme'
 import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
 import { useMenopauseOnboardingStore } from '../../../store/useMenopauseOnboardingStore'
@@ -93,6 +98,26 @@ const GROUP_META: Record<MenopauseGroup, { label: string; icon: CharacterName }>
   genitourinary: { label: 'Intimate', icon: 'heart' },
 }
 const GROUP_ORDER: MenopauseGroup[] = ['vasomotor', 'sleep', 'mood', 'physical', 'genitourinary']
+
+// Diffuse per-stage bloom hues for the ChoiceTimeline halos — the `meno` field ramp.
+const STAGE_BLOOMS = [diffuseFields.meno.g1, diffuseFields.meno.g2, diffuseFields.meno.g3]
+
+// The store keeps `lastPeriodDate` as an ISO 'YYYY-MM-DD' string; DiffuseDotCalendar
+// is controlled by a Date. Convert with LOCAL date parts (not toISOString) so an
+// evening selection west of UTC doesn't slide to the previous day. Mirrors the
+// cycle/kids onboarding helpers.
+function isoToDate(iso: string | null): Date {
+  if (!iso) return new Date()
+  const [y, m, d] = iso.split('-').map((p) => parseInt(p, 10))
+  if (!y || !m || !d) return new Date()
+  return new Date(y, m - 1, d)
+}
+function dateToIso(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 // ─── Resolved token palette (dual-variant, tokens only) ──────────────────────
 
@@ -308,38 +333,53 @@ function StepStage({ step, total, onContinue }: { step: number; total: number; o
       onContinue={onContinue}
       continueDisabled={!stage}
     >
-      <View style={styles.optionList}>
-        {STAGE_OPTIONS.map((opt) => {
-          const selected = stage === opt.id
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() => setStage(opt.id)}
-              style={[
-                styles.optionCard,
-                !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
-                {
-                  backgroundColor: selected ? pal.accentSoft : pal.surface,
-                  borderColor: selected ? pal.accent : pal.border,
-                  borderWidth: selected ? 1.5 : 1,
-                  borderRadius: pal.radius.lg,
-                },
-              ]}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: pal.bg, borderColor: pal.border }]}>
-                <Character name={opt.icon} size={30} color={pal.accent} bg={pal.bg} />
-              </View>
-              <View style={styles.optionText}>
-                <Text style={[styles.optionLabel, { color: pal.text, fontFamily: pal.fontDisplay }]}>{opt.label}</Text>
-                <Text style={[styles.optionDesc, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{opt.desc}</Text>
-              </View>
-              <View style={[styles.check, { backgroundColor: selected ? pal.accent : 'transparent', borderColor: selected ? pal.accent : pal.border }]}>
-                {selected && <Ionicons name="checkmark" size={15} color={pal.bg} />}
-              </View>
-            </Pressable>
-          )
-        })}
-      </View>
+      {pal.diffuse ? (
+        // Diffuse: shared vertical connector-line single-select (ring-dot nodes +
+        // per-stage bloom halo), matching the kids caregiver step.
+        <ChoiceTimeline
+          options={STAGE_OPTIONS.map((opt, i) => ({
+            key: opt.id,
+            label: opt.label,
+            sub: opt.desc,
+            bloomColor: STAGE_BLOOMS[i % STAGE_BLOOMS.length],
+          }))}
+          value={stage}
+          onChange={(k) => setStage(k as MenopauseStage)}
+        />
+      ) : (
+        <View style={styles.optionList}>
+          {STAGE_OPTIONS.map((opt) => {
+            const selected = stage === opt.id
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => setStage(opt.id)}
+                style={[
+                  styles.optionCard,
+                  { ...STICKER_SHADOW, shadowColor: pal.text },
+                  {
+                    backgroundColor: selected ? pal.accentSoft : pal.surface,
+                    borderColor: selected ? pal.accent : pal.border,
+                    borderWidth: selected ? 1.5 : 1,
+                    borderRadius: pal.radius.lg,
+                  },
+                ]}
+              >
+                <View style={[styles.optionIcon, { backgroundColor: pal.bg, borderColor: pal.border }]}>
+                  <Character name={opt.icon} size={30} color={pal.accent} bg={pal.bg} />
+                </View>
+                <View style={styles.optionText}>
+                  <Text style={[styles.optionLabel, { color: pal.text, fontFamily: pal.fontDisplay }]}>{opt.label}</Text>
+                  <Text style={[styles.optionDesc, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{opt.desc}</Text>
+                </View>
+                <View style={[styles.check, { backgroundColor: selected ? pal.accent : 'transparent', borderColor: selected ? pal.accent : pal.border }]}>
+                  {selected && <Ionicons name="checkmark" size={15} color={pal.bg} />}
+                </View>
+              </Pressable>
+            )
+          })}
+        </View>
+      )}
       <Text style={[styles.note, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{COPY.stageNote}</Text>
     </OnboardingStep>
   )
@@ -373,18 +413,28 @@ function StepLastPeriod({
       onSkip={onSkip}
       continueDisabled={!date}
     >
-      <View style={styles.centered}>
-        <DatePickerField
-          inline
-          label=""
-          value={date || ''}
-          onChange={setDate}
-          placeholder={COPY.lastPeriodSkip}
-          modalTitle={COPY.lastPeriodQ}
-          maximumDate={new Date()}
-          accentColor={pal.accent}
+      {pal.diffuse ? (
+        // Diffuse: shared hairline dot-grid calendar (bounds only via minimumDate,
+        // matching the cycle/kids date steps). The Continue gate still requires a pick.
+        <DiffuseDotCalendar
+          value={isoToDate(date || null)}
+          onChange={(d) => setDate(dateToIso(d))}
+          accent={pal.accent}
         />
-      </View>
+      ) : (
+        <View style={styles.centered}>
+          <DatePickerField
+            inline
+            label=""
+            value={date || ''}
+            onChange={setDate}
+            placeholder={COPY.lastPeriodSkip}
+            modalTitle={COPY.lastPeriodQ}
+            maximumDate={new Date()}
+            accentColor={pal.accent}
+          />
+        </View>
+      )}
     </OnboardingStep>
   )
 }
@@ -432,37 +482,49 @@ function StepSymptoms({
                   {meta.label}
                 </Text>
               </View>
-              <View style={styles.chipWrap}>
-                {items.map((s) => {
-                  const selected = symptoms.includes(s.id)
-                  return (
-                    <Pressable
-                      key={s.id}
-                      onPress={() => toggle(s.id)}
-                      style={[
-                        styles.chip,
-                        !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
-                        {
-                          backgroundColor: selected ? pal.accentSoft : pal.surface,
-                          borderColor: selected ? pal.accent : pal.border,
-                          // Diffuse has no `full` pill token — use its xl outline
-                          // shape; current keeps the sticker pill.
-                          borderRadius: pal.diffuse ? pal.radius.xl : pal.radius.full,
-                        },
-                      ]}
-                    >
-                      <Text
+              {pal.diffuse ? (
+                // Diffuse: shared hairline mono chip cluster (multi), one per group —
+                // matches the kids allergies step. Global symptom array is spliced
+                // per group so each BloomChips only owns its own ids.
+                <BloomChips
+                  options={items.map((s) => ({ key: s.id, label: s.label }))}
+                  value={symptoms.filter((id) => items.some((s) => s.id === id))}
+                  onChange={(next) => {
+                    const others = symptoms.filter((id) => !items.some((s) => s.id === id))
+                    setSymptoms([...others, ...(next as MenopauseSymptomId[])])
+                  }}
+                />
+              ) : (
+                <View style={styles.chipWrap}>
+                  {items.map((s) => {
+                    const selected = symptoms.includes(s.id)
+                    return (
+                      <Pressable
+                        key={s.id}
+                        onPress={() => toggle(s.id)}
                         style={[
-                          styles.chipText,
-                          { color: selected ? pal.accent : pal.textSecondary, fontFamily: pal.fontBodyMedium },
+                          styles.chip,
+                          { ...STICKER_SHADOW, shadowColor: pal.text },
+                          {
+                            backgroundColor: selected ? pal.accentSoft : pal.surface,
+                            borderColor: selected ? pal.accent : pal.border,
+                            borderRadius: pal.radius.full,
+                          },
                         ]}
                       >
-                        {s.label}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
-              </View>
+                        <Text
+                          style={[
+                            styles.chipText,
+                            { color: selected ? pal.accent : pal.textSecondary, fontFamily: pal.fontBodyMedium },
+                          ]}
+                        >
+                          {s.label}
+                        </Text>
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              )}
             </View>
           )
         })}
@@ -488,10 +550,23 @@ function StepHrt({ step, total, onContinue }: { step: number; total: number; onC
       sticker={<Character name="medicine" size={52} color={pal.accent} bg={pal.bg} />}
       onContinue={onContinue}
     >
-      <View style={styles.toggleRow}>
-        <TogglePill label={COPY.hrtYes} active={onHrt} onPress={() => setOnHrt(true)} />
-        <TogglePill label={COPY.hrtNo} active={!onHrt} onPress={() => setOnHrt(false)} />
-      </View>
+      {pal.diffuse ? (
+        // Diffuse: shared binary 2-blob single-select — matches the cycle
+        // temperature-tracking step.
+        <PoleField
+          options={[
+            { key: 'yes', label: COPY.hrtYes, color: diffuseFields.meno.g2 },
+            { key: 'no', label: COPY.hrtNo, color: diffuseFields.meno.g4 },
+          ]}
+          value={onHrt ? 'yes' : 'no'}
+          onChange={(k) => setOnHrt(k === 'yes')}
+        />
+      ) : (
+        <View style={styles.toggleRow}>
+          <TogglePill label={COPY.hrtYes} active={onHrt} onPress={() => setOnHrt(true)} />
+          <TogglePill label={COPY.hrtNo} active={!onHrt} onPress={() => setOnHrt(false)} />
+        </View>
+      )}
       <Text style={[styles.note, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{COPY.hrtNote}</Text>
     </OnboardingStep>
   )
