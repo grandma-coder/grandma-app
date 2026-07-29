@@ -62,7 +62,7 @@ interface OnboardingStepProps {
   continueDisabled?: boolean
   continueLabel?: string
   /** Diffuse variant: which mode's aura recipe backs the shell */
-  auraMode?: 'pre-pregnancy' | 'pregnancy' | 'kids'
+  auraMode?: 'pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause'
   /** Diffuse variant: explicit progress 0..1 for the hairline bar (defaults to step/total) */
   progress?: number
 }

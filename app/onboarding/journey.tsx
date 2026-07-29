@@ -16,7 +16,7 @@ import { useTheme, stickers, getModeColor, getModeColorSoft, useDiffuseTheme, di
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useOnboardingStore } from '../../store/useOnboardingStore'
 import { useModeStore } from '../../store/useModeStore'
-import { Flower, Heart, Star } from '../../components/ui/Stickers'
+import { Flower, Heart, Star, Sun } from '../../components/ui/Stickers'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
 import { PillButton } from '../../components/ui/PillButton'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -31,7 +31,7 @@ interface JourneyOption {
   title: string
   subtitle: string
   sticker: (color: string) => React.ReactNode
-  modeKey: 'pre' | 'preg' | 'kids'
+  modeKey: 'pre' | 'preg' | 'kids' | 'meno'
   /** Diffuse blob field: color (blob `--c` first stop) + CENTER anchor coords. */
   blobColor: string
   blobCx: string
@@ -87,6 +87,19 @@ export default function JourneyScreen() {
       blobColor: '#46C173',
       blobCx: '30%',
       blobCy: '62%',
+    },
+    {
+      // Menopause (E1). English literals — no menopause i18n keys exist yet;
+      // a later i18n wave extracts them. blobColor follows this array's vivid
+      // aura-field hex convention (ember, to match the `meno` field).
+      id: 'menopause',
+      title: 'Menopause',
+      subtitle: 'Change & wellbeing',
+      sticker: (color) => <Sun size={44} fill={color} />,
+      modeKey: 'meno',
+      blobColor: '#E8975A',
+      blobCx: '70%',
+      blobCy: '68%',
     },
   ]
 
