@@ -98,6 +98,7 @@ import {
 } from '../../lib/analyticsData'
 import { getAgeSleepTarget } from '../../lib/kidsScoring'
 import { computeCrossInsights } from '../../lib/kidsCrossInsights'
+import { buildHealthInsight } from '../../lib/kidsPillarInsights'
 import {
   buildInsightHighlights,
   type InsightHighlights,
@@ -3363,6 +3364,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  // Health's "show all care log" disclosure — collapsed by default so the
+  // observation-led lead is what a parent sees first, not the raw diary
+  // (spec: docs/superpowers/specs/2026-07-28-kids-insights-observation-led-content.md).
+  const [showCareLog, setShowCareLog] = useState(false)
 
   // Diffuse "explanation" block — hairline top rule, mono eyebrow, sans body.
   // Under the flag-off path we keep the paper card so behavior is unchanged.
@@ -3813,8 +3818,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       const doneVaccines = analytics.health.vaccines.filter((v) => v.done).length
       const totalVaccines = analytics.health.vaccines.length
       const vaccinePct = totalVaccines > 0 ? Math.round((doneVaccines / totalVaccines) * 100) : 0
-      const totalEvents = analytics.health.weeklyFrequency.reduce((a, b) => a + b, 0)
-      const concernEvents = analytics.health.concernEvents
+      // Observation-led lead + supporting copy (spec: kids-insights-observation-
+      // led-content §4 HEALTH) — replaces the old stat-trio/diary-first layout.
+      // Health carries no /10 score, so this IS the "how's my child doing" answer.
+      const insight = buildHealthInsight(analytics, ageMonths, childName)
 
       // Group events by type
       const eventsByType: Record<string, typeof analytics.health.recentEvents> = {}
@@ -3825,55 +3832,36 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
       return (
         <View style={styles.detailBody}>
-          {/* Summary card */}
-          <StatRow>
-            <StatPill label="Vaccines logged" value={`${doneVaccines}`} color={PILLAR_CONFIG.health.color} />
-            <StatPill label="Concerns" value={`${concernEvents}`} color={concernEvents === 0 ? brand.success : brand.accent} />
-            <StatPill label="Recent logs" value={`${totalEvents}`} color={colors.textMuted} />
-          </StatRow>
+          {/* Lead insight — the wellness read, not the raw log */}
+          <View style={{ gap: 8 }}>
+            <Text style={{
+              fontSize: diffuse ? 20 : 19,
+              lineHeight: diffuse ? 27 : 26,
+              color: diffuse ? dt.colors.ink : colors.text,
+              fontFamily: diffuse ? dt.typeRole.title : font.display,
+              letterSpacing: -0.2,
+            }}>
+              {insight.lead}
+            </Text>
+            {insight.supporting.map((line, i) => (
+              <Text
+                key={i}
+                style={[styles.detailExplain, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+              >
+                {line}
+              </Text>
+            ))}
+          </View>
 
           {/* Health is a reference, not a graded score */}
           <View style={[explainCardStyle]}>
             <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
             <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-              {`Health here is a reference, not a graded score. It tracks ${childName}'s vaccines and flags only genuine concerns — a fever, an injury, or a doctor visit. Everyday logs like a normal temperature check or a vitamin are routine care and don't count against anything. ${concernEvents === 0 ? 'Nothing to flag right now.' : `${concernEvents} concern${concernEvents !== 1 ? 's' : ''} flagged in this window.`}`}
+              {`Health here is a reference, not a graded score. It tracks ${childName}'s vaccines and flags only genuine concerns — a fever, an injury, or a doctor visit. Everyday logs like a normal temperature check or a vitamin are routine care and don't count against anything.`}
             </Text>
           </View>
 
-          {/* Recent events by type */}
-          {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
-            <View style={diffuse
-              ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
-              : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
-              <Text style={diffuse
-                ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
-                : [styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: font.display }]}>Recent care log</Text>
-              {Object.entries(eventsByType).map(([type, events]) => (
-                <View key={type} style={{ marginBottom: 14 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
-                    <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, fontWeight: '600', fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: 1.4 }}>
-                      {getHealthEventLabel(type).toUpperCase()}
-                    </Text>
-                  </View>
-                  {events.map((e, i) => (
-                    <View
-                      key={i}
-                      style={[styles.eventRow, { borderBottomColor: i < events.length - 1 ? (diffuse ? dt.colors.line : colors.border) : 'transparent' }]}
-                    >
-                      <View style={[styles.eventDot, { backgroundColor: diffuse ? dt.colors.ink3 : colors.textMuted }]} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.eventLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]} numberOfLines={1}>{e.label}</Text>
-                        <Text style={[styles.eventDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{e.date}</Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Weekly event frequency chart */}
+          {/* Weekly event frequency chart — the one supporting visual */}
           {analytics.health.hasData && (
             <ChartCard title="Care logged" onExpand={() => onFullScreen('health_freq')}>
               {diffuse ? (
@@ -3887,6 +3875,58 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                 <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={PILLAR_CONFIG.health.color} width={chartW} />
               )}
             </ChartCard>
+          )}
+
+          {/* Demoted raw care log — the lead above already says what matters;
+              this is the collapsed diary for a parent who wants to dig in. */}
+          {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
+            <View>
+              <Pressable
+                onPress={() => setShowCareLog((v) => !v)}
+                style={({ pressed }) => [
+                  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, opacity: pressed ? 0.6 : 1 },
+                ]}
+              >
+                <Text style={diffuse
+                  ? [styles.diffuseEyebrow, { color: dt.colors.ink3, marginBottom: 0 }]
+                  : [styles.chartTitle, { color: chartTitleColor, marginBottom: 0, fontFamily: font.display, fontSize: 14 }]}>
+                  {showCareLog ? 'Hide care log' : 'Show all care log'}
+                </Text>
+                <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 15 }}>{showCareLog ? '▾' : '▸'}</Text>
+              </Pressable>
+
+              {showCareLog && (
+                <View style={diffuse
+                  ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
+                  : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+                  <Text style={diffuse
+                    ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
+                    : [styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: font.display }]}>Recent care log</Text>
+                  {Object.entries(eventsByType).map(([type, events]) => (
+                    <View key={type} style={{ marginBottom: 14 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                        <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
+                        <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, fontWeight: '600', fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: 1.4 }}>
+                          {getHealthEventLabel(type).toUpperCase()}
+                        </Text>
+                      </View>
+                      {events.map((e, i) => (
+                        <View
+                          key={i}
+                          style={[styles.eventRow, { borderBottomColor: i < events.length - 1 ? (diffuse ? dt.colors.line : colors.border) : 'transparent' }]}
+                        >
+                          <View style={[styles.eventDot, { backgroundColor: diffuse ? dt.colors.ink3 : colors.textMuted }]} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.eventLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]} numberOfLines={1}>{e.label}</Text>
+                            <Text style={[styles.eventDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{e.date}</Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
           )}
 
           {/* Vaccine tracker */}

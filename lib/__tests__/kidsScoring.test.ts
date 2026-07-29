@@ -12,6 +12,7 @@ const health = (over: Partial<HealthData> = {}): HealthData => ({
   recentEvents: [],
   weeklyFrequency: [0, 1, 0, 0, 0, 0, 0],
   concernEvents: 0,
+  concernTimeline: [],
   vaccines: [{ name: 'MMR', done: true }, { name: 'Polio', done: false }],
   weekLabels: ['M','T','W','T','F','S','S'],
   hasData: true, ...over,

@@ -70,6 +70,12 @@ export interface HealthData {
    * notes) — routine logging (a normal temp reading, a routine medicine dose)
    * does NOT count here. `scoreHealth` penalizes this, never `weeklyFrequency`. */
   concernEvents: number
+  /** Dated fever/injury/doctor events backing `concernEvents` — enough to
+   * compute frequency, recency, clustering, and recovery from, without
+   * re-deriving concern classification from raw logs downstream (see
+   * `lib/kidsPillarInsights.ts` → `buildHealthInsight`). `date` is the raw
+   * log date (YYYY-MM-DD), NOT the display-formatted date in `recentEvents`. */
+  concernTimeline: { date: string; kind: 'fever' | 'injury' | 'doctor'; label: string }[]
   vaccines: { name: string; done: boolean }[]
   weekLabels: string[]
   hasData: boolean
@@ -421,12 +427,25 @@ function isConcernNote(value: string | null): boolean {
   return kind.includes('injur') || kind.includes('doctor') || kind.includes('sick')
 }
 
+// Which `concernTimeline` bucket a concern note falls in. 'sick' notes are
+// filed under 'doctor' (both read as "an illness worth a professional eye"
+// in the timeline, distinct from an 'injury') — there's no separate 'sick'
+// bucket in the union. Only called after `isConcernNote` has already
+// confirmed the note is a genuine concern, so the fallback is unreachable
+// in practice but kept honest rather than asserting non-null.
+function concernNoteKind(value: string | null): 'injury' | 'doctor' {
+  const rec = asRecord(parseValue(value))
+  const kind = String(rec?.eventType ?? '').toLowerCase()
+  return kind.includes('injur') ? 'injury' : 'doctor'
+}
+
 export function buildHealthData(logs: ChildLog[], dates: string[], labels: string[]): HealthData {
   const healthTypes = ['temperature', 'vaccine', 'medicine', 'note']
   const healthLogs = logs.filter((l) => healthTypes.includes(l.type))
 
   const weeklyFreq = new Array(dates.length).fill(0)
   const recentEvents: HealthData['recentEvents'] = []
+  const concernTimeline: HealthData['concernTimeline'] = []
   const vaccineNames = new Set<string>()
   let concernEvents = 0
 
@@ -436,16 +455,23 @@ export function buildHealthData(logs: ChildLog[], dates: string[], labels: strin
 
     const displayDate = new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     const typeLabel = log.type.charAt(0).toUpperCase() + log.type.slice(1)
-    recentEvents.push({ date: displayDate, type: typeLabel, label: healthEventLabel(log, typeLabel) })
+    const label = healthEventLabel(log, typeLabel)
+    recentEvents.push({ date: displayDate, type: typeLabel, label })
 
     if (log.type === 'vaccine' && log.value) {
       vaccineNames.add(typeof log.value === 'string' ? log.value : '')
     } else if (log.type === 'temperature' && isFeverTemperature(log.value)) {
       concernEvents++
+      concernTimeline.push({ date: log.date, kind: 'fever', label })
     } else if (log.type === 'note' && isConcernNote(log.value)) {
       concernEvents++
+      concernTimeline.push({ date: log.date, kind: concernNoteKind(log.value), label })
     }
   }
+
+  // Chronological (oldest first) so downstream frequency/recency/recovery
+  // math (`buildHealthInsight`) can rely on ordering without re-sorting.
+  concernTimeline.sort((a, b) => a.date.localeCompare(b.date))
 
   // Standard vaccine list with logged ones marked as done
   const standardVaccines = ['HepB', 'DTaP', 'IPV', 'Hib', 'PCV13', 'RV', 'MMR', 'Varicella']
@@ -458,6 +484,7 @@ export function buildHealthData(logs: ChildLog[], dates: string[], labels: strin
     recentEvents: recentEvents.slice(0, 5),
     weeklyFrequency: weeklyFreq,
     concernEvents,
+    concernTimeline,
     vaccines,
     weekLabels: labels,
     hasData: healthLogs.length > 0,
