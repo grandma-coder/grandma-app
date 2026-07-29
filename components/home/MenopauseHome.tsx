@@ -34,10 +34,11 @@ import { MenopauseWallet } from './MenopauseWallet'
 import { useProfile } from '../../lib/useProfile'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
-import { DiffuseStatCard, DiffuseSectionHeader, DiffuseListRow, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseStatCard, DiffuseSectionHeader, DiffuseListRow } from '../ui/diffuse/DiffusePrimitives'
 import { diffuseFields, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
+import { MenopauseDayStrip } from '../menopause/MenopauseDayStrip'
 import { MenopauseSymptomForm, MenopausePeriodForm } from '../menopause/MenopauseLogForms'
 import { symptomBlob, logTypeBlob } from '../menopause/menopauseIcons'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
@@ -247,6 +248,13 @@ export function MenopauseHome() {
           </PaperCard>
         )}
 
+        {/* ─── Day strip — at-a-glance "when did I log symptoms" (last 14 days) ─
+            The flat, non-cyclical equivalent of the cycle date strip: logged days
+            carry their symptom blob, empty days a muted pip, today ringed. */}
+        <View style={styles.section}>
+          <MenopauseDayStrip rows={rows} pal={pal} />
+        </View>
+
         {/* ─── 12-month offer — never automatic; a warm, dismissible prompt ─── */}
         {showOffer && (
           pal.diffuse ? (
@@ -330,11 +338,9 @@ export function MenopauseHome() {
           <View style={styles.section}>
             <DiffuseSectionHeader title="Recent" />
             {recent.length === 0 ? (
-              <DiffuseEmptyState
-                icon={<Character name="note" size={40} color={pal.accent} />}
-                title="Nothing logged yet"
-                message="Tap a signal above to note how you're feeling. Your notes will show up here."
-              />
+              <Text style={[styles.emptyText, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
+                Nothing logged yet — tap a signal above and it&apos;ll show up here.
+              </Text>
             ) : (
               <View>
                 {recent.map((r, i) => (
