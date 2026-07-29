@@ -7,6 +7,7 @@
  */
 
 import { supabase } from './supabase'
+import { ALL_MENOPAUSE_SYMPTOMS, type MenopauseSymptomId } from './menopauseSymptoms'
 
 const SYMPTOMS = [
   'Cramps', 'Headache', 'Bloating', 'Fatigue', 'Nausea',
@@ -193,6 +194,88 @@ export async function seedCycleData(): Promise<{ inserted: number }> {
     }
   }
   console.log('[seedCycleData] done, inserted', rows.length, 'rows')
+
+  return { inserted: rows.length }
+}
+
+// ─── Menopause seed ───────────────────────────────────────────────────────
+
+/**
+ * Dev-only seed for the Menopause behavior. Mirrors seedCycleData's shape
+ * (auth → wipe menopause_logs → build rows → chunked insert). Builds ~6 weeks
+ * of realistic symptom rows (0–3/day, weighted toward hot flashes / night
+ * sweats / sleep) plus 1–2 recent `period` events so the home counter,
+ * analytics headline, and 12-month offer all have something to render.
+ */
+export async function seedMenopauseData(): Promise<{ inserted: number }> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) throw new Error(`Session error: ${formatSupabaseError(sessionError)}`)
+  const session = sessionData.session
+  if (!session) throw new Error('Not authenticated')
+  const userId = session.user.id
+
+  // Wipe existing
+  const { error: delError } = await supabase.from('menopause_logs').delete().eq('user_id', userId)
+  if (delError) throw new Error(`Delete failed: ${formatSupabaseError(delError)}`)
+
+  const rows: Array<{
+    user_id: string; date: string; type: string; value: string | null; severity: number | null; notes: string | null
+  }> = []
+  const today = new Date()
+
+  // Sample from the real taxonomy, with extra weight on the most common
+  // perimenopause complaints so the vasomotor + sleep charts read true.
+  const SYMPTOM_POOL: MenopauseSymptomId[] = [
+    ...ALL_MENOPAUSE_SYMPTOMS.map((s) => s.id),
+    'hot_flash', 'hot_flash', 'night_sweat', 'sleep',
+  ]
+
+  // ~40 recent days — 0–3 symptom rows per day, severity 1–5.
+  for (let i = 0; i < 40; i++) {
+    const date = dateStr(addDays(today, -i))
+    const count = Math.floor(Math.random() * 4) // 0–3
+    const pickedToday = new Set<MenopauseSymptomId>()
+    for (let k = 0; k < count; k++) {
+      const id = randFrom(SYMPTOM_POOL)
+      if (pickedToday.has(id)) continue // at most one row per symptom per day
+      pickedToday.add(id)
+      rows.push({
+        user_id: userId,
+        date,
+        type: id,
+        value: null,
+        severity: 1 + Math.floor(Math.random() * 5), // 1–5
+        notes: null,
+      })
+    }
+  }
+
+  // 1–2 `period` events in the last ~2 months.
+  const periodOffsets = [12, 47] // days ago
+  const periodCount = 1 + Math.floor(Math.random() * 2) // 1–2
+  for (let p = 0; p < periodCount; p++) {
+    rows.push({
+      user_id: userId,
+      date: dateStr(addDays(today, -periodOffsets[p])),
+      type: 'period',
+      value: randFrom(['light', 'medium'] as const),
+      severity: null,
+      notes: null,
+    })
+  }
+
+  // Insert in batches of 100
+  console.log('[seedMenopauseData] inserting', rows.length, 'rows for user', userId)
+  const BATCH = 100
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const chunk = rows.slice(i, i + BATCH)
+    const { error: insError } = await supabase.from('menopause_logs').insert(chunk)
+    if (insError) {
+      console.error('[seedMenopauseData] insert failed', insError)
+      throw new Error(`Insert failed: ${formatSupabaseError(insError)}`)
+    }
+  }
+  console.log('[seedMenopauseData] done, inserted', rows.length, 'rows')
 
   return { inserted: rows.length }
 }
@@ -514,17 +597,20 @@ export async function seedAllData(): Promise<{
   kids: number
   kidsCount: number
   exams: number
+  menopause: number
 }> {
   const cycle = await seedCycleData()
   const pregnancy = await seedPregnancyData()
   const kids = await seedKidsData()
   const exams = await seedExamData()
+  const menopause = await seedMenopauseData()
   return {
     cycle: cycle.inserted,
     pregnancy: pregnancy.inserted,
     kids: kids.inserted,
     kidsCount: kids.childIds.length,
     exams: exams.inserted,
+    menopause: menopause.inserted,
   }
 }
 
@@ -708,6 +794,7 @@ import { useBehaviorStore } from '../store/useBehaviorStore'
  *  - children exist → kids
  *  - pregnancy_logs exist → pregnancy
  *  - cycle_logs exist → pre-pregnancy
+ *  - menopause_logs exist → menopause
  *
  * Adds any missing enrollments (doesn't remove existing ones). Writes to both
  * the behaviors table and the useBehaviorStore.
@@ -722,7 +809,7 @@ export async function repairBehaviorsFromData(): Promise<{ enrolled: string[] }>
   if (!session) throw new Error('Not authenticated')
   const userId = session.user.id
 
-  const inferred: Array<'pre-pregnancy' | 'pregnancy' | 'kids'> = []
+  const inferred: Array<'pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause'> = []
 
   // Kids — does the user own any children row?
   const { count: kidsCount, error: kidsErr } = await supabase
@@ -748,13 +835,22 @@ export async function repairBehaviorsFromData(): Promise<{ enrolled: string[] }>
   if (cycleErr) throw new Error(`cycle_logs query failed: ${formatSupabaseError(cycleErr)}`)
   if ((cycleCount ?? 0) > 0) inferred.push('pre-pregnancy')
 
+  // Menopause — 1:1 DB type (no alias remap, unlike pre-pregnancy→'cycle')
+  const { count: menoCount, error: menoErr } = await supabase
+    .from('menopause_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+  if (menoErr) throw new Error(`menopause_logs query failed: ${formatSupabaseError(menoErr)}`)
+  if ((menoCount ?? 0) > 0) inferred.push('menopause')
+
   if (inferred.length === 0) return { enrolled: [] }
 
   // Map store names → DB type values
-  const DB_MAP: Record<'pre-pregnancy' | 'pregnancy' | 'kids', string> = {
+  const DB_MAP: Record<'pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause', string> = {
     'pre-pregnancy': 'cycle',
     'pregnancy': 'pregnancy',
     'kids': 'kids',
+    'menopause': 'menopause',
   }
 
   // Fetch existing behavior rows to avoid duplicate inserts (no unique constraint on user_id,type)
@@ -1131,6 +1227,10 @@ export async function wipeAllDemoData(): Promise<void> {
   // cycle_logs
   const { error: cErr } = await supabase.from('cycle_logs').delete().eq('user_id', userId)
   if (cErr) throw new Error(`cycle_logs delete failed: ${formatSupabaseError(cErr)}`)
+
+  // menopause_logs
+  const { error: mErr } = await supabase.from('menopause_logs').delete().eq('user_id', userId)
+  if (mErr) throw new Error(`menopause_logs delete failed: ${formatSupabaseError(mErr)}`)
 
   // pregnancy_logs
   const { error: pErr } = await supabase.from('pregnancy_logs').delete().eq('user_id', userId)

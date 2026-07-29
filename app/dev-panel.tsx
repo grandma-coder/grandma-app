@@ -14,8 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../constants/theme'
 import { supabase } from '../lib/supabase'
 import { signOut } from '../lib/signOut'
-import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedAllData, wipeAllDemoData, repairBehaviorsFromData, backfillCaregiverLinks, simulateCaregiver, resetToParentSim } from '../lib/devSeed'
+import { seedCycleData, seedKidsData, seedPregnancyData, seedExamData, seedMenopauseData, seedAllData, wipeAllDemoData, repairBehaviorsFromData, backfillCaregiverLinks, simulateCaregiver, resetToParentSim } from '../lib/devSeed'
+import { toDateStr } from '../lib/cycleLogic'
 import { useModeStore } from '../store/useModeStore'
+import { useMenopauseStore } from '../store/useMenopauseStore'
 import { useThemeStore } from '../store/useThemeStore'
 import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
 import { useChildStore } from '../store/useChildStore'
@@ -135,6 +137,8 @@ export default function DevPanel() {
   const queryClient = useQueryClient()
   const mode = useModeStore((s) => s.mode)
   const setMode = useModeStore((s) => s.setModeUnsafe)
+  const menoStage = useMenopauseStore((s) => s.stage)
+  const menoLastPeriod = useMenopauseStore((s) => s.lastPeriodDate)
   const variant = useThemeStore((s) => s.variant)
   const setVariant = useThemeStore((s) => s.setVariant)
   const granularCaregiverAccess = useFeatureFlags((s) => s.granularCaregiverAccess)
@@ -217,7 +221,50 @@ export default function DevPanel() {
     await run('Seed everything', async () => {
       const r = await seedAllData()
       await queryClient.invalidateQueries()
-      return `cycle ${r.cycle} · preg ${r.pregnancy} · kids ${r.kids} (${r.kidsCount} child${r.kidsCount === 1 ? '' : 'ren'}) · exams ${r.exams}`
+      return `cycle ${r.cycle} · preg ${r.pregnancy} · kids ${r.kids} (${r.kidsCount} child${r.kidsCount === 1 ? '' : 'ren'}) · exams ${r.exams} · meno ${r.menopause}`
+    })
+  }
+
+  async function handleSeedMenopause() {
+    await run('Seed menopause data', async () => {
+      const { inserted } = await seedMenopauseData()
+      await queryClient.invalidateQueries({ queryKey: ['menopause-logs'] })
+      return `Inserted ${inserted} menopause logs`
+    })
+  }
+
+  async function handleSetMenopauseStage(stage: 'peri' | 'meno' | 'post') {
+    await run(`Set stage: ${stage}`, async () => {
+      useMenopauseStore.getState().setStage(stage)
+      // Persist to profiles (best-effort — local store is the source of truth here).
+      const { data: s } = await supabase.auth.getSession()
+      const userId = s.session?.user.id
+      if (userId) {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({ id: userId, menopause_stage: stage }, { onConflict: 'id' })
+        if (error) console.warn('[dev-panel] menopause_stage upsert failed', error)
+      }
+      return `Stage set to ${stage}`
+    })
+  }
+
+  async function handleSetMonthsSincePeriod(months: number) {
+    await run(`Set ${months}mo since period`, async () => {
+      const d = new Date()
+      d.setMonth(d.getMonth() - months)
+      const iso = toDateStr(d)
+      useMenopauseStore.getState().setLastPeriodDate(iso)
+      // Persist to profiles (best-effort).
+      const { data: s } = await supabase.auth.getSession()
+      const userId = s.session?.user.id
+      if (userId) {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({ id: userId, last_period_date: iso }, { onConflict: 'id' })
+        if (error) console.warn('[dev-panel] last_period_date upsert failed', error)
+      }
+      return `Last period set to ${iso} (~${months}mo ago)`
     })
   }
 
@@ -357,10 +404,73 @@ export default function DevPanel() {
         <Section title="MODE">
           <Body size={12} color={colors.textMuted}>Current: {mode}</Body>
           <View style={styles.row}>
-            <ModeButton current={mode} target="pre-pregnancy" label="Pre-Preg" onPress={setMode} />
-            <ModeButton current={mode} target="pregnancy"     label="Preg"     onPress={setMode} />
-            <ModeButton current={mode} target="kids"          label="Kids"     onPress={setMode} />
+            <ModeButton current={mode} target="pre-pregnancy" label="Pre-Preg"  onPress={setMode} />
+            <ModeButton current={mode} target="pregnancy"     label="Preg"      onPress={setMode} />
+            <ModeButton current={mode} target="kids"          label="Kids"      onPress={setMode} />
+            <ModeButton current={mode} target="menopause"     label="Menopause" onPress={setMode} />
           </View>
+        </Section>
+
+        {/* Menopause tools */}
+        <Section title="MENOPAUSE">
+          <Body size={11} color={colors.textMuted}>
+            Seed logs, set the self-identified stage, and scrub months-since-last-period
+            to exercise the 12-month home offer. Stage + date also persist to profiles.
+          </Body>
+          <Body size={12} color={colors.textMuted}>
+            Stage: {menoStage ?? '—'} · Last period: {menoLastPeriod ?? '—'}
+          </Body>
+
+          <ActionRow
+            label="Seed menopause data"
+            sub="~6 weeks of symptoms + recent period events"
+            onPress={handleSeedMenopause}
+            busy={busy}
+          />
+
+          <Body size={11} color={colors.textMuted} style={{ marginTop: 4 }}>Stage</Body>
+          <View style={styles.row}>
+            {(['peri', 'meno', 'post'] as const).map((st) => {
+              const active = menoStage === st
+              return (
+                <Pressable
+                  key={st}
+                  onPress={() => handleSetMenopauseStage(st)}
+                  style={[
+                    styles.modeBtn,
+                    { backgroundColor: colors.surface, borderColor: active ? colors.primary : colors.border },
+                  ]}
+                >
+                  <Body size={12} color={active ? colors.primary : colors.text} style={{ fontWeight: '600' }}>
+                    {st === 'peri' ? 'Peri' : st === 'meno' ? 'Meno' : 'Post'}
+                  </Body>
+                </Pressable>
+              )
+            })}
+          </View>
+
+          <Body size={11} color={colors.textMuted} style={{ marginTop: 4 }}>Months since last period</Body>
+          <View style={styles.row}>
+            {[3, 6, 12, 14].map((m) => (
+              <Pressable
+                key={m}
+                onPress={() => handleSetMonthsSincePeriod(m)}
+                style={[
+                  styles.modeBtn,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                ]}
+              >
+                <Body size={12} color={colors.text} style={{ fontWeight: '600' }}>{m}</Body>
+              </Pressable>
+            ))}
+          </View>
+
+          <ActionRow
+            label="Menopause onboarding"
+            sub="Walk the direct onboarding flow"
+            onPress={() => router.push('/onboarding/menopause')}
+            busy={busy}
+          />
         </Section>
 
         {/* Design variant (v3 Diffuse migration toggle) */}
@@ -416,7 +526,7 @@ export default function DevPanel() {
           <Body size={11} color={colors.textMuted}>
             Toggle which behaviors are unlocked. Unenrolled modes show locked in the ModeSwitcher.
           </Body>
-          {(['pre-pregnancy', 'pregnancy', 'kids'] as Behavior[]).map((b) => {
+          {(['pre-pregnancy', 'pregnancy', 'kids', 'menopause'] as Behavior[]).map((b) => {
             const isEnrolled = enrolled.includes(b)
             return (
               <Pressable
