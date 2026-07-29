@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native'
 import Svg, { Path, Circle, Line, Rect, Defs, Pattern, G, LinearGradient, RadialGradient, Stop, Ellipse, Text as SvgText } from 'react-native-svg'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
+import { bucketSeries } from './bucketSeries'
 
 const DEFAULT_CHART_W = Dimensions.get('window').width - 76
 
@@ -1200,6 +1201,12 @@ export function BrickColumns({
   height?: number
 }) {
   if (data.length === 0) return <EmptyChart height={height} />
+  // Per-day series over a long window (30/90/365 days) has too many columns to
+  // draw — the width math underflows and nothing renders. Bucket to a legible
+  // count so the chart works on ANY date range. (<= maxBricks*2 passes through.)
+  const bucketed = bucketSeries(data, labels, 13)
+  data = bucketed.data
+  labels = bucketed.labels
   const { colors } = useTheme()
   const dt = useDiffuseTheme()
   const w = CW, n = data.length

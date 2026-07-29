@@ -87,6 +87,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
 import { BrickColumns, DotCountRows, MilestoneTrail, type DotRow } from './shared/MiniCharts'
+import { bucketSeries } from './shared/bucketSeries'
 import { FullScreenChart } from '../charts/FullScreenChart'
 import {
   useKidsAnalytics,
@@ -4678,6 +4679,10 @@ function HighlightBarChart({
   const numFont = diffuse ? diffuseFont.mono : font.display
   const labelFont = diffuse ? diffuseFont.mono : font.body
   const labelFontActive = diffuse ? diffuseFont.monoBold : font.bodySemiBold
+  // Long windows (30/90/365 days) have too many per-day bars to draw; bucket to
+  // a legible count so the chart renders on any date range (diffuse path re-buckets
+  // harmlessly inside BrickColumns).
+  { const b = bucketSeries(rawData, rawLabels, 13); rawData = b.data; rawLabels = b.labels }
   if (rawData.length === 0) return null
 
   const realMax = Math.max(...rawData, 0)
