@@ -3814,6 +3814,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       const totalVaccines = analytics.health.vaccines.length
       const vaccinePct = totalVaccines > 0 ? Math.round((doneVaccines / totalVaccines) * 100) : 0
       const totalEvents = analytics.health.weeklyFrequency.reduce((a, b) => a + b, 0)
+      const concernEvents = analytics.health.concernEvents
 
       // Group events by type
       const eventsByType: Record<string, typeof analytics.health.recentEvents> = {}
@@ -3826,49 +3827,18 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
         <View style={styles.detailBody}>
           {/* Summary card */}
           <StatRow>
-            <StatPill label="Vaccines done" value={`${doneVaccines}/${totalVaccines}`} color={brand.success} />
-            <StatPill label="Events this week" value={`${totalEvents}`} color={totalEvents === 0 ? brand.success : brand.accent} />
-            <StatPill label="Completion" value={`${vaccinePct}%`} color={PILLAR_CONFIG.health.color} />
+            <StatPill label="Vaccines logged" value={`${doneVaccines}`} color={PILLAR_CONFIG.health.color} />
+            <StatPill label="Concerns" value={`${concernEvents}`} color={concernEvents === 0 ? brand.success : brand.accent} />
+            <StatPill label="Recent logs" value={`${totalEvents}`} color={colors.textMuted} />
           </StatRow>
 
-          {/* Health score explanation */}
+          {/* Health is a reference, not a graded score */}
           <View style={[explainCardStyle]}>
             <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
             <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-              {`Health score = vaccine completion (60%) + low health incidents (40%). ${doneVaccines}/${totalVaccines} vaccines logged. ${totalEvents === 0 ? 'No health events this week — great!' : `${totalEvents} health event${totalEvents !== 1 ? 's' : ''} logged this week.`}`}
+              {`Health here is a reference, not a graded score. It tracks ${childName}'s vaccines and flags only genuine concerns — a fever, an injury, or a doctor visit. Everyday logs like a normal temperature check or a vitamin are routine care and don't count against anything. ${concernEvents === 0 ? 'Nothing to flag right now.' : `${concernEvents} concern${concernEvents !== 1 ? 's' : ''} flagged in this window.`}`}
             </Text>
           </View>
-
-          {analytics.scores.health.hasData && (() => {
-            const healthScore = analytics.scores.health
-            const vaccineScore = totalVaccines > 0 ? (doneVaccines / totalVaccines) * 10 : 5
-            const eventPenalty = Math.min(totalEvents * 0.8, 5)
-            const eventScore = Math.max(10 - eventPenalty, 2)
-            return (
-              <ScoreMathCard
-                title={`Health · ${Number.isFinite(healthScore.value) ? healthScore.value.toFixed(1) : '—'}/10`}
-                color={PILLAR_CONFIG.health.color}
-                steps={[
-                  {
-                    label: 'Vaccine score (×0.6)',
-                    formula: totalVaccines > 0
-                      ? `${doneVaccines}/${totalVaccines} vaccines × 10 = ${vaccineScore.toFixed(1)}`
-                      : 'no vaccines logged — default 5.0',
-                    value: (vaccineScore * 0.6).toFixed(1),
-                  },
-                  {
-                    label: 'Event score (×0.4)',
-                    formula: `max(10 − ${totalEvents} events × 0.8, 2) = ${eventScore.toFixed(1)}`,
-                    value: (eventScore * 0.4).toFixed(1),
-                  },
-                ]}
-                final={{
-                  label: 'Score = weighted sum',
-                  value: Number.isFinite(healthScore.value) ? healthScore.value.toFixed(1) : '—',
-                }}
-              />
-            )
-          })()}
 
           {/* Recent events by type */}
           {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
@@ -3877,12 +3847,12 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
               <Text style={diffuse
                 ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
-                : [styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: font.display }]}>{t('kids_analytics_health_recent_events')}</Text>
+                : [styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: font.display }]}>Recent care log</Text>
               {Object.entries(eventsByType).map(([type, events]) => (
                 <View key={type} style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
-                    <Text style={{ color: getEventColor(type), fontSize: 11, fontWeight: '600', fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: 1.4 }}>
+                    <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, fontWeight: '600', fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: 1.4 }}>
                       {getHealthEventLabel(type).toUpperCase()}
                     </Text>
                   </View>
@@ -3891,7 +3861,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                       key={i}
                       style={[styles.eventRow, { borderBottomColor: i < events.length - 1 ? (diffuse ? dt.colors.line : colors.border) : 'transparent' }]}
                     >
-                      <View style={[styles.eventDot, { backgroundColor: getEventColor(type) }]} />
+                      <View style={[styles.eventDot, { backgroundColor: diffuse ? dt.colors.ink3 : colors.textMuted }]} />
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.eventLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]} numberOfLines={1}>{e.label}</Text>
                         <Text style={[styles.eventDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{e.date}</Text>
@@ -3905,7 +3875,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Weekly event frequency chart */}
           {analytics.health.hasData && (
-            <ChartCard title="Health Events This Week" onExpand={() => onFullScreen('health_freq')}>
+            <ChartCard title="Care logged" onExpand={() => onFullScreen('health_freq')}>
               {diffuse ? (
                 <BrickColumns
                   data={analytics.health.weeklyFrequency}
