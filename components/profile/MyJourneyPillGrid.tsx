@@ -20,6 +20,7 @@ const PILL_ORDER: Array<{ behavior: Behavior; label: string }> = [
   { behavior: 'pre-pregnancy', label: 'Cycle' },
   { behavior: 'pregnancy', label: 'Expecting' },
   { behavior: 'kids', label: 'Raising' },
+  { behavior: 'menopause', label: 'Menopause' },
 ]
 
 /**

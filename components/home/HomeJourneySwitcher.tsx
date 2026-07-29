@@ -30,7 +30,7 @@ const ICON_BY_BEHAVIOR = {
   menopause: ModeTrying,
 } as const
 
-const ORDER: Behavior[] = ['pre-pregnancy', 'pregnancy', 'kids']
+const ORDER: Behavior[] = ['pre-pregnancy', 'pregnancy', 'kids', 'menopause']
 
 export function HomeJourneySwitcher() {
   const { colors, radius, isDark, font } = useTheme()
