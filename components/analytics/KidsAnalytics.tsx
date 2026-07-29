@@ -99,7 +99,16 @@ import {
 } from '../../lib/analyticsData'
 import { getAgeSleepTarget } from '../../lib/kidsScoring'
 import { computeCrossInsights } from '../../lib/kidsCrossInsights'
-import { buildHealthInsight } from '../../lib/kidsPillarInsights'
+import {
+  buildHealthInsight,
+  buildSleepInsight,
+  buildNutritionInsight,
+  buildMoodInsight,
+  buildGrowthInsight,
+  buildActivityInsight,
+  type PillarInsight,
+} from '../../lib/kidsPillarInsights'
+import { resolveSex, type Sex } from '../../lib/growthStandards'
 import {
   buildInsightHighlights,
   type InsightHighlights,
@@ -630,6 +639,12 @@ export function KidsAnalytics() {
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? children[0] ?? null
   const ageMonths = selectedChild?.birthDate ? getAgeMonths(selectedChild.birthDate) : 12
   const childName = selectedChild?.name ?? 'your child'
+  // Resolves the same way `buildScores`/analyticsData does: an unresolved
+  // sex (`isFallback`) can't be placed on a sex-specific WHO curve with
+  // confidence, so the growth pop-up insight gets `null`, never a silently
+  // assumed value.
+  const resolvedSex = resolveSex(selectedChild?.sex)
+  const sex: Sex | null = resolvedSex.isFallback ? null : resolvedSex.sex
   const chartW = SCREEN_W - 72
 
   const onRefresh = useCallback(async () => {
@@ -1046,6 +1061,7 @@ export function KidsAnalytics() {
           chartW={chartW}
           childName={childName}
           ageMonths={ageMonths}
+          sex={sex}
           onClose={() => setSelectedPillar(null)}
           onFullScreen={setFullScreen}
         />
@@ -3030,7 +3046,7 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function PillarDetailModal({
-  visible, pillarKey, analytics, chartW, childName, ageMonths, onClose, onFullScreen,
+  visible, pillarKey, analytics, chartW, childName, ageMonths, sex, onClose, onFullScreen,
 }: {
   visible: boolean
   pillarKey: PillarKey | null
@@ -3038,6 +3054,7 @@ function PillarDetailModal({
   chartW: number
   childName: string
   ageMonths: number
+  sex: Sex | null
   onClose: () => void
   onFullScreen: (id: string) => void
 }) {
@@ -3067,6 +3084,7 @@ function PillarDetailModal({
           onFullScreen={onFullScreen}
           childName={childName}
           ageMonths={ageMonths}
+          sex={sex}
         />
       </DiffuseSheet>
     )
@@ -3145,6 +3163,7 @@ function PillarDetailModal({
                 onFullScreen={onFullScreen}
                 childName={childName}
                 ageMonths={ageMonths}
+                sex={sex}
               />
             </Animated.View>
           </ScrollView>
@@ -3353,22 +3372,28 @@ function ScoreMathCard(_props: {
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, ageMonths }: {
+function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, ageMonths, sex }: {
   pillarKey: PillarKey
   analytics: AnalyticsData
   chartW: number
   onFullScreen: (id: string) => void
   childName: string
   ageMonths: number
+  sex: Sex | null
 }) {
   const { colors, radius, stickers } = useTheme()
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  // Health's "show all care log" disclosure — collapsed by default so the
-  // observation-led lead is what a parent sees first, not the raw diary
-  // (spec: docs/superpowers/specs/2026-07-28-kids-insights-observation-led-content.md).
-  const [showCareLog, setShowCareLog] = useState(false)
+  // Every pillar sheet leads with the observation-led insight (headline +
+  // supporting lines) and demotes its existing detailed content — explain
+  // block, stat trio, charts, lists — behind one "Show details" disclosure,
+  // collapsed by default (spec: docs/superpowers/specs/2026-07-28-kids-
+  // insights-observation-led-content.md §2). `PillarDetailModal` returns
+  // null while no pillar is selected, so each pillar selection remounts a
+  // fresh `PillarDetail` — this single flag never leaks open/closed state
+  // from one pillar's sheet into the next.
+  const [showDetails, setShowDetails] = useState(false)
 
   // Diffuse "explanation" block — hairline top rule, mono eyebrow, sans body.
   // Under the flag-off path we keep the paper card so behavior is unchanged.
@@ -3381,6 +3406,52 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
   const helpCapsColor = diffuse ? dt.colors.ink3 : colors.text
   const explainColor = diffuse ? dt.colors.ink2 : colors.textSecondary
   const chartTitleColor = diffuse ? dt.colors.ink : colors.text
+
+  // Lead + supporting render — identical treatment across all six pillars
+  // (spec §2's "one honest sentence" headline, then 1–2 supporting lines).
+  const renderLead = (insight: PillarInsight) => (
+    <View style={{ gap: 8 }}>
+      <Text style={{
+        fontSize: diffuse ? 20 : 19,
+        lineHeight: diffuse ? 27 : 26,
+        color: diffuse ? dt.colors.ink : colors.text,
+        fontFamily: diffuse ? dt.typeRole.title : font.display,
+        letterSpacing: -0.2,
+      }}>
+        {insight.lead}
+      </Text>
+      {insight.supporting.map((line, i) => (
+        <Text
+          key={i}
+          style={[styles.detailExplain, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+        >
+          {line}
+        </Text>
+      ))}
+    </View>
+  )
+
+  // Demotes the pillar's raw chart/explain/stat content behind a single
+  // "Show details" toggle, collapsed by default — the lead above is the
+  // whole point; this is for the parent who wants to dig into the diary.
+  const renderDetailsToggle = (content: React.ReactNode) => (
+    <View>
+      <Pressable
+        onPress={() => setShowDetails((v) => !v)}
+        style={({ pressed }) => [
+          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, opacity: pressed ? 0.6 : 1 },
+        ]}
+      >
+        <Text style={diffuse
+          ? [styles.diffuseEyebrow, { color: dt.colors.ink3, marginBottom: 0 }]
+          : [styles.chartTitle, { color: chartTitleColor, marginBottom: 0, fontFamily: font.display, fontSize: 14 }]}>
+          {showDetails ? 'Hide details' : 'Show details'}
+        </Text>
+        <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 15 }}>{showDetails ? '▾' : '▸'}</Text>
+      </Pressable>
+      {showDetails && <View style={{ gap: 16 }}>{content}</View>}
+    </View>
+  )
 
   switch (pillarKey) {
     case 'nutrition': {
@@ -3408,8 +3479,13 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       const isMilkPhase = mode === 'milk'
       const isMixedPhase = mode === 'mixed'
 
-      return nutr.hasData ? (
+      const insight = buildNutritionInsight(analytics, ageMonths, childName)
+
+      return (
         <View style={styles.detailBody}>
+          {renderLead(insight)}
+          {!nutr.hasData && <EmptyDetail pillar="nutrition" />}
+          {insight.demotedAvailable && renderDetailsToggle(<>
           {/* Summary stats — differ by age mode */}
           <StatRow>
             {isMilkPhase ? (
@@ -3666,8 +3742,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </View>
             </View>
           )}
+          </>)}
         </View>
-      ) : <EmptyDetail pillar="nutrition" />
+      )
     }
 
     case 'sleep': {
@@ -3681,9 +3758,13 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
         ? Math.round(((analytics.sleep.qualityCounts.great + analytics.sleep.qualityCounts.good) / totalSessions) * 100)
         : 0
       const sleepScore = analytics.scores.sleep
+      const insight = buildSleepInsight(analytics, ageMonths, childName)
 
-      return analytics.sleep.hasData ? (
+      return (
         <View style={styles.detailBody}>
+          {renderLead(insight)}
+          {!analytics.sleep.hasData && <EmptyDetail pillar="sleep" />}
+          {insight.demotedAvailable && renderDetailsToggle(<>
           {/* Stats at top */}
           <StatRow>
             <StatPill label="Avg/night" value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
@@ -3770,16 +3851,21 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           <ChartCard title="Sleep Quality Breakdown" onExpand={() => onFullScreen('sleep_quality')}>
             <SleepQualityChart counts={analytics.sleep.qualityCounts} />
           </ChartCard>
+          </>)}
         </View>
-      ) : <EmptyDetail pillar="sleep" />
+      )
     }
 
     case 'mood': {
       const moodWeights: Record<string, number> = { happy: 10, calm: 9, energetic: 8, fussy: 3, cranky: 1 }
       const totalMoods = analytics.mood.dominantMoods.reduce((a, m) => a + m.count, 0)
       const moodScore = analytics.scores.mood
-      return analytics.mood.hasData ? (
+      const insight = buildMoodInsight(analytics, ageMonths, childName)
+      return (
         <View style={styles.detailBody}>
+          {renderLead(insight)}
+          {!analytics.mood.hasData && <EmptyDetail pillar="mood" />}
+          {insight.demotedAvailable && renderDetailsToggle(<>
           <View style={[explainCardStyle]}>
             <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
             <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
@@ -3811,8 +3897,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           <ChartCard title="Daily Mood Tracking" onExpand={() => onFullScreen('mood_daily')}>
             <MoodDailyChart dailyCounts={analytics.mood.dailyCounts} labels={analytics.mood.weekLabels} width={chartW} />
           </ChartCard>
+          </>)}
         </View>
-      ) : <EmptyDetail pillar="mood" />
+      )
     }
 
     case 'health': {
@@ -3834,26 +3921,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       return (
         <View style={styles.detailBody}>
           {/* Lead insight — the wellness read, not the raw log */}
-          <View style={{ gap: 8 }}>
-            <Text style={{
-              fontSize: diffuse ? 20 : 19,
-              lineHeight: diffuse ? 27 : 26,
-              color: diffuse ? dt.colors.ink : colors.text,
-              fontFamily: diffuse ? dt.typeRole.title : font.display,
-              letterSpacing: -0.2,
-            }}>
-              {insight.lead}
-            </Text>
-            {insight.supporting.map((line, i) => (
-              <Text
-                key={i}
-                style={[styles.detailExplain, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}
-              >
-                {line}
-              </Text>
-            ))}
-          </View>
+          {renderLead(insight)}
 
+          {renderDetailsToggle(<>
           {/* Health is a reference, not a graded score */}
           <View style={[explainCardStyle]}>
             <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
@@ -3878,55 +3948,38 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             </ChartCard>
           )}
 
-          {/* Demoted raw care log — the lead above already says what matters;
-              this is the collapsed diary for a parent who wants to dig in. */}
+          {/* Raw care log — the lead above already says what matters; this is
+              the diary for a parent who wants to dig in, folded into the same
+              "Show details" disclosure rather than a second nested toggle. */}
           {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
-            <View>
-              <Pressable
-                onPress={() => setShowCareLog((v) => !v)}
-                style={({ pressed }) => [
-                  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, opacity: pressed ? 0.6 : 1 },
-                ]}
-              >
-                <Text style={diffuse
-                  ? [styles.diffuseEyebrow, { color: dt.colors.ink3, marginBottom: 0 }]
-                  : [styles.chartTitle, { color: chartTitleColor, marginBottom: 0, fontFamily: font.display, fontSize: 14 }]}>
-                  {showCareLog ? 'Hide care log' : 'Show all care log'}
-                </Text>
-                <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 15 }}>{showCareLog ? '▾' : '▸'}</Text>
-              </Pressable>
-
-              {showCareLog && (
-                <View style={diffuse
-                  ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
-                  : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
-                  <Text style={diffuse
-                    ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
-                    : [styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: font.display }]}>Recent care log</Text>
-                  {Object.entries(eventsByType).map(([type, events]) => (
-                    <View key={type} style={{ marginBottom: 14 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                        <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
-                        <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, fontWeight: '600', fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: 1.4 }}>
-                          {getHealthEventLabel(type).toUpperCase()}
-                        </Text>
+            <View style={diffuse
+              ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
+              : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+              <Text style={diffuse
+                ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
+                : [styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: font.display }]}>Recent care log</Text>
+              {Object.entries(eventsByType).map(([type, events]) => (
+                <View key={type} style={{ marginBottom: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
+                    <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, fontWeight: '600', fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: 1.4 }}>
+                      {getHealthEventLabel(type).toUpperCase()}
+                    </Text>
+                  </View>
+                  {events.map((e, i) => (
+                    <View
+                      key={i}
+                      style={[styles.eventRow, { borderBottomColor: i < events.length - 1 ? (diffuse ? dt.colors.line : colors.border) : 'transparent' }]}
+                    >
+                      <View style={[styles.eventDot, { backgroundColor: diffuse ? dt.colors.ink3 : colors.textMuted }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.eventLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]} numberOfLines={1}>{e.label}</Text>
+                        <Text style={[styles.eventDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{e.date}</Text>
                       </View>
-                      {events.map((e, i) => (
-                        <View
-                          key={i}
-                          style={[styles.eventRow, { borderBottomColor: i < events.length - 1 ? (diffuse ? dt.colors.line : colors.border) : 'transparent' }]}
-                        >
-                          <View style={[styles.eventDot, { backgroundColor: diffuse ? dt.colors.ink3 : colors.textMuted }]} />
-                          <View style={{ flex: 1 }}>
-                            <Text style={[styles.eventLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]} numberOfLines={1}>{e.label}</Text>
-                            <Text style={[styles.eventDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{e.date}</Text>
-                          </View>
-                        </View>
-                      ))}
                     </View>
                   ))}
                 </View>
-              )}
+              ))}
             </View>
           )}
 
@@ -3967,14 +4020,18 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               ))}
             </View>
           </View>
+          </>)}
         </View>
       )
     }
 
-    case 'growth':
-      if (!analytics.growth.hasData) return <EmptyDetail pillar="growth" />
+    case 'growth': {
+      const insight = buildGrowthInsight(analytics, ageMonths, childName, sex)
       return (
         <View style={styles.detailBody}>
+          {renderLead(insight)}
+          {!analytics.growth.hasData && <EmptyDetail pillar="growth" />}
+          {insight.demotedAvailable && renderDetailsToggle(<>
           <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
             {t('kids_analytics_growth_track_hint', { name: childName })}
           </Text>
@@ -4090,8 +4147,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </Text>
             </View>
           )}
+          </>)}
         </View>
       )
+    }
 
     case 'activity': {
       const act = analytics.activity
@@ -4124,8 +4183,12 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             { emoji: '📚', label: 'Structured learning',  pct: 15, tip: 'Reading, puzzles, educational activities' },
           ]
 
+      const insight = buildActivityInsight(analytics, ageMonths, childName)
+
       return (
         <View style={styles.detailBody}>
+          {renderLead(insight)}
+          {renderDetailsToggle(<>
           {/* Stats */}
           <StatRow>
             <StatPill label="Active days" value={act.hasData ? `${act.activeDays}/7` : '—'} color={COLOR} />
@@ -4243,6 +4306,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </View>
             )
           })()}
+          </>)}
         </View>
       )
     }
