@@ -2,8 +2,9 @@
  * Analytics / Vault Tab — renders behavior-specific variant.
  *
  * - pre-pregnancy → CycleAnalytics
- * - pregnancy → placeholder
- * - kids → placeholder
+ * - pregnancy → PregnancyAnalytics
+ * - menopause → MenopauseAnalytics
+ * - kids → KidsAnalytics
  */
 
 import { View, StyleSheet } from 'react-native'
@@ -12,6 +13,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { CycleAnalytics } from '../../components/analytics/CycleAnalytics'
 import { PregnancyAnalytics } from '../../components/analytics/PregnancyAnalytics'
 import { KidsAnalytics } from '../../components/analytics/KidsAnalytics'
+import { MenopauseAnalytics } from '../../components/analytics/MenopauseAnalytics'
 
 export default function VaultScreen() {
   const mode = useModeStore((s) => s.mode)
@@ -26,6 +28,7 @@ export default function VaultScreen() {
   let inner
   if (mode === 'pre-pregnancy') inner = <CycleAnalytics />
   else if (mode === 'pregnancy') inner = <PregnancyAnalytics onExamsPress={handleExams} />
+  else if (mode === 'menopause') inner = <MenopauseAnalytics />
   else inner = <KidsAnalytics />
 
   return <View style={styles.root}>{inner}</View>
