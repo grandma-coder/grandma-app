@@ -310,6 +310,27 @@ export function ModeParent({ size = 80, fill = '#9DC3E8', stroke = INK }: BasePr
   )
 }
 
+// Menopause — Ember disc + the "phase" emblem (ascending life-phase bars), the
+// same identity glyph the Menopause home hero uses (Character name="phase").
+// Default fill is brand.menopause (#E8975A); hardcoded to match the other Mode*
+// stickers, which inline their mode hue (raw hex is allowed in sticker files).
+export function ModeMenopause({ size = 80, fill = '#E8975A', stroke = INK }: BaseProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 100 100">
+      <SvgCircle cx={50} cy={50} r={42} fill={fill} stroke={stroke} strokeWidth={1.8} />
+      <G transform="translate(26,25)">
+        <Path
+          d="M8 34a4 4 0 0 1 4-4 4 4 0 0 1 4 4v4H8ZM20 26a4 4 0 0 1 4-4 4 4 0 0 1 4 4v12h-8ZM32 16a4 4 0 0 1 4-4 4 4 0 0 1 4 4v22h-8Z"
+          fill={PAPER}
+          stroke={stroke}
+          strokeWidth={1.2}
+          strokeLinejoin="round"
+        />
+      </G>
+    </Svg>
+  )
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // 6. CARE CIRCLE
 // ═══════════════════════════════════════════════════════════════════════════

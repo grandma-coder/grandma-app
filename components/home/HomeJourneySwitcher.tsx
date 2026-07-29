@@ -18,16 +18,14 @@ import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
-import { ModeTrying, ModePregnant, ModeParent } from '../stickers/RewardStickers'
+import { ModeTrying, ModePregnant, ModeParent, ModeMenopause } from '../stickers/RewardStickers'
 import { MonoCaps } from '../ui/Typography'
 
 const ICON_BY_BEHAVIOR = {
   'pre-pregnancy': ModeTrying,
   pregnancy: ModePregnant,
   kids: ModeParent,
-  // Menopause (U1): placeholder icon; ORDER below still lists only the 3 wired
-  // journeys, so this is type-completeness only until a later E1 task.
-  menopause: ModeTrying,
+  menopause: ModeMenopause,
 } as const
 
 const ORDER: Behavior[] = ['pre-pregnancy', 'pregnancy', 'kids', 'menopause']
@@ -63,7 +61,9 @@ export function HomeJourneySwitcher() {
   const labelFor = (b: Behavior) =>
     b === 'pre-pregnancy'
       ? (cycleIntent === 'ttc' ? 'Dreaming' : 'Cycle')
-      : b === 'pregnancy' ? 'Expecting' : 'Raising'
+      : b === 'pregnancy' ? 'Expecting'
+      : b === 'menopause' ? 'Menopause'
+      : 'Raising'
 
   const ActiveIcon = ICON_BY_BEHAVIOR[currentBehavior]
 

@@ -4,16 +4,14 @@ import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColor 
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
-import { ModeTrying, ModePregnant, ModeParent } from '../stickers/RewardStickers'
+import { ModeTrying, ModePregnant, ModeParent, ModeMenopause } from '../stickers/RewardStickers'
 import { useTranslation } from '../../lib/i18n'
 
 const ICON_BY_BEHAVIOR = {
   'pre-pregnancy': ModeTrying,
   pregnancy: ModePregnant,
   kids: ModeParent,
-  // Menopause (U1): placeholder icon; PILL_ORDER below still lists only the 3
-  // wired journeys, so this is type-completeness only until a later E1 task.
-  menopause: ModeTrying,
+  menopause: ModeMenopause,
 } as const
 
 const PILL_ORDER: Array<{ behavior: Behavior; label: string }> = [
