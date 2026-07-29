@@ -125,6 +125,9 @@ export function MyJourneyPillGrid() {
                       : { fontFamily: font.display, color: colors.text },
                   ]}
                   allowFontScaling={false}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
                 >
                   {label}
                 </Text>
