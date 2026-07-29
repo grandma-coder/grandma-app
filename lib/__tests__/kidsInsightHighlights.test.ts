@@ -152,3 +152,52 @@ describe('buildInsightHighlights — per-pillar gate isolated from the overall g
     expect(h.strength?.pillar).toBe('nutrition')
   })
 })
+
+// The trend sentence ("X declining/improving N% this week") went through the
+// same honesty gap as strength/concern: a noisy trend off a low-confidence
+// pillar (e.g. "Sleep declining 53%" computed from a handful of logs spread
+// across a long sparse window) must be suppressed even when it's the
+// largest |trend| in PILLAR_ORDER. These two tests isolate the per-pillar
+// trend gate from the overall gate the same way the block above does.
+describe('buildInsightHighlights — trend confidence gate isolated from the overall gate', () => {
+  it('suppresses the trend sentence when the trending pillar\'s OWN confidence is below LOW_CONF (overallConfidence clears the bar)', () => {
+    // Present pillars: nutrition, sleep (trending, LOW confidence), health.
+    // Weighted overallConfidence (weights: nutrition .27, sleep .22, health .13):
+    //   (0.9*0.27 + 0.2*0.22 + 0.9*0.13) / (0.27 + 0.22 + 0.13)
+    //   = (0.243 + 0.044 + 0.117) / 0.62 = 0.404 / 0.62 = 0.65161...  → 0.65
+    // 0.65 >= LOW_CONF, so the master/overall gate does NOT suppress — only
+    // sleep's own 0.2 confidence can explain the trend sentence being
+    // withheld, even though its |trend| (53%) easily clears the 10% floor
+    // and is the largest in PILLAR_ORDER.
+    const scores = {
+      overall: 6,
+      overallConfidence: 0.65,
+      nutrition: { value: 6, label: 'fair', trend: 0, hasData: true, confidence: 0.9 },
+      sleep: { value: 5, label: 'needs attention', trend: -53, hasData: true, confidence: 0.2 },
+      mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      health: { value: 6, label: 'fair', trend: 0, hasData: true, confidence: 0.9 },
+      growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    }
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Milo', 24, null)
+    expect(h.trend).toBeNull()
+    expect(h.message).not.toMatch(/declining|improving/i)
+  })
+
+  it('still surfaces the trend sentence once the trending pillar\'s own confidence clears the bar', () => {
+    const scores = {
+      overall: 6,
+      overallConfidence: 0.9,
+      nutrition: { value: 6, label: 'fair', trend: 0, hasData: true, confidence: 0.9 },
+      sleep: { value: 5, label: 'needs attention', trend: -53, hasData: true, confidence: 0.9 },
+      mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      health: { value: 6, label: 'fair', trend: 0, hasData: true, confidence: 0.9 },
+      growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    }
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Milo', 24, null)
+    expect(h.trend).not.toBeNull()
+    expect(h.trend?.pillar).toBe('sleep')
+    expect(h.message).toMatch(/declining/i)
+  })
+})

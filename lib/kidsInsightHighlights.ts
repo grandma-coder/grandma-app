@@ -117,9 +117,13 @@ export function buildInsightHighlights(
   // Pick the pillar with the largest absolute trend (≥10%), not the first
   // one that crosses 10% in PILLAR_ORDER. The old find() hid a 40% activity
   // decline behind a 12% nutrition wobble simply because nutrition came
-  // earlier in the array.
+  // earlier in the array. Also requires the trending pillar's OWN confidence
+  // to clear LOW_CONF — a noisy trend off a sparse window (e.g. "Sleep
+  // declining 53%" computed from a handful of logs spread across 90 days)
+  // must be suppressed, the same honesty gate already applied to strength/
+  // concern below.
   const trendPillar = PILLAR_ORDER
-    .filter((k) => scores[k].hasData && Math.abs(scores[k].trend) >= 10)
+    .filter((k) => scores[k].hasData && scores[k].confidence >= LOW_CONF && Math.abs(scores[k].trend) >= 10)
     .reduce<PillarKey | null>(
       (best, k) => (best === null || Math.abs(scores[k].trend) > Math.abs(scores[best].trend) ? k : best),
       null,
