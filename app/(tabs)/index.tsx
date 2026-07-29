@@ -16,6 +16,7 @@ import { useIsDiffuse, useScrollBottomInset } from '../../components/ui/diffuse/
 import { CycleHome } from '../../components/home/CycleHome'
 import { PregnancyHome } from '../../components/home/PregnancyHome'
 import { KidsHome } from '../../components/home/KidsHome'
+import { MenopauseHome } from '../../components/home/MenopauseHome'
 import {
   visibleCards, hasCapability, CAPABILITY, isCaregiver,
   type CaregiverView,
@@ -85,7 +86,11 @@ export default function Home() {
           rather than nesting it inside the outer one. */}
       {mode === 'pre-pregnancy' && <CycleHome caregiverView={caregiverView} />}
 
-      {mode !== 'pregnancy' && mode !== 'pre-pregnancy' && (
+      {/* Menopause brings its own ScrollView + hydration gate — render it
+          standalone (like cycle/pregnancy) rather than nesting it. */}
+      {mode === 'menopause' && <MenopauseHome />}
+
+      {mode !== 'pregnancy' && mode !== 'pre-pregnancy' && mode !== 'menopause' && (
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
