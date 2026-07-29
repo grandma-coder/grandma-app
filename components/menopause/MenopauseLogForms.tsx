@@ -187,7 +187,12 @@ export function MenopausePeriodForm({ onSaved }: { onSaved: () => void }) {
       const { data } = await supabase.auth.getSession()
       const userId = data.session?.user.id
       if (userId) {
-        await supabase.from('profiles').update({ last_period_date: date }).eq('id', userId)
+        // upsert (not update) — a menopause-first user may have no profiles row
+        // yet, and .update() would silently match 0 rows. Best-effort mirror.
+        const { error: profErr } = await supabase
+          .from('profiles')
+          .upsert({ id: userId, last_period_date: date }, { onConflict: 'id' })
+        if (profErr) console.warn('[menopause] profiles last_period_date write failed:', profErr.message)
       }
       onSaved()
     } catch (e) {

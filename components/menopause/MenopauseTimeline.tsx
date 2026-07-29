@@ -234,7 +234,10 @@ function EmptyState({ pal, onLog }: { pal: MenoPalette; onLog: () => void }) {
             backgroundColor: pal.accentSoft,
             borderColor: pal.accent,
             borderRadius: pal.diffuse ? pal.radius.xl : pal.radius.full,
-            opacity: pressed ? 0.7 : 1,
+            // sticker press-stamp: dip down on tap (current variant), matching
+            // the canonical button contract; Diffuse presses with opacity only.
+            transform: [{ translateY: pressed && !pal.diffuse ? 2 : 0 }],
+            opacity: pressed ? 0.75 : 1,
           },
         ]}
       >
