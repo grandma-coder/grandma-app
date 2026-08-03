@@ -85,7 +85,7 @@ import {
 } from '../ui/diffuse/DiffusePrimitives'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
-import { DotCountRows, MilestoneTrail, type DotRow, GlowAreaLine, SipColumns, MiniLineChart } from './shared/MiniCharts'
+import { DotCountRows, MilestoneTrail, type DotRow, SipColumns, MiniBarChart } from './shared/MiniCharts'
 import { bucketSeries } from './shared/bucketSeries'
 import { FullScreenChart } from '../charts/FullScreenChart'
 import {
@@ -4325,18 +4325,19 @@ function MealsLineChart({
   const numFont = diffuse ? diffuseFont.mono : font.display
   const labelFont = diffuse ? diffuseFont.mono : font.body
 
-  // Diffuse: meals/feeds per day as a clear trend line — replaces the
-  // illegible toy-brick grid. A line handles many points cleanly (no width
-  // underflow on long windows), unlike stacked columns.
+  // Diffuse: meals/feeds per day as clean labelled bars — counts read clearer
+  // as bars (magnitude + day labels + tap value) than an abstract line with no
+  // visible axis. Bucket first so wide windows don't underflow the bar width.
   if (diffuse) {
-    if (rawData.length < 2) return null
+    if (rawData.length === 0) return null
+    const b = bucketSeries(rawData, rawLabels, 13)
     return (
-      <MiniLineChart
-        data={rawData}
-        labels={rawLabels}
+      <MiniBarChart
+        data={b.data}
+        labels={b.labels}
         color={color}
         height={150}
-        width={width}
+        unit="meals"
       />
     )
   }
@@ -4464,9 +4465,9 @@ function HighlightBarChart({
       )
     }
     return (
-      <GlowAreaLine
+      <MiniBarChart
         data={rawData}
-        color={stickers.coral}
+        color={barColor}
         labels={rawLabels}
         height={Math.max(height, 150)}
         unit={unit}
