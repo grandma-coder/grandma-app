@@ -159,14 +159,10 @@ export function MenopauseCalendar() {
               dayMarker={(date) => {
                 const logs = logsByDate.get(localDateStr(date)) ?? []
                 if (!logs.length) return null
-                const keys = [...new Set(logs.map((l) => symptomStickerKey(l.type)))].slice(0, 3)
-                return (
-                  <View style={styles.markerRow}>
-                    {keys.map((k) => (
-                      <View key={k} style={[styles.marker, { backgroundColor: s[k] }]} />
-                    ))}
-                  </View>
-                )
+                // The day's primary logged symptom, as a crisp Ink blob (the
+                // dayField soft-tints the cell in the same hue behind it).
+                const key = symptomStickerKey(logs[0].type)
+                return <Character name={logTypeBlob(logs[0].type)} size={15} color={s[`${key}Ink`]} />
               }}
             />
           </View>
@@ -245,9 +241,16 @@ export function MenopauseCalendar() {
                 const key = symptomStickerKey(row.type)
                 const sub = entrySubtitle(row)
                 return (
-                  <View key={`${row.type}-${i}`} style={styles.detailRow}>
+                  <View
+                    key={`${row.type}-${i}`}
+                    style={[
+                      styles.detailCard,
+                      !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
+                      { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg },
+                    ]}
+                  >
                     <View style={[styles.detailBlob, { backgroundColor: s[`${key}Soft`] }]}>
-                      <Character name={logTypeBlob(row.type) as CharacterName} size={18} color={s[key]} bg={s[`${key}Soft`]} />
+                      <Character name={logTypeBlob(row.type) as CharacterName} size={18} color={s[`${key}Ink`]} bg={s[`${key}Soft`]} />
                     </View>
                     <View style={styles.detailCopy}>
                       <Text style={[styles.detailEntryTitle, { color: pal.text, fontFamily: pal.fontBodySemiBold }]}>{entryTitle(row)}</Text>
@@ -397,6 +400,7 @@ const styles = StyleSheet.create({
   detailLabel: { fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 14 },
   detailList: { gap: 10, marginTop: 10 },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  detailCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1 },
   detailBlob: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   detailCopy: { flex: 1, gap: 2 },
   detailEntryTitle: { fontSize: 15, letterSpacing: -0.2 },

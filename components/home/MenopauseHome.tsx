@@ -97,6 +97,7 @@ export function MenopauseHome() {
   const { stickers } = useTheme()
   const hueOf = (type: string) => (stickers as Record<string, string>)[symptomStickerKey(type)]
   const hueSoftOf = (type: string) => (stickers as Record<string, string>)[`${symptomStickerKey(type)}Soft`]
+  const hueInkOf = (type: string) => (stickers as Record<string, string>)[`${symptomStickerKey(type)}Ink`]
 
   const hydrated = useMenopauseStore((s) => s.hydrated)
   const stage = useMenopauseStore((s) => s.stage)
@@ -133,7 +134,7 @@ export function MenopauseHome() {
       ALL_MENOPAUSE_SYMPTOMS.map((s) => ({
         key: s.id,
         label: menopauseSymptomLabel(s.id),
-        icon: <Character name={symptomBlob(s.id)} size={26} color={hueOf(s.id)} />,
+        icon: <Character name={symptomBlob(s.id)} size={26} color={hueInkOf(s.id)} />,
         soft: hueSoftOf(s.id),
       })),
     [stickers], // eslint-disable-line react-hooks/exhaustive-deps

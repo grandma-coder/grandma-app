@@ -29,7 +29,7 @@ export const GROUP_ORDER: MenopauseGroup[] = ['vasomotor', 'sleep', 'mood', 'phy
 // other behaviors (each signal its own tone) — brand Ember stays for structure
 // (ring center, today, CTAs). Keys index the shared `stickers` palette, which is
 // active in both variants; resolve via useTheme().stickers[key] (+ `${key}Soft`).
-export type StickerHueKey = 'coral' | 'lilac' | 'yellow' | 'green' | 'pink' | 'blue'
+export type StickerHueKey = 'coral' | 'lilac' | 'yellow' | 'green' | 'pink' | 'blue' | 'peach'
 
 export const GROUP_STICKER: Record<MenopauseGroup, StickerHueKey> = {
   vasomotor: 'coral', // heat / hot flashes
@@ -39,12 +39,33 @@ export const GROUP_STICKER: Record<MenopauseGroup, StickerHueKey> = {
   genitourinary: 'pink', // intimate
 }
 
-/** Sticker-hue key for any `menopause_logs.type` (symptom → its group hue; period
- *  → coral; note → blue). Pair with `${key}Soft` for the socket tint. */
+// Per-SYMPTOM hue so each signal reads as its own colour (not one hue per group —
+// which stacked "green above green"). Spread across the 7 sticker hues so no two
+// are adjacent in the 2-col picker/quick-log grids. Resolve the crisp icon with
+// the `${key}Ink` variant on a `${key}Soft` socket.
+export const SYMPTOM_STICKER: Record<MenopauseSymptomId, StickerHueKey> = {
+  hot_flash: 'coral',
+  night_sweat: 'blue',
+  sleep: 'lilac',
+  fatigue: 'peach',
+  low_mood: 'yellow',
+  anxiety: 'coral',
+  brain_fog: 'blue',
+  joint_pain: 'green',
+  headache: 'peach',
+  palpitations: 'coral',
+  weight: 'yellow',
+  vaginal_dryness: 'pink',
+  libido: 'pink',
+}
+
+/** Sticker-hue key for any `menopause_logs.type` (symptom → its own hue; period
+ *  → coral; note → blue). Pair with `${key}Ink` (icon) + `${key}Soft` (socket). */
 export function symptomStickerKey(type: string): StickerHueKey {
   if (type === 'period') return 'coral'
   if (type === 'note') return 'blue'
   const id = resolveMenopauseSymptomId(type)
+  if (id && SYMPTOM_STICKER[id]) return SYMPTOM_STICKER[id]
   const sym = id ? ALL_MENOPAUSE_SYMPTOMS.find((s) => s.id === id) : undefined
   return sym ? GROUP_STICKER[sym.group] : 'blue'
 }

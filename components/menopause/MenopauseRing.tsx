@@ -105,6 +105,7 @@ export function MenopauseRing({
         const key = logged ? symptomStickerKey(n.logs[0].type) : null
         const hue = key ? sticker[key] : pal.accent
         const hueSoft = key ? sticker[`${key}Soft`] : pal.accentSoft
+        const hueInk = key ? sticker[`${key}Ink`] : pal.accent
         return (
           <View
             key={n.key}
@@ -118,7 +119,7 @@ export function MenopauseRing({
             ]}
           >
             {logged && blob ? (
-              <Character name={blob} size={14} color={hue} bg={hueSoft} />
+              <Character name={blob} size={14} color={hueInk} bg={hueSoft} />
             ) : (
               <Ionicons name="checkmark" size={12} color={n.isToday ? pal.accent : checkColor} />
             )}
