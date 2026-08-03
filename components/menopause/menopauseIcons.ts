@@ -24,6 +24,30 @@ export const GROUP_META: Record<MenopauseGroup, { label: string; icon: Character
 
 export const GROUP_ORDER: MenopauseGroup[] = ['vasomotor', 'sleep', 'mood', 'physical', 'genitourinary']
 
+// Per-group sticker-palette hue so the home reads with varied colour like the
+// other behaviors (each signal its own tone) — brand Ember stays for structure
+// (ring center, today, CTAs). Keys index the shared `stickers` palette, which is
+// active in both variants; resolve via useTheme().stickers[key] (+ `${key}Soft`).
+export type StickerHueKey = 'coral' | 'lilac' | 'yellow' | 'green' | 'pink' | 'blue'
+
+export const GROUP_STICKER: Record<MenopauseGroup, StickerHueKey> = {
+  vasomotor: 'coral', // heat / hot flashes
+  sleep: 'lilac', // night / rest
+  mood: 'yellow', // mind & mood
+  physical: 'green', // body
+  genitourinary: 'pink', // intimate
+}
+
+/** Sticker-hue key for any `menopause_logs.type` (symptom → its group hue; period
+ *  → coral; note → blue). Pair with `${key}Soft` for the socket tint. */
+export function symptomStickerKey(type: string): StickerHueKey {
+  if (type === 'period') return 'coral'
+  if (type === 'note') return 'blue'
+  const id = resolveMenopauseSymptomId(type)
+  const sym = id ? ALL_MENOPAUSE_SYMPTOMS.find((s) => s.id === id) : undefined
+  return sym ? GROUP_STICKER[sym.group] : 'blue'
+}
+
 /** Blob for a symptom id — resolves to that symptom's group icon. */
 export function symptomBlob(id: string): CharacterName {
   const symptom = ALL_MENOPAUSE_SYMPTOMS.find((s) => s.id === id)

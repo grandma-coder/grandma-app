@@ -36,7 +36,7 @@ import { useProfile } from '../../lib/useProfile'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseSectionHeader, DiffuseListRow } from '../ui/diffuse/DiffusePrimitives'
-import { diffuseFont } from '../../constants/theme'
+import { diffuseFont, useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
 import { MenopauseRing } from '../menopause/MenopauseRing'
@@ -45,7 +45,7 @@ import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { SlidersHorizontal } from 'lucide-react-native'
 import { useMenopauseQuickLogStore, DEFAULT_MENOPAUSE_QUICK_LOG_KEYS } from '../../store/useMenopauseQuickLogStore'
 import { MenopauseSymptomForm, MenopausePeriodForm } from '../menopause/MenopauseLogForms'
-import { symptomBlob, logTypeBlob } from '../menopause/menopauseIcons'
+import { symptomBlob, logTypeBlob, symptomStickerKey } from '../menopause/menopauseIcons'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import {
   monthsSinceDate,
@@ -111,6 +111,11 @@ export function MenopauseHome() {
   const bottomInset = useScrollBottomInset(insets.bottom + 120)
   const pal = useMenoPalette()
   const { t } = useTranslation()
+  // Per-symptom-group hues from the shared sticker palette (active both variants),
+  // so signals read with varied colour like the other behaviors.
+  const { stickers } = useTheme()
+  const hueOf = (type: string) => (stickers as Record<string, string>)[symptomStickerKey(type)]
+  const hueSoftOf = (type: string) => (stickers as Record<string, string>)[`${symptomStickerKey(type)}Soft`]
 
   const hydrated = useMenopauseStore((s) => s.hydrated)
   const stage = useMenopauseStore((s) => s.stage)
@@ -149,10 +154,10 @@ export function MenopauseHome() {
       ALL_MENOPAUSE_SYMPTOMS.map((s) => ({
         key: s.id,
         label: menopauseSymptomLabel(s.id),
-        icon: <Character name={symptomBlob(s.id)} size={26} color={pal.accent} />,
-        soft: pal.accentSoft,
+        icon: <Character name={symptomBlob(s.id)} size={26} color={hueOf(s.id)} />,
+        soft: hueSoftOf(s.id),
       })),
-    [pal.accent, pal.accentSoft],
+    [stickers], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   // Which log sheet (if any) is open. Both reuse U7's forms verbatim.
@@ -354,7 +359,7 @@ export function MenopauseHome() {
                     key={`${r.date}-${r.type}-${i}`}
                     title={logRowLabel(r.type)}
                     sub={recentDetail(r)}
-                    icon={<Character name={logTypeBlob(r.type)} size={22} color={pal.accent} />}
+                    icon={<Character name={logTypeBlob(r.type)} size={22} color={hueOf(r.type)} />}
                     last={i === recent.length - 1}
                     compact
                   />
@@ -484,6 +489,8 @@ function QuickChip({
   onPress: () => void
 }) {
   const label = menopauseSymptomLabel(id)
+  const { stickers } = useTheme()
+  const hue = (stickers as Record<string, string>)[symptomStickerKey(id)]
   return (
     <Pressable
       onPress={onPress}
@@ -503,7 +510,7 @@ function QuickChip({
         },
       ]}
     >
-      <Character name={symptomBlob(id)} size={18} color={pal.accent} bg={pal.surface} />
+      <Character name={symptomBlob(id)} size={18} color={hue} bg={pal.surface} />
       <Text
         style={[
           styles.quickChipText,
@@ -555,10 +562,13 @@ function MoreChip({ pal, onPress }: { pal: MenoPalette; onPress: () => void }) {
 // ─── Recent row (cream) — blob + label + date/detail ─────────────────────────
 
 function RecentRow({ row, pal }: { row: MenopauseLogRow; pal: MenoPalette }) {
+  const { stickers } = useTheme()
+  const s = stickers as Record<string, string>
+  const key = symptomStickerKey(row.type)
   return (
     <View style={styles.recentRow}>
-      <View style={[styles.recentBlob, { backgroundColor: pal.accentSoft }]}>
-        <Character name={logTypeBlob(row.type)} size={18} color={pal.accent} bg={pal.accentSoft} />
+      <View style={[styles.recentBlob, { backgroundColor: s[`${key}Soft`] }]}>
+        <Character name={logTypeBlob(row.type)} size={18} color={s[key]} bg={s[`${key}Soft`]} />
       </View>
       <View style={styles.recentCopy}>
         <Text style={[styles.recentLabel, { color: pal.text, fontFamily: pal.fontBodySemiBold }]}>

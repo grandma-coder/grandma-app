@@ -11,7 +11,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Character } from '../characters/Characters'
 import { diffuseFont, useTheme } from '../../constants/theme'
-import { logTypeBlob } from './menopauseIcons'
+import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
 
@@ -44,6 +44,7 @@ export function MenopauseRing({
   // Diffuse) — used only for the soft "all clear" check tone.
   const { stickers } = useTheme()
   const checkColor = stickers.greenInk
+  const sticker = stickers as Record<string, string>
 
   const nodes = useMemo(() => {
     const byDate = new Map<string, MenopauseLogRow[]>()
@@ -101,6 +102,9 @@ export function MenopauseRing({
       {nodes.map((n) => {
         const logged = n.logs.length > 0
         const blob = logged ? logTypeBlob(n.logs[0].type) : null
+        const key = logged ? symptomStickerKey(n.logs[0].type) : null
+        const hue = key ? sticker[key] : pal.accent
+        const hueSoft = key ? sticker[`${key}Soft`] : pal.accentSoft
         return (
           <View
             key={n.key}
@@ -108,13 +112,13 @@ export function MenopauseRing({
               styles.node,
               { left: n.x, top: n.y },
               logged
-                ? { backgroundColor: pal.accentSoft, borderColor: pal.accent }
+                ? { backgroundColor: hueSoft, borderColor: hue }
                 : { backgroundColor: pal.surface, borderColor: pal.border },
               n.isToday ? { borderWidth: 2, borderColor: pal.accent } : null,
             ]}
           >
             {logged && blob ? (
-              <Character name={blob} size={14} color={pal.accent} bg={pal.accentSoft} />
+              <Character name={blob} size={14} color={hue} bg={hueSoft} />
             ) : (
               <Ionicons name="checkmark" size={12} color={n.isToday ? pal.accent : checkColor} />
             )}
