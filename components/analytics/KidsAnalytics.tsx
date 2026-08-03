@@ -86,7 +86,7 @@ import {
 import { toDateStr } from '../../lib/cycleLogic'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
-import { BrickColumns, DotCountRows, MilestoneTrail, type DotRow } from './shared/MiniCharts'
+import { DotCountRows, MilestoneTrail, type DotRow, GlowAreaLine, SipColumns, MiniLineChart } from './shared/MiniCharts'
 import { bucketSeries } from './shared/bucketSeries'
 import { FullScreenChart } from '../charts/FullScreenChart'
 import {
@@ -3844,6 +3844,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               color={PILLAR_CONFIG.sleep.color}
               width={chartW}
               unit="h"
+              target={target}
             />
           </ChartCard>
 
@@ -3932,19 +3933,13 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             </Text>
           </View>
 
-          {/* Weekly event frequency chart — the one supporting visual */}
-          {analytics.health.hasData && (
+          {/* Weekly event frequency chart — the one supporting visual. Health is
+              becoming a reference surface (vaccines + genuine concerns only,
+              not a graded score), so this low-value frequency chart is dropped
+              in Diffuse; kept for the legacy theme. */}
+          {analytics.health.hasData && !diffuse && (
             <ChartCard title="Care logged" onExpand={() => onFullScreen('health_freq')}>
-              {diffuse ? (
-                <BrickColumns
-                  data={analytics.health.weeklyFrequency}
-                  labels={analytics.health.weekLabels}
-                  color={stickers.blue}
-                  accent={getDiffuseAccent('kids', dt.isDark)}
-                />
-              ) : (
-                <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={PILLAR_CONFIG.health.color} width={chartW} />
-              )}
+              <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={PILLAR_CONFIG.health.color} width={chartW} />
             </ChartCard>
           )}
 
@@ -4635,7 +4630,7 @@ function MealsLineChart({
   labels: string[]
   width: number
 }) {
-  const { colors, stickers } = useTheme()
+  const { colors } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const color = diffuse ? getDiffuseAccent('kids', dt.isDark) : PILLAR_CONFIG.nutrition.color
@@ -4645,16 +4640,18 @@ function MealsLineChart({
   const numFont = diffuse ? diffuseFont.mono : font.display
   const labelFont = diffuse ? diffuseFont.mono : font.body
 
-  // Diffuse: meals/feeds per day render as the Kids toy-brick columns.
+  // Diffuse: meals/feeds per day as a clear trend line — replaces the
+  // illegible toy-brick grid. A line handles many points cleanly (no width
+  // underflow on long windows), unlike stacked columns.
   if (diffuse) {
-    if (rawData.length === 0) return null
+    if (rawData.length < 2) return null
     return (
-      <BrickColumns
+      <MiniLineChart
         data={rawData}
         labels={rawLabels}
-        color={stickers.blue}
-        accent={getDiffuseAccent('kids', dt.isDark)}
+        color={color}
         height={150}
+        width={width}
       />
     )
   }
@@ -4724,7 +4721,7 @@ function MealsLineChart({
 // Mockup-faithful bar chart: flex bars, no grid, color-mix for non-highlighted,
 // tiny "1h" label on the highlighted (max) bar. Matches kids-analytics-screen.jsx.
 function HighlightBarChart({
-  data: rawData, labels: rawLabels, color, width: _width, height = 140, unit = '',
+  data: rawData, labels: rawLabels, color, width: _width, height = 140, unit = '', target,
 }: {
   data: number[]
   labels: string[]
@@ -4732,6 +4729,9 @@ function HighlightBarChart({
   width?: number
   height?: number
   unit?: string
+  /** Reference goal (e.g. age sleep target). When set, Diffuse renders filled
+   * columns against this line instead of a plain trend line. */
+  target?: number
 }) {
   const { colors, stickers } = useTheme()
   const { t } = useTranslation()
@@ -4743,9 +4743,9 @@ function HighlightBarChart({
   const numFont = diffuse ? diffuseFont.mono : font.display
   const labelFont = diffuse ? diffuseFont.mono : font.body
   const labelFontActive = diffuse ? diffuseFont.monoBold : font.bodySemiBold
-  // Long windows (30/90/365 days) have too many per-day bars to draw; bucket to
-  // a legible count so the chart renders on any date range (diffuse path re-buckets
-  // harmlessly inside BrickColumns).
+  // Long windows (30/90/365 days) have too many per-day bars/columns to draw;
+  // bucket to a legible count so the chart renders on any date range. The
+  // Diffuse SipColumns branch below relies on this having already run.
   { const b = bucketSeries(rawData, rawLabels, 13); rawData = b.data; rawLabels = b.labels }
   if (rawData.length === 0) return null
 
@@ -4760,17 +4760,31 @@ function HighlightBarChart({
     )
   }
 
-  // Diffuse: render the distinct Kids toy-brick columns instead of bars.
-  // Resting bricks in the soft sticker powder-blue; "today" in the deeper Kids
-  // accent so the latest day pops.
+  // Diffuse: a clear trend, not the illegible toy-brick grid. Sleep passes a
+  // `target` so the age-appropriate goal is visible as a reference line on
+  // filled columns; everything else (Activity sessions) reads as a smooth
+  // area line. Distinct sticker hue per pillar so the two never look alike.
   if (diffuse) {
+    if (target !== undefined) {
+      return (
+        <SipColumns
+          data={rawData}
+          target={target}
+          color={stickers.lilac}
+          accent={barColor}
+          labels={rawLabels}
+          height={Math.max(height, 150)}
+          unit={unit}
+        />
+      )
+    }
     return (
-      <BrickColumns
+      <GlowAreaLine
         data={rawData}
+        color={stickers.coral}
         labels={rawLabels}
-        color={stickers.blue}
-        accent={getDiffuseAccent('kids', dt.isDark)}
         height={Math.max(height, 150)}
+        unit={unit}
       />
     )
   }
