@@ -1,66 +1,126 @@
 /**
  * MenopauseWallet — the "Quick access" card stack on the Menopause home,
- * mirroring CycleWallet / KidsWallet / WeekWallet so every behavior home carries
- * the same wallet section. Static shortcut set for E1 (no per-user customization
- * store/picker yet — the sibling wallets' Edit affordance is deferred). The
- * shared WalletCard primitive owns the dual-variant (cream / Diffuse) chrome, so
- * this file just supplies tone + icon + title + tap target per row.
+ * mirroring CycleWallet / KidsWallet / WeekWallet. Editable: the user picks which
+ * shortcut cards show + their order via the Edit affordance (useMenopauseWalletStore).
+ * `enabledKeys: null` = not customized yet → the full default order. The shared
+ * WalletCard primitive owns the dual-variant (cream / Diffuse) chrome; this file
+ * supplies tone + icon + title + tap target per card.
  */
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 import { View } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme } from '../../constants/theme'
+import { SlidersHorizontal } from 'lucide-react-native'
+import { useTheme, useDiffuseTheme } from '../../constants/theme'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
+import { useMenopauseWalletStore } from '../../store/useWalletStore'
 import type { WalletTone } from '../../lib/wallet'
 import { WalletCard } from './WalletCard'
+import { WalletPicker, type WalletPickerItem } from './WalletPicker'
+import { QuietPill } from '../ui/QuietPill'
 import { Character } from '../characters/Characters'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 
-type MenoWalletId = 'ask_grandma' | 'reminders' | 'rewards'
+type MenoWalletId = 'ask_grandma' | 'reminders' | 'rewards' | 'community'
+
+// The available shortcut superset + its default order. All shared with the other
+// behavior wallets (same titles/routes), so the Menopause wallet reads the same.
+const AVAILABLE: MenoWalletId[] = ['ask_grandma', 'reminders', 'rewards', 'community']
 
 export function MenopauseWallet() {
   const { colors, stickers } = useTheme()
+  const dt = useDiffuseTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
+  const enabledKeys = useMenopauseWalletStore((s) => s.enabledKeys)
+  const setEnabled = useMenopauseWalletStore((s) => s.setEnabled)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
-  const tiles: { id: MenoWalletId; tone: WalletTone; title: string; icon: ReactNode; onPress: () => void }[] = [
-    {
-      id: 'ask_grandma',
-      tone: 'peach',
-      title: t('wallet_askGrandma_title'),
-      icon: <GrandmaLogo size={26} palette="sky" outline={colors.text} />,
-      onPress: () => router.push('/grandma-talk' as never),
-    },
-    {
-      id: 'reminders',
-      tone: 'lilac',
-      title: t('wallet_reminders_title'),
-      icon: <Character name="clock" size={26} color={stickers.blue} />,
-      onPress: () => router.push('/notifications' as never),
-    },
-    {
-      id: 'rewards',
-      tone: 'yellow',
-      title: t('wallet_rewards_title'),
-      icon: <Character name="crown" size={26} color={stickers.yellow} />,
-      onPress: () => router.push('/daily-rewards' as never),
-    },
-  ]
+  const toneFor = (id: MenoWalletId): WalletTone =>
+    ({ ask_grandma: 'peach', reminders: 'lilac', rewards: 'yellow', community: 'green' } as const)[id]
+
+  const iconFor = (id: MenoWalletId): ReactNode => {
+    switch (id) {
+      case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
+      case 'reminders': return <Character name="clock" size={26} color={stickers.blue} />
+      case 'rewards': return <Character name="crown" size={26} color={stickers.yellow} />
+      case 'community': return <Character name="community" size={26} color={stickers.green} />
+    }
+  }
+
+  const titleFor = (id: MenoWalletId): string =>
+    ({
+      ask_grandma: t('wallet_askGrandma_title'),
+      reminders: t('wallet_reminders_title'),
+      rewards: t('wallet_rewards_title'),
+      community: t('wallet_channels_title'),
+    } as const)[id]
+
+  const softFor = (id: MenoWalletId): string =>
+    ({
+      ask_grandma: stickers.peachSoft,
+      reminders: stickers.lilacSoft,
+      rewards: stickers.yellowSoft,
+      community: stickers.greenSoft,
+    } as const)[id]
+
+  const onHeader = (id: MenoWalletId) => {
+    switch (id) {
+      case 'ask_grandma': return router.push('/grandma-talk' as never)
+      case 'reminders': return router.push('/notifications' as never)
+      case 'rewards': return router.push('/daily-rewards' as never)
+      case 'community': return router.push('/community' as never)
+    }
+  }
+
+  // Displayed cards: default order when uncustomized; else the user's enabled
+  // keys (in their order), dropping any id no longer available.
+  const displayedIds: MenoWalletId[] =
+    enabledKeys === null
+      ? AVAILABLE
+      : enabledKeys.filter((k): k is MenoWalletId => AVAILABLE.includes(k as MenoWalletId))
+
+  const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  const pickerItems: WalletPickerItem[] = AVAILABLE.map((id) => ({
+    key: id,
+    label: titleFor(id),
+    icon: iconFor(id),
+    soft: softFor(id),
+  }))
 
   return (
     <View>
-      {tiles.map((tile, i) => (
+      {/* Edit affordance — icon-only, standardized with the cycle/kids wallets. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 6 }}>
+        <QuietPill
+          leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
+          onPress={() => setPickerOpen(true)}
+          accessibilityLabel={t('kids_quickLogs_edit')}
+        />
+      </View>
+
+      {displayedIds.map((id, i) => (
         <WalletCard
-          key={tile.id}
-          tone={tile.tone}
-          icon={tile.icon}
-          title={tile.title}
+          key={id}
+          tone={toneFor(id)}
+          icon={iconFor(id)}
+          title={titleFor(id)}
           expanded={false}
           linkOnly
-          last={i === tiles.length - 1}
+          last={i === displayedIds.length - 1}
           hideChevron
-          onPressHeader={tile.onPress}
+          onPressHeader={() => onHeader(id)}
         />
       ))}
+
+      <WalletPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        items={pickerItems}
+        enabledKeys={displayedIds}
+        onSave={setEnabled}
+      />
     </View>
   )
 }

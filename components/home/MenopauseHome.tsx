@@ -40,6 +40,10 @@ import { diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
 import { MenopauseRing } from '../menopause/MenopauseRing'
+import { QuietPill } from '../ui/QuietPill'
+import { WalletPicker, type WalletPickerItem } from './WalletPicker'
+import { SlidersHorizontal } from 'lucide-react-native'
+import { useMenopauseQuickLogStore, DEFAULT_MENOPAUSE_QUICK_LOG_KEYS } from '../../store/useMenopauseQuickLogStore'
 import { MenopauseSymptomForm, MenopausePeriodForm } from '../menopause/MenopauseLogForms'
 import { symptomBlob, logTypeBlob } from '../menopause/menopauseIcons'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
@@ -48,7 +52,7 @@ import {
   shouldOfferMenopauseUpdate,
   type MenopauseStage,
 } from '../../lib/menopauseStage'
-import { useMenopauseLogs, computeSymptomStats, type MenopauseLogRow } from '../../lib/menopauseAnalytics'
+import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import {
   ALL_MENOPAUSE_SYMPTOMS,
   menopauseSymptomLabel,
@@ -73,14 +77,6 @@ const WISDOM: Record<MenopauseStage, string> = {
 }
 
 const WISDOM_FALLBACK = 'However this season arrives, you do not have to navigate it alone.'
-
-// A broad default quick-log set spanning every symptom group, so the home always
-// offers a useful spread — not just what's already been logged. The user's most-
-// logged signals are merged in front of these, and a "More" chip opens the full
-// symptom catalog for anything else.
-const QUICK_DEFAULTS: MenopauseSymptomId[] = [
-  'hot_flash', 'night_sweat', 'sleep', 'fatigue', 'low_mood', 'brain_fog', 'joint_pain', 'vaginal_dryness',
-]
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -132,25 +128,32 @@ export function MenopauseHome() {
   // Quick-log set: the symptoms the user actually logs (their tracked signals),
   // most-frequent first; fall back to the vasomotor + sleep starter set when
   // there's nothing logged yet. Derived from U7's analytics — no store change.
+  // Quick-log signals = the user's pinned set (editable via the picker), falling
+  // back to the broad defaults until the store rehydrates. Filtered to valid ids.
+  const quickHydrated = useMenopauseQuickLogStore((s) => s.hydrated)
+  const quickEnabled = useMenopauseQuickLogStore((s) => s.enabledKeys)
+  const setQuickEnabled = useMenopauseQuickLogStore((s) => s.setEnabled)
+  const [quickPickerOpen, setQuickPickerOpen] = useState(false)
+
   const trackedIds = useMemo<MenopauseSymptomId[]>(() => {
-    const logged = computeSymptomStats(rows)
-      .map((s) => s.id)
-      .filter((id): id is MenopauseSymptomId =>
-        ALL_MENOPAUSE_SYMPTOMS.some((s) => s.id === id))
-    // The user's most-logged signals first, then fill from the broad defaults —
-    // deduped and capped — so the set is always a useful spread, never just one.
-    const seen = new Set<MenopauseSymptomId>()
-    const out: MenopauseSymptomId[] = []
-    for (const id of [...logged, ...QUICK_DEFAULTS]) {
-      if (seen.has(id)) continue
-      seen.add(id)
-      out.push(id)
-      if (out.length >= 8) break
-    }
-    return out
-  }, [rows])
+    const keys = quickHydrated ? quickEnabled : DEFAULT_MENOPAUSE_QUICK_LOG_KEYS
+    return keys.filter((id): id is MenopauseSymptomId =>
+      ALL_MENOPAUSE_SYMPTOMS.some((s) => s.id === id))
+  }, [quickHydrated, quickEnabled])
 
   const recent = useMemo<MenopauseLogRow[]>(() => rows.slice(-4).reverse(), [rows])
+
+  // Full symptom catalog for the quick-log Edit picker.
+  const quickPickerItems = useMemo<WalletPickerItem[]>(
+    () =>
+      ALL_MENOPAUSE_SYMPTOMS.map((s) => ({
+        key: s.id,
+        label: menopauseSymptomLabel(s.id),
+        icon: <Character name={symptomBlob(s.id)} size={26} color={pal.accent} />,
+        soft: pal.accentSoft,
+      })),
+    [pal.accent, pal.accentSoft],
+  )
 
   // Which log sheet (if any) is open. Both reuse U7's forms verbatim.
   const [activeSheet, setActiveSheet] = useState<'symptom' | 'period' | null>(null)
@@ -293,7 +296,17 @@ export function MenopauseHome() {
         {/* ─── Quick log — tracked symptoms → reuse U7's symptom form ───────── */}
         {pal.diffuse ? (
           <View style={styles.section}>
-            <DiffuseSectionHeader eyebrow="TODAY" title="Quick log" />
+            <DiffuseSectionHeader
+              eyebrow="TODAY"
+              title="Quick log"
+              right={
+                <QuietPill
+                  leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
+                  onPress={() => setQuickPickerOpen(true)}
+                  accessibilityLabel="Edit quick-log signals"
+                />
+              }
+            />
             <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
               Tap a signal to note how you&apos;re feeling today.
             </Text>
@@ -306,7 +319,14 @@ export function MenopauseHome() {
           </View>
         ) : (
           <PaperCard radius={pal.radius.lg} padding={18} style={styles.section}>
-            <Text style={[styles.cardTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Quick log</Text>
+            <View style={styles.quickHead}>
+              <Text style={[styles.cardTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Quick log</Text>
+              <QuietPill
+                leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
+                onPress={() => setQuickPickerOpen(true)}
+                accessibilityLabel="Edit quick-log signals"
+              />
+            </View>
             <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
               Tap a signal to note how you&apos;re feeling today.
             </Text>
@@ -438,6 +458,16 @@ export function MenopauseHome() {
       >
         <MenopausePeriodForm onSaved={() => setActiveSheet(null)} />
       </LogSheet>
+
+      {/* Quick-log Edit picker — choose which signals are pinned (shared with the
+          cycle/kids quick-log + wallet editors via WalletPicker). */}
+      <WalletPicker
+        visible={quickPickerOpen}
+        onClose={() => setQuickPickerOpen(false)}
+        items={quickPickerItems}
+        enabledKeys={trackedIds}
+        onSave={setQuickEnabled}
+      />
     </View>
   )
 }
@@ -585,6 +615,7 @@ const styles = StyleSheet.create({
   dismissText: { fontSize: 14.5 },
 
   // Quick log
+  quickHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
   quickChip: {
     flexDirection: 'row',

@@ -60,3 +60,4 @@ function createWalletStore(persistKey: string) {
 export const usePregnancyWalletStore = createWalletStore('grandma-wallet-pregnancy')
 export const useCycleWalletStore = createWalletStore('grandma-wallet-cycle')
 export const useKidsWalletStore = createWalletStore('grandma-wallet-kids')
+export const useMenopauseWalletStore = createWalletStore('grandma-wallet-menopause')
