@@ -3393,7 +3393,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
   // null while no pillar is selected, so each pillar selection remounts a
   // fresh `PillarDetail` — this single flag never leaks open/closed state
   // from one pillar's sheet into the next.
-  const [showDetails, setShowDetails] = useState(false)
+  const [showDetails, setShowDetails] = useState(true)
 
   // Diffuse "explanation" block — hairline top rule, mono eyebrow, sans body.
   // Under the flag-off path we keep the paper card so behavior is unchanged.
