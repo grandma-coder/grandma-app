@@ -34,11 +34,11 @@ import { MenopauseWallet } from './MenopauseWallet'
 import { useProfile } from '../../lib/useProfile'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
-import { DiffuseStatCard, DiffuseSectionHeader, DiffuseListRow } from '../ui/diffuse/DiffusePrimitives'
-import { diffuseFields, diffuseFont } from '../../constants/theme'
+import { DiffuseSectionHeader, DiffuseListRow } from '../ui/diffuse/DiffusePrimitives'
+import { diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
-import { MenopauseDayStrip } from '../menopause/MenopauseDayStrip'
+import { MenopauseRing } from '../menopause/MenopauseRing'
 import { MenopauseSymptomForm, MenopausePeriodForm } from '../menopause/MenopauseLogForms'
 import { symptomBlob, logTypeBlob } from '../menopause/menopauseIcons'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
@@ -207,52 +207,18 @@ export function MenopauseHome() {
       >
         <HomeGreeting name={displayName} microLabel={microLabel} trailing={<HomeJourneySwitcher />} />
 
-        {/* ─── Hero — stage + months-since-last-period counter ─────────────── */}
-        {pal.diffuse ? (
-          <View style={styles.section}>
-            <DiffuseStatCard
-              label={stageLabel}
-              value={months === null ? undefined : String(months)}
-              emptyLabel="—"
-              sub={monthsCaption}
-              icon={<Character name="phase" size={26} color={pal.accent} />}
-              iconNoBloom
-              accent={diffuseFields.meno.g1}
-              accent2={diffuseFields.meno.g3}
-            />
-          </View>
-        ) : (
-          <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={20} style={styles.section}>
-            <View style={styles.heroTop}>
-              <View style={[styles.heroBlob, { backgroundColor: pal.surface, borderColor: pal.border }]}>
-                <Character name="phase" size={30} color={pal.accent} bg={pal.surface} />
-              </View>
-              <View style={styles.heroTitleWrap}>
-                <Text style={[styles.eyebrow, { color: pal.accent, fontFamily: pal.fontBodySemiBold }]}>
-                  {microLabel}
-                </Text>
-                <Text style={[styles.heroStage, { color: pal.text, fontFamily: pal.fontDisplay }]}>
-                  {stageLabel}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.heroCount}>
-              <Text style={[styles.heroNumber, { color: pal.accent, fontFamily: pal.fontDisplay }]}>
-                {months === null ? '—' : months}
-              </Text>
-              <Text style={[styles.heroCaption, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
-                {monthsCaption}
-              </Text>
-            </View>
-          </PaperCard>
-        )}
-
-        {/* ─── Day strip — at-a-glance "when did I log symptoms" (last 14 days) ─
-            The flat, non-cyclical equivalent of the cycle date strip: logged days
-            carry their symptom blob, empty days a muted pip, today ringed. */}
-        <View style={styles.section}>
-          <MenopauseDayStrip rows={rows} pal={pal} />
+        {/* ─── Ring — the menopause "wheel": last 28 days on a hairline ring,
+            logged days carry their symptom blob, empty days a soft check, today
+            ringed; stage + months-since-last-period counter in the center. The
+            flat-time analogue of cycle's phase ring (both variants). */}
+        <View style={styles.ringSection}>
+          <MenopauseRing
+            rows={rows}
+            pal={pal}
+            stageLabel={stageLabel}
+            months={months}
+            monthsCaption={monthsCaption}
+          />
         </View>
 
         {/* ─── 12-month offer — never automatic; a warm, dismissible prompt ─── */}
@@ -530,6 +496,7 @@ const styles = StyleSheet.create({
   loaderRoot: { alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 20 },
   section: { marginTop: SECTION_GAP },
+  ringSection: { marginTop: 8, marginBottom: 4 },
 
   // Diffuse soft card wrapper (hairline box; used for offer / wisdom / period).
   diffuseSoftCard: { borderWidth: 1, padding: 18 },
