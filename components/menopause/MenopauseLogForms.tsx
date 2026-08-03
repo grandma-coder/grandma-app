@@ -31,7 +31,8 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from './menoPalette'
-import { GROUP_META, GROUP_ORDER } from './menopauseIcons'
+import { GROUP_META, GROUP_ORDER, GROUP_STICKER, symptomBlob, symptomStickerKey } from './menopauseIcons'
+import { useTheme } from '../../constants/theme'
 
 // ─── Copy (English literals — no menopause i18n keys exist yet) ──────────────
 
@@ -57,6 +58,8 @@ const COPY = {
 
 export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved: () => void; initialId?: MenopauseSymptomId; logDate?: string }) {
   const pal = useMenoPalette()
+  const { stickers } = useTheme()
+  const st = stickers as Record<string, string>
   // Pre-select when opened from a home quick-log chip (skips straight to severity).
   const [symptomId, setSymptomId] = useState<MenopauseSymptomId | null>(initialId ?? null)
   const [severity, setSeverity] = useState(3)
@@ -93,7 +96,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
         return (
           <View key={group} style={styles.groupBlock}>
             <View style={styles.groupHead}>
-              <Character name={meta.icon} size={20} color={pal.accent} bg={pal.bg} />
+              <Character name={meta.icon} size={20} color={st[`${GROUP_STICKER[group]}Ink`]} bg={pal.bg} />
               <Text style={[styles.groupLabel, { color: pal.textMuted, fontFamily: pal.fontBodySemiBold }]}>
                 {meta.label}
               </Text>
@@ -102,6 +105,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
               {items.map((s) => (
                 <SelectableChip
                   key={s.id}
+                  id={s.id}
                   label={s.label}
                   selected={symptomId === s.id}
                   onPress={() => setSymptomId(s.id)}
@@ -247,16 +251,27 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
 // ─── Shared selectable pill chip (dual-variant) ──────────────────────────────
 
 function SelectableChip({
+  id,
   label,
   selected,
   onPress,
   pal,
 }: {
+  /** Symptom id → colored icon + hue. Omitted for plain chips (e.g. period flow). */
+  id?: MenopauseSymptomId
   label: string
   selected: boolean
   onPress: () => void
   pal: MenoPalette
 }) {
+  // Symptom chips carry their own colour: a crisp Ink blob, and when selected the
+  // pill tints in that hue. Plain chips (no id) keep the Ember look, no icon.
+  const { stickers } = useTheme()
+  const st = stickers as Record<string, string>
+  const key = id ? symptomStickerKey(id) : null
+  const hue = key ? st[key] : pal.accent
+  const hueSoft = key ? st[`${key}Soft`] : pal.accentSoft
+  const hueInk = key ? st[`${key}Ink`] : pal.accent
   return (
     <Pressable
       onPress={onPress}
@@ -267,8 +282,8 @@ function SelectableChip({
         // Hard-offset sticker shadow — CURRENT variant only; Diffuse stays flat.
         !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
         {
-          backgroundColor: selected ? pal.accentSoft : pal.surface,
-          borderColor: selected ? pal.accent : pal.border,
+          backgroundColor: selected ? hueSoft : pal.surface,
+          borderColor: selected ? hue : pal.border,
           // Diffuse has no `full` pill token — use its xl outline; current keeps
           // the sticker pill.
           borderRadius: pal.diffuse ? pal.radius.xl : pal.radius.full,
@@ -276,10 +291,11 @@ function SelectableChip({
         },
       ]}
     >
+      {id ? <Character name={symptomBlob(id)} size={17} color={hueInk} /> : null}
       <Text
         style={[
           styles.chipText,
-          { color: selected ? pal.accent : pal.textSecondary, fontFamily: pal.fontBodyMedium },
+          { color: selected ? hueInk : pal.textSecondary, fontFamily: pal.fontBodyMedium },
         ]}
       >
         {label}
@@ -296,7 +312,7 @@ const styles = StyleSheet.create({
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   groupLabel: { fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1 },
   chipText: { fontSize: 14.5 },
 
   severityBlock: { gap: 8 },
