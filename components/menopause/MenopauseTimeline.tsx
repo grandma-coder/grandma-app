@@ -23,7 +23,8 @@ import { menopauseSymptomLabel, resolveMenopauseSymptomId } from '../../lib/meno
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { MenopauseSymptomForm, MenopausePeriodForm } from './MenopauseLogForms'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from './menoPalette'
-import { logTypeBlob } from './menopauseIcons'
+import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
+import { useTheme } from '../../constants/theme'
 
 // ─── Copy (English literals — no menopause i18n keys exist yet) ──────────────
 
@@ -186,6 +187,11 @@ export function MenopauseTimeline() {
 
 function EntryRow({ row, pal }: { row: MenopauseLogRow; pal: MenoPalette }) {
   const subtitle = entrySubtitle(row)
+  // Per-group sticker hue so the timeline reads with varied colour like the home
+  // + cycle calendar (each signal its own tone).
+  const { stickers } = useTheme()
+  const s = stickers as Record<string, string>
+  const key = symptomStickerKey(row.type)
   return (
     <View
       style={[
@@ -194,8 +200,8 @@ function EntryRow({ row, pal }: { row: MenopauseLogRow; pal: MenoPalette }) {
         { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg },
       ]}
     >
-      <View style={[styles.entryIcon, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
-        <Character name={logTypeBlob(row.type)} size={24} color={pal.accent} bg={pal.accentSoft} />
+      <View style={[styles.entryIcon, { backgroundColor: s[`${key}Soft`], borderColor: pal.border }]}>
+        <Character name={logTypeBlob(row.type)} size={24} color={s[key]} bg={s[`${key}Soft`]} />
       </View>
       <View style={styles.entryText}>
         <Text style={[styles.entryTitle, { color: pal.text, fontFamily: pal.fontBodySemiBold }]}>

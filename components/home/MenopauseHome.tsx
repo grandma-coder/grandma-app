@@ -35,7 +35,7 @@ import { MenopauseWallet } from './MenopauseWallet'
 import { useProfile } from '../../lib/useProfile'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
-import { DiffuseSectionHeader, DiffuseListRow } from '../ui/diffuse/DiffusePrimitives'
+import { DiffuseSectionHeader } from '../ui/diffuse/DiffusePrimitives'
 import { diffuseFont, useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
@@ -45,7 +45,7 @@ import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { SlidersHorizontal } from 'lucide-react-native'
 import { useMenopauseQuickLogStore, DEFAULT_MENOPAUSE_QUICK_LOG_KEYS } from '../../store/useMenopauseQuickLogStore'
 import { MenopauseSymptomForm, MenopausePeriodForm } from '../menopause/MenopauseLogForms'
-import { symptomBlob, logTypeBlob, symptomStickerKey } from '../menopause/menopauseIcons'
+import { symptomBlob, symptomStickerKey } from '../menopause/menopauseIcons'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import {
   monthsSinceDate,
@@ -56,7 +56,6 @@ import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnaly
 import {
   ALL_MENOPAUSE_SYMPTOMS,
   menopauseSymptomLabel,
-  resolveMenopauseSymptomId,
   type MenopauseSymptomId,
 } from '../../lib/menopauseSymptoms'
 import { supabase } from '../../lib/supabase'
@@ -83,25 +82,6 @@ function getMicroLabel(): string {
   const day = d.toLocaleDateString('en-US', { weekday: 'long' })
   const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   return `${day.toUpperCase()} · ${date.toUpperCase()} · MENOPAUSE`
-}
-
-function formatLogDate(iso: string): string {
-  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function logRowLabel(type: string): string {
-  if (type === 'period') return 'Period'
-  if (type === 'note') return 'Note'
-  const id = resolveMenopauseSymptomId(type)
-  return id ? menopauseSymptomLabel(id) : type
-}
-
-function recentDetail(row: MenopauseLogRow): string {
-  return row.severity != null
-    ? `${formatLogDate(row.date)} · intensity ${row.severity}/5`
-    : row.value
-      ? `${formatLogDate(row.date)} · ${row.value}`
-      : formatLogDate(row.date)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -145,8 +125,6 @@ export function MenopauseHome() {
     return keys.filter((id): id is MenopauseSymptomId =>
       ALL_MENOPAUSE_SYMPTOMS.some((s) => s.id === id))
   }, [quickHydrated, quickEnabled])
-
-  const recent = useMemo<MenopauseLogRow[]>(() => rows.slice(-4).reverse(), [rows])
 
   // Full symptom catalog for the quick-log Edit picker.
   const quickPickerItems = useMemo<WalletPickerItem[]>(
@@ -344,45 +322,8 @@ export function MenopauseHome() {
           </PaperCard>
         )}
 
-        {/* ─── Recent — last few logged entries ────────────────────────────── */}
-        {pal.diffuse ? (
-          <View style={styles.section}>
-            <DiffuseSectionHeader title="Recent" />
-            {recent.length === 0 ? (
-              <Text style={[styles.emptyText, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
-                Nothing logged yet — tap a signal above and it&apos;ll show up here.
-              </Text>
-            ) : (
-              <View>
-                {recent.map((r, i) => (
-                  <DiffuseListRow
-                    key={`${r.date}-${r.type}-${i}`}
-                    title={logRowLabel(r.type)}
-                    sub={recentDetail(r)}
-                    icon={<Character name={logTypeBlob(r.type)} size={22} color={hueOf(r.type)} />}
-                    last={i === recent.length - 1}
-                    compact
-                  />
-                ))}
-              </View>
-            )}
-          </View>
-        ) : (
-          <PaperCard radius={pal.radius.lg} padding={18} style={styles.section}>
-            <Text style={[styles.cardTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Recent</Text>
-            {recent.length === 0 ? (
-              <Text style={[styles.emptyText, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
-                Nothing logged yet. Your notes will show up here.
-              </Text>
-            ) : (
-              <View style={styles.recentList}>
-                {recent.map((r, i) => (
-                  <RecentRow key={`${r.date}-${r.type}-${i}`} row={r} pal={pal} />
-                ))}
-              </View>
-            )}
-          </PaperCard>
-        )}
+        {/* Recent moved to the Agenda tab (MenopauseTimeline) — the date-grouped
+            log timeline, mirroring where cycle/kids surface their logged entries. */}
 
         {/* ─── Grandma Wisdom — one stage-appropriate line ─────────────────── */}
         {pal.diffuse ? (
@@ -556,29 +497,6 @@ function MoreChip({ pal, onPress }: { pal: MenoPalette; onPress: () => void }) {
         More
       </Text>
     </Pressable>
-  )
-}
-
-// ─── Recent row (cream) — blob + label + date/detail ─────────────────────────
-
-function RecentRow({ row, pal }: { row: MenopauseLogRow; pal: MenoPalette }) {
-  const { stickers } = useTheme()
-  const s = stickers as Record<string, string>
-  const key = symptomStickerKey(row.type)
-  return (
-    <View style={styles.recentRow}>
-      <View style={[styles.recentBlob, { backgroundColor: s[`${key}Soft`] }]}>
-        <Character name={logTypeBlob(row.type)} size={18} color={s[key]} bg={s[`${key}Soft`]} />
-      </View>
-      <View style={styles.recentCopy}>
-        <Text style={[styles.recentLabel, { color: pal.text, fontFamily: pal.fontBodySemiBold }]}>
-          {logRowLabel(row.type)}
-        </Text>
-        <Text style={[styles.recentDetail, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
-          {recentDetail(row)}
-        </Text>
-      </View>
-    </View>
   )
 }
 
