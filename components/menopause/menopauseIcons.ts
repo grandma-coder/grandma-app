@@ -12,6 +12,7 @@ import {
   resolveMenopauseSymptomId,
   ALL_MENOPAUSE_SYMPTOMS,
   type MenopauseGroup,
+  type MenopauseSymptomId,
 } from '../../lib/menopauseSymptoms'
 
 export const GROUP_META: Record<MenopauseGroup, { label: string; icon: CharacterName }> = {
@@ -48,8 +49,31 @@ export function symptomStickerKey(type: string): StickerHueKey {
   return sym ? GROUP_STICKER[sym.group] : 'blue'
 }
 
-/** Blob for a symptom id — resolves to that symptom's group icon. */
+// Per-symptom blob — each of the 13 signals gets its OWN icon (not one shared
+// group icon). Uses the closest existing Character blob per symptom; the few
+// weaker matches (fatigue/joint_pain/weight/vaginal_dryness) are flagged for
+// bespoke blobs.
+export const SYMPTOM_BLOB: Record<MenopauseSymptomId, CharacterName> = {
+  hot_flash: 'temperature', // thermometer / heat
+  night_sweat: 'water', // sweat drop
+  sleep: 'sleep', // sleepy moon
+  fatigue: 'night', // low energy  (bespoke 'battery' candidate)
+  low_mood: 'mood', // mood face
+  anxiety: 'observe', // on-edge / vigilant  (bespoke candidate — 'anxious' is a mood *face*, not a blob)
+  brain_fog: 'cloud', // fog
+  joint_pain: 'activity', // body/movement  (bespoke 'joint' candidate)
+  headache: 'brain', // head
+  palpitations: 'heartbeat', // racing heart
+  weight: 'trending', // change  (bespoke 'scale' candidate)
+  vaginal_dryness: 'soothe', // intimate care  (bespoke candidate)
+  libido: 'heart', // intimacy
+}
+
+/** Blob for a symptom id — its own per-symptom icon, falling back to the group
+ *  icon then the note blob. */
 export function symptomBlob(id: string): CharacterName {
+  const own = SYMPTOM_BLOB[id as MenopauseSymptomId]
+  if (own) return own
   const symptom = ALL_MENOPAUSE_SYMPTOMS.find((s) => s.id === id)
   return symptom ? GROUP_META[symptom.group].icon : 'note'
 }
