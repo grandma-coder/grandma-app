@@ -1,24 +1,23 @@
 /**
  * MenopauseRing — the menopause home "wheel", the flat-time analogue of cycle's
  * CycleJourneyRingFull. 28 day-nodes sit on a hairline ring; a day you logged
- * carries its symptom blob (Ember), a day with nothing shows a soft check ("all
- * clear"), today is ringed. The stage + months-since-last-period counter lives in
- * the center. Purely visual for E1 (logging happens via the Quick-log chips).
- *
- * Dual-variant, tokens-only via the shared MenoPalette.
+ * carries its symptom blob (Ember), a day with nothing shows a soft green check
+ * ("all clear"), today is ringed. The stage + months-since-last-period counter
+ * lives in the center. Purely visual for E1 (logging happens via the Quick-log
+ * chips). Dual-variant, tokens-only via the shared MenoPalette + sticker palette.
  */
 import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Character } from '../characters/Characters'
-import { diffuseFont } from '../../constants/theme'
+import { diffuseFont, useTheme } from '../../constants/theme'
 import { logTypeBlob } from './menopauseIcons'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
 
 const DAYS = 28
-const SIZE = 320
-const NODE = 30
+const SIZE = 280
+const NODE = 24
 const R = SIZE / 2 - NODE / 2 - 6 // node-center radius
 
 function localDateStr(d: Date): string {
@@ -41,6 +40,11 @@ export function MenopauseRing({
   months: number | null
   monthsCaption: string
 }) {
+  // Sticker palette is shared across both variants (stickers stay active under
+  // Diffuse) — used only for the soft "all clear" check tone.
+  const { stickers } = useTheme()
+  const checkColor = stickers.greenInk
+
   const nodes = useMemo(() => {
     const byDate = new Map<string, MenopauseLogRow[]>()
     for (const r of rows) {
@@ -110,9 +114,9 @@ export function MenopauseRing({
             ]}
           >
             {logged && blob ? (
-              <Character name={blob} size={16} color={pal.accent} bg={pal.accentSoft} />
+              <Character name={blob} size={14} color={pal.accent} bg={pal.accentSoft} />
             ) : (
-              <Ionicons name="checkmark" size={13} color={n.isToday ? pal.accent : pal.textMuted} />
+              <Ionicons name="checkmark" size={12} color={n.isToday ? pal.accent : checkColor} />
             )}
           </View>
         )
@@ -121,7 +125,7 @@ export function MenopauseRing({
   )
 }
 
-const CENTER_BOX = 200
+const CENTER_BOX = 176
 
 const styles = StyleSheet.create({
   wrap: { width: SIZE, height: SIZE, alignSelf: 'center' },
@@ -144,9 +148,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
   },
-  stage: { fontSize: 11, letterSpacing: 1, textAlign: 'center' },
-  number: { fontSize: 60, lineHeight: 64, letterSpacing: -1 },
-  caption: { fontSize: 12.5, lineHeight: 17, textAlign: 'center', maxWidth: 150 },
+  stage: { fontSize: 10.5, letterSpacing: 1, textAlign: 'center' },
+  number: { fontSize: 48, lineHeight: 52, letterSpacing: -1 },
+  caption: { fontSize: 12, lineHeight: 16, textAlign: 'center', maxWidth: 138 },
   node: {
     position: 'absolute',
     width: NODE,
