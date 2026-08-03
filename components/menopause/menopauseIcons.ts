@@ -54,18 +54,18 @@ export function symptomStickerKey(type: string): StickerHueKey {
 // weaker matches (fatigue/joint_pain/weight/vaginal_dryness) are flagged for
 // bespoke blobs.
 export const SYMPTOM_BLOB: Record<MenopauseSymptomId, CharacterName> = {
-  hot_flash: 'temperature', // thermometer / heat
-  night_sweat: 'water', // sweat drop
+  hot_flash: 'flame', // bespoke flame
+  night_sweat: 'nightsweat', // bespoke crescent moon + sweat drop
   sleep: 'sleep', // sleepy moon
-  fatigue: 'night', // low energy  (bespoke 'battery' candidate)
+  fatigue: 'battery', // bespoke low battery
   low_mood: 'mood', // mood face
-  anxiety: 'observe', // on-edge / vigilant  (bespoke candidate — 'anxious' is a mood *face*, not a blob)
+  anxiety: 'worry', // bespoke worried face
   brain_fog: 'cloud', // fog
-  joint_pain: 'activity', // body/movement  (bespoke 'joint' candidate)
+  joint_pain: 'joint', // bespoke dog-bone
   headache: 'brain', // head
   palpitations: 'heartbeat', // racing heart
-  weight: 'trending', // change  (bespoke 'scale' candidate)
-  vaginal_dryness: 'soothe', // intimate care  (bespoke candidate)
+  weight: 'scale', // bespoke weight scale
+  vaginal_dryness: 'dryness', // bespoke leaf/petal
   libido: 'heart', // intimacy
 }
 

@@ -38,6 +38,8 @@ export type CharacterName =
   // communication · commerce · misc (migration finish)
   | 'chat' | 'book' | 'chart' | 'scan' | 'person'
   | 'trending' | 'marketplace' | 'channel' | 'skip' | 'poll' | 'empty'
+  // menopause symptoms (bespoke)
+  | 'flame' | 'nightsweat' | 'battery' | 'worry' | 'joint' | 'scale' | 'dryness'
 
 // Mood expressions — one `mood` blob, a `face` prop varies the expression.
 // Kids: happy·calm·energetic·fussy·cranky. Pregnancy adds excited·anxious·nauseous.
@@ -63,6 +65,9 @@ const HUE: Record<CharacterName, string> = {
   calendar: '#5F8FC1', selfcare: '#D86A4F',
   chat: '#7A9D4A', book: '#5F8FC1', chart: '#8E72C9', scan: '#5F8FC1', person: '#D98CA6',
   trending: '#D86A4F', marketplace: '#E08A5A', channel: '#7A9D4A', skip: '#8E72C9', poll: '#C9A02C', empty: '#8E72C9',
+  // menopause symptoms
+  flame: '#EE7B6D', nightsweat: '#7FA8D8', battery: '#9DA86A', worry: '#8E72C9',
+  joint: '#7A9D4A', scale: '#7A9D4A', dryness: '#D98CA6',
 }
 
 // Blob silhouette (48×48) per concept, ported from the approved set.
@@ -146,6 +151,17 @@ const D: Record<CharacterName, string> = {
   skip: 'M9 13c0-1.3 1.5-2.1 2.5-1.2L23 21.8c.7.6.7 1.7 0 2.3L11.5 33.2C10.5 34.1 9 33.3 9 32V13ZM25 13c0-1.3 1.5-2.1 2.5-1.2L39 21.8c.7.6.7 1.7 0 2.3L27.5 33.2C26.5 34.1 25 33.3 25 32V13Z',
   poll: 'M10 8a4 4 0 0 0-4 4v24a4 4 0 0 0 4 4h28a4 4 0 0 0 4-4V12a4 4 0 0 0-4-4H10Z',
   empty: 'M24 7a17 17 0 1 1 0 34 17 17 0 0 1 0-34Z',
+  // menopause symptoms. flame = hot flashes; nightsweat = crescent moon + sweat
+  // drop; battery = fatigue (low-charge cut-out in FACE); worry = mood circle w/
+  // worried face; joint = dog-bone (joint aches); scale = weight scale (dial
+  // cut-out); dryness = leaf/petal (vein cut-out).
+  flame: 'M24 5c-2 7-11 11-11 23a11 11 0 0 0 22 0c0-6-3-9-5-13-1 4-2 5-4 5 1-8 0-14-2-15Z',
+  nightsweat: 'M27 7C16 7 8 15 8 25s8 17 19 16c1 0 1-1 0-2-7-2-12-8-12-15S18 11 27 9c1-1 1-2 0-2ZM35 26c-1 3-4 5-4 8a4 4 0 0 0 8 0c0-3-3-5-4-8Z',
+  battery: 'M6 17h27a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3ZM38 21h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2Z',
+  worry: 'M24 6a18 18 0 1 1 0 36 18 18 0 0 1 0-36Z',
+  joint: 'M14 15a4.5 4.5 0 1 0-1 8.9 4.5 4.5 0 1 0 1 8.9c1 0 2-.5 3-1.3h14c1 .8 2 1.3 3 1.3a4.5 4.5 0 1 0 1-8.9 4.5 4.5 0 1 0-1-8.9c-1 0-2 .5-3 1.3H17c-1-.8-2-1.3-3-1.3Z',
+  scale: 'M9 10h30a3 3 0 0 1 3 3v22a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V13a3 3 0 0 1 3-3Z',
+  dryness: 'M24 6C15 11 10 20 12 32c12 2 22-4 24-16-7 1-11-3-12-10Z',
 }
 
 // Face per concept. Eyes ONLY on creatures/subjects; object glyphs are faceless
@@ -162,6 +178,8 @@ type FaceKind = 'dots' | 'sleepy' | 'smile' | 'pulse' | 'wave' | 'target' | 'bli
   // communication · commerce · misc cut-outs
   | 'chatDots' | 'bookSpine' | 'bars' | 'scanLine' | 'trendArrow'
   | 'tagHole' | 'hash' | 'pollBars' | 'emptyDash'
+  // menopause cut-outs
+  | 'battLow' | 'worried' | 'scaleDial' | 'leafVein'
 const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, number] }> = {
   // subjects / creatures → eyes
   nutrition: { kind: 'dots', e: [19, 30, 29, 30] },
@@ -237,6 +255,14 @@ const FACE: Record<CharacterName, { kind: FaceKind; e: [number, number, number, 
   skip: { kind: 'none', e: [0, 0, 0, 0] },
   poll: { kind: 'pollBars', e: [0, 0, 0, 0] },
   empty: { kind: 'emptyDash', e: [0, 0, 0, 0] },
+  // menopause symptoms
+  flame: { kind: 'none', e: [0, 0, 0, 0] },
+  nightsweat: { kind: 'none', e: [0, 0, 0, 0] },
+  battery: { kind: 'battLow', e: [0, 0, 0, 0] },
+  worry: { kind: 'worried', e: [0, 0, 0, 0] },
+  joint: { kind: 'none', e: [0, 0, 0, 0] },
+  scale: { kind: 'scaleDial', e: [0, 0, 0, 0] },
+  dryness: { kind: 'leafVein', e: [0, 0, 0, 0] },
 }
 
 // Mood expression face recipes — drawn on the `mood` blob. Each returns the
@@ -433,6 +459,30 @@ export function Character({ name, size = 24, color, eye = '#1A1916', bg = '#F4F1
       {/* empty — dashed placeholder rule */}
       {f.kind === 'emptyDash' && (
         <Path d="M17 24h14" stroke={bg} strokeWidth={2.8} fill="none" strokeLinecap="round" strokeDasharray="3.5 3.5" />
+      )}
+      {/* fatigue — low battery: hollow out most of the cell, leaving a small charge */}
+      {f.kind === 'battLow' && (
+        <Path d="M13 20h18a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H13Z" fill={bg} />
+      )}
+      {/* anxiety — worried face (brows + dots + wavy mouth) */}
+      {f.kind === 'worried' && (
+        <>
+          <Circle cx={17} cy={23} r={2} fill={eye} />
+          <Circle cx={31} cy={23} r={2} fill={eye} />
+          <Path d="M13 18l6 2M35 18l-6 2" stroke={eye} strokeWidth={1.8} fill="none" strokeLinecap="round" />
+          <Path d="M17 32l3-2 4 2 4-2 3 2" stroke={eye} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      )}
+      {/* weight — scale dial (gauge arc + needle) */}
+      {f.kind === 'scaleDial' && (
+        <>
+          <Path d="M17 31a7 7 0 0 1 14 0" stroke={bg} strokeWidth={2} fill="none" strokeLinecap="round" />
+          <Path d="M24 31l5-4" stroke={bg} strokeWidth={2} fill="none" strokeLinecap="round" />
+        </>
+      )}
+      {/* dryness — leaf vein */}
+      {f.kind === 'leafVein' && (
+        <Path d="M18 30q6-10 15-15" stroke={bg} strokeWidth={1.6} fill="none" strokeLinecap="round" />
       )}
     </Svg>
   )
