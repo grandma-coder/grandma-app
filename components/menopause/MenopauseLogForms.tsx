@@ -55,7 +55,7 @@ const COPY = {
 // Symptom form
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function MenopauseSymptomForm({ onSaved, initialId }: { onSaved: () => void; initialId?: MenopauseSymptomId }) {
+export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved: () => void; initialId?: MenopauseSymptomId; logDate?: string }) {
   const pal = useMenoPalette()
   // Pre-select when opened from a home quick-log chip (skips straight to severity).
   const [symptomId, setSymptomId] = useState<MenopauseSymptomId | null>(initialId ?? null)
@@ -68,7 +68,8 @@ export function MenopauseSymptomForm({ onSaved, initialId }: { onSaved: () => vo
     setSaving(true)
     try {
       await saveMenopauseLog({
-        date: toDateStr(new Date()),
+        // logDate = the calendar/week-strip selected day; defaults to today.
+        date: logDate ?? toDateStr(new Date()),
         type: symptomId,
         severity,
         notes: notes.trim() || null,
@@ -170,7 +171,7 @@ const FLOW_OPTIONS: { id: Flow; label: string }[] = [
   { id: 'heavy', label: COPY.flowHeavy },
 ]
 
-export function MenopausePeriodForm({ onSaved }: { onSaved: () => void }) {
+export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void; logDate?: string }) {
   const pal = useMenoPalette()
   const [flow, setFlow] = useState<Flow | null>(null)
   const [saving, setSaving] = useState(false)
@@ -178,22 +179,25 @@ export function MenopausePeriodForm({ onSaved }: { onSaved: () => void }) {
   async function handleSave() {
     if (!flow || saving) return
     setSaving(true)
-    const date = toDateStr(new Date())
+    const date = logDate ?? toDateStr(new Date())
     try {
       await saveMenopauseLog({ date, type: 'period', value: flow })
-      // A logged period is the newest known period start — update the durable
-      // store + profile so the home "months since last period" counter and the
-      // 12-month offer stay accurate.
-      useMenopauseStore.getState().setLastPeriodDate(date)
-      const { data } = await supabase.auth.getSession()
-      const userId = data.session?.user.id
-      if (userId) {
-        // upsert (not update) — a menopause-first user may have no profiles row
-        // yet, and .update() would silently match 0 rows. Best-effort mirror.
-        const { error: profErr } = await supabase
-          .from('profiles')
-          .upsert({ id: userId, last_period_date: date }, { onConflict: 'id' })
-        if (profErr) console.warn('[menopause] profiles last_period_date write failed:', profErr.message)
+      // A logged period updates the "months since last period" counter only when
+      // it's the NEWEST known period start — backfilling an older day via the
+      // calendar must not regress the counter. ISO 'YYYY-MM-DD' compares lexically.
+      const current = useMenopauseStore.getState().lastPeriodDate
+      if (!current || date >= current) {
+        useMenopauseStore.getState().setLastPeriodDate(date)
+        const { data } = await supabase.auth.getSession()
+        const userId = data.session?.user.id
+        if (userId) {
+          // upsert (not update) — a menopause-first user may have no profiles row
+          // yet, and .update() would silently match 0 rows. Best-effort mirror.
+          const { error: profErr } = await supabase
+            .from('profiles')
+            .upsert({ id: userId, last_period_date: date }, { onConflict: 'id' })
+          if (profErr) console.warn('[menopause] profiles last_period_date write failed:', profErr.message)
+        }
       }
       onSaved()
     } catch (e) {
