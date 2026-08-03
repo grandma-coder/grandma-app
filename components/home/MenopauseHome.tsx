@@ -28,6 +28,7 @@ import { PillButton } from '../ui/PillButton'
 import { BrandedLoader } from '../ui/BrandedLoader'
 import { LogSheet } from '../calendar/LogSheet'
 import { Character } from '../characters/Characters'
+import { Ionicons } from '@expo/vector-icons'
 import { HomeGreeting } from './HomeGreeting'
 import { HomeJourneySwitcher } from './HomeJourneySwitcher'
 import { MenopauseWallet } from './MenopauseWallet'
@@ -73,9 +74,13 @@ const WISDOM: Record<MenopauseStage, string> = {
 
 const WISDOM_FALLBACK = 'However this season arrives, you do not have to navigate it alone.'
 
-// Fallback quick-log set when the user has logged nothing yet: top vasomotor +
-// sleep — the signals most people track first.
-const FALLBACK_SYMPTOMS: MenopauseSymptomId[] = ['hot_flash', 'night_sweat', 'sleep']
+// A broad default quick-log set spanning every symptom group, so the home always
+// offers a useful spread — not just what's already been logged. The user's most-
+// logged signals are merged in front of these, and a "More" chip opens the full
+// symptom catalog for anything else.
+const QUICK_DEFAULTS: MenopauseSymptomId[] = [
+  'hot_flash', 'night_sweat', 'sleep', 'fatigue', 'low_mood', 'brain_fog', 'joint_pain', 'vaginal_dryness',
+]
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -132,7 +137,17 @@ export function MenopauseHome() {
       .map((s) => s.id)
       .filter((id): id is MenopauseSymptomId =>
         ALL_MENOPAUSE_SYMPTOMS.some((s) => s.id === id))
-    return (logged.length ? logged : FALLBACK_SYMPTOMS).slice(0, 6)
+    // The user's most-logged signals first, then fill from the broad defaults —
+    // deduped and capped — so the set is always a useful spread, never just one.
+    const seen = new Set<MenopauseSymptomId>()
+    const out: MenopauseSymptomId[] = []
+    for (const id of [...logged, ...QUICK_DEFAULTS]) {
+      if (seen.has(id)) continue
+      seen.add(id)
+      out.push(id)
+      if (out.length >= 8) break
+    }
+    return out
   }, [rows])
 
   const recent = useMemo<MenopauseLogRow[]>(() => rows.slice(-4).reverse(), [rows])
@@ -195,6 +210,9 @@ export function MenopauseHome() {
         : 'months since your last period'
 
   const openSymptom = (id: MenopauseSymptomId) => { setPendingSymptom(id); setActiveSheet('symptom') }
+  // "More" opens the symptom sheet with nothing pre-selected → the full grouped
+  // catalog (all 13 signals + severity + note), so anything can be logged.
+  const openMore = () => { setPendingSymptom(null); setActiveSheet('symptom') }
 
   return (
     <View style={[styles.root, { backgroundColor: pal.bg }]}>
@@ -283,6 +301,7 @@ export function MenopauseHome() {
               {trackedIds.map((id) => (
                 <QuickChip key={id} id={id} pal={pal} onPress={() => openSymptom(id)} />
               ))}
+              <MoreChip pal={pal} onPress={openMore} />
             </View>
           </View>
         ) : (
@@ -295,6 +314,7 @@ export function MenopauseHome() {
               {trackedIds.map((id) => (
                 <QuickChip key={id} id={id} pal={pal} onPress={() => openSymptom(id)} />
               ))}
+              <MoreChip pal={pal} onPress={openMore} />
             </View>
           </PaperCard>
         )}
@@ -463,6 +483,40 @@ function QuickChip({
         ]}
       >
         {label}
+      </Text>
+    </Pressable>
+  )
+}
+
+// ─── "More" chip — opens the full symptom catalog (accent-tinted, "+") ───────
+
+function MoreChip({ pal, onPress }: { pal: MenoPalette; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Log another symptom"
+      style={({ pressed }) => [
+        styles.quickChip,
+        !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
+        {
+          backgroundColor: pal.accentSoft,
+          borderColor: pal.accent,
+          borderRadius: pal.diffuse ? 12 : pal.radius.full,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      <Ionicons name="add" size={16} color={pal.accent} />
+      <Text
+        style={[
+          styles.quickChipText,
+          pal.diffuse
+            ? { color: pal.accent, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: 12.5 }
+            : { color: pal.accent, fontFamily: pal.fontBodyMedium },
+        ]}
+      >
+        More
       </Text>
     </Pressable>
   )
