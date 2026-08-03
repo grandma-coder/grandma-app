@@ -83,7 +83,6 @@ import {
   DiffuseEmptyState,
   DiffuseCircularMetric,
 } from '../ui/diffuse/DiffusePrimitives'
-import { toDateStr } from '../../lib/cycleLogic'
 import { useChildStore } from '../../store/useChildStore'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
 import { DotCountRows, MilestoneTrail, type DotRow, GlowAreaLine, SipColumns, MiniLineChart } from './shared/MiniCharts'
@@ -3333,41 +3332,6 @@ function ActivityModal({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SCORE MATH BREAKDOWN — shows the step-by-step formula & numbers per pillar
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface MathStep {
-  label: string      // "Quality" / "Consistency bonus"
-  formula: string    // "(good × 10 + little × 5) / meals"
-  value: string      // "7.5"
-}
-
-// The kids-analytics-screen.jsx mockup deliberately omits a step-by-step
-// score-math card — the modal flow is header → tiles → "How this score works"
-// → body charts. We render nothing here so the data hooks/conditionals upstream
-// stay valid without surfacing a calculation table that's not in the design.
-/**
- * Score-math breakdown card — currently a no-op placeholder.
- *
- * Renders nothing today. The 8 call sites compute the steps/final values
- * because the math is also useful for the surrounding "explain" copy and
- * because the wiring is ready for when this card is brought back.
- *
- * If the card is determined to be permanently scrapped (rather than just
- * hidden), the 8 call sites + their IIFE wrappers can be removed in a
- * dedicated cleanup commit. Leaving them in place for now keeps the
- * scoring math visible alongside the user-facing copy.
- */
-function ScoreMathCard(_props: {
-  title: string
-  steps: MathStep[]
-  final: { label: string; value: string }
-  color: string
-}) {
-  return null
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // PILLAR DETAIL — charts with day detail strip
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3395,16 +3359,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
   // from one pillar's sheet into the next.
   const [showDetails, setShowDetails] = useState(true)
 
-  // Diffuse "explanation" block — hairline top rule, mono eyebrow, sans body.
-  // Under the flag-off path we keep the paper card so behavior is unchanged.
-  const explainCardStyle = diffuse
-    ? { borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4, gap: 8 } as const
-    : { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 8, borderWidth: 1, borderColor: colors.border } as const
   const cardStyle = diffuse
     ? { borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 } as const
     : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border } as const
-  const helpCapsColor = diffuse ? dt.colors.ink3 : colors.text
-  const explainColor = diffuse ? dt.colors.ink2 : colors.textSecondary
   const chartTitleColor = diffuse ? dt.colors.ink : colors.text
 
   // Lead + supporting render — identical treatment across all six pillars
@@ -3458,24 +3415,26 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       const nutr = analytics.nutrition
       const mode = nutr.mode
       const totalMeals = nutr.mealFrequency.reduce((a, b) => a + b, 0)
-      const windowDays = Math.max(1, nutr.mealFrequency.length)
       const daysLogged = nutr.mealFrequency.filter((m) => m > 0).length
       const avgPerDay = daysLogged > 0 ? (totalMeals / daysLogged).toFixed(1) : '—'
-      const score = analytics.scores.nutrition
       const variety = nutr.topFoods.length
 
       const totalBreast = nutr.breastSessions.reduce((a, b) => a + b, 0)
       const totalBottle = nutr.bottleSessions.reduce((a, b) => a + b, 0)
       const totalBottleMl = nutr.bottleMlPerDay.reduce((a, b) => a + b, 0)
 
+      // "Ate well" is a share of RATED meals only (good + little + none) — a
+      // meal with no quality logged is neither good nor bad and must not
+      // silently count toward the denominator. Matches buildNutritionInsight's
+      // rated-meal % (this used to divide by ALL meals incl. unrated, which
+      // is how it could read "0% ate well" of 441 meals).
       const totalGood = nutr.eatQuality.good.reduce((a, b) => a + b, 0)
       const totalLittle = nutr.eatQuality.little.reduce((a, b) => a + b, 0)
       const totalNone = nutr.eatQuality.none.reduce((a, b) => a + b, 0)
-      const pctGood = totalMeals > 0 ? Math.round((totalGood / totalMeals) * 100) : 0
-      const pctLittle = totalMeals > 0 ? Math.round((totalLittle / totalMeals) * 100) : 0
-      const pctNone = totalMeals > 0 ? Math.round((totalNone / totalMeals) * 100) : 0
+      const ratedTotal = totalGood + totalLittle + totalNone
+      const pctGood = ratedTotal > 0 ? Math.round((totalGood / ratedTotal) * 100) : 0
 
-      // Mode-specific stat pills + explainer + math card.
+      // Mode-specific stat pills.
       const isMilkPhase = mode === 'milk'
       const isMixedPhase = mode === 'mixed'
 
@@ -3506,155 +3465,13 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </>
             ) : (
               <>
-                <StatPill label="Ate well" value={`${pctGood}%`} color={brand.success} />
+                <StatPill label="Ate well" value={ratedTotal > 0 ? `${pctGood}%` : '—'} color={brand.success} />
                 <StatPill label="Avg meals/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
                 <StatPill label="Foods variety" value={`${variety}`} color={brand.secondary} />
               </>
             )}
           </StatRow>
 
-          {/* Explanation — different copy per mode */}
-          <View style={[explainCardStyle]}>
-            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
-            {isMilkPhase ? (
-              <>
-                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-                  {`At ${getAgeLabel(ageMonths)}, ${childName} is on milk feeds only. Score reflects feed frequency vs the age target of ${nutr.feedTarget} feeds/day, and how consistently you're logging.`}
-                </Text>
-                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-                  {`${totalBreast} breast session${totalBreast !== 1 ? 's' : ''} · ${totalBottle} bottle${totalBottle !== 1 ? 's' : ''}${totalBottleMl > 0 ? ` (${Math.round(totalBottleMl)}ml total)` : ''} logged across ${daysLogged} of ${windowDays} days.`}
-                </Text>
-                {daysLogged < Math.min(5, windowDays) && (
-                  <Text style={[styles.detailExplain, { color: brand.accent }]}>
-                    {t('kids_analytics_log_every_feed_hint')}
-                  </Text>
-                )}
-              </>
-            ) : isMixedPhase ? (
-              <>
-                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-                  {`At ${getAgeLabel(ageMonths)}, ${childName} is transitioning to solids. Score = milk feed frequency (60%) + solid-food variety (40%).`}
-                </Text>
-                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-                  {`${totalBreast + totalBottle} milk feed${totalBreast + totalBottle !== 1 ? 's' : ''}, ${variety} unique solid food${variety !== 1 ? 's' : ''} tried this window.`}
-                </Text>
-                {variety < 3 && (
-                  <Text style={[styles.detailExplain, { color: brand.accent }]}>
-                    {`Aim for 3+ distinct first foods per week — variety builds a safer, broader palate.`}
-                  </Text>
-                )}
-              </>
-            ) : (
-              <>
-                <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-                  {`${pctGood}% of ${totalMeals} meals this week were eaten well. ${pctLittle > 0 ? `${pctLittle}% were eaten partially. ` : ''}${pctNone > 0 ? `${pctNone}% were refused. ` : ''}${daysLogged < windowDays ? `Only ${daysLogged} of ${windowDays} days logged — consistent logging improves accuracy.` : 'Great logging consistency!'}`}
-                </Text>
-                {variety < 5 && (
-                  <Text style={[styles.detailExplain, { color: brand.accent }]}>
-                    {`${variety} unique food${variety !== 1 ? 's' : ''} logged. Aim for 5+ different foods to boost the variety bonus.`}
-                  </Text>
-                )}
-              </>
-            )}
-            {score.trend !== 0 && (
-              <Text style={[styles.detailExplain, { color: score.trend > 0 ? brand.success : brand.error }]}>
-                {`Nutrition ${score.trend > 0 ? '↑ improving' : '↓ declining'} ${Math.abs(score.trend)}% vs the start of the window.`}
-              </Text>
-            )}
-          </View>
-
-          {/* Math breakdown — branches on mode */}
-          {(() => {
-            const avgFeedsLogged = daysLogged > 0 ? totalMeals / daysLogged : 0
-
-            if (isMilkPhase) {
-              const freqRatio = Math.min(avgFeedsLogged / Math.max(1, nutr.feedTarget), 1.2)
-              const freqScore = Math.min(freqRatio / 1.2, 1) * 8
-              const consistencyBonus = Math.min(daysLogged / windowDays, 1) * 2
-              return (
-                <ScoreMathCard
-                  title={`Nutrition · ${Number.isFinite(score.value) ? score.value.toFixed(1) : '—'}/10`}
-                  color={PILLAR_CONFIG.nutrition.color}
-                  steps={[
-                    {
-                      label: 'Feed frequency',
-                      formula: `${avgFeedsLogged.toFixed(1)} feeds/day ÷ target ${nutr.feedTarget} × 8`,
-                      value: freqScore.toFixed(1),
-                    },
-                    {
-                      label: 'Consistency bonus',
-                      formula: `min(${daysLogged} / ${windowDays} days, 1) × 2`,
-                      value: `+${consistencyBonus.toFixed(1)}`,
-                    },
-                  ]}
-                  final={{
-                    label: 'Score = min(sum, 10)',
-                    value: Number.isFinite(score.value) ? score.value.toFixed(1) : '—',
-                  }}
-                />
-              )
-            }
-
-            if (isMixedPhase) {
-              const freqRatio = Math.min(avgFeedsLogged / Math.max(1, nutr.feedTarget), 1)
-              const freqScore = freqRatio * 10
-              const varietyScore = Math.min(variety / 3, 1) * 10
-              return (
-                <ScoreMathCard
-                  title={`Nutrition · ${Number.isFinite(score.value) ? score.value.toFixed(1) : '—'}/10`}
-                  color={PILLAR_CONFIG.nutrition.color}
-                  steps={[
-                    {
-                      label: 'Feed frequency (×0.6)',
-                      formula: `${avgFeedsLogged.toFixed(1)} feeds/day ÷ target ${nutr.feedTarget}`,
-                      value: (freqScore * 0.6).toFixed(1),
-                    },
-                    {
-                      label: 'Solid variety (×0.4)',
-                      formula: `min(${variety} foods / 3, 1) × 10`,
-                      value: (varietyScore * 0.4).toFixed(1),
-                    },
-                  ]}
-                  final={{
-                    label: 'Score = weighted sum',
-                    value: Number.isFinite(score.value) ? score.value.toFixed(1) : '—',
-                  }}
-                />
-              )
-            }
-
-            // Solids phase (12+)
-            const qualityScore = totalMeals > 0 ? (totalGood * 10 + totalLittle * 5) / totalMeals : 0
-            const freqBonus = Math.min(daysLogged / windowDays, 1) * 1.5
-            const varietyBonus = Math.min(variety / 5, 1) * 1.0
-            return (
-              <ScoreMathCard
-                title={`Nutrition · ${Number.isFinite(score.value) ? score.value.toFixed(1) : '—'}/10`}
-                color={PILLAR_CONFIG.nutrition.color}
-                steps={[
-                  {
-                    label: 'Quality',
-                    formula: `(${totalGood} × 10 + ${totalLittle} × 5) ÷ ${totalMeals} meals`,
-                    value: qualityScore.toFixed(1),
-                  },
-                  {
-                    label: 'Frequency bonus',
-                    formula: `min(${daysLogged} / ${windowDays} days, 1) × 1.5`,
-                    value: `+${freqBonus.toFixed(1)}`,
-                  },
-                  {
-                    label: 'Variety bonus',
-                    formula: `min(${variety} foods / 5, 1) × 1.0`,
-                    value: `+${varietyBonus.toFixed(1)}`,
-                  },
-                ]}
-                final={{
-                  label: 'Score = min(sum, 10)',
-                  value: Number.isFinite(score.value) ? score.value.toFixed(1) : '—',
-                }}
-              />
-            )
-          })()}
           {/* Mode-specific charts */}
           {isMilkPhase && (
             <ChartCard title="Feeds per Day" onExpand={() => onFullScreen('meal_freq')}>
@@ -3685,7 +3502,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {!isMilkPhase && (
-            <ChartCard title="Weekly Eat Quality" onExpand={() => onFullScreen('eat_quality')}>
+            <ChartCard title="Eat Quality" onExpand={() => onFullScreen('eat_quality')}>
               <EatQualityBubbles
                 good={analytics.nutrition.eatQuality.good}
                 little={analytics.nutrition.eatQuality.little}
@@ -3750,14 +3567,6 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
     case 'sleep': {
       const target = getAgeSleepTarget(ageMonths)
       const avg = analytics.sleep.avgHours
-      const deficit = target - avg
-      const daysOnTarget = analytics.sleep.dailyHours.filter((h) => h > 0 && h >= target).length
-      const daysLogged = analytics.sleep.dailyHours.filter((h) => h > 0).length
-      const totalSessions = analytics.sleep.qualityCounts.great + analytics.sleep.qualityCounts.good + analytics.sleep.qualityCounts.restless + analytics.sleep.qualityCounts.poor
-      const pctGoodSleep = totalSessions > 0
-        ? Math.round(((analytics.sleep.qualityCounts.great + analytics.sleep.qualityCounts.good) / totalSessions) * 100)
-        : 0
-      const sleepScore = analytics.scores.sleep
       const insight = buildSleepInsight(analytics, ageMonths, childName)
 
       return (
@@ -3771,70 +3580,6 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             <StatPill label="Quality" value={getBestQuality(analytics.sleep.qualityCounts)} color={brand.success} />
             <StatPill label="Target" value={`${target}h`} color={colors.textMuted} />
           </StatRow>
-
-          {/* Explanation */}
-          <View style={[explainCardStyle]}>
-            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
-            <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-              {`${childName} averaged ${avg.toFixed(1)}h/night across ${daysLogged} logged days. The target for ${getAgeLabel(ageMonths)} is ${target}h including naps. `}
-              {deficit > 0.5
-                ? `That's a ${deficit.toFixed(1)}h nightly deficit — consistent early bedtimes and a wind-down routine can help close this gap.`
-                : `${childName} is meeting the sleep target!`}
-            </Text>
-            {daysOnTarget > 0 && (
-              <Text style={[styles.detailExplain, { color: brand.success }]}>
-                {`${daysOnTarget} of ${daysLogged} logged nights hit the ${target}h target.`}
-              </Text>
-            )}
-            {sleepScore.trend !== 0 && (
-              <Text style={[styles.detailExplain, { color: sleepScore.trend > 0 ? brand.success : brand.error }]}>
-                {`Sleep ${sleepScore.trend > 0 ? '↑ improving' : '↓ declining'} ${Math.abs(sleepScore.trend)}% vs the start of the window.`}
-              </Text>
-            )}
-            {daysLogged < 5 && (
-              <Text style={[styles.detailExplain, { color: brand.accent }]}>
-                {`Only ${daysLogged} days logged — log sleep daily for a more accurate score.`}
-              </Text>
-            )}
-          </View>
-
-          {(() => {
-            const qc = analytics.sleep.qualityCounts
-            const totalQ = qc.great + qc.good + qc.restless + qc.poor
-            const qualityScore = totalQ > 0
-              ? (qc.great * 10 + qc.good * 7.5 + qc.restless * 4 + qc.poor * 1) / totalQ
-              : 0
-            const windowDays = Math.max(1, analytics.sleep.dailyHours.length)
-            const daysWithSleep = analytics.sleep.dailyHours.filter((h) => h > 0).length
-            const consistencyBonus = Math.min(daysWithSleep / windowDays, 1) * 1.5
-            return (
-              <ScoreMathCard
-                title={`Sleep · ${Number.isFinite(sleepScore.value) ? sleepScore.value.toFixed(1) : '—'}/10`}
-                color={PILLAR_CONFIG.sleep.color}
-                steps={[
-                  {
-                    label: 'Quality',
-                    formula: `(great·10 + good·7.5 + restless·4 + poor·1) ÷ ${totalQ} sessions`,
-                    value: qualityScore.toFixed(1),
-                  },
-                  {
-                    label: 'Quality × 0.85',
-                    formula: 'weighting to leave room for the consistency bonus',
-                    value: (qualityScore * 0.85).toFixed(1),
-                  },
-                  {
-                    label: 'Consistency bonus',
-                    formula: `min(${daysWithSleep} / ${windowDays} days, 1) × 1.5`,
-                    value: `+${consistencyBonus.toFixed(1)}`,
-                  },
-                ]}
-                final={{
-                  label: 'Score = min(sum, 10)',
-                  value: Number.isFinite(sleepScore.value) ? sleepScore.value.toFixed(1) : '—',
-                }}
-              />
-            )
-          })()}
 
           {/* Highlighted bar chart */}
           <ChartCard title="Daily Sleep Hours" onExpand={() => onFullScreen('sleep_weekly')}>
@@ -3858,41 +3603,13 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
     }
 
     case 'mood': {
-      const moodWeights: Record<string, number> = { happy: 10, calm: 9, energetic: 8, fussy: 3, cranky: 1 }
-      const totalMoods = analytics.mood.dominantMoods.reduce((a, m) => a + m.count, 0)
-      const moodScore = analytics.scores.mood
       const insight = buildMoodInsight(analytics, ageMonths, childName)
       return (
         <View style={styles.detailBody}>
           {renderLead(insight)}
           {!analytics.mood.hasData && <EmptyDetail pillar="mood" />}
           {insight.demotedAvailable && renderDetailsToggle(<>
-          <View style={[explainCardStyle]}>
-            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
-            <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-              {t('kids_analytics_mood_score_weights_hint')}
-            </Text>
-          </View>
-
-          <ScoreMathCard
-            title={`Mood · ${Number.isFinite(moodScore.value) ? moodScore.value.toFixed(1) : '—'}/10`}
-            color={PILLAR_CONFIG.mood.color}
-            steps={analytics.mood.dominantMoods.map((m) => ({
-              label: `${m.mood} × ${m.count}`,
-              formula: `weight ${moodWeights[m.mood] ?? 5} per log`,
-              value: `${((moodWeights[m.mood] ?? 5) * m.count).toFixed(0)}`,
-            })).concat([{
-              label: 'Total logs',
-              formula: 'sum of mood counts',
-              value: String(totalMoods),
-            }])}
-            final={{
-              label: 'Score = weighted sum ÷ total',
-              value: Number.isFinite(moodScore.value) ? moodScore.value.toFixed(1) : '—',
-            }}
-          />
-
-          <ChartCard title="Mood Distribution This Week" onExpand={() => onFullScreen('mood_dist')}>
+          <ChartCard title="Mood Distribution" onExpand={() => onFullScreen('mood_dist')}>
             <MoodDistribution moods={analytics.mood.dominantMoods} />
           </ChartCard>
           <ChartCard title="Daily Mood Tracking" onExpand={() => onFullScreen('mood_daily')}>
@@ -3925,14 +3642,6 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {renderLead(insight)}
 
           {renderDetailsToggle(<>
-          {/* Health is a reference, not a graded score */}
-          <View style={[explainCardStyle]}>
-            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
-            <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-              {`Health here is a reference, not a graded score. It tracks ${childName}'s vaccines and flags only genuine concerns — a fever, an injury, or a doctor visit. Everyday logs like a normal temperature check or a vitamin are routine care and don't count against anything.`}
-            </Text>
-          </View>
-
           {/* Weekly event frequency chart — the one supporting visual. Health is
               becoming a reference surface (vaccines + genuine concerns only,
               not a graded score), so this low-value frequency chart is dropped
@@ -4027,44 +3736,6 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {renderLead(insight)}
           {!analytics.growth.hasData && <EmptyDetail pillar="growth" />}
           {insight.demotedAvailable && renderDetailsToggle(<>
-          <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-            {t('kids_analytics_growth_track_hint', { name: childName })}
-          </Text>
-
-          {(() => {
-            const growthScore = analytics.scores.growth
-            const totalMeasurements = analytics.growth.weights.length + analytics.growth.heights.length
-            const measureScore = Math.min(totalMeasurements / 4, 1) * 7
-            const sevenDaysAgo = new Date()
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-            const recentDate = toDateStr(sevenDaysAgo)
-            const hasRecent = analytics.growth.weights.some((w) => w.date >= recentDate)
-              || analytics.growth.heights.some((h) => h.date >= recentDate)
-            const recencyBonus = hasRecent ? 3 : 1
-            return (
-              <ScoreMathCard
-                title={`Growth · ${Number.isFinite(growthScore.value) ? growthScore.value.toFixed(1) : '—'}/10`}
-                color={PILLAR_CONFIG.growth.color}
-                steps={[
-                  {
-                    label: 'Measurement score',
-                    formula: `min(${totalMeasurements} logs / 4, 1) × 7`,
-                    value: measureScore.toFixed(1),
-                  },
-                  {
-                    label: 'Recency bonus',
-                    formula: hasRecent ? 'logged in the last 7 days: +3' : 'no recent logs: +1',
-                    value: `+${recencyBonus}`,
-                  },
-                ]}
-                final={{
-                  label: 'Score = min(sum, 10)',
-                  value: Number.isFinite(growthScore.value) ? growthScore.value.toFixed(1) : '—',
-                }}
-              />
-            )
-          })()}
-
           {/* Latest measurements — always shown */}
           {(() => {
             const lastWeight = analytics.growth.weights[analytics.growth.weights.length - 1]
@@ -4150,12 +3821,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
     case 'activity': {
       const act = analytics.activity
       const COLOR = PILLAR_CONFIG.activity.color
-      const ageLabel = getAgeLabel(ageMonths)
-      const weeklyTarget = ageMonths < 12
-        ? '20–30 min tummy time & floor play daily'
-        : ageMonths < 36
-        ? '180 min of light active play daily'
-        : '60 min of moderate-to-vigorous activity daily'
+      // Real span of the selected window — "active days" is out of however
+      // many days are actually in view, never a hardcoded /7 (that broke the
+      // stat once a 30/90-day range was selected).
+      const windowDays = Math.max(1, act.dailySessions.length)
 
       const guideItems = ageMonths < 12
         ? [
@@ -4186,56 +3855,14 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {renderDetailsToggle(<>
           {/* Stats */}
           <StatRow>
-            <StatPill label="Active days" value={act.hasData ? `${act.activeDays}/7` : '—'} color={COLOR} />
+            <StatPill label="Active days" value={act.hasData ? `${act.activeDays}/${windowDays}` : '—'} color={COLOR} />
             <StatPill label="Sessions" value={act.hasData ? `${act.totalSessions}` : '—'} color={brand.secondary} />
             <StatPill label="Types" value={act.hasData ? `${act.uniqueTypes.length}` : '—'} color={brand.accent} />
           </StatRow>
 
-          {/* Explanation */}
-          <View style={[explainCardStyle]}>
-            <Text style={[styles.helpCardCaps, { color: helpCapsColor, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{t('kids_analytics_how_score_works')}</Text>
-            <Text style={[styles.detailExplain, { color: explainColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-              {act.hasData
-                ? `${childName} was active on ${act.activeDays} of ${act.dailySessions.length} days (${act.totalSessions} session${act.totalSessions !== 1 ? 's' : ''}, ${act.uniqueTypes.length} unique type${act.uniqueTypes.length !== 1 ? 's' : ''}).`
-                : `No activity logs found. Log sessions from Calendar → Activity to track ${childName}'s movement.`}
-            </Text>
-            <Text style={[styles.detailExplain, { color: colors.textMuted }]}>
-              {`Target for ${ageLabel}: ${weeklyTarget}`}
-            </Text>
-          </View>
-
-          {act.hasData && (() => {
-            const activityScore = analytics.scores.activity
-            const windowDays = Math.max(1, act.dailySessions.length)
-            const base = (act.activeDays / windowDays) * 9
-            const varietyBonus = Math.min(act.uniqueTypes.length / 3, 1)
-            return (
-              <ScoreMathCard
-                title={`Activity · ${Number.isFinite(activityScore.value) ? activityScore.value.toFixed(1) : '—'}/10`}
-                color={COLOR}
-                steps={[
-                  {
-                    label: 'Active-day rate',
-                    formula: `${act.activeDays} / ${windowDays} days × 9`,
-                    value: base.toFixed(1),
-                  },
-                  {
-                    label: 'Variety bonus',
-                    formula: `min(${act.uniqueTypes.length} types / 3, 1)`,
-                    value: `+${varietyBonus.toFixed(1)}`,
-                  },
-                ]}
-                final={{
-                  label: 'Score = min(sum, 10)',
-                  value: Number.isFinite(activityScore.value) ? activityScore.value.toFixed(1) : '—',
-                }}
-              />
-            )
-          })()}
-
           {/* Weekly sessions bar chart */}
           {act.hasData && (
-            <ChartCard title="Activity Sessions This Week" onExpand={() => onFullScreen('activity_weekly')}>
+            <ChartCard title="Activity Sessions" onExpand={() => onFullScreen('activity_weekly')}>
               <HighlightBarChart
                 data={act.dailySessions}
                 labels={act.weekLabels}
@@ -5299,7 +4926,6 @@ const styles = StyleSheet.create({
   // Detail body
   detailBody: { gap: 16, paddingTop: 8 },
   detailExplain: { fontSize: 14, fontFamily: font.body, lineHeight: 20, paddingHorizontal: 4 },
-  helpCardCaps: { fontSize: 15, fontFamily: font.display, letterSpacing: -0.2, marginBottom: 4 },
 
   // Chart card — paper-cutout sticker style (no harsh black shadow)
   card: {
