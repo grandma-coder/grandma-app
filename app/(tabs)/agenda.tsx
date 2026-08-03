@@ -14,7 +14,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { CycleCalendar } from '../../components/calendar/CycleCalendar'
 import { PregnancyCalendar } from '../../components/calendar/PregnancyCalendar'
 import { KidsCalendar } from '../../components/calendar/KidsCalendar'
-import { MenopauseTimeline } from '../../components/menopause/MenopauseTimeline'
+import { MenopauseCalendar } from '../../components/menopause/MenopauseCalendar'
 
 export default function AgendaScreen() {
   const mode = useModeStore((s) => s.mode)
@@ -22,7 +22,7 @@ export default function AgendaScreen() {
   let inner
   if (mode === 'pre-pregnancy') inner = <CycleCalendar />
   else if (mode === 'pregnancy') inner = <PregnancyCalendar />
-  else if (mode === 'menopause') inner = <MenopauseTimeline />
+  else if (mode === 'menopause') inner = <MenopauseCalendar />
   else inner = <KidsCalendar />
 
   // All three calendars render the notification bell inline in their own

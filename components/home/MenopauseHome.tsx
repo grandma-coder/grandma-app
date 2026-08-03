@@ -40,6 +40,7 @@ import { diffuseFont, useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
 import { MenopauseRing } from '../menopause/MenopauseRing'
+import { MenopauseWeekStrip } from '../menopause/MenopauseWeekStrip'
 import { QuietPill } from '../ui/QuietPill'
 import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { SlidersHorizontal } from 'lucide-react-native'
@@ -142,6 +143,8 @@ export function MenopauseHome() {
   const [activeSheet, setActiveSheet] = useState<'symptom' | 'period' | null>(null)
   // The symptom a quick-log chip pre-selects, so the sheet opens on severity.
   const [pendingSymptom, setPendingSymptom] = useState<MenopauseSymptomId | null>(null)
+  // The date a week-strip tap targets (null = today, for the quick-log chips).
+  const [logDate, setLogDate] = useState<string | null>(null)
   // The 12-month offer is dismissible for the session only (never persisted —
   // it re-surfaces next launch until the user updates their stage).
   const [offerDismissed, setOfferDismissed] = useState(false)
@@ -195,10 +198,12 @@ export function MenopauseHome() {
         ? 'month since your last period'
         : 'months since your last period'
 
-  const openSymptom = (id: MenopauseSymptomId) => { setPendingSymptom(id); setActiveSheet('symptom') }
+  const openSymptom = (id: MenopauseSymptomId) => { setLogDate(null); setPendingSymptom(id); setActiveSheet('symptom') }
   // "More" opens the symptom sheet with nothing pre-selected → the full grouped
   // catalog (all 13 signals + severity + note), so anything can be logged.
-  const openMore = () => { setPendingSymptom(null); setActiveSheet('symptom') }
+  const openMore = () => { setLogDate(null); setPendingSymptom(null); setActiveSheet('symptom') }
+  // A week-strip tap logs for THAT day (threaded to the form via logDate).
+  const openLogForDate = (date: string) => { setLogDate(date); setPendingSymptom(null); setActiveSheet('symptom') }
 
   return (
     <View style={[styles.root, { backgroundColor: pal.bg }]}>
@@ -223,6 +228,11 @@ export function MenopauseHome() {
             months={months}
             monthsCaption={monthsCaption}
           />
+        </View>
+
+        {/* Week strip — tap a day to log for it (cycle-home parity). */}
+        <View style={styles.section}>
+          <MenopauseWeekStrip rows={rows} pal={pal} onDatePress={openLogForDate} />
         </View>
 
         {/* ─── 12-month offer — never automatic; a warm, dismissible prompt ─── */}
@@ -393,9 +403,13 @@ export function MenopauseHome() {
       <LogSheet
         visible={activeSheet === 'symptom'}
         title="Log a symptom"
-        onClose={() => setActiveSheet(null)}
+        onClose={() => { setActiveSheet(null); setLogDate(null) }}
       >
-        <MenopauseSymptomForm initialId={pendingSymptom ?? undefined} onSaved={() => { setActiveSheet(null); setPendingSymptom(null) }} />
+        <MenopauseSymptomForm
+          initialId={pendingSymptom ?? undefined}
+          logDate={logDate ?? undefined}
+          onSaved={() => { setActiveSheet(null); setPendingSymptom(null); setLogDate(null) }}
+        />
       </LogSheet>
       <LogSheet
         visible={activeSheet === 'period'}
