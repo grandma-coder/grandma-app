@@ -24,6 +24,14 @@ export interface PillarBandItem {
   score: PillarScore | undefined
   takeaway?: string      // short human line under the name
   icon: (size: number, color: string) => ReactNode
+  /**
+   * Marks a REFERENCE row (currently: Health) — no `/10` grade, just a
+   * status. Reference rows are excluded from the worst-first score sort and
+   * pinned at the bottom instead.
+   */
+  reference?: boolean
+  /** Muted status text shown in place of the big number when `reference` is set (e.g. "All clear", "1 to note"). */
+  statusText?: string
 }
 
 interface Props {
@@ -32,12 +40,17 @@ interface Props {
 }
 
 // Sort: has-data ascending by score (worst first), then no-data pillars last.
+// REFERENCE rows (no score to rank) never enter the score sort — they're
+// appended at the very end regardless of any `score` they happen to carry.
 function sortLowestFirst(items: PillarBandItem[]): PillarBandItem[] {
-  return [...items].sort((a, b) => {
+  const scored = items.filter((i) => !i.reference)
+  const reference = items.filter((i) => i.reference)
+  const sortedScored = [...scored].sort((a, b) => {
     const av = a.score?.hasData ? a.score.value : Infinity
     const bv = b.score?.hasData ? b.score.value : Infinity
     return av - bv
   })
+  return [...sortedScored, ...reference]
 }
 
 // Diffuse wants a whisper of the pillar hue, not a saturated block. Render the
@@ -57,7 +70,7 @@ export function KidsPillarBands({ items, onPillarPress }: Props) {
       {sorted.map((item, i) => {
         const has = !!item.score?.hasData
         const low = has && (item.score!.confidence ?? 1) < 0.4
-        const focus = i === 0 // top row = needs-attention focus
+        const focus = i === 0 && !item.reference // a reference row is never the "needs attention" focus
         const ink = colors.ink
         return (
           <Pressable
@@ -70,7 +83,7 @@ export function KidsPillarBands({ items, onPillarPress }: Props) {
               i > 0 && { borderTopWidth: 1, borderTopColor: colors.line },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={`${item.label}${has ? `, ${item.score!.value.toFixed(1)} out of 10` : ', no data'}. ${item.takeaway ?? ''}`}
+            accessibilityLabel={`${item.label}${item.reference ? `, ${item.statusText ?? 'reference'}` : has ? `, ${item.score!.value.toFixed(1)} out of 10` : ', no data'}. ${item.takeaway ?? ''}`}
           >
             <View style={styles.icon}>{item.icon(focus ? 24 : 22, item.color)}</View>
             <View style={styles.mid}>
@@ -87,9 +100,15 @@ export function KidsPillarBands({ items, onPillarPress }: Props) {
                 </Text>
               ) : null}
             </View>
-            <Text style={[styles.value, focus && styles.valueFocus, { color: has ? (low ? colors.ink3 : ink) : colors.ink3 }]}>
-              {has ? item.score!.value.toFixed(1) : '—'}
-            </Text>
+            {item.reference ? (
+              <Text style={[styles.statusText, { color: colors.ink2 }]} numberOfLines={1}>
+                {item.statusText}
+              </Text>
+            ) : (
+              <Text style={[styles.value, focus && styles.valueFocus, { color: has ? (low ? colors.ink3 : ink) : colors.ink3 }]}>
+                {has ? item.score!.value.toFixed(1) : '—'}
+              </Text>
+            )}
           </Pressable>
         )
       })}
@@ -134,4 +153,11 @@ const styles = StyleSheet.create({
     letterSpacing: -1.2,
   },
   valueFocus: { fontSize: 40 },
+  statusText: {
+    fontFamily: diffuseFont.bodySemiBold,
+    fontSize: 13,
+    lineHeight: 17,
+    textAlign: 'right',
+    maxWidth: 96,
+  },
 })

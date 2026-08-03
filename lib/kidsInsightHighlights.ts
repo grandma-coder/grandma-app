@@ -12,6 +12,14 @@ export type PillarKey = 'nutrition' | 'sleep' | 'mood' | 'health' | 'growth' | '
 
 export const PILLAR_ORDER: PillarKey[] = ['nutrition', 'sleep', 'mood', 'health', 'growth', 'activity']
 
+// Health is a REFERENCE pillar (vaccines-on-record + concern flags), not a
+// graded one — illness is episodic and vaccines aren't a score. It's scored
+// internally (`scoreHealth`, still on `WellnessScores.health`) so the
+// reference panel has data, but it must never be picked as the narrative's
+// "main area to work on" / "strength" / trending pillar, and never dress up
+// a `/10` value in a sentence. See the honest-scores spec.
+const NARRATIVE_PILLAR_ORDER: PillarKey[] = PILLAR_ORDER.filter((k) => k !== 'health')
+
 // Label-only lookup for narrative sentences. Kept in sync by hand with
 // PILLAR_CONFIG in components/analytics/KidsAnalytics.tsx (which also carries
 // icon/color — UI concerns this pure module intentionally does not import).
@@ -52,13 +60,13 @@ export function buildInsightHighlights(
   ageMonths: number,
   crossLine: string | null,
 ): InsightHighlights {
-  const lowest = PILLAR_ORDER.reduce<PillarKey | null>((min, key) => {
+  const lowest = NARRATIVE_PILLAR_ORDER.reduce<PillarKey | null>((min, key) => {
     if (!scores[key].hasData) return min
     if (!min || scores[key].value < scores[min].value) return key
     return min
   }, null)
 
-  const highest = PILLAR_ORDER.reduce<PillarKey | null>((max, key) => {
+  const highest = NARRATIVE_PILLAR_ORDER.reduce<PillarKey | null>((max, key) => {
     if (!scores[key].hasData) return max
     if (!max || scores[key].value > scores[max].value) return key
     return max
@@ -113,6 +121,15 @@ export function buildInsightHighlights(
     parts.push(`Log a few more days for a clearer read on ${childName}'s week.`)
   }
 
+  // Health is reference-only (no score in the narrative above), but a
+  // genuine concern flag (fever-range temp, injury/doctor/sick note — see
+  // `concernEvents` in buildHealthData) is still worth a mention. Optional
+  // chaining because some callers pass partial analytics fixtures.
+  const healthConcerns = analytics.health?.concernEvents ?? 0
+  if (healthConcerns > 0) {
+    parts.push(`${healthConcerns} health concern${healthConcerns === 1 ? '' : 's'} flagged this week — worth a look.`)
+  }
+
   let trend: InsightTrend | null = null
   // Pick the pillar with the largest absolute trend (≥10%), not the first
   // one that crosses 10% in PILLAR_ORDER. The old find() hid a 40% activity
@@ -122,7 +139,7 @@ export function buildInsightHighlights(
   // declining 53%" computed from a handful of logs spread across 90 days)
   // must be suppressed, the same honesty gate already applied to strength/
   // concern below.
-  const trendPillar = PILLAR_ORDER
+  const trendPillar = NARRATIVE_PILLAR_ORDER
     .filter((k) => scores[k].hasData && scores[k].confidence >= LOW_CONF && Math.abs(scores[k].trend) >= 10)
     .reduce<PillarKey | null>(
       (best, k) => (best === null || Math.abs(scores[k].trend) > Math.abs(scores[best].trend) ? k : best),

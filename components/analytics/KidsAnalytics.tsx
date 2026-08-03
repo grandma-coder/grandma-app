@@ -528,7 +528,13 @@ function buildGrandmaContext(
     lines.push(`Mood: ${scores.mood.value.toFixed(1)}/10 — dominant: ${top?.mood ?? 'no data'}`)
   }
   if (scores.health.hasData) {
-    lines.push(`Health: ${scores.health.value.toFixed(1)}/10`)
+    // Health is reference-only (not part of `overall`) — give Grandma the
+    // vaccine/concern facts instead of a `/10` she could parrot back as a
+    // fake grade.
+    const doneVaccines = analytics.health.vaccines.filter((v) => v.done).length
+    const totalVaccines = analytics.health.vaccines.length
+    const concernNote = analytics.health.concernEvents > 0 ? `, ${analytics.health.concernEvents} concern(s) flagged` : ', no concerns flagged'
+    lines.push(`Health (reference, not scored): ${doneVaccines}/${totalVaccines} vaccines on record${concernNote}`)
   }
   if (scores.growth.hasData) {
     const w = analytics.growth.weights.at(-1)
@@ -543,7 +549,10 @@ function buildGrandmaContext(
     lines.push(`Diapers: ${totalCount} ${windowLabel} (${typeCounts.pee} pee, ${typeCounts.poop} poop, ${typeCounts.mixed} mixed) — avg ${(totalCount / windowDays).toFixed(1)}/day`)
   }
 
-  const lowest = PILLAR_ORDER.reduce<PillarKey | null>((min, key) => {
+  // Health is reference-only and excluded from this "main concern" pick —
+  // same honesty rule as buildInsightHighlights: it has no `/10` to be a
+  // concern at.
+  const lowest = PILLAR_ORDER.filter((k) => k !== 'health').reduce<PillarKey | null>((min, key) => {
     if (!scores[key].hasData) return min
     if (!min || scores[key].value < scores[min].value) return key
     return min
@@ -880,6 +889,10 @@ export function KidsAnalytics() {
               nutrition: stickers.greenSoft, sleep: stickers.lilacSoft, mood: stickers.pinkSoft,
               health: stickers.blueSoft, growth: stickers.yellowSoft, activity: stickers.peachSoft,
             }
+            // Health is a REFERENCE row (vaccines-on-record + concern flags),
+            // not a graded one — no `/10`, just a status pinned at the
+            // bottom of the band (see sortLowestFirst in KidsPillarBands).
+            const healthConcerns = analytics.health.concernEvents
             const bandItems: PillarBandItem[] = PILLAR_ORDER.map((key) => ({
               key,
               label: PILLAR_CONFIG[key].label,
@@ -888,6 +901,10 @@ export function KidsAnalytics() {
               score: s[key],
               takeaway: tipMap[key]?.body,
               icon: PILLAR_LINE_ICON[key],
+              reference: key === 'health',
+              statusText: key === 'health'
+                ? (healthConcerns === 0 ? 'All clear' : `${healthConcerns} to note`)
+                : undefined,
             }))
             return (
               <View style={{ gap: 4 }}>
@@ -1120,13 +1137,23 @@ function ScoreInfoModal({
     nutrition: `Tracks meal frequency and quality (ate well / a little / didn't eat). ${ageMonths < 6 ? 'For infants under 6 months breast/bottle feeds count.' : ageMonths < 12 ? 'Mixed stage — milk + early solids both tracked.' : 'Variety, frequency, and eating quality all factor in.'}`,
     sleep: `Sleep duration and quality (great/good/restless/poor). Target for ${getAgeLabel(ageMonths)}: ${getAgeSleepTarget(ageMonths)}h/day. Consistency across the week adds a bonus.`,
     mood: `Weighted from logged moods: happy/calm/energetic raise the score; fussy/cranky lower it. The more days logged, the more accurate the score.`,
-    health: `Combines vaccine completion and health event frequency. More vaccines done + fewer incidents (temperature, medicine) = higher score.`,
+    // Health is NOT one of the weighted pillars below — illness is episodic
+    // and vaccines aren't a score. This panel is a reference: vaccines on
+    // record, plus any genuine concerns (fever-range temp, injury, doctor
+    // visit) flagged from your logs. Routine logging never lowers anything,
+    // because there's nothing here to lower.
+    health: `Not scored — a reference for vaccines on record and any genuine concerns flagged from your logs (fever-range temps, injuries, doctor visits). Routine logging never counts against anything here.`,
     growth: `Reflects how regularly weight and height are measured. Frequent tracking earns a higher score. Recent measurements get a recency bonus.`,
     activity: `Scored by active days per week (how many days had at least one logged session) plus a variety bonus for mixing different types. 7 active days = perfect score.`,
   }
 
+  // Weights for the FIVE pillars that feed `overall` (nutrition/sleep/mood/
+  // growth/activity), renormalized to 100% now that Health has been dropped
+  // from the weighted blend (matches the pillars array in buildScores —
+  // 0.27/0.22/0.18/0.09/0.11 out of an 0.87 total). Health shows a
+  // "Reference" label instead of a weight — it isn't part of this average.
   const WEIGHTS: Record<PillarKey, string> = {
-    nutrition: '27%', sleep: '22%', mood: '18%', health: '13%', growth: '9%', activity: '11%',
+    nutrition: '31%', sleep: '25%', mood: '21%', health: 'Reference', growth: '10%', activity: '13%',
   }
 
   if (diffuse) {
@@ -1158,7 +1185,7 @@ function ScoreInfoModal({
                 {PILLAR_LINE_ICON[key](22, config.color)}
                 <Text style={{ flex: 1, fontFamily: diffuseFont.display, fontSize: 17, color: dt.colors.ink }}>{config.label}</Text>
                 <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, color: dt.colors.ink3 }}>{WEIGHTS[key]}</Text>
-                {score?.hasData && (
+                {key !== 'health' && score?.hasData && (
                   <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, color: dt.colors.ink }}>{score.value.toFixed(1)}</Text>
                 )}
               </View>
@@ -1234,7 +1261,7 @@ function ScoreInfoModal({
                       </View>
                       <Text style={[styles.pillarInfoName, { color: colors.text }]}>{config.label}</Text>
                       <Text style={[styles.pillarInfoWeight, { color: colors.textMuted }]}>{WEIGHTS[key]}</Text>
-                      {score?.hasData && (
+                      {key !== 'health' && score?.hasData && (
                         <View style={[styles.pillarInfoScoreBadge, { backgroundColor: config.color + '20' }]}>
                           <Text style={[styles.pillarInfoScoreText, { color: config.color }]}>{score.value.toFixed(1)}</Text>
                         </View>
@@ -1534,11 +1561,14 @@ function WellnessScoreArc({
   function getPillarExplanation(key: PillarKey): string {
     const score = scores[key]
     const pct   = score.hasData ? Math.round((score.value / 10) * 100) : 0
+    // Health is a REFERENCE line, not a graded percentage — illness is
+    // episodic and vaccines aren't a score. Vaccine + concern-flag data
+    // still backs the reference panel; it just isn't phrased as a `%` here.
     const explanations: Record<PillarKey, string> = {
       nutrition: `${pct}% — tracks meal frequency, eating quality, and food variety this week`,
       sleep:     `${pct}% — measures avg sleep hours vs age target, quality, and consistency`,
       mood:      `${pct}% — based on daily mood logs (happy, calm, energetic, fussy, cranky)`,
-      health:    `${pct}% — reflects vaccine completion and health event frequency`,
+      health:    `Reference — vaccines on record and any genuine concerns flagged, not scored`,
       growth:    `${pct}% — tracks weight & height measurement regularity`,
       activity:  `${pct}% — based on active days this week and variety of activities logged`,
     }
@@ -1697,7 +1727,9 @@ function WellnessScoreArc({
             <Text style={[styles.arcTooltipTitle, { color: PILLAR_CONFIG[activePillar].color }]}>
               {PILLAR_CONFIG[activePillar].label}
               {' — '}
-              {scores[activePillar].hasData
+              {activePillar === 'health'
+                ? 'Reference'
+                : scores[activePillar].hasData
                 ? `${scores[activePillar].value.toFixed(1)}/10`
                 : t('kids_analytics_no_data_short')}
             </Text>
@@ -2902,7 +2934,14 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
               <View style={{ width: `${pct}%`, height: 2, borderRadius: 999, backgroundColor: dt.colors.ink3 }} />
             </View>
           </View>
-          {score.hasData && Number.isFinite(score.value) ? (
+          {pillarKey === 'health' ? (
+            // Health is reference-only — no `/10` grade, ever. (Not wrapped
+            // in t() — PILLAR_EXPLAIN/WEIGHTS above this component are also
+            // untranslated English literals; see the i18n coverage plan.)
+            <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, color: dt.colors.ink3 }}>
+              REFERENCE
+            </Text>
+          ) : score.hasData && Number.isFinite(score.value) ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 26, color: dt.colors.ink }}>
               {score.value.toFixed(1)}
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: dt.colors.ink3 }}>{' /10'}</Text>
@@ -2981,7 +3020,12 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
         </View>
 
         <View style={styles.pillarPaperScore}>
-          {score.hasData && Number.isFinite(score.value) ? (
+          {pillarKey === 'health' ? (
+            // Health is reference-only — no `/10` grade, ever.
+            <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
+              Reference
+            </Text>
+          ) : score.hasData && Number.isFinite(score.value) ? (
             <>
               <Text
                 style={[
@@ -3073,7 +3117,10 @@ function PillarDetailModal({
       <DiffuseSheet
         visible={visible}
         title={config.label}
-        chip={score.hasData ? `${score.value.toFixed(1)}/10` : undefined}
+        // Health is a REFERENCE pillar (vaccines-on-record + concern flags) —
+        // never a graded `/10`. A mono "REFERENCE" chip (existing DiffuseSheet
+        // chip styling — roleType.data) replaces the numeric chip for it.
+        chip={pillarKey === 'health' ? 'REFERENCE' : score.hasData ? `${score.value.toFixed(1)}/10` : undefined}
         onClose={onClose}
       >
         <PillarDetail
@@ -3129,7 +3176,18 @@ function PillarDetailModal({
                 >
                   {config.label}
                 </Text>
-                {score.hasData && (
+                {pillarKey === 'health' ? (
+                  <Text
+                    style={{
+                      color: PILLAR_CONFIG[pillarKey].color,
+                      fontSize: 13,
+                      fontFamily: font.bodyMedium,
+                      marginTop: 2,
+                    }}
+                  >
+                    Reference — vaccines on record, not scored
+                  </Text>
+                ) : score.hasData && (
                   <Text
                     style={{
                       color: PILLAR_CONFIG[pillarKey].color,

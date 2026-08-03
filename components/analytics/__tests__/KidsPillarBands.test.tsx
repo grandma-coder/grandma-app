@@ -45,4 +45,47 @@ describe('KidsPillarBands', () => {
     expect(getByText('Eating well')).toBeTruthy()
     expect(queryByText(/Eating well.*low data/)).toBeNull()
   })
+
+  // Health is a REFERENCE row (no `/10` grade — vaccines-on-record + concern
+  // flags instead). It must never win the worst-first sort even when its own
+  // score would otherwise put it on top, and it must show `statusText`
+  // instead of a numeric value.
+  it('pins a reference row last regardless of score, showing statusText instead of a number', () => {
+    const items: PillarBandItem[] = [
+      {
+        key: 'health',
+        label: 'Health',
+        color: '#000',
+        softColor: '#EEEEEE',
+        // Highest score in the list — would sort FIRST under plain
+        // worst-first ordering if the `reference` pin didn't override it.
+        score: makeScore({ value: 9, confidence: 1 }),
+        reference: true,
+        statusText: 'All clear',
+        icon,
+      },
+      {
+        key: 'sleep',
+        label: 'Sleep',
+        color: '#000',
+        softColor: '#EEEEEE',
+        score: makeScore({ value: 3, confidence: 1 }),
+        takeaway: 'Needs attention',
+        icon,
+      },
+    ]
+
+    const { getByText, queryByText, getAllByRole } = render(
+      <KidsPillarBands items={items} onPillarPress={() => {}} />
+    )
+
+    expect(getByText('All clear')).toBeTruthy()
+    expect(queryByText('9.0')).toBeNull()
+
+    // Sleep (the only scored row) is the top/focus row despite being added
+    // second — Health's higher score must not displace it from the top.
+    const rows = getAllByRole('button')
+    expect(rows[0].props.accessibilityLabel).toMatch(/^Sleep/)
+    expect(rows[1].props.accessibilityLabel).toMatch(/^Health/)
+  })
 })

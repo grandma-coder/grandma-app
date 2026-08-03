@@ -336,12 +336,18 @@ export function buildScores(
 
   const as = scoreActivity(activity)
 
-  // Weighted overall: nutrition 27%, sleep 22%, mood 18%, health 13%, growth 9%, activity 11%
+  // Weighted overall: nutrition 27%, sleep 22%, mood 18%, growth 9%, activity 11%
+  // (sums to 87% of the original 100% — the effective-weight normalization
+  // below renormalizes across whichever of these five are present, so the
+  // relative proportions still hold). Health is intentionally EXCLUDED —
+  // it's a reference pillar (vaccines-on-record + concern flags), not a
+  // graded one: illness is episodic and vaccines aren't a score. `scoreHealth`
+  // is still computed and returned on `WellnessScores.health` below so the
+  // reference panel keeps its data; it just no longer feeds `overall`.
   const pillars = [
     { score: ns, weight: 0.27 },
     { score: ss, weight: 0.22 },
     { score: ms, weight: 0.18 },
-    { score: hs, weight: 0.13 },
     { score: gs, weight: 0.09 },
     { score: as, weight: 0.11 },
   ]

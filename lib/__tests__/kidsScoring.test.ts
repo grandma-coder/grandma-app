@@ -1,4 +1,4 @@
-import { scoreSleep, scoreHealth, scoreNutrition, scoreGrowth, buildScores, getAgeSleepTarget, dataConfidence } from '../kidsScoring'
+import { scoreSleep, scoreHealth, scoreNutrition, scoreGrowth, scoreMood, scoreActivity, buildScores, getAgeSleepTarget, dataConfidence } from '../kidsScoring'
 import { buildHealthData } from '../analyticsData'
 import type { SleepData, HealthData, NutritionData, GrowthData, MoodData, ActivityData } from '../analyticsData'
 
@@ -270,14 +270,15 @@ describe('confidence-weighted overall', () => {
     // per-pillar scores buildScores used, and confirm `overall` tracks the
     // confidence-weighted one — proving the low-confidence, low-value sleep
     // pillar (avgHours 5 vs a 12h target at 26mo) doesn't drag the composite
-    // down as hard as plain weight-normalization would.
+    // down as hard as plain weight-normalization would. Health is excluded
+    // here to mirror buildScores' own `pillars` array — it's a reference
+    // pillar and no longer feeds `overall` (see "excludes health" below).
     const ns = scoreNutrition(nutritionData)
     const ss = scoreSleep(sleepData, 26)
-    const hs = scoreHealth(healthData)
     const gs = scoreGrowth(growthData, 26, 'male')
     const pillars = [
       { score: ns, weight: 0.27 }, { score: ss, weight: 0.22 },
-      { score: hs, weight: 0.13 }, { score: gs, weight: 0.09 },
+      { score: gs, weight: 0.09 },
     ]
     const present = pillars.filter((p) => p.score.hasData)
     const plainWTotal = present.reduce((a, p) => a + p.weight, 0)
@@ -289,6 +290,80 @@ describe('confidence-weighted overall', () => {
     // otherwise the assertion below would pass trivially.
     expect(Math.abs(confOverall - plainOverall)).toBeGreaterThan(0.05)
     expect(full.overall).toBeCloseTo(Math.round(confOverall * 10) / 10, 1)
+  })
+})
+
+// Health is a REFERENCE pillar (vaccines-on-record + concern flags), not a
+// graded one — illness is episodic and vaccines aren't a score. `buildScores`
+// still computes and returns `scores.health` (the reference panel needs the
+// data), but it must never feed `overall`/`overallConfidence`.
+describe('buildScores excludes health from overall', () => {
+  const nutritionData = nutrition({
+    mealFrequency: [3, 3, 3, 3, 3, 3, 3],
+    eatQuality: { good: [3, 3, 3, 3, 3, 3, 3], little: new Array(7).fill(0), none: new Array(7).fill(0) },
+    topFoods: [
+      { label: 'a', count: 5 }, { label: 'b', count: 5 }, { label: 'c', count: 5 },
+      { label: 'd', count: 5 }, { label: 'e', count: 5 },
+    ],
+  })
+  const sleepData = sleep({
+    dailyHours: [12, 12, 12, 12, 12, 12, 12], avgHours: 12,
+    qualityCounts: { great: 7, good: 0, restless: 0, poor: 0 },
+  })
+  const moodData: MoodData = {
+    dailyCounts: { happy: [3, 3, 3, 3, 3, 3, 3] },
+    dominantMoods: [{ mood: 'happy', count: 21 }],
+    weekLabels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+    hasData: true,
+  }
+  const growthData: GrowthData = { weights: [{ value: 10, date: '2026-07-20' }], heights: [], heads: [], hasData: true }
+  const activityData: ActivityData = {
+    activeDays: 7, totalSessions: 7, totalMinutes: 210, uniqueTypes: ['walk', 'bike', 'swim'],
+    dailySessions: [1, 1, 1, 1, 1, 1, 1], weekLabels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], hasData: true,
+  }
+
+  it('a terrible health score does not drag overall down at all', () => {
+    const goodHealth = health({ concernEvents: 0, weeklyFrequency: [1, 1, 1, 1, 1, 1, 1], vaccines: [{ name: 'MMR', done: true }] })
+    const terribleHealth = health({
+      concernEvents: 10,
+      weeklyFrequency: [3, 3, 3, 3, 3, 3, 3],
+      vaccines: [{ name: 'MMR', done: false }, { name: 'Polio', done: false }],
+    })
+
+    // Sanity: the two health fixtures must actually score differently,
+    // otherwise a passing `overall` comparison below would be trivial.
+    expect(scoreHealth(terribleHealth).value).toBeLessThan(scoreHealth(goodHealth).value)
+
+    const withGoodHealth = buildScores(nutritionData, sleepData, moodData, goodHealth, growthData, activityData, 26, 'male')
+    const withTerribleHealth = buildScores(nutritionData, sleepData, moodData, terribleHealth, growthData, activityData, 26, 'male')
+
+    // Every other pillar is identical between the two calls — if health fed
+    // `overall` at all, the terrible-health run would score lower.
+    expect(withTerribleHealth.overall).toBe(withGoodHealth.overall)
+    expect(withTerribleHealth.overallConfidence).toBe(withGoodHealth.overallConfidence)
+
+    // `scores.health` itself is still populated (the reference panel needs it).
+    expect(withTerribleHealth.health.hasData).toBe(true)
+    expect(withTerribleHealth.health.value).toBe(scoreHealth(terribleHealth).value)
+  })
+
+  it('overall matches the plain weight-normalized average of the other five pillars only', () => {
+    const healthData = health({ concernEvents: 0 })
+    const full = buildScores(nutritionData, sleepData, moodData, healthData, growthData, activityData, 26, 'male')
+
+    const ns = scoreNutrition(nutritionData)
+    const ss = scoreSleep(sleepData, 26)
+    const ms = scoreMood(moodData)
+    const gs = scoreGrowth(growthData, 26, 'male')
+    const as = scoreActivity(activityData)
+    const pillars = [
+      { score: ns, weight: 0.27 }, { score: ss, weight: 0.22 }, { score: ms, weight: 0.18 },
+      { score: gs, weight: 0.09 }, { score: as, weight: 0.11 },
+    ]
+    const effTotal = pillars.reduce((a, p) => a + p.weight * p.score.confidence, 0)
+    const expectedOverall = pillars.reduce((a, p) => a + p.score.value * ((p.weight * p.score.confidence) / effTotal), 0)
+
+    expect(full.overall).toBeCloseTo(Math.round(expectedOverall * 10) / 10, 1)
   })
 })
 

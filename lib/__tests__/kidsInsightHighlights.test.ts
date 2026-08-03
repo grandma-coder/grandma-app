@@ -71,19 +71,26 @@ describe('buildInsightHighlights honesty', () => {
   })
 
   it('still asserts a confident strength when both the pillar and the overall read clear the bar', () => {
+    // Uses activity (not health) as the highest scorer — health is a
+    // reference pillar and excluded from strength/concern selection
+    // regardless of its own value/confidence; see the dedicated
+    // "excludes health" describe block below. Nutrition is given a second,
+    // lower-value present pillar so `highest`/`lowest` differ (both would
+    // otherwise collapse to the single present narrative pillar, which the
+    // `highest !== lowest` guard treats as neither a strength nor a concern).
     const scores = {
       overall: 8,
       overallConfidence: 0.9,
-      nutrition: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      nutrition: { value: 3, label: 'needs attention', trend: 0, hasData: true, confidence: 0.9 },
       sleep: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
-      health: { value: 9, label: 'excellent', trend: 0, hasData: true, confidence: 0.9 },
+      health: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
-      activity: { value: 5, label: 'fair', trend: 0, hasData: true, confidence: 0.9 },
+      activity: { value: 9, label: 'excellent', trend: 0, hasData: true, confidence: 0.9 },
     }
     const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Noa', 20, null)
     expect(h.strength).not.toBeNull()
-    expect(h.strength?.pillar).toBe('health')
+    expect(h.strength?.pillar).toBe('activity')
     expect(h.message).toMatch(/strength/i)
   })
 })
@@ -199,5 +206,97 @@ describe('buildInsightHighlights — trend confidence gate isolated from the ove
     expect(h.trend).not.toBeNull()
     expect(h.trend?.pillar).toBe('sleep')
     expect(h.message).toMatch(/declining/i)
+  })
+})
+
+// Health is a REFERENCE pillar (vaccines-on-record + concern flags) — illness
+// is episodic and vaccines aren't a score. It must never be picked as the
+// narrative's strength / concern / trending pillar, regardless of its own
+// value, confidence, or trend — even when it would otherwise "win" outright.
+describe('buildInsightHighlights excludes health from strength/concern/trend', () => {
+  it('never calls health a strength, even as the highest-value, high-confidence pillar', () => {
+    const scores = {
+      overall: 8,
+      overallConfidence: 0.9,
+      nutrition: { value: 6, label: 'fair', trend: 0, hasData: true, confidence: 0.9 },
+      sleep: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      health: { value: 10, label: 'excellent', trend: 0, hasData: true, confidence: 0.9 },
+      growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    }
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null)
+    // Health (10) would win the highest-value pick over nutrition (6) if it
+    // weren't excluded. Nutrition alone doesn't clear the strength bar
+    // (>= 8), so no strength should fire at all — never a fallback to health.
+    expect(h.strength).toBeNull()
+    expect(h.message).not.toMatch(/strength/i)
+  })
+
+  it('never calls health "the main area to work on", even as the lowest-value, high-confidence pillar', () => {
+    const scores = {
+      overall: 6,
+      overallConfidence: 0.9,
+      nutrition: { value: 9, label: 'excellent', trend: 0, hasData: true, confidence: 0.9 },
+      sleep: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      health: { value: 1, label: 'low', trend: 0, hasData: true, confidence: 0.9 },
+      growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    }
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null)
+    // Health (1) would win the lowest-value pick over nutrition (9) if it
+    // weren't excluded. With no other pillar below 7, no concern should fire.
+    expect(h.concern).toBeNull()
+    expect(h.message).not.toMatch(/main area to work on|main focus/i)
+  })
+
+  it('never surfaces a health trend sentence, even with the single largest |trend|', () => {
+    const scores = {
+      overall: 7,
+      overallConfidence: 0.9,
+      nutrition: { value: 6, label: 'fair', trend: 5, hasData: true, confidence: 0.9 }, // below the 10% floor anyway
+      sleep: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      health: { value: 7, label: 'good', trend: -60, hasData: true, confidence: 0.9 },
+      growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    }
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null)
+    expect(h.trend).toBeNull()
+    expect(h.message).not.toMatch(/declining|improving/i)
+  })
+})
+
+// Optional per the honest-scores spec: Health has no shown score, but a
+// genuine concern flag (fever-range temp, injury/doctor/sick note) is still
+// worth a mention in the narrative.
+describe('buildInsightHighlights — optional health concern note', () => {
+  const scores = {
+    overall: 8,
+    overallConfidence: 0.9,
+    nutrition: { value: 8, label: 'good', trend: 0, hasData: true, confidence: 0.9 },
+    sleep: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    health: { value: 5, label: 'fair', trend: 0, hasData: true, confidence: 0.9 },
+    growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+  }
+
+  it('mentions health concerns when concernEvents > 0', () => {
+    const analytics = { ...emptyAnalytics, health: { concernEvents: 2 } }
+    const h = buildInsightHighlights(scores as any, analytics, 'Rio', 24, null)
+    expect(h.message).toMatch(/2 health concerns flagged/i)
+  })
+
+  it('says nothing about health when concernEvents is 0', () => {
+    const analytics = { ...emptyAnalytics, health: { concernEvents: 0 } }
+    const h = buildInsightHighlights(scores as any, analytics, 'Rio', 24, null)
+    expect(h.message).not.toMatch(/health concern/i)
+  })
+
+  it('does not crash when analytics.health is missing from a partial fixture', () => {
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Rio', 24, null)
+    expect(h.message).not.toMatch(/health concern/i)
   })
 })
