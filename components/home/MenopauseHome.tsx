@@ -41,6 +41,7 @@ import { useTranslation } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
 import { MenopauseRing } from '../menopause/MenopauseRing'
 import { MenopauseWeekStrip } from '../menopause/MenopauseWeekStrip'
+import { MenopauseLogSheet, type MenopauseLogPick } from '../menopause/MenopauseLogSheet'
 import { QuietPill } from '../ui/QuietPill'
 import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { SlidersHorizontal } from 'lucide-react-native'
@@ -146,6 +147,9 @@ export function MenopauseHome() {
   const [pendingSymptom, setPendingSymptom] = useState<MenopauseSymptomId | null>(null)
   // The date a week-strip tap targets (null = today, for the quick-log chips).
   const [logDate, setLogDate] = useState<string | null>(null)
+  // The tile-grid launcher (cycle-parity) + the day it targets.
+  const [gridOpen, setGridOpen] = useState(false)
+  const [gridDate, setGridDate] = useState<string | null>(null)
   // The 12-month offer is dismissible for the session only (never persisted —
   // it re-surfaces next launch until the user updates their stage).
   const [offerDismissed, setOfferDismissed] = useState(false)
@@ -199,12 +203,16 @@ export function MenopauseHome() {
         ? 'month since your last period'
         : 'months since your last period'
 
+  // Quick-log chip → straight to the compact severity form for that symptom.
   const openSymptom = (id: MenopauseSymptomId) => { setLogDate(null); setPendingSymptom(id); setActiveSheet('symptom') }
-  // "More" opens the symptom sheet with nothing pre-selected → the full grouped
-  // catalog (all 13 signals + severity + note), so anything can be logged.
-  const openMore = () => { setLogDate(null); setPendingSymptom(null); setActiveSheet('symptom') }
-  // A week-strip tap logs for THAT day (threaded to the form via logDate).
-  const openLogForDate = (date: string) => { setLogDate(date); setPendingSymptom(null); setActiveSheet('symptom') }
+  // "More" and a week-strip tap open the tile grid (cycle LogActivitySheet parity).
+  const openMore = () => { setGridDate(null); setGridOpen(true) }
+  const openLogForDate = (date: string) => { setGridDate(date); setGridOpen(true) }
+  const onGridPick = (type: MenopauseLogPick) => {
+    setLogDate(gridDate)
+    if (type === 'period') setActiveSheet('period')
+    else { setPendingSymptom(type); setActiveSheet('symptom') }
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: pal.bg }]}>
@@ -415,10 +423,20 @@ export function MenopauseHome() {
       <LogSheet
         visible={activeSheet === 'period'}
         title="Log a period"
-        onClose={() => setActiveSheet(null)}
+        onClose={() => { setActiveSheet(null); setLogDate(null) }}
       >
-        <MenopausePeriodForm onSaved={() => setActiveSheet(null)} />
+        <MenopausePeriodForm logDate={logDate ?? undefined} onSaved={() => { setActiveSheet(null); setLogDate(null) }} />
       </LogSheet>
+
+      {/* Tile-grid launcher (cycle LogActivitySheet parity) — from "More" or a
+          week-strip tap; picking a tile opens the compact form for that day. */}
+      <MenopauseLogSheet
+        open={gridOpen}
+        onClose={() => setGridOpen(false)}
+        onPick={onGridPick}
+        isPeri={stage === 'peri'}
+        title="Log activity"
+      />
 
       {/* Quick-log Edit picker — choose which signals are pinned (shared with the
           cycle/kids quick-log + wallet editors via WalletPicker). */}

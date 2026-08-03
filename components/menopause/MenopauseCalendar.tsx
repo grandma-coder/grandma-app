@@ -19,9 +19,10 @@ import { diffuseFont, useTheme, useDiffuseTheme, getDiffuseAccent } from '../../
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnalytics'
-import { menopauseSymptomLabel, resolveMenopauseSymptomId } from '../../lib/menopauseSymptoms'
+import { menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../../lib/menopauseSymptoms'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { MenopauseSymptomForm, MenopausePeriodForm } from './MenopauseLogForms'
+import { MenopauseLogSheet, type MenopauseLogPick } from './MenopauseLogSheet'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from './menoPalette'
 import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
 
@@ -42,7 +43,6 @@ const COPY = {
   intensity: 'Intensity',
 }
 
-type SheetKind = 'none' | 'chooser' | 'symptom' | 'period'
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
 // ─── Date helpers (local, never toISOString) ─────────────────────────────────
@@ -97,7 +97,9 @@ export function MenopauseCalendar() {
     const d = new Date()
     return { year: d.getFullYear(), month: d.getMonth() }
   })
-  const [sheet, setSheet] = useState<SheetKind>('none')
+  const [gridOpen, setGridOpen] = useState(false)
+  const [pickedSymptom, setPickedSymptom] = useState<MenopauseSymptomId | null>(null)
+  const [periodOpen, setPeriodOpen] = useState(false)
 
   const logsByDate = useMemo(() => {
     const m = new Map<string, MenopauseLogRow[]>()
@@ -124,7 +126,11 @@ export function MenopauseCalendar() {
   const monthLabel = new Date(visibleMonth.year, visibleMonth.month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   function openAdd() {
-    setSheet(isPeri ? 'chooser' : 'symptom')
+    setGridOpen(true)
+  }
+  function onPick(type: MenopauseLogPick) {
+    if (type === 'period') setPeriodOpen(true)
+    else setPickedSymptom(type)
   }
   function prevMonth() {
     setVisibleMonth((m) => (m.month === 0 ? { year: m.year - 1, month: 11 } : { year: m.year, month: m.month - 1 }))
@@ -285,18 +291,22 @@ export function MenopauseCalendar() {
         </View>
       </ScrollView>
 
-      {/* ─── Log sheets — every form targets the SELECTED day via logDate ── */}
-      <LogSheet visible={sheet === 'chooser'} title={COPY.chooserTitle} onClose={() => setSheet('none')}>
-        <View style={styles.chooser}>
-          <ChooserCard icon="temperature" title={COPY.chooserSymptom} desc={COPY.chooserSymptomDesc} pal={pal} onPress={() => setSheet('symptom')} />
-          <ChooserCard icon="period" title={COPY.chooserPeriod} desc={COPY.chooserPeriodDesc} pal={pal} onPress={() => setSheet('period')} />
-        </View>
+      {/* ─── Log flow: tile grid → per-symptom / period form, all for the
+          SELECTED day (via logDate) — the cycle LogActivitySheet pattern. ── */}
+      <MenopauseLogSheet
+        open={gridOpen}
+        onClose={() => setGridOpen(false)}
+        onPick={onPick}
+        isPeri={isPeri}
+        title="Log activity"
+      />
+      <LogSheet visible={!!pickedSymptom} title={COPY.sheetSymptom} onClose={() => setPickedSymptom(null)}>
+        {pickedSymptom ? (
+          <MenopauseSymptomForm initialId={pickedSymptom} logDate={selectedDate} onSaved={() => setPickedSymptom(null)} />
+        ) : null}
       </LogSheet>
-      <LogSheet visible={sheet === 'symptom'} title={COPY.sheetSymptom} onClose={() => setSheet('none')}>
-        <MenopauseSymptomForm logDate={selectedDate} onSaved={() => setSheet('none')} />
-      </LogSheet>
-      <LogSheet visible={sheet === 'period'} title={COPY.sheetPeriod} onClose={() => setSheet('none')}>
-        <MenopausePeriodForm logDate={selectedDate} onSaved={() => setSheet('none')} />
+      <LogSheet visible={periodOpen} title={COPY.sheetPeriod} onClose={() => setPeriodOpen(false)}>
+        <MenopausePeriodForm logDate={selectedDate} onSaved={() => setPeriodOpen(false)} />
       </LogSheet>
     </View>
   )
@@ -314,42 +324,6 @@ function NavBtn({ dir, onPress, pal }: { dir: 'back' | 'fwd'; onPress: () => voi
       style={({ pressed }) => [styles.navBtn, { borderColor: pal.border, opacity: pressed ? 0.6 : 1 }]}
     >
       <Ionicons name={dir === 'back' ? 'chevron-back' : 'chevron-forward'} size={16} color={pal.textSecondary} />
-    </Pressable>
-  )
-}
-
-// ─── Chooser card (peri only) ─────────────────────────────────────────────────
-
-function ChooserCard({
-  icon,
-  title,
-  desc,
-  pal,
-  onPress,
-}: {
-  icon: CharacterName
-  title: string
-  desc: string
-  pal: MenoPalette
-  onPress: () => void
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.chooserCard,
-        !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
-        { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg, opacity: pressed ? 0.7 : 1 },
-      ]}
-    >
-      <View style={[styles.chooserIcon, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
-        <Character name={icon} size={26} color={pal.accent} bg={pal.accentSoft} />
-      </View>
-      <View style={styles.detailCopy}>
-        <Text style={[styles.detailEntryTitle, { color: pal.text, fontFamily: pal.fontBodySemiBold }]}>{title}</Text>
-        <Text style={[styles.detailEntrySub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{desc}</Text>
-      </View>
     </Pressable>
   )
 }

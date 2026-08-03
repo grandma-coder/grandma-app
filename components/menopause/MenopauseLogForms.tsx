@@ -26,6 +26,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 import { saveMenopauseLog } from '../../lib/menopauseLogs'
 import {
   ALL_MENOPAUSE_SYMPTOMS,
+  menopauseSymptomLabel,
   type MenopauseSymptomId,
 } from '../../lib/menopauseSymptoms'
 import { supabase } from '../../lib/supabase'
@@ -86,6 +87,19 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
 
   return (
     <View style={styles.form}>
+      {initialId ? (
+        // Compact mode — opened from a log tile with the symptom already chosen:
+        // skip the picker, go straight to severity + note.
+        <View style={styles.lockedHead}>
+          <View style={[styles.lockedIcon, { backgroundColor: st[`${symptomStickerKey(initialId)}Soft`], borderColor: pal.border }]}>
+            <Character name={symptomBlob(initialId)} size={22} color={st[`${symptomStickerKey(initialId)}Ink`]} bg={st[`${symptomStickerKey(initialId)}Soft`]} />
+          </View>
+          <Text style={[styles.lockedLabel, { color: pal.text, fontFamily: pal.fontDisplay }]}>
+            {menopauseSymptomLabel(initialId)}
+          </Text>
+        </View>
+      ) : (
+      <>
       <Text style={[styles.sectionLabel, { color: pal.textMuted, fontFamily: pal.fontBodySemiBold }]}>
         {COPY.symptomPick}
       </Text>
@@ -116,6 +130,8 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
           </View>
         )
       })}
+      </>
+      )}
 
       {symptomId && (
         <View style={styles.severityBlock}>
@@ -307,6 +323,10 @@ function SelectableChip({
 const styles = StyleSheet.create({
   form: { gap: 18, paddingBottom: 8 },
   sectionLabel: { fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
+
+  lockedHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  lockedIcon: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  lockedLabel: { fontSize: 20, letterSpacing: -0.3 },
 
   groupBlock: { gap: 10 },
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
