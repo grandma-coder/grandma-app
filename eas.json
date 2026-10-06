@@ -51,16 +51,14 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "hello.igorus@gmail.com",
-        "ascAppId": "6771927342",
-        "appleTeamId": "WC35Q7ALQL"
+        "appleTeamId": "C7H9AXWR6A",
+        "ascAppId": "<PASTE APPLE ID>"
       }
     },
     "preview": {
       "ios": {
-        "appleId": "hello.igorus@gmail.com",
-        "ascAppId": "6771927342",
-        "appleTeamId": "WC35Q7ALQL"
+        "appleTeamId": "C7H9AXWR6A",
+        "ascAppId": "<PASTE APPLE ID>"
       }
     }
   }

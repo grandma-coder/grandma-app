@@ -10,7 +10,7 @@
     "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.grandmacoder.grandmaapp",
+      "bundleIdentifier": "co.sauceroom.grandma",
       "buildNumber": "4",
       "icon": "./assets/icon.png",
       "usesAppleSignIn": true,
