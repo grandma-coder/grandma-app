@@ -52,13 +52,13 @@
     "production": {
       "ios": {
         "appleTeamId": "C7H9AXWR6A",
-        "ascAppId": "<PASTE APPLE ID>"
+        "ascAppId": "6819497177"
       }
     },
     "preview": {
       "ios": {
         "appleTeamId": "C7H9AXWR6A",
-        "ascAppId": "<PASTE APPLE ID>"
+        "ascAppId": "6819497177"
       }
     }
   }
