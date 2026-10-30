@@ -12,7 +12,11 @@ appId: co.sauceroom.grandma
 - hideKeyboard
 - tapOn:
     point: "78%,92%"
-- waitForAnimationToEnd
+# Positively confirm the send landed: the user's own bubble must appear (QUESTION_RE is
+# the regex-escaped question, passed by record.sh).
+- extendedWaitUntil:
+    visible: "${QUESTION_RE}"
+    timeout: 8000
 # Wait out the "thinking" orb messages (THINKING_MESSAGES in GrandmaTalk.tsx).
 - extendedWaitUntil:
     notVisible: "(flipping|asking|checking|let me|brewing|consulting|digging|warming|untangling|polishing|stirring|pulling|dusting|cross-referencing|rummaging|heating|leafing|channeling).*…"

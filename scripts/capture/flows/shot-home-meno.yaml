@@ -3,12 +3,12 @@ appId: co.sauceroom.grandma
 - runFlow: mode-meno.yaml
 - waitForAnimationToEnd
 # Week strip is at the top of meno home; quick-log chips sit below (always visible,
-# English-only labels in the app today: "Hot flashes", accessibilityLabel "Log Hot flashes").
+# hardcoded English in both languages: text "Hot flashes", accessibilityLabel "Log Hot flashes",
+# so the selector is a contains-style full-match regex).
 - scrollUntilVisible:
-    element: "Hot flash.*|Ondas? de calor|Onda de calor"
+    element: ".*Hot flash.*|.*[Oo]ndas? de calor.*"
     direction: DOWN
-    optional: true
-- tapOn: "Hot flash.*|Ondas? de calor|Onda de calor"
+- tapOn: ".*Hot flash.*|.*[Oo]ndas? de calor.*"
 - waitForAnimationToEnd
 - swipe: { direction: DOWN, duration: 900 }
 - waitForAnimationToEnd
