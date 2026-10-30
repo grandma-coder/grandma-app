@@ -33,4 +33,12 @@ describe('submitWaitlist', () => {
     expect(JSON.stringify(spy.mock.calls)).not.toContain('ana@example.com')
     spy.mockRestore()
   })
+  it('missing config (deps throw) still allows honeypot and validation, and join failure → error', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const broken: WaitlistDeps = { hashIp: () => { throw new Error('SUPABASE_URL is not set') }, join: async () => { throw new Error('SUPABASE_URL is not set') } }
+    expect(await submitWaitlist({ ...valid, company: 'x' }, null, broken)).toEqual({ status: 'success', country: 'BR' })
+    expect((await submitWaitlist({ ...valid, email: '' }, null, broken)).status).toBe('invalid')
+    expect(await submitWaitlist(valid, null, broken)).toEqual({ status: 'error' })
+    spy.mockRestore()
+  })
 })

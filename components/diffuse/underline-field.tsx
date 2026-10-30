@@ -14,7 +14,7 @@ export function UnderlineField({ label, error, id, className = '', ref, ...input
         className="w-full rounded-none border-0 border-b-[1.5px] border-line-2 bg-transparent px-0.5 pb-3.5 pt-2.5 text-[18px] text-ink outline-none placeholder:text-ink-4 focus:border-hair aria-[invalid=true]:border-err"
         {...input}
       />
-      {error && <p id={`${fid}-err`} className="mt-2 text-[14px] text-err">{error}</p>}
+      {error && <p id={`${fid}-err`} className="mt-2 text-[14px] text-err" role="alert">{error}</p>}
     </div>
   )
 }
