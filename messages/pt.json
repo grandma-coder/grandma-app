@@ -121,7 +121,7 @@
   "privacy": {
     "metaTitle": "Política de Privacidade | Grandma",
     "title": "Política de Privacidade",
-    "updated": "Atualizado em 15 de maio de 2026",
+    "updated": "Atualizado em 30 de outubro de 2026",
     "note": "Esta é uma tradução. Em caso de divergência, vale a versão em inglês.",
     "intro": "A sua privacidade importa para nós. Esta política explica quais dados coletamos, como os usamos e como você pode controlá-los.",
     "sections": [
@@ -155,7 +155,7 @@
       {
         "heading": "Dados de saúde",
         "paragraphs": [
-          "Levamos os dados de saúde a sério. A grandma.app foi pensada para estar em conformidade com a HIPAA e com a GDPR:",
+          "Levamos os dados de saúde a sério. A grandma.app foi pensada para levar a HIPAA em consideração e estar em conformidade com a GDPR:",
           "Nunca vendemos os seus dados de saúde.",
           "Nunca usamos os seus dados de saúde para publicidade.",
           "Nunca compartilhamos os seus dados de saúde com terceiros sem o seu consentimento explícito.",
@@ -188,18 +188,18 @@
         ]
       },
       {
-        "heading": "Contato",
-        "paragraphs": [
-          "Para dúvidas de privacidade ou solicitações sobre os seus dados, escreva para privacy@grandma.app"
-        ]
-      },
-      {
         "id": "waitlist-data",
         "heading": "A lista de espera",
         "paragraphs": [
           "Quando você entra na lista de espera, guardamos o seu email, o seu nome se você informar, o capítulo que escolheu, o seu país, o idioma do site, se você quer o aviso de lançamento, de onde você veio (tags de campanha e site de origem) e um hash irreversível do seu endereço IP, usado só para evitar abuso.",
           "Usamos esses dados só para enviar o seu convite e, se você pediu, um aviso de lançamento. Nunca vendemos nem compartilhamos para marketing.",
           "Para sair da lista, escreva para support@grandma.app e apagamos o seu registro."
+        ]
+      },
+      {
+        "heading": "Contato",
+        "paragraphs": [
+          "Para dúvidas de privacidade ou solicitações sobre os seus dados, escreva para privacy@grandma.app"
         ]
       }
     ]
@@ -214,7 +214,7 @@
       {
         "heading": "Aviso médico",
         "paragraphs": [
-          "A grandma.app NÃO substitui aconselhamento, diagnóstico ou tratamento médico profissional. Procure sempre o seu médico, a sua obstetriz ou outro profissional de saúde qualificado para qualquer dúvida sobre uma condição médica. Nunca ignore uma orientação médica profissional nem atrase a busca por ela por causa de algo que você leu ou ouviu na grandma.app."
+          "A grandma.app NÃO substitui aconselhamento, diagnóstico ou tratamento médico profissional. Procure sempre o seu médico, a sua parteira ou outro profissional de saúde qualificado para qualquer dúvida sobre uma condição médica. Nunca ignore uma orientação médica profissional nem atrase a busca por ela por causa de algo que você leu ou ouviu na grandma.app."
         ]
       },
       {
@@ -283,7 +283,7 @@
       {
         "heading": "Alterações no serviço",
         "paragraphs": [
-          "Reservamo-nos o direito de modificar, suspender ou encerrar o serviço a qualquer momento. Avisaremos com antecedência razoável sobre mudanças significativas. Continuar usando o serviço após as mudanças significa que você as aceita."
+          "Nós nos reservamos o direito de modificar, suspender ou encerrar o serviço a qualquer momento. Avisaremos com antecedência razoável sobre mudanças significativas. Continuar usando o serviço após as mudanças significa que você as aceita."
         ]
       },
       {
