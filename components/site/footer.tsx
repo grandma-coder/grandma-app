@@ -12,7 +12,7 @@ export async function Footer({ locale }: { locale: 'en' | 'pt' }) {
           <div className="flex items-center gap-2.5 font-display text-[28px]"><Mark size={36} still />grandma</div>
           <p className="mt-3.5 max-w-[300px] text-[14px] font-light text-ink-3">{t('tag')}</p>
         </div>
-        <nav className="flex gap-8 text-[15px] font-light text-ink-2">
+        <nav aria-label={t('navLabel')} className="flex flex-wrap gap-x-8 gap-y-3 text-[15px] font-light text-ink-2">
           <Link href="/privacy" className="hover:text-ink">{t('privacy')}</Link>
           <Link href="/terms" className="hover:text-ink">{t('terms')}</Link>
           <a href="mailto:support@grandma.app" className="hover:text-ink">support@grandma.app</a>
