@@ -3,7 +3,6 @@ import { Nav } from '@/components/site/nav'
 import { Hero } from '@/components/site/hero'
 import { Launch } from '@/components/site/launch'
 import { Chapters } from '@/components/site/chapters'
-import { Grandma } from '@/components/site/grandma'
 import { Faq } from '@/components/site/faq'
 import { Closing } from '@/components/site/closing'
 import { Footer } from '@/components/site/footer'
@@ -22,7 +21,6 @@ export default async function Home({ params }: { params: Promise<{ locale: 'en' 
         <Hero locale={locale} country={country} form={form} />
         <div data-mode="pre"><Launch locale={locale} country={country} /></div>
         <Chapters locale={locale} />
-        <Grandma locale={locale} />
         <Faq locale={locale} />
         <Closing locale={locale} />
         <Footer locale={locale} />

@@ -126,18 +126,6 @@
       }
     }
   },
-  "grandma": {
-    "title": "Conheça a <em>Vovó.</em>",
-    "quote": "A amiga que está acordada às 3 da manhã — e que sabe das coisas.",
-    "body": "Ela sabe o nome dos seus filhos, lembra das idades e do sono deles, conta o que a ciência diz e o que a sua avó teria feito — e deixa você decidir.",
-    "traits": [
-      "Sempre por perto",
-      "Sabe o nome dos seus filhos",
-      "Nunca julga",
-      "Cita fontes reais"
-    ],
-    "videoAlt": "Fazendo uma pergunta para a Vovó no app"
-  },
   "faq": {
     "title": "As perguntas <em>óbvias.</em>",
     "items": [

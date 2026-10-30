@@ -6,7 +6,7 @@ export async function Faq({ locale }: { locale: 'en' | 'pt' }) {
   const items = t.raw('items') as { q: string; a: string }[]
   return (
     <section className="pt-[110px]">
-      <SectionHead n="04">{t.rich('title', { em: (c) => <em>{c}</em> })}</SectionHead>
+      <SectionHead n="03">{t.rich('title', { em: (c) => <em>{c}</em> })}</SectionHead>
       <div>
         {items.map((it, i) => (
           <details key={it.q} open={i === 0} className="group border-b border-line-2 py-[22px] first:border-t">

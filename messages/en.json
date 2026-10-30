@@ -126,18 +126,6 @@
       }
     }
   },
-  "grandma": {
-    "title": "Meet <em>Grandma.</em>",
-    "quote": "The friend who's awake at 3am — and actually knows things.",
-    "body": "She knows your kids by name, remembers their ages and sleep patterns, tells you what the science says and what your grandmother would have done — and lets you decide.",
-    "traits": [
-      "Always there",
-      "Knows your kids by name",
-      "Never judges",
-      "Cites real sources"
-    ],
-    "videoAlt": "Asking Grandma a question in the app"
-  },
   "faq": {
     "title": "The obvious <em>questions.</em>",
     "items": [
