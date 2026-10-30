@@ -1,6 +1,9 @@
 appId: co.sauceroom.grandma
 ---
-- openLink: grandma-app://onboarding/journey?addMode=true
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://onboarding/journey?addMode=true"
 - waitForAnimationToEnd
 # Card titles: "Pregnant" / "Grávida" (onboardingJourney_pregnant); old names kept as fallback.
 - tapOn: "Pregnant|Grávida|Pregnancy|Gravidez"

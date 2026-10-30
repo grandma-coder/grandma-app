@@ -2,20 +2,23 @@ appId: co.sauceroom.grandma
 ---
 - launchApp
 - runFlow: _open-panel.yaml
+# Rows are single accessible elements whose text is "<title>, <subtitle>", so match by prefix regex.
 - scrollUntilVisible:
-    element: "Seed everything"
+    element: "Seed everything.*"
     direction: DOWN
-- tapOn: "Seed everything"
+    timeout: 60000
+- tapOn: "Seed everything.*"
+- extendedWaitUntil:
+    visible: "OK"
+    timeout: 180000
+- tapOn: "OK"
+- scrollUntilVisible:
+    element: "Seed menopause data.*"
+    direction: UP
+    timeout: 60000
+- tapOn: "Seed menopause data.*"
 - extendedWaitUntil:
     visible: "OK"
     timeout: 120000
 - tapOn: "OK"
-- scrollUntilVisible:
-    element: "Seed menopause data"
-    direction: UP
-- tapOn: "Seed menopause data"
-- extendedWaitUntil:
-    visible: "OK"
-    timeout: 60000
-- tapOn: "OK"
-- runFlow: _home.yaml
+- runFlow: _light.yaml

@@ -1,10 +1,12 @@
 appId: co.sauceroom.grandma
 ---
-- openLink: grandma-app://profile/settings
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://profile/settings"
 - waitForAnimationToEnd
-- scrollUntilVisible:
-    element: "English|Português \\(Brasil\\)|Language|Idioma"
-    direction: DOWN
-- tapOn: "English|Português \\(Brasil\\)"   # opens the language list on the current value
-- tapOn: "English"
+# Row is one accessible element "<label>, <CODE>, <native name>, →" (label is localized),
+# so match on the language code in the middle.
+- tapOn: ".*, (EN|PT|ES), .*"
+- tapOn: "EN, English.*"
 - runFlow: _home.yaml

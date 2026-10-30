@@ -1,7 +1,10 @@
 appId: co.sauceroom.grandma
 ---
 - runFlow: mode-kids.yaml
-- openLink: grandma-app://grandma-talk
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://grandma-talk"
 - waitForAnimationToEnd
 # Placeholder is a hardcoded English literal in GrandmaTalk.tsx; chat_placeholder kept as fallback.
 - tapOn: "Tap to talk to grandma…|Ask Grandma anything...|Pergunte qualquer coisa para a Vovó..."

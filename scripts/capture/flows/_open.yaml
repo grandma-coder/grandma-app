@@ -1,0 +1,11 @@
+appId: co.sauceroom.grandma
+---
+# Usage: runFlow: { file: _open.yaml, env: { LINK: "grandma-app://..." } }
+# iOS shows an "Open in “grandma-app”?" system alert for custom-scheme links
+# (not every time), so tap its "Open" button when it is on screen.
+- openLink: ${LINK}
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
