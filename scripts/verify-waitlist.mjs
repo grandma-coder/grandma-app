@@ -38,6 +38,12 @@ try {
 
   const [{ has }] = await sql`select has_function_privilege('anon', 'public.waitlist_join(text,text,text,text,text,boolean,text,text,text,text,text)', 'execute') as has`
   assert(has === false, "anon cannot execute waitlist_join")
+  const [w] = await sql`select email, name from public.waitlist where email = ${email}`
+  for (let i = 0; i < 2; i++)
+    await sql`insert into public.beta_testers (email, name, platform, note, invited_by)
+              values (${w.email}, ${w.name}, 'both', 'from waitlist', 'verify') on conflict (email) do nothing`
+  const bt = await sql`select * from public.beta_testers where email = ${email}`
+  assert(bt.length === 1, "promoting twice leaves one beta_testers row")
 } finally {
   await sql`delete from public.beta_testers where email like ${tag + "%"}`
   await sql`delete from public.waitlist where email like ${tag + "%"}`
