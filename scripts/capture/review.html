@@ -5,5 +5,6 @@
 <div id="r"></div>
 <script>
 const shots=["onboarding-picker","home-pre","home-preg","home-kids","home-meno","talk","insights-pre","calendar-meno"];
-document.getElementById("r").innerHTML=["pt","en"].map(l=>`<h2>${l}</h2><div class="g">${shots.map(s=>`<figure><video src="../../public/media/app/${l}/${s}.mp4" poster="../../public/media/app/${l}/${s}.jpg" autoplay muted loop playsinline></video><figcaption>${l}/${s}</figcaption></figure>`).join("")}</div>`).join("");
+const combos=[["pt",""],["pt","-dark"],["en",""],["en","-dark"]];
+document.getElementById("r").innerHTML=combos.map(([l,t])=>`<h2>${l} ${t?"dark":"light"}</h2><div class="g">${shots.map(s=>`<figure><video src="../../public/media/app/${l}/${s}${t}.mp4" poster="../../public/media/app/${l}/${s}${t}.jpg" autoplay muted loop playsinline></video><figcaption>${l}/${s}${t}</figcaption></figure>`).join("")}</div>`).join("");
 </script>

@@ -4,9 +4,11 @@ appId: co.sauceroom.grandma
     file: _open.yaml
     env:
       LINK: "grandma-app://onboarding/journey?addMode=true"
-- waitForAnimationToEnd
-# Card titles: "Pregnant" / "Grávida" (onboardingJourney_pregnant); old names kept as fallback.
-- tapOn: "Pregnant|Grávida|Pregnancy|Gravidez"
-- waitForAnimationToEnd
-- swipe: { direction: UP, duration: 900 }
-- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: ".*Pregnant.*|.*Gr.vida.*"
+    timeout: 10000
+# The journeys already added are dimmed and tapping them does nothing, and tapping an
+# available one would enrol the demo account, so do not tap: let the floating
+# bubbles drift for the length of the clip.
+- waitForAnimationToEnd:
+    timeout: 5000

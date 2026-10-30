@@ -1,6 +1,5 @@
 appId: co.sauceroom.grandma
 ---
-- runFlow: mode-meno.yaml
 - waitForAnimationToEnd
 # Week strip is at the top of meno home; quick-log chips sit below (always visible,
 # hardcoded English in both languages: text "Hot flashes", accessibilityLabel "Log Hot flashes",

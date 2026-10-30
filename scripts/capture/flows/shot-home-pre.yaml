@@ -1,6 +1,5 @@
 appId: co.sauceroom.grandma
 ---
-- runFlow: mode-pre.yaml
 - waitForAnimationToEnd
 - swipe: { direction: UP, duration: 1400 }
 - waitForAnimationToEnd

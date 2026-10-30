@@ -1,6 +1,5 @@
 appId: co.sauceroom.grandma
 ---
-- runFlow: mode-pre.yaml
 - runFlow:
     file: _open.yaml
     env:
