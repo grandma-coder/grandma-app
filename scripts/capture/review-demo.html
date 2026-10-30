@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>Flow demo review</title>
+<style>body{font:14px system-ui;background:#F4F1E8;margin:24px}h2{font:600 13px ui-monospace;letter-spacing:.1em;text-transform:uppercase;color:#807A6E}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}figure{margin:0}video{width:100%;border-radius:22px;background:#000}figcaption{font:12px ui-monospace;margin-top:6px}</style>
+<h1>Flow demos — picker → onboarding → home → log → calendar. Check: fictional names only, no Dev Panel / DEV MODE, right language, light, 9:41</h1>
+<div id="r"></div>
+<script>
+const modes=[["pre","Cycle"],["preg","Pregnancy"],["kids","Kids"],["meno","Menopause"]];
+document.getElementById("r").innerHTML=["pt","en"].map(l=>`<h2>${l}</h2><div class="g">${modes.map(([m,n])=>`<figure><video src="../../public/media/app/${l}/demo-${m}.mp4" poster="../../public/media/app/${l}/demo-${m}.jpg" controls muted loop playsinline></video><figcaption>${l}/demo-${m} · ${n}</figcaption></figure>`).join("")}</div>`).join("");
+</script>

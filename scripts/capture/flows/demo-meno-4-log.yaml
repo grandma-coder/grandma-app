@@ -1,0 +1,13 @@
+appId: co.sauceroom.grandma
+---
+# Scene 4: log a hot flash from the menopause home quick-log (a11y label
+# "Log Hot flashes" is hardcoded English) → intensity 3 → 4 → SAVE.
+- tapOn: ".*Hot flash.*|.*[Oo]ndas? de calor.*"
+- extendedWaitUntil:
+    visible: "SAVE.*|SALVAR.*"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 700 } }
+- swipe: { start: "220,618", end: "305,618", duration: 700 }
+- runFlow: { file: _pause.yaml, env: { MS: 700 } }
+- tapOn: "SAVE.*|SALVAR.*"
+- runFlow: { file: _pause.yaml, env: { MS: 2000 } }

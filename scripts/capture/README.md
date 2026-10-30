@@ -29,3 +29,23 @@ Each shot flow assumes the right app mode is already active: `record.sh` runs `f
 ## If a step can't find a label
 `maestro hierarchy` prints the current screen's elements. Update the flow's text
 selector and re-run only that shot: `bash scripts/capture/record.sh home-meno`.
+
+## Flow demos (one ~24 s walkthrough per behavior, pt + en, light)
+Each demo = 5 scenes with hard cuts: journey picker (bloom picked, CONTINUE never tapped) →
+first 3 onboarding steps of that behavior with fictional values (backed out with the close
+button, never saved) → the behavior's home → one real log entry (approved demo data) →
+Calendar/Agenda overview.
+
+    bash scripts/capture/demo.sh                    # record (pt, en × pre, preg, kids, meno) + encode
+    bash scripts/capture/demo.sh record             # raw/demo/<lang>/<mode>/<n>-<scene>.mov
+    bash scripts/capture/demo.sh encode             # public/media/app/<lang>/demo-<mode>.{mp4,webm,jpg}
+    LANGS=en MODES=kids SCENES=2-profile bash scripts/capture/demo.sh record   # redo one scene
+    open scripts/capture/review-demo.html
+
+- `flows/demo-<mode>-<n>-<scene>.yaml`: one flow per scene. Shared pieces: `_demo-picker.yaml`,
+  `_demo-onb-close.yaml` (runs after scene 2, not recorded), `_pause.yaml` (Maestro has no sleep).
+- `demo.tsv`: per mode/scene `back` (start of the cut, seconds before the END of the raw scene —
+  Maestro's start-up lead-in varies, the flow ending does not), `length` (raw seconds) and
+  `speed` (playback factor). Poster = start of scene 3 (top of the home).
+- Each run logs one entry per behavior (kids sleep, cycle mood, pregnancy kicks, hot flash).
+- Mode switches use the Dev Panel BEFORE the recorder starts; it never appears on video.

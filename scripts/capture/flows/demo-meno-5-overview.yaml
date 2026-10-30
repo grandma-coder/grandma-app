@@ -1,0 +1,7 @@
+appId: co.sauceroom.grandma
+---
+# Scene 5: Calendar tab: month of symptom icons, today's logs (incl. the hot flash), another day.
+- tapOn: "Calendar|Calendário"
+- runFlow: { file: _pause.yaml, env: { MS: 1800 } }
+- tapOn: "16"
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }

@@ -1,0 +1,6 @@
+appId: co.sauceroom.grandma
+---
+- runFlow:
+    file: _demo-picker.yaml
+    env:
+      BLOB: ".*, (Trying|Tentando)"

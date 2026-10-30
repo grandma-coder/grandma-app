@@ -1,0 +1,10 @@
+appId: co.sauceroom.grandma
+---
+# Scene 5: Agenda (open after scene 4): month grid with per-day log icons, then the
+# APPTS tab ("Pregnancy path" milestones + appointment list). The timeline list is
+# not scrolled: some seeded rows render raw JSON (app bug), e.g. Sleep {"quality":...}.
+- runFlow: { file: _pause.yaml, env: { MS: 1200 } }
+- tapOn: "APPTS|CONSULTAS"
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }
+- swipe: { start: "50%,75%", end: "50%,50%", duration: 900 }
+- runFlow: { file: _pause.yaml, env: { MS: 1200 } }
