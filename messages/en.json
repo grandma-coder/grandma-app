@@ -21,6 +21,59 @@
     "lede": "Cycle, pregnancy, the first years and menopause — one calm companion who remembers everything, judges nothing, and answers at 3am.",
     "videoAlt": "The grandma app: choosing your chapter, then the home screen"
   },
+  "form": {
+    "email": "Email",
+    "emailPh": "you@example.com",
+    "country": "Where do you live?",
+    "countries": {
+      "BR": "Brasil",
+      "US": "United States",
+      "OTHER": "Other"
+    },
+    "mode": "Where are you <em>right now?</em>",
+    "modes": {
+      "pre": [
+        "Chapter 01",
+        "Trying"
+      ],
+      "preg": [
+        "Chapter 02",
+        "Expecting"
+      ],
+      "kids": [
+        "Chapter 03",
+        "Raising"
+      ],
+      "meno": [
+        "Chapter 04",
+        "The change"
+      ]
+    },
+    "name": "Your name · optional",
+    "namePh": "Maya",
+    "notify": "Also tell me when the app launches in my country.",
+    "submit": "Save my seat",
+    "submitting": "Saving…",
+    "retry": "Try again",
+    "consent": "We keep your details only to send your invite and the launch notice. <link>How we handle your data</link>.",
+    "honeypot": "Leave this field empty",
+    "success": {
+      "title": "You're on the <em>list.</em>",
+      "BR": "We'll write when invites open in Brasil.",
+      "US": "We'll write when invites open in the United States.",
+      "OTHER": "We'll write when the app reaches you."
+    },
+    "rateLimited": "Too many tries from this connection. Please try again in an hour.",
+    "error": "Something went wrong on our side. Please try again.",
+    "errors": {
+      "email_required": "Please enter your email.",
+      "email_invalid": "That email doesn't look right.",
+      "email_too_long": "That email is too long.",
+      "name_too_long": "Please use 80 characters or fewer.",
+      "mode_required": "Pick the chapter you're in.",
+      "country_required": "Pick where you live."
+    }
+  },
   "launch": {
     "title": "How the <em>launch</em> works.",
     "sub": "Invites go out in the order people join, country by country.",

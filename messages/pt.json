@@ -21,6 +21,59 @@
     "lede": "Ciclo, gravidez, os primeiros anos e a menopausa — uma companhia calma que lembra de tudo, não julga nada e responde às 3 da manhã.",
     "videoAlt": "O app grandma: escolhendo o seu capítulo e depois a tela inicial"
   },
+  "form": {
+    "email": "Email",
+    "emailPh": "voce@exemplo.com",
+    "country": "Onde você mora?",
+    "countries": {
+      "BR": "Brasil",
+      "US": "Estados Unidos",
+      "OTHER": "Outro"
+    },
+    "mode": "Onde você está <em>agora?</em>",
+    "modes": {
+      "pre": [
+        "Capítulo 01",
+        "Tentando"
+      ],
+      "preg": [
+        "Capítulo 02",
+        "Esperando"
+      ],
+      "kids": [
+        "Capítulo 03",
+        "Criando"
+      ],
+      "meno": [
+        "Capítulo 04",
+        "A mudança"
+      ]
+    },
+    "name": "Seu nome · opcional",
+    "namePh": "Maya",
+    "notify": "Também quero saber quando o app chegar ao meu país.",
+    "submit": "Garantir meu lugar",
+    "submitting": "Salvando…",
+    "retry": "Tentar de novo",
+    "consent": "Guardamos seus dados só para enviar o convite e o aviso de lançamento. <link>Como cuidamos dos seus dados</link>.",
+    "honeypot": "Deixe este campo vazio",
+    "success": {
+      "title": "Você está na <em>lista.</em>",
+      "BR": "A gente escreve quando os convites abrirem no Brasil.",
+      "US": "A gente escreve quando os convites abrirem nos Estados Unidos.",
+      "OTHER": "A gente escreve quando o app chegar até você."
+    },
+    "rateLimited": "Muitas tentativas a partir desta conexão. Tente de novo daqui a uma hora.",
+    "error": "Algo deu errado do nosso lado. Tente de novo.",
+    "errors": {
+      "email_required": "Digite o seu email.",
+      "email_invalid": "Esse email não parece certo.",
+      "email_too_long": "Esse email é longo demais.",
+      "name_too_long": "Use até 80 caracteres.",
+      "mode_required": "Escolha a fase em que você está.",
+      "country_required": "Escolha onde você mora."
+    }
+  },
   "launch": {
     "title": "Como o <em>lançamento</em> funciona.",
     "sub": "Os convites saem na ordem de inscrição, país por país.",
