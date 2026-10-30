@@ -137,21 +137,29 @@ create table public.waitlist (
   invited_at    timestamptz,
   invited_by    text
 );
-create unique index waitlist_email_lower_idx on public.waitlist (lower(email));
+-- email is stored lowercased; a plain unique constraint (not an expression
+-- index) so ON CONFLICT (email) works.
+alter table public.waitlist add constraint waitlist_email_key unique (email);
+alter table public.waitlist add constraint waitlist_email_lower_chk check (email = lower(email));
 create index waitlist_created_at_idx on public.waitlist (created_at desc);
 create index waitlist_ip_hash_created_idx on public.waitlist (ip_hash, created_at desc);
 alter table public.waitlist enable row level security;  -- no policies: service role only
 ```
 
-**Server action** (`app/[locale]/actions/join-waitlist.ts`, `"use server"`):
+A SQL function `public.waitlist_join(...) returns text` does the rate-limit check and the upsert in one round trip. Execute is granted to `service_role` only. It returns `'ok'` or `'rate_limited'`.
+
+**Server action** (`lib/waitlist/action.ts`, `"use server"`):
 
 1. Parse the form with zod: valid email (max 254 characters), optional name (max 80), `mode` from the enum, `locale` from the route, `notify_launch` as a boolean, and UTM and referrer values (max 200 each).
 2. **Honeypot:** a hidden `company` field. If it is filled, return success without writing anything.
-3. **Rate limit:** `ip_hash = sha256(ip + WAITLIST_IP_SALT)`. If there are 5 or more rows with that hash in the last hour, return a translated "try again later" error.
-4. Upsert on `lower(email)`. On conflict, update `name`, `mode`, `locale`, `notify_launch` and `updated_at`. Never touch `created_at`, so the queue position is kept.
-5. Return `{ ok: true }` for both a new email and an existing one. The response never reveals whether an email was already on the list.
+3. Call `waitlist_join` through `supabase.rpc(...)` with `ip_hash = sha256(WAITLIST_IP_SALT + ":" + ip)`.
+   - **Rate limit:** if there are 5 or more rows with that hash in the last hour, the function returns `'rate_limited'` and the user sees a translated "try again later" message.
+   - **Upsert:** on conflict on `email`, it updates `name` (only if a new one is given), `mode`, `locale`, `notify_launch` and `updated_at`. It never touches `created_at` (queue position) or first-touch UTM values.
+4. Return the same success state for a new email and an existing one. The response never reveals whether an email was already on the list.
 
-The write uses `@supabase/supabase-js` with `SUPABASE_SERVICE_ROLE_KEY`, in a `server-only` module. UTM values are read from the landing URL on the client and posted as hidden fields.
+The call uses `@supabase/supabase-js` with `SUPABASE_SERVICE_ROLE_KEY`, in a `server-only` module. UTM values are read from the landing URL on the client and posted as hidden fields.
+
+**Hero:** the hero's email field does not submit on its own. It passes the email to the main waitlist form (prefill and scroll), because a mode is required. The hero's "Trusted by 3,200+ families" counter is fabricated (it increments randomly every 8 seconds), so it is removed. Only "Built by parents, for parents." stays.
 
 **Form UI states:** idle, submitting (button disabled, mono "saving…" label), success (translated thank-you that replaces the form), validation error (inline, per field), and server error (a single translated message plus a retry). A consent line under the button links to the localized privacy page. This covers LGPD and GDPR: the stated purpose is the invite and launch notice only.
 
@@ -184,7 +192,7 @@ This follows the "Adding a pillar" convention in that repo's `CLAUDE.md`.
 | Honeypot filled | Silent success. Nothing is written. |
 | Rate limit hit | Translated "try again later" message. Nothing is written. |
 | Supabase unreachable or error | Logged server-side with no PII (email masked). The user sees the generic error and can retry. |
-| Missing env vars | The action throws at module load in dev, and `next build` fails in CI. Never fails silently in production. |
+| Missing env vars | The action throws a clear `<NAME> is not set` error on first use. It never writes partially or fails silently. The pre-launch end-to-end check against the production build confirms they are set. |
 | Command center DB error | Standard tRPC error toast. Export and promote are all-or-nothing transactions. |
 
 ---
