@@ -12,6 +12,8 @@ appId: co.sauceroom.grandma
 - hideKeyboard
 - tapOn:
     point: "78%,92%"
+# NOTE: the visible-QUESTION_RE wait below could also match the composer text if the send
+# tap missed; verify with `maestro hierarchy` on first run.
 # Positively confirm the send landed: the user's own bubble must appear (QUESTION_RE is
 # the regex-escaped question, passed by record.sh).
 - extendedWaitUntil:

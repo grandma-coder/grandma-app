@@ -20,8 +20,13 @@ question_re() {  # regex-escaped question for Maestro text selectors
   esac
 }
 rec=""
-cleanup() { [ -n "${rec:-}" ] && kill -INT "$rec" 2>/dev/null; return 0; }
-trap cleanup INT TERM EXIT
+cleanup() {
+  if [ -n "${rec:-}" ]; then kill -INT "$rec" 2>/dev/null; wait "$rec" 2>/dev/null; rec=""; fi
+  return 0
+}
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
+trap cleanup EXIT
 failed=()
 
 bash ./prepare.sh || exit 1
