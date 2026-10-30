@@ -117,5 +117,187 @@
     "privacy": "Privacidade",
     "terms": "Termos",
     "rights": "© 2026 grandma.app"
+  },
+  "privacy": {
+    "metaTitle": "Política de Privacidade | Grandma",
+    "title": "Política de Privacidade",
+    "updated": "Atualizado em 15 de maio de 2026",
+    "note": "Esta é uma tradução. Em caso de divergência, vale a versão em inglês.",
+    "intro": "A sua privacidade importa para nós. Esta política explica quais dados coletamos, como os usamos e como você pode controlá-los.",
+    "sections": [
+      {
+        "heading": "O que coletamos",
+        "paragraphs": [
+          "A grandma.app coleta as informações que você fornece diretamente: seu email, seu nome e os dados de saúde que você escolher registrar (informações do ciclo, detalhes da gravidez, dados de crescimento dos filhos, sintomas, anotações).",
+          "Também coletamos dados básicos de uso para melhorar a experiência no app, como quais recursos você usa e com que frequência. Não rastreamos a sua localização nem acessamos os seus contatos."
+        ]
+      },
+      {
+        "heading": "Como armazenamos os seus dados",
+        "paragraphs": [
+          "Os seus dados ficam no Supabase, uma infraestrutura de banco de dados segura. Todos os dados são criptografados em trânsito (TLS 1.3) e em repouso (AES-256). As suas credenciais de autenticação são protegidas com hash bcrypt.",
+          "Usamos práticas de segurança padrão do mercado e auditamos a nossa infraestrutura regularmente. Os dados ficam em servidores na União Europeia, para cumprir a GDPR."
+        ]
+      },
+      {
+        "heading": "Processamento por IA",
+        "paragraphs": [
+          "A grandma.app funciona com o Claude, o assistente de IA da Anthropic. Quando você conversa com a Guru Vovó, as suas mensagens são enviadas à API da Anthropic para serem processadas. A Anthropic não usa as suas conversas para treinar os modelos dela quando o acesso é feito pela API.",
+          "Os seus dados de saúde podem entrar no contexto da conversa para gerar respostas personalizadas. Você pode desativar isso em Configurações."
+        ]
+      },
+      {
+        "heading": "Processamento de pagamentos",
+        "paragraphs": [
+          "Os pagamentos são processados pelo RevenueCat, que gerencia assinaturas no iOS e no Android. Não guardamos os dados do seu cartão — todo o processamento é feito pelo Apple Pay, pelo Google Pay ou pela infraestrutura segura de pagamentos do RevenueCat."
+        ]
+      },
+      {
+        "heading": "Dados de saúde",
+        "paragraphs": [
+          "Levamos os dados de saúde a sério. A grandma.app foi pensada para estar em conformidade com a HIPAA e com a GDPR:",
+          "Nunca vendemos os seus dados de saúde.",
+          "Nunca usamos os seus dados de saúde para publicidade.",
+          "Nunca compartilhamos os seus dados de saúde com terceiros sem o seu consentimento explícito.",
+          "Os seus dados de saúde nunca são usados para treinar modelos de IA."
+        ]
+      },
+      {
+        "heading": "Dados de crianças",
+        "paragraphs": [
+          "A grandma.app ajuda você a acompanhar o desenvolvimento dos seus filhos. Tratamos os dados de crianças com cuidado especial:",
+          "Nenhum identificador de publicidade é associado a perfis de crianças.",
+          "Nenhum perfilamento comportamental é feito com os dados de crianças.",
+          "Os dados da criança só são visíveis para os pais e para cuidadores autorizados de forma explícita.",
+          "Todos os dados da criança podem ser exportados ou apagados a qualquer momento."
+        ]
+      },
+      {
+        "heading": "Exportação e exclusão de dados",
+        "paragraphs": [
+          "Você tem controle total sobre os seus dados:",
+          "Exporte todos os seus dados em /account/export.",
+          "Apague a sua conta inteira em /account/delete.",
+          "A exclusão é permanente e concluída em até 30 dias."
+        ]
+      },
+      {
+        "heading": "Compartilhamento no Círculo de Cuidado",
+        "paragraphs": [
+          "Quando você convida cuidadores para o seu círculo de cuidado, é você quem decide exatamente o que eles podem ver. As permissões são granulares — uma babá pode registrar sonecas sem ver o prontuário médico. Todo compartilhamento é opcional e pode ser revogado a qualquer momento."
+        ]
+      },
+      {
+        "heading": "Contato",
+        "paragraphs": [
+          "Para dúvidas de privacidade ou solicitações sobre os seus dados, escreva para privacy@grandma.app"
+        ]
+      },
+      {
+        "id": "waitlist-data",
+        "heading": "A lista de espera",
+        "paragraphs": [
+          "Quando você entra na lista de espera, guardamos o seu email, o seu nome se você informar, o capítulo que escolheu, o seu país, o idioma do site, se você quer o aviso de lançamento, de onde você veio (tags de campanha e site de origem) e um hash irreversível do seu endereço IP, usado só para evitar abuso.",
+          "Usamos esses dados só para enviar o seu convite e, se você pediu, um aviso de lançamento. Nunca vendemos nem compartilhamos para marketing.",
+          "Para sair da lista, escreva para support@grandma.app e apagamos o seu registro."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "metaTitle": "Termos de Uso | Grandma",
+    "title": "Termos de Uso",
+    "updated": "Atualizado em 15 de maio de 2026",
+    "note": "Esta é uma tradução. Em caso de divergência, vale a versão em inglês.",
+    "intro": "Ao usar a grandma.app, você concorda com estes termos. Leia com atenção.",
+    "sections": [
+      {
+        "heading": "Aviso médico",
+        "paragraphs": [
+          "A grandma.app NÃO substitui aconselhamento, diagnóstico ou tratamento médico profissional. Procure sempre o seu médico, a sua obstetriz ou outro profissional de saúde qualificado para qualquer dúvida sobre uma condição médica. Nunca ignore uma orientação médica profissional nem atrase a busca por ela por causa de algo que você leu ou ouviu na grandma.app."
+        ]
+      },
+      {
+        "heading": "Idade mínima",
+        "paragraphs": [
+          "Você precisa ter pelo menos 13 anos para usar a grandma.app. Se tiver menos de 18, só pode usar o app com a participação de um dos pais ou responsável. Pais e responsáveis respondem pelos dados de crianças inseridos no app."
+        ]
+      },
+      {
+        "heading": "Responsabilidades da conta",
+        "paragraphs": [
+          "Você é responsável por manter a confidencialidade das credenciais da sua conta. Você concorda em nos avisar imediatamente sobre qualquer uso não autorizado da sua conta. Não nos responsabilizamos por perdas ou danos decorrentes de você não proteger a sua conta."
+        ]
+      },
+      {
+        "heading": "Uso aceitável",
+        "paragraphs": [
+          "Você concorda em não:",
+          "Usar a grandma.app para qualquer finalidade ilegal.",
+          "Tentar obter acesso não autorizado aos nossos sistemas.",
+          "Interferir no serviço ou interrompê-lo.",
+          "Enviar conteúdo ou código malicioso.",
+          "Se passar por outra pessoa ou falsear a sua identidade.",
+          "Usar o serviço para assediar, abusar ou prejudicar outras pessoas."
+        ]
+      },
+      {
+        "heading": "Assinaturas e pagamentos",
+        "paragraphs": [
+          "A grandma.app oferece planos gratuito e premium por assinatura. As assinaturas premium são cobradas mensal ou anualmente pela Apple App Store ou pelo Google Play.",
+          "As assinaturas renovam automaticamente, a menos que sejam canceladas pelo menos 24 horas antes do fim do período atual.",
+          "Você pode gerenciar e cancelar assinaturas nas configurações da loja de apps do seu dispositivo.",
+          "Reembolsos seguem as políticas da Apple e do Google, ou são feitos diretamente por nós em até 14 dias após a compra.",
+          "Mudanças de preço serão comunicadas com 30 dias de antecedência."
+        ]
+      },
+      {
+        "heading": "Conteúdo gerado por IA",
+        "paragraphs": [
+          "A grandma.app usa IA (com o Claude, da Anthropic) para oferecer informação e apoio. As respostas da IA:",
+          "Não são aconselhamento médico e não devem ser tratadas como tal.",
+          "Podem conter imprecisões ou erros.",
+          "Devem ser confirmadas com profissionais qualificados em decisões importantes.",
+          "São fornecidas \"como estão\", sem garantia de precisão ou completude."
+        ]
+      },
+      {
+        "heading": "Seu conteúdo",
+        "paragraphs": [
+          "Você mantém a propriedade de todo o conteúdo que cria na grandma.app (registros, anotações, fotos etc.). Ao usar o serviço, você nos concede uma licença limitada para armazenar, processar e exibir o seu conteúdo na medida necessária para prestar o serviço.",
+          "Você pode exportar ou apagar o seu conteúdo a qualquer momento. Ao excluir a conta, o seu conteúdo é removido de forma permanente em até 30 dias."
+        ]
+      },
+      {
+        "heading": "Propriedade intelectual",
+        "paragraphs": [
+          "A grandma.app, incluindo o design, os recursos e o conteúdo (exceto o seu conteúdo pessoal), pertence a nós e é protegida por leis de propriedade intelectual. Você não pode copiar, modificar, distribuir nem criar obras derivadas do nosso serviço sem permissão."
+        ]
+      },
+      {
+        "heading": "Limitação de responsabilidade",
+        "paragraphs": [
+          "Na máxima extensão permitida por lei, a grandma.app e seus operadores não respondem por danos indiretos, incidentais, especiais, consequenciais ou punitivos, nem por perda de lucros ou receitas, seja direta ou indireta, nem por perda de dados, de uso, de reputação ou outras perdas intangíveis."
+        ]
+      },
+      {
+        "heading": "Alterações no serviço",
+        "paragraphs": [
+          "Reservamo-nos o direito de modificar, suspender ou encerrar o serviço a qualquer momento. Avisaremos com antecedência razoável sobre mudanças significativas. Continuar usando o serviço após as mudanças significa que você as aceita."
+        ]
+      },
+      {
+        "heading": "Lei aplicável",
+        "paragraphs": [
+          "Estes termos são regidos pelas leis de Portugal. Quaisquer disputas serão resolvidas nos tribunais de Lisboa, Portugal."
+        ]
+      },
+      {
+        "heading": "Contato",
+        "paragraphs": [
+          "Para dúvidas sobre estes termos, escreva para terms@grandma.app"
+        ]
+      }
+    ]
   }
 }
