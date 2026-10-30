@@ -10,7 +10,7 @@ export async function Faq({ locale }: { locale: 'en' | 'pt' }) {
       <div>
         {items.map((it, i) => (
           <details key={it.q} open={i === 0} className="group border-b border-line-2 py-[22px] first:border-t">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-5 font-display text-[clamp(24px,2.4vw,30px)] leading-[1.15] [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-5 font-display text-[clamp(20px,2vw,24px)] font-bold leading-[1.2] tracking-[-0.02em] [&::-webkit-details-marker]:hidden">
               {it.q}
               <span aria-hidden="true" className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full border border-line-2 transition-transform duration-300 group-open:rotate-45">
                 <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 2v10M2 7h10" stroke="#1A1916" strokeWidth="1.2" strokeLinecap="round" /></svg>

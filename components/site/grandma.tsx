@@ -8,7 +8,7 @@ export async function Grandma({ locale }: { locale: 'en' | 'pt' }) {
       <SectionHead n="03">{t.rich('title', { em: (c) => <em>{c}</em> })}</SectionHead>
       <div className="grid items-center gap-14 lg:grid-cols-2">
         <div>
-          <p className="m-0 max-w-[520px] font-display text-[clamp(28px,3vw,38px)] italic leading-[1.15]">“{t('quote')}”</p>
+          <p className="m-0 max-w-[520px] font-display text-[clamp(24px,2.6vw,32px)] font-bold italic leading-[1.15] tracking-[-0.02em]">“{t('quote')}”</p>
           <p className="mt-6 max-w-[520px] text-[17px] font-light text-ink-2">{t('body')}</p>
           <div className="mt-7 flex flex-wrap gap-2.5">{(t.raw('traits') as string[]).map((x) => <Chip key={x} as="span">{x}</Chip>)}</div>
         </div>

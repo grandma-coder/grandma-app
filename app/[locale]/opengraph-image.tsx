@@ -15,7 +15,7 @@ export default async function OG({ params }: { params: Promise<{ locale: string 
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, color: '#1A1916',
         background: `radial-gradient(circle at 18% 22%, ${f.g1}, transparent 55%), radial-gradient(circle at 84% 18%, ${f.g2}, transparent 55%), radial-gradient(circle at 74% 86%, ${f.g3}, transparent 55%), radial-gradient(circle at 20% 82%, ${f.g4}, transparent 55%), #F4F1E8` }}>
         <div style={{ fontSize: 26, letterSpacing: 6, textTransform: 'uppercase' }}>{`${h('status')} · ${h('first')} · ${h('then')}`}</div>
-        <div style={{ fontSize: 84, lineHeight: 1, maxWidth: 1000 }}>{t('ogTitle')}</div>
+        <div style={{ fontSize: 80, fontWeight: 700, letterSpacing: -2, lineHeight: 1, maxWidth: 1000 }}>{t('ogTitle')}</div>
       </div>
     ),
     size,

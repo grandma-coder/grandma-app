@@ -12,7 +12,7 @@ export function FieldCard({ mode, label, title, children, className = '' }: { mo
           ))}
         </span>
       </div>
-      <h3 className="mt-2 font-display text-[clamp(44px,5vw,58px)] font-normal leading-[0.9] text-ink [font-variant-numeric:lining-nums]">{title}</h3>
+      <h3 className="mt-2 font-display text-[clamp(36px,4.2vw,48px)] font-bold leading-[0.95] tracking-[-0.035em] text-ink">{title}</h3>
       {children}
     </article>
   )

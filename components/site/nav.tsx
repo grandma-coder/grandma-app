@@ -18,7 +18,7 @@ export function Nav() {
   return (
     <header className={`sticky top-0 z-50 border-b transition-colors ${scrolled ? 'border-line bg-[color-mix(in_oklab,var(--bg)_82%,transparent)] backdrop-blur-[18px]' : 'border-transparent'}`}>
       <div className="mx-auto flex h-[78px] max-w-[1280px] items-center justify-between px-[22px] md:px-14">
-        <Link href="/" aria-label={t('home')} className="flex items-center gap-2.5 font-display text-[32px] leading-none tracking-[-0.01em]">
+        <Link href="/" aria-label={t('home')} className="flex items-center gap-2.5 font-display text-[26px] font-bold leading-none tracking-[-0.03em]">
           <Mark size={42} />grandma
         </Link>
         <div className="flex items-center gap-6">

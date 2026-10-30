@@ -4,7 +4,7 @@
 
 **Goal:** A lean, visual PT/EN site whose only job is collecting a waitlist for the Brazil-first, then-US launch; signups (with country) land in Supabase and are managed from a Waitlist pillar in grandma-command-center; every app image is a real recording from the iOS Simulator.
 
-**Architecture:** `public.waitlist` + `waitlist_join()` live in grandma's Supabase Postgres, owned by grandma-command-center. The site (Next 16 + next-intl, `/en` and `/pt`) writes through a server action using the service-role key. A capture pipeline in this repo (Maestro + `simctl` + ffmpeg) records the installed dev-client app with demo data and outputs looping videos into `public/media/app/<lang>/`. The UI is rebuilt on the real Diffuse v3 system (Cormorant Garamond / Hanken Grotesk / Space Mono, generative fields, glass).
+**Architecture:** `public.waitlist` + `waitlist_join()` live in grandma's Supabase Postgres, owned by grandma-command-center. The site (Next 16 + next-intl, `/en` and `/pt`) writes through a server action using the service-role key. A capture pipeline in this repo (Maestro + `simctl` + ffmpeg) records the installed dev-client app with demo data and outputs looping videos into `public/media/app/<lang>/`. The UI is rebuilt on the real Diffuse v3 system (Hanken Grotesk Bold display / Hanken Grotesk / Space Mono, generative fields, glass).
 
 **Tech Stack:** Next.js 16, React 19, Tailwind 4, next-intl 4, zod 3 (site) / zod 4 (CC), @supabase/supabase-js 2, Drizzle + postgres-js, tRPC 11, Clerk, Vitest, Maestro, xcrun simctl, ffmpeg.
 
@@ -24,7 +24,7 @@
 - Waitlist emails are stored trimmed + lowercased; `created_at` never changes after insert.
 - Service-role key only in `server-only` modules.
 - CC tables: RLS on, no policies. Every PII read/export calls `writeAudit`. CC DB results: `Array.from(res)`.
-- Diffuse v3 per `APP/docs/design/design-system-v3.html`: display = **Cormorant Garamond** (300/400 + italic, italic "feeling words" in `--ink-2`); reading = Hanken Grotesk 300–600; labels/data = Space Mono. No filled black buttons except the small `.gchip` inside glass panels. Primary CTA = mono label + arrow on a hairline.
+- Diffuse v3 per `APP/docs/design/design-system-v3.html`: display = **Hanken Grotesk Bold** (700; italic "feeling words" in Bold Italic, `--ink-2`; Igor's decision 2026-10-30, supersedes Cormorant); reading = Hanken Grotesk 300–600; labels/data = Space Mono. No filled black buttons except the small `.gchip` inside glass panels. Primary CTA = mono label + arrow on a hairline.
 - No pricing page, no prices anywhere on the site.
 - No fabricated numbers on the site.
 - Every app image comes from `public/media/app/` (capture pipeline). No hand-drawn app screens.

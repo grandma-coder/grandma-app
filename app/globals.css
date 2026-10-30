@@ -20,7 +20,7 @@
 [data-mode=meno] { --g1:#F5C89A; --g2:#F0B27A; --g3:#E8975A; --g4:#F7DCC0; --accent:#C2703A; --accent-soft:#F7E3D2 }
 
 @theme inline {
-  --font-display: var(--font-cormorant), Georgia, serif;
+  --font-display: var(--font-hanken), system-ui, sans-serif;
   --font-sans: var(--font-hanken), system-ui, sans-serif;
   --font-mono: var(--font-space-mono), ui-monospace, monospace;
   --color-bg: var(--bg); --color-paper: var(--paper); --color-paper-2: var(--paper-2); --color-deep: var(--deep);

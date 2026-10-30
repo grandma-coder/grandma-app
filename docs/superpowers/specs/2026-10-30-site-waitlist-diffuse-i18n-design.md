@@ -14,7 +14,7 @@ For now the site has one job: **collect a waitlist for the launch, Brazil first 
 
 1. **Waitlist:** signups are saved to grandma's Supabase Postgres with the person's country, and the team manages them from a **Waitlist** pillar in grandma-command-center (filter by country, export, promote to beta).
 2. **Real app, not drawings:** every app image on the site is a short looping video or still recorded from the real app in the iOS Simulator, with demo data, in both languages.
-3. **Design:** the app's actual Diffuse v3 system (Cormorant Garamond display, Hanken Grotesk body, Space Mono labels, generative fields, glass panels).
+3. **Design:** the app's actual Diffuse v3 system (Hanken Grotesk Bold display, Hanken Grotesk body, Space Mono labels, generative fields, glass panels).
 4. **Languages:** Brazilian Portuguese and English, with the same content.
 
 ### Success criteria
@@ -50,7 +50,7 @@ For now the site has one job: **collect a waitlist for the launch, Brazil first 
 | App capture | `grandma-app/.maestro/README.md` describes screenshot flows, but the flow files were never committed. No simulator currently has the app installed. |
 
 Notes from the app repo:
-- The Diffuse display font in `constants/theme.ts` is temporarily swapped to Hanken Grotesk Bold (commit `5f06c35`, marked "PREVIEW SWAP"). The design system itself (`docs/design/design-system-v3.html`, `Onboarding.html`) uses Cormorant Garamond. The site follows the design system.
+- The Diffuse display font in `constants/theme.ts` is temporarily swapped to Hanken Grotesk Bold (commit `5f06c35`, marked "PREVIEW SWAP"). The design-system HTML still shows Cormorant Garamond, but **Igor decided on 2026-10-30 that the bold sans is grandma's real, current display font**; the app's "PREVIEW SWAP" comment is outdated. The site follows the app: Hanken Grotesk Bold / Bold Italic.
 - The app has a Dev Panel (`app/dev-panel.tsx`) with demo seeding per mode (`seedAllData`, `seedMenopauseData`, …), a mode switch, and direct routes (Grandma talk, Insights, onboarding). It has in-app language switching (`store/useLanguageStore.ts`).
 - `npm run eas:install:sim` installs the latest EAS simulator build without a local compile.
 
@@ -80,7 +80,7 @@ flowchart LR
 | — | Nav | Logo (heart-eye) + "grandma", `PT · EN`, "Join the waitlist →". No other links. | Transparent, blurred paper when scrolled |
 | 1 | **Hero** | Mono status row: `WAITLIST OPEN · BRASIL FIRST · THEN US`. Headline (PT: "Com você em cada *capítulo.*"). One-line lede. **The form itself** (email + country + chapter + submit) on desktop; on mobile the email field and button, with the rest of the form expanding inline. | Real app video in a phone frame: the onboarding journey picker → home |
 | 2 | **Launch** | Three steps on a hairline timeline: `01 Join the list` → `02 Brasil · first invites` → `03 United States · next`. One sentence each. The visitor's own country is highlighted. | Choice-timeline ring nodes from v3 |
-| 3 | **Four chapters** | Four field cards (Cycle, Pregnancy, Kids, Menopause): mono chapter label, Cormorant title, one sentence. Each card plays that mode's home-screen loop. | Field cards + phone videos |
+| 3 | **Four chapters** | Four field cards (Cycle, Pregnancy, Kids, Menopause): mono chapter label, Hanken Bold title, one sentence. Each card plays that mode's home-screen loop. | Field cards + phone videos |
 | 4 | **Grandma** | "Meet *Grandma.*" plus two sentences and the five trait chips. | Real chat video (Grandma talk) |
 | 5 | **FAQ** | Four questions: when it launches (BR → US), what it costs (free to start, Premium optional, no numbers), privacy, who it's for (four chapters). | Hairline rows |
 | — | Final strip + footer | "Take your time. *We'll be here.*" + CTA. Footer: privacy, terms, support email, language. | Kids field |
@@ -91,17 +91,17 @@ Removed from the current site: pillars grid, connections, memories, testimonials
 
 Tokens and components are copied from `grandma-app/docs/design/design-system-v3.html`, not from `constants/theme.ts` (see the font note in §2).
 
-- **Fonts:** Cormorant Garamond 300/400 + italic for display; Hanken Grotesk 300–600 for reading; Space Mono 400/700 for labels and data. Italic "feeling words" are rendered in `--ink-2` (grey), or in the mode accent where the app does (e.g. "sees you.").
+- **Fonts:** Hanken Grotesk Bold (700) for display, with italic "feeling words" in Bold Italic (the app's `diffuseFont`; Igor's decision 2026-10-30); Hanken Grotesk 300–600 for reading; Space Mono 400/700 for labels and data. Italic "feeling words" are rendered in `--ink-2` (grey), or in the mode accent where the app does (e.g. "sees you.").
 - **Tokens:** paper `#F4F1E8`, ink ramp `#1A1916 → #B3AC9C`, lines `.12 / .20 / .55`, radius 14/20/28/40, `--sh-card`, `--sh-pop`, grain (soft-light, 0.22 page / 0.30 field), mode fields `pre / preg / kids / meno` with g1–g4 + accent (values from `diffuseFields`).
 - **Components** (`components/diffuse/`):
   - `GradientField`: the v3 `.gfield` engine (four radial gradients, blur 46px, saturate 1.14, grain overlay).
-  - `SectionHead`: hairline top rule, mono number, Cormorant h2 with an italic part.
-  - `FieldCard`: the v3 `.bcard` (chapter label, swatch dots, big serif title, optional glass panel).
+  - `SectionHead`: hairline top rule, mono number, Hanken Bold h2 with an italic part.
+  - `FieldCard`: the v3 `.bcard` (chapter label, swatch dots, big bold-sans title, optional glass panel).
   - `Glass`: the frosted inner panel.
   - `ActionRule`: containerless mono label + arrow on a hairline (primary CTA).
   - `GlassPill`: the v3 `.gradpill` gradient-glass button (used once, in the final strip).
   - `Chip`: mono pill, hairline ring + bold when selected.
-  - `BloomPicker`: the onboarding journey picker (four soft blooms, mono chapter + serif italic name), used for the mode question in the form; keyboard-operable radio group.
+  - `BloomPicker`: the onboarding journey picker (four soft blooms, mono chapter + bold-italic name), used for the mode question in the form; keyboard-operable radio group.
   - `UnderlineField`: bare underline input with a mono label.
   - `AppVideo`: phone frame + `<video autoplay muted loop playsinline>` with a poster image; shows the poster only when `prefers-reduced-motion` is set.
   - `Mark`: the heart-eye SVG from `Onboarding.html`, blink + heartbeat animation, still under reduced motion.

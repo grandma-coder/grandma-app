@@ -12,7 +12,7 @@ export function BloomPicker<T extends string>({ name, legend, value, onChange, o
   const errId = useId()
   return (
     <fieldset className="m-0 border-0 p-0">
-      <legend className="font-display text-[26px] leading-[1.1] [&_em]:italic [&_em]:text-ink-2">{legend}</legend>
+      <legend className="font-display text-[clamp(20px,5.4vw,24px)] font-bold leading-[1.1] tracking-[-0.02em] [&_em]:italic [&_em]:text-ink-2">{legend}</legend>
       <div className="relative mt-1.5 h-[250px]">
         {options.map((o) => {
           const on = o.value === value
@@ -37,7 +37,7 @@ export function BloomPicker<T extends string>({ name, legend, value, onChange, o
                 style={{ background: 'radial-gradient(circle, var(--g2) 0%, var(--g1) 38%, color-mix(in oklab, var(--g3) 70%, transparent) 58%, transparent 72%)' }} />
               <span aria-hidden="true" className="absolute -inset-1.5 hidden rounded-full border border-hair group-has-[:checked]:block" />
               <small className="font-mono text-[8.5px] uppercase tracking-[0.16em] text-[rgba(26,25,22,.62)]">{o.kicker}</small>
-              <span className="font-display text-[23px] italic leading-none text-ink">{o.label}</span>
+              <span className="font-display text-[19px] font-bold italic leading-none tracking-[-0.02em] text-ink">{o.label}</span>
             </label>
           )
         })}

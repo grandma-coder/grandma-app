@@ -52,7 +52,7 @@ export function WaitlistForm({ defaultCountry }: { defaultCountry: Country }) {
     return (
       <div ref={statusRef} tabIndex={-1} role="status" className="outline-none">
         <Mark size={72} />
-        <p className="mt-3 font-display text-[44px] leading-none [&_em]:italic [&_em]:text-ink-2">{t.rich('success.title', { em: (c) => <em>{c}</em> })}</p>
+        <p className="mt-3 font-display text-[clamp(32px,9vw,40px)] font-bold leading-none tracking-[-0.03em] [&_em]:italic [&_em]:text-ink-2">{t.rich('success.title', { em: (c) => <em>{c}</em> })}</p>
         <p className="mt-3 text-[16px] font-light text-ink-2">{t(`success.${state.country}`)}</p>
       </div>
     )

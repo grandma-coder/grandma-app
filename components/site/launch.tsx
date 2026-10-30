@@ -17,7 +17,7 @@ export async function Launch({ locale, country }: { locale: 'en' | 'pt'; country
           <li key={s.k} className="relative pl-8 md:pl-0 md:pt-8">
             <span aria-hidden="true" className={`absolute left-0 top-1 h-[13px] w-[13px] rounded-full border-[1.5px] md:top-0 ${i === here ? 'border-accent bg-accent shadow-[inset_0_0_0_2.5px_var(--bg),0_0_0_6px_color-mix(in_oklab,var(--accent)_18%,transparent)]' : 'border-hair bg-bg'}`} />
             <p className="font-mono text-[11px] tracking-[0.14em] text-ink-3">{s.k}{i === here && <span className="ml-3 text-ink">· {t('you')}</span>}</p>
-            <h3 className="mt-2 font-display text-[30px] font-normal leading-[1.05]">{s.title}</h3>
+            <h3 className="mt-2 font-display text-[26px] font-bold leading-[1.1] tracking-[-0.025em]">{s.title}</h3>
             <p className="mt-2 max-w-[320px] text-[15px] font-light text-ink-2">{s.body}</p>
           </li>
         ))}

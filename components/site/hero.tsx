@@ -13,7 +13,7 @@ export async function Hero({ locale, form }: { locale: 'en' | 'pt'; country: Cou
       </p>
       <div className="grid items-start gap-14 lg:grid-cols-[1.25fr_1fr]">
         <div>
-          <h1 className="m-0 font-display text-[clamp(56px,8vw,118px)] font-light leading-[0.92] tracking-[-0.015em] [&_em]:italic [&_em]:text-ink-2">
+          <h1 className="m-0 font-display text-[clamp(44px,6.4vw,88px)] font-bold leading-[1.02] tracking-[-0.035em] [&_em]:italic [&_em]:text-ink-2">
             {t.rich('title', { em: (c) => <em>{c}</em> })}
           </h1>
           <p className="mt-6 max-w-[540px] text-[17px] font-light leading-[1.6] text-ink-2">{t('lede')}</p>
