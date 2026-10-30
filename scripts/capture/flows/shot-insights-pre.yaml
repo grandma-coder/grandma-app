@@ -1,0 +1,7 @@
+appId: co.sauceroom.grandma
+---
+- runFlow: mode-pre.yaml
+- openLink: grandma-app://insights
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1600 }
+- waitForAnimationToEnd

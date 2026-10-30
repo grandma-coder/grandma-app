@@ -1,0 +1,9 @@
+appId: co.sauceroom.grandma
+---
+- openLink: grandma-app://onboarding/journey?addMode=true
+- waitForAnimationToEnd
+# Card titles: "Pregnant" / "Grávida" (onboardingJourney_pregnant); old names kept as fallback.
+- tapOn: "Pregnant|Grávida|Pregnancy|Gravidez"
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 900 }
+- waitForAnimationToEnd

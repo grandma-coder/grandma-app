@@ -1,0 +1,8 @@
+appId: co.sauceroom.grandma
+---
+- runFlow: mode-meno.yaml
+# Tab label comes from modeConfig ("Calendar", hardcoded) with tab_calendar fallback ("Calendário" in pt-BR).
+- tapOn: "Calendar|Calendário|Agenda"
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1400 }
+- waitForAnimationToEnd
