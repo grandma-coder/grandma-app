@@ -1,69 +1,69 @@
-# Site waitlist, Diffuse redesign and PT/EN — Implementation Plan
+# grandma.app waitlist site (BR first, then US) — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** The grandma.app marketing site collects a real waitlist (managed in grandma-command-center), uses the app's Diffuse design system, and is available in English and Brazilian Portuguese.
+**Goal:** A lean, visual PT/EN site whose only job is collecting a waitlist for the Brazil-first, then-US launch; signups (with country) land in Supabase and are managed from a Waitlist pillar in grandma-command-center; every app image is a real recording from the iOS Simulator.
 
-**Architecture:** A `public.waitlist` table and a `waitlist_join` SQL function live in grandma's Supabase Postgres, owned by grandma-command-center. The site (Next 16 + next-intl, routes `/en` and `/pt`) writes through a server action that calls the function with the service-role key. The command center adds a Waitlist pillar (tRPC router + page) that reads, exports and promotes signups to `beta_testers`. The site is reskinned through a small Diffuse primitive kit in `components/diffuse/`.
+**Architecture:** `public.waitlist` + `waitlist_join()` live in grandma's Supabase Postgres, owned by grandma-command-center. The site (Next 16 + next-intl, `/en` and `/pt`) writes through a server action using the service-role key. A capture pipeline in this repo (Maestro + `simctl` + ffmpeg) records the installed dev-client app with demo data and outputs looping videos into `public/media/app/<lang>/`. The UI is rebuilt on the real Diffuse v3 system (Cormorant Garamond / Hanken Grotesk / Space Mono, generative fields, glass).
 
-**Tech Stack:** Next.js 16, React 19, Tailwind 4, next-intl 4, zod 3 (site) / zod 4 (command center), @supabase/supabase-js 2, Drizzle + postgres-js, tRPC 11, Clerk, Vitest, framer-motion.
+**Tech Stack:** Next.js 16, React 19, Tailwind 4, next-intl 4, zod 3 (site) / zod 4 (CC), @supabase/supabase-js 2, Drizzle + postgres-js, tRPC 11, Clerk, Vitest, Maestro, xcrun simctl, ffmpeg.
 
-**Spec:** `docs/superpowers/specs/2026-10-30-site-waitlist-diffuse-i18n-design.md` (in `v0-grandma-app`).
+**Spec:** `docs/superpowers/specs/2026-10-30-site-waitlist-diffuse-i18n-design.md` (revision 2). Visual reference: `docs/mockups/2026-10-30-diffuse-site-and-waitlist.html`.
 
 **Repos and paths:**
-- SITE = `/Users/igorcarvalhorodrigues/dev/v0-grandma-app` (branch `feat/waitlist-diffuse-i18n`, already created)
-- CC = `/Users/igorcarvalhorodrigues/dev/grandma-command-center` (create branch `feat/waitlist-pillar` from `main` in Task 1)
-- APP = `/Users/igorcarvalhorodrigues/dev/grandma-app` (read-only reference; never modified)
+- SITE = `/Users/igorcarvalhorodrigues/dev/v0-grandma-app` (branch `feat/waitlist-diffuse-i18n`, exists)
+- CC = `/Users/igorcarvalhorodrigues/dev/grandma-command-center` (branch `feat/waitlist-pillar`, created in Task 1)
+- APP = `/Users/igorcarvalhorodrigues/dev/grandma-app` (read-only; never modified; used to install/run the dev client)
 
 ## Global Constraints
 
-- Never modify the `grandma-app` repo.
-- Locales are exactly `en` and `pt`. `pt` means pt-BR (`<html lang="pt-BR">`, hreflang `pt-BR`).
-- Modes are exactly `pre`, `preg`, `kids`, `meno`. No caregiver mode anywhere on the site.
-- Waitlist emails are stored lowercased and trimmed. `created_at` is never updated after insert.
-- The service-role key is used only in server-only modules. It must never appear in a client bundle.
-- Command center tables: RLS enabled, no policies. Every PII read and every export calls `writeAudit(...)`.
-- CC DB driver: `db.execute<T>(sql\`…\`)` returns a RowList — iterate with `Array.from(res)`. `DATABASE_URL` is the transaction pooler.
-- CC middleware is `proxy.ts`. The SITE's middleware is also `proxy.ts` (Next 16).
-- Diffuse rules: no filled pills, no stamp shadows. Primary CTA is a containerless mono label + arrow on a hairline. Fonts are assigned by role: Hanken Grotesk Bold for titles and feeling words, Hanken Grotesk Regular for reading, Space Mono for labels/data.
-- PT glossary (from the app's `lib/i18n/pt-BR.ts`): Grandma in prose = "a Vovó"; the brand stays "grandma.app"; modes = "Ciclo", "Gravidez", "Filhos", "Menopausa"; address the reader as "você"; feminine forms where the app uses them ("Bem-vinda").
-- No fabricated numbers on the page (no fake counters, no invented user counts).
+- Never modify the `grandma-app` repo. Running `npm start` / `npm run eas:install:sim` there is allowed.
+- Locales are exactly `en` and `pt`; `pt` = pt-BR (`<html lang="pt-BR">`, hreflang `pt-BR`).
+- Modes are exactly `pre`, `preg`, `kids`, `meno`. No caregiver anywhere on the site.
+- Countries are exactly `BR`, `US`, `OTHER`.
+- Waitlist emails are stored trimmed + lowercased; `created_at` never changes after insert.
+- Service-role key only in `server-only` modules.
+- CC tables: RLS on, no policies. Every PII read/export calls `writeAudit`. CC DB results: `Array.from(res)`.
+- Diffuse v3 per `APP/docs/design/design-system-v3.html`: display = **Cormorant Garamond** (300/400 + italic, italic "feeling words" in `--ink-2`); reading = Hanken Grotesk 300–600; labels/data = Space Mono. No filled black buttons except the small `.gchip` inside glass panels. Primary CTA = mono label + arrow on a hairline.
+- No pricing page, no prices anywhere on the site.
+- No fabricated numbers on the site.
+- Every app image comes from `public/media/app/` (capture pipeline). No hand-drawn app screens.
+- PT glossary: "a Vovó" in prose; "grandma.app" brand; Ciclo / Gravidez / Filhos / Menopausa; "você".
+- Capture uses a demo account only; no real user data in any frame.
 
 ## Review Focus
 
-1. **Same email, different case or whitespace** (`" Ana@X.com "` then `"ana@x.com"`): expect one row, original `created_at`, success both times. Pinned in Task 1 (SQL verification) and Task 14 (schema test).
-2. **CSV opened in Excel with a name like `=HYPERLINK(...)`**: expect the cell rendered as text, not a formula. Pinned in Task 2 (`toCsv` test).
-3. **Visitor with `Accept-Language: pt-PT` or `pt`**: expect `/pt`, not `/en`. Pinned in Task 5 (manual curl check).
-4. **Promote to beta when the email is already in `beta_testers`**: expect no error, waitlist row still marked invited, nothing duplicated. Pinned in Task 3 (live verification script) and Task 1 constraint.
-5. **Form submitted with JavaScript disabled or before hydration**: expect the server action to still run and render the result. Pinned in Task 15 (the form uses `action={formAction}`, not `onSubmit`).
+1. **Same email with different case/whitespace, possibly a different country**: one row, original `created_at`, country updated, success both times. Pinned in Task 1 (SQL verify) and Task 13 (schema test).
+2. **Geo header missing or unexpected (`DE`, empty, lowercase `br`)**: form defaults to Brasil on `/pt`, Other on `/en`, `BR`/`US` mapped case-insensitively. Pinned in Task 8 (`countryFromGeo` tests).
+3. **CSV opened in Excel with `=HYPERLINK(...)` in a name**: rendered as text. Pinned in Task 2.
+4. **Visitor with reduced motion, iOS Low Power Mode, or a failed video**: poster image shows, no layout shift. Pinned in Task 9 (`AppVideo`) and Task 15 manual check.
+5. **Form submitted before hydration / without JS**: server action still runs and renders the result. Pinned in Task 14 Step 5, item 6.
 
 ---
 
 ## Part A — grandma-command-center
 
-### Task 1: Waitlist table, join function and Drizzle schema
+### Task 1: Waitlist table (with country), join function, Drizzle schema
 
 **Files:**
-- Create: `CC/migrations/0018_waitlist.sql`
-- Create: `CC/scripts/verify-waitlist.mjs`
-- Modify: `CC/db/schema/center.ts` (append table after `betaTesters`)
+- Create: `CC/migrations/0018_waitlist.sql`, `CC/scripts/verify-waitlist.mjs`
+- Modify: `CC/db/schema/center.ts` (append after `betaTesters`)
 
 **Interfaces:**
-- Produces: table `public.waitlist`; function `public.waitlist_join(p_email text, p_name text, p_mode text, p_locale text, p_notify_launch boolean, p_utm_source text, p_utm_medium text, p_utm_campaign text, p_referrer text, p_ip_hash text) returns text` (`'ok' | 'rate_limited'`); Drizzle export `waitlist` from `@/db/schema`.
+- Produces: `public.waitlist`; `public.waitlist_join(p_email text, p_name text, p_mode text, p_locale text, p_country text, p_notify_launch boolean, p_utm_source text, p_utm_medium text, p_utm_campaign text, p_referrer text, p_ip_hash text) returns text` (`'ok' | 'rate_limited'`); Drizzle `waitlist`, `WAITLIST_MODES`, `WAITLIST_LOCALES`, `WAITLIST_COUNTRIES` from `@/db/schema`.
 
-- [ ] **Step 1: Create the branch**
+- [ ] **Step 1: Branch**
 
 ```bash
 cd /Users/igorcarvalhorodrigues/dev/grandma-command-center
 git checkout main && git pull && git checkout -b feat/waitlist-pillar
 ```
 
-- [ ] **Step 2: Write the migration**
-
-`migrations/0018_waitlist.sql`:
+- [ ] **Step 2: Migration** — `migrations/0018_waitlist.sql`:
 
 ```sql
 -- Waitlist — signups from the grandma.app marketing site (v0-grandma-app).
+-- Launch is Brazil first, then the US, so country is first-class.
 -- Command-center-owned. The site WRITES only through waitlist_join() with the
 -- service role; the console READS, exports and promotes rows to beta_testers.
 -- Idempotent.
@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS public.waitlist (
   name          TEXT,
   mode          TEXT NOT NULL CHECK (mode IN ('pre','preg','kids','meno')),
   locale        TEXT NOT NULL CHECK (locale IN ('en','pt')),
+  country       TEXT NOT NULL DEFAULT 'OTHER' CHECK (country IN ('BR','US','OTHER')),
   notify_launch BOOLEAN NOT NULL DEFAULT false,
   utm_source    TEXT,
   utm_medium    TEXT,
@@ -89,13 +90,14 @@ CREATE TABLE IF NOT EXISTS public.waitlist (
 );
 
 CREATE INDEX IF NOT EXISTS waitlist_created_at_idx ON public.waitlist (created_at DESC);
+CREATE INDEX IF NOT EXISTS waitlist_country_created_idx ON public.waitlist (country, created_at);
 CREATE INDEX IF NOT EXISTS waitlist_ip_hash_created_idx ON public.waitlist (ip_hash, created_at DESC);
 
 ALTER TABLE public.waitlist ENABLE ROW LEVEL SECURITY;
 -- No policies: service role only.
 
 CREATE OR REPLACE FUNCTION public.waitlist_join(
-  p_email text, p_name text, p_mode text, p_locale text, p_notify_launch boolean,
+  p_email text, p_name text, p_mode text, p_locale text, p_country text, p_notify_launch boolean,
   p_utm_source text, p_utm_medium text, p_utm_campaign text, p_referrer text, p_ip_hash text
 ) RETURNS text
 LANGUAGE plpgsql
@@ -111,14 +113,15 @@ BEGIN
   END IF;
 
   INSERT INTO public.waitlist
-    (email, name, mode, locale, notify_launch, utm_source, utm_medium, utm_campaign, referrer, ip_hash)
+    (email, name, mode, locale, country, notify_launch, utm_source, utm_medium, utm_campaign, referrer, ip_hash)
   VALUES
-    (lower(trim(p_email)), nullif(trim(p_name), ''), p_mode, p_locale, coalesce(p_notify_launch, false),
-     p_utm_source, p_utm_medium, p_utm_campaign, p_referrer, p_ip_hash)
+    (lower(trim(p_email)), nullif(trim(p_name), ''), p_mode, p_locale, coalesce(p_country, 'OTHER'),
+     coalesce(p_notify_launch, false), p_utm_source, p_utm_medium, p_utm_campaign, p_referrer, p_ip_hash)
   ON CONFLICT (email) DO UPDATE SET
     name          = coalesce(excluded.name, waitlist.name),
     mode          = excluded.mode,
     locale        = excluded.locale,
+    country       = excluded.country,
     notify_launch = excluded.notify_launch,
     updated_at    = now();
 
@@ -126,21 +129,21 @@ BEGIN
 END
 $$;
 
-REVOKE ALL ON FUNCTION public.waitlist_join(text,text,text,text,boolean,text,text,text,text,text) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.waitlist_join(text,text,text,text,boolean,text,text,text,text,text) TO service_role;
+REVOKE ALL ON FUNCTION public.waitlist_join(text,text,text,text,text,boolean,text,text,text,text,text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.waitlist_join(text,text,text,text,text,boolean,text,text,text,text,text) TO service_role;
 
 NOTIFY pgrst, 'reload schema';
 ```
 
-- [ ] **Step 3: Add the Drizzle table**
-
-Append to `db/schema/center.ts` right after the `betaTesters` table (all needed column helpers are already imported on line 1):
+- [ ] **Step 3: Drizzle** — append to `db/schema/center.ts` after `betaTesters` (helpers already imported on line 1):
 
 ```ts
 export const WAITLIST_MODES = ["pre", "preg", "kids", "meno"] as const
 export type WaitlistMode = (typeof WAITLIST_MODES)[number]
 export const WAITLIST_LOCALES = ["en", "pt"] as const
 export type WaitlistLocale = (typeof WAITLIST_LOCALES)[number]
+export const WAITLIST_COUNTRIES = ["BR", "US", "OTHER"] as const
+export type WaitlistCountry = (typeof WAITLIST_COUNTRIES)[number]
 
 /** Marketing-site waitlist. Written by the site via waitlist_join(); see migrations/0018_waitlist.sql. */
 export const waitlist = pgTable("waitlist", {
@@ -149,6 +152,7 @@ export const waitlist = pgTable("waitlist", {
   name: text("name"),
   mode: text("mode").notNull(),
   locale: text("locale").notNull(),
+  country: text("country").notNull().default("OTHER"),
   notifyLaunch: boolean("notify_launch").notNull().default(false),
   utmSource: text("utm_source"),
   utmMedium: text("utm_medium"),
@@ -162,99 +166,89 @@ export const waitlist = pgTable("waitlist", {
 })
 ```
 
-Check that `db/schema/index.ts` re-exports `center.ts` with `export *` (it does for `betaTesters`). If it lists names explicitly, add `waitlist`, `WAITLIST_MODES`, `WAITLIST_LOCALES`.
+If `db/schema/index.ts` lists exports by name instead of `export *`, add the new names.
 
-- [ ] **Step 4: Apply the migration**
+- [ ] **Step 4: Apply**
 
 ```bash
 set -a; source .env.local; set +a
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/0018_waitlist.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/0018_waitlist.sql   # idempotent: must succeed again
 ```
 
-Expected: `CREATE TABLE`, `CREATE INDEX` ×2, `ALTER TABLE`, `CREATE FUNCTION`, `REVOKE`, `GRANT`, `NOTIFY`, with no errors. Run it a second time: it must succeed again (idempotent; `CREATE TABLE IF NOT EXISTS` skips with a NOTICE).
+Without `psql`: `node -e "const s=require('postgres')(process.env.DATABASE_URL,{prepare:false});s.file('migrations/0018_waitlist.sql').then(()=>s.end())"`.
 
-If `psql` is not installed, run the file with postgres-js: `node -e "const s=require('postgres')(process.env.DATABASE_URL,{prepare:false});s.file('migrations/0018_waitlist.sql').then(()=>s.end())"`.
-
-- [ ] **Step 5: Write the verification script**
-
-`scripts/verify-waitlist.mjs`:
+- [ ] **Step 5: Verification script** — `scripts/verify-waitlist.mjs`:
 
 ```js
-// Throwaway live check for migrations/0018_waitlist.sql. Uses a unique test
-// email and deletes everything it creates. Run: node scripts/verify-waitlist.mjs
+// Throwaway live check for migrations/0018_waitlist.sql. Uses unique test
+// emails and deletes everything it creates. Run: node scripts/verify-waitlist.mjs
 import postgres from "postgres"
 
 const sql = postgres(process.env.DATABASE_URL, { prepare: false })
 const tag = `verify-${Date.now()}`
 const email = `${tag}@example.com`
 const ip = `iphash-${tag}`
-const assert = (cond, msg) => { if (!cond) { console.error("FAIL:", msg); process.exitCode = 1 } else console.log("ok:", msg) }
+const assert = (c, m) => { if (!c) { console.error("FAIL:", m); process.exitCode = 1 } else console.log("ok:", m) }
+const join = (e, name, mode, country, ipHash = ip) =>
+  sql`select public.waitlist_join(${e}, ${name}, ${mode}, 'pt', ${country}, true, 'ig', 'social', 'launch', null, ${ipHash}) as r`
 
 try {
-  const join = (e, name, mode, ipHash = ip) =>
-    sql`select public.waitlist_join(${e}, ${name}, ${mode}, 'pt', true, 'ig', 'social', 'launch', null, ${ipHash}) as r`
-
-  const [a] = await join(`  ${email.toUpperCase()} `, "Ana", "preg")
-  assert(a.r === "ok", "first join returns ok")
+  const [a] = await join(`  ${email.toUpperCase()} `, "Ana", "preg", "BR")
+  assert(a.r === "ok", "first join ok")
   const [row1] = await sql`select * from public.waitlist where email = ${email}`
-  assert(row1 && row1.email === email, "email stored lowercased + trimmed")
+  assert(row1?.country === "BR", "country stored")
 
   await new Promise((r) => setTimeout(r, 1100))
-  const [b] = await join(email, null, "kids")
-  assert(b.r === "ok", "second join (same email) returns ok")
+  const [b] = await join(email, null, "kids", "US")
+  assert(b.r === "ok", "repeat join ok")
   const rows = await sql`select * from public.waitlist where email = ${email}`
-  assert(rows.length === 1, "still exactly one row")
+  assert(rows.length === 1, "one row")
   assert(rows[0].created_at.getTime() === row1.created_at.getTime(), "created_at unchanged")
-  assert(rows[0].mode === "kids", "mode updated")
+  assert(rows[0].mode === "kids" && rows[0].country === "US", "mode + country updated")
   assert(rows[0].name === "Ana", "name kept when new name is null")
   assert(rows[0].utm_source === "ig", "first-touch utm kept")
 
-  for (let i = 0; i < 4; i++) await join(`${tag}-${i}@example.com`, null, "pre")
-  const [c] = await join(`${tag}-x@example.com`, null, "pre")
-  assert(c.r === "rate_limited", "6th distinct signup from same ip_hash within 1h is rate_limited")
-  const [d] = await join(`${tag}-y@example.com`, null, "pre", null)
-  assert(d.r === "ok", "null ip_hash is not rate limited")
+  for (let i = 0; i < 4; i++) await join(`${tag}-${i}@example.com`, null, "pre", "BR")
+  const [c] = await join(`${tag}-x@example.com`, null, "pre", "BR")
+  assert(c.r === "rate_limited", "6th signup from same ip_hash in 1h is rate_limited")
+  const [d] = await join(`${tag}-y@example.com`, null, "pre", "OTHER", null)
+  assert(d.r === "ok", "null ip_hash not rate limited")
 
-  const [{ has }] = await sql`select has_function_privilege('anon', 'public.waitlist_join(text,text,text,text,boolean,text,text,text,text,text)', 'execute') as has`
+  let threw = false
+  try { await join(`${tag}-z@example.com`, null, "pre", "DE", null) } catch { threw = true }
+  assert(threw, "unknown country rejected by CHECK")
+
+  const [{ has }] = await sql`select has_function_privilege('anon', 'public.waitlist_join(text,text,text,text,text,boolean,text,text,text,text,text)', 'execute') as has`
   assert(has === false, "anon cannot execute waitlist_join")
 } finally {
+  await sql`delete from public.beta_testers where email like ${tag + "%"}`
   await sql`delete from public.waitlist where email like ${tag + "%"}`
   await sql.end()
 }
 ```
 
-- [ ] **Step 6: Run it**
+- [ ] **Step 6: Run** — `set -a; source .env.local; set +a; node scripts/verify-waitlist.mjs` → every line `ok:`, exit 0.
 
-Run: `set -a; source .env.local; set +a; node scripts/verify-waitlist.mjs`
-Expected: every line starts with `ok:`; exit code 0.
-
-- [ ] **Step 7: Typecheck and commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 pnpm typecheck
 git add migrations/0018_waitlist.sql db/schema/center.ts scripts/verify-waitlist.mjs
-git commit -m "feat(waitlist): waitlist table, waitlist_join() and Drizzle schema"
+git commit -m "feat(waitlist): waitlist table with country, waitlist_join() and Drizzle schema"
 ```
 
 ---
 
 ### Task 2: Pure waitlist helpers (filters, WHERE builder, CSV)
 
-**Files:**
-- Create: `CC/lib/waitlist.ts`
-- Test: `CC/lib/__tests__/waitlist.test.ts`
+**Files:** Create `CC/lib/waitlist.ts`; Test `CC/lib/__tests__/waitlist.test.ts`
 
 **Interfaces:**
-- Consumes: `WAITLIST_MODES`, `WAITLIST_LOCALES` from `@/db/schema`.
-- Produces:
-  - `waitlistFilterSchema` (zod 4) → `WaitlistFilter = { mode?: WaitlistMode; locale?: WaitlistLocale; from?: string; to?: string; invited: "all" | "invited" | "pending"; q?: string }`
-  - `buildWaitlistWhere(f: WaitlistFilter): SQL` — a Drizzle `sql` fragment beginning with `where`, referencing table alias `w`.
-  - `WaitlistRowOut = { id: string; email: string; name: string | null; mode: string; locale: string; notifyLaunch: boolean; utmSource: string | null; createdAt: string; invitedAt: string | null; signedUp: boolean }`
-  - `toCsv(rows: WaitlistRowOut[]): string`
+- Consumes: `WAITLIST_MODES`, `WAITLIST_LOCALES`, `WAITLIST_COUNTRIES`.
+- Produces: `waitlistFilterSchema` → `WaitlistFilter = { mode?; locale?; country?; from?; to?; invited: "all"|"invited"|"pending"; q? }`; `buildWaitlistWhere(f): SQL` (starts with `where`, alias `w`); `WaitlistRowOut = { id; email; name: string|null; mode; locale; country; notifyLaunch: boolean; utmSource: string|null; createdAt: string; invitedAt: string|null; signedUp: boolean }`; `toCsv(rows): string`.
 
-- [ ] **Step 1: Write the failing tests**
-
-`lib/__tests__/waitlist.test.ts`:
+- [ ] **Step 1: Failing tests** — `lib/__tests__/waitlist.test.ts`:
 
 ```ts
 import { describe, it, expect } from "vitest"
@@ -265,78 +259,67 @@ const dialect = new PgDialect()
 const render = (f: unknown) => dialect.sqlToQuery(buildWaitlistWhere(waitlistFilterSchema.parse(f)))
 
 describe("waitlistFilterSchema", () => {
-  it("defaults invited to all", () => {
-    expect(waitlistFilterSchema.parse({}).invited).toBe("all")
-  })
-  it("rejects an unknown mode", () => {
+  it("defaults invited to all", () => expect(waitlistFilterSchema.parse({}).invited).toBe("all"))
+  it("rejects unknown mode and country", () => {
     expect(() => waitlistFilterSchema.parse({ mode: "care" })).toThrow()
+    expect(() => waitlistFilterSchema.parse({ country: "DE" })).toThrow()
   })
-  it("rejects a malformed date", () => {
-    expect(() => waitlistFilterSchema.parse({ from: "30/10/2026" })).toThrow()
-  })
+  it("rejects a malformed date", () => expect(() => waitlistFilterSchema.parse({ from: "30/10/2026" })).toThrow())
 })
 
 describe("buildWaitlistWhere", () => {
-  it("is a no-op filter when empty", () => {
-    expect(render({}).sql).toBe("where true")
-  })
-  it("combines mode, locale, dates, invited and search with parameters", () => {
-    const q = render({ mode: "meno", locale: "pt", from: "2026-10-01", to: "2026-10-30", invited: "pending", q: "ana" })
+  it("is a no-op when empty", () => expect(render({}).sql).toBe("where true"))
+  it("combines every filter with parameters", () => {
+    const q = render({ mode: "meno", locale: "pt", country: "BR", from: "2026-10-01", to: "2026-10-30", invited: "pending", q: "ana" })
     expect(q.sql).toContain("w.mode = $1")
     expect(q.sql).toContain("w.locale = $2")
-    expect(q.sql).toContain("w.created_at >= $3::date")
-    expect(q.sql).toContain("w.created_at < ($4::date + 1)")
+    expect(q.sql).toContain("w.country = $3")
+    expect(q.sql).toContain("w.created_at >= $4::date")
+    expect(q.sql).toContain("w.created_at < ($5::date + 1)")
     expect(q.sql).toContain("w.invited_at is null")
-    expect(q.sql).toContain("(w.email ilike $5 or w.name ilike $6)")
-    expect(q.params).toEqual(["meno", "pt", "2026-10-01", "2026-10-30", "%ana%", "%ana%"])
+    expect(q.sql).toContain("(w.email ilike $6 or w.name ilike $7)")
+    expect(q.params).toEqual(["meno", "pt", "BR", "2026-10-01", "2026-10-30", "%ana%", "%ana%"])
   })
-  it("escapes LIKE wildcards in search", () => {
-    expect(render({ q: "50%_off" }).params).toEqual(["%50\\%\\_off%", "%50\\%\\_off%"])
-  })
+  it("escapes LIKE wildcards", () => expect(render({ q: "50%_off" }).params).toEqual(["%50\\%\\_off%", "%50\\%\\_off%"]))
 })
 
-const row = (over: Partial<WaitlistRowOut> = {}): WaitlistRowOut => ({
-  id: "1", email: "ana@x.com", name: "Ana", mode: "preg", locale: "pt", notifyLaunch: true,
-  utmSource: null, createdAt: "2026-10-30T12:00:00.000Z", invitedAt: null, signedUp: false, ...over,
+const row = (o: Partial<WaitlistRowOut> = {}): WaitlistRowOut => ({
+  id: "1", email: "ana@x.com", name: "Ana", mode: "preg", locale: "pt", country: "BR", notifyLaunch: true,
+  utmSource: null, createdAt: "2026-10-30T12:00:00.000Z", invitedAt: null, signedUp: false, ...o,
 })
 
 describe("toCsv", () => {
-  it("writes a header and one line per row", () => {
-    const out = toCsv([row()])
-    expect(out.split("\r\n")[0]).toBe("email,name,mode,locale,notify_launch,utm_source,created_at,invited_at,signed_up")
-    expect(out.split("\r\n")[1]).toBe("ana@x.com,Ana,preg,pt,true,,2026-10-30T12:00:00.000Z,,false")
+  it("header + one line per row", () => {
+    const [h, l] = toCsv([row()]).split("\r\n")
+    expect(h).toBe("email,name,mode,locale,country,notify_launch,utm_source,created_at,invited_at,signed_up")
+    expect(l).toBe("ana@x.com,Ana,preg,pt,BR,true,,2026-10-30T12:00:00.000Z,,false")
   })
-  it("quotes commas, quotes and newlines", () => {
-    expect(toCsv([row({ name: 'Ana, "Nana"\nSilva' })]).split("\r\n").slice(1).join("\r\n"))
-      .toContain('"Ana, ""Nana""\nSilva"')
-  })
+  it("quotes commas, quotes and newlines", () =>
+    expect(toCsv([row({ name: 'Ana, "Nana"\nSilva' })])).toContain('"Ana, ""Nana""\nSilva"'))
   it("neutralises spreadsheet formulas", () => {
-    for (const bad of ["=HYPERLINK(\"x\")", "+1", "-1", "@SUM(A1)"]) {
-      expect(toCsv([row({ name: bad })])).toContain(`'${bad.startsWith("=") ? bad.replace(/"/g, '""') : bad}`)
-    }
+    expect(toCsv([row({ name: '=HYPERLINK("x")' })])).toContain(`"'=HYPERLINK(""x"")"`)
+    expect(toCsv([row({ name: "+1" })])).toContain(",'+1,")
+    expect(toCsv([row({ name: "-1" })])).toContain(",'-1,")
+    expect(toCsv([row({ name: "@SUM(A1)" })])).toContain(",'@SUM(A1),")
   })
 })
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [ ] **Step 2: Run** — `pnpm vitest run lib/__tests__/waitlist.test.ts` → FAIL (module missing).
 
-Run: `pnpm vitest run lib/__tests__/waitlist.test.ts`
-Expected: FAIL — `Cannot find module '../waitlist'`.
-
-- [ ] **Step 3: Implement**
-
-`lib/waitlist.ts`:
+- [ ] **Step 3: Implement** — `lib/waitlist.ts`:
 
 ```ts
 import { z } from "zod"
 import { sql, type SQL } from "drizzle-orm"
-import { WAITLIST_MODES, WAITLIST_LOCALES } from "@/db/schema"
+import { WAITLIST_MODES, WAITLIST_LOCALES, WAITLIST_COUNTRIES } from "@/db/schema"
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD")
 
 export const waitlistFilterSchema = z.object({
   mode: z.enum(WAITLIST_MODES).optional(),
   locale: z.enum(WAITLIST_LOCALES).optional(),
+  country: z.enum(WAITLIST_COUNTRIES).optional(),
   from: isoDate.optional(),
   to: isoDate.optional(),
   invited: z.enum(["all", "invited", "pending"]).default("all"),
@@ -350,6 +333,7 @@ export interface WaitlistRowOut {
   name: string | null
   mode: string
   locale: string
+  country: string
   notifyLaunch: boolean
   utmSource: string | null
   createdAt: string
@@ -357,15 +341,14 @@ export interface WaitlistRowOut {
   signedUp: boolean
 }
 
-function escapeLike(s: string): string {
-  return s.replace(/[\\%_]/g, (c) => `\\${c}`)
-}
+const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
-/** WHERE clause over `public.waitlist w`. Always returns a fragment starting with `where`. */
+/** WHERE clause over `public.waitlist w`. Always starts with `where`. */
 export function buildWaitlistWhere(f: WaitlistFilter): SQL {
   const parts: SQL[] = []
   if (f.mode) parts.push(sql`w.mode = ${f.mode}`)
   if (f.locale) parts.push(sql`w.locale = ${f.locale}`)
+  if (f.country) parts.push(sql`w.country = ${f.country}`)
   if (f.from) parts.push(sql`w.created_at >= ${f.from}::date`)
   if (f.to) parts.push(sql`w.created_at < (${f.to}::date + 1)`)
   if (f.invited === "invited") parts.push(sql`w.invited_at is not null`)
@@ -374,73 +357,43 @@ export function buildWaitlistWhere(f: WaitlistFilter): SQL {
     const like = `%${escapeLike(f.q)}%`
     parts.push(sql`(w.email ilike ${like} or w.name ilike ${like})`)
   }
-  if (parts.length === 0) return sql`where true`
-  return sql`where ${sql.join(parts, sql` and `)}`
+  return parts.length === 0 ? sql`where true` : sql`where ${sql.join(parts, sql` and `)}`
 }
 
-const CSV_COLUMNS: { header: string; get: (r: WaitlistRowOut) => string | boolean | null }[] = [
-  { header: "email", get: (r) => r.email },
-  { header: "name", get: (r) => r.name },
-  { header: "mode", get: (r) => r.mode },
-  { header: "locale", get: (r) => r.locale },
-  { header: "notify_launch", get: (r) => r.notifyLaunch },
-  { header: "utm_source", get: (r) => r.utmSource },
-  { header: "created_at", get: (r) => r.createdAt },
-  { header: "invited_at", get: (r) => r.invitedAt },
-  { header: "signed_up", get: (r) => r.signedUp },
+const COLS: [string, (r: WaitlistRowOut) => string | boolean | null][] = [
+  ["email", (r) => r.email], ["name", (r) => r.name], ["mode", (r) => r.mode], ["locale", (r) => r.locale],
+  ["country", (r) => r.country], ["notify_launch", (r) => r.notifyLaunch], ["utm_source", (r) => r.utmSource],
+  ["created_at", (r) => r.createdAt], ["invited_at", (r) => r.invitedAt], ["signed_up", (r) => r.signedUp],
 ]
 
-function csvCell(v: string | boolean | null): string {
+function cell(v: string | boolean | null): string {
   if (v === null) return ""
   let s = String(v)
-  // Spreadsheet formula injection guard (OWASP): prefix with a quote.
-  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}` // OWASP CSV-injection guard
   if (/[",\r\n]/.test(s)) s = `"${s.replace(/"/g, '""')}"`
   return s
 }
 
 export function toCsv(rows: WaitlistRowOut[]): string {
-  const lines = [CSV_COLUMNS.map((c) => c.header).join(",")]
-  for (const r of rows) lines.push(CSV_COLUMNS.map((c) => csvCell(c.get(r))).join(","))
-  return lines.join("\r\n")
+  return [COLS.map(([h]) => h).join(","), ...rows.map((r) => COLS.map(([, g]) => cell(g(r))).join(","))].join("\r\n")
 }
 ```
 
-Note on the formula test: for `=HYPERLINK("x")` the cell becomes `'=HYPERLINK("x")`, which contains `"` so it is quoted and inner quotes doubled → `"'=HYPERLINK(""x"")"`. The test checks for the substring `'=HYPERLINK(""x"")`.
+- [ ] **Step 4: Run** → PASS. If only whitespace around `and` differs, fix the implementation.
 
-- [ ] **Step 4: Run tests**
-
-Run: `pnpm vitest run lib/__tests__/waitlist.test.ts`
-Expected: PASS (all). If the `buildWaitlistWhere` SQL string differs only in whitespace around `and`, adjust the implementation (not the test) so the fragments match exactly.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add lib/waitlist.ts lib/__tests__/waitlist.test.ts
-git commit -m "feat(waitlist): filter schema, WHERE builder and formula-safe CSV"
-```
+- [ ] **Step 5: Commit** — `git add lib/waitlist.ts lib/__tests__/waitlist.test.ts && git commit -m "feat(waitlist): filters (incl. country), WHERE builder, formula-safe CSV"`
 
 ---
 
 ### Task 3: Waitlist tRPC router
 
-**Files:**
-- Create: `CC/server/routers/waitlist.ts`
-- Modify: `CC/server/routers/index.ts` (import + register `waitlist: waitlistRouter`)
-- Test: `CC/server/__tests__/waitlist-router.test.ts`
-- Modify: `CC/scripts/verify-waitlist.mjs` (add promote check)
+**Files:** Create `CC/server/routers/waitlist.ts`, `CC/server/__tests__/waitlist-router.test.ts`; Modify `CC/server/routers/index.ts`, `CC/scripts/verify-waitlist.mjs`
 
 **Interfaces:**
-- Consumes: `waitlistFilterSchema`, `buildWaitlistWhere`, `toCsv`, `WaitlistRowOut` (Task 2); `waitlist`, `betaTesters` (Task 1); `protectedProcedure`, `piiProcedure`, `adminProcedure`, `router` from `../trpc`; `writeAudit` from `@/lib/audit`.
-- Produces (client calls in Task 4):
-  - `trpc.waitlist.stats.useQuery()` → `{ total: number; last7: number; daily: { day: string; count: number }[]; byMode: { mode: string; count: number }[]; byLocale: { locale: string; count: number }[] }`
-  - `trpc.waitlist.list.useQuery({ filter: WaitlistFilter; page: number })` → `{ rows: WaitlistRowOut[]; total: number; pageSize: 50 }`
-  - `trpc.waitlist.exportCsv.useMutation()` input `{ filter: WaitlistFilter }` → `{ csv: string; count: number }`
-  - `trpc.waitlist.promoteToBeta.useMutation()` input `{ ids: string[] }` (1–200 uuids) → `{ promoted: number; alreadyBeta: number }`
+- Consumes: Task 1 + Task 2 exports; `router`, `protectedProcedure`, `piiProcedure`, `adminProcedure`; `writeAudit`.
+- Produces: `trpc.waitlist.stats` → `{ total; last7; daily: {day; count}[]; byCountry: {country; count}[]; byMode: {mode; count}[]; byLocale: {locale; count}[] }`; `trpc.waitlist.list({ filter, page })` → `{ rows: WaitlistRowOut[]; total; pageSize: 50 }`; `trpc.waitlist.exportCsv({ filter })` → `{ csv; count }`; `trpc.waitlist.promoteToBeta({ ids })` → `{ promoted; alreadyBeta }`.
 
-- [ ] **Step 1: Write the failing gate test**
-
-`server/__tests__/waitlist-router.test.ts`:
+- [ ] **Step 1: Failing gate test** — `server/__tests__/waitlist-router.test.ts`:
 
 ```ts
 import { describe, it, expect, vi } from "vitest"
@@ -455,20 +408,22 @@ import type { Context } from "../context"
 const ctx = (p: Partial<Context>): Context => ({ userId: null, userEmail: null, role: null, allowed: false, ...p })
 const viewer = ctx({ userId: "v", userEmail: "v@grandma.app", role: "viewer", allowed: true })
 const admin = ctx({ userId: "a", userEmail: "a@grandma.app", role: "admin", allowed: true })
+const FORBIDDEN = { code: "FORBIDDEN" } as Partial<TRPCError>
 
-describe("waitlist router gates", () => {
-  it("viewer can read stats", async () => {
-    await expect(waitlistRouter.createCaller(viewer).stats()).resolves.toBeDefined()
+describe("waitlist router", () => {
+  it("viewer reads stats, including byCountry", async () => {
+    const s = await waitlistRouter.createCaller(viewer).stats()
+    expect(s).toMatchObject({ total: 0, byCountry: [] })
   })
-  it("viewer is FORBIDDEN on list, export and promote", async () => {
+  it("viewer is FORBIDDEN on list, export, promote", async () => {
     const c = waitlistRouter.createCaller(viewer)
-    await expect(c.list({ filter: {}, page: 0 })).rejects.toMatchObject({ code: "FORBIDDEN" } as Partial<TRPCError>)
-    await expect(c.exportCsv({ filter: {} })).rejects.toMatchObject({ code: "FORBIDDEN" } as Partial<TRPCError>)
-    await expect(c.promoteToBeta({ ids: ["00000000-0000-0000-0000-000000000000"] })).rejects.toMatchObject({ code: "FORBIDDEN" } as Partial<TRPCError>)
+    await expect(c.list({ filter: {}, page: 0 })).rejects.toMatchObject(FORBIDDEN)
+    await expect(c.exportCsv({ filter: {} })).rejects.toMatchObject(FORBIDDEN)
+    await expect(c.promoteToBeta({ ids: ["00000000-0000-4000-8000-000000000000"] })).rejects.toMatchObject(FORBIDDEN)
   })
   it("admin list writes an audit entry", async () => {
     const { writeAudit } = await import("@/lib/audit")
-    await waitlistRouter.createCaller(admin).list({ filter: {}, page: 0 })
+    await waitlistRouter.createCaller(admin).list({ filter: { country: "BR" }, page: 0 })
     expect(writeAudit).toHaveBeenCalledWith(expect.objectContaining({ action: "waitlist.list", actorEmail: "a@grandma.app" }))
   })
   it("promote rejects an empty id list", async () => {
@@ -477,14 +432,9 @@ describe("waitlist router gates", () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify failure**
+Run: `pnpm vitest run server/__tests__/waitlist-router.test.ts` → FAIL.
 
-Run: `pnpm vitest run server/__tests__/waitlist-router.test.ts`
-Expected: FAIL — cannot find `../routers/waitlist`.
-
-- [ ] **Step 3: Implement the router**
-
-`server/routers/waitlist.ts`:
+- [ ] **Step 2: Implement** — `server/routers/waitlist.ts`:
 
 ```ts
 import { z } from "zod"
@@ -499,23 +449,19 @@ const PAGE_SIZE = 50
 const EXPORT_LIMIT = 20_000
 
 type RawRow = {
-  id: string; email: string; name: string | null; mode: string; locale: string; notify_launch: boolean
+  id: string; email: string; name: string | null; mode: string; locale: string; country: string; notify_launch: boolean
   utm_source: string | null; created_at: string | Date; invited_at: string | Date | null; signed_up: boolean
   [k: string]: unknown
 }
-
-const iso = (v: string | Date | null): string | null => (v === null ? null : new Date(v).toISOString())
-
-function toOut(r: RawRow): WaitlistRowOut {
-  return {
-    id: r.id, email: r.email, name: r.name, mode: r.mode, locale: r.locale, notifyLaunch: r.notify_launch,
-    utmSource: r.utm_source, createdAt: iso(r.created_at)!, invitedAt: iso(r.invited_at), signedUp: r.signed_up,
-  }
-}
+const iso = (v: string | Date | null) => (v === null ? null : new Date(v).toISOString())
+const toOut = (r: RawRow): WaitlistRowOut => ({
+  id: r.id, email: r.email, name: r.name, mode: r.mode, locale: r.locale, country: r.country, notifyLaunch: r.notify_launch,
+  utmSource: r.utm_source, createdAt: iso(r.created_at)!, invitedAt: iso(r.invited_at), signedUp: r.signed_up,
+})
 
 function selectRows(where: ReturnType<typeof buildWaitlistWhere>, limit: number, offset: number) {
   return db.execute<RawRow>(sql`
-    select w.id, w.email, w.name, w.mode, w.locale, w.notify_launch, w.utm_source, w.created_at, w.invited_at,
+    select w.id, w.email, w.name, w.mode, w.locale, w.country, w.notify_launch, w.utm_source, w.created_at, w.invited_at,
       exists (select 1 from auth.users au where lower(au.email) = w.email) as signed_up
     from public.waitlist w
     ${where}
@@ -524,32 +470,32 @@ function selectRows(where: ReturnType<typeof buildWaitlistWhere>, limit: number,
   `)
 }
 
-/**
- * Waitlist — signups from the marketing site. Stats are aggregate (viewer+);
- * anything with an email is PII (admin) and audited.
- */
+type Count<K extends string> = { [k in K]: string } & { count: number; [k: string]: unknown }
+const groupBy = <K extends "mode" | "locale" | "country">(col: K) =>
+  db.execute<Count<K>>(sql`select ${sql.raw(col)} as ${sql.raw(col)}, count(*)::int as count from public.waitlist group by 1 order by 2 desc`)
+
+/** Waitlist — marketing-site signups. Aggregates are viewer+; anything with an email is admin + audited. */
 export const waitlistRouter = router({
   stats: protectedProcedure.query(async () => {
-    const [totals, daily, byMode, byLocale] = await Promise.all([
+    const [totals, daily, byCountry, byMode, byLocale] = await Promise.all([
       db.execute<{ total: number; last7: number; [k: string]: unknown }>(sql`
-        select count(*)::int as total,
-          count(*) filter (where created_at > now() - interval '7 days')::int as last7
+        select count(*)::int as total, count(*) filter (where created_at > now() - interval '7 days')::int as last7
         from public.waitlist`),
       db.execute<{ day: string; count: number; [k: string]: unknown }>(sql`
         select to_char(d::date, 'YYYY-MM-DD') as day, count(w.id)::int as count
         from generate_series(current_date - 89, current_date, interval '1 day') d
         left join public.waitlist w on w.created_at::date = d::date
         group by d order by d`),
-      db.execute<{ mode: string; count: number; [k: string]: unknown }>(sql`
-        select mode, count(*)::int as count from public.waitlist group by mode order by count desc`),
-      db.execute<{ locale: string; count: number; [k: string]: unknown }>(sql`
-        select locale, count(*)::int as count from public.waitlist group by locale order by count desc`),
+      groupBy("country"),
+      groupBy("mode"),
+      groupBy("locale"),
     ])
     const t = Array.from(totals)[0]
     return {
       total: t?.total ?? 0,
       last7: t?.last7 ?? 0,
       daily: Array.from(daily).map((r) => ({ day: r.day, count: r.count })),
+      byCountry: Array.from(byCountry).map((r) => ({ country: r.country, count: r.count })),
       byMode: Array.from(byMode).map((r) => ({ mode: r.mode, count: r.count })),
       byLocale: Array.from(byLocale).map((r) => ({ locale: r.locale, count: r.count })),
     }
@@ -567,13 +513,11 @@ export const waitlistRouter = router({
       return { rows: Array.from(rows).map(toOut), total: Array.from(count)[0]?.n ?? 0, pageSize: PAGE_SIZE }
     }),
 
-  exportCsv: piiProcedure
-    .input(z.object({ filter: waitlistFilterSchema }))
-    .mutation(async ({ ctx, input }) => {
-      const rows = Array.from(await selectRows(buildWaitlistWhere(input.filter), EXPORT_LIMIT, 0)).map(toOut)
-      await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "waitlist.export", meta: { filter: input.filter, count: rows.length } })
-      return { csv: toCsv(rows), count: rows.length }
-    }),
+  exportCsv: piiProcedure.input(z.object({ filter: waitlistFilterSchema })).mutation(async ({ ctx, input }) => {
+    const rows = Array.from(await selectRows(buildWaitlistWhere(input.filter), EXPORT_LIMIT, 0)).map(toOut)
+    await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "waitlist.export", meta: { filter: input.filter, count: rows.length } })
+    return { csv: toCsv(rows), count: rows.length }
+  }),
 
   promoteToBeta: adminProcedure
     .input(z.object({ ids: z.array(z.string().uuid()).min(1).max(200) }))
@@ -584,13 +528,10 @@ export const waitlistRouter = router({
         if (rows.length === 0) return { promoted: 0, alreadyBeta: 0 }
         const inserted = await tx
           .insert(betaTesters)
-          .values(rows.map((r) => ({ email: r.email, name: r.name, platform: "both", note: "from waitlist", invitedBy: actor })))
+          .values(rows.map((r) => ({ email: r.email, name: r.name, platform: "both", note: `from waitlist · ${r.country}`, invitedBy: actor })))
           .onConflictDoNothing({ target: betaTesters.email })
           .returning({ id: betaTesters.id })
-        await tx
-          .update(waitlist)
-          .set({ invitedAt: new Date(), invitedBy: actor })
-          .where(and(inArray(waitlist.id, input.ids), isNull(waitlist.invitedAt)))
+        await tx.update(waitlist).set({ invitedAt: new Date(), invitedBy: actor }).where(and(inArray(waitlist.id, input.ids), isNull(waitlist.invitedAt)))
         return { promoted: inserted.length, alreadyBeta: rows.length - inserted.length }
       })
       await writeAudit({ actorEmail: actor, action: "waitlist.promote", meta: { ids: input.ids, ...result } })
@@ -599,108 +540,86 @@ export const waitlistRouter = router({
 })
 ```
 
-Register it in `server/routers/index.ts`: add `import { waitlistRouter } from "./waitlist"` and `waitlist: waitlistRouter,` after `graph: graphRouter,`.
+In `server/routers/index.ts`: `import { waitlistRouter } from "./waitlist"` and `waitlist: waitlistRouter,` after `graph: graphRouter,`.
 
-- [ ] **Step 4: Run tests**
+- [ ] **Step 3: Run test** → PASS.
 
-Run: `pnpm vitest run server/__tests__/waitlist-router.test.ts`
-Expected: PASS. (`stats` with the mocked `db.execute` returning `[]` yields zeros.)
-
-- [ ] **Step 5: Add a live promote check**
-
-In `scripts/verify-waitlist.mjs`, before the `finally`, add:
+- [ ] **Step 4: Live promote check** — in `scripts/verify-waitlist.mjs`, before `} finally {`:
 
 ```js
-  // promote path: same SQL shape the router uses, run directly
-  const [w] = await sql`select id, email, name from public.waitlist where email = ${email}`
-  await sql`insert into public.beta_testers (email, name, platform, note, invited_by)
-            values (${w.email}, ${w.name}, 'both', 'from waitlist', 'verify') on conflict (email) do nothing`
-  await sql`insert into public.beta_testers (email, name, platform, note, invited_by)
-            values (${w.email}, ${w.name}, 'both', 'from waitlist', 'verify') on conflict (email) do nothing`
+  const [w] = await sql`select email, name from public.waitlist where email = ${email}`
+  for (let i = 0; i < 2; i++)
+    await sql`insert into public.beta_testers (email, name, platform, note, invited_by)
+              values (${w.email}, ${w.name}, 'both', 'from waitlist', 'verify') on conflict (email) do nothing`
   const bt = await sql`select * from public.beta_testers where email = ${email}`
   assert(bt.length === 1, "promoting twice leaves one beta_testers row")
 ```
 
-and in the `finally` block, before `sql.end()`, add `await sql\`delete from public.beta_testers where email like ${tag + "%"}\``.
+Run `node scripts/verify-waitlist.mjs` → all `ok:`.
 
-Run: `node scripts/verify-waitlist.mjs` → all `ok:`.
-
-- [ ] **Step 6: Full checks and commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 pnpm typecheck && pnpm test
 git add server/routers/waitlist.ts server/routers/index.ts server/__tests__/waitlist-router.test.ts scripts/verify-waitlist.mjs
-git commit -m "feat(waitlist): tRPC router — stats, audited list/export, promote to beta"
+git commit -m "feat(waitlist): router — stats by country, audited list/export, promote to beta"
 ```
 
 ---
 
-### Task 4: Waitlist pillar page and sidebar
+### Task 4: Waitlist pillar UI and sidebar
 
-**Files:**
-- Create: `CC/app/(app)/waitlist/page.tsx`
-- Create: `CC/app/(app)/waitlist/WaitlistStats.tsx`
-- Create: `CC/app/(app)/waitlist/WaitlistTable.tsx`
-- Modify: `CC/components/CommandCenterSidebar.tsx` (Audience section + `READY`)
+**Files:** Create `CC/app/(app)/waitlist/page.tsx`, `WaitlistStats.tsx`, `WaitlistTable.tsx`; Modify `CC/components/CommandCenterSidebar.tsx`
 
-**Interfaces:**
-- Consumes: the four procedures from Task 3; `createContext` from `@/server/context`; `trpc` from `@/lib/trpc`.
+**Interfaces:** Consumes Task 3 procedures; `createContext`; `trpc` from `@/lib/trpc`.
 
-- [ ] **Step 1: Page (server component, role-aware)**
-
-`app/(app)/waitlist/page.tsx`:
+- [ ] **Step 1: Page** — `app/(app)/waitlist/page.tsx`:
 
 ```tsx
 import { createContext } from "@/server/context"
 import { WaitlistStats } from "./WaitlistStats"
 import { WaitlistTable } from "./WaitlistTable"
 
-/**
- * Waitlist — signups from the grandma.app marketing site. Viewers see
- * aggregates; admins also see the list (PII, audited), export and promote.
- */
+/** Waitlist — marketing-site signups. Launch order: Brazil, then the US. Viewers see aggregates; admins also see the audited list. */
 export default async function WaitlistPage() {
   const ctx = await createContext()
   if (!ctx.allowed) return <main className="p-8 text-fg-secondary">No access.</main>
-
   return (
     <main className="mx-auto max-w-6xl px-8 py-10">
       <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Audience</p>
       <h1 className="display text-3xl font-bold tracking-tight text-fg-primary">Waitlist</h1>
       <p className="mt-2 max-w-2xl text-sm text-fg-tertiary">
-        People who joined from grandma.app. Order is first come, first served. Promote people to the beta roster
-        when it&apos;s their turn.
+        People who joined from grandma.app. Brazil opens first, then the US. Within a country it&apos;s first come, first
+        served — promote people to the beta roster when it&apos;s their turn.
       </p>
       <div className="mt-8 space-y-8">
         <WaitlistStats />
-        {ctx.role === "admin" ? (
-          <WaitlistTable />
-        ) : (
-          <p className="text-sm text-fg-tertiary">The list of emails is visible to admins only.</p>
-        )}
+        {ctx.role === "admin" ? <WaitlistTable /> : <p className="text-sm text-fg-tertiary">The list of emails is visible to admins only.</p>}
       </div>
     </main>
   )
 }
 ```
 
-- [ ] **Step 2: Stats component**
-
-`app/(app)/waitlist/WaitlistStats.tsx`:
+- [ ] **Step 2: Stats** — `app/(app)/waitlist/WaitlistStats.tsx`:
 
 ```tsx
 "use client"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { trpc } from "@/lib/trpc"
 
-const MODE_LABEL: Record<string, string> = { pre: "Cycle", preg: "Pregnancy", kids: "Kids", meno: "Menopause" }
-const LOCALE_LABEL: Record<string, string> = { en: "English", pt: "Português" }
+const LABEL: Record<string, string> = {
+  BR: "Brasil", US: "United States", OTHER: "Other",
+  pre: "Cycle", preg: "Pregnancy", kids: "Kids", meno: "Menopause",
+  en: "English", pt: "Português",
+}
+const fmt = (rows: { count: number; key: string }[]) => rows.map((r) => `${LABEL[r.key] ?? r.key} ${r.count.toLocaleString()}`).join(" · ") || "—"
 
-function Tile({ label, value }: { label: string; value: string | number }) {
+function Tile({ label, value, small }: { label: string; value: string; small?: boolean }) {
   return (
     <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
       <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">{label}</p>
-      <p className="display mt-1 text-3xl font-bold tabular-nums text-fg-primary">{value}</p>
+      <p className={small ? "mt-2 text-sm font-medium leading-6 text-fg-secondary" : "display mt-1 text-3xl font-bold tabular-nums text-fg-primary"}>{value}</p>
     </div>
   )
 }
@@ -708,18 +627,14 @@ function Tile({ label, value }: { label: string; value: string | number }) {
 export function WaitlistStats() {
   const { data, isLoading, error } = trpc.waitlist.stats.useQuery()
   if (isLoading) return <p className="text-sm text-fg-tertiary">Loading…</p>
-  if (error || !data) return <p className="text-sm text-accent-red">Couldn&apos;t load stats: {error?.message}</p>
-
-  const split = (rows: { count: number }[], key: "mode" | "locale", labels: Record<string, string>) =>
-    rows.map((r) => `${labels[(r as Record<string, unknown>)[key] as string] ?? (r as Record<string, unknown>)[key]} ${r.count}`).join(" · ") || "—"
-
+  if (error || !data) return <p className="text-sm text-fg-secondary">Couldn&apos;t load stats: {error?.message}</p>
   return (
     <section className="space-y-4">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile label="Total" value={data.total.toLocaleString()} />
         <Tile label="Last 7 days" value={data.last7.toLocaleString()} />
-        <Tile label="By mode" value={split(data.byMode, "mode", MODE_LABEL)} />
-        <Tile label="By language" value={split(data.byLocale, "locale", LOCALE_LABEL)} />
+        <Tile label="By country" small value={fmt(data.byCountry.map((r) => ({ key: r.country, count: r.count })))} />
+        <Tile label="By mode" small value={fmt(data.byMode.map((r) => ({ key: r.mode, count: r.count })))} />
       </div>
       <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
         <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Signups per day · 90 days</p>
@@ -728,8 +643,8 @@ export function WaitlistStats() {
             <BarChart data={data.daily} margin={{ top: 4, right: 0, left: -24, bottom: 0 }}>
               <XAxis dataKey="day" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={24} />
               <YAxis allowDecimals={false} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-              <Tooltip cursor={{ fill: "rgba(20,33,61,0.05)" }} />
-              <Bar dataKey="count" fill="var(--accent-blue, #14213D)" radius={[3, 3, 0, 0]} />
+              <Tooltip />
+              <Bar dataKey="count" fill="var(--accent-500)" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -739,11 +654,9 @@ export function WaitlistStats() {
 }
 ```
 
-Before committing, open `app/globals.css` in CC and replace `var(--accent-blue, #14213D)` and `text-accent-red` with the actual accent token / utility names that file defines (the skin's CLAUDE.md lists `text-accent-*`; pick the existing blue and red names). Do not hardcode a hex if a token exists.
+(`--accent-500` is defined in CC `app/globals.css` for both themes.)
 
-- [ ] **Step 3: Table component**
-
-`app/(app)/waitlist/WaitlistTable.tsx`:
+- [ ] **Step 3: Table** — `app/(app)/waitlist/WaitlistTable.tsx`:
 
 ```tsx
 "use client"
@@ -751,10 +664,10 @@ import { useState } from "react"
 import { trpc } from "@/lib/trpc"
 import type { WaitlistFilter } from "@/lib/waitlist"
 
+const COUNTRIES = [["", "All countries"], ["BR", "Brasil"], ["US", "United States"], ["OTHER", "Other"]] as const
 const MODES = [["", "All modes"], ["pre", "Cycle"], ["preg", "Pregnancy"], ["kids", "Kids"], ["meno", "Menopause"]] as const
 const LOCALES = [["", "All languages"], ["en", "English"], ["pt", "Português"]] as const
 const INVITED = [["all", "Everyone"], ["pending", "Not invited"], ["invited", "Invited"]] as const
-
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString() : "—")
 
 export function WaitlistTable() {
@@ -770,7 +683,7 @@ export function WaitlistTable() {
       const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }))
       const a = document.createElement("a")
       a.href = url
-      a.download = `waitlist-${new Date().toISOString().slice(0, 10)}.csv`
+      a.download = `waitlist-${filter.country ?? "all"}-${new Date().toISOString().slice(0, 10)}.csv`
       a.click()
       URL.revokeObjectURL(url)
       setNotice(`Exported ${count} rows.`)
@@ -791,96 +704,48 @@ export function WaitlistTable() {
   const total = list.data?.total ?? 0
   const pageSize = list.data?.pageSize ?? 50
   const pages = Math.max(1, Math.ceil(total / pageSize))
-
-  const update = (patch: Partial<WaitlistFilter>) => {
-    setFilter((f) => ({ ...f, ...patch }))
-    setPage(0)
-    setSelected(new Set())
-  }
-  const toggle = (id: string) =>
-    setSelected((s) => {
-      const n = new Set(s)
-      if (n.has(id)) n.delete(id)
-      else n.add(id)
-      return n
-    })
-
-  const select = "rounded-lg border border-border-default bg-card px-3 py-2 text-sm text-fg-primary"
+  const update = (p: Partial<WaitlistFilter>) => { setFilter((f) => ({ ...f, ...p })); setPage(0); setSelected(new Set()) }
+  const toggle = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  const ctl = "rounded-lg border border-border-default bg-card px-3 py-2 text-sm text-fg-primary"
+  const opt = <T extends readonly (readonly [string, string])[]>(o: T) => o.map(([v, l]) => <option key={v} value={v}>{l}</option>)
 
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <input
-          className={`${select} min-w-[220px]`}
-          placeholder="Search email or name"
-          value={filter.q ?? ""}
-          onChange={(e) => update({ q: e.target.value || undefined })}
-        />
-        <select className={select} value={filter.mode ?? ""} onChange={(e) => update({ mode: (e.target.value || undefined) as WaitlistFilter["mode"] })}>
-          {MODES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-        <select className={select} value={filter.locale ?? ""} onChange={(e) => update({ locale: (e.target.value || undefined) as WaitlistFilter["locale"] })}>
-          {LOCALES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-        <select className={select} value={filter.invited} onChange={(e) => update({ invited: e.target.value as WaitlistFilter["invited"] })}>
-          {INVITED.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-        <input type="date" className={select} value={filter.from ?? ""} onChange={(e) => update({ from: e.target.value || undefined })} aria-label="From" />
-        <input type="date" className={select} value={filter.to ?? ""} onChange={(e) => update({ to: e.target.value || undefined })} aria-label="To" />
+        <input className={`${ctl} min-w-[220px]`} placeholder="Search email or name" value={filter.q ?? ""} onChange={(e) => update({ q: e.target.value || undefined })} />
+        <select className={ctl} value={filter.country ?? ""} onChange={(e) => update({ country: (e.target.value || undefined) as WaitlistFilter["country"] })}>{opt(COUNTRIES)}</select>
+        <select className={ctl} value={filter.mode ?? ""} onChange={(e) => update({ mode: (e.target.value || undefined) as WaitlistFilter["mode"] })}>{opt(MODES)}</select>
+        <select className={ctl} value={filter.locale ?? ""} onChange={(e) => update({ locale: (e.target.value || undefined) as WaitlistFilter["locale"] })}>{opt(LOCALES)}</select>
+        <select className={ctl} value={filter.invited} onChange={(e) => update({ invited: e.target.value as WaitlistFilter["invited"] })}>{opt(INVITED)}</select>
+        <input type="date" aria-label="From" className={ctl} value={filter.from ?? ""} onChange={(e) => update({ from: e.target.value || undefined })} />
+        <input type="date" aria-label="To" className={ctl} value={filter.to ?? ""} onChange={(e) => update({ to: e.target.value || undefined })} />
         <div className="ml-auto flex gap-2">
-          <button className={select} disabled={exportCsv.isPending} onClick={() => exportCsv.mutate({ filter })}>
-            {exportCsv.isPending ? "Exporting…" : "Export CSV"}
-          </button>
-          <button
-            className={`${select} font-semibold`}
-            disabled={selected.size === 0 || promote.isPending}
-            onClick={() => promote.mutate({ ids: [...selected] })}
-          >
+          <button className={ctl} disabled={exportCsv.isPending} onClick={() => exportCsv.mutate({ filter })}>{exportCsv.isPending ? "Exporting…" : "Export CSV"}</button>
+          <button className={`${ctl} font-semibold`} disabled={selected.size === 0 || promote.isPending} onClick={() => promote.mutate({ ids: [...selected] })}>
             {promote.isPending ? "Promoting…" : `Promote to beta (${selected.size})`}
           </button>
         </div>
       </div>
-
-      {notice && <p className="text-sm text-fg-secondary" role="status">{notice}</p>}
+      {notice && <p role="status" className="text-sm text-fg-secondary">{notice}</p>}
       {list.error && <p className="text-sm text-fg-secondary">Couldn&apos;t load the list: {list.error.message}</p>}
-
       <div className="overflow-x-auto rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
         <table className="w-full text-left text-sm">
           <thead className="font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">
             <tr className="border-b border-border-default">
-              <th className="w-10 px-4 py-3">
-                <input
-                  type="checkbox"
-                  aria-label="Select page"
-                  checked={rows.length > 0 && rows.every((r) => selected.has(r.id))}
-                  onChange={(e) => setSelected(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())}
-                />
-              </th>
-              <th className="px-4 py-3">#</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Mode</th>
-              <th className="px-4 py-3">Lang</th>
-              <th className="px-4 py-3">Joined</th>
-              <th className="px-4 py-3">Invited</th>
-              <th className="px-4 py-3">In app</th>
+              <th className="w-10 px-4 py-3"><input type="checkbox" aria-label="Select page" checked={rows.length > 0 && rows.every((r) => selected.has(r.id))} onChange={(e) => setSelected(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())} /></th>
+              {["#", "Email", "Name", "Country", "Mode", "Lang", "Joined", "Invited", "In app"].map((h) => <th key={h} className="px-4 py-3">{h}</th>)}
             </tr>
           </thead>
           <tbody>
-            {list.isLoading && (
-              <tr><td colSpan={9} className="px-4 py-6 text-fg-tertiary">Loading…</td></tr>
-            )}
-            {!list.isLoading && rows.length === 0 && (
-              <tr><td colSpan={9} className="px-4 py-6 text-fg-tertiary">No one matches these filters.</td></tr>
-            )}
+            {list.isLoading && <tr><td colSpan={10} className="px-4 py-6 text-fg-tertiary">Loading…</td></tr>}
+            {!list.isLoading && rows.length === 0 && <tr><td colSpan={10} className="px-4 py-6 text-fg-tertiary">No one matches these filters.</td></tr>}
             {rows.map((r, i) => (
               <tr key={r.id} className="border-b border-border-default last:border-0">
-                <td className="px-4 py-3">
-                  <input type="checkbox" aria-label={`Select ${r.email}`} checked={selected.has(r.id)} onChange={() => toggle(r.id)} />
-                </td>
+                <td className="px-4 py-3"><input type="checkbox" aria-label={`Select ${r.email}`} checked={selected.has(r.id)} onChange={() => toggle(r.id)} /></td>
                 <td className="px-4 py-3 tabular-nums text-fg-muted">{page * pageSize + i + 1}</td>
                 <td className="px-4 py-3 text-fg-primary">{r.email}</td>
                 <td className="px-4 py-3 text-fg-secondary">{r.name ?? "—"}</td>
+                <td className="px-4 py-3">{r.country}</td>
                 <td className="px-4 py-3">{r.mode}</td>
                 <td className="px-4 py-3 uppercase">{r.locale}</td>
                 <td className="px-4 py-3 tabular-nums">{fmt(r.createdAt)}</td>
@@ -891,13 +756,12 @@ export function WaitlistTable() {
           </tbody>
         </table>
       </div>
-
       <div className="flex items-center justify-between text-sm text-fg-tertiary">
         <span>{total.toLocaleString()} people</span>
         <div className="flex items-center gap-2">
-          <button className={select} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</button>
+          <button className={ctl} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</button>
           <span className="tabular-nums">{page + 1} / {pages}</span>
-          <button className={select} disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)}>Next</button>
+          <button className={ctl} disabled={page + 1 >= pages} onClick={() => setPage((p) => p + 1)}>Next</button>
         </div>
       </div>
     </section>
@@ -905,64 +769,446 @@ export function WaitlistTable() {
 }
 ```
 
-The `#` column is the queue position within the current filter (rows are ordered by `created_at asc`).
+`#` = position within the current filter (ordered by `created_at asc`); filter by Brasil to see the BR queue.
 
-- [ ] **Step 4: Sidebar**
+- [ ] **Step 4: Sidebar** — in `components/CommandCenterSidebar.tsx`: import `ListPlus` from `lucide-react`; in the `Audience` items after Revenue add `{ href: "/waitlist", label: "Waitlist", icon: ListPlus },`; add `"/waitlist"` to `READY`.
 
-In `components/CommandCenterSidebar.tsx`:
-- add `ListPlus` to the `lucide-react` import;
-- in the `Audience` section items, after `Revenue`, add `{ href: "/waitlist", label: "Waitlist", icon: ListPlus },`;
-- add `"/waitlist"` to the `READY` set.
+- [ ] **Step 5: Browser check** — `pnpm dev`; insert `select public.waitlist_join('qa-cc@example.com','QA','meno','pt','BR',false,null,null,null,null,null)`; as admin open `/waitlist`: tiles (By country shows "Brasil 1"), chart, row with country BR, Country filter, CSV download has a `country` column, Promote → "Promoted 1 to beta", `/beta` shows it. As viewer: tiles + chart only. Clean up: `delete from waitlist where email='qa-cc@example.com'; delete from beta_testers where email='qa-cc@example.com';`.
 
-- [ ] **Step 5: Verify in the browser**
-
-Run: `pnpm dev` (port 3002). Insert one test row with `node -e` or psql (`select public.waitlist_join('qa-cc@example.com','QA','meno','pt',false,null,null,null,null,null)`), then sign in as an admin and open `/waitlist`. Check: tiles show totals, chart renders, the row appears, Export downloads a CSV, selecting the row and clicking Promote shows "Promoted 1 to beta" and `/beta` lists the email. Sign in as a viewer (or temporarily set your role to viewer in Clerk): only the tiles and chart show. Delete the test rows afterwards (`delete from waitlist where email='qa-cc@example.com'; delete from beta_testers where email='qa-cc@example.com';`).
-
-- [ ] **Step 6: Checks and commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test && pnpm build
 git add "app/(app)/waitlist" components/CommandCenterSidebar.tsx
-git commit -m "feat(waitlist): Waitlist pillar — stats, audited table, CSV export, promote to beta"
+git commit -m "feat(waitlist): Waitlist pillar — country-first stats, audited table, CSV, promote to beta"
 ```
 
 ---
 
-## Part B — marketing site (v0-grandma-app)
+## Part B — App capture pipeline (in SITE)
 
-All commands in Part B run from `/Users/igorcarvalhorodrigues/dev/v0-grandma-app` on branch `feat/waitlist-diffuse-i18n`.
+All Part B files live in `SITE/scripts/capture/`. Commands run from SITE unless stated.
 
-### Task 5: i18n infrastructure (routing, layout, metadata, switcher)
+### Task 5: Capture setup (simulator, dev client, demo data)
 
-**Files:**
-- Modify: `package.json` (deps + scripts)
-- Create: `vitest.config.ts`
-- Create: `i18n/routing.ts`, `i18n/navigation.ts`, `i18n/request.ts`
-- Create: `proxy.ts`
-- Modify: `next.config.mjs`
-- Move: `app/layout.tsx` → `app/[locale]/layout.tsx` (rewritten), `app/page.tsx` → `app/[locale]/page.tsx`, `app/pricing/page.tsx` → `app/[locale]/pricing/page.tsx`, `app/privacy/page.tsx` → `app/[locale]/privacy/page.tsx`, `app/terms/page.tsx` → `app/[locale]/terms/page.tsx`
-- Create: `messages/en.json`, `messages/pt.json` (namespaces `meta`, `nav`, `locale`)
-- Create: `components/locale-switcher.tsx`
-- Modify: `components/navigation.tsx` (links via `@/i18n/navigation`, labels via `t`, switcher)
-- Test: `messages/messages.test.ts`
+**Files:** Create `scripts/capture/README.md`, `scripts/capture/prepare.sh`, `scripts/capture/flows/_open-panel.yaml`, `scripts/capture/flows/00-seed.yaml`, `scripts/capture/flows/lang-en.yaml`, `scripts/capture/flows/lang-pt.yaml`, `scripts/capture/flows/mode-pre.yaml`, `mode-preg.yaml`, `mode-kids.yaml`, `mode-meno.yaml`, `scripts/capture/flows/_home.yaml`
 
 **Interfaces:**
-- Produces: `routing` (`locales: ['en','pt']`, `defaultLocale: 'en'`); `Link`, `usePathname`, `useRouter`, `redirect` from `@/i18n/navigation`; `type Locale = 'en' | 'pt'`; `htmlLang(locale)` → `'en' | 'pt-BR'`; `pnpm test`, `pnpm typecheck`, `pnpm i18n:check` scripts. Every later site task adds keys to BOTH message files.
+- Produces: `bash scripts/capture/prepare.sh` (exit 0 = ready); subflows `_open-panel.yaml`, `_home.yaml`, `lang-<en|pt>.yaml`, `mode-<pre|preg|kids|meno>.yaml` used by Task 6.
 
-- [ ] **Step 1: Install dependencies and add scripts**
+- [ ] **Step 1: prepare.sh**
+
+```bash
+#!/usr/bin/env bash
+# Readies the booted iOS Simulator for capture: app installed, Metro reachable,
+# clean status bar. Does not sign in — Igor does that once by hand (README).
+set -euo pipefail
+APP_ID="co.sauceroom.grandma"
+APP_REPO="${APP_REPO:-/Users/igorcarvalhorodrigues/dev/grandma-app}"
+
+booted=$(xcrun simctl list devices booted | grep -c Booted || true)
+if [ "$booted" -eq 0 ]; then echo "✗ No booted simulator. Open Simulator.app (iPhone 16 Pro / 17 Pro) first."; exit 1; fi
+
+if ! xcrun simctl get_app_container booted "$APP_ID" >/dev/null 2>&1; then
+  echo "• Installing latest EAS simulator build of grandma…"
+  (cd "$APP_REPO" && npm run eas:install:sim)
+fi
+xcrun simctl get_app_container booted "$APP_ID" >/dev/null || { echo "✗ $APP_ID still not installed. Run 'npm run eas:build:sim' in $APP_REPO."; exit 1; }
+
+if ! curl -sf http://localhost:8081/status | grep -q running; then
+  echo "✗ Metro is not running. In another terminal: cd $APP_REPO && npm start"; exit 1
+fi
+
+xcrun simctl status_bar booted override --time "9:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \
+  --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+xcrun simctl ui booted appearance light
+which maestro >/dev/null || export PATH="$PATH:$HOME/.maestro/bin"
+maestro --version >/dev/null
+echo "✓ Ready. App installed, Metro up, status bar 9:41."
+```
+
+`chmod +x scripts/capture/prepare.sh`.
+
+- [ ] **Step 2: README** — `scripts/capture/README.md`:
+
+```markdown
+# App capture — real grandma.app clips for the site
+
+Records the installed grandma dev-client app in the iOS Simulator with demo data,
+in English and Portuguese, and encodes looping clips into `public/media/app/<lang>/`.
+Nothing here modifies the grandma-app repo.
+
+## One-time (per machine)
+1. Open Simulator.app with an iPhone 16 Pro or 17 Pro.
+2. `cd ../grandma-app && npm start` (Metro) — keep it running.
+3. `bash scripts/capture/prepare.sh` (installs the latest EAS simulator build if missing).
+4. **Igor:** open the app in the simulator and sign in with the demo account.
+   Never a real user. Credentials stay out of this repo.
+5. `maestro test scripts/capture/flows/00-seed.yaml` — seeds every mode with demo data.
+
+## Record + encode
+    bash scripts/capture/record.sh          # all shots, both languages → scripts/capture/raw/
+    bash scripts/capture/encode.sh          # → public/media/app/{en,pt}/*.{mp4,webm,jpg}
+    open scripts/capture/review.html        # Igor reviews every clip before commit
+
+Re-run whenever the app's UI changes. Raw recordings are gitignored.
+
+## If a step can't find a label
+`maestro hierarchy` prints the current screen's elements. Update the flow's text
+selector and re-run only that shot: `bash scripts/capture/record.sh home-meno`.
+```
+
+- [ ] **Step 3: Subflows**
+
+`flows/_open-panel.yaml` (dev panel via deep link; the panel is `__DEV__`-only):
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- openLink: grandma-app://dev-panel
+- extendedWaitUntil:
+    visible: "SEED DATA"
+    timeout: 20000
+```
+
+`flows/_home.yaml` (back to the tabbed home and drop dev mode so its banner never appears in a clip):
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- runFlow:
+    when:
+      visible: "EXIT"
+    commands:
+      - tapOn: "EXIT"
+- openLink: grandma-app:///
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertNotVisible: "DEV MODE"
+```
+
+`flows/00-seed.yaml`:
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- launchApp
+- runFlow: _open-panel.yaml
+- scrollUntilVisible:
+    element: "Seed everything"
+    direction: DOWN
+- tapOn: "Seed everything"
+- extendedWaitUntil:
+    visible: "OK"
+    timeout: 120000
+- tapOn: "OK"
+- scrollUntilVisible:
+    element: "Seed menopause data"
+    direction: UP
+- tapOn: "Seed menopause data"
+- extendedWaitUntil:
+    visible: "OK"
+    timeout: 60000
+- tapOn: "OK"
+- runFlow: _home.yaml
+```
+
+`flows/mode-pre.yaml` (same shape for the other three; only the label differs: `Preg`, `Kids`, `Menopause`):
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- runFlow: _open-panel.yaml
+- scrollUntilVisible:
+    element: "MODE"
+    direction: UP
+- tapOn: "Pre-Preg"
+- runFlow: _home.yaml
+```
+
+`flows/lang-en.yaml` / `flows/lang-pt.yaml` (Settings language picker; only the tapped label differs — `English` / `Português (Brasil)`):
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- openLink: grandma-app://profile/settings
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "English|Português \\(Brasil\\)|Language|Idioma"
+    direction: DOWN
+- tapOn: "English|Português \\(Brasil\\)"   # opens the language list on the current value
+- tapOn: "English"
+- runFlow: _home.yaml
+```
+
+- [ ] **Step 4: Dry run (with Igor signed in)**
+
+```bash
+bash scripts/capture/prepare.sh
+maestro test scripts/capture/flows/00-seed.yaml
+maestro test scripts/capture/flows/lang-pt.yaml
+maestro test scripts/capture/flows/mode-meno.yaml
+xcrun simctl io booted screenshot /tmp/capture-check.png && open /tmp/capture-check.png
+```
+
+Expected: app in Portuguese, menopause home with seeded data, no DEV MODE pill, status bar 9:41. For any failed step run `maestro hierarchy` and fix the selector (labels come from `APP/app/dev-panel.tsx` and `APP/app/profile/settings.tsx`).
+
+- [ ] **Step 5: Commit**
+
+```bash
+printf "scripts/capture/raw/\n" >> .gitignore
+git add .gitignore scripts/capture
+git commit -m "chore(capture): simulator prep, demo seed, mode and language subflows"
+```
+
+---
+
+### Task 6: Shot flows and recorder
+
+**Files:** Create `scripts/capture/record.sh`, `scripts/capture/flows/shot-*.yaml` (8 files)
+
+**Interfaces:**
+- Consumes: Task 5 subflows.
+- Produces: `scripts/capture/raw/<lang>/<shot>.mov` for shots `onboarding-picker`, `home-pre`, `home-preg`, `home-kids`, `home-meno`, `talk`, `insights-pre`, `calendar-meno`.
+
+- [ ] **Step 1: Shot flows.** Each shot sets its mode, then performs ~6–8 s of motion. Recording is started/stopped by `record.sh`, so the flows contain only the action.
+
+`flows/shot-home-pre.yaml`:
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- runFlow: mode-pre.yaml
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1400 }
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1400 }
+- waitForAnimationToEnd
+- swipe: { direction: DOWN, duration: 1800 }
+- waitForAnimationToEnd
+```
+
+`flows/shot-home-preg.yaml` and `flows/shot-home-kids.yaml`: identical to the above with `mode-preg.yaml` / `mode-kids.yaml`.
+
+`flows/shot-home-meno.yaml` (home week strip → quick log → tap a symptom → close):
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- runFlow: mode-meno.yaml
+- waitForAnimationToEnd
+- tapOn:
+    id: "quick-log"
+    optional: true
+- runFlow:
+    when:
+      notVisible: "Hot flash|Onda de calor"
+    commands:
+      - tapOn: "Log|Registrar"
+- waitForAnimationToEnd
+- tapOn: "Hot flash|Onda de calor"
+- waitForAnimationToEnd
+- swipe: { direction: DOWN, duration: 900 }
+- waitForAnimationToEnd
+```
+
+`flows/shot-talk.yaml`:
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- runFlow: mode-kids.yaml
+- openLink: grandma-app://grandma-talk
+- waitForAnimationToEnd
+- tapOn:
+    point: "50%,92%"
+- inputText: "${QUESTION}"
+- pressKey: Enter
+- extendedWaitUntil:
+    notVisible: "…"
+    timeout: 25000
+- waitForAnimationToEnd
+```
+
+(`QUESTION` is passed by `record.sh` per language.)
+
+`flows/shot-onboarding-picker.yaml`:
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- openLink: grandma-app://onboarding/journey?addMode=true
+- waitForAnimationToEnd
+- tapOn: "Pregnancy|Gravidez"
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 900 }
+- waitForAnimationToEnd
+```
+
+`flows/shot-insights-pre.yaml`:
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- runFlow: mode-pre.yaml
+- openLink: grandma-app://insights
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1600 }
+- waitForAnimationToEnd
+```
+
+`flows/shot-calendar-meno.yaml`:
+
+```yaml
+appId: co.sauceroom.grandma
+---
+- runFlow: mode-meno.yaml
+- tapOn: "Agenda"
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1400 }
+- waitForAnimationToEnd
+```
+
+`record.sh` records the whole flow, including the mode switch at the start; `encode.sh` trims those first seconds with per-shot values from `shots.tsv` (Task 7).
+
+- [ ] **Step 2: record.sh**
+
+```bash
+#!/usr/bin/env bash
+# Records each shot flow in each language: scripts/capture/raw/<lang>/<shot>.mov
+# Usage: record.sh [shot ...]   (default: all shots)
+set -uo pipefail
+cd "$(dirname "$0")"
+export PATH="$PATH:$HOME/.maestro/bin"
+SHOTS=(onboarding-picker home-pre home-preg home-kids home-meno talk insights-pre calendar-meno)
+[ $# -gt 0 ] && SHOTS=("$@")
+declare -A Q=( [en]="Rio woke up 4 times last night. Is this a regression?" [pt]="O Rio acordou 4 vezes esta noite. É regressão?" )
+failed=()
+
+bash ./prepare.sh || exit 1
+for lang in pt en; do
+  maestro test "flows/lang-$lang.yaml" || { echo "✗ could not switch language to $lang"; exit 1; }
+  mkdir -p "raw/$lang"
+  for shot in "${SHOTS[@]}"; do
+    out="raw/$lang/$shot.mov"
+    rm -f "$out"
+    xcrun simctl io booted recordVideo --codec h264 --force "$out" >/dev/null 2>&1 &
+    rec=$!
+    sleep 1.5
+    if maestro test -e QUESTION="${Q[$lang]}" "flows/shot-$shot.yaml"; then echo "✓ $lang/$shot"; else failed+=("$lang/$shot"); fi
+    sleep 0.8
+    kill -INT "$rec"; wait "$rec" 2>/dev/null
+  done
+done
+xcrun simctl status_bar booted clear
+if [ ${#failed[@]} -gt 0 ]; then echo "✗ Failed shots: ${failed[*]}"; exit 1; fi
+echo "✓ All shots recorded."
+```
+
+(`declare -A` needs bash ≥ 4: run with `/opt/homebrew/bin/bash` if macOS bash 3.2 errors — the shebang `env bash` picks Homebrew bash when it's first on `PATH`.)
+
+- [ ] **Step 3: Run** — `bash scripts/capture/record.sh`. Expected: 16 `✓` lines, `raw/pt/*.mov` and `raw/en/*.mov`. Open two of them (`open scripts/capture/raw/pt/home-meno.mov`) and confirm: Portuguese UI, demo data, no DEV MODE pill.
+
+- [ ] **Step 4: Commit** — `git add scripts/capture && git commit -m "chore(capture): eight shot flows + recorder for both languages"`
+
+---
+
+### Task 7: Encode clips and review gallery
+
+**Files:** Create `scripts/capture/encode.sh`, `scripts/capture/shots.tsv`, `scripts/capture/review.html`; Output `public/media/app/{en,pt}/<shot>.{mp4,webm,jpg}`
+
+**Interfaces:**
+- Produces: `/media/app/<lang>/<shot>.mp4|.webm|.jpg` — consumed by `AppVideo` (Task 9) with `shot` ∈ the 8 names above and `lang` ∈ `en|pt`.
+
+- [ ] **Step 1: shots.tsv** (seconds to skip at the start — the mode switch — and clip length):
+
+```
+shot	start	length
+onboarding-picker	1.0	7
+home-pre	4.0	7
+home-preg	4.0	7
+home-kids	4.0	7
+home-meno	4.0	8
+talk	5.0	8
+insights-pre	5.0	6
+calendar-meno	5.0	6
+```
+
+- [ ] **Step 2: encode.sh**
+
+```bash
+#!/usr/bin/env bash
+# raw/<lang>/<shot>.mov → public/media/app/<lang>/<shot>.{mp4,webm,jpg}
+set -euo pipefail
+cd "$(dirname "$0")"
+OUT=../../public/media/app
+tail -n +2 shots.tsv | while IFS=$'\t' read -r shot start length; do
+  for lang in en pt; do
+    in="raw/$lang/$shot.mov"; [ -f "$in" ] || { echo "skip $lang/$shot (no raw)"; continue; }
+    mkdir -p "$OUT/$lang"
+    vf="scale=720:-2:flags=lanczos,fps=30"
+    ffmpeg -loglevel error -y -ss "$start" -t "$length" -i "$in" -an -vf "$vf" \
+      -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 28 -preset slow -movflags +faststart "$OUT/$lang/$shot.mp4"
+    ffmpeg -loglevel error -y -ss "$start" -t "$length" -i "$in" -an -vf "$vf" \
+      -c:v libvpx-vp9 -b:v 0 -crf 40 -row-mt 1 "$OUT/$lang/$shot.webm"
+    ffmpeg -loglevel error -y -ss "$(echo "$start + 0.5" | bc)" -i "$in" -frames:v 1 -vf "scale=720:-2" -q:v 3 "$OUT/$lang/$shot.jpg"
+    size=$(du -k "$OUT/$lang/$shot.mp4" | cut -f1)
+    [ "$size" -le 1536 ] && echo "✓ $lang/$shot ${size}KB" || echo "⚠ $lang/$shot ${size}KB > 1.5MB — raise crf or shorten"
+  done
+done
+```
+
+- [ ] **Step 3: review.html** — a static gallery Igor opens locally:
+
+```html
+<!doctype html><meta charset="utf-8"><title>Capture review</title>
+<style>body{font:14px system-ui;background:#F4F1E8;margin:24px}h2{font:600 13px ui-monospace;letter-spacing:.1em;text-transform:uppercase;color:#807A6E}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}figure{margin:0}video{width:100%;border-radius:22px;background:#000}figcaption{font:12px ui-monospace;margin-top:6px}</style>
+<h1>Capture review — check: demo data only, no DEV MODE pill, right language, no notifications</h1>
+<div id="r"></div>
+<script>
+const shots=["onboarding-picker","home-pre","home-preg","home-kids","home-meno","talk","insights-pre","calendar-meno"];
+document.getElementById("r").innerHTML=["pt","en"].map(l=>`<h2>${l}</h2><div class="g">${shots.map(s=>`<figure><video src="../../public/media/app/${l}/${s}.mp4" poster="../../public/media/app/${l}/${s}.jpg" autoplay muted loop playsinline></video><figcaption>${l}/${s}</figcaption></figure>`).join("")}</div>`).join("");
+</script>
+```
+
+- [ ] **Step 4: Encode and review**
+
+```bash
+bash scripts/capture/encode.sh
+open scripts/capture/review.html
+```
+
+Expected: 16 `✓` lines, each ≤ 1.5 MB. Adjust `shots.tsv` start/length until each clip begins on the destination screen. **Gate:** Igor approves the 16 clips (demo data only, right language, no dev UI, nothing personal). Do not commit media before that.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add scripts/capture/encode.sh scripts/capture/shots.tsv scripts/capture/review.html public/media/app
+git commit -m "feat(media): real app clips (PT + EN) from the capture pipeline"
+```
+
+---
+
+## Part C — Site (SITE repo)
+
+### Task 8: Diffuse v3 foundation — tokens, fonts, modes, countries
+
+**Files:**
+- Create: `vitest.config.ts`, `test/server-only-stub.ts`, `lib/modes.ts`, `lib/modes.test.ts`, `lib/countries.ts`, `lib/countries.test.ts`
+- Modify: `package.json` (deps + scripts), `app/globals.css` (replace entirely)
+
+**Interfaces:**
+- Produces: `MODES`, `Mode`, `isMode`, `FIELDS` (`Record<Mode, {g1,g2,g3,g4,accent,accentSoft}>`), `fieldStops(mode)`; `COUNTRIES = ['BR','US','OTHER']`, `Country`, `countryFromGeo(header: string | null | undefined, locale: 'en' | 'pt'): Country`; CSS tokens/utilities listed in Step 5; scripts `test`, `typecheck`, `i18n:check`.
+
+- [ ] **Step 1: Dependencies and scripts**
 
 ```bash
 pnpm add next-intl @supabase/supabase-js server-only
 pnpm add -D vitest
 ```
 
-In `package.json` `scripts` add:
-
-```json
-"typecheck": "tsc --noEmit",
-"test": "vitest run",
-"i18n:check": "vitest run messages"
-```
+`package.json` scripts: add `"typecheck": "tsc --noEmit"`, `"test": "vitest run"`, `"i18n:check": "vitest run messages"`.
 
 `vitest.config.ts`:
 
@@ -980,67 +1226,480 @@ export default defineConfig({
 })
 ```
 
-Create `test/server-only-stub.ts` with `export {}`.
+`test/server-only-stub.ts`: `export {}`.
 
-- [ ] **Step 2: Write the failing message-parity test**
+- [ ] **Step 2: Failing tests**
 
-`messages/messages.test.ts`:
+`lib/modes.test.ts`:
+
+```ts
+import { describe, it, expect } from 'vitest'
+import { MODES, FIELDS, fieldStops, isMode } from './modes'
+
+describe('modes', () => {
+  it('has exactly the four live modes', () => expect(MODES).toEqual(['pre', 'preg', 'kids', 'meno']))
+  it('matches the app diffuseFields', () => {
+    expect(FIELDS.meno).toEqual({ g1: '#F5C89A', g2: '#F0B27A', g3: '#E8975A', g4: '#F7DCC0', accent: '#C2703A', accentSoft: '#F7E3D2' })
+    expect(fieldStops('preg')).toEqual(['#F8C9A6', '#F2AEC6', '#BDA4E2', '#F8E1B2'])
+  })
+  it('isMode rejects caregiver and junk', () => {
+    expect(isMode('kids')).toBe(true)
+    expect(isMode('care')).toBe(false)
+    expect(isMode(undefined)).toBe(false)
+  })
+})
+```
+
+`lib/countries.test.ts`:
+
+```ts
+import { describe, it, expect } from 'vitest'
+import { COUNTRIES, countryFromGeo } from './countries'
+
+describe('countryFromGeo', () => {
+  it('lists the launch countries', () => expect(COUNTRIES).toEqual(['BR', 'US', 'OTHER']))
+  it('maps BR and US case-insensitively', () => {
+    expect(countryFromGeo('BR', 'en')).toBe('BR')
+    expect(countryFromGeo('us', 'pt')).toBe('US')
+  })
+  it('maps any other country to OTHER', () => expect(countryFromGeo('DE', 'pt')).toBe('OTHER'))
+  it('falls back by locale when the header is missing', () => {
+    expect(countryFromGeo(null, 'pt')).toBe('BR')
+    expect(countryFromGeo('', 'en')).toBe('OTHER')
+    expect(countryFromGeo(undefined, 'en')).toBe('OTHER')
+  })
+})
+```
+
+Run `pnpm test` → FAIL (modules missing).
+
+- [ ] **Step 3: Implement**
+
+`lib/modes.ts`:
+
+```ts
+/** The app's four live behaviors and their Diffuse fields (grandma-app constants/theme.ts `diffuseFields`). */
+export const MODES = ['pre', 'preg', 'kids', 'meno'] as const
+export type Mode = (typeof MODES)[number]
+export const isMode = (v: unknown): v is Mode => typeof v === 'string' && (MODES as readonly string[]).includes(v)
+
+export interface Field { g1: string; g2: string; g3: string; g4: string; accent: string; accentSoft: string }
+
+export const FIELDS: Record<Mode, Field> = {
+  pre: { g1: '#F0A99A', g2: '#F0B8C8', g3: '#C9B7E6', g4: '#F7DCC0', accent: '#C25872', accentSoft: '#F6DCE4' },
+  preg: { g1: '#F8C9A6', g2: '#F2AEC6', g3: '#BDA4E2', g4: '#F8E1B2', accent: '#8F5FC6', accentSoft: '#E7D8F5' },
+  kids: { g1: '#F4D888', g2: '#A2D8B4', g3: '#A6BCE6', g4: '#F4B396', accent: '#4C79CE', accentSoft: '#CBDCF7' },
+  meno: { g1: '#F5C89A', g2: '#F0B27A', g3: '#E8975A', g4: '#F7DCC0', accent: '#C2703A', accentSoft: '#F7E3D2' },
+}
+
+export const fieldStops = (m: Mode): [string, string, string, string] => [FIELDS[m].g1, FIELDS[m].g2, FIELDS[m].g3, FIELDS[m].g4]
+```
+
+`lib/countries.ts`:
+
+```ts
+/** Launch countries: Brazil opens first, then the US. */
+export const COUNTRIES = ['BR', 'US', 'OTHER'] as const
+export type Country = (typeof COUNTRIES)[number]
+
+/** Default for the form from Vercel's x-vercel-ip-country header, falling back by site language. */
+export function countryFromGeo(header: string | null | undefined, locale: 'en' | 'pt'): Country {
+  const c = (header ?? '').trim().toUpperCase()
+  if (c === 'BR' || c === 'US') return c
+  if (c) return 'OTHER'
+  return locale === 'pt' ? 'BR' : 'OTHER'
+}
+```
+
+Run `pnpm test` → PASS.
+
+- [ ] **Step 4: Replace `app/globals.css`** entirely:
+
+```css
+@import 'tailwindcss';
+
+/* Diffuse v3 — grandma-app docs/design/design-system-v3.html */
+:root {
+  --bg: #F4F1E8; --paper: #FBFAF5; --paper-2: #F7F4EC; --deep: #E7E3D7;
+  --ink: #1A1916; --ink-2: #4A463E; --ink-3: #807A6E; --ink-4: #B3AC9C;
+  --line: rgba(26,25,22,.12); --line-2: rgba(26,25,22,.20); --hair: rgba(26,25,22,.55);
+  --err: #C62828;
+  --r-sm: 14px; --r-md: 20px; --r-lg: 28px; --r-xl: 40px;
+  --blur-glass: 18px;
+  --sh-card: 0 1px 2px rgba(26,25,22,.04), 0 8px 30px -18px rgba(26,25,22,.18);
+  --sh-pop: 0 2px 6px rgba(26,25,22,.06), 0 22px 50px -24px rgba(26,25,22,.30);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* default field = pregnancy; [data-mode] overrides */
+  --g1: #F8C9A6; --g2: #F2AEC6; --g3: #BDA4E2; --g4: #F8E1B2; --accent: #8F5FC6; --accent-soft: #E7D8F5;
+}
+[data-mode=pre]  { --g1:#F0A99A; --g2:#F0B8C8; --g3:#C9B7E6; --g4:#F7DCC0; --accent:#C25872; --accent-soft:#F6DCE4 }
+[data-mode=preg] { --g1:#F8C9A6; --g2:#F2AEC6; --g3:#BDA4E2; --g4:#F8E1B2; --accent:#8F5FC6; --accent-soft:#E7D8F5 }
+[data-mode=kids] { --g1:#F4D888; --g2:#A2D8B4; --g3:#A6BCE6; --g4:#F4B396; --accent:#4C79CE; --accent-soft:#CBDCF7 }
+[data-mode=meno] { --g1:#F5C89A; --g2:#F0B27A; --g3:#E8975A; --g4:#F7DCC0; --accent:#C2703A; --accent-soft:#F7E3D2 }
+
+@theme inline {
+  --font-display: var(--font-cormorant), Georgia, serif;
+  --font-sans: var(--font-hanken), system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+  --color-bg: var(--bg); --color-paper: var(--paper); --color-paper-2: var(--paper-2); --color-deep: var(--deep);
+  --color-ink: var(--ink); --color-ink-2: var(--ink-2); --color-ink-3: var(--ink-3); --color-ink-4: var(--ink-4);
+  --color-line: var(--line); --color-line-2: var(--line-2); --color-hair: var(--hair); --color-err: var(--err);
+  --color-accent: var(--accent); --color-accent-soft: var(--accent-soft);
+  --radius-d-sm: var(--r-sm); --radius-d-md: var(--r-md); --radius-d-lg: var(--r-lg); --radius-d-xl: var(--r-xl);
+  --shadow-card: var(--sh-card); --shadow-pop: var(--sh-pop);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--accent-soft); }
+
+/* page grain */
+body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 40; opacity: .22; background-image: var(--grain); mix-blend-mode: soft-light; }
+
+/* generative field engine (v3 .gfield) */
+.gfield { position: relative; overflow: hidden; isolation: isolate; }
+.gfield::before { content: ""; position: absolute; inset: -20%; z-index: -2;
+  background: radial-gradient(52% 58% at 20% 24%, var(--g1), transparent 74%), radial-gradient(54% 60% at 82% 20%, var(--g2), transparent 74%),
+    radial-gradient(60% 64% at 74% 84%, var(--g3), transparent 74%), radial-gradient(54% 60% at 22% 80%, var(--g4), transparent 74%), var(--bg);
+  filter: blur(46px) saturate(1.14); }
+.gfield::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .30; background-image: var(--grain); mix-blend-mode: soft-light; pointer-events: none; }
+.gfield.soft::before { opacity: .55; }
+
+/* glass panel + gradient-glass pill (v3 .glass / .gradpill) */
+.glass { background: rgba(255,255,255,.55); backdrop-filter: blur(var(--blur-glass)); -webkit-backdrop-filter: blur(var(--blur-glass)); border: 1px solid rgba(255,255,255,.6); border-radius: var(--r-md); }
+.gradpill { position: relative; overflow: hidden; color: var(--ink);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--g1) 60%, transparent), color-mix(in oklab, var(--g2) 48%, transparent), color-mix(in oklab, var(--g3) 56%, transparent));
+  backdrop-filter: blur(18px) saturate(1.6); -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  box-shadow: inset 0 1.5px 1px rgba(255,255,255,.9), inset 0 0 0 1px rgba(255,255,255,.45); }
+.gradpill::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 55%; pointer-events: none; background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0)); }
+
+/* heart-eye mark motion */
+.mark-eye { transform-origin: 100px 100px; animation: mark-blink 6s infinite; }
+.mark-heart { transform-origin: 100px 100px; animation: mark-beat 1.6s ease-in-out infinite; }
+@keyframes mark-blink { 0%, 46%, 50%, 100% { transform: scaleY(1) } 48% { transform: scaleY(.08) } }
+@keyframes mark-beat { 0%, 100% { transform: scale(1) } 14% { transform: scale(1.08) } 28% { transform: scale(1) } }
+@media (prefers-reduced-motion: reduce) { .mark-eye, .mark-heart { animation: none; } html { scroll-behavior: auto; } }
+```
+
+The old `styles/globals.css` and the shadcn `components/ui/*` still compile (they reference CSS variables that may now be undefined; they are unused by the new pages and are deleted in Task 15).
+
+- [ ] **Step 5: Verify and commit** — `pnpm test && pnpm typecheck`. (The current pages will look unstyled until Task 11; that's expected on this branch.)
+
+```bash
+git add -A
+git commit -m "feat(diffuse): v3 tokens, field engine, modes + launch countries"
+```
+
+---
+
+### Task 9: Diffuse v3 component kit
+
+**Files:** Create in `components/diffuse/`: `mark.tsx`, `section-head.tsx`, `field-card.tsx`, `action-rule.tsx`, `chip.tsx`, `underline-field.tsx`, `bloom-picker.tsx`, `app-video.tsx`, `index.ts`
+
+**Interfaces (all exported from `@/components/diffuse`):**
+- `Mark({ size?: number; still?: boolean; className? })`
+- `SectionHead({ n: string; children: ReactNode; sub?: ReactNode; id?: string })` — children may include `<em>`.
+- `FieldCard({ mode: Mode; label: string; title: string; children?: ReactNode; className? })` — swatches top-right.
+- `ActionRule({ href?: string; type?: 'submit'|'button'; pending?: boolean; disabled?: boolean; onClick?; children; className? })`
+- `Chip({ selected?: boolean; onClick?; dot?: string; children; as?: 'button'|'span'; role?; 'aria-checked'? })`
+- `UnderlineField({ label: string; error?: string; ref?; ...InputHTMLAttributes })`
+- `BloomPicker<T extends string>({ name: string; legend: ReactNode; value: T | ''; onChange(v: T): void; options: { value: T; kicker: string; label: string; mode: Mode }[]; error?: string })` — posts `name=value` through a hidden input.
+- `AppVideo({ shot: string; lang: 'en'|'pt'; alt: string; priority?: boolean; size?: 'md'|'sm' })` — phone frame; plays `/media/app/<lang>/<shot>.{webm,mp4}` with `.jpg` poster.
+
+- [ ] **Step 1: Components**
+
+`mark.tsx` (paths from `APP/docs/design/Onboarding.html`):
+
+```tsx
+export function Mark({ size = 40, still = false, className = '' }: { size?: number; still?: boolean; className?: string }) {
+  return (
+    <svg viewBox="0 0 200 200" width={size} height={size} className={className} aria-hidden="true">
+      <g stroke="#1A1916" strokeWidth="4.5" strokeLinecap="round" fill="none">
+        <path d="M100 35 L100 60" /><path d="M70 42 L78 65" /><path d="M130 42 L122 65" /><path d="M48 58 L62 74" /><path d="M152 58 L138 74" />
+        <path d="M100 160 L100 140" /><path d="M70 158 L78 138" /><path d="M130 158 L122 138" /><path d="M48 142 L62 128" /><path d="M152 142 L138 128" />
+      </g>
+      <g className={still ? undefined : 'mark-eye'}>
+        <path d="M 35 100 Q 100 55 165 100 Q 100 145 35 100 Z" fill="#F5D652" stroke="#1A1916" strokeWidth="4.5" strokeLinejoin="round" />
+        <g className={still ? undefined : 'mark-heart'}>
+          <path d="M100 128 C 72 106 64 86 82 76 C 92 71 100 80 100 88 C 100 80 108 71 118 76 C 136 86 128 106 100 128 Z" fill="#1A1916" />
+          <path d="M100 122 C 78 104 72 88 86 80 C 94 77 100 83 100 90 C 100 83 106 77 114 80 C 128 88 122 104 100 122 Z" fill="#EE7B6D" />
+        </g>
+      </g>
+    </svg>
+  )
+}
+```
+
+`section-head.tsx`:
+
+```tsx
+import type { ReactNode } from 'react'
+
+export function SectionHead({ n, children, sub, id }: { n: string; children: ReactNode; sub?: ReactNode; id?: string }) {
+  return (
+    <header id={id} className="mb-10">
+      <div className="flex items-baseline gap-[18px] border-t border-hair pt-[18px]">
+        <span className="font-mono text-[12px] tracking-[0.14em] text-ink-3">{n}</span>
+        <h2 className="m-0 font-display text-[clamp(34px,4.2vw,52px)] font-normal leading-none tracking-[-0.01em] [&_em]:italic [&_em]:text-ink-2">{children}</h2>
+      </div>
+      {sub && <p className="mt-4 max-w-[640px] text-[15.5px] font-light leading-[1.6] text-ink-3">{sub}</p>}
+    </header>
+  )
+}
+```
+
+`field-card.tsx`:
+
+```tsx
+import type { ReactNode } from 'react'
+import type { Mode } from '@/lib/modes'
+
+export function FieldCard({ mode, label, title, children, className = '' }: { mode: Mode; label: string; title: string; children?: ReactNode; className?: string }) {
+  return (
+    <article data-mode={mode} className={`gfield flex min-h-[360px] flex-col rounded-d-lg p-7 shadow-card ${className}`}>
+      <div className="flex items-start justify-between gap-4">
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-[rgba(26,25,22,.62)]">{label}</span>
+        <span className="flex gap-1.5" aria-hidden="true">
+          {(['--g1', '--g2', '--g3', '--g4'] as const).map((v) => (
+            <i key={v} className="h-[18px] w-[18px] rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,.06)]" style={{ background: `var(${v})` }} />
+          ))}
+        </span>
+      </div>
+      <h3 className="mt-2 font-display text-[clamp(44px,5vw,58px)] font-normal leading-[0.9] text-ink [font-variant-numeric:lining-nums]">{title}</h3>
+      {children}
+    </article>
+  )
+}
+```
+
+`action-rule.tsx`:
+
+```tsx
+import type { ReactNode } from 'react'
+import { Link } from '@/i18n/navigation'
+
+const BASE =
+  'group flex w-full items-center justify-between border-t border-line-2 px-0.5 pb-0.5 pt-[18px] font-mono text-[13px] font-bold uppercase tracking-[0.2em] text-ink transition-colors hover:border-hair focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-hair disabled:cursor-default disabled:border-line disabled:text-ink-4'
+
+function Arrow() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" className="opacity-85 transition-transform duration-[250ms] group-hover:translate-x-1.5">
+      <path d="M5 12h13M13 6l6 6-6 6" />
+    </svg>
+  )
+}
+
+export function ActionRule({ href, type = 'button', pending, disabled, onClick, className = '', children }: {
+  href?: string; type?: 'submit' | 'button'; pending?: boolean; disabled?: boolean; onClick?: () => void; className?: string; children: ReactNode
+}) {
+  if (href) return <Link href={href} className={`${BASE} ${className}`}><span>{children}</span><Arrow /></Link>
+  return (
+    <button type={type} onClick={onClick} disabled={disabled || pending} aria-busy={pending || undefined} className={`${BASE} ${className}`}>
+      <span>{children}</span><Arrow />
+    </button>
+  )
+}
+```
+
+`chip.tsx`:
+
+```tsx
+import type { ReactNode } from 'react'
+
+export function Chip({ selected = false, onClick, dot, children, as = 'button', role, ...aria }: {
+  selected?: boolean; onClick?: () => void; dot?: string; children: ReactNode; as?: 'button' | 'span'; role?: string; 'aria-checked'?: boolean
+}) {
+  const cls = `inline-flex items-center rounded-full border px-[18px] py-[11px] font-mono text-[12px] tracking-[0.04em] transition-all duration-200 ${
+    selected
+      ? 'border-hair bg-[color-mix(in_oklab,var(--paper)_80%,transparent)] font-bold text-ink shadow-[inset_0_1px_1px_rgba(255,255,255,.5)]'
+      : 'border-line bg-[color-mix(in_oklab,var(--paper)_55%,transparent)] text-ink-3'
+  } ${as === 'button' ? 'cursor-pointer focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-hair' : ''}`
+  const inner = <>{dot && <span aria-hidden="true" className="mr-2 h-1.5 w-1.5 rounded-full" style={{ background: dot }} />}{children}</>
+  if (as === 'span') return <span className={cls}>{inner}</span>
+  return <button type="button" role={role} aria-checked={aria['aria-checked']} aria-pressed={role ? undefined : selected} onClick={onClick} className={cls}>{inner}</button>
+}
+```
+
+`underline-field.tsx`:
+
+```tsx
+import { useId, type InputHTMLAttributes, type Ref } from 'react'
+
+export function UnderlineField({ label, error, id, className = '', ref, ...input }: { label: string; error?: string; ref?: Ref<HTMLInputElement> } & InputHTMLAttributes<HTMLInputElement>) {
+  const auto = useId()
+  const fid = id ?? auto
+  return (
+    <div className={className}>
+      <label htmlFor={fid} className="mb-1 block font-mono text-[10px] uppercase tracking-[0.2em] text-ink-3">{label}</label>
+      <input
+        id={fid}
+        ref={ref}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${fid}-err` : undefined}
+        className="w-full rounded-none border-0 border-b-[1.5px] border-line-2 bg-transparent px-0.5 pb-3.5 pt-2.5 text-[18px] text-ink outline-none placeholder:text-ink-4 focus:border-hair aria-[invalid=true]:border-err"
+        {...input}
+      />
+      {error && <p id={`${fid}-err`} className="mt-2 text-[14px] text-err">{error}</p>}
+    </div>
+  )
+}
+```
+
+`bloom-picker.tsx` (the onboarding journey picker):
+
+```tsx
+'use client'
+
+import type { ReactNode } from 'react'
+import type { Mode } from '@/lib/modes'
+
+const POS: Record<Mode, [number, number]> = { pre: [20, 36], preg: [68, 26], kids: [36, 76], meno: [82, 72] }
+
+export function BloomPicker<T extends string>({ name, legend, value, onChange, options, error }: {
+  name: string; legend: ReactNode; value: T | ''; onChange: (v: T) => void
+  options: { value: T; kicker: string; label: string; mode: Mode }[]; error?: string
+}) {
+  return (
+    <fieldset className="m-0 border-0 p-0">
+      <legend className="font-display text-[26px] leading-[1.1] [&_em]:italic [&_em]:text-ink-2">{legend}</legend>
+      <input type="hidden" name={name} value={value} />
+      <div role="radiogroup" className="relative mt-1.5 h-[250px]">
+        {options.map((o) => {
+          const on = o.value === value
+          const [x, y] = POS[o.mode]
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              data-mode={o.mode}
+              onClick={() => onChange(o.value)}
+              style={{ left: `${x}%`, top: `${y}%` }}
+              className={`absolute flex h-[132px] w-[132px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-0.5 rounded-full transition-transform duration-300 [transition-timing-function:cubic-bezier(.32,.72,0,1)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[6px] focus-visible:outline-hair ${on ? 'scale-[1.08]' : ''}`}
+            >
+              <span aria-hidden="true" className="absolute inset-0 -z-10 rounded-full transition-all duration-300"
+                style={{ background: 'radial-gradient(circle, var(--g2) 0%, var(--g1) 38%, color-mix(in oklab, var(--g3) 70%, transparent) 58%, transparent 72%)', filter: on ? 'blur(7px) saturate(1.15)' : 'blur(10px) saturate(.9)', opacity: on ? 1 : 0.75 }} />
+              {on && <span aria-hidden="true" className="absolute -inset-1.5 rounded-full border border-hair" />}
+              <small className="font-mono text-[8.5px] uppercase tracking-[0.16em] text-[rgba(26,25,22,.62)]">{o.kicker}</small>
+              <span className="font-display text-[23px] italic leading-none text-ink">{o.label}</span>
+            </button>
+          )
+        })}
+      </div>
+      {error && <p className="mt-2 text-center text-[14px] text-err" role="alert">{error}</p>}
+    </fieldset>
+  )
+}
+```
+
+Keyboard: each bloom is a focusable `role="radio"` button; Space/Enter selects. (Arrow-key roving is not required for 4 options; Tab order is fine.)
+
+`app-video.tsx`:
+
+```tsx
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+
+/** Real app clip in a phone frame. Lazy-loads when near the viewport; poster only under reduced motion. */
+export function AppVideo({ shot, lang, alt, priority = false, size = 'md' }: { shot: string; lang: 'en' | 'pt'; alt: string; priority?: boolean; size?: 'md' | 'sm' }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [load, setLoad] = useState(priority)
+  const [reduce, setReduce] = useState(false)
+  const base = `/media/app/${lang}/${shot}`
+
+  useEffect(() => {
+    setReduce(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    if (priority || !ref.current) return
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setLoad(true); io.disconnect() } }, { rootMargin: '300px' })
+    io.observe(ref.current)
+    return () => io.disconnect()
+  }, [priority])
+
+  const frame = size === 'md' ? 'w-[300px] rounded-[48px] border-[11px]' : 'w-[240px] rounded-[40px] border-[9px]'
+  return (
+    <div ref={ref} className={`relative mx-auto aspect-[9/19.5] overflow-hidden border-[#121110] bg-bg shadow-[0_30px_60px_-30px_rgba(26,25,22,.45)] ${frame}`}>
+      {load && !reduce ? (
+        <video className="absolute inset-0 h-full w-full object-cover" autoPlay muted loop playsInline preload={priority ? 'auto' : 'metadata'} poster={`${base}.jpg`} aria-label={alt}>
+          <source src={`${base}.webm`} type="video/webm" />
+          <source src={`${base}.mp4`} type="video/mp4" />
+        </video>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="absolute inset-0 h-full w-full object-cover" src={`${base}.jpg`} alt={alt} loading={priority ? 'eager' : 'lazy'} />
+      )}
+    </div>
+  )
+}
+```
+
+`index.ts`:
+
+```ts
+export { Mark } from './mark'
+export { SectionHead } from './section-head'
+export { FieldCard } from './field-card'
+export { ActionRule } from './action-rule'
+export { Chip } from './chip'
+export { UnderlineField } from './underline-field'
+export { BloomPicker } from './bloom-picker'
+export { AppVideo } from './app-video'
+```
+
+(`ActionRule` imports `@/i18n/navigation`, created in Task 10; typecheck this task together with Task 10's Step 2 if running strictly in order, or create `i18n/` files first.)
+
+- [ ] **Step 2: Commit** — `git add components/diffuse && git commit -m "feat(diffuse): v3 kit — mark, section head, field card, action rule, chip, field, bloom picker, app video"`
+
+---
+
+### Task 10: i18n infrastructure and layout
+
+**Files:**
+- Create: `i18n/routing.ts`, `i18n/navigation.ts`, `i18n/request.ts`, `proxy.ts`, `app/[locale]/layout.tsx`, `components/site/locale-switcher.tsx`, `messages/en.json`, `messages/pt.json` (namespaces `meta`, `locale` for now), `messages/messages.test.ts`
+- Modify: `next.config.mjs`
+- Delete: `app/layout.tsx`, `app/page.tsx`, `app/pricing/`, `app/privacy/`, `app/terms/` (privacy/terms are recreated under `[locale]` in Task 12)
+
+**Interfaces:**
+- Produces: `routing` (`['en','pt']`, default `en`), `Locale`, `htmlLang(locale)`; `Link`, `usePathname`, `useRouter` from `@/i18n/navigation`; `LocaleSwitcher`; layout with fonts `--font-cormorant`, `--font-hanken`, `--font-space-mono`.
+
+- [ ] **Step 1: Message parity test** — `messages/messages.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest'
 import en from './en.json'
 import pt from './pt.json'
 
-function keys(obj: unknown, prefix = ''): string[] {
-  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return [prefix]
-  return Object.entries(obj).flatMap(([k, v]) => keys(v, prefix ? `${prefix}.${k}` : k))
-}
+const keys = (o: unknown, p = ''): string[] =>
+  typeof o !== 'object' || o === null || Array.isArray(o) ? [p] : Object.entries(o).flatMap(([k, v]) => keys(v, p ? `${p}.${k}` : k))
+const strings = (o: unknown, p = ''): [string, string][] =>
+  typeof o === 'string' ? [[p, o]] : Array.isArray(o) ? o.flatMap((v, i) => strings(v, `${p}[${i}]`)) : typeof o === 'object' && o ? Object.entries(o).flatMap(([k, v]) => strings(v, p ? `${p}.${k}` : k)) : []
+const arrays = (o: unknown, p = ''): [string, number][] =>
+  Array.isArray(o) ? [[p, o.length]] : typeof o === 'object' && o ? Object.entries(o).flatMap(([k, v]) => arrays(v, p ? `${p}.${k}` : k)) : []
 
 describe('messages', () => {
-  it('en and pt have exactly the same keys', () => {
-    const e = new Set(keys(en))
-    const p = new Set(keys(pt))
+  it('same keys in en and pt', () => {
+    const e = new Set(keys(en)), p = new Set(keys(pt))
     expect([...e].filter((k) => !p.has(k)), 'missing in pt').toEqual([])
     expect([...p].filter((k) => !e.has(k)), 'missing in en').toEqual([])
   })
-  it('no empty strings', () => {
-    const empty = (o: unknown, path = ''): string[] =>
-      typeof o === 'string' ? (o.trim() ? [] : [path])
-      : Array.isArray(o) ? o.flatMap((v, i) => empty(v, `${path}[${i}]`))
-      : Object.entries(o as object).flatMap(([k, v]) => empty(v, path ? `${path}.${k}` : k))
-    expect([...empty(en), ...empty(pt)]).toEqual([])
-  })
-  it('arrays have the same length in both locales', () => {
-    const arrays = (o: unknown, path = ''): [string, number][] =>
-      Array.isArray(o) ? [[path, o.length]]
-      : typeof o === 'object' && o !== null ? Object.entries(o).flatMap(([k, v]) => arrays(v, path ? `${path}.${k}` : k))
-      : []
-    expect(arrays(pt)).toEqual(arrays(en))
-  })
+  it('no empty strings', () => expect([...strings(en), ...strings(pt)].filter(([, s]) => !s.trim())).toEqual([]))
+  it('same array lengths', () => expect(arrays(pt)).toEqual(arrays(en)))
+  it('no prices on the site', () => expect([...strings(en), ...strings(pt)].filter(([, s]) => /\$\s?\d/.test(s))).toEqual([]))
 })
 ```
 
-Run: `pnpm i18n:check` → FAIL (`./en.json` not found).
-
-- [ ] **Step 3: Routing files and proxy**
+- [ ] **Step 2: Routing**
 
 `i18n/routing.ts`:
 
 ```ts
 import { defineRouting } from 'next-intl/routing'
 
-export const routing = defineRouting({
-  locales: ['en', 'pt'],
-  defaultLocale: 'en',
-  localePrefix: 'always',
-})
-
+export const routing = defineRouting({ locales: ['en', 'pt'], defaultLocale: 'en', localePrefix: 'always' })
 export type Locale = (typeof routing.locales)[number]
-
-/** BCP-47 tag for <html lang> and hreflang. */
-export function htmlLang(locale: Locale): 'en' | 'pt-BR' {
-  return locale === 'pt' ? 'pt-BR' : 'en'
-}
+export const htmlLang = (l: Locale): 'en' | 'pt-BR' => (l === 'pt' ? 'pt-BR' : 'en')
 ```
 
 `i18n/navigation.ts`:
@@ -1073,10 +1732,7 @@ import createMiddleware from 'next-intl/middleware'
 import { routing } from './i18n/routing'
 
 export default createMiddleware(routing)
-
-export const config = {
-  matcher: '/((?!api|_next|_vercel|.*\\..*).*)',
-}
+export const config = { matcher: '/((?!api|_next|_vercel|media|.*\\..*).*)' }
 ```
 
 `next.config.mjs`:
@@ -1088,47 +1744,32 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
+  typescript: { ignoreBuildErrors: true },
+  images: { unoptimized: true },
 }
 
 export default withNextIntl(nextConfig)
 ```
 
-- [ ] **Step 4: Move pages under `[locale]`**
+- [ ] **Step 3: Layout** — delete the old entry files, then create `app/[locale]/layout.tsx`:
 
 ```bash
-mkdir -p "app/[locale]/pricing" "app/[locale]/privacy" "app/[locale]/terms"
-git mv app/page.tsx "app/[locale]/page.tsx"
-git mv app/pricing/page.tsx "app/[locale]/pricing/page.tsx"
-git mv app/privacy/page.tsx "app/[locale]/privacy/page.tsx"
-git mv app/terms/page.tsx "app/[locale]/terms/page.tsx"
-git mv app/layout.tsx "app/[locale]/layout.tsx"
+git rm app/layout.tsx app/page.tsx app/pricing/page.tsx app/privacy/page.tsx app/terms/page.tsx
 ```
-
-`app/globals.css` stays where it is.
-
-- [ ] **Step 5: Rewrite the locale layout**
-
-`app/[locale]/layout.tsx` (fonts unchanged in this task; Task 9 replaces them):
 
 ```tsx
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { Fraunces, DM_Sans, Instrument_Serif } from 'next/font/google'
+import { Cormorant_Garamond, Hanken_Grotesk, Space_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { routing, htmlLang, type Locale } from '@/i18n/routing'
 import '../globals.css'
 
-const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', display: 'swap', weight: ['400', '500', '600', '700'] })
-const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans', display: 'swap', weight: ['400', '500', '600', '700'] })
-const instrumentSerif = Instrument_Serif({ subsets: ['latin'], variable: '--font-instrument-serif', display: 'swap', weight: ['400'], style: ['italic'] })
+const cormorant = Cormorant_Garamond({ subsets: ['latin'], variable: '--font-cormorant', display: 'swap', weight: ['300', '400', '500'], style: ['normal', 'italic'] })
+const hanken = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-hanken', display: 'swap', weight: ['300', '400', '500', '600'] })
+const spaceMono = Space_Mono({ subsets: ['latin'], variable: '--font-space-mono', display: 'swap', weight: ['400', '700'] })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://grandma.app'
 
@@ -1144,35 +1785,20 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     metadataBase: new URL(SITE_URL),
     title: t('title'),
     description: t('description'),
-    alternates: {
-      canonical: `/${locale}`,
-      languages: { en: '/en', 'pt-BR': '/pt', 'x-default': '/en' },
-    },
-    openGraph: {
-      title: t('ogTitle'),
-      description: t('ogDescription'),
-      type: 'website',
-      locale: locale === 'pt' ? 'pt_BR' : 'en_US',
-    },
+    alternates: { canonical: `/${locale}`, languages: { en: '/en', 'pt-BR': '/pt', 'x-default': '/en' } },
+    openGraph: { title: t('ogTitle'), description: t('description'), type: 'website', locale: locale === 'pt' ? 'pt_BR' : 'en_US' },
     twitter: { card: 'summary_large_image' },
     icons: { icon: '/favicon.svg' },
   }
 }
 
-export default async function LocaleLayout({
-  children,
-  params,
-}: Readonly<{ children: React.ReactNode; params: Promise<{ locale: string }> }>) {
+export default async function LocaleLayout({ children, params }: Readonly<{ children: React.ReactNode; params: Promise<{ locale: string }> }>) {
   const { locale } = await params
   if (!hasLocale(routing.locales, locale)) notFound()
   setRequestLocale(locale)
-
   return (
-    <html lang={htmlLang(locale as Locale)} className="bg-[#F3ECD9]">
-      <body
-        className={`${fraunces.variable} ${dmSans.variable} ${instrumentSerif.variable} antialiased`}
-        style={{ fontFamily: 'var(--font-dm-sans), var(--font-body)' }}
-      >
+    <html lang={htmlLang(locale as Locale)} className={`${cormorant.variable} ${hanken.variable} ${spaceMono.variable}`}>
+      <body>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
@@ -1181,85 +1807,7 @@ export default async function LocaleLayout({
 }
 ```
 
-(The Open Graph image is handled in Task 16.)
-
-In each of the four moved page files, make the default export receive params and call `setRequestLocale` first, so pages render statically:
-
-```tsx
-import { setRequestLocale } from 'next-intl/server'
-
-export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params
-  setRequestLocale(locale)
-  // ...existing JSX unchanged
-}
-```
-
-If a moved page file starts with `'use client'`, move its JSX body into a new client component in `components/` (e.g. `components/pricing-content.tsx`) and keep the page file a server component that renders it.
-
-- [ ] **Step 6: Messages (first namespaces)**
-
-`messages/en.json`:
-
-```json
-{
-  "meta": {
-    "title": "Grandma · A calmer companion for your cycle, pregnancy, kids and menopause",
-    "description": "Grandma is a calm companion app for every chapter: cycle tracking, pregnancy, raising kids 0–5 and menopause. Currently in early access. Join the waitlist.",
-    "ogTitle": "Grandma · Wisdom for every chapter",
-    "ogDescription": "Cycle, pregnancy, kids and menopause. The calm companion who remembers everything."
-  },
-  "nav": {
-    "features": "Features",
-    "modes": "The four modes",
-    "grandma": "Meet Grandma",
-    "pricing": "Pricing",
-    "join": "Join the waitlist",
-    "openMenu": "Open menu",
-    "closeMenu": "Close menu",
-    "home": "grandma.app home"
-  },
-  "locale": {
-    "label": "Language",
-    "en": "EN",
-    "pt": "PT"
-  }
-}
-```
-
-`messages/pt.json`:
-
-```json
-{
-  "meta": {
-    "title": "Grandma · Uma companhia tranquila para o seu ciclo, gravidez, filhos e menopausa",
-    "description": "Grandma é um app de companhia tranquila para cada fase: ciclo, gravidez, filhos de 0 a 5 anos e menopausa. Em acesso antecipado. Entre na lista de espera.",
-    "ogTitle": "Grandma · Sabedoria para cada fase",
-    "ogDescription": "Ciclo, gravidez, filhos e menopausa. A companhia tranquila que lembra de tudo."
-  },
-  "nav": {
-    "features": "Recursos",
-    "modes": "Os quatro modos",
-    "grandma": "Conheça a Vovó",
-    "pricing": "Preços",
-    "join": "Entrar na lista",
-    "openMenu": "Abrir menu",
-    "closeMenu": "Fechar menu",
-    "home": "Início do grandma.app"
-  },
-  "locale": {
-    "label": "Idioma",
-    "en": "EN",
-    "pt": "PT"
-  }
-}
-```
-
-Run: `pnpm i18n:check` → PASS.
-
-- [ ] **Step 7: Locale switcher**
-
-`components/locale-switcher.tsx`:
+- [ ] **Step 4: Switcher** — `components/site/locale-switcher.tsx`:
 
 ```tsx
 'use client'
@@ -1273,24 +1821,17 @@ export function LocaleSwitcher({ className = '' }: { className?: string }) {
   const locale = useLocale() as Locale
   const pathname = usePathname()
   const router = useRouter()
-
-  const change = (next: Locale) => {
-    if (next === locale) return
-    const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : ''
-    router.replace(hash ? { pathname, hash } : pathname, { locale: next, scroll: false })
-  }
-
   return (
-    <div role="group" aria-label={t('label')} className={`flex items-center gap-1 ${className}`}>
+    <div role="group" aria-label={t('label')} className={`flex items-center gap-1.5 font-mono text-[11px] tracking-[0.14em] text-ink-4 ${className}`}>
       {routing.locales.map((l, i) => (
-        <span key={l} className="flex items-center gap-1">
+        <span key={l} className="flex items-center gap-1.5">
           {i > 0 && <span aria-hidden="true">·</span>}
           <button
             type="button"
             lang={l === 'pt' ? 'pt-BR' : 'en'}
             aria-pressed={l === locale}
-            onClick={() => change(l)}
-            className={l === locale ? 'font-bold underline underline-offset-4' : 'opacity-60 hover:opacity-100'}
+            onClick={() => l !== locale && router.replace(pathname, { locale: l, scroll: false })}
+            className={l === locale ? 'font-bold text-ink underline underline-offset-4' : 'text-ink-3 hover:text-ink'}
           >
             {t(l)}
           </button>
@@ -1301,1332 +1842,608 @@ export function LocaleSwitcher({ className = '' }: { className?: string }) {
 }
 ```
 
-- [ ] **Step 8: Navigation uses i18n**
-
-In `components/navigation.tsx`:
-- replace `import Link from 'next/link'` with `import { Link } from '@/i18n/navigation'` and add `import { useTranslations } from 'next-intl'` and `import { LocaleSwitcher } from './locale-switcher'`;
-- inside `Navigation`, add `const t = useTranslations('nav')`;
-- replace `navLinks` with:
-
-```ts
-  const navLinks = [
-    { href: '/#features', label: t('features') },
-    { href: '/#stages', label: t('modes') },
-    { href: '/#grandma', label: t('grandma') },
-    { href: '/pricing', label: t('pricing') },
-  ]
-```
-
-- replace every remaining literal user-facing string in the file (button labels, aria-labels such as "Open menu") with the matching `t(...)` key from Step 6;
-- render `<LocaleSwitcher className="text-[13px] tracking-[0.12em]" />` in the desktop nav after the links, and inside the mobile menu.
-
-(`/#features` makes the anchors work from `/pricing` too; next-intl prefixes the locale.)
-
-- [ ] **Step 9: Verify**
-
-```bash
-pnpm i18n:check
-pnpm build
-pnpm start &
-sleep 4
-curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" -H "Accept-Language: pt-BR,pt;q=0.9" http://localhost:3000/
-curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" -H "Accept-Language: pt-PT" http://localhost:3000/
-curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" -H "Accept-Language: de-DE" http://localhost:3000/
-curl -s http://localhost:3000/pt | grep -o '<html lang="[^"]*"'
-curl -s http://localhost:3000/pt | grep -o 'hrefLang="[^"]*"' | sort -u
-kill %1
-```
-
-Expected: first two redirect to `/pt`, third to `/en`; `<html lang="pt-BR"`; hreflang values `en`, `pt-BR`, `x-default`. Open `/en` and `/pt` in a browser: the page looks the same as before, nav labels are translated, and clicking `PT · EN` switches language and keeps the scroll anchor.
-
-- [ ] **Step 10: Commit**
-
-```bash
-git add -A
-git commit -m "feat(i18n): next-intl routing for /en and /pt, localized metadata, language switcher"
-```
-
----
-
-### Task 6: Extract home page copy to messages (EN + PT)
-
-**Files:**
-- Modify: `components/hero-section.tsx`, `components/animated-hero-card.tsx`, `components/three-stages-section.tsx`, `components/meet-grandma-section.tsx`, `components/pillars-section.tsx`, `components/connections-section.tsx`, `components/memories-section.tsx`, `components/testimonials-section.tsx`, `components/waitlist-faq-section.tsx`, `components/footer.tsx`
-- Modify: `messages/en.json`, `messages/pt.json`
-
-**Interfaces:**
-- Consumes: `useTranslations` (client components) / `getTranslations` (server components) from next-intl; `Link` from `@/i18n/navigation`.
-- Produces: namespaces `hero`, `stages`, `meet`, `pillars`, `connections`, `memories`, `trust`, `testimonials`, `waitlist`, `faq`, `final`, `footer`. Later tasks rename/extend keys inside these namespaces.
-
-This is a mechanical extraction. Visuals do not change in this task, except the removal of the fabricated counter.
-
-**Key rules:**
-- One namespace per section component, named as above. Keys are camelCase and describe the role: `eyebrow`, `title`, `titleEm`, `titleEnd`, `subtitle`, `cta`, `note`, `items[]`.
-- A headline with an italic word becomes three keys (`title`, `titleEm`, `titleEnd`) or one rich-text key using `t.rich('title', { em: (c) => <em ...>{c}</em> })` with `"title": "With you through every <em>chapter</em> of your journey."` — prefer `t.rich` for any sentence where word order may change in Portuguese.
-- Lists of items (stage features, FAQ entries, pillar cards, testimonials) become arrays of objects in JSON, read with `t.raw('items') as Item[]`. Keep icons/stickers/colors in the component, matched by index or by an `id` field in the JSON.
-- Inline links in copy (e.g. "pricing page") use `t.rich` with a `link` tag rendering `<Link href="/pricing">`.
-- Mock app screens inside phone mockups (e.g. `PregnancyScreen` "Week 40 · Saturday", "Hi, Sarah") are translated too, under `stages.screens.*`. Names in mockups: "Sarah" in EN, "Ana" in PT.
-- `aria-label`s are user-facing and must be translated.
-- Do not translate: "grandma", "grandma.app", the email placeholder domain.
-
-**Worked example — hero.** In `components/hero-section.tsx`:
-- delete the `waitlistCount` state, the `useEffect` interval and the whole "Trusted by … families" `motion.span` block (the number was fabricated). Keep the "Built by parents, for parents." line.
-- delete `handleSubmit`'s `console.log` body for now: `const handleSubmit = (e: React.FormEvent) => { e.preventDefault() }` (Task 11 wires it).
-- use `const t = useTranslations('hero')` and these keys:
+- [ ] **Step 5: First messages** — `messages/en.json`:
 
 ```json
-"hero": {
-  "eyebrow": "EARLY ACCESS · INVITES ROLLING OUT WEEKLY",
-  "title": "With you through every <em>chapter</em> of your journey.",
-  "subtitle": "From cycle tracking, through every week of pregnancy, into the beautiful chaos of raising little ones — Grandma is the calm, knowing companion who remembers everything, judges nothing, and answers at 3am.",
-  "emailPlaceholder": "you@your-life.com",
-  "cta": "Join the waitlist",
-  "note": "We'll send one email when your invite is ready. No spam, on Grandma's honor.",
-  "builtBy": "Built by parents, for parents."
-}
-```
-
-```json
-"hero": {
-  "eyebrow": "ACESSO ANTECIPADO · CONVITES TODA SEMANA",
-  "title": "Com você em cada <em>capítulo</em> da sua jornada.",
-  "subtitle": "Do acompanhamento do ciclo, passando por cada semana da gravidez, até o caos lindo de criar os pequenos — a Vovó é a companhia calma e sábia que lembra de tudo, não julga nada e responde às 3 da manhã.",
-  "emailPlaceholder": "voce@sua-vida.com",
-  "cta": "Entrar na lista",
-  "note": "Vamos mandar um único email quando o seu convite estiver pronto. Sem spam, palavra da Vovó.",
-  "builtBy": "Feito por mães e pais, para mães e pais."
-}
-```
-
-and render the title with `t.rich('title', { em: (chunks) => <em …existing em styles…>{chunks}</em> })`.
-
-- [ ] **Step 1: Extract one component at a time**
-
-For each file in the list, in this order: hero → animated-hero-card → three-stages → meet-grandma → pillars → connections → memories → testimonials → waitlist-faq → footer:
-1. Add the namespace to `messages/en.json` with the current English text, verbatim.
-2. Add the same keys to `messages/pt.json` with the pt-BR translation (follow the Global Constraints glossary; natural Brazilian Portuguese, warm and plain, not literal).
-3. Replace literals in the component with `t(...)`, `t.rich(...)` or `t.raw(...)`.
-4. Replace `next/link` imports with `Link` from `@/i18n/navigation`.
-5. Run `pnpm i18n:check` (must pass) before moving to the next file.
-
-The FAQ answer about AI ("Grandma is built on Claude…") is extracted as-is in EN and translated as-is in PT; Igor decides the final wording in review (spec §3.2).
-
-- [ ] **Step 2: Check no literal copy remains**
-
-```bash
-grep -nE ">[^<>{}]*[A-Za-z]{3,}[^<>{}]*<" components/*-section.tsx components/footer.tsx components/navigation.tsx components/animated-hero-card.tsx
-grep -nE "(placeholder|aria-label|title|alt)=\"[^\"]*[A-Za-z]{3,}" components/*-section.tsx components/footer.tsx components/navigation.tsx components/animated-hero-card.tsx
-```
-
-Expected: no matches, except the `grandma` wordmark. Fix any other hit by extracting it.
-
-- [ ] **Step 3: Verify both locales**
-
-Run: `pnpm i18n:check && pnpm typecheck && pnpm build`, then `pnpm dev` and read through `/en` and `/pt` top to bottom. Expected: `/en` is word-for-word the old site minus the counter; `/pt` has no English left except brand names; no `MISSING_MESSAGE` errors in the terminal or console.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add -A
-git commit -m "feat(i18n): home page copy in EN and PT; remove fabricated signup counter"
-```
-
----
-
-### Task 7: Extract pricing, privacy and terms copy
-
-**Files:**
-- Modify: `app/[locale]/pricing/page.tsx` (or its client component from Task 5), `app/[locale]/privacy/page.tsx`, `app/[locale]/terms/page.tsx`
-- Modify: `messages/en.json`, `messages/pt.json` (namespaces `pricing`, `privacy`, `terms`)
-
-**Interfaces:**
-- Consumes: `getTranslations({ locale, namespace })` in server pages; `Link` from `@/i18n/navigation`.
-- Produces: per-page `generateMetadata` returning translated `title` and `description` (keys `pricing.metaTitle`, `pricing.metaDescription`, same for `privacy` and `terms`).
-
-- [ ] **Step 1: Pricing**
-
-Same rules as Task 6. Plan tiers become `pricing.plans[]` objects `{ id, name, price, period, description, features[] , cta }`. Prices stay in USD in both locales (`$9.99/month` → `US$ 9,99/mês` in PT text). Add:
-
-```tsx
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params
-  const t = await getTranslations({ locale, namespace: 'pricing' })
-  return { title: t('metaTitle'), description: t('metaDescription'), alternates: { canonical: `/${locale}/pricing`, languages: { en: '/en/pricing', 'pt-BR': '/pt/pricing' } } }
-}
-```
-
-- [ ] **Step 2: Privacy and terms**
-
-Long legal text: one key per heading and one per paragraph, grouped as `privacy.sections[] = { heading, paragraphs[] }`, rendered in a loop. Add `privacy.lastUpdated` and `privacy.translationNote` (PT only meaning: "Esta é uma tradução. Em caso de divergência, vale a versão em inglês." — in EN the key reads "This is the authoritative version."). Render `translationNote` under the title. Same structure for `terms`. Add `generateMetadata` like Step 1 with the right paths.
-
-Also add to privacy, in both languages, a short section `waitlist` describing what the waitlist stores (email, optional name, mode, language, launch-notice preference, campaign source, a one-way hash of the IP for abuse prevention), the purpose (invite + launch notice only), and how to be removed (email `support@grandma.app`). This is the page the consent line links to (Task 15).
-
-- [ ] **Step 3: Verify and commit**
-
-```bash
-pnpm i18n:check && pnpm typecheck && pnpm build
-git add -A
-git commit -m "feat(i18n): pricing, privacy and terms in EN and PT; waitlist privacy section"
-```
-
----
-
-### Task 8: Diffuse foundation — modes, tokens, fonts
-
-**Files:**
-- Create: `lib/modes.ts`
-- Test: `lib/modes.test.ts`
-- Modify: `app/globals.css` (replace the `:root` block and `@theme inline`; keep the component classes for now)
-- Modify: `app/[locale]/layout.tsx` (fonts)
-
-**Interfaces:**
-- Produces:
-  - `MODES = ['pre','preg','kids','meno'] as const`, `type Mode`, `isMode(v: unknown): v is Mode`
-  - `FIELDS: Record<Mode, { g1: string; g2: string; g3: string; g4: string; accent: string; accentSoft: string }>`
-  - `fieldStops(mode: Mode): [string, string, string, string]`
-  - CSS variables: `--d-paper`, `--d-paper-2`, `--d-paper-3`, `--d-bg-deep`, `--d-ink`, `--d-ink-2`, `--d-ink-3`, `--d-ink-4`, `--d-line`, `--d-line-2`, `--d-hairline`, `--d-r-sm|md|lg|xl`, `--d-blur-soft|field|glass`, `--sh-card`, `--sh-pop`, `--d-grain`, `--field-<mode>-g1..g4`, `--field-<mode>-accent`, `--field-<mode>-accent-soft`, fonts `--font-hanken`, `--font-space-mono`
-  - Tailwind utilities: `bg-paper`, `bg-paper-2`, `text-ink`, `text-ink-2`, `text-ink-3`, `text-ink-4`, `border-line`, `border-line-2`, `border-hairline`, `font-display`, `font-body`, `font-mono`, `rounded-d-sm|md|lg|xl`, `shadow-card`, `shadow-pop`
-
-- [ ] **Step 1: Failing test for modes**
-
-`lib/modes.test.ts`:
-
-```ts
-import { describe, it, expect } from 'vitest'
-import { MODES, FIELDS, fieldStops, isMode } from './modes'
-
-describe('modes', () => {
-  it('has exactly the four live modes', () => {
-    expect(MODES).toEqual(['pre', 'preg', 'kids', 'meno'])
-  })
-  it('matches the app diffuseFields values', () => {
-    expect(FIELDS.meno).toEqual({ g1: '#F5C89A', g2: '#F0B27A', g3: '#E8975A', g4: '#F7DCC0', accent: '#C2703A', accentSoft: '#F7E3D2' })
-    expect(fieldStops('preg')).toEqual(['#F8C9A6', '#F2AEC6', '#BDA4E2', '#F8E1B2'])
-  })
-  it('isMode rejects caregiver and junk', () => {
-    expect(isMode('kids')).toBe(true)
-    expect(isMode('care')).toBe(false)
-    expect(isMode(undefined)).toBe(false)
-  })
-})
-```
-
-Run: `pnpm test lib/modes.test.ts` → FAIL (module missing).
-
-- [ ] **Step 2: Implement `lib/modes.ts`**
-
-```ts
-/**
- * The app's four live behaviors and their Diffuse generative fields.
- * Values copied from grandma-app/constants/theme.ts `diffuseFields`
- * (caregiver is scaffold-only in the app and is deliberately absent here).
- */
-export const MODES = ['pre', 'preg', 'kids', 'meno'] as const
-export type Mode = (typeof MODES)[number]
-
-export function isMode(v: unknown): v is Mode {
-  return typeof v === 'string' && (MODES as readonly string[]).includes(v)
-}
-
-export interface Field {
-  g1: string
-  g2: string
-  g3: string
-  g4: string
-  accent: string
-  accentSoft: string
-}
-
-export const FIELDS: Record<Mode, Field> = {
-  pre: { g1: '#F0A99A', g2: '#F0B8C8', g3: '#C9B7E6', g4: '#F7DCC0', accent: '#C25872', accentSoft: '#F6DCE4' },
-  preg: { g1: '#F8C9A6', g2: '#F2AEC6', g3: '#BDA4E2', g4: '#F8E1B2', accent: '#8F5FC6', accentSoft: '#E7D8F5' },
-  kids: { g1: '#F4D888', g2: '#A2D8B4', g3: '#A6BCE6', g4: '#F4B396', accent: '#4C79CE', accentSoft: '#CBDCF7' },
-  meno: { g1: '#F5C89A', g2: '#F0B27A', g3: '#E8975A', g4: '#F7DCC0', accent: '#C2703A', accentSoft: '#F7E3D2' },
-}
-
-export function fieldStops(mode: Mode): [string, string, string, string] {
-  const f = FIELDS[mode]
-  return [f.g1, f.g2, f.g3, f.g4]
-}
-```
-
-Run: `pnpm test lib/modes.test.ts` → PASS.
-
-- [ ] **Step 3: Tokens in `app/globals.css`**
-
-Replace the whole `:root { … }` block with the block below. The second half aliases the OLD variable names to Diffuse values, so every section shifts to the new palette immediately and nothing breaks; Tasks 10–13 migrate components to the new names and Task 16 deletes the aliases.
-
-```css
-:root {
-  /* ── Diffuse canvas & ink (grandma-app diffuseLightTokens / v3) ── */
-  --d-paper: #F4F1E8;
-  --d-paper-2: #FBFAF5;
-  --d-paper-3: #F7F4EC;
-  --d-bg-deep: #EDE9DD;
-  --d-ink: #1A1916;
-  --d-ink-2: #4A463E;
-  --d-ink-3: #807A6E;
-  --d-ink-4: #B3AC9C;
-  --d-line: rgba(26, 25, 22, 0.12);
-  --d-line-2: rgba(26, 25, 22, 0.20);
-  --d-hairline: rgba(26, 25, 22, 0.55);
-  --d-success: #2E7D32;
-  --d-error: #C62828;
-
-  /* ── Shape, blur, depth ── */
-  --d-r-sm: 14px;
-  --d-r-md: 20px;
-  --d-r-lg: 28px;
-  --d-r-xl: 40px;
-  --d-blur-soft: 40px;
-  --d-blur-field: 70px;
-  --d-blur-glass: 18px;
-  --sh-card: 0 1px 2px rgba(26, 25, 22, .04), 0 8px 30px -18px rgba(26, 25, 22, .18);
-  --sh-pop: 0 2px 6px rgba(26, 25, 22, .06), 0 22px 50px -24px rgba(26, 25, 22, .30);
-  --d-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --d-grain-opacity: 0.22;
-
-  /* ── Mode fields (lib/modes.ts FIELDS — keep in sync) ── */
-  --field-pre-g1: #F0A99A; --field-pre-g2: #F0B8C8; --field-pre-g3: #C9B7E6; --field-pre-g4: #F7DCC0;
-  --field-pre-accent: #C25872; --field-pre-accent-soft: #F6DCE4;
-  --field-preg-g1: #F8C9A6; --field-preg-g2: #F2AEC6; --field-preg-g3: #BDA4E2; --field-preg-g4: #F8E1B2;
-  --field-preg-accent: #8F5FC6; --field-preg-accent-soft: #E7D8F5;
-  --field-kids-g1: #F4D888; --field-kids-g2: #A2D8B4; --field-kids-g3: #A6BCE6; --field-kids-g4: #F4B396;
-  --field-kids-accent: #4C79CE; --field-kids-accent-soft: #CBDCF7;
-  --field-meno-g1: #F5C89A; --field-meno-g2: #F0B27A; --field-meno-g3: #E8975A; --field-meno-g4: #F7DCC0;
-  --field-meno-accent: #C2703A; --field-meno-accent-soft: #F7E3D2;
-
-  /* ── Sticker palette (icons only under Diffuse) — unchanged ── */
-  --sticker-yellow: #F5D652; --sticker-yellow-soft: #FBEA9E;
-  --sticker-blue: #9DC3E8; --sticker-blue-soft: #CFE0F0;
-  --sticker-pink: #F2B2C7; --sticker-pink-soft: #F9D8E2;
-  --sticker-green: #BDD48C; --sticker-green-soft: #DDE7BB;
-  --sticker-lilac: #C8B6E8; --sticker-lilac-soft: #E3D8F2;
-  --sticker-peach: #F5B896; --sticker-peach-soft: #F9D6C0;
-  --sticker-coral: #EE7B6D;
-  --sticker-charcoal: #2A2624;
-
-  /* ── Easing ── */
-  --ease-paper: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-ink: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-letter: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* ── LEGACY ALIASES — removed in Task 16. Do not use in new code. ── */
-  --bg: var(--d-paper);
-  --bg-warm: var(--d-bg-deep);
-  --surface: var(--d-paper-2);
-  --surface-raised: var(--d-paper-3);
-  --border: var(--d-line);
-  --border-light: var(--d-line);
-  --border-strong: var(--d-line-2);
-  --ink: var(--d-ink);
-  --ink-secondary: var(--d-ink-2);
-  --ink-muted: var(--d-ink-3);
-  --ink-faint: var(--d-ink-4);
-  --primary: var(--field-preg-accent);
-  --primary-light: var(--field-preg-g3);
-  --primary-dark: var(--d-ink);
-  --secondary: var(--field-kids-accent);
-  --rose: var(--field-pre-accent);
-  --rose-soft: var(--field-pre-accent-soft);
-  --lavender: var(--field-preg-accent);
-  --lavender-soft: var(--field-preg-accent-soft);
-  --blue-powder: var(--field-kids-accent);
-  --blue-powder-soft: var(--field-kids-accent-soft);
-  --r-sm: var(--d-r-sm); --r-md: var(--d-r-md); --r-lg: var(--d-r-lg); --r-xl: var(--d-r-xl); --r-xxl: var(--d-r-xl); --r-full: 999px;
-  --shadow-card: var(--sh-card);
-  --shadow-card-hover: var(--sh-pop);
-  --shadow-stamp: none;
-  --shadow-stamp-press: none;
-  --font-fraunces: var(--font-hanken);
-  --font-dm-sans: var(--font-hanken);
-  --font-instrument-serif: var(--font-hanken);
-  --font-display: var(--font-hanken), system-ui, sans-serif;
-  --font-italic: var(--font-hanken), system-ui, sans-serif;
-  --font-body: var(--font-hanken), system-ui, sans-serif;
-
-  /* ── shadcn compatibility (components/ui) ── */
-  --background: var(--d-paper);
-  --foreground: var(--d-ink);
-  --card: var(--d-paper-2);
-  --card-foreground: var(--d-ink);
-  --popover: var(--d-paper-2);
-  --popover-foreground: var(--d-ink);
-  --muted: var(--d-paper-3);
-  --muted-foreground: var(--d-ink-3);
-  --accent: var(--field-preg-accent-soft);
-  --accent-foreground: var(--d-ink);
-  --destructive: var(--d-error);
-  --destructive-foreground: var(--d-paper-2);
-  --input: var(--d-line-2);
-  --ring: var(--d-ink);
-  --radius: 0.875rem;
-}
-```
-
-Update the `body` rule: `background: var(--d-paper); color: var(--d-ink); font-family: var(--font-hanken), system-ui, sans-serif; font-size: 17px; line-height: 1.6;` and `::selection { background: var(--field-preg-accent-soft); color: var(--d-ink); }`.
-
-In `@theme inline`, replace the font and color lines with (keep any shadcn `--color-*` lines that follow, they now resolve through the compatibility block):
-
-```css
-  --font-sans: var(--font-hanken), system-ui, sans-serif;
-  --font-display: var(--font-hanken), system-ui, sans-serif;
-  --font-body: var(--font-hanken), system-ui, sans-serif;
-  --font-mono: var(--font-space-mono), ui-monospace, monospace;
-  --color-paper: var(--d-paper);
-  --color-paper-2: var(--d-paper-2);
-  --color-paper-3: var(--d-paper-3);
-  --color-bg-deep: var(--d-bg-deep);
-  --color-ink: var(--d-ink);
-  --color-ink-2: var(--d-ink-2);
-  --color-ink-3: var(--d-ink-3);
-  --color-ink-4: var(--d-ink-4);
-  --color-line: var(--d-line);
-  --color-line-2: var(--d-line-2);
-  --color-hairline: var(--d-hairline);
-  --radius-d-sm: var(--d-r-sm);
-  --radius-d-md: var(--d-r-md);
-  --radius-d-lg: var(--d-r-lg);
-  --radius-d-xl: var(--d-r-xl);
-  --shadow-card: var(--sh-card);
-  --shadow-pop: var(--sh-pop);
-```
-
-- [ ] **Step 4: Fonts in the layout**
-
-In `app/[locale]/layout.tsx`, replace the three font imports/constants with:
-
-```tsx
-import { Hanken_Grotesk, Space_Mono } from 'next/font/google'
-
-const hanken = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-hanken', display: 'swap', weight: ['400', '500', '700'], style: ['normal', 'italic'] })
-const spaceMono = Space_Mono({ subsets: ['latin'], variable: '--font-space-mono', display: 'swap', weight: ['400', '700'] })
-```
-
-and the `<html>`/`<body>`:
-
-```tsx
-    <html lang={htmlLang(locale as Locale)} className={`${hanken.variable} ${spaceMono.variable} bg-[#F4F1E8]`}>
-      <body className="antialiased font-body">
-```
-
-(The font variables go on `<html>` so the `:root` aliases can resolve them.)
-
-- [ ] **Step 5: Verify and commit**
-
-Run: `pnpm test && pnpm typecheck && pnpm build`. Then `pnpm dev`: the whole site is now on warm off-white paper with Hanken Grotesk, nothing is broken or unstyled, stamp shadows are gone.
-
-```bash
-git add -A
-git commit -m "feat(diffuse): Diffuse tokens, mode fields, Hanken Grotesk + Space Mono"
-```
-
----
-
-### Task 9: Diffuse primitive kit
-
-**Files:**
-- Create: `components/diffuse/display.tsx`, `components/diffuse/mono-label.tsx`, `components/diffuse/gradient-field.tsx`, `components/diffuse/grain.tsx`, `components/diffuse/action-rule.tsx`, `components/diffuse/text-link.tsx`, `components/diffuse/hairline-select.tsx`, `components/diffuse/field.tsx`, `components/diffuse/card.tsx`, `components/diffuse/index.ts`
-- Create: `app/[locale]/dev/diffuse/page.tsx` (kit preview; not linked, `robots: noindex`)
-
-**Interfaces:**
-- Consumes: `Mode`, `FIELDS` from `@/lib/modes`.
-- Produces (all exported from `@/components/diffuse`):
-  - `Display({ as?: 'h1'|'h2'|'h3'; size?: 'hero'|'xl'|'lg'|'md'; className?; children })` — Hanken Bold, tight tracking. Feeling words inside are `<Display.Em>` (bold italic).
-  - `MonoLabel({ as?: 'p'|'span'; dot?: Mode; className?; children })` — Space Mono, 12px, `tracking-[0.2em]`, uppercase, `text-ink-3`; optional 6px accent dot.
-  - `GradientField({ mode: Mode; intensity?: 'soft'|'full'; className? })` — absolutely positioned, `aria-hidden`, four blurred blobs + `Grain`.
-  - `Grain({ className? })`
-  - `ActionRule({ href?: string; type?: 'submit'|'button'; disabled?: boolean; pending?: boolean; onClick?; className?; children })` — renders `Link` (from `@/i18n/navigation`) when `href` is set, else `<button>`. Mono uppercase label + arrow on a top hairline; arrow slides 6px on hover.
-  - `TextLink({ href: string; className?; children })`
-  - `HairlineSelect<T extends string>({ name: string; value: T; onChange(v: T): void; options: { value: T; label: string; mode?: Mode }[]; legend: string })` — radio group; selected option gets a hairline ring and an accent dot.
-  - `Field({ label: string; error?: string; ...InputHTMLAttributes })` — hairline-underlined input with mono label and error text, wired with `aria-invalid` / `aria-describedby`.
-  - `Card({ as?: 'div'|'article'|'li'; size?: 'md'|'lg'; className?; children })`
-
-- [ ] **Step 1: Write the components**
-
-`components/diffuse/display.tsx`:
-
-```tsx
-import type { ReactNode } from 'react'
-
-const SIZES = {
-  hero: 'text-[44px] leading-[1.02] lg:text-[84px] tracking-[-0.035em]',
-  xl: 'text-[36px] leading-[1.05] lg:text-[56px] tracking-[-0.03em]',
-  lg: 'text-[28px] leading-[1.1] lg:text-[40px] tracking-[-0.025em]',
-  md: 'text-[22px] leading-[1.15] lg:text-[26px] tracking-[-0.02em]',
-} as const
-
-export function Display({
-  as: Tag = 'h2',
-  size = 'xl',
-  className = '',
-  children,
-}: {
-  as?: 'h1' | 'h2' | 'h3'
-  size?: keyof typeof SIZES
-  className?: string
-  children: ReactNode
-}) {
-  return <Tag className={`font-display font-bold text-ink text-balance ${SIZES[size]} ${className}`}>{children}</Tag>
-}
-
-function Em({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <em className={`font-display font-bold italic ${className}`}>{children}</em>
-}
-Display.Em = Em
-```
-
-`components/diffuse/mono-label.tsx`:
-
-```tsx
-import type { ReactNode } from 'react'
-import { FIELDS, type Mode } from '@/lib/modes'
-
-export function MonoLabel({
-  as: Tag = 'p',
-  dot,
-  className = '',
-  children,
-}: {
-  as?: 'p' | 'span'
-  dot?: Mode
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <Tag className={`inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.2em] text-ink-3 ${className}`}>
-      {dot && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ background: FIELDS[dot].accent }} />}
-      {children}
-    </Tag>
-  )
-}
-```
-
-`components/diffuse/grain.tsx`:
-
-```tsx
-export function Grain({ className = '' }: { className?: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none absolute inset-0 mix-blend-multiply ${className}`}
-      style={{ backgroundImage: 'var(--d-grain)', opacity: 'var(--d-grain-opacity)' }}
-    />
-  )
-}
-```
-
-`components/diffuse/gradient-field.tsx`:
-
-```tsx
-import { fieldStops, type Mode } from '@/lib/modes'
-import { Grain } from './grain'
-
-// Blob placement mirrors the v3 reference: four soft lobes, offset so the
-// centre stays light enough for ink text.
-const BLOBS = [
-  'left-[-10%] top-[-20%] h-[70%] w-[60%]',
-  'right-[-15%] top-[-10%] h-[65%] w-[55%]',
-  'left-[10%] bottom-[-25%] h-[70%] w-[55%]',
-  'right-[0%] bottom-[-20%] h-[60%] w-[50%]',
-]
-
-export function GradientField({
-  mode,
-  intensity = 'soft',
-  className = '',
-}: {
-  mode: Mode
-  intensity?: 'soft' | 'full'
-  className?: string
-}) {
-  const stops = fieldStops(mode)
-  return (
-    <div aria-hidden="true" className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
-      {stops.map((color, i) => (
-        <span
-          key={i}
-          className={`absolute rounded-full ${BLOBS[i]}`}
-          style={{
-            background: color,
-            filter: 'blur(var(--d-blur-field))',
-            opacity: intensity === 'full' ? 0.9 : 0.55,
-          }}
-        />
-      ))}
-      <Grain />
-    </div>
-  )
-}
-```
-
-`components/diffuse/action-rule.tsx`:
-
-```tsx
-import type { ReactNode } from 'react'
-import { Link } from '@/i18n/navigation'
-
-function Arrow() {
-  return (
-    <svg viewBox="0 0 22 18" width="22" height="18" fill="none" aria-hidden="true" className="opacity-85 transition-transform duration-[250ms] group-hover:translate-x-1.5">
-      <path d="M1 9h19M13 2l7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-const BASE =
-  'group flex w-full items-center justify-between border-t border-line-2 pt-[18px] pb-0.5 px-0.5 font-mono text-[13px] font-bold uppercase tracking-[0.2em] text-ink transition-colors hover:border-hairline disabled:cursor-default disabled:border-line disabled:text-ink-4'
-
-export function ActionRule({
-  href,
-  type = 'button',
-  disabled,
-  pending,
-  onClick,
-  className = '',
-  children,
-}: {
-  href?: string
-  type?: 'submit' | 'button'
-  disabled?: boolean
-  pending?: boolean
-  onClick?: () => void
-  className?: string
-  children: ReactNode
-}) {
-  if (href) {
-    return (
-      <Link href={href} className={`${BASE} ${className}`}>
-        <span>{children}</span>
-        <Arrow />
-      </Link>
-    )
-  }
-  return (
-    <button type={type} disabled={disabled || pending} aria-busy={pending || undefined} onClick={onClick} className={`${BASE} ${className}`}>
-      <span>{children}</span>
-      <Arrow />
-    </button>
-  )
-}
-```
-
-`components/diffuse/text-link.tsx`:
-
-```tsx
-import type { ReactNode } from 'react'
-import { Link } from '@/i18n/navigation'
-
-export function TextLink({ href, className = '', children }: { href: string; className?: string; children: ReactNode }) {
-  return (
-    <Link href={href} className={`font-mono text-[12px] font-bold uppercase tracking-[0.2em] text-ink-3 transition-colors hover:text-ink ${className}`}>
-      {children}
-    </Link>
-  )
-}
-```
-
-`components/diffuse/hairline-select.tsx`:
-
-```tsx
-'use client'
-
-import { FIELDS, type Mode } from '@/lib/modes'
-
-export function HairlineSelect<T extends string>({
-  name,
-  value,
-  onChange,
-  options,
-  legend,
-}: {
-  name: string
-  value: T
-  onChange: (v: T) => void
-  options: { value: T; label: string; mode?: Mode }[]
-  legend: string
-}) {
-  return (
-    <fieldset>
-      <legend className="mb-3 font-mono text-[12px] uppercase tracking-[0.2em] text-ink-3">{legend}</legend>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {options.map((o) => {
-          const checked = o.value === value
-          return (
-            <label
-              key={o.value}
-              className={`relative flex cursor-pointer items-center gap-2 rounded-d-md border px-4 py-3 text-[15px] transition-colors ${
-                checked ? 'border-hairline text-ink' : 'border-line text-ink-2 hover:border-line-2'
-              }`}
-            >
-              <input type="radio" name={name} value={o.value} checked={checked} onChange={() => onChange(o.value)} className="sr-only" />
-              <span
-                aria-hidden="true"
-                className="h-2 w-2 rounded-full border transition-colors"
-                style={{
-                  borderColor: o.mode ? FIELDS[o.mode].accent : 'var(--d-hairline)',
-                  background: checked ? (o.mode ? FIELDS[o.mode].accent : 'var(--d-ink)') : 'transparent',
-                }}
-              />
-              {o.label}
-            </label>
-          )
-        })}
-      </div>
-    </fieldset>
-  )
-}
-```
-
-`components/diffuse/field.tsx`:
-
-```tsx
-import { useId, type InputHTMLAttributes } from 'react'
-
-export function Field({ label, error, id, className = '', ...input }: { label: string; error?: string } & InputHTMLAttributes<HTMLInputElement>) {
-  const auto = useId()
-  const fieldId = id ?? auto
-  const errorId = `${fieldId}-error`
-  return (
-    <div className={className}>
-      <label htmlFor={fieldId} className="block font-mono text-[12px] uppercase tracking-[0.2em] text-ink-3">
-        {label}
-      </label>
-      <input
-        id={fieldId}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
-        className="mt-2 w-full border-0 border-b border-line-2 bg-transparent px-0 pb-2 text-[18px] text-ink placeholder:text-ink-4 focus:border-hairline focus:outline-none aria-[invalid=true]:border-[var(--d-error)]"
-        {...input}
-      />
-      {error && (
-        <p id={errorId} className="mt-2 text-[14px] text-[var(--d-error)]">
-          {error}
-        </p>
-      )}
-    </div>
-  )
-}
-```
-
-`components/diffuse/card.tsx`:
-
-```tsx
-import type { ReactNode } from 'react'
-
-export function Card({
-  as: Tag = 'div',
-  size = 'md',
-  className = '',
-  children,
-}: {
-  as?: 'div' | 'article' | 'li'
-  size?: 'md' | 'lg'
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <Tag className={`relative overflow-hidden border border-line bg-paper-2 shadow-card ${size === 'lg' ? 'rounded-d-lg p-8 lg:p-12' : 'rounded-d-md p-6'} ${className}`}>
-      {children}
-    </Tag>
-  )
-}
-```
-
-`components/diffuse/index.ts`:
-
-```ts
-export { Display } from './display'
-export { MonoLabel } from './mono-label'
-export { GradientField } from './gradient-field'
-export { Grain } from './grain'
-export { ActionRule } from './action-rule'
-export { TextLink } from './text-link'
-export { HairlineSelect } from './hairline-select'
-export { Field } from './field'
-export { Card } from './card'
-```
-
-- [ ] **Step 2: Kit preview page**
-
-`app/[locale]/dev/diffuse/page.tsx`:
-
-```tsx
-'use client'
-
-import { useState } from 'react'
-import { Display, MonoLabel, GradientField, ActionRule, TextLink, HairlineSelect, Field, Card } from '@/components/diffuse'
-import { MODES, type Mode } from '@/lib/modes'
-
-export default function DiffuseKitPage() {
-  const [mode, setMode] = useState<Mode>('preg')
-  return (
-    <main className="mx-auto max-w-4xl space-y-12 px-6 py-16">
-      <MonoLabel dot="preg">Diffuse kit · dev only</MonoLabel>
-      <Display as="h1" size="hero">Light, <Display.Em>soft</Display.Em>, generative.</Display>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {MODES.map((m) => (
-          <div key={m} className="relative h-40 overflow-hidden rounded-d-lg border border-line">
-            <GradientField mode={m} intensity="full" />
-            <MonoLabel className="absolute bottom-3 left-3 text-ink">{m}</MonoLabel>
-          </div>
-        ))}
-      </div>
-      <Card size="lg">
-        <Field label="Email" placeholder="you@your-life.com" />
-        <Field className="mt-6" label="Email (error)" error="Please enter a valid email." defaultValue="ana@" />
-        <div className="mt-6">
-          <HairlineSelect name="mode" legend="I am…" value={mode} onChange={setMode} options={MODES.map((m) => ({ value: m, label: m, mode: m }))} />
-        </div>
-        <div className="mt-8 space-y-4">
-          <ActionRule type="button">Save my seat</ActionRule>
-          <ActionRule type="button" pending>Saving…</ActionRule>
-          <TextLink href="/pricing">See pricing</TextLink>
-        </div>
-      </Card>
-    </main>
-  )
-}
-```
-
-Add `app/[locale]/dev/diffuse/layout.tsx` exporting `export const metadata = { robots: { index: false, follow: false } }` and `export default function L({ children }: { children: React.ReactNode }) { return children }`.
-
-- [ ] **Step 3: Visual check against the reference**
-
-Run `pnpm dev`, open `/en/dev/diffuse` next to `APP/docs/design/design-system-v3.html` (open the file in a browser). Compare: font weights, mono letter-spacing, hairline thickness/colour, field softness, grain visibility, card radius/shadow. Adjust class values in the kit (not in the reference) until they match. Check keyboard: Tab reaches each radio option and the buttons; focus is visible (add `focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[var(--d-hairline)]` to `BASE` in ActionRule and to the label in HairlineSelect via `has-[:focus-visible]:outline …` if not visible).
-
-- [ ] **Step 4: Commit**
-
-```bash
-pnpm typecheck && pnpm build
-git add -A
-git commit -m "feat(diffuse): web primitive kit mirroring the app (Display, MonoLabel, GradientField, ActionRule…)"
-```
-
----
-
-### Task 10: Navigation, hero, final strip and footer on Diffuse
-
-**Files:**
-- Modify: `components/navigation.tsx`, `components/hero-section.tsx`, `components/animated-hero-card.tsx`, `components/footer.tsx`, `components/waitlist-faq-section.tsx` (only `FinalHeroStrip`)
-- Create: `lib/waitlist/prefill.ts`
-- Modify: `messages/en.json`, `messages/pt.json`
-
-**Interfaces:**
-- Consumes: kit from Task 9; `MODES` from `@/lib/modes`.
-- Produces: `PREFILL_EVENT = 'waitlist:prefill'` and `prefillWaitlist(email: string): void` (dispatches `CustomEvent<string>` and scrolls to `#waitlist`), consumed by the waitlist form in Task 15.
-
-**Token migration map** (used in this task and Tasks 11–13; apply to every touched file):
-
-| Old | New |
-|---|---|
-| `style={{ fontFamily: 'var(--font-fraunces)…' }}` + `font-semibold` | `font-display font-bold` (or `<Display>`) |
-| Instrument Serif italic `<em>` | `<Display.Em>` |
-| `<p className="eyebrow">` | `<MonoLabel>` |
-| `var(--bg)` / `var(--bg-warm)` / `var(--surface)` / `var(--surface-raised)` | `bg-paper` / `bg-bg-deep` / `bg-paper-2` / `bg-paper-3` |
-| `var(--ink)` / `--ink-secondary` / `--ink-muted` / `--ink-faint` | `text-ink` / `text-ink-2` / `text-ink-3` / `text-ink-4` |
-| `var(--border)` / `--border-strong` | `border-line` / `border-line-2` |
-| `--rose*` / `--lavender*` / `--blue-powder*` | `FIELDS.pre|preg|kids.accent / accentSoft` (or `--field-<mode>-accent[-soft]`) |
-| `.btn-primary` | `<ActionRule>` |
-| `.btn-secondary`, text CTAs | `<TextLink>` |
-| `.card-paper`, `rounded-[28px] border shadow-[var(--shadow-card)]` | `<Card>` |
-| `.chip*`, filled `rounded-full` labels | `<MonoLabel dot=…>` |
-| `.input-field` | `<Field>` |
-| `rounded-[12px]` / `[36px]` / `[48px]` | `rounded-d-sm` / `rounded-d-xl` / `rounded-d-xl` |
-| Background sticker collage (absolute stickers scattered for decoration) | delete; stickers only as icons next to content |
-
-- [ ] **Step 1: Prefill helper**
-
-`lib/waitlist/prefill.ts`:
-
-```ts
-export const PREFILL_EVENT = 'waitlist:prefill'
-
-/** Hand an email from any CTA to the main waitlist form and scroll to it. */
-export function prefillWaitlist(email: string): void {
-  window.dispatchEvent(new CustomEvent<string>(PREFILL_EVENT, { detail: email.trim() }))
-  document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-```
-
-- [ ] **Step 2: Navigation**
-
-Rebuild `components/navigation.tsx` keeping its behaviour (scroll state, mobile menu, `ScrollProgress`) and the Task 5 i18n wiring:
-- bar: transparent at top; when scrolled, `bg-paper/85 backdrop-blur-[var(--d-blur-glass)] border-b border-line` full-width (no floating pill, no `rounded-full`, no card shadow);
-- wordmark: `GrandmaLogo` + `grandma` in `font-display font-bold tracking-[-0.03em]`;
-- links: `font-mono text-[12px] uppercase tracking-[0.2em] text-ink-2 hover:text-ink`;
-- right side: `LocaleSwitcher` (mono, same style) and a `TextLink href="/#waitlist"` with `t('join')`;
-- mobile menu: full-screen `bg-paper` sheet, links as `Display size="md"` rows separated by `border-b border-line`, `LocaleSwitcher` and `ActionRule href="/#waitlist"` at the bottom;
-- `ScrollProgress`: 1px bar in `var(--d-hairline)`.
-
-- [ ] **Step 3: Hero**
-
-Rebuild `components/hero-section.tsx`:
-
-```tsx
-'use client'
-
-import { useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { motion, useReducedMotion } from 'framer-motion'
-import { AnimatedHeroCard } from './animated-hero-card'
-import { Display, MonoLabel, GradientField, ActionRule } from '@/components/diffuse'
-import { prefillWaitlist } from '@/lib/waitlist/prefill'
-
-export function HeroSection() {
-  const t = useTranslations('hero')
-  const reduce = useReducedMotion()
-  const [email, setEmail] = useState('')
-
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    prefillWaitlist(email)
-  }
-
-  return (
-    <section id="hero" aria-label={t('aria')} className="relative overflow-hidden bg-paper px-6 pb-20 pt-32 lg:px-12">
-      <GradientField mode="preg" className="opacity-70" />
-      <div className="relative mx-auto grid max-w-[1280px] items-center gap-12 lg:grid-cols-[1.2fr_1fr] lg:gap-16">
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-[640px]"
-        >
-          <MonoLabel dot="preg">{t('eyebrow')}</MonoLabel>
-          <Display as="h1" size="hero" className="mb-6 mt-6">
-            {t.rich('title', { em: (c) => <Display.Em>{c}</Display.Em> })}
-          </Display>
-          <p className="mb-10 max-w-[540px] text-[17px] leading-[1.6] text-ink-2 lg:text-[19px]">{t('subtitle')}</p>
-          <form onSubmit={onSubmit} className="max-w-[440px] space-y-6">
-            <label className="sr-only" htmlFor="hero-email">{t('emailLabel')}</label>
-            <input
-              id="hero-email"
-              type="email"
-              autoComplete="email"
-              placeholder={t('emailPlaceholder')}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border-0 border-b border-line-2 bg-transparent px-0 pb-2 text-[18px] text-ink placeholder:text-ink-4 focus:border-hairline focus:outline-none"
-            />
-            <ActionRule type="submit">{t('cta')}</ActionRule>
-          </form>
-          <p className="mt-4 text-[14px] text-ink-3">{t('note')}</p>
-        </motion.div>
-        <div className="relative flex min-h-[400px] items-center justify-center lg:min-h-[520px]">
-          <AnimatedHeroCard />
-        </div>
-      </div>
-      <div className="relative mx-auto mt-16 max-w-[1280px] border-t border-line pt-6 lg:mt-24">
-        <MonoLabel>{t('builtBy')}</MonoLabel>
-      </div>
-    </section>
-  )
-}
-```
-
-Add keys `hero.aria` ("Introduction" / "Introdução") and `hero.emailLabel` ("Your email" / "Seu email") to both files. Reskin `AnimatedHeroCard` with the migration map (card → `Card`, labels → `MonoLabel`, numbers → `font-display font-bold tabular-nums`, data text → `font-mono`).
-
-- [ ] **Step 4: Final strip and footer**
-
-`FinalHeroStrip`: section `relative overflow-hidden bg-paper py-24 text-center`, a `GradientField mode="kids"` behind, `MonoLabel` eyebrow, `Display size="xl"` with the line, and an `ActionRule href="/#waitlist"` (max-w-[360px], centred) with a new key `final.cta` ("Save my seat" / "Garantir meu lugar"). Remove the leaf sticker.
-
-Footer: `bg-bg-deep border-t border-line`; column titles as `MonoLabel`; links `text-ink-2 hover:text-ink`; bottom row with `LocaleSwitcher`, the copyright line, and links to `/privacy` and `/terms` via `Link` from `@/i18n/navigation`. Keep all existing footer keys.
-
-- [ ] **Step 5: Verify and commit**
-
-Run: `pnpm i18n:check && pnpm typecheck && pnpm build`. In `pnpm dev`, at 390, 768 and 1280 px wide, check `/en` and `/pt`: hero headline doesn't overflow (Hanken Bold is wider than Fraunces — reduce `hero` size class if the PT headline wraps to more than 4 lines at 390px); typing an email in the hero and pressing Enter scrolls to `#waitlist`; nav switches between transparent and blurred paper.
-
-```bash
-git add -A
-git commit -m "feat(diffuse): navigation, hero, final strip and footer on Diffuse"
-```
-
----
-
-### Task 11: Four modes section (replaces three stages)
-
-**Files:**
-- Create: `components/modes-section.tsx` (from `components/three-stages-section.tsx`)
-- Create: `components/mode-screens.tsx` (the four phone-screen mockups)
-- Delete: `components/three-stages-section.tsx`
-- Modify: `app/[locale]/page.tsx` (`ThreeStagesSection` → `ModesSection`)
-- Modify: `messages/en.json`, `messages/pt.json` (`stages` namespace → `modes`; update `nav.modes` anchor stays `#stages`)
-
-**Interfaces:**
-- Consumes: kit (Task 9); `MODES`, `type Mode` (Task 8).
-- Produces: `ModesSection()`; `ModeScreen({ mode }: { mode: Mode })`.
-
-- [ ] **Step 1: Messages**
-
-Replace the `stages` namespace with `modes` in both files. Move the existing stage texts into it (cycle → `pre`, pregnancy → `preg`, kids → `kids`) and add `meno`. Final shape and new copy:
-
-`messages/en.json`:
-
-```json
-"modes": {
-  "aria": "The four modes",
-  "eyebrow": "FOUR MODES",
-  "title": "One companion. Four <em>chapters</em>.",
-  "subtitle": "Grandma's whole app reshapes itself around where you are. Same wisdom, different chapter — and she keeps your history when you move on.",
-  "seeApp": "See the app",
-  "closePreview": "Close preview",
-  "outro": "Switch modes any time. Grandma remembers everything.",
-  "items": {
-    "pre": {
-      "label": "Cycle",
-      "title": "Know your <em>cycle</em>.",
-      "description": "A cycle ring with hormone curves, fertile windows that actually make sense, daily wisdom, and six fertility pillars to understand your body on every level.",
-      "features": ["Cycle ring and phase predictions", "Hormone curves (LH, estrogen, progesterone)", "Fertile window and ovulation forecast", "Daily wisdom and affirmations", "Preconception checklist and supplements", "Mood, energy and symptom logging"]
-    },
-    "preg": {
-      "label": "Pregnancy",
-      "title": "Expecting, <em>for two</em>.",
-      "description": "A 40-week journey ring, baby size in real fruit (and feelings), trimester-aware content, daily affirmations, and a birth plan that fits in your bag.",
-      "features": ["40-week journey ring with fruit size", "Baby growth (length and weight)", "Trimester-aware daily content", "Affirmations and kick counter", "Birth plan and hospital bag checklist", "Appointments and contraction timer"]
-    },
-    "kids": {
-      "label": "Kids",
-      "title": "Raising <em>little ones</em>.",
-      "description": "From newborn to five: feeds, sleep, growth, milestones and vaccines in one calm place, shared with the people who help you care.",
-      "features": ["Feeds, sleep and diapers", "Growth charts and milestones", "Vaccine reminders", "Care circle for partner and nanny", "Memories you can keep", "Ask Grandma, any hour"]
-    },
-    "meno": {
-      "label": "Menopause",
-      "title": "Through the <em>change</em>.",
-      "description": "Track hot flashes, sleep, mood and cycle changes, see your patterns over weeks, and get steady, grounded answers for perimenopause and beyond.",
-      "features": ["Quick symptom log (hot flashes, sleep, mood)", "Calendar with day-by-day icons", "Patterns across weeks", "Cycle changes in perimenopause", "Notes to bring to your doctor", "Ask Grandma, any hour"]
-    }
+{
+  "meta": {
+    "title": "Grandma · Waitlist open — Brasil first, then the US",
+    "description": "A calm companion for your cycle, pregnancy, kids and menopause. Join the waitlist: invites open in Brasil first, then the United States.",
+    "ogTitle": "Grandma · Join the waitlist"
   },
-  "screens": { }
+  "locale": { "label": "Language", "en": "EN", "pt": "PT" }
 }
 ```
 
 `messages/pt.json`:
 
 ```json
-"modes": {
-  "aria": "Os quatro modos",
-  "eyebrow": "QUATRO MODOS",
-  "title": "Uma companhia. Quatro <em>capítulos</em>.",
-  "subtitle": "O app inteiro da Vovó se ajusta ao momento em que você está. A mesma sabedoria, outro capítulo — e ela guarda o seu histórico quando você muda de fase.",
-  "seeApp": "Ver o app",
-  "closePreview": "Fechar prévia",
-  "outro": "Troque de modo quando quiser. A Vovó lembra de tudo.",
-  "items": {
-    "pre": {
-      "label": "Ciclo",
-      "title": "Conheça o seu <em>ciclo</em>.",
-      "description": "Um anel do ciclo com curvas hormonais, janela fértil que faz sentido de verdade, sabedoria diária e seis pilares de fertilidade para entender o seu corpo por inteiro.",
-      "features": ["Anel do ciclo e previsão das fases", "Curvas hormonais (LH, estrogênio, progesterona)", "Janela fértil e previsão da ovulação", "Sabedoria e afirmações diárias", "Checklist pré-concepção e suplementos", "Registro de humor, energia e sintomas"]
-    },
-    "preg": {
-      "label": "Gravidez",
-      "title": "Esperando, <em>a dois</em>.",
-      "description": "Um anel de 40 semanas, o tamanho do bebê em frutas (e em sentimentos), conteúdo para cada trimestre, afirmações diárias e um plano de parto que cabe na bolsa.",
-      "features": ["Anel de 40 semanas com tamanho em frutas", "Crescimento do bebê (comprimento e peso)", "Conteúdo diário para cada trimestre", "Afirmações e contador de chutes", "Plano de parto e checklist da mala da maternidade", "Consultas e cronômetro de contrações"]
-    },
-    "kids": {
-      "label": "Filhos",
-      "title": "Criando os <em>pequenos</em>.",
-      "description": "Do recém-nascido aos cinco anos: mamadas, sono, crescimento, marcos e vacinas num lugar tranquilo, compartilhado com quem ajuda você a cuidar.",
-      "features": ["Mamadas, sono e fraldas", "Curvas de crescimento e marcos", "Lembretes de vacina", "Rede de cuidado para parceiro e babá", "Memórias para guardar", "Pergunte à Vovó, a qualquer hora"]
-    },
-    "meno": {
-      "label": "Menopausa",
-      "title": "Atravessando a <em>mudança</em>.",
-      "description": "Registre ondas de calor, sono, humor e mudanças no ciclo, veja seus padrões ao longo das semanas e receba respostas calmas e embasadas para a perimenopausa e depois dela.",
-      "features": ["Registro rápido de sintomas (calor, sono, humor)", "Calendário com ícones dia a dia", "Padrões ao longo das semanas", "Mudanças no ciclo na perimenopausa", "Anotações para levar à consulta", "Pergunte à Vovó, a qualquer hora"]
+{
+  "meta": {
+    "title": "Grandma · Lista de espera aberta — Brasil primeiro, depois EUA",
+    "description": "Uma companhia tranquila para o seu ciclo, gravidez, filhos e menopausa. Entre na lista de espera: os convites abrem primeiro no Brasil, depois nos Estados Unidos.",
+    "ogTitle": "Grandma · Entre na lista de espera"
+  },
+  "locale": { "label": "Idioma", "en": "EN", "pt": "PT" }
+}
+```
+
+- [ ] **Step 6: Verify and commit** — `pnpm i18n:check && pnpm typecheck` (the build needs a page; Task 11 adds it).
+
+```bash
+git add -A
+git commit -m "feat(i18n): next-intl routing /en /pt, v3 fonts layout, localized metadata, switcher"
+```
+
+---
+
+### Task 11: Lean home
+
+**Files:**
+- Create: `app/[locale]/page.tsx`, `components/site/nav.tsx`, `components/site/hero.tsx`, `components/site/launch.tsx`, `components/site/chapters.tsx`, `components/site/grandma.tsx`, `components/site/faq.tsx`, `components/site/closing.tsx`, `components/site/footer.tsx`, `lib/geo.ts`
+- Modify: `messages/en.json`, `messages/pt.json`
+- Delete: every file in `components/` except `components/diffuse/`, `components/site/`, and `components/waitlist-form.tsx` (Task 14); also `components/ui/`, `hooks/`, `styles/`, `components.json`
+
+**Interfaces:**
+- Consumes: kit (Task 9), `Link` (Task 10), `countryFromGeo` (Task 8).
+- Produces: `getDefaultCountry(locale): Promise<Country>` in `lib/geo.ts`; `Hero({ locale, country, form: ReactNode })` with a `form` slot that Task 14 fills with `<WaitlistForm />` (until then the slot renders the email field + ActionRule linking to `#join`); anchor `#join` on the hero form.
+
+- [ ] **Step 1: Messages** — add these namespaces to both files.
+
+`messages/en.json` (merge into the existing object):
+
+```json
+{
+  "nav": { "join": "Join the waitlist", "home": "grandma.app home" },
+  "hero": {
+    "status": "Waitlist open",
+    "first": "Brasil first",
+    "then": "Then the US",
+    "title": "With you through every <em>chapter.</em>",
+    "lede": "Cycle, pregnancy, the first years and menopause — one calm companion who remembers everything, judges nothing, and answers at 3am.",
+    "videoAlt": "The grandma app: choosing your chapter, then the home screen"
+  },
+  "launch": {
+    "title": "How the <em>launch</em> works.",
+    "sub": "Invites go out in the order people join, country by country.",
+    "steps": [
+      { "k": "01", "title": "Join the list", "body": "Leave your email and where you are in life. That's all." },
+      { "k": "02", "title": "Brasil, first", "body": "The first invites open in Brazil, in Portuguese." },
+      { "k": "03", "title": "United States, next", "body": "Then the US, in English. Everywhere else after that." }
+    ],
+    "you": "You're here"
+  },
+  "chapters": {
+    "title": "One companion, <em>four chapters.</em>",
+    "sub": "The whole app reshapes itself around where you are. Switch any time — Grandma keeps your history.",
+    "items": {
+      "pre": { "label": "Chapter 01 · Trying", "title": "Cycle", "body": "Your cycle, hormones and fertile window — explained, not just tracked.", "alt": "Cycle home screen in the grandma app" },
+      "preg": { "label": "Chapter 02 · Expecting", "title": "Pregnancy", "body": "Forty weeks, one at a time, with your baby's size and what's next.", "alt": "Pregnancy home screen in the grandma app" },
+      "kids": { "label": "Chapter 03 · Raising", "title": "Kids", "body": "Sleep, feeds, growth and milestones from newborn to five — shared with your people.", "alt": "Kids home screen in the grandma app" },
+      "meno": { "label": "Chapter 04 · The change", "title": "Menopause", "body": "Hot flashes, sleep and mood, with patterns over weeks and steady answers.", "alt": "Menopause quick log in the grandma app" }
     }
   },
-  "screens": { }
+  "grandma": {
+    "title": "Meet <em>Grandma.</em>",
+    "quote": "The friend who's awake at 3am — and actually knows things.",
+    "body": "She knows your kids by name, remembers their ages and sleep patterns, tells you what the science says and what your grandmother would have done — and lets you decide.",
+    "traits": ["Always there", "Knows your kids by name", "Never judges", "Cites real sources"],
+    "videoAlt": "Asking Grandma a question in the app"
+  },
+  "faq": {
+    "title": "The obvious <em>questions.</em>",
+    "items": [
+      { "q": "When does it launch?", "a": "Invites open in Brasil first, then in the United States. Within each country we go in the order people joined, and we never skip ahead." },
+      { "q": "Is it only for pregnancy and babies?", "a": "No. Grandma has four chapters: Cycle, Pregnancy, Kids (newborn to five) and Menopause. Switch any time — she keeps your history." },
+      { "q": "What will it cost?", "a": "Free to start. An optional Premium plan adds more, and you'll see it before you ever pay." },
+      { "q": "Is my data private?", "a": "Yes. Your data is encrypted, never sold, and never used to train AI models. You can export it or delete your account at any time." }
+    ]
+  },
+  "closing": { "eyebrow": "Ready when you are", "title": "Take your time. <em>We'll be here.</em>", "cta": "Save my seat" },
+  "footer": { "tag": "A calm companion for your cycle, pregnancy, kids and menopause.", "line": "Calm where it counts, warm where it helps.", "privacy": "Privacy", "terms": "Terms", "rights": "© 2026 grandma.app" }
 }
 ```
 
-`modes.screens` holds the phone-mockup strings moved from `stages.screens` in Task 6, plus a new `meno` group for Step 2 (EN: `"greeting": "Hi,"`, `"name": "Sarah"`, `"date": "Day 214 · Thursday"`, `"todayTitle": "Today"`, `"symptoms": ["Hot flash", "Slept 6h", "Calm"]`, `"pattern": "Hot flashes eased 30% this month"`, `"ask": "Ask Grandma"`; PT: `"Oi,"`, `"Ana"`, `"Dia 214 · Quinta"`, `"Hoje"`, `["Onda de calor", "Dormiu 6h", "Tranquila"]`, `"As ondas de calor diminuíram 30% este mês"`, `"Pergunte à Vovó"`). Run `pnpm i18n:check`.
+`messages/pt.json`:
 
-- [ ] **Step 2: Mode screens**
-
-Create `components/mode-screens.tsx`: move `CycleTrackingScreen`, `PregnancyScreen` and `KidsScreen` out of `three-stages-section.tsx` unchanged except for the migration map (fonts → `font-display`/`font-mono`, colours → tokens/`FIELDS`), and add:
-
-```tsx
-function MenopauseScreen() {
-  const t = useTranslations('modes.screens.meno')
-  const f = FIELDS.meno
-  const symptoms = t.raw('symptoms') as string[]
-  return (
-    <div className="flex min-h-full flex-col gap-3 bg-paper p-4">
-      <div className="pt-4">
-        <p className="font-display text-[14px] font-bold">
-          {t('greeting')} <em className="italic">{t('name')}</em>
-        </p>
-        <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-3">{t('date')}</p>
-      </div>
-      <div className="relative overflow-hidden rounded-d-md border border-line p-4">
-        <GradientField mode="meno" intensity="full" />
-        <p className="relative font-mono text-[9px] uppercase tracking-[0.2em] text-ink-2">{t('todayTitle')}</p>
-        <ul className="relative mt-2 flex flex-wrap gap-1.5">
-          {symptoms.map((s) => (
-            <li key={s} className="rounded-d-sm border border-hairline/40 bg-paper-2/70 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em]">{s}</li>
-          ))}
-        </ul>
-      </div>
-      <div className="rounded-d-md border border-line bg-paper-2 p-3">
-        <p className="text-[11px] leading-snug text-ink-2">{t('pattern')}</p>
-        <svg viewBox="0 0 120 32" className="mt-2 h-8 w-full" aria-hidden="true">
-          <polyline points="0,8 20,10 40,14 60,13 80,20 100,22 120,26" fill="none" stroke={f.accent} strokeWidth="1.5" />
-        </svg>
-      </div>
-      <p className="mt-auto border-t border-line-2 pt-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em]">{t('ask')} →</p>
-    </div>
-  )
-}
-
-export function ModeScreen({ mode }: { mode: Mode }) {
-  switch (mode) {
-    case 'pre': return <CycleTrackingScreen />
-    case 'preg': return <PregnancyScreen />
-    case 'kids': return <KidsScreen />
-    case 'meno': return <MenopauseScreen />
-  }
+```json
+{
+  "nav": { "join": "Entrar na lista", "home": "Início do grandma.app" },
+  "hero": {
+    "status": "Lista de espera aberta",
+    "first": "Brasil primeiro",
+    "then": "Depois os EUA",
+    "title": "Com você em cada <em>capítulo.</em>",
+    "lede": "Ciclo, gravidez, os primeiros anos e a menopausa — uma companhia calma que lembra de tudo, não julga nada e responde às 3 da manhã.",
+    "videoAlt": "O app grandma: escolhendo o seu capítulo e depois a tela inicial"
+  },
+  "launch": {
+    "title": "Como o <em>lançamento</em> funciona.",
+    "sub": "Os convites saem na ordem de inscrição, país por país.",
+    "steps": [
+      { "k": "01", "title": "Entre na lista", "body": "Deixe o seu email e em que momento da vida você está. Só isso." },
+      { "k": "02", "title": "Brasil, primeiro", "body": "Os primeiros convites abrem no Brasil, em português." },
+      { "k": "03", "title": "Estados Unidos, depois", "body": "Depois os EUA, em inglês. O resto do mundo em seguida." }
+    ],
+    "you": "Você está aqui"
+  },
+  "chapters": {
+    "title": "Uma companhia, <em>quatro capítulos.</em>",
+    "sub": "O app inteiro se ajusta ao momento em que você está. Troque quando quiser — a Vovó guarda o seu histórico.",
+    "items": {
+      "pre": { "label": "Capítulo 01 · Tentando", "title": "Ciclo", "body": "Seu ciclo, seus hormônios e a janela fértil — explicados, não só registrados.", "alt": "Tela inicial do Ciclo no app grandma" },
+      "preg": { "label": "Capítulo 02 · Esperando", "title": "Gravidez", "body": "Quarenta semanas, uma de cada vez, com o tamanho do bebê e o que vem pela frente.", "alt": "Tela inicial da Gravidez no app grandma" },
+      "kids": { "label": "Capítulo 03 · Criando", "title": "Filhos", "body": "Sono, mamadas, crescimento e marcos do recém-nascido aos cinco anos — compartilhado com quem cuida junto.", "alt": "Tela inicial de Filhos no app grandma" },
+      "meno": { "label": "Capítulo 04 · A mudança", "title": "Menopausa", "body": "Ondas de calor, sono e humor, com padrões ao longo das semanas e respostas calmas.", "alt": "Registro rápido da Menopausa no app grandma" }
+    }
+  },
+  "grandma": {
+    "title": "Conheça a <em>Vovó.</em>",
+    "quote": "A amiga que está acordada às 3 da manhã — e que sabe das coisas.",
+    "body": "Ela sabe o nome dos seus filhos, lembra das idades e do sono deles, conta o que a ciência diz e o que a sua avó teria feito — e deixa você decidir.",
+    "traits": ["Sempre por perto", "Sabe o nome dos seus filhos", "Nunca julga", "Cita fontes reais"],
+    "videoAlt": "Fazendo uma pergunta para a Vovó no app"
+  },
+  "faq": {
+    "title": "As perguntas <em>óbvias.</em>",
+    "items": [
+      { "q": "Quando vai ser lançado?", "a": "Os convites abrem primeiro no Brasil, depois nos Estados Unidos. Em cada país seguimos a ordem de inscrição e nunca furamos a fila." },
+      { "q": "É só para gravidez e bebês?", "a": "Não. A Vovó tem quatro capítulos: Ciclo, Gravidez, Filhos (do recém-nascido aos cinco anos) e Menopausa. Troque quando quiser — ela guarda o seu histórico." },
+      { "q": "Quanto vai custar?", "a": "Grátis para começar. Um plano Premium opcional acrescenta mais, e você vê tudo antes de pagar qualquer coisa." },
+      { "q": "Meus dados são privados?", "a": "Sim. Seus dados são criptografados, nunca são vendidos e nunca são usados para treinar modelos de IA. Você pode exportar tudo ou apagar a conta quando quiser." }
+    ]
+  },
+  "closing": { "eyebrow": "Quando você quiser", "title": "Sem pressa. <em>A gente vai estar aqui.</em>", "cta": "Garantir meu lugar" },
+  "footer": { "tag": "Uma companhia tranquila para o seu ciclo, gravidez, filhos e menopausa.", "line": "Calma onde importa, carinho onde ajuda.", "privacy": "Privacidade", "terms": "Termos", "rights": "© 2026 grandma.app" }
 }
 ```
 
-(`'use client'` at the top; import `useTranslations`, `GradientField`, `FIELDS`, `type Mode`.)
+(The FAQ privacy answer no longer names vendors or Claude; Igor confirms wording in review.)
 
-- [ ] **Step 3: Section**
+- [ ] **Step 2: Geo helper** — `lib/geo.ts`:
 
-`components/modes-section.tsx`:
+```ts
+import 'server-only'
+import { headers } from 'next/headers'
+import { countryFromGeo, type Country } from './countries'
+
+export async function getDefaultCountry(locale: 'en' | 'pt'): Promise<Country> {
+  const h = await headers()
+  return countryFromGeo(h.get('x-vercel-ip-country'), locale)
+}
+```
+
+- [ ] **Step 3: Sections**
+
+`components/site/nav.tsx`:
 
 ```tsx
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Display, MonoLabel, GradientField, Card } from '@/components/diffuse'
-import { MODES, type Mode } from '@/lib/modes'
-import { PhoneMockup } from './phone-mockup'
-import { ModeScreen } from './mode-screens'
-import { ScrollReveal } from './scroll-animations'
+import { Link } from '@/i18n/navigation'
+import { Mark } from '@/components/diffuse'
+import { LocaleSwitcher } from './locale-switcher'
 
-type Item = { label: string; title: string; description: string; features: string[] }
-
-export function ModesSection() {
-  const t = useTranslations('modes')
-  const reduce = useReducedMotion()
-  const [open, setOpen] = useState<Mode | null>(null)
-
+export function Nav() {
+  const t = useTranslations('nav')
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 30)
+    on()
+    window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
   return (
-    <section id="stages" aria-label={t('aria')} className="bg-paper px-6 py-20 lg:px-12 lg:py-32">
-      <div className="mx-auto max-w-[1280px]">
-        <ScrollReveal>
-          <div className="mx-auto mb-12 max-w-[760px] text-center lg:mb-16">
-            <MonoLabel>{t('eyebrow')}</MonoLabel>
-            <Display size="xl" className="mb-6 mt-4">{t.rich('title', { em: (c) => <Display.Em>{c}</Display.Em> })}</Display>
-            <p className="text-[17px] leading-[1.6] text-ink-2 lg:text-[19px]">{t('subtitle')}</p>
-          </div>
-        </ScrollReveal>
+    <header className={`sticky top-0 z-50 border-b transition-colors ${scrolled ? 'border-line bg-[color-mix(in_oklab,var(--bg)_82%,transparent)] backdrop-blur-[18px]' : 'border-transparent'}`}>
+      <div className="mx-auto flex h-[78px] max-w-[1280px] items-center justify-between px-[22px] md:px-14">
+        <Link href="/" aria-label={t('home')} className="flex items-center gap-2.5 font-display text-[32px] leading-none tracking-[-0.01em]">
+          <Mark size={42} />grandma
+        </Link>
+        <div className="flex items-center gap-6">
+          <LocaleSwitcher />
+          <a href="#join" className="hidden font-mono text-[12px] font-bold uppercase tracking-[0.2em] text-ink sm:inline">{t('join')} →</a>
+        </div>
+      </div>
+    </header>
+  )
+}
+```
 
-        <ul className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {MODES.map((mode) => {
-            const item = t.raw(`items.${mode}`) as Item
-            const isOpen = open === mode
-            return (
-              <Card as="li" key={mode} className="flex flex-col !p-0">
-                <div className="relative p-6 lg:p-8">
-                  <GradientField mode={mode} />
-                  <div className="relative">
-                    <MonoLabel dot={mode}>{item.label}</MonoLabel>
-                    <Display as="h3" size="md" className="mb-3 mt-4">
-                      {t.rich(`items.${mode}.title`, { em: (c) => <Display.Em>{c}</Display.Em> })}
-                    </Display>
-                    <p className="text-[15px] leading-[1.6] text-ink-2">{item.description}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  aria-expanded={isOpen}
-                  aria-controls={`mode-${mode}-preview`}
-                  onClick={() => setOpen(isOpen ? null : mode)}
-                  className="mt-auto flex items-center justify-between border-t border-line px-6 py-4 font-mono text-[12px] font-bold uppercase tracking-[0.2em] text-ink-2 hover:text-ink lg:px-8"
-                >
-                  {isOpen ? t('closePreview') : t('seeApp')}
-                  <span aria-hidden="true">{isOpen ? '−' : '+'}</span>
-                </button>
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      id={`mode-${mode}-preview`}
-                      initial={reduce ? false : { height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={reduce ? undefined : { height: 0, opacity: 0 }}
-                      transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-6 pb-8 lg:px-8">
-                        <div className="mb-6 flex justify-center">
-                          <PhoneMockup className="w-[220px]"><ModeScreen mode={mode} /></PhoneMockup>
-                        </div>
-                        <ul className="flex flex-col gap-2">
-                          {item.features.map((f) => (
-                            <li key={f} className="flex items-start gap-2 text-[14px] text-ink-2">
-                              <span aria-hidden="true" className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-ink-3" />
-                              {f}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Card>
-            )
-          })}
-        </ul>
+`components/site/hero.tsx`:
 
-        <p className="mx-auto max-w-[720px] pt-12 text-center font-display text-[20px] font-bold italic text-ink-2 lg:pt-16 lg:text-[24px]">
-          {t('outro')}
-        </p>
+```tsx
+import type { ReactNode } from 'react'
+import { getTranslations } from 'next-intl/server'
+import { AppVideo } from '@/components/diffuse'
+import type { Country } from '@/lib/countries'
+
+export async function Hero({ locale, form }: { locale: 'en' | 'pt'; country: Country; form: ReactNode }) {
+  const t = await getTranslations({ locale, namespace: 'hero' })
+  return (
+    <section className="pt-10">
+      <p className="mb-8 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
+        <span className="text-ink"><span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-[#3DAA6E] align-middle" />{t('status')}</span>
+        <span aria-hidden="true">·</span><span>{t('first')}</span><span aria-hidden="true">·</span><span>{t('then')}</span>
+      </p>
+      <div className="grid items-start gap-14 lg:grid-cols-[1.25fr_1fr]">
+        <div>
+          <h1 className="m-0 font-display text-[clamp(56px,8vw,118px)] font-light leading-[0.92] tracking-[-0.015em] [&_em]:italic [&_em]:text-ink-2">
+            {t.rich('title', { em: (c) => <em>{c}</em> })}
+          </h1>
+          <p className="mt-6 max-w-[540px] text-[17px] font-light leading-[1.6] text-ink-2">{t('lede')}</p>
+          <div id="join" className="mt-10 max-w-[520px] scroll-mt-28">{form}</div>
+        </div>
+        <div className="lg:sticky lg:top-28">
+          <AppVideo shot="onboarding-picker" lang={locale} alt={t('videoAlt')} priority />
+        </div>
       </div>
     </section>
   )
 }
 ```
 
-Reskin `components/phone-mockup.tsx` with the migration map (frame `border-ink`, `rounded-d-xl`, `shadow-pop`).
+`components/site/launch.tsx`:
 
-- [ ] **Step 4: Wire and delete**
+```tsx
+import { getTranslations } from 'next-intl/server'
+import { SectionHead } from '@/components/diffuse'
+import type { Country } from '@/lib/countries'
 
-In `app/[locale]/page.tsx` replace the `ThreeStagesSection` import and usage with `ModesSection` from `@/components/modes-section`. `git rm components/three-stages-section.tsx`. Check nothing else imports it: `grep -rn "three-stages" app components` → no matches.
+type Step = { k: string; title: string; body: string }
 
-- [ ] **Step 5: Verify and commit**
+export async function Launch({ locale, country }: { locale: 'en' | 'pt'; country: Country }) {
+  const t = await getTranslations({ locale, namespace: 'launch' })
+  const steps = t.raw('steps') as Step[]
+  const here = country === 'BR' ? 1 : country === 'US' ? 2 : 0
+  return (
+    <section className="pt-[110px]">
+      <SectionHead n="01" sub={t('sub')}>{t.rich('title', { em: (c) => <em>{c}</em> })}</SectionHead>
+      <ol className="relative grid list-none gap-8 p-0 md:grid-cols-3 md:gap-6">
+        <span aria-hidden="true" className="absolute left-[6px] top-0 h-full w-px bg-hair md:left-0 md:right-0 md:top-[6px] md:h-px md:w-auto" />
+        {steps.map((s, i) => (
+          <li key={s.k} className="relative pl-8 md:pl-0 md:pt-8">
+            <span aria-hidden="true" className={`absolute left-0 top-1 h-[13px] w-[13px] rounded-full border-[1.5px] md:top-0 ${i === here ? 'border-accent bg-accent shadow-[inset_0_0_0_2.5px_var(--bg),0_0_0_6px_color-mix(in_oklab,var(--accent)_18%,transparent)]' : 'border-hair bg-bg'}`} />
+            <p className="font-mono text-[11px] tracking-[0.14em] text-ink-3">{s.k}{i === here && <span className="ml-3 text-ink">· {t('you')}</span>}</p>
+            <h3 className="mt-2 font-display text-[30px] font-normal leading-[1.05]">{s.title}</h3>
+            <p className="mt-2 max-w-[320px] text-[15px] font-light text-ink-2">{s.body}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+```
 
-`pnpm i18n:check && pnpm typecheck && pnpm build`. In the browser at 390/768/1280 in both locales: four cards (1 / 2 / 4 columns), each with its own field colour, "See the app" opens the mockup, the menopause mockup renders, keyboard Enter/Space toggles, `prefers-reduced-motion` (DevTools → Rendering) removes the height animation.
+(`data-mode="pre"` on the `<section>` wrapper in the page gives the accent; see Step 4.)
+
+`components/site/chapters.tsx`:
+
+```tsx
+import { getTranslations } from 'next-intl/server'
+import { AppVideo, FieldCard, SectionHead } from '@/components/diffuse'
+import { MODES } from '@/lib/modes'
+
+const SHOT = { pre: 'home-pre', preg: 'home-preg', kids: 'home-kids', meno: 'home-meno' } as const
+type Item = { label: string; title: string; body: string; alt: string }
+
+export async function Chapters({ locale }: { locale: 'en' | 'pt' }) {
+  const t = await getTranslations({ locale, namespace: 'chapters' })
+  return (
+    <section className="pt-[110px]">
+      <SectionHead n="02" sub={t('sub')}>{t.rich('title', { em: (c) => <em>{c}</em> })}</SectionHead>
+      <div className="grid gap-[22px] md:grid-cols-2">
+        {MODES.map((m) => {
+          const it = t.raw(`items.${m}`) as Item
+          return (
+            <FieldCard key={m} mode={m} label={it.label} title={it.title}>
+              <p className="mb-6 mt-3.5 max-w-[380px] text-[15px] font-light text-[rgba(26,25,22,.72)]">{it.body}</p>
+              <div className="mt-auto flex justify-center pt-2"><AppVideo shot={SHOT[m]} lang={locale} alt={it.alt} size="sm" /></div>
+            </FieldCard>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+```
+
+`components/site/grandma.tsx`:
+
+```tsx
+import { getTranslations } from 'next-intl/server'
+import { AppVideo, Chip, SectionHead } from '@/components/diffuse'
+
+export async function Grandma({ locale }: { locale: 'en' | 'pt' }) {
+  const t = await getTranslations({ locale, namespace: 'grandma' })
+  return (
+    <section className="pt-[110px]">
+      <SectionHead n="03">{t.rich('title', { em: (c) => <em>{c}</em> })}</SectionHead>
+      <div className="grid items-center gap-14 lg:grid-cols-2">
+        <div>
+          <p className="m-0 max-w-[520px] font-display text-[clamp(28px,3vw,38px)] italic leading-[1.15]">“{t('quote')}”</p>
+          <p className="mt-6 max-w-[520px] text-[17px] font-light text-ink-2">{t('body')}</p>
+          <div className="mt-7 flex flex-wrap gap-2.5">{(t.raw('traits') as string[]).map((x) => <Chip key={x} as="span">{x}</Chip>)}</div>
+        </div>
+        <div data-mode="kids" className="gfield soft rounded-d-xl py-10"><AppVideo shot="talk" lang={locale} alt={t('videoAlt')} /></div>
+      </div>
+    </section>
+  )
+}
+```
+
+`components/site/faq.tsx` (no JS — native `<details>`):
+
+```tsx
+import { getTranslations } from 'next-intl/server'
+import { SectionHead } from '@/components/diffuse'
+
+export async function Faq({ locale }: { locale: 'en' | 'pt' }) {
+  const t = await getTranslations({ locale, namespace: 'faq' })
+  const items = t.raw('items') as { q: string; a: string }[]
+  return (
+    <section className="pt-[110px]">
+      <SectionHead n="04">{t.rich('title', { em: (c) => <em>{c}</em> })}</SectionHead>
+      <div>
+        {items.map((it, i) => (
+          <details key={it.q} open={i === 0} className="group border-b border-line-2 py-[22px] first:border-t">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-5 font-display text-[clamp(24px,2.4vw,30px)] leading-[1.15] [&::-webkit-details-marker]:hidden">
+              {it.q}
+              <span aria-hidden="true" className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full border border-line-2 transition-transform duration-300 group-open:rotate-45">
+                <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 2v10M2 7h10" stroke="#1A1916" strokeWidth="1.2" strokeLinecap="round" /></svg>
+              </span>
+            </summary>
+            <p className="mb-0 mt-3 max-w-[720px] text-[16px] font-light leading-[1.7] text-ink-2">{it.a}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  )
+}
+```
+
+`components/site/closing.tsx`:
+
+```tsx
+import { getTranslations } from 'next-intl/server'
+
+export async function Closing({ locale }: { locale: 'en' | 'pt' }) {
+  const t = await getTranslations({ locale, namespace: 'closing' })
+  return (
+    <section data-mode="kids" className="gfield mt-[110px] rounded-d-xl px-6 py-24 text-center shadow-card">
+      <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-[rgba(26,25,22,.62)]">{t('eyebrow')}</p>
+      <h2 className="mt-3.5 font-display text-[clamp(46px,6.4vw,92px)] font-light leading-[0.95] [&_em]:italic [&_em]:text-ink-2">{t.rich('title', { em: (c) => <em>{c}</em> })}</h2>
+      <a href="#join" className="gradpill mx-auto mt-10 inline-flex items-center justify-center rounded-full px-9 py-4 text-[15px] font-semibold">{t('cta')}</a>
+    </section>
+  )
+}
+```
+
+`components/site/footer.tsx`:
+
+```tsx
+import { getTranslations } from 'next-intl/server'
+import { Link } from '@/i18n/navigation'
+import { Mark } from '@/components/diffuse'
+import { LocaleSwitcher } from './locale-switcher'
+
+export async function Footer({ locale }: { locale: 'en' | 'pt' }) {
+  const t = await getTranslations({ locale, namespace: 'footer' })
+  return (
+    <footer className="mt-[90px] pb-16">
+      <div className="flex flex-wrap items-start justify-between gap-8 border-t border-hair pt-8">
+        <div>
+          <div className="flex items-center gap-2.5 font-display text-[28px]"><Mark size={36} still />grandma</div>
+          <p className="mt-3.5 max-w-[300px] text-[14px] font-light text-ink-3">{t('tag')}</p>
+        </div>
+        <nav className="flex gap-8 text-[15px] font-light text-ink-2">
+          <Link href="/privacy" className="hover:text-ink">{t('privacy')}</Link>
+          <Link href="/terms" className="hover:text-ink">{t('terms')}</Link>
+          <a href="mailto:support@grandma.app" className="hover:text-ink">support@grandma.app</a>
+        </nav>
+      </div>
+      <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-hair pt-6">
+        <p className="m-0 font-display text-[22px] italic text-ink-2">{t('line')}</p>
+        <div className="flex items-center gap-6"><LocaleSwitcher /><span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-4">{t('rights')}</span></div>
+      </div>
+    </footer>
+  )
+}
+```
+
+- [ ] **Step 4: Page** — `app/[locale]/page.tsx`:
+
+```tsx
+import { setRequestLocale } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
+import { Nav } from '@/components/site/nav'
+import { Hero } from '@/components/site/hero'
+import { Launch } from '@/components/site/launch'
+import { Chapters } from '@/components/site/chapters'
+import { Grandma } from '@/components/site/grandma'
+import { Faq } from '@/components/site/faq'
+import { Closing } from '@/components/site/closing'
+import { Footer } from '@/components/site/footer'
+import { ActionRule, UnderlineField } from '@/components/diffuse'
+import { getDefaultCountry } from '@/lib/geo'
+
+export default async function Home({ params }: { params: Promise<{ locale: 'en' | 'pt' }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const country = await getDefaultCountry(locale)
+  const t = await getTranslations({ locale, namespace: 'hero' })
+  // Placeholder until Task 14 swaps in <WaitlistForm defaultCountry={country} />.
+  const form = (
+    <div className="grid gap-6">
+      <UnderlineField label="Email" type="email" placeholder="you@example.com" />
+      <ActionRule href="#join">{t('status')}</ActionRule>
+    </div>
+  )
+  return (
+    <>
+      <Nav />
+      <main className="mx-auto max-w-[1180px] px-[22px] md:px-14">
+        <Hero locale={locale} country={country} form={form} />
+        <div data-mode="pre"><Launch locale={locale} country={country} /></div>
+        <Chapters locale={locale} />
+        <Grandma locale={locale} />
+        <Faq locale={locale} />
+        <Closing locale={locale} />
+        <Footer locale={locale} />
+      </main>
+    </>
+  )
+}
+```
+
+- [ ] **Step 5: Delete the old site**
 
 ```bash
-git add -A
-git commit -m "feat(modes): four-modes section with menopause; replaces three stages"
+git rm -r components/ui hooks styles components.json \
+  components/three-stages-section.tsx components/theme-provider.tsx components/connections-section.tsx \
+  components/animated-hero-card.tsx components/grandma-logo.tsx components/memories-section.tsx components/pillars-section.tsx \
+  components/meet-grandma-section.tsx components/phone-mockup.tsx components/footer.tsx components/testimonials-section.tsx \
+  components/hero-section.tsx components/scroll-animations.tsx components/waitlist-faq-section.tsx components/navigation.tsx components/stickers.tsx
+pnpm remove $(node -e "const p=require('./package.json').dependencies;console.log(Object.keys(p).filter(k=>k.startsWith('@radix-ui/')||['cmdk','embla-carousel-react','input-otp','react-day-picker','react-resizable-panels','recharts','sonner','vaul','next-themes','date-fns','react-hook-form','@hookform/resolvers','framer-motion','class-variance-authority','clsx','tailwind-merge','lucide-react','tw-animate-css'].includes(k)).join(' '))")
+grep -rn "lib/utils" app components lib || git rm lib/utils.ts
 ```
+
+- [ ] **Step 6: Verify**
+
+```bash
+pnpm i18n:check && pnpm test && pnpm typecheck && pnpm build
+pnpm start & sleep 4
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" -H "Accept-Language: pt-BR" http://localhost:3000/
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" -H "Accept-Language: pt-PT" http://localhost:3000/
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" -H "Accept-Language: de" http://localhost:3000/
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/en/pricing
+curl -s -H "x-vercel-ip-country: US" http://localhost:3000/en | grep -o "You're here" | head -1
+kill %1
+```
+
+Expected: `/pt`, `/pt`, `/en`; pricing `404`; "You're here" present (US step highlighted). Open `/pt` and `/en` at 390 / 768 / 1280: compare with the mockup; clips play; the four chapter cards show their own field colours.
+
+- [ ] **Step 7: Commit** — `git add -A && git commit -m "feat(site): lean waitlist-first home — hero, launch BR→US, four chapters, Grandma, FAQ; remove old site + pricing"`
 
 ---
 
-### Task 12: Reskin middle sections and FAQ
+### Task 12: Privacy and terms
 
-**Files:**
-- Modify: `components/meet-grandma-section.tsx`, `components/pillars-section.tsx`, `components/connections-section.tsx`, `components/memories-section.tsx`, `components/testimonials-section.tsx`, `components/waitlist-faq-section.tsx` (`FAQItem`, `FAQSection`), `components/stickers.tsx` (no change unless a sticker hardcodes an old var), `components/scroll-animations.tsx`
-- Modify: `messages/en.json`, `messages/pt.json` (copy that mentions three stages; FAQ menopause entry)
+**Files:** Create `app/[locale]/privacy/page.tsx`, `app/[locale]/terms/page.tsx`, `components/site/legal-page.tsx`; Modify `messages/en.json`, `messages/pt.json` (namespaces `privacy`, `terms`)
 
-**Interfaces:**
-- Consumes: kit (Task 9), migration map (Task 10), `FIELDS`.
+**Interfaces:** `LegalPage({ locale, ns: 'privacy' | 'terms' })`; message shape `{ metaTitle, title, updated, note, sections: { id?: string; heading: string; paragraphs: string[] }[] }`.
 
-- [ ] **Step 1: Apply the migration map section by section**
-
-For each component, in page order (meet → pillars → connections → memories → trust/testimonials → FAQ):
-1. Replace every old token/class per the Task 10 map. Background decorative sticker collages are removed; stickers that sit next to a title or inside a card as an icon stay.
-2. Section backgrounds alternate `bg-paper` / `bg-bg-deep`. At most one `GradientField` per section, only where the section is about a specific mode or about Grandma herself (`meet-grandma`: `mode="preg"` soft).
-3. Section headers: `MonoLabel` eyebrow + `Display size="xl"` + `text-ink-2` subtitle, centred, `max-w-[760px]`.
-4. Numbers and data inside illustrations/mockups use `font-mono` or `font-display font-bold tabular-nums`.
-5. Run `pnpm dev` and compare with `/en/dev/diffuse` before moving on.
-
-- [ ] **Step 2: Copy updates for four modes**
-
-Search both message files for text that lists three stages or says "three"/"3" about stages, and "pre-pregnancy" phrasing:
-
-```bash
-grep -n -iE "three|3 stages|trying|expecting|raising|pre-pregnancy" messages/en.json
-grep -n -iE "três|3 fases|tentando|esperando|criando|pré-gravidez" messages/pt.json
-```
-
-Rewrite each hit to cover the four modes (cycle, pregnancy, kids, menopause), in both files. Leave the `modes.items.*` copy from Task 11 as is.
-
-- [ ] **Step 3: FAQ**
-
-In `faq.items` (both files), replace the "What if I'm not pregnant yet…" entry with:
+- [ ] **Step 1: Messages.** Take the English text of the deleted pages from git (`git show HEAD~1:app/privacy/page.tsx`, `git show HEAD~1:app/terms/page.tsx` — use the commit before Task 10's deletion: `git log --oneline -- app/privacy/page.tsx`), put each heading and paragraph into `privacy.sections[]` / `terms.sections[]` verbatim, then translate into pt-BR (glossary). Remove any mention of prices. Add to **both** privacy files a section with `"id": "waitlist-data"`:
 
 EN:
 ```json
-{ "q": "Is it only for pregnancy and babies?", "a": "No. Grandma has four modes: Cycle for tracking and trying to conceive, Pregnancy for all 40 weeks, Kids from newborn to five, and Menopause for perimenopause and beyond. Switch any time — Grandma keeps your history." }
+{ "id": "waitlist-data", "heading": "The waitlist", "paragraphs": [
+  "When you join the waitlist we store your email, your name if you give it, the chapter you chose, your country, the site language, whether you want the launch notice, where you came from (campaign tags and referring site) and a one-way hash of your IP address used only to prevent abuse.",
+  "We use this only to send your invite and, if you asked, one launch notice. We never sell it or share it for marketing.",
+  "To be removed, email support@grandma.app and we'll delete your entry."
+]}
 ```
 
 PT:
 ```json
-{ "q": "É só para gravidez e bebês?", "a": "Não. A Vovó tem quatro modos: Ciclo, para acompanhar o ciclo e tentar engravidar; Gravidez, para as 40 semanas; Filhos, do recém-nascido aos cinco anos; e Menopausa, para a perimenopausa e depois dela. Troque quando quiser — a Vovó guarda o seu histórico." }
+{ "id": "waitlist-data", "heading": "A lista de espera", "paragraphs": [
+  "Quando você entra na lista de espera, guardamos o seu email, o seu nome se você informar, o capítulo que escolheu, o seu país, o idioma do site, se você quer o aviso de lançamento, de onde você veio (tags de campanha e site de origem) e um hash irreversível do seu endereço IP, usado só para evitar abuso.",
+  "Usamos esses dados só para enviar o seu convite e, se você pediu, um aviso de lançamento. Nunca vendemos nem compartilhamos para marketing.",
+  "Para sair da lista, escreva para support@grandma.app e apagamos o seu registro."
+]}
 ```
 
-(Use whatever item key names Task 6 chose for FAQ entries; the example assumes `q`/`a`.)
+Also set `privacy.note` / `terms.note`: EN "This is the authoritative version." / PT "Esta é uma tradução. Em caso de divergência, vale a versão em inglês."
 
-`FAQItem` reskin: question in `font-display font-bold text-[20px] lg:text-[22px]`; the toggle is a 32px circle with `border-line-2` and a hairline plus that rotates 45°; rows separated by `border-line`; the button gets `aria-expanded` and `aria-controls` pointing at the answer panel `id`.
+- [ ] **Step 2: Shared page** — `components/site/legal-page.tsx`:
 
-- [ ] **Step 4: Verify and commit**
+```tsx
+import { getTranslations } from 'next-intl/server'
+import { Nav } from './nav'
+import { Footer } from './footer'
 
-`pnpm i18n:check && pnpm typecheck && pnpm build`, then visual pass at 390/768/1280 in both locales.
+type Section = { id?: string; heading: string; paragraphs: string[] }
+
+export async function LegalPage({ locale, ns }: { locale: 'en' | 'pt'; ns: 'privacy' | 'terms' }) {
+  const t = await getTranslations({ locale, namespace: ns })
+  return (
+    <>
+      <Nav />
+      <main className="mx-auto max-w-[1180px] px-[22px] md:px-14">
+        <article className="mx-auto max-w-[720px] pt-16">
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">{t('updated')}</p>
+          <h1 className="mt-3 font-display text-[clamp(48px,6vw,80px)] font-light leading-[0.95]">{t('title')}</h1>
+          <p className="mt-4 text-[14px] text-ink-3">{t('note')}</p>
+          {(t.raw('sections') as Section[]).map((s) => (
+            <section key={s.heading} id={s.id} className="mt-10 scroll-mt-28 border-t border-line pt-10">
+              <h2 className="font-display text-[28px] font-normal">{s.heading}</h2>
+              {s.paragraphs.map((p) => <p key={p.slice(0, 32)} className="mt-4 font-light leading-[1.7] text-ink-2">{p}</p>)}
+            </section>
+          ))}
+        </article>
+        <Footer locale={locale} />
+      </main>
+    </>
+  )
+}
+```
+
+`app/[locale]/privacy/page.tsx` (terms: same with `'terms'`):
+
+```tsx
+import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { LegalPage } from '@/components/site/legal-page'
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: 'en' | 'pt' }> }) {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'privacy' })
+  return { title: t('metaTitle'), alternates: { canonical: `/${locale}/privacy`, languages: { en: '/en/privacy', 'pt-BR': '/pt/privacy' } } }
+}
+
+export default async function Page({ params }: { params: Promise<{ locale: 'en' | 'pt' }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
+  return <LegalPage locale={locale} ns="privacy" />
+}
+```
+
+- [ ] **Step 3: Verify and commit** — `pnpm i18n:check && pnpm build`; open `/pt/privacy#waitlist-data` and `/en/terms`.
 
 ```bash
-git add -A
-git commit -m "feat(diffuse): reskin meet, pillars, connections, memories, testimonials and FAQ; four-mode copy"
+git add -A && git commit -m "feat(site): privacy and terms in PT/EN with waitlist data section"
 ```
 
 ---
 
-### Task 13: Reskin pricing, privacy and terms
+### Task 13: Waitlist submission core (schema with country, IP hash, submit)
 
-**Files:**
-- Modify: `app/[locale]/pricing/page.tsx` (and its client component if one was split out in Task 5), `app/[locale]/privacy/page.tsx`, `app/[locale]/terms/page.tsx`
-
-**Interfaces:**
-- Consumes: kit (Task 9), migration map (Task 10).
-
-- [ ] **Step 1: Pricing**
-
-Header as in Task 12 Step 1.3. Plans are `Card size="lg"`s in a 1/2-column grid; plan name `MonoLabel`; price `font-display font-bold text-[56px] tabular-nums` with the period in `font-mono text-ink-3`; features as hairline-separated rows (`border-b border-line py-3`); CTA `ActionRule href="/#waitlist"` (pre-launch, every plan leads to the waitlist). The premium card gets `GradientField mode="preg"` soft behind its header only.
-
-- [ ] **Step 2: Privacy and terms**
-
-Reading layout: `max-w-[720px] mx-auto`, `MonoLabel` with `lastUpdated`, `Display size="xl"` title, the `translationNote` in `text-ink-3 text-[14px]`, section headings `font-display font-bold text-[22px]`, body `text-ink-2 leading-[1.7]`, sections separated by `border-t border-line pt-10 mt-10`. The waitlist section gets `id="waitlist-data"`.
-
-- [ ] **Step 3: Verify and commit**
-
-`pnpm typecheck && pnpm build`, visual check of `/en/pricing`, `/pt/pricing`, `/pt/privacy#waitlist-data`, `/en/terms`.
-
-```bash
-git add -A
-git commit -m "feat(diffuse): reskin pricing, privacy and terms"
-```
-
----
-
-### Task 14: Waitlist submission core (schema, IP hash, submit)
-
-**Files:**
-- Create: `lib/waitlist/schema.ts`, `lib/waitlist/hash.ts`, `lib/waitlist/submit.ts`, `lib/waitlist/types.ts`
-- Test: `lib/waitlist/schema.test.ts`, `lib/waitlist/hash.test.ts`, `lib/waitlist/submit.test.ts`
+**Files:** Create `lib/waitlist/types.ts`, `lib/waitlist/schema.ts`, `lib/waitlist/hash.ts`, `lib/waitlist/submit.ts`; Tests `lib/waitlist/schema.test.ts`, `hash.test.ts`, `submit.test.ts`
 
 **Interfaces:**
-- Consumes: `MODES` from `@/lib/modes`; `routing.locales` from `@/i18n/routing`.
-- Produces:
-  - `types.ts`:
-    ```ts
-    export type WaitlistErrorCode = 'email_required' | 'email_invalid' | 'email_too_long' | 'name_too_long' | 'mode_required'
-    export type WaitlistField = 'email' | 'name' | 'mode'
-    export type WaitlistState =
-      | { status: 'idle' }
-      | { status: 'success' }
-      | { status: 'invalid'; fieldErrors: Partial<Record<WaitlistField, WaitlistErrorCode>> }
-      | { status: 'rate_limited' }
-      | { status: 'error' }
-    export interface WaitlistRow {
-      email: string; name: string | null; mode: Mode; locale: Locale; notifyLaunch: boolean
-      utmSource: string | null; utmMedium: string | null; utmCampaign: string | null; referrer: string | null
-    }
-    export interface WaitlistDeps {
-      join(row: WaitlistRow, ipHash: string | null): Promise<'ok' | 'rate_limited'>
-      hashIp(ip: string | null): string | null
-    }
-    ```
-  - `schema.ts`: `waitlistSchema` (zod 3) parsing a plain object to `WaitlistRow`; `formDataToObject(fd: FormData): Record<string, string>`
-  - `hash.ts`: `makeIpHasher(salt: string): (ip: string | null) => string | null`
-  - `submit.ts`: `submitWaitlist(raw: Record<string, string>, ip: string | null, deps: WaitlistDeps): Promise<WaitlistState>`
+- `types.ts`:
+  ```ts
+  import type { Mode } from '@/lib/modes'
+  import type { Country } from '@/lib/countries'
+  import type { Locale } from '@/i18n/routing'
+  export type WaitlistErrorCode = 'email_required' | 'email_invalid' | 'email_too_long' | 'name_too_long' | 'mode_required' | 'country_required'
+  export type WaitlistField = 'email' | 'name' | 'mode' | 'country'
+  export type WaitlistState =
+    | { status: 'idle' }
+    | { status: 'success'; country: Country }
+    | { status: 'invalid'; fieldErrors: Partial<Record<WaitlistField, WaitlistErrorCode>> }
+    | { status: 'rate_limited' }
+    | { status: 'error' }
+  export interface WaitlistRow {
+    email: string; name: string | null; mode: Mode; locale: Locale; country: Country; notifyLaunch: boolean
+    utmSource: string | null; utmMedium: string | null; utmCampaign: string | null; referrer: string | null
+  }
+  export interface WaitlistDeps {
+    join(row: WaitlistRow, ipHash: string | null): Promise<'ok' | 'rate_limited'>
+    hashIp(ip: string | null): string | null
+  }
+  ```
+- `waitlistSchema` (zod 3), `formDataToObject(fd)`, `makeIpHasher(salt)`, `submitWaitlist(raw, ip, deps): Promise<WaitlistState>`.
 
 - [ ] **Step 1: Failing tests**
 
@@ -2636,24 +2453,23 @@ git commit -m "feat(diffuse): reskin pricing, privacy and terms"
 import { describe, it, expect } from 'vitest'
 import { waitlistSchema, formDataToObject } from './schema'
 
-const base = { email: 'ana@example.com', mode: 'preg', locale: 'pt' }
+const base = { email: 'ana@example.com', mode: 'preg', locale: 'pt', country: 'BR' }
 
 describe('waitlistSchema', () => {
-  it('normalises email to trimmed lowercase', () => {
-    expect(waitlistSchema.parse({ ...base, email: '  Ana@Example.COM ' }).email).toBe('ana@example.com')
-  })
-  it('maps an empty name to null and trims a real one', () => {
+  it('normalises email', () => expect(waitlistSchema.parse({ ...base, email: '  Ana@Example.COM ' }).email).toBe('ana@example.com'))
+  it('maps empty name to null', () => {
     expect(waitlistSchema.parse({ ...base, name: '   ' }).name).toBeNull()
-    expect(waitlistSchema.parse({ ...base, name: '  Ana ' }).name).toBe('Ana')
+    expect(waitlistSchema.parse({ ...base, name: ' Ana ' }).name).toBe('Ana')
   })
   it('reads the checkbox', () => {
     expect(waitlistSchema.parse({ ...base, notify_launch: 'on' }).notifyLaunch).toBe(true)
     expect(waitlistSchema.parse(base).notifyLaunch).toBe(false)
   })
-  it('falls back to en for an unknown locale', () => {
-    expect(waitlistSchema.parse({ ...base, locale: 'de' }).locale).toBe('en')
+  it('falls back to en for unknown locale', () => expect(waitlistSchema.parse({ ...base, locale: 'de' }).locale).toBe('en'))
+  it('accepts the three countries', () => {
+    for (const c of ['BR', 'US', 'OTHER']) expect(waitlistSchema.parse({ ...base, country: c }).country).toBe(c)
   })
-  it('drops oversized utm values instead of failing', () => {
+  it('drops oversized utm values', () => {
     const r = waitlistSchema.parse({ ...base, utm_source: 'x'.repeat(201), utm_medium: 'social' })
     expect(r.utmSource).toBeNull()
     expect(r.utmMedium).toBe('social')
@@ -2664,8 +2480,10 @@ describe('waitlistSchema', () => {
     [{ ...base, email: `${'a'.repeat(250)}@x.co` }, 'email', 'email_too_long'],
     [{ ...base, name: 'n'.repeat(81) }, 'name', 'name_too_long'],
     [{ ...base, mode: 'care' }, 'mode', 'mode_required'],
-    [{ email: 'ana@example.com', locale: 'pt' }, 'mode', 'mode_required'],
-  ])('rejects %j with %s=%s', (input, field, code) => {
+    [{ email: 'ana@example.com', locale: 'pt', country: 'BR' }, 'mode', 'mode_required'],
+    [{ ...base, country: 'DE' }, 'country', 'country_required'],
+    [{ email: 'ana@example.com', locale: 'pt', mode: 'preg' }, 'country', 'country_required'],
+  ])('rejects %j (%s=%s)', (input, field, code) => {
     const r = waitlistSchema.safeParse(input)
     expect(r.success).toBe(false)
     if (!r.success) expect(r.error.flatten().fieldErrors[field as 'email']?.[0]).toBe(code)
@@ -2690,21 +2508,10 @@ import { makeIpHasher } from './hash'
 
 describe('makeIpHasher', () => {
   const h = makeIpHasher('salt-1')
-  it('is deterministic and hex', () => {
-    expect(h('1.2.3.4')).toBe(h('1.2.3.4'))
-    expect(h('1.2.3.4')).toMatch(/^[0-9a-f]{64}$/)
-  })
-  it('depends on the salt and never returns the raw ip', () => {
-    expect(makeIpHasher('salt-2')('1.2.3.4')).not.toBe(h('1.2.3.4'))
-    expect(h('1.2.3.4')).not.toContain('1.2.3.4')
-  })
-  it('returns null for a missing ip', () => {
-    expect(h(null)).toBeNull()
-    expect(h('')).toBeNull()
-  })
-  it('refuses an empty salt', () => {
-    expect(() => makeIpHasher('')).toThrow()
-  })
+  it('deterministic hex', () => { expect(h('1.2.3.4')).toBe(h('1.2.3.4')); expect(h('1.2.3.4')).toMatch(/^[0-9a-f]{64}$/) })
+  it('salted, never the raw ip', () => { expect(makeIpHasher('salt-2')('1.2.3.4')).not.toBe(h('1.2.3.4')); expect(h('1.2.3.4')).not.toContain('1.2.3.4') })
+  it('null for missing ip', () => { expect(h(null)).toBeNull(); expect(h('')).toBeNull() })
+  it('refuses an empty salt', () => expect(() => makeIpHasher('')).toThrow())
 })
 ```
 
@@ -2716,111 +2523,73 @@ import { submitWaitlist } from './submit'
 import type { WaitlistDeps } from './types'
 
 const deps = (result: 'ok' | 'rate_limited' | Error = 'ok') => {
-  const join = vi.fn(async () => {
-    if (result instanceof Error) throw result
-    return result
-  })
+  const join = vi.fn(async () => { if (result instanceof Error) throw result; return result })
   return { join, hashIp: vi.fn((ip: string | null) => (ip ? `h(${ip})` : null)) } satisfies WaitlistDeps
 }
-const valid = { email: ' Ana@Example.com ', name: 'Ana', mode: 'meno', locale: 'pt', notify_launch: 'on', utm_source: 'ig' }
+const valid = { email: ' Ana@Example.com ', name: 'Ana', mode: 'meno', locale: 'pt', country: 'BR', notify_launch: 'on', utm_source: 'ig' }
 
 describe('submitWaitlist', () => {
-  it('writes a normalised row with the hashed ip and returns success', async () => {
+  it('writes a normalised row with hashed ip and echoes the country', async () => {
     const d = deps()
-    expect(await submitWaitlist(valid, '1.2.3.4', d)).toEqual({ status: 'success' })
-    expect(d.join).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'ana@example.com', mode: 'meno', locale: 'pt', notifyLaunch: true, utmSource: 'ig' }),
-      'h(1.2.3.4)',
-    )
+    expect(await submitWaitlist(valid, '1.2.3.4', d)).toEqual({ status: 'success', country: 'BR' })
+    expect(d.join).toHaveBeenCalledWith(expect.objectContaining({ email: 'ana@example.com', mode: 'meno', country: 'BR', notifyLaunch: true, utmSource: 'ig' }), 'h(1.2.3.4)')
   })
-  it('returns success without writing when the honeypot is filled', async () => {
+  it('honeypot → success without writing', async () => {
     const d = deps()
-    expect(await submitWaitlist({ ...valid, company: 'Acme' }, '1.2.3.4', d)).toEqual({ status: 'success' })
+    expect(await submitWaitlist({ ...valid, company: 'Acme' }, null, d)).toEqual({ status: 'success', country: 'BR' })
     expect(d.join).not.toHaveBeenCalled()
   })
-  it('returns field errors and does not write when invalid', async () => {
+  it('invalid → field errors, no write', async () => {
     const d = deps()
-    expect(await submitWaitlist({ ...valid, email: 'nope', mode: '' }, null, d)).toEqual({
-      status: 'invalid',
-      fieldErrors: { email: 'email_invalid', mode: 'mode_required' },
+    expect(await submitWaitlist({ ...valid, email: 'nope', mode: '', country: '' }, null, d)).toEqual({
+      status: 'invalid', fieldErrors: { email: 'email_invalid', mode: 'mode_required', country: 'country_required' },
     })
     expect(d.join).not.toHaveBeenCalled()
   })
-  it('passes rate limiting through', async () => {
-    expect(await submitWaitlist(valid, '1.2.3.4', deps('rate_limited'))).toEqual({ status: 'rate_limited' })
-  })
-  it('turns a storage failure into a generic error and logs without the email', async () => {
+  it('rate limit passes through', async () => expect(await submitWaitlist(valid, '1.2.3.4', deps('rate_limited'))).toEqual({ status: 'rate_limited' }))
+  it('storage failure → generic error, email masked in logs', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(await submitWaitlist(valid, null, deps(new Error('db down for ana@example.com')))).toEqual({ status: 'error' })
-    const logged = JSON.stringify(spy.mock.calls)
-    expect(logged).not.toContain('ana@example.com')
+    expect(JSON.stringify(spy.mock.calls)).not.toContain('ana@example.com')
     spy.mockRestore()
   })
 })
 ```
 
-Run: `pnpm test lib/waitlist` → FAIL (modules missing).
+Run `pnpm test lib/waitlist` → FAIL.
 
 - [ ] **Step 2: Implement**
 
-`lib/waitlist/types.ts`: exactly the block in **Interfaces** above, with `import type { Mode } from '@/lib/modes'` and `import type { Locale } from '@/i18n/routing'`.
+`lib/waitlist/types.ts`: exactly the Interfaces block above.
 
 `lib/waitlist/schema.ts`:
 
 ```ts
 import { z } from 'zod'
 import { MODES } from '@/lib/modes'
+import { COUNTRIES } from '@/lib/countries'
 import { routing } from '@/i18n/routing'
 import type { WaitlistRow } from './types'
 
-const optionalText = (max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .optional()
-    .catch(undefined)
-    .transform((v) => (v ? v : null))
+const optionalText = (max: number) => z.string().trim().max(max).optional().catch(undefined).transform((v) => v || null)
 
 export const waitlistSchema = z
   .object({
-    email: z
-      .string({ required_error: 'email_required' })
-      .trim()
-      .toLowerCase()
-      .min(1, 'email_required')
-      .max(254, 'email_too_long')
-      .email('email_invalid'),
-    name: z
-      .string()
-      .trim()
-      .max(80, 'name_too_long')
-      .optional()
-      .transform((v) => (v ? v : null)),
+    email: z.string({ required_error: 'email_required' }).trim().toLowerCase().min(1, 'email_required').max(254, 'email_too_long').email('email_invalid'),
+    name: z.string().trim().max(80, 'name_too_long').optional().transform((v) => v || null),
     mode: z.enum(MODES, { errorMap: () => ({ message: 'mode_required' }) }),
+    country: z.enum(COUNTRIES, { errorMap: () => ({ message: 'country_required' }) }),
     locale: z.enum(routing.locales).catch('en'),
-    notify_launch: z
-      .string()
-      .optional()
-      .transform((v) => v === 'on' || v === 'true'),
+    notify_launch: z.string().optional().transform((v) => v === 'on' || v === 'true'),
     utm_source: optionalText(200),
     utm_medium: optionalText(200),
     utm_campaign: optionalText(200),
     referrer: optionalText(200),
   })
-  .transform(
-    (v): WaitlistRow => ({
-      email: v.email,
-      name: v.name,
-      mode: v.mode,
-      locale: v.locale,
-      notifyLaunch: v.notify_launch,
-      utmSource: v.utm_source,
-      utmMedium: v.utm_medium,
-      utmCampaign: v.utm_campaign,
-      referrer: v.referrer,
-    }),
-  )
+  .transform((v): WaitlistRow => ({
+    email: v.email, name: v.name, mode: v.mode, locale: v.locale, country: v.country, notifyLaunch: v.notify_launch,
+    utmSource: v.utm_source, utmMedium: v.utm_medium, utmCampaign: v.utm_campaign, referrer: v.referrer,
+  }))
 
 export function formDataToObject(fd: FormData): Record<string, string> {
   const out: Record<string, string> = {}
@@ -2828,8 +2597,6 @@ export function formDataToObject(fd: FormData): Record<string, string> {
   return out
 }
 ```
-
-Order matters for `email`: `.min(1)` before `.max` before `.email` so an empty string reports `email_required` and a 260-char string reports `email_too_long` (zod 3 reports the first failing check first in `fieldErrors[...][0]`). If the `email_too_long` test reports `email_invalid` first, keep the order and change the test input to a syntactically valid long address (it already is: `aaa…@x.co`).
 
 `lib/waitlist/hash.ts`:
 
@@ -2847,32 +2614,26 @@ export function makeIpHasher(salt: string): (ip: string | null) => string | null
 
 ```ts
 import { waitlistSchema } from './schema'
+import { COUNTRIES, type Country } from '@/lib/countries'
 import type { WaitlistDeps, WaitlistErrorCode, WaitlistField, WaitlistState } from './types'
 
-const FIELDS: WaitlistField[] = ['email', 'name', 'mode']
+const FIELDS: WaitlistField[] = ['email', 'name', 'mode', 'country']
+const asCountry = (v: string | undefined): Country => ((COUNTRIES as readonly string[]).includes(v ?? '') ? (v as Country) : 'OTHER')
 
-export async function submitWaitlist(
-  raw: Record<string, string>,
-  ip: string | null,
-  deps: WaitlistDeps,
-): Promise<WaitlistState> {
-  // Honeypot: real people never see or fill this field.
-  if (raw.company && raw.company.trim() !== '') return { status: 'success' }
+export async function submitWaitlist(raw: Record<string, string>, ip: string | null, deps: WaitlistDeps): Promise<WaitlistState> {
+  if (raw.company && raw.company.trim() !== '') return { status: 'success', country: asCountry(raw.country) }
 
   const parsed = waitlistSchema.safeParse(raw)
   if (!parsed.success) {
     const flat = parsed.error.flatten().fieldErrors as Record<string, string[] | undefined>
     const fieldErrors: Partial<Record<WaitlistField, WaitlistErrorCode>> = {}
-    for (const f of FIELDS) {
-      const code = flat[f]?.[0]
-      if (code) fieldErrors[f] = code as WaitlistErrorCode
-    }
+    for (const f of FIELDS) if (flat[f]?.[0]) fieldErrors[f] = flat[f]![0] as WaitlistErrorCode
     return { status: 'invalid', fieldErrors }
   }
 
   try {
     const result = await deps.join(parsed.data, deps.hashIp(ip))
-    return result === 'rate_limited' ? { status: 'rate_limited' } : { status: 'success' }
+    return result === 'rate_limited' ? { status: 'rate_limited' } : { status: 'success', country: parsed.data.country }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[waitlist] join failed:', message.replace(/[^\s@]+@[^\s@]+/g, '<email>'))
@@ -2881,36 +2642,19 @@ export async function submitWaitlist(
 }
 ```
 
-- [ ] **Step 3: Run tests**
-
-Run: `pnpm test lib/waitlist`
-Expected: PASS.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add lib/waitlist
-git commit -m "feat(waitlist): validation, IP hashing and submit core with tests"
-```
+- [ ] **Step 3: Run** → PASS. Commit: `git add lib/waitlist && git commit -m "feat(waitlist): validation with country, IP hashing, submit core"`
 
 ---
 
-### Task 15: Waitlist server action, Supabase client and form
+### Task 14: Server action, Supabase client, waitlist form in the hero
 
-**Files:**
-- Create: `lib/waitlist/supabase.ts`, `lib/waitlist/action.ts`
-- Create: `components/waitlist-form.tsx`
-- Modify: `components/waitlist-faq-section.tsx` (`WaitlistSection` uses the new form)
-- Create: `.env.example`
-- Modify: `messages/en.json`, `messages/pt.json` (`waitlist` namespace)
+**Files:** Create `lib/waitlist/supabase.ts`, `lib/waitlist/action.ts`, `components/waitlist-form.tsx`, `.env.example`; Modify `app/[locale]/page.tsx` (use the form), `messages/en.json`, `messages/pt.json` (`form` namespace)
 
 **Interfaces:**
-- Consumes: `submitWaitlist`, `formDataToObject`, `makeIpHasher`, types (Task 14); `PREFILL_EVENT` (Task 10); kit (Task 9); `MODES` (Task 8).
-- Produces: `joinWaitlist(prev: WaitlistState, formData: FormData): Promise<WaitlistState>` server action; `<WaitlistForm />`.
+- Consumes: Task 13; kit; `Country`; `MODES`.
+- Produces: `joinWaitlist(prev: WaitlistState, fd: FormData): Promise<WaitlistState>`; `<WaitlistForm defaultCountry={Country} />`.
 
-- [ ] **Step 1: Supabase deps (server-only)**
-
-`lib/waitlist/supabase.ts`:
+- [ ] **Step 1: Supabase deps** — `lib/waitlist/supabase.ts`:
 
 ```ts
 import 'server-only'
@@ -2918,33 +2662,19 @@ import { createClient } from '@supabase/supabase-js'
 import { makeIpHasher } from './hash'
 import type { WaitlistDeps } from './types'
 
-function required(name: string): string {
-  const v = process.env[name]
-  if (!v) throw new Error(`${name} is not set`)
-  return v
-}
-
+const required = (name: string) => { const v = process.env[name]; if (!v) throw new Error(`${name} is not set`); return v }
 let cached: WaitlistDeps | null = null
 
 export function waitlistDeps(): WaitlistDeps {
   if (cached) return cached
-  const supabase = createClient(required('SUPABASE_URL'), required('SUPABASE_SERVICE_ROLE_KEY'), {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  const supabase = createClient(required('SUPABASE_URL'), required('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false, autoRefreshToken: false } })
   cached = {
     hashIp: makeIpHasher(required('WAITLIST_IP_SALT')),
     async join(row, ipHash) {
       const { data, error } = await supabase.rpc('waitlist_join', {
-        p_email: row.email,
-        p_name: row.name,
-        p_mode: row.mode,
-        p_locale: row.locale,
-        p_notify_launch: row.notifyLaunch,
-        p_utm_source: row.utmSource,
-        p_utm_medium: row.utmMedium,
-        p_utm_campaign: row.utmCampaign,
-        p_referrer: row.referrer,
-        p_ip_hash: ipHash,
+        p_email: row.email, p_name: row.name, p_mode: row.mode, p_locale: row.locale, p_country: row.country,
+        p_notify_launch: row.notifyLaunch, p_utm_source: row.utmSource, p_utm_medium: row.utmMedium,
+        p_utm_campaign: row.utmCampaign, p_referrer: row.referrer, p_ip_hash: ipHash,
       })
       if (error) throw new Error(`waitlist_join: ${error.code} ${error.message}`)
       return data === 'rate_limited' ? 'rate_limited' : 'ok'
@@ -2978,90 +2708,54 @@ export async function joinWaitlist(_prev: WaitlistState, formData: FormData): Pr
 # Waitlist (server-only). Same Supabase project as grandma-app / grandma-command-center.
 SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=
-# Any long random string; changing it resets rate-limit buckets.
+# Long random string (openssl rand -hex 32). Changing it resets rate-limit buckets.
 WAITLIST_IP_SALT=
 NEXT_PUBLIC_SITE_URL=https://grandma.app
 ```
 
-Confirm `.gitignore` ignores `.env*.local` (it does in v0 templates; if not, add `.env*.local`).
+Ensure `.gitignore` covers `.env*.local`.
 
-- [ ] **Step 2: Messages**
+- [ ] **Step 2: Messages** — `form` namespace.
 
-Replace the `waitlist` namespace (keep any existing keys Task 6 created only if still used; the form below uses exactly these):
-
-`messages/en.json`:
-
+EN:
 ```json
-"waitlist": {
-  "aria": "Join the waitlist",
-  "eyebrow": "JOIN THE WAITLIST",
-  "title": "We'll send your invite the <em>moment</em> it's your turn.",
-  "subtitle": "We're rolling out invites slowly — Grandma takes her time to make sure each family feels seen. Leave your email and we'll let you know when you're up.",
-  "name": "Your name (optional)",
-  "namePlaceholder": "Ana",
-  "email": "Email",
-  "emailPlaceholder": "you@your-life.com",
-  "modeLegend": "I'm in…",
-  "modes": { "pre": "Cycle", "preg": "Pregnancy", "kids": "Kids", "meno": "Menopause" },
-  "notify": "Also tell me when the iOS and Android apps launch.",
-  "submit": "Save my seat",
-  "submitting": "Saving…",
-  "consent": "By joining you agree that we store your details to send your invite and the launch notice. Nothing else. <link>How we handle your data</link>.",
-  "promise": "Pinky promise: no marketing emails. Only your invite, and a single hello.",
-  "success": { "title": "You're on the list.", "body": "We'll email you when it's your turn. You can close this page — Grandma will remember." },
+"form": {
+  "email": "Email", "emailPh": "you@example.com",
+  "country": "Where do you live?", "countries": { "BR": "Brasil", "US": "United States", "OTHER": "Other" },
+  "mode": "Where are you <em>right now?</em>",
+  "modes": { "pre": ["Chapter 01", "Trying"], "preg": ["Chapter 02", "Expecting"], "kids": ["Chapter 03", "Raising"], "meno": ["Chapter 04", "The change"] },
+  "name": "Your name · optional", "namePh": "Maya",
+  "notify": "Also tell me when the app launches in my country.",
+  "submit": "Save my seat", "submitting": "Saving…", "retry": "Try again",
+  "consent": "We keep your details only to send your invite and the launch notice. <link>How we handle your data</link>.",
+  "honeypot": "Leave this field empty",
+  "success": { "title": "You're on the <em>list.</em>", "BR": "We'll write when invites open in Brasil.", "US": "We'll write when invites open in the United States.", "OTHER": "We'll write when the app reaches you." },
   "rateLimited": "Too many tries from this connection. Please try again in an hour.",
   "error": "Something went wrong on our side. Please try again.",
-  "retry": "Try again",
-  "companyLabel": "Leave this field empty",
-  "errors": {
-    "email_required": "Please enter your email.",
-    "email_invalid": "That email doesn't look right.",
-    "email_too_long": "That email is too long.",
-    "name_too_long": "Please use 80 characters or fewer.",
-    "mode_required": "Pick the chapter you're in."
-  }
+  "errors": { "email_required": "Please enter your email.", "email_invalid": "That email doesn't look right.", "email_too_long": "That email is too long.", "name_too_long": "Please use 80 characters or fewer.", "mode_required": "Pick the chapter you're in.", "country_required": "Pick where you live." }
 }
 ```
 
-`messages/pt.json`:
-
+PT:
 ```json
-"waitlist": {
-  "aria": "Entrar na lista de espera",
-  "eyebrow": "LISTA DE ESPERA",
-  "title": "A gente manda o seu convite no <em>momento</em> em que for a sua vez.",
-  "subtitle": "Estamos liberando os convites aos poucos — a Vovó não tem pressa, para que cada família se sinta bem cuidada. Deixe o seu email e avisamos quando chegar a sua vez.",
-  "name": "Seu nome (opcional)",
-  "namePlaceholder": "Ana",
-  "email": "Email",
-  "emailPlaceholder": "voce@sua-vida.com",
-  "modeLegend": "Estou em…",
-  "modes": { "pre": "Ciclo", "preg": "Gravidez", "kids": "Filhos", "meno": "Menopausa" },
-  "notify": "Também quero saber quando os apps de iOS e Android forem lançados.",
-  "submit": "Garantir meu lugar",
-  "submitting": "Salvando…",
-  "consent": "Ao entrar, você concorda que guardemos os seus dados para enviar o convite e o aviso de lançamento. Nada além disso. <link>Como cuidamos dos seus dados</link>.",
-  "promise": "Promessa de dedinho: nada de email de marketing. Só o seu convite e um único olá.",
-  "success": { "title": "Você está na lista.", "body": "Vamos mandar um email quando for a sua vez. Pode fechar esta página — a Vovó vai lembrar." },
+"form": {
+  "email": "Email", "emailPh": "voce@exemplo.com",
+  "country": "Onde você mora?", "countries": { "BR": "Brasil", "US": "Estados Unidos", "OTHER": "Outro" },
+  "mode": "Onde você está <em>agora?</em>",
+  "modes": { "pre": ["Capítulo 01", "Tentando"], "preg": ["Capítulo 02", "Esperando"], "kids": ["Capítulo 03", "Criando"], "meno": ["Capítulo 04", "A mudança"] },
+  "name": "Seu nome · opcional", "namePh": "Maya",
+  "notify": "Também quero saber quando o app chegar ao meu país.",
+  "submit": "Garantir meu lugar", "submitting": "Salvando…", "retry": "Tentar de novo",
+  "consent": "Guardamos seus dados só para enviar o convite e o aviso de lançamento. <link>Como cuidamos dos seus dados</link>.",
+  "honeypot": "Deixe este campo vazio",
+  "success": { "title": "Você está na <em>lista.</em>", "BR": "A gente escreve quando os convites abrirem no Brasil.", "US": "A gente escreve quando os convites abrirem nos Estados Unidos.", "OTHER": "A gente escreve quando o app chegar até você." },
   "rateLimited": "Muitas tentativas a partir desta conexão. Tente de novo daqui a uma hora.",
   "error": "Algo deu errado do nosso lado. Tente de novo.",
-  "retry": "Tentar de novo",
-  "companyLabel": "Deixe este campo vazio",
-  "errors": {
-    "email_required": "Digite o seu email.",
-    "email_invalid": "Esse email não parece certo.",
-    "email_too_long": "Esse email é longo demais.",
-    "name_too_long": "Use até 80 caracteres.",
-    "mode_required": "Escolha a fase em que você está."
-  }
+  "errors": { "email_required": "Digite o seu email.", "email_invalid": "Esse email não parece certo.", "email_too_long": "Esse email é longo demais.", "name_too_long": "Use até 80 caracteres.", "mode_required": "Escolha a fase em que você está.", "country_required": "Escolha onde você mora." }
 }
 ```
 
-Run `pnpm i18n:check`.
-
-- [ ] **Step 3: The form**
-
-`components/waitlist-form.tsx`:
+- [ ] **Step 3: Form** — `components/waitlist-form.tsx`:
 
 ```tsx
 'use client'
@@ -3070,218 +2764,130 @@ import { useActionState, useEffect, useRef, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { joinWaitlist } from '@/lib/waitlist/action'
-import { PREFILL_EVENT } from '@/lib/waitlist/prefill'
 import type { WaitlistState } from '@/lib/waitlist/types'
 import { MODES, type Mode } from '@/lib/modes'
-import { ActionRule, Display, Field, HairlineSelect } from '@/components/diffuse'
+import { COUNTRIES, type Country } from '@/lib/countries'
+import { ActionRule, BloomPicker, Chip, Mark, UnderlineField } from '@/components/diffuse'
 
 const INITIAL: WaitlistState = { status: 'idle' }
-const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign'] as const
+const UTM = ['utm_source', 'utm_medium', 'utm_campaign'] as const
 
-export function WaitlistForm() {
-  const t = useTranslations('waitlist')
+export function WaitlistForm({ defaultCountry }: { defaultCountry: Country }) {
+  const t = useTranslations('form')
   const locale = useLocale()
-  const [state, formAction, pending] = useActionState(joinWaitlist, INITIAL)
-  const [mode, setMode] = useState<Mode | ''>('')
+  const [state, action, pending] = useActionState(joinWaitlist, INITIAL)
   const [email, setEmail] = useState('')
-  const [utm, setUtm] = useState<Record<string, string>>({})
-  const emailRef = useRef<HTMLInputElement>(null)
+  const [country, setCountry] = useState<Country>(defaultCountry)
+  const [mode, setMode] = useState<Mode | ''>('')
+  // Starts expanded so the full form works before hydration / without JS; collapses on small screens after mount.
+  const [expanded, setExpanded] = useState(true)
+  const [attrib, setAttrib] = useState<Record<string, string>>({})
   const statusRef = useRef<HTMLDivElement>(null)
 
-  // Campaign attribution from the landing URL + referrer (first touch is kept server-side).
   useEffect(() => {
+    if (window.matchMedia('(max-width: 767px)').matches) setExpanded(false)
     const p = new URLSearchParams(window.location.search)
-    const next: Record<string, string> = {}
-    for (const k of UTM_KEYS) {
-      const v = p.get(k)
-      if (v) next[k] = v
-    }
-    if (document.referrer && !document.referrer.startsWith(window.location.origin)) next.referrer = document.referrer
-    setUtm(next)
+    const a: Record<string, string> = {}
+    for (const k of UTM) { const v = p.get(k); if (v) a[k] = v }
+    if (document.referrer && !document.referrer.startsWith(window.location.origin)) a.referrer = document.referrer
+    setAttrib(a)
   }, [])
-
-  // Email handed over from the hero.
-  useEffect(() => {
-    const onPrefill = (e: Event) => {
-      const value = (e as CustomEvent<string>).detail
-      if (value) setEmail(value)
-      setTimeout(() => emailRef.current?.focus({ preventScroll: true }), 400)
-    }
-    window.addEventListener(PREFILL_EVENT, onPrefill)
-    return () => window.removeEventListener(PREFILL_EVENT, onPrefill)
-  }, [])
-
-  useEffect(() => {
-    if (state.status !== 'idle' && state.status !== 'invalid') statusRef.current?.focus()
-  }, [state])
+  useEffect(() => { if (state.status !== 'idle') { setExpanded(true); statusRef.current?.focus() } }, [state])
 
   if (state.status === 'success') {
     return (
-      <div ref={statusRef} tabIndex={-1} role="status" className="py-8 text-center outline-none">
-        <Display size="lg">{t('success.title')}</Display>
-        <p className="mx-auto mt-4 max-w-[440px] text-ink-2">{t('success.body')}</p>
+      <div ref={statusRef} tabIndex={-1} role="status" className="outline-none">
+        <Mark size={72} />
+        <p className="mt-3 font-display text-[44px] leading-none [&_em]:italic [&_em]:text-ink-2">{t.rich('success.title', { em: (c) => <em>{c}</em> })}</p>
+        <p className="mt-3 text-[16px] font-light text-ink-2">{t(`success.${state.country}`)}</p>
       </div>
     )
   }
 
   const errs = state.status === 'invalid' ? state.fieldErrors : {}
-
+  const show = expanded || email.length > 0
   return (
-    <form action={formAction} noValidate className="mx-auto max-w-[520px] space-y-8">
+    <form action={action} noValidate className="grid gap-7">
       <input type="hidden" name="locale" value={locale} />
-      {Object.entries(utm).map(([k, v]) => (
-        <input key={k} type="hidden" name={k} value={v} />
-      ))}
-      {/* Honeypot — hidden from people and assistive tech. */}
-      <div aria-hidden="true" className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden">
-        <label>
-          {t('companyLabel')}
-          <input type="text" name="company" tabIndex={-1} autoComplete="off" />
+      <input type="hidden" name="country" value={country} />
+      {Object.entries(attrib).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
+      <div aria-hidden="true" className="absolute left-[-10000px] h-px w-px overflow-hidden">
+        <label>{t('honeypot')}<input type="text" name="company" tabIndex={-1} autoComplete="off" /></label>
+      </div>
+
+      <UnderlineField label={t('email')} name="email" type="email" autoComplete="email" required placeholder={t('emailPh')}
+        value={email} onChange={(e) => setEmail(e.target.value)} onFocus={() => setExpanded(true)}
+        error={errs.email ? t(`errors.${errs.email}`) : undefined} />
+
+      <div className={show ? 'grid gap-7' : 'hidden md:grid md:gap-7'}>
+        <div>
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-ink-3" id="country-label">{t('country')}</p>
+          <div role="radiogroup" aria-labelledby="country-label" className="flex flex-wrap gap-2.5">
+            {COUNTRIES.map((c) => <Chip key={c} role="radio" aria-checked={country === c} selected={country === c} onClick={() => setCountry(c)}>{t(`countries.${c}`)}</Chip>)}
+          </div>
+          {errs.country && <p className="mt-2 text-[14px] text-err">{t(`errors.${errs.country}`)}</p>}
+        </div>
+        <BloomPicker name="mode" value={mode} onChange={setMode}
+          legend={t.rich('mode', { em: (c) => <em>{c}</em> })}
+          options={MODES.map((m) => { const [kicker, label] = t.raw(`modes.${m}`) as [string, string]; return { value: m, kicker, label, mode: m } })}
+          error={errs.mode ? t(`errors.${errs.mode}`) : undefined} />
+        <UnderlineField label={t('name')} name="name" autoComplete="given-name" maxLength={80} placeholder={t('namePh')} error={errs.name ? t(`errors.${errs.name}`) : undefined} />
+        <label className="flex cursor-pointer items-start gap-3 text-[15px] font-light text-ink-2">
+          <input type="checkbox" name="notify_launch" className="mt-1.5 h-4 w-4 accent-[var(--ink)]" />{t('notify')}
         </label>
       </div>
 
-      <Field
-        ref={emailRef}
-        label={t('email')}
-        name="email"
-        type="email"
-        autoComplete="email"
-        required
-        placeholder={t('emailPlaceholder')}
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        error={errs.email ? t(`errors.${errs.email}`) : undefined}
-      />
-      <Field
-        label={t('name')}
-        name="name"
-        autoComplete="given-name"
-        maxLength={80}
-        placeholder={t('namePlaceholder')}
-        error={errs.name ? t(`errors.${errs.name}`) : undefined}
-      />
-
-      <div>
-        <HairlineSelect
-          name="mode"
-          legend={t('modeLegend')}
-          value={mode as Mode}
-          onChange={setMode}
-          options={MODES.map((m) => ({ value: m, label: t(`modes.${m}`), mode: m }))}
-        />
-        {errs.mode && <p className="mt-2 text-[14px] text-[var(--d-error)]" role="alert">{t(`errors.${errs.mode}`)}</p>}
+      <div ref={statusRef} tabIndex={-1} aria-live="polite" className="outline-none">
+        {state.status === 'rate_limited' && <p className="rounded-d-sm border border-err/50 bg-white/45 px-4 py-3 text-[14.5px] text-err">{t('rateLimited')}</p>}
+        {state.status === 'error' && <p className="rounded-d-sm border border-err/50 bg-white/45 px-4 py-3 text-[14.5px] text-err">{t('error')}</p>}
       </div>
 
-      <label className="flex cursor-pointer items-start gap-3 text-[15px] text-ink-2">
-        <input type="checkbox" name="notify_launch" className="mt-1 h-4 w-4 accent-[var(--d-ink)]" />
-        {t('notify')}
-      </label>
-
-      <div ref={statusRef} tabIndex={-1} className="outline-none" aria-live="polite">
-        {state.status === 'rate_limited' && <p className="text-[15px] text-[var(--d-error)]">{t('rateLimited')}</p>}
-        {state.status === 'error' && <p className="text-[15px] text-[var(--d-error)]">{t('error')}</p>}
-      </div>
-
-      <ActionRule type="submit" pending={pending}>
-        {pending ? t('submitting') : state.status === 'error' ? t('retry') : t('submit')}
-      </ActionRule>
-
-      <p className="text-[13px] leading-[1.6] text-ink-3">
-        {t.rich('consent', {
-          link: (c) => (
-            <Link href="/privacy#waitlist-data" className="underline underline-offset-2 hover:text-ink">
-              {c}
-            </Link>
-          ),
-        })}
+      <ActionRule type="submit" pending={pending}>{pending ? t('submitting') : state.status === 'error' ? t('retry') : t('submit')}</ActionRule>
+      <p className="m-0 text-[12.5px] font-light leading-[1.6] text-ink-3">
+        {t.rich('consent', { link: (c) => <Link href="/privacy#waitlist-data" className="text-ink underline underline-offset-2">{c}</Link> })}
       </p>
     </form>
   )
 }
 ```
 
-`Field` must forward refs for `ref={emailRef}`: in `components/diffuse/field.tsx` React 19 passes `ref` as a normal prop, so add `ref` to the destructured props (`{ label, error, id, className = '', ref, ...input }: { label: string; error?: string; ref?: React.Ref<HTMLInputElement> } & InputHTMLAttributes<HTMLInputElement>`) and put `ref={ref}` on the `<input>`.
+Mobile: after hydration only the email field and submit show until the email is focused or typed; desktop always shows everything. Before hydration (or without JS) the whole form is visible, so it always works.
 
-Note: inputs keep their values after a failed submit because `email` is controlled and the browser keeps uncontrolled `name`; the radio is controlled via `mode`. The form works without JavaScript because it posts through `action={formAction}`.
-
-- [ ] **Step 4: Section uses the form**
-
-Rewrite `WaitlistSection` in `components/waitlist-faq-section.tsx`:
+- [ ] **Step 4: Use it** — in `app/[locale]/page.tsx` replace the placeholder `form` with:
 
 ```tsx
-export function WaitlistSection() {
-  const t = useTranslations('waitlist')
-  return (
-    <section id="waitlist" aria-label={t('aria')} className="relative overflow-hidden bg-bg-deep px-6 py-20 lg:px-12 lg:py-32">
-      <GradientField mode="pre" />
-      <div className="relative mx-auto max-w-[880px]">
-        <Card size="lg" className="bg-paper-2/90 backdrop-blur-[var(--d-blur-glass)]">
-          <div className="mb-10 text-center">
-            <MonoLabel>{t('eyebrow')}</MonoLabel>
-            <Display size="xl" className="mb-6 mt-4">{t.rich('title', { em: (c) => <Display.Em>{c}</Display.Em> })}</Display>
-            <p className="mx-auto max-w-[540px] text-ink-2">{t('subtitle')}</p>
-          </div>
-          <WaitlistForm />
-          <p className="mt-8 text-center font-display italic text-ink-3">{t('promise')}</p>
-        </Card>
-      </div>
-    </section>
-  )
-}
+import { WaitlistForm } from '@/components/waitlist-form'
+// …
+const form = <WaitlistForm defaultCountry={country} />
 ```
 
-with imports `GradientField, Card, MonoLabel, Display` from `@/components/diffuse` and `WaitlistForm` from `./waitlist-form`. Remove the old state, `handleSubmit`, sticker imports that are no longer used, and the old `stageColors`.
+and remove the now-unused `ActionRule`, `UnderlineField` and `getTranslations('hero')` placeholder imports.
 
-- [ ] **Step 5: Local end-to-end**
+- [ ] **Step 5: Local end-to-end** — `.env.local` with real `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `WAITLIST_IP_SALT=$(openssl rand -hex 32)`. `pnpm dev`, then on `/pt?utm_source=qa`:
+1. Empty submit → email, chapter errors in PT; nothing written.
+2. `QA-Site@Example.com`, Brasil, Menopausa, notify on → success "…abrirem no Brasil."
+3. Reload, same email, Estados Unidos, Filhos → success "…nos Estados Unidos."
+4. CC `/waitlist` (or SQL): one row `qa-site@example.com`, `country = US`, `mode = kids`, `utm_source = qa`, `created_at` from step 2.
+5. `curl -s -H "x-vercel-ip-country: US" localhost:3000/pt | grep -o 'aria-checked="true"[^>]*>Estados Unidos'` → match (geo default).
+6. DevTools → disable JavaScript → reload → submit a new email → success renders.
+7. `grep -r "SERVICE_ROLE\|service_role" .next/static || echo clean` → `clean`.
+Delete QA rows: `delete from public.waitlist where email like 'qa-site%';`.
 
-Create `.env.local` with the real `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Supabase dashboard → Project Settings → API), and a random `WAITLIST_IP_SALT` (`openssl rand -hex 32`). Then `pnpm dev` and on `/pt?utm_source=qa`:
-
-1. Submit with an empty form → email and mode errors in Portuguese; nothing written.
-2. Submit `QA-Site@Example.com`, mode Menopausa, notify on → success panel.
-3. Reload, submit `qa-site@example.com` with mode Filhos → success again.
-4. In the command center `/waitlist` (or SQL): exactly one row `qa-site@example.com`, `mode = kids`, `locale = pt`, `utm_source = qa`, `created_at` from step 2.
-5. Hero: type an email, press Enter → page scrolls to the form with the email filled.
-6. DevTools → disable JavaScript → reload → submit a new email → success page renders (server-rendered result).
-7. Check the client bundle has no secret: `grep -r "SERVICE_ROLE\|service_role" .next/static || echo clean` → `clean`.
-
-Delete QA rows afterwards: `delete from public.waitlist where email like 'qa-site%';`.
-
-- [ ] **Step 6: Checks and commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 pnpm test && pnpm i18n:check && pnpm typecheck && pnpm build
 git add -A
-git commit -m "feat(waitlist): server action to Supabase, Diffuse waitlist form with hero prefill"
+git commit -m "feat(waitlist): server action with country, hero form with bloom picker and geo default"
 ```
 
 ---
 
-### Task 16: Cleanup, OG images and final verification
+### Task 15: OG images, cleanup, final verification
 
-**Files:**
-- Modify: `app/globals.css` (delete legacy aliases and old component classes)
-- Modify: any component still using legacy names
-- Create: `app/[locale]/opengraph-image.tsx`
-- Modify: `app/[locale]/layout.tsx` (no hardcoded `bg-[#F4F1E8]`; use `bg-paper`)
-- Modify: `next.config.mjs` (only if typecheck is clean — see Step 3)
+**Files:** Create `app/[locale]/opengraph-image.tsx`; Modify `next.config.mjs` (typecheck gate), `public/` (remove unused placeholders)
 
-**Interfaces:**
-- Consumes: everything above.
-
-- [ ] **Step 1: Remove legacy tokens**
-
-Find remaining uses:
-
-```bash
-grep -rnE "var\(--(bg|bg-warm|surface|surface-raised|border|border-light|border-strong|ink|ink-secondary|ink-muted|ink-faint|primary|primary-light|primary-dark|secondary|rose|rose-soft|lavender|lavender-soft|blue-powder|blue-powder-soft|r-(sm|md|lg|xl|xxl|full)|shadow-card|shadow-card-hover|shadow-stamp|shadow-stamp-press|font-fraunces|font-dm-sans|font-instrument-serif|font-display|font-italic|font-body)\)" components app --include=*.tsx
-grep -rnE "\b(eyebrow|btn-primary|btn-secondary|card-paper|input-field|chip(-rose|-lavender|-blue)?|sticker-shadow)\b" components app --include=*.tsx
-```
-
-Migrate every hit with the Task 10 map (leave `components/ui/*` alone — they use the shadcn compatibility vars). When both commands print nothing, delete the `LEGACY ALIASES` block from `:root` and the `.eyebrow`, `.btn-primary`, `.btn-secondary`, `.card-paper`, `.input-field`, `.chip*`, `.sticker-shadow` rules from `app/globals.css`. Re-run both greps → empty. Also delete `styles/globals.css` if nothing imports it (`grep -rn "styles/globals" .` → no matches).
-
-- [ ] **Step 2: Open Graph image per locale**
-
-`app/[locale]/opengraph-image.tsx`:
+- [ ] **Step 1: OG image** — `app/[locale]/opengraph-image.tsx`:
 
 ```tsx
 import { ImageResponse } from 'next/og'
@@ -3294,18 +2900,14 @@ export const contentType = 'image/png'
 export default async function OG({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'meta' })
-  const f = FIELDS.preg
+  const h = await getTranslations({ locale, namespace: 'hero' })
+  const f = FIELDS.pre
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-          padding: 72, background: `radial-gradient(circle at 15% 20%, ${f.g1}, transparent 55%), radial-gradient(circle at 85% 15%, ${f.g2}, transparent 55%), radial-gradient(circle at 30% 90%, ${f.g3}, transparent 55%), radial-gradient(circle at 90% 85%, ${f.g4}, transparent 55%), #F4F1E8`,
-          color: '#1A1916',
-        }}
-      >
-        <div style={{ fontSize: 28, letterSpacing: 6, textTransform: 'uppercase' }}>grandma.app</div>
-        <div style={{ fontSize: 72, fontWeight: 700, lineHeight: 1.05, marginTop: 16, maxWidth: 960 }}>{t('ogTitle')}</div>
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, color: '#1A1916',
+        background: `radial-gradient(circle at 18% 22%, ${f.g1}, transparent 55%), radial-gradient(circle at 84% 18%, ${f.g2}, transparent 55%), radial-gradient(circle at 74% 86%, ${f.g3}, transparent 55%), radial-gradient(circle at 20% 82%, ${f.g4}, transparent 55%), #F4F1E8` }}>
+        <div style={{ fontSize: 26, letterSpacing: 6, textTransform: 'uppercase' }}>{`${h('status')} · ${h('first')} · ${h('then')}`}</div>
+        <div style={{ fontSize: 84, lineHeight: 1, maxWidth: 1000 }}>{t('ogTitle')}</div>
       </div>
     ),
     size,
@@ -3313,34 +2915,25 @@ export default async function OG({ params }: { params: Promise<{ locale: string 
 }
 ```
 
-Remove any leftover `images: ['/og-image.png']` reference. Verify: `curl -sI http://localhost:3000/pt/opengraph-image | head -3` → `200` and `content-type: image/png`.
+- [ ] **Step 2: Cleanup** — remove unused files in `public/` (`placeholder*.{png,svg,jpg}`, `placeholder-user.jpg`), check `grep -rn "placeholder" app components` returns nothing. Run `pnpm typecheck`; if zero errors, set `ignoreBuildErrors: false` in `next.config.mjs`.
 
-- [ ] **Step 3: Typecheck gate**
-
-Run `pnpm typecheck`. If it reports zero errors, set `ignoreBuildErrors: false` in `next.config.mjs` so future type errors fail the build. If it reports errors only in `components/ui/*` (pre-existing v0 scaffolding), leave `ignoreBuildErrors: true` and list the count in the PR description. Errors in any file this plan touched must be fixed.
-
-- [ ] **Step 4: Final verification**
+- [ ] **Step 3: Final verification**
 
 ```bash
-pnpm test && pnpm i18n:check && pnpm typecheck && pnpm build
+pnpm test && pnpm i18n:check && pnpm typecheck && pnpm build && pnpm start
 ```
 
-Then with `pnpm start`:
-- Screenshots at 390, 768 and 1280 px of `/en`, `/pt`, `/en/pricing`, `/pt/pricing` (DevTools device toolbar or Playwright). Compare against `APP/docs/design/design-system-v3.html`. No horizontal scroll at 390; no old fonts (DevTools → Rendered fonts shows only Hanken Grotesk and Space Mono).
-- Lighthouse (mobile) on `/pt`: Accessibility ≥ 95; no contrast failures on text over gradient fields (if any, raise the field's `opacity` down or the text to `text-ink`).
-- `curl -s http://localhost:3000/en/dev/diffuse | grep -o 'noindex'` → `noindex`.
-- Repeat Task 15 Step 5 items 2–4 once more against the production build.
+With `pnpm start`:
+- Screenshots of `/pt` and `/en` at 390, 768, 1280; compare with the mockup. No horizontal scroll at 390.
+- Lighthouse mobile on `/pt`: Accessibility ≥ 95, LCP < 2.5 s.
+- DevTools → Rendering → `prefers-reduced-motion: reduce`: every phone shows its poster; the mark stops blinking.
+- Block `*.webm` and `*.mp4` in DevTools Network: posters show, layout doesn't shift.
+- `curl -sI localhost:3000/pt/opengraph-image | head -3` → 200, `image/png`.
+- Task 14 Step 5 items 2–4 once more against the production build.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit** — `git add -A && git commit -m "chore(site): localized OG images, cleanup, typecheck gate"`
 
-```bash
-git add -A
-git commit -m "chore(diffuse): remove legacy tokens and classes; localized OG images"
-```
-
-- [ ] **Step 6: Hand-off checklist for Igor (no code)**
-
-Report, with the evidence from Step 4:
-1. pt-BR copy is ready for review in `messages/pt.json` (including the "built on Claude" FAQ answer, which was translated as-is).
-2. Vercel env vars to add on the site project: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `WAITLIST_IP_SALT`, `NEXT_PUBLIC_SITE_URL`.
-3. Two branches to open PRs for: `feat/waitlist-pillar` (CC) and `feat/waitlist-diffuse-i18n` (site). The CC migration is already applied (Task 1); merge CC first.
+- [ ] **Step 5: Hand-off for Igor**
+1. PT copy in `messages/pt.json` and the 16 clips (already reviewed in Task 7) — final read.
+2. Vercel env vars for the site: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `WAITLIST_IP_SALT`, `NEXT_PUBLIC_SITE_URL`.
+3. PRs: `feat/waitlist-pillar` (CC) first — its migration is already applied — then `feat/waitlist-diffuse-i18n` (site).
