@@ -1,0 +1,6 @@
+appId: co.sauceroom.grandma
+---
+- openLink: grandma-app://dev-panel
+- extendedWaitUntil:
+    visible: "SEED DATA"
+    timeout: 20000

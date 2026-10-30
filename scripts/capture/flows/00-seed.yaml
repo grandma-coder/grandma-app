@@ -1,0 +1,21 @@
+appId: co.sauceroom.grandma
+---
+- launchApp
+- runFlow: _open-panel.yaml
+- scrollUntilVisible:
+    element: "Seed everything"
+    direction: DOWN
+- tapOn: "Seed everything"
+- extendedWaitUntil:
+    visible: "OK"
+    timeout: 120000
+- tapOn: "OK"
+- scrollUntilVisible:
+    element: "Seed menopause data"
+    direction: UP
+- tapOn: "Seed menopause data"
+- extendedWaitUntil:
+    visible: "OK"
+    timeout: 60000
+- tapOn: "OK"
+- runFlow: _home.yaml
