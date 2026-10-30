@@ -4,5 +4,118 @@
     "description": "A calm companion for your cycle, pregnancy, kids and menopause. Join the waitlist: invites open in Brasil first, then the United States.",
     "ogTitle": "Grandma · Join the waitlist"
   },
-  "locale": { "label": "Language", "en": "EN", "pt": "PT" }
+  "locale": {
+    "label": "Language",
+    "en": "EN",
+    "pt": "PT"
+  },
+  "nav": {
+    "join": "Join the waitlist",
+    "home": "grandma.app home"
+  },
+  "hero": {
+    "status": "Waitlist open",
+    "first": "Brasil first",
+    "then": "Then the US",
+    "title": "With you through every <em>chapter.</em>",
+    "lede": "Cycle, pregnancy, the first years and menopause — one calm companion who remembers everything, judges nothing, and answers at 3am.",
+    "videoAlt": "The grandma app: choosing your chapter, then the home screen"
+  },
+  "launch": {
+    "title": "How the <em>launch</em> works.",
+    "sub": "Invites go out in the order people join, country by country.",
+    "steps": [
+      {
+        "k": "01",
+        "title": "Join the list",
+        "body": "Leave your email and where you are in life. That's all."
+      },
+      {
+        "k": "02",
+        "title": "Brasil, first",
+        "body": "The first invites open in Brazil, in Portuguese."
+      },
+      {
+        "k": "03",
+        "title": "United States, next",
+        "body": "Then the US, in English. Everywhere else after that."
+      }
+    ],
+    "you": "You're here"
+  },
+  "chapters": {
+    "title": "One companion, <em>four chapters.</em>",
+    "sub": "The whole app reshapes itself around where you are. Switch any time — Grandma keeps your history.",
+    "items": {
+      "pre": {
+        "label": "Chapter 01 · Trying",
+        "title": "Cycle",
+        "body": "Your cycle, hormones and fertile window — explained, not just tracked.",
+        "alt": "Cycle home screen in the grandma app"
+      },
+      "preg": {
+        "label": "Chapter 02 · Expecting",
+        "title": "Pregnancy",
+        "body": "Forty weeks, one at a time, with your baby's size and what's next.",
+        "alt": "Pregnancy home screen in the grandma app"
+      },
+      "kids": {
+        "label": "Chapter 03 · Raising",
+        "title": "Kids",
+        "body": "Sleep, feeds, growth and milestones from newborn to five — shared with your people.",
+        "alt": "Kids home screen in the grandma app"
+      },
+      "meno": {
+        "label": "Chapter 04 · The change",
+        "title": "Menopause",
+        "body": "Hot flashes, sleep and mood, with patterns over weeks and steady answers.",
+        "alt": "Menopause quick log in the grandma app"
+      }
+    }
+  },
+  "grandma": {
+    "title": "Meet <em>Grandma.</em>",
+    "quote": "The friend who's awake at 3am — and actually knows things.",
+    "body": "She knows your kids by name, remembers their ages and sleep patterns, tells you what the science says and what your grandmother would have done — and lets you decide.",
+    "traits": [
+      "Always there",
+      "Knows your kids by name",
+      "Never judges",
+      "Cites real sources"
+    ],
+    "videoAlt": "Asking Grandma a question in the app"
+  },
+  "faq": {
+    "title": "The obvious <em>questions.</em>",
+    "items": [
+      {
+        "q": "When does it launch?",
+        "a": "Invites open in Brasil first, then in the United States. Within each country we go in the order people joined, and we never skip ahead."
+      },
+      {
+        "q": "Is it only for pregnancy and babies?",
+        "a": "No. Grandma has four chapters: Cycle, Pregnancy, Kids (newborn to five) and Menopause. Switch any time — she keeps your history."
+      },
+      {
+        "q": "What will it cost?",
+        "a": "Free to start. An optional Premium plan adds more, and you'll see it before you ever pay."
+      },
+      {
+        "q": "Is my data private?",
+        "a": "Yes. Your data is encrypted, never sold, and never used to train AI models. You can export it or delete your account at any time."
+      }
+    ]
+  },
+  "closing": {
+    "eyebrow": "Ready when you are",
+    "title": "Take your time. <em>We'll be here.</em>",
+    "cta": "Save my seat"
+  },
+  "footer": {
+    "tag": "A calm companion for your cycle, pregnancy, kids and menopause.",
+    "line": "Calm where it counts, warm where it helps.",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "rights": "© 2026 grandma.app"
+  }
 }
