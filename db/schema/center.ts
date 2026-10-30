@@ -145,6 +145,33 @@ export const betaTesters = pgTable("beta_testers", {
   invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const WAITLIST_MODES = ["pre", "preg", "kids", "meno"] as const
+export type WaitlistMode = (typeof WAITLIST_MODES)[number]
+export const WAITLIST_LOCALES = ["en", "pt"] as const
+export type WaitlistLocale = (typeof WAITLIST_LOCALES)[number]
+export const WAITLIST_COUNTRIES = ["BR", "US", "OTHER"] as const
+export type WaitlistCountry = (typeof WAITLIST_COUNTRIES)[number]
+
+/** Marketing-site waitlist. Written by the site via waitlist_join(); see migrations/0018_waitlist.sql. */
+export const waitlist = pgTable("waitlist", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  mode: text("mode").notNull(),
+  locale: text("locale").notNull(),
+  country: text("country").notNull().default("OTHER"),
+  notifyLaunch: boolean("notify_launch").notNull().default(false),
+  utmSource: text("utm_source"),
+  utmMedium: text("utm_medium"),
+  utmCampaign: text("utm_campaign"),
+  referrer: text("referrer"),
+  ipHash: text("ip_hash"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  invitedAt: timestamp("invited_at", { withTimezone: true }),
+  invitedBy: text("invited_by"),
+})
+
 export const SUPPORT_STATUSES = ["open", "in_progress", "resolved", "closed"] as const
 export type SupportStatus = (typeof SUPPORT_STATUSES)[number]
 
