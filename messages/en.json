@@ -18,7 +18,7 @@
     "first": "Brasil first",
     "then": "Then the US",
     "title": "With you through every <em>chapter.</em>",
-    "lede": "Cycle, pregnancy, the first years and menopause — one calm companion who remembers everything, judges nothing, and answers at 3am.",
+    "lede": "Cycle, pregnancy, the first years and menopause — one calm companion that remembers everything and judges nothing.",
     "videoAlt": "The grandma app: choosing your chapter, then the home screen"
   },
   "form": {
@@ -121,7 +121,7 @@
       "meno": {
         "label": "Chapter 04 · The change",
         "title": "Menopause",
-        "body": "Hot flashes, sleep and mood, with patterns over weeks and steady answers.",
+        "body": "Hot flashes, sleep and mood, with patterns over weeks — so you can see what's changing.",
         "alt": "Menopause quick log in the grandma app"
       }
     }

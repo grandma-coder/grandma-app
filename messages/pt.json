@@ -18,7 +18,7 @@
     "first": "Brasil primeiro",
     "then": "Depois os EUA",
     "title": "Com você em cada <em>capítulo.</em>",
-    "lede": "Ciclo, gravidez, os primeiros anos e a menopausa — uma companhia calma que lembra de tudo, não julga nada e responde às 3 da manhã.",
+    "lede": "Ciclo, gravidez, os primeiros anos e a menopausa — uma companhia calma que lembra de tudo e não julga nada.",
     "videoAlt": "O app grandma: escolhendo o seu capítulo e depois a tela inicial"
   },
   "form": {
@@ -121,7 +121,7 @@
       "meno": {
         "label": "Capítulo 04 · A mudança",
         "title": "Menopausa",
-        "body": "Ondas de calor, sono e humor, com padrões ao longo das semanas e respostas calmas.",
+        "body": "Ondas de calor, sono e humor, com padrões ao longo das semanas — pra você ver o que está mudando.",
         "alt": "Registro rápido da Menopausa no app grandma"
       }
     }
