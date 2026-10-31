@@ -1,9 +1,15 @@
+import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { ImageResponse } from 'next/og'
 import { getTranslations } from 'next-intl/server'
 import { PATHS, type StickerName } from '@/components/stickers/paths'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
+
+// `alt` must be a static export: generateImageMetadata (the per-locale route) breaks static generation here
+// (`headers()` inside generateStaticParams), so the alt is the brand name; the image text itself is localised.
+export const alt = 'grandma'
 
 const PAPER = '#F3F0E8'
 const INK = '#161513'
@@ -43,12 +49,10 @@ function items(line: string): Item[] {
   return out
 }
 
-/** The site's hand font, when reachable at build time; the default sans otherwise (never fails the build). */
-async function handFont(): Promise<ArrayBuffer | null> {
+/** The site's hand font (SIL OFL, assets/fonts) read from disk: no network at build. Falls back to the default sans. */
+async function handFont(): Promise<Buffer | null> {
   try {
-    const css = await (await fetch('https://fonts.googleapis.com/css?family=Architects+Daughter')).text()
-    const url = /src: url\((.+?)\) format\('truetype'\)/.exec(css)?.[1]
-    return url ? await (await fetch(url)).arrayBuffer() : null
+    return await readFile(fileURLToPath(new URL('../../assets/fonts/ArchitectsDaughter-Regular.ttf', import.meta.url)))
   } catch {
     return null
   }
@@ -94,6 +98,6 @@ export default async function OG({ params }: { params: Promise<{ locale: string 
         </div>
       </div>
     ),
-    { ...size, fonts: font ? [{ name: 'Hand', data: font, weight: 400, style: 'normal' }] : undefined },
+    { ...size, fonts: font ? [{ name: 'Hand', data: font.buffer.slice(font.byteOffset, font.byteOffset + font.byteLength) as ArrayBuffer, weight: 400, style: 'normal' }] : undefined },
   )
 }

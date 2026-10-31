@@ -9,10 +9,21 @@ const PROFILES = [
 ]
 const ALL_SCREENS = ['home', 'agenda', 'week', 'profile', 'vaccines', 'memories', 'care', 'village', 'community', 'chat', 'exams', 'exam', 'appointments', 'reminders', 'pediatric', 'growth', 'privacy']
 const PHASES = ['pre', 'preg', 'kids', 'meno']
+// Hand-written RSC flight response for the `joinWaitlist` server action, matching what next@16.2.6 sends back
+// (captured from a real call that returned { status: 'error' }, with the payload swapped to success).
+// If a Next upgrade changes the wire format, the hero join step fails with "did not flip to the joined state":
+// re-capture a real response (page.on('response') on the POST with a Next-Action header) and update this string.
 const MOCK_BODY = '0:{"a":"$@1","f":"","q":"","i":false,"b":"qa-mock"}\n1:{"status":"success"}\n'
 
 const P = '#phone'
 const failures = []
+
+// the walk must never reach a real backend: only run against a local server unless explicitly allowed
+const { hostname } = new URL(BASE_URL)
+if (!['localhost', '127.0.0.1', '[::1]'].includes(hostname) && process.env.QA_ALLOW_REMOTE !== '1') {
+  console.error(`Refusing to run qa:walk against ${BASE_URL} (not localhost). Set QA_ALLOW_REMOTE=1 to override.`)
+  process.exit(2)
+}
 
 async function runScenario(browser, loc, profile) {
   const label = `/${loc} ${profile.name}`
@@ -32,6 +43,11 @@ async function runScenario(browser, loc, profile) {
     if (req.method() === 'POST' && req.headers()['next-action']) {
       mocked++
       return route.fulfill({ status: 200, contentType: 'text/x-component', body: MOCK_BODY })
+    }
+    // fail-safe: any other write (POST/PUT/PATCH/DELETE) is blocked and fails the run
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method())) {
+      problems.push(`blocked unexpected ${req.method()} ${url}`)
+      return route.abort()
     }
     return route.continue()
   })
