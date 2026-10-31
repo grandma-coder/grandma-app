@@ -55,7 +55,7 @@ function setup(children: ReactNode = null, locale: 'en' | 'pt' = 'en') {
   return user
 }
 
-const tab = (name: string) => within(screen.getByRole('navigation', { name: m.barAria })).getByRole('button', { name })
+const tab = (name: string) => within(document.getElementById(TABBAR_ID)!).getByRole('button', { name, hidden: true })
 const out = (id: string) => screen.getByTestId(id).textContent
 
 beforeEach(() => { join.mockReset(); mockMedia(true); window.scrollTo = vi.fn() as unknown as typeof window.scrollTo })
@@ -238,9 +238,14 @@ describe('black bar steps aside while the phone is on screen', () => {
     window.innerHeight = 800
     setup()
     expect(bar().getAttribute('data-away')).toBe('true')
+    // away = off screen AND out of the tab order / accessibility tree
+    expect(bar().hasAttribute('inert')).toBe(true)
+    expect(bar().getAttribute('aria-hidden')).toBe('true')
     slot.getBoundingClientRect = () => rectOf(900, 400)
     act(() => { window.dispatchEvent(new Event('scroll')) })
     expect(bar().getAttribute('data-away')).toBe('false')
+    expect(bar().hasAttribute('inert')).toBe(false)
+    expect(bar().getAttribute('aria-hidden')).toBeNull()
     slot.remove()
   })
 
@@ -255,10 +260,78 @@ describe('black bar steps aside while the phone is on screen', () => {
   })
 })
 
+describe('modal behaviour (Explorar and the list pop-up)', () => {
+  const page = () => screen.getByTestId('page')
+  const ui = (id: string) => document.getElementById(id)!
+
+  it.each([
+    ['Explorar', () => tab(m.explore), EXPLORE_ID],
+    ['the list pop-up', () => tab(m.list), POP_ID],
+  ])('%s: inerts the page, moves focus in, Escape closes and focus returns to the opener', async (_n, opener, id) => {
+    const user = setup(<main data-testid="page"><button>behind</button></main>)
+    const btn = opener()
+    await user.click(btn)
+    expect(ui(id).getAttribute('aria-modal')).toBe('true')
+    expect(page().hasAttribute('inert')).toBe(true)
+    expect(ui(TABBAR_ID).hasAttribute('inert')).toBe(false)
+    expect(document.activeElement).toBe(ui(id))
+    await user.keyboard('{Escape}')
+    expect(page().hasAttribute('inert')).toBe(false)
+    expect(document.activeElement).toBe(btn)
+  })
+
+  it('the pop-up opened from Explorar returns focus to the List tab, not the inert Explorar button', async () => {
+    const user = setup(<main data-testid="page" />)
+    await user.click(tab(m.explore))
+    await user.click(within(ui(EXPLORE_ID)).getByRole('button', { name: en.v3.explore.join }))
+    expect(document.activeElement).toBe(ui(POP_ID))
+    await user.click(within(ui(POP_ID)).getByRole('button', { name: en.v3.pop.close }))
+    expect(document.activeElement).toBe(tab(m.list))
+  })
+
+  it('does not steal focus when another tab closed it', async () => {
+    const user = setup(<main data-testid="page" />)
+    await user.click(tab(m.list))
+    await user.click(tab(m.home))
+    expect(document.activeElement).toBe(tab(m.home))
+  })
+})
+
+describe('Log tab timer', () => {
+  it('a fast Log -> Memories tap does not open the register sheet over Memories', async () => {
+    mockMedia(true, false) // motion allowed: 250 ms delay
+    const user = userEvent.setup({ delay: null })
+    setup()
+    await user.click(tab(m.log))
+    await user.click(tab(m.memories))
+    await new Promise((r) => setTimeout(r, 400))
+    expect(out('screen')).toBe('memories')
+    expect(out('sheet')).toBe('none')
+  })
+
+  it('is cleared on unmount', async () => {
+    mockMedia(true, false)
+    const user = setup()
+    await user.click(tab(m.log))
+    cleanup()
+    await new Promise((r) => setTimeout(r, 400)) // would throw / warn on a dispatch after unmount
+  })
+})
+
 describe('phone fit', () => {
+  it('leaves --s to the stylesheet when CSS can fit the phone itself', () => {
+    vi.stubGlobal('CSS', { supports: () => true })
+    window.innerWidth = 320; window.innerHeight = 568
+    setup(<Hero />)
+    expect(document.getElementById(PHONE_ID)!.style.getPropertyValue('--s')).toBe('')
+    vi.unstubAllGlobals()
+  })
+
   it('Hero sets --s on the phone slot from the window size', () => {
+    vi.stubGlobal('CSS', { supports: () => false }) // no tan/atan2: the JS fallback fits it
     window.innerWidth = 320; window.innerHeight = 568
     setup(<Hero />)
     expect(document.getElementById(PHONE_ID)!.style.getPropertyValue('--s')).toBe('0.41')
+    vi.unstubAllGlobals()
   })
 })

@@ -116,6 +116,11 @@
   .modes { position: sticky; top: 66px; z-index: 30; width: 100%; }
   .modes button { font-size: clamp(10px, 3vw, 11.5px); min-width: 0; }
   /* the device keeps its 390px layout box when scaled; clip it so the page never gets wider than the screen */
+  /* self-fitting before hydration: --s = min(1, min(82vw,340px)/390px, (100svh-240px)/800px), floor .25; tan(atan2(a,b)) divides two lengths */
+  .phoneSlot { --s: .6; }
+  @supports (width: calc(tan(atan2(1px, 1px)) * 1px)) {
+    .phoneSlot { --s: max(.25, min(1, tan(atan2(min(82vw, 340px), 390px)), tan(atan2(100svh - 240px, 800px)))); }
+  }
   .phoneSlot { display: block; position: relative; width: calc(390px * var(--s, .8)); height: calc(800px * var(--s, .8)); overflow: hidden; border-radius: calc(56px * var(--s, .8)); }
   .phoneSlot > * { position: absolute; top: 0; left: 0; transform: scale(var(--s, .8)); transform-origin: 0 0; }
   .qjHero { margin-top: 16px; }

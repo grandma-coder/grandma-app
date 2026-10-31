@@ -8,9 +8,14 @@ export const SMALL_QUERY = '(max-width: 900px)'
 /** Mobile browsers fire `resize` as the URL bar collapses; ignore pure height jitter below this. */
 const HEIGHT_JITTER = 100
 
+/** True when the stylesheet can already fit the phone on its own (tan/atan2 length division, svh-stable). */
+export const cssFitsPhone = () =>
+  typeof CSS !== 'undefined' && !!CSS.supports?.('width', 'calc(tan(atan2(1px, 1px)) * 1px)')
+
 /** Keep `--s` (scale of the 390x800 device) on the phone slot in step with the window. */
 export function usePhoneFit(ref: RefObject<HTMLElement | null>) {
   useEffect(() => {
+    if (cssFitsPhone()) return // the CSS fit is exact from first paint and ignores URL-bar jitter
     let w = window.innerWidth
     let h = window.innerHeight
     const fit = () => ref.current?.style.setProperty('--s', String(phoneScale(w, h)))

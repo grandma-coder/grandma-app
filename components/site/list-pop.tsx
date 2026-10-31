@@ -1,31 +1,19 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { QuickJoin } from './quick-join'
 import { useMobileUi } from './mobile-context'
 import { POP_ID } from './ids'
 import m from './mobile.module.css'
 
-/** The black bar's "List" pop-up: the same quick-join as everywhere, in a bottom sheet above the bar. */
+/** The black bar's "List" pop-up: the same quick-join as everywhere, in a bottom sheet above the bar. Modal behaviour lives in `useOverlay`. */
 export function ListPop() {
   const t = useTranslations('v3.pop')
   const { panel, close } = useMobileUi()
   const open = panel === 'list'
-  const box = useRef<HTMLDivElement>(null)
-  const from = useRef<Element | null>(null)
-
-  // focus moves into the dialog and comes back to whatever opened it
-  useEffect(() => {
-    if (!open) return
-    from.current = document.activeElement
-    box.current?.focus({ preventScroll: true })
-    return () => { (from.current as HTMLElement | null)?.focus?.({ preventScroll: true }) }
-  }, [open])
-
   return (
     <div
-      ref={box} id={POP_ID} role="dialog" aria-modal="true" aria-labelledby={`${POP_ID}-title`} aria-hidden={!open} inert={!open} tabIndex={-1}
+      id={POP_ID} role="dialog" aria-modal="true" aria-labelledby={`${POP_ID}-title`} aria-hidden={!open} inert={!open} tabIndex={-1}
       className={`${m.pop} ${open ? m.on : ''}`}
     >
       <div className={m.grab} />

@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { Sticker } from '@/components/stickers/sticker'
 import type { StickerName } from '@/components/stickers/paths'
 import { useDemo } from '@/components/demo/demo'
 import { useMobileUi } from './mobile-context'
 import { useBarAway } from './use-phone-fit'
+import { useOverlay } from './use-overlay'
 import { prefersReducedMotion, showPhone } from './phone-nav'
 import { ExplorePanel } from './explore-panel'
 import { ListPop } from './list-pop'
@@ -23,34 +24,32 @@ export function MobileBar() {
   const { panel, openExplore, openList, close } = useMobileUi()
   const away = useBarAway(panel !== 'none')
 
-  useEffect(() => {
-    if (panel === 'none') return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [panel, close])
+  useOverlay(panel, close)
+  const logTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(logTimer.current), [])
 
   const go = (tab: Tab) => {
+    clearTimeout(logTimer.current)
     if (tab === 'list') return openList()
     close()
     if (tab === 'memories') dispatch({ type: 'openScreen', screen: 'memories' })
     else dispatch({ type: 'openScreen', screen: 'home' })
-    if (tab === 'log') setTimeout(() => dispatch({ type: 'openSheet', sheet: { kind: 'register' } }), prefersReducedMotion() ? 0 : 250)
+    if (tab === 'log') logTimer.current = setTimeout(() => dispatch({ type: 'openSheet', sheet: { kind: 'register' } }), prefersReducedMotion() ? 0 : 250)
     showPhone()
   }
   const tab = (k: Tab) => (
-    <button type="button" onClick={() => go(k)}>
+    <button type="button" data-tab={k} onClick={() => go(k)}>
       <Sticker name={ICON[k]} className={m.ico} />{t(k)}
     </button>
   )
 
   return (
     <>
-      <nav id={TABBAR_ID} aria-label={t('barAria')} className={m.tabbar} data-away={away}>
+      <nav id={TABBAR_ID} aria-label={t('barAria')} className={m.tabbar} data-away={away} aria-hidden={away || undefined} inert={away}>
         {tab('home')}
         {tab('log')}
         <button
-          type="button" className={`${m.mid} ${panel === 'explore' ? m.on : ''}`}
+          type="button" data-tab="explore" className={`${m.mid} ${panel === 'explore' ? m.on : ''}`}
           aria-expanded={panel === 'explore'} onClick={() => (panel === 'explore' ? close() : openExplore())}
         >
           <i><Sticker name="eye" className={m.ico} /></i>{t('explore')}

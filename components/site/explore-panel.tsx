@@ -19,7 +19,7 @@ export function ExplorePanel() {
   const open = panel === 'explore'
   return (
     <div
-      id={EXPLORE_ID} role="dialog" aria-labelledby={`${EXPLORE_ID}-title`} aria-hidden={!open} inert={!open}
+      id={EXPLORE_ID} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby={`${EXPLORE_ID}-title`} aria-hidden={!open} inert={!open}
       className={`${m.xp} ${open ? m.on : ''}`}
     >
       <h3 id={`${EXPLORE_ID}-title`} className={s.hand}>{t('title')}</h3>
