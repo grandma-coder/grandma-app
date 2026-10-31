@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useId, useRef, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { joinWaitlist } from '@/lib/waitlist/action'
 import type { WaitlistState } from '@/lib/waitlist/types'
 import { MODES, type Mode } from '@/lib/modes'
@@ -56,7 +57,7 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
   const done = useRef<HTMLDivElement>(null)
   const mine = useRef(false)
   const errId = useId()
-  const legendId = useId()
+  const radioName = useId()
   const mode = picked ?? demo.mode
 
   useEffect(() => {
@@ -77,12 +78,14 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
       type="email" name="email" required autoComplete="email" inputMode="email"
       value={email} onChange={(e) => setEmail(e.target.value)}
       placeholder={placeholder} aria-label={aria}
-      aria-invalid={err ? true : undefined} aria-describedby={err ? errId : undefined}
+      aria-invalid={state.status === 'invalid' || undefined} aria-describedby={err ? errId : undefined}
     />
   )
   const hidden = (
     <>
       <input type="hidden" name="locale" value={locale} />
+      {/* mode is always posted from state: React resets the form after each action, which would snap radios back */}
+      <input type="hidden" name="mode" value={mode} />
       {Object.entries(attrib).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       <div className={s.hp} aria-hidden="true">
         <label>{t('waitlist.honeypot')}<input type="text" name="company" tabIndex={-1} autoComplete="new-password" defaultValue="" data-1p-ignore data-lpignore="true" /></label>
@@ -90,6 +93,9 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
     </>
   )
   const error = errMsg && <p id={errId} role="alert" className={s.err}>{errMsg}</p>
+  const note = (key: 'hero.note' | 'waitlist.note' | 'pop.note') => (
+    <>{t(key)} · <Link href="/privacy#waitlist-data">{t('waitlist.privacy')}</Link></>
+  )
 
   if (variant === 'hero') {
     return (
@@ -101,12 +107,12 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
         ) : (
           <form action={action} noValidate className={`${s.qj} ${s.qjHero}`} aria-busy={pending || undefined}>
             {hidden}
-            <input type="hidden" name="mode" value={mode} />
             {field(t('hero.emailPlaceholder'), t('hero.emailAria'))}
             <button type="submit" disabled={pending}>{t('hero.join')}</button>
           </form>
         )}
-        {error || <p className={s.qjNote}>{t('hero.note')}</p>}
+        {error}
+        <p className={s.qjNote}>{note('hero.note')}</p>
       </div>
     )
   }
@@ -125,27 +131,30 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
           </div>
         </div>
       ) : (
-        <form action={action} noValidate aria-busy={pending || undefined}>
-          {hidden}
-          {pop && <p className={s.popNote}>{t('pop.note')}</p>}
+        <>
+          {pop && <p className={s.popNote}>{note('pop.note')}</p>}
+          {/* outside the <form> so React's post-action reset never touches them; the hidden `mode` posts the pick */}
           <fieldset>
-            <legend id={legendId} className={pop ? s.hp : s.q}>{t('waitlist.question')}</legend>
+            <legend className={pop ? s.hp : s.q}>{t('waitlist.question')}</legend>
             <div className={s.phases}>
               {MODES.map((m) => (
                 <label key={m}>
-                  <input type="radio" name="mode" value={m} checked={mode === m} onChange={() => setPicked(m)} />
+                  <input type="radio" name={radioName} value={m} checked={mode === m} onChange={() => setPicked(m)} />
                   <Sticker name={data.phases[m].icon} className={s.ico} />{data.phases[m].name}
                 </label>
               ))}
             </div>
           </fieldset>
-          <div className={s.email}>
-            {field(t(pop ? 'pop.emailPlaceholder' : 'waitlist.emailPlaceholder'), t(pop ? 'pop.emailAria' : 'waitlist.emailAria'))}
-            <button type="submit" className={`${s.pill} ${s.dark}`} disabled={pending}>{t(pop ? 'pop.submit' : 'waitlist.join')}</button>
-          </div>
-          {error}
-          {!pop && <div className={s.meta}><span>{t('waitlist.note')}</span></div>}
-        </form>
+          <form action={action} noValidate aria-busy={pending || undefined}>
+            {hidden}
+            <div className={s.email}>
+              {field(t(pop ? 'pop.emailPlaceholder' : 'waitlist.emailPlaceholder'), t(pop ? 'pop.emailAria' : 'waitlist.emailAria'))}
+              <button type="submit" className={`${s.pill} ${s.dark}`} disabled={pending}>{t(pop ? 'pop.submit' : 'waitlist.join')}</button>
+            </div>
+            {error}
+            {!pop && <div className={s.meta}><span>{note('waitlist.note')}</span></div>}
+          </form>
+        </>
       )}
     </div>
   )

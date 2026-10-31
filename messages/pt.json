@@ -244,7 +244,8 @@
         "rate_limited": "Muitas tentativas a partir desta conexão. Tente de novo daqui a uma hora.",
         "generic": "Algo deu errado do nosso lado. Tente de novo."
       },
-      "honeypot": "Deixe este campo vazio"
+      "honeypot": "Deixe este campo vazio",
+      "privacy": "Privacidade"
     },
     "mobile": {
       "barAria": "Testar o app",

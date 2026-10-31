@@ -3,6 +3,8 @@
 .wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
 .hand { font-family: var(--hand); text-transform: uppercase; -webkit-text-stroke: .028em currentColor; letter-spacing: .01em; font-weight: 400; }
 .ico { display: inline-block; width: 1.25em; height: 1.25em; vertical-align: -.28em; overflow: visible; }
+/* inline token sticker: the margin stands in for the space before it */
+.tok { margin-left: .25em; }
 @keyframes slideIn { from { opacity: 0; transform: translateY(-8px) scale(.97); } }
 
 /* ── site top bar ── */
@@ -19,7 +21,7 @@
 .hero { padding: 10px 0 50px; }
 .heroGrid { display: grid; grid-template-columns: 1fr 390px; gap: 56px; align-items: center; min-height: calc(100svh - 72px); }
 .rebus { margin: 0; font-size: clamp(34px, 4.6vw, 66px); line-height: 1.22; text-wrap: pretty; }
-.rebus .reb { display: inline-block; width: 1.3em; height: 1.3em; margin: 0 .04em; vertical-align: -.28em; transform-origin: 50% 60%; animation: pop .7s var(--spring) both; animation-delay: calc(.25s + var(--i) * .12s); cursor: pointer; }
+.rebus .reb { display: inline-block; width: 1.3em; height: 1.3em; margin: 0 .04em 0 .29em; vertical-align: -.28em; transform-origin: 50% 60%; animation: pop .7s var(--spring) both; animation-delay: calc(.25s + var(--i) * .12s); cursor: pointer; }
 .rebus .reb .ico { width: 100%; height: 100%; vertical-align: top; }
 .rebus .reb.boing { animation: boing .6s var(--spring); }
 @keyframes pop { from { transform: scale(0) rotate(-30deg); } }
@@ -100,6 +102,7 @@
 .qjHero input { font-size: 17px; padding: 0 16px; }
 .qjHero button { padding: 14px 22px; font-size: 16px; }
 .qjNote { margin: 10px 0 0 18px; font-size: 13px; color: var(--ink-3); }
+.qjNote a, .meta a, .popNote a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
 .err { margin: 10px 0 0 18px; font-size: 13px; font-weight: 600; color: var(--err); }
 .join .err { margin-left: 14px; }
 .hp { position: fixed; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

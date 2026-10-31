@@ -41,6 +41,13 @@ function setup(locale: 'en' | 'pt' = 'en') {
 afterEach(cleanup)
 
 describe('demo home', () => {
+  it('the date label is the demo date (Friday, Oct 30), not the real clock', () => {
+    setup()
+    expect(screen.getByTestId('home-date').textContent).toBe('Friday, Oct 30')
+    cleanup()
+    setup('pt')
+    expect(screen.getByTestId('home-date').textContent).toBe('sexta-feira, 30 de out.')
+  })
   it('pre: the goal switch changes the hero', async () => {
     const user = setup()
     await user.click(screen.getByTestId('mode-pre'))

@@ -12,12 +12,12 @@ export function PhaseSwitch() {
   const t = useTranslations('v3.phases')
   const { state, dispatch, data } = useDemo()
   return (
-    <div className={s.modes} id={MODES_ID} role="tablist" aria-label={t('aria')}>
+    <div className={s.modes} id={MODES_ID} role="group" aria-label={t('aria')}>
       {MODES.map((m) => {
         const on = state.mode === m
         return (
           <button
-            key={m} type="button" role="tab" aria-selected={on} aria-controls={PHONE_ID} className={on ? s.on : undefined}
+            key={m} type="button" aria-pressed={on} aria-controls={PHONE_ID} className={on ? s.on : undefined}
             onClick={() => { dispatch({ type: 'setMode', mode: m }); dispatch({ type: 'tourDone', key: 'mode' }) }}
           >
             <Sticker name={data.phases[m].icon} className={s.ico} />{data.phases[m].name}

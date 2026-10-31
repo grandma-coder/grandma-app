@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
 import { fmt, forGoal } from '@/lib/demo'
 import { Ico } from './sticker-ico'
 import { useDemo } from './demo'
@@ -16,11 +16,10 @@ export function Home() {
   const { state, dispatch, data, onNudge } = useDemo()
   const { ui } = data
   const phase = data.phases[state.mode]
-  const [today, setToday] = useState('')
-  // formatted after mount: server and client may disagree on the date
-  useEffect(() => {
-    setToday(new Date().toLocaleDateString(ui.dateLocale, { weekday: 'long', day: 'numeric', month: 'short' }))
-  }, [ui.dateLocale])
+  // the demo's fixed "today" (UTC), same as the agenda, so server and client render the same label
+  const dd = data.demoDate
+  const today = new Date(Date.UTC(dd.year, dd.month - 1, dd.day))
+    .toLocaleDateString(ui.dateLocale, { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' })
 
   const chips = forGoal(phase.chips, state.goal)
   const quick = forGoal(phase.quick, state.goal)
@@ -30,7 +29,7 @@ export function Home() {
 
   return (
     <>
-      <span className={styles.lbl} suppressHydrationWarning>{today}</span>
+      <span className={styles.lbl} data-testid="home-date">{today}</span>
       <div className={styles.topRow}>
         <h3 className={styles.hHand}>{fmt(ui.home.hello, { name: ui.user })}</h3>
         <Ico name={phase.icon} />

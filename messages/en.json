@@ -244,7 +244,8 @@
         "rate_limited": "Too many tries from this connection. Please try again in an hour.",
         "generic": "Something went wrong on our side. Please try again."
       },
-      "honeypot": "Leave this field empty"
+      "honeypot": "Leave this field empty",
+      "privacy": "Privacy"
     },
     "mobile": {
       "barAria": "Try the app",

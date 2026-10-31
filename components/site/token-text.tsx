@@ -18,7 +18,8 @@ function boing(e: MouseEvent<HTMLSpanElement>) {
 
 /**
  * Renders copy with inline stickers, each glued to the word before it (`white-space: nowrap`) so a
- * sticker never starts a line on its own. `rebus` adds the hero's staggered pop-in and boing on tap.
+ * sticker never starts a line on its own. The gap before a sticker is a margin, not a space character,
+ * so the text (and the accessible name) reads "life, …" with no stray space before punctuation. `rebus` adds the hero's staggered pop-in and boing on tap.
  */
 export function TokenText({ text, rebus = false }: { text: string; rebus?: boolean }) {
   const out: ReactNode[] = []
@@ -32,13 +33,13 @@ export function TokenText({ text, rebus = false }: { text: string; rebus?: boole
     const i = k++
     out.push(
       <span key={i} style={{ whiteSpace: 'nowrap' }}>
-        {word}{' '}
+        {word}
         {rebus ? (
           <span className={s.reb} style={{ '--i': i } as CSSProperties} onClick={boing} aria-hidden="true">
             <Sticker name={name} className={s.ico} />
           </span>
         ) : (
-          <Sticker name={name} className={s.ico} />
+          <Sticker name={name} className={`${s.ico} ${s.tok}`} />
         )}
         {punct}
       </span>,

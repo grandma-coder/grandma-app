@@ -54,6 +54,7 @@ function setup(children: ReactNode, locale: 'en' | 'pt' = 'en') {
   return user
 }
 
+const phaseButton = (name: string) => within(screen.getByRole('group', { name: en.v3.phases.aria })).getByRole('button', { name })
 const emailFields = () => screen.queryAllByRole('textbox') as HTMLInputElement[]
 const submitOf = (input: HTMLInputElement) => within(input.closest('form')!).getByRole('button')
 const reduceMotion = (reduce: boolean) => {
@@ -111,28 +112,55 @@ describe('QuickJoin', () => {
     const [field] = emailFields()
     await user.type(field, 'ana@example.com')
     await user.click(submitOf(field))
-    expect((await screen.findByRole('alert')).textContent).toBe(en.v3.waitlist.errors.rate_limited)
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe(en.v3.waitlist.errors.rate_limited)
+    expect(field.getAttribute('aria-invalid')).toBeNull()
+    expect(field.getAttribute('aria-describedby')).toBe(alert.id)
     await user.click(submitOf(field))
     await waitFor(() => expect(screen.getByRole('alert').textContent).toBe(en.v3.waitlist.errors.generic))
     expect(field.value).toBe('ana@example.com')
+  })
+
+  it('a retry after a failed submit still posts the picked phase', async () => {
+    join.mockResolvedValue({ status: 'rate_limited' })
+    const user = setup(<QuickJoin variant="section" />)
+    const meno = () => screen.getByRole('radio', { name: demoEn.phases.meno.name }) as HTMLInputElement
+    await user.click(meno())
+    const [field] = emailFields()
+    await user.type(field, 'ana@example.com')
+    await user.click(submitOf(field))
+    await screen.findByRole('alert')
+    expect(meno().checked).toBe(true)
+    await user.click(submitOf(field))
+    await waitFor(() => expect(join).toHaveBeenCalledTimes(2))
+    expect((join.mock.calls[0][1] as FormData).get('mode')).toBe('meno')
+    expect((join.mock.calls[1][1] as FormData).get('mode')).toBe('meno')
+    expect((join.mock.calls[1][1] as FormData).getAll('mode')).toHaveLength(1)
+    expect(meno().checked).toBe(true)
+  })
+
+  it.each(['hero', 'section', 'pop'] as const)('%s note links to the privacy policy', (variant) => {
+    setup(<QuickJoin variant={variant} />)
+    const link = screen.getByRole('link', { name: en.v3.waitlist.privacy })
+    expect(link.getAttribute('href')).toBe('/privacy#waitlist-data')
   })
 
   it('the hero field posts the demo phase, following the phase switch', async () => {
     const user = setup(<><PhaseSwitch /><QuickJoin variant="hero" /></>)
     const hidden = () => emailFields()[0].closest('form')!.querySelector<HTMLInputElement>('input[name="mode"]')!
     expect(hidden().value).toBe('kids')
-    await user.click(screen.getByRole('tab', { name: demoEn.phases.pre.name }))
+    await user.click(phaseButton(demoEn.phases.pre.name))
     expect(hidden().value).toBe('pre')
   })
 
   it('section radios default to the demo phase; picking one does not change the demo', async () => {
     const user = setup(<><PhaseSwitch /><QuickJoin variant="section" /></>)
     expect((screen.getByRole('radio', { name: demoEn.phases.kids.name }) as HTMLInputElement).checked).toBe(true)
-    await user.click(screen.getByRole('tab', { name: demoEn.phases.preg.name }))
+    await user.click(phaseButton(demoEn.phases.preg.name))
     expect((screen.getByRole('radio', { name: demoEn.phases.preg.name }) as HTMLInputElement).checked).toBe(true)
     await user.click(screen.getByRole('radio', { name: demoEn.phases.meno.name }))
     expect(screen.getByTestId('mode').textContent).toBe('preg')
-    await user.click(screen.getByRole('tab', { name: demoEn.phases.pre.name }))
+    await user.click(phaseButton(demoEn.phases.pre.name))
     expect((screen.getByRole('radio', { name: demoEn.phases.meno.name }) as HTMLInputElement).checked).toBe(true)
   })
 
@@ -163,8 +191,8 @@ describe('hero rebus', () => {
     const stickers = h1.querySelectorAll('svg')
     expect(stickers).toHaveLength(3)
     const glued = [...stickers].map((s) => s.closest('span[style*="nowrap"]') as HTMLElement)
-    expect(glued.map((g) => g.textContent!.trim())).toEqual(['life', "kids' ,", 'app .'])
-    expect(h1.textContent!.replace(/\s+/g, ' ').replace(/ ([,.])/g, '$1').trim()).toBe("Your life and your kids', in one app.")
+    expect(glued.map((g) => g.textContent)).toEqual(['life', "kids',", 'app.'])
+    expect(h1.textContent).toBe("Your life and your kids', in one app.")
     expect([...h1.querySelectorAll<HTMLElement>('[style*="--i"]')].map((e) => e.style.getPropertyValue('--i'))).toEqual(['0', '1', '2'])
   })
 })
@@ -174,11 +202,13 @@ describe('phase switch', () => {
     const user = setup(<PhaseSwitch />)
     await user.click(screen.getByTestId('advance'))
     expect(screen.getByTestId('step').textContent).toBe('2')
-    const tab = screen.getByRole('tab', { name: demoEn.phases.meno.name })
-    await user.click(tab)
+    const btn = phaseButton(demoEn.phases.meno.name)
+    expect(btn.getAttribute('aria-pressed')).toBe('false')
+    await user.click(btn)
     expect(screen.getByTestId('mode').textContent).toBe('meno')
     expect(screen.getByTestId('step').textContent).toBe('3')
-    expect(tab.getAttribute('aria-selected')).toBe('true')
+    expect(btn.getAttribute('aria-pressed')).toBe('true')
+    expect(screen.queryByRole('tab')).toBeNull()
   })
 })
 
