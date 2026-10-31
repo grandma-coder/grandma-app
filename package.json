@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "i18n:check": "vitest run messages"
+    "i18n:check": "vitest run messages",
+    "qa:walk": "node scripts/qa/walk.mjs",
+    "qa:devices": "node scripts/qa/devices.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
@@ -31,6 +33,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "happy-dom": "^21.0.4",
+    "playwright-core": "^1.64.1",
     "postcss": "^8.5",
     "tailwindcss": "^4.2.0",
     "typescript": "5.7.3",
