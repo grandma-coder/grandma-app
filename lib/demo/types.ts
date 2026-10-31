@@ -175,7 +175,7 @@ export interface DemoUi {
       title: string; icon: StickerName
       filters: { all: string; sell: string; swap: string; free: string }
       kinds: Record<VillageKind, string>
-      buy: string; want: string; commentPlaceholder: string; commentAria: string; send: string
+      buy: string; want: string; commentPlaceholder: string; commentAria: string; send: string; likeAria: string; commentsAria: string
       requestSent: string; messageSent: string
     }
     community: {

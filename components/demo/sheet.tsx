@@ -6,6 +6,7 @@ import { fmt } from '@/lib/demo'
 import { Ico } from './sticker-ico'
 import { useChips, useDemo } from './demo'
 import { LogSheet } from './log-sheet'
+import { AddExamSheet } from './screens/add-exam-sheet'
 import type { ToastState } from './toast'
 import styles from './demo.module.css'
 
@@ -79,7 +80,10 @@ export function Sheets({ onCheer }: { onCheer: (t: Omit<ToastState, 'n'>) => voi
   let body: ReactNode = null
   if (shown.kind === 'register') { title = data.ui.register.title; body = <RegisterSheet /> }
   else if (shown.kind === 'shortcuts') { title = data.ui.shortcuts.title; body = <ShortcutsSheet /> }
-  else if (shown.kind === 'log') {
+  else if (shown.kind === 'addExam') {
+    title = data.ui.screens.exams.add
+    body = <><SheetHead title={title} /><AddExamSheet onCheer={onCheer} /></>
+  } else if (shown.kind === 'log') {
     title = fmt(data.ui.log.title, { label: chips.find((c) => c.id === shown.chip)?.label.toLowerCase() ?? '' })
     body = <LogSheet chipId={shown.chip} onCheer={onCheer} />
   }

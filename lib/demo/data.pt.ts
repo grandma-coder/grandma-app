@@ -437,7 +437,7 @@ export const dataPt: DemoData = {
         title: 'Vila', icon: 'stroller',
         filters: { all: 'Tudo', sell: 'Venda', swap: 'Troca', free: 'Doação' },
         kinds: { sell: 'Venda', free: 'Doação', swap: 'Troca' },
-        buy: 'Comprar', want: 'Quero', commentPlaceholder: 'Comentar…', commentAria: 'Comentar', send: 'Enviar',
+        buy: 'Comprar', want: 'Quero', commentPlaceholder: 'Comentar…', commentAria: 'Comentar', send: 'Enviar', likeAria: 'Curtir', commentsAria: 'Comentários',
         requestSent: 'Pedido enviado!', messageSent: 'Mensagem enviada!',
       },
       community: {

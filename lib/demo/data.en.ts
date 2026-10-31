@@ -437,7 +437,7 @@ export const dataEn: DemoData = {
         title: 'Village', icon: 'stroller',
         filters: { all: 'All', sell: 'For sale', swap: 'Swap', free: 'Free' },
         kinds: { sell: 'For sale', free: 'Free', swap: 'Swap' },
-        buy: 'Buy', want: 'I want it', commentPlaceholder: 'Comment…', commentAria: 'Comment', send: 'Send',
+        buy: 'Buy', want: 'I want it', commentPlaceholder: 'Comment…', commentAria: 'Comment', send: 'Send', likeAria: 'Like', commentsAria: 'Comments',
         requestSent: 'Request sent!', messageSent: 'Message sent!',
       },
       community: {

@@ -1,0 +1,105 @@
+/* Feature screens. Ported from the mockup sections: perfil + features, community chat, village feed, exams, growth, memories timeline.
+   Keyframes are module-scoped, so slideIn and the scan line live here too. */
+@keyframes slideIn { from { opacity: 0; transform: translateY(-8px) scale(.97); } }
+@keyframes scanLine { to { top: 100%; } }
+@media (prefers-reduced-motion: reduce) { .msg, .tlIt, .scan.go::after { animation: none; } }
+
+.small { font-size: 20px; }
+.list { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; font-size: 14px; font-weight: 600; text-align: left; width: 100%; }
+.item svg { width: 30px; height: 30px; flex: none; }
+.item span { margin-left: auto; font: 400 10px var(--mono); color: var(--ink-3); }
+.item .ok { color: #1E8A6A; }
+.circle { display: flex; gap: 6px; margin-top: 10px; }
+.circle span { display: grid; justify-items: center; gap: 2px; font-size: 11px; font-weight: 600; flex: 1; text-align: center; }
+.circle svg { width: 44px; height: 44px; }
+.memo { margin-top: 12px; padding: 12px; background: #FFF1B8; font: 16px/1.25 var(--hand); text-transform: uppercase; transform: rotate(-1.5deg); }
+.memo small { display: block; font: 10px var(--mono); text-transform: none; color: var(--ink-2); margin-bottom: 4px; }
+.flash { display: block; min-height: 1em; margin-top: 4px; font: 10px var(--mono); color: var(--ink-3); text-align: center; }
+
+/* community chat */
+.chatPage { min-height: 100%; display: flex; flex-direction: column; }
+.chat { flex: 1; display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.msg { display: flex; gap: 7px; align-items: flex-end; max-width: 90%; animation: slideIn .4s var(--spring) both; }
+.msg > svg { width: 32px; height: 32px; flex: none; }
+.bub { background: #fff; border: 1.5px solid var(--ink); border-radius: 16px 16px 16px 4px; padding: 7px 10px 6px; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+.bub b { display: block; font-size: 11px; margin-bottom: 1px; }
+.re { margin-top: 3px; border: 0; background: none; padding: 0; font: 10px var(--mono); color: var(--ink-3); }
+.re.on { color: #D2577F; }
+.msg.me { align-self: flex-end; }
+.msg.me .bub { background: var(--ink); color: #fff; border-radius: 16px 16px 4px 16px; }
+.typing { margin: 0; font: 11px var(--mono); color: var(--ink-3); }
+/* sticks above the tab bar while the thread scrolls; the negative margin lines it up 112px from the phone's bottom edge */
+.composer { position: sticky; bottom: 112px; z-index: 11; display: flex; gap: 6px; margin: 12px -6px -18px; background: #fff; border: 1.5px solid var(--ink); border-radius: 99px; padding: 4px; }
+.composer input { flex: 1; min-width: 0; border: 0; outline: 0; padding: 0 10px; font: 13px var(--sans); background: none; color: var(--ink); }
+.composer button { border: 0; background: var(--ink); color: #fff; border-radius: 99px; padding: 8px 14px; font-weight: 700; font-size: 12px; }
+.chan { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; }
+.chan svg { width: 36px; height: 36px; flex: none; }
+.chan b { display: block; font-size: 14px; }
+.chan small { font-size: 11px; color: var(--ink-2); }
+.chan em { margin-left: auto; font: normal 9px var(--mono); border: 1px solid var(--ink); border-radius: 99px; padding: 2px 7px; background: var(--tc, #fff); }
+
+/* village feed */
+.post { margin-top: 12px; overflow: hidden; padding: 0; }
+.who { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 11px; color: var(--ink-2); }
+.who svg { width: 30px; height: 30px; }
+.who b { display: block; font-size: 13px; color: var(--ink); }
+.vph { height: 180px; display: grid; place-items: center; background: var(--c); border-block: 1.5px solid var(--ink); position: relative; }
+.vph > svg { width: 124px; height: 124px; transform: rotate(var(--r)); }
+.vph .badge { position: absolute; left: 10px; top: 10px; }
+.badge { font: 10px var(--mono); border: 1px solid var(--ink); border-radius: 99px; padding: 2px 8px; background: var(--b, #fff); }
+.bd { padding: 10px 12px 12px; }
+.bd h6 { margin: 0; font-size: 15px; display: flex; justify-content: space-between; gap: 8px; }
+.price { font: 800 15px var(--sans); white-space: nowrap; }
+.acts { display: flex; gap: 14px; align-items: center; margin-top: 8px; }
+.acts button { border: 0; background: none; padding: 0; display: flex; align-items: center; gap: 4px; font-weight: 700; font-size: 12px; color: var(--ink); }
+.acts svg { width: 24px; height: 24px; transition: transform .3s var(--spring); }
+.acts .like.on svg { transform: scale(1.25) rotate(-8deg); }
+.acts .like:not(.on) svg { filter: grayscale(1) opacity(.45); }
+.acts .want { margin-left: auto; background: var(--ink); color: #fff; border-radius: 99px; padding: 7px 14px; }
+.cmts { margin-top: 8px; border-top: 1px dashed rgba(22,21,19,.12); padding-top: 8px; font-size: 12px; }
+.cmts p { margin: 0 0 5px; overflow-wrap: anywhere; }
+.cmtIn { display: flex; gap: 6px; margin-top: 6px; }
+.cmtIn input { flex: 1; min-width: 0; border: 1.5px solid var(--ink); border-radius: 99px; padding: 6px 10px; font: 12px var(--sans); outline: 0; color: var(--ink); background: #fff; }
+.cmtIn button { border: 0; background: var(--ink); color: #fff; border-radius: 99px; padding: 6px 12px; font-weight: 700; font-size: 11px; }
+
+/* exams */
+.exam { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; }
+.exam svg { width: 34px; height: 34px; flex: none; }
+.exam b { display: block; font-size: 14px; }
+.exam small { font-size: 11px; color: var(--ink-2); }
+.st { margin-left: auto; font: 10px var(--mono); border: 1px solid var(--ink); border-radius: 99px; padding: 2px 8px; white-space: nowrap; }
+.stOk { background: #D7F0DD; }
+.stWarn { background: #FFE1A8; }
+.exam.add { justify-content: center; border-style: dashed; font-weight: 700; font-size: 14px; }
+.scan { height: 150px; display: grid; place-items: center; background: #fff; border: 1.5px dashed var(--ink); border-radius: 14px; margin-top: 12px; position: relative; overflow: hidden; }
+.scan svg { width: 96px; height: 96px; transform: rotate(-4deg); }
+.scan.go::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--ma); box-shadow: 0 0 12px var(--ma); animation: scanLine 1.1s linear infinite; }
+.read { margin-top: 12px; padding: 12px; background: #FFF1B8; }
+.read small { font: 10px var(--mono); color: var(--ink-2); display: block; }
+.read p { margin: 4px 0 0; font: 15px/1.25 var(--hand); text-transform: uppercase; }
+.vals { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+.vals td { padding: 8px 4px; border-top: 1px solid rgba(22,21,19,.12); }
+.vals td:nth-child(2) { font-weight: 800; white-space: nowrap; }
+.vals td:nth-child(3) { font: 10px var(--mono); color: var(--ink-3); }
+.vals td:last-child { text-align: right; }
+.flag { font: 10px var(--mono); border-radius: 99px; padding: 1px 7px; border: 1px solid var(--ink); }
+.btnRow { display: flex; gap: 8px; margin-top: 12px; }
+.btnRow button { flex: 1; border: 1.5px solid var(--ink); background: #fff; border-radius: 99px; padding: 10px; font-weight: 700; font-size: 12px; color: var(--ink); }
+.btnRow button.dk { background: var(--ink); color: #fff; }
+
+/* memories timeline */
+.tl { position: relative; margin-top: 14px; padding-left: 24px; }
+.tl::before { content: ""; position: absolute; left: 8px; top: 6px; bottom: 6px; border-left: 2px dashed rgba(22,21,19,.3); }
+.tlY { font: 15px var(--hand); text-transform: uppercase; margin: 4px 0 8px -24px; }
+.tlIt { position: relative; margin-bottom: 14px; animation: slideIn .5s var(--spring) both; }
+.tlIt::before { content: ""; position: absolute; left: -21px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--c); border: 1.5px solid var(--ink); }
+.tlY + .when { display: block; }
+.when { font: 10px var(--mono); color: var(--ink-3); }
+.tlCard { display: flex; gap: 12px; padding: 8px; margin-top: 4px; align-items: center; }
+.ph { width: 70px; height: 70px; flex: none; display: grid; place-items: center; background: var(--c); border: 1.5px solid var(--ink); transform: rotate(var(--r)); box-shadow: 0 2px 0 rgba(22,21,19,.12); }
+.ph svg { width: 48px; height: 48px; }
+.tlCard b { font: 15px/1.1 var(--hand); text-transform: uppercase; display: block; }
+.tlCard span { font-size: 11px; color: var(--ink-2); }
+.newmem { width: 100%; margin-top: 12px; border: 1.5px dashed var(--ink); background: #fff; border-radius: 16px; padding: 11px; font-weight: 700; font-size: 13px; display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--ink); }
+.newmem svg { width: 26px; height: 26px; }
