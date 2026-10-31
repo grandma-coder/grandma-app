@@ -105,7 +105,7 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
             <Sticker name="star" className={s.ico} /><span>{t('waitlist.joinedInline')}</span>
           </div>
         ) : (
-          <form action={action} noValidate className={`${s.qj} ${s.qjHero}`} aria-busy={pending || undefined}>
+          <form action={action} noValidate data-tour="join" className={`${s.qj} ${s.qjHero}`} aria-busy={pending || undefined}>
             {hidden}
             {field(t('hero.emailPlaceholder'), t('hero.emailAria'))}
             <button type="submit" disabled={pending}>{t('hero.join')}</button>

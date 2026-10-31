@@ -276,6 +276,7 @@
       "shortcuts": "Open grandma's shortcuts",
       "join": "Like it? Save your spot ♡",
       "progress": "{n} of {total}",
+      "label": "Guided tour",
       "skip": "skip"
     }
   }

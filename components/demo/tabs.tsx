@@ -32,9 +32,9 @@ export function TabBar() {
         const on = TAB_SCREEN[id] === state.screen
         const label = data.ui.tabs[id]
         return id === 'shortcuts' ? (
-          <button key={id} type="button" className={styles.eye} aria-label={label} onClick={() => press(id)}><Ico name={icon} cut /></button>
+          <button key={id} type="button" data-tour="shortcuts" className={styles.eye} aria-label={label} onClick={() => press(id)}><Ico name={icon} cut /></button>
         ) : (
-          <button key={id} type="button" className={on ? styles.on : ''} aria-current={on ? 'page' : undefined} onClick={() => press(id)}>
+          <button key={id} type="button" data-tour={id === 'week' ? 'week' : undefined} className={on ? styles.on : ''} aria-current={on ? 'page' : undefined} onClick={() => press(id)}>
             <Ico name={icon} />{label}
           </button>
         )

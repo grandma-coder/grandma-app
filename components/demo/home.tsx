@@ -43,8 +43,8 @@ export function Home() {
       <Top />
       <div className={styles.sec}><h4>{ui.home.registerToday}</h4><span className={styles.lbl}>{ui.home.tapSign}</span></div>
       <div className={styles.chips}>
-        {chips.map((c) => (
-          <button key={c.id} type="button" className={`${styles.chip} ${state.logged[state.mode][c.id] ? styles.logged : ''}`}
+        {chips.map((c, i) => (
+          <button key={c.id} type="button" data-tour={i === 0 ? 'log' : undefined} className={`${styles.chip} ${state.logged[state.mode][c.id] ? styles.logged : ''}`}
             onClick={() => dispatch({ type: 'openSheet', sheet: { kind: 'log', chip: c.id } })}>
             <Ico name={c.icon} />{c.label}
           </button>
