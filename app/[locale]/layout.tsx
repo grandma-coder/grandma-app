@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { notFound } from 'next/navigation'
-import { Architects_Daughter, Hanken_Grotesk, Space_Mono } from 'next/font/google'
+import localFont from 'next/font/local'
 import { Analytics } from '@vercel/analytics/next'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -8,9 +8,22 @@ import { routing, htmlLang, type Locale } from '@/i18n/routing'
 import { StickerFilters } from '@/components/stickers/filters'
 import '../globals.css'
 
-const hanken = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-hanken', display: 'swap', weight: ['300', '400', '500', '600', '700'], style: ['normal', 'italic'] })
-const spaceMono = Space_Mono({ subsets: ['latin'], variable: '--font-space-mono', display: 'swap', weight: ['400', '700'] })
-const hand = Architects_Daughter({ subsets: ['latin'], variable: '--font-hand', display: 'swap', weight: '400' })
+// Self-hosted (latin subset, OFL — assets/fonts): next/font/google fails under Vercel's Turbopack build adapter.
+const hanken = localFont({
+  variable: '--font-hanken', display: 'swap',
+  src: [
+    { path: '../../assets/fonts/HankenGrotesk-latin.woff2', weight: '300 700', style: 'normal' },
+    { path: '../../assets/fonts/HankenGrotesk-Italic-latin.woff2', weight: '300 700', style: 'italic' },
+  ],
+})
+const spaceMono = localFont({
+  variable: '--font-space-mono', display: 'swap',
+  src: [
+    { path: '../../assets/fonts/SpaceMono-Regular-latin.woff2', weight: '400', style: 'normal' },
+    { path: '../../assets/fonts/SpaceMono-Bold-latin.woff2', weight: '700', style: 'normal' },
+  ],
+})
+const hand = localFont({ variable: '--font-hand', display: 'swap', src: '../../assets/fonts/ArchitectsDaughter-Regular.ttf', weight: '400' })
 
 export const viewport: Viewport = { themeColor: '#F3F0E8', viewportFit: 'cover' }
 
