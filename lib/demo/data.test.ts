@@ -4,7 +4,7 @@ import { MODES } from '@/lib/modes'
 import { getDemoData, fmt } from './index'
 import { dataEn } from './data.en'
 import { dataPt } from './data.pt'
-import { forGoal, type DemoData, type Goal } from './types'
+import { forGoal, type DemoData, type Goal, type OptKey } from './types'
 
 const GOALS: Goal[] = ['track', 'ttc']
 
@@ -46,7 +46,21 @@ const strings = (v: unknown, path = ''): [string, string][] => {
 
 const locales: [string, DemoData][] = [['pt', dataPt], ['en', dataEn]]
 
+/** Strings under these keys are ids, colours, icons or enum values and must match across locales; every other string is display text. */
+const NEUTRAL = new Set(['id', 'icon', 'icons', 'kind', 'tone', 'accent', 'dot', 'color', 'ring', 'badge', 'status', 'flag', 'how', 't', 'screen', 'mode', 'kid', 'year', 'u', 'p'])
+const neutral = (v: unknown, key = ''): unknown => {
+  v = expand(v)
+  if (typeof v === 'string') return NEUTRAL.has(key) || key.includes(':') ? v : '#'
+  if (Array.isArray(v)) return v.map((x) => neutral(x, key))
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v as object).map(([k, x]) => [k, neutral(x, k)]))
+  return v
+}
+
 describe('demo seed data', () => {
+  it('en and pt agree on every language-neutral field (ids, numbers, booleans, colours, icons, kinds)', () => {
+    expect(neutral(dataEn)).toEqual(neutral(dataPt))
+  })
+
   it('en and pt share the exact same structure and array lengths', () => {
     expect(shape(dataEn)).toEqual(shape(dataPt))
   })
@@ -84,7 +98,7 @@ describe('demo seed data', () => {
         for (const q of forGoal(p.quick, goal)) expect(screens.has(q.screen)).toBe(true)
         for (const c of forGoal(p.chans, goal)) expect(d.msgs[c.id], `msgs for ${c.id}`).toBeDefined()
         for (const chip of forGoal(p.chips, goal)) {
-          if (chip.cfg.t === 'pick') for (const o of chip.cfg.options) expect(d.optIcons[`${chip.id}:${o.id}`], `optIcons ${chip.id}:${o.id}`).toBeDefined()
+          if (chip.cfg.t === 'pick') for (const o of chip.cfg.options) expect(d.optIcons[`${chip.id}:${o.id}` as OptKey], `optIcons ${chip.id}:${o.id}`).toBeDefined()
           if (chip.cfg.t === 'range' && d.rangeVis[chip.id]) expect(['grow', 'count']).toContain(d.rangeVis[chip.id]!.how)
         }
       }

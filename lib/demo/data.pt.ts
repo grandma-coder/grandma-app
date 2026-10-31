@@ -1,4 +1,4 @@
-import type { ChipCfg, DemoData, Exam, Goal } from './types'
+import type { Chip, ChipCfg, DemoData, Goal } from './types'
 
 const MOOD: ChipCfg = { t: 'mood' }
 const ok = (name: string, value: string, range: string) => ({ name, value, range, flag: 'ok' as const })
@@ -20,8 +20,8 @@ export const dataPt: DemoData = {
       name: 'Ciclo', tone: '#F9CFE0', accent: '#E0709A', icon: 'flower',
       hero: preHero,
       kidHero: null,
-      chips: (goal) => {
-        const base = [
+      chips: (goal): Chip[] => {
+        const base: Chip[] = [
           { id: 'mood' as const, label: 'Humor', icon: 'face3' as const, cfg: MOOD },
           { id: 'flow' as const, label: 'Fluxo', icon: 'drop' as const, cfg: { t: 'pick' as const, memory: false, options: [{ id: 'none', label: 'Nenhum' }, { id: 'light', label: 'Leve' }, { id: 'medium', label: 'Médio' }, { id: 'heavy', label: 'Intenso' }] } },
         ]
@@ -39,15 +39,15 @@ export const dataPt: DemoData = {
         { icon: 'brain', label: 'Sintomas', value: 'cólica leve', time: '10:40', kid: null },
       ],
       quick: (goal) => goal === 'ttc'
-        ? [{ screen: 'lembretes', sub: 'Vitamina às 8h' }, { screen: 'exames', sub: '2 guardados' }, { screen: 'comunidade', sub: 'Tentando engravidar' }, { screen: 'memorias', sub: '3 momentos' }]
-        : [{ screen: 'lembretes', sub: 'Menstruação em 14 dias' }, { screen: 'exames', sub: '2 guardados' }, { screen: 'comunidade', sub: 'Ciclo e TPM' }, { screen: 'memorias', sub: '3 momentos' }],
+        ? [{ screen: 'reminders', sub: 'Vitamina às 8h' }, { screen: 'exams', sub: '2 guardados' }, { screen: 'community', sub: 'Tentando engravidar' }, { screen: 'memories', sub: '3 momentos' }]
+        : [{ screen: 'reminders', sub: 'Menstruação em 14 dias' }, { screen: 'exams', sub: '2 guardados' }, { screen: 'community', sub: 'Ciclo e TPM' }, { screen: 'memories', sub: '3 momentos' }],
       cal: {
         per: [17, 18, 19, 20, 21], fer: [26, 27, 28, 29, 31], ev: [], star: 30, dots: [17, 19, 22, 24, 26, 28, 29], kd: null,
         legend: [{ color: '#F4A6C9', label: 'menstruação', ring: null }, { color: '#fff', label: 'janela fértil', ring: '#1E8A6A' }, { color: '#161513', label: 'registros', ring: null }],
       },
       events: [
-        { icon: 'bell', title: 'Exame de sangue', sub: 'jejum de 8h', when: 'ter 4 nov · 7:30', kid: null },
-        { icon: 'doc', title: 'Ginecologista', sub: 'levar os registros', when: 'qui 13 nov · 10:00', kid: null },
+        { icon: 'bell', title: 'Exame de sangue', sub: 'jejum de 8h', when: 'qua 4 nov · 7:30', kid: null },
+        { icon: 'doc', title: 'Ginecologista', sub: 'levar os registros', when: 'sex 13 nov · 10:00', kid: null },
         { icon: 'moon', title: 'Próxima menstruação', sub: 'previsão', when: '13 nov', kid: null },
       ],
       chans: (goal) => goal === 'ttc'
@@ -77,14 +77,14 @@ export const dataPt: DemoData = {
         { icon: 'face4', label: 'Humor', value: 'ótimo', time: '11:00', kid: null },
         { icon: 'zz', label: 'Sono', value: '7h', time: '07:00', kid: null },
       ],
-      quick: [{ screen: 'consultas', sub: '8 de 12 feitas' }, { screen: 'exames', sub: 'morfológico ok' }, { screen: 'memorias', sub: '4 momentos' }, { screen: 'comunidade', sub: 'Mães de fevereiro' }],
+      quick: [{ screen: 'appointments', sub: '8 de 12 feitas' }, { screen: 'exams', sub: 'morfológico ok' }, { screen: 'memories', sub: '4 momentos' }, { screen: 'community', sub: 'Mães de fevereiro' }],
       cal: {
         per: [], fer: [], ev: [11], star: null, dots: [2, 5, 9, 12, 16, 19, 22, 23, 26, 29, 30], kd: null,
         legend: [{ color: '#DCCFF9', label: 'consulta', ring: null }, { color: '#161513', label: 'registros', ring: null }],
       },
       events: [
-        { icon: 'bell', title: 'Curva glicêmica', sub: 'semana 26', when: 'ter 11 nov · 8:00', kid: null },
-        { icon: 'bell', title: 'Consulta 28 semanas', sub: 'com a dra. Lúcia', when: 'qui 27 nov', kid: null },
+        { icon: 'bell', title: 'Curva glicêmica', sub: 'semana 26', when: 'qua 11 nov · 8:00', kid: null },
+        { icon: 'bell', title: 'Consulta 28 semanas', sub: 'com a dra. Lúcia', when: 'sex 27 nov', kid: null },
         { icon: 'doc', title: 'Ultrassom morfológico', sub: 'tudo certo', when: 'feito ✓', kid: null },
       ],
       chans: [
@@ -108,8 +108,8 @@ export const dataPt: DemoData = {
       name: 'Filhos', tone: '#CFE1FA', accent: '#4C79CE', icon: 'baby',
       hero: null,
       kidHero: {
-        kenji: { n: '10h', em: 'de sono ontem', row: [{ label: 'Última refeição', value: '12:30' }, { label: 'Próxima vacina', value: 'sáb 8 nov' }] },
-        lua: { n: '5', em: 'mamadas hoje', row: [{ label: 'Última mamada', value: '13:10 · esq.' }, { label: 'Próxima vacina', value: 'qua 12 nov' }] },
+        kenji: { n: '10h', em: 'de sono ontem', row: [{ label: 'Última refeição', value: '12:30' }, { label: 'Próxima vacina', value: 'dom 8 nov' }] },
+        lua: { n: '5', em: 'mamadas hoje', row: [{ label: 'Última mamada', value: '13:10 · esq.' }, { label: 'Próxima vacina', value: 'qui 12 nov' }] },
       },
       chips: [
         { id: 'sleep', label: 'Sono', icon: 'zz', cfg: { t: 'range', min: 0.5, max: 14, step: 0.5, v: 10, unit: 'h' } },
@@ -124,7 +124,7 @@ export const dataPt: DemoData = {
         { icon: 'diaper', label: 'Fralda', value: 'xixi · pela babá', time: '11:05', kid: 'kenji' },
         { icon: 'zz', label: 'Sono', value: '10h · noite', time: '07:10', kid: 'kenji' },
       ],
-      quick: [{ screen: 'vacinas', sub: 'Lua: 12 nov' }, { screen: 'crescimento', sub: 'Kenji p55' }, { screen: 'rede', sub: '4 pessoas' }, { screen: 'vila', sub: '4 anúncios perto' }],
+      quick: [{ screen: 'vaccines', sub: 'Lua: 12 nov' }, { screen: 'growth', sub: 'Kenji p55' }, { screen: 'care', sub: '4 pessoas' }, { screen: 'village', sub: '4 anúncios perto' }],
       cal: {
         per: [], fer: [], ev: [8, 12], star: null, dots: [],
         kd: { kenji: [1, 3, 6, 8, 10, 13, 15, 17, 20, 22, 24, 27, 29, 30], lua: [2, 3, 5, 7, 9, 12, 14, 16, 19, 21, 23, 26, 28, 30] },
@@ -132,8 +132,8 @@ export const dataPt: DemoData = {
       },
       events: [
         { icon: 'bell', title: 'Pediatra', sub: 'rotina', when: 'hoje · 16:00', kid: 'kenji' },
-        { icon: 'syringe', title: 'DTP (reforço)', sub: 'calendário PNI', when: 'sáb 8 nov', kid: 'kenji' },
-        { icon: 'syringe', title: 'Pentavalente 6 meses', sub: 'calendário PNI', when: 'qua 12 nov', kid: 'lua' },
+        { icon: 'syringe', title: 'DTP (reforço)', sub: 'calendário PNI', when: 'dom 8 nov', kid: 'kenji' },
+        { icon: 'syringe', title: 'Pentavalente 6 meses', sub: 'calendário PNI', when: 'qui 12 nov', kid: 'lua' },
         { icon: 'house', title: 'Babá: Ana', sub: 'os dois · seg a sex', when: '8h às 17h', kid: null },
       ],
       chans: [
@@ -170,13 +170,13 @@ export const dataPt: DemoData = {
         { icon: 'flame', label: 'Ondas de calor', value: 'intensidade 3 de 5', time: '10:20', kid: null },
         { icon: 'zz', label: 'Sono', value: '6h30', time: '07:00', kid: null },
       ],
-      quick: [{ screen: 'lembretes', sub: 'Caminhada às 18h' }, { screen: 'comunidade', sub: 'Ondas de calor' }, { screen: 'exames', sub: 'densitometria ok' }, { screen: 'memorias', sub: '3 momentos' }],
+      quick: [{ screen: 'reminders', sub: 'Caminhada às 18h' }, { screen: 'community', sub: 'Ondas de calor' }, { screen: 'exams', sub: 'densitometria ok' }, { screen: 'memories', sub: '3 momentos' }],
       cal: {
         per: [], fer: [], ev: [12], star: null, dots: [2, 4, 7, 9, 11, 14, 16, 18, 21, 23, 25, 28, 30], kd: null,
         legend: [{ color: '#FBD3B3', label: 'consulta', ring: null }, { color: '#161513', label: 'sintomas registrados', ring: null }],
       },
       events: [
-        { icon: 'doc', title: 'Ginecologista', sub: 'levar o resumo das semanas', when: 'qua 12 nov · 9:00', kid: null },
+        { icon: 'doc', title: 'Ginecologista', sub: 'levar o resumo das semanas', when: 'qui 12 nov · 9:00', kid: null },
         { icon: 'bell', title: 'Densitometria', sub: 'agendar', when: 'dez', kid: null },
       ],
       chans: [
@@ -275,15 +275,15 @@ export const dataPt: DemoData = {
   growth: {
     kenji: {
       xs: [0, 6, 12, 18, 24], xl: ['0', '6m', '12m', '18m', '2a'],
-      peso: { p3: [2.5, 6.4, 7.8, 8.9, 10.0], p50: [3.3, 7.9, 9.6, 10.9, 12.2], p97: [4.3, 9.7, 11.8, 13.5, 15.1], me: [3.4, 7.8, 9.9, 11.2, 12.4], u: 'kg', p: 'p55' },
-      altura: { p3: [46.3, 63.6, 71.3, 77.2, 81.4], p50: [49.9, 67.6, 75.7, 82.3, 87.1], p97: [53.4, 71.6, 80.2, 87.7, 93.2], me: [50, 67, 76, 82, 86], u: 'cm', p: 'p40' },
-      cabeca: { p3: [32.1, 41.0, 43.6, 44.9, 45.8], p50: [34.5, 43.3, 46.1, 47.4, 48.3], p97: [36.9, 45.6, 48.6, 49.9, 50.8], me: [35, 43.5, 46, 47.5, 48.4], u: 'cm', p: 'p52' },
+      weight: { p3: [2.5, 6.4, 7.8, 8.9, 10.0], p50: [3.3, 7.9, 9.6, 10.9, 12.2], p97: [4.3, 9.7, 11.8, 13.5, 15.1], me: [3.4, 7.8, 9.9, 11.2, 12.4], u: 'kg', p: 'p55' },
+      height: { p3: [46.3, 63.6, 71.3, 77.2, 81.4], p50: [49.9, 67.6, 75.7, 82.3, 87.1], p97: [53.4, 71.6, 80.2, 87.7, 93.2], me: [50, 67, 76, 82, 86], u: 'cm', p: 'p40' },
+      head: { p3: [32.1, 41.0, 43.6, 44.9, 45.8], p50: [34.5, 43.3, 46.1, 47.4, 48.3], p97: [36.9, 45.6, 48.6, 49.9, 50.8], me: [35, 43.5, 46, 47.5, 48.4], u: 'cm', p: 'p52' },
     },
     lua: {
       xs: [0, 1, 2, 3, 4, 5], xl: ['0', '1m', '2m', '3m', '4m', '5m'],
-      peso: { p3: [2.4, 3.2, 3.9, 4.5, 5.0, 5.4], p50: [3.2, 4.2, 5.1, 5.8, 6.4, 6.9], p97: [4.2, 5.5, 6.6, 7.5, 8.2, 8.8], me: [3.2, 4.3, 5.2, 5.9, 6.5, 7.0], u: 'kg', p: 'p55' },
-      altura: { p3: [45.6, 50.0, 53.2, 55.8, 58.0, 59.9], p50: [49.1, 53.7, 57.1, 59.8, 62.1, 64.0], p97: [52.7, 57.4, 60.9, 63.8, 66.2, 68.2], me: [49, 54, 57.5, 60, 62.5, 64], u: 'cm', p: 'p50' },
-      cabeca: { p3: [31.7, 34.3, 36.0, 37.2, 38.2, 39.0], p50: [33.9, 36.5, 38.3, 39.5, 40.6, 41.5], p97: [36.1, 38.8, 40.5, 41.9, 43.0, 43.9], me: [34, 36.6, 38.4, 39.7, 40.8, 41.6], u: 'cm', p: 'p53' },
+      weight: { p3: [2.4, 3.2, 3.9, 4.5, 5.0, 5.4], p50: [3.2, 4.2, 5.1, 5.8, 6.4, 6.9], p97: [4.2, 5.5, 6.6, 7.5, 8.2, 8.8], me: [3.2, 4.3, 5.2, 5.9, 6.5, 7.0], u: 'kg', p: 'p55' },
+      height: { p3: [45.6, 50.0, 53.2, 55.8, 58.0, 59.9], p50: [49.1, 53.7, 57.1, 59.8, 62.1, 64.0], p97: [52.7, 57.4, 60.9, 63.8, 66.2, 68.2], me: [49, 54, 57.5, 60, 62.5, 64], u: 'cm', p: 'p50' },
+      head: { p3: [31.7, 34.3, 36.0, 37.2, 38.2, 39.0], p50: [33.9, 36.5, 38.3, 39.5, 40.6, 41.5], p97: [36.1, 38.8, 40.5, 41.9, 43.0, 43.9], me: [34, 36.6, 38.4, 39.7, 40.8, 41.6], u: 'cm', p: 'p53' },
     },
   },
   vax: {
@@ -292,14 +292,14 @@ export const dataPt: DemoData = {
       { name: 'Pentavalente', when: '6 meses', done: true },
       { name: 'Febre amarela', when: '9 meses', done: true },
       { name: 'Tríplice viral', when: '12 meses', done: true },
-      { name: 'DTP (reforço)', when: 'sáb 8 nov', done: false },
+      { name: 'DTP (reforço)', when: 'dom 8 nov', done: false },
     ],
     lua: [
       { name: 'BCG', when: 'ao nascer', done: true },
       { name: 'Hepatite B', when: 'ao nascer', done: true },
       { name: 'Pentavalente', when: '2 e 4 meses', done: true },
       { name: 'Rotavírus', when: '2 e 4 meses', done: true },
-      { name: 'Pentavalente', when: 'qua 12 nov', done: false },
+      { name: 'Pentavalente', when: 'qui 12 nov', done: false },
     ],
   },
   optIcons: {
@@ -318,14 +318,14 @@ export const dataPt: DemoData = {
     { icon: 'heart', title: 'Gravidez', desc: 'Semana a semana, chutes e todas as consultas.', action: { mode: 'preg' } },
     { icon: 'baby', title: 'Filhos', desc: 'Sono, comida, fraldas e marcos de cada filho.', action: { mode: 'kids' } },
     { icon: 'flame', title: 'Menopausa', desc: 'Sintomas ao longo das semanas, pra entender o que muda.', action: { mode: 'meno' } },
-    { icon: 'syringe', title: 'Vacinas', desc: 'O calendário do seu país, com aviso antes de cada dose.', action: { screen: 'vacinas' } },
-    { icon: 'pola', title: 'Memórias', desc: 'Primeiro passo, primeira palavra, com foto e data.', action: { screen: 'memorias' } },
-    { icon: 'house', title: 'Rede de cuidado', desc: 'Parceiro, avó e babá registram junto. Cada um vê só o que você libera.', action: { screen: 'rede' } },
-    { icon: 'stroller', title: 'Vila', desc: 'O que não serve mais vira o carrinho de outra família.', action: { screen: 'vila' } },
-    { icon: 'bubble', title: 'Comunidade', desc: 'Canais por fase e círculos anônimos.', action: { screen: 'comunidade' } },
-    { icon: 'doc', title: 'Pro pediatra', desc: 'Crescimento, vacinas e alergias numa página pronta pra consulta.', action: { screen: 'pediatra' } },
-    { icon: 'ruler', title: 'Crescimento', desc: 'Peso e altura com percentis.', action: { screen: 'crescimento' } },
-    { icon: 'lock', title: 'Privacidade', desc: 'PIN e Face ID. Exporte ou apague tudo quando quiser.', action: { screen: 'privacidade' } },
+    { icon: 'syringe', title: 'Vacinas', desc: 'O calendário do seu país, com aviso antes de cada dose.', action: { screen: 'vaccines' } },
+    { icon: 'pola', title: 'Memórias', desc: 'Primeiro passo, primeira palavra, com foto e data.', action: { screen: 'memories' } },
+    { icon: 'house', title: 'Rede de cuidado', desc: 'Parceiro, avó e babá registram junto. Cada um vê só o que você libera.', action: { screen: 'care' } },
+    { icon: 'stroller', title: 'Vila', desc: 'O que não serve mais vira o carrinho de outra família.', action: { screen: 'village' } },
+    { icon: 'bubble', title: 'Comunidade', desc: 'Canais por fase e círculos anônimos.', action: { screen: 'community' } },
+    { icon: 'doc', title: 'Pro pediatra', desc: 'Crescimento, vacinas e alergias numa página pronta pra consulta.', action: { screen: 'pediatric' } },
+    { icon: 'ruler', title: 'Crescimento', desc: 'Peso e altura com percentis.', action: { screen: 'growth' } },
+    { icon: 'lock', title: 'Privacidade', desc: 'PIN e Face ID. Exporte ou apague tudo quando quiser.', action: { screen: 'privacy' } },
   ],
   cyc: {
     per: { icon: 'drop', name: 'Menstruação', what: 'sangramento' },
@@ -374,23 +374,23 @@ export const dataPt: DemoData = {
     profile: {
       title: 'Perfil', kids: 'Filhos', add: 'Adicionar', network: 'Sua rede', people: '4 pessoas', kidsSuffix: ' · Kenji e Lua',
       items: [
-        { screen: 'rede', icon: 'house', title: 'Rede de cuidado' },
-        { screen: 'exames', icon: 'doc', title: 'Exames' },
-        { screen: 'privacidade', icon: 'lock', title: 'Privacidade' },
-        { screen: 'lembretes', icon: 'bell', title: 'Lembretes' },
-        { screen: 'memorias', icon: 'pola', title: 'Memórias' },
+        { screen: 'care', icon: 'house', title: 'Rede de cuidado' },
+        { screen: 'exams', icon: 'doc', title: 'Exames' },
+        { screen: 'privacy', icon: 'lock', title: 'Privacidade' },
+        { screen: 'reminders', icon: 'bell', title: 'Lembretes' },
+        { screen: 'memories', icon: 'pola', title: 'Memórias' },
       ],
     },
     tabs: { home: 'Início', agenda: 'Agenda', shortcuts: 'Atalhos', week: 'Semana', profile: 'Perfil' },
     shortcuts: {
       title: 'Atalhos',
       items: [
-        { screen: 'memorias', icon: 'pola', title: 'Memórias' },
-        { screen: 'vacinas', icon: 'syringe', title: 'Vacinas' },
-        { screen: 'rede', icon: 'house', title: 'Rede' },
-        { screen: 'vila', icon: 'stroller', title: 'Vila' },
-        { screen: 'comunidade', icon: 'bubble', title: 'Comunidade' },
-        { screen: 'exames', icon: 'doc', title: 'Exames' },
+        { screen: 'memories', icon: 'pola', title: 'Memórias' },
+        { screen: 'vaccines', icon: 'syringe', title: 'Vacinas' },
+        { screen: 'care', icon: 'house', title: 'Rede' },
+        { screen: 'village', icon: 'stroller', title: 'Vila' },
+        { screen: 'community', icon: 'bubble', title: 'Comunidade' },
+        { screen: 'exams', icon: 'doc', title: 'Exames' },
       ],
     },
     register: { title: 'Registrar hoje' },
@@ -412,7 +412,7 @@ export const dataPt: DemoData = {
       cycleTitle: 'Seu ciclo', tapDay: 'toque num dia', bbtTitle: 'Temperatura basal', bbtSub: '°C · dia do ciclo', moodTitle: 'Humor da semana', moodSub: '7 dias',
       kicksTitle: 'Chutes por dia', kicksSub: 'cada ♡ = 2 chutes', weightTitle: 'Ganho de peso', weightSub: 'kg · faixa indicada', weekAbbr: 'sem {w}',
       trailTitle: 'Até aqui', trailSub: 'semanas',
-      pregTiles: { gainValue: '+6,2 kg', gainLabel: 'desde o início', visitsValue: '8 de 12', visitsLabel: 'consultas', sleepValue: '7h10', sleepLabel: 'sono médio' },
+      pregTiles: { gainValue: '+6,2 kg', gainLabel: 'desde o início', visitsValue: '8 de 12', visitsLabel: 'appointments', sleepValue: '7h10', sleepLabel: 'sono médio' },
       nightsTitle: 'Noites', nightsSub: '18h → 8h', nightsAxis: ['18h', '22h', '2h', '6h', '8h'],
       kenjiLegend: 'Kenji · média 10h40', luaLegend: 'Lua · acorda 2x',
       plateTitle: 'Prato do Kenji', plateSub: 'esta semana',
@@ -424,22 +424,22 @@ export const dataPt: DemoData = {
       menoTiles: { sleepValue: '4 de 7', sleepLabel: 'noites bem dormidas', fogValue: '2 dias', fogLabel: 'com névoa mental', dropValue: '−66%', dropLabel: 'ondas desde S1' },
     },
     screens: {
-      vacinas: { title: 'Vacinas', icon: 'syringe', note: 'Calendário do PNI pra cada filho. A gente avisa antes de cada dose.' },
-      memorias: { title: 'Memórias', icon: 'pola', note: 'Os primeiros de tudo, em ordem. Um dia vai tudo pra quem vem depois.', newMemory: 'Nova memória', saved: 'Guardado!' },
-      rede: {
+      vaccines: { title: 'Vacinas', icon: 'syringe', note: 'Calendário do PNI pra cada filho. A gente avisa antes de cada dose.' },
+      memories: { title: 'Memórias', icon: 'pola', note: 'Os primeiros de tudo, em ordem. Um dia vai tudo pra quem vem depois.', newMemory: 'Nova memória', saved: 'Guardado!' },
+      care: {
         title: 'Rede de cuidado', icon: 'house', note: 'Cada pessoa vê só o que você libera.',
         circle: { you: 'Você', partner: 'Parceiro', grandma: 'Avó', sitter: 'Babá' },
         access: { partner: 'tudo', grandma: 'fotos e marcos', sitter: 'registra o dia' },
         memoFrom: 'Babá · 12:30', memo: 'Kenji comeu tudo e pediu mais. Lua mamou e dormiu 1h20.',
       },
-      vila: {
+      village: {
         title: 'Vila', icon: 'stroller',
         filters: { all: 'Tudo', sell: 'Venda', swap: 'Troca', free: 'Doação' },
         kinds: { sell: 'Venda', free: 'Doação', swap: 'Troca' },
         buy: 'Comprar', want: 'Quero', commentPlaceholder: 'Comentar…', commentAria: 'Comentar', send: 'Enviar',
         requestSent: 'Pedido enviado!', messageSent: 'Mensagem enviada!',
       },
-      comunidade: {
+      community: {
         title: 'Comunidade', icon: 'bubble', note: 'Canais por fase e círculos onde ninguém sabe quem você é.',
         kinds: { channel: 'canal', anon: 'anônimo' },
         noteAnon: 'Círculo anônimo: aqui você aparece como Coruja anônima.',
@@ -448,32 +448,32 @@ export const dataPt: DemoData = {
         meAnon: 'Coruja anônima (você)', me: 'Você',
         replyAnon: { icon: 'owl', who: 'Gaivota anônima' }, replyOpen: { icon: 'face4', who: 'Carol · mãe do Theo' },
       },
-      exames: {
+      exams: {
         title: 'Exames', icon: 'doc', note: 'Foto do exame, a vovó lê, explica e guarda. Tudo num lugar pra mostrar ao médico.',
         normal: 'normal', attention: 'atenção', add: 'Adicionar exame',
         kept: 'guardado em Exames', readBy: 'A vovó leu pra você', low: 'baixo', share: 'Compartilhar com o médico', original: 'Ver original',
         addNote: 'Tire uma foto do resultado. A vovó lê, explica e guarda.', takePhoto: 'Tirar foto', reading: 'Lendo o exame…', done: 'Lido e guardado!',
         newExam: { title: 'Exame de hoje', date: 'hoje', status: 'ok', read: 'Li e guardei. Está tudo dentro do esperado.', vals: [ok('Glicose', '86 mg/dL', '< 99'), ok('Colesterol total', '168 mg/dL', '< 190')] },
       },
-      consultas: {
+      appointments: {
         title: 'Consultas', icon: 'bell', note: 'O pré-natal inteiro, semana a semana.',
         items: [{ name: 'Primeira consulta', when: 'feito', done: true }, { name: 'Ultrassom morfológico', when: 'feito', done: true }, { name: 'Curva glicêmica', when: 'semana 26', done: false }, { name: 'Consulta 28 semanas', when: 'semana 28', done: false }],
       },
-      lembretes: {
+      reminders: {
         title: 'Lembretes', icon: 'bell', note: 'A vovó lembra por você.',
         items: [{ name: 'Tomar vitamina', when: '08:00' }, { name: 'Registrar temperatura', when: '07:00' }, { name: 'Consulta', when: 'qui, 14:00' }],
       },
-      pediatra: {
+      pediatric: {
         title: 'Pro pediatra', icon: 'doc', note: 'Uma página pronta pra levar na consulta.',
         items: {
           kenji: [{ label: 'Peso', value: '12,4 kg · p55' }, { label: 'Altura', value: '86 cm · p40' }, { label: 'Vacinas', value: 'em dia' }, { label: 'Alergias', value: 'nenhuma' }, { label: 'Sono médio', value: '10h' }],
           lua: [{ label: 'Peso', value: '7,0 kg · p55' }, { label: 'Altura', value: '64 cm · p50' }, { label: 'Vacinas', value: 'em dia' }, { label: 'Mamadas', value: '7 por dia' }, { label: 'Sono', value: '14h por dia' }],
         },
       },
-      crescimento: {
+      growth: {
         title: 'Crescimento', icon: 'ruler',
-        tabs: { peso: 'Peso', altura: 'Altura', cabeca: 'Cabeça' },
-        chartTitles: { peso: 'Peso', altura: 'Altura', cabeca: 'Perímetro da cabeça' },
+        tabs: { weight: 'Peso', height: 'Altura', head: 'Cabeça' },
+        chartTitles: { weight: 'Peso', height: 'Altura', head: 'Perímetro da cabeça' },
         curve: 'curva OMS', now: 'agora', percentile: 'percentil', nextMeasure: 'próxima medida',
         next: { kenji: 'hoje', lua: '12 nov' },
         milestones: 'Marcos',
@@ -482,7 +482,7 @@ export const dataPt: DemoData = {
           lua: [{ icon: 'star', label: 'Rolou sozinha', when: '4 meses' }, { icon: 'baby2', label: 'Sorriso social', when: '2 meses' }],
         },
       },
-      privacidade: {
+      privacy: {
         title: 'Privacidade', icon: 'lock', note: 'Seus dados são seus.',
         items: [{ label: 'PIN e Face ID', value: 'ligado' }, { label: 'Nada é vendido', value: 'nunca' }, { label: 'Exportar tudo', value: 'a qualquer hora' }, { label: 'Apagar a conta', value: 'de verdade' }],
       },

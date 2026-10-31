@@ -11,20 +11,34 @@ export type Goalable<T> = T | ((goal: Goal) => T)
 export const forGoal = <T,>(v: Goalable<T>, goal: Goal): T => (typeof v === 'function' ? (v as (g: Goal) => T)(goal) : v)
 
 export type FeatScreenKey =
-  | 'vacinas' | 'memorias' | 'rede' | 'vila' | 'comunidade' | 'exames'
-  | 'consultas' | 'lembretes' | 'pediatra' | 'crescimento' | 'privacidade'
+  | 'vaccines' | 'memories' | 'care' | 'village' | 'community' | 'exams'
+  | 'appointments' | 'reminders' | 'pediatric' | 'growth' | 'privacy'
 export type ChipId =
   | 'mood' | 'flow' | 'temp' | 'ovtest' | 'symptoms' | 'sleep' | 'kicks' | 'visit'
   | 'food' | 'diaper' | 'milestone' | 'heat' | 'fog'
 export type CycPhase = 'per' | 'fol' | 'ovu' | 'lut'
 export type VillageKind = 'sell' | 'free' | 'swap'
-export type GrowthKey = 'peso' | 'altura' | 'cabeca'
+export type GrowthKey = 'weight' | 'height' | 'head'
 export type ChanKind = 'channel' | 'anon'
+export type ChanId =
+  | 'ttc' | 'irregular' | 'afterPositive' | 'cycle' | 'endo' | 'feb' | 'fears' | 'layette'
+  | 'babySleep' | 'solids' | 'momsOfTwo' | 'exhaustion' | 'hotFlashes' | 'menoSleep' | 'running'
+/** `${chipId}:${optionId}` for every pick option; a typo in data fails tsc */
+export type OptKey =
+  | 'flow:none' | 'flow:light' | 'flow:medium' | 'flow:heavy'
+  | 'symptoms:cramps' | 'symptoms:bloating' | 'symptoms:headache' | 'symptoms:acne'
+  | 'ovtest:negative' | 'ovtest:positive'
+  | 'visit:prenatal' | 'visit:ultrasound' | 'visit:blood' | 'visit:other'
+  | 'food:nursing' | 'food:puree' | 'food:fruit' | 'food:snack'
+  | 'diaper:pee' | 'diaper:poop' | 'diaper:both'
+  | 'milestone:firstStep' | 'milestone:firstWord' | 'milestone:firstTooth' | 'milestone:other'
+  | 'fog:mild' | 'fog:medium' | 'fog:strong'
+export type OptionId = OptKey extends `${string}:${infer O}` ? O : never
 
 export interface Pair { label: string; value: string }
 export interface Kid { name: string; age: string; icon: StickerName; tone: string; dot: string }
 
-export interface PickOption { id: string; label: string }
+export interface PickOption { id: OptionId; label: string }
 export type ChipCfg =
   | { t: 'mood' }
   | { t: 'pick'; options: PickOption[]; memory: boolean }
@@ -42,7 +56,7 @@ export interface Cal {
   kd: Record<KidId, number[]> | null; legend: LegendItem[]
 }
 export interface EventItem { icon: StickerName; title: string; sub: string; when: string; kid: KidId | null }
-export interface Chan { id: string; icon: StickerName; title: string; kind: ChanKind; tone: string }
+export interface Chan { id: ChanId; icon: StickerName; title: string; kind: ChanKind; tone: string }
 export interface ExamValue { name: string; value: string; range: string; flag: 'ok' | 'low' }
 export interface Exam { title: string; date: string; status: 'ok' | 'warn'; read: string; vals: ExamValue[] }
 export interface Memory { year: string; month: string; title: string; sub: string; icon: StickerName; tone: string; kid: KidId | null }
@@ -75,7 +89,7 @@ export interface VillagePost {
   comments: { name: string; text: string }[]
 }
 export interface GrowthSeries { p3: number[]; p50: number[]; p97: number[]; me: number[]; u: string; p: string }
-export interface Growth { xs: number[]; xl: string[]; peso: GrowthSeries; altura: GrowthSeries; cabeca: GrowthSeries }
+export interface Growth { xs: number[]; xl: string[]; weight: GrowthSeries; height: GrowthSeries; head: GrowthSeries }
 export interface Vax { name: string; when: string; done: boolean }
 export interface Feat {
   icon: StickerName; title: string; desc: string
@@ -149,38 +163,38 @@ export interface DemoUi {
     menoTiles: { sleepValue: string; sleepLabel: string; fogValue: string; fogLabel: string; dropValue: string; dropLabel: string }
   }
   screens: {
-    vacinas: { title: string; icon: StickerName; note: string }
-    memorias: { title: string; icon: StickerName; note: string; newMemory: string; saved: string }
-    rede: {
+    vaccines: { title: string; icon: StickerName; note: string }
+    memories: { title: string; icon: StickerName; note: string; newMemory: string; saved: string }
+    care: {
       title: string; icon: StickerName; note: string
       circle: { you: string; partner: string; grandma: string; sitter: string }
       access: { partner: string; grandma: string; sitter: string }
       memoFrom: string; memo: string
     }
-    vila: {
+    village: {
       title: string; icon: StickerName
       filters: { all: string; sell: string; swap: string; free: string }
       kinds: Record<VillageKind, string>
       buy: string; want: string; commentPlaceholder: string; commentAria: string; send: string
       requestSent: string; messageSent: string
     }
-    comunidade: {
+    community: {
       title: string; icon: StickerName; note: string; kinds: Record<ChanKind, string>
       noteAnon: string; noteOpen: string
       composerPlaceholder: string; composerAria: string; typing: string
       meAnon: string; me: string
       replyAnon: { icon: StickerName; who: string }; replyOpen: { icon: StickerName; who: string }
     }
-    exames: {
+    exams: {
       title: string; icon: StickerName; note: string; normal: string; attention: string; add: string
       kept: string; readBy: string; low: string; share: string; original: string
       addNote: string; takePhoto: string; reading: string; done: string
       newExam: Exam
     }
-    consultas: { title: string; icon: StickerName; note: string; items: { name: string; when: string; done: boolean }[] }
-    lembretes: { title: string; icon: StickerName; note: string; items: { name: string; when: string }[] }
-    pediatra: { title: string; icon: StickerName; note: string; items: Record<KidId, Pair[]> }
-    crescimento: {
+    appointments: { title: string; icon: StickerName; note: string; items: { name: string; when: string; done: boolean }[] }
+    reminders: { title: string; icon: StickerName; note: string; items: { name: string; when: string }[] }
+    pediatric: { title: string; icon: StickerName; note: string; items: Record<KidId, Pair[]> }
+    growth: {
       title: string; icon: StickerName
       tabs: Record<GrowthKey, string>
       chartTitles: Record<GrowthKey, string>
@@ -189,7 +203,7 @@ export interface DemoUi {
       milestones: string
       milestoneItems: Record<KidId, { icon: StickerName; label: string; when: string }[]>
     }
-    privacidade: { title: string; icon: StickerName; note: string; items: Pair[] }
+    privacy: { title: string; icon: StickerName; note: string; items: Pair[] }
   }
 }
 
@@ -199,13 +213,13 @@ export interface DemoData {
   phases: Record<Mode, Phase>
   weeks: Week[]
   /** keyed by `Chan.id` */
-  msgs: Record<string, Msg[]>
+  msgs: Record<ChanId, Msg[]>
   replies: string[]
   village: VillagePost[]
   growth: Record<KidId, Growth>
   vax: Record<KidId, Vax[]>
   /** keyed `${chipId}:${optionId}`; icons shown on a pick tile */
-  optIcons: Record<string, StickerName[]>
+  optIcons: Record<OptKey, StickerName[]>
   /** keyed by `ChipId`; how a range chip draws itself in the log sheet */
   rangeVis: Partial<Record<ChipId, { icon: StickerName; how: 'grow' | 'count' }>>
   feats: Feat[]

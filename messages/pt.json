@@ -346,11 +346,7 @@
       "phoneAria": "Demonstração do app"
     },
     "phases": {
-      "aria": "Fase",
-      "pre": "Ciclo",
-      "preg": "Grávida",
-      "kids": "Filhos",
-      "meno": "Menopausa"
+      "aria": "Fase"
     },
     "tabs": {
       "home": "Início",
