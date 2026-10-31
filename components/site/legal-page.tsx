@@ -24,8 +24,8 @@ export async function LegalPage({ locale, ns }: { locale: 'en' | 'pt'; ns: 'priv
             </section>
           ))}
         </article>
-        <Footer locale={locale} />
       </main>
+      <Footer />
     </>
   )
 }

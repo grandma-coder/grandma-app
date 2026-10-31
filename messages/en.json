@@ -1,8 +1,8 @@
 {
   "meta": {
-    "title": "Grandma · Waitlist open — Brasil first, then the US",
-    "description": "A calm companion for your cycle, pregnancy, kids and menopause. Join the waitlist: invites open in Brasil first, then the United States.",
-    "ogTitle": "Grandma · Join the waitlist"
+    "title": "grandma · Your life and your kids', in one app",
+    "description": "Cycle, pregnancy, kids and menopause, in one app. Try it right here, then save your spot on the waitlist.",
+    "ogTitle": "grandma · Your life and your kids', in one app"
   },
   "locale": {
     "label": "Language",
@@ -10,142 +10,9 @@
     "pt": "PT"
   },
   "nav": {
-    "join": "Join the waitlist",
     "home": "grandma.app home"
   },
-  "hero": {
-    "status": "Waitlist open",
-    "first": "Brasil first",
-    "then": "Then the US",
-    "title": "With you through every <em>chapter.</em>",
-    "lede": "Cycle, pregnancy, the first years and menopause — one calm companion that remembers everything and judges nothing.",
-    "videoAlt": "The grandma app: choosing your chapter, then the home screen"
-  },
-  "form": {
-    "email": "Email",
-    "emailPh": "you@example.com",
-    "mode": "Where are you <em>right now?</em>",
-    "modes": {
-      "pre": [
-        "Chapter 01",
-        "Trying"
-      ],
-      "preg": [
-        "Chapter 02",
-        "Expecting"
-      ],
-      "kids": [
-        "Chapter 03",
-        "Raising"
-      ],
-      "meno": [
-        "Chapter 04",
-        "The change"
-      ]
-    },
-    "name": "Your name · optional",
-    "namePh": "Maya",
-    "notify": "Also tell me when the app launches in my country.",
-    "submit": "Save my seat",
-    "submitting": "Saving…",
-    "retry": "Try again",
-    "consent": "We keep your details only to send your invite and the launch notice. <link>How we handle your data</link>.",
-    "honeypot": "Leave this field empty",
-    "success": {
-      "title": "You're on the <em>list.</em>",
-      "body": "We'll write when the app reaches you."
-    },
-    "rateLimited": "Too many tries from this connection. Please try again in an hour.",
-    "error": "Something went wrong on our side. Please try again.",
-    "errors": {
-      "email_required": "Please enter your email.",
-      "email_invalid": "That email doesn't look right.",
-      "email_too_long": "That email is too long.",
-      "name_too_long": "Please use 80 characters or fewer.",
-      "mode_required": "Pick the chapter you're in."
-    }
-  },
-  "launch": {
-    "title": "How the <em>launch</em> works.",
-    "sub": "Invites go out in the order people join, country by country.",
-    "steps": [
-      {
-        "k": "01",
-        "title": "Join the list",
-        "body": "Leave your email and where you are in life. That's all."
-      },
-      {
-        "k": "02",
-        "title": "Brasil, first",
-        "body": "The first invites open in Brazil, in Portuguese."
-      },
-      {
-        "k": "03",
-        "title": "United States, next",
-        "body": "Then the US, in English. Everywhere else after that."
-      }
-    ],
-    "you": "You're here"
-  },
-  "chapters": {
-    "title": "One companion, <em>four chapters.</em>",
-    "sub": "The whole app reshapes itself around where you are. Switch any time — Grandma keeps your history.",
-    "items": {
-      "pre": {
-        "label": "Chapter 01 · Trying",
-        "title": "Cycle",
-        "body": "Your cycle, hormones and fertile window — explained, not just tracked.",
-        "alt": "Cycle home screen in the grandma app"
-      },
-      "preg": {
-        "label": "Chapter 02 · Expecting",
-        "title": "Pregnancy",
-        "body": "Forty weeks, one at a time, with your baby's size and what's next.",
-        "alt": "Pregnancy home screen in the grandma app"
-      },
-      "kids": {
-        "label": "Chapter 03 · Raising",
-        "title": "Kids",
-        "body": "Sleep, feeds, growth and milestones from newborn to five — shared with your people.",
-        "alt": "Kids home screen in the grandma app"
-      },
-      "meno": {
-        "label": "Chapter 04 · The change",
-        "title": "Menopause",
-        "body": "Hot flashes, sleep and mood, with patterns over weeks — so you can see what's changing.",
-        "alt": "Menopause quick log in the grandma app"
-      }
-    }
-  },
-  "faq": {
-    "title": "The obvious <em>questions.</em>",
-    "items": [
-      {
-        "q": "When does it launch?",
-        "a": "Invites open in Brasil first, then in the United States. Within each country we go in the order people joined, and we never skip ahead."
-      },
-      {
-        "q": "Is it only for pregnancy and babies?",
-        "a": "No. Grandma has four chapters: Cycle, Pregnancy, Kids (newborn to five) and Menopause. Switch any time — she keeps your history."
-      },
-      {
-        "q": "What will it cost?",
-        "a": "Free to start. An optional Premium plan adds more, and you'll see it before you ever pay."
-      },
-      {
-        "q": "Is my data private?",
-        "a": "Yes. Your data is encrypted, never sold, and never used to train AI models. You can export it or delete your account at any time."
-      }
-    ]
-  },
-  "closing": {
-    "eyebrow": "Ready when you are",
-    "title": "Take your time. <em>We'll be here.</em>",
-    "cta": "Save my seat"
-  },
   "footer": {
-    "tag": "A calm companion for your cycle, pregnancy, kids and menopause.",
-    "line": "Calm where it counts, warm where it helps.",
     "privacy": "Privacy",
     "terms": "Terms",
     "rights": "© 2026 grandma.app",
@@ -368,7 +235,16 @@
       "joinedInline": "You're on the list! We'll let you know.",
       "joinedTitle": "You're on the list!",
       "joinedBody": "We'll let you know as soon as invites open.",
-      "installHint": "On your phone, tap <b>Share → Add to Home Screen</b> and grandma will be right there."
+      "installHint": "On your phone, tap <b>Share → Add to Home Screen</b> and grandma will be right there.",
+      "errors": {
+        "email_required": "Please enter your email.",
+        "email_invalid": "That email doesn't look right.",
+        "email_too_long": "That email is too long.",
+        "mode_required": "Pick the phase you're in.",
+        "rate_limited": "Too many tries from this connection. Please try again in an hour.",
+        "generic": "Something went wrong on our side. Please try again."
+      },
+      "honeypot": "Leave this field empty"
     },
     "mobile": {
       "barAria": "Try the app",

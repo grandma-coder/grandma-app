@@ -1,26 +1,31 @@
-import type { ReactNode } from 'react'
-import { getTranslations } from 'next-intl/server'
-import { AppVideo } from '@/components/diffuse'
-import type { Country } from '@/lib/countries'
+'use client'
 
-export async function Hero({ locale, form }: { locale: 'en' | 'pt'; country: Country; form: ReactNode }) {
-  const t = await getTranslations({ locale, namespace: 'hero' })
+import { useTranslations } from 'next-intl'
+import { DemoDevice } from '@/components/demo/device'
+import { PhaseSwitch } from './phase-switch'
+import { QuickJoin } from './quick-join'
+import { TokenText } from './token-text'
+import { MODES_ID, PHONE_ID } from './ids'
+import s from './site.module.css'
+
+/** Rebus headline, sub, the hero email field and, beside it, the phase switch over the working phone. */
+export function Hero() {
+  const t = useTranslations('v3.hero')
   return (
-    <section className="pt-10">
-      <p className="mb-8 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
-        <span className="text-ink"><span aria-hidden="true" className="mr-2 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-[#3DAA6E] align-middle" />{t('status')}</span>
-        <span aria-hidden="true">·</span><span>{t('first')}</span><span aria-hidden="true">·</span><span>{t('then')}</span>
-      </p>
-      <div className="grid items-start gap-14 lg:grid-cols-[1.25fr_1fr]">
+    <section className={s.hero}>
+      <div className={`${s.wrap} ${s.heroGrid}`}>
         <div>
-          <h1 className="m-0 font-display text-[clamp(44px,6.4vw,88px)] font-bold leading-[1.02] tracking-[-0.035em] [&_em]:italic [&_em]:text-ink-2">
-            {t.rich('title', { em: (c) => <em>{c}</em> })}
-          </h1>
-          <p className="mt-6 max-w-[540px] text-[17px] font-light leading-[1.6] text-ink-2">{t('lede')}</p>
-          <div id="join" className="mt-10 max-w-[520px] scroll-mt-28">{form}</div>
+          <h1 className={`${s.rebus} ${s.hand}`}><TokenText text={t('rebus')} rebus /></h1>
+          <p className={s.sub}>{t('sub')}</p>
+          <QuickJoin variant="hero" />
+          <a className={`${s.tryHint} ${s.hand}`} href={`#${MODES_ID}`}><TokenText text={t('tryDesktop')} /></a>
         </div>
-        <div className="lg:sticky lg:top-28">
-          <AppVideo shot="onboarding-picker" lang={locale} alt={t('videoAlt')} priority />
+        <div className={s.phoneCol}>
+          <PhaseSwitch />
+          {/* Task 10 scales the device by setting --s on this slot */}
+          <div className={s.phoneSlot} id={PHONE_ID} role="region" aria-label={t('phoneAria')}>
+            <DemoDevice />
+          </div>
         </div>
       </div>
     </section>

@@ -28,6 +28,7 @@ describe('messages', () => {
       expect(r.match(/\[(\w+)\]/g)).toEqual(['[flower]', '[baby]', '[phone]'])
       expect(r).not.toMatch(/[{}]/)
     })
-    it('no country-order copy', () => expect([...strings(en), ...strings(pt)].filter(([k, s]) => k.startsWith('v3') && /brasil|brazil/i.test(s))).toEqual([]))
   })
+  it('no country-order copy anywhere (launch is worldwide)', () =>
+    expect([...strings(en), ...strings(pt)].filter(([, s]) => /brasil|brazil|then the us|depois os eua|in my country|no meu país/i.test(s))).toEqual([]))
 })

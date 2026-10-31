@@ -160,7 +160,7 @@ input.rg::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; back
 .faces button.on { transform: scale(1.2) rotate(-6deg); color: var(--ink); }
 .bigNum { text-align: center; margin-top: 14px; font: 800 64px/1 var(--sans); letter-spacing: -.05em; }
 .bigNum small { display: block; font: 11px var(--mono); letter-spacing: .14em; color: var(--ink-3); margin-top: 6px; }
-input[type=range] { width: 100%; margin-top: 18px; accent-color: var(--ink); }
+:where(.device) input[type=range] { width: 100%; margin-top: 18px; accent-color: var(--ink); }
 .kick { margin: 18px auto 0; width: 150px; height: 150px; border-radius: 50%; border: 1.5px solid var(--ink); background: #fff; display: grid; place-items: center; box-shadow: 0 3px 0 rgba(22,21,19,.12); transition: transform .15s var(--spring), box-shadow .15s; }
 .kick:active { transform: scale(.94); }
 .kick .ico { width: 70px; height: 70px; }

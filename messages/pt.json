@@ -1,8 +1,8 @@
 {
   "meta": {
-    "title": "Grandma · Lista de espera aberta — Brasil primeiro, depois EUA",
-    "description": "Uma companhia tranquila para o seu ciclo, gravidez, filhos e menopausa. Entre na lista de espera: os convites abrem primeiro no Brasil, depois nos Estados Unidos.",
-    "ogTitle": "Grandma · Entre na lista de espera"
+    "title": "grandma · Sua vida e a dos seus filhos, num app só",
+    "description": "Ciclo, gravidez, filhos e menopausa, num app só. Testa aqui mesmo e guarda seu lugar na lista de espera.",
+    "ogTitle": "grandma · Sua vida e a dos seus filhos, num app só"
   },
   "locale": {
     "label": "Idioma",
@@ -10,142 +10,9 @@
     "pt": "PT"
   },
   "nav": {
-    "join": "Entrar na lista",
     "home": "Início do grandma.app"
   },
-  "hero": {
-    "status": "Lista de espera aberta",
-    "first": "Brasil primeiro",
-    "then": "Depois os EUA",
-    "title": "Com você em cada <em>capítulo.</em>",
-    "lede": "Ciclo, gravidez, os primeiros anos e a menopausa — uma companhia calma que lembra de tudo e não julga nada.",
-    "videoAlt": "O app grandma: escolhendo o seu capítulo e depois a tela inicial"
-  },
-  "form": {
-    "email": "Email",
-    "emailPh": "voce@exemplo.com",
-    "mode": "Onde você está <em>agora?</em>",
-    "modes": {
-      "pre": [
-        "Capítulo 01",
-        "Tentando"
-      ],
-      "preg": [
-        "Capítulo 02",
-        "Esperando"
-      ],
-      "kids": [
-        "Capítulo 03",
-        "Criando"
-      ],
-      "meno": [
-        "Capítulo 04",
-        "A mudança"
-      ]
-    },
-    "name": "Seu nome · opcional",
-    "namePh": "Maya",
-    "notify": "Também quero saber quando o app chegar ao meu país.",
-    "submit": "Garantir meu lugar",
-    "submitting": "Salvando…",
-    "retry": "Tentar de novo",
-    "consent": "Guardamos seus dados só para enviar o convite e o aviso de lançamento. <link>Como cuidamos dos seus dados</link>.",
-    "honeypot": "Deixe este campo vazio",
-    "success": {
-      "title": "Você está na <em>lista.</em>",
-      "body": "A gente escreve quando o app chegar até você."
-    },
-    "rateLimited": "Muitas tentativas a partir desta conexão. Tente de novo daqui a uma hora.",
-    "error": "Algo deu errado do nosso lado. Tente de novo.",
-    "errors": {
-      "email_required": "Digite o seu email.",
-      "email_invalid": "Esse email não parece certo.",
-      "email_too_long": "Esse email é longo demais.",
-      "name_too_long": "Use até 80 caracteres.",
-      "mode_required": "Escolha a fase em que você está."
-    }
-  },
-  "launch": {
-    "title": "Como o <em>lançamento</em> funciona.",
-    "sub": "Os convites saem na ordem de inscrição, país por país.",
-    "steps": [
-      {
-        "k": "01",
-        "title": "Entre na lista",
-        "body": "Deixe o seu email e em que momento da vida você está. Só isso."
-      },
-      {
-        "k": "02",
-        "title": "Brasil, primeiro",
-        "body": "Os primeiros convites abrem no Brasil, em português."
-      },
-      {
-        "k": "03",
-        "title": "Estados Unidos, depois",
-        "body": "Depois os EUA, em inglês. O resto do mundo em seguida."
-      }
-    ],
-    "you": "Você está aqui"
-  },
-  "chapters": {
-    "title": "Uma companhia, <em>quatro capítulos.</em>",
-    "sub": "O app inteiro se ajusta ao momento em que você está. Troque quando quiser — a Vovó guarda o seu histórico.",
-    "items": {
-      "pre": {
-        "label": "Capítulo 01 · Tentando",
-        "title": "Ciclo",
-        "body": "Seu ciclo, seus hormônios e a janela fértil — explicados, não só registrados.",
-        "alt": "Tela inicial do Ciclo no app grandma"
-      },
-      "preg": {
-        "label": "Capítulo 02 · Esperando",
-        "title": "Gravidez",
-        "body": "Quarenta semanas, uma de cada vez, com o tamanho do bebê e o que vem pela frente.",
-        "alt": "Tela inicial da Gravidez no app grandma"
-      },
-      "kids": {
-        "label": "Capítulo 03 · Criando",
-        "title": "Filhos",
-        "body": "Sono, mamadas, crescimento e marcos do recém-nascido aos cinco anos — compartilhado com quem cuida junto.",
-        "alt": "Tela inicial de Filhos no app grandma"
-      },
-      "meno": {
-        "label": "Capítulo 04 · A mudança",
-        "title": "Menopausa",
-        "body": "Ondas de calor, sono e humor, com padrões ao longo das semanas — pra você ver o que está mudando.",
-        "alt": "Registro rápido da Menopausa no app grandma"
-      }
-    }
-  },
-  "faq": {
-    "title": "As perguntas <em>óbvias.</em>",
-    "items": [
-      {
-        "q": "Quando vai ser lançado?",
-        "a": "Os convites abrem primeiro no Brasil, depois nos Estados Unidos. Em cada país seguimos a ordem de inscrição e nunca furamos a fila."
-      },
-      {
-        "q": "É só para gravidez e bebês?",
-        "a": "Não. A Vovó tem quatro capítulos: Ciclo, Gravidez, Filhos (do recém-nascido aos cinco anos) e Menopausa. Troque quando quiser — ela guarda o seu histórico."
-      },
-      {
-        "q": "Quanto vai custar?",
-        "a": "Grátis para começar. Um plano Premium opcional acrescenta mais, e você vê tudo antes de pagar qualquer coisa."
-      },
-      {
-        "q": "Meus dados são privados?",
-        "a": "Sim. Seus dados são criptografados, nunca são vendidos e nunca são usados para treinar modelos de IA. Você pode exportar tudo ou apagar a conta quando quiser."
-      }
-    ]
-  },
-  "closing": {
-    "eyebrow": "Quando você quiser",
-    "title": "Sem pressa. <em>A gente vai estar aqui.</em>",
-    "cta": "Garantir meu lugar"
-  },
   "footer": {
-    "tag": "Uma companhia tranquila para o seu ciclo, gravidez, filhos e menopausa.",
-    "line": "Calma onde importa, carinho onde ajuda.",
     "privacy": "Privacidade",
     "terms": "Termos",
     "rights": "© 2026 grandma.app",
@@ -368,7 +235,16 @@
       "joinedInline": "Você está na lista! A gente avisa.",
       "joinedTitle": "Você está na lista!",
       "joinedBody": "A gente avisa assim que os convites abrirem.",
-      "installHint": "No celular, toque em <b>Compartilhar → Adicionar à Tela de Início</b> e a grandma fica aqui pertinho."
+      "installHint": "No celular, toque em <b>Compartilhar → Adicionar à Tela de Início</b> e a grandma fica aqui pertinho.",
+      "errors": {
+        "email_required": "Digite o seu email.",
+        "email_invalid": "Esse email não parece certo.",
+        "email_too_long": "Esse email é longo demais.",
+        "mode_required": "Escolha a fase em que você está.",
+        "rate_limited": "Muitas tentativas a partir desta conexão. Tente de novo daqui a uma hora.",
+        "generic": "Algo deu errado do nosso lado. Tente de novo."
+      },
+      "honeypot": "Deixe este campo vazio"
     },
     "mobile": {
       "barAria": "Testar o app",
