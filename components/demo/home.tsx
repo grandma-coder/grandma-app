@@ -55,7 +55,7 @@ export function Home() {
       {state.logs >= 2 && (
         <button type="button" className={`${styles.nudge} ${styles.show}`} onClick={onNudge}>
           <Ico name="star" />
-          <div><b>{ui.home.nudgeTitle}</b><span>{ui.home.nudgeSub}</span></div>
+          <span className={styles.nudgeTxt}><b>{ui.home.nudgeTitle}</b><span>{ui.home.nudgeSub}</span></span>
         </button>
       )}
       <Top />
@@ -108,10 +108,10 @@ function Top() {
                   onClick={() => dispatch({ type: 'setKid', kid: id })}>
                   <span className={styles.nm}>{k.name}</span>
                   <small>{k.age}</small>
-                  <div className={styles.n}>{h.n}</div>
+                  <span className={styles.n}>{h.n}</span>
                   <small>{h.em}</small>
                   <Ico name={k.icon} />
-                  <div className={styles.r}>{h.row[1].label}<b>{h.row[1].value}</b></div>
+                  <span className={styles.r}>{h.row[1].label}<b>{h.row[1].value}</b></span>
                 </button>
               )
             })}

@@ -8,7 +8,7 @@
   --ease: cubic-bezier(.22,.8,.2,1); --spring: cubic-bezier(.34,1.56,.64,1);
 }
 .device *, .device *::before, .device *::after { box-sizing: border-box; }
-.device button { font: inherit; color: inherit; cursor: pointer; }
+:where(.device) button { font: inherit; color: inherit; cursor: pointer; }
 .device :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 8px; }
 .ico { display: inline-block; width: 1.25em; height: 1.25em; vertical-align: -.28em; overflow: visible; }
 @keyframes pop { from { transform: scale(0) rotate(-30deg); } }
@@ -186,3 +186,6 @@ input[type=range] { width: 100%; margin-top: 18px; accent-color: var(--ink); }
 .log { list-style: none; }
 .today { margin: 0; padding: 0; list-style: none; }
 button.nudge { width: 100%; text-align: left; border: 0; font: inherit; cursor: pointer; }
+.kidc .nm, .kidc .n, .kidc .r { display: block; }
+.nudge .nudgeTxt { display: block; font-size: inherit; opacity: 1; }
+.sheet:focus { outline: none; }

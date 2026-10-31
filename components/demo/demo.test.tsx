@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -126,6 +127,27 @@ describe('log sheet', () => {
     fireEvent.change(within(dialog).getByRole('slider'), { target: { value: '8.5' } })
     await user.click(within(dialog).getByRole('button', { name: en.ui.save }))
     expect(within(screen.getByTestId('today')).getAllByRole('listitem')[0].textContent).toContain('8.5h')
+  })
+})
+
+describe('sheet focus', () => {
+  it('moves focus into the dialog, Escape closes it and focus returns to the chip', async () => {
+    const user = setup()
+    const chip = screen.getByRole('button', { name: /^Food$/ })
+    await user.click(chip)
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.contains(document.activeElement)).toBe(true)
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.activeElement).toBe(chip)
+  })
+})
+
+describe('css', () => {
+  it('the button reset is :where()-scoped so component classes win', () => {
+    const css = readFileSync('components/demo/demo.module.css', 'utf8')
+    expect(css).toMatch(/:where\(\.device\) button\s*\{/)
+    expect(css).not.toMatch(/^\.device button/m)
   })
 })
 

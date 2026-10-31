@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Sheet as SheetState } from '@/lib/demo/reducer'
 import { fmt } from '@/lib/demo'
 import { Ico } from './sticker-ico'
@@ -60,6 +60,19 @@ export function Sheets({ onCheer }: { onCheer: (t: Omit<ToastState, 'n'>) => voi
   // a fresh `n` per opening remounts the content, so a reopened log sheet never keeps the last pick
   const [view, setView] = useState<{ sheet: SheetState; n: number }>({ sheet: state.sheet, n: 0 })
   if (open && state.sheet !== view.sheet) setView({ sheet: state.sheet, n: view.n + 1 })
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const opener = useRef<HTMLElement | null>(null)
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      dialogRef.current?.focus()
+    } else if (!open && wasOpen.current) {
+      if (opener.current?.isConnected) opener.current.focus()
+      opener.current = null
+    }
+    wasOpen.current = open
+  }, [open])
   const shown = open ? state.sheet : view.sheet
 
   let title = ''
@@ -73,8 +86,8 @@ export function Sheets({ onCheer }: { onCheer: (t: Omit<ToastState, 'n'>) => voi
 
   return (
     <>
-      <div className={`${styles.scrim} ${open ? styles.on : ''}`} onClick={() => dispatch({ type: 'closeSheet' })} />
-      <div role="dialog" aria-label={title} aria-hidden={!open} inert={!open} className={`${styles.sheet} ${open ? styles.on : ''}`}
+      <div aria-hidden="true" className={`${styles.scrim} ${open ? styles.on : ''}`} onClick={() => dispatch({ type: 'closeSheet' })} />
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-label={title} aria-hidden={!open} inert={!open} className={`${styles.sheet} ${open ? styles.on : ''}`}
         onKeyDown={(e) => { if (e.key === 'Escape') dispatch({ type: 'closeSheet' }) }}>
         <div className={styles.grab} />
         <div key={view.n}>{body}</div>
