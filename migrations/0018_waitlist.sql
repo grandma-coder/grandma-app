@@ -1,5 +1,6 @@
 -- Waitlist — signups from the grandma.app marketing site (v0-grandma-app).
--- Launch is Brazil first, then the US, so country is first-class.
+-- Worldwide launch: country is first-class and holds any ISO 3166-1 alpha-2
+-- code (uppercase) or 'OTHER', captured from the visitor's geo header.
 -- Command-center-owned. The site WRITES only through waitlist_join() with the
 -- service role; the console READS, exports and promotes rows to beta_testers.
 -- Idempotent.
@@ -10,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.waitlist (
   name          TEXT,
   mode          TEXT NOT NULL CHECK (mode IN ('pre','preg','kids','meno')),
   locale        TEXT NOT NULL CHECK (locale IN ('en','pt')),
-  country       TEXT NOT NULL DEFAULT 'OTHER' CHECK (country IN ('BR','US','OTHER')),
+  country       TEXT NOT NULL DEFAULT 'OTHER' CHECK (country = 'OTHER' OR country ~ '^[A-Z]{2}$'),
   notify_launch BOOLEAN NOT NULL DEFAULT false,
   utm_source    TEXT,
   utm_medium    TEXT,

@@ -1,13 +1,13 @@
 import { z } from "zod"
 import { sql, type SQL } from "drizzle-orm"
-import { WAITLIST_MODES, WAITLIST_LOCALES, WAITLIST_COUNTRIES } from "@/db/schema"
+import { WAITLIST_MODES, WAITLIST_LOCALES } from "@/db/schema"
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD")
 
 export const waitlistFilterSchema = z.object({
   mode: z.enum(WAITLIST_MODES).optional(),
   locale: z.enum(WAITLIST_LOCALES).optional(),
-  country: z.enum(WAITLIST_COUNTRIES).optional(),
+  country: z.string().regex(/^([A-Z]{2}|OTHER)$/, "Expected ISO 3166-1 alpha-2 (uppercase) or OTHER").optional(),
   from: isoDate.optional(),
   to: isoDate.optional(),
   invited: z.enum(["all", "invited", "pending"]).default("all"),

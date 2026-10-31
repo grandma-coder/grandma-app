@@ -149,8 +149,6 @@ export const WAITLIST_MODES = ["pre", "preg", "kids", "meno"] as const
 export type WaitlistMode = (typeof WAITLIST_MODES)[number]
 export const WAITLIST_LOCALES = ["en", "pt"] as const
 export type WaitlistLocale = (typeof WAITLIST_LOCALES)[number]
-export const WAITLIST_COUNTRIES = ["BR", "US", "OTHER"] as const
-export type WaitlistCountry = (typeof WAITLIST_COUNTRIES)[number]
 
 /** Marketing-site waitlist. Written by the site via waitlist_join(); see migrations/0018_waitlist.sql. */
 export const waitlist = pgTable("waitlist", {

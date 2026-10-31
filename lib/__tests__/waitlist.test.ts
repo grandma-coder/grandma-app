@@ -7,9 +7,12 @@ const render = (f: unknown) => dialect.sqlToQuery(buildWaitlistWhere(waitlistFil
 
 describe("waitlistFilterSchema", () => {
   it("defaults invited to all", () => expect(waitlistFilterSchema.parse({}).invited).toBe("all"))
-  it("rejects unknown mode and country", () => {
-    expect(() => waitlistFilterSchema.parse({ mode: "care" })).toThrow()
-    expect(() => waitlistFilterSchema.parse({ country: "DE" })).toThrow()
+  it("rejects unknown mode", () => expect(() => waitlistFilterSchema.parse({ mode: "care" })).toThrow())
+  it("accepts any uppercase ISO code and OTHER", () => {
+    for (const c of ["FR", "BR", "DE", "OTHER"]) expect(waitlistFilterSchema.parse({ country: c }).country).toBe(c)
+  })
+  it("rejects malformed country", () => {
+    for (const c of ["fr", "BRA", "", "F", "F1", "other"]) expect(() => waitlistFilterSchema.parse({ country: c })).toThrow()
   })
   it("rejects a malformed date", () => expect(() => waitlistFilterSchema.parse({ from: "30/10/2026" })).toThrow())
 })

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react"
 import { trpc } from "@/lib/trpc"
 import type { WaitlistFilter } from "@/lib/waitlist"
 
-const COUNTRIES = [["", "All countries"], ["BR", "Brasil"], ["US", "United States"], ["OTHER", "Other"]] as const
 const MODES = [["", "All modes"], ["pre", "Cycle"], ["preg", "Pregnancy"], ["kids", "Kids"], ["meno", "Menopause"]] as const
 const LOCALES = [["", "All languages"], ["en", "English"], ["pt", "Português"]] as const
 const INVITED = [["all", "Everyone"], ["pending", "Not invited"], ["invited", "Invited"]] as const
@@ -16,6 +15,8 @@ export function WaitlistTable() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [notice, setNotice] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+  const stats = trpc.waitlist.stats.useQuery()
+  const countries: (readonly [string, string])[] = [["", "All countries"], ...(stats.data?.byCountry ?? []).map((r) => [r.country, `${r.country} (${r.count})`] as const)]
 
   // Debounce search: every list call writes an audit row, so don't fire per keystroke.
   useEffect(() => {
@@ -66,7 +67,7 @@ export function WaitlistTable() {
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <input className={`${ctl} min-w-[220px]`} aria-label="Search email or name" placeholder="Search email or name" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <select aria-label="Country" className={ctl} value={filter.country ?? ""} onChange={(e) => update({ country: (e.target.value || undefined) as WaitlistFilter["country"] })}>{opt(COUNTRIES)}</select>
+        <select aria-label="Country" className={ctl} value={filter.country ?? ""} onChange={(e) => update({ country: e.target.value || undefined })}>{opt(countries)}</select>
         <select aria-label="Mode" className={ctl} value={filter.mode ?? ""} onChange={(e) => update({ mode: (e.target.value || undefined) as WaitlistFilter["mode"] })}>{opt(MODES)}</select>
         <select aria-label="Language" className={ctl} value={filter.locale ?? ""} onChange={(e) => update({ locale: (e.target.value || undefined) as WaitlistFilter["locale"] })}>{opt(LOCALES)}</select>
         <select aria-label="Invited" className={ctl} value={filter.invited} onChange={(e) => update({ invited: e.target.value as WaitlistFilter["invited"] })}>{opt(INVITED)}</select>
