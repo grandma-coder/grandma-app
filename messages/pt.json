@@ -332,5 +332,78 @@
         ]
       }
     ]
+  },
+  "v3": {
+    "hero": {
+      "rebus": "Sua vida [flower] e a dos seus filhos [baby], num app só [phone].",
+      "sub": "Ciclo, gravidez, filhos e menopausa. Pode ser só o seu ciclo, ou a família inteira.",
+      "emailPlaceholder": "seu@email.com",
+      "emailAria": "Seu email",
+      "join": "Entrar na lista",
+      "note": "Um email quando for a sua vez. Nada além disso.",
+      "tryDesktop": "Testa aqui [pencil] troca a fase e mexe à vontade →",
+      "tryMobile": "Testa no menu aqui embaixo [pencil]",
+      "phoneAria": "Demonstração do app"
+    },
+    "phases": {
+      "aria": "Fase",
+      "pre": "Ciclo",
+      "preg": "Grávida",
+      "kids": "Filhos",
+      "meno": "Menopausa"
+    },
+    "tabs": {
+      "home": "Início",
+      "agenda": "Agenda",
+      "shortcuts": "Atalhos",
+      "week": "Semana",
+      "profile": "Perfil"
+    },
+    "features": {
+      "title": "O que mora aqui dentro [house]"
+    },
+    "waitlist": {
+      "title": "Em breve, no mundo todo [globe]. Guarda seu lugar [heart]",
+      "question": "Em que fase você está?",
+      "emailPlaceholder": "seu@email.com",
+      "emailAria": "Seu email",
+      "join": "Entrar na lista",
+      "note": "Um email quando for a sua vez. Só isso.",
+      "joinedInline": "Você está na lista! A gente avisa.",
+      "joinedTitle": "Você está na lista!",
+      "joinedBody": "A gente avisa assim que os convites abrirem.",
+      "installHint": "No celular, toque em <b>Compartilhar → Adicionar à Tela de Início</b> e a grandma fica aqui pertinho."
+    },
+    "mobile": {
+      "barAria": "Testar o app",
+      "home": "Início",
+      "log": "Registrar",
+      "explore": "Explorar",
+      "memories": "Memórias",
+      "list": "Lista",
+      "goTry": "Testa o app ↓"
+    },
+    "explore": {
+      "title": "Tudo que mora no app",
+      "hint": "Toque num selo e veja no celular.",
+      "join": "Entrar na lista"
+    },
+    "pop": {
+      "title": "Entrar na lista",
+      "note": "Um email quando for a sua vez. Só isso.",
+      "emailPlaceholder": "seu@email.com",
+      "emailAria": "Seu email",
+      "submit": "Entrar",
+      "close": "Fechar"
+    },
+    "tour": {
+      "log": "Toca aqui pra registrar",
+      "week": "Agora vê os gráficos da semana",
+      "mode": "Troca a fase e vê tudo mudar",
+      "shortcuts": "Abre os atalhos da vovó",
+      "join": "Gostou? Guarda seu lugar ♡",
+      "progress": "{n} de {total}",
+      "skip": "pular"
+    }
   }
 }

@@ -18,4 +18,16 @@ describe('messages', () => {
   it('no empty strings', () => expect([...strings(en), ...strings(pt)].filter(([, s]) => !s.trim())).toEqual([]))
   it('same array lengths', () => expect(arrays(pt)).toEqual(arrays(en)))
   it('no prices on the site', () => expect([...strings(en), ...strings(pt)].filter(([, s]) => /\$\s?\d/.test(s))).toEqual([]))
+  describe('v3 namespace', () => {
+    const v3 = (m: typeof en) => (m as unknown as { v3?: Record<string, Record<string, unknown>> }).v3
+    it.each([['en', en], ['pt', pt]] as const)('%s has every v3 group', (_, m) => {
+      expect(Object.keys(v3(m) ?? {}).sort()).toEqual(['explore', 'features', 'hero', 'mobile', 'phases', 'pop', 'tabs', 'tour', 'waitlist'])
+    })
+    it.each([['en', en], ['pt', pt]] as const)('%s rebus carries the three sticker tokens, in order, as [token]', (_, m) => {
+      const r = String((v3(m)?.hero as { rebus?: string } | undefined)?.rebus)
+      expect(r.match(/\[(\w+)\]/g)).toEqual(['[flower]', '[baby]', '[phone]'])
+      expect(r).not.toMatch(/[{}]/)
+    })
+    it('no country-order copy', () => expect([...strings(en), ...strings(pt)].filter(([k, s]) => k.startsWith('v3') && /brasil|brazil/i.test(s))).toEqual([]))
+  })
 })

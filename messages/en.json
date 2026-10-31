@@ -332,5 +332,78 @@
         ]
       }
     ]
+  },
+  "v3": {
+    "hero": {
+      "rebus": "Your life [flower] and your kids' [baby], in one app [phone].",
+      "sub": "Cycle, pregnancy, kids and menopause. Just your cycle, or the whole family.",
+      "emailPlaceholder": "you@email.com",
+      "emailAria": "Your email",
+      "join": "Join the list",
+      "note": "One email when it's your turn. Nothing else.",
+      "tryDesktop": "Try it here [pencil] switch the phase and tap around →",
+      "tryMobile": "Try it from the menu below [pencil]",
+      "phoneAria": "App demo"
+    },
+    "phases": {
+      "aria": "Phase",
+      "pre": "Cycle",
+      "preg": "Pregnant",
+      "kids": "Kids",
+      "meno": "Menopause"
+    },
+    "tabs": {
+      "home": "Home",
+      "agenda": "Agenda",
+      "shortcuts": "Shortcuts",
+      "week": "Week",
+      "profile": "Profile"
+    },
+    "features": {
+      "title": "What lives in here [house]"
+    },
+    "waitlist": {
+      "title": "Coming soon, worldwide [globe]. Save your spot [heart]",
+      "question": "Which phase are you in?",
+      "emailPlaceholder": "you@email.com",
+      "emailAria": "Your email",
+      "join": "Join the list",
+      "note": "One email when it's your turn. That's it.",
+      "joinedInline": "You're on the list! We'll let you know.",
+      "joinedTitle": "You're on the list!",
+      "joinedBody": "We'll let you know as soon as invites open.",
+      "installHint": "On your phone, tap <b>Share → Add to Home Screen</b> and grandma will be right there."
+    },
+    "mobile": {
+      "barAria": "Try the app",
+      "home": "Home",
+      "log": "Log",
+      "explore": "Explore",
+      "memories": "Memories",
+      "list": "List",
+      "goTry": "Try the app ↓"
+    },
+    "explore": {
+      "title": "Everything that lives in the app",
+      "hint": "Tap a sticker and see it on the phone.",
+      "join": "Join the list"
+    },
+    "pop": {
+      "title": "Join the list",
+      "note": "One email when it's your turn. That's it.",
+      "emailPlaceholder": "you@email.com",
+      "emailAria": "Your email",
+      "submit": "Join",
+      "close": "Close"
+    },
+    "tour": {
+      "log": "Tap here to log",
+      "week": "Now see this week's charts",
+      "mode": "Switch the phase and watch everything change",
+      "shortcuts": "Open grandma's shortcuts",
+      "join": "Like it? Save your spot ♡",
+      "progress": "{n} of {total}",
+      "skip": "skip"
+    }
   }
 }
