@@ -181,7 +181,7 @@ export interface DemoUi {
     community: {
       title: string; icon: StickerName; note: string; kinds: Record<ChanKind, string>
       noteAnon: string; noteOpen: string
-      composerPlaceholder: string; composerAria: string; typing: string
+      composerPlaceholder: string; composerAria: string; likeMsgAria: string; typing: string
       meAnon: string; me: string
       replyAnon: { icon: StickerName; who: string }; replyOpen: { icon: StickerName; who: string }
     }

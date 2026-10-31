@@ -82,7 +82,7 @@ export function Sheets({ onCheer }: { onCheer: (t: Omit<ToastState, 'n'>) => voi
   else if (shown.kind === 'shortcuts') { title = data.ui.shortcuts.title; body = <ShortcutsSheet /> }
   else if (shown.kind === 'addExam') {
     title = data.ui.screens.exams.add
-    body = <><SheetHead title={title} /><AddExamSheet onCheer={onCheer} /></>
+    body = <><SheetHead title={title} /><AddExamSheet /></>
   } else if (shown.kind === 'log') {
     title = fmt(data.ui.log.title, { label: chips.find((c) => c.id === shown.chip)?.label.toLowerCase() ?? '' })
     body = <LogSheet chipId={shown.chip} onCheer={onCheer} />

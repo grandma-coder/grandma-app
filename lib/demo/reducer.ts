@@ -126,7 +126,7 @@ export function demoReducer(s: DemoState, a: DemoAction): DemoState {
     case 'setKid':
       return { ...s, kid: a.kid }
     case 'openScreen':
-      return { ...s, screen: a.screen, arg: a.arg ?? null, sheet: NONE }
+      return { ...s, screen: a.screen, arg: a.arg ?? null, sheet: NONE, typing: a.screen === 'chat' ? s.typing : null }
     case 'back':
       return { ...s, ...backTarget(s), typing: null }
     case 'openSheet':

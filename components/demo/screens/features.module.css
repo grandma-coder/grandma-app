@@ -2,7 +2,11 @@
    Keyframes are module-scoped, so slideIn and the scan line live here too. */
 @keyframes slideIn { from { opacity: 0; transform: translateY(-8px) scale(.97); } }
 @keyframes scanLine { to { top: 100%; } }
-@media (prefers-reduced-motion: reduce) { .msg, .tlIt, .scan.go::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .msg, .tlIt, .scan.go::after { animation: none; }
+  .acts svg { transition: none; }
+  .acts .like.on svg { transform: none; }
+}
 
 .small { font-size: 20px; }
 .list { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
@@ -15,7 +19,6 @@
 .circle svg { width: 44px; height: 44px; }
 .memo { margin-top: 12px; padding: 12px; background: #FFF1B8; font: 16px/1.25 var(--hand); text-transform: uppercase; transform: rotate(-1.5deg); }
 .memo small { display: block; font: 10px var(--mono); text-transform: none; color: var(--ink-2); margin-bottom: 4px; }
-.flash { display: block; min-height: 1em; margin-top: 4px; font: 10px var(--mono); color: var(--ink-3); text-align: center; }
 
 /* community chat */
 .chatPage { min-height: 100%; display: flex; flex-direction: column; }
@@ -29,8 +32,8 @@
 .msg.me { align-self: flex-end; }
 .msg.me .bub { background: var(--ink); color: #fff; border-radius: 16px 16px 4px 16px; }
 .typing { margin: 0; font: 11px var(--mono); color: var(--ink-3); }
-/* sticks above the tab bar while the thread scrolls; the negative margin lines it up 112px from the phone's bottom edge */
-.composer { position: sticky; bottom: 112px; z-index: 11; display: flex; gap: 6px; margin: 12px -6px -18px; background: #fff; border: 1.5px solid var(--ink); border-radius: 99px; padding: 4px; }
+/* sticks 128px above the phone's bottom edge so it clears the raised centre button of the tab bar (>= 8px); the -2px margin keeps its natural spot on that line */
+.composer { position: sticky; bottom: 128px; z-index: 11; display: flex; gap: 6px; margin: 12px -6px -2px; background: #fff; border: 1.5px solid var(--ink); border-radius: 99px; padding: 4px; }
 .composer input { flex: 1; min-width: 0; border: 0; outline: 0; padding: 0 10px; font: 13px var(--sans); background: none; color: var(--ink); }
 .composer button { border: 0; background: var(--ink); color: #fff; border-radius: 99px; padding: 8px 14px; font-weight: 700; font-size: 12px; }
 .chan { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; }

@@ -1,28 +1,20 @@
 'use client'
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
 import { useDemo } from './demo'
 import { DemoScreen } from './screens'
 import { Sheets } from './sheet'
 import { TabBar } from './tabs'
-import { Toast, type ToastState } from './toast'
+import { Toast } from './toast'
 import styles from './demo.module.css'
-
-const TOAST_MS = 1500
 
 /**
  * The phone: a fixed 390x800 frame (bezel, island, status bar). A parent may scale it with a CSS transform;
  * no viewport logic lives here.
  */
 export function DemoDevice({ className }: { className?: string }) {
-  const { state, data } = useDemo()
+  const { state, data, toast, cheer } = useDemo()
   const phase = data.phases[state.mode]
-  const [toast, setToast] = useState<ToastState | null>(null)
-  useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), TOAST_MS)
-    return () => clearTimeout(t)
-  }, [toast])
 
   return (
     <div className={`${styles.device} ${className ?? ''}`}>
@@ -31,7 +23,7 @@ export function DemoDevice({ className }: { className?: string }) {
         <div className={styles.status} aria-hidden="true"><span>9:41</span><span>●●● ▮</span></div>
         <DemoScreen />
         <TabBar />
-        <Sheets onCheer={(t) => setToast({ ...t, n: (toast?.n ?? 0) + 1 })} />
+        <Sheets onCheer={(t) => cheer(t.icon, t.text)} />
         <Toast toast={toast} />
       </div>
     </div>

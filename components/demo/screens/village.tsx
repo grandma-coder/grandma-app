@@ -6,17 +6,16 @@ import { Ico } from '../sticker-ico'
 import { useDemo } from '../demo'
 import styles from '../demo.module.css'
 import f from './features.module.css'
-import { Head, useFlash } from './parts'
+import { Head } from './parts'
 
 const FILTERS: VillageFilter[] = ['all', 'sell', 'swap', 'free']
 
 function Post({ n }: { n: number }) {
-  const { state, dispatch, data } = useDemo()
+  const { state, dispatch, data, cheer } = useDemo()
   const t = data.ui.screens.village
   const p = data.village[n]
   const st = state.posts[n]
   const [text, setText] = useState('')
-  const [sent, flash] = useFlash()
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!text.trim()) return
@@ -42,8 +41,8 @@ function Post({ n }: { n: number }) {
           <button type="button" aria-expanded={st.open} aria-label={`${t.commentsAria} ${st.comments.length}`} onClick={() => dispatch({ type: 'toggleComments', post: n })}>
             <Ico name="bubble" />{st.comments.length}
           </button>
-          <button type="button" className={f.want} aria-live="polite" onClick={flash}>
-            {sent ? (p.kind === 'sell' ? t.requestSent : t.messageSent) : p.kind === 'sell' ? t.buy : t.want}
+          <button type="button" className={f.want} onClick={() => cheer('bubble', p.kind === 'sell' ? t.requestSent : t.messageSent)}>
+            {p.kind === 'sell' ? t.buy : t.want}
           </button>
         </div>
         {st.open && (

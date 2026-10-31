@@ -445,7 +445,7 @@ export const dataEn: DemoData = {
         kinds: { channel: 'channel', anon: 'anonymous' },
         noteAnon: 'Anonymous circle: here you show up as Anonymous owl.',
         noteOpen: 'Open channel, with verified professionals.',
-        composerPlaceholder: 'Write to the community…', composerAria: 'Message', typing: 'someone is typing…',
+        composerPlaceholder: 'Write to the community…', composerAria: 'Message', likeMsgAria: 'Like message', typing: 'someone is typing…',
         meAnon: 'Anonymous owl (you)', me: 'You',
         replyAnon: { icon: 'owl', who: 'Anonymous seagull' }, replyOpen: { icon: 'face4', who: 'Carol · Theo’s mom' },
       },

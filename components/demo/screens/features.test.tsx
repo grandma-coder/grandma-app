@@ -130,7 +130,7 @@ describe('community and chat', () => {
     mount()
     go({ type: 'openScreen', screen: 'chat', arg: 'babySleep' })
     const user = userEvent.setup()
-    const btn = screen.getAllByRole('button', { name: /♡/ })[0]
+    const btn = screen.getAllByRole("button", { name: /like message/i })[0]
     expect(btn.textContent).toContain('6')
     await user.click(btn)
     expect(btn.textContent).toContain('7')
@@ -186,6 +186,7 @@ describe('exams', () => {
     expect(snap.arg).toBe(0)
     expect(snap.exams.kids).toHaveLength(n + 1)
     expect(snap.sheet.kind).toBe('none')
+    expect(screen.getByText(en.ui.screens.exams.done)).toBeTruthy()
     expect(screen.getAllByText(en.ui.screens.exams.newExam.title).length).toBeGreaterThan(0)
   })
 
@@ -199,6 +200,19 @@ describe('exams', () => {
     go({ type: 'closeSheet' })
     act(() => { vi.advanceTimersByTime(3000) })
     expect(snap.screen).toBe('exams')
+  })
+})
+
+describe('toasts', () => {
+  it('village want/buy and new memory cheer through the device toast', async () => {
+    mount(true)
+    go({ type: 'openScreen', screen: 'village' })
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('button', { name: 'Buy' })[0])
+    expect(screen.getByText(en.ui.screens.village.requestSent)).toBeTruthy()
+    go({ type: 'openScreen', screen: 'memories' })
+    await user.click(screen.getByRole('button', { name: new RegExp(en.ui.screens.memories.newMemory) }))
+    expect(screen.getByText(en.ui.screens.memories.saved)).toBeTruthy()
   })
 })
 

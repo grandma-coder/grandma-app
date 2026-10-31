@@ -48,7 +48,7 @@ function ChatView({ chan }: { chan: Chan }) {
             <div className={f.bub}>
               <b>{m.who}</b>{m.text}
               {!m.me && (
-                <><br /><button type="button" className={`${f.re} ${m.mine ? f.on : ''}`} aria-pressed={!!m.mine} onClick={() => dispatch({ type: 'likeMsg', channel: chan.id, index: i })}>♡ {m.likes}</button></>
+                <><br /><button type="button" className={`${f.re} ${m.mine ? f.on : ''}`} aria-label={`${t.likeMsgAria} ${m.likes}`} aria-pressed={!!m.mine} onClick={() => dispatch({ type: 'likeMsg', channel: chan.id, index: i })}>♡ {m.likes}</button></>
               )}
             </div>
           </div>

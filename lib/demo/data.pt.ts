@@ -445,7 +445,7 @@ export const dataPt: DemoData = {
         kinds: { channel: 'canal', anon: 'anônimo' },
         noteAnon: 'Círculo anônimo: aqui você aparece como Coruja anônima.',
         noteOpen: 'Canal aberto, com profissionais verificadas.',
-        composerPlaceholder: 'Escreva pra comunidade…', composerAria: 'Mensagem', typing: 'alguém está escrevendo…',
+        composerPlaceholder: 'Escreva pra comunidade…', composerAria: 'Mensagem', likeMsgAria: 'Curtir mensagem', typing: 'alguém está escrevendo…',
         meAnon: 'Coruja anônima (você)', me: 'Você',
         replyAnon: { icon: 'owl', who: 'Gaivota anônima' }, replyOpen: { icon: 'face4', who: 'Carol · mãe do Theo' },
       },

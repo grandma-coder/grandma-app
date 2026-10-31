@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { StickerName } from '@/components/stickers/paths'
 import { Ico } from '../sticker-ico'
 import { useDemo } from '../demo'
@@ -36,11 +36,3 @@ export function Row({ icon, label, value, ok }: { icon: StickerName; label: stri
 }
 
 export const List = ({ children }: { children: ReactNode }) => <ul className={f.list}>{children}</ul>
-
-/** A flag that switches on for `ms` and then off again; the timer dies with the component. */
-export function useFlash(ms = 1800): [boolean, () => void] {
-  const [on, setOn] = useState(false)
-  const t = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  useEffect(() => () => clearTimeout(t.current), [])
-  return [on, () => { setOn(true); clearTimeout(t.current); t.current = setTimeout(() => setOn(false), ms) }]
-}

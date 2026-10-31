@@ -6,12 +6,11 @@ import { useDemo } from '../demo'
 import { KidSwitch } from '../kid-switch'
 import styles from '../demo.module.css'
 import f from './features.module.css'
-import { Head, Note, useFlash } from './parts'
+import { Head, Note } from './parts'
 
 export function Memories() {
-  const { state, dispatch, data } = useDemo()
+  const { state, dispatch, data, cheer } = useDemo()
   const t = data.ui.screens.memories
-  const [saved, flash] = useFlash()
   const kids = state.mode === 'kids'
   const mine = state.mems[state.mode].filter((m) => !kids || state.kid === 'all' || m.kid === state.kid)
   return (
@@ -19,10 +18,9 @@ export function Memories() {
       <Head title={t.title} icon={t.icon} />
       {kids && <KidSwitch />}
       <Note>{t.note}</Note>
-      <button type="button" className={f.newmem} onClick={() => { dispatch({ type: 'addMemory' }); flash() }}>
+      <button type="button" className={f.newmem} onClick={() => { dispatch({ type: 'addMemory' }); cheer('pola', t.saved) }}>
         <Ico name="pola" />{t.newMemory}
       </button>
-      <span role="status" className={f.flash}>{saved ? t.saved : ''}</span>
       <div className={f.tl}>
         {mine.map((m, n) => (
           <div key={`${mine.length - n}`} data-memory="" className={f.tlIt} style={{ '--c': m.tone } as CSSProperties}>

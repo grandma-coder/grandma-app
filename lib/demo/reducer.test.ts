@@ -7,6 +7,13 @@ const run = (s: DemoState, ...as: DemoAction[]) => as.reduce(demoReducer, s)
 const fresh = () => initDemo(dataEn)
 
 describe('demoReducer', () => {
+  it('openScreen away from a chat clears the pending reply marker', () => {
+    let s = run(fresh(), { type: 'openScreen', screen: 'chat', arg: 'babySleep' }, { type: 'sendChat', channel: 'babySleep', text: 'hi' })
+    expect(s.typing).toBe('babySleep')
+    s = run(s, { type: 'openScreen', screen: 'agenda' })
+    expect(s.typing).toBeNull()
+  })
+
   it('starts in kids mode on home with the tour active', () => {
     const s = fresh()
     expect(s.mode).toBe('kids')
