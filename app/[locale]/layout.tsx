@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { Hanken_Grotesk, Space_Mono } from 'next/font/google'
+import { Architects_Daughter, Hanken_Grotesk, Space_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { routing, htmlLang, type Locale } from '@/i18n/routing'
+import { StickerFilters } from '@/components/stickers/filters'
 import '../globals.css'
 
 const hanken = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-hanken', display: 'swap', weight: ['300', '400', '500', '600', '700'], style: ['normal', 'italic'] })
 const spaceMono = Space_Mono({ subsets: ['latin'], variable: '--font-space-mono', display: 'swap', weight: ['400', '700'] })
+const hand = Architects_Daughter({ subsets: ['latin'], variable: '--font-hand', display: 'swap', weight: '400' })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://grandma.app'
 
@@ -36,8 +38,9 @@ export default async function LocaleLayout({ children, params }: Readonly<{ chil
   if (!hasLocale(routing.locales, locale)) notFound()
   setRequestLocale(locale)
   return (
-    <html lang={htmlLang(locale as Locale)} className={`${hanken.variable} ${spaceMono.variable}`}>
+    <html lang={htmlLang(locale as Locale)} className={`${hanken.variable} ${spaceMono.variable} ${hand.variable}`}>
       <body>
+        <StickerFilters />
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

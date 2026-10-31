@@ -2,8 +2,8 @@
 
 /* Diffuse v3 — grandma-app docs/design/design-system-v3.html */
 :root {
-  --bg: #F4F1E8; --paper: #FBFAF5; --paper-2: #F7F4EC; --deep: #E7E3D7;
-  --ink: #1A1916; --ink-2: #4A463E; --ink-3: #807A6E; --ink-4: #B3AC9C;
+  --bg: #F3F0E8; --paper: #FBF9F3; --app: #FBF6EA; --paper-2: #F7F4EC; --deep: #E7E3D7;
+  --ink: #161513; --ink-2: #4F4B43; --ink-3: #8C877C; --ink-4: #B3AC9C;
   --line: rgba(26,25,22,.12); --line-2: rgba(26,25,22,.20); --hair: rgba(26,25,22,.55);
   --err: #C62828;
   --r-sm: 14px; --r-md: 20px; --r-lg: 28px; --r-xl: 40px;
@@ -11,6 +11,9 @@
   --sh-card: 0 1px 2px rgba(26,25,22,.04), 0 8px 30px -18px rgba(26,25,22,.18);
   --sh-pop: 0 2px 6px rgba(26,25,22,.06), 0 22px 50px -24px rgba(26,25,22,.30);
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* v3 sticker palette (matches components/stickers/paths.ts) */
+  --s-pink: #F4A6C9; --s-yellow: #F9C846; --s-blue: #8DB6F2; --s-orange: #F37A3B; --s-green: #1E8A6A;
+  --s-red: #EC4B3C; --s-lilac: #B69CF2; --s-peach: #F7C9A6; --s-mint: #9ED8B0; --s-cream: #FFF8E6;
   /* default field = pregnancy; [data-mode] overrides */
   --g1: #F8C9A6; --g2: #F2AEC6; --g3: #BDA4E2; --g4: #F8E1B2; --accent: #8F5FC6; --accent-soft: #E7D8F5;
 }
@@ -26,10 +29,16 @@
   --color-bg: var(--bg); --color-paper: var(--paper); --color-paper-2: var(--paper-2); --color-deep: var(--deep);
   --color-ink: var(--ink); --color-ink-2: var(--ink-2); --color-ink-3: var(--ink-3); --color-ink-4: var(--ink-4);
   --color-line: var(--line); --color-line-2: var(--line-2); --color-hair: var(--hair); --color-err: var(--err);
+  --color-app: var(--app);
+  --color-s-pink: var(--s-pink); --color-s-yellow: var(--s-yellow); --color-s-blue: var(--s-blue); --color-s-orange: var(--s-orange); --color-s-green: var(--s-green);
+  --color-s-red: var(--s-red); --color-s-lilac: var(--s-lilac); --color-s-peach: var(--s-peach); --color-s-mint: var(--s-mint); --color-s-cream: var(--s-cream);
   --color-accent: var(--accent); --color-accent-soft: var(--accent-soft);
   --radius-d-sm: var(--r-sm); --radius-d-md: var(--r-md); --radius-d-lg: var(--r-lg); --radius-d-xl: var(--r-xl);
   --shadow-card: var(--sh-card); --shadow-pop: var(--sh-pop);
 }
+
+/* hand-lettered face: --font-hand is set by next/font on <html> (a theme token would self-reference) */
+.font-hand { font-family: var(--font-hand), 'Architects Daughter', cursive; }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
