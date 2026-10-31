@@ -333,6 +333,7 @@ export const dataPt: DemoData = {
     ovu: { icon: 'egg', name: 'Ovulação', what: 'janela fértil' },
     lut: { icon: 'moon2', name: 'Lútea', what: 'progesterona' },
   },
+  demoDate: { year: 2026, month: 10, day: 30 },
   ui: {
     user: 'Amara',
     dateLocale: 'pt-BR',

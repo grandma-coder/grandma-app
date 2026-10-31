@@ -3,6 +3,9 @@
 import type { ComponentType } from 'react'
 import type { ScreenName } from '@/lib/demo/reducer'
 import { Home } from '../home'
+import { Agenda } from './agenda'
+import { Week } from './week'
+import { Profile } from './profile'
 import { useDemo } from '../demo'
 import styles from '../demo.module.css'
 
@@ -13,6 +16,9 @@ import styles from '../demo.module.css'
  */
 export const SCREENS: Partial<Record<ScreenName, ComponentType>> = {
   home: Home,
+  agenda: Agenda,
+  week: Week,
+  profile: Profile,
 }
 
 export function DemoScreen() {

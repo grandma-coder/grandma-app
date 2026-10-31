@@ -224,5 +224,7 @@ export interface DemoData {
   rangeVis: Partial<Record<ChipId, { icon: StickerName; how: 'grow' | 'count' }>>
   feats: Feat[]
   cyc: Record<CycPhase, { icon: StickerName; name: string; what: string }>
+  /** fixed "today" of the demo, so the calendar renders identically on server and client */
+  demoDate: { year: number; month: number; day: number }
   ui: DemoUi
 }
