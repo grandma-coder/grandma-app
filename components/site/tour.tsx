@@ -57,9 +57,9 @@ export function Tour() {
       el.dataset.on = String(on)
     }
     const mark = (el: Element | null) => {
-      if (prev === el) return
-      prev?.classList.remove(HIT)
-      el?.classList.add(HIT)
+      // React can rewrite className on re-render, so re-assert the class every frame
+      if (prev && prev !== el) prev.classList.remove(HIT)
+      if (el && !el.classList.contains(HIT)) el.classList.add(HIT)
       prev = el
     }
     const place = () => {
@@ -103,6 +103,7 @@ export function Tour() {
 
   const tryApp = () => {
     document.getElementById(MODES_ID)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
+    clearTimeout(goTimer.current)
     if (isSmall()) goTimer.current = setTimeout(showPhone, 450)
   }
 

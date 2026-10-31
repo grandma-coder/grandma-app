@@ -197,4 +197,30 @@ describe('Tour', () => {
     expect(queue.size).toBe(0)
     expect(hit()).toEqual([])
   })
+
+  it('puts the breathing class back when a re-render overwrites the target className', () => {
+    setup()
+    const chip = document.querySelector('#phone [data-tour="log"]') as HTMLElement
+    expect(chip.classList.contains('tour-hit')).toBe(true)
+    chip.className = 'rewritten'
+    flush()
+    expect(chip.classList.contains('tour-hit')).toBe(true)
+    expect(chip.classList.contains('rewritten')).toBe(true)
+  })
+
+  it('calls showPhone once on a double tap of the pill (phones)', () => {
+    vi.useFakeTimers()
+    try {
+      mockMedia(true)
+      below = true
+      setup()
+      const spy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+      document.getElementById(MODES_ID)!.scrollIntoView = vi.fn()
+      const pill = screen.getByRole('button', { name: en.v3.mobile.goTry })
+      act(() => { pill.click(); pill.click() })
+      act(() => { vi.advanceTimersByTime(500) })
+      // showPhone scrolls only when #modes is out of place; with the mocked rect (top 2000) it does, once
+      expect(spy).toHaveBeenCalledTimes(1)
+    } finally { vi.useRealTimers() }
+  })
 })
