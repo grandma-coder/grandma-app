@@ -4,6 +4,7 @@ import { SiteShell } from '@/components/site/site-shell'
 import { Hero } from '@/components/site/hero'
 import { StickerSheet } from '@/components/site/sticker-sheet'
 import { WaitlistSection } from '@/components/site/waitlist-section'
+import { MobileBar } from '@/components/site/mobile-bar'
 import { Footer } from '@/components/site/footer'
 
 export default async function Home({ params }: { params: Promise<{ locale: 'en' | 'pt' }> }) {
@@ -18,6 +19,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'en' 
           <StickerSheet />
           <WaitlistSection />
         </main>
+        <MobileBar />
       </SiteShell>
       <Footer />
     </>

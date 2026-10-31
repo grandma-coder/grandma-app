@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { notFound } from 'next/navigation'
 import { Architects_Daughter, Hanken_Grotesk, Space_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
@@ -11,6 +11,8 @@ import '../globals.css'
 const hanken = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-hanken', display: 'swap', weight: ['300', '400', '500', '600', '700'], style: ['normal', 'italic'] })
 const spaceMono = Space_Mono({ subsets: ['latin'], variable: '--font-space-mono', display: 'swap', weight: ['400', '700'] })
 const hand = Architects_Daughter({ subsets: ['latin'], variable: '--font-hand', display: 'swap', weight: '400' })
+
+export const viewport: Viewport = { themeColor: '#F3F0E8', viewportFit: 'cover' }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://grandma.app'
 
@@ -29,7 +31,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     alternates: { canonical: `/${locale}`, languages: { en: '/en', 'pt-BR': '/pt', 'x-default': '/en' } },
     openGraph: { title: t('ogTitle'), description: t('description'), type: 'website', locale: locale === 'pt' ? 'pt_BR' : 'en_US' },
     twitter: { card: 'summary_large_image' },
-    icons: { icon: '/favicon.svg' },
+    other: { 'apple-mobile-web-app-capable': 'yes' },
+    icons: { icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }, { url: '/favicon.ico', sizes: '48x48' }], apple: '/icons/apple-touch-icon.png' },
+    appleWebApp: { capable: true, title: 'grandma', statusBarStyle: 'default' },
   }
 }
 

@@ -46,3 +46,6 @@ button { cursor: pointer; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* room for the black bar on phones */
+@media (max-width: 900px) { body { padding-bottom: calc(84px + var(--safe-b)); } }
