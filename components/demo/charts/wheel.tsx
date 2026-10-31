@@ -25,7 +25,7 @@ export function CycleWheel() {
           const d = i + 1, a = ((90 + ((d - TODAY) * 360) / 28) * Math.PI) / 180
           const cls = `${c.wd} ${d === TODAY ? c.today : ''} ${d === sel ? c.sel : ''}`
           return (
-            <button key={d} type="button" className={cls} aria-label={fmt(ui.cycle.dayAria, { d })} aria-pressed={d === sel}
+            <button key={d} type="button" className={cls} aria-label={`${fmt(ui.cycle.dayAria, { d })}, ${cyc[phaseOf(d)].name}`} aria-current={d === TODAY ? 'date' : undefined} aria-pressed={d === sel}
               style={{ left: r2(128 + R * Math.cos(a)), top: r2(128 + R * Math.sin(a)), '--k': i } as React.CSSProperties}
               onClick={() => setSel(d)}>
               <Ico name={cyc[phaseOf(d)].icon} />

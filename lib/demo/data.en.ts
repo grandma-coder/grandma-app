@@ -370,7 +370,7 @@ export const dataEn: DemoData = {
     },
     cycle: { day: 'DAY', todayPrefix: 'today · ', dayAria: 'Day {d}' },
     weekdays: { mondayFirst: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], sundayFirst: ['S', 'M', 'T', 'W', 'T', 'F', 'S'] },
-    agenda: { title: 'Agenda', next: 'Coming up', shared: 'shared', today: 'Today' },
+    agenda: { title: 'Agenda', next: 'Coming up', shared: 'shared', today: 'Today', states: { period: 'period', fertile: 'fertile window', event: 'appointment', today: 'today' } },
     week: { title: 'Your week' },
     profile: {
       title: 'Profile', kids: 'Kids', add: 'Add', network: 'Your circle', people: '4 people', kidsSuffix: ' · Kenji and Lua',
@@ -418,7 +418,7 @@ export const dataEn: DemoData = {
       kenjiLegend: 'Kenji · avg 10h40', luaLegend: 'Lua · wakes 2x',
       plateTitle: 'Kenji’s plate', plateSub: 'this week',
       plate: [{ label: 'Protein', pct: 28, tone: '#F4A6C9' }, { label: 'Veggies', pct: 24, tone: '#9ED8B0' }, { label: 'Fruit', pct: 22, tone: '#F9C846' }, { label: 'Carbs', pct: 26, tone: '#CFE1FA' }],
-      proteinTitle: 'Protein this week', proteinSub: '86% of goal', proteinNote: 'Adding up what the nanny and you logged.',
+      proteinTitle: 'Protein this week', proteinPct: 86, proteinSub: '86% of goal', proteinNote: 'Adding up what the nanny and you logged.',
       feedsTitle: 'Lua’s feeds', feedsSub: 'per day', seeGrowth: 'See full growth',
       heatTitle: 'When they show up', heatSub: 'this week', heatSlots: ['morning', 'afternoon', 'evening', 'night'], heatNote: 'Mostly afternoons and nights. Worth bringing to your visit.',
       trendTitle: 'Hot flashes per week', trendSub: '6 weeks', trendWeek: 'W{n}',

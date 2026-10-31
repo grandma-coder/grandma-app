@@ -16,7 +16,7 @@ export function GrowthChart({ growth, tab, title, curve }: { growth: Growth; tab
   const line = (arr: number[]) => arr.map((v, i) => `${X(i)},${Y(v)}`).join(' ')
   const band = `${line(m.p97)} ${m.p3.map((v, i) => `${X(i)},${Y(v)}`).reverse().join(' ')}`
   return (
-    <ChartCard title={`${title} (${m.u})`} sub={curve}>
+    <ChartCard title={`${title} (${m.u})`} sub={curve} alt={`${title} (${m.u}), ${curve}: ${growth.xl.map((t, i) => `${t} ${m.me[i]}`).join(', ')}`}>
       <svg className={c.gsvg} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
         <polygon points={band} style={{ fill: 'var(--mc)' }} opacity=".55" />
         <polyline points={line(m.p50)} fill="none" stroke="#8C877C" strokeWidth="1.5" strokeDasharray="5 4" />

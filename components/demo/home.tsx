@@ -1,33 +1,16 @@
 'use client'
 
 import { useEffect, useState, type CSSProperties } from 'react'
-import { fmt, forGoal, type LogItem } from '@/lib/demo'
+import { fmt, forGoal } from '@/lib/demo'
 import { Ico } from './sticker-ico'
 import { useDemo } from './demo'
 import { KidSwitch } from './kid-switch'
+import { LogRow } from './log-row'
 import { SizeCard } from './size-card'
 import { KID_IDS } from './kids'
 import styles from './demo.module.css'
 
 const SOFT = { color: 'rgba(22,21,19,.6)' } as const
-
-function LogRow({ item }: { item: LogItem }) {
-  const { data } = useDemo()
-  const kid = item.kid ? data.kids[item.kid] : null
-  return (
-    <li className={`${styles.log} ${styles.card}`}>
-      <Ico name={item.icon} />
-      <div>
-        <b>
-          {item.label}
-          {kid && <span className={styles.tag} style={{ '--tc': kid.tone } as CSSProperties}>{kid.name}</span>}
-        </b>
-        <span>{item.value}</span>
-      </div>
-      <time>{item.time}</time>
-    </li>
-  )
-}
 
 export function Home() {
   const { state, dispatch, data, onNudge } = useDemo()

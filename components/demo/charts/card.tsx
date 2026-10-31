@@ -5,11 +5,11 @@ import demo from '../demo.module.css'
 import c from './charts.module.css'
 
 /** Chart frame: title left, small mono sub-label right. */
-export function ChartCard({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+export function ChartCard({ title, sub, alt, children }: { title: string; sub?: string; alt?: string; children: ReactNode }) {
   return (
     <div className={`${demo.card} ${c.chart}`}>
       <h5>{title}{sub != null && <span>{sub}</span>}</h5>
-      {children}
+      {alt ? <div role="img" aria-label={alt}>{children}</div> : children}
     </div>
   )
 }

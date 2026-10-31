@@ -128,7 +128,7 @@ export interface DemoUi {
   }
   cycle: { day: string; todayPrefix: string; dayAria: string }
   weekdays: { mondayFirst: string[]; sundayFirst: string[] }
-  agenda: { title: string; next: string; shared: string; today: string }
+  agenda: { title: string; next: string; shared: string; today: string; states: { period: string; fertile: string; event: string; today: string } }
   week: { title: string }
   profile: { title: string; kids: string; add: string; network: string; people: string; kidsSuffix: string; items: { screen: FeatScreenKey; icon: StickerName; title: string }[] }
   tabs: { home: string; agenda: string; shortcuts: string; week: string; profile: string }
@@ -156,7 +156,7 @@ export interface DemoUi {
     nightsTitle: string; nightsSub: string; nightsAxis: string[]
     kenjiLegend: string; luaLegend: string
     plateTitle: string; plateSub: string; plate: { label: string; pct: number; tone: string }[]
-    proteinTitle: string; proteinSub: string; proteinNote: string
+    proteinTitle: string; proteinSub: string; proteinPct: number; proteinNote: string
     feedsTitle: string; feedsSub: string; seeGrowth: string
     heatTitle: string; heatSub: string; heatSlots: string[]; heatNote: string
     trendTitle: string; trendSub: string; trendWeek: string

@@ -18,7 +18,7 @@ export function Nights({ days, show }: { days: string[]; show: KidId[] }) {
     <i className={nap ? c.nap : undefined} style={{ '--a': `${pos(n[0])}%`, '--w': `${pos(n[1]) - pos(n[0])}%`, '--c': kids[id].tone } as CSSProperties} />
   )
   return (
-    <ChartCard title={ui.charts.nightsTitle} sub={ui.charts.nightsSub}>
+    <ChartCard title={ui.charts.nightsTitle} sub={ui.charts.nightsSub} alt={`${ui.charts.nightsTitle}, ${ui.charts.nightsSub}: ${[show.includes('kenji') && ui.charts.kenjiLegend, show.includes('lua') && ui.charts.luaLegend].filter(Boolean).join('; ')}`}>
       <div className={c.nights}>
         {KENJI.map((n, i) => (
           <div key={i} style={{ display: 'contents' }}>

@@ -370,7 +370,7 @@ export const dataPt: DemoData = {
     },
     cycle: { day: 'DIA', todayPrefix: 'hoje · ', dayAria: 'Dia {d}' },
     weekdays: { mondayFirst: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'], sundayFirst: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'] },
-    agenda: { title: 'Agenda', next: 'Próximos', shared: 'compartilhado', today: 'Hoje' },
+    agenda: { title: 'Agenda', next: 'Próximos', shared: 'compartilhado', today: 'Hoje', states: { period: 'menstruação', fertile: 'janela fértil', event: 'consulta', today: 'hoje' } },
     week: { title: 'Sua semana' },
     profile: {
       title: 'Perfil', kids: 'Filhos', add: 'Adicionar', network: 'Sua rede', people: '4 pessoas', kidsSuffix: ' · Kenji e Lua',
@@ -418,7 +418,7 @@ export const dataPt: DemoData = {
       kenjiLegend: 'Kenji · média 10h40', luaLegend: 'Lua · acorda 2x',
       plateTitle: 'Prato do Kenji', plateSub: 'esta semana',
       plate: [{ label: 'Proteína', pct: 28, tone: '#F4A6C9' }, { label: 'Vegetais', pct: 24, tone: '#9ED8B0' }, { label: 'Frutas', pct: 22, tone: '#F9C846' }, { label: 'Carboidratos', pct: 26, tone: '#CFE1FA' }],
-      proteinTitle: 'Proteína da semana', proteinSub: '86% da meta', proteinNote: 'Somando o que a babá e você registraram.',
+      proteinTitle: 'Proteína da semana', proteinPct: 86, proteinSub: '86% da meta', proteinNote: 'Somando o que a babá e você registraram.',
       feedsTitle: 'Mamadas da Lua', feedsSub: 'por dia', seeGrowth: 'Ver crescimento completo',
       heatTitle: 'Quando elas aparecem', heatSub: 'esta semana', heatSlots: ['manhã', 'tarde', 'noite', 'madrug.'], heatNote: 'Mais à tarde e de madrugada. Vale levar pra consulta.',
       trendTitle: 'Ondas de calor por semana', trendSub: '6 semanas', trendWeek: 'S{n}',

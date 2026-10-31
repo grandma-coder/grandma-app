@@ -18,7 +18,7 @@ export function LineChart({ vals, labels, title, sub, cover, coverLabel, mark, m
   const Y = (v: number) => r2(h - 14 - ((v - min + pad) / (max - min + 2 * pad)) * (h - 28))
   const pts = vals.map((v, i): [number, number] => [r2(12 + (i * (W - 24)) / (vals.length - 1)), Y(v)])
   return (
-    <ChartCard title={title} sub={sub}>
+    <ChartCard title={title} sub={sub} alt={`${title}, ${sub}: ${labels.map((l, i) => `${l} ${vals[i]}`).join(', ')}${cover != null ? `. ${coverLabel} ${cover}` : ''}`}>
       <svg className={c.lineSvg} viewBox={`0 0 ${W} ${h}`} aria-hidden="true">
         {cover != null && (
           <>
@@ -49,7 +49,7 @@ export function WeightBand({ title, sub, weekLabel }: { title: string; sub: stri
   const Y = (v: number) => r2(h - 16 - (v / 9) * (h - 26))
   const band = [...HI.map((v, i) => `${X(i)},${Y(v)}`), ...LO.map((v, i) => `${X(i)},${Y(v)}`).reverse()].join(' ')
   return (
-    <ChartCard title={title} sub={sub}>
+    <ChartCard title={title} sub={sub} alt={`${title}, ${sub}: ${WKS.map((w, i) => `${weekLabel(w)} ${ME[i]}`).join(', ')}`}>
       <svg className={c.lineSvg} viewBox={`0 0 ${W} ${h}`} aria-hidden="true">
         <polygon points={band} style={{ fill: 'var(--mc)' }} opacity=".6" />
         <g filter="url(#wob)">

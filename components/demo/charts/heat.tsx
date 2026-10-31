@@ -7,7 +7,7 @@ const GRID = [[0, 2, 0, 3, 0, 0, 1], [1, 0, 0, 0, 2, 0, 0], [0, 3, 0, 0, 0, 2, 0
 
 export function Heat({ title, sub, note, slots, days }: { title: string; sub: string; note: string; slots: string[]; days: string[] }) {
   return (
-    <ChartCard title={title} sub={sub}>
+    <ChartCard title={title} sub={sub} alt={`${title}, ${sub}: ${GRID.map((r, i) => `${slots[i]} ${r.reduce((a, b) => a + b, 0)}`).join(', ')}. ${note}`}>
       <div className={c.heat} data-testid="heat">
         <span />
         {days.map((d, i) => <span key={i} className={c.d}>{d}</span>)}

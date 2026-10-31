@@ -1,35 +1,21 @@
 'use client'
 
 import type { CSSProperties } from 'react'
-import type { KidId, LogItem } from '@/lib/demo'
+import type { KidId } from '@/lib/demo'
 import { Ico } from '../sticker-ico'
 import { useDemo } from '../demo'
 import { KidSwitch } from '../kid-switch'
+import { KidTag, LogRow } from '../log-row'
 import { KID_IDS } from '../kids'
 import styles from '../demo.module.css'
 import s from './screens.module.css'
 
 const cls = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
-function KidTag({ id }: { id: KidId | null }) {
-  const { data } = useDemo()
-  if (!id) return null
-  return <span className={styles.tag} style={{ '--tc': data.kids[id].tone } as CSSProperties}>{data.kids[id].name}</span>
-}
-
-function LogRow({ item }: { item: LogItem }) {
-  return (
-    <li className={cls(styles.log, styles.card)}>
-      <Ico name={item.icon} />
-      <div><b>{item.label}<KidTag id={item.kid} /></b><span>{item.value}</span></div>
-      <time>{item.time}</time>
-    </li>
-  )
-}
-
 export function Agenda() {
   const { state, data } = useDemo()
   const { ui, demoDate: dd } = data
+  const st = ui.agenda.states
   const phase = data.phases[state.mode]
   const c = phase.cal
   const kids = state.mode === 'kids'
@@ -53,14 +39,17 @@ export function Agenda() {
           {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} data-blank="" />)}
           {Array.from({ length: total }, (_, i) => i + 1).map((d) => {
             const per = c.per.includes(d), fer = c.fer.includes(d), ev = c.ev.includes(d), today = d === dd.day
+            const dayKids = c.kd ? KID_IDS.filter((id) => c.kd![id].includes(d) && (state.kid === 'all' || state.kid === id)) : []
+            const label = [d, today && st.today, per && st.period, fer && st.fertile, ev && st.event, ...dayKids.map((id) => data.kids[id].name)].filter(Boolean)
+            const named = label.length > 1
             return (
-              <span key={d} data-day={d} data-per={per ? '' : undefined} data-fer={fer ? '' : undefined} data-ev={ev ? '' : undefined} data-today={today ? '' : undefined}
+              <span key={d} data-day={d} role={named ? 'img' : undefined} aria-label={named ? label.join(', ') : undefined} data-per={per ? '' : undefined} data-fer={fer ? '' : undefined} data-ev={ev ? '' : undefined} data-today={today ? '' : undefined}
                 className={cls(today && s.today, per && s.per, fer && s.fer, ev && s.ev, c.dots.includes(d) && s.dot)}>
                 {d}
                 {c.star === d && <Ico name="star" />}
                 {c.kd && (
                   <b className={s.kd}>
-                    {KID_IDS.filter((id) => c.kd![id].includes(d) && (state.kid === 'all' || state.kid === id)).map((id) => (
+                    {dayKids.map((id) => (
                       <i key={id} data-kid-dot={id} style={{ background: data.kids[id].dot }} />
                     ))}
                   </b>

@@ -7,7 +7,7 @@ export function Beads({ title, sub, days, values, icon, per, testId }: {
 }) {
   let k = 0
   return (
-    <ChartCard title={title} sub={sub}>
+    <ChartCard title={title} sub={sub} alt={`${title}, ${sub}: ${days.map((d, i) => `${d} ${values[i]}`).join(', ')}`}>
       <div className={c.beads} data-testid={testId}>
         {values.map((n, i) => (
           <div key={i}>{days[i]}<p>{Array.from({ length: Math.round(n / per) }, () => <Stk key={k} name={icon} k={k++} testId="heart" />)}</p><b>{n}</b></div>

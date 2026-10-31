@@ -49,7 +49,7 @@ function WeekPre() {
     <>
       <CycleWheel />
       <LineChart vals={BBT} labels={BBT_DAYS} title={ch.bbtTitle} sub={ch.bbtSub} cover={36.45} coverLabel={ch.baseline} mark={9} markLabel={ch.ovulation} />
-      <ChartCard title={ch.moodTitle} sub={ch.moodSub}>
+      <ChartCard title={ch.moodTitle} sub={ch.moodSub} alt={`${ch.moodTitle}: ${MOODS.map((f, i) => `${days[i]} ${data.ui.log.faces.find((x) => x.icon === f)?.label}`).join(', ')}`}>
         <FacesRow items={MOODS.map((icon, i) => ({ icon, label: days[i] }))} />
       </ChartCard>
     </>
@@ -64,7 +64,7 @@ function WeekPreg() {
     <>
       <Beads title={ch.kicksTitle} sub={ch.kicksSub} days={days} values={KICKS} icon="heart" per={2} testId="kicks" />
       <WeightBand title={ch.weightTitle} sub={ch.weightSub} weekLabel={(w) => fmt(ch.weekAbbr, { w })} />
-      <ChartCard title={ch.trailTitle} sub={ch.trailSub}>
+      <ChartCard title={ch.trailTitle} sub={ch.trailSub} alt={`${ch.trailTitle}, ${ch.trailSub}: ${data.weeks.slice(0, 5).map((w) => `${w.week} ${w.name}`).join(', ')}`}>
         <FacesRow items={data.weeks.slice(0, 5).map((w) => ({ icon: w.icon, label: String(w.week) }))} />
       </ChartCard>
       <Tiles items={[{ value: t.gainValue, label: t.gainLabel }, { value: t.visitsValue, label: t.visitsLabel }, { value: t.sleepValue, label: t.sleepLabel }]} />

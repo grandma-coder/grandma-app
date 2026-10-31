@@ -24,9 +24,8 @@ export function Plate() {
     a = a1
     return <path key={p.label} d={arc(60, 60, 0.01, 54, a0 + 0.8, a1 - 0.8)} fill={p.tone} stroke="#161513" strokeWidth="1.8" />
   })
-  const meter = parseInt(ch.proteinSub, 10)
   return (
-    <ChartCard title={ch.plateTitle} sub={ch.plateSub}>
+    <ChartCard title={ch.plateTitle} sub={ch.plateSub} alt={`${ch.plateTitle}: ${ch.plate.map((p) => `${p.label} ${p.pct}%`).join(', ')}. ${ch.proteinTitle}: ${ch.proteinSub}.`}>
       <div className={c.plateW}>
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle cx="60" cy="60" r="59" fill="#fff" stroke="#161513" strokeWidth="1.8" />
@@ -35,7 +34,7 @@ export function Plate() {
         <ul>{ch.plate.map((p) => <li key={p.label}><i style={{ background: p.tone }} />{p.label}<b>{p.pct}%</b></li>)}</ul>
       </div>
       <h5 style={{ marginTop: 12 }}>{ch.proteinTitle}<span>{ch.proteinSub}</span></h5>
-      <div className={c.meter}><i style={{ '--w': `${Number.isFinite(meter) ? meter : 86}%` } as React.CSSProperties} /></div>
+      <div className={c.meter}><i style={{ '--w': `${ch.proteinPct}%` } as React.CSSProperties} /></div>
       <p className={c.note}>{ch.proteinNote}</p>
     </ChartCard>
   )
