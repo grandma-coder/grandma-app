@@ -1,16 +1,17 @@
 import { describe, it, expect } from 'vitest'
-import { COUNTRIES, countryFromGeo } from './countries'
+import { countryFromGeo } from './countries'
 
 describe('countryFromGeo', () => {
-  it('lists the launch countries', () => expect(COUNTRIES).toEqual(['BR', 'US', 'OTHER']))
-  it('maps BR and US case-insensitively', () => {
-    expect(countryFromGeo('BR', 'en')).toBe('BR')
-    expect(countryFromGeo('us', 'pt')).toBe('US')
+  it('uppercases any ISO alpha-2 code', () => {
+    expect(countryFromGeo('br')).toBe('BR')
+    expect(countryFromGeo('DE')).toBe('DE')
+    expect(countryFromGeo(' fr ')).toBe('FR')
   })
-  it('maps any other country to OTHER', () => expect(countryFromGeo('DE', 'pt')).toBe('OTHER'))
-  it('falls back by locale when the header is missing', () => {
-    expect(countryFromGeo(null, 'pt')).toBe('BR')
-    expect(countryFromGeo('', 'en')).toBe('OTHER')
-    expect(countryFromGeo(undefined, 'en')).toBe('OTHER')
+  it('falls back to OTHER for malformed or missing values', () => {
+    expect(countryFromGeo('xx1')).toBe('OTHER')
+    expect(countryFromGeo('USA')).toBe('OTHER')
+    expect(countryFromGeo('')).toBe('OTHER')
+    expect(countryFromGeo(null)).toBe('OTHER')
+    expect(countryFromGeo(undefined)).toBe('OTHER')
   })
 })

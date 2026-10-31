@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { waitlistSchema, formDataToObject } from './schema'
 
-const base = { email: 'ana@example.com', mode: 'preg', locale: 'pt', country: 'BR' }
+const base = { email: 'ana@example.com', mode: 'preg', locale: 'pt' }
 
 describe('waitlistSchema', () => {
   it('normalises email', () => expect(waitlistSchema.parse({ ...base, email: '  Ana@Example.COM ' }).email).toBe('ana@example.com'))
@@ -14,8 +14,9 @@ describe('waitlistSchema', () => {
     expect(waitlistSchema.parse(base).notifyLaunch).toBe(false)
   })
   it('falls back to en for unknown locale', () => expect(waitlistSchema.parse({ ...base, locale: 'de' }).locale).toBe('en'))
-  it('accepts the three countries', () => {
-    for (const c of ['BR', 'US', 'OTHER']) expect(waitlistSchema.parse({ ...base, country: c }).country).toBe(c)
+  it('accepts a payload with no country and never reads one from the client', () => {
+    const r = waitlistSchema.parse({ ...base, country: 'US' })
+    expect(r).not.toHaveProperty('country')
   })
   it('drops oversized utm values', () => {
     const r = waitlistSchema.parse({ ...base, utm_source: 'x'.repeat(201), utm_medium: 'social' })
@@ -28,9 +29,7 @@ describe('waitlistSchema', () => {
     [{ ...base, email: `${'a'.repeat(250)}@x.co` }, 'email', 'email_too_long'],
     [{ ...base, name: 'n'.repeat(81) }, 'name', 'name_too_long'],
     [{ ...base, mode: 'care' }, 'mode', 'mode_required'],
-    [{ email: 'ana@example.com', locale: 'pt', country: 'BR' }, 'mode', 'mode_required'],
-    [{ ...base, country: 'DE' }, 'country', 'country_required'],
-    [{ email: 'ana@example.com', locale: 'pt', mode: 'preg' }, 'country', 'country_required'],
+    [{ email: 'ana@example.com', locale: 'pt' }, 'mode', 'mode_required'],
   ])('rejects %j (%s=%s)', (input, field, code) => {
     const r = waitlistSchema.safeParse(input)
     expect(r.success).toBe(false)

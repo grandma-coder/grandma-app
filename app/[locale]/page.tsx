@@ -12,8 +12,8 @@ import { getDefaultCountry } from '@/lib/geo'
 export default async function Home({ params }: { params: Promise<{ locale: 'en' | 'pt' }> }) {
   const { locale } = await params
   setRequestLocale(locale)
-  const country = await getDefaultCountry(locale)
-  const form = <WaitlistForm defaultCountry={country} />
+  const country = await getDefaultCountry()
+  const form = <WaitlistForm />
   return (
     <>
       <Nav />

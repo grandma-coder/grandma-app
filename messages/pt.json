@@ -24,12 +24,6 @@
   "form": {
     "email": "Email",
     "emailPh": "voce@exemplo.com",
-    "country": "Onde você mora?",
-    "countries": {
-      "BR": "Brasil",
-      "US": "Estados Unidos",
-      "OTHER": "Outro"
-    },
     "mode": "Onde você está <em>agora?</em>",
     "modes": {
       "pre": [
@@ -59,9 +53,7 @@
     "honeypot": "Deixe este campo vazio",
     "success": {
       "title": "Você está na <em>lista.</em>",
-      "BR": "A gente escreve quando os convites abrirem no Brasil.",
-      "US": "A gente escreve quando os convites abrirem nos Estados Unidos.",
-      "OTHER": "A gente escreve quando o app chegar até você."
+      "body": "A gente escreve quando o app chegar até você."
     },
     "rateLimited": "Muitas tentativas a partir desta conexão. Tente de novo daqui a uma hora.",
     "error": "Algo deu errado do nosso lado. Tente de novo.",
@@ -70,8 +62,7 @@
       "email_invalid": "Esse email não parece certo.",
       "email_too_long": "Esse email é longo demais.",
       "name_too_long": "Use até 80 caracteres.",
-      "mode_required": "Escolha a fase em que você está.",
-      "country_required": "Escolha onde você mora."
+      "mode_required": "Escolha a fase em que você está."
     }
   },
   "launch": {

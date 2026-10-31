@@ -6,19 +6,16 @@ import { Link } from '@/i18n/navigation'
 import { joinWaitlist } from '@/lib/waitlist/action'
 import type { WaitlistState } from '@/lib/waitlist/types'
 import { MODES, type Mode } from '@/lib/modes'
-import { COUNTRIES, type Country } from '@/lib/countries'
 import { ActionRule, BloomPicker, Mark, UnderlineField } from '@/components/diffuse'
 
 const INITIAL: WaitlistState = { status: 'idle' }
-const CHIP = 'inline-flex cursor-pointer items-center rounded-full border px-[18px] py-[11px] font-mono text-[12px] tracking-[0.04em] transition-all duration-200'
 const UTM = ['utm_source', 'utm_medium', 'utm_campaign'] as const
 
-export function WaitlistForm({ defaultCountry }: { defaultCountry: Country }) {
+export function WaitlistForm() {
   const t = useTranslations('form')
   const locale = useLocale()
   const [state, action, pending] = useActionState(joinWaitlist, INITIAL)
   const [email, setEmail] = useState('')
-  const [country, setCountry] = useState<Country>(defaultCountry)
   const [mode, setMode] = useState<Mode | ''>('')
   const [name, setName] = useState('')
   const [notify, setNotify] = useState(false)
@@ -41,7 +38,7 @@ export function WaitlistForm({ defaultCountry }: { defaultCountry: Country }) {
     setExpanded(true)
     if (state.status === 'invalid') {
       const f = state.fieldErrors
-      const sel = f.email ? 'input[name="email"]' : f.country ? 'input[name="country"]' : f.mode ? 'input[name="mode"]' : f.name ? 'input[name="name"]' : null
+      const sel = f.email ? 'input[name="email"]' : f.mode ? 'input[name="mode"]' : f.name ? 'input[name="name"]' : null
       // Wait a frame so a collapsed (mobile) section is visible before focusing.
       if (sel) { requestAnimationFrame(() => formRef.current?.querySelector<HTMLInputElement>(sel)?.focus()); return }
     }
@@ -53,7 +50,7 @@ export function WaitlistForm({ defaultCountry }: { defaultCountry: Country }) {
       <div ref={statusRef} tabIndex={-1} role="status" className="outline-none">
         <Mark size={72} />
         <p className="mt-3 font-display text-[clamp(32px,9vw,40px)] font-bold leading-none tracking-[-0.03em] [&_em]:italic [&_em]:text-ink-2">{t.rich('success.title', { em: (c) => <em>{c}</em> })}</p>
-        <p className="mt-3 text-[16px] font-light text-ink-2">{t(`success.${state.country}`)}</p>
+        <p className="mt-3 text-[16px] font-light text-ink-2">{t('success.body')}</p>
       </div>
     )
   }
@@ -73,18 +70,6 @@ export function WaitlistForm({ defaultCountry }: { defaultCountry: Country }) {
         error={errs.email ? t(`errors.${errs.email}`) : undefined} />
 
       <div className={show ? 'grid gap-7' : 'hidden md:grid md:gap-7'}>
-        <fieldset className="m-0 border-0 p-0">
-          <legend className="mb-3 p-0 font-mono text-[10px] uppercase tracking-[0.2em] text-ink-3">{t('country')}</legend>
-          <div className="flex flex-wrap gap-2.5">
-            {COUNTRIES.map((c) => (
-              <label key={c} className={`${CHIP} border-line bg-[color-mix(in_oklab,var(--paper)_55%,transparent)] text-ink-3 has-[:checked]:border-hair has-[:checked]:bg-[color-mix(in_oklab,var(--paper)_80%,transparent)] has-[:checked]:font-bold has-[:checked]:text-ink has-[:checked]:shadow-[inset_0_1px_1px_rgba(255,255,255,.5)] has-[:focus-visible]:outline has-[:focus-visible]:outline-1 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-hair`}>
-                <input type="radio" name="country" value={c} checked={country === c} onChange={() => setCountry(c)} aria-describedby={errs.country ? 'country-err' : undefined} className="sr-only" />
-                {t(`countries.${c}`)}
-              </label>
-            ))}
-          </div>
-          {errs.country && <p id="country-err" role="alert" className="mt-2 text-[14px] text-err">{t(`errors.${errs.country}`)}</p>}
-        </fieldset>
         <BloomPicker name="mode" value={mode} onChange={setMode}
           legend={t.rich('mode', { em: (c) => <em>{c}</em> })}
           options={MODES.map((m) => { const [kicker, label] = t.raw(`modes.${m}`) as [string, string]; return { value: m, kicker, label, mode: m } })}

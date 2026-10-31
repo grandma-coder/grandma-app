@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { MODES } from '@/lib/modes'
-import { COUNTRIES } from '@/lib/countries'
 import { routing } from '@/i18n/routing'
 import type { WaitlistRow } from './types'
 
@@ -11,7 +10,6 @@ export const waitlistSchema = z
     email: z.string({ required_error: 'email_required' }).trim().toLowerCase().min(1, 'email_required').max(254, 'email_too_long').email('email_invalid'),
     name: z.string().trim().max(80, 'name_too_long').optional().transform((v) => v || null),
     mode: z.enum(MODES, { errorMap: () => ({ message: 'mode_required' }) }),
-    country: z.enum(COUNTRIES, { errorMap: () => ({ message: 'country_required' }) }),
     locale: z.enum(routing.locales).catch('en'),
     notify_launch: z.string().optional().transform((v) => v === 'on' || v === 'true'),
     utm_source: optionalText(200),
@@ -19,8 +17,8 @@ export const waitlistSchema = z
     utm_campaign: optionalText(200),
     referrer: optionalText(200),
   })
-  .transform((v): WaitlistRow => ({
-    email: v.email, name: v.name, mode: v.mode, locale: v.locale, country: v.country, notifyLaunch: v.notify_launch,
+  .transform((v): Omit<WaitlistRow, 'country'> => ({
+    email: v.email, name: v.name, mode: v.mode, locale: v.locale, notifyLaunch: v.notify_launch,
     utmSource: v.utm_source, utmMedium: v.utm_medium, utmCampaign: v.utm_campaign, referrer: v.referrer,
   }))
 

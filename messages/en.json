@@ -24,12 +24,6 @@
   "form": {
     "email": "Email",
     "emailPh": "you@example.com",
-    "country": "Where do you live?",
-    "countries": {
-      "BR": "Brasil",
-      "US": "United States",
-      "OTHER": "Other"
-    },
     "mode": "Where are you <em>right now?</em>",
     "modes": {
       "pre": [
@@ -59,9 +53,7 @@
     "honeypot": "Leave this field empty",
     "success": {
       "title": "You're on the <em>list.</em>",
-      "BR": "We'll write when invites open in Brasil.",
-      "US": "We'll write when invites open in the United States.",
-      "OTHER": "We'll write when the app reaches you."
+      "body": "We'll write when the app reaches you."
     },
     "rateLimited": "Too many tries from this connection. Please try again in an hour.",
     "error": "Something went wrong on our side. Please try again.",
@@ -70,8 +62,7 @@
       "email_invalid": "That email doesn't look right.",
       "email_too_long": "That email is too long.",
       "name_too_long": "Please use 80 characters or fewer.",
-      "mode_required": "Pick the chapter you're in.",
-      "country_required": "Pick where you live."
+      "mode_required": "Pick the chapter you're in."
     }
   },
   "launch": {
