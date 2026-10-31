@@ -115,6 +115,17 @@ async function runScenario(browser, loc, profile) {
   await page.waitForSelector(`${P} nav button`)
   await page.waitForSelector('[data-coach] small button', { state: 'attached' })
   await settle(400)
+  // With the tour running, a sheet's focus() used to scroll the overflow:hidden phone ~500px (content stuck shifted up).
+  await step('tour on: opening a sheet leaves the phone unscrolled', async () => {
+    await click(`${P} [data-screen=home] button[class*="chip"]`, 0)
+    await sheetOpen(true)
+    await settle(700)
+    const scrolled = await page.evaluate(() => [...document.querySelectorAll('#phone *')]
+      .filter((e) => e.scrollTop > 0 && !e.matches('[role=dialog], [data-screen]'))
+      .map((e) => `${String(e.className).split(' ')[0]}=${e.scrollTop}`))
+    expect(scrolled.length === 0, `phone containers scrolled: ${scrolled.join(', ')}`)
+    await click('#phone [role=dialog] [class*="shTop"] button:last-child'); await sheetOpen(false)
+  })
   await step('skip tour', async () => {
     await click('[data-coach] small button')
     await page.waitForFunction(() => !document.querySelector('[data-coach]'), null, { timeout: 3000 })

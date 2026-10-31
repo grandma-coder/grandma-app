@@ -148,6 +148,26 @@ describe('sheet focus', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(document.activeElement).toBe(chip)
   })
+
+  it('moves focus without scrolling: the sheet starts off-screen, so a plain focus() scrolls the phone (WebKit) or the page', async () => {
+    const user = setup()
+    const chip = screen.getByRole('button', { name: /^Food$/ })
+    const calls: { el: HTMLElement; o?: FocusOptions }[] = []
+    const orig = HTMLElement.prototype.focus
+    HTMLElement.prototype.focus = function (this: HTMLElement, o?: FocusOptions) { calls.push({ el: this, o }); return orig.call(this, o) }
+    try {
+      await user.click(chip)
+      const dialog = screen.getByRole('dialog')
+      const opened = calls.filter((c) => c.el === dialog)
+      expect(opened).toHaveLength(1)
+      expect(opened[0].o?.preventScroll).toBe(true)
+      calls.length = 0
+      await user.keyboard('{Escape}')
+    } finally { HTMLElement.prototype.focus = orig }
+    const back = calls.filter((c) => c.el === chip)
+    expect(back).toHaveLength(1)
+    expect(back[0].o?.preventScroll).toBe(true)
+  })
 })
 
 describe('css', () => {

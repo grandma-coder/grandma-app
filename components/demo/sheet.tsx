@@ -64,12 +64,14 @@ export function Sheets({ onCheer }: { onCheer: (t: Omit<ToastState, 'n'>) => voi
   const dialogRef = useRef<HTMLDivElement>(null)
   const opener = useRef<HTMLElement | null>(null)
   const wasOpen = useRef(false)
+  // preventScroll: the sheet is still translated below the screen when focused, and a plain focus()
+  // scrolls to it — the page in Chrome, the overflow:hidden phone in Safari (content stuck shifted up).
   useEffect(() => {
     if (open && !wasOpen.current) {
       opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-      dialogRef.current?.focus()
+      dialogRef.current?.focus({ preventScroll: true })
     } else if (!open && wasOpen.current) {
-      if (opener.current?.isConnected) opener.current.focus()
+      if (opener.current?.isConnected) opener.current.focus({ preventScroll: true })
       opener.current = null
     }
     wasOpen.current = open
