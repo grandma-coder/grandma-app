@@ -71,6 +71,12 @@ async function runScenario(browser, loc, profile) {
   const snap = async () => { const s = await screen(); if (s) seen.add(s); return s }
   const settle = (ms = 150) => page.waitForTimeout(ms)
   const expect = (cond, msg) => { if (!cond) throw new Error(msg) }
+  // iOS Safari zooms the page into any text field under 16px on focus
+  const font16 = async (sel) => {
+    const px = await page.evaluate((s) => [...document.querySelectorAll(s)].map((e) => parseFloat(getComputedStyle(e).fontSize)), sel)
+    expect(px.length > 0, `no field for ${sel}`)
+    expect(px.every((p) => p >= 16), `${sel} font-size ${px.join(', ')}px < 16px (iOS zooms on focus)`)
+  }
   const waitScreen = async (want) => {
     await page.waitForFunction((w) => document.querySelector('#phone [data-screen]')?.getAttribute('data-screen') === w, want, { timeout: 5000 })
       .catch(async () => { throw new Error(`expected screen "${want}", got "${await screen()}"`) })
@@ -137,6 +143,7 @@ async function runScenario(browser, loc, profile) {
           el.dispatchEvent(new Event('input', { bubbles: true }))
         })
         if (kinds.includes('kick')) for (let k = 0; k < 3; k++) await click(`${dlg} button[class*="kick"]`)
+        await font16(`${dlg} textarea`)
         await setValue(`${dlg} textarea`, `qa note <b>x</b> ${tag} ${i}`)
         await click(`${dlg} button[class*="save"]`)
         await sheetOpen(false)
@@ -250,6 +257,7 @@ async function runScenario(browser, loc, profile) {
     expect(await page.evaluate((s) => document.querySelector(s).getAttribute('aria-pressed'), like) !== before, 'like did not toggle')
     await click(`${P} [data-screen=village] article button[aria-expanded]`); await settle(150)
     const cm = await count(`${P} [data-screen=village] article [class*="cmts"] p`)
+    await font16(`${P} [data-screen=village] article [class*="cmtIn"] input`)
     await setValue(`${P} [data-screen=village] article [class*="cmtIn"] input`, 'qa comment <i>x</i>')
     await click(`${P} [data-screen=village] article [class*="cmtIn"] button`); await settle(150)
     expect((await count(`${P} [data-screen=village] article [class*="cmts"] p`)) === cm + 1, 'comment not added')
@@ -261,6 +269,7 @@ async function runScenario(browser, loc, profile) {
     await click(`${P} [data-screen=community] button[class*="chan"]`); await waitScreen('chat')
     const msgs = `${P} [data-screen=chat] div[class*="msg"]`
     const n0 = await count(msgs)
+    await font16(`${P} [data-screen=chat] form input`)
     await setValue(`${P} [data-screen=chat] form input`, 'hello from the qa walk')
     await click(`${P} [data-screen=chat] form button`); await settle(150)
     expect((await count(msgs)) === n0 + 1, 'sent message not shown')
@@ -330,6 +339,7 @@ async function runScenario(browser, loc, profile) {
   // ---- join through the hero field (mocked server action) ----
   await step('hero join (mocked)', async () => {
     await top(); await settle(200)
+    await font16('input[type=email]')
     await setValue('form[data-tour=join] input[type=email]', 'qa@example.com')
     await click('form[data-tour=join] button[type=submit]')
     await page.waitForFunction(() => !document.querySelector('form[data-tour=join]') && document.querySelector('[role=status]'), null, { timeout: 5000 })

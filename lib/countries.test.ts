@@ -14,4 +14,13 @@ describe('countryFromGeo', () => {
     expect(countryFromGeo(null)).toBe('OTHER')
     expect(countryFromGeo(undefined)).toBe('OTHER')
   })
+  it('maps placeholder codes (unknown XX / ZZ, Tor T1) and non-letters to OTHER', () => {
+    expect(countryFromGeo('XX')).toBe('OTHER')
+    expect(countryFromGeo('xx')).toBe('OTHER')
+    expect(countryFromGeo('ZZ')).toBe('OTHER')
+    expect(countryFromGeo('T1')).toBe('OTHER')
+    expect(countryFromGeo('A1')).toBe('OTHER')
+    expect(countryFromGeo('1')).toBe('OTHER')
+    expect(countryFromGeo('B-')).toBe('OTHER')
+  })
 })

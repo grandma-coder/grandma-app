@@ -1,5 +1,4 @@
 import type { MetadataRoute } from 'next'
-import { routing } from '@/i18n/routing'
 
 export const PWA_BG = '#F3F0E8'
 
@@ -12,7 +11,8 @@ export const ICONS: Record<string, { size: number; pad: number }> = {
 }
 
 export function buildManifest(): MetadataRoute.Manifest {
-  const start = `/${routing.defaultLocale}`
+  // '/' (not '/en'): the middleware redirects to the visitor's locale, so a PT install opens in PT
+  const start = '/'
   return {
     id: start,
     name: 'grandma',

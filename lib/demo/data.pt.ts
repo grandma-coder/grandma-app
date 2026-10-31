@@ -6,8 +6,8 @@ const low = (name: string, value: string, range: string) => ({ name, value, rang
 
 const preHero = (goal: Goal) =>
   goal === 'ttc'
-    ? { label: 'Dia do ciclo', n: '14', em: 'janela fértil', row: [{ label: 'Melhor momento pra tentar', value: 'hoje e amanhã' }, { label: 'Teste de gravidez', value: 'a partir de 13 nov' }], icon: 'heart' as const }
-    : { label: 'Dia do ciclo', n: '14', em: 'fase fértil', row: [{ label: 'Próxima menstruação', value: 'em 14 dias' }, { label: 'Ciclo médio', value: '28 dias' }], icon: 'moon' as const }
+    ? { label: 'Dia do ciclo', n: '14', em: 'janela fértil', row: [{ label: 'Melhor momento pra tentar', value: 'hoje e amanhã' }, { label: 'Teste de gravidez', value: 'a partir de 14 nov' }], icon: 'heart' as const }
+    : { label: 'Dia do ciclo', n: '14', em: 'fase fértil', row: [{ label: 'Próxima menstruação', value: 'em 15 dias' }, { label: 'Ciclo médio', value: '28 dias' }], icon: 'moon' as const }
 
 export const dataPt: DemoData = {
   locale: 'pt',
@@ -40,7 +40,7 @@ export const dataPt: DemoData = {
       ],
       quick: (goal) => goal === 'ttc'
         ? [{ screen: 'reminders', sub: 'Vitamina às 8h' }, { screen: 'exams', sub: '2 guardados' }, { screen: 'community', sub: 'Tentando engravidar' }, { screen: 'memories', sub: '3 momentos' }]
-        : [{ screen: 'reminders', sub: 'Menstruação em 14 dias' }, { screen: 'exams', sub: '2 guardados' }, { screen: 'community', sub: 'Ciclo e TPM' }, { screen: 'memories', sub: '3 momentos' }],
+        : [{ screen: 'reminders', sub: 'Menstruação em 15 dias' }, { screen: 'exams', sub: '2 guardados' }, { screen: 'community', sub: 'Ciclo e TPM' }, { screen: 'memories', sub: '3 momentos' }],
       cal: {
         per: [17, 18, 19, 20, 21], fer: [26, 27, 28, 29, 31], ev: [], star: 30, dots: [17, 19, 22, 24, 26, 28, 29], kd: null,
         legend: [{ color: '#F4A6C9', label: 'menstruação', ring: null }, { color: '#fff', label: 'janela fértil', ring: '#1E8A6A' }, { color: '#161513', label: 'registros', ring: null }],
@@ -48,7 +48,7 @@ export const dataPt: DemoData = {
       events: [
         { icon: 'bell', title: 'Exame de sangue', sub: 'jejum de 8h', when: 'qua 4 nov · 7:30', kid: null },
         { icon: 'doc', title: 'Ginecologista', sub: 'levar os registros', when: 'sex 13 nov · 10:00', kid: null },
-        { icon: 'moon', title: 'Próxima menstruação', sub: 'previsão', when: '13 nov', kid: null },
+        { icon: 'moon', title: 'Próxima menstruação', sub: 'previsão', when: '14 nov', kid: null },
       ],
       chans: (goal) => goal === 'ttc'
         ? [{ id: 'ttc', icon: 'heart', title: 'Tentando engravidar', kind: 'channel', tone: '#F9CFE0' }, { id: 'irregular', icon: 'owl', title: 'Ciclos irregulares', kind: 'anon', tone: '#FFF1B8' }, { id: 'afterPositive', icon: 'star', title: 'Depois do positivo', kind: 'channel', tone: '#DCCFF9' }]

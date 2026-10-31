@@ -191,6 +191,27 @@ describe('Tour', () => {
     expect(queue.size).toBe(0)
   })
 
+  it('reads one rect per frame and writes no styles or classes while nothing changes', () => {
+    setup()
+    flush()
+    const halo = coach().querySelector('[data-halo]') as HTMLElement
+    // sentinels: any write from the loop would overwrite them
+    halo.style.left = '1px'
+    coach().dataset.on = 'x'
+    const toggle = vi.spyOn(Object.getPrototypeOf(coach().classList) as DOMTokenList, 'toggle')
+    const rect = vi.mocked(HTMLElement.prototype.getBoundingClientRect)
+    rect.mockClear()
+    flush(); flush(); flush()
+    expect(rect).toHaveBeenCalledTimes(3)
+    expect(halo.style.left).toBe('1px')
+    expect(coach().dataset.on).toBe('x')
+    expect(toggle).not.toHaveBeenCalled()
+    // a moved target is picked up on the next frame
+    below = true
+    flush()
+    expect(coach().dataset.on).toBe('false')
+  })
+
   it('cancels its loop on unmount', () => {
     setup()
     cleanup()

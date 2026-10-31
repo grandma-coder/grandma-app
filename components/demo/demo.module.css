@@ -112,7 +112,8 @@ input.rg { -webkit-appearance: none; appearance: none; height: 16px; border-radi
 input.rg::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; border-radius: 50%; background: var(--ma); border: 2px solid var(--ink); box-shadow: 0 2px 0 rgba(22,21,19,.2); cursor: grab; }
 input.rg::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: var(--ma); border: 2px solid var(--ink); }
 .rgEnds { display: flex; justify-content: space-between; margin-top: 6px; font: 10px var(--mono); color: var(--ink-3); }
-.noteIn { width: 100%; margin-top: 14px; border: 1.5px dashed var(--ink); border-radius: 14px; padding: 10px 12px; font: 13px var(--sans); background: #fff; resize: none; outline: 0; color: var(--ink); }
+/* 16px so iOS Safari does not zoom in on focus */
+.noteIn { width: 100%; margin-top: 14px; border: 1.5px dashed var(--ink); border-radius: 14px; padding: 8px 12px; font: 16px var(--sans); background: #fff; resize: none; outline: 0; color: var(--ink); }
 .faces button .ico { transition: transform .3s var(--spring); }
 /* cycle wheel: one sticker per day, today big at the bottom (as in the app) */
 .wheel { position: relative; width: 256px; height: 256px; margin: 8px auto 0; }

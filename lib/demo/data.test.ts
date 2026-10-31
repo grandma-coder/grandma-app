@@ -157,3 +157,25 @@ describe('demo seed data', () => {
     expect(fmt('keep {this}', {})).toBe('keep {this}')
   })
 })
+
+describe('cycle numbers agree (28-day cycle)', () => {
+  it.each([['en', dataEn], ['pt', dataPt]] as const)('%s: cycle day, next period, calendar and wheel line up', (_l, d) => {
+    const pre = d.phases.pre
+    const { year, month, day } = d.demoDate
+    // the calendar's first period day is cycle day 1
+    const cycleDay = day - pre.cal.per[0] + 1
+    for (const g of GOALS) expect(forGoal(pre.hero!, g).n).toBe(String(cycleDay))
+    const daysLeft = 28 - cycleDay + 1
+    const next = new Date(Date.UTC(year, month - 1, day + daysLeft))
+    const nextDay = String(next.getUTCDate())
+    const track = forGoal(pre.hero!, 'track')
+    expect(track.row[0].value).toContain(String(daysLeft))
+    expect(track.row[1].value).toContain('28')
+    expect(forGoal(pre.hero!, 'ttc').row[1].value).toContain(nextDay)
+    const predicted = pre.events.find((e) => e.icon === 'moon')!
+    expect(predicted.when).toContain(nextDay)
+    expect(forGoal(pre.quick, 'track').find((q) => q.screen === 'reminders')!.sub).toContain(String(daysLeft))
+    // today is the fertile peak the calendar stars
+    expect(pre.cal.star).toBe(day)
+  })
+})

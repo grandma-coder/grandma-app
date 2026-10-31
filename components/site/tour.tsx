@@ -26,7 +26,8 @@ const isSmall = () => !!window.matchMedia?.(SMALL_QUERY).matches
 /**
  * Hand-drawn onboarding: a sticky note, a drawn arrow and a halo that follow the next thing to tap. Steps live in
  * the demo reducer (`tourDone` advances only on the current key; `skipTour` / `joined` end it). One fixed overlay,
- * positioned from getBoundingClientRect in a rAF loop that stops with the tour and pauses with the tab.
+ * positioned from getBoundingClientRect in a rAF loop that stops with the tour and pauses with the tab. Each frame reads
+ * the target's rect once and writes only when the rect, step, viewport, visibility or busy state changed.
  */
 export function Tour() {
   const { state, dispatch } = useDemo()
@@ -62,25 +63,32 @@ export function Tour() {
       if (el && !el.classList.contains(HIT)) el.classList.add(HIT)
       prev = el
     }
+    // last inputs that were written out; a frame whose inputs match touches no styles or classes
+    let last = ''
     const place = () => {
       const { key: k, busy: b } = live.current
       const el = document.querySelector(TARGET[k])
-      const r = el?.getBoundingClientRect()
-      const vis = !!r && r.width > 0 && r.bottom > 70 && r.top < window.innerHeight - (isSmall() ? 90 : 10)
-      const below = !!r && r.top >= window.innerHeight - 10 && k !== 'join'
+      const r = el?.getBoundingClientRect() // the one layout read per frame
+      const iw = window.innerWidth, ih = window.innerHeight
+      const vis = !!r && r.width > 0 && r.bottom > 70 && r.top < ih - (isSmall() ? 90 : 10)
+      const below = !!r && r.top >= ih - 10 && k !== 'join'
       const show = vis && !b
-      const n = note.current, a = arrow.current, h = halo.current
-      // reads first, then writes: one layout pass per frame
-      const nw = show && n ? n.offsetWidth : 0, nh = show && n ? n.offsetHeight : 0
-      setOn(coach.current, show)
-      setOn(go.current, below && !b)
+      const pill = below && !b
       mark(show ? el! : null)
+      const sig = `${k}|${show}|${pill}|${iw}x${ih}|${show ? `${r!.left},${r!.top},${r!.width},${r!.height}` : ''}`
+      if (sig === last) return
+      last = sig
+      setOn(coach.current, show)
+      setOn(go.current, pill)
+      const n = note.current, a = arrow.current, h = halo.current
       if (!show || !r || !n || !a || !h) return
+      // the note's size changes only with its text or the viewport, both part of the signature
+      const nw = n.offsetWidth, nh = n.offsetHeight
       const pad = 6, cx = r.left + r.width / 2
       Object.assign(h.style, { left: `${r.left - pad}px`, top: `${r.top - pad}px`, width: `${r.width + pad * 2}px`, height: `${r.height + pad * 2}px` })
       const up = r.top - nh - 52 > 64
       Object.assign(n.style, {
-        left: `${Math.max(8, Math.min(window.innerWidth - nw - 8, cx - nw * 0.75))}px`,
+        left: `${Math.max(8, Math.min(iw - nw - 8, cx - nw * 0.75))}px`,
         top: `${up ? r.top - nh - 48 : r.bottom + 48}px`,
       })
       Object.assign(a.style, { left: `${cx - 34}px`, top: `${up ? r.top - 48 : r.bottom + 4}px`, transform: up ? 'none' : 'scaleY(-1)' })

@@ -122,7 +122,7 @@ export function demoReducer(s: DemoState, a: DemoAction): DemoState {
     case 'setMode':
       return { ...s, mode: a.mode, screen: 'home', arg: null, sheet: NONE, typing: null }
     case 'setGoal':
-      return { ...s, goal: a.goal, logged: withMode(s.logged, 'pre', {}) }
+      return { ...s, goal: a.goal, logged: withMode(s.logged, 'pre', {}), typing: null }
     case 'setKid':
       return { ...s, kid: a.kid }
     case 'openScreen':

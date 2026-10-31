@@ -6,8 +6,8 @@ const low = (name: string, value: string, range: string) => ({ name, value, rang
 
 const preHero = (goal: Goal) =>
   goal === 'ttc'
-    ? { label: 'Cycle day', n: '14', em: 'fertile window', row: [{ label: 'Best time to try', value: 'today and tomorrow' }, { label: 'Pregnancy test', value: 'from Nov 13' }], icon: 'heart' as const }
-    : { label: 'Cycle day', n: '14', em: 'fertile phase', row: [{ label: 'Next period', value: 'in 14 days' }, { label: 'Average cycle', value: '28 days' }], icon: 'moon' as const }
+    ? { label: 'Cycle day', n: '14', em: 'fertile window', row: [{ label: 'Best time to try', value: 'today and tomorrow' }, { label: 'Pregnancy test', value: 'from Nov 14' }], icon: 'heart' as const }
+    : { label: 'Cycle day', n: '14', em: 'fertile phase', row: [{ label: 'Next period', value: 'in 15 days' }, { label: 'Average cycle', value: '28 days' }], icon: 'moon' as const }
 
 export const dataEn: DemoData = {
   locale: 'en',
@@ -40,7 +40,7 @@ export const dataEn: DemoData = {
       ],
       quick: (goal) => goal === 'ttc'
         ? [{ screen: 'reminders', sub: 'Vitamin at 8 AM' }, { screen: 'exams', sub: '2 saved' }, { screen: 'community', sub: 'Trying to conceive' }, { screen: 'memories', sub: '3 moments' }]
-        : [{ screen: 'reminders', sub: 'Period in 14 days' }, { screen: 'exams', sub: '2 saved' }, { screen: 'community', sub: 'Cycle and PMS' }, { screen: 'memories', sub: '3 moments' }],
+        : [{ screen: 'reminders', sub: 'Period in 15 days' }, { screen: 'exams', sub: '2 saved' }, { screen: 'community', sub: 'Cycle and PMS' }, { screen: 'memories', sub: '3 moments' }],
       cal: {
         per: [17, 18, 19, 20, 21], fer: [26, 27, 28, 29, 31], ev: [], star: 30, dots: [17, 19, 22, 24, 26, 28, 29], kd: null,
         legend: [{ color: '#F4A6C9', label: 'period', ring: null }, { color: '#fff', label: 'fertile window', ring: '#1E8A6A' }, { color: '#161513', label: 'logs', ring: null }],
@@ -48,7 +48,7 @@ export const dataEn: DemoData = {
       events: [
         { icon: 'bell', title: 'Blood test', sub: 'fasting for 8h', when: 'Wed, Nov 4 · 7:30 AM', kid: null },
         { icon: 'doc', title: 'Gynecologist', sub: 'bring your logs', when: 'Fri, Nov 13 · 10:00 AM', kid: null },
-        { icon: 'moon', title: 'Next period', sub: 'predicted', when: 'Nov 13', kid: null },
+        { icon: 'moon', title: 'Next period', sub: 'predicted', when: 'Nov 14', kid: null },
       ],
       chans: (goal) => goal === 'ttc'
         ? [{ id: 'ttc', icon: 'heart', title: 'Trying to conceive', kind: 'channel', tone: '#F9CFE0' }, { id: 'irregular', icon: 'owl', title: 'Irregular cycles', kind: 'anon', tone: '#FFF1B8' }, { id: 'afterPositive', icon: 'star', title: 'After the positive', kind: 'channel', tone: '#DCCFF9' }]

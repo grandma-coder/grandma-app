@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { routing } from '@/i18n/routing'
 import { buildManifest, ICONS } from './manifest'
 
 describe('web app manifest', () => {
@@ -11,8 +10,8 @@ describe('web app manifest', () => {
     expect(m.background_color).toBe('#F3F0E8')
     expect(m.theme_color).toBe('#F3F0E8')
   })
-  it('starts at the default locale', () => {
-    expect(m.start_url).toBe(`/${routing.defaultLocale}`)
+  it('starts at the root so the middleware picks the locale', () => {
+    expect(m.start_url).toBe('/')
     expect(m.id).toBe(m.start_url)
     expect(m.scope).toBe('/')
   })

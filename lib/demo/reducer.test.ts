@@ -71,6 +71,11 @@ describe('demoReducer', () => {
     expect(t.logged.kids.diaper).toBe(true)
   })
 
+  it('goal switch clears a pending typing indicator', () => {
+    const s: DemoState = { ...fresh(), typing: 'ttc' }
+    expect(run(s, { type: 'setGoal', goal: 'ttc' }).typing).toBeNull()
+  })
+
   it('tour advances only on the current key; joined ends it', () => {
     let s = fresh()
     expect(TOUR_STEPS).toEqual(['log', 'week', 'mode', 'shortcuts', 'join'])
