@@ -29,12 +29,21 @@ try {
   for (let i = 0; i < 4; i++) await join(`${tag}-${i}@example.com`, null, "pre", "BR")
   const [c] = await join(`${tag}-x@example.com`, null, "pre", "BR")
   assert(c.r === "rate_limited", "6th signup from same ip_hash in 1h is rate_limited")
+  const [e] = await join(email, null, "meno", "PT")
+  assert(e.r === "rate_limited", "re-join of an existing email from a limited ip_hash is rate_limited")
+  const [kept] = await sql`select mode, country from public.waitlist where email = ${email}`
+  assert(kept.mode === "kids" && kept.country === "US", "rate-limited re-join does not overwrite the row")
+  const ip2 = `${ip}-2`
+  const [f] = await join(`${tag}-0@example.com`, null, "meno", "BR", ip2)
+  assert(f.r === "ok", "re-join from another ip_hash ok")
+  const [moved] = await sql`select ip_hash, updated_at > created_at as bumped from public.waitlist where email = ${tag + "-0@example.com"}`
+  assert(moved.ip_hash === ip2 && moved.bumped, "re-join refreshes ip_hash and updated_at")
   const [d] = await join(`${tag}-y@example.com`, null, "pre", "OTHER", null)
   assert(d.r === "ok", "null ip_hash not rate limited")
 
   let threw = false
-  try { await join(`${tag}-z@example.com`, null, "pre", "DE", null) } catch { threw = true }
-  assert(threw, "unknown country rejected by CHECK")
+  try { await join(`${tag}-z@example.com`, null, "pre", "DEU", null) } catch { threw = true }
+  assert(threw, "malformed country rejected by CHECK")
 
   const [{ has }] = await sql`select has_function_privilege('anon', 'public.waitlist_join(text,text,text,text,text,boolean,text,text,text,text,text)', 'execute') as has`
   assert(has === false, "anon cannot execute waitlist_join")

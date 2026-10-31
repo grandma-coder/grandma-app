@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.waitlist (
 
 CREATE INDEX IF NOT EXISTS waitlist_created_at_idx ON public.waitlist (created_at DESC);
 CREATE INDEX IF NOT EXISTS waitlist_country_created_idx ON public.waitlist (country, created_at);
-CREATE INDEX IF NOT EXISTS waitlist_ip_hash_created_idx ON public.waitlist (ip_hash, created_at DESC);
+CREATE INDEX IF NOT EXISTS waitlist_ip_hash_updated_idx ON public.waitlist (ip_hash, updated_at DESC);
 
 ALTER TABLE public.waitlist ENABLE ROW LEVEL SECURITY;
 -- No policies: service role only.
@@ -42,9 +42,13 @@ SECURITY INVOKER
 SET search_path = public
 AS $$
 BEGIN
+  -- Rate limit by attempts, not just new rows: every join (insert or re-join) stamps the row with the caller's
+  -- ip_hash and updated_at, so an ip_hash may touch at most 5 rows per hour. Re-joining an existing email from a
+  -- limited IP is refused like a new signup, instead of overwriting mode/locale/country/notify_launch unchecked.
+  -- updated_at >= created_at always (both default to now(); re-joins bump updated_at), so it covers both cases.
   IF p_ip_hash IS NOT NULL AND (
     SELECT count(*) FROM public.waitlist
-    WHERE ip_hash = p_ip_hash AND created_at > now() - interval '1 hour'
+    WHERE ip_hash = p_ip_hash AND greatest(created_at, updated_at) > now() - interval '1 hour'
   ) >= 5 THEN
     RETURN 'rate_limited';
   END IF;
@@ -60,6 +64,7 @@ BEGIN
     locale        = excluded.locale,
     country       = excluded.country,
     notify_launch = excluded.notify_launch,
+    ip_hash       = excluded.ip_hash,
     updated_at    = now();
 
   RETURN 'ok';
