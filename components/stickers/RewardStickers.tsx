@@ -37,8 +37,8 @@ const INK = '#141313'
 const PAPER = '#FFFEF8'
 
 // Fonts loaded in app/_layout.tsx — use these exact names for SvgText.
-const FONT_DISPLAY = 'Fraunces_600SemiBold'
-const FONT_BODY = 'DMSans_500Medium'
+const FONT_DISPLAY = 'ArchitectsDaughter_400Regular'
+const FONT_BODY = 'HankenGrotesk_500Medium'
 
 interface BaseProps {
   size?: number

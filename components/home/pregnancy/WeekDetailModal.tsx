@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   heroSize: {
-    fontFamily: 'Fraunces_500Medium',
+    fontFamily: 'ArchitectsDaughter_400Regular',
     fontSize: 22,
     letterSpacing: -0.4,
   },

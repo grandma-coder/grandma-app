@@ -1,0 +1,142 @@
+/**
+ * The grandma.app sticker set, rendered from the site's hand-drawn SVGs (wobble filter baked in) to PNG,
+ * because react-native-svg can't run feTurbulence/feDisplacementMap. `cut` adds the white die-cut edge
+ * and soft drop shadow. Regenerate from v0-grandma-app/components/stickers/paths.ts — never hand-edit.
+ */
+import { Image, type ImageStyle, type StyleProp } from 'react-native'
+
+const PLAIN = {
+  avocado: require('../../assets/stickers-site/avocado.png'),
+  baby: require('../../assets/stickers-site/baby.png'),
+  baby2: require('../../assets/stickers-site/baby2.png'),
+  backpack: require('../../assets/stickers-site/backpack.png'),
+  banana: require('../../assets/stickers-site/banana.png'),
+  bars: require('../../assets/stickers-site/bars.png'),
+  bell: require('../../assets/stickers-site/bell.png'),
+  bodysuit: require('../../assets/stickers-site/bodysuit.png'),
+  books: require('../../assets/stickers-site/books.png'),
+  bottle: require('../../assets/stickers-site/bottle.png'),
+  br: require('../../assets/stickers-site/br.png'),
+  brain: require('../../assets/stickers-site/brain.png'),
+  bubble: require('../../assets/stickers-site/bubble.png'),
+  cal: require('../../assets/stickers-site/cal.png'),
+  camera: require('../../assets/stickers-site/camera.png'),
+  cloud: require('../../assets/stickers-site/cloud.png'),
+  corn: require('../../assets/stickers-site/corn.png'),
+  crib: require('../../assets/stickers-site/crib.png'),
+  diaper: require('../../assets/stickers-site/diaper.png'),
+  doc: require('../../assets/stickers-site/doc.png'),
+  drop: require('../../assets/stickers-site/drop.png'),
+  egg: require('../../assets/stickers-site/egg.png'),
+  eggplant: require('../../assets/stickers-site/eggplant.png'),
+  eye: require('../../assets/stickers-site/eye.png'),
+  face1: require('../../assets/stickers-site/face1.png'),
+  face2: require('../../assets/stickers-site/face2.png'),
+  face3: require('../../assets/stickers-site/face3.png'),
+  face4: require('../../assets/stickers-site/face4.png'),
+  flame: require('../../assets/stickers-site/flame.png'),
+  flower: require('../../assets/stickers-site/flower.png'),
+  globe: require('../../assets/stickers-site/globe.png'),
+  heart: require('../../assets/stickers-site/heart.png'),
+  house: require('../../assets/stickers-site/house.png'),
+  jicama: require('../../assets/stickers-site/jicama.png'),
+  leaf: require('../../assets/stickers-site/leaf.png'),
+  lettuce: require('../../assets/stickers-site/lettuce.png'),
+  lock: require('../../assets/stickers-site/lock.png'),
+  me: require('../../assets/stickers-site/me.png'),
+  moon: require('../../assets/stickers-site/moon.png'),
+  moon2: require('../../assets/stickers-site/moon2.png'),
+  otest: require('../../assets/stickers-site/otest.png'),
+  owl: require('../../assets/stickers-site/owl.png'),
+  pencil: require('../../assets/stickers-site/pencil.png'),
+  phone: require('../../assets/stickers-site/phone.png'),
+  plum: require('../../assets/stickers-site/plum.png'),
+  pola: require('../../assets/stickers-site/pola.png'),
+  pumpkin: require('../../assets/stickers-site/pumpkin.png'),
+  rasp: require('../../assets/stickers-site/rasp.png'),
+  ruler: require('../../assets/stickers-site/ruler.png'),
+  shoe: require('../../assets/stickers-site/shoe.png'),
+  star: require('../../assets/stickers-site/star.png'),
+  stroller: require('../../assets/stickers-site/stroller.png'),
+  syringe: require('../../assets/stickers-site/syringe.png'),
+  thermo: require('../../assets/stickers-site/thermo.png'),
+  us: require('../../assets/stickers-site/us.png'),
+  zz: require('../../assets/stickers-site/zz.png'),
+} as const
+
+const CUT = {
+  avocado: require('../../assets/stickers-site/avocado-cut.png'),
+  baby: require('../../assets/stickers-site/baby-cut.png'),
+  baby2: require('../../assets/stickers-site/baby2-cut.png'),
+  backpack: require('../../assets/stickers-site/backpack-cut.png'),
+  banana: require('../../assets/stickers-site/banana-cut.png'),
+  bars: require('../../assets/stickers-site/bars-cut.png'),
+  bell: require('../../assets/stickers-site/bell-cut.png'),
+  bodysuit: require('../../assets/stickers-site/bodysuit-cut.png'),
+  books: require('../../assets/stickers-site/books-cut.png'),
+  bottle: require('../../assets/stickers-site/bottle-cut.png'),
+  br: require('../../assets/stickers-site/br-cut.png'),
+  brain: require('../../assets/stickers-site/brain-cut.png'),
+  bubble: require('../../assets/stickers-site/bubble-cut.png'),
+  cal: require('../../assets/stickers-site/cal-cut.png'),
+  camera: require('../../assets/stickers-site/camera-cut.png'),
+  cloud: require('../../assets/stickers-site/cloud-cut.png'),
+  corn: require('../../assets/stickers-site/corn-cut.png'),
+  crib: require('../../assets/stickers-site/crib-cut.png'),
+  diaper: require('../../assets/stickers-site/diaper-cut.png'),
+  doc: require('../../assets/stickers-site/doc-cut.png'),
+  drop: require('../../assets/stickers-site/drop-cut.png'),
+  egg: require('../../assets/stickers-site/egg-cut.png'),
+  eggplant: require('../../assets/stickers-site/eggplant-cut.png'),
+  eye: require('../../assets/stickers-site/eye-cut.png'),
+  face1: require('../../assets/stickers-site/face1-cut.png'),
+  face2: require('../../assets/stickers-site/face2-cut.png'),
+  face3: require('../../assets/stickers-site/face3-cut.png'),
+  face4: require('../../assets/stickers-site/face4-cut.png'),
+  flame: require('../../assets/stickers-site/flame-cut.png'),
+  flower: require('../../assets/stickers-site/flower-cut.png'),
+  globe: require('../../assets/stickers-site/globe-cut.png'),
+  heart: require('../../assets/stickers-site/heart-cut.png'),
+  house: require('../../assets/stickers-site/house-cut.png'),
+  jicama: require('../../assets/stickers-site/jicama-cut.png'),
+  leaf: require('../../assets/stickers-site/leaf-cut.png'),
+  lettuce: require('../../assets/stickers-site/lettuce-cut.png'),
+  lock: require('../../assets/stickers-site/lock-cut.png'),
+  me: require('../../assets/stickers-site/me-cut.png'),
+  moon: require('../../assets/stickers-site/moon-cut.png'),
+  moon2: require('../../assets/stickers-site/moon2-cut.png'),
+  otest: require('../../assets/stickers-site/otest-cut.png'),
+  owl: require('../../assets/stickers-site/owl-cut.png'),
+  pencil: require('../../assets/stickers-site/pencil-cut.png'),
+  phone: require('../../assets/stickers-site/phone-cut.png'),
+  plum: require('../../assets/stickers-site/plum-cut.png'),
+  pola: require('../../assets/stickers-site/pola-cut.png'),
+  pumpkin: require('../../assets/stickers-site/pumpkin-cut.png'),
+  rasp: require('../../assets/stickers-site/rasp-cut.png'),
+  ruler: require('../../assets/stickers-site/ruler-cut.png'),
+  shoe: require('../../assets/stickers-site/shoe-cut.png'),
+  star: require('../../assets/stickers-site/star-cut.png'),
+  stroller: require('../../assets/stickers-site/stroller-cut.png'),
+  syringe: require('../../assets/stickers-site/syringe-cut.png'),
+  thermo: require('../../assets/stickers-site/thermo-cut.png'),
+  us: require('../../assets/stickers-site/us-cut.png'),
+  zz: require('../../assets/stickers-site/zz-cut.png'),
+} as const
+
+export type SiteStickerName = keyof typeof PLAIN
+export const SITE_STICKER_NAMES = Object.keys(PLAIN) as SiteStickerName[]
+
+type Props = { name: SiteStickerName; size?: number; cut?: boolean; style?: StyleProp<ImageStyle> }
+
+/** `size` is the drawn icon size; the PNG carries a 6/64 margin for the wobble and die-cut, like the site's viewBox. */
+export function SiteSticker({ name, size = 32, cut = false, style }: Props) {
+  const box = size * (76 / 64)
+  return (
+    <Image
+      source={(cut ? CUT : PLAIN)[name]}
+      style={[{ width: box, height: box, margin: -(box - size) / 2 }, style]}
+      resizeMode="contain"
+      accessibilityIgnoresInvertColors
+    />
+  )
+}

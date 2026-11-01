@@ -561,7 +561,7 @@ export function AppointmentForm({
                   styles.chipText,
                   {
                     color: inkText,
-                    fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold',
+                    fontFamily: active ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold',
                   },
                 ]}
               >
@@ -1937,12 +1937,12 @@ const styles = StyleSheet.create({
   },
   counterBtnText: {
     fontSize: 28,
-    fontFamily: 'Fraunces_800ExtraBold',
+    fontFamily: 'HankenGrotesk_700Bold',
     lineHeight: 32,
   },
   counterValue: {
     fontSize: 48,
-    fontFamily: 'Fraunces_800ExtraBold',
+    fontFamily: 'HankenGrotesk_700Bold',
     minWidth: 64,
     textAlign: 'center',
   },

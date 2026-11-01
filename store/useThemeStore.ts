@@ -5,10 +5,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 export type AppTheme = 'dark' | 'light'
 
 // Which visual language the app renders in.
-//   'diffuse' — design-system-v3 "Diffuse" (DEFAULT as of the v3 ship).
-//               See constants/theme.ts → useDiffuseTheme().
-//   'current' — legacy cream-paper / sticker-collage. Still fully supported and
-//               reachable via Dev Panel → DESIGN VARIANT, but no longer default.
+//   'current' — cream paper + stickers, restyled in Nov 2026 to match grandma.app
+//               (hand-lettered display, Hanken, ink outlines). DEFAULT.
+//   'diffuse' — design-system-v3 "Diffuse". Off; still reachable via
+//               Dev Panel → DESIGN VARIANT. See constants/theme.ts → useDiffuseTheme().
 export type ThemeVariant = 'current' | 'diffuse'
 
 interface ThemeStore {
@@ -25,8 +25,8 @@ interface ThemeStore {
 export const useThemeStore = create<ThemeStore>()(
   persist(
     (set, get) => ({
-      theme: 'dark',
-      variant: 'diffuse',
+      theme: 'light',
+      variant: 'current',
       hydrated: false,
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set({ theme: get().theme === 'dark' ? 'light' : 'dark' }),
@@ -36,18 +36,16 @@ export const useThemeStore = create<ThemeStore>()(
     }),
     {
       name: 'grandma-theme',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ theme: state.theme, variant: state.variant }),
-      // v0 → v1: Diffuse became the default visual language. Existing installs
-      // have `variant: 'current'` persisted from before it shipped; since there
-      // was never a user-facing variant toggle (dev-panel only), no user chose
-      // 'current' deliberately — so flip everyone to 'diffuse' once. Team
-      // members can switch back in the Dev Panel; that choice persists at v1
-      // and won't be re-migrated.
+      // History: v0 → v1 moved everyone to Diffuse. v1 → v2 (below) moves everyone to the
+      // restyled 'current' look on the light canvas. Choices made after that persist at v2.
       migrate: (persisted, version) => {
         const s = (persisted ?? {}) as Partial<ThemeStore>
-        if (version < 1) return { ...s, variant: 'diffuse' as ThemeVariant }
+        // v1 → v2: the site-look redesign ships as the default on the light canvas — flip everyone once
+        // (variant was never user-facing; theme can be switched back in Settings and persists at v2).
+        if (version < 2) return { ...s, variant: 'current' as ThemeVariant, theme: 'light' as AppTheme }
         return s
       },
       // See useBehaviorStore for the rationale — must flip hydrated

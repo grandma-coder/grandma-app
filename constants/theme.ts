@@ -6,8 +6,9 @@
  *
  * RULE: Components NEVER hardcode hex values — always use semantic tokens.
  *
- * Design language (Apr 2026 redesign):
- *   Light default — cream paper canvas, editorial serif display, sticker accents
+ * Design language (Nov 2026, matches grandma.app): cream paper, ink outlines, hand-lettered
+ * display (Architects Daughter) + Hanken Grotesk, Kika-style stickers, pastel tone per journey.
+ *   Light default — cream paper canvas, hand-lettered display, sticker accents
  *   Dark  — warm ink on dark parchment, same stickers
  */
 
@@ -17,32 +18,32 @@ import { useThemeStore } from '../store/useThemeStore'
 // ─── BRAND COLORS (never change between modes) ─────────────────────────────
 
 export const brand = {
-  primary: '#7048B8',
-  primaryLight: '#9B70D4',
-  primaryDark: '#4A2880',
-  primaryTint: '#EFE6FF',
+  primary: '#161513',
+  primaryLight: '#4F4B43',
+  primaryDark: '#000000',
+  primaryTint: '#F3F0E8',
 
-  secondary: '#3B7DD8',
-  secondaryTint: '#E3EDFF',
+  secondary: '#4C79CE',
+  secondaryTint: '#CFE1FA',
 
-  accent: '#F59E0B',
-  accentTint: '#FEF5E1',
+  accent: '#F9C846',
+  accentTint: '#FFF1B8',
 
   success: '#4CAF50',
   warning: '#FF9800',
   error: '#F44336',
 
   // Journey mode colors — softer pastels (2026 redesign)
-  prePregnancy: '#E58BB4',   // rose
-  pregnancy: '#B7A6E8',      // lavender
-  kids: '#8BB8E8',           // powder blue
-  menopause: '#E8975A',      // warm ember
+  prePregnancy: '#F4A6C9',   // rose
+  pregnancy: '#B69CF2',      // lavender
+  kids: '#8DB6F2',           // powder blue
+  menopause: '#F2A06E',      // warm ember
 
   // Journey mode soft tints
-  prePregnancySoft: '#F7CFDD',
-  pregnancySoft: '#E0D5F3',
-  kidsSoft: '#D4E3F3',
-  menopauseSoft: '#F7E3D2',
+  prePregnancySoft: '#F9CFE0',
+  pregnancySoft: '#DCCFF9',
+  kidsSoft: '#CFE1FA',
+  menopauseSoft: '#FBD3B3',
 
   // Cycle phase colors
   phase: {
@@ -73,27 +74,27 @@ export const brand = {
 // ─── STICKER PALETTE (always available, used as accents) ────────────────────
 
 export const stickers = {
-  yellow: '#F5D652',
-  yellowSoft: '#FBEA9E',
+  yellow: '#F9C846',
+  yellowSoft: '#FFF1B8',
   yellowInk: '#7C5E0F',       // dark text/icon tint on cream
-  blue: '#9DC3E8',
-  blueSoft: '#CFE0F0',
+  blue: '#8DB6F2',
+  blueSoft: '#CFE1FA',
   blueInk: '#1F4A7A',         // dark text/icon tint on cream
-  pink: '#F2B2C7',
-  pinkSoft: '#F9D8E2',
+  pink: '#F4A6C9',
+  pinkSoft: '#F9CFE0',
   pinkInk: '#8E3A56',         // dark text/icon tint on cream
-  green: '#BDD48C',
-  greenSoft: '#DDE7BB',
+  green: '#9ED8B0',
+  greenSoft: '#D7F0DD',
   greenInk: '#3F5919',        // dark text/icon tint on cream
-  lilac: '#C8B6E8',
-  lilacSoft: '#E3D8F2',
+  lilac: '#B69CF2',
+  lilacSoft: '#DCCFF9',
   lilacInk: '#3A2A6E',        // dark text/icon tint on cream
-  peach: '#F5B896',
-  peachSoft: '#F9D6C0',
+  peach: '#F7C9A6',
+  peachSoft: '#FBD3B3',
   peachInk: '#8B4A26',        // dark text/icon tint on cream
-  coral: '#EE7B6D',
+  coral: '#EC4B3C',
   coralInk: '#B43E2E',        // dark text/icon tint on cream
-  charcoal: '#2A2624',
+  charcoal: '#161513',
 } as const
 
 // Dark mode sticker overrides (slightly brighter)
@@ -139,31 +140,31 @@ export const chartSeries = [
 
 export const lightTokens = {
   // Canvas
-  bg: '#F3ECD9',             // cream
-  bgWarm: '#EFE5CC',         // slightly deeper cream
-  surface: '#FFFEF8',        // card paper white
-  surfaceRaised: '#F7F0DF',  // nested cards
-  surfaceGlass: 'rgba(20,19,19,0.04)',
+  bg: '#FBF6EA',             // cream
+  bgWarm: '#F3F0E8',         // slightly deeper cream
+  surface: '#FFFFFF',        // card paper white
+  surfaceRaised: '#F7F4EC',  // nested cards
+  surfaceGlass: 'rgba(22,21,19,0.04)',
 
   // Borders
-  border: 'rgba(20,19,19,0.08)',
-  borderLight: 'rgba(20,19,19,0.05)',
-  borderStrong: 'rgba(20,19,19,0.14)',
+  border: 'rgba(22,21,19,0.12)',
+  borderLight: 'rgba(22,21,19,0.07)',
+  borderStrong: 'rgba(22,21,19,0.20)',
 
   // Text — near-black ink on cream
-  text: '#141313',
-  textSecondary: '#3A3533',
-  textMuted: '#6E6763',
-  textFaint: '#A69E93',
-  textInverse: '#F5EDDC',
+  text: '#161513',
+  textSecondary: '#4F4B43',
+  textMuted: '#8C877C',
+  textFaint: '#B3AC9C',
+  textInverse: '#FBF6EA',
 
   // Interactive
-  primary: '#7048B8',
-  primaryLight: '#9B70D4',
-  primaryTint: '#EFE6FF',
+  primary: '#161513',
+  primaryLight: '#4F4B43',
+  primaryTint: '#F3F0E8',
 
-  secondary: '#3B7DD8',
-  secondaryTint: '#E3EDFF',
+  secondary: '#4C79CE',
+  secondaryTint: '#CFE1FA',
 
   accent: brand.pregnancy,   // mode-driven — lavender default
   accentSoft: brand.pregnancySoft,
@@ -174,10 +175,10 @@ export const lightTokens = {
   error: '#C62828',
 
   // Tab bar
-  tabBg: 'rgba(20,19,19,0.96)',
-  tabBorder: 'rgba(20,19,19,0.06)',
+  tabBg: '#FBF6EA',
+  tabBorder: '#161513',
   tabActive: brand.pregnancy,
-  tabInactive: 'rgba(245,237,220,0.55)',
+  tabInactive: '#8C877C',
 } as const
 
 // ─── DARK MODE TOKENS — warm ink on parchment ──────────────────────────────
@@ -278,16 +279,17 @@ export const fontWeight = {
   black: '900' as const,
 }
 
-// 2026 redesign fonts
+// Site look (Nov 2026) — same faces as grandma.app: Architects Daughter for display / accent words
+// (one weight; it carries the hand-drawn voice), Hanken Grotesk for UI and big numbers.
 export const font = {
-  display: 'Fraunces_600SemiBold',         // serif editorial display
-  displayBold: 'Fraunces_700Bold',         // heavier display weight (hero numbers, big titles)
-  displayExtraBold: 'Fraunces_800ExtraBold', // heaviest display weight (jumbo hero numbers) — loaded in app/_layout.tsx
-  italic: 'InstrumentSerif_400Regular_Italic', // italic accent
-  body: 'DMSans_400Regular',               // UI body
-  bodyMedium: 'DMSans_500Medium',          // medium weight UI
-  bodySemiBold: 'DMSans_600SemiBold',      // semibold UI labels
-  bodyBold: 'DMSans_700Bold',              // bold UI labels (chip text, emphasised pills)
+  display: 'ArchitectsDaughter_400Regular',  // hand-lettered titles
+  displayBold: 'HankenGrotesk_700Bold',      // hero numbers, heavy titles
+  displayExtraBold: 'HankenGrotesk_700Bold', // jumbo hero numbers
+  italic: 'ArchitectsDaughter_400Regular',   // accent words (was a serif italic)
+  body: 'HankenGrotesk_400Regular',          // UI body
+  bodyMedium: 'HankenGrotesk_500Medium',     // medium weight UI
+  bodySemiBold: 'HankenGrotesk_600SemiBold', // semibold UI labels
+  bodyBold: 'HankenGrotesk_700Bold',         // bold UI labels (chip text, emphasised pills)
 } as const
 
 // ─── MOTION ────────────────────────────────────────────────────────────────

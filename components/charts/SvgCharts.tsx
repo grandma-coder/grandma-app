@@ -866,7 +866,7 @@ const bubbleClusterStyles = StyleSheet.create({
     transform: [{ rotate: '-22deg' }],
   },
   bubbleCount: {
-    fontFamily: 'Fraunces_800ExtraBold',
+    fontFamily: 'HankenGrotesk_700Bold',
     fontSize: 28,
     letterSpacing: -1,
     lineHeight: 32,

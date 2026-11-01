@@ -196,6 +196,8 @@ export default function RootLayout() {
     HankenGrotesk_600SemiBold,
     HankenGrotesk_700Bold,
     HankenGrotesk_700Bold_Italic,
+    // Site look (Nov 2026): the grandma.app hand-lettered face, vendored (OFL) — assets/fonts
+    ArchitectsDaughter_400Regular: require('../assets/fonts/ArchitectsDaughter-Regular.ttf'),
   })
 
   // Apply DM Sans as the default for every Text / TextInput once fonts load.

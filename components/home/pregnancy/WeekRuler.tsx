@@ -36,8 +36,8 @@ const TICKS = 6 // 0, ~10, 20, 30, 40, 51
 
 export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke, valueFont, labelFont }: WeekRulerProps) {
   const { t } = useTranslation()
-  const valFont = valueFont ?? 'Fraunces_700Bold'
-  const endFont = labelFont ?? 'DMSans_500Medium'
+  const valFont = valueFont ?? 'HankenGrotesk_700Bold'
+  const endFont = labelFont ?? 'HankenGrotesk_500Medium'
   const clamped = Math.max(0, Math.min(MAX_CM, cm))
   const x = X_START + (clamped / MAX_CM) * (X_END - X_START)
   const label = clamped < 1 ? `${clamped.toFixed(2)}cm` : clamped < 10 ? `${clamped.toFixed(1)}cm` : `${Math.round(clamped)}cm`

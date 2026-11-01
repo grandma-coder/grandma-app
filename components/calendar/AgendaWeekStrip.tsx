@@ -195,7 +195,7 @@ export function AgendaWeekStrip({
               onPress={() => onSelectDate(dateStr)}
               style={styles.cell}
             >
-              <Text style={[styles.weekday, { color: labelColor, fontFamily: isSelected ? 'DMSans_700Bold' : 'DMSans_500Medium' }]}>
+              <Text style={[styles.weekday, { color: labelColor, fontFamily: isSelected ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_500Medium' }]}>
                 {DAY_INITIALS[date.getDay()]}
               </Text>
               <View

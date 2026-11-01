@@ -216,7 +216,7 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
       <Text
         style={[
           styles.pillName,
-          { color: ink, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' },
+          { color: ink, fontFamily: active ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold' },
         ]}
       >
         {label}

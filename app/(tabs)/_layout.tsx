@@ -640,8 +640,8 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
                   {
                     color: isFocused ? inkColor : labelMutedColor,
                     fontFamily: isFocused
-                      ? 'Fraunces_700Bold'
-                      : 'InstrumentSerif_400Regular_Italic',
+                      ? 'HankenGrotesk_700Bold'
+                      : 'ArchitectsDaughter_400Regular',
                     fontStyle: isFocused ? 'normal' : 'italic',
                   },
                 ]}

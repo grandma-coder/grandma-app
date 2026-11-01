@@ -1577,7 +1577,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                 {diffuse ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: kidColor }} /> : null}
                 <Text style={[s.pillName, diffuse
                   ? { fontFamily: active ? diffuseFont.bodySemiBold : diffuseFont.body, color: active ? dt.colors.ink : dt.colors.ink2 }
-                  : { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : kidColor }]}>{c.name}</Text>
+                  : { fontFamily: active ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold', color: active ? ST_INK : kidColor }]}>{c.name}</Text>
                 <Text style={[s.pillAge, diffuse
                   ? { fontFamily: diffuseFont.mono, color: dt.colors.ink3, fontSize: 9.5, letterSpacing: 0.5 }
                   : { color: active ? 'rgba(20,19,19,0.7)' : kidColor + 'AA' }]}>{formatAge(c.birthDate)}</Text>
@@ -1655,7 +1655,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                       alignSelf: 'flex-start',
                     }]}
                   >
-                    <Text style={[s.pillName, { color: ST_INK, fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold' }]}>{c.name}</Text>
+                    <Text style={[s.pillName, { color: ST_INK, fontFamily: active ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold' }]}>{c.name}</Text>
                     <Text style={[s.pillAge, { color: ST_INK, opacity: active ? 0.7 : 0.55 }]}>{formatAge(c.birthDate)}</Text>
                   </Pressable>
                 )
@@ -1708,7 +1708,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                 fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
                 color: active ? dt.colors.ink : dt.colors.ink3,
                 textTransform: 'uppercase', letterSpacing: 1.4, fontSize: 11,
-              } : { fontFamily: active ? 'DMSans_700Bold' : 'DMSans_600SemiBold', color: active ? ST_INK : colors.textMuted }]}>
+              } : { fontFamily: active ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold', color: active ? ST_INK : colors.textMuted }]}>
                 {opt.key === 'custom' && customRange
                   ? `${fmtShortDate(customRange.start)}–${fmtShortDate(customRange.end)}`
                   : opt.key === 'today' ? t('common_today')
@@ -5061,7 +5061,7 @@ function BreastfeedingInsights({
                   <Text style={{
                     color: isPeak ? DIAPER_STICKER_INK : '#6E6763',
                     fontSize: 11,
-                    fontFamily: isPeak ? 'DMSans_700Bold' : 'DMSans_600SemiBold',
+                    fontFamily: isPeak ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold',
                     letterSpacing: 0.3,
                   }}>
                     {b.label}
@@ -6566,7 +6566,7 @@ function ReminderRow({
               fontSize: 15,
               fontFamily: diffuse
                 ? (r.done ? diffuseFont.body : diffuseFont.display)
-                : (r.done ? 'DMSans_400Regular' : 'Fraunces_600SemiBold'),
+                : (r.done ? 'HankenGrotesk_400Regular' : 'ArchitectsDaughter_400Regular'),
               color: r.done ? (diffuse ? dt.colors.ink3 : colors.textMuted) : (diffuse ? dt.colors.ink : colors.text),
               textDecorationLine: r.done ? 'line-through' : 'none',
               lineHeight: 21,
@@ -7007,7 +7007,7 @@ function RemindersModal({
                 >
                   <Text style={{
                     fontSize: diffuse ? 11 : 14,
-                    fontFamily: diffuse ? (isOn ? diffuseFont.monoBold : diffuseFont.mono) : (isOn ? 'Fraunces_600SemiBold' : 'DMSans_600SemiBold'),
+                    fontFamily: diffuse ? (isOn ? diffuseFont.monoBold : diffuseFont.mono) : (isOn ? 'ArchitectsDaughter_400Regular' : 'HankenGrotesk_600SemiBold'),
                     color: diffuse ? (isOn ? dt.colors.ink : dt.colors.ink3) : (isOn ? '#FFFEF8' : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)')),
                     letterSpacing: diffuse ? 1.2 : -0.1,
                     textTransform: diffuse ? 'uppercase' : 'none',

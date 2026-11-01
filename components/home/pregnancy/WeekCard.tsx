@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
 
   mega: {
     // Matches HTML .mega: Fraunces 800 extra-bold, with subtle emboss shadow
-    fontFamily: 'Fraunces_800ExtraBold',
+    fontFamily: 'HankenGrotesk_700Bold',
     fontSize: 56,
     fontWeight: '800',
     letterSpacing: -3,
