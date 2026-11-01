@@ -27,7 +27,7 @@ const isSmall = () => !!window.matchMedia?.(SMALL_QUERY).matches
  * Hand-drawn onboarding: a sticky note, a drawn arrow and a halo that follow the next thing to tap. Steps live in
  * the demo reducer (`tourDone` advances only on the current key; `skipTour` / `joined` end it). One fixed overlay,
  * positioned from getBoundingClientRect in a rAF loop that stops with the tour and pauses with the tab. Each frame reads
- * the target's rect once and writes only when the rect, step, viewport, visibility or busy state changed.
+ * the target's rect (and its phone screen's, to catch a scrolled-away target) once and writes only when the rect, step, viewport, visibility or busy state changed.
  */
 export function Tour() {
   const { state, dispatch } = useDemo()
@@ -68,9 +68,12 @@ export function Tour() {
     const place = () => {
       const { key: k, busy: b } = live.current
       const el = document.querySelector(TARGET[k])
-      const r = el?.getBoundingClientRect() // the one layout read per frame
+      const r = el?.getBoundingClientRect() // layout reads: the target, plus its phone screen below (no writes between)
+      // a target inside a scrolled phone screen can be clipped while still inside the window
+      const clip = el?.closest('[data-screen]')?.getBoundingClientRect()
+      const inScreen = !clip || (!!r && r.bottom > clip.top + 4 && r.top < clip.bottom - 4)
       const iw = window.innerWidth, ih = window.innerHeight
-      const vis = !!r && r.width > 0 && r.bottom > 70 && r.top < ih - (isSmall() ? 90 : 10)
+      const vis = !!r && r.width > 0 && inScreen && r.bottom > 70 && r.top < ih - (isSmall() ? 90 : 10)
       const below = !!r && r.top >= ih - 10 && k !== 'join'
       const show = vis && !b
       const pill = below && !b

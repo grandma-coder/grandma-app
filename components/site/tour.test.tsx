@@ -33,6 +33,7 @@ function Grab() { demo = useDemo(); ui = useMobileUi(); return null }
 let queue: Map<number, FrameRequestCallback>
 let nextId: number
 let below: boolean
+let clipped: boolean // the phone screen scrolled the target out of its visible area
 const flush = () => act(() => {
   const run = [...queue.values()]
   queue.clear()
@@ -56,12 +57,13 @@ function setup(locale: 'en' | 'pt' = 'en') {
 }
 
 beforeEach(() => {
-  queue = new Map(); nextId = 1; below = false
+  queue = new Map(); nextId = 1; below = false; clipped = false
   window.requestAnimationFrame = ((cb: FrameRequestCallback) => { queue.set(nextId, cb); return nextId++ }) as typeof window.requestAnimationFrame
   window.cancelAnimationFrame = ((id: number) => { queue.delete(id) }) as typeof window.cancelAnimationFrame
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 })
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    if (clipped && this.matches('[data-screen]')) return { left: 0, top: 400, width: 390, height: 300, right: 390, bottom: 700, x: 0, y: 400, toJSON() {} } as DOMRect
     const top = below && this.closest('[data-tour], #modes') ? 2000 : 200
     return { left: 100, top, width: 80, height: 40, right: 180, bottom: top + 40, x: 100, y: top, toJSON() {} } as DOMRect
   })
@@ -191,7 +193,7 @@ describe('Tour', () => {
     expect(queue.size).toBe(0)
   })
 
-  it('reads one rect per frame and writes no styles or classes while nothing changes', () => {
+  it('reads the target (and its phone screen) once per frame and writes no styles or classes while nothing changes', () => {
     setup()
     flush()
     const halo = coach().querySelector('[data-halo]') as HTMLElement
@@ -202,7 +204,7 @@ describe('Tour', () => {
     const rect = vi.mocked(HTMLElement.prototype.getBoundingClientRect)
     rect.mockClear()
     flush(); flush(); flush()
-    expect(rect).toHaveBeenCalledTimes(3)
+    expect(rect).toHaveBeenCalledTimes(6) // target + its screen, 3 frames
     expect(halo.style.left).toBe('1px')
     expect(coach().dataset.on).toBe('x')
     expect(toggle).not.toHaveBeenCalled()
@@ -210,6 +212,19 @@ describe('Tour', () => {
     below = true
     flush()
     expect(coach().dataset.on).toBe('false')
+  })
+
+  it('hides when the target is scrolled out of the phone screen, even though it is inside the window', () => {
+    setup()
+    flush()
+    expect(coach().dataset.on).toBe('true')
+    clipped = true
+    flush()
+    expect(coach().dataset.on).toBe('false')
+    expect(hit()).toEqual([])
+    clipped = false
+    flush()
+    expect(coach().dataset.on).toBe('true')
   })
 
   it('cancels its loop on unmount', () => {
