@@ -28,7 +28,8 @@ import { useCaregiverStore } from '../../store/useCaregiverStore'
 import { useProfile } from '../../lib/useProfile'
 import { getModeConfig, getCaregiverTabVisibility } from '../../lib/modeConfig'
 import { isCaregiver } from '../../lib/caregiverPermissions'
-import { useTheme, brand, getModeColor, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
+import { useTheme, brand, getModeColor, getModeAccent, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
+import { SiteSticker, type SiteStickerName } from '../../components/stickers/SiteSticker'
 import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
 import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
@@ -39,7 +40,7 @@ import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 const STRIP_HEIGHT = 84
 const STICKER_TAB_SIZE = 46
 const CENTER_BURST_SIZE = 72
-const STICKER_INK = '#141313'
+const STICKER_INK = '#161513'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -259,14 +260,15 @@ function CenterTabButton() {
           ) : (
           <Animated.View
             style={[
-              styles.centerBurstWrap,
-              { shadowColor: STICKER_INK, transform: [{ rotate: rotation }, { scale: pulse }] },
+              styles.centerEye,
+              {
+                borderColor: isDark ? '#F5EDDC' : STICKER_INK,
+                shadowColor: isDark ? '#000' : colors.bg,
+                transform: [{ rotate: rotation }, { scale: Animated.multiply(pulse, fabPress) }],
+              },
             ]}
           >
-            <Burst size={CENTER_BURST_SIZE} fill={StickerPalette.coral} stroke={STICKER_INK} points={11} wobble={0.26} />
-            <View style={styles.centerSparkleAbs} pointerEvents="none">
-              <Plus size={26} color={STICKER_INK} strokeWidth={3} />
-            </View>
+            <SiteSticker name="eye" size={46} cut />
           </Animated.View>
           )}
         </Pressable>
@@ -478,26 +480,26 @@ interface TabStickerCfg {
   color: string
 }
 
-function TornEdge({ width, color }: { width: number; color: string }) {
-  // Wavy/zig-zag torn paper top edge — deterministic but irregular.
-  const segs = 26
-  const segW = width / segs
-  const heights = [3, 7, 2, 5, 8, 4, 6, 3, 9, 5, 2, 6, 4, 8, 3, 5, 7, 2, 6, 4, 9, 3, 5, 8, 2, 6, 4]
-  let d = `M0,${STRIP_HEIGHT} L0,10 `
-  for (let i = 0; i <= segs; i++) {
-    const x = (i * segW).toFixed(1)
-    const y = heights[i % heights.length]
-    d += `L${x},${y} `
-  }
-  d += `L${width},${STRIP_HEIGHT} Z`
+// The site's tab bar edge: a hand-drawn ink wave on each side, stopping at the centre eye.
+const WAVE = 'M0 7 C25 3 45 10 75 6 S130 2 160 7 S190 9 200 6'
+function WavyEdge({ width, paper, ink }: { width: number; paper: string; ink: string }) {
+  const side = width / 2 - 41
+  const wave = (flip: boolean) => (
+    <Svg width={side} height={12} viewBox="0 0 200 12" preserveAspectRatio="none"
+      style={{ position: 'absolute', top: -6, [flip ? 'right' : 'left']: 0, transform: flip ? [{ scaleX: -1 }] : undefined }}
+      pointerEvents="none">
+      <Path d={`${WAVE} V12 H0Z`} fill={paper} />
+      <Path d={WAVE} fill="none" stroke={ink} strokeWidth={2.4} strokeLinecap="round" />
+    </Svg>
+  )
+  return <>{wave(false)}{wave(true)}</>
+}
+
+/** Small wavy underline under the active tab label (CSS `text-decoration: underline wavy` on the site). */
+function ActiveWave({ color }: { color: string }) {
   return (
-    <Svg
-      width={width}
-      height={STRIP_HEIGHT}
-      style={StyleSheet.absoluteFillObject}
-      pointerEvents="none"
-    >
-      <Path d={d} fill={color} />
+    <Svg width={40} height={6} viewBox="0 0 40 6" style={{ marginTop: 1 }} pointerEvents="none">
+      <Path d="M1 3 Q4 0 7 3 T13 3 T19 3 T25 3 T31 3 T37 3" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" />
     </Svg>
   )
 }
@@ -569,14 +571,17 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
     return true
   })
 
-  // Paper color — cream in light mode, parchment in dark
-  const paperColor = isDark ? '#2C2820' : StickerPalette.cream
+  // Paper + ink, as on grandma.app: cream bar, hand-drawn wave edge, sticker icons, hand-lettered labels.
+  const { colors } = useTheme()
+  const paperColor = isDark ? '#2C2820' : colors.bg
   const inkColor = isDark ? StickerPalette.cream : STICKER_INK
-  const labelMutedColor = isDark ? 'rgba(245,237,220,0.6)' : '#6E6763'
+  const labelMutedColor = isDark ? 'rgba(245,237,220,0.6)' : colors.textMuted
+  const accent = getModeAccent(mode, isDark)
+  const TAB_STICKER: Record<string, SiteStickerName> = { index: 'house', agenda: 'cal', vault: 'bars', settings: 'me' }
 
   return (
     <View style={[stripStyles.wrap, { paddingBottom: insets.bottom, backgroundColor: paperColor }]}>
-      <TornEdge width={screenW} color={paperColor} />
+      <WavyEdge width={screenW} paper={paperColor} ink={inkColor} />
       <View style={[stripStyles.row, { backgroundColor: paperColor }]}>
         {visible.map((route) => {
           const isFocused = state.routes[state.index]?.key === route.key
@@ -591,7 +596,6 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
 
           const cfg = TAB_CFG[route.name]
           if (!cfg) return null
-          const Icon = cfg.icon
 
           const onPress = () => {
             const event = navigation.emit({
@@ -613,42 +617,19 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
               accessibilityState={{ selected: isFocused }}
               accessibilityLabel={cfg.label}
             >
-              <View
-                style={[
-                  stripStyles.tabSticker,
-                  {
-                    backgroundColor: cfg.color,
-                    borderColor: STICKER_INK,
-                    opacity: isFocused ? 1 : 0.92,
-                    shadowOpacity: isFocused ? 0.18 : 0,
-                  },
-                ]}
-              >
-                <Icon size={20} color={STICKER_INK} strokeWidth={2} />
+              <View style={{ transform: isFocused ? [{ rotate: '-8deg' }, { scale: 1.16 }] : undefined }}>
+                <SiteSticker name={TAB_STICKER[route.name] ?? 'house'} size={32} />
                 {route.name === 'settings' && unreadNotifications > 0 && (
-                  <View
-                    style={[
-                      stripStyles.unreadDot,
-                      { backgroundColor: StickerPalette.coral, borderColor: STICKER_INK },
-                    ]}
-                  />
+                  <View style={[stripStyles.unreadDot, { backgroundColor: StickerPalette.coral, borderColor: STICKER_INK }]} />
                 )}
               </View>
               <Text
-                style={[
-                  stripStyles.tabLabel,
-                  {
-                    color: isFocused ? inkColor : labelMutedColor,
-                    fontFamily: isFocused
-                      ? 'HankenGrotesk_700Bold'
-                      : 'ArchitectsDaughter_400Regular',
-                    fontStyle: isFocused ? 'normal' : 'italic',
-                  },
-                ]}
+                style={[stripStyles.tabLabel, { color: isFocused ? inkColor : labelMutedColor }]}
                 numberOfLines={1}
               >
                 {cfg.label}
               </Text>
+              {isFocused ? <ActiveWave color={accent} /> : <View style={{ height: 7 }} />}
             </Pressable>
           )
         })}
@@ -925,6 +906,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  centerEye: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 2.5,
+    backgroundColor: '#F7C6D9',
+    marginTop: -14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // a paper-coloured ring around the disc, like the site's box-shadow: 0 0 0 6px
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
   centerBurstWrap: {
     width: CENTER_BURST_SIZE,
     height: CENTER_BURST_SIZE,
@@ -1121,8 +1116,10 @@ const stripStyles = StyleSheet.create({
   },
   tabLabel: {
     marginTop: 4,
-    fontSize: 11,
-    letterSpacing: 0.1,
+    fontSize: 12,
+    fontFamily: 'ArchitectsDaughter_400Regular',
+    textTransform: 'uppercase',
+    letterSpacing: 0.2,
   },
   unreadDot: {
     position: 'absolute',

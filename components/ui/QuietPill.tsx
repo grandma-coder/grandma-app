@@ -25,11 +25,12 @@ interface QuietPillProps {
 }
 
 export function QuietPill({ label, onPress, leading, accessibilityLabel, style }: QuietPillProps) {
-  const { colors, font } = useTheme()
+  const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
 
-  const inkColor = diffuse ? dt.colors.ink3 : colors.textMuted
+  // grandma.app chip: white, ink outline, bold ink label
+  const inkColor = diffuse ? dt.colors.ink3 : colors.text
 
   // Glyph form — no chrome, just the icon. Bigger hitSlop since it's small.
   if (!label) {
@@ -56,7 +57,8 @@ export function QuietPill({ label, onPress, leading, accessibilityLabel, style }
       style={({ pressed }) => [
         styles.pill,
         {
-          borderColor: diffuse ? dt.colors.line2 : colors.border,
+          borderColor: diffuse ? dt.colors.line2 : (isDark ? colors.borderStrong : colors.text),
+          borderWidth: diffuse ? 1 : 1.5,
           backgroundColor: diffuse ? 'transparent' : colors.surface,
           opacity: pressed ? 0.6 : 1,
         },
@@ -66,8 +68,8 @@ export function QuietPill({ label, onPress, leading, accessibilityLabel, style }
       {leading}
       <Text
         style={{
-          fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold,
-          fontSize: 11,
+          fontFamily: diffuse ? diffuseFont.mono : font.bodyBold,
+          fontSize: diffuse ? 11 : 12,
           color: inkColor,
           textTransform: diffuse ? 'uppercase' : 'none',
           letterSpacing: diffuse ? 0.8 : 0,

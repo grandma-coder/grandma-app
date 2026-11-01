@@ -37,14 +37,15 @@ function CurrentPaperCard({
   style,
   tint,
   flat = false,
-  radius = 20,
+  radius = 18,
   padding = 16,
   borderColor,
 }: PaperCardProps) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
 
   const bg = tint ?? colors.surface
-  const border = borderColor ?? colors.border
+  // grandma.app card: ink outline + a hard 2px drop (in dark the outline stays a cream hairline)
+  const border = borderColor ?? (isDark ? colors.border : colors.text)
 
   return (
     <View
@@ -53,7 +54,7 @@ function CurrentPaperCard({
           backgroundColor: bg,
           borderColor: border,
           borderRadius: radius,
-          borderWidth: 1,
+          borderWidth: isDark ? 1 : 1.5,
           padding,
         },
         !flat && styles.shadow,
@@ -107,10 +108,10 @@ function DiffusePaperCard({
 
 const styles = StyleSheet.create({
   shadow: {
-    shadowColor: '#141313',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowColor: '#161513',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
     elevation: 2,
   },
 })

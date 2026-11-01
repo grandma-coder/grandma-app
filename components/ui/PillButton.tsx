@@ -92,7 +92,7 @@ function CurrentPillButton({
       ]}
     >
       {leading ? <View style={styles.slot}>{leading}</View> : null}
-      <Text style={[styles.label, { fontFamily: font.bodySemiBold, color: v.fg }]}>
+      <Text style={[styles.label, { fontFamily: font.bodyBold, color: v.fg }]}>
         {loading ? '…' : label}
       </Text>
       {trailing ? <View style={styles.slot}>{trailing}</View> : null}

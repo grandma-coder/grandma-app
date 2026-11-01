@@ -348,6 +348,16 @@ export function getModeColor(mode: 'pre' | 'preg' | 'kids' | 'care' | 'meno' | s
   return isDark ? '#C4B5EF' : brand.pregnancy
 }
 
+/** The site's strong accent per journey — wavy underlines, active marks, slider thumbs (not fills). */
+export function getModeAccent(mode: 'pre' | 'preg' | 'kids' | 'care' | 'meno' | string, isDark = false): string {
+  if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#F2A2C2' : '#E0709A'
+  if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#C4B5EF' : '#8F5FC6'
+  if (mode === 'kids') return isDark ? '#A5C9F0' : '#4C79CE'
+  if (mode === 'meno' || mode === 'menopause') return isDark ? '#F0B074' : '#D9672A'
+  if (mode === 'care' || mode === 'caregiver') return isDark ? '#6FAEBE' : '#4A8496'
+  return isDark ? '#C4B5EF' : '#8F5FC6'
+}
+
 export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | 'care' | 'meno' | string, isDark = false): string {
   if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#3A2730' : brand.prePregnancySoft
   if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#2D2842' : brand.pregnancySoft
