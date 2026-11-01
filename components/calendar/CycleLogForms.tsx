@@ -21,7 +21,7 @@ import {
   ALL_SYMPTOMS, suggestedForPhase, symptomLabel, type SymptomId,
 } from '../../lib/cycleSymptoms'
 import { phaseHint, saveLabel } from '../../lib/cycleLogForms'
-import { askGrandmaAboutSymptoms } from '../../lib/symptomAssist'
+import { askGrandmaAboutSymptoms, canAskGrandma } from '../../lib/symptomAssist'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel, kgToDisplay, displayToKg, weightLabel } from '../../lib/units'
@@ -657,7 +657,7 @@ export function SymptomsForm({
       )}
 
       {/* Symptom-triggered Grandma — offer to ask about the selected symptoms. */}
-      {toggle.selectedCount > 0 ? (
+      {toggle.selectedCount > 0 && canAskGrandma() ? (
         <Pressable
           onPress={async () => {
             const labels = [...toggle.selected].map((id) => symptomLabel(id as SymptomId))

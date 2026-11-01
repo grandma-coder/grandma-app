@@ -12,6 +12,7 @@
  * behavior cards. When uncustomized (enabledKeys null) the builder order is used.
  */
 
+import { useGrandmaChatEnabled } from '../../../store/useFeatureFlags'
 import React, { useState, useEffect } from 'react'
 import { View } from 'react-native'
 import { router } from 'expo-router'
@@ -100,7 +101,10 @@ export function WeekWallet({
   const shortcutOnlyIds: PregCardId[] = WALLET_SHORTCUTS
     .map((s) => s.key)
     .filter((k) => !defaultCards.some((c) => c.id === k)) as PregCardId[]
+  // "Talk to Grandma" follows the remote grandma_chat flag (command center): off = not offered or shown.
+  const chatOn = useGrandmaChatEnabled()
   const availableIds: PregCardId[] = [...defaultCards.map((c) => c.id), ...shortcutOnlyIds]
+    .filter((id) => id !== 'ask_grandma' || chatOn)
 
   // For a caregiver, restrict to the shared allowlist (owner → null → no filter).
   const displayedIds: PregCardId[] = (

@@ -13,6 +13,7 @@
  * taps straight to a route / pop-up sheet — nothing expands inline.
  */
 
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import React, { useState } from 'react'
 import { View } from 'react-native'
 import { router } from 'expo-router'
@@ -90,7 +91,10 @@ export function KidsWallet({
   const shortcutOnlyIds: KidsCardId[] = WALLET_SHORTCUTS
     .map((s) => s.key)
     .filter((k) => !defaultCards.some((c) => c.id === k)) as KidsCardId[]
+  // "Talk to Grandma" follows the remote grandma_chat flag (command center): off = not offered or shown.
+  const chatOn = useGrandmaChatEnabled()
   const availableIds: KidsCardId[] = [...defaultCards.map((c) => c.id), ...shortcutOnlyIds]
+    .filter((id) => id !== 'ask_grandma' || chatOn)
 
   // Displayed cards: builder order when uncustomized; else the user's enabled
   // keys (in their order), dropping any key whose card isn't currently available

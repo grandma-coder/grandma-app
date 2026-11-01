@@ -44,7 +44,7 @@ import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
 import { Character } from '../characters/Characters'
-import { askGrandmaAboutSymptoms } from '../../lib/symptomAssist'
+import { askGrandmaAboutSymptoms, canAskGrandma } from '../../lib/symptomAssist'
 import { ExamForm } from '../exams/ExamForm'
 import { StepSlider } from '../ui/StepSlider'
 import { NumberStepper } from '../ui/NumberStepper'
@@ -409,7 +409,7 @@ export function PregnancySymptomsForm({
         ]}
       />
       {/* Symptom-triggered Grandma — offer to ask about the selected symptoms. */}
-      {selected.length > 0 ? (
+      {selected.length > 0 && canAskGrandma() ? (
         <Pressable
           onPress={async () => {
             const labels = selected.map((id) => {

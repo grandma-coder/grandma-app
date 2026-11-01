@@ -6,6 +6,7 @@
  * Deep-links to full agenda for scheduling.
  */
 
+import { useGrandmaChatEnabled } from '../../../store/useFeatureFlags'
 import React from 'react'
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
@@ -47,6 +48,8 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  // Ask Grandma follows the remote grandma_chat flag (command center).
+  const chatOn = useGrandmaChatEnabled()
   // Long-form appointment prose is translated at runtime + cached (Phase C).
   // Stable id-based keys so cache survives content edits (hash guards staleness).
   const { text: description } = useTranslatedContent(
@@ -128,6 +131,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
           <Text style={[dstyles.actionLabel, { color: ink }]}>{t('pregnancy_appt_scheduleInAgenda')}</Text>
           <DiffuseArrow color={ink3} size={16} />
         </Pressable>
+        {chatOn && (
         <Pressable
           onPress={() => { onClose(); router.push('/grandma-talk') }}
           style={({ pressed }) => [dstyles.action, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
@@ -135,6 +139,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
           <Text style={[dstyles.actionLabel, { color: ink }]}>{t('pregnancy_appt_askGrandma')}</Text>
           <DiffuseArrow color={ink3} size={16} />
         </Pressable>
+        )}
       </DiffuseSheet>
     )
   }
@@ -218,6 +223,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
                 colorSoft={stickers.lilacSoft}
                 onPress={() => { onClose(); router.push('/(tabs)/agenda') }}
               />
+              {chatOn && (
               <StickerButton
                 label={t('pregnancy_appt_askGrandma')}
                 color={stickers.yellow}
@@ -225,6 +231,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
                 active={false}
                 onPress={() => { onClose(); router.push('/grandma-talk') }}
               />
+              )}
             </View>
           </ScrollView>
         </View>
