@@ -69,6 +69,7 @@ import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
 import { hydrateDailyQuestions } from '../lib/dailyMessage'
 import { hydrateBirthTopics } from '../lib/birthGuideData'
+import { loadRemoteFlags } from '../lib/remoteFlags'
 import { initNotifications } from '../lib/pushNotifications'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
 import { ThemeProvider } from '../components/ui/ThemeProvider'
@@ -482,6 +483,8 @@ export default function RootLayout() {
       // back to bundled data if the fetch fails.
       hydrateDailyQuestions().catch(() => {})
       hydrateBirthTopics().catch(() => {})
+      // Remote kill switches from the command center (grandma_chat …); fails closed.
+      loadRemoteFlags().catch(() => {})
       // B3: register this device's push token + sync on-device local schedules
       // from the user's saved prefs. Best-effort; never blocks launch.
       initNotifications().catch(() => {})

@@ -3,6 +3,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { logAiUsage } from '../_shared/aiUsage.ts'
+import { isFeatureEnabled } from '../_shared/featureFlag.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -65,6 +66,14 @@ serve(async (req) => {
     )
   }
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  // Remote kill switch (public.feature_flags, toggled from the command center). Checked before auth
+  // and before any Anthropic call so a switched-off chat costs nothing, even from old app builds.
+  if (!(await isFeatureEnabled(supabase, 'grandma_chat'))) {
+    return new Response(
+      JSON.stringify({ error: 'grandma_chat_disabled' }),
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
   const { data: authData, error: authError } = await supabase.auth.getUser(token)
   if (authError || !authData?.user?.id) {
     return new Response(

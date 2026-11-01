@@ -6,6 +6,7 @@
  */
 
 import { supabase } from './supabase'
+import { useFeatureFlags } from '../store/useFeatureFlags'
 
 export interface ChatMessage {
   id: string
@@ -40,6 +41,8 @@ export async function sendGrandmaMessage(
   messages: Pick<ChatMessage, 'role' | 'content'>[],
   context: ChatContext
 ): Promise<GrandmaResponse> {
+  // Remote kill switch (command center). The edge functions refuse too; this skips the round trip.
+  if (!useFeatureFlags.getState().grandmaChat) throw new Error('grandma_chat_disabled')
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 

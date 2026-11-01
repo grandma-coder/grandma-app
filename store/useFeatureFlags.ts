@@ -3,16 +3,18 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 /**
- * App-level feature flags. Toggled from the Dev Panel; persisted so a flip
- * survives an app kill. Ships OFF so new surfaces land dark and get turned on
- * without a rebuild. No remote config exists yet — this store is the single
- * swap point if one is added later.
+ * App-level feature flags. Local ones are toggled from the Dev Panel and persisted.
+ * Remote ones (`grandmaChat`) come from public.feature_flags via lib/remoteFlags.ts,
+ * are never persisted, and start OFF — the app fails closed until the server says on.
  */
 interface FeatureFlagsState {
   /** Master gate for the granular caregiver access editor in Care Circle. */
   granularCaregiverAccess: boolean
+  /** Remote: "Talk to Grandma" AI chat. Off = every entry point hidden. */
+  grandmaChat: boolean
   hydrated: boolean
   setGranularCaregiverAccess: (v: boolean) => void
+  setRemoteFlags: (flags: { grandmaChat: boolean }) => void
   setHydrated: (v: boolean) => void
 }
 
@@ -20,8 +22,10 @@ export const useFeatureFlags = create<FeatureFlagsState>()(
   persist(
     (set) => ({
       granularCaregiverAccess: false,
+      grandmaChat: false,
       hydrated: false,
       setGranularCaregiverAccess: (v) => set({ granularCaregiverAccess: v }),
+      setRemoteFlags: (flags) => set(flags),
       setHydrated: (v) => set({ hydrated: v }),
     }),
     {
@@ -35,3 +39,6 @@ export const useFeatureFlags = create<FeatureFlagsState>()(
     },
   ),
 )
+
+/** True only when the server has switched the Grandma chat on. */
+export const useGrandmaChatEnabled = () => useFeatureFlags((s) => s.grandmaChat)
