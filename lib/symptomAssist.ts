@@ -8,6 +8,7 @@
  * Pure helpers (no React) so any log form can call them.
  */
 
+import { useFeatureFlags } from '../store/useFeatureFlags'
 import { router } from 'expo-router'
 
 /**
@@ -24,10 +25,17 @@ export function symptomContext(labels: string[]): string {
 
 /** Open Grandma with the given symptom labels pre-loaded as context. */
 export function askGrandmaAboutSymptoms(labels: string[]): void {
+  // Behind the remote grandma_chat flag (command center); the log forms hide the button via canAskGrandma().
+  if (!canAskGrandma()) return
   const ctx = symptomContext(labels)
   if (!ctx) return
   router.push({
     pathname: '/grandma-talk',
     params: { insightContext: ctx },
   })
+}
+
+/** Whether the "ask Grandma about these symptoms" action is available (remote grandma_chat flag). */
+export function canAskGrandma(): boolean {
+  return useFeatureFlags.getState().grandmaChat
 }

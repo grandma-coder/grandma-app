@@ -6,6 +6,7 @@
  * Grandma" suggestion section as rose pill buttons.
  */
 
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -66,6 +67,8 @@ export default function PillarDetail() {
       </View>
     )
   }
+
+  const chatOn = useGrandmaChatEnabled()
 
   function handleSuggestion(suggestion: string) {
     router.push({
@@ -176,6 +179,8 @@ export default function PillarDetail() {
           />
         ))}
 
+        {/* Ask Grandma — behind the remote grandma_chat flag (command center) */}
+        {chatOn && (<>
         <View style={[styles.sectionHeading, { marginTop: 24 }]}>
           <ScribbleUnderline color={diffuse ? 'transparent' : stickers.coral} strokeWidth={2.5}>
             <Text style={[styles.sectionTitle, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
@@ -194,6 +199,7 @@ export default function PillarDetail() {
             />
           ))}
         </View>
+        </>)}
       </ScrollView>
     </View>
   )

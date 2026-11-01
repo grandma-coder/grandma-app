@@ -30,6 +30,7 @@ import { getModeConfig, getCaregiverTabVisibility } from '../../lib/modeConfig'
 import { isCaregiver } from '../../lib/caregiverPermissions'
 import { useTheme, brand, getModeColor, getModeAccent, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { SiteSticker, type SiteStickerName } from '../../components/stickers/SiteSticker'
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import { useTranslation } from '../../lib/i18n'
 import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
 import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
@@ -150,6 +151,9 @@ function CenterTabButton() {
   const overlayAnim = useRef(new Animated.Value(0)).current
   const spinAnim = useRef(new Animated.Value(0)).current
   const itemAnims = useRef(WHEEL_ITEMS.map(() => new Animated.Value(0))).current
+  // "Talk to Grandma" is behind the remote grandma_chat flag (command center); off = not in the menu.
+  const chatOn = useGrandmaChatEnabled()
+  const items = WHEEL_ITEMS.filter((it) => it.id !== 'chat' || chatOn)
   // Aurora swirl — a slow continuous rotation of the pastel bloom field behind
   // the menu, so it drifts like the reference gradient instead of sitting flat.
   const auroraSpin = useRef(new Animated.Value(0)).current
@@ -312,7 +316,7 @@ function CenterTabButton() {
               contentContainerStyle={styles.wordScrollContent}
               showsVerticalScrollIndicator={false}
             >
-              {WHEEL_ITEMS.map((item, i) => {
+              {items.map((item, i) => {
                 const anim = itemAnims[i]
                 return (
                   <Animated.View
@@ -381,10 +385,10 @@ function CenterTabButton() {
         </Animated.View>
 
         {/* Fan items */}
-        {WHEEL_ITEMS.map((item, i) => {
+        {items.map((item, i) => {
           const Icon = item.icon
           const anim = itemAnims[i]
-          const total = WHEEL_ITEMS.length
+          const total = items.length
           const t01 = total === 1 ? 0.5 : i / (total - 1)
           const deg = FAN_START_DEG + (FAN_END_DEG - FAN_START_DEG) * t01
           const rad = (deg * Math.PI) / 180

@@ -9,6 +9,8 @@
 import type { TodayLogEntry } from './analyticsData'
 import type { StandardAppointment } from './pregnancyAppointments'
 import type { WalletTone } from './wallet'
+import { useFeatureFlags } from '../store/useFeatureFlags'
+
 
 export type { WalletTone }
 
@@ -56,7 +58,8 @@ export function buildWalletCards(input: BuildWalletCardsInput): WalletCardDescri
   cards.push({ id: 'memories', tone: 'pink', linkOnly: true })
   cards.push({ id: 'exams', tone: 'lilac', linkOnly: true })
   cards.push({ id: 'birth_guide', tone: 'green', linkOnly: true })
-  cards.push({ id: 'ask_grandma', tone: 'lavender', linkOnly: true })
+  // "Talk to Grandma" is behind the remote grandma_chat flag (command center); off = no card.
+  if (useFeatureFlags.getState().grandmaChat) cards.push({ id: 'ask_grandma', tone: 'lavender', linkOnly: true })
 
   return cards
 }

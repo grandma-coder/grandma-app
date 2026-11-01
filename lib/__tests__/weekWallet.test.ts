@@ -9,6 +9,10 @@ const appt = {
 
 const loggedKick: TodayLogEntry = { value: '10', notes: null, created_at: '2026-07-11' }
 
+import { useFeatureFlags } from '../../store/useFeatureFlags'
+
+beforeEach(() => useFeatureFlags.setState({ grandmaChat: true }))
+
 describe('buildWalletCards', () => {
   test('week 12, no appt, no tip → essentials, reminders, exams, birth_guide, ask_grandma', () => {
     const ids = buildWalletCards({
@@ -67,4 +71,10 @@ describe('buildWalletCards', () => {
     expect(a.appointment?.name).toBe('Anatomy Scan')
     expect(a.tone).toBe('yellow')
   })
+})
+
+test('no ask_grandma card while the grandma_chat flag is off', () => {
+  useFeatureFlags.setState({ grandmaChat: false })
+  const ids = buildWalletCards({ weekNumber: 12, todayLogs: {}, hasWeekTip: false, upcomingAppointment: null }).map((c) => c.id)
+  expect(ids).not.toContain('ask_grandma')
 })

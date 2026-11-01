@@ -1,4 +1,5 @@
 // components/pregnancy/BirthDetailModal.tsx
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import React, { useEffect, useState } from 'react'
 import {
   Modal,
@@ -94,6 +95,9 @@ export function BirthDetailModal({
     onClose()
   }
 
+  // Behind the remote grandma_chat flag (command center): off = no Ask Grandma CTA.
+  const chatOn = useGrandmaChatEnabled()
+
   const handleAskGrandma = () => {
     handleClose()
     onAskGrandma()
@@ -165,6 +169,7 @@ export function BirthDetailModal({
           />
         )}
 
+        {chatOn && (<>
         {/* Ask Grandma — containerless hairline action */}
         <Pressable
           onPress={handleAskGrandma}
@@ -178,6 +183,7 @@ export function BirthDetailModal({
           </Text>
           <DiffuseArrow color={dt.colors.ink3} size={16} />
         </Pressable>
+        </>)}
       </DiffuseSheet>
     )
   }
@@ -305,6 +311,7 @@ export function BirthDetailModal({
             )}
           </ScrollView>
 
+          {chatOn && (<>
           {/* Ask Grandma CTA — sticker pill */}
           <View style={styles.ctaPad}>
             <Pressable
@@ -331,6 +338,7 @@ export function BirthDetailModal({
               </Body>
             </Pressable>
           </View>
+          </>)}
         </View>
       </View>
     </Modal>

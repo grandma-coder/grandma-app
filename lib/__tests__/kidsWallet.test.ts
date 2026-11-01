@@ -1,5 +1,9 @@
 import { buildKidsWalletCards } from '../kidsWallet'
 
+import { useFeatureFlags } from '../../store/useFeatureFlags'
+
+beforeEach(() => useFeatureFlags.setState({ grandmaChat: true }))
+
 describe('buildKidsWalletCards', () => {
   test('no diaper, no leap → essentials, goals, vaccines, health, exams, reminders, ask_grandma, rewards', () => {
     const ids = buildKidsWalletCards({ hasDiaper: false, hasGrowthLeap: false }).map((c) => c.id)
@@ -22,4 +26,9 @@ describe('buildKidsWalletCards', () => {
     expect(byId['growth_leap'].linkOnly).toBe(false)
     expect(byId['reminders'].linkOnly).toBe(false)
   })
+})
+
+test('no ask_grandma card while the grandma_chat flag is off', () => {
+  useFeatureFlags.setState({ grandmaChat: false })
+  expect(buildKidsWalletCards({ hasDiaper: false, hasGrowthLeap: false }).map((c) => c.id)).not.toContain('ask_grandma')
 })

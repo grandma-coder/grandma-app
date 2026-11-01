@@ -9,7 +9,9 @@
  */
 
 import { Redirect } from 'expo-router'
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 
 export default function LibraryRedirect() {
-  return <Redirect href="/grandma-talk" />
+  // Chat behind the remote grandma_chat flag: off = back to Home.
+  return <Redirect href={useGrandmaChatEnabled() ? '/grandma-talk' : '/(tabs)'} />
 }
