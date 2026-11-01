@@ -84,6 +84,7 @@ import {
   DiffuseCircularMetric,
 } from '../ui/diffuse/DiffusePrimitives'
 import { useChildStore } from '../../store/useChildStore'
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
 import { DotCountRows, MilestoneTrail, type DotRow, SipColumns, MiniBarChart } from './shared/MiniCharts'
 import { bucketSeries } from './shared/bucketSeries'
@@ -570,6 +571,7 @@ function buildGrandmaContext(
 
 export function KidsAnalytics() {
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const { colors, radius, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -933,6 +935,7 @@ export function KidsAnalytics() {
                 )}
                 {/* Ask-Grandma pill — heart-eye logo + prompt. Replaces the old
                     duplicate "GRANDMA SAYS" card (same text as the summary). */}
+                {chatEnabled && (
                 <Pressable
                   onPress={() => {
                     const ctx = buildGrandmaContext(s, analytics, childName, ageMonths)
@@ -953,6 +956,7 @@ export function KidsAnalytics() {
                   </Text>
                   <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, color: dt.colors.ink3 }}>→</Text>
                 </Pressable>
+                )}
                 <KidsPillarBands items={bandItems} onPillarPress={(key) => setSelectedPillar(key as PillarKey)} />
               </View>
             )
@@ -1307,6 +1311,7 @@ function TipDetailModal({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const { colors, radius } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -1335,6 +1340,7 @@ function TipDetailModal({
         </View>
         <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, lineHeight: 24, color: dt.colors.ink, marginBottom: 12 }}>{tip.body}</Text>
         <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, lineHeight: 21, color: dt.colors.ink2, marginBottom: 20 }}>{tip.detail}</Text>
+        {chatEnabled && (
         <Pressable
           onPress={handleAskGrandma}
           style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: 16, opacity: pressed ? 0.6 : 1 }]}
@@ -1342,6 +1348,7 @@ function TipDetailModal({
           <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>{t('kids_analytics_ask_grandma_tip')}</Text>
           <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dt.colors.ink3 }}>→</Text>
         </Pressable>
+        )}
       </DiffuseSheet>
     )
   }
@@ -1368,6 +1375,7 @@ function TipDetailModal({
           </View>
           <Text style={[styles.tipModalDetail, { color: colors.textSecondary }]}>{tip.detail}</Text>
 
+          {chatEnabled && (
           <Pressable
             onPress={handleAskGrandma}
             style={({ pressed }) => [
@@ -1379,6 +1387,7 @@ function TipDetailModal({
             <Sparkles size={16} color={colors.primary} strokeWidth={2} />
             <Text style={[styles.tipAskBtnText, { color: colors.primary }]}>{t('kids_analytics_ask_grandma_tip')}</Text>
           </Pressable>
+          )}
         </Pressable>
       </Pressable>
     </Modal>
@@ -1770,6 +1779,7 @@ function GrandmaInsightCard({
   compact?: boolean
 }) {
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -1834,6 +1844,7 @@ function GrandmaInsightCard({
               </Text>
             </View>
           )}
+          {chatEnabled && (
           <Pressable
             onPress={(e) => { e.stopPropagation?.(); handleDiscussPress() }}
             hitSlop={8}
@@ -1846,6 +1857,7 @@ function GrandmaInsightCard({
             </Text>
             <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dt.colors.ink3 }}>→</Text>
           </Pressable>
+          )}
         </Pressable>
 
         {detailOpen && (
@@ -1949,6 +1961,7 @@ function GrandmaInsightCard({
 
         {/* "Let's discuss →" ink-dark pill button — opens confirm sheet */}
         <Animated.View entering={FadeIn.duration(400).delay(500)}>
+          {chatEnabled && (
           <Pressable
             onPress={(e) => {
               e.stopPropagation?.()
@@ -1970,6 +1983,7 @@ function GrandmaInsightCard({
               {t('kids_analytics_discuss_btn')}
             </Text>
           </Pressable>
+          )}
         </Animated.View>
       </Pressable>
 
@@ -2007,6 +2021,7 @@ function GrandmaInsightDetailSheet({
   onDiscuss: () => void
 }) {
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const { colors, radius, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -2046,6 +2061,7 @@ function GrandmaInsightDetailSheet({
         {rows.length === 0 && (
           <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, color: dt.colors.ink3, textAlign: 'center', paddingVertical: 20 }}>{t('kids_analytics_insight_no_highlights')}</Text>
         )}
+        {chatEnabled && (
         <Pressable
           onPress={onDiscuss}
           style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: dt.colors.line2, paddingTop: 18, marginTop: 8, opacity: pressed ? 0.6 : 1 }]}
@@ -2053,6 +2069,7 @@ function GrandmaInsightDetailSheet({
           <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink }}>{t('kids_analytics_discuss_btn')}</Text>
           <Text style={{ fontFamily: diffuseFont.body, fontSize: 18, color: dt.colors.ink3 }}>→</Text>
         </Pressable>
+        )}
       </DiffuseSheet>
     )
   }
@@ -2196,6 +2213,7 @@ function GrandmaInsightDetailSheet({
             </View>
           )}
 
+          {chatEnabled && (
           <Pressable
             onPress={onDiscuss}
             style={({ pressed }) => [
@@ -2209,6 +2227,7 @@ function GrandmaInsightDetailSheet({
               {t('kids_analytics_discuss_btn')}
             </Text>
           </Pressable>
+          )}
         </Pressable>
       </Pressable>
     </Modal>
@@ -2354,6 +2373,7 @@ function HealthTipsSection({
   onTipPress: (tip: TipData) => void
 }) {
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const { colors, radius } = useTheme()
 
   function handleAskGrandma() {
@@ -2397,6 +2417,7 @@ function HealthTipsSection({
         })}
       </View>
 
+      {chatEnabled && (
       <Pressable
         onPress={handleAskGrandma}
         style={({ pressed }) => [
@@ -2408,6 +2429,7 @@ function HealthTipsSection({
         <Sparkles size={16} color={colors.primary} strokeWidth={2} />
         <Text style={[styles.askButtonText, { color: colors.text }]}>{t('kids_analytics_ask_grandma_full_ctx')}</Text>
       </Pressable>
+      )}
     </View>
   )
 }

@@ -37,6 +37,7 @@ import {
   type Insight, type InsightType, type BehaviorMetrics,
 } from '../../lib/insights'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import { getWeekData, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { getDailyAffirmation } from '../../lib/pregnancyAffirmations'
 import { getBirthFocusForWeek } from '../../lib/pregnancyInsights'
@@ -545,6 +546,7 @@ function CollapsibleCard({
 }: CollapsibleCardProps) {
   const { colors, ink, diffuse } = useInsightsTheme()
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const isOpen = expandedMap[id] ?? defaultOpen
   const Sticker = stickerForEmoji(emoji)
 
@@ -562,6 +564,7 @@ function CollapsibleCard({
       {isOpen && (
         <View style={[ci.cardBody, { borderTopColor: ink + '12' }]}>
           {children}
+          {chatEnabled && (
           <Pressable
             onPress={() => router.push('/grandma-talk')}
             style={({ pressed }) => [
@@ -578,6 +581,7 @@ function CollapsibleCard({
               {t('insights_askGrandmaAbout', { topic: title.toLowerCase() })}
             </Text>
           </Pressable>
+          )}
         </View>
       )}
     </View>
@@ -644,6 +648,7 @@ const WARNING_SIGNS = [
 function PregnancyInsightsContent() {
   const { colors, ink, diffuse } = useInsightsTheme()
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const insets = useSafeAreaInsets()
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate)
@@ -836,6 +841,7 @@ function PregnancyInsightsContent() {
         {pTab === 'reads' && renderReads()}
       </ScrollView>
 
+      {chatEnabled && (
       <Pressable
         onPress={() => router.push('/grandma-talk')}
         style={({ pressed }) => [
@@ -847,6 +853,7 @@ function PregnancyInsightsContent() {
         <Text style={[ci.askBarText, { color: ink }]}>{t('insights_askGrandma')}</Text>
         <ChevronRight size={18} color={ink} strokeWidth={2.5} />
       </Pressable>
+      )}
     </View>
   )
 }
@@ -902,6 +909,7 @@ const ci = StyleSheet.create({
 export function InsightsScreen() {
   const { colors, radius, isDark, ink, diffuse } = useInsightsTheme()
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const queryClient = useQueryClient()
@@ -1345,6 +1353,7 @@ export function InsightsScreen() {
             </View>
 
             {/* Ask Grandma CTA — sticker hero button */}
+            {chatEnabled && (
             <Pressable
               onPress={() => router.push('/grandma-talk' as any)}
               style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}
@@ -1355,6 +1364,7 @@ export function InsightsScreen() {
                 <ChevronRight size={18} color={ink} strokeWidth={2.5} />
               </View>
             </Pressable>
+            )}
           </>
         )}
 
@@ -1539,6 +1549,7 @@ function ArticleDetailModal({
   const { colors, ink } = useInsightsTheme()
   const diffuse = useIsDiffuse()
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const insets = useSafeAreaInsets()
   const meta = CATEGORY_META[article.category]
   const Icon = meta.icon
@@ -1585,12 +1596,14 @@ function ArticleDetailModal({
               ))}
             </ScrollView>
             <View style={[s.modalDivider, { backgroundColor: ink + '15', marginVertical: 20 }]} />
+            {chatEnabled && (
             <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
               <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
                 <Character name="chat" size={18} color={ink} />
                 <Text style={[s.askBtnText, { color: ink }]}>{t('insights_askGrandma')}</Text>
               </View>
             </Pressable>
+            )}
           </View>
         </View>
       </View>
@@ -1717,6 +1730,7 @@ function InsightDetailModal({
   const { colors, ink } = useInsightsTheme()
   const diffuse = useIsDiffuse()
   const { t } = useTranslation()
+  const chatEnabled = useGrandmaChatEnabled()
   const insets = useSafeAreaInsets()
   const config = TYPE_CONFIG[insight.type as InsightType] ?? TYPE_CONFIG.nudge
   const Icon = config.icon
@@ -1784,12 +1798,14 @@ function InsightDetailModal({
               </Text>
             </View>
             <View style={s.modalActions}>
+              {chatEnabled && (
               <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ flex: 1, transform: [{ translateY: pressed ? 2 : 0 }] }]}>
                 <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
                   <Character name="chat" size={18} color={ink} />
                   <Text style={[s.askBtnText, { color: ink }]}>{t('insights_askGrandma')}</Text>
                 </View>
               </Pressable>
+              )}
               {isArchived ? (
                 <Pressable onPress={onRestore}
                   style={({ pressed }) => [
