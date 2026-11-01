@@ -6,9 +6,12 @@ import type { WaitlistDeps } from './types'
 const required = (name: string) => { const v = process.env[name]; if (!v) throw new Error(`${name} is not set`); return v }
 let cached: WaitlistDeps | null = null
 
+// Own names, not SUPABASE_*: those belong to the Vercel Supabase integration (another project) and get
+// rewritten by it. The waitlist writes to the command center's project.
+
 export function waitlistDeps(): WaitlistDeps {
   if (cached) return cached
-  const supabase = createClient(required('SUPABASE_URL'), required('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false, autoRefreshToken: false } })
+  const supabase = createClient(required('WAITLIST_SUPABASE_URL'), required('WAITLIST_SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false, autoRefreshToken: false } })
   cached = {
     hashIp: makeIpHasher(required('WAITLIST_IP_SALT')),
     async join(row, ipHash) {
