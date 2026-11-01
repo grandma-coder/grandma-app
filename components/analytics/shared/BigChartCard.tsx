@@ -41,7 +41,7 @@ export function BigChartCard({ label, value, unit, children, blobColor, labelAli
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: 'rgba(20,19,19,0.14)',
+          borderColor: colors.text,
         },
         pressed && { opacity: 0.92 },
       ]}
@@ -55,7 +55,7 @@ export function BigChartCard({ label, value, unit, children, blobColor, labelAli
         style={[
           styles.label,
           labelAlign === 'center' && styles.labelCentered,
-          { color: colors.textMuted, fontFamily: font.bodySemiBold },
+          { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' },
         ]}
       >
         {label}
@@ -66,7 +66,7 @@ export function BigChartCard({ label, value, unit, children, blobColor, labelAli
           <Text
             style={[
               styles.value,
-              { color: colors.text, fontFamily: font.display },
+              { color: colors.text, fontFamily: font.displayBold },
             ]}
           >
             {value}
@@ -93,17 +93,16 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     marginTop: 8,
-    borderRadius: 28,
+    borderRadius: 18,
     paddingVertical: 18,
     paddingHorizontal: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    elevation: 3,
+    shadowColor: '#161513',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
   },
   blob: {
     position: 'absolute',
@@ -113,7 +112,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 10,
-    letterSpacing: 2,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
   },
   labelCentered: {

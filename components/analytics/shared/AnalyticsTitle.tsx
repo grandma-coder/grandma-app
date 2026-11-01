@@ -18,7 +18,7 @@ export function AnalyticsTitle({ primary, italic }: Props) {
       <Text
         style={[
           styles.line,
-          { color: colors.text, fontFamily: font.display },
+          { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.2 },
         ]}
       >
         {primary}
@@ -27,7 +27,7 @@ export function AnalyticsTitle({ primary, italic }: Props) {
         style={[
           styles.line,
           styles.italic,
-          { color: colors.text, fontFamily: font.italic },
+          { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.2 },
         ]}
       >
         {italic}
@@ -47,6 +47,6 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   italic: {
-    fontStyle: 'italic',
+    fontStyle: 'normal',
   },
 })

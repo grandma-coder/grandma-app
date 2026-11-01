@@ -2,7 +2,7 @@
  * SectionHeader — "Wednesday, Apr 15 · 0 activities" style section divider.
  */
 
-import { View, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { Calendar } from 'lucide-react-native'
 import { useTheme } from '../../constants/theme'
 import { Body } from '../ui/Typography'
@@ -20,21 +20,21 @@ interface SectionHeaderProps {
 export function SectionHeader({ title, right, iconColor, noIcon }: SectionHeaderProps) {
   const { colors, isDark, font } = useTheme()
   const ink = isDark ? colors.text : '#141313'
-  const muted = isDark ? colors.textMuted : '#6E6763'
-  const resolvedIconColor = iconColor ?? (isDark ? colors.primary : '#7048B8')
+  const muted = colors.textMuted
+  const resolvedIconColor = iconColor ?? (isDark ? colors.primary : colors.text)
 
   return (
     <View style={styles.row}>
       <View style={styles.left}>
         {!noIcon ? <Calendar size={16} color={resolvedIconColor} strokeWidth={2} /> : null}
-        <Body size={15} color={ink} style={{ fontFamily: font.bodySemiBold }}>
+        <Body size={17} color={ink} style={{ fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.2 }}>
           {title}
         </Body>
       </View>
       {right ? (
-        <Body size={13} color={muted}>
+        <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: muted }}>
           {right}
-        </Body>
+        </Text>
       ) : null}
     </View>
   )

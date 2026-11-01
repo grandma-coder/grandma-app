@@ -14,7 +14,7 @@ import {
   View, Text, Pressable, Alert, StyleSheet, ActivityIndicator, TextInput,
 } from 'react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import {
@@ -28,6 +28,7 @@ import { cToDisplay, tempLabel, kgToDisplay, displayToKg, weightLabel } from '..
 import { SymptomSticker, CustomSymptomBlob } from './symptomStickers'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../ui/Stickers'
 import { Character, type MoodExpression } from '../characters/Characters'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 
@@ -185,11 +186,11 @@ function LogFormShell({
     <View style={styles.shell}>
       <View style={styles.headRow}>
         {title ? (
-          <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+          <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }, diffuse ? null : { textTransform: 'uppercase', letterSpacing: 0.2, fontSize: 24 }]}>
             {title}
           </Text>
         ) : null}
-        <Text style={[styles.subline, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+        <Text style={[styles.subline, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
           {subline}
         </Text>
       </View>
@@ -199,10 +200,10 @@ function LogFormShell({
           styles.phasePill,
           diffuse
             ? { borderColor: dt.colors.hairline, backgroundColor: 'transparent', alignSelf: 'flex-start' }
-            : { borderColor: phaseInk, backgroundColor: phaseTint },
+            : { borderColor: colors.text, borderWidth: 1.5, backgroundColor: phaseTint },
         ]}
       >
-        <Text style={[styles.phasePillText, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.mono } : { color: phaseInk, fontFamily: font.bodySemiBold }]}>
+        <Text style={[styles.phasePillText, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.mono } : { color: colors.text, fontFamily: font.bodyBold }]}>
           {phaseHintText}
         </Text>
       </View>
@@ -225,7 +226,7 @@ function SaveStickerButton({
 }: {
   label: string; accent: string; disabled?: boolean; loading?: boolean; onPress: () => void
 }) {
-  const { font } = useTheme()
+  const { font, colors } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
 
@@ -256,13 +257,13 @@ function SaveStickerButton({
       onPress={loading || disabled ? undefined : onPress}
       style={[
         styles.saveBtn,
-        { backgroundColor: accent, opacity: disabled ? 0.5 : 1, borderColor: '#141313' },
+        { backgroundColor: colors.text, opacity: disabled ? 0.5 : 1, borderColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1 },
       ]}
     >
       {loading ? (
-        <ActivityIndicator color="#FFFEF8" />
+        <ActivityIndicator color={colors.bg} />
       ) : (
-        <Text style={[styles.saveLabel, { color: '#FFFEF8', fontFamily: font.bodySemiBold }]}>
+        <Text style={[styles.saveLabel, { color: colors.bg, fontFamily: font.bodyBold }]}>
           {label}
         </Text>
       )}
@@ -318,9 +319,9 @@ function StickerChip({ sticker, label, selected, accent, onPress }: StickerChipP
       style={[
         styles.chip,
         {
-          backgroundColor: selected ? accent : colors.surface,
-          borderColor: selected ? '#141313' : colors.border,
-          borderWidth: selected ? 1.5 : 1,
+          backgroundColor: selected ? getModeColorSoft('pre') : colors.surface,
+          borderColor: colors.text,
+          borderWidth: 1.5,
         },
       ]}
     >
@@ -328,13 +329,13 @@ function StickerChip({ sticker, label, selected, accent, onPress }: StickerChipP
       <Text
         style={[
           styles.chipLabel,
-          { color: selected ? '#FFFEF8' : colors.text, fontFamily: font.bodySemiBold },
+          { color: colors.text, fontFamily: font.bodyBold },
         ]}
       >
         {label}
       </Text>
       {selected ? (
-        <Text style={[styles.chipCheck, { color: '#FFFEF8', fontFamily: font.bodyBold }]}>{'✓'}</Text>
+        <Text style={[styles.chipCheck, { color: colors.text, fontFamily: font.bodyBold }]}>{'✓'}</Text>
       ) : null}
     </Pressable>
   )
@@ -374,7 +375,7 @@ const FLOW_OPTIONS: { id: 'light' | 'medium' | 'heavy'; labelKey: keyof Translat
 export function PeriodStartForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
-  const { stickers } = useTheme()
+  const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -424,11 +425,11 @@ export function PeriodStartForm({
                 diffuse ? styles.tileFlexD : styles.tileFlex,
                 diffuse
                   ? { backgroundColor: on ? dt.colors.surface : 'transparent', borderColor: on ? dt.colors.hairline : dt.colors.line }
-                  : { backgroundColor: on ? accent : tint, borderColor: '#141313' },
+                  : { backgroundColor: on ? getModeColorSoft('pre') : colors.surface, borderColor: colors.text, ...(on ? { transform: [{ rotate: '-1.5deg' }, { scale: 1.04 }] } : null) },
               ]}
             >
-              {diffuse ? <Character name="period" size={30} color={opt.dropColor} /> : <Drop size={36} fill={on ? '#FFFEF8' : opt.dropColor} />}
-              <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: on ? '#FFFEF8' : '#141313' }]}>
+              {diffuse ? <Character name="period" size={30} color={opt.dropColor} /> : <Drop size={36} fill={opt.dropColor} />}
+              <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>
                 {t(opt.labelKey)}
               </Text>
             </Pressable>
@@ -440,7 +441,7 @@ export function PeriodStartForm({
         onChangeText={setNotes}
         placeholder={t('cycleLogForm_notesPlaceholder')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : '#888'}
-        style={[styles.notesInput, diffuse ? { backgroundColor: 'transparent', borderBottomWidth: 1.5, borderBottomColor: dt.colors.line2, borderRadius: 0, color: dt.colors.ink, fontFamily: diffuseFont.body, paddingHorizontal: 2 } : null]}
+        style={[styles.notesInput, diffuse ? { backgroundColor: 'transparent', borderBottomWidth: 1.5, borderBottomColor: dt.colors.line2, borderRadius: 0, color: dt.colors.ink, fontFamily: diffuseFont.body, paddingHorizontal: 2 } : SITE_NOTES]}
       />
     </LogFormShell>
   )
@@ -634,7 +635,7 @@ export function SymptomsForm({
               { flex: 1, marginTop: 0, paddingVertical: 10 },
               diffuse
                 ? { backgroundColor: 'transparent', borderBottomWidth: 1.5, borderBottomColor: dt.colors.line2, borderRadius: 0, color: dt.colors.ink, fontFamily: diffuseFont.body, paddingHorizontal: 2 }
-                : { backgroundColor: colors.surfaceRaised, color: colors.text },
+                : { ...SITE_NOTES, color: colors.text },
             ]}
           />
           <Pressable
@@ -750,23 +751,24 @@ export function MoodForm({
               onPress={() => setValue(m.id)}
               style={{
                 flex: 1, alignItems: 'center', paddingVertical: 10,
-                backgroundColor: diffuse ? 'transparent' : (active ? tint : 'transparent'),
+                backgroundColor: diffuse ? 'transparent' : (active ? getModeColorSoft('pre') : 'transparent'),
                 borderRadius: diffuse ? 999 : 14,
-                borderWidth: diffuse ? 1 : 0,
-                borderColor: diffuse ? (active ? dt.colors.hairline : 'transparent') : 'transparent',
+                borderWidth: diffuse ? 1 : 1.5,
+                borderColor: diffuse ? (active ? dt.colors.hairline : 'transparent') : (active ? '#161513' : 'transparent'),
+                ...(!diffuse && active ? { transform: [{ rotate: '-1.5deg' }, { scale: 1.04 }] } : null),
               }}
             >
               {diffuse
                 ? <Character name="mood" size={40} face={m.face} color={m.fill} />
-                : <M size={40} fill={m.fill} />}
+                : <SiteSticker name={MOOD_FACE[m.id] ?? 'face2'} size={40} />}
               <Text style={diffuse ? {
                 fontSize: 9, marginTop: 4, fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
                 letterSpacing: 0.6, textTransform: 'uppercase',
                 color: active ? dt.colors.ink : dt.colors.ink3,
               } : {
                 fontSize: 10, marginTop: 4,
-                color: active ? '#141313' : '#555',
-                fontWeight: active ? '700' : '600',
+                color: active ? '#161513' : '#4F4B43',
+                fontFamily: 'HankenGrotesk_700Bold',
               }}>
                 {t(m.labelKey)}
               </Text>
@@ -779,7 +781,7 @@ export function MoodForm({
         onChangeText={setNotes}
         placeholder={t('cycleLogForm_noteOptional')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : '#888'}
-        style={[styles.notesInput, diffuse ? { backgroundColor: 'transparent', borderBottomWidth: 1.5, borderBottomColor: dt.colors.line2, borderRadius: 0, color: dt.colors.ink, fontFamily: diffuseFont.body, paddingHorizontal: 2 } : null]}
+        style={[styles.notesInput, diffuse ? { backgroundColor: 'transparent', borderBottomWidth: 1.5, borderBottomColor: dt.colors.line2, borderRadius: 0, color: dt.colors.ink, fontFamily: diffuseFont.body, paddingHorizontal: 2 } : SITE_NOTES]}
       />
     </LogFormShell>
   )
@@ -955,7 +957,7 @@ const CM_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
 export function CmForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
-  const { stickers } = useTheme()
+  const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -1002,11 +1004,11 @@ export function CmForm({
                 diffuse ? styles.tileD : styles.tile,
                 diffuse
                   ? { backgroundColor: on ? dt.colors.surface : 'transparent', borderColor: on ? dt.colors.hairline : dt.colors.line }
-                  : { backgroundColor: on ? accent : tint, borderColor: '#141313' },
+                  : { backgroundColor: on ? getModeColorSoft('pre') : colors.surface, borderColor: colors.text, ...(on ? { transform: [{ rotate: '-1.5deg' }, { scale: 1.04 }] } : null) },
               ]}
             >
-              {diffuse ? <Character name="water" size={26} color={stickers.blue} /> : <Drop size={28} fill={on ? '#FFFEF8' : accent} />}
-              <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: on ? '#FFFEF8' : '#141313' }]}>
+              {diffuse ? <Character name="water" size={26} color={stickers.blue} /> : <SiteSticker name="drop" size={30} />}
+              <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>
                 {t(opt.labelKey)}
               </Text>
             </Pressable>
@@ -1021,7 +1023,7 @@ export function CmForm({
 export function IntimacyForm({
   date, phase, onSaved,
 }: { date: string; phase: CyclePhase; onSaved: () => void }) {
-  const { stickers } = useTheme()
+  const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -1068,11 +1070,11 @@ export function IntimacyForm({
                 diffuse ? styles.tileWideD : styles.tileWide,
                 diffuse
                   ? { backgroundColor: on ? dt.colors.surface : 'transparent', borderColor: on ? dt.colors.hairline : dt.colors.line }
-                  : { backgroundColor: on ? accent : tint, borderColor: '#141313' },
+                  : { backgroundColor: on ? getModeColorSoft('pre') : colors.surface, borderColor: colors.text, ...(on ? { transform: [{ rotate: '-1.5deg' }, { scale: 1.04 }] } : null) },
               ]}
             >
               {diffuse ? <Character name="heart" size={40} color={stickers.pink} /> : <Heart size={40} fill={on ? '#FFFEF8' : accent} />}
-              <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, marginTop: 6, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: on ? '#FFFEF8' : '#141313', marginTop: 6 }]}>
+              <Text style={[styles.tileLabel, diffuse ? { color: on ? dt.colors.ink : dt.colors.ink3, marginTop: 6, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold, marginTop: 6 }]}>
                 {t(opt === 'unprotected' ? 'cycleLogForm_unprotected' : 'cycleLogForm_protected')}
               </Text>
             </Pressable>
@@ -1084,7 +1086,7 @@ export function IntimacyForm({
         onChangeText={setNotes}
         placeholder={t('cycleLogForm_noteOptional')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : '#888'}
-        style={[styles.notesInput, diffuse ? { backgroundColor: 'transparent', borderBottomWidth: 1.5, borderBottomColor: dt.colors.line2, borderRadius: 0, color: dt.colors.ink, fontFamily: diffuseFont.body, paddingHorizontal: 2 } : null]}
+        style={[styles.notesInput, diffuse ? { backgroundColor: 'transparent', borderBottomWidth: 1.5, borderBottomColor: dt.colors.line2, borderRadius: 0, color: dt.colors.ink, fontFamily: diffuseFont.body, paddingHorizontal: 2 } : SITE_NOTES]}
       />
     </LogFormShell>
   )
@@ -1531,6 +1533,18 @@ export function ActivityForm({
 }
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
+const SITE_NOTES = {
+  backgroundColor: '#FFFFFF',
+  borderWidth: 1.5,
+  borderStyle: 'dashed' as const,
+  borderColor: '#161513',
+  borderRadius: 14,
+  fontSize: 16,
+}
+const MOOD_FACE: Record<string, 'face1' | 'face2' | 'face3' | 'face4'> = {
+  low: 'face1', down: 'face1', okay: 'face2', good: 'face3', great: 'face4',
+}
+
 const styles = StyleSheet.create({
   shell: { padding: 0, gap: 12 },
   headRow: { gap: 4 },
@@ -1553,8 +1567,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1.5,
     alignItems: 'center',
-    shadowColor: '#141313', shadowOpacity: 1, shadowRadius: 0,
-    shadowOffset: { width: 2, height: 2 }, elevation: 2,
+    shadowColor: '#141313', shadowOpacity: 0.1, shadowRadius: 0,
+    shadowOffset: { width: 0, height: 2 }, elevation: 0,
   },
   saveLabel: { fontSize: 15, letterSpacing: 0.2 },
   // Diffuse containerless save (.solid): mono-caps + arrow on a top hairline
@@ -1583,24 +1597,24 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 18, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#141313', shadowOpacity: 1, shadowRadius: 0,
-    shadowOffset: { width: 2, height: 2 }, elevation: 2,
+    shadowColor: '#141313', shadowOpacity: 0.1, shadowRadius: 0,
+    shadowOffset: { width: 0, height: 2 }, elevation: 0,
   },
   tileFlex: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 18, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#141313', shadowOpacity: 1, shadowRadius: 0,
-    shadowOffset: { width: 2, height: 2 }, elevation: 2,
+    shadowColor: '#141313', shadowOpacity: 0.1, shadowRadius: 0,
+    shadowOffset: { width: 0, height: 2 }, elevation: 0,
   },
   tileWide: {
     flex: 1,
     paddingVertical: 18,
     borderRadius: 18, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#141313', shadowOpacity: 1, shadowRadius: 0,
-    shadowOffset: { width: 2, height: 2 }, elevation: 2,
+    shadowColor: '#141313', shadowOpacity: 0.1, shadowRadius: 0,
+    shadowOffset: { width: 0, height: 2 }, elevation: 0,
   },
   // Diffuse tiles — hairline, no offset shadow
   tileD: {

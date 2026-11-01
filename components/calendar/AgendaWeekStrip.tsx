@@ -28,7 +28,6 @@ interface AgendaWeekStripProps {
 }
 
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-const TODAY_AMBER = '#F9D77E'
 const ST_INK = '#141313'
 const ST_YELLOW = '#F5D652'
 
@@ -107,18 +106,18 @@ export function AgendaWeekStrip({
         styles.container,
         diffuse
           ? { backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 4 }
-          : { backgroundColor: paper, borderColor: paperBorder },
+          : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
       ]}
     >
       <View style={styles.captionRow}>
         <View style={styles.captionLeft}>
-          <MonoCaps size={11} color={textMuted}>
+          <MonoCaps size={11} color={textMuted} style={diffuse ? undefined : { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }}>
             {monthLabel}
           </MonoCaps>
           <Pressable
             onPress={() => stepWeek(-7)}
             hitSlop={10}
-            style={[styles.arrowBtn, { borderColor: paperBorder }]}
+            style={[styles.arrowBtn, diffuse ? { borderColor: paperBorder } : { borderColor: colors.text, borderWidth: 1.5 }]}
             accessibilityLabel="Previous week"
           >
             <ChevronLeft size={14} color={ink} strokeWidth={2.2} />
@@ -126,7 +125,7 @@ export function AgendaWeekStrip({
           <Pressable
             onPress={() => stepWeek(7)}
             hitSlop={10}
-            style={[styles.arrowBtn, { borderColor: paperBorder }]}
+            style={[styles.arrowBtn, diffuse ? { borderColor: paperBorder } : { borderColor: colors.text, borderWidth: 1.5 }]}
             accessibilityLabel="Next week"
           >
             <ChevronRight size={14} color={ink} strokeWidth={2.2} />
@@ -206,12 +205,11 @@ export function AgendaWeekStrip({
                     borderWidth: 1.5,
                     borderColor: ST_INK,
                     shadowColor: ST_INK,
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: 1,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
                     shadowRadius: 0,
-                    elevation: 4,
                   },
-                  isToday && { backgroundColor: TODAY_AMBER, borderWidth: 1.5, borderColor: ST_INK },
+                  isToday && { backgroundColor: colors.surface, borderWidth: 2, borderColor: modeColor || ST_INK },
                 ]}
               >
                 <Text style={[styles.num, { color: numColor }]}>

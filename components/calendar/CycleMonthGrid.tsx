@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
-import { useTheme, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, getDiffuseAccent, getModeAccent, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
@@ -212,12 +212,12 @@ export function CycleMonthGrid({
   }
 
   return (
-    <View style={[styles.wrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={[styles.wrap, styles.siteWrap, { backgroundColor: colors.surface, borderColor: colors.text }]}>
       <View style={styles.header}>
         <Pressable onPress={onPrevMonth} style={styles.navBtn} hitSlop={8}>
           <Text style={[styles.navText, { color: ink, fontFamily: font.bodyBold }]}>{t('common_chevronPrev')}</Text>
         </Pressable>
-        <Text style={[styles.monthLabel, { color: ink, fontFamily: font.display }]}>
+        <Text style={[styles.monthLabel, { color: ink, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.2 }]}>
           {monthLabel}
         </Text>
         <Pressable onPress={onNextMonth} style={styles.navBtn} hitSlop={8}>
@@ -229,7 +229,7 @@ export function CycleMonthGrid({
         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
           <Text
             key={i}
-            style={[styles.dow, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}
+            style={[styles.dow, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}
           >
             {d}
           </Text>
@@ -255,8 +255,8 @@ export function CycleMonthGrid({
                 {
                   backgroundColor: c.inMonth ? tint : 'transparent',
                   opacity: c.inMonth ? 1 : 0.35,
-                  borderColor: isSelected ? '#141313' : 'transparent',
-                  borderWidth: isSelected ? 1.5 : 0,
+                  borderColor: isSelected ? colors.text : 'transparent',
+                  borderWidth: isSelected ? 2 : 0,
                 },
               ]}
             >
@@ -296,7 +296,7 @@ export function CycleMonthGrid({
                 <View
                   style={[
                     styles.todayRing,
-                    { borderColor: accent },
+                    { borderColor: getModeAccent('pre'), borderStyle: 'solid', borderWidth: 2 },
                   ]}
                   pointerEvents="none"
                 />
@@ -329,7 +329,15 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   navText: { fontSize: 22, lineHeight: 24 },
-  monthLabel: { fontSize: 17 },
+  monthLabel: { fontSize: 19 },
+  siteWrap: {
+    borderRadius: 18,
+    borderWidth: 1.5,
+    shadowColor: '#161513',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
+  },
   dowRow: {
     flexDirection: 'row',
     marginBottom: 6,

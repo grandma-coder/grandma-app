@@ -61,7 +61,7 @@ export function AgendaHeader({ onFilter, onAdd, right }: AgendaHeaderProps) {
 
   return (
     <View style={styles.row}>
-      <Display size={28} color={ink}>{t('agendaHeader_title')}</Display>
+      <Display size={30} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2 }}>{t('agendaHeader_title')}</Display>
 
       <View style={styles.actions}>
         {right}
@@ -101,14 +101,14 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 999,
-    borderWidth: 1.5,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: STICKER_INK,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   circleBtnD: {
     width: 38,

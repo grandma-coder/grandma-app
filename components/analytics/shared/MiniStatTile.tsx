@@ -30,7 +30,7 @@ export function MiniStatTile({ label, value, sticker, tint, onPress }: Props) {
         styles.tile,
         {
           backgroundColor: tint,
-          borderColor: 'rgba(20,19,19,0.12)',
+          borderColor: colors.text,
         },
         pressed && { opacity: 0.85 },
       ]}
@@ -40,7 +40,8 @@ export function MiniStatTile({ label, value, sticker, tint, onPress }: Props) {
           styles.chip,
           {
             backgroundColor: colors.surface,
-            borderColor: colors.border,
+            borderColor: colors.text,
+            borderWidth: 1.5,
           },
         ]}
       >
@@ -50,7 +51,7 @@ export function MiniStatTile({ label, value, sticker, tint, onPress }: Props) {
         <Text
           style={[
             styles.label,
-            { color: colors.textMuted, fontFamily: font.bodySemiBold },
+            { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' },
           ]}
           numberOfLines={1}
         >
@@ -59,7 +60,7 @@ export function MiniStatTile({ label, value, sticker, tint, onPress }: Props) {
         <Text
           style={[
             styles.value,
-            { color: colors.text, fontFamily: font.display },
+            { color: colors.text, fontFamily: font.displayBold },
           ]}
           numberOfLines={1}
         >
@@ -73,24 +74,23 @@ export function MiniStatTile({ label, value, sticker, tint, onPress }: Props) {
 const styles = StyleSheet.create({
   tile: {
     flex: 1,
-    borderRadius: 22,
+    borderRadius: 18,
     padding: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     minHeight: 72,
-    shadowColor: '#000',
+    shadowColor: '#161513',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
   },
   chip: {
     width: 42,
     height: 42,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontSize: 9,
-    letterSpacing: 1.5,
+    fontSize: 10,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
   },
   value: {

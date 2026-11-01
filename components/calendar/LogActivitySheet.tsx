@@ -68,10 +68,10 @@ export function LogActivitySheet({ open, onClose, onSelect, title }: Props) {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
-  const paper = isDark ? colors.surface : '#FFFEF8'
-  const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
-  const bg = diffuse ? dt.colors.bg : (isDark ? colors.bg : '#F3ECD9')
-  const ink = diffuse ? dt.colors.ink : (isDark ? colors.text : '#141313')
+  const paper = colors.surface
+  const paperBorder = isDark ? colors.border : colors.text
+  const bg = diffuse ? dt.colors.bg : colors.bg
+  const ink = diffuse ? dt.colors.ink : colors.text
 
   function handleSelect(type: LogType) {
     onClose()
@@ -83,17 +83,17 @@ export function LogActivitySheet({ open, onClose, onSelect, title }: Props) {
   return (
     <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.sheetBackdrop} onPress={onClose} />
-      <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : null]}>
+      <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : { borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
         <View style={styles.handleWrap}>
-          <View style={[styles.handle, { backgroundColor: diffuse ? dt.colors.line2 : paperBorder }]} />
+          <View style={[styles.handle, diffuse ? { backgroundColor: dt.colors.line2 } : { backgroundColor: colors.text, opacity: 0.25 }]} />
         </View>
         <View style={styles.sheetHeader}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, color: dt.colors.ink, letterSpacing: -0.3 }}>{heading}</Text>
           ) : (
-            <Display size={22} color={ink}>{heading}</Display>
+            <Display size={24} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2 }}>{heading}</Display>
           )}
-          <Pressable onPress={onClose} style={[styles.closeBtn, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline } : { backgroundColor: paper, borderColor: paperBorder }]}>
+          <Pressable onPress={onClose} style={[styles.closeBtn, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline } : { backgroundColor: paper, borderColor: paperBorder, borderWidth: 2 }]}>
             <X size={18} color={ink} />
           </Pressable>
         </View>

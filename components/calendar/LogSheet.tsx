@@ -55,25 +55,31 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
             {
               backgroundColor: bg,
               paddingBottom: insets.bottom + 16,
+              borderTopWidth: 2.5,
+              borderLeftWidth: 0,
+              borderRightWidth: 0,
+              borderColor: ink,
+              borderTopLeftRadius: 26,
+              borderTopRightRadius: 26,
             },
           ]}
         >
           <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: paperBorder }]} />
+            <View style={[styles.handle, { backgroundColor: ink, opacity: 0.25 }]} />
           </View>
 
           <View style={styles.header}>
             <View style={styles.titleRow}>
-              <Display size={22} color={ink}>{title}</Display>
+              <Display size={24} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2 }}>{title}</Display>
               {chip ? (
-                <View style={[styles.chip, { backgroundColor: (chipColor ?? ink) + '22', borderColor: (chipColor ?? ink) + '55' }]}>
+                <View style={[styles.chip, { backgroundColor: paper, borderColor: ink }]}>
                   <Text style={[styles.chipText, { color: ink }]}>{chip}</Text>
                 </View>
               ) : null}
               {titleRight}
             </View>
             <Pressable onPress={onClose} hitSlop={8}>
-              <View style={[styles.closeBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <View style={[styles.closeBtn, { backgroundColor: paper, borderColor: ink, borderWidth: 2 }]}>
                 <X size={18} color={ink} />
               </View>
             </Pressable>

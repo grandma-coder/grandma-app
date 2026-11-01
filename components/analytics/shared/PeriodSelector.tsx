@@ -76,7 +76,7 @@ export function PeriodSelector({ value, onChange, customLabel, showCustom = true
               styles.pill,
               {
                 backgroundColor: active ? colors.text : colors.surface,
-                borderColor: colors.border,
+                borderColor: colors.text,
               },
             ]}
           >
@@ -84,8 +84,8 @@ export function PeriodSelector({ value, onChange, customLabel, showCustom = true
               style={[
                 styles.label,
                 {
-                  color: active ? colors.bg : colors.textSecondary,
-                  fontFamily: font.bodyMedium,
+                  color: active ? colors.bg : colors.text,
+                  fontFamily: font.bodyBold,
                 },
               ]}
             >
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   label: {
     fontSize: 13,

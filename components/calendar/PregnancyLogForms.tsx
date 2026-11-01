@@ -369,18 +369,19 @@ export function PregnancySymptomsForm({
                 styles.chip,
                 {
                   backgroundColor: active ? getModeColorSoft('preg', isDark) : colors.surface,
-                  borderColor: active ? getModeColor('preg', isDark) : colors.border,
+                  borderColor: isDark ? (active ? getModeColor('preg', isDark) : colors.border) : colors.text,
+                  borderWidth: isDark ? 1 : 1.5,
                   borderRadius: radius.full,
                 },
               ]}
             >
               {active && (
-                <Check size={12} color={getModeColor('preg', isDark)} strokeWidth={3} />
+                <Check size={12} color={isDark ? getModeColor('preg', isDark) : colors.text} strokeWidth={3} />
               )}
               <Text
                 style={[
                   styles.chipText,
-                  { color: active ? getModeColor('preg', isDark) : colors.text },
+                  { color: isDark ? (active ? getModeColor('preg', isDark) : colors.text) : colors.text, fontFamily: font.bodyBold },
                 ]}
               >
                 {t(opt.key)}
@@ -897,15 +898,15 @@ function SaveButton({
       style={({ pressed }) => [
         styles.saveBtn,
         {
-          backgroundColor: isDisabled ? ST_CREAM : ST_LAVENDER,
+          backgroundColor: isDisabled ? ST_CREAM : (isDark ? ST_LAVENDER : colors.text),
           borderColor: isDark && isDisabled ? colors.border : ST_INK,
           borderWidth: 2,
           borderRadius: 999,
           shadowColor: ST_INK,
-          shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-          shadowOpacity: 1,
+          shadowOffset: { width: 0, height: pressed ? 1 : 2 },
+          shadowOpacity: isDark ? 1 : 0.1,
           shadowRadius: 0,
-          elevation: 5,
+          elevation: 0,
           transform: [{ translateY: pressed && !isDisabled ? 2 : 0 }],
           opacity: isDisabled ? 0.55 : 1,
         },
@@ -1889,7 +1890,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 15,
     fontFamily: font.bodyBold,
-    letterSpacing: 1,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   chipRow: {

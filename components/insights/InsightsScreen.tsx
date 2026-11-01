@@ -487,6 +487,8 @@ function useInsightsTheme() {
   return { ...theme, colors, font: insightsFont, diffuse, ink }
 }
 
+const SITE_TITLE = { textTransform: 'uppercase' as const, letterSpacing: 0.2 }
+
 function mixWithWhite(hex: string, whiteAmount: number): string {
   const h = hex.replace('#', '')
   const r = parseInt(h.slice(0, 2), 16)
@@ -541,18 +543,18 @@ function CollapsibleCard({
   id, title, emoji, color, defaultOpen = false,
   children, expandedMap, onToggle,
 }: CollapsibleCardProps) {
-  const { colors, ink } = useInsightsTheme()
+  const { colors, ink, diffuse } = useInsightsTheme()
   const { t } = useTranslation()
   const isOpen = expandedMap[id] ?? defaultOpen
   const Sticker = stickerForEmoji(emoji)
 
   return (
-    <View style={[ci.card, { backgroundColor: colors.surface }]}>
+    <View style={[ci.card, { backgroundColor: colors.surface }, diffuse ? null : { borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
       <Pressable onPress={() => onToggle(id)} style={ci.cardHeader}>
         <View style={[ci.cardStickerWrap, { backgroundColor: color + '28' }]}>
           <Sticker size={26} />
         </View>
-        <Text style={[ci.cardTitle, { color: colors.text, flex: 1 }]}>{title}</Text>
+        <Text style={[ci.cardTitle, diffuse ? null : SITE_TITLE, { color: colors.text, flex: 1 }]}>{title}</Text>
         <View style={[ci.cardChevronPill, { backgroundColor: colors.surfaceRaised }]}>
           <Text style={[ci.cardChevron, { color: ink + 'A0' }]}>{isOpen ? '▲' : '▼'}</Text>
         </View>
@@ -640,7 +642,7 @@ const WARNING_SIGNS = [
 ]
 
 function PregnancyInsightsContent() {
-  const { colors, ink } = useInsightsTheme()
+  const { colors, ink, diffuse } = useInsightsTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
@@ -672,10 +674,10 @@ function PregnancyInsightsContent() {
 
   const renderToday = () => (
     <>
-      <View style={[ci.greetingCard, { backgroundColor: colors.accentSoft }]}>
+      <View style={[ci.greetingCard, { backgroundColor: colors.accentSoft }, diffuse ? null : { borderColor: colors.text, borderRadius: 18 }]}>
         <Text style={[ci.greetingDate, { color: colors.textMuted }]}>{today}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={[ci.greetingName, { color: ink }]}>{t('insights_greetingMorning', { name: parentName })}</Text>
+          <Text style={[ci.greetingName, diffuse ? null : SITE_TITLE, { color: ink }]}>{t('insights_greetingMorning', { name: parentName })}</Text>
         </View>
         <Text style={[ci.greetingWeek, { color: colors.accent }]}>{t('insights_greetingWeek', { n: weekNumber, size: weekData.babySize })}</Text>
       </View>
@@ -758,7 +760,7 @@ function PregnancyInsightsContent() {
       {featuredRead && (
         <View style={[ci.featuredCard, { backgroundColor: stickerPalette.yellowSoft }]}>
           <Text style={[ci.featuredBadge, { color: ink }]}>{t('insights_featuredThisWeek')}</Text>
-          <Text style={[ci.featuredTitle, { color: ink }]}>{featuredRead.title}</Text>
+          <Text style={[ci.featuredTitle, diffuse ? null : SITE_TITLE, { color: ink }]}>{featuredRead.title}</Text>
           <Text style={[ci.featuredSummary, { color: ink + 'C8' }]}>{featuredRead.teaser}</Text>
           <Text style={[ci.featuredMins, { color: ink + 'A0' }]}>{t('insights_reads_minRead', { n: featuredRead.readMinutes })}</Text>
         </View>
@@ -898,7 +900,7 @@ const ci = StyleSheet.create({
 // ─── Main Screen ──────────────────────────────────────────────────────────
 
 export function InsightsScreen() {
-  const { colors, radius, isDark, ink } = useInsightsTheme()
+  const { colors, radius, isDark, ink, diffuse } = useInsightsTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
@@ -1118,7 +1120,7 @@ export function InsightsScreen() {
             <ArrowLeft size={20} color={colors.text} strokeWidth={2.5} />
           </Pressable>
         </View>
-        <Text style={[s.heading, { color: colors.text }]}>{t('insights_screenTitle')}</Text>
+        <Text style={[s.heading, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{t('insights_screenTitle')}</Text>
         <Text style={[s.subtitle, { color: colors.textSecondary }]}>
           {t('insights_subtitle', { name: childName })}
         </Text>
@@ -1174,7 +1176,7 @@ export function InsightsScreen() {
               <View style={s.dailyTop}>
                 <View style={{ flex: 1 }}>
                   <Text style={[s.dailyGreeting, { color: colors.textMuted }]}>{today}</Text>
-                  <Text style={[s.dailyName, { color: ink }]}>{greeting}</Text>
+                  <Text style={[s.dailyName, diffuse ? null : SITE_TITLE, { color: ink }]}>{greeting}</Text>
                 </View>
                 <View style={[s.sunIcon, { backgroundColor: stickerPalette.yellow }]}>
                   <Character name="sun" size={22} color={ink} />
@@ -1203,7 +1205,7 @@ export function InsightsScreen() {
                   <View style={[s.weekIconWrap, { backgroundColor: stickerPalette.blueSoft }]}>
                     <Character name="chart" size={15} color={ink} />
                   </View>
-                  <Text style={[s.weekTitle, { color: colors.text }]}>{t('insights_thisWeek')}</Text>
+                  <Text style={[s.weekTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{t('insights_thisWeek')}</Text>
                   {metrics.logStreak > 0 && (
                     <View style={[s.streakBadge, { backgroundColor: stickerPalette.peachSoft }]}>
                       <Character name="streak" size={11} color={stickerPalette.peachInk} />
@@ -1282,7 +1284,7 @@ export function InsightsScreen() {
             {!isLoading && !generating && insights.length === 0 && (
               <View style={[s.noInsightsCard, { backgroundColor: colors.surface }]}>
                 <Character name="sparkle" size={26} color={colors.textMuted} />
-                <Text style={[s.noInsightsTitle, { color: colors.text }]}>{t('insights_noAiTitle')}</Text>
+                <Text style={[s.noInsightsTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{t('insights_noAiTitle')}</Text>
                 <Text style={[s.noInsightsBody, { color: colors.textMuted }]}>
                   {t('insights_noAiBody')}
                 </Text>
@@ -1437,7 +1439,7 @@ export function InsightsScreen() {
             {!isLoadingHistory && archivedInsights.length === 0 && (
               <View style={[s.historyEmpty, { backgroundColor: colors.surface }]}>
                 <Character name="clock" size={26} color={colors.textMuted} />
-                <Text style={[s.historyEmptyTitle, { color: colors.text }]}>{t('insights_history_noHistory')}</Text>
+                <Text style={[s.historyEmptyTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{t('insights_history_noHistory')}</Text>
                 <Text style={[s.historyEmptyBody, { color: colors.textMuted }]}>
                   {t('insights_historyEmptyBody')}
                 </Text>
@@ -1515,7 +1517,7 @@ function ArticleCard({ article, onTap }: { article: Article; onTap: () => void }
             </View>
             <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{t('insights_reads_minRead', { n: article.readMinutes })}</Text>
           </View>
-          <Text style={[s.articleTitle, { color: colors.text }]}>{article.title}</Text>
+          <Text style={[s.articleTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{article.title}</Text>
           <Text style={[s.articleSummary, { color: colors.textSecondary }]} numberOfLines={2}>{article.summary}</Text>
         </View>
       </View>
@@ -1576,7 +1578,7 @@ function ArticleDetailModal({
               </View>
               <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{t('insights_reads_minRead', { n: article.readMinutes })}</Text>
             </View>
-            <Text style={[s.modalTitle, { color: colors.text }]}>{article.title}</Text>
+            <Text style={[s.modalTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{article.title}</Text>
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 320 }}>
               {article.content.map((para, i) => (
                 <Text key={i} style={[s.articleParagraph, { color: colors.textSecondary }]}>{para}</Text>
@@ -1645,7 +1647,7 @@ function InsightCard({
               <X size={14} color={ink} strokeWidth={2.75} />
             </Pressable>
           </View>
-          <Text style={[s.cardTitle, { color: ink }]} numberOfLines={2}>{insight.title}</Text>
+          <Text style={[s.cardTitle, diffuse ? null : SITE_TITLE, { color: ink }]} numberOfLines={2}>{insight.title}</Text>
           <Text style={[s.cardBody, { color: ink + 'CC' }]} numberOfLines={3}>{insight.body}</Text>
           <View style={[s.cardFooter, { borderTopColor: ink + '14' }]}>
             <View style={[s.modeBadge, { backgroundColor: paper, borderColor: ink + '30' }]}>
@@ -1761,7 +1763,7 @@ function InsightDetailModal({
                 </View>
               )}
             </View>
-            <Text style={[s.modalTitle, { color: colors.text }]}>{insight.title}</Text>
+            <Text style={[s.modalTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{insight.title}</Text>
             <Text style={[s.modalBody, { color: colors.textSecondary }]}>{insight.body}</Text>
             <View style={[s.modalDivider, { backgroundColor: ink + '15' }]} />
             <View style={[s.tipCard, { backgroundColor: config.gradient[0], borderColor: ink }]}>

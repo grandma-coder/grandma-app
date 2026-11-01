@@ -10,7 +10,6 @@ import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 
 const ST_INK = '#141313'
-const ST_YELLOW = '#F5D652'
 
 export interface SegmentedOption {
   key: string
@@ -77,11 +76,11 @@ function DiffuseSegmentedTabs({ options, value, onChange }: SegmentedTabsProps) 
 function CurrentSegmentedTabs({ options, value, onChange, activeBg, activeFg }: SegmentedTabsProps) {
   const { colors, font, isDark } = useTheme()
 
-  const trackBg = isDark ? colors.surface : '#FFFEF8'
-  const trackBorder = isDark ? colors.border : 'rgba(20,19,19,0.10)'
-  const inactiveFg = isDark ? colors.textSecondary : '#3A3533'
-  const resolvedActiveBg = activeBg ?? ST_YELLOW
-  const resolvedActiveFg = activeFg ?? ST_INK
+  const trackBg = colors.surface
+  const trackBorder = colors.text
+  const inactiveFg = colors.textSecondary
+  const resolvedActiveBg = activeBg ?? colors.text
+  const resolvedActiveFg = activeFg ?? colors.bg
 
   return (
     <View
@@ -105,13 +104,8 @@ function CurrentSegmentedTabs({ options, value, onChange, activeBg, activeFg }: 
               isActive && {
                 backgroundColor: resolvedActiveBg,
                 borderWidth: 1.5,
-                borderColor: ST_INK,
-                shadowColor: ST_INK,
-                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                shadowOpacity: 1,
-                shadowRadius: 0,
-                elevation: 4,
-                transform: [{ translateY: pressed ? 2 : 0 }],
+                borderColor: colors.text,
+                opacity: pressed ? 0.85 : 1,
               },
             ]}
           >
@@ -120,7 +114,7 @@ function CurrentSegmentedTabs({ options, value, onChange, activeBg, activeFg }: 
               style={[
                 styles.label,
                 {
-                  fontFamily: isActive ? font.bodySemiBold : font.bodyMedium,
+                  fontFamily: isActive ? font.bodyBold : font.bodyMedium,
                   color: isActive ? resolvedActiveFg : inactiveFg,
                   fontSize,
                 },

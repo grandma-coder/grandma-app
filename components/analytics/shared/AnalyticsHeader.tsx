@@ -31,21 +31,21 @@ export function AnalyticsHeader({ title = 'Analytics', onBack, onShare, hide }: 
     <View style={[styles.wrap, { paddingTop: insets.top + 6 }]}>
       <Pressable
         onPress={handleBack}
-        style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.text }]}
       >
         <ChevronLeft size={16} color={colors.text} />
       </Pressable>
       <Text
         style={[
           styles.title,
-          { color: colors.text, fontFamily: font.bodyMedium },
+          { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.2 },
         ]}
       >
         {title}
       </Text>
       <Pressable
         onPress={onShare}
-        style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        style={[styles.btn, { backgroundColor: colors.surface, borderColor: colors.text }]}
       >
         <ShareIcon size={16} color={colors.text} />
       </Pressable>
@@ -65,11 +65,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 15,
+    fontSize: 18,
   },
 })

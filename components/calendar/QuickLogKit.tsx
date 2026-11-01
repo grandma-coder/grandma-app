@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { useTheme, useDiffuseTheme, diffuseFont, radius } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, radius, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { Character, type CharacterName, type MoodExpression } from '../characters/Characters'
 import { useChildStore } from '../../store/useChildStore'
+import { useModeStore } from '../../store/useModeStore'
 import { ChevronDown } from 'lucide-react-native'
 
 export interface ChoiceOption {
@@ -27,6 +28,7 @@ export function ChoiceStep({ options, value, onChange, multi = false, testID }: 
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   const ink = diffuse ? dt.colors.ink : colors.text
   const line = diffuse ? dt.colors.line : colors.border
 
@@ -51,15 +53,16 @@ export function ChoiceStep({ options, value, onChange, multi = false, testID }: 
             style={({ pressed }) => [
               kitStyles.choice,
               {
-                borderColor: on ? ink : line,
-                backgroundColor: on ? (diffuse ? dt.colors.surface : colors.surfaceRaised) : 'transparent',
+                borderColor: diffuse ? (on ? ink : line) : colors.text,
+                backgroundColor: on ? (diffuse ? dt.colors.surface : getModeColorSoft(mode)) : (diffuse ? 'transparent' : colors.surface),
                 borderRadius: radius.lg,
                 opacity: pressed ? 0.7 : 1,
+                ...(!diffuse && on ? { transform: [{ rotate: '-1.5deg' }, { scale: 1.04 }] } : null),
               },
             ]}
           >
             <Character name={o.blob} size={40} color={o.color} face={o.face} />
-            <Text style={[kitStyles.choiceLabel, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>
+            <Text style={[kitStyles.choiceLabel, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.bodyBold }]}>
               {o.label}
             </Text>
           </Pressable>

@@ -88,8 +88,8 @@ export function LogTile({ icon, label, tint = 'activity', onPress, index = 0 }: 
                 borderWidth: isDark ? 0 : 1.5,
                 borderColor: tileBorder,
                 shadowColor: '#141313',
-                shadowOpacity: isDark ? 0 : 0.06,
-                shadowRadius: 6,
+                shadowOpacity: isDark ? 0 : 0.1,
+                shadowRadius: 0,
                 shadowOffset: { width: 0, height: 2 },
               },
         ]}
@@ -100,7 +100,7 @@ export function LogTile({ icon, label, tint = 'activity', onPress, index = 0 }: 
             diffuse
               ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
               : {
-                  backgroundColor: isDark ? ink + '33' : '#FFFEF8',
+                  backgroundColor: isDark ? ink + '33' : '#FFFFFF',
                   borderWidth: isDark ? 0 : 1.5,
                   borderColor: iconBorder,
                 },
@@ -113,7 +113,7 @@ export function LogTile({ icon, label, tint = 'activity', onPress, index = 0 }: 
             {label}
           </Text>
         ) : (
-          <Body size={13} color={textInk} style={{ fontFamily: font.displayBold, letterSpacing: -0.2 }} align="center">
+          <Body size={13} color={textInk} style={{ fontFamily: font.display, letterSpacing: 0.2, textTransform: 'uppercase' }} align="center">
             {label}
           </Body>
         )}

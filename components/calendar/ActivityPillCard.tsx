@@ -56,7 +56,7 @@ export function ActivityPillCard({
   const { t } = useTranslation()
   const { fill, ink } = getTint(tint, isDark)
   const textInk = isDark ? colors.text : '#141313'
-  const textMuted = isDark ? colors.textMuted : '#6E6763'
+  const textMuted = colors.textMuted
 
   const scale = useSharedValue(1)
   const iconAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
@@ -76,13 +76,26 @@ export function ActivityPillCard({
       disabled={!onPress}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: fill, opacity: pressed ? 0.88 : 1 },
+        isDark
+          ? { backgroundColor: fill, opacity: pressed ? 0.88 : 1 }
+          : {
+              backgroundColor: colors.surface,
+              borderWidth: 1.5,
+              borderColor: colors.text,
+              shadowColor: colors.text,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 0,
+              opacity: pressed ? 0.88 : 1,
+            },
       ]}
     >
       <Animated.View
         style={[
           styles.iconWrap,
-          { backgroundColor: isDark ? ink + '33' : '#FFFEF8' },
+          isDark
+            ? { backgroundColor: ink + '33' }
+            : { backgroundColor: fill, borderWidth: 1.5, borderColor: colors.text },
           iconAnimStyle,
         ]}
       >
@@ -91,7 +104,7 @@ export function ActivityPillCard({
 
       <View style={styles.textCol}>
         <View style={styles.titleRow}>
-          <Body size={15} color={textInk} style={{ fontFamily: font.bodySemiBold }}>
+          <Body size={15} color={textInk} style={{ fontFamily: font.bodyBold }}>
             {title}
           </Body>
           {logged ? (
@@ -116,7 +129,9 @@ export function ActivityPillCard({
         <View
           style={[
             styles.chip,
-            { backgroundColor: (chip.color ?? ink) + '22', borderColor: (chip.color ?? ink) + '40' },
+            isDark
+              ? { backgroundColor: (chip.color ?? ink) + '22', borderColor: (chip.color ?? ink) + '40' }
+              : { backgroundColor: fill, borderColor: colors.text, borderWidth: 1.5 },
           ]}
         >
           <Text style={[styles.chipText, { color: chip.color ?? textInk, fontFamily: font.bodySemiBold }]}>
@@ -160,7 +175,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#22C55E',
+    backgroundColor: '#161513',
     alignItems: 'center',
     justifyContent: 'center',
   },

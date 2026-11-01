@@ -24,13 +24,13 @@ export function Section({
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 20, color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.3 }}>
+            <Text style={{ fontSize: 20, color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: diffuse ? -0.3 : 0.2, ...(diffuse ? null : { textTransform: 'uppercase' as const }) }}>
               {title}
             </Text>
             {subtitle ? (
               <Text style={diffuse
                 ? { fontSize: 10, color: dt.colors.ink3, fontFamily: diffuseFont.mono, marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }
-                : { fontSize: 12, color: colors.textMuted, fontFamily: font.bodyMedium, marginTop: 2 }}>
+                : { fontSize: 10, color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', marginTop: 3, letterSpacing: 1.4, textTransform: 'uppercase' }}>
                 {subtitle}
               </Text>
             ) : null}
