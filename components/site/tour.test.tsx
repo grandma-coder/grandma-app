@@ -34,6 +34,7 @@ let queue: Map<number, FrameRequestCallback>
 let nextId: number
 let below: boolean
 let clipped: boolean // the phone screen scrolled the target out of its visible area
+let covered: boolean // the target sits under the phone's tab bar
 const flush = () => act(() => {
   const run = [...queue.values()]
   queue.clear()
@@ -57,12 +58,13 @@ function setup(locale: 'en' | 'pt' = 'en') {
 }
 
 beforeEach(() => {
-  queue = new Map(); nextId = 1; below = false; clipped = false
+  queue = new Map(); nextId = 1; below = false; clipped = false; covered = false
   window.requestAnimationFrame = ((cb: FrameRequestCallback) => { queue.set(nextId, cb); return nextId++ }) as typeof window.requestAnimationFrame
   window.cancelAnimationFrame = ((id: number) => { queue.delete(id) }) as typeof window.cancelAnimationFrame
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 })
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    if (this.matches('#phone nav')) { const t = covered ? 220 : 760; return { left: 0, top: t, width: 390, height: 100, right: 390, bottom: t + 100, x: 0, y: t, toJSON() {} } as DOMRect }
     if (clipped && this.matches('[data-screen]')) return { left: 0, top: 400, width: 390, height: 300, right: 390, bottom: 700, x: 0, y: 400, toJSON() {} } as DOMRect
     const top = below && this.closest('[data-tour], #modes') ? 2000 : 200
     return { left: 100, top, width: 80, height: 40, right: 180, bottom: top + 40, x: 100, y: top, toJSON() {} } as DOMRect
@@ -193,7 +195,7 @@ describe('Tour', () => {
     expect(queue.size).toBe(0)
   })
 
-  it('reads the target (and its phone screen) once per frame and writes no styles or classes while nothing changes', () => {
+  it('reads the target (plus its phone screen and tab bar) once per frame and writes no styles or classes while nothing changes', () => {
     setup()
     flush()
     const halo = coach().querySelector('[data-halo]') as HTMLElement
@@ -204,7 +206,7 @@ describe('Tour', () => {
     const rect = vi.mocked(HTMLElement.prototype.getBoundingClientRect)
     rect.mockClear()
     flush(); flush(); flush()
-    expect(rect).toHaveBeenCalledTimes(6) // target + its screen, 3 frames
+    expect(rect).toHaveBeenCalledTimes(9) // target + its screen + tab bar, 3 frames
     expect(halo.style.left).toBe('1px')
     expect(coach().dataset.on).toBe('x')
     expect(toggle).not.toHaveBeenCalled()
@@ -225,6 +227,23 @@ describe('Tour', () => {
     clipped = false
     flush()
     expect(coach().dataset.on).toBe('true')
+  })
+
+  it('a target under the phone tab bar hides the note and is scrolled into view once', () => {
+    const scrollBy = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollBy', { configurable: true, value: scrollBy })
+    try {
+      covered = true
+      setup()
+      flush(); flush(); flush()
+      expect(coach().dataset.on).toBe('false')
+      expect(scrollBy).toHaveBeenCalledTimes(1)
+      expect((scrollBy.mock.contexts[0] as HTMLElement).matches('[data-screen]')).toBe(true)
+      expect(scrollBy.mock.calls[0][0].top).toBeGreaterThan(0)
+      covered = false // scrolled clear of the bar
+      flush()
+      expect(coach().dataset.on).toBe('true')
+    } finally { delete (HTMLElement.prototype as { scrollBy?: unknown }).scrollBy }
   })
 
   it('cancels its loop on unmount', () => {

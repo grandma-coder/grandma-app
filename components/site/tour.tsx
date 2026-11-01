@@ -27,7 +27,7 @@ const isSmall = () => !!window.matchMedia?.(SMALL_QUERY).matches
  * Hand-drawn onboarding: a sticky note, a drawn arrow and a halo that follow the next thing to tap. Steps live in
  * the demo reducer (`tourDone` advances only on the current key; `skipTour` / `joined` end it). One fixed overlay,
  * positioned from getBoundingClientRect in a rAF loop that stops with the tour and pauses with the tab. Each frame reads
- * the target's rect (and its phone screen's, to catch a scrolled-away target) once and writes only when the rect, step, viewport, visibility or busy state changed.
+ * the target's rect (plus its phone screen and tab bar, to catch a scrolled-away or covered target) once and writes only when the rect, step, viewport, visibility or busy state changed.
  */
 export function Tour() {
   const { state, dispatch } = useDemo()
@@ -65,13 +65,25 @@ export function Tour() {
     }
     // last inputs that were written out; a frame whose inputs match touches no styles or classes
     let last = ''
+    // the target last scrolled into view inside the phone; once per target, so a reader scrolling away isn't fought
+    let nudged: Element | null = null
     const place = () => {
       const { key: k, busy: b } = live.current
       const el = document.querySelector(TARGET[k])
-      const r = el?.getBoundingClientRect() // layout reads: the target, plus its phone screen below (no writes between)
-      // a target inside a scrolled phone screen can be clipped while still inside the window
-      const clip = el?.closest('[data-screen]')?.getBoundingClientRect()
-      const inScreen = !clip || (!!r && r.bottom > clip.top + 4 && r.top < clip.bottom - 4)
+      // layout reads (no writes between): the target, then, inside the phone, its screen and the tab bar over it
+      const r = el?.getBoundingClientRect()
+      const sc = el?.closest<HTMLElement>('[data-screen]')
+      const clip = sc?.getBoundingClientRect()
+      const bar = sc && document.querySelector('#phone nav')?.getBoundingClientRect()
+      // a target can sit inside the window yet be scrolled out of the phone screen or under its tab bar
+      const floor = clip ? Math.min(clip.bottom, bar ? bar.top - 8 : clip.bottom) : 0
+      const inScreen = !clip || (!!r && r.top >= clip.top - 2 && r.bottom <= floor)
+      if (sc && clip && r && !inScreen && !b && nudged !== el) {
+        nudged = el
+        const scale = sc.clientHeight ? clip.height / sc.clientHeight : 1
+        const dy = r.bottom > floor ? r.bottom - floor + 16 : r.top - clip.top - 16
+        sc.scrollBy?.({ top: dy / scale, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+      }
       const iw = window.innerWidth, ih = window.innerHeight
       const vis = !!r && r.width > 0 && inScreen && r.bottom > 70 && r.top < ih - (isSmall() ? 90 : 10)
       const below = !!r && r.top >= ih - 10 && k !== 'join'
