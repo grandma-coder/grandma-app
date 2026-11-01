@@ -486,7 +486,7 @@ function WavyEdge({ width, paper, ink }: { width: number; paper: string; ink: st
   const side = width / 2 - 41
   const wave = (flip: boolean) => (
     <Svg width={side} height={12} viewBox="0 0 200 12" preserveAspectRatio="none"
-      style={{ position: 'absolute', top: -6, [flip ? 'right' : 'left']: 0, transform: flip ? [{ scaleX: -1 }] : undefined }}
+      style={{ position: 'absolute', top: -6, [flip ? 'right' : 'left']: 0, transform: flip ? [{ scaleX: -1 }] : [] }}
       pointerEvents="none">
       <Path d={`${WAVE} V12 H0Z`} fill={paper} />
       <Path d={WAVE} fill="none" stroke={ink} strokeWidth={2.4} strokeLinecap="round" />
@@ -617,7 +617,7 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
               accessibilityState={{ selected: isFocused }}
               accessibilityLabel={cfg.label}
             >
-              <View style={{ transform: isFocused ? [{ rotate: '-8deg' }, { scale: 1.16 }] : undefined }}>
+              <View style={{ transform: isFocused ? [{ rotate: '-8deg' }, { scale: 1.16 }] : [] }}>
                 <SiteSticker name={TAB_STICKER[route.name] ?? 'house'} size={32} />
                 {route.name === 'settings' && unreadNotifications > 0 && (
                   <View style={[stripStyles.unreadDot, { backgroundColor: StickerPalette.coral, borderColor: STICKER_INK }]} />
