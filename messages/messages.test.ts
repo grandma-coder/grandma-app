@@ -23,9 +23,9 @@ describe('messages', () => {
     it.each([['en', en], ['pt', pt]] as const)('%s has every v3 group', (_, m) => {
       expect(Object.keys(v3(m) ?? {}).sort()).toEqual(['explore', 'features', 'hero', 'mobile', 'phases', 'pop', 'tabs', 'tour', 'waitlist'])
     })
-    it.each([['en', en], ['pt', pt]] as const)('%s rebus carries the three sticker tokens, in order, as [token]', (_, m) => {
+    it.each([['en', en], ['pt', pt]] as const)('%s rebus carries the four sticker tokens, in order, as [token]', (_, m) => {
       const r = String((v3(m)?.hero as { rebus?: string } | undefined)?.rebus)
-      expect(r.match(/\[(\w+)\]/g)).toEqual(['[flower]', '[baby]', '[phone]'])
+      expect(r.match(/\[(\w+)\]/g)).toEqual(['[flower]', '[heart]', '[baby]', '[phone]'])
       expect(r).not.toMatch(/[{}]/)
     })
   })

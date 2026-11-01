@@ -1,8 +1,8 @@
 {
   "meta": {
-    "title": "grandma · Sua vida e a dos seus filhos, num app só",
+    "title": "grandma · Seu ciclo, sua gravidez, seus filhos. Num app só",
     "description": "Ciclo, gravidez, filhos e menopausa, num app só. Testa aqui mesmo e guarda seu lugar na lista de espera.",
-    "ogTitle": "grandma · Sua vida e a dos seus filhos, num app só"
+    "ogTitle": "grandma · Seu ciclo, sua gravidez, seus filhos. Num app só"
   },
   "locale": {
     "label": "Idioma",
@@ -202,7 +202,7 @@
   },
   "v3": {
     "hero": {
-      "rebus": "Sua vida [flower] e a dos seus filhos [baby], num app só [phone].",
+      "rebus": "Seu ciclo [flower], sua gravidez [heart], seus filhos [baby]. Num app só [phone].",
       "sub": "Ciclo, gravidez, filhos e menopausa. Pode ser só o seu ciclo, ou a família inteira.",
       "emailPlaceholder": "seu@email.com",
       "emailAria": "Seu email",

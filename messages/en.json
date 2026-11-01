@@ -1,8 +1,8 @@
 {
   "meta": {
-    "title": "grandma · Your life and your kids', in one app",
+    "title": "grandma · Your cycle, your pregnancy, your kids. One app",
     "description": "Cycle, pregnancy, kids and menopause, in one app. Try it right here, then save your spot on the waitlist.",
-    "ogTitle": "grandma · Your life and your kids', in one app"
+    "ogTitle": "grandma · Your cycle, your pregnancy, your kids. One app"
   },
   "locale": {
     "label": "Language",
@@ -202,7 +202,7 @@
   },
   "v3": {
     "hero": {
-      "rebus": "Your life [flower] and your kids' [baby], in one app [phone].",
+      "rebus": "Your cycle [flower], your pregnancy [heart], your kids [baby]. One app [phone].",
       "sub": "Cycle, pregnancy, kids and menopause. Just your cycle, or the whole family.",
       "emailPlaceholder": "you@email.com",
       "emailAria": "Your email",
