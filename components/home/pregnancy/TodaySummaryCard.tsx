@@ -10,10 +10,11 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
-import { useTheme, radius, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
+import { useTheme, radius, diffuseFont, useDiffuseTheme, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { QuietPill } from '../../ui/QuietPill'
 import { Character } from '../../characters/Characters'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { useTranslation } from '../../../lib/i18n'
 import { Display, MonoCaps } from '../../ui/Typography'
 import {
@@ -97,12 +98,12 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
     },
     water: {
       key: 'water', logType: 'water',
-      icon: diffuse ? <Character name="water" size={24} color={stickers.blue} /> : <LogWater size={22} />,
+      icon: diffuse ? <Character name="water" size={24} color={stickers.blue} /> : <SiteSticker name="drop" size={22} />,
       label: `${waterVal}/8`, done: waterVal >= 8,
     },
     sleep: {
       key: 'sleep', logType: 'sleep',
-      icon: diffuse ? <Character name="sleep" size={24} color={stickers.lilac} /> : <LogSleep size={22} />,
+      icon: diffuse ? <Character name="sleep" size={24} color={stickers.lilac} /> : <SiteSticker name="zz" size={22} />,
       label: sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '+', done: sleepVal !== null,
     },
     meals: {
@@ -117,12 +118,12 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
     },
     kicks: {
       key: 'kicks', logType: 'kick_count',
-      icon: diffuse ? <Character name="kick" size={24} color={stickers.coral} /> : <LogKicks size={22} />,
+      icon: diffuse ? <Character name="kick" size={24} color={stickers.coral} /> : <SiteSticker name="shoe" size={22} />,
       label: kicksVal !== null ? String(kicksVal) : '+', done: kicksVal !== null,
     },
     symptom: {
       key: 'symptom', logType: 'symptom',
-      icon: diffuse ? <Character name="activity" size={24} color={stickers.pink} /> : <LogSymptom size={22} />,
+      icon: diffuse ? <Character name="activity" size={24} color={stickers.pink} /> : <SiteSticker name="thermo" size={22} />,
       label: symptomDone ? '✓' : '+', done: symptomDone,
     },
     exercise: {
@@ -147,12 +148,12 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
     },
     appointment: {
       key: 'appointment', logType: 'appointment',
-      icon: diffuse ? <Character name="checkup" size={24} color={stickers.blue} /> : <LogAppointment size={22} />,
+      icon: diffuse ? <Character name="checkup" size={24} color={stickers.blue} /> : <SiteSticker name="cal" size={22} />,
       label: appointmentDone ? '✓' : '+', done: appointmentDone,
     },
     exam_result: {
       key: 'exam_result', logType: 'exam_result',
-      icon: diffuse ? <Character name="exam" size={24} color={stickers.lilac} /> : <LogExamResult size={22} />,
+      icon: diffuse ? <Character name="exam" size={24} color={stickers.lilac} /> : <SiteSticker name="doc" size={22} />,
       label: examResultDone ? '✓' : '+', done: examResultDone,
     },
     nesting: {
@@ -211,7 +212,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
               {t('cycleLog_todayTitle')}
             </Text>
           ) : (
-            <Display size={22} color={ink}>{t('cycleLog_todayTitle')}</Display>
+            <Display size={18} color={ink}>{t('cycleLog_todayTitle')}</Display>
           )}
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor }}>
             {t('cycleLog_hint')}
@@ -237,11 +238,14 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           soft green (no mode-accent violet). */}
       <View style={styles.chipsRow}>
         {pills.map((p) => {
-          const bg = p.done ? stickers.greenSoft : neutralBg
-          const border = p.done
-            ? stickers.green
-            : (diffuse ? dt.colors.line : colors.border)
-          const textColor = p.done ? stickers.greenInk : titleColor
+          // Site look: white + ink outline; logged = journey tone fill.
+          const bg = diffuse
+            ? (p.done ? stickers.greenSoft : neutralBg)
+            : (p.done ? getModeColorSoft('pregnancy') : colors.surface)
+          const border = diffuse
+            ? (p.done ? stickers.green : dt.colors.line)
+            : colors.text
+          const textColor = diffuse ? (p.done ? stickers.greenInk : titleColor) : colors.text
           return (
             <Pressable
               key={p.key}
@@ -249,13 +253,13 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
               disabled={!onLogMetric}
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, opacity: pressed ? 0.8 : 1 },
+                { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, borderWidth: diffuse ? 1 : 1.5, opacity: pressed ? 0.8 : 1 },
               ]}
             >
               <View style={styles.chipIcon}>{p.icon}</View>
               <Text
                 numberOfLines={1}
-                style={[styles.chipLabel, { color: textColor, fontFamily: labelFont, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.5 : 0 }]}
+                style={[styles.chipLabel, { color: textColor, fontFamily: diffuse ? labelFont : font.bodyBold, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.5 : 0, fontSize: diffuse ? 12 : 13 }]}
               >
                 {p.label}
               </Text>

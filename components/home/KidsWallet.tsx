@@ -28,6 +28,7 @@ import { QuietPill } from '../ui/QuietPill'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { SlidersHorizontal } from 'lucide-react-native'
 import { Character } from '../characters/Characters'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { MemoriesSheet } from './MemoriesSheet'
 import {
   NotifyGoalAchieved, NotifyRoutine, LogDiaper, LogGrowth,
@@ -119,18 +120,18 @@ export function KidsWallet({
       }
     }
     switch (id) {
-      case 'goals': return <StarSticker size={24} fill={stickers.yellow} stroke="#141313" />
-      case 'health': return <HeartSticker size={24} fill={stickers.coral} />
-      case 'vaccines': return <Character name="vaccine" size={24} color={stickers.blue} />
-      case 'exams': return <Character name="exam" size={24} color={stickers.lilac} />
-      case 'diaper': return <LogDiaper size={24} />
-      case 'growth_leap': return <LogGrowth size={24} />
-      case 'reminders': return <NotifyRoutine size={24} />
-      case 'memories': return <Character name="photo" size={24} color={stickers.pink} />
+      case 'goals': return <SiteSticker name="star" size={26} />
+      case 'health': return <SiteSticker name="heart" size={26} />
+      case 'vaccines': return <SiteSticker name="syringe" size={26} />
+      case 'exams': return <SiteSticker name="doc" size={26} />
+      case 'diaper': return <SiteSticker name="diaper" size={26} />
+      case 'growth_leap': return <SiteSticker name="ruler" size={26} />
+      case 'reminders': return <SiteSticker name="bell" size={26} />
+      case 'memories': return <SiteSticker name="camera" size={26} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
-      case 'rewards': return <NotifyGoalAchieved size={24} />
-      case 'channels': return <Character name="community" size={24} color={stickers.peach} />
-      case 'village': return <Character name="community" size={24} color={stickers.green} />
+      case 'rewards': return <SiteSticker name="star" size={26} />
+      case 'channels': return <SiteSticker name="bubble" size={26} />
+      case 'village': return <SiteSticker name="us" size={26} />
     }
   }
 

@@ -20,6 +20,7 @@ import { WalletCard } from './WalletCard'
 import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { QuietPill } from '../ui/QuietPill'
 import { Character } from '../characters/Characters'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 
 type MenoWalletId = 'ask_grandma' | 'reminders' | 'rewards' | 'community'
@@ -43,9 +44,9 @@ export function MenopauseWallet() {
   const iconFor = (id: MenoWalletId): ReactNode => {
     switch (id) {
       case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
-      case 'reminders': return <Character name="clock" size={26} color={stickers.blue} />
-      case 'rewards': return <Character name="crown" size={26} color={stickers.yellow} />
-      case 'community': return <Character name="community" size={26} color={stickers.green} />
+      case 'reminders': return diffuse ? <Character name="clock" size={26} color={stickers.blue} /> : <SiteSticker name="bell" size={26} />
+      case 'rewards': return diffuse ? <Character name="crown" size={26} color={stickers.yellow} /> : <SiteSticker name="star" size={26} />
+      case 'community': return diffuse ? <Character name="community" size={26} color={stickers.green} /> : <SiteSticker name="us" size={26} />
     }
   }
 

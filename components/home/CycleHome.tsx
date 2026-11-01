@@ -239,7 +239,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
               {t('home_wallet_label')}
             </Text>
           ) : (
-            <Display size={22} style={{ marginBottom: 12 }}>{t('home_wallet_label')}</Display>
+            <Display size={18} style={{ marginBottom: 12 }}>{t('home_wallet_label')}</Display>
           )}
           <CycleWallet visibleCardIds={caregiverView?.visible ?? null} />
         </View>

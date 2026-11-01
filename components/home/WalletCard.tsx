@@ -20,7 +20,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { ChevronDown, ArrowUpRight } from 'lucide-react-native'
 import {
-  useTheme, font, getModeColor, diffuseFont, useDiffuseTheme,
+  useTheme, font, getModeColor, getModeColorSoft, diffuseFont, useDiffuseTheme,
 } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useModeStore } from '../../store/useModeStore'
@@ -82,7 +82,17 @@ export function WalletCard({
     bg = (stickers as Record<string, string>)[tone] ?? colors.surface
     ink = (stickers as Record<string, string>)[tone + 'Ink'] ?? colors.text
   }
-  const border = diffuse ? dt.colors.line : colors.border
+  // Site look: tone fill is the soft pastel, ink stays the theme ink, outline is ink.
+  if (!diffuse && !isDark) {
+    if (tone === 'mode' || tone === 'lavender') {
+      bg = getModeColorSoft(tone === 'mode' ? mode : 'pregnancy', false)
+    } else if (tone !== 'surface') {
+      bg = (stickers as Record<string, string>)[tone + 'Soft'] ?? colors.surface
+    }
+    ink = colors.text
+  }
+  const siteOutline = !diffuse && !isDark
+  const border = diffuse ? dt.colors.line : siteOutline ? colors.text : colors.border
 
   // The circular icon chip.
   //  · Current: paper-white on tinted cards, subtle raised on cream.
@@ -97,7 +107,7 @@ export function WalletCard({
       : ((stickers as Record<string, string>)[tone + 'Soft'] ?? dt.colors.surfaceRaised)
     chipBg = softTone
   } else {
-    chipBg = tone === 'surface' ? colors.surfaceRaised : '#FFFEF8'
+    chipBg = siteOutline ? colors.surface : tone === 'surface' ? colors.surfaceRaised : '#FFFEF8'
   }
 
   const showBody = expanded && !linkOnly && !!children
@@ -109,10 +119,12 @@ export function WalletCard({
         {
           backgroundColor: bg,
           borderColor: border,
-          borderWidth: diffuse ? 1 : StyleSheet.hairlineWidth,
-          marginBottom: last ? 0 : (expanded ? 6 : -16),
+          borderWidth: diffuse ? 1 : siteOutline ? 1.5 : StyleSheet.hairlineWidth,
+          marginBottom: last ? 0 : (expanded ? 6 : siteOutline ? 10 : -16),
           zIndex: expanded ? 30 : undefined,
         },
+        siteOutline && styles.cardSite,
+        siteOutline && { shadowColor: colors.text },
       ]}
     >
       <Pressable
@@ -123,7 +135,15 @@ export function WalletCard({
         accessibilityState={linkOnly ? undefined : { expanded }}
       >
         <View style={styles.chipWrap}>
-          <View style={[styles.chip, { backgroundColor: chipBg }]}>{icon}</View>
+          <View
+            style={[
+              styles.chip,
+              { backgroundColor: chipBg },
+              siteOutline && { borderWidth: 1.5, borderColor: colors.text },
+            ]}
+          >
+            {icon}
+          </View>
           {/* iOS app-icon-style count badge on the chip's top-right corner. */}
           {badge && badge > 0 ? (
             <View
@@ -143,7 +163,11 @@ export function WalletCard({
         </View>
 
         <Text
-          style={[styles.title, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}
+          style={[
+            styles.title,
+            { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display },
+            siteOutline && styles.titleSite,
+          ]}
           numberOfLines={1}
         >
           {title}
@@ -151,7 +175,7 @@ export function WalletCard({
 
         {trailingValue ? (
           <Text
-            style={[styles.trailing, { color: ink, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}
+            style={[styles.trailing, { color: ink, fontFamily: diffuse || siteOutline ? (diffuse ? diffuseFont.mono : 'SpaceMono_400Regular') : font.bodySemiBold }]}
             numberOfLines={1}
           >
             {trailingValue}
@@ -173,6 +197,8 @@ export function WalletCard({
 
 const styles = StyleSheet.create({
   card: { borderRadius: 26, overflow: 'hidden' },
+  // Site look: radius 18, hard ink drop. (overflow stays hidden — body is clipped to the card.)
+  cardSite: { borderRadius: 18, overflow: 'visible', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 13,
     paddingHorizontal: 16, paddingVertical: 16,
@@ -182,6 +208,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   title: { flex: 1, minWidth: 0, fontSize: 18, letterSpacing: -0.3 },
+  titleSite: { fontSize: 16, letterSpacing: 0.2, textTransform: 'uppercase' },
   trailing: { fontSize: 14 },
   chipWrap: { flexShrink: 0 },
   chipBadge: {

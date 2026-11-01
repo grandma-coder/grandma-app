@@ -95,7 +95,7 @@ export function MenopauseHome() {
   const { t } = useTranslation()
   // Per-symptom-group hues from the shared sticker palette (active both variants),
   // so signals read with varied colour like the other behaviors.
-  const { stickers } = useTheme()
+  const { stickers, font } = useTheme()
   const hueOf = (type: string) => (stickers as Record<string, string>)[symptomStickerKey(type)]
   const hueSoftOf = (type: string) => (stickers as Record<string, string>)[`${symptomStickerKey(type)}Soft`]
   const hueInkOf = (type: string) => (stickers as Record<string, string>)[`${symptomStickerKey(type)}Ink`]
@@ -273,7 +273,7 @@ export function MenopauseHome() {
             <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={18} borderColor={pal.accent} style={styles.section}>
               <View style={styles.rowHead}>
                 <Character name="celebrate" size={22} color={pal.accent} bg={pal.accentSoft} />
-                <Text style={[styles.cardTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>A gentle milestone</Text>
+                <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>A gentle milestone</Text>
               </View>
               <Text style={[styles.offerBody, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
                 It&apos;s been 12 months since your last period — many people consider this menopause.
@@ -322,7 +322,7 @@ export function MenopauseHome() {
         ) : (
           <PaperCard radius={pal.radius.lg} padding={18} style={styles.section}>
             <View style={styles.quickHead}>
-              <Text style={[styles.cardTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Quick log</Text>
+              <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Quick log</Text>
               <QuietPill
                 leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
                 onPress={() => setQuickPickerOpen(true)}
@@ -358,7 +358,7 @@ export function MenopauseHome() {
           <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={18} style={styles.section}>
             <View style={styles.rowHead}>
               <Character name="selfcare" size={22} color={pal.accent} bg={pal.accentSoft} />
-              <Text style={[styles.eyebrow, { color: pal.accent, fontFamily: pal.fontBodySemiBold }]}>FROM GRANDMA</Text>
+              <Text style={[styles.eyebrow, { color: pal.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, fontSize: 10 }]}>FROM GRANDMA</Text>
             </View>
             <Text style={[styles.wisdomText, { color: pal.text, fontFamily: pal.fontDisplay }]}>{wisdomLine}</Text>
           </PaperCard>
@@ -388,7 +388,7 @@ export function MenopauseHome() {
                   <Character name="period" size={24} color={pal.accent} bg={pal.accentSoft} />
                 </View>
                 <View style={styles.periodCopy}>
-                  <Text style={[styles.cardTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Still spotting?</Text>
+                  <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Still spotting?</Text>
                   <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
                     Log a period to keep your counter accurate.
                   </Text>
@@ -401,7 +401,7 @@ export function MenopauseHome() {
 
         {/* ─── Wallet — the shared "Quick access" stack every behavior home has ─ */}
         <View style={styles.section}>
-          <Text style={[styles.walletHeading, { color: pal.text, fontFamily: pal.fontDisplay }]}>
+          <Text style={[styles.walletHeading, !pal.diffuse && styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>
             {t('home_wallet_label')}
           </Text>
           <MenopauseWallet />
@@ -463,7 +463,7 @@ function QuickChip({
   onPress: () => void
 }) {
   const label = menopauseSymptomLabel(id)
-  const { stickers } = useTheme()
+  const { stickers, font } = useTheme()
   const hue = (stickers as Record<string, string>)[symptomStickerKey(id)]
   return (
     <Pressable
@@ -476,9 +476,9 @@ function QuickChip({
         !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
         {
           backgroundColor: pal.surface,
-          borderColor: pal.border,
-          // Diffuse uses the softer 12px chip radius (matches CycleTodaySummaryCard);
-          // current keeps the sticker pill (radius.full).
+          // Site look: white pill + 1.5px ink outline (diffuse keeps its hairline).
+          borderColor: pal.diffuse ? pal.border : pal.text,
+          borderWidth: pal.diffuse ? 1 : 1.5,
           borderRadius: pal.diffuse ? 12 : pal.radius.full,
           opacity: pressed ? 0.7 : 1,
         },
@@ -490,7 +490,7 @@ function QuickChip({
           styles.quickChipText,
           pal.diffuse
             ? { color: pal.text, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: 12.5 }
-            : { color: pal.textSecondary, fontFamily: pal.fontBodyMedium },
+            : { color: pal.text, fontFamily: font.bodyBold, fontSize: 13 },
         ]}
       >
         {label}
@@ -502,6 +502,7 @@ function QuickChip({
 // ─── "More" chip — opens the full symptom catalog (accent-tinted, "+") ───────
 
 function MoreChip({ pal, onPress }: { pal: MenoPalette; onPress: () => void }) {
+  const { font } = useTheme()
   return (
     <Pressable
       onPress={onPress}
@@ -511,20 +512,21 @@ function MoreChip({ pal, onPress }: { pal: MenoPalette; onPress: () => void }) {
         styles.quickChip,
         !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
         {
-          backgroundColor: pal.accentSoft,
-          borderColor: pal.accent,
+          backgroundColor: pal.diffuse ? pal.accentSoft : pal.surface,
+          borderColor: pal.diffuse ? pal.accent : pal.text,
+          borderWidth: pal.diffuse ? 1 : 1.5,
           borderRadius: pal.diffuse ? 12 : pal.radius.full,
           opacity: pressed ? 0.7 : 1,
         },
       ]}
     >
-      <Ionicons name="add" size={16} color={pal.accent} />
+      <Ionicons name="add" size={16} color={pal.diffuse ? pal.accent : pal.text} />
       <Text
         style={[
           styles.quickChipText,
           pal.diffuse
             ? { color: pal.accent, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: 12.5 }
-            : { color: pal.accent, fontFamily: pal.fontBodyMedium },
+            : { color: pal.text, fontFamily: font.bodyBold, fontSize: 13 },
         ]}
       >
         More
@@ -566,6 +568,8 @@ const styles = StyleSheet.create({
   // Shared card bits
   rowHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   cardTitle: { fontSize: 20, letterSpacing: -0.3 },
+  // Site look section title (non-diffuse): hand display face, uppercase.
+  siteTitle: { fontSize: 18, letterSpacing: 0.2, textTransform: 'uppercase' },
   cardSub: { fontSize: 13.5, lineHeight: 19, marginTop: 3 },
 
   // 12-month offer

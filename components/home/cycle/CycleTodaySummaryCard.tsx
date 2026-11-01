@@ -13,10 +13,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { QuietPill } from '../../ui/QuietPill'
 import { Character } from '../../characters/Characters'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogTimeline'
 import { moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
@@ -212,14 +213,14 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     {
       key: 'bbt',
       sheet: 'basal_temp',
-      icon: diffuse ? diffuseBlob('basal_temp') : <Drop size={22} fill={stickers.blue} />,
+      icon: diffuse ? diffuseBlob('basal_temp') : <SiteSticker name="thermo" size={22} />,
       label: bbtValue ? `${bbtValue}°` : '+',
       done: !!bbtValue,
     },
     {
       key: 'lh',
       sheet: 'lh',
-      icon: diffuse ? diffuseBlob('lh') : <Drop size={22} fill={stickers.yellow} />,
+      icon: diffuse ? diffuseBlob('lh') : <SiteSticker name="otest" size={22} />,
       label: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '+',
       done: !!lhValue,
     },
@@ -233,30 +234,30 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     {
       key: 'intimacy',
       sheet: 'intercourse',
-      icon: diffuse ? diffuseBlob('intercourse') : <Heart size={22} fill={intimacy ? stickers.pink : stickers.pinkSoft} />,
+      icon: diffuse ? diffuseBlob('intercourse') : <SiteSticker name="heart" size={22} />,
       label: intimacy ? '✓' : '+',
       done: !!intimacy,
     },
     {
       key: 'period_start',
       sheet: 'period_start',
-      icon: diffuse ? diffuseBlob('period_start') : <Drop size={22} fill={periodStart ? stickers.coral : stickers.pinkSoft} />,
+      icon: diffuse ? diffuseBlob('period_start') : <SiteSticker name="drop" size={22} />,
       label: periodStart ? (periodStart === 'light' ? 'Lt' : periodStart === 'medium' ? 'Md' : periodStart === 'heavy' ? 'Hv' : '✓') : '+',
       done: !!periodStart,
     },
     {
       key: 'period_end', sheet: 'period_end',
-      icon: diffuse ? diffuseBlob('period_end') : <Drop size={22} fill={periodEnd ? stickers.coral : stickers.pinkSoft} />,
+      icon: diffuse ? diffuseBlob('period_end') : <SiteSticker name="drop" size={22} />,
       label: periodEnd ? '✓' : '+', done: !!periodEnd,
     },
     {
       key: 'pregnancy_test', sheet: 'pregnancy_test',
-      icon: diffuse ? diffuseBlob('pregnancy_test') : <Drop size={22} fill={stickers.yellow} />,
+      icon: diffuse ? diffuseBlob('pregnancy_test') : <SiteSticker name="otest" size={22} />,
       label: pregTest ? (pregTest === 'positive' ? 'Pos' : pregTest === 'negative' ? 'Neg' : '✓') : '+', done: !!pregTest,
     },
     {
       key: 'sex_drive', sheet: 'sex_drive',
-      icon: diffuse ? diffuseBlob('sex_drive') : <Heart size={22} fill={sexDrive ? stickers.pink : stickers.pinkSoft} />,
+      icon: diffuse ? diffuseBlob('sex_drive') : <SiteSticker name="heart" size={22} />,
       label: sexDrive ?? '+', done: !!sexDrive,
     },
     {
@@ -271,7 +272,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     },
     {
       key: 'water', sheet: 'water',
-      icon: diffuse ? diffuseBlob('water') : <Drop size={22} fill={stickers.blue} />,
+      icon: diffuse ? diffuseBlob('water') : <SiteSticker name="drop" size={22} />,
       label: water ? `${water}` : '+', done: !!water,
     },
     {
@@ -355,7 +356,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
               {logTitle}
             </Text>
           ) : (
-            <Display size={22} color={ink}>{logTitle}</Display>
+            <Display size={18} color={ink}>{logTitle}</Display>
           )}
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor, ...(diffuse ? { letterSpacing: 1, textTransform: 'uppercase' as const, fontSize: 10 } : null) }}>
             {summaryHint}
@@ -383,22 +384,25 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
           tints soft green (no mode-accent). */}
       <View style={styles.chipsRow}>
         {visibleChips.map((c) => {
-          const bg = c.done ? stickers.greenSoft : neutralBg
-          const border = c.done ? stickers.green : (diffuse ? dt.colors.line : colors.border)
-          const textColor = c.done ? stickers.greenInk : titleColor
+          // Site look: white + ink outline; logged = journey tone fill.
+          const bg = diffuse
+            ? (c.done ? stickers.greenSoft : neutralBg)
+            : (c.done ? getModeColorSoft('pre-pregnancy') : colors.surface)
+          const border = diffuse ? (c.done ? stickers.green : dt.colors.line) : colors.text
+          const textColor = diffuse ? (c.done ? stickers.greenInk : titleColor) : colors.text
           return (
             <Pressable
               key={c.key}
               onPress={() => setSheetType(c.sheet)}
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, opacity: pressed ? 0.8 : 1 },
+                { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, borderWidth: diffuse ? 1 : 1.5, opacity: pressed ? 0.8 : 1 },
               ]}
             >
               <View style={styles.chipIcon}>{c.icon}</View>
               <Text
                 numberOfLines={1}
-                style={[styles.chipLabel, { color: textColor, fontFamily: labelFont, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.5 : 0 }]}
+                style={[styles.chipLabel, { color: textColor, fontFamily: diffuse ? labelFont : font.bodyBold, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.5 : 0, fontSize: diffuse ? 12 : 13 }]}
               >
                 {c.label}
               </Text>

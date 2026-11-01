@@ -19,6 +19,7 @@ import { useTheme, useDiffuseTheme } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { SlidersHorizontal } from 'lucide-react-native'
 import { Character } from '../../characters/Characters'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { useTranslation } from '../../../lib/i18n'
 import { buildWalletCards, type WalletCardId } from '../../../lib/weekWallet'
 import { WALLET_SHORTCUTS } from '../../../lib/walletCatalog'
@@ -132,17 +133,17 @@ export function WeekWallet({
       }
     }
     switch (id) {
-      case 'appointment': return <NotifyAppointmentDue size={26} />
-      case 'week_tip': return <TipRead size={26} />
-      case 'kicks': return <LogKicks size={26} />
-      case 'reminders': return <NotifyRoutine size={26} />
-      case 'memories': return <Character name="photo" size={26} color={stickers.pink} />
-      case 'exams': return <Character name="exam" size={26} color={stickers.lilac} />
-      case 'birth_guide': return <Leaf size={24} fill={stickers.green} />
+      case 'appointment': return <SiteSticker name="cal" size={26} />
+      case 'week_tip': return <SiteSticker name="brain" size={26} />
+      case 'kicks': return <SiteSticker name="shoe" size={26} />
+      case 'reminders': return <SiteSticker name="bell" size={26} />
+      case 'memories': return <SiteSticker name="camera" size={26} />
+      case 'exams': return <SiteSticker name="doc" size={26} />
+      case 'birth_guide': return <SiteSticker name="books" size={26} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="lilac" outline={colors.text} />
-      case 'rewards': return <NotifyGoalAchieved size={24} />
-      case 'channels': return <Character name="community" size={26} color={stickers.peach} />
-      case 'village': return <Character name="community" size={26} color={stickers.green} />
+      case 'rewards': return <SiteSticker name="star" size={26} />
+      case 'channels': return <SiteSticker name="bubble" size={26} />
+      case 'village': return <SiteSticker name="us" size={26} />
     }
   }
 

@@ -14,9 +14,10 @@ import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { SlidersHorizontal } from 'lucide-react-native'
-import { useTheme, diffuseFont, useDiffuseTheme } from '../../../constants/theme'
+import { useTheme, diffuseFont, useDiffuseTheme, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { Character, type CharacterName } from '../../characters/Characters'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { useTranslation } from '../../../lib/i18n'
 import { Display } from '../../ui/Typography'
 import { QuietPill } from '../../ui/QuietPill'
@@ -47,6 +48,11 @@ const CHAR_FOR: Record<string, { name: CharacterName; hue: keyof ReturnType<type
   exam:     { name: 'exam',     hue: 'green' },
 }
 
+// Site-look icons (non-diffuse): obvious sticker matches; anything else keeps its Character blob.
+const SITE_FOR: Record<string, SiteStickerName> = {
+  sleep: 'zz', feeding: 'bottle', diaper: 'diaper', wake_up: 'flower', health: 'thermo', memory: 'camera', exam: 'doc',
+}
+
 export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Props) {
   const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
@@ -75,7 +81,9 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
       return {
         key,
         logType: def.logType,
-        icon: <Character name={glyph.name} size={20} color={stickers[glyph.hue]} />,
+        icon: !diffuse && SITE_FOR[key]
+          ? <SiteSticker name={SITE_FOR[key]} size={22} />
+          : <Character name={glyph.name} size={20} color={stickers[glyph.hue]} />,
         label: t(def.labelKey),
         done,
       }
@@ -114,7 +122,7 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
               {t('cycleLog_todayTitle')}
             </Text>
           ) : (
-            <Display size={22} color={ink}>{t('cycleLog_todayTitle')}</Display>
+            <Display size={18} color={ink}>{t('cycleLog_todayTitle')}</Display>
           )}
           <Text style={{ marginTop: 3, fontFamily: hintFont, fontSize: 12, color: hintColor }}>
             {t('cycleLog_hint')}
@@ -138,9 +146,12 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
       {/* Tappable log chips — neutral hairline; a completed log tints soft green. */}
       <View style={styles.chipsRow}>
         {pills.map((p) => {
-          const bg = p.done ? stickers.greenSoft : neutralBg
-          const border = p.done ? stickers.green : (diffuse ? dt.colors.line : colors.border)
-          const textColor = p.done ? stickers.greenInk : titleColor
+          // Site look: white + ink outline; logged = journey tone fill.
+          const bg = diffuse
+            ? (p.done ? stickers.greenSoft : neutralBg)
+            : (p.done ? getModeColorSoft('kids') : colors.surface)
+          const border = diffuse ? (p.done ? stickers.green : dt.colors.line) : colors.text
+          const textColor = diffuse ? (p.done ? stickers.greenInk : titleColor) : colors.text
           return (
             <Pressable
               key={p.key}
@@ -148,13 +159,13 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
               disabled={!onLogMetric}
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, opacity: pressed ? 0.8 : 1 },
+                { backgroundColor: bg, borderColor: border, borderRadius: diffuse ? 12 : 999, borderWidth: diffuse ? 1 : 1.5, opacity: pressed ? 0.8 : 1 },
               ]}
             >
               <View style={styles.chipIcon}>{p.icon}</View>
               <Text
                 numberOfLines={1}
-                style={[styles.chipLabel, { color: textColor, fontFamily: labelFont, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.5 : 0 }]}
+                style={[styles.chipLabel, { color: textColor, fontFamily: diffuse ? labelFont : font.bodyBold, textTransform: diffuse ? 'uppercase' : 'none', letterSpacing: diffuse ? 0.5 : 0, fontSize: diffuse ? 12 : 13 }]}
               >
                 {p.label}
               </Text>

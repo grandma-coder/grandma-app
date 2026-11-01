@@ -15,7 +15,7 @@ import { WeekRuler } from './WeekRuler'
 import { BabyIllustration } from './babyIllustrations'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
-import { font, diffuseFont, useDiffuseTheme, getDiffuseAccent, getModeField } from '../../../constants/theme'
+import { font, diffuseFont, useDiffuseTheme, getDiffuseAccent, getModeField, useTheme } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -105,6 +105,7 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { colors } = useTheme()
   const data = getWeekData(week)
   const stat = getWeekStat(week)
   const pal = paletteForWeek(week)
@@ -207,7 +208,14 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: pal.bg, width, opacity: pressed ? 0.96 : 1 },
+        {
+          backgroundColor: pal.bg,
+          width,
+          opacity: pressed ? 0.96 : 1,
+          borderWidth: 1.5,
+          borderColor: colors.text,
+          shadowColor: colors.text,
+        },
       ]}
     >
       {/* Top row: meta (left) + sizename (right) */}
@@ -290,17 +298,15 @@ void formatWeight
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 28,
+    borderRadius: 22,
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 14,
     minHeight: 236,
-    overflow: 'hidden',
-    shadowColor: '#141313',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 22,
-    elevation: 6,
+    // Hard ink drop (site look) — no blur. No overflow:hidden so iOS keeps the shadow.
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 0,
   },
   topRow: {
     flexDirection: 'row',
@@ -310,9 +316,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   meta: {
-    fontFamily: font.bodySemiBold,
-    fontSize: 11,
-    letterSpacing: 1.8,
+    fontFamily: 'SpaceMono_400Regular',
+    fontSize: 10,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     flex: 1,
   },
@@ -321,8 +327,8 @@ const styles = StyleSheet.create({
     // fall back to the canonical 600 weight so Android doesn't drop to
     // the system serif.
     fontFamily: font.display,
-    fontSize: 20,
-    letterSpacing: -0.3,
+    fontSize: 19,
+    letterSpacing: 0.2,
     textAlign: 'right',
   },
   sizeNameBold: {
@@ -373,16 +379,16 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   statLabel: {
-    fontFamily: font.bodySemiBold,
-    fontSize: 9,
-    letterSpacing: 2,
+    fontFamily: 'SpaceMono_400Regular',
+    fontSize: 10,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     opacity: 0.7,
   },
   statValue: {
     fontFamily: font.display,
     fontSize: 24,
-    letterSpacing: -0.8,
+    letterSpacing: 0,
     lineHeight: 26,
   },
   statUnit: {
@@ -401,7 +407,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   footerLabel: {
-    fontFamily: font.bodyMedium,
+    fontFamily: 'SpaceMono_400Regular',
     fontSize: 10,
     letterSpacing: 1.4,
     textTransform: 'uppercase',

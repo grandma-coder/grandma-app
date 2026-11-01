@@ -709,13 +709,13 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
                 </>
               ) : (
                 <>
-                  <Text style={[styles.centerLabel, { color: accent, fontFamily: font.bodySemiBold }]}>
+                  <Text style={[styles.centerLabel, { color: accent, fontFamily: 'SpaceMono_400Regular' }]}>
                     {t('cycle_ring_label_day')}
                   </Text>
                   <Text style={[styles.centerNumber, { color: accent, fontFamily: font.display }]}>
                     {selectedDay}
                   </Text>
-                  <Text style={[styles.centerStatus, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+                  <Text style={[styles.centerStatus, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
                     {t('cycle_ring_of_n', { n: cycleLength })}
                   </Text>
                 </>
@@ -824,10 +824,10 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
       >
         <View style={styles.statusRow}>
           <View style={styles.statusBlock}>
-            <Text style={[styles.statusTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]} numberOfLines={1}>
+            <Text style={[styles.statusTitle, !diffuse && { letterSpacing: 0.2, textTransform: 'uppercase', fontSize: 24 }, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]} numberOfLines={1}>
               {t('cycle_ring_phase_prefix')}<Text style={[styles.statusTitleAccent, { color: diffuse ? dt.colors.ink : accent, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>{titleItalic}</Text>
             </Text>
-            <Text style={[styles.dateLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+            <Text style={[styles.dateLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 10 }]}>
               {t('cycle_ring_date_phase', { date: formatLongDate(selectedDate), phase: phaseLabel(selPhase, t) })}
             </Text>
           </View>
@@ -838,8 +838,8 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
               </Text>
             </View>
           ) : (
-            <View style={[styles.statusPill, { borderColor: accent + '55', backgroundColor: tint }]}>
-              <Text style={[styles.statusPillText, { color: accent, fontFamily: font.bodySemiBold }]}>
+            <View style={[styles.statusPill, { borderColor: colors.text, borderWidth: 1.5, backgroundColor: tint }]}>
+              <Text style={[styles.statusPillText, { color: colors.text, fontFamily: font.bodyBold }]}>
                 {statusLabel}
               </Text>
             </View>
@@ -849,7 +849,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
         {/* Fertility cell */}
         <View style={styles.statsRow}>
           <View style={[styles.statCell, { borderTopColor: diffuse ? dt.colors.line2 : accent + '66' }]}>
-            <Text style={[styles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+            <Text style={[styles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
               {t('cycle_ring_label_fertility')}
             </Text>
             <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
@@ -858,7 +858,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
             </Text>
           </View>
           <View style={[styles.statCell, { borderTopColor: diffuse ? dt.colors.line2 : accent + '66' }]}>
-            <Text style={[styles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+            <Text style={[styles.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
               {t('cycle_ring_label_next_period')}
             </Text>
             <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>

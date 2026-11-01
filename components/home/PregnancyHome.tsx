@@ -360,7 +360,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
             {t('home_wallet_label')}
           </Text>
         ) : (
-          <Display size={22} style={{ marginBottom: 12 }}>{t('home_wallet_label')}</Display>
+          <Display size={18} style={{ marginBottom: 12 }}>{t('home_wallet_label')}</Display>
         )}
         <WeekWallet
           weekNumber={weekNumber}

@@ -5,12 +5,14 @@ import { router } from 'expo-router'
 import { Display, MonoCaps } from '../../ui/Typography'
 import { CardSticker } from './CardSticker'
 import { useTheme } from '../../../constants/theme'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
 import { DailyMessageModal } from './DailyMessageModal'
 import { QuietPill } from '../../ui/QuietPill'
 
 export function DailyMessageCard() {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
   const { todayQuestion, todayCard, isAnswered, collection } = useDailyMessage()
   const [open, setOpen] = useState(false)
   if (!todayQuestion) return null
@@ -18,18 +20,24 @@ export function DailyMessageCard() {
   return (
     <View>
       <Pressable onPress={() => setOpen(true)}>
-        <MonoCaps color={colors.textMuted}>
-          DAILY MESSAGE{isAnswered ? `  ·  ${collection.length} CARD${collection.length === 1 ? '' : 'S'}` : ''}
-        </MonoCaps>
+        {diffuse ? (
+          <MonoCaps color={colors.textMuted}>
+            DAILY MESSAGE{isAnswered ? `  ·  ${collection.length} CARD${collection.length === 1 ? '' : 'S'}` : ''}
+          </MonoCaps>
+        ) : (
+          <Display size={18} color={colors.text}>
+            DAILY MESSAGE{isAnswered ? `  ·  ${collection.length} CARD${collection.length === 1 ? '' : 'S'}` : ''}
+          </Display>
+        )}
 
         {isAnswered && todayCard ? (
           <View style={styles.answeredRow}>
             <CardSticker color={todayCard.color} size={44} mode={todayCard.mode} />
-            <Display size={18} style={styles.flex} numberOfLines={3}>{todayCard.text}</Display>
+            <Display size={18} style={[styles.flex, !diffuse && { textTransform: 'none', lineHeight: 24 }]} numberOfLines={3}>{todayCard.text}</Display>
           </View>
         ) : (
           <View style={styles.promptRow}>
-            <Display size={23} style={styles.promptFlex}>{todayQuestion.prompt}</Display>
+            <Display size={20} style={[styles.promptFlex, !diffuse && { textTransform: 'none', lineHeight: 26 }]}>{todayQuestion.prompt}</Display>
             {/* Answer sits as a small pill beside the question (bottom-aligned,
                 next to the "?") rather than on its own line below — removes the
                 empty gap under the prompt. */}

@@ -1562,10 +1562,11 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                   borderColor: active ? dt.colors.hairline : dt.colors.line,
                   opacity: pressed ? 0.7 : 1,
                 } : {
-                  backgroundColor: active ? kidColor : kidColor + '2E',
+                  // Site look: white chip + ink outline; the selected kid takes its tone fill.
+                  backgroundColor: active ? kidColor : colors.surface,
                   borderRadius: radius.full,
-                  borderWidth: active ? 1.5 : 1,
-                  borderColor: active ? ST_INK : kidColor + '40',
+                  borderWidth: 1.5,
+                  borderColor: ST_INK,
                   shadowColor: ST_INK,
                   shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
                   shadowOpacity: active ? 1 : 0,
@@ -1577,10 +1578,10 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                 {diffuse ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: kidColor }} /> : null}
                 <Text style={[s.pillName, diffuse
                   ? { fontFamily: active ? diffuseFont.bodySemiBold : diffuseFont.body, color: active ? dt.colors.ink : dt.colors.ink2 }
-                  : { fontFamily: active ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold', color: active ? ST_INK : kidColor }]}>{c.name}</Text>
+                  : { fontFamily: 'HankenGrotesk_700Bold', color: ST_INK }]}>{c.name}</Text>
                 <Text style={[s.pillAge, diffuse
                   ? { fontFamily: diffuseFont.mono, color: dt.colors.ink3, fontSize: 9.5, letterSpacing: 0.5 }
-                  : { color: active ? 'rgba(20,19,19,0.7)' : kidColor + 'AA' }]}>{formatAge(c.birthDate)}</Text>
+                  : { color: 'rgba(20,19,19,0.7)' }]}>{formatAge(c.birthDate)}</Text>
               </Pressable>
             )
           })}
@@ -1692,23 +1693,19 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                 borderRadius: radius.full,
                 opacity: pressed ? 0.7 : 1,
               } : {
-                backgroundColor: active ? ST_YELLOW : 'transparent',
-                borderColor: active ? ST_INK : colors.border,
-                borderWidth: active ? 1.5 : 1,
+                // Site look: segmented — white + ink outline; selected = ink fill, white label.
+                backgroundColor: active ? ST_INK : colors.surface,
+                borderColor: ST_INK,
+                borderWidth: 1.5,
                 borderRadius: radius.full,
-                shadowColor: ST_INK,
-                shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
-                shadowOpacity: active ? 1 : 0,
-                shadowRadius: 0,
-                elevation: active ? 4 : 0,
-                transform: [{ translateY: active && pressed ? 2 : 0 }],
+                opacity: pressed ? 0.85 : 1,
               }]}
             >
               <Text style={[s.dateRangeText, diffuse ? {
                 fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
                 color: active ? dt.colors.ink : dt.colors.ink3,
                 textTransform: 'uppercase', letterSpacing: 1.4, fontSize: 11,
-              } : { fontFamily: active ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold', color: active ? ST_INK : colors.textMuted }]}>
+              } : { fontFamily: 'HankenGrotesk_700Bold', color: active ? '#FFFFFF' : ST_INK }]}>
                 {opt.key === 'custom' && customRange
                   ? `${fmtShortDate(customRange.start)}–${fmtShortDate(customRange.end)}`
                   : opt.key === 'today' ? t('common_today')
@@ -2071,7 +2068,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           {t('home_wallet_label')}
         </Text>
       ) : (
-        <Display size={22} style={{ marginTop: 16, marginBottom: 12 }}>{t('home_wallet_label')}</Display>
+        <Display size={18} style={{ marginTop: 16, marginBottom: 12 }}>{t('home_wallet_label')}</Display>
       ))}
 
       {/* ─── Wallet stack (Set Goals → Rewards) ─────────────── */}
@@ -2779,7 +2776,7 @@ function CurrentHeroTiles({
   const { t } = useTranslation()
   const ink = colors.text
   const ink3 = isDark ? colors.textSecondary : '#6E6763'
-  const lineColor = isDark ? colors.borderStrong : 'rgba(20,19,19,0.08)'
+  const lineColor = isDark ? colors.borderStrong : colors.text // site look: ink outline
   const paper = colors.surface
 
   // Sticker-palette soft bgs — bumped contrast in dark mode so cards read as
@@ -3000,16 +2997,15 @@ function SvgStar() {
 
 // ─── Hero tile shared styles (sticker-card aesthetic) ─────────────────────────
 const tileStyles = StyleSheet.create({
+  // Site look: 1.5px ink outline, radius 18, hard ink drop (no blur, no overflow clip so iOS keeps the shadow).
   card: {
     padding: 16,
-    borderRadius: 28,
-    borderWidth: 1,
-    overflow: 'hidden',
+    borderRadius: 18,
+    borderWidth: 1.5,
     shadowColor: '#141313',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -3018,8 +3014,8 @@ const tileStyles = StyleSheet.create({
   },
   metaLabel: {
     fontSize: 10,
-    fontFamily: font.bodySemiBold,
-    letterSpacing: 1.6,
+    fontFamily: 'SpaceMono_400Regular',
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
   },
   metaSub: {
@@ -3040,7 +3036,7 @@ const tileStyles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   miniSticker: {
     width: 30,

@@ -30,6 +30,7 @@ import { CyclePillarsGrid } from './CyclePillarsGrid'
 import { MemoriesSheet } from '../MemoriesSheet'
 import { NotifyRoutine, LogOvulation, NotifyGoalAchieved } from '../../stickers/RewardStickers'
 import { Character } from '../../characters/Characters'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { GrandmaLogo } from '../../ui/GrandmaLogo'
 
 /**
@@ -110,14 +111,14 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
       }
     }
     switch (id) {
-      case 'reminders': return <NotifyRoutine size={26} />
-      case 'pillars': return <LogOvulation size={24} />
-      case 'memories': return <Character name="photo" size={26} color={stickers.pink} />
-      case 'exams': return <Character name="exam" size={26} color={stickers.blue} />
+      case 'reminders': return <SiteSticker name="bell" size={26} />
+      case 'pillars': return <SiteSticker name="flower" size={26} />
+      case 'memories': return <SiteSticker name="camera" size={26} />
+      case 'exams': return <SiteSticker name="doc" size={26} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="rose" outline={colors.text} />
-      case 'rewards': return <NotifyGoalAchieved size={24} />
-      case 'channels': return <Character name="community" size={26} color={stickers.peach} />
-      case 'village': return <Character name="community" size={26} color={stickers.green} />
+      case 'rewards': return <SiteSticker name="star" size={26} />
+      case 'channels': return <SiteSticker name="bubble" size={26} />
+      case 'village': return <SiteSticker name="us" size={26} />
     }
   }
 
