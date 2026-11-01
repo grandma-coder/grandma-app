@@ -17,7 +17,6 @@ import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 const ST_INK = '#141313'
-const PAPER_BORDER = 'rgba(20,19,19,0.18)'
 
 // ─── Shared child color palette (sticker palette) ─────────────────────────
 
@@ -131,8 +130,6 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const ink = isDark ? colors.text : ST_INK
-  const inkBorder = isDark ? colors.border : PAPER_BORDER
-  const tintBg = isDark ? color + '28' : color + '24' // ~14% in light, ~16% in dark
 
   // Diffuse: never a filled saturated pill. Selection = hairline border + a
   // colored dot + a weight/serif shift. Active gets the strong hairline rule
@@ -191,15 +188,15 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
       style={({ pressed }) => [
         styles.pill,
         {
-          backgroundColor: active ? color : tintBg,
-          borderColor: active ? ST_INK : inkBorder,
-          borderWidth: active ? 1.5 : 1,
+          backgroundColor: active ? color + '66' : colors.surface,
+          borderColor: isDark ? colors.border : ST_INK,
+          borderWidth: 1.5,
           borderRadius: radius.full,
           // Soft sticker shadow on active state only
           shadowColor: ST_INK,
-          shadowOffset: { width: 0, height: active ? (pressed ? 1 : 4) : 0 },
-          shadowOpacity: active ? 0.18 : 0,
-          shadowRadius: active ? (pressed ? 4 : 10) : 0,
+          shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
+          shadowOpacity: active ? 0.1 : 0,
+          shadowRadius: 0,
           elevation: active ? 3 : 0,
           transform: [{ translateY: active && pressed ? 1 : 0 }],
         },
@@ -216,7 +213,7 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
       <Text
         style={[
           styles.pillName,
-          { color: ink, fontFamily: active ? 'HankenGrotesk_700Bold' : 'HankenGrotesk_600SemiBold' },
+          { color: ink, fontFamily: 'HankenGrotesk_700Bold' },
         ]}
       >
         {label}

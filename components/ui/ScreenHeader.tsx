@@ -37,7 +37,6 @@ function CurrentScreenHeader({ title, onBack, hideBack, right, style }: ScreenHe
   const { colors, font } = useTheme()
   const ink = colors.text
   const paper = colors.surface
-  const paperBorder = colors.border
 
   const handleBack = useBackHandler(onBack)
 
@@ -47,7 +46,7 @@ function CurrentScreenHeader({ title, onBack, hideBack, right, style }: ScreenHe
         <View style={styles.slot} />
       ) : (
         <Pressable onPress={handleBack} hitSlop={12}>
-          <View style={[styles.backBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.backBtn, styles.backBtnSite, { backgroundColor: paper, borderColor: ink }]}>
             <Ionicons name="chevron-back" size={20} color={ink} />
           </View>
         </Pressable>
@@ -55,7 +54,7 @@ function CurrentScreenHeader({ title, onBack, hideBack, right, style }: ScreenHe
 
       {title ? (
         <Text
-          style={[styles.title, { fontFamily: font.bodyMedium, color: ink }]}
+          style={[styles.title, styles.titleSite, { fontFamily: font.display, color: ink }]}
           numberOfLines={1}
         >
           {title}
@@ -125,6 +124,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginHorizontal: 12,
   },
+  backBtnSite: { width: 34, height: 34, borderWidth: 2 },
+  titleSite: { fontSize: 17, letterSpacing: 0.2, textTransform: 'uppercase' },
   titleSpace: { flex: 1 },
   slot: {
     minWidth: 38,

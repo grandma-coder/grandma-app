@@ -45,9 +45,9 @@ export function EmptyState({
         // Diffuse: hairline ring (no filled soft-disc socket).
         <View style={[styles.iconSocket, diffuse
           ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
-          : { backgroundColor: socketBg }]}>{icon}</View>
+          : { backgroundColor: socketBg, borderWidth: 1.5, borderColor: colors.text }]}>{icon}</View>
       ) : null}
-      <Display size={20} align="center">{title}</Display>
+      <Display size={20} align="center" style={diffuse ? undefined : { letterSpacing: 0.2 }}>{title}</Display>
       {message ? (
         <Body size={14} color={colors.textMuted} align="center" style={styles.message}>
           {message}

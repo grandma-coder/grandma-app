@@ -31,15 +31,18 @@ export default function ResultCard({ result, scanType, onClose }: ResultCardProp
       <View
         style={[
           styles.card,
-          { backgroundColor: diffuse ? dt.colors.bg : colors.surface },
+          { backgroundColor: diffuse ? dt.colors.bg : colors.bg },
+          !diffuse && { borderTopWidth: 2.5, borderTopColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 },
         ]}
       >
-        <View style={[styles.header, { borderBottomColor: diffuse ? dt.colors.line : colors.border }]}>
+        <View style={[styles.header, { borderBottomColor: diffuse ? dt.colors.line : colors.text }]}>
           <Text
             style={[
               styles.title,
               { color: diffuse ? dt.colors.ink : colors.text },
-              diffuse && { fontFamily: diffuseFont.display, fontWeight: '400', letterSpacing: -0.3 },
+              diffuse
+                ? { fontFamily: diffuseFont.display, fontWeight: '400', letterSpacing: -0.3 }
+                : { fontFamily: font.display, fontWeight: '400', letterSpacing: 0.2, textTransform: 'uppercase' },
             ]}
           >
             {title}
@@ -50,7 +53,7 @@ export default function ResultCard({ result, scanType, onClose }: ResultCardProp
               styles.closeButton,
               diffuse
                 ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: 999 }
-                : { backgroundColor: colors.accent },
+                : { backgroundColor: colors.text },
             ]}
           >
             <Text

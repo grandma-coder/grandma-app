@@ -41,11 +41,12 @@ import { BadgesStrip, type BadgeEntry } from '../../components/profile/BadgesStr
 import { MyJourneyPillGrid } from '../../components/profile/MyJourneyPillGrid'
 import { StatRow } from '../../components/ui/StatRow'
 import { childColor } from '../../components/ui/ChildPills'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { Character } from '../../components/characters/Characters'
 import { MemoriesSheet } from '../../components/home/MemoriesSheet'
 
 export default function ProfileScreen() {
-  const { colors, radius, isDark } = useTheme()
+  const { colors, radius, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
@@ -219,7 +220,7 @@ export default function ProfileScreen() {
               styles.gearBtn,
               diffuse
                 ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline }
-                : { backgroundColor: colors.surface, borderColor: colors.border },
+                : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 2, width: 34, height: 34 },
             ]}
             hitSlop={8}
           >
@@ -267,8 +268,13 @@ export default function ProfileScreen() {
                 }
               : {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  borderRadius: radius.lg,
+                  borderColor: colors.text,
+                  borderWidth: 1.5,
+                  borderRadius: 18,
+                  shadowColor: colors.text,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 0,
                 },
           ]}
         >
@@ -378,7 +384,7 @@ export default function ProfileScreen() {
           ) : (
             <>
               <StatRow
-                icon={<Character name="community" size={18} />}
+                icon={<SiteSticker name="heart" size={26} />}
                 label={t('profile_careCircle')}
                 value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
                 onPress={() => router.push('/profile/care-circle')}
@@ -387,7 +393,7 @@ export default function ProfileScreen() {
               {/* Pregnancy-only row — surfaces current week / due date */}
               {isPregnancyBehavior && (
                 <StatRow
-                  icon={<Character name="heartbeat" size={18} />}
+                  icon={<SiteSticker name="egg" size={26} />}
                   label="Pregnancy"
                   value={pregnancySummary}
                   onPress={() => router.push('/profile/pregnancy')}
@@ -397,7 +403,7 @@ export default function ProfileScreen() {
               {/* Pre-pregnancy-only row — cycle tracking entry point */}
               {isPrePregBehavior && (
                 <StatRow
-                  icon={<Character name="period" size={18} />}
+                  icon={<SiteSticker name="drop" size={26} />}
                   label="Cycle"
                   value="Tracking"
                   onPress={() => router.push('/(tabs)')}
@@ -405,7 +411,7 @@ export default function ProfileScreen() {
               )}
               {isPrePregBehavior && (
                 <StatRow
-                  icon={<Character name="calendar" size={18} />}
+                  icon={<SiteSticker name="cal" size={26} />}
                   label={t('cycleSettings_rowTitle')}
                   onPress={() => router.push('/profile/cycle-settings')}
                 />
@@ -414,7 +420,7 @@ export default function ProfileScreen() {
               {/* Kids-only rows — hidden in pregnancy / pre-pregnancy modes */}
               {showKidsItems && (
                 <StatRow
-                  icon={<Character name="baby" size={18} />}
+                  icon={<SiteSticker name="baby" size={26} />}
                   label="Kids Profile"
                   value={children.length === 1 ? '1 child' : `${children.length} children`}
                   onPress={() => router.push('/profile/kids')}
@@ -422,7 +428,7 @@ export default function ProfileScreen() {
               )}
               {showMemoriesRow && (
                 <StatRow
-                  icon={<Character name="photo" size={18} />}
+                  icon={<SiteSticker name="camera" size={26} />}
                   label={t('profile_memories')}
                   value="—"
                   onPress={() => setShowMemories(true)}
@@ -430,46 +436,46 @@ export default function ProfileScreen() {
               )}
               {showKidsItems && (
                 <StatRow
-                  icon={<Character name="health" size={18} />}
+                  icon={<SiteSticker name="thermo" size={26} />}
                   label={t('profile_healthHistory')}
                   value={joinedYear ? `Since ${joinedYear}` : '—'}
                   onPress={() => router.push('/profile/health-history')}
                 />
               )}
               <StatRow
-                icon={<Character name="warning" size={18} />}
+                icon={<SiteSticker name="phone" size={26} />}
                 label={t('profile_emergencyInsurance')}
                 value={hasEmergency ? 'Ready' : 'Not set'}
                 onPress={() => router.push('/profile/emergency-insurance')}
               />
               <StatRow
-                icon={<Character name="bell" size={18} />}
+                icon={<SiteSticker name="bell" size={26} />}
                 label={t('profile_notifications')}
                 onPress={() => router.push('/profile/notifications')}
               />
               <StatRow
-                icon={<Character name="key" size={18} />}
+                icon={<SiteSticker name="lock" size={26} />}
                 label={t('profile_accountSecurity')}
                 onPress={() => router.push('/profile/account')}
               />
               <StatRow
-                icon={<Character name="note" size={18} />}
+                icon={<SiteSticker name="eye" size={26} />}
                 label={t('profile_dataPrivacy')}
                 onPress={() => router.push('/profile/privacy')}
               />
               <StatRow
-                icon={<Character name="gem" size={18} />}
+                icon={<SiteSticker name="star" size={26} />}
                 label={t('profile_subscription')}
                 value={isPremium ? 'Premium' : 'Upgrade'}
                 onPress={() => router.push('/paywall')}
               />
               <StatRow
-                icon={<Character name="tip" size={18} />}
+                icon={<SiteSticker name="books" size={26} />}
                 label={t('profile_help')}
                 onPress={() => router.push('/profile/help')}
               />
               <StatRow
-                icon={<Character name="star" size={18} />}
+                icon={<SiteSticker name="doc" size={26} />}
                 label={t('profile_about')}
                 onPress={() => router.push('/profile/about')}
                 isLast
@@ -490,7 +496,7 @@ export default function ProfileScreen() {
                   borderWidth: 1,
                   borderColor: dt.colors.line2,
                 }
-              : { backgroundColor: colors.surface, borderRadius: radius.lg },
+              : { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1.5, borderColor: colors.text },
             pressed && { opacity: 0.7 },
           ]}
         >
@@ -500,7 +506,7 @@ export default function ProfileScreen() {
               styles.signOutText,
               diffuse
                 ? { color: dt.colors.error, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13 }
-                : { color: brand.error },
+                : { color: brand.error, fontFamily: font.bodyBold },
             ]}
           >
             {t('profile_signOut')}

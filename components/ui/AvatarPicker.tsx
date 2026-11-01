@@ -204,7 +204,7 @@ export function AvatarPickerModal({
               : { backgroundColor: colors.bg, borderColor: colors.border },
           ]}
         >
-          <View style={[styles.handle, diffuse && { backgroundColor: dt.colors.line2 }]} />
+          <View style={[styles.handle, diffuse ? { backgroundColor: dt.colors.line2 } : { backgroundColor: colors.text, opacity: 0.25 }]} />
 
           <View style={styles.header}>
             <Display size={22} color={diffuse ? dt.colors.ink : colors.text} style={!diffuse ? { fontFamily: font.display } : undefined}>
@@ -215,10 +215,10 @@ export function AvatarPickerModal({
               hitSlop={8}
               style={[
                 styles.closeBtn,
-                diffuse && { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.hairline },
+                diffuse ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.hairline } : { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.text, width: 34, height: 34 },
               ]}
             >
-              <X size={18} color={diffuse ? dt.colors.ink : colors.textMuted} strokeWidth={2} />
+              <X size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2} />
             </Pressable>
           </View>
 

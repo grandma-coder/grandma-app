@@ -116,7 +116,7 @@ function SavedToastOverlay({
   const message = opts.message ?? 'Your changes have been saved.'
 
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const borderInk = diffuse ? dt.colors.line : colors.border
+  const borderInk = diffuse ? dt.colors.line : colors.text
   const ink = diffuse ? dt.colors.ink : colors.text
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
 
@@ -145,6 +145,7 @@ function SavedToastOverlay({
             style={[
               styles.card,
               { backgroundColor: paper, borderColor: borderInk },
+              !diffuse && styles.cardSite,
             ]}
           >
             {/* Animated logo */}
@@ -211,6 +212,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 14 },
     elevation: 12,
   },
+  cardSite: { borderWidth: 1.5, borderRadius: 26, shadowColor: '#161513', shadowOpacity: 0.1, shadowRadius: 0, shadowOffset: { width: 0, height: 2 } },
   logoWrap: {
     marginBottom: 14,
   },

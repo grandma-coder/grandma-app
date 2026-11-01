@@ -58,7 +58,7 @@ export function StatRow({
           styles.iconWrap,
           diffuse
             ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }
-            : { backgroundColor: iconBg ?? colors.surfaceRaised },
+            : { backgroundColor: iconBg ?? 'transparent' },
         ]}
       >
         {icon}

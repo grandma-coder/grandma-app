@@ -73,17 +73,18 @@ function CurrentActionSheet({
         <View
           style={[
             styles.card,
+            siteStyles.card,
             {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
+              backgroundColor: colors.bg,
+              borderColor: colors.text,
               paddingBottom: (insets.bottom || spacing.md) + spacing.xs,
             },
           ]}
         >
-          <View style={[styles.handle, { backgroundColor: colors.textMuted + '55' }]} />
+          <View style={[styles.handle, { backgroundColor: colors.text, opacity: 0.25 }]} />
 
           {title ? (
-            <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>{title}</Text>
+            <Text style={[styles.title, siteStyles.title, { color: colors.text, fontFamily: font.display }]}>{title}</Text>
           ) : null}
           {message ? (
             <Text style={[styles.message, { color: colors.textSecondary, fontFamily: font.body }]}>{message}</Text>
@@ -92,14 +93,15 @@ function CurrentActionSheet({
           <View style={styles.rows}>
             {items.map((item, i) => {
               const fg = item.danger ? stickers.coral : colors.text
-              const bg = item.danger ? stickers.coralInk + '14' : colors.surfaceRaised
+              const bg = item.danger ? stickers.coralInk + '14' : colors.surface
               return (
                 <Pressable
                   key={i}
                   onPress={() => handle(item)}
                   style={({ pressed }) => [
                     styles.row,
-                    { backgroundColor: bg, opacity: pressed ? 0.8 : 1 },
+                    siteStyles.row,
+                    { backgroundColor: bg, borderColor: colors.text, opacity: pressed ? 0.8 : 1 },
                   ]}
                 >
                   {item.icon ? <View style={styles.rowIcon}>{item.icon}</View> : null}
@@ -113,7 +115,7 @@ function CurrentActionSheet({
             onPress={onRequestClose}
             style={({ pressed }) => [
               styles.cancelRow,
-              { borderColor: colors.borderStrong, opacity: pressed ? 0.8 : 1 },
+              { borderColor: colors.text, borderWidth: 1.5, backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1 },
             ]}
           >
             <Text style={[styles.rowLabel, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
@@ -269,6 +271,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 10,
   },
+})
+
+const siteStyles = StyleSheet.create({
+  card: { borderTopWidth: 2.5, borderLeftWidth: 0, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 26, borderTopRightRadius: 26 },
+  title: { letterSpacing: 0.2, textTransform: 'uppercase' },
+  row: { borderWidth: 1.5 },
 })
 
 const diffuseStyles = StyleSheet.create({

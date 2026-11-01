@@ -32,7 +32,7 @@ function CurrentPaperAlert({
   buttons = [{ label: 'OK', variant: 'primary' }],
   onRequestClose,
 }: PaperAlertProps) {
-  const { colors, font, stickers, brand } = useTheme()
+  const { colors, font, stickers } = useTheme()
   const fade = useRef(new Animated.Value(0)).current
   const scale = useRef(new Animated.Value(0.92)).current
 
@@ -68,13 +68,15 @@ function CurrentPaperAlert({
             styles.card,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
+              borderColor: colors.text,
+              borderWidth: 1.5,
+              borderRadius: 26,
               opacity: fade,
               transform: [{ scale }],
             },
           ]}
         >
-          <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>
+          <Text style={[styles.title, { color: colors.text, fontFamily: font.display, letterSpacing: 0.2, textTransform: 'uppercase' }]}>
             {title}
           </Text>
           {italic ? (
@@ -94,10 +96,10 @@ function CurrentPaperAlert({
               const bg = isDanger
                 ? stickers.peachSoft
                 : isPrimary
-                ? brand.pregnancy
-                : 'transparent'
-              const fg = isDanger ? stickers.coral : isPrimary ? colors.text : colors.textSecondary
-              const border = !isPrimary && !isDanger ? colors.borderStrong : 'transparent'
+                ? colors.text
+                : colors.surface
+              const fg = isDanger ? stickers.coral : isPrimary ? colors.surface : colors.text
+              const border = colors.text
               return (
                 <Pressable
                   key={i}
@@ -107,12 +109,12 @@ function CurrentPaperAlert({
                     {
                       backgroundColor: bg,
                       borderColor: border,
-                      borderWidth: !isPrimary && !isDanger ? 1 : 0,
+                      borderWidth: 1.5,
                       opacity: pressed ? 0.85 : 1,
                     },
                   ]}
                 >
-                  <Text style={[styles.btnLabel, { color: fg, fontFamily: font.bodySemiBold }]}>
+                  <Text style={[styles.btnLabel, { color: fg, fontFamily: font.bodyBold }]}>
                     {b.label}
                   </Text>
                 </Pressable>

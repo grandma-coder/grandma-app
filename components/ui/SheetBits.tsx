@@ -11,7 +11,7 @@
 import { ReactNode } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { MonoCaps, Display, Body } from './Typography'
-import { font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { font, useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 // ─── Banner row ─────────────────────────────────────────────────────────────
@@ -46,8 +46,9 @@ function CurrentSheetBannerRow({
   valueColor,
   labelColor,
 }: SheetBannerRowProps) {
+  const { colors } = useTheme()
   return (
-    <View style={[styles.banner, { backgroundColor: bg, borderColor }]}>
+    <View style={[styles.banner, { backgroundColor: bg, borderColor: colors.text, borderWidth: 1.5 }]}>
       {icon ? (
         <View style={[styles.bannerIcon, iconBg ? { backgroundColor: iconBg } : null]}>
           {icon}
@@ -108,14 +109,15 @@ function CurrentSheetStatTile({
   borderColor = 'rgba(20,19,19,0.08)',
   highlighted = false,
 }: SheetStatTileProps) {
+  const { colors } = useTheme()
   return (
     <View
       style={[
         styles.tile,
         {
           backgroundColor: bg,
-          borderColor,
-          borderWidth: highlighted ? 1.5 : 1,
+          borderColor: colors.text,
+          borderWidth: highlighted ? 2 : 1.5,
         },
       ]}
     >

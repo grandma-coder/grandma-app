@@ -54,7 +54,7 @@ function CurrentStickerButton({
   fontSize = 15,
   style,
 }: StickerButtonProps) {
-  const { font } = useTheme()
+  const { font, colors } = useTheme()
 
   const shadow = colorDark ?? color
   const inactiveBg = colorSoft ?? color + '55'
@@ -87,7 +87,7 @@ function CurrentStickerButton({
         style={[
           styles.label,
           {
-            fontFamily: font.bodySemiBold,
+            fontFamily: font.bodyBold,
             color: resolvedTextColor,
             fontSize,
           },

@@ -34,7 +34,7 @@ export function Display({ children, color, size = 40, align, style, ...rest }: T
     <Text
       {...rest}
       style={[
-        styles.display,
+        diffuse ? styles.display : styles.displaySite,
         { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align, lineHeight: size * 1.02 },
         style,
       ]}
@@ -54,7 +54,7 @@ export function DisplayItalic({ children, color, size = 40, align, style, ...res
     <Text
       {...rest}
       style={[
-        styles.displayItalic,
+        diffuse ? styles.displayItalic : styles.displayItalicSite,
         { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align, lineHeight: size * 1.02 },
         style,
       ]}
@@ -70,13 +70,13 @@ export function MonoCaps({ children, color, size = 10, align, style, ...rest }: 
   const dt = useDiffuseTheme()
   // Under Diffuse this is the true mono "data voice" (Space Mono); the current
   // theme keeps its DM Sans medium (as before).
-  const fam = diffuse ? diffuseFont.mono : font.bodyMedium
-  const fallback = diffuse ? dt.colors.ink3 : colors.textFaint
+  const fam = diffuse ? diffuseFont.mono : 'SpaceMono_400Regular'
+  const fallback = diffuse ? dt.colors.ink3 : colors.textMuted
   return (
     <Text
       {...rest}
       style={[
-        styles.monoCaps,
+        diffuse ? styles.monoCaps : styles.monoCapsSite,
         { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align },
         style,
       ]}
@@ -106,4 +106,7 @@ const styles = StyleSheet.create({
   display: { letterSpacing: -0.8 },
   displayItalic: { letterSpacing: -0.4 },
   monoCaps: { letterSpacing: 1.2, textTransform: 'uppercase' },
+  displaySite: { letterSpacing: 0.2, textTransform: 'uppercase' },
+  displayItalicSite: { letterSpacing: 0 },
+  monoCapsSite: { letterSpacing: 1.4, textTransform: 'uppercase' },
 })

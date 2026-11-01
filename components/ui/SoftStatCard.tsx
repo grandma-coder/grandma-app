@@ -10,7 +10,7 @@ import { ReactNode } from 'react'
 import { View, Pressable, StyleSheet, ViewStyle, StyleProp } from 'react-native'
 import { Display, MonoCaps, Body } from './Typography'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
-import { useDiffuseTheme } from '../../constants/theme'
+import { useDiffuseTheme, useTheme } from '../../constants/theme'
 
 interface SoftStatCardProps {
   label: string
@@ -50,12 +50,13 @@ export function SoftStatCard({
   const Container: any = onPress ? Pressable : View
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { colors } = useTheme()
   // Diffuse: hairline geometry — paper surface + hairline border, no filled
   // sticker tint, no shadow. Typography children (Display/MonoCaps/Body)
   // self-branch to serif hero / mono label roles automatically.
   const cardTokens = diffuse
     ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
-    : { backgroundColor: bg ?? '#FFFEF8', borderColor: 'rgba(20,19,19,0.08)' }
+    : { backgroundColor: bg ?? colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 }
   return (
     <Container
       onPress={onPress}
