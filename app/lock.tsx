@@ -48,8 +48,8 @@ export default function LockScreen() {
 
   const ink = diffuse ? dt.colors.ink : colors.text
   const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
-  const accent = diffuse ? dt.stickers.lilac : stickers.lilac
-  const dotEmpty = diffuse ? dt.colors.line2 : colors.borderStrong
+  const accent = diffuse ? dt.stickers.lilac : colors.text
+  const dotEmpty = diffuse ? dt.colors.line2 : colors.text
   const dotFill = diffuse ? dt.colors.ink : accent
 
   const promptText = isSet
@@ -145,9 +145,9 @@ export default function LockScreen() {
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.top}>
         <GrandmaLogo size={64} />
-        <Display size={26} color={ink} align="center" style={{ marginTop: 18 }}>{promptText}</Display>
+        <Display size={24} color={ink} align="center" style={{ marginTop: 18 }}>{promptText}</Display>
         {isSet && (
-          <DisplayItalic size={15} color={inkMuted} align="center" style={{ marginTop: 4 }}>
+          <DisplayItalic size={15} color={inkMuted} align="center" style={{ marginTop: 4, ...(diffuse ? null : { fontFamily: font.body }) }}>
             {t('lock_setSubtitle')}
           </DisplayItalic>
         )}
@@ -172,7 +172,7 @@ export default function LockScreen() {
         {[['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']].map((row) => (
           <View key={row[0]} style={styles.padRow}>
             {row.map((d) => (
-              <PadKey key={d} label={d} onPress={() => press(d)} ink={ink} keyBg={diffuse ? dt.colors.surface : colors.surface} border={diffuse ? dt.colors.line : colors.border} font={diffuse ? diffuseTypeRole.numHero : font.display} radius={radius.full} />
+              <PadKey key={d} label={d} onPress={() => press(d)} ink={ink} keyBg={diffuse ? dt.colors.surface : colors.surface} border={diffuse ? dt.colors.line : colors.text} font={diffuse ? diffuseTypeRole.numHero : font.displayBold} radius={radius.full} site={!diffuse} />
             ))}
           </View>
         ))}
@@ -183,7 +183,7 @@ export default function LockScreen() {
               <BioIcon size={28} color={accent} strokeWidth={1.8} />
             </Pressable>
           ) : <View style={styles.padSlot} />}
-          <PadKey label="0" onPress={() => press('0')} ink={ink} keyBg={diffuse ? dt.colors.surface : colors.surface} border={diffuse ? dt.colors.line : colors.border} font={diffuse ? diffuseTypeRole.numHero : font.display} radius={radius.full} />
+          <PadKey label="0" onPress={() => press('0')} ink={ink} keyBg={diffuse ? dt.colors.surface : colors.surface} border={diffuse ? dt.colors.line : colors.text} font={diffuse ? diffuseTypeRole.numHero : font.displayBold} radius={radius.full} site={!diffuse} />
           <Pressable onPress={backspace} style={({ pressed }) => [styles.padSlot, pressed && { opacity: 0.6 }]} hitSlop={6}>
             <Delete size={26} color={inkMuted} strokeWidth={1.8} />
           </Pressable>
@@ -202,13 +202,18 @@ export default function LockScreen() {
   )
 }
 
-function PadKey({ label, onPress, ink, keyBg, border, font, radius }: {
-  label: string; onPress: () => void; ink: string; keyBg: string; border: string; font: string; radius: number
+function PadKey({ label, onPress, ink, keyBg, border, font, radius, site }: {
+  label: string; onPress: () => void; ink: string; keyBg: string; border: string; font: string; radius: number; site?: boolean
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.padKey, { backgroundColor: keyBg, borderColor: border, borderRadius: radius }, pressed && { opacity: 0.6 }]}
+      style={({ pressed }) => [
+        styles.padKey,
+        { backgroundColor: keyBg, borderColor: border, borderRadius: radius },
+        site && { borderWidth: 1.5, shadowColor: border, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
+        pressed && { opacity: 0.6 },
+      ]}
     >
       <Text style={[styles.padKeyText, { color: ink, fontFamily: font }]}>{label}</Text>
     </Pressable>

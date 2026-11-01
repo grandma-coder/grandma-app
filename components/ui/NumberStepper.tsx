@@ -123,11 +123,15 @@ export function NumberStepper({
         }
       : {
           backgroundColor: disabled ? colors.surface : color,
-          borderColor: '#141313',
+          borderColor: colors.text,
+          shadowColor: colors.text,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: disabled ? 0 : 0.1,
+          shadowRadius: 0,
           opacity: disabled ? 0.5 : 1,
         }
 
-  const glyphColor = diffuse ? dt.colors.ink : '#141313'
+  const glyphColor = diffuse ? dt.colors.ink : colors.text
 
   // Soft accent bloom that lives inside the Diffuse button node.
   const Bloom = () =>
@@ -168,7 +172,7 @@ export function NumberStepper({
             selectTextOnFocus
             style={[
               styles.value,
-              { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display },
+              { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.displayBold, ...(diffuse ? null : { letterSpacing: 0 }) },
             ]}
           />
         ) : (
@@ -176,7 +180,7 @@ export function NumberStepper({
             <Text
               style={[
                 styles.value,
-                { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display },
+                { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.displayBold, ...(diffuse ? null : { letterSpacing: 0 }) },
               ]}
             >
               {display}
@@ -186,7 +190,7 @@ export function NumberStepper({
                     styles.unit,
                     diffuse
                       ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }
-                      : { color: colors.textMuted, fontFamily: font.bodyMedium },
+                      : { color: colors.textMuted, fontFamily: font.bodyBold },
                   ]}
                 >
                   {' '}{diffuse && unit.length <= 3 ? unit.toUpperCase() : unit}

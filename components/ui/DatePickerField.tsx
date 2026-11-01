@@ -191,9 +191,12 @@ export default function DatePickerField({
       style={({ pressed }) => [
         styles.trigger,
         {
-          backgroundColor: isDark ? colors.surface : ST_PAPER,
-          borderColor: isDark ? colors.text : ST_INK,
-          shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+          backgroundColor: colors.surface,
+          borderColor: colors.text,
+          borderRadius: 14,
+          shadowColor: colors.text,
+          shadowOpacity: 0.1,
+          shadowOffset: { width: 0, height: pressed ? 0 : 2 },
           opacity: 1,
           transform: [{ translateY: pressed ? 2 : 0 }],
         },
@@ -203,22 +206,18 @@ export default function DatePickerField({
         <View
           style={[
             styles.triggerIcon,
-            { backgroundColor: accent.soft, borderColor: isDark ? colors.text : ST_INK },
+            { backgroundColor: accent.soft, borderColor: colors.text },
           ]}
         >
-          <Calendar size={14} color={ST_INK} strokeWidth={2.2} />
+          <Calendar size={14} color={colors.text} strokeWidth={2.2} />
         </View>
         <Text
           style={[
             styles.triggerText,
             {
               color: value
-                ? isDark
-                  ? colors.text
-                  : ST_INK
-                : isDark
-                ? colors.textMuted
-                : '#8A8480',
+                ? colors.text
+                : colors.textMuted,
             },
           ]}
           numberOfLines={1}
@@ -234,7 +233,7 @@ export default function DatePickerField({
       {label ? (
         diffuse
           ? <Text style={[diffuseStyles.label, { color: dt.colors.ink3 }]}>{label}</Text>
-          : <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+          : <Text style={[styles.label, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase' }]}>{label}</Text>
       ) : null}
       {trigger}
 
@@ -247,6 +246,15 @@ export default function DatePickerField({
               {
                 backgroundColor: isDark ? colors.surface : ST_PAPER,
                 borderColor: isDark ? colors.text : ST_INK,
+                ...(diffuse
+                  ? null
+                  : {
+                      backgroundColor: isDark ? colors.surface : colors.bg,
+                      borderColor: colors.text,
+                      borderTopWidth: 2.5,
+                      borderTopLeftRadius: 26,
+                      borderTopRightRadius: 26,
+                    }),
               },
             ]}
           >
@@ -256,7 +264,7 @@ export default function DatePickerField({
             </View>
 
             {/* Drag handle */}
-            <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
+            <View style={[styles.handleBar, { backgroundColor: colors.border }, !diffuse && { backgroundColor: colors.text, opacity: 0.25 }]} />
 
             {/* Header */}
             <View style={styles.headerRow}>
@@ -264,6 +272,7 @@ export default function DatePickerField({
                 style={[
                   styles.title,
                   { color: isDark ? colors.text : ST_INK },
+                  !diffuse && { color: colors.text, textTransform: 'uppercase', letterSpacing: 0.2 },
                 ]}
               >
                 {modalTitle || label || 'Select date'}
@@ -277,6 +286,9 @@ export default function DatePickerField({
                     borderColor: isDark ? colors.text : ST_INK,
                     shadowOffset: { width: 0, height: pressed ? 1 : 2 },
                     transform: [{ translateY: pressed ? 1 : 0 }],
+                    ...(diffuse
+                      ? null
+                      : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 2, width: 34, height: 34, borderRadius: 17, shadowColor: colors.text, shadowOpacity: 0.1 }),
                   },
                 ]}
               >
@@ -311,10 +323,13 @@ export default function DatePickerField({
                     borderColor: ST_INK,
                     shadowOffset: { width: 0, height: pressed ? 2 : 5 },
                     transform: [{ translateY: pressed ? 3 : 0 }],
+                    ...(diffuse
+                      ? null
+                      : { backgroundColor: colors.text, borderColor: colors.text, borderWidth: 1.5, shadowColor: colors.text, shadowOpacity: 0.1, shadowOffset: { width: 0, height: pressed ? 1 : 2 }, transform: [{ translateY: pressed ? 1 : 0 }] }),
                   },
                 ]}
               >
-                <Text style={styles.doneText}>{t('common_done')}</Text>
+                <Text style={[styles.doneText, !diffuse && { color: colors.bg }]}>{t('common_done')}</Text>
               </Pressable>
             )}
           </Pressable>

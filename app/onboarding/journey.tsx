@@ -18,6 +18,7 @@ import { useOnboardingStore } from '../../store/useOnboardingStore'
 import { useModeStore } from '../../store/useModeStore'
 import { Flower, Heart, Star, Sun } from '../../components/ui/Stickers'
 import { Display, DisplayItalic, Body } from '../../components/ui/Typography'
+import { SiteSticker, type SiteStickerName } from '../../components/stickers/SiteSticker'
 import { PillButton } from '../../components/ui/PillButton'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
@@ -36,6 +37,13 @@ interface JourneyOption {
   blobColor: string
   blobCx: string
   blobCy: string
+}
+
+const SITE_STICKER: Record<JourneyOption['modeKey'], SiteStickerName> = {
+  pre: 'flower',
+  preg: 'heart',
+  kids: 'baby',
+  meno: 'flame',
 }
 
 const FIRST_ROUTE: Record<Behavior, string> = {
@@ -128,7 +136,7 @@ export default function JourneyScreen() {
 
   const bg = colors.bg
   const paper = colors.surface
-  const paperBorder = colors.border
+  const paperBorder = colors.text
   const ink = colors.text
   const ink3 = colors.textMuted
   const ink4 = colors.textFaint
@@ -287,13 +295,13 @@ export default function JourneyScreen() {
     return (
       <View style={[styles.root, { backgroundColor: bg }]}>
         <View style={[styles.emptyWrap, { paddingTop: insets.top + 80 }]}>
-          <View style={[styles.emptyIcon, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Heart size={52} fill={stickers.coral} />
+          <View style={[styles.emptyIcon, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1.5 }]}>
+            <SiteSticker name="heart" size={56} cut />
           </View>
           <Display align="center" size={28} color={ink}>
             {t('onboardingJourney_allEnrolled1')}
           </Display>
-          <DisplayItalic align="center" size={28} color={ink}>
+          <DisplayItalic align="center" size={28} color={ink} style={styles.upper}>
             {t('onboardingJourney_allEnrolled2')}
           </DisplayItalic>
           <Body align="center" color={ink3} style={{ marginTop: 12, maxWidth: 300 }}>
@@ -326,10 +334,10 @@ export default function JourneyScreen() {
         />
 
         {/* Heading */}
-        <Display size={40} color={ink}>
+        <Display size={32} color={ink}>
           {isAddMode ? t('onboardingJourney_addHeading1') : t('onboardingJourney_heading1')}
         </Display>
-        <DisplayItalic size={40} color={ink} style={{ marginBottom: 10 }}>
+        <DisplayItalic size={32} color={ink} style={[styles.upper, { marginBottom: 10 }]}>
           {isAddMode ? t('onboardingJourney_addHeading2') : t('onboardingJourney_heading2')}
         </DisplayItalic>
 
@@ -339,13 +347,13 @@ export default function JourneyScreen() {
 
         {/* Social proof — trust cue before the first commitment (first-time only) */}
         {!isAddMode && (
-          <View style={[styles.socialProof, { backgroundColor: getModeColorSoft('pre', isDark), borderColor: paperBorder, borderRadius: radius.md }]}>
+          <View style={[styles.socialProof, { backgroundColor: getModeColorSoft('pre', isDark), borderColor: paperBorder, borderWidth: 1.5, borderRadius: 14 }]}>
             <View style={styles.socialAvatars}>
               <View style={[styles.avatarDot, { backgroundColor: stickers.pink, borderColor: paper }]} />
               <View style={[styles.avatarDot, { backgroundColor: stickers.lilac, borderColor: paper, marginLeft: -8 }]} />
               <View style={[styles.avatarDot, { backgroundColor: stickers.blue, borderColor: paper, marginLeft: -8 }]} />
             </View>
-            <Text style={[styles.socialText, { color: ink, fontFamily: font.bodyMedium }]}>
+            <Text style={[styles.socialText, { color: ink, fontFamily: font.bodyBold }]}>
               {t('onboardingJourney_socialProof')}
             </Text>
           </View>
@@ -369,17 +377,22 @@ export default function JourneyScreen() {
                   styles.card,
                   {
                     backgroundColor: isSelected || isDimmed ? softBg : paper,
-                    borderColor: isSelected ? accent : paperBorder,
-                    borderWidth: isSelected ? 1.5 : 1,
-                    borderRadius: radius.lg,
+                    borderColor: paperBorder,
+                    borderWidth: 1.5,
+                    borderRadius: 18,
+                    shadowColor: ink,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 0,
                     opacity: isDimmed ? 0.55 : 1,
                   },
+                  isSelected && { transform: [{ rotate: '-1.5deg' }, { scale: 1.02 }] },
                   pressed && !isDimmed && { transform: [{ scale: 0.98 }] },
                 ]}
               >
                 {/* Sticker circle */}
                 <View style={[styles.stickerCircle, { backgroundColor: paper, borderColor: paperBorder }]}>
-                  {journey.sticker(accent)}
+                  <SiteSticker name={SITE_STICKER[journey.modeKey]} size={36} cut />
                 </View>
 
                 {/* Text */}
@@ -394,13 +407,13 @@ export default function JourneyScreen() {
 
                 {/* Status indicator */}
                 {isDimmed ? (
-                  <View style={[styles.activeBadge, { backgroundColor: accent }]}>
-                    <Text style={[styles.activeBadgeText, { fontFamily: font.bodyMedium, color: bg }]}>
+                  <View style={[styles.activeBadge, { backgroundColor: ink }]}>
+                    <Text style={[styles.activeBadgeText, { fontFamily: 'SpaceMono_700Bold', color: bg }]}>
                       {t('onboardingJourney_activeBadge')}
                     </Text>
                   </View>
                 ) : (
-                  <View style={[styles.chevronCircle, { backgroundColor: isSelected ? ink : paper, borderColor: paperBorder }]}>
+                  <View style={[styles.chevronCircle, { backgroundColor: isSelected ? ink : paper, borderColor: paperBorder, borderWidth: 1.5 }]}>
                     <Ionicons
                       name={isSelected ? 'checkmark' : 'chevron-forward'}
                       size={16}
@@ -470,14 +483,15 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   cardText: { flex: 1, gap: 2 },
-  cardTitle: { fontSize: 22, letterSpacing: -0.4 },
+  cardTitle: { fontSize: 20, letterSpacing: 0.2, textTransform: 'uppercase' },
   cardSubtitle: { fontSize: 13 },
+  upper: { textTransform: 'uppercase', letterSpacing: 0.2 },
 
   chevronCircle: {
     width: 36,

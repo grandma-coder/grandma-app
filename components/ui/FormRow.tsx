@@ -40,7 +40,6 @@ function CurrentFormRow({
   const { colors, font, stickers } = useTheme()
 
   const paper = colors.surface
-  const paperBorder = colors.border
   const ink = colors.text
   const ink4 = colors.textFaint
   const stickerBg = stickerTint ?? stickers.yellowSoft
@@ -54,28 +53,34 @@ function CurrentFormRow({
         styles.row,
         {
           backgroundColor: paper,
-          borderColor: paperBorder,
+          borderColor: ink,
+          borderWidth: 1.5,
+          borderRadius: 18,
+          shadowColor: ink,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 0,
           opacity: pressed ? 0.9 : 1,
         },
         style,
       ]}
     >
       {sticker && (
-        <View style={[styles.stickerCircle, { backgroundColor: stickerBg }]}>
+        <View style={[styles.stickerCircle, { backgroundColor: stickerBg, borderWidth: 1.5, borderColor: ink }]}>
           {sticker}
         </View>
       )}
 
       <View style={styles.body}>
         <Text
-          style={[styles.label, { fontFamily: font.bodyMedium, color: ink4 }]}
+          style={[styles.label, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}
           numberOfLines={1}
         >
           {label}
         </Text>
         {value !== undefined && (
           <Text
-            style={[styles.value, { fontFamily: font.display, color: ink }]}
+            style={[styles.value, { fontFamily: font.display, color: ink, letterSpacing: 0.2, textTransform: 'uppercase' }]}
             numberOfLines={1}
           >
             {value}

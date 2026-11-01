@@ -25,7 +25,7 @@ export function FieldError({ message, showIcon = true }: FieldErrorProps) {
   const errColor = diffuse ? dt.colors.error : brand.error
   const textStyle = diffuse
     ? { color: errColor, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' as const }
-    : { color: errColor, fontFamily: font.bodyMedium, fontSize: 13 }
+    : { color: errColor, fontFamily: font.bodySemiBold, fontSize: 13 }
 
   return (
     <View style={styles.row}>

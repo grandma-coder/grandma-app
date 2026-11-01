@@ -6,6 +6,7 @@
  * Saves answers to Supabase profiles + behaviors table at the end.
  */
 
+import { SiteSticker } from '../../../components/stickers/SiteSticker'
 import { useState, useCallback, useRef, useMemo } from 'react'
 import {
   View,
@@ -332,7 +333,7 @@ function StepLastPeriod({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_lastPeriod')}
-      sticker={<Flower size={56} petal={stickers.pink} center={stickers.yellow} />}
+      sticker={<SiteSticker name="flower" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
       continueDisabled={!date}
@@ -391,7 +392,7 @@ function StepCycleLength({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_cycleLength')}
-      sticker={<Moon size={52} fill={stickers.lilac} />}
+      sticker={<SiteSticker name="moon" size={44} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -430,7 +431,7 @@ function StepCycleLength({
         <>
           <View style={stepStyles.inputRow}>
             {!unknown && (
-              <View style={[stepStyles.numberInputWrap, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}>
+              <View style={[stepStyles.numberInputWrap, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 14 }]}>
                 <TextInput
                   value={cycleLength?.toString() ?? ''}
                   onChangeText={(txt) => {
@@ -443,7 +444,7 @@ function StepCycleLength({
                   placeholderTextColor={colors.textMuted}
                   placeholder="28"
                 />
-                <Text style={[stepStyles.unitLabel, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>{t('cycleOnboarding_days')}</Text>
+                <Text style={[stepStyles.unitLabel, { color: colors.textSecondary, fontFamily: font.body }]}>{t('cycleOnboarding_days')}</Text>
               </View>
             )}
 
@@ -453,20 +454,20 @@ function StepCycleLength({
                 stepStyles.chip,
                 {
                   backgroundColor: unknown ? modeSoft : colors.surface,
-                  borderColor: unknown ? mode : colors.border,
-                  borderRadius: radius.lg,
+                  borderColor: colors.text,
+                  borderRadius: 18,
                 },
               ]}
             >
-              <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
+              <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary, fontFamily: font.bodyBold }]}>
                 {t('cycleOnboarding_iDontKnow')}
               </Text>
             </Pressable>
           </View>
 
           {/* TTC toggle */}
-          <View style={[stepStyles.ttcCard, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-            <Text style={[stepStyles.ttcLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>
+          <View style={[stepStyles.ttcCard, { backgroundColor: colors.surfaceRaised, borderRadius: 18 }]}>
+            <Text style={[stepStyles.ttcLabel, { color: colors.text, fontFamily: font.bodyBold }]}>
               {t('cycleOnboarding_q_ttc')}
             </Text>
             <View style={stepStyles.toggleRow}>
@@ -507,7 +508,7 @@ function StepPeriodDuration({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_periodDuration')}
-      sticker={<Drop size={52} fill={stickers.coral} />}
+      sticker={<SiteSticker name="drop" size={44} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -539,7 +540,7 @@ function StepPeriodDuration({
               <Text
                 style={[
                   stepStyles.durationChipText,
-                  { color: duration === n ? mode : colors.text, fontFamily: font.bodySemiBold },
+                  { color: duration === n ? mode : colors.text, fontFamily: font.bodyBold },
                 ]}
               >
                 {n} {t('cycleOnboarding_days')}
@@ -589,7 +590,7 @@ function StepConditions({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_conditions')}
-      sticker={<Leaf size={56} fill={stickers.green} />}
+      sticker={<SiteSticker name="leaf" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -634,7 +635,7 @@ function StepConditions({
                     stepStyles.conditionChip,
                     {
                       backgroundColor: selected ? modeSoft : colors.surface,
-                      borderColor: selected ? mode : colors.text,
+                      borderColor: colors.text,
                       shadowColor: colors.text,
                       borderRadius: radius.full,
                     },
@@ -643,7 +644,7 @@ function StepConditions({
                   <Text
                     style={[
                       stepStyles.conditionChipText,
-                      { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
+                      { color: colors.text, fontFamily: font.bodyBold },
                     ]}
                   >
                     {t(opt.labelKey)}
@@ -659,8 +660,8 @@ function StepConditions({
                 stepStyles.otherInputWrap,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  borderRadius: radius.md,
+                  borderColor: colors.text,
+                  borderRadius: 14,
                   shadowColor: colors.text,
                 },
               ]}
@@ -670,7 +671,7 @@ function StepConditions({
                 onChangeText={setConditionsOther}
                 placeholder={t('cycleOnboarding_conditionOtherPlaceholder')}
                 placeholderTextColor={colors.textMuted}
-                style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.bodyMedium }]}
+                style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.body }]}
                 autoCapitalize="sentences"
               />
             </View>
@@ -706,7 +707,7 @@ function StepTempUnit({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_tempUnit')}
-      sticker={<Sun size={56} fill={stickers.yellow} />}
+      sticker={<SiteSticker name="star" size={48} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -764,7 +765,7 @@ function StepTTCDuration({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_ttcDuration')}
-      sticker={<Flower size={56} petal={stickers.pink} center={stickers.yellow} />}
+      sticker={<SiteSticker name="flower" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -790,7 +791,7 @@ function StepTTCDuration({
                   stepStyles.conditionChip,
                   {
                     backgroundColor: selected ? modeSoft : colors.surface,
-                    borderColor: selected ? mode : colors.text,
+                    borderColor: colors.text,
                     shadowColor: colors.text,
                     borderRadius: radius.full,
                   },
@@ -799,7 +800,7 @@ function StepTTCDuration({
                 <Text
                   style={[
                     stepStyles.conditionChipText,
-                    { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
+                    { color: colors.text, fontFamily: font.bodyBold },
                   ]}
                 >
                   {t(opt.labelKey)}
@@ -835,7 +836,7 @@ function StepTTCTemperature({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_trackingTemp')}
-      sticker={<Sun size={56} fill={stickers.yellow} />}
+      sticker={<SiteSticker name="star" size={48} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -884,7 +885,7 @@ function StepTTCSupplements({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_supplements')}
-      sticker={<Leaf size={56} fill={stickers.green} />}
+      sticker={<SiteSticker name="leaf" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -911,9 +912,9 @@ function StepTTCSupplements({
             {
               color: colors.text,
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.md,
-              fontFamily: font.bodyMedium,
+              borderColor: colors.text,
+              borderRadius: 14,
+              fontFamily: font.body,
             },
           ]}
         />
@@ -968,10 +969,10 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
         <View
           style={[
             completeStyles.iconCircle,
-            { backgroundColor: modeSoft, borderWidth: 1, borderColor: colors.border },
+            { backgroundColor: modeSoft, borderWidth: 1.5, borderColor: colors.text },
           ]}
         >
-          <Flower size={56} petal={stickers.pink} center={stickers.yellow} />
+          <SiteSticker name="flower" size={48} cut />
         </View>
 
         <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
@@ -984,12 +985,12 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
 
         {/* Prediction reward card */}
         {prediction ? (
-          <View style={[completeStyles.predictCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
+          <View style={[completeStyles.predictCard, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 18 }]}>
             {ttc ? (
-              <PredictRow icon={<Flower size={22} petal={stickers.green} center={stickers.yellow} />} label={t('cycleOnboarding_predict_fertile')} value={prediction.fertileWindow} accent={mode} colors={colors} font={font} />
+              <PredictRow icon={<SiteSticker name="flower" size={22} cut />} label={t('cycleOnboarding_predict_fertile')} value={prediction.fertileWindow} accent={mode} colors={colors} font={font} />
             ) : null}
-            <PredictRow icon={<Flower size={22} petal={stickers.lilac} center={stickers.pink} />} label={t('cycleOnboarding_predict_ovulation')} value={prediction.ovulation} accent={mode} colors={colors} font={font} />
-            <PredictRow icon={<Flower size={22} petal={stickers.coral} center={stickers.yellow} />} label={t('cycleOnboarding_predict_period')} value={prediction.nextPeriod} accent={mode} colors={colors} font={font} last />
+            <PredictRow icon={<SiteSticker name="flower" size={22} cut />} label={t('cycleOnboarding_predict_ovulation')} value={prediction.ovulation} accent={mode} colors={colors} font={font} />
+            <PredictRow icon={<SiteSticker name="flower" size={22} cut />} label={t('cycleOnboarding_predict_period')} value={prediction.nextPeriod} accent={mode} colors={colors} font={font} last />
           </View>
         ) : null}
       </ScrollView>
@@ -1038,8 +1039,8 @@ function TogglePill({
         stepStyles.togglePill,
         {
           backgroundColor: active ? modeSoft : colors.surface,
-          borderColor: active ? mode : colors.border,
-          borderRadius: radius.lg,
+          borderColor: colors.text,
+          borderRadius: 18,
         },
       ]}
     >
@@ -1066,7 +1067,7 @@ const stepStyles = StyleSheet.create({
   dateButton: {
     paddingVertical: 18,
     paddingHorizontal: 24,
-    borderWidth: 1,
+    borderWidth: 1.5,
     width: '100%',
   },
   dateButtonText: {
@@ -1080,7 +1081,7 @@ const stepStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
     height: 64,
     gap: 8,
   },
@@ -1095,7 +1096,7 @@ const stepStyles = StyleSheet.create({
   chip: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
   },
   chipText: {
@@ -1110,12 +1111,12 @@ const stepStyles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 20,
     height: 56,
-    borderWidth: 2,
+    borderWidth: 1.5,
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   otherInputText: {
     fontSize: 16,
@@ -1123,11 +1124,11 @@ const stepStyles = StyleSheet.create({
   durationChip: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   durationChipText: {
     fontSize: 16,
@@ -1135,11 +1136,11 @@ const stepStyles = StyleSheet.create({
   conditionChip: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   conditionChipText: {
     fontSize: 15,
@@ -1152,11 +1153,11 @@ const stepStyles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     alignItems: 'center',
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   togglePillText: {
     fontSize: 16,
@@ -1170,7 +1171,7 @@ const stepStyles = StyleSheet.create({
     fontSize: 16,
   },
   textArea: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 16,
     fontSize: 16,
     minHeight: 120,
@@ -1205,7 +1206,7 @@ const completeStyles = StyleSheet.create({
   },
   predictCard: {
     width: '100%',
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 18,
     marginTop: 4,
   },
@@ -1227,8 +1228,9 @@ const completeStyles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontSize: 32,
-    letterSpacing: -0.5,
+    fontSize: 28,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
   },
   message: {
     fontSize: 16,

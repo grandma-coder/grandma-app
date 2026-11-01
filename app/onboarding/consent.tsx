@@ -21,7 +21,7 @@ import { Check } from 'lucide-react-native'
 import { OnboardingStep } from '../../components/onboarding/OnboardingStep'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
-import { Heart } from '../../components/ui/Stickers'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useConsentStore } from '../../store/useConsentStore'
 import { useTranslation } from '../../lib/i18n'
 
@@ -39,10 +39,10 @@ export default function ConsentScreen() {
   const [agreePolicy, setAgreePolicy] = useState(false)
   const canContinue = agreeData && agreePolicy
 
-  const accent = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : stickers.coral
+  const accent = diffuse ? getDiffuseAccent('pre-pregnancy', dt.isDark) : colors.text
   const ink = diffuse ? dt.colors.ink : colors.text
   const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
-  const line = diffuse ? dt.colors.line : colors.border
+  const line = diffuse ? dt.colors.line : colors.text
 
   function onContinue() {
     if (!canContinue) return
@@ -54,7 +54,11 @@ export default function ConsentScreen() {
     return (
       <Pressable
         onPress={onToggle}
-        style={[styles.row, { borderColor: line, backgroundColor: diffuse ? 'transparent' : colors.surface, borderRadius: radius.md }]}
+        style={[
+          styles.row,
+          { borderColor: line, backgroundColor: diffuse ? 'transparent' : colors.surface, borderRadius: diffuse ? radius.md : 18 },
+          !diffuse && { borderWidth: 1.5, shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
+        ]}
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
       >
@@ -64,8 +68,9 @@ export default function ConsentScreen() {
             {
               borderColor: checked ? accent : line,
               backgroundColor: checked ? accent : 'transparent',
-              borderRadius: 8,
+              borderRadius: diffuse ? 8 : 7,
             },
+            !diffuse && { borderWidth: 1.5 },
           ]}
         >
           {checked && <Check size={16} color={diffuse ? dt.colors.bg : colors.textInverse} strokeWidth={3} />}
@@ -86,7 +91,7 @@ export default function ConsentScreen() {
       auraMode="pre-pregnancy"
       question={t('consent_question')}
       italicSuffix={t('consent_questionItalic')}
-      sticker={<Heart size={56} fill={stickers.pink} />}
+      sticker={<SiteSticker name="lock" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!canContinue}
       continueLabel={t('consent_cta')}

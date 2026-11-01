@@ -140,7 +140,7 @@ export function StepSlider({
             styles.value,
             diffuse
               ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-              : { color: colors.text, fontFamily: font.display },
+              : { color: colors.text, fontFamily: font.displayBold },
           ]}
         >
           {value}
@@ -150,7 +150,7 @@ export function StepSlider({
                 styles.unit,
                 diffuse
                   ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1.4 }
-                  : { color: colors.textMuted, fontFamily: font.bodyMedium },
+                  : { color: colors.textMuted, fontFamily: font.bodyBold },
               ]}
             >
               {' '}
@@ -170,7 +170,7 @@ export function StepSlider({
             styles.track,
             diffuse
               ? { backgroundColor: 'transparent', borderColor: dt.colors.line }
-              : { backgroundColor: colors.surface, borderColor: colors.border },
+              : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 },
           ]}
         />
         <View
@@ -196,8 +196,13 @@ export function StepSlider({
                 }
               : {
                   left: thumbLeft,
-                  backgroundColor: '#FFFEF8',
-                  borderColor: color,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.text,
+                  borderWidth: 2,
+                  shadowColor: colors.text,
+                  shadowOpacity: 0.2,
+                  shadowRadius: 0,
+                  shadowOffset: { width: 0, height: 2 },
                   transform: [{ translateY }, { scale }, { rotate }],
                 },
           ]}
@@ -222,7 +227,7 @@ export function StepSlider({
               styles.scaleText,
               diffuse
                 ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }
-                : { color: colors.textMuted, fontFamily: font.body },
+                : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 },
             ]}
           >
             {min}
@@ -234,7 +239,7 @@ export function StepSlider({
               styles.scaleText,
               diffuse
                 ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }
-                : { color: colors.textMuted, fontFamily: font.body },
+                : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 },
             ]}
           >
             {max}

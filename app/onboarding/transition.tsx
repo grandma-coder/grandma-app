@@ -8,10 +8,10 @@
 import { useEffect, useRef } from 'react'
 import { View, Text, Pressable, Animated, StyleSheet, Dimensions } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Moon, Heart, Star } from '../../components/ui/Stickers'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { PillButton } from '../../components/ui/PillButton'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, stickers, getModeColor, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, getModeColor, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, type AuraBloom } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -40,21 +40,21 @@ export default function TransitionScreen() {
     route: string
   }> = {
     pregnancy: {
-      sticker: <Heart size={96} fill={stickers.pink} />,
+      sticker: <SiteSticker name="heart" size={96} cut />,
       char: 'heart',
       heading: t('onboardingTransition_pregnancy_heading'),
       subtext: t('onboardingTransition_pregnancy_subtext'),
       route: '/onboarding/pregnancy',
     },
     kids: {
-      sticker: <Star size={96} fill={stickers.blue} />,
+      sticker: <SiteSticker name="baby" size={96} cut />,
       char: 'star',
       heading: t('onboardingTransition_kids_heading'),
       subtext: t('onboardingTransition_kids_subtext'),
       route: '/onboarding/kids',
     },
     'pre-pregnancy': {
-      sticker: <Moon size={96} fill={stickers.lilac} />,
+      sticker: <SiteSticker name="flower" size={96} cut />,
       char: 'night',
       heading: t('onboardingTransition_cycle_heading'),
       subtext: t('onboardingTransition_cycle_subtext'),
@@ -63,7 +63,7 @@ export default function TransitionScreen() {
     // Menopause (U1): placeholder content (reuses cycle copy/keys) so the map
     // stays total. A later E1 task adds the real screen, copy, and queue entry.
     menopause: {
-      sticker: <Moon size={96} fill={stickers.peach} />,
+      sticker: <SiteSticker name="flame" size={96} cut />,
       char: 'night',
       heading: t('onboardingTransition_cycle_heading'),
       subtext: t('onboardingTransition_cycle_subtext'),
@@ -207,7 +207,7 @@ export default function TransitionScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bgWarm }]}>
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <Animated.View
         style={[
           styles.content,
@@ -222,7 +222,7 @@ export default function TransitionScreen() {
         <View style={styles.iconWrap}>{content.sticker}</View>
 
         {/* Heading */}
-        <Text style={[styles.heading, { color: colors.text, fontFamily: font.display }]}>
+        <Text style={[styles.heading, { color: colors.text, fontFamily: font.display, letterSpacing: 0.2, textTransform: 'uppercase' }]}>
           {content.heading}
         </Text>
 
@@ -243,13 +243,13 @@ export default function TransitionScreen() {
 
         {/* Skip */}
         <Pressable onPress={handleSkip} style={styles.skipBtn}>
-          <Text style={[styles.skipText, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[styles.skipText, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
             {t('onboardingTransition_skip')}
           </Text>
         </Pressable>
 
         {/* Auto-advance progress bar */}
-        <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+        <View style={[styles.progressTrack, { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.text, height: 10, borderRadius: 5 }]}>
           <Animated.View
             style={[
               styles.progressFill,

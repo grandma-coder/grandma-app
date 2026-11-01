@@ -6,6 +6,7 @@
  * Saves answers to Supabase pregnancy_logs, behaviors, and profiles.
  */
 
+import { SiteSticker } from '../../../components/stickers/SiteSticker'
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import {
   View,
@@ -405,7 +406,7 @@ function StepDueDate({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_dueDate')}
-      sticker={<Heart size={56} fill={stickers.lilac} />}
+      sticker={<SiteSticker name="heart" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!dueDate}
     >
@@ -434,7 +435,7 @@ function StepDueDate({
             <View
               style={[
                 stepStyles.weekBadge,
-                { backgroundColor: modeSoft, borderRadius: radius.lg },
+                { backgroundColor: modeSoft, borderRadius: 18 },
               ]}
             >
               <Text style={[stepStyles.weekBadgeText, { color: mode }]}>
@@ -468,7 +469,7 @@ function StepFirstPregnancy({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_firstPregnancy')}
-      sticker={<Star size={52} fill={stickers.yellow} />}
+      sticker={<SiteSticker name="star" size={44} cut />}
       onContinue={onContinue}
       continueDisabled={first === null}
     >
@@ -516,7 +517,7 @@ function StepMood({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_mood')}
-      sticker={<Sun size={56} fill={stickers.peach} />}
+      sticker={<SiteSticker name="star" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -547,9 +548,9 @@ function StepMood({
                   stepStyles.moodCard,
                   {
                     backgroundColor: selected ? modeSoft : colors.surface,
-                    borderColor: selected ? mode : colors.text,
+                    borderColor: colors.text,
                     shadowColor: colors.text,
-                    borderRadius: radius.lg,
+                    borderRadius: 18,
                   },
                 ]}
               >
@@ -604,7 +605,7 @@ function StepBirthPlace({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_birthPlace')}
-      sticker={<Cloud size={64} fill={stickers.blue} />}
+      sticker={<SiteSticker name="cloud" size={56} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -630,7 +631,7 @@ function StepBirthPlace({
                   stepStyles.placeChip,
                   {
                     backgroundColor: selected ? modeSoft : colors.surface,
-                    borderColor: selected ? mode : colors.text,
+                    borderColor: colors.text,
                     shadowColor: colors.text,
                     borderRadius: radius.full,
                   },
@@ -678,7 +679,7 @@ function StepCareProvider({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_careProvider')}
-      sticker={<Flower size={56} petal={stickers.lilac} center={stickers.yellow} />}
+      sticker={<SiteSticker name="flower" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -703,8 +704,8 @@ function StepCareProvider({
             {
               color: colors.text,
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.md,
+              borderColor: colors.text,
+              borderRadius: 14,
             },
           ]}
           autoCapitalize="words"
@@ -739,7 +740,7 @@ function StepConditions({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_conditions')}
-      sticker={<Moon size={52} fill={stickers.lilac} />}
+      sticker={<SiteSticker name="moon" size={44} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -765,8 +766,8 @@ function StepConditions({
             {
               color: colors.text,
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.md,
+              borderColor: colors.text,
+              borderRadius: 14,
             },
           ]}
         />
@@ -801,7 +802,7 @@ function StepPartner({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_partner')}
-      sticker={<Heart size={56} fill={stickers.pink} />}
+      sticker={<SiteSticker name="heart" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -837,8 +838,8 @@ function StepPartner({
               {
                 color: colors.text,
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
-                borderRadius: radius.md,
+                borderColor: colors.text,
+                borderRadius: 14,
               },
             ]}
             autoCapitalize="words"
@@ -880,12 +881,12 @@ function CompletionScreen({
             completeStyles.iconCircle,
             {
               backgroundColor: modeSoft,
-              borderWidth: 1,
-              borderColor: colors.border,
+              borderWidth: 1.5,
+              borderColor: colors.text,
             },
           ]}
         >
-          <Heart size={56} fill={stickers.pink} />
+          <SiteSticker name="heart" size={48} cut />
         </View>
 
         <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
@@ -907,9 +908,9 @@ function CompletionScreen({
               completeStyles.countdownCard,
               {
                 backgroundColor: colors.surface,
-                borderRadius: radius.lg,
-                borderWidth: 1,
-                borderColor: colors.border,
+                borderRadius: 18,
+                borderWidth: 1.5,
+                borderColor: colors.text,
               },
             ]}
           >
@@ -968,7 +969,7 @@ function TogglePill({
         stepStyles.togglePill,
         {
           backgroundColor: active ? modeSoft : colors.surface,
-          borderColor: active ? mode : colors.text,
+          borderColor: colors.text,
           shadowColor: colors.text,
           borderRadius: radius.full,
         },
@@ -996,12 +997,12 @@ const stepStyles = StyleSheet.create({
   dateButton: {
     paddingVertical: 18,
     paddingHorizontal: 24,
-    borderWidth: 1,
+    borderWidth: 1.5,
     width: '100%',
   },
   dateButtonText: {
     fontSize: 17,
-    fontFamily: font.bodySemiBold,
+    fontFamily: font.bodyBold,
     textAlign: 'center',
   },
   weekBadge: {
@@ -1011,7 +1012,7 @@ const stepStyles = StyleSheet.create({
   },
   weekBadgeText: {
     fontSize: 14,
-    fontFamily: font.bodySemiBold,
+    fontFamily: font.bodyBold,
     textAlign: 'center',
   },
   toggleRow: {
@@ -1022,11 +1023,11 @@ const stepStyles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     alignItems: 'center',
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   togglePillText: {
     fontSize: 16,
@@ -1042,12 +1043,12 @@ const stepStyles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     paddingVertical: 16,
-    borderWidth: 2,
+    borderWidth: 1.5,
     gap: 6,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   moodIcon: {
     alignItems: 'center',
@@ -1056,7 +1057,7 @@ const stepStyles = StyleSheet.create({
   },
   moodLabel: {
     fontSize: 13,
-    fontFamily: font.bodySemiBold,
+    fontFamily: font.bodyBold,
   },
   chipGrid: {
     flexDirection: 'row',
@@ -1066,34 +1067,34 @@ const stepStyles = StyleSheet.create({
   placeChip: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   placeChipText: {
     fontSize: 15,
-    fontFamily: font.bodySemiBold,
+    fontFamily: font.bodyBold,
   },
   textInput: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 20,
     height: 56,
     fontSize: 16,
-    fontFamily: font.bodyMedium,
+    fontFamily: font.body,
   },
   textArea: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 16,
     fontSize: 16,
-    fontFamily: font.bodyMedium,
+    fontFamily: font.body,
     minHeight: 120,
     textAlignVertical: 'top',
   },
   hint: {
     fontSize: 13,
-    fontFamily: font.bodyMedium,
+    fontFamily: font.body,
     marginTop: 12,
     lineHeight: 18,
   },
@@ -1139,8 +1140,9 @@ const completeStyles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontSize: 32,
-    letterSpacing: -0.5,
+    fontSize: 28,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
   },
   message: {
     fontSize: 16,
@@ -1156,7 +1158,7 @@ const completeStyles = StyleSheet.create({
   },
   countdownDays: {
     fontSize: 56,
-    letterSpacing: -2,
+    letterSpacing: 0,
   },
   countdownLabel: {
     fontSize: 15,

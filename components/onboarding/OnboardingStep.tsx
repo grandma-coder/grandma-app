@@ -19,7 +19,6 @@ import {
   getDiffuseAccent,
   getModeField,
 } from '../../constants/theme'
-import { Display, DisplayItalic } from '../ui/Typography'
 import { PillButton } from '../ui/PillButton'
 import { useTranslation } from '../../lib/i18n'
 import { AuraField, type AuraBloom } from '../ui/diffuse/AuraField'
@@ -202,8 +201,8 @@ export function OnboardingStep({
 
   const bg = colors.bg
   const paper = colors.surface
-  const paperBorder = colors.border
-  const ink = isDark ? colors.text : '#141313'
+  const paperBorder = colors.text
+  const ink = colors.text
   const ink3 = colors.textMuted
 
   return (
@@ -213,7 +212,7 @@ export function OnboardingStep({
         <View style={styles.navRow}>
           {backHandler ? (
             <Pressable onPress={backHandler} hitSlop={8}>
-              <View style={[styles.circleBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <View style={[styles.circleBtn, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 2, width: 36, height: 36 }]}>
                 <Ionicons name="chevron-back" size={18} color={ink} />
               </View>
             </Pressable>
@@ -221,19 +220,19 @@ export function OnboardingStep({
             <View style={styles.circleBtn} />
           )}
 
-          <Text style={[styles.stepCount, { fontFamily: font.body, color: ink3 }]}>
+          <Text style={[styles.stepCount, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: ink3 }]}>
             {step} / {total}
           </Text>
 
           {onSkip ? (
             <Pressable onPress={onSkip} hitSlop={8}>
-              <Text style={[styles.skipHeaderText, { fontFamily: font.body, color: ink3 }]}>
+              <Text style={[styles.skipHeaderText, { fontFamily: font.bodyBold, color: ink3 }]}>
                 {t('common_skip')}
               </Text>
             </Pressable>
           ) : closeHandler ? (
             <Pressable onPress={closeHandler} hitSlop={8}>
-              <View style={[styles.circleBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <View style={[styles.circleBtn, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 2, width: 36, height: 36 }]}>
                 <Ionicons name="close" size={18} color={ink} />
               </View>
             </Pressable>
@@ -245,13 +244,13 @@ export function OnboardingStep({
         {/* Question + optional sticker accent on the right */}
         <View style={styles.questionRow}>
           <View style={styles.questionWrap}>
-            <Display size={32} color={ink}>
+            <Text style={[styles.siteTitle, { fontFamily: font.display, color: ink }]}>
               {question}
-            </Display>
+            </Text>
             {italicSuffix && (
-              <DisplayItalic size={32} color={ink}>
+              <Text style={[styles.siteTitle, { fontFamily: font.display, color: colors.textSecondary }]}>
                 {italicSuffix}
-              </DisplayItalic>
+              </Text>
             )}
           </View>
           {sticker ? (
@@ -297,8 +296,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepCount: { fontSize: 13 },
+  stepCount: { fontSize: 11, textTransform: 'uppercase' },
   skipHeaderText: { fontSize: 13 },
+  siteTitle: { fontSize: 28, lineHeight: 33, letterSpacing: 0.2, textTransform: 'uppercase' },
 
   questionRow: {
     marginTop: 4,

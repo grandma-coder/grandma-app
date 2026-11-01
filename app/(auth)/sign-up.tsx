@@ -18,8 +18,8 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
-import { useTheme, stickers, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
-import { Squishy, Heart } from '../../components/ui/Stickers'
+import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -169,7 +169,7 @@ export default function SignUp() {
 
   const bg = colors.bg
   const paper = colors.surface
-  const paperBorder = colors.border
+  const paperBorder = colors.text
   const ink = colors.text
   const ink3 = isDark ? colors.textMuted : '#6E6763'
   const ink4 = isDark ? colors.textFaint : '#A69E93'
@@ -178,10 +178,10 @@ export default function SignUp() {
     <View style={[styles.root, { backgroundColor: bg }]}>
       {/* Decorative stickers — collage art */}
       <View style={[styles.stickerTR, { transform: [{ rotate: '-8deg' }] }]}>
-        <Squishy w={110} h={70} fill={isDark ? stickers.yellow : '#F5D652'} />
+        <SiteSticker name="flower" size={60} cut />
       </View>
       <View style={[styles.stickerTR2, { transform: [{ rotate: '16deg' }] }]}>
-        <Heart size={40} fill={isDark ? stickers.pink : '#F2B2C7'} />
+        <SiteSticker name="heart" size={44} cut />
       </View>
 
       <KeyboardAvoidingView
@@ -210,7 +210,7 @@ export default function SignUp() {
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
             {t('auth_signUp_heading2')}
           </Text>
-          <Text style={[styles.headingItalic, { fontFamily: font.italic, color: ink }]}>
+          <Text style={[styles.headingItalic, { fontFamily: font.display, color: ink }]}>
             {t('auth_signUp_heading3')}
           </Text>
           <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
@@ -219,7 +219,7 @@ export default function SignUp() {
 
           {/* Paper card inputs */}
           <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+            <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
               {t('auth_emailLabel')}
             </Text>
             <TextInput
@@ -235,7 +235,7 @@ export default function SignUp() {
           </View>
 
           <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <Text style={[styles.inputLabel, { fontFamily: font.bodySemiBold, color: ink4 }]}>
+            <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
               {t('auth_passwordLabel')}
             </Text>
             <TextInput
@@ -255,14 +255,14 @@ export default function SignUp() {
             disabled={loading}
             style={({ pressed }) => [
               styles.cta,
-              { backgroundColor: ink },
+              { backgroundColor: ink, shadowColor: ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
               {
                 opacity: pressed ? 0.88 : loading ? 0.6 : 1,
                 transform: [{ scale: pressed ? 0.98 : 1 }],
               },
             ]}
           >
-            <Text style={[styles.ctaText, { fontFamily: font.bodyMedium, color: bg }]}>
+            <Text style={[styles.ctaText, { fontFamily: font.bodyBold, color: bg }]}>
               {loading ? t('auth_creating') : t('auth_continue')}
             </Text>
           </Pressable>
@@ -314,20 +314,16 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
   },
 
   heading: {
-    fontSize: 40,
-    lineHeight: 42,
-    letterSpacing: -1, fontFamily: font.display },
+    fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase', fontFamily: font.display },
   headingItalic: {
-    fontSize: 40,
-    lineHeight: 42,
-    letterSpacing: -0.5,
+    fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase',
     marginBottom: 10, fontFamily: font.display },
   sub: {
     fontSize: 15,
@@ -335,9 +331,9 @@ const styles = StyleSheet.create({
   },
 
   inputCard: {
-    borderRadius: 20,
+    borderRadius: 14,
     padding: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     marginBottom: 12,
   },
   inputLabel: {
@@ -348,7 +344,7 @@ const styles = StyleSheet.create({
   },
   inputText: {
     fontSize: 18,
-    letterSpacing: -0.3,
+    letterSpacing: 0,
   },
 
   cta: {

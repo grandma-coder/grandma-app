@@ -34,7 +34,7 @@ function CurrentTextField({ label, error, containerStyle, height = 64, style, fo
   return (
     <View style={containerStyle}>
       {label ? (
-        <Text style={[styles.label, { fontFamily: font.bodyMedium, color: colors.textFaint }]}>
+        <Text style={[styles.label, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
           {label}
         </Text>
       ) : null}
@@ -43,13 +43,13 @@ function CurrentTextField({ label, error, containerStyle, height = 64, style, fo
         style={[
           {
             backgroundColor: colors.surface,
-            borderColor: hasError ? brand.error : colors.border,
-            borderWidth: hasError ? 1.5 : 1,
-            borderRadius: radius.md,
+            borderColor: hasError ? brand.error : colors.text,
+            borderWidth: 1.5,
+            borderRadius: 14,
             paddingHorizontal: spacing.lg,
             height,
-            fontSize: fs.md,
-            fontFamily: font.bodyMedium,
+            fontSize: Math.max(fs.md, 16),
+            fontFamily: font.body,
             color: colors.text,
           },
           style,

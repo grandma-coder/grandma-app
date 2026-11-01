@@ -83,8 +83,11 @@ function CurrentDateModal({
           style={[
             styles.sheet,
             {
-              backgroundColor: isDark ? colors.surface : ST_PAPER,
-              borderColor: isDark ? colors.text : ST_INK,
+              backgroundColor: isDark ? colors.surface : colors.bg,
+              borderColor: isDark ? colors.text : colors.text,
+              borderTopWidth: 2.5,
+              borderTopLeftRadius: 26,
+              borderTopRightRadius: 26,
             },
           ]}
         >
@@ -92,17 +95,23 @@ function CurrentDateModal({
             <StarSticker size={64} fill={accent.fill} stroke={ST_INK} />
           </View>
 
-          <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
+          <View style={[styles.handleBar, { backgroundColor: colors.text, opacity: 0.25 }]} />
 
           <View style={styles.headerRow}>
-            <Text style={[styles.title, { color: isDark ? colors.text : ST_INK }]}>{title}</Text>
+            <Text style={[styles.title, { color: colors.text, textTransform: 'uppercase', letterSpacing: 0.2 }]}>{title}</Text>
             <Pressable
               onPress={onClose}
               style={({ pressed }) => [
                 styles.closeBtn,
                 {
-                  backgroundColor: isDark ? colors.surfaceRaised : ST_CREAM,
-                  borderColor: isDark ? colors.text : ST_INK,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.text,
+                  borderWidth: 2,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 17,
+                  shadowColor: colors.text,
+                  shadowOpacity: 0.1,
                   shadowOffset: { width: 0, height: pressed ? 1 : 2 },
                   transform: [{ translateY: pressed ? 1 : 0 }],
                 },
@@ -133,14 +142,17 @@ function CurrentDateModal({
               style={({ pressed }) => [
                 styles.doneBtn,
                 {
-                  backgroundColor: accent.fill,
-                  borderColor: ST_INK,
-                  shadowOffset: { width: 0, height: pressed ? 2 : 5 },
-                  transform: [{ translateY: pressed ? 3 : 0 }],
+                  backgroundColor: colors.text,
+                  borderColor: colors.text,
+                  borderWidth: 1.5,
+                  shadowColor: colors.text,
+                  shadowOpacity: 0.1,
+                  shadowOffset: { width: 0, height: pressed ? 1 : 2 },
+                  transform: [{ translateY: pressed ? 1 : 0 }],
                 },
               ]}
             >
-              <Text style={styles.doneText}>{t('common_save')}</Text>
+              <Text style={[styles.doneText, { color: colors.bg }]}>{t('common_save')}</Text>
             </Pressable>
           )}
         </Pressable>

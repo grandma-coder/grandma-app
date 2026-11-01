@@ -21,6 +21,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { Burst, Blob, Heart, Flower } from '../../components/ui/Stickers'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseOAuthRow, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -164,27 +165,19 @@ export default function Welcome() {
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      {/* ── Decorative stickers (positioned absolutely) — collage art; hidden under Diffuse ── */}
-      {!diffuse && (
-        <>
-          <View style={[styles.stickerTL, { transform: [{ rotate: '-18deg' }] }]}>
-            <Blob size={110} fill={stickers.yellow} variant={1} />
-          </View>
-          <View style={[styles.stickerTR, { transform: [{ rotate: '24deg' }] }]}>
-            <Burst size={90} fill={stickers.pink} />
-          </View>
-          <View style={[styles.stickerMidL, { transform: [{ rotate: '-8deg' }] }]}>
-            <Flower
-              size={80}
-              petal={stickers.lilac}
-              center={stickers.yellow}
-            />
-          </View>
-          <View style={styles.stickerMidR}>
-            <Heart size={70} fill={stickers.blue} />
-          </View>
-        </>
-      )}
+      {/* ── Decorative stickers (site-hero collage) ── */}
+      <View style={[styles.stickerTL, { transform: [{ rotate: '-14deg' }] }]}>
+        <SiteSticker name="flower" size={78} cut />
+      </View>
+      <View style={[styles.stickerTR, { transform: [{ rotate: '12deg' }] }]}>
+        <SiteSticker name="heart" size={64} cut />
+      </View>
+      <View style={[styles.stickerMidL, { transform: [{ rotate: '-8deg' }] }]}>
+        <SiteSticker name="baby" size={60} cut />
+      </View>
+      <View style={[styles.stickerMidR, { transform: [{ rotate: '10deg' }] }]}>
+        <SiteSticker name="flame" size={54} cut />
+      </View>
 
       {/* ── Content ── */}
       <Animated.View
@@ -204,17 +197,17 @@ export default function Welcome() {
         </View>
 
         {/* Italic welcome line */}
-        <Text style={[styles.welcomeLine, { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: ink3 }]}>
+        <Text style={[styles.welcomeLine, { fontFamily: 'SpaceMono_400Regular', color: ink3 }]}>
           {t('auth_welcome_intro')}
         </Text>
 
         {/* Main wordmark */}
-        <Text style={[styles.wordmark, { fontFamily: diffuse ? diffuseFont.display : font.display, color: ink }]}>
+        <Text style={[styles.wordmark, { fontFamily: font.display, color: ink }]}>
           {t('auth_signUp_heading2')}
         </Text>
 
         {/* Italic tagline — mode-agnostic pre-login; ink under Diffuse, no accent */}
-        <Text style={[styles.seesYou, { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: diffuse ? dt.colors.ink2 : stickers.coral }]}>
+        <Text style={[styles.seesYou, { fontFamily: font.display, color: ink }]}>
           {t('auth_welcome_tagline')}
         </Text>
 
@@ -244,7 +237,16 @@ export default function Welcome() {
                     borderColor: dt.colors.line2,
                     opacity: pressed ? 0.6 : loading === 'apple' ? 0.5 : 1,
                   }
-                : { backgroundColor: ink, opacity: pressed ? 0.88 : loading === 'apple' ? 0.6 : 1 },
+                : {
+                    backgroundColor: ink,
+                    borderWidth: 1.5,
+                    borderColor: ink,
+                    shadowColor: ink,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 0,
+                    opacity: pressed ? 0.88 : loading === 'apple' ? 0.6 : 1,
+                  },
             ]}
           >
             {loading === 'apple' ? (
@@ -254,7 +256,7 @@ export default function Welcome() {
                 <Ionicons name="logo-apple" size={18} color={diffuse ? dt.colors.ink : bg} />
                 <Text style={[styles.authBtnText, diffuse
                   ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
-                  : { fontFamily: font.bodyMedium, color: bg }]}>
+                  : { fontFamily: font.bodyBold, color: bg }]}>
                   {t('auth_continueWithApple')}
                 </Text>
               </>
@@ -276,8 +278,12 @@ export default function Welcome() {
                 }
               : {
                   backgroundColor: paper,
-                  borderWidth: 1,
-                  borderColor: paperBorder,
+                  borderWidth: 1.5,
+                  borderColor: ink,
+                  shadowColor: ink,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 0,
                   opacity: pressed ? 0.88 : loading === 'google' ? 0.6 : 1,
                 },
           ]}
@@ -289,7 +295,7 @@ export default function Welcome() {
               <Ionicons name="logo-google" size={18} color={ink} />
               <Text style={[styles.authBtnText, diffuse
                 ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
-                : { fontFamily: font.bodyMedium, color: ink }]}>
+                : { fontFamily: font.bodyBold, color: ink }]}>
                 {t('auth_continueWithGoogle')}
               </Text>
             </>
@@ -320,23 +326,23 @@ const styles = StyleSheet.create({
   // Sticker positions
   stickerTL: {
     position: 'absolute',
-    top: 72,
-    left: -20,
+    top: 84,
+    left: 22,
   },
   stickerTR: {
     position: 'absolute',
-    top: 100,
-    right: -10,
+    top: 112,
+    right: 28,
   },
   stickerMidL: {
     position: 'absolute',
-    top: 250,
-    left: 30,
+    top: 262,
+    left: 12,
   },
   stickerMidR: {
     position: 'absolute',
-    top: 220,
-    right: 24,
+    top: 236,
+    right: 20,
   },
 
   // Text content
@@ -348,16 +354,22 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   welcomeLine: {
-    fontSize: 18,
-    marginBottom: 6,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   wordmark: {
-    fontSize: 68,
-    fontWeight: '700',
-    lineHeight: 64,
-    letterSpacing: -2, fontFamily: font.display },
+    fontSize: 64,
+    lineHeight: 68,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+    fontFamily: font.display },
   seesYou: {
-    fontSize: 32,
+    fontSize: 28,
+    lineHeight: 32,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
     marginTop: 4,
     marginBottom: 16, fontFamily: font.display },
   body: {
@@ -386,7 +398,6 @@ const styles = StyleSheet.create({
   },
   authBtnText: {
     fontSize: 16,
-    fontWeight: '500',
   },
   signInLink: {
     fontSize: 13,

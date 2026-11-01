@@ -15,6 +15,7 @@
  * Semantic icons are Character blobs (the shared icon system).
  */
 
+import { SiteSticker } from '../../../components/stickers/SiteSticker'
 import { useState, useCallback, useRef } from 'react'
 import {
   View,
@@ -148,19 +149,19 @@ function useMenoPalette() {
   }
   return {
     diffuse: false,
-    radius,
+    radius: { ...radius, md: 14, lg: 18 },
     accent: getModeColor('menopause', isDark),
     accentSoft: getModeColorSoft('menopause', isDark),
     bg: colors.bg,
     surface: colors.surface,
-    border: colors.border,
+    border: colors.text,
     text: colors.text,
     textSecondary: colors.textSecondary,
     textMuted: colors.textMuted,
     fontDisplay: font.display,
     fontBody: font.body,
-    fontBodyMedium: font.bodyMedium,
-    fontBodySemiBold: font.bodySemiBold,
+    fontBodyMedium: font.bodyBold,
+    fontBodySemiBold: font.bodyBold,
   } as const
 }
 
@@ -305,7 +306,7 @@ function StepIntro({ step, total, onContinue }: { step: number; total: number; o
       auraMode="menopause"
       question={COPY.introQ}
       italicSuffix={COPY.introItalic}
-      sticker={<Character name="selfcare" size={56} color={pal.accent} bg={pal.bg} />}
+      sticker={<SiteSticker name="flame" size={48} cut />}
       onContinue={onContinue}
       continueLabel={COPY.introCta}
     >
@@ -329,7 +330,7 @@ function StepStage({ step, total, onContinue }: { step: number; total: number; o
       total={total}
       auraMode="menopause"
       question={COPY.stageQ}
-      sticker={<Character name="phase" size={54} color={pal.accent} bg={pal.bg} />}
+      sticker={<SiteSticker name="moon2" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!stage}
     >
@@ -359,8 +360,8 @@ function StepStage({ step, total, onContinue }: { step: number; total: number; o
                   { ...STICKER_SHADOW, shadowColor: pal.text },
                   {
                     backgroundColor: selected ? pal.accentSoft : pal.surface,
-                    borderColor: selected ? pal.accent : pal.border,
-                    borderWidth: selected ? 1.5 : 1,
+                    borderColor: pal.border,
+                    borderWidth: 1.5,
                     borderRadius: pal.radius.lg,
                   },
                 ]}
@@ -372,7 +373,7 @@ function StepStage({ step, total, onContinue }: { step: number; total: number; o
                   <Text style={[styles.optionLabel, { color: pal.text, fontFamily: pal.fontDisplay }]}>{opt.label}</Text>
                   <Text style={[styles.optionDesc, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{opt.desc}</Text>
                 </View>
-                <View style={[styles.check, { backgroundColor: selected ? pal.accent : 'transparent', borderColor: selected ? pal.accent : pal.border }]}>
+                <View style={[styles.check, { backgroundColor: selected ? pal.text : 'transparent', borderColor: pal.border }]}>
                   {selected && <Ionicons name="checkmark" size={15} color={pal.bg} />}
                 </View>
               </Pressable>
@@ -408,7 +409,7 @@ function StepLastPeriod({
       total={total}
       auraMode="menopause"
       question={COPY.lastPeriodQ}
-      sticker={<Character name="calendar" size={54} color={pal.accent} bg={pal.bg} />}
+      sticker={<SiteSticker name="cal" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
       continueDisabled={!date}
@@ -466,7 +467,7 @@ function StepSymptoms({
       total={total}
       auraMode="menopause"
       question={COPY.symptomsQ}
-      sticker={<Character name="health" size={54} color={pal.accent} bg={pal.bg} />}
+      sticker={<SiteSticker name="thermo" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -478,7 +479,7 @@ function StepSymptoms({
             <View key={group} style={styles.groupBlock}>
               <View style={styles.groupHead}>
                 <Character name={meta.icon} size={20} color={pal.accent} bg={pal.bg} />
-                <Text style={[styles.groupLabel, { color: pal.textMuted, fontFamily: pal.fontBodySemiBold }]}>
+                <Text style={[styles.groupLabel, { color: pal.textMuted, fontFamily: pal.diffuse ? pal.fontBodySemiBold : 'SpaceMono_400Regular' }]}>
                   {meta.label}
                 </Text>
               </View>
@@ -507,7 +508,7 @@ function StepSymptoms({
                           { ...STICKER_SHADOW, shadowColor: pal.text },
                           {
                             backgroundColor: selected ? pal.accentSoft : pal.surface,
-                            borderColor: selected ? pal.accent : pal.border,
+                            borderColor: pal.border,
                             borderRadius: pal.radius.full,
                           },
                         ]}
@@ -515,7 +516,7 @@ function StepSymptoms({
                         <Text
                           style={[
                             styles.chipText,
-                            { color: selected ? pal.accent : pal.textSecondary, fontFamily: pal.fontBodyMedium },
+                            { color: pal.text, fontFamily: pal.fontBodyMedium },
                           ]}
                         >
                           {s.label}
@@ -547,7 +548,7 @@ function StepHrt({ step, total, onContinue }: { step: number; total: number; onC
       total={total}
       auraMode="menopause"
       question={COPY.hrtQ}
-      sticker={<Character name="medicine" size={52} color={pal.accent} bg={pal.bg} />}
+      sticker={<SiteSticker name="syringe" size={48} cut />}
       onContinue={onContinue}
     >
       {pal.diffuse ? (
@@ -582,12 +583,12 @@ function TogglePill({ label, active, onPress }: { label: string; active: boolean
         !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
         {
           backgroundColor: active ? pal.accentSoft : pal.surface,
-          borderColor: active ? pal.accent : pal.border,
+          borderColor: pal.border,
           borderRadius: pal.radius.lg,
         },
       ]}
     >
-      <Text style={[styles.togglePillText, { color: active ? pal.accent : pal.textSecondary, fontFamily: pal.fontBodySemiBold }]}>
+      <Text style={[styles.togglePillText, { color: pal.text, fontFamily: pal.fontBodySemiBold }]}>
         {label}
       </Text>
     </Pressable>
@@ -607,7 +608,7 @@ function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: 
     <View style={[completeStyles.root, { backgroundColor: pal.bg }]}>
       <ScrollView contentContainerStyle={completeStyles.content} showsVerticalScrollIndicator={false}>
         <View style={[completeStyles.iconCircle, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
-          <Character name="heart" size={56} color={pal.accent} bg={pal.bg} />
+          <SiteSticker name="flame" size={52} cut />
         </View>
 
         <Text style={[completeStyles.title, { color: pal.text, fontFamily: pal.fontDisplay }]}>{COPY.doneTitle}</Text>
@@ -651,7 +652,7 @@ function SummaryRow({
     <View style={[completeStyles.summaryRow, !last && { borderBottomWidth: 1, borderBottomColor: pal.border }]}>
       <Character name={icon} size={22} color={pal.accent} bg={pal.bg} />
       <Text style={[completeStyles.summaryLabel, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{label}</Text>
-      <Text style={[completeStyles.summaryValue, { color: pal.accent, fontFamily: pal.fontDisplay }]}>{value}</Text>
+      <Text style={[completeStyles.summaryValue, { color: pal.text, fontFamily: pal.fontDisplay }]}>{value}</Text>
     </View>
   )
 }
@@ -663,16 +664,16 @@ function SummaryRow({
 // per-call from the resolved palette ink. Mirrors cycle/index.tsx's
 // durationChip/conditionChip/togglePill sticker shadow.
 const STICKER_SHADOW = {
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 1,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
   shadowRadius: 0,
-  elevation: 3,
+  elevation: 0,
 } as const
 
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center', flex: 1 },
 
-  introCard: { padding: 20, borderWidth: 1 },
+  introCard: { padding: 20, borderWidth: 1.5 },
   introBody: { fontSize: 16, lineHeight: 24 },
 
   optionList: { gap: 12 },
@@ -681,12 +682,12 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   optionText: { flex: 1, gap: 3 },
-  optionLabel: { fontSize: 19, letterSpacing: -0.3 },
+  optionLabel: { fontSize: 18, letterSpacing: 0.2, textTransform: 'uppercase' },
   optionDesc: { fontSize: 13, lineHeight: 18 },
   check: {
     width: 26,
@@ -702,9 +703,9 @@ const styles = StyleSheet.create({
   symptomScroll: { paddingBottom: 8 },
   groupBlock: { marginBottom: 18 },
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  groupLabel: { fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
+  groupLabel: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1 },
+  chip: { paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1.5 },
   chipText: { fontSize: 14.5 },
 
   toggleRow: { flexDirection: 'row', gap: 12 },
@@ -726,14 +727,14 @@ const completeStyles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
-  title: { fontSize: 32, letterSpacing: -0.5, textAlign: 'center' },
+  title: { fontSize: 28, letterSpacing: 0.2, textTransform: 'uppercase', textAlign: 'center' },
   message: { fontSize: 16, textAlign: 'center', lineHeight: 24, maxWidth: 320 },
-  summary: { width: '100%', borderWidth: 1, paddingHorizontal: 18, marginTop: 8 },
+  summary: { width: '100%', borderWidth: 1.5, paddingHorizontal: 18, marginTop: 8 },
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15 },
   summaryLabel: { flex: 1, fontSize: 14 },
   summaryValue: { fontSize: 16 },

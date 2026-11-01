@@ -6,6 +6,7 @@
  * Saves children to Supabase children table + care_circle entries.
  */
 
+import { SiteSticker } from '../../../components/stickers/SiteSticker'
 import { useState, useCallback, useRef, type ReactNode } from 'react'
 import {
   View,
@@ -580,7 +581,7 @@ function StepChildCount({
       total={total}
       auraMode="kids"
       question="How many children are you tracking?"
-      sticker={<Star size={56} fill={stickers.blue} />}
+      sticker={<SiteSticker name="baby" size={48} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -597,8 +598,8 @@ function StepChildCount({
             stepStyles.counterButton,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.lg,
+              borderColor: colors.text,
+              borderRadius: 18,
               opacity: count <= 1 ? 0.3 : 1,
             },
           ]}
@@ -617,8 +618,8 @@ function StepChildCount({
             stepStyles.counterButton,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.lg,
+              borderColor: colors.text,
+              borderRadius: 18,
               opacity: count >= 6 ? 0.3 : 1,
             },
           ]}
@@ -661,7 +662,7 @@ function StepChildName({
       total={total}
       auraMode="kids"
       question={`${label}What is their name?`}
-      sticker={<Heart size={52} fill={stickers.pink} />}
+      sticker={<SiteSticker name="heart" size={44} cut />}
       onContinue={onContinue}
       continueDisabled={!child?.name.trim()}
     >
@@ -685,10 +686,10 @@ function StepChildName({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.border,
+            borderColor: colors.text,
             shadowColor: colors.text,
-            borderRadius: radius.md,
-            fontFamily: font.bodyMedium,
+            borderRadius: 14,
+            fontFamily: font.body,
           },
         ]}
       />
@@ -735,7 +736,7 @@ function StepChildDob({
       total={total}
       auraMode="kids"
       question={`When was ${childName} born?`}
-      sticker={<Sun size={56} fill={stickers.yellow} />}
+      sticker={<SiteSticker name="star" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!child?.birthDate}
     >
@@ -762,16 +763,16 @@ function StepChildDob({
         />
 
         {tooOld && (
-          <View style={[stepStyles.ageBadge, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 8 }]}>
-            <Text style={[stepStyles.ageBadgeText, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+          <View style={[stepStyles.ageBadge, { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1.5, borderColor: colors.text, marginTop: 8 }]}>
+            <Text style={[stepStyles.ageBadgeText, { color: colors.textMuted, fontFamily: font.body }]}>
               {t('kidsOnboard_tunedForAges')}
             </Text>
           </View>
         )}
 
         {child?.birthDate && (
-          <View style={[stepStyles.ageBadge, { backgroundColor: modeSoft, borderRadius: radius.lg }]}>
-            <Text style={[stepStyles.ageBadgeText, { color: mode, fontFamily: font.bodySemiBold }]}>
+          <View style={[stepStyles.ageBadge, { backgroundColor: modeSoft, borderRadius: 18 }]}>
+            <Text style={[stepStyles.ageBadgeText, { color: mode, fontFamily: font.bodyBold }]}>
               {formatAge(child.birthDate)}
             </Text>
           </View>
@@ -839,7 +840,7 @@ function StepChildCountry({
       total={total}
       auraMode="kids"
       question={`Where does ${childName} live?`}
-      sticker={<Cloud size={64} fill={stickers.blue} />}
+      sticker={<SiteSticker name="cloud" size={56} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -882,8 +883,8 @@ function StepChildCountry({
             stepStyles.countrySearch,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.md,
+              borderColor: colors.text,
+              borderRadius: 14,
               shadowColor: colors.text,
             },
           ]}
@@ -894,7 +895,7 @@ function StepChildCountry({
             placeholder="Search country..."
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
-            style={[stepStyles.countrySearchInput, { color: colors.text, fontFamily: font.bodyMedium }]}
+            style={[stepStyles.countrySearchInput, { color: colors.text, fontFamily: font.body }]}
           />
         </View>
 
@@ -916,17 +917,17 @@ function StepChildCountry({
                     stepStyles.allergyChip,
                     {
                       backgroundColor: isSelected ? modeSoft : colors.surface,
-                      borderColor: isSelected ? mode : colors.text,
+                      borderColor: colors.text,
                       shadowColor: colors.text,
                       borderRadius: radius.full,
                     },
                   ]}
                 >
-                  {isSelected && <Check size={14} color={mode} strokeWidth={3} />}
+                  {isSelected && <Check size={14} color={colors.text} strokeWidth={3} />}
                   <Text
                     style={[
                       stepStyles.allergyChipText,
-                      { color: isSelected ? mode : colors.text, fontFamily: font.bodySemiBold },
+                      { color: colors.text, fontFamily: font.bodyBold },
                     ]}
                   >
                     {c.name}
@@ -993,7 +994,7 @@ function StepChildPhoto({
       total={total}
       auraMode="kids"
       question={`Pick a photo or icon for ${childName}`}
-      sticker={<Flower size={56} petal={stickers.blue} center={stickers.yellow} />}
+      sticker={<SiteSticker name="flower" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1049,7 +1050,7 @@ function StepChildPhoto({
               ]}
             >
               <Camera size={36} color={colors.text} strokeWidth={1.8} />
-              <Text style={[stepStyles.photoHint, { color: colors.text, fontFamily: font.bodyMedium }]}>
+              <Text style={[stepStyles.photoHint, { color: colors.text, fontFamily: font.body }]}>
                 {t('kidsOnboard_photoHint')}
               </Text>
             </View>
@@ -1099,7 +1100,7 @@ function StepChildAllergies({
       total={total}
       auraMode="kids"
       question={`Any allergies for ${childName}?`}
-      sticker={<Leaf size={56} fill={stickers.green} />}
+      sticker={<SiteSticker name="leaf" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1145,17 +1146,17 @@ function StepChildAllergies({
                 stepStyles.allergyChip,
                 {
                   backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: selected ? mode : colors.text,
+                  borderColor: colors.text,
                   shadowColor: colors.text,
                   borderRadius: radius.full,
                 },
               ]}
             >
-              {selected && <Check size={14} color={mode} strokeWidth={3} />}
+              {selected && <Check size={14} color={colors.text} strokeWidth={3} />}
               <Text
                 style={[
                   stepStyles.allergyChipText,
-                  { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
+                  { color: colors.text, fontFamily: font.bodyBold },
                 ]}
               >
                 {allergy}
@@ -1172,8 +1173,8 @@ function StepChildAllergies({
             stepStyles.otherInputWrap,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.md,
+              borderColor: colors.text,
+              borderRadius: 14,
               shadowColor: colors.text,
             },
           ]}
@@ -1183,7 +1184,7 @@ function StepChildAllergies({
             onChangeText={(t) => updateChild(childIdx, { allergiesOther: t })}
             placeholder="Tell us what other allergies..."
             placeholderTextColor={colors.textMuted}
-            style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.bodyMedium }]}
+            style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.body }]}
             autoCapitalize="sentences"
           />
         </View>
@@ -1223,7 +1224,7 @@ function StepChildConditions({
       total={total}
       auraMode="kids"
       question={`Any conditions or medications for ${childName}?`}
-      sticker={<Moon size={52} fill={stickers.lilac} />}
+      sticker={<SiteSticker name="moon" size={44} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1249,10 +1250,10 @@ function StepChildConditions({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.border,
+            borderColor: colors.text,
             shadowColor: colors.text,
-            borderRadius: radius.md,
-            fontFamily: font.bodyMedium,
+            borderRadius: 14,
+            fontFamily: font.body,
           },
         ]}
       />
@@ -1289,7 +1290,7 @@ function StepPartner({
       total={total}
       auraMode="kids"
       question="Want to add your partner?"
-      sticker={<Heart size={56} fill={stickers.pink} />}
+      sticker={<SiteSticker name="heart" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1320,14 +1321,14 @@ function StepPartner({
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: colors.border,
+            borderColor: colors.text,
             shadowColor: colors.text,
-            borderRadius: radius.md,
-            fontFamily: font.bodyMedium,
+            borderRadius: 14,
+            fontFamily: font.body,
           },
         ]}
       />
-      <Text style={[stepStyles.hint, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+      <Text style={[stepStyles.hint, { color: colors.textMuted, fontFamily: font.body }]}>
         {t('kidsOnboard_partnerHint')}
       </Text>
       </>
@@ -1367,7 +1368,7 @@ function StepCaregiver({
       total={total}
       auraMode="kids"
       question="Want to add a caregiver?"
-      sticker={<Star size={56} fill={stickers.blue} />}
+      sticker={<SiteSticker name="baby" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1409,7 +1410,7 @@ function StepCaregiver({
                 stepStyles.roleChip,
                 {
                   backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: selected ? mode : colors.text,
+                  borderColor: colors.text,
                   shadowColor: colors.text,
                   borderRadius: radius.full,
                 },
@@ -1418,7 +1419,7 @@ function StepCaregiver({
               <Text
                 style={[
                   stepStyles.roleChipText,
-                  { color: selected ? mode : colors.text, fontFamily: font.bodySemiBold },
+                  { color: colors.text, fontFamily: font.bodyBold },
                 ]}
               >
                 {opt.label}
@@ -1441,11 +1442,11 @@ function StepCaregiver({
             {
               color: colors.text,
               backgroundColor: colors.surface,
-              borderColor: colors.border,
+              borderColor: colors.text,
               shadowColor: colors.text,
-              borderRadius: radius.md,
+              borderRadius: 14,
               marginTop: 16,
-              fontFamily: font.bodyMedium,
+              fontFamily: font.body,
             },
           ]}
         />
@@ -1486,15 +1487,15 @@ function CompletionScreen({
             completeStyles.iconCircle,
             {
               backgroundColor: modeSoft,
-              borderWidth: 1,
-              borderColor: colors.border,
+              borderWidth: 1.5,
+              borderColor: colors.text,
             },
           ]}
         >
-          <Star size={56} fill={stickers.blue} />
+          <SiteSticker name="baby" size={48} cut />
         </View>
 
-        <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.displayBold }]}>
+        <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
           {t('kidsOnboard_completionTitle')}
         </Text>
 
@@ -1516,8 +1517,8 @@ function CompletionScreen({
                 completeStyles.childCard,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  borderRadius: radius.lg,
+                  borderColor: colors.text,
+                  borderRadius: 18,
                 },
               ]}
             >
@@ -1541,7 +1542,7 @@ function CompletionScreen({
                   {child.name}
                 </Text>
                 {child.birthDate && (
-                  <Text style={[completeStyles.childAge, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
+                  <Text style={[completeStyles.childAge, { color: colors.textSecondary, fontFamily: font.body }]}>
                     {formatAge(child.birthDate)}
                   </Text>
                 )}
@@ -1566,39 +1567,39 @@ const stepStyles = StyleSheet.create({
     gap: 16,
   },
   textInput: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     paddingHorizontal: 20,
     height: 56,
     fontSize: 16,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   otherInputWrap: {
     marginTop: 16,
     paddingHorizontal: 20,
     height: 56,
-    borderWidth: 2,
+    borderWidth: 1.5,
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   otherInputText: {
     fontSize: 16,
   },
   textArea: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     padding: 16,
     fontSize: 16,
     minHeight: 120,
     textAlignVertical: 'top',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   hint: {
     fontSize: 13,
@@ -1608,7 +1609,7 @@ const stepStyles = StyleSheet.create({
   dateButton: {
     paddingVertical: 18,
     paddingHorizontal: 24,
-    borderWidth: 1,
+    borderWidth: 1.5,
     width: '100%',
   },
   dateButtonText: {
@@ -1633,7 +1634,7 @@ const stepStyles = StyleSheet.create({
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   counterDisplay: {
     width: 88,
@@ -1650,26 +1651,26 @@ const stepStyles = StyleSheet.create({
     gap: 10,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   countryName: {
     fontSize: 15,
   },
   countrySearch: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     paddingHorizontal: 18,
     height: 56,
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   countrySearchInput: {
     fontSize: 16,
   },
   countryDropdown: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     marginTop: 6,
     overflow: 'hidden',
   },
@@ -1689,12 +1690,12 @@ const stepStyles = StyleSheet.create({
     height: 160,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     gap: 8,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   photoHint: {
     fontSize: 13,
@@ -1710,11 +1711,11 @@ const stepStyles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   allergyChipText: {
     fontSize: 14,
@@ -1722,11 +1723,11 @@ const stepStyles = StyleSheet.create({
   roleChip: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 0,
-    elevation: 3,
+    elevation: 0,
   },
   roleChipText: {
     fontSize: 15,
@@ -1767,8 +1768,9 @@ const completeStyles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 32,
-    letterSpacing: -0.5,
+    fontSize: 28,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
     marginBottom: 12,
   },
   message: {
@@ -1786,7 +1788,7 @@ const completeStyles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     gap: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   childPhoto: {
     width: 52,

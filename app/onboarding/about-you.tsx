@@ -18,8 +18,8 @@ import { OnboardingStep } from '../../components/onboarding/OnboardingStep'
 import { DiffuseField } from '../../components/ui/diffuse/DiffuseField'
 import DatePickerField from '../../components/ui/DatePickerField'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
-import { useTheme, stickers } from '../../constants/theme'
-import { Heart } from '../../components/ui/Stickers'
+import { useTheme } from '../../constants/theme'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useTranslation } from '../../lib/i18n'
 
@@ -63,7 +63,7 @@ export default function AboutYouScreen() {
         auraMode="pre-pregnancy"
         question={t('aboutYou_question')}
         italicSuffix={t('aboutYou_questionItalic')}
-        sticker={<Heart size={56} fill={stickers.pink} />}
+        sticker={<SiteSticker name="me" size={48} cut />}
         onContinue={persistAndGo}
         onSkip={persistAndGo}
         continueDisabled={!name.trim()}
@@ -89,9 +89,9 @@ export default function AboutYouScreen() {
                 {
                   color: colors.text,
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  borderRadius: radius.md,
-                  fontFamily: font.bodyMedium,
+                  borderColor: colors.text,
+                  borderRadius: 14,
+                  fontFamily: font.body,
                 },
               ]}
             />
@@ -116,7 +116,7 @@ export default function AboutYouScreen() {
 const styles = StyleSheet.create({
   fields: { gap: 20 },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 18,
     height: 60,
     fontSize: 17,
