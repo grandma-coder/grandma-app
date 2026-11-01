@@ -14,7 +14,8 @@ describe('menopause foundation', () => {
     expect(cfg.aiContextLabel).toBe('menopause')
   })
   it('resolves a distinct mode color for menopause', () => {
-    expect(getModeColor('menopause', false)).toBe('#E8975A')
+    expect(getModeColor('menopause', false)).toBe('#F2A06E') // site-look tone (Nov 2026)
+    for (const other of ['pre-pregnancy', 'pregnancy', 'kids']) expect(getModeColor('menopause', false)).not.toBe(getModeColor(other, false))
   })
   it('resolves a distinct Diffuse accent for menopause', () => {
     expect(getDiffuseAccent('menopause', false)).toBe('#C2703A')
