@@ -124,7 +124,7 @@ export function ActiveChildChip({ childId, onChange }: ActiveChildChipProps) {
   if (!diffuse) {
     // Site look: every child visible as a pill — no hidden tap-to-cycle.
     return (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+      <ScrollView horizontal style={{ flexGrow: 0 }} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2, alignItems: 'center' }}>
         {children.map((c, i) => (
           <SiteChoice key={c.id} compact wobble tick={false} label={c.name} selected={c.id === (childId || children[0]?.id)}
             tone={CHILD_COLORS[i % CHILD_COLORS.length]} onPress={() => onChange(c.id)} />
