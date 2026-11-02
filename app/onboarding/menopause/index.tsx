@@ -102,7 +102,7 @@ const SYMPTOM_STICKERS: Partial<Record<MenopauseSymptomId, SiteStickerName>> = {
   night_sweat: 'drop',
   sleep: 'zz',
   fatigue: 'cloud',
-  low_mood: 'face3',
+  low_mood: 'face1',
   anxiety: 'bubble',
   brain_fog: 'brain',
   palpitations: 'heart',

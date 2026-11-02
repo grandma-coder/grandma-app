@@ -83,11 +83,11 @@ const MOOD_OPTIONS: {
   label: string
 }[] = [
   { id: 'excited', label: 'Excited', sticker: 'star' },
-  { id: 'happy', label: 'Happy', sticker: 'face1' },
+  { id: 'happy', label: 'Happy', sticker: 'face3' },
   { id: 'calm', label: 'Calm', sticker: 'leaf' },
   { id: 'anxious', label: 'Anxious', sticker: 'cloud' },
   { id: 'tired', label: 'Tired', sticker: 'zz' },
-  { id: 'nauseous', label: 'Nauseous', sticker: 'face4' },
+  { id: 'nauseous', label: 'Nauseous', sticker: 'face2' },
 ]
 
 const BIRTH_PLACE_OPTIONS: { id: BirthPlace; label: string; sticker: SiteStickerName }[] = [
@@ -436,16 +436,11 @@ function StepDueDate({
 
           {/* Week indicator */}
           {dueDate && (
-            <View
-              style={[
-                stepStyles.weekBadge,
-                { backgroundColor: modeSoft, borderRadius: 18 },
-              ]}
-            >
-              <Text style={[stepStyles.weekBadgeText, { color: mode }]}>
+            <HandDrawnBox fill={modeSoft} stroke={colors.text} radius={18} seed="weekbadge" style={stepStyles.weekBadge}>
+              <Text style={[stepStyles.weekBadgeText, { color: colors.text }]}>
                 {t('preg_onboard_completionBadge', { week: calcWeekNumber(dueDate), days: daysUntil(dueDate) })}
               </Text>
-            </View>
+            </HandDrawnBox>
           )}
         </View>
       )}
@@ -947,7 +942,8 @@ const stepStyles = StyleSheet.create({
   weekBadge: {
     paddingVertical: 10,
     paddingHorizontal: 16,
-    marginTop: 8,
+    marginTop: 14,
+    transform: [{ rotate: '-1.5deg' }],
   },
   weekBadgeText: {
     fontSize: 14,
