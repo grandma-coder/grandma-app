@@ -23,6 +23,9 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useKidsAnalytics } from '../lib/analyticsData'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { PillButton } from '../components/ui/PillButton'
+import { SiteSticker } from '../components/stickers/SiteSticker'
 import { Display, DisplayItalic, MonoCaps } from '../components/ui/Typography'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import {
@@ -183,7 +186,9 @@ export default function ChildReportScreen() {
   if (!child) {
     return (
       <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          {diffuse ? <ScreenHeader title="" /> : <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />}
+        </View>
         <Text style={[styles.empty, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{t('report_noChild')}</Text>
       </View>
     )
@@ -193,14 +198,16 @@ export default function ChildReportScreen() {
     return (
       <View style={{ marginTop: 18 }}>
         <MonoCaps color={inkMuted} style={{ letterSpacing: 1.5 }}>{label}</MonoCaps>
-        <View style={[styles.card, diffuse && styles.cardFlat, { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }]}>{kids}</View>
+        <View style={diffuse
+          ? [styles.card, styles.cardFlat, { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }]
+          : [styles.siteList, { borderTopColor: line }]}>{kids}</View>
       </View>
     )
   }
 
   function KV({ k, v, muted }: { k: string; v: string; muted?: boolean }) {
     return (
-      <View style={styles.kv}>
+      <View style={[styles.kv, !diffuse && styles.kvSite]}>
         <Text style={[styles.kvK, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{k}</Text>
         <Text style={[styles.kvV, { color: muted ? inkMuted : ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{v}</Text>
       </View>
@@ -209,12 +216,20 @@ export default function ChildReportScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }, !diffuse && { flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
+        {diffuse ? <ScreenHeader title="" /> : (
+          <>
+            <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
+            <SiteSticker name="doc" size={30} cut />
+            <Display size={26} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3, flexShrink: 1 }}>{t('report_title')}</Display>
+          </>
+        )}
+      </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.titleBlock}>
-          <Display size={32} color={ink}>{t('report_title')}</Display>
-          <DisplayItalic size={17} color={diffuse ? dt.colors.ink : stickers.coral} style={{ marginTop: 6 }}>
+          {diffuse && <Display size={32} color={ink}>{t('report_title')}</Display>}
+          <DisplayItalic size={17} color={diffuse ? dt.colors.ink : ink} style={{ marginTop: diffuse ? 6 : 0 }}>
             {child.name}{child.birthDate ? ` · ${ageLabel(child.birthDate)}` : ''}
           </DisplayItalic>
         </View>
@@ -226,7 +241,7 @@ export default function ChildReportScreen() {
         <Section label={t('report_sectionGrowth')}>
           {growth.length ? growth.map((g, i) => (
             <View key={g.metric}>
-              {i > 0 && <View style={[styles.divider, { backgroundColor: line }]} />}
+              {i > 0 && <View style={[styles.divider, !diffuse && styles.dividerSite, { backgroundColor: line }]} />}
               <KV
                 k={g.metric === 'weight' ? t('report_weight') : g.metric === 'height' ? t('report_height') : t('report_head')}
                 v={`${g.value} ${g.unit}${g.percentile != null ? `  ·  ${g.percentile}${t('report_percentileSuffix')}` : ''}`}
@@ -238,7 +253,7 @@ export default function ChildReportScreen() {
         <Section label={t('report_sectionVaccines')}>
           {vaccines.length ? vaccines.slice(0, 8).map((v, i) => (
             <View key={`${v.name}-${i}`}>
-              {i > 0 && <View style={[styles.divider, { backgroundColor: line }]} />}
+              {i > 0 && <View style={[styles.divider, !diffuse && styles.dividerSite, { backgroundColor: line }]} />}
               <KV k={v.name || '—'} v={v.date} />
             </View>
           )) : <KV k={t('report_vaccines')} v={t('report_none')} muted />}
@@ -247,22 +262,33 @@ export default function ChildReportScreen() {
         {(feedingSummary || sleepSummary) && (
           <Section label={t('report_sectionRoutine')}>
             {feedingSummary && <KV k={t('report_feeding')} v={feedingSummary} />}
-            {feedingSummary && sleepSummary && <View style={[styles.divider, { backgroundColor: line }]} />}
+            {feedingSummary && sleepSummary && <View style={[styles.divider, !diffuse && styles.dividerSite, { backgroundColor: line }]} />}
             {sleepSummary && <KV k={t('report_sleep')} v={sleepSummary} />}
           </Section>
         )}
 
-        <Pressable
-          onPress={generating || !pdfAvailable ? undefined : handleGenerate}
-          style={[styles.cta, { backgroundColor: accent, borderRadius: radius.full, opacity: generating || !pdfAvailable ? 0.5 : 1 }]}
-        >
-          {generating
-            ? <ActivityIndicator size="small" color={diffuse ? dt.colors.bg : colors.textInverse} />
-            : <Download size={18} color={diffuse ? dt.colors.bg : colors.textInverse} strokeWidth={2} />}
-          <Text style={[styles.ctaText, { color: diffuse ? dt.colors.bg : colors.textInverse, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
-            {t('report_generate')}
-          </Text>
-        </Pressable>
+        {diffuse ? (
+          <Pressable
+            onPress={generating || !pdfAvailable ? undefined : handleGenerate}
+            style={[styles.cta, { backgroundColor: accent, borderRadius: radius.full, opacity: generating || !pdfAvailable ? 0.5 : 1 }]}
+          >
+            {generating
+              ? <ActivityIndicator size="small" color={dt.colors.bg} />
+              : <Download size={18} color={dt.colors.bg} strokeWidth={2} />}
+            <Text style={[styles.ctaText, { color: dt.colors.bg, fontFamily: diffuseFont.bodySemiBold }]}>
+              {t('report_generate')}
+            </Text>
+          </Pressable>
+        ) : (
+          <PillButton
+            variant="ink"
+            label={t('report_generate')}
+            onPress={handleGenerate}
+            disabled={!pdfAvailable}
+            loading={generating}
+            style={{ marginTop: 26 }}
+          />
+        )}
 
         {!pdfAvailable && (
           <Text style={[styles.unavailable, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
@@ -294,6 +320,9 @@ const styles = StyleSheet.create({
   },
   cardFlat: { shadowOpacity: 0, elevation: 0 },
   divider: { height: 1, marginHorizontal: 18 },
+  dividerSite: { height: StyleSheet.hairlineWidth, marginHorizontal: 0 },
+  siteList: { marginTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  kvSite: { paddingHorizontal: 0 },
   kv: { flexDirection: 'row', paddingVertical: 13, paddingHorizontal: 18, gap: 12, alignItems: 'flex-start' },
   kvK: { fontSize: 13, width: 96, flexShrink: 0 },
   kvV: { fontSize: 14, flex: 1, lineHeight: 19 },

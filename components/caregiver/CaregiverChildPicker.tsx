@@ -10,10 +10,11 @@ import { router } from 'expo-router'
 import { useChildStore } from '../../store/useChildStore'
 import { useTheme, useDiffuseTheme, diffuseFont, radius, font } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { SiteChoice } from '../ui/SiteChoice'
 import type { ChildWithRole } from '../../types'
 
 export function CaregiverChildPicker() {
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
@@ -43,6 +44,20 @@ export function CaregiverChildPicker() {
         // Diffuse: hairline pill — never a filled saturated pill. Active =
         // transparent bg + strong hairline border + a semibold weight shift;
         // inactive = paper surface + faint line. A leading dot marks active.
+        if (!diffuse) {
+          return (
+            <SiteChoice
+              key={c.id}
+              compact
+              tick={false}
+              label={c.name}
+              selected={active}
+              onPress={() => switchTo(c)}
+              tone={stickers.yellowSoft}
+              sticker={c.caregiverRole === 'family' ? 'heart' : 'baby'}
+            />
+          )
+        }
         return (
           <Pressable
             key={c.id}

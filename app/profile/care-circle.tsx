@@ -60,10 +60,13 @@ import { supabase } from '../../lib/supabase'
 import { SubscriptionTier, TIER_SEAT_LIMIT } from '../../lib/revenue'
 import { SignedImage, PHOTO_BUCKETS } from '../../lib/photoSigning'
 import { toDateStr } from '../../lib/cycleLogic'
-import { LogSheet } from '../../components/calendar/LogSheet'
+import { LogSheet, SheetFooterAction } from '../../components/calendar/LogSheet'
 import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteChoice } from '../../components/ui/SiteChoice'
+import { SiteSticker, type SiteStickerName } from '../../components/stickers/SiteSticker'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
 import { childColor } from '../../components/ui/ChildPills'
 import { useSavedToast } from '../../components/ui/SavedToast'
@@ -204,6 +207,18 @@ function renderActivitySticker(kind: string, size: number, stickerColors: { cora
     default:
       return <HeartSticker size={size} fill={stickerColors.pink} />
   }
+}
+
+/** Site-look: log kind → card-less sticker. */
+const ACTIVITY_SITE_STICKER: Record<string, SiteStickerName> = {
+  vaccine: 'syringe', medicine: 'syringe', health: 'thermo', temperature: 'thermo',
+  diaper: 'diaper', feeding: 'bottle', food: 'bottle', sleep: 'zz', mood: 'face3',
+  activity: 'star', memory: 'camera', photo: 'camera', growth: 'ruler', milestone: 'star', note: 'pencil',
+}
+
+/** Site-look: member role → avatar sticker (never `us`). */
+const MEMBER_SITE_STICKER: Record<string, SiteStickerName> = {
+  partner: 'heart', nanny: 'baby', family: 'house', doctor: 'me',
 }
 
 /**
@@ -405,9 +420,9 @@ function PhotoPickerAvatar({ uri, onPick, size = 96 }: { uri: string; onPick: (n
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: diffuse ? dt.colors.surface : stickers.lilac + (isDark ? '32' : '40'),
+          backgroundColor: diffuse ? dt.colors.surface : stickers.yellowSoft,
           borderColor: diffuse ? dt.colors.line2 : ink,
-          borderWidth: diffuse ? 1 : 2,
+          borderWidth: diffuse ? 1 : 1.5,
         },
       ]}
     >
@@ -416,14 +431,14 @@ function PhotoPickerAvatar({ uri, onPick, size = 96 }: { uri: string; onPick: (n
       ) : diffuse ? (
         <User size={size * 0.42} color={dt.colors.ink3} strokeWidth={1.4} />
       ) : (
-        <FlowerSticker size={size * 0.55} petal={stickers.lilac} center={stickers.yellow} />
+        <SiteSticker name="me" size={Math.round(size * 0.6)} cut />
       )}
       <View
         style={[
           photoStyles.badge,
           diffuse
             ? { backgroundColor: dt.colors.surface, borderRadius: 14, borderColor: dt.colors.hairline, borderWidth: 1 }
-            : { backgroundColor: stickers.lilac, borderRadius: 14, borderColor: ink, borderWidth: 1.5 },
+            : { backgroundColor: colors.surface, borderRadius: 14, borderColor: ink, borderWidth: 1.5 },
         ]}
       >
         <Camera size={12} color={diffuse ? dt.colors.ink : ink} strokeWidth={diffuse ? 1.6 : 2.5} />
@@ -766,18 +781,41 @@ export default function CareCircleScreen() {
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header — paper-circle back + large editorial title */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader />
-        <View style={styles.titleBlock}>
-          <Text style={[styles.pageTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
-            {t('careCircle_title')}
-          </Text>
-          <Text style={[styles.pageItalic, { color: diffuse ? dt.colors.ink3 : stickers.coral, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
-            {t('careCircle_tagline')}
-          </Text>
-        </View>
+        {diffuse ? (
+          <>
+            <ScreenHeader />
+            <View style={styles.titleBlock}>
+              <Text style={[styles.pageTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+                {t('careCircle_title')}
+              </Text>
+              <Text style={[styles.pageItalic, { color: dt.colors.ink3, fontFamily: diffuseFont.italic }]}>
+                {t('careCircle_tagline')}
+              </Text>
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 }}>
+              <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+              <SiteSticker name="heart" size={30} cut />
+              <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
+                {t('careCircle_title')}
+              </Text>
+            </View>
+            <Text style={[styles.siteTagline, { color: colors.textMuted, fontFamily: font.body }]}>
+              {t('careCircle_tagline')}
+            </Text>
+          </>
+        )}
       </View>
 
       {/* Tab Toggle */}
+      {!diffuse ? (
+        <View style={styles.siteTabs}>
+          <SiteChoice compact tick={false} label={t('careCircle_members_tab')} selected={tab === 'members'} onPress={() => setTab('members')} tone={stickers.yellowSoft} style={{ flex: 1 }} />
+          <SiteChoice compact tick={false} label={t('careCircle_activity_tab')} selected={tab === 'activity'} onPress={() => setTab('activity')} tone={stickers.yellowSoft} style={{ flex: 1 }} />
+        </View>
+      ) : (
       <View
         style={[
           styles.toggleRow,
@@ -853,6 +891,7 @@ export default function CareCircleScreen() {
           </Text>
         </Pressable>
       </View>
+      )}
 
       {tab === 'members' ? (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -865,20 +904,12 @@ export default function CareCircleScreen() {
                 message={t('careCircle_invite_partner_desc')}
               />
             ) : (
-              <View
-                style={[
-                  styles.emptyCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <FlowerSticker size={120} petal={stickers.pink} center={stickers.yellow} />
-                <Display size={24} align="center" color={colors.text}>
+              <View style={styles.siteEmpty}>
+                <SiteSticker name="heart" size={84} cut />
+                <Display size={24} align="center" color={colors.text} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>
                   {t('careCircle_no_caregivers')}
                 </Display>
-                <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, textAlign: 'center', marginTop: -6 }}>
+                <Text style={{ fontFamily: font.body, fontSize: 15, color: colors.text, textAlign: 'center', marginTop: -6 }}>
                   {t('careCircle_invite_village')}
                 </Text>
                 <Body size={14} align="center" color={colors.textSecondary}>
@@ -901,6 +932,72 @@ export default function CareCircleScreen() {
 
             // Diffuse status hues map onto the carried-forward semantic tokens.
             const dStatusColor = isPaused ? dt.colors.error : isPending ? dt.colors.warning : dt.colors.success
+
+            if (!diffuse) {
+              const roleLabel = m.role.charAt(0).toUpperCase() + m.role.slice(1)
+              const statusTone = isPaused ? stickers.peachSoft : isPending ? stickers.yellowSoft : stickers.greenSoft
+              return (
+                <View key={m.email || m.rowIds[0]} style={[styles.siteMember, { borderBottomColor: colors.border, opacity: isPaused ? 0.7 : 1 }]}>
+                  <Pressable
+                    onPress={() => setEditingMember(m)}
+                    style={styles.siteMemberTop}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Edit ${title}`}
+                  >
+                    {m.photoUrl && !isIconAvatar(m.photoUrl) ? (
+                      <View style={[styles.sitePhoto, { borderColor: colors.text }]}>
+                        <SignedImage value={m.photoUrl} bucket={PHOTO_BUCKETS.avatar} style={styles.memberPhoto} />
+                      </View>
+                    ) : (
+                      <SiteSticker name={MEMBER_SITE_STICKER[m.role] ?? 'me'} size={46} cut />
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.siteMemberName, { color: colors.text, fontFamily: font.bodyBold }]} numberOfLines={1}>{title}</Text>
+                      {m.email ? (
+                        <Text style={[styles.memberEmail, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>{m.email}</Text>
+                      ) : null}
+                      <View style={styles.memberBadges}>
+                        <View style={[styles.siteTag, { borderColor: colors.text, backgroundColor: stickers.lilacSoft }]}>
+                          <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{roleLabel}</Text>
+                        </View>
+                        <View style={[styles.siteTag, { borderColor: colors.text, backgroundColor: statusTone }]}>
+                          <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{isPaused ? 'Paused' : m.status}</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                  </Pressable>
+
+                  {m.childIds.length > 0 && (
+                    <Text style={[styles.siteMeta, { color: colors.textSecondary, fontFamily: font.body }]}>
+                      {m.childIds.map((cid) => children.find((c) => c.id === cid)?.name ?? 'Child').join(' · ')}
+                    </Text>
+                  )}
+                  {permKeys.length > 0 && (
+                    <Text style={[styles.siteEyebrow, { color: colors.textMuted }]}>
+                      {permKeys.map((p) => p.replace('_', ' ')).join(' · ')}
+                    </Text>
+                  )}
+
+                  <View style={styles.siteActions}>
+                    {isPending && (
+                      <Pressable onPress={() => resendInvite(m)} hitSlop={8} style={styles.siteAction} accessibilityRole="button">
+                        <Mail size={14} color={colors.text} strokeWidth={2} />
+                        <Text style={[styles.siteActionText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('careCircle_resend_invite')}</Text>
+                      </Pressable>
+                    )}
+                    <Pressable onPress={() => pauseMember(m)} hitSlop={8} style={styles.siteAction} accessibilityRole="button">
+                      {isPaused ? <Check size={14} color={colors.text} strokeWidth={2} /> : <Pause size={14} color={colors.text} strokeWidth={2} />}
+                      <Text style={[styles.siteActionText, { color: colors.text, fontFamily: font.bodyBold }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
+                    </Pressable>
+                    <Pressable onPress={() => removeMember(m)} hitSlop={8} style={styles.siteAction} accessibilityRole="button">
+                      <Trash2 size={14} color={colors.text} strokeWidth={2} />
+                      <Text style={[styles.siteActionText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('careCircle_remove')}</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )
+            }
 
             return (
               <View
@@ -1143,7 +1240,7 @@ export default function CareCircleScreen() {
             }
             leading={diffuse
               ? <UserPlus size={18} color={dt.colors.bg} strokeWidth={1.8} />
-              : <SparkleSticker size={20} fill={stickers.yellow} />}
+              : undefined}
             style={{ marginTop: 10 }}
           />
         </ScrollView>
@@ -1197,20 +1294,12 @@ export default function CareCircleScreen() {
                   message={t('careCircle_activity_log_desc')}
                 />
               ) : (
-                <View
-                  style={[
-                    styles.emptyCard,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <FlowerSticker size={120} petal={stickers.lilac} center={stickers.yellow} />
-                  <Display size={24} align="center" color={colors.text}>
+                <View style={styles.siteEmpty}>
+                  <SiteSticker name="house" size={84} cut />
+                  <Display size={24} align="center" color={colors.text} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>
                     {t('careCircle_no_activity_title')}
                   </Display>
-                  <Text style={{ fontFamily: font.italic, fontSize: 18, color: stickers.coral, textAlign: 'center', marginTop: -6 }}>
+                  <Text style={{ fontFamily: font.body, fontSize: 15, color: colors.text, textAlign: 'center', marginTop: -6 }}>
                     {t('careCircle_quiet_day')}
                   </Text>
                   <Body size={14} align="center" color={colors.textSecondary}>
@@ -1237,6 +1326,33 @@ export default function CareCircleScreen() {
                 {items.map((a) => {
                   const summary = formatActivitySummary(a.type, a.value, a.notes)
                   const typeLabel = friendlyTypeLabel(a.type, a.value)
+                  if (!diffuse) {
+                    return (
+                      <View key={a.id} style={[styles.siteActivity, { borderBottomColor: colors.border }]}>
+                        <SiteSticker name={ACTIVITY_SITE_STICKER[a.type] ?? 'heart'} size={38} cut />
+                        <View style={{ flex: 1 }}>
+                          <View style={styles.activityTopRow}>
+                            <Text style={[styles.activityType, { color: colors.text, fontFamily: font.bodyBold, flexShrink: 1 }]} numberOfLines={1}>{typeLabel}</Text>
+                            <View style={[styles.siteTag, { borderColor: colors.text, backgroundColor: stickers.yellowSoft }]}>
+                              <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{a.loggedByName}</Text>
+                            </View>
+                          </View>
+                          {summary !== '' && (
+                            <Text style={[styles.activityValue, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>{summary}</Text>
+                          )}
+                          {a.notes && summary !== a.notes && (
+                            <Text style={[styles.activityNotes, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>{a.notes}</Text>
+                          )}
+                          <View style={styles.activityFooter}>
+                            <View style={[styles.siteTag, { borderColor: colors.text, backgroundColor: stickers.blueSoft }]}>
+                              <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{a.childName}</Text>
+                            </View>
+                            <Text style={[styles.activityTime, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>{a.date}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    )
+                  }
                   return (
                     <View
                       key={a.id}
@@ -1378,24 +1494,15 @@ function FilterChip({ label, active, onPress, kind = 'kid' }: { label: string; a
   }
 
   return (
-    <Pressable
+    <SiteChoice
+      compact
+      tick={false}
+      label={label}
+      selected={active}
       onPress={onPress}
-      style={[styles.filterChip, {
-        backgroundColor: active ? stickers.lilacSoft : colors.surface,
-        borderColor: active ? stickers.lilac : colors.borderStrong,
-        borderWidth: active ? 2 : 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-      }]}
-    >
-      {kind === 'kid' ? (
-        <FlowerSticker size={14} petal={stickers.pink} center={stickers.yellow} />
-      ) : (
-        <HeartSticker size={14} fill={stickers.coral} />
-      )}
-      <Text style={[styles.filterChipText, { color: active ? stickers.lilacInk : colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
-    </Pressable>
+      tone={stickers.yellowSoft}
+      sticker={kind === 'kid' ? 'baby' : 'me'}
+    />
   )
 }
 
@@ -1412,7 +1519,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
   const toast = useSavedToast()
   // Diffuse re-tokens the shared field/chip colors; the JSX below reads these.
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const paperBorder = diffuse ? dt.colors.line : colors.text
   const inkActiveBg = diffuse ? dt.colors.surface : stickers.lilac + (isDark ? '32' : '40')
   const inkActiveText = diffuse ? dt.colors.ink : stickers.lilacInk
   const inkActiveBorder = diffuse ? dt.colors.hairline : inkActiveText
@@ -1584,13 +1691,13 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
   const STEP_TITLES = ['Who', 'Children', 'Permissions', 'Send Invite']
 
   return (
-    <LogSheet visible={visible} title={STEP_TITLES[step - 1] ?? 'Add Member'} onClose={handleClose}>
+    <LogSheet visible={visible} title={STEP_TITLES[step - 1] ?? 'Add Member'} onClose={handleClose} sticker="heart">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={sheetStyles.form}>
           {/* Progress dots */}
           <View style={sheetStyles.progressRow}>
             {[1, 2, 3, 4].map((s) => (
-              <View key={s} style={[sheetStyles.progressDot, { backgroundColor: s <= step ? (diffuse ? dt.colors.ink : stickers.lilacInk) : (diffuse ? dt.colors.line2 : colors.borderLight) }]} />
+              <View key={s} style={[sheetStyles.progressDot, { backgroundColor: s <= step ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.line2 : colors.borderLight) }]} />
             ))}
           </View>
 
@@ -1598,10 +1705,10 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 1 && (
             <>
               <View style={{ alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontFamily: displayFont, fontSize: 28, color: textColor, letterSpacing: -0.5 }}>
+                <Text style={{ fontFamily: displayFont, fontSize: 28, color: textColor, letterSpacing: diffuse ? -0.5 : 0.3, textTransform: diffuse ? 'none' : 'uppercase' }}>
                   {t('careCircle_step1_who')}
                 </Text>
-                <Text style={{ fontFamily: diffuse ? diffuseFont.italic : font.italic, fontSize: 18, color: diffuse ? dt.colors.ink3 : stickers.coral, marginTop: 2 }}>
+                <Text style={{ fontFamily: diffuse ? diffuseFont.italic : font.body, fontSize: diffuse ? 18 : 14, color: diffuse ? dt.colors.ink3 : colors.textMuted, marginTop: 2 }}>
                   {t('careCircle_step1_tagline')}
                 </Text>
               </View>
@@ -1612,12 +1719,17 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                 onChangeText={setName}
                 placeholder="Caregiver's name"
                 placeholderTextColor={mutedColor}
-                style={[sheetStyles.input, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
+                style={[sheetStyles.input, !diffuse && sheetStyles.inputSite, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
               />
               <View style={{ marginTop: 4 }}><MonoCaps color={mutedColor}>{t('careCircle_field_role')}</MonoCaps></View>
               <View style={sheetStyles.chipGrid}>
                 {ROLES.map((r) => {
                   const active = role === r.id
+                  if (!diffuse) {
+                    return (
+                      <SiteChoice key={r.id} compact tick={false} label={r.label} selected={active} onPress={() => setRole(r.id)} tone={stickers.yellowSoft} sticker={MEMBER_SITE_STICKER[r.id] ?? MEMBER_SITE_STICKER[(r as any).dbRole ?? ''] ?? 'me'} />
+                    )
+                  }
                   return (
                     <Pressable
                       key={r.id}
@@ -1632,7 +1744,9 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                   )
                 })}
               </View>
-              <SheetButton label="Next — Select Children" onPress={() => setStep(2)} disabled={!role || !name.trim()} />
+              <SheetFooterAction>
+                <SheetButton label="Next — Select Children" onPress={() => setStep(2)} disabled={!role || !name.trim()} />
+              </SheetFooterAction>
             </>
           )}
 
@@ -1645,6 +1759,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               <View style={sheetStyles.chipGrid}>
                 {allChildren.map((c) => {
                   const active = selectedChildren.includes(c.id)
+                  if (!diffuse) {
+                    return (
+                      <SiteChoice key={c.id} compact label={c.name} selected={active} onPress={() => toggleChild(c.id)} tone={stickers.yellowSoft} sticker="baby" />
+                    )
+                  }
                   return (
                     <Pressable
                       key={c.id}
@@ -1660,16 +1779,18 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                   )
                 })}
               </View>
-              <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(1)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, diffuse
-                    ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
-                    : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
-                </Pressable>
-                <View style={{ flex: 1 }}>
-                  <SheetButton label="Next — Permissions" onPress={() => setStep(3)} disabled={selectedChildren.length === 0} />
+              <SheetFooterAction>
+                <View style={sheetStyles.btnRow}>
+                  <Pressable onPress={() => setStep(1)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                    <Text style={[sheetStyles.backBtnText, diffuse
+                      ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
+                      : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
+                  </Pressable>
+                  <View style={{ flex: 1 }}>
+                    <SheetButton label="Next — Permissions" onPress={() => setStep(3)} disabled={selectedChildren.length === 0} />
+                  </View>
                 </View>
-              </View>
+              </SheetFooterAction>
             </>
           )}
 
@@ -1681,6 +1802,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               </Text>
               {PERMISSION_LEVELS.map((p) => {
                 const active = permLevel === p.id
+                if (!diffuse) {
+                  return (
+                    <SiteChoice key={p.id} align="start" label={p.label} sub={p.desc} selected={active} onPress={() => setPermLevel(p.id)} tone={stickers.yellowSoft} />
+                  )
+                }
                 return (
                   <Pressable
                     key={p.id}
@@ -1695,16 +1821,18 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                   </Pressable>
                 )
               })}
-              <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(2)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, diffuse
-                    ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
-                    : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
-                </Pressable>
-                <View style={{ flex: 1 }}>
-                  <SheetButton label="Next — Send Invite" onPress={() => setStep(4)} />
+              <SheetFooterAction>
+                <View style={sheetStyles.btnRow}>
+                  <Pressable onPress={() => setStep(2)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                    <Text style={[sheetStyles.backBtnText, diffuse
+                      ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
+                      : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
+                  </Pressable>
+                  <View style={{ flex: 1 }}>
+                    <SheetButton label="Next — Send Invite" onPress={() => setStep(4)} />
+                  </View>
                 </View>
-              </View>
+              </SheetFooterAction>
             </>
           )}
 
@@ -1720,6 +1848,11 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                 {(['email', 'sms', 'link'] as const).map((m) => {
                   const active = sendMethod === m
                   const labels = { email: 'Via Email', sms: 'Via SMS', link: 'Share Link' }
+                  if (!diffuse) {
+                    return (
+                      <SiteChoice key={m} compact tick={false} label={labels[m]} selected={active} onPress={() => setSendMethod(m)} tone={stickers.yellowSoft} />
+                    )
+                  }
                   return (
                     <Pressable
                       key={m}
@@ -1746,7 +1879,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                     placeholderTextColor={mutedColor}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    style={[sheetStyles.input, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
+                    style={[sheetStyles.input, !diffuse && sheetStyles.inputSite, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
                   />
                 </>
               )}
@@ -1758,7 +1891,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <Pressable
                       onPress={() => setShowCountryPicker(!showCountryPicker)}
-                      style={[sheetStyles.countryBtn, { backgroundColor: paper, borderColor: paperBorder }]}
+                      style={[sheetStyles.countryBtn, !diffuse && sheetStyles.inputSite, { backgroundColor: paper, borderColor: paperBorder }]}
                     >
                       <Text style={{ fontSize: 16 }}>{COUNTRY_CODES.find((c) => c.code === countryCode)?.flag ?? '🌍'}</Text>
                       <Text style={[sheetStyles.countryCode, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>{countryCode}</Text>
@@ -1770,7 +1903,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       placeholder="Phone number"
                       placeholderTextColor={mutedColor}
                       keyboardType="phone-pad"
-                      style={[sheetStyles.input, { flex: 1, color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
+                      style={[sheetStyles.input, !diffuse && sheetStyles.inputSite, { flex: 1, color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
                     />
                   </View>
                   {showCountryPicker && (
@@ -1798,16 +1931,18 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                 </Text>
               )}
 
-              <View style={sheetStyles.btnRow}>
-                <Pressable onPress={() => setStep(3)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
-                  <Text style={[sheetStyles.backBtnText, diffuse
-                    ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
-                    : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
-                </Pressable>
-                <View style={{ flex: 1 }}>
-                  <SheetButton label={saving ? 'Sending…' : 'Send Invite'} onPress={handleSendInvite} disabled={saving} />
+              <SheetFooterAction>
+                <View style={sheetStyles.btnRow}>
+                  <Pressable onPress={() => setStep(3)} style={[sheetStyles.backBtn, { borderColor: diffuse ? dt.colors.line2 : paperBorder }]}>
+                    <Text style={[sheetStyles.backBtnText, diffuse
+                      ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 12 }
+                      : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
+                  </Pressable>
+                  <View style={{ flex: 1 }}>
+                    <SheetButton label={saving ? 'Sending…' : 'Send Invite'} onPress={handleSendInvite} disabled={saving} />
+                  </View>
                 </View>
-              </View>
+              </SheetFooterAction>
             </>
           )}
         </View>
@@ -1847,21 +1982,7 @@ function SheetButton({ label, onPress, disabled }: { label: string; onPress: () 
     )
   }
 
-  const ink = colors.text
-  const inkText = colors.bg
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        sheetStyles.sheetBtn,
-        { backgroundColor: ink, opacity: disabled ? 0.45 : 1 },
-        pressed && !disabled && { transform: [{ scale: 0.98 }] },
-      ]}
-    >
-      <Text style={[sheetStyles.sheetBtnText, { color: inkText, fontFamily: font.bodySemiBold }]}>{label}</Text>
-    </Pressable>
-  )
+  return <PillButton variant="ink" label={label} onPress={onPress} disabled={disabled} height={54} />
 }
 
 function InviteButton({ icon: Icon, label, color, onPress, saving }: { icon: typeof Mail; label: string; color: string; onPress: () => void; saving: boolean }) {
@@ -1916,7 +2037,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const paperBorder = diffuse ? dt.colors.line : colors.text
   const inkActiveBg = diffuse ? dt.colors.surface : stickers.lilac + (isDark ? '32' : '40')
   const inkActiveText = diffuse ? dt.colors.ink : stickers.lilacInk
   const inkActiveBorder = diffuse ? dt.colors.hairline : inkActiveText
@@ -1945,7 +2066,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
   const showGranular = flagsHydrated && granularEnabled
 
   return (
-    <LogSheet visible title={`Edit ${member.displayName || 'Member'}`} onClose={onClose}>
+    <LogSheet visible title={`Edit ${member.displayName || 'Member'}`} onClose={onClose} sticker="me">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={sheetStyles.form}>
           <PhotoPickerAvatar uri={editPhotoUri} onPick={setEditPhotoUri} />
@@ -1956,7 +2077,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
             onChangeText={setEditName}
             placeholder="Caregiver name"
             placeholderTextColor={mutedColor}
-            style={[sheetStyles.input, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
+            style={[sheetStyles.input, !diffuse && sheetStyles.inputSite, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
           />
 
           {member.email ? (
@@ -1970,6 +2091,11 @@ function EditMemberSheet({ member, onClose, onSaved }: {
           <View style={sheetStyles.chipGrid}>
             {ROLES.map((r) => {
               const active = editRole === r.id || editRole === ((r as any).dbRole ?? r.id)
+              if (!diffuse) {
+                return (
+                  <SiteChoice key={r.id} compact tick={false} label={r.label} selected={active} onPress={() => setEditRole(r.id)} tone={stickers.yellowSoft} sticker={MEMBER_SITE_STICKER[r.id] ?? MEMBER_SITE_STICKER[(r as any).dbRole ?? ''] ?? 'me'} />
+                )
+              }
               return (
                 <Pressable
                   key={r.id}
@@ -1996,6 +2122,11 @@ function EditMemberSheet({ member, onClose, onSaved }: {
           ) : (
             PERMISSION_LEVELS.map((p) => {
               const active = editPermLevel === p.id
+              if (!diffuse) {
+                return (
+                  <SiteChoice key={p.id} align="start" label={p.label} sub={p.desc} selected={active} onPress={() => setEditPermLevel(p.id)} tone={stickers.yellowSoft} />
+                )
+              }
               return (
                 <Pressable
                   key={p.id}
@@ -2012,16 +2143,18 @@ function EditMemberSheet({ member, onClose, onSaved }: {
             })
           )}
 
-          <SheetButton
-            label="Save Changes"
-            onPress={() =>
-              onSaved(
-                showGranular
-                  ? { displayName: editName.trim(), photoUrl: editPhotoUri, role: editRole, permissions: workingPerms }
-                  : { displayName: editName.trim(), photoUrl: editPhotoUri, role: editRole, permLevel: editPermLevel },
-              )
-            }
-          />
+          <SheetFooterAction>
+            <SheetButton
+              label="Save Changes"
+              onPress={() =>
+                onSaved(
+                  showGranular
+                    ? { displayName: editName.trim(), photoUrl: editPhotoUri, role: editRole, permissions: workingPerms }
+                    : { displayName: editName.trim(), photoUrl: editPhotoUri, role: editRole, permLevel: editPermLevel },
+                )
+              }
+            />
+          </SheetFooterAction>
         </View>
       </ScrollView>
     </LogSheet>
@@ -2060,6 +2193,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  siteTitle: { flex: 1, fontSize: 26, textTransform: 'uppercase', letterSpacing: 0.3 },
+  siteTagline: { fontSize: 14, marginTop: 10, paddingHorizontal: 8 },
+  siteTabs: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 14 },
+  siteEmpty: { alignItems: 'center', paddingVertical: 36, gap: 14 },
+  siteMember: { paddingVertical: 14, gap: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  siteMemberTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  sitePhoto: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, overflow: 'hidden' as const },
+  siteMemberName: { fontSize: 17 },
+  siteTag: { flexDirection: 'row', alignItems: 'center', paddingVertical: 2, paddingHorizontal: 9, borderRadius: 999, borderWidth: 1.5 },
+  siteTagText: { fontSize: 11, textTransform: 'capitalize' },
+  siteMeta: { fontSize: 13, marginLeft: 58 },
+  siteEyebrow: { fontSize: 10, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase', marginLeft: 58 },
+  siteActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, marginLeft: 58, marginTop: 2 },
+  siteAction: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 },
+  siteActionText: { fontSize: 13 },
+  siteActivity: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   memberCard: {
     padding: 18,
     gap: 12,
@@ -2175,6 +2324,7 @@ const styles = StyleSheet.create({
 const sheetStyles = StyleSheet.create({
   form: { gap: 14, paddingBottom: 12 },
   input: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 16, height: 52, fontSize: 15 },
+  inputSite: { borderWidth: 1.5, borderRadius: 14, fontSize: 16 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row',

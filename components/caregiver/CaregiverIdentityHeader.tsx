@@ -18,6 +18,7 @@ import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useChildStore } from '../../store/useChildStore'
 import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { CaregiverChildPicker } from './CaregiverChildPicker'
 
 interface CaregiverIdentityHeaderProps {
@@ -43,7 +44,9 @@ export function CaregiverIdentityHeader({ size = 26 }: CaregiverIdentityHeaderPr
     <View style={styles.outer}>
       <View style={styles.wrap}>
         <View style={styles.badge}>
-          {isFamily ? <RoleFamily size={40} /> : <RoleNanny size={40} />}
+          {diffuse
+            ? (isFamily ? <RoleFamily size={40} /> : <RoleNanny size={40} />)
+            : <SiteSticker name={isFamily ? 'heart' : 'baby'} size={44} cut />}
         </View>
         <View style={{ flex: 1 }}>
           <View style={styles.row}>
@@ -61,8 +64,8 @@ export function CaregiverIdentityHeader({ size = 26 }: CaregiverIdentityHeaderPr
               </>
             ) : (
               <>
-                <Display size={size} color={ink}>Caring for</Display>
-                <DisplayItalic size={size} color={ink} style={{ marginLeft: 8 }} numberOfLines={1}>
+                <Display size={size} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>Caring for</Display>
+                <DisplayItalic size={size} color={ink} style={{ marginLeft: 8, textTransform: 'uppercase', letterSpacing: 0.3 }} numberOfLines={1}>
                   {activeChild.name}
                 </DisplayItalic>
               </>

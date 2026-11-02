@@ -9,6 +9,9 @@ import { useTranslation } from '../lib/i18n'
 import { useModeStore } from '../store/useModeStore'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { PillButton } from '../components/ui/PillButton'
+import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
 
 type PermGlyph = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
 
@@ -46,6 +49,14 @@ export default function AcceptInvite() {
     buttonText: { color: colors.textInverse, fontSize: 16, fontWeight: '700' },
     declineButton: { paddingVertical: 16 },
     declineText: { color: colors.textMuted, fontSize: 14 },
+    siteTitle: { fontSize: 28, color: colors.text, marginBottom: 8, textAlign: 'center', fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 },
+    siteEyebrow: { fontSize: 10, color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 },
+    siteRows: { width: '100%', marginBottom: 28 },
+    siteRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12,
+      borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
+    },
+    sitePermText: { fontSize: 15, color: colors.text, fontFamily: font.body, flex: 1 },
   }), [colors])
   const params = useLocalSearchParams<{ token: string | string[] }>()
   const token = Array.isArray(params.token) ? params.token[0] : params.token
@@ -92,12 +103,12 @@ export default function AcceptInvite() {
   }, [token])
 
   // Map a capability key to a display row. Order is stable for rendering.
-  const PERM_LABELS: { key: string; icon: keyof typeof Ionicons.glyphMap; Glyph: PermGlyph; label: string }[] = [
-    { key: 'view', icon: 'eye-outline', Glyph: Eye, label: 'View the child’s logs' },
-    { key: 'log_activity', icon: 'create-outline', Glyph: PencilLine, label: 'Log daily activities' },
-    { key: 'chat', icon: 'chatbubble-outline', Glyph: MessageCircle, label: 'Use Grandma chat' },
-    { key: 'edit_child', icon: 'person-outline', Glyph: User, label: 'Edit the child profile' },
-    { key: 'emergency', icon: 'medkit-outline', Glyph: HeartPulse, label: 'View medical information' },
+  const PERM_LABELS: { key: string; icon: keyof typeof Ionicons.glyphMap; Glyph: PermGlyph; sticker: SiteStickerName; label: string }[] = [
+    { key: 'view', icon: 'eye-outline', Glyph: Eye, sticker: 'eye', label: 'View the child’s logs' },
+    { key: 'log_activity', icon: 'create-outline', Glyph: PencilLine, sticker: 'pencil', label: 'Log daily activities' },
+    { key: 'chat', icon: 'chatbubble-outline', Glyph: MessageCircle, sticker: 'bubble', label: 'Use Grandma chat' },
+    { key: 'edit_child', icon: 'person-outline', Glyph: User, sticker: 'baby', label: 'Edit the child profile' },
+    { key: 'emergency', icon: 'medkit-outline', Glyph: HeartPulse, sticker: 'thermo', label: 'View medical information' },
   ]
 
   async function handleAccept() {
@@ -135,49 +146,61 @@ export default function AcceptInvite() {
   if (accepted) {
     return (
       <View style={[styles.container, diffuse && { backgroundColor: dt.colors.bg }]}>
-        <Text style={styles.emoji}>{t('acceptInvite_successEmoji')}</Text>
+        {diffuse ? (
+          <Text style={styles.emoji}>{t('acceptInvite_successEmoji')}</Text>
+        ) : (
+          <View style={{ marginBottom: 20 }}><SiteSticker name="star" size={64} cut /></View>
+        )}
         <Text style={[
-          styles.title,
+          diffuse ? styles.title : styles.siteTitle,
           diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
         ]}>{t('acceptInvite_successTitle')}</Text>
         <Text style={[styles.subtitle, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
           {t('acceptInvite_successBody', { name: childName })}
         </Text>
-        <Pressable
-          onPress={() => router.replace('/(tabs)')}
-          style={[
-            styles.button,
-            diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: 999 },
-          ]}
-        >
-          <Text style={[
-            styles.buttonText,
-            diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 },
-          ]}>{t('acceptInvite_goHome')}</Text>
-        </Pressable>
+        {diffuse ? (
+          <Pressable
+            onPress={() => router.replace('/(tabs)')}
+            style={[
+              styles.button,
+              { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: 999 },
+            ]}
+          >
+            <Text style={[
+              styles.buttonText,
+              { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 },
+            ]}>{t('acceptInvite_goHome')}</Text>
+          </Pressable>
+        ) : (
+          <PillButton variant="ink" label={t('acceptInvite_goHome')} onPress={() => router.replace('/(tabs)')} style={{ width: '100%' }} />
+        )}
       </View>
     )
   }
 
   return (
     <View style={[styles.container, diffuse && { backgroundColor: dt.colors.bg }]}>
-      <Pressable
-        onPress={() => router.back()}
-        style={[
-          styles.backButton,
-          diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
-        ]}
-      >
-        {diffuse ? (
+      {diffuse ? (
+        <Pressable
+          onPress={() => router.back()}
+          style={[
+            styles.backButton,
+            { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
+          ]}
+        >
           <ArrowLeft size={20} color={dt.colors.ink} strokeWidth={1.6} />
-        ) : (
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        )}
-      </Pressable>
+        </Pressable>
+      ) : (
+        <InkBackButton ink={colors.text} paper={colors.surface} style={{ position: 'absolute', top: 56, left: 24, marginBottom: 0 }} />
+      )}
 
-      <Text style={styles.emoji}>{t('acceptInvite_headerEmoji')}</Text>
+      {diffuse ? (
+        <Text style={styles.emoji}>{t('acceptInvite_headerEmoji')}</Text>
+      ) : (
+        <View style={{ marginBottom: 16 }}><SiteSticker name="heart" size={64} cut /></View>
+      )}
       <Text style={[
-        styles.title,
+        diffuse ? styles.title : styles.siteTitle,
         diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
       ]}>{t('acceptInvite_title')}</Text>
       <Text style={[styles.subtitle, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
@@ -185,11 +208,11 @@ export default function AcceptInvite() {
       </Text>
 
       <View style={[
-        styles.permissionsCard,
+        diffuse ? styles.permissionsCard : styles.siteRows,
         diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line },
       ]}>
         <Text style={[
-          styles.permissionsTitle,
+          diffuse ? styles.permissionsTitle : styles.siteEyebrow,
           diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 11 },
         ]}>{t('acceptInvite_permissionsTitle')}</Text>
         {/* Render the rows the owner actually granted. Falls back to the
@@ -197,42 +220,48 @@ export default function AcceptInvite() {
         {PERM_LABELS
           .filter((p) => (grantedPerms ? grantedPerms.includes(p.key) : ['view', 'log_activity', 'chat'].includes(p.key)))
           .map((p) => (
-            <View key={p.key} style={styles.permRow}>
+            <View key={p.key} style={diffuse ? styles.permRow : styles.siteRow}>
               {diffuse ? (
                 <DiffuseBloomIcon color={accent} size={30} intensity={0.45}>
                   <p.Glyph size={16} color={dt.colors.ink3} strokeWidth={1.6} />
                 </DiffuseBloomIcon>
               ) : (
-                <Ionicons name={p.icon} size={18} color={colors.accent} />
+                <SiteSticker name={p.sticker} size={30} cut />
               )}
-              <Text style={[styles.permText, diffuse && { color: dt.colors.ink2, fontFamily: diffuseFont.body }]}>{p.label}</Text>
+              <Text style={[diffuse ? styles.permText : styles.sitePermText, diffuse && { color: dt.colors.ink2, fontFamily: diffuseFont.body }]}>{p.label}</Text>
             </View>
           ))}
       </View>
 
-      <Pressable
-        onPress={handleAccept}
-        disabled={loading}
-        style={[
-          styles.button,
-          diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline, borderRadius: 999 },
-          loading && { opacity: 0.6 },
-        ]}
-      >
-        {loading ? (
-          <ActivityIndicator color={diffuse ? dt.colors.ink : colors.textInverse} />
-        ) : (
-          <Text style={[
-            styles.buttonText,
-            diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 },
-          ]}>{t('acceptInvite_acceptBtn')}</Text>
-        )}
-      </Pressable>
+      {diffuse ? (
+        <Pressable
+          onPress={handleAccept}
+          disabled={loading}
+          style={[
+            styles.button,
+            { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline, borderRadius: 999 },
+            loading && { opacity: 0.6 },
+          ]}
+        >
+          {loading ? (
+            <ActivityIndicator color={dt.colors.ink} />
+          ) : (
+            <Text style={[
+              styles.buttonText,
+              { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 },
+            ]}>{t('acceptInvite_acceptBtn')}</Text>
+          )}
+        </Pressable>
+      ) : (
+        <PillButton variant="ink" label={t('acceptInvite_acceptBtn')} onPress={handleAccept} disabled={loading} loading={loading} style={{ width: '100%' }} />
+      )}
 
       <Pressable onPress={() => router.back()} style={styles.declineButton}>
         <Text style={[
           styles.declineText,
-          diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 11 },
+          diffuse
+            ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 11 }
+            : { color: colors.text, fontFamily: font.bodyBold, textDecorationLine: 'underline' },
         ]}>{t('acceptInvite_declineBtn')}</Text>
       </Pressable>
     </View>

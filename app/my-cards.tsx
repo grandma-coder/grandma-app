@@ -6,6 +6,8 @@ import { X, ChevronLeft } from 'lucide-react-native'
 import { useTheme, shadows, useDiffuseTheme, diffuseFont } from '../constants/theme'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { Display, MonoCaps } from '../components/ui/Typography'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteSticker } from '../components/stickers/SiteSticker'
 import { CardSticker } from '../components/home/pregnancy/CardSticker'
 import { useDailyMessage, type DailyMessageRow } from '../lib/dailyMessage/useDailyMessage'
 import { getCardById } from '../lib/dailyMessage'
@@ -57,24 +59,37 @@ export default function MyCardsScreen() {
     back: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
     title: { letterSpacing: -0.5, marginTop: 8 },
     // Paper surface + hairline + subtle shadow + small sticker accent + ink serif.
-    tile: { flex: 1, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 16, minHeight: 168, justifyContent: 'space-between', ...shadows.card },
+    tile: { flex: 1, borderRadius: radius.lg, borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? colors.border : colors.text, backgroundColor: colors.surface, padding: 16, minHeight: 168, justifyContent: 'space-between', ...shadows.card },
     tileText: { lineHeight: 22, letterSpacing: -0.2, marginTop: 12 },
     tileDate: { marginTop: 10 },
     empty: { fontFamily: font.italic, fontSize: 18, color: colors.textMuted, textAlign: 'center', marginTop: 80 },
     overlay: { flex: 1, backgroundColor: colors.bg + 'F2', justifyContent: 'center', paddingHorizontal: 24 },
-    big: { borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 28, minHeight: 260, justifyContent: 'flex-start', gap: 22, ...shadows.cardPop },
+    big: { borderRadius: radius.lg, borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? colors.border : colors.text, backgroundColor: colors.surface, padding: 28, minHeight: 260, justifyContent: 'flex-start', gap: 22, ...shadows.cardPop },
     bigText: { lineHeight: 33, letterSpacing: -0.3 },
-    close: { position: 'absolute', top: 14, right: 14, width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+    close: { position: 'absolute', top: 14, right: 14, width: 38, height: 38, borderRadius: 19, borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? colors.border : colors.text, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   })
 
   return (
     <View style={[styles.fill, { paddingTop: insets.top + 8 }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
-          <ChevronLeft size={22} color={colors.text} strokeWidth={2} />
-        </Pressable>
-        <MonoCaps color={colors.textMuted}>DAILY MESSAGE</MonoCaps>
-        <Display size={28} style={styles.title}>My Cards</Display>
+        {diffuse ? (
+          <>
+            <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
+              <ChevronLeft size={22} color={colors.text} strokeWidth={2} />
+            </Pressable>
+            <MonoCaps color={colors.textMuted}>DAILY MESSAGE</MonoCaps>
+            <Display size={28} style={styles.title}>My Cards</Display>
+          </>
+        ) : (
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+              <SiteSticker name="star" size={30} cut />
+              <Display size={26} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>My Cards</Display>
+            </View>
+            <MonoCaps color={colors.textMuted} style={{ marginTop: 14 }}>DAILY MESSAGE</MonoCaps>
+          </>
+        )}
       </View>
 
       <FlatList

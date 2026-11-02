@@ -14,6 +14,9 @@ import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { PaperAlert } from '../components/ui/PaperAlert'
 import { Heart } from '../components/ui/Stickers'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { PillButton } from '../components/ui/PillButton'
+import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
 import { SubscriptionTier, TIER_SEAT_LIMIT } from '../lib/revenue'
 
 interface CaregiverRow {
@@ -26,7 +29,7 @@ interface CaregiverRow {
 }
 
 export default function ManageCaregivers() {
-  const { colors, stickers } = useTheme()
+  const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
@@ -81,6 +84,17 @@ export default function ManageCaregivers() {
       backgroundColor: colors.surface, borderRadius: 16, padding: 16,
       borderWidth: 1, borderColor: colors.border, marginBottom: 10,
     },
+    siteRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingVertical: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
+    },
+    tag: {
+      borderRadius: 999, paddingHorizontal: 9, paddingVertical: 2,
+      borderWidth: 1.5, borderColor: colors.text,
+    },
+    tagText: { fontSize: 11, fontFamily: font.bodyBold, color: colors.text, textTransform: 'capitalize' },
+    siteTitle: { fontSize: 22, fontFamily: font.display, color: colors.text, textTransform: 'uppercase', letterSpacing: 0.3 },
     cardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
     avatar: {
       width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceRaised,
@@ -94,7 +108,7 @@ export default function ManageCaregivers() {
     emptyState: { alignItems: 'center', paddingTop: 40, gap: 8 },
     emptyTitle: { fontSize: 16, fontWeight: '600', color: colors.textMuted },
     emptySubtitle: { fontSize: 13, color: colors.textMuted },
-  }), [colors])
+  }), [colors, font])
 
   const child = useChildStore((s) => s.activeChild)
   const [caregivers, setCaregivers] = useState<CaregiverRow[]>([])
@@ -147,24 +161,31 @@ export default function ManageCaregivers() {
   return (
     <View style={[styles.container, diffuse && { backgroundColor: dt.colors.bg }]}>
       <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          style={[
-            styles.backButton,
-            diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
-          ]}
-        >
-          {diffuse ? (
+        {diffuse ? (
+          <Pressable
+            onPress={() => router.back()}
+            style={[
+              styles.backButton,
+              { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
+            ]}
+          >
             <ArrowLeft size={20} color={dt.colors.ink} strokeWidth={1.6} />
-          ) : (
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          )}
-        </Pressable>
-        <Text style={[
-          styles.title,
-          diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
-        ]}>{t('leaderboard_tabCaregivers')}</Text>
-        <View style={{ width: 40 }} />
+          </Pressable>
+        ) : (
+          <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+        )}
+        {diffuse ? (
+          <Text style={[
+            styles.title,
+            { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
+          ]}>{t('leaderboard_tabCaregivers')}</Text>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <SiteSticker name="heart" size={30} cut />
+            <Text style={styles.siteTitle}>{t('leaderboard_tabCaregivers')}</Text>
+          </View>
+        )}
+        <View style={{ width: diffuse ? 40 : 44 }} />
       </View>
 
       <Text style={[styles.subtitle, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
@@ -187,7 +208,21 @@ export default function ManageCaregivers() {
         </Text>
       </View>
 
-      {atLimit && nextTierRoute ? (
+      {atLimit && nextTierRoute && !diffuse ? (
+        <PillButton
+          variant="ink"
+          label={t('manageCaregivers_upgradeForSeats', { tier: nextTierLabel ?? '' })}
+          onPress={() => router.push(`/paywall?tier=${nextTierRoute}`)}
+          style={{ marginHorizontal: 24, marginBottom: 20 }}
+        />
+      ) : !diffuse ? (
+        <PillButton
+          variant="ink"
+          label={t('careInvite_title')}
+          onPress={() => router.push('/invite-caregiver')}
+          style={{ marginHorizontal: 24, marginBottom: 20 }}
+        />
+      ) : atLimit && nextTierRoute ? (
         <Pressable
           onPress={() => router.push(`/paywall?tier=${nextTierRoute}`)}
           style={[
@@ -260,6 +295,38 @@ export default function ManageCaregivers() {
             const statusTextColor = diffuse
               ? (DIFFUSE_STATUS_TEXT[item.status] ?? dt.colors.ink3)
               : (STATUS_TEXT_COLORS[item.status] ?? colors.textMuted)
+            if (!diffuse) {
+              const avatar: SiteStickerName = item.role === 'nanny' ? 'baby' : item.role === 'family' ? 'heart' : 'me'
+              const statusTone = item.status === 'accepted' ? stickers.greenSoft : item.status === 'pending' ? stickers.peachSoft : colors.surfaceRaised
+              return (
+                <View style={styles.siteRow}>
+                  <View style={styles.cardLeft}>
+                    <SiteSticker name={avatar} size={38} cut />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.email, { fontFamily: font.bodyBold }]} numberOfLines={1}>{item.email}</Text>
+                      <View style={{ flexDirection: 'row', gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
+                        <View style={[styles.tag, { backgroundColor: stickers.yellowSoft }]}>
+                          <Text style={styles.tagText}>{item.role}</Text>
+                        </View>
+                        <View style={[styles.tag, { backgroundColor: statusTone }]}>
+                          <Text style={styles.tagText}>{item.status}</Text>
+                        </View>
+                        {item.is_locked && (
+                          <View style={[styles.tag, { backgroundColor: stickers.peachSoft }]}>
+                            <Text style={styles.tagText}>{t('manageCaregivers_readOnly')}</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                  {item.status !== 'revoked' && (
+                    <Pressable onPress={() => revoke(item.id)} style={styles.revokeButton} hitSlop={8} accessibilityRole="button" accessibilityLabel="Revoke access">
+                      <Ionicons name="close" size={22} color={colors.text} />
+                    </Pressable>
+                  )}
+                </View>
+              )
+            }
             return (
               <View style={[
                 styles.card,

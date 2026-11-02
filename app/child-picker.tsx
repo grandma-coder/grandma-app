@@ -5,13 +5,15 @@ import { Ionicons } from '@expo/vector-icons'
 import { X, Check } from 'lucide-react-native'
 import { useChildStore } from '../store/useChildStore'
 import type { ChildWithRole } from '../types'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../constants/theme'
 import { useTranslation } from '../lib/i18n'
 import { useModeStore } from '../store/useModeStore'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteSticker } from '../components/stickers/SiteSticker'
 
 export default function ChildPicker() {
-  const { colors, stickers } = useTheme()
+  const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
@@ -46,7 +48,7 @@ export default function ChildPicker() {
       width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface,
       justifyContent: 'center', alignItems: 'center',
     },
-    list: { paddingHorizontal: 24, gap: 10 },
+    list: { paddingHorizontal: 24, gap: diffuse ? 10 : 0 },
     card: {
       flexDirection: 'row', alignItems: 'center', gap: 14,
       backgroundColor: colors.surface, borderRadius: 16, padding: 16,
@@ -60,7 +62,15 @@ export default function ChildPicker() {
     childName: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
     roleBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
     roleText: { fontSize: 11, fontWeight: '600', color: colors.textSecondary, textTransform: 'capitalize' },
-  }), [colors])
+    siteTitle: { fontSize: 22, color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 },
+    siteRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
+    },
+    siteName: { fontSize: 17, color: colors.text, fontFamily: font.bodyBold, marginBottom: 4 },
+    siteTag: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 2, borderWidth: 1.5, borderColor: colors.text, alignSelf: 'flex-start' },
+    siteTagText: { fontSize: 11, color: colors.text, fontFamily: font.bodyBold, textTransform: 'capitalize' },
+  }), [colors, font, diffuse])
 
   function handleSelect(child: ChildWithRole) {
     setActiveChild(child)
@@ -69,25 +79,29 @@ export default function ChildPicker() {
 
   return (
     <View style={[styles.container, diffuse && { backgroundColor: dt.colors.bg }]}>
-      <View style={styles.header}>
-        <Text style={[
-          styles.title,
-          diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
-        ]}>{t('childPicker_title')}</Text>
-        <Pressable
-          onPress={() => router.back()}
-          style={[
-            styles.closeButton,
-            diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 },
-          ]}
-        >
-          {diffuse ? (
+      {diffuse ? (
+        <View style={styles.header}>
+          <Text style={[
+            styles.title,
+            { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
+          ]}>{t('childPicker_title')}</Text>
+          <Pressable
+            onPress={() => router.back()}
+            style={[
+              styles.closeButton,
+              { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 },
+            ]}
+          >
             <X size={20} color={dt.colors.ink} strokeWidth={1.6} />
-          ) : (
-            <Ionicons name="close" size={24} color={colors.textMuted} />
-          )}
-        </Pressable>
-      </View>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={[styles.header, { justifyContent: 'flex-start', gap: 12 }]}>
+          <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          <SiteSticker name="baby2" size={30} cut />
+          <Text style={styles.siteTitle}>{t('childPicker_title')}</Text>
+        </View>
+      )}
 
       <FlatList
         data={children}
@@ -95,6 +109,25 @@ export default function ChildPicker() {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
           const isActive = item.id === activeChild?.id
+          if (!diffuse) {
+            return (
+              <Pressable
+                onPress={() => handleSelect(item)}
+                style={[styles.siteRow, isActive && { backgroundColor: getModeColorSoft(mode), marginHorizontal: -12, paddingHorizontal: 12, borderRadius: 14 }]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
+              >
+                <SiteSticker name={item.caregiverRole === 'parent' ? 'baby' : 'baby2'} size={42} cut />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.siteName} numberOfLines={1}>{item.name}</Text>
+                  <View style={[styles.siteTag, { backgroundColor: ROLE_COLORS[item.caregiverRole] ?? colors.surfaceRaised }]}>
+                    <Text style={styles.siteTagText}>{item.caregiverRole}</Text>
+                  </View>
+                </View>
+                {isActive ? <Ionicons name="checkmark" size={24} color={colors.text} /> : <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />}
+              </Pressable>
+            )
+          }
           return (
             <Pressable
               onPress={() => handleSelect(item)}

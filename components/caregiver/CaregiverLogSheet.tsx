@@ -17,7 +17,7 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Modal, View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont, font, radius } from '../../constants/theme'
 import { ChevronLeft } from 'lucide-react-native'
@@ -34,6 +34,9 @@ import {
   ActivityForm,
   HealthEventForm,
 } from '../calendar/KidsLogForms'
+import { LogSheet } from '../calendar/LogSheet'
+import { StickerChoice } from '../calendar/QuickLogKit'
+import type { SiteStickerName } from '../stickers/SiteSticker'
 import type { ChildWithRole } from '../../types'
 import { useTranslation } from '../../lib/i18n'
 
@@ -50,17 +53,18 @@ interface LogTypeDef {
   key: LogType
   label: string
   emoji: string
+  sticker: SiteStickerName
   capability: typeof CAPABILITY[keyof typeof CAPABILITY]
 }
 
 const LOG_TYPES: LogTypeDef[] = [
-  { key: 'feeding', label: 'Feeding', emoji: '🍼', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'sleep', label: 'Sleep', emoji: '😴', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'diaper', label: 'Diaper', emoji: '🧷', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'mood', label: 'Mood', emoji: '🙂', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'memory', label: 'Memory', emoji: '📸', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'activity', label: 'Activity', emoji: '🧩', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'health', label: 'Health', emoji: '🩺', capability: CAPABILITY.EMERGENCY },
+  { key: 'feeding', label: 'Feeding', emoji: '🍼', sticker: 'bottle', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'sleep', label: 'Sleep', emoji: '😴', sticker: 'zz', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'diaper', label: 'Diaper', emoji: '🧷', sticker: 'diaper', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'mood', label: 'Mood', emoji: '🙂', sticker: 'face3', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'memory', label: 'Memory', emoji: '📸', sticker: 'camera', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'activity', label: 'Activity', emoji: '🧩', sticker: 'star', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'health', label: 'Health', emoji: '🩺', sticker: 'thermo', capability: CAPABILITY.EMERGENCY },
 ]
 
 interface Props {
@@ -70,7 +74,7 @@ interface Props {
 
 export function CaregiverLogSheet({ child, onClose }: Props) {
   const insets = useSafeAreaInsets()
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -177,44 +181,39 @@ export function CaregiverLogSheet({ child, onClose }: Props) {
     )
   }
 
+  const selectedDef = allowed.find((lt) => lt.key === selected)
   return (
-    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
-          <View style={styles.handle} />
-
-          {selected === null ? (
-            <>
-              <Text style={styles.title}>{t('caregiverLogSheet_title', { name: child.name })}</Text>
-              <ScrollView contentContainerStyle={styles.grid}>
-                {allowed.map((lt) => (
-                  <Pressable
-                    key={lt.key}
-                    onPress={() => setSelected(lt.key)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Log ${lt.label}`}
-                    style={styles.tile}
-                  >
-                    <Text style={styles.tileEmoji}>{lt.emoji}</Text>
-                    <Text style={styles.tileLabel}>{lt.label}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-              <Pressable onPress={onClose} style={styles.cancel}>
-                <Text style={styles.cancelText}>{t('common_close')}</Text>
-              </Pressable>
-            </>
-          ) : (
-            <ScrollView contentContainerStyle={styles.formWrap}>
-              <Pressable onPress={() => setSelected(null)} style={styles.back}>
-                <Text style={styles.backText}>{t('caregiverLogSheet_backChevron', { back: t('common_back') })}</Text>
-              </Pressable>
-              {formBody}
-            </ScrollView>
-          )}
+    <LogSheet
+      visible
+      onClose={onClose}
+      sticker={selectedDef?.sticker ?? 'heart'}
+      title={selectedDef ? selectedDef.label : t('caregiverLogSheet_title', { name: child.name })}
+    >
+      {selected === null ? (
+        <View style={styles.siteGrid}>
+          {allowed.map((lt) => (
+            <StickerChoice
+              key={lt.key}
+              label={lt.label}
+              sticker={lt.sticker}
+              on={false}
+              onPress={() => setSelected(lt.key)}
+              tone={stickers.yellowSoft}
+              width="33%"
+            />
+          ))}
         </View>
-      </View>
-    </Modal>
+      ) : (
+        <View style={styles.formWrap}>
+          <Pressable onPress={() => setSelected(null)} style={styles.back} hitSlop={8} accessibilityRole="button">
+            <Text style={[styles.backText, { color: colors.text, fontFamily: font.bodyBold }]}>
+              {t('caregiverLogSheet_backChevron', { back: t('common_back') })}
+            </Text>
+          </Pressable>
+          {formBody}
+        </View>
+      )}
+    </LogSheet>
   )
 }
 
@@ -292,6 +291,12 @@ const makeStyles = (colors: ReturnType<typeof useTheme>['colors']) =>
       fontSize: 16,
       fontFamily: font.bodyMedium,
       color: colors.textSecondary,
+    },
+    siteGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      rowGap: 8,
+      paddingBottom: 8,
     },
     diffuseBack: {
       flexDirection: 'row',

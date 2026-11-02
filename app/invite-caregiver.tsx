@@ -28,19 +28,21 @@ import { useTranslation } from '../lib/i18n'
 import { useChildStore } from '../store/useChildStore'
 import { useTheme, radius, spacing, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { Display, MonoCaps, Body } from '../components/ui/Typography'
-import { PaperCard } from '../components/ui/PaperCard'
 import { PillButton } from '../components/ui/PillButton'
 import { useSavedToast } from '../components/ui/SavedToast'
 import { MissingStickers } from '../components/stickers/MissingStickers'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteChoice } from '../components/ui/SiteChoice'
+import { SiteSticker } from '../components/stickers/SiteSticker'
 import { useModeStore } from '../store/useModeStore'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 
 type RoleGlyph = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
 
-const ROLES: { id: string; label: string; Sticker: React.ComponentType<{ size?: number }>; Glyph: RoleGlyph }[] = [
-  { id: 'nanny', label: 'Nanny', Sticker: MissingStickers.CaregiverNanny, Glyph: Baby },
-  { id: 'family', label: 'Family', Sticker: MissingStickers.CaregiverFamily, Glyph: Heart },
+const ROLES: { id: string; label: string; Sticker: React.ComponentType<{ size?: number }>; Glyph: RoleGlyph; site: 'baby' | 'heart' }[] = [
+  { id: 'nanny', label: 'Nanny', Sticker: MissingStickers.CaregiverNanny, Glyph: Baby, site: 'baby' },
+  { id: 'family', label: 'Family', Sticker: MissingStickers.CaregiverFamily, Glyph: Heart, site: 'heart' },
 ]
 
 export default function InviteCaregiver() {
@@ -87,16 +89,16 @@ export default function InviteCaregiver() {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.md,
+      borderWidth: diffuse ? 1 : 1.5,
+      borderColor: diffuse ? colors.border : colors.text,
+      borderRadius: diffuse ? radius.md : 14,
       paddingHorizontal: 16,
       height: 56,
       gap: 10,
     },
     inputInner: {
       flex: 1,
-      fontSize: 15,
+      fontSize: 16,
       paddingVertical: 0,
     },
     roleRow: {
@@ -147,7 +149,7 @@ export default function InviteCaregiver() {
     doneButton: {
       paddingVertical: 12,
     },
-  }), [colors, font, stickers, brand])
+  }), [colors, font, stickers, brand, diffuse])
 
   const child = useChildStore((s) => s.activeChild)
   const [email, setEmail] = useState('')
@@ -214,6 +216,16 @@ export default function InviteCaregiver() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Close button top-right */}
+          {!diffuse ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: spacing.sm }}>
+              <InkBackButton icon="close" label="Close" ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+              <SiteSticker name={inviteLink ? 'star' : 'heart'} size={30} cut />
+              <Display size={26} color={colors.text} style={{ textTransform: 'uppercase', letterSpacing: 0.3, flexShrink: 1 }}>
+                {inviteLink ? t('careInvite_sent_title') : t('careInvite_title')}
+              </Display>
+            </View>
+          ) : null}
+          {diffuse ? (
           <View style={styles.header}>
             <Pressable
               onPress={() => router.back()}
@@ -232,13 +244,16 @@ export default function InviteCaregiver() {
               )}
             </Pressable>
           </View>
+          ) : null}
 
           {!inviteLink ? (
             <>
               {/* Title */}
-              <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>
-                {t('careInvite_title')}
-              </Display>
+              {diffuse ? (
+                <Display size={40} color={dt.colors.ink}>
+                  {t('careInvite_title')}
+                </Display>
+              ) : null}
               <Body size={15} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={styles.subtitle}>
                 {t('careInvite_subtitle', { name: child?.name ?? t('careInvite_yourChild') })}
               </Body>
@@ -309,22 +324,15 @@ export default function InviteCaregiver() {
                       )
                     }
                     return (
-                      <Pressable
+                      <SiteChoice
                         key={r.id}
+                        label={r.label}
+                        sticker={r.site}
+                        selected={isActive}
                         onPress={() => setRole(r.id)}
-                        style={[styles.roleChip, isActive && styles.roleChipActive]}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Select role ${r.label}`}
-                      >
-                        <r.Sticker size={36} />
-                        <Body
-                          size={15}
-                          color={isActive ? colors.text : colors.textMuted}
-                          style={{ fontFamily: font.bodySemiBold }}
-                        >
-                          {r.label}
-                        </Body>
-                      </Pressable>
+                        tone={stickers.yellowSoft}
+                        style={{ flex: 1 }}
+                      />
                     )
                   })}
                 </View>
@@ -363,14 +371,12 @@ export default function InviteCaregiver() {
                     <Check size={34} color={dt.colors.ink} strokeWidth={1.6} />
                   </DiffuseBloomIcon>
                 </View>
-              ) : (
-                <View style={styles.stickerBadge}>
-                  <Ionicons name="checkmark" size={36} color={stickers.greenInk} />
-                </View>
-              )}
-              <Display size={36} align="center" color={diffuse ? dt.colors.ink : colors.text}>
-                {t('careInvite_sent_title')}
-              </Display>
+              ) : null}
+              {diffuse ? (
+                <Display size={36} align="center" color={dt.colors.ink}>
+                  {t('careInvite_sent_title')}
+                </Display>
+              ) : null}
               <Body size={15} align="center" color={diffuse ? dt.colors.ink3 : colors.textMuted}>
                 {t('careInvite_share_with', { email })}
               </Body>
@@ -394,16 +400,18 @@ export default function InviteCaregiver() {
                     <Copy size={18} color={dt.colors.ink} strokeWidth={1.6} />
                   </View>
                 ) : (
-                  <PaperCard flat padding={16} radius={radius.md} style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      <Body size={13} color={colors.textMuted} numberOfLines={2} style={{ flex: 1 }}>
-                        {inviteLink}
-                      </Body>
-                      <Ionicons name="copy-outline" size={20} color={colors.primary} />
-                    </View>
-                  </PaperCard>
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: colors.text, backgroundColor: colors.surface }}>
+                    <Body size={13} color={colors.textSecondary} numberOfLines={2} style={{ flex: 1 }}>
+                      {inviteLink}
+                    </Body>
+                    <Ionicons name="copy-outline" size={20} color={colors.text} />
+                  </View>
                 )}
               </Pressable>
+
+              {!diffuse ? (
+                <PillButton variant="ink" label="Copy link" onPress={copyLink} style={{ alignSelf: 'stretch' }} />
+              ) : null}
 
               <Pressable
                 onPress={() => router.back()}
@@ -414,7 +422,7 @@ export default function InviteCaregiver() {
               >
                 <Body
                   size={diffuse ? 12 : 16}
-                  color={diffuse ? dt.colors.ink : colors.primary}
+                  color={diffuse ? dt.colors.ink : colors.text}
                   style={diffuse
                     ? { fontFamily: diffuseFont.mono, letterSpacing: 2, textTransform: 'uppercase' }
                     : { fontFamily: font.bodySemiBold }}

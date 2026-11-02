@@ -21,6 +21,7 @@ import { hasCapability, CAPABILITY } from '../../lib/caregiverPermissions'
 import { PaperCard } from '../ui/PaperCard'
 import { PillButton } from '../ui/PillButton'
 import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { NannyUpdatesFeed } from '../home/NannyUpdatesFeed'
 import { CaregiverChildPicker } from './CaregiverChildPicker'
 import { CaregiverLogSheet } from './CaregiverLogSheet'
@@ -36,6 +37,14 @@ export function CaregiverHome() {
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [logOpen, setLogOpen] = useState(false)
 
+  // Light: card-less (sticker + label + hairline). Diffuse keeps the paper card.
+  const Shell = ({ children, radius: r, padding, style }: { children: React.ReactNode; radius: number; padding: number; style?: object }) =>
+    diffuse ? (
+      <PaperCard radius={r} padding={padding} style={style}>{children}</PaperCard>
+    ) : (
+      <View style={[{ paddingVertical: padding / 2, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }, style]}>{children}</View>
+    )
+
   // Empty state: invited but not linked to any child yet (owner removed the
   // child, or the link hasn't resolved). Give a clear "ask the owner" message
   // rather than a blank screen.
@@ -47,9 +56,9 @@ export function CaregiverHome() {
           { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 40 },
         ]}
       >
-        <PaperCard radius={28} padding={24}>
+        <Shell radius={28} padding={24} style={undefined}>
           <View style={styles.emptyWrap}>
-            <RoleFamily size={56} />
+            {diffuse ? <RoleFamily size={56} /> : <SiteSticker name="house" size={64} cut />}
             <Text
               style={[
                 styles.emptyTitle,
@@ -68,7 +77,7 @@ export function CaregiverHome() {
               care circle, or check that your invite was accepted.
             </Text>
           </View>
-        </PaperCard>
+        </Shell>
       </ScrollView>
     )
   }
@@ -89,7 +98,7 @@ export function CaregiverHome() {
         <CaregiverChildPicker />
 
         {/* Child identity header — name + role badge. Non-PHI. */}
-        <PaperCard radius={28} padding={20} style={styles.headerCard}>
+        <Shell radius={28} padding={20} style={styles.headerCard}>
           <View
             style={styles.headerRow}
             accessibilityRole="header"
@@ -98,20 +107,26 @@ export function CaregiverHome() {
             <View
               style={[
                 styles.avatar,
-                diffuse && {
-                  backgroundColor: 'transparent',
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: dt.colors.line2,
-                },
+                diffuse
+                  ? {
+                      backgroundColor: 'transparent',
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: dt.colors.line2,
+                    }
+                  : { backgroundColor: 'transparent' },
               ]}
             >
-              {isFamily ? <RoleFamily size={36} /> : <RoleNanny size={36} />}
+              {diffuse
+                ? (isFamily ? <RoleFamily size={36} /> : <RoleNanny size={36} />)
+                : <SiteSticker name={isFamily ? 'heart' : 'baby'} size={44} cut />}
             </View>
             <View style={styles.headerText}>
               <Text
                 style={[
                   styles.childName,
-                  diffuse && { fontFamily: diffuseFont.display, color: dt.colors.ink },
+                  diffuse
+                    ? { fontFamily: diffuseFont.display, color: dt.colors.ink }
+                    : { textTransform: 'uppercase', letterSpacing: 0.3 },
                 ]}
               >
                 {activeChild.name}
@@ -119,6 +134,7 @@ export function CaregiverHome() {
               <Text
                 style={[
                   styles.roleLabel,
+                  !diffuse && { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
                   diffuse && {
                     fontFamily: diffuseFont.mono,
                     color: dt.colors.ink3,
@@ -132,7 +148,7 @@ export function CaregiverHome() {
               </Text>
             </View>
           </View>
-        </PaperCard>
+        </Shell>
 
         {/* Primary action — log the day. Hidden entirely when not granted. */}
         {canLog && (
