@@ -1,16 +1,23 @@
 /**
- * Default font for every text style that doesn't name one.
+ * Default font for text that doesn't name one.
  *
  * `Text.defaultProps` no longer applies under React 19 (function components ignore
- * defaultProps), so any StyleSheet text style without a `fontFamily` fell back to the
- * system font (SF) instead of Hanken Grotesk. This wraps `StyleSheet.create` once, at
- * boot, and gives each entry that sets `fontSize` / `fontWeight` but no `fontFamily`
- * the Hanken weight that matches its `fontWeight`. Inline styles applied later still win.
+ * defaultProps), so any text without a `fontFamily` fell back to the system font (SF)
+ * instead of Hanken Grotesk. This swaps react-native's `Text` / `TextInput` exports for thin
+ * wrappers that look at the FINAL flattened style at render time and, only when no
+ * `fontFamily` is set anywhere in it, add the Hanken weight matching its `fontWeight`.
+ * A font set by any style in the array is never overridden (an earlier StyleSheet-level
+ * patch did that and clobbered display titles via later modifier styles).
  *
- * Must be imported before any module that calls StyleSheet.create at load time — it's the
- * first import in app/_layout.tsx.
+ * Babel compiles `import { Text } from 'react-native'` to a property read at each use, so
+ * replacing the getter here reaches every screen. Imported first in app/_layout.tsx.
  */
-import { StyleSheet } from 'react-native'
+import { createElement, forwardRef } from 'react'
+import { StyleSheet, type StyleProp, type TextStyle } from 'react-native'
+
+// The real exports object (not an interop copy) — other modules read `.Text` from it at use time.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const RN: Record<string, any> = require('react-native')
 
 const HANKEN: Record<string, string> = {
   '100': 'HankenGrotesk_400Regular', '200': 'HankenGrotesk_400Regular', '300': 'HankenGrotesk_400Regular',
@@ -24,20 +31,34 @@ export function hankenFor(weight: unknown): string {
   return HANKEN[String(weight ?? '400')] ?? 'HankenGrotesk_400Regular'
 }
 
+/** The style to render with: unchanged when a fontFamily is present, else Hanken by weight. */
+export function withDefaultFont(style: unknown): unknown {
+  const flat = (StyleSheet.flatten(style as StyleProp<TextStyle>) ?? {}) as TextStyle
+  if (flat.fontFamily) return style
+  return [style, { fontFamily: hankenFor(flat.fontWeight) }]
+}
+
+function wrap(Orig: any, name: string) {
+  const Wrapped = forwardRef<unknown, any>((props, ref) =>
+    createElement(Orig, { ...props, ref, style: withDefaultFont(props.style) }),
+  )
+  ;(Wrapped as { displayName?: string }).displayName = name
+  return Wrapped
+}
+
 let patched = false
 export function patchDefaultFont() {
   if (patched) return
   patched = true
-  const create = StyleSheet.create.bind(StyleSheet) as (s: Record<string, unknown>) => unknown
-  ;(StyleSheet as { create: unknown }).create = (styles: Record<string, unknown>) => {
-    const out: Record<string, unknown> = {}
-    for (const key of Object.keys(styles)) {
-      const s = styles[key] as Record<string, unknown> | null
-      out[key] = s && typeof s === 'object' && !Array.isArray(s) && s.fontFamily === undefined && (s.fontSize !== undefined || s.fontWeight !== undefined)
-        ? { ...s, fontFamily: hankenFor(s.fontWeight) }
-        : s
-    }
-    return create(out)
+  try {
+    const OrigText = RN.Text
+    const OrigInput = RN.TextInput
+    const Text = Object.assign(wrap(OrigText, 'Text'), OrigText)
+    const TextInput = Object.assign(wrap(OrigInput, 'TextInput'), OrigInput)
+    Object.defineProperty(RN, 'Text', { configurable: true, enumerable: true, get: () => Text })
+    Object.defineProperty(RN, 'TextInput', { configurable: true, enumerable: true, get: () => TextInput })
+  } catch {
+    // Export not redefinable in this environment (e.g. some test mocks) — leave the system default.
   }
 }
 

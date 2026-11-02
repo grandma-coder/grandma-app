@@ -382,7 +382,7 @@ export default function CreatePostScreen() {
               s.nextBtn,
               diffuse
                 ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: radius.full, opacity: canAdvance() ? 1 : 0.35 }
-                : { backgroundColor: colors.text, borderRadius: radius.full, opacity: canAdvance() ? 1 : 0.35 },
+                : { backgroundColor: canAdvance() ? stickers.peachSoft : colors.surface, borderWidth: 1.5, borderColor: canAdvance() ? colors.text : colors.border, borderRadius: radius.full },
               pressed && canAdvance() && { transform: [{ scale: 0.98 }] },
             ]}
           >
@@ -394,7 +394,7 @@ export default function CreatePostScreen() {
                 <DiffuseArrow color={accent} />
               </View>
             ) : (
-              <Text style={[s.nextBtnText, { color: colors.surface, fontFamily: font.bodyBold }]}>
+              <Text style={[s.nextBtnText, { color: canAdvance() ? colors.text : colors.textMuted, fontFamily: font.bodyBold }]}>
                 {step === 4 ? t('garage_create_preview') : t('garage_create_next')}
               </Text>
             )}
@@ -407,18 +407,18 @@ export default function CreatePostScreen() {
               s.nextBtn,
               diffuse
                 ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: radius.full, opacity: posting ? 0.5 : 1 }
-                : { backgroundColor: colors.text, borderRadius: radius.full, opacity: posting ? 0.5 : 1 },
+                : { backgroundColor: stickers.peachSoft, borderWidth: 1.5, borderColor: colors.text, borderRadius: radius.full, opacity: posting ? 0.6 : 1 },
               pressed && !posting && { transform: [{ scale: 0.98 }] },
             ]}
           >
             {posting ? (
-              <ActivityIndicator color={diffuse ? dt.colors.ink : colors.surface} size="small" />
+              <ActivityIndicator color={diffuse ? dt.colors.ink : colors.text} size="small" />
             ) : (
               <View style={s.publishRow}>
-                <Send size={18} color={diffuse ? accent : colors.surface} strokeWidth={2.4} />
+                <Send size={18} color={diffuse ? accent : colors.text} strokeWidth={2.4} />
                 <Text style={[s.nextBtnText, diffuse
                   ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, textTransform: 'uppercase', letterSpacing: 2, fontSize: 13 }
-                  : { color: colors.surface, fontFamily: font.bodyBold }]}>{t('garage_create_publish')}</Text>
+                  : { color: colors.text, fontFamily: font.bodyBold }]}>{t('garage_create_publish')}</Text>
               </View>
             )}
           </Pressable>
