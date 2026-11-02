@@ -146,9 +146,96 @@ import {
 import { BrandedLoader } from '../ui/BrandedLoader'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { useTranslation } from '../../lib/i18n'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { DetailSheetHeader } from '../ui/DetailSheetHeader'
+import { FadeUp } from '../ui/Motion'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
+
+// ─── Site look (light rendering only) ──────────────────────────────────────
+const MONO = 'SpaceMono_400Regular'
+const HAIR = StyleSheet.hairlineWidth * 2
+
+// Pillar → site sticker (+ the soft tone that sits behind it in sheet headers).
+const PILLAR_SITE_STICKER: Record<'nutrition' | 'sleep' | 'mood' | 'health' | 'growth' | 'activity', SiteStickerName> = {
+  nutrition: 'avocado', sleep: 'moon', mood: 'face3', health: 'thermo', growth: 'ruler', activity: 'shoe',
+}
+// Old emoji used by the guide lists → the nearest site sticker.
+const EMOJI_SITE_STICKER: Record<string, SiteStickerName> = {
+  '👶': 'baby', '🧸': 'star', '🚶': 'shoe', '😴': 'zz', '🏃': 'shoe', '🌳': 'leaf',
+  '🧩': 'pencil', '📖': 'books', '⚽': 'shoe', '🎨': 'pencil', '📚': 'books',
+}
+// Pillar colour → its soft tone (for outlined chart bars).
+const SOFT_BY_PILLAR_COLOR: Record<string, string> = {
+  '#7A9D4A': '#D7F0DD', // nutrition → greenSoft
+  '#8E72C9': '#DCCFF9', // sleep → lilacSoft
+  '#D87CA0': '#F9CFE0', // mood → pinkSoft
+  '#5F8FC1': '#CFE1FA', // health → blueSoft
+  '#C9A02C': '#FFF1B8', // growth → yellowSoft
+  '#D86A4F': '#FBD3B3', // activity → peachSoft
+}
+const MOOD_SITE_STICKER: Record<string, SiteStickerName> = {
+  happy: 'face4', calm: 'face3', energetic: 'star', fussy: 'face2', cranky: 'face1',
+}
+const HEALTH_EVENT_STICKER: Record<string, SiteStickerName> = {
+  temperature: 'thermo', medicine: 'drop', vaccine: 'syringe', note: 'pencil',
+}
+
+/** Light bottom sheet: bg paper, 2.5px ink top border, 26px top radius, grabber at 25% ink. */
+function LightSheet({ visible, onClose, height, children }: {
+  visible: boolean
+  onClose: () => void
+  height?: number
+  children: React.ReactNode
+}) {
+  const { colors } = useTheme()
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View
+          style={[
+            styles.modalSheet,
+            {
+              height,
+              maxHeight: SCREEN_H * 0.92,
+              backgroundColor: colors.bg,
+              borderTopLeftRadius: 26,
+              borderTopRightRadius: 26,
+              borderTopWidth: 2.5,
+              borderColor: colors.text,
+            },
+          ]}
+        >
+          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
+          </View>
+          {children}
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+/** 34px close button: white disc, 2px ink ring. */
+function SiteClose({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel="Close"
+      style={({ pressed }) => [
+        { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: colors.text, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      <X size={16} color={colors.text} strokeWidth={2.2} />
+    </Pressable>
+  )
+}
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 
@@ -736,7 +823,7 @@ export function KidsAnalytics() {
               <Text
                 style={[
                   styles.headerSub,
-                  { color: colors.textSecondary, fontFamily: font.body },
+                  { color: colors.textSecondary, fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
                 ]}
               >
                 {getAgeLabel(ageMonths)}
@@ -748,11 +835,11 @@ export function KidsAnalytics() {
                 hitSlop={10}
                 style={({ pressed }) => [
                   styles.infoBtnNew,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 2, width: 34, height: 34 },
                   pressed && { opacity: 0.7 },
                 ]}
               >
-                <Info size={16} color={colors.text} strokeWidth={2} />
+                <Info size={16} color={colors.text} strokeWidth={2.2} />
               </Pressable>
             </View>
           </View>
@@ -858,11 +945,11 @@ export function KidsAnalytics() {
         )}
 
         {error && !isLoading && (
-          <Pressable onPress={() => refetch()} style={[styles.errorCard, { backgroundColor: diffuse ? 'transparent' : brand.error + '15', borderRadius: radius.xl, borderWidth: diffuse ? 1 : 0, borderColor: diffuse ? dt.colors.line : 'transparent' }]}>
-            <Text style={[styles.errorText, { color: diffuse ? dt.colors.error : brand.error, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>{t('kids_analytics_error_load')}</Text>
+          <Pressable onPress={() => refetch()} style={[styles.errorCard, { backgroundColor: diffuse ? 'transparent' : colors.surface, borderRadius: diffuse ? radius.xl : 18, borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? dt.colors.line : colors.text }]}>
+            <Text style={[styles.errorText, { color: diffuse ? dt.colors.error : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>{t('kids_analytics_error_load')}</Text>
             <View style={styles.row}>
-              <RefreshCw size={14} color={diffuse ? dt.colors.error : brand.error} strokeWidth={diffuse ? 1.6 : 2} />
-              <Text style={[styles.errorRetry, { color: diffuse ? dt.colors.error : brand.error, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('kids_analytics_tap_retry')}</Text>
+              <RefreshCw size={14} color={diffuse ? dt.colors.error : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[styles.errorRetry, { color: diffuse ? dt.colors.error : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : MONO, fontSize: diffuse ? undefined : 11, letterSpacing: diffuse ? undefined : 1.4, textTransform: diffuse ? undefined : 'uppercase' }]}>{t('kids_analytics_tap_retry')}</Text>
             </View>
           </Pressable>
         )}
@@ -968,7 +1055,7 @@ export function KidsAnalytics() {
               <KidsWellnessRingCard scores={analytics.scores} onPillarPress={setSelectedPillar} />
               <GrandmaInsightCard scores={analytics.scores} analytics={analytics} childName={childName} ageMonths={ageMonths} crossLine={crossLine} />
               <View style={styles.pillarSection}>
-                <Text style={[styles.pillarSectionTitle, { color: colors.text, fontFamily: font.display }]}>
+                <Text style={[styles.pillarSectionTitle, { color: colors.text, fontFamily: font.display, fontSize: 18, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 0 }]}>
                   {t('kids_analytics_thriving_breakdown')}
                 </Text>
                 {PILLAR_ORDER.map((key) => (
@@ -988,10 +1075,10 @@ export function KidsAnalytics() {
               message={t('kids_analytics_no_data_hint')}
             />
           ) : (
-            <View style={[styles.emptyAll, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <FileQuestion size={32} color={colors.textMuted} />
-              <Text style={[styles.emptyAllTitle, { color: colors.text }]}>{t('kids_analytics_no_data_title')}</Text>
-              <Text style={[styles.emptyAllSub, { color: colors.textMuted }]}>
+            <View style={styles.emptyAll}>
+              <SiteSticker name="cloud" size={56} cut />
+              <Text style={[styles.emptyAllTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('kids_analytics_no_data_title')}</Text>
+              <Text style={[styles.emptyAllSub, { color: colors.textSecondary }]}>
                 {t('kids_analytics_no_data_hint')}
               </Text>
             </View>
@@ -1007,24 +1094,27 @@ export function KidsAnalytics() {
               styles.reportCard,
               {
                 backgroundColor: diffuse ? dt.colors.surface : colors.surface,
-                borderColor: diffuse ? dt.colors.line : colors.border,
-                borderRadius: radius.lg,
+                borderColor: diffuse ? dt.colors.line : colors.text,
+                borderWidth: diffuse ? 1 : 1.5,
+                borderRadius: diffuse ? radius.lg : 18,
               },
               pressed && { opacity: 0.7 },
             ]}
           >
-            <View style={[styles.reportIcon, { backgroundColor: diffuse ? dt.stickers.blueSoft : stickers.blueSoft }]}>
-              <Character name="exam" size={26} color={diffuse ? getDiffuseAccent('kids', dt.isDark) : stickers.blue} />
+            <View style={[styles.reportIcon, { backgroundColor: diffuse ? dt.stickers.blueSoft : 'transparent' }]}>
+              {diffuse
+                ? <Character name="exam" size={26} color={getDiffuseAccent('kids', dt.isDark)} />
+                : <SiteSticker name="doc" size={38} cut />}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.reportTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
+              <Text style={[styles.reportTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]}>
                 {t('report_cardTitle')}
               </Text>
-              <Text style={[styles.reportDesc, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+              <Text style={[styles.reportDesc, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                 {t('report_cardDesc')}
               </Text>
             </View>
-            <ChevronRight size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.5 : 2} />
+            <ChevronRight size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.5 : 2} />
           </Pressable>
         ) : null}
       </ScrollView>
@@ -1212,87 +1302,84 @@ function ScoreInfoModal({
     )
   }
 
+  const eyebrowS = [styles.siteEyebrow, { color: colors.textSecondary }]
+  const ageLine =
+    'Sleep target: ' + getAgeSleepTarget(ageMonths) + 'h/day\n' +
+    (ageMonths < 6 ? 'Nutrition: breast/formula only (8–12 feeds/day)' :
+      ageMonths < 12 ? 'Nutrition: introducing solids alongside milk' :
+        ageMonths < 24 ? 'Nutrition: 3 meals + snacks, ~1000 cal/day' :
+          'Nutrition: 3 meals + 2 snacks/day')
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalSheet, { backgroundColor: colors.surface, borderRadius: radius.xl, paddingBottom: insets.bottom + 24 }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('kids_analytics_score_guide_title')}</Text>
-            <Pressable onPress={onClose} hitSlop={8} style={[styles.modalClose, { backgroundColor: colors.surfaceRaised }]}>
-              <X size={18} color={colors.textMuted} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ maxHeight: SCREEN_H * 0.62 }}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
-          >
-            {scores && (
-              <View style={[styles.scoreHighlight, { backgroundColor: colors.primaryTint, borderRadius: radius.xl, borderColor: colors.primary + '30' }]}>
-                <Text style={[styles.scoreHighlightNum, { color: scoreColor(scores.overall) }]}>
-                  {scores.overall.toFixed(1)}
-                </Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.scoreHighlightLabel, { color: colors.text }]}>{t('kids_analytics_score_child_label', { childName })}</Text>
-                  <Text style={[styles.scoreHighlightSub, { color: colors.textSecondary }]}>{t('kids_analytics_score_weighted_avg')}</Text>
-                </View>
-              </View>
-            )}
-
-            <Text style={[styles.infoSectionLabel, { color: colors.textSecondary }]}>{t('kids_analytics_score_scale_label')}</Text>
-            <View style={{ gap: 8, marginBottom: 20 }}>
-              {SCORE_BANDS.map((b) => (
-                <View key={b.label} style={styles.bandRow}>
-                  <View style={[styles.bandDot, { backgroundColor: b.color }]} />
-                  <Text style={[styles.bandLabel, { color: colors.text }]}>{b.label}</Text>
-                  <Text style={[styles.bandRange, { color: colors.textMuted }]}>{b.range}</Text>
-                </View>
-              ))}
-            </View>
-
-            <Text style={[styles.infoSectionLabel, { color: colors.textSecondary }]}>{t('kids_analytics_pillar_scoring_label')}</Text>
-            <View style={{ gap: 10, marginBottom: 20 }}>
-              {PILLAR_ORDER.map((key) => {
-                const config = PILLAR_CONFIG[key]
-                const Icon = config.icon
-                const score = scores?.[key]
-                return (
-                  <View key={key} style={[styles.pillarInfoCard, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-                    <View style={styles.pillarInfoHeader}>
-                      <View style={[styles.pillarInfoIcon, { backgroundColor: config.color + '15' }]}>
-                        <Icon size={16} color={config.color} strokeWidth={2} />
-                      </View>
-                      <Text style={[styles.pillarInfoName, { color: colors.text }]}>{config.label}</Text>
-                      <Text style={[styles.pillarInfoWeight, { color: colors.textMuted }]}>{WEIGHTS[key]}</Text>
-                      {key !== 'health' && score?.hasData && (
-                        <View style={[styles.pillarInfoScoreBadge, { backgroundColor: config.color + '20' }]}>
-                          <Text style={[styles.pillarInfoScoreText, { color: config.color }]}>{score.value.toFixed(1)}</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={[styles.pillarInfoBody, { color: colors.textSecondary }]}>{PILLAR_EXPLAIN[key]}</Text>
-                  </View>
-                )
-              })}
-            </View>
-
-            <View style={[styles.ageBanner, { backgroundColor: brand.kids + '10', borderRadius: radius.xl, borderColor: brand.kids + '30' }]}>
-              <Text style={[styles.ageBannerTitle, { color: brand.kids }]}>
-                {childName}{' at '}{getAgeLabel(ageMonths)}
-              </Text>
-              <Text style={[styles.ageBannerBody, { color: colors.textSecondary }]}>
-                {'Sleep target: ' + getAgeSleepTarget(ageMonths) + 'h/day\n' +
-                  (ageMonths < 6 ? 'Nutrition: breast/formula only (8–12 feeds/day)' :
-                    ageMonths < 12 ? 'Nutrition: introducing solids alongside milk' :
-                      ageMonths < 24 ? 'Nutrition: 3 meals + snacks, ~1000 cal/day' :
-                        'Nutrition: 3 meals + 2 snacks/day')}
-              </Text>
-            </View>
-          </ScrollView>
-        </View>
+    <LightSheet visible={visible} onClose={onClose} height={SCREEN_H * 0.86}>
+      <View style={{ paddingHorizontal: 20 }}>
+        <DetailSheetHeader
+          title={t('kids_analytics_score_guide_title')}
+          sticker="bars"
+          tone={stickers.blueSoft}
+          onClose={onClose}
+        />
       </View>
-    </Modal>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: insets.bottom + 28 }}
+      >
+        {scores && (
+          <FadeUp index={0}>
+            <View style={styles.siteHeroRow}>
+              <Text style={[styles.siteHero, { color: colors.text, fontFamily: font.displayBold }]}>{scores.overall.toFixed(1)}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.siteBody, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('kids_analytics_score_child_label', { childName })}</Text>
+                <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0, marginTop: 4 }]}>{t('kids_analytics_score_weighted_avg')}</Text>
+              </View>
+            </View>
+          </FadeUp>
+        )}
+
+        <FadeUp index={1}>
+          <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
+          <Text style={eyebrowS}>{t('kids_analytics_score_scale_label')}</Text>
+          {SCORE_BANDS.map((b) => (
+            <View key={b.label} style={styles.bandRowSite}>
+              <View style={[styles.bandSwatch, { backgroundColor: b.color, borderColor: colors.text }]} />
+              <Text style={[styles.siteBody, { color: colors.text, fontFamily: font.body, flex: 1 }]}>{b.label}</Text>
+              <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{b.range}</Text>
+            </View>
+          ))}
+        </FadeUp>
+
+        <FadeUp index={2}>
+          <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
+          <Text style={eyebrowS}>{t('kids_analytics_pillar_scoring_label')}</Text>
+          {PILLAR_ORDER.map((key, idx) => {
+            const config = PILLAR_CONFIG[key]
+            const score = scores?.[key]
+            return (
+              <View key={key} style={[styles.pillarInfoRowSite, idx > 0 && { borderTopWidth: HAIR, borderTopColor: colors.border }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                  <SiteSticker name={PILLAR_SITE_STICKER[key]} size={28} cut />
+                  <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display, flex: 1 }]}>{config.label}</Text>
+                  <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{WEIGHTS[key]}</Text>
+                  {key !== 'health' && score?.hasData && (
+                    <Text style={[styles.siteNum, { color: colors.text, fontFamily: font.displayBold }]}>{score.value.toFixed(1)}</Text>
+                  )}
+                </View>
+                <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body }]}>{PILLAR_EXPLAIN[key]}</Text>
+              </View>
+            )
+          })}
+        </FadeUp>
+
+        <FadeUp index={3}>
+          <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
+          <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display, marginBottom: 6 }]}>
+            {childName}{' at '}{getAgeLabel(ageMonths)}
+          </Text>
+          <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body, lineHeight: 21 }]}>{ageLine}</Text>
+        </FadeUp>
+      </ScrollView>
+    </LightSheet>
   )
 }
 
@@ -1889,77 +1976,43 @@ function GrandmaInsightCard({
         onPress={() => setDetailOpen(true)}
         style={({ pressed }) => [
           styles.grandmaInsightPaper,
-          { backgroundColor: colors.accentSoft, borderColor: colors.border },
+          { backgroundColor: colors.surface, borderColor: colors.text },
           pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] },
         ]}
       >
-        {/* Big Heart sticker tucked into the bottom-right corner */}
-        <View style={styles.grandmaInsightStickerBg} pointerEvents="none">
-          <StickerHeart size={150} fill={stickers.pink} />
-        </View>
-
-        {/* Header: label + date */}
+        {/* Header: small heart sticker + eyebrow, date on the right */}
         <View style={styles.grandmaInsightHeader}>
-          <Animated.View entering={FadeIn.duration(400)}>
-            <Text
-              style={[
-                styles.grandmaInsightLabel,
-                { color: colors.textMuted, fontFamily: font.bodySemiBold },
-              ]}
-            >
-              {t('kids_analytics_grandma_says_label')}
-            </Text>
-          </Animated.View>
-          <Text
-            style={[
-              styles.grandmaInsightDate,
-              { color: colors.textMuted, fontFamily: font.body },
-            ]}
-          >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <SiteSticker name="heart" size={26} cut />
+            <Animated.View entering={FadeIn.duration(400)}>
+              <Text style={[styles.grandmaInsightLabel, { color: colors.textSecondary, fontFamily: MONO, letterSpacing: 1.4 }]}>
+                {t('kids_analytics_grandma_says_label')}
+              </Text>
+            </Animated.View>
+          </View>
+          <Text style={[styles.grandmaInsightDate, { color: colors.textSecondary, fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
             {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </Text>
         </View>
 
-        {/* Word-by-word animated reveal — staggered fade-in for a delightful feel */}
-        <Animated.View
-          entering={FadeInDown.duration(500).delay(120)}
-          style={styles.grandmaInsightMessageWrap}
-        >
-          <Text
-            style={[
-              styles.grandmaInsightMessage,
-              { color: colors.text, fontFamily: font.body },
-            ]}
-          >
+        <Animated.View entering={FadeInDown.duration(500).delay(120)} style={styles.grandmaInsightMessageWrap}>
+          <Text style={[styles.grandmaInsightMessage, { color: colors.text, fontFamily: font.body, fontSize: 16, lineHeight: 23 }]}>
             {highlights.message}
           </Text>
         </Animated.View>
 
         {highlights.crossLine && (
-          <Animated.View
-            entering={FadeIn.duration(400).delay(300)}
-            style={styles.grandmaInsightCrossWrap}
-          >
-            <Text
-              style={[
-                styles.grandmaInsightLabel,
-                { color: colors.textMuted, fontFamily: font.bodySemiBold, marginBottom: 4 },
-              ]}
-            >
+          <Animated.View entering={FadeIn.duration(400).delay(300)} style={[styles.grandmaInsightCrossWrap, { borderTopWidth: HAIR, borderTopColor: colors.border, paddingTop: 12 }]}>
+            <Text style={[styles.grandmaInsightLabel, { color: colors.textSecondary, fontFamily: MONO, letterSpacing: 1.4, marginBottom: 6 }]}>
               {t('kids_analytics_grandma_noticed_label')}
             </Text>
-            <Text
-              style={[
-                styles.grandmaInsightMessage,
-                { color: colors.text, fontFamily: font.display },
-              ]}
-            >
+            <Text style={[styles.grandmaInsightMessage, { color: colors.text, fontFamily: font.bodySemiBold }]}>
               {highlights.crossLine}
             </Text>
           </Animated.View>
         )}
 
-        {/* "Let's discuss →" ink-dark pill button — opens confirm sheet */}
+        {/* "Let's discuss →" ink pill — opens confirm sheet */}
         <Animated.View entering={FadeIn.duration(400).delay(500)}>
           {chatEnabled && (
           <Pressable
@@ -1974,12 +2027,7 @@ function GrandmaInsightCard({
               pressed && { opacity: 0.85 },
             ]}
           >
-            <Text
-              style={[
-                styles.grandmaInsightBtnText,
-                { color: colors.bg, fontFamily: font.bodyMedium },
-              ]}
-            >
+            <Text style={[styles.grandmaInsightBtnText, { color: colors.surface, fontFamily: font.bodyBold }]}>
               {t('kids_analytics_discuss_btn')}
             </Text>
           </Pressable>
@@ -2075,190 +2123,115 @@ function GrandmaInsightDetailSheet({
   }
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable
-          style={[
-            styles.insightDetailSheet,
-            {
-              backgroundColor: colors.surface,
-              borderRadius: radius.xl,
-              paddingBottom: insets.bottom + 20,
-            },
-          ]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View style={styles.insightDetailHeaderRow}>
-            <View style={styles.insightDetailLabelWrap}>
-              <Text
-                style={[
-                  styles.grandmaInsightLabel,
-                  { color: colors.textMuted, fontFamily: font.bodySemiBold },
-                ]}
-              >
-                {t('kids_analytics_grandma_says_label')}
-              </Text>
-              <Text
-                style={[
-                  styles.insightDetailOverall,
-                  { color: colors.text, fontFamily: font.display },
-                ]}
-              >
-                {childName}{' is '}{highlights.overallLabel}
-              </Text>
-              <Text
-                style={[
-                  styles.insightDetailOverallSub,
-                  { color: colors.textSecondary, fontFamily: font.body },
-                ]}
-              >
-                {t('kids_analytics_insight_overall_week', { score: highlights.overallScore.toFixed(1) })}
-              </Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              style={[styles.modalClose, { backgroundColor: colors.surfaceRaised }]}
-            >
-              <X size={18} color={colors.textMuted} />
-            </Pressable>
+    <LightSheet visible onClose={onClose}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: insets.bottom + 24 }}
+      >
+        <View style={styles.insightDetailHeaderRow}>
+          <View style={styles.insightDetailLabelWrap}>
+            <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>
+              {t('kids_analytics_grandma_says_label')}
+            </Text>
+            <Text style={[styles.insightDetailOverall, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
+              {childName}{' is '}{highlights.overallLabel}
+            </Text>
+            <Text style={[styles.insightDetailOverallSub, { color: colors.textSecondary, fontFamily: font.body }]}>
+              {t('kids_analytics_insight_overall_week', { score: highlights.overallScore.toFixed(1) })}
+            </Text>
           </View>
+          <SiteClose onPress={onClose} />
+        </View>
 
+        <View style={{ marginTop: 8 }}>
           {highlights.strength && (
             <HighlightRow
-              icon={<StickerBurst size={28} fill={stickers.yellow} points={8} />}
+              icon={<SiteSticker name="star" size={30} cut />}
               label={t('kids_analytics_insight_strength_label')}
-              labelColor={colors.textMuted}
               title={PILLAR_CONFIG[highlights.strength.pillar].label}
-              titleColor={PILLAR_CONFIG[highlights.strength.pillar].color}
               body={highlights.strength.reason}
-              bodyColor={colors.textSecondary}
-              bgColor={colors.surfaceRaised}
-              radius={radius.lg}
-              font={font}
             />
           )}
 
           {highlights.concern && (
             <HighlightRow
-              icon={<StickerHeart size={28} fill={stickers.pink} />}
+              icon={<SiteSticker name="eye" size={30} cut />}
               label={t('kids_analytics_insight_concern_label')}
-              labelColor={colors.textMuted}
               title={PILLAR_CONFIG[highlights.concern.pillar].label}
-              titleColor={PILLAR_CONFIG[highlights.concern.pillar].color}
               body={highlights.concern.reason}
-              bodyColor={colors.textSecondary}
-              bgColor={colors.surfaceRaised}
-              radius={radius.lg}
-              font={font}
             />
           )}
 
           {highlights.trend && (
             <HighlightRow
-              icon={
-                highlights.trend.direction === 'improving'
-                  ? <ArrowUpRight size={24} color={colors.success} strokeWidth={2.2} />
-                  : <ArrowDownRight size={24} color={colors.error} strokeWidth={2.2} />
-              }
+              icon={<SiteSticker name="bars" size={30} cut />}
               label={t('kids_analytics_insight_trend_label')}
-              labelColor={colors.textMuted}
-              title={`${PILLAR_CONFIG[highlights.trend.pillar].label} ${highlights.trend.direction}`}
-              titleColor={highlights.trend.direction === 'improving' ? colors.success : colors.error}
+              title={`${PILLAR_CONFIG[highlights.trend.pillar].label} ${highlights.trend.direction === 'improving' ? '↑' : '↓'} ${highlights.trend.direction}`}
               body={`${highlights.trend.delta}% week-over-week change.`}
-              bodyColor={colors.textSecondary}
-              bgColor={colors.surfaceRaised}
-              radius={radius.lg}
-              font={font}
             />
           )}
+        </View>
 
-          {highlights.actions.length > 0 && (
-            <View style={styles.insightActionsBlock}>
-              <Text
-                style={[
-                  styles.grandmaInsightLabel,
-                  { color: colors.textMuted, fontFamily: font.bodySemiBold },
-                ]}
-              >
-                {t('kids_analytics_insight_next_steps_label')}
-              </Text>
-              {highlights.actions.map((a, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.insightActionRow,
-                    { backgroundColor: colors.primaryTint, borderRadius: radius.md },
-                  ]}
-                >
-                  <Lightbulb size={16} color={colors.primary} strokeWidth={2} />
-                  <Text
-                    style={[
-                      styles.insightActionText,
-                      { color: colors.text, fontFamily: font.body },
-                    ]}
-                  >
-                    {a}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {!highlights.strength && !highlights.concern && !highlights.trend && (
-            <View style={[styles.insightEmpty, { backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}>
-              <Text style={[styles.insightEmptyText, { color: colors.textSecondary, fontFamily: font.body }]}>
-                {t('kids_analytics_insight_no_highlights')}
-              </Text>
-            </View>
-          )}
-
-          {chatEnabled && (
-          <Pressable
-            onPress={onDiscuss}
-            style={({ pressed }) => [
-              styles.insightDetailCta,
-              { backgroundColor: colors.text, borderRadius: radius.full },
-              pressed && { opacity: 0.85 },
-            ]}
-          >
-            <Sparkles size={16} color={colors.bg} strokeWidth={2} />
-            <Text style={[styles.insightDetailCtaText, { color: colors.bg, fontFamily: font.bodySemiBold }]}>
-              {t('kids_analytics_discuss_btn')}
+        {highlights.actions.length > 0 && (
+          <View style={[styles.insightActionsBlock, { borderTopWidth: HAIR, borderTopColor: colors.border, paddingTop: 16, marginTop: 4 }]}>
+            <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 4 }]}>
+              {t('kids_analytics_insight_next_steps_label')}
             </Text>
-          </Pressable>
-          )}
+            {highlights.actions.map((a, i) => (
+              <View key={i} style={styles.insightActionRow}>
+                <SiteSticker name="pencil" size={22} />
+                <Text style={[styles.insightActionText, { color: colors.text, fontFamily: font.body }]}>{a}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {!highlights.strength && !highlights.concern && !highlights.trend && (
+          <Text style={[styles.insightEmptyText, { color: colors.textSecondary, fontFamily: font.body, paddingVertical: 16 }]}>
+            {t('kids_analytics_insight_no_highlights')}
+          </Text>
+        )}
+
+        {chatEnabled && (
+        <Pressable
+          onPress={onDiscuss}
+          style={({ pressed }) => [
+            styles.insightDetailCta,
+            { backgroundColor: colors.text, borderRadius: radius.full },
+            pressed && { opacity: 0.85 },
+          ]}
+        >
+          <Sparkles size={16} color={colors.surface} strokeWidth={2} />
+          <Text style={[styles.insightDetailCtaText, { color: colors.surface, fontFamily: font.bodyBold }]}>
+            {t('kids_analytics_discuss_btn')}
+          </Text>
         </Pressable>
-      </Pressable>
-    </Modal>
+        )}
+      </ScrollView>
+    </LightSheet>
   )
 }
 
 function HighlightRow({
-  icon, label, labelColor, title, titleColor, body, bodyColor, bgColor, radius, font,
+  icon, label, title, body,
 }: {
   icon: React.ReactNode
   label: string
-  labelColor: string
   title: string
-  titleColor: string
   body: string
-  bodyColor: string
-  bgColor: string
-  radius: number
-  font: { body: string; bodyMedium: string; bodySemiBold: string; display: string }
 }) {
+  const { colors } = useTheme()
   return (
-    <View style={[styles.insightHighlightRow, { backgroundColor: bgColor, borderRadius: radius }]}>
+    <View style={[styles.insightHighlightRow, { borderTopWidth: HAIR, borderTopColor: colors.border }]}>
       <View style={styles.insightHighlightIcon}>{icon}</View>
       <View style={styles.insightHighlightBody}>
-        <Text style={[styles.insightHighlightLabel, { color: labelColor, fontFamily: font.bodySemiBold }]}>
+        <Text style={[styles.insightHighlightLabel, { color: colors.textSecondary, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {label}
         </Text>
-        <Text style={[styles.insightHighlightTitle, { color: titleColor, fontFamily: font.bodySemiBold }]}>
+        <Text style={[styles.insightHighlightTitle, { color: colors.text, fontFamily: font.bodyBold }]}>
           {title}
         </Text>
-        <Text style={[styles.insightHighlightText, { color: bodyColor, fontFamily: font.body }]}>
+        <Text style={[styles.insightHighlightText, { color: colors.textSecondary, fontFamily: font.body }]}>
           {body}
         </Text>
       </View>
@@ -2311,15 +2284,16 @@ function DiscussConfirmSheet({
         <Pressable
           style={[
             styles.confirmSheet,
-            { backgroundColor: colors.surface, borderRadius: radius.xl, paddingBottom: insets.bottom + 20 },
+            { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, paddingBottom: insets.bottom > 0 ? 26 : 26 },
+            { shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
           ]}
           onPress={(e) => e.stopPropagation()}
         >
           <View style={styles.confirmIconWrap} pointerEvents="none">
-            <StickerHeart size={72} fill={stickers.pink} />
+            <SiteSticker name="heart" size={64} cut />
           </View>
 
-          <Text style={[styles.confirmTitle, { color: colors.text, fontFamily: font.display }]}>
+          <Text style={[styles.confirmTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
             {t('kids_analytics_confirm_share_title')}
           </Text>
           <Text style={[styles.confirmBody, { color: colors.textSecondary, fontFamily: font.body }]}>
@@ -2334,8 +2308,8 @@ function DiscussConfirmSheet({
               pressed && { opacity: 0.85 },
             ]}
           >
-            <Sparkles size={16} color={colors.bg} strokeWidth={2} />
-            <Text style={[styles.confirmPrimaryText, { color: colors.bg, fontFamily: font.bodySemiBold }]}>
+            <Sparkles size={16} color={colors.surface} strokeWidth={2} />
+            <Text style={[styles.confirmPrimaryText, { color: colors.surface, fontFamily: font.bodyBold }]}>
               {t('kids_analytics_confirm_share_yes')}
             </Text>
           </Pressable>
@@ -2344,11 +2318,11 @@ function DiscussConfirmSheet({
             onPress={onClose}
             style={({ pressed }) => [
               styles.confirmSecondary,
-              { borderRadius: radius.full, borderColor: colors.border },
+              { borderRadius: radius.full, borderColor: colors.text, borderWidth: 1.5, backgroundColor: colors.surface },
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={[styles.confirmSecondaryText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
+            <Text style={[styles.confirmSecondaryText, { color: colors.text, fontFamily: font.bodyBold }]}>
               {t('kids_analytics_confirm_share_no')}
             </Text>
           </Pressable>
@@ -2508,93 +2482,46 @@ function RoutineComplianceSection({ data }: { data: RoutineComplianceData }) {
   }
 
   return (
-    <View style={{ marginTop: 2 }}>
+    <View>
       <Pressable
         onPress={() => setShowModal(true)}
         style={({ pressed }) => [
-          styles.pillarPaper,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-          pressed && { opacity: 0.92 },
+          styles.pillarRowSite,
+          { borderTopColor: colors.border },
+          pressed && { opacity: 0.7 },
         ]}
       >
         <View style={styles.pillarPaperHead}>
-          <View
-            style={[
-              styles.pillarStickerChip,
-              { backgroundColor: tint, borderColor: colors.border },
-            ]}
-          >
-            <StickerFlower size={26} petal={stickers.coral} />
-          </View>
-
+          <SiteSticker name="cal" size={34} cut />
           <View style={{ flex: 1 }}>
-            <View style={styles.pillarPaperTitleRow}>
-              <Text
-                style={[
-                  styles.pillarPaperName,
-                  { color: colors.text, fontFamily: font.display },
-                ]}
-              >
-                {t('kids_analytics_routine_compliance_title')}
-              </Text>
-            </View>
-
-            <View
-              style={[styles.pillarPaperBarBg, { backgroundColor: tint }]}
-            >
-              <View
-                style={[
-                  styles.pillarPaperBarFill,
-                  { width: `${adherenceRate}%`, backgroundColor: adherenceColor },
-                ]}
-              />
+            <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display }]}>
+              {t('kids_analytics_routine_compliance_title')}
+            </Text>
+            <View style={[styles.siteBarTrack, { backgroundColor: colors.border }]}>
+              <View style={[styles.siteBarFill, { width: `${adherenceRate}%`, backgroundColor: tint, borderColor: colors.text }]} />
             </View>
           </View>
-
           <View style={styles.pillarPaperScore}>
             {data.hasData ? (
               <>
-                <Text
-                  style={[
-                    styles.pillarPaperValue,
-                    { color: colors.text, fontFamily: font.display },
-                  ]}
-                >
-                  {data.totalSkips}
-                </Text>
-                <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
-                  {' skips'}
-                </Text>
+                <Text style={[styles.siteNum, { color: colors.text, fontFamily: font.displayBold }]}>{data.totalSkips}</Text>
+                <Text style={[styles.siteMono, { color: colors.textSecondary, marginLeft: 3 }]}>{'skips'}</Text>
               </>
             ) : (
-              <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
-                {'—'}
-              </Text>
+              <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{'—'}</Text>
             )}
           </View>
         </View>
 
-        <Text
-          style={[
-            styles.pillarPaperBody,
-            { color: colors.textSecondary, fontFamily: font.body },
-          ]}
-        >
+        <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body, marginTop: 10 }]}>
           {data.hasData
             ? `${adherenceRate}% adherence this week — ${data.totalSkips} total skip${data.totalSkips === 1 ? '' : 's'}.`
             : 'No routines tracked yet — add skips in the calendar.'}
         </Text>
 
         <View style={styles.pillarPaperFooter}>
-          <Text
-            style={[
-              styles.pillarPaperFooterText,
-              { color: adherenceColor, fontFamily: font.bodySemiBold },
-            ]}
-          >
-            {t('kids_analytics_tip_tap_details')}
-          </Text>
-          <ChevronRight size={14} color={adherenceColor} strokeWidth={2.5} />
+          <Text style={[styles.siteMono, { color: colors.text }]}>{t('kids_analytics_tip_tap_details')}</Text>
+          <ChevronRight size={14} color={colors.text} strokeWidth={2.2} />
         </View>
       </Pressable>
 
@@ -2674,234 +2601,75 @@ function RoutineComplianceModal({
     )
   }
 
+  const maxSkipSite = Math.max(...(data.weeklySkips.length ? data.weeklySkips : [1]), 1)
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
-        <View
-          style={[
-            styles.modalSheet,
-            { height: sheetH, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
-          ]}
-        >
-          {/* Handle */}
-          <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
-            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
-          </View>
-
-          {/* Header */}
-          <View
-            style={[
-              styles.modalHeader,
-              {
-                borderBottomWidth: StyleSheet.hairlineWidth,
-                borderBottomColor: colors.border,
-                paddingBottom: 16,
-              },
-            ]}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View
-                style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 999,
-                  backgroundColor: tint,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <StickerFlower size={26} petal={stickers.coral} />
-              </View>
-              <View>
-                <Text
-                  style={[
-                    styles.modalTitle,
-                    { color: colors.text, fontFamily: font.display },
-                  ]}
-                >
-                  {t('kids_analytics_routine_compliance_title')}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.textSecondary,
-                    fontSize: 13,
-                    fontFamily: font.body,
-                  }}
-                >
-                  {data.hasData
-                    ? `${adherenceRate}% adherence · ${data.totalSkips} skip${data.totalSkips === 1 ? '' : 's'}`
-                    : 'No routines tracked yet'}
-                </Text>
-              </View>
-            </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              style={[
-                styles.modalClose,
-                { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-              ]}
-            >
-              <X size={16} color={colors.text} strokeWidth={2} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            style={{ flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: 20,
-              paddingTop: 16,
-              paddingBottom: insets.bottom + 24,
-              gap: 16,
-            }}
-          >
-            <Animated.View entering={FadeInDown.duration(220)} style={[
-              styles.routineExpand,
-              { backgroundColor: colors.surface, borderColor: colors.border, marginTop: 0 },
-            ]}>
-              <View style={styles.routineStatRow}>
-            <View style={styles.routineStatCell}>
-              <Text
-                style={[
-                  styles.routineStatValue,
-                  { color: colors.text, fontFamily: font.display },
-                ]}
-              >
-                {adherenceRate}%
-              </Text>
-              <Text
-                style={[
-                  styles.routineStatLabel,
-                  { color: colors.textMuted, fontFamily: font.body },
-                ]}
-              >
-                {t('kids_analytics_routine_adherence')}
-              </Text>
-            </View>
-            <View style={styles.routineStatCell}>
-              <Text
-                style={[
-                  styles.routineStatValue,
-                  { color: colors.text, fontFamily: font.display },
-                ]}
-              >
-                {data.totalSkips}
-              </Text>
-              <Text
-                style={[
-                  styles.routineStatLabel,
-                  { color: colors.textMuted, fontFamily: font.body },
-                ]}
-              >
-                {t('kids_analytics_routine_total_skips')}
-              </Text>
-            </View>
-          </View>
-
-          {data.hasData && (
-            <View>
-              <Text
-                style={[
-                  styles.routineSubheader,
-                  { color: colors.textMuted, fontFamily: font.bodySemiBold },
-                ]}
-              >
-                {t('kids_analytics_routine_skips_per_day')}
-              </Text>
-              <View style={styles.routineBarsRow}>
-                {data.weeklySkips.map((count, i) => {
-                  const maxV = Math.max(...data.weeklySkips, 1)
-                  const barH = count > 0 ? Math.max((count / maxV) * 44, 10) : 4
-                  return (
-                    <View key={i} style={styles.routineBarCell}>
-                      <View
-                        style={{
-                          width: '80%',
-                          height: barH,
-                          backgroundColor: count > 0 ? stickers.coral : colors.border,
-                          borderRadius: 4,
-                        }}
-                      />
-                      <Text
-                        style={{
-                          color: colors.textMuted,
-                          fontFamily: font.body,
-                          fontSize: 11,
-                          marginTop: 6,
-                        }}
-                      >
-                        {data.weekLabels[i]}
-                      </Text>
-                    </View>
-                  )
-                })}
-              </View>
-            </View>
-          )}
-
-          {data.mostSkipped.length > 0 && (
-            <View>
-              <Text
-                style={[
-                  styles.routineSubheader,
-                  { color: colors.textMuted, fontFamily: font.bodySemiBold },
-                ]}
-              >
-                {t('kids_analytics_routine_most_skipped')}
-              </Text>
-              <View style={{ gap: 10 }}>
-                {data.mostSkipped.map((item, i) => (
-                  <View key={i} style={styles.routineSkipRow}>
-                    <MinusCircle size={16} color={stickers.coral} strokeWidth={2} />
-                    <Text
-                      style={{
-                        color: colors.text,
-                        fontFamily: font.body,
-                        fontSize: 14,
-                        flex: 1,
-                      }}
-                    >
-                      {item.name}
-                    </Text>
-                    <View style={[styles.routineSkipBadge, { backgroundColor: stickers.peachSoft }]}>
-                      <Text
-                        style={{
-                          color: stickers.coral,
-                          fontFamily: font.bodySemiBold,
-                          fontSize: 13,
-                        }}
-                      >
-                        {item.count}{'×'}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {!data.hasData && (
-            <Text
-              style={{
-                color: colors.textMuted,
-                fontFamily: font.body,
-                fontSize: 13,
-                textAlign: 'center',
-              }}
-            >
-              {t('kids_analytics_routine_no_skips')}
-            </Text>
-          )}
-            </Animated.View>
-          </ScrollView>
-        </View>
+    <LightSheet visible={visible} onClose={onClose} height={sheetH}>
+      <View style={{ paddingHorizontal: 20 }}>
+        <DetailSheetHeader
+          title={t('kids_analytics_routine_compliance_title')}
+          sticker="cal"
+          tone={tint}
+          onClose={onClose}
+        />
       </View>
-    </Modal>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: insets.bottom + 28 }}
+      >
+        <FadeUp index={0}>
+          <Text style={[styles.siteEyebrow, { color: colors.textSecondary }]}>{t('kids_analytics_routine_adherence')}</Text>
+          <View style={styles.siteHeroRow}>
+            <Text style={[styles.siteHero, { color: colors.text, fontFamily: font.displayBold }]}>{data.hasData ? `${adherenceRate}%` : '—'}</Text>
+            <Text style={[styles.siteBody, { color: colors.textSecondary, fontFamily: font.body }]}>
+              {data.hasData
+                ? `${data.totalSkips} ${t('kids_analytics_routine_total_skips').toLowerCase()}`
+                : 'No routines tracked yet'}
+            </Text>
+          </View>
+        </FadeUp>
+
+        {data.hasData && (
+          <FadeUp index={1}>
+            <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
+            <Text style={[styles.siteEyebrow, { color: colors.textSecondary }]}>{t('kids_analytics_routine_skips_per_day')}</Text>
+            <View style={styles.routineBarsRow}>
+              {data.weeklySkips.map((count, i) => {
+                const barH = count > 0 ? Math.max((count / maxSkipSite) * 44, 8) : 3
+                return (
+                  <View key={i} style={styles.routineBarCell}>
+                    <Text style={[styles.siteSmall, { color: colors.text, fontFamily: font.bodySemiBold, height: 16 }]}>{count > 0 ? count : ''}</Text>
+                    <View style={{ flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+                      <View style={{ height: barH, backgroundColor: count > 0 ? tint : colors.border, borderRadius: 8, borderWidth: count > 0 ? 1.5 : 0, borderColor: colors.text }} />
+                    </View>
+                    <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body, marginTop: 4 }]}>{data.weekLabels[i]}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </FadeUp>
+        )}
+
+        {data.mostSkipped.length > 0 && (
+          <FadeUp index={2}>
+            <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
+            <Text style={[styles.siteEyebrow, { color: colors.textSecondary }]}>{t('kids_analytics_routine_most_skipped')}</Text>
+            {data.mostSkipped.map((item, i) => (
+              <View key={i} style={[styles.routineSkipRow, { paddingVertical: 11 }, i > 0 && { borderTopWidth: HAIR, borderTopColor: colors.border }]}>
+                <Text style={[styles.siteBody, { color: colors.text, fontFamily: font.body, flex: 1 }]}>{item.name}</Text>
+                <Text style={[styles.siteNum, { color: colors.text, fontFamily: font.displayBold, fontSize: 18 }]}>{item.count}{'×'}</Text>
+              </View>
+            ))}
+          </FadeUp>
+        )}
+
+        {!data.hasData && (
+          <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body, textAlign: 'center', marginTop: 20 }]}>
+            {t('kids_analytics_routine_no_skips')}
+          </Text>
+        )}
+      </ScrollView>
+    </LightSheet>
   )
 }
 
@@ -2984,123 +2752,65 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        styles.pillarPaper,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-        pressed && { opacity: 0.92 },
+        styles.pillarRowSite,
+        { borderTopColor: colors.border },
+        pressed && { opacity: 0.7 },
       ]}
     >
       <View style={styles.pillarPaperHead}>
-        <View
-          style={[
-            styles.pillarStickerChip,
-            { backgroundColor: palette.tint, borderColor: colors.border },
-          ]}
-        >
-          {renderPillarSticker(stickerForPillar(pillarKey), palette.chip, 26)}
-        </View>
+        <SiteSticker name={PILLAR_SITE_STICKER[pillarKey]} size={34} cut />
 
         <View style={{ flex: 1 }}>
           <View style={styles.pillarPaperTitleRow}>
-            <Text
-              style={[
-                styles.pillarPaperName,
-                { color: colors.text, fontFamily: font.display },
-              ]}
-            >
+            <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display }]}>
               {config.label}
             </Text>
             {score.hasData && score.trend !== 0 && (
               <View style={styles.trendBadge}>
                 {score.trend > 0
-                  ? <ArrowUpRight size={12} color={brand.success} strokeWidth={2.5} />
-                  : <ArrowDownRight size={12} color={brand.error} strokeWidth={2.5} />}
-                <Text
-                  style={[
-                    styles.trendText,
-                    { color: score.trend > 0 ? brand.success : brand.error },
-                  ]}
-                >
-                  {Math.abs(score.trend)}%
-                </Text>
+                  ? <ArrowUpRight size={12} color={colors.text} strokeWidth={2.5} />
+                  : <ArrowDownRight size={12} color={colors.text} strokeWidth={2.5} />}
+                <Text style={[styles.siteMono, { color: colors.text }]}>{Math.abs(score.trend)}%</Text>
               </View>
             )}
           </View>
 
-          <View
-            style={[
-              styles.pillarPaperBarBg,
-              { backgroundColor: palette.tint },
-            ]}
-          >
-            <View
-              style={[
-                styles.pillarPaperBarFill,
-                { width: `${pct}%`, backgroundColor: palette.bar },
-              ]}
-            />
+          <View style={[styles.siteBarTrack, { backgroundColor: colors.border }]}>
+            <View style={[styles.siteBarFill, { width: `${pct}%`, backgroundColor: palette.tint, borderColor: pct > 0 ? colors.text : 'transparent' }]} />
           </View>
         </View>
 
         <View style={styles.pillarPaperScore}>
           {pillarKey === 'health' ? (
             // Health is reference-only — no `/10` grade, ever.
-            <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
-              Reference
-            </Text>
+            <Text style={[styles.siteMono, { color: colors.textSecondary }]}>Reference</Text>
           ) : score.hasData && Number.isFinite(score.value) ? (
             <>
-              <Text
-                style={[
-                  styles.pillarPaperValue,
-                  { color: colors.text, fontFamily: font.display },
-                ]}
-              >
-                {score.value.toFixed(1)}
-              </Text>
-              <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
-                /10
-              </Text>
+              <Text style={[styles.siteNum, { color: colors.text, fontFamily: font.displayBold }]}>{score.value.toFixed(1)}</Text>
+              <Text style={[styles.siteMono, { color: colors.textSecondary, marginLeft: 2 }]}>/10</Text>
             </>
           ) : (
-            <Text style={[styles.pillarPaperOf, { color: colors.textMuted }]}>
-              {'—'}
-            </Text>
+            <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{'—'}</Text>
           )}
         </View>
       </View>
 
       {/* Integrated tip body — replaces the old "Health Tips" cards. */}
       {tip && (
-        <Text
-          style={[
-            styles.pillarPaperTipTitle,
-            { color: colors.text, fontFamily: font.bodySemiBold },
-          ]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.pillarPaperTipTitle, { color: colors.text, fontFamily: font.bodySemiBold, marginTop: 10 }]} numberOfLines={1}>
           {tip.title}
         </Text>
       )}
       <Text
-        style={[
-          styles.pillarPaperBody,
-          { color: colors.textSecondary, fontFamily: font.body },
-        ]}
+        style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body, marginTop: tip ? 3 : 10 }]}
         numberOfLines={3}
       >
         {body}
       </Text>
 
       <View style={styles.pillarPaperFooter}>
-        <Text
-          style={[
-            styles.pillarPaperFooterText,
-            { color: palette.bar, fontFamily: font.bodySemiBold },
-          ]}
-        >
-          {t('kids_analytics_tip_tap_details')}
-        </Text>
-        <ChevronRight size={14} color={palette.bar} strokeWidth={2.5} />
+        <Text style={[styles.siteMono, { color: colors.text }]}>{t('kids_analytics_tip_tap_details')}</Text>
+        <ChevronRight size={14} color={colors.text} strokeWidth={2.2} />
       </View>
     </Pressable>
   )
@@ -3159,96 +2869,44 @@ function PillarDetailModal({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        {/* Backdrop tap closes modal */}
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
-        {/* Sheet — fixed height so ScrollView flex:1 works */}
-        <View style={[styles.modalSheet, { height: sheetH, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32 }]}>
-          {/* Handle bar */}
-          <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
-            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
-          </View>
-
-          {/* Header — matches kids-analytics-screen.jsx mockup */}
-          <View style={[styles.modalHeader, { paddingBottom: 14 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 999,
-                  backgroundColor: palette.tint,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {renderPillarSticker(stickerForPillar(pillarKey), palette.chip, 22)}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    color: colors.text,
-                    fontFamily: font.display,
-                    fontSize: 26,
-                    letterSpacing: -0.5,
-                    lineHeight: 30,
-                  }}
-                >
-                  {config.label}
-                </Text>
-                {pillarKey === 'health' ? (
-                  <Text
-                    style={{
-                      color: PILLAR_CONFIG[pillarKey].color,
-                      fontSize: 13,
-                      fontFamily: font.bodyMedium,
-                      marginTop: 2,
-                    }}
-                  >
-                    Reference — vaccines on record, not scored
-                  </Text>
-                ) : score.hasData && (
-                  <Text
-                    style={{
-                      color: PILLAR_CONFIG[pillarKey].color,
-                      fontSize: 13,
-                      fontFamily: font.bodyMedium,
-                      marginTop: 2,
-                    }}
-                  >
-                    {score.value.toFixed(1)}{'/10 — '}{score.label}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <Pressable onPress={onClose} hitSlop={10} style={[styles.modalClose, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, width: 32, height: 32, borderRadius: 16 }]}>
-              <X size={14} color={colors.text} strokeWidth={2} />
-            </Pressable>
-          </View>
-
-          {/* Scrollable content — flex:1 fills the remaining sheet height */}
-          <ScrollView
-            style={{ flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 24, gap: 16 }}
-          >
-            <Animated.View entering={FadeInDown.duration(220)}>
-              <PillarDetail
-                pillarKey={pillarKey}
-                analytics={analytics}
-                chartW={chartW}
-                onFullScreen={onFullScreen}
-                childName={childName}
-                ageMonths={ageMonths}
-                sex={sex}
-              />
-            </Animated.View>
-          </ScrollView>
-        </View>
+    <LightSheet visible={visible} onClose={onClose} height={sheetH}>
+      <View style={{ paddingHorizontal: 20 }}>
+        <DetailSheetHeader
+          title={config.label}
+          sticker={PILLAR_SITE_STICKER[pillarKey]}
+          tone={palette.tint}
+          onClose={onClose}
+        />
+        {pillarKey === 'health' ? (
+          <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>
+            Reference — vaccines on record, not scored
+          </Text>
+        ) : score.hasData ? (
+          <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>
+            {score.value.toFixed(1)}{'/10 — '}{score.label}
+          </Text>
+        ) : null}
       </View>
-    </Modal>
+
+      {/* Scrollable content — flex:1 fills the remaining sheet height */}
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 28, gap: 16 }}
+      >
+        <FadeUp index={0}>
+          <PillarDetail
+            pillarKey={pillarKey}
+            analytics={analytics}
+            chartW={chartW}
+            onFullScreen={onFullScreen}
+            childName={childName}
+            ageMonths={ageMonths}
+            sex={sex}
+          />
+        </FadeUp>
+      </ScrollView>
+    </LightSheet>
   )
 }
 
@@ -3441,26 +3099,29 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
   const cardStyle = diffuse
     ? { borderTopWidth: 1, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 } as const
-    : { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border } as const
+    : { borderTopWidth: HAIR, borderTopColor: colors.border, paddingTop: 16 } as const
   const chartTitleColor = diffuse ? dt.colors.ink : colors.text
+  // Light section: hairline rule + a Space Mono eyebrow, no boxes.
+  const quietSection = { borderTopWidth: HAIR, borderTopColor: colors.border, paddingTop: 16 } as const
+  const siteEyebrowStyle = [styles.siteEyebrow, { color: colors.textSecondary }]
 
   // Lead + supporting render — identical treatment across all six pillars
   // (spec §2's "one honest sentence" headline, then 1–2 supporting lines).
   const renderLead = (insight: PillarInsight) => (
     <View style={{ gap: 8 }}>
       <Text style={{
-        fontSize: diffuse ? 20 : 19,
+        fontSize: diffuse ? 20 : 18,
         lineHeight: diffuse ? 27 : 26,
         color: diffuse ? dt.colors.ink : colors.text,
-        fontFamily: diffuse ? dt.typeRole.title : font.display,
-        letterSpacing: -0.2,
+        fontFamily: diffuse ? dt.typeRole.title : font.bodySemiBold,
+        letterSpacing: diffuse ? -0.2 : 0,
       }}>
         {insight.lead}
       </Text>
       {insight.supporting.map((line, i) => (
         <Text
           key={i}
-          style={[styles.detailExplain, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+          style={[styles.detailExplain, { color: diffuse ? dt.colors.ink2 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body, paddingHorizontal: diffuse ? 4 : 0 }]}
         >
           {line}
         </Text>
@@ -3477,14 +3138,15 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
         onPress={() => setShowDetails((v) => !v)}
         style={({ pressed }) => [
           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, opacity: pressed ? 0.6 : 1 },
+          !diffuse && { borderTopWidth: HAIR, borderTopColor: colors.border, paddingTop: 14 },
         ]}
       >
         <Text style={diffuse
           ? [styles.diffuseEyebrow, { color: dt.colors.ink3, marginBottom: 0 }]
-          : [styles.chartTitle, { color: chartTitleColor, marginBottom: 0, fontFamily: font.display, fontSize: 14 }]}>
+          : [styles.siteEyebrow, { color: colors.text, marginBottom: 0 }]}>
           {showDetails ? 'Hide details' : 'Show details'}
         </Text>
-        <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 15 }}>{showDetails ? '▾' : '▸'}</Text>
+        <Text style={{ color: diffuse ? dt.colors.ink3 : colors.text, fontSize: 15 }}>{showDetails ? '▾' : '▸'}</Text>
       </Pressable>
       {showDetails && <View style={{ gap: 16 }}>{content}</View>}
     </View>
@@ -3530,9 +3192,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             {isMilkPhase ? (
               <>
                 <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
-                <StatPill label="Breast sessions" value={`${totalBreast}`} color={brand.secondary} />
+                <StatPill label="Breast (total)" value={`${totalBreast}`} color={brand.secondary} />
                 <StatPill
-                  label="Bottle total"
+                  label="Bottle (total)"
                   value={totalBottleMl > 0 ? `${Math.round(totalBottleMl)}ml` : `${totalBottle}×`}
                   color={brand.accent}
                 />
@@ -3540,8 +3202,8 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             ) : isMixedPhase ? (
               <>
                 <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
-                <StatPill label="Milk feeds" value={`${totalBreast + totalBottle}`} color={brand.secondary} />
-                <StatPill label="Foods tried" value={`${variety}`} color={brand.accent} />
+                <StatPill label="Milk feeds (total)" value={`${totalBreast + totalBottle}`} color={brand.secondary} />
+                <StatPill label="Foods tried (total)" value={`${variety}`} color={brand.accent} />
               </>
             ) : (
               <>
@@ -3564,16 +3226,18 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {isMilkPhase && (totalBreast > 0 || totalBottle > 0) && (
-            <View style={[styles.card, diffuse ? cardStyle : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-              <Text style={[styles.chartTitle, { color: chartTitleColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t('kids_home_feeding_modal_breast_vs_bottle')}</Text>
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
-                <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
-                  <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 28, fontFamily: font.display }}>{totalBreast}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>{t('kids_analytics_breast_sessions')}</Text>
+            <View style={[styles.card, diffuse ? cardStyle : { ...quietSection, padding: 0, shadowOpacity: 0, elevation: 0 }]}>
+              <Text style={diffuse
+                ? [styles.chartTitle, { color: chartTitleColor, fontFamily: diffuseFont.display }]
+                : siteEyebrowStyle}>{t('kids_home_feeding_modal_breast_vs_bottle')}</Text>
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: diffuse ? 10 : 0 }}>
+                <View style={{ flex: 1, alignItems: diffuse ? 'center' : 'flex-start', padding: diffuse ? 16 : 0, backgroundColor: diffuse ? colors.surfaceRaised : 'transparent', borderRadius: radius.lg }}>
+                  <Text style={{ color: diffuse ? PILLAR_CONFIG.nutrition.color : colors.text, fontSize: 28, fontFamily: diffuse ? font.display : font.displayBold }}>{totalBreast}</Text>
+                  <Text style={{ color: diffuse ? colors.textMuted : colors.textSecondary, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>{t('kids_analytics_breast_sessions')}</Text>
                 </View>
-                <View style={{ flex: 1, alignItems: 'center', padding: 16, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }}>
-                  <Text style={{ color: brand.secondary, fontSize: 28, fontFamily: font.display }}>{totalBottle}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>
+                <View style={{ flex: 1, alignItems: diffuse ? 'center' : 'flex-start', padding: diffuse ? 16 : 0, backgroundColor: diffuse ? colors.surfaceRaised : 'transparent', borderRadius: radius.lg }}>
+                  <Text style={{ color: diffuse ? brand.secondary : colors.text, fontSize: 28, fontFamily: diffuse ? font.display : font.displayBold }}>{totalBottle}</Text>
+                  <Text style={{ color: diffuse ? colors.textMuted : colors.textSecondary, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>
                     {totalBottleMl > 0 ? `${Math.round(totalBottleMl)}ml total` : 'bottles'}
                   </Text>
                 </View>
@@ -3602,10 +3266,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {!isMilkPhase && analytics.nutrition.topFoods.length > 0 && (
             <View style={diffuse
               ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
-              : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              : quietSection}>
               <Text style={diffuse
                 ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
-                : [styles.chartTitle, { color: chartTitleColor, fontFamily: font.display }]}>{t('kids_analytics_most_logged_foods')}</Text>
+                : siteEyebrowStyle}>{t('kids_analytics_most_logged_foods')}</Text>
               <View style={{ gap: 0 }}>
                 {analytics.nutrition.topFoods.map((food, i) => (
                   <View
@@ -3622,17 +3286,15 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                         <Text style={{ color: rankColor(i), fontSize: 12, fontFamily: diffuseFont.monoBold }}>{i + 1}</Text>
                       </View>
                     ) : (
-                      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: rankColor(i) + '25', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ color: rankColor(i), fontSize: 12, fontWeight: '900', fontFamily: font.display }}>#{i + 1}</Text>
+                      <View style={{ width: 24, alignItems: 'center' }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: MONO }}>{i + 1}</Text>
                       </View>
                     )}
-                    <Text style={{ color: diffuse ? dt.colors.ink : colors.text, fontSize: 15, fontWeight: '600', fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold, flex: 1 }}>{food.label}</Text>
+                    <Text style={{ color: diffuse ? dt.colors.ink : colors.text, fontSize: 15, fontWeight: diffuse ? '600' : undefined, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold, flex: 1 }}>{food.label}</Text>
                     {diffuse ? (
                       <Text style={{ color: dt.colors.ink3, fontSize: 12, fontFamily: diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase' }}>{t('kids_analytics_times_prefix', { count: food.count })}</Text>
                     ) : (
-                      <View style={{ backgroundColor: PILLAR_CONFIG.nutrition.color + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 }}>
-                        <Text style={{ color: PILLAR_CONFIG.nutrition.color, fontSize: 14, fontWeight: '800', fontFamily: font.display }}>{t('kids_analytics_times_prefix', { count: food.count })}</Text>
-                      </View>
+                      <Text style={{ color: colors.text, fontSize: 12, fontFamily: MONO, letterSpacing: 0.4, textTransform: 'uppercase' }}>{t('kids_analytics_times_prefix', { count: food.count })}</Text>
                     )}
                   </View>
                 ))}
@@ -3656,9 +3318,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {insight.demotedAvailable && renderDetailsToggle(<>
           {/* Stats at top */}
           <StatRow>
-            <StatPill label="Avg/night" value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
+            <StatPill label="Avg per night" value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
             <StatPill label="Quality" value={getBestQuality(analytics.sleep.qualityCounts)} color={brand.success} />
-            <StatPill label="Target" value={`${target}h`} color={colors.textMuted} />
+            <StatPill label="Target per night" value={`${target}h`} color={colors.textMuted} />
           </StatRow>
 
           {/* Highlighted bar chart */}
@@ -3738,15 +3400,17 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {analytics.health.hasData && analytics.health.recentEvents.length > 0 && (
             <View style={diffuse
               ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
-              : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+              : quietSection}>
               <Text style={diffuse
                 ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
-                : [styles.chartTitle, { color: chartTitleColor, marginBottom: 14, fontFamily: font.display }]}>Recent care log</Text>
+                : siteEyebrowStyle}>Recent care log</Text>
               {Object.entries(eventsByType).map(([type, events]) => (
                 <View key={type} style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
-                    <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, fontWeight: '600', fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: 1.4 }}>
+                    {diffuse
+                      ? <EmojiSticker size={14}>{getHealthEventEmoji(type)}</EmojiSticker>
+                      : <SiteSticker name={HEALTH_EVENT_STICKER[type.toLowerCase()] ?? 'pencil'} size={20} />}
+                    <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontSize: 11, fontWeight: diffuse ? '600' : undefined, fontFamily: diffuse ? diffuseFont.mono : MONO, letterSpacing: 1.4 }}>
                       {getHealthEventLabel(type).toUpperCase()}
                     </Text>
                   </View>
@@ -3755,10 +3419,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                       key={i}
                       style={[styles.eventRow, { borderBottomColor: i < events.length - 1 ? (diffuse ? dt.colors.line : colors.border) : 'transparent' }]}
                     >
-                      <View style={[styles.eventDot, { backgroundColor: diffuse ? dt.colors.ink3 : colors.textMuted }]} />
+                      <View style={[styles.eventDot, { backgroundColor: diffuse ? dt.colors.ink3 : colors.text, width: diffuse ? 12 : 6, height: diffuse ? 12 : 6, borderRadius: diffuse ? 6 : 3 }]} />
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.eventLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]} numberOfLines={1}>{e.label}</Text>
-                        <Text style={[styles.eventDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{e.date}</Text>
+                        <Text style={[styles.eventLabel, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={1}>{e.label}</Text>
+                        <Text style={[styles.eventDate, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : MONO, fontSize: diffuse ? undefined : 11 }]}>{e.date}</Text>
                       </View>
                     </View>
                   ))}
@@ -3770,18 +3434,18 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {/* Vaccine tracker */}
           <View style={diffuse
             ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
-            : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
+            : quietSection}>
             <View style={[styles.row, { marginBottom: 4 }]}>
               {diffuse
                 ? <Character name="vaccine" size={20} color={getDiffuseAccent('kids', dt.isDark)} />
-                : <Syringe size={18} color={PILLAR_CONFIG.health.color} strokeWidth={2} />}
+                : <SiteSticker name="syringe" size={26} cut />}
               <Text style={diffuse
                 ? [styles.diffuseEyebrow, { color: dt.colors.ink3, marginBottom: 0 }]
-                : [styles.chartTitle, { color: chartTitleColor, marginBottom: 0, fontFamily: font.display }]}>{t('kids_analytics_vaccine_tracker_title')}</Text>
+                : [styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>{t('kids_analytics_vaccine_tracker_title')}</Text>
             </View>
             {/* Progress bar */}
-            <View style={{ height: diffuse ? 4 : 8, borderRadius: 999, marginTop: 12, marginBottom: 12, overflow: 'hidden', backgroundColor: diffuse ? dt.colors.line : brand.success + '22' }}>
-              <View style={{ width: `${vaccinePct}%`, height: '100%', backgroundColor: diffuse ? getDiffuseAccent('kids', dt.isDark) : brand.success, borderRadius: 999 }} />
+            <View style={{ height: diffuse ? 4 : 6, borderRadius: 999, marginTop: 12, marginBottom: 12, overflow: 'hidden', backgroundColor: diffuse ? dt.colors.line : colors.border }}>
+              <View style={{ width: `${vaccinePct}%`, height: '100%', backgroundColor: diffuse ? getDiffuseAccent('kids', dt.isDark) : stickers.green, borderRadius: 999 }} />
             </View>
             <Text style={[styles.detailExplain, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, marginBottom: 14, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
               {`${doneVaccines}/${totalVaccines} logged as completed`}
@@ -3791,15 +3455,16 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                 <View
                   key={i}
                   style={[styles.vaccineChip, {
-                    backgroundColor: v.done ? (diffuse ? getDiffuseAccent('kids', dt.isDark) + '22' : brand.success + '1A') : (diffuse ? 'transparent' : colors.surfaceRaised),
-                    borderColor: v.done ? (diffuse ? getDiffuseAccent('kids', dt.isDark) + '66' : brand.success + '55') : (diffuse ? dt.colors.line2 : colors.borderStrong),
+                    backgroundColor: v.done ? (diffuse ? getDiffuseAccent('kids', dt.isDark) + '22' : stickers.greenSoft) : (diffuse ? 'transparent' : colors.surface),
+                    borderColor: v.done ? (diffuse ? getDiffuseAccent('kids', dt.isDark) + '66' : colors.text) : (diffuse ? dt.colors.line2 : colors.border),
+                    borderWidth: diffuse ? 1 : (v.done ? 1.5 : 1),
                     borderRadius: radius.full,
                   }]}
                 >
                   {v.done && (diffuse
                     ? <Character name="vaccine" size={13} color={getDiffuseAccent('kids', dt.isDark)} />
-                    : <Shield size={14} color={brand.success} strokeWidth={2.5} />)}
-                  <Text style={[styles.vaccineText, { color: v.done ? (diffuse ? dt.colors.ink : brand.success) : (diffuse ? dt.colors.ink3 : colors.textSecondary), fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{v.name}</Text>
+                    : <Shield size={14} color={colors.text} strokeWidth={2.5} />)}
+                  <Text style={[styles.vaccineText, { color: v.done ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink3 : colors.textSecondary), fontFamily: diffuse ? diffuseFont.mono : (v.done ? font.bodyBold : font.body) }]}>{v.name}</Text>
                 </View>
               ))}
             </View>
@@ -3886,9 +3551,11 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {analytics.growth.weights.length < 2 && analytics.growth.heights.length < 2 && (
-            <View style={[styles.card, diffuse ? { ...cardStyle, alignItems: 'center', paddingVertical: 20 } : { backgroundColor: colors.surface, borderRadius: radius.xl, alignItems: 'center', paddingVertical: 20 }]}>
-              <Character name="growth" size={24} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
-              <Text style={[styles.emptyText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, marginTop: 8, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>
+            <View style={[styles.card, diffuse ? { ...cardStyle, alignItems: 'center', paddingVertical: 20 } : { alignItems: 'center', paddingVertical: 20, padding: 0, shadowOpacity: 0, elevation: 0 }]}>
+              {diffuse
+                ? <Character name="growth" size={24} color={dt.colors.ink3} />
+                : <SiteSticker name="ruler" size={40} cut />}
+              <Text style={[styles.emptyText, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, marginTop: 8, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                 {t('kids_analytics_add_measurements_hint')}
               </Text>
             </View>
@@ -3935,9 +3602,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {renderDetailsToggle(<>
           {/* Stats */}
           <StatRow>
-            <StatPill label="Active days" value={act.hasData ? `${act.activeDays}/${windowDays}` : '—'} color={COLOR} />
-            <StatPill label="Sessions" value={act.hasData ? `${act.totalSessions}` : '—'} color={brand.secondary} />
-            <StatPill label="Types" value={act.hasData ? `${act.uniqueTypes.length}` : '—'} color={brand.accent} />
+            <StatPill label="Active days (total)" value={act.hasData ? `${act.activeDays}/${windowDays}` : '—'} color={COLOR} />
+            <StatPill label="Sessions (total)" value={act.hasData ? `${act.totalSessions}` : '—'} color={brand.secondary} />
+            <StatPill label="Activity types" value={act.hasData ? `${act.uniqueTypes.length}` : '—'} color={brand.accent} />
           </StatRow>
 
           {/* Weekly sessions bar chart */}
@@ -3958,29 +3625,25 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             return (
               <View style={diffuse
                 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16, marginTop: 4 }
-                : [styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
+                : quietSection}>
                 <Text style={diffuse
                   ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
-                  : [styles.chartTitle, { color: chartTitleColor, marginBottom: 6, fontFamily: font.display }]}>{t('kids_analytics_activity_rec_split')}</Text>
+                  : siteEyebrowStyle}>{t('kids_analytics_activity_rec_split')}</Text>
                 {guideItems.map((item) => (
                   <View key={item.label} style={{ paddingVertical: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      {!diffuse && (
-                        <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ fontSize: 12 }}>{item.emoji}</Text>
-                        </View>
-                      )}
-                      <Text style={{ flex: 1, color: diffuse ? dt.colors.ink : colors.text, fontSize: 14, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.1 }}>
+                      {!diffuse && <SiteSticker name={EMOJI_SITE_STICKER[item.emoji] ?? 'star'} size={26} cut />}
+                      <Text style={{ flex: 1, color: diffuse ? dt.colors.ink : colors.text, fontSize: diffuse ? 14 : 15, fontFamily: diffuse ? diffuseFont.display : font.bodySemiBold, letterSpacing: diffuse ? -0.1 : 0 }}>
                         {item.label}
                       </Text>
-                      <Text style={{ color: diffuse ? dt.colors.ink : COLOR, fontSize: 16, fontFamily: diffuse ? diffuseFont.mono : font.display, letterSpacing: -0.3 }}>
+                      <Text style={{ color: diffuse ? dt.colors.ink : colors.text, fontSize: 16, fontFamily: diffuse ? diffuseFont.mono : font.displayBold, letterSpacing: diffuse ? -0.3 : 0 }}>
                         {item.pct}%
                       </Text>
                     </View>
-                    <View style={{ height: diffuse ? 4 : 6, borderRadius: 999, backgroundColor: diffuse ? dt.colors.line : colors.surfaceRaised, marginTop: 6, overflow: 'hidden' }}>
-                      <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: splitAccent }} />
+                    <View style={{ height: diffuse ? 4 : 6, borderRadius: 999, backgroundColor: diffuse ? dt.colors.line : colors.border, marginTop: 6, overflow: 'hidden' }}>
+                      <View style={{ width: `${item.pct}%`, height: '100%', backgroundColor: diffuse ? splitAccent : stickers.peach }} />
                     </View>
-                    <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, fontFamily: diffuse ? diffuseFont.body : font.body, lineHeight: 14, marginTop: 4 }}>
+                    <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontSize: diffuse ? 11 : 12, fontFamily: diffuse ? diffuseFont.body : font.body, lineHeight: diffuse ? 14 : 17, marginTop: 4 }}>
                       {item.tip}
                     </Text>
                   </View>
@@ -3994,9 +3657,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                       : 'WHO recommends 60 min of moderate-to-vigorous activity daily for children 3+.'}
                   </Text>
                 ) : (
-                  <View style={{ backgroundColor: COLOR + '15', borderRadius: radius.md, padding: 12, marginTop: 8, borderWidth: 1, borderColor: COLOR + '30', flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-                    <Text style={{ fontSize: 14, lineHeight: 16 }}>{'📋'}</Text>
-                    <Text style={{ color: COLOR, fontSize: 12, fontFamily: font.bodyMedium, flex: 1, lineHeight: 16 }}>
+                  <View style={{ marginTop: 8, flexDirection: 'row', gap: 10, alignItems: 'flex-start', borderTopWidth: HAIR, borderTopColor: colors.border, paddingTop: 12 }}>
+                    <SiteSticker name="bell" size={22} />
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body, flex: 1, lineHeight: 19 }}>
                       {ageMonths < 12
                         ? 'Aim for 20–30 min tummy time daily, spread across sessions.'
                         : ageMonths < 36
@@ -4043,10 +3706,10 @@ function ChartCard({ title, children, onExpand }: { title: string; children: Rea
     )
   }
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }]}>
+    <View style={{ borderTopWidth: HAIR, borderTopColor: colors.border, paddingTop: 16 }}>
       <Pressable onPress={onExpand} style={styles.chartHeader}>
-        <Text style={[styles.chartTitle, { color: colors.text }]}>{title}</Text>
-        <ChevronRight size={18} color={colors.textMuted} strokeWidth={1.75} />
+        <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>{title}</Text>
+        <ChevronRight size={16} color={colors.text} strokeWidth={2} />
       </Pressable>
       <View style={styles.chartBody}>{children}</View>
     </View>
@@ -4065,7 +3728,7 @@ function StatRow({ children }: { children: React.ReactNode }) {
       <View style={[styles.statStrip, { borderColor: dt.colors.line }]}>{children}</View>
     )
   }
-  return <View style={styles.statRow}>{children}</View>
+  return <View style={styles.statRowSite}>{children}</View>
 }
 
 function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
@@ -4092,15 +3755,11 @@ function StatPill({ label, value, color }: { label: string; value: string; color
       </View>
     )
   }
+  // Light: bare number + mono caption, left-aligned — no boxes.
   return (
-    <View style={[styles.statPill, {
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.border,
-    }]}>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
+    <View style={styles.statCellSite}>
+      <Text style={[styles.statValueSite, { color: colors.text, fontFamily: font.displayBold }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{value}</Text>
+      <Text style={[styles.statLabelSite, { color: colors.textSecondary }]} numberOfLines={2}>{label}</Text>
     </View>
   )
 }
@@ -4129,9 +3788,9 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
     )
   }
   return (
-    <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }]}>
-      <Icon size={22} color={colors.textMuted} strokeWidth={1.75} />
-      <Text style={[styles.emptyText, { color: colors.textMuted }]}>{messages[pillar]}</Text>
+    <View style={styles.emptyCard}>
+      <SiteSticker name={PILLAR_SITE_STICKER[pillar]} size={48} cut />
+      <Text style={[styles.emptyText, { color: colors.textSecondary, fontFamily: font.body }]}>{messages[pillar]}</Text>
     </View>
   )
 }
@@ -4143,6 +3802,8 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
 }) {
   const { colors, stickers: st } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
+  const axisText = diffuse ? colors.textMuted : colors.textSecondary
   const leftPad = 40, rightPad = 16, topPad = 28, bottomPad = 8
   const chartW = width - leftPad - rightPad
   const chartH = height - topPad - bottomPad
@@ -4183,7 +3844,7 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
                 strokeDasharray={i === 0 ? undefined : '3,5'}
                 strokeLinecap="round"
               />
-              <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end" fontFamily={font.bodyMedium}>
+              <SvgText x={leftPad - 10} y={y + 4} fill={axisText} fontSize={11} fontWeight="600" textAnchor="end" fontFamily={font.bodyMedium}>
                 {tick}
               </SvgText>
             </G>
@@ -4226,7 +3887,7 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
         })}
       </Svg>
       <View style={[styles.labelRow, { width, paddingLeft: leftPad, paddingRight: rightPad }]}>
-        {labels.map((l, i) => <Text key={i} style={[styles.label, { color: colors.textMuted }]}>{l}</Text>)}
+        {labels.map((l, i) => <Text key={i} style={[styles.label, { color: axisText }]}>{l}</Text>)}
       </View>
       <View style={styles.legendRow}>
         <LegendDot color={colGood} label="Ate well" />
@@ -4247,9 +3908,10 @@ function Donut({ size = 100, pct, color, label, bgRing }: {
 }) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const labelColor = diffuse ? dt.colors.ink3 : '#6E6763'
-  const numColor = diffuse ? dt.colors.ink : color
-  const numFont = diffuse ? diffuseFont.display : font.display
+  const { colors: themeColors } = useTheme()
+  const labelColor = diffuse ? dt.colors.ink3 : themeColors.textSecondary
+  const numColor = diffuse ? dt.colors.ink : themeColors.text
+  const numFont = diffuse ? diffuseFont.display : font.displayBold
   const stroke = 10
   const r = size / 2 - stroke / 2 - 1
   const cf = 2 * Math.PI * r
@@ -4341,10 +4003,10 @@ function MealsLineChart({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const color = diffuse ? getDiffuseAccent('kids', dt.isDark) : PILLAR_CONFIG.nutrition.color
-  const axisColor = diffuse ? dt.colors.ink3 : colors.textMuted
-  const nodeFill = diffuse ? dt.colors.surface : colors.surfaceRaised
-  const nodeStroke = diffuse ? dt.colors.line2 : colors.borderStrong
-  const numFont = diffuse ? diffuseFont.mono : font.display
+  const axisColor = diffuse ? dt.colors.ink3 : colors.textSecondary
+  const nodeFill = diffuse ? dt.colors.surface : colors.surface
+  const nodeStroke = diffuse ? dt.colors.line2 : colors.text
+  const numFont = diffuse ? diffuseFont.mono : font.bodyBold
   const labelFont = diffuse ? diffuseFont.mono : font.body
 
   // Diffuse: meals/feeds per day as clean labelled bars — counts read clearer
@@ -4405,7 +4067,7 @@ function MealsLineChart({
               textAnchor="middle"
               fontSize={10}
               fontFamily={numFont}
-              fill={p.v > 0 ? color : axisColor}
+              fill={diffuse ? (p.v > 0 ? color : axisColor) : (p.v > 0 ? colors.text : axisColor)}
             >
               {p.v}
             </SvgText>
@@ -4497,61 +4159,62 @@ function HighlightBarChart({
     )
   }
 
+  // Light (site look): ink-outlined soft-tone bars with the TRUE value over each bar.
+  // A freak day can't flatten the rest: bars scale to a robust ceiling (2.5× the median logged
+  // day, never above a 24h day for hours), and an over-ceiling bar is simply drawn full-height
+  // while its label keeps the real number.
   const { data, labels } = binSeries(rawData, rawLabels, 14)
-  const maxV = Math.max(...data, 0.1)
-  const maxIdx = data.indexOf(maxV)
-  const yTop = realMax % 1 === 0 ? Math.ceil(maxV) : Number(maxV.toFixed(1))
-  const yMid = Math.round(maxV / 2)
-
-  const fmt = (v: number) => (v % 1 === 0 ? `${v}` : v.toFixed(1))
-  const dimmed = diffuse ? `${barColor}55` : `${color}66` // 40% over paper, mockup-equivalent of color-mix
+  const logged = data.filter((v) => v > 0).sort((x, y) => x - y)
+  const median = logged.length ? logged[Math.floor(logged.length / 2)] : 0
+  const trueMax = Math.max(...data, 0.1)
+  let ceiling = trueMax
+  if (logged.length >= 3 && trueMax > median * 3) ceiling = median * 2.5
+  if (unit === 'h') ceiling = Math.min(ceiling, 24)
+  if (target !== undefined) ceiling = Math.max(ceiling, Math.min(target, 24))
+  ceiling = Math.max(ceiling, 0.1)
+  const BAR_AREA = Math.max(height - 40, 80)
+  const maxIdx = data.indexOf(trueMax)
+  const showAll = data.length <= 9
+  const fmt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? `${Math.round(v)}` : v.toFixed(1))
+  const tone = SOFT_BY_PILLAR_COLOR[color] ?? stickers.lilacSoft
 
   return (
     <View style={{ width: '100%', paddingVertical: 4 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height, paddingLeft: 22, gap: 4, position: 'relative' }}>
-        {/* Y axis labels — left edge, 3 only, no grid lines */}
-        <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, justifyContent: 'space-between', paddingVertical: 2 }}>
-          <Text style={{ fontSize: 10, color: axisColor, fontFamily: labelFont }}>{fmt(yTop)}</Text>
-          <Text style={{ fontSize: 10, color: axisColor, fontFamily: labelFont }}>{fmt(yMid)}</Text>
-          <Text style={{ fontSize: 10, color: axisColor, fontFamily: labelFont }}>0</Text>
-        </View>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, position: 'relative' }}>
+        {target !== undefined && target > 0 && (
+          <View
+            pointerEvents="none"
+            style={{ position: 'absolute', left: 0, right: 0, top: 16 + BAR_AREA * (1 - Math.min(target, ceiling) / ceiling), height: 1, backgroundColor: colors.text, opacity: 0.45 }}
+          />
+        )}
         {data.map((v, i) => {
-          const pct = Math.max((v / maxV) * 100, v > 0 ? 2 : 0)
-          const isMax = i === maxIdx && v > 0
+          const h = v > 0 ? Math.max(4, (Math.min(v, ceiling) / ceiling) * BAR_AREA) : 3
+          const labelHere = v > 0 && (showAll || i === maxIdx)
           return (
-            <View key={i} style={{ flex: 1, alignItems: 'stretch', position: 'relative', height: '100%', justifyContent: 'flex-end' }}>
-              {/* Highlighted label tooltip */}
-              {isMax && (
-                <View style={{ position: 'absolute', top: -2, left: 0, right: 0, alignItems: 'center' }}>
-                  <View style={{ backgroundColor: barColor + '22', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 }}>
-                    <Text style={{ fontSize: 10, fontFamily: numFont, color: diffuse ? dt.colors.ink : color }}>
-                      {fmt(v)}{unit}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              <View style={{
-                height: `${pct}%`,
-                marginHorizontal: 2,
-                borderRadius: 6,
-                backgroundColor: v === 0 ? emptyBar : (isMax ? barColor : dimmed),
-              }} />
+            <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ fontSize: 11, height: 16, fontFamily: font.bodySemiBold, color: colors.text }} numberOfLines={1}>
+                {labelHere ? `${fmt(v)}${unit}` : ''}
+              </Text>
+              <View style={{ height: BAR_AREA, justifyContent: 'flex-end', width: '100%' }}>
+                <View style={{ height: h, borderRadius: 8, borderWidth: v > 0 ? 1.5 : 0, borderColor: colors.text, backgroundColor: v > 0 ? tone : colors.border }} />
+              </View>
             </View>
           )
         })}
       </View>
       {/* X labels */}
-      <View style={{ flexDirection: 'row', paddingLeft: 22, gap: 4, marginTop: 8 }}>
+      <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
         {labels.map((l, i) => (
-          <Text key={i} style={{
-            flex: 1, textAlign: 'center', fontSize: 10,
-            color: i === maxIdx && data[i] > 0 ? (diffuse ? dt.colors.ink : color) : axisColor,
-            fontFamily: i === maxIdx && data[i] > 0 ? labelFontActive : labelFont,
-          }}>
+          <Text key={i} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: colors.textSecondary, fontFamily: font.body }} numberOfLines={1}>
             {l}
           </Text>
         ))}
       </View>
+      {target !== undefined && target > 0 && (
+        <Text style={{ fontSize: 11, color: colors.textSecondary, fontFamily: font.body, marginTop: 8 }}>
+          {`Target line: ${target}${unit}`}
+        </Text>
+      )}
     </View>
   )
 }
@@ -4588,6 +4251,8 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
     return <DotCountRows rows={rows} />
   }
 
+  const siteTone = [stickers.greenSoft, stickers.blueSoft, stickers.peachSoft, stickers.pinkSoft]
+  const siteSticker: SiteStickerName[] = ['zz', 'moon', 'face2', 'face1']
   return (
     <View style={styles.qualityWrap}>
       {items.map((item, i) => {
@@ -4595,12 +4260,12 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
         if (item.count === 0) return null
         return (
           <View key={i} style={styles.qualityRow}>
-            <EmojiSticker size={24}>{item.emoji}</EmojiSticker>
-            <Text style={[styles.qualityLabel, { color: labelColor, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{item.label}</Text>
-            <View style={[styles.qualityBarBg, { backgroundColor: item.color + '1A', borderRadius: radius.full, height: 12 }]}>
-              <View style={[styles.qualityBarFill, { width: `${pct}%`, backgroundColor: item.color, borderRadius: radius.full }]} />
+            <SiteSticker name={siteSticker[i]} size={26} cut />
+            <Text style={[styles.qualityLabel, { color: labelColor, fontFamily: font.body }]}>{item.label}</Text>
+            <View style={[styles.qualityBarBg, { backgroundColor: colors.border, borderRadius: radius.full, height: 8 }]}>
+              <View style={[styles.qualityBarFill, { width: `${pct}%`, backgroundColor: siteTone[i], borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]} />
             </View>
-            <Text style={[styles.qualityPct, { color: diffuse ? dt.colors.ink : item.color, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>{pct}%</Text>
+            <Text style={[styles.qualityPct, { color: colors.text, fontFamily: font.displayBold }]}>{pct}%</Text>
           </View>
         )
       })}
@@ -4640,17 +4305,20 @@ function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<st
             <View key={dayIdx} style={{ width: colW, alignItems: 'center', gap: 4, paddingVertical: 10 }}>
               {dayMoods.length > 0 ? dayMoods.slice(0, 3).map((mood) => {
                 const fill = moodFaceFill(mood)
+                if (!diffuse) {
+                  return <SiteSticker key={mood} name={MOOD_SITE_STICKER[mood] ?? 'face3'} size={28} cut />
+                }
                 return (
                   <View key={mood} style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: fill + '55', borderWidth: 1.5, borderColor: ink, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    {diffuse
-                      ? <Character name="mood" size={22} face={moodExpression(mood)} color={moodBlobFill(mood)} />
-                      : <MoodFace size={20} variant={moodFaceVariant(mood)} fill={fill} stroke={ink} />}
+                    <Character name="mood" size={22} face={moodExpression(mood)} color={moodBlobFill(mood)} />
                   </View>
                 )
               }) : (
-                <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong }} />
+                <View style={diffuse
+                  ? { width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong }
+                  : { width: 8, height: 8, borderRadius: 4, marginVertical: 7, backgroundColor: colors.border }} />
               )}
-              <Text style={[styles.label, { color: dayMoods.length > 0 ? colors.textSecondary : colors.textMuted }]} numberOfLines={1}>
+              <Text style={[styles.label, { color: diffuse ? (dayMoods.length > 0 ? colors.textSecondary : colors.textMuted) : colors.textSecondary }]} numberOfLines={1}>
                 {label}
               </Text>
             </View>
@@ -4728,7 +4396,7 @@ const styles = StyleSheet.create({
     marginHorizontal: -20,
   },
   headerSub: {
-    fontSize: 14,
+    fontSize: 10,
     paddingHorizontal: 24,
     marginTop: -4,
     marginBottom: 2,
@@ -4802,10 +4470,14 @@ const styles = StyleSheet.create({
 
   // Grandma insight — 2026 paper redesign
   grandmaInsightPaper: {
-    borderRadius: 26,
-    padding: 18,
-    paddingBottom: 20,
-    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+    paddingBottom: 18,
+    borderWidth: 1.5,
+    shadowColor: '#161513',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -4829,9 +4501,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   grandmaInsightMessageWrap: {
-    marginTop: 10,
+    marginTop: 12,
     marginBottom: 14,
-    maxWidth: SCREEN_W * 0.68,
   },
   grandmaInsightMessage: {
     fontSize: 15,
@@ -4839,7 +4510,6 @@ const styles = StyleSheet.create({
   },
   grandmaInsightCrossWrap: {
     marginBottom: 14,
-    maxWidth: SCREEN_W * 0.68,
   },
   grandmaInsightBtn: {
     alignSelf: 'flex-start',
@@ -4867,7 +4537,27 @@ const styles = StyleSheet.create({
   askButtonText: { fontSize: 15, fontWeight: '700', fontFamily: font.bodySemiBold },
 
   // Pillar section
-  pillarSection: { gap: 12 },
+  pillarSection: { gap: 0 },
+  // Site look — quiet rows, hairlines, mono eyebrows
+  pillarRowSite: { paddingVertical: 16, borderTopWidth: StyleSheet.hairlineWidth * 2 },
+  siteEyebrow: { fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 10 },
+  siteMono: { fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
+  siteSectionTitle: { fontSize: 17, lineHeight: 20, letterSpacing: 0.2, textTransform: 'uppercase' },
+  siteBody: { fontSize: 15, lineHeight: 22 },
+  siteSmall: { fontSize: 13, lineHeight: 19 },
+  siteNum: { fontSize: 24, lineHeight: 28 },
+  siteHero: { fontSize: 52, lineHeight: 58, letterSpacing: -1.5 },
+  siteHeroRow: { flexDirection: 'row', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' },
+  siteDivider: { height: StyleSheet.hairlineWidth * 2, marginVertical: 18 },
+  siteBarTrack: { height: 6, borderRadius: 999, overflow: 'hidden', marginTop: 8 },
+  siteBarFill: { height: '100%', borderRadius: 999, borderWidth: 1 },
+  bandRowSite: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 7 },
+  bandSwatch: { width: 14, height: 14, borderRadius: 4, borderWidth: 1.5 },
+  pillarInfoRowSite: { paddingVertical: 14 },
+  statRowSite: { flexDirection: 'row', gap: 16 },
+  statCellSite: { flex: 1, gap: 4 },
+  statValueSite: { fontSize: 26, lineHeight: 30, letterSpacing: -0.5 },
+  statLabelSite: { fontFamily: MONO, fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', lineHeight: 13 },
   pillarSectionTitle: { fontSize: 13, fontWeight: '900', fontFamily: font.display, letterSpacing: 2, marginBottom: 4 },
   pillarRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
   pillarIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
@@ -5074,9 +4764,9 @@ const styles = StyleSheet.create({
   errorCard: { padding: 20, alignItems: 'center', gap: 10 },
   errorText: { fontSize: 15, fontFamily: font.bodySemiBold },
   errorRetry: { fontSize: 14, fontFamily: font.bodyMedium },
-  emptyCard: { padding: 24, alignItems: 'center', gap: 10 },
+  emptyCard: { paddingVertical: 20, paddingHorizontal: 12, alignItems: 'center', gap: 10 },
   emptyText: { fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center', lineHeight: 20 },
-  emptyAll: { padding: 40, alignItems: 'center', gap: 14, marginTop: 16 },
+  emptyAll: { padding: 32, alignItems: 'center', gap: 12, marginTop: 8 },
   emptyAllTitle: { fontSize: 20, fontFamily: font.display },
   emptyAllSub: { fontSize: 15, fontFamily: font.body, textAlign: 'center', lineHeight: 22 },
 
@@ -5115,14 +4805,14 @@ const styles = StyleSheet.create({
   insightDetailLabelWrap: { flex: 1, gap: 4 },
   insightDetailOverall: { fontSize: 22, lineHeight: 26, marginTop: 4 },
   insightDetailOverallSub: { fontSize: 13, lineHeight: 18 },
-  insightHighlightRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 14 },
+  insightHighlightRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, paddingVertical: 14 },
   insightHighlightIcon: { width: 36, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   insightHighlightBody: { flex: 1, gap: 4 },
   insightHighlightLabel: { fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' },
   insightHighlightTitle: { fontSize: 15, lineHeight: 20 },
   insightHighlightText: { fontSize: 14, lineHeight: 20 },
   insightActionsBlock: { gap: 8, marginTop: 2 },
-  insightActionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 12, paddingHorizontal: 14 },
+  insightActionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 8 },
   insightActionText: { flex: 1, fontSize: 14, lineHeight: 20 },
   insightEmpty: { padding: 16 },
   insightEmptyText: { fontSize: 14, lineHeight: 20, textAlign: 'center' },
