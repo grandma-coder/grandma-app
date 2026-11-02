@@ -22,6 +22,9 @@ import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { PillButton } from '../../components/ui/PillButton'
+import { HandDrawnBox, HandRule } from '../../components/ui/HandDrawn'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { Stagger, StickerEnter } from '../../components/ui/Motion'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseOAuthRow, DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -218,9 +221,9 @@ export default function SignIn() {
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
       {/* Decorative sticker — collage art */}
-      <View style={[styles.stickerTR, { top: insets.top + 14 }]}>
+      <StickerEnter delay={450} tilt={12} seed={7} style={[styles.stickerTR, { top: insets.top + 14 }]}>
         <SiteSticker name="flower" size={48} cut />
-      </View>
+      </StickerEnter>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -234,15 +237,9 @@ export default function SignIn() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <Stagger delay={80}>
           {/* Back button */}
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <View style={[styles.backBtn, {
-              backgroundColor: paper,
-              borderColor: paperBorder,
-            }]}>
-              <Ionicons name="chevron-back" size={20} color={ink} />
-            </View>
-          </Pressable>
+          <InkBackButton ink={ink} paper={paper} />
 
           {/* Heading */}
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
@@ -279,11 +276,11 @@ export default function SignIn() {
 
           {/* Divider */}
           <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
+            <HandRule color={paperBorder} />
             <Text style={[styles.dividerText, { fontFamily: font.body, color: ink4 }]}>
               {t('auth_orSignInEmail')}
             </Text>
-            <View style={[styles.dividerLine, { backgroundColor: paperBorder }]} />
+            <HandRule color={paperBorder} />
           </View>
 
           {/* Paper card inputs */}
@@ -339,6 +336,7 @@ export default function SignIn() {
               </Text>
             </Text>
           </Pressable>
+          </Stagger>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -373,7 +371,7 @@ function InputField({
   font,
 }: InputFieldProps) {
   return (
-    <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+    <HandDrawnBox style={styles.inputCard} fill={paper} stroke={paperBorder} radius={14} seed={'field1'}>
       <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: ink4 }]}>
         {label}
       </Text>
@@ -388,7 +386,7 @@ function InputField({
         placeholder={secureTextEntry ? '••••••••' : 'your@email.com'}
         placeholderTextColor={ink4}
       />
-    </View>
+    </HandDrawnBox>
   )
 }
 
@@ -445,7 +443,6 @@ const styles = StyleSheet.create({
   inputCard: {
     borderRadius: 14,
     padding: 14,
-    borderWidth: 1.5,
     marginBottom: 12,
   },
   inputLabel: {

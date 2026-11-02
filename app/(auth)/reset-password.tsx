@@ -25,6 +25,8 @@ import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { PillButton } from '../../components/ui/PillButton'
+import { HandDrawnBox } from '../../components/ui/HandDrawn'
+import { Stagger, StickerEnter } from '../../components/ui/Motion'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA } from '../../components/ui/diffuse/DiffuseActions'
@@ -153,9 +155,9 @@ export default function ResetPassword() {
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      <View style={[styles.stickerTR, { top: insets.top + 14 }]}>
+      <StickerEnter delay={450} tilt={12} seed={14} style={[styles.stickerTR, { top: insets.top + 14 }]}>
         <SiteSticker name="lock" size={48} cut />
-      </View>
+      </StickerEnter>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -169,13 +171,14 @@ export default function ResetPassword() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <Stagger delay={80}>
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>{t('auth_reset_heading')}</Text>
           <Text style={[styles.headingItalic, { fontFamily: font.display, color: ink }]}>{t('auth_reset_heading2')}</Text>
           <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
             {t('auth_reset_subtitle')}
           </Text>
 
-          <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <HandDrawnBox style={styles.inputCard} fill={paper} stroke={paperBorder} radius={14} seed={'field1'}>
             <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
               {t('auth_newPasswordLabel')}
             </Text>
@@ -191,9 +194,9 @@ export default function ResetPassword() {
               placeholderTextColor={ink4}
               accessibilityLabel="New password"
             />
-          </View>
+          </HandDrawnBox>
 
-          <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <HandDrawnBox style={styles.inputCard} fill={paper} stroke={paperBorder} radius={14} seed={'field2'}>
             <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
               {t('auth_confirmPasswordLabel')}
             </Text>
@@ -209,7 +212,7 @@ export default function ResetPassword() {
               placeholderTextColor={ink4}
               accessibilityLabel="Confirm new password"
             />
-          </View>
+          </HandDrawnBox>
 
           <PillButton
             label={loading ? t('auth_updating') : t('auth_updatePassword')}
@@ -217,6 +220,7 @@ export default function ResetPassword() {
             variant="ink"
             disabled={loading}
           />
+          </Stagger>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -225,12 +229,12 @@ export default function ResetPassword() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  stickerTR: { position: 'absolute', right: 26, transform: [{ rotate: '12deg' }], zIndex: 0 },
+  stickerTR: { position: 'absolute', right: 26, zIndex: 0 },
   container: { flexGrow: 1, paddingHorizontal: 24, zIndex: 1 },
   heading: { fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase', marginTop: 10 },
   headingItalic: { fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 8 },
   sub: { fontSize: 15, marginBottom: 28, lineHeight: 22 },
-  inputCard: { borderRadius: 14, padding: 14, borderWidth: 1.5, marginBottom: 16 },
+  inputCard: { borderRadius: 14, padding: 14, marginBottom: 16 },
   inputLabel: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 },
   inputText: { fontSize: 18, letterSpacing: 0 },
   cta: { height: 58, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: 4, marginBottom: 16 },

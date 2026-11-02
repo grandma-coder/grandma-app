@@ -11,11 +11,15 @@ import { useEffect, useRef } from 'react'
 import { Animated, Easing, Pressable, Text, View, StyleSheet, type TextStyle, type StyleProp } from 'react-native'
 import { font } from '../../constants/theme'
 import { SiteSticker, SITE_STICKER_NAMES, type SiteStickerName } from '../stickers/SiteSticker'
+import { useIdleSway } from './Motion'
 
 export function SiteBrand({ color, size = 22 }: { color: string; size?: number }) {
+  const sway = useIdleSway(5, 3)
   return (
     <View style={styles.brand} accessibilityRole="header" accessibilityLabel="grandma">
-      <SiteSticker name="eye" size={size * 1.55} />
+      <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
+        <SiteSticker name="eye" size={size * 1.55} />
+      </Animated.View>
       <Text style={[styles.brandText, { color, fontSize: size }]}>grandma</Text>
     </View>
   )
@@ -26,6 +30,7 @@ const TOKEN = /\[([a-z0-9]+)\]/
 function PopSticker({ name, size, index, delay }: { name: SiteStickerName; size: number; index: number; delay: number }) {
   const pop = useRef(new Animated.Value(0)).current
   const boing = useRef(new Animated.Value(0)).current
+  const sway = useIdleSway(4, index * 2 + 1)
 
   useEffect(() => {
     Animated.spring(pop, { toValue: 1, friction: 5, tension: 90, delay: delay + index * 120, useNativeDriver: true }).start()
@@ -48,7 +53,9 @@ function PopSticker({ name, size, index, delay }: { name: SiteStickerName; size:
   return (
     <Pressable onPress={onPress} hitSlop={6} accessible={false}>
       <Animated.View style={{ marginLeft: size * 0.12, marginRight: size * 0.02, transform: [{ translateY: size * 0.2 }, { scale }, { rotate }] }}>
-        <SiteSticker name={name} size={size} />
+        <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
+          <SiteSticker name={name} size={size} />
+        </Animated.View>
       </Animated.View>
     </Pressable>
   )

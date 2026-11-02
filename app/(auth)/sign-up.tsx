@@ -21,6 +21,9 @@ import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { PillButton } from '../../components/ui/PillButton'
+import { HandDrawnBox, HandRule } from '../../components/ui/HandDrawn'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { Stagger, StickerEnter } from '../../components/ui/Motion'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -178,9 +181,9 @@ export default function SignUp() {
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
       {/* Decorative sticker — one per auth screen, level with the back button */}
-      <View style={[styles.stickerTR, { top: insets.top + 14, transform: [{ rotate: '12deg' }] }]}>
+      <StickerEnter delay={450} tilt={12} seed={7} style={[styles.stickerTR, { top: insets.top + 14 }]}>
         <SiteSticker name="heart" size={48} cut />
-      </View>
+      </StickerEnter>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -194,12 +197,9 @@ export default function SignUp() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <Stagger delay={80}>
           {/* Back button */}
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <View style={[styles.backBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-              <Ionicons name="chevron-back" size={20} color={ink} />
-            </View>
-          </Pressable>
+          <InkBackButton ink={ink} paper={paper} />
 
           {/* Heading */}
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>
@@ -216,7 +216,7 @@ export default function SignUp() {
           </Text>
 
           {/* Paper card inputs */}
-          <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <HandDrawnBox style={styles.inputCard} fill={paper} stroke={paperBorder} radius={14} seed={'field1'}>
             <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
               {t('auth_emailLabel')}
             </Text>
@@ -230,9 +230,9 @@ export default function SignUp() {
               placeholder={t('auth_emailPlaceholder')}
               placeholderTextColor={ink4}
             />
-          </View>
+          </HandDrawnBox>
 
-          <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <HandDrawnBox style={styles.inputCard} fill={paper} stroke={paperBorder} radius={14} seed={'field2'}>
             <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
               {t('auth_passwordLabel')}
             </Text>
@@ -245,7 +245,7 @@ export default function SignUp() {
               placeholder={t('auth_passwordPlaceholder')}
               placeholderTextColor={ink4}
             />
-          </View>
+          </HandDrawnBox>
 
           {/* CTA */}
           <PillButton
@@ -270,6 +270,7 @@ export default function SignUp() {
             {' '}{t('auth_termsAnd')}{' '}
             <Text style={{ textDecorationLine: 'underline' }}>{t('privacy_privacyPolicy')}</Text>.
           </Text>
+          </Stagger>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -314,7 +315,6 @@ const styles = StyleSheet.create({
   inputCard: {
     borderRadius: 14,
     padding: 14,
-    borderWidth: 1.5,
     marginBottom: 12,
   },
   inputLabel: {

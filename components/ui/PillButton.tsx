@@ -12,9 +12,10 @@
  * unchanged.
  */
 
-import { ReactNode, useRef } from 'react'
+import { ReactNode, useRef, useState } from 'react'
 import { Pressable, Text, StyleSheet, ViewStyle, StyleProp, View, Animated, ActivityIndicator } from 'react-native'
 import * as Haptics from 'expo-haptics'
+import { HandDrawnPill } from './HandDrawn'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useTheme, useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
@@ -57,6 +58,7 @@ function CurrentPillButton({
   const { colors, font, isDark } = useTheme()
   // 0 = resting on its shadow, 1 = pushed all the way down onto it.
   const press = useRef(new Animated.Value(0)).current
+  const [width, setWidth] = useState(0)
 
   const ink = colors.text
   const paper = colors.surface
@@ -85,29 +87,32 @@ function CurrentPillButton({
       onPress={onPress}
       onPressIn={isInactive ? undefined : pressIn}
       onPressOut={isInactive ? undefined : pressOut}
+      onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}
       disabled={isInactive}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: isInactive, busy: loading }}
       style={[{ height: height + SHADOW, opacity: isInactive ? 0.55 : 1 }, style]}
     >
-      {/* the hard ink shadow the button sits on */}
-      <View style={[styles.shadow, { height, top: SHADOW, backgroundColor: v.shadow }]} />
+      {/* the hand-drawn ink shadow the button sits on */}
+      <View style={[styles.layer, { top: SHADOW, height }]}>
+        <HandDrawnPill width={width} height={height} fill={v.shadow} seed={label + 'shadow'} />
+      </View>
       <Animated.View
         style={[
           styles.base,
           {
             height,
-            backgroundColor: v.bg,
-            borderColor: v.border,
-            borderWidth: 2,
             transform: [
               { translateY: press.interpolate({ inputRange: [0, 1], outputRange: [0, SHADOW - 1] }) },
               { scale: press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.985] }) },
+              { rotate: press.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-0.6deg'] }) },
             ],
           },
         ]}
       >
+        {/* wobbly ink outline, like the tab bar's hand-drawn edge */}
+        <HandDrawnPill width={width} height={height} fill={v.bg} stroke={v.border} strokeWidth={2.6} seed={label} />
         {loading ? (
           <ActivityIndicator color={v.fg} />
         ) : (
@@ -221,7 +226,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 20,
   },
-  shadow: { position: 'absolute', left: 0, right: 0, borderRadius: 999 },
+  layer: { position: 'absolute', left: 0, right: 0 },
   label: { fontSize: 16, letterSpacing: -0.2 },
   slot: { alignItems: 'center', justifyContent: 'center' },
 })

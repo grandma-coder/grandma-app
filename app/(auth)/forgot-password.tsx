@@ -22,6 +22,9 @@ import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { PillButton } from '../../components/ui/PillButton'
+import { HandDrawnBox, HandRule } from '../../components/ui/HandDrawn'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { Stagger, StickerEnter } from '../../components/ui/Motion'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -161,9 +164,9 @@ export default function ForgotPassword() {
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      <View style={[styles.stickerTR, { top: insets.top + 14 }]}>
+      <StickerEnter delay={450} tilt={12} seed={15} style={[styles.stickerTR, { top: insets.top + 14 }]}>
         <SiteSticker name="lock" size={48} cut />
-      </View>
+      </StickerEnter>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -177,11 +180,8 @@ export default function ForgotPassword() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable onPress={() => router.back()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Go back">
-            <View style={[styles.backBtn, { backgroundColor: paper, borderColor: paperBorder }]}>
-              <Ionicons name="chevron-back" size={20} color={ink} />
-            </View>
-          </Pressable>
+          <Stagger delay={80}>
+          <InkBackButton ink={ink} paper={paper} />
 
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>{t('auth_forgot_heading')}</Text>
           <Text style={[styles.headingItalic, { fontFamily: font.display, color: ink }]}>{t('auth_forgot_heading2')}</Text>
@@ -191,7 +191,7 @@ export default function ForgotPassword() {
 
           {!sent && (
             <>
-              <View style={[styles.inputCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <HandDrawnBox style={styles.inputCard} fill={paper} stroke={paperBorder} radius={14} seed={'field1'}>
                 <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
                   {t('auth_emailLabel')}
                 </Text>
@@ -207,7 +207,7 @@ export default function ForgotPassword() {
                   placeholderTextColor={ink4}
                   accessibilityLabel="Email address"
                 />
-              </View>
+              </HandDrawnBox>
 
               <PillButton
                 label={loading ? t('auth_sending') : t('auth_sendResetLink')}
@@ -225,6 +225,7 @@ export default function ForgotPassword() {
               variant="ink"
             />
           )}
+          </Stagger>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -233,13 +234,13 @@ export default function ForgotPassword() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  stickerTR: { position: 'absolute', right: 26, transform: [{ rotate: '12deg' }], zIndex: 0 },
+  stickerTR: { position: 'absolute', right: 26, zIndex: 0 },
   container: { flexGrow: 1, paddingHorizontal: 24, zIndex: 1 },
   backBtn: { width: 44, height: 44, borderRadius: 999, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   heading: { fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase', marginTop: 10 },
   headingItalic: { fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 8 },
   sub: { fontSize: 15, marginBottom: 28, lineHeight: 22 },
-  inputCard: { borderRadius: 14, padding: 14, borderWidth: 1.5, marginBottom: 16 },
+  inputCard: { borderRadius: 14, padding: 14, marginBottom: 16 },
   inputLabel: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 },
   inputText: { fontSize: 18, letterSpacing: 0 },
   cta: { height: 58, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
