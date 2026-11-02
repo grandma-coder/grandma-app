@@ -32,3 +32,13 @@ Read `docs/design/site-look.md` first.
 
 ## Done when
 `npx tsc --noEmit` shows no errors in your files (ignore errors in files other agents are editing) and `npx jest --silent` passes. Report: short bullets per file/section + anything left undone.
+
+## Loading (always visible)
+- While data is loading, never show provisional or empty data ("—", "Not enough data yet", "Tap to log", a fake cycle day) and never "Loading…" text.
+- Use `components/ui/Skeleton.tsx`: `Skeleton`, `SkeletonLines`, `SkeletonBars`, `SkeletonRing`, `SkeletonRow`, `SkeletonPage`. Shape the skeleton like the content that's coming.
+- Only on FIRST load (no cached data yet): `isLoading && !data`. Background refetches keep showing the current data.
+- Empty state is different from loading: once loaded with no data, show the existing empty state.
+
+## Fonts
+- Titles: `font.display` (Architects Daughter) uppercase. Body/labels: Hanken (`font.body*`). Eyebrows: `'SpaceMono_400Regular'`. Big numbers: `font.displayBold`.
+- Never leave a text style without a fontFamily; `lib/fontDefaults.ts` backs up StyleSheet styles but inline styles must set it.

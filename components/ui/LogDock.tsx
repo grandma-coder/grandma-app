@@ -4,7 +4,9 @@
  * the journey tone and a little ink tick sits on the sticker.
  *
  * Motion: stickers pop in one after another and sway; a press squashes + tilts the sticker
- * (light haptic). Five fit per row; more wrap to a second row.
+ * (light haptic). The save moment: when an item turns done (the sheet saved and the log is
+ * back), the sticker hops, the ✓ springs in, the underline draws and the phone gives a
+ * success tap. Five fit per row; more wrap to a second row.
  */
 
 import { useEffect, useRef } from 'react'
@@ -36,6 +38,28 @@ function DockItem({ item, index, accent }: { item: LogDockItem; index: number; a
   }, [pop, index])
   const to = (v: number) => Animated.spring(press, { toValue: v, friction: 5, tension: 280, useNativeDriver: true }).start()
 
+  // Save moment — only on a live false → true flip, never on first render (already-done items).
+  const celebrate = useRef(new Animated.Value(0)).current
+  const tickIn = useRef(new Animated.Value(item.done ? 1 : 0)).current
+  const wasDone = useRef(item.done)
+  useEffect(() => {
+    if (item.done && !wasDone.current) {
+      celebrate.setValue(0)
+      tickIn.setValue(0)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(celebrate, { toValue: 1, duration: 160, useNativeDriver: true }),
+          Animated.spring(celebrate, { toValue: 0, friction: 4, tension: 160, useNativeDriver: true }),
+        ]),
+        Animated.spring(tickIn, { toValue: 1, friction: 4, tension: 140, delay: 120, useNativeDriver: true }),
+      ]).start()
+    } else if (!item.done) {
+      tickIn.setValue(0)
+    }
+    wasDone.current = item.done
+  }, [item.done, celebrate, tickIn])
+
   return (
     <Pressable
       onPress={item.onPress ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); item.onPress?.() } : undefined}
@@ -52,6 +76,8 @@ function DockItem({ item, index, accent }: { item: LogDockItem; index: number; a
           transform: [
             { scale: Animated.multiply(pop, press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.85] })) },
             { rotate: press.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-10deg'] }) },
+            { translateY: celebrate.interpolate({ inputRange: [0, 1], outputRange: [0, -10] }) },
+            { scale: celebrate.interpolate({ inputRange: [0, 1], outputRange: [1, 1.18] }) },
           ],
         }}
       >
@@ -59,21 +85,21 @@ function DockItem({ item, index, accent }: { item: LogDockItem; index: number; a
           <SiteSticker name={item.sticker} size={40} />
         </Animated.View>
         {item.done ? (
-          <View style={[styles.tick, { backgroundColor: ink, borderColor: colors.bg }]}>
+          <Animated.View style={[styles.tick, { backgroundColor: ink, borderColor: colors.bg, transform: [{ scale: tickIn }] }]}>
             <Svg width={10} height={10} viewBox="0 0 18 18">
               <Path d="M3.5 9.5 L7.5 13 L14.5 4.5" stroke={colors.bg} strokeWidth={3.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
-          </View>
+          </Animated.View>
         ) : null}
       </Animated.View>
       <Text style={[styles.label, { color: item.done ? ink : colors.textSecondary, fontFamily: font.display }]} numberOfLines={2}>
         {item.label}
       </Text>
-      <View style={{ height: 8, opacity: item.done ? 1 : 0 }}>
+      <Animated.View style={{ height: 8, opacity: item.done ? tickIn : 0, transform: [{ scaleX: tickIn }] }}>
         <Svg width={44} height={8} viewBox="0 0 60 8">
           <Path d={UNDERLINE} stroke={accent} strokeWidth={3} fill="none" strokeLinecap="round" />
         </Svg>
-      </View>
+      </Animated.View>
     </Pressable>
   )
 }
