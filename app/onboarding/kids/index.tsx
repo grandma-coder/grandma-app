@@ -24,9 +24,14 @@ import DatePickerField from '../../../components/ui/DatePickerField'
 import * as ImagePicker from 'expo-image-picker'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { router } from 'expo-router'
-import { Camera, User, Plus, Minus, Check } from 'lucide-react-native'
+import { Camera, User } from 'lucide-react-native'
 import { Star, Heart, Moon, Sun, Flower, Cloud, Leaf } from '../../../components/ui/Stickers'
-import { PillButton } from '../../../components/ui/PillButton'
+import { SiteChoice, SiteStepper } from '../../../components/ui/SiteChoice'
+import { HandDrawnBox } from '../../../components/ui/HandDrawn'
+import { CelebrateHero } from '../../../components/onboarding/Celebrate'
+import { EyeAction, ACTION_TONES } from '../../../components/ui/AuthDock'
+import { FadeUp } from '../../../components/ui/Motion'
+import type { SiteStickerName } from '../../../components/stickers/SiteSticker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
 import { useTheme, useDiffuseTheme, brand, stickers, getModeColor, getModeColorSoft, diffuseFields } from '../../../constants/theme'
@@ -126,6 +131,26 @@ const ALLERGY_OPTIONS = [
   'Milk', 'Eggs', 'Peanuts', 'Tree nuts', 'Soy',
   'Wheat', 'Fish', 'Shellfish', 'Sesame', 'Other',
 ]
+
+const ALLERGY_STICKER: Record<string, SiteStickerName> = {
+  Milk: 'bottle',
+  Eggs: 'egg',
+  Peanuts: 'corn',
+  'Tree nuts': 'leaf',
+  Soy: 'lettuce',
+  Wheat: 'corn',
+  Fish: 'drop',
+  Shellfish: 'rasp',
+  Sesame: 'plum',
+  Other: 'pencil',
+}
+
+const ROLE_STICKER: Record<CaregiverRole, SiteStickerName> = {
+  partner: 'heart',
+  nanny: 'stroller',
+  family: 'house',
+  doctor: 'syringe',
+}
 
 const CAREGIVER_ROLES: { id: CaregiverRole; label: string }[] = [
   { id: 'partner', label: 'Partner' },
@@ -591,41 +616,7 @@ function StepChildCount({
         <ArcDial min={1} max={6} value={count} onChange={setCount} unit="kids" />
       ) : (
       <View style={stepStyles.counterRow}>
-        <Pressable
-          onPress={() => setCount(count - 1)}
-          disabled={count <= 1}
-          style={[
-            stepStyles.counterButton,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: 18,
-              opacity: count <= 1 ? 0.3 : 1,
-            },
-          ]}
-        >
-          <Minus size={24} color={colors.text} strokeWidth={2.5} />
-        </Pressable>
-
-        <View style={[stepStyles.counterDisplay, { backgroundColor: modeSoft, borderRadius: radius.xl }]}>
-          <Text style={[stepStyles.counterNumber, { color: mode, fontFamily: font.displayBold }]}>{count}</Text>
-        </View>
-
-        <Pressable
-          onPress={() => setCount(count + 1)}
-          disabled={count >= 6}
-          style={[
-            stepStyles.counterButton,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: 18,
-              opacity: count >= 6 ? 0.3 : 1,
-            },
-          ]}
-        >
-          <Plus size={24} color={colors.text} strokeWidth={2.5} />
-        </Pressable>
+        <SiteStepper value={count} onChange={setCount} min={1} max={6} tone={modeSoft} />
       </View>
       )}
     </OnboardingStep>
@@ -674,25 +665,17 @@ function StepChildName({
           autoCapitalize="words"
         />
       ) : (
-      <TextInput
-        value={child?.name ?? ''}
-        onChangeText={(name) => updateChild(childIdx, { name })}
-        placeholder="First name"
-        placeholderTextColor={colors.textMuted}
-        autoCapitalize="words"
-        autoFocus
-        style={[
-          stepStyles.textInput,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.text,
-            shadowColor: colors.text,
-            borderRadius: 14,
-            fontFamily: font.body,
-          },
-        ]}
-      />
+      <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="child-name">
+        <TextInput
+          value={child?.name ?? ''}
+          onChangeText={(name) => updateChild(childIdx, { name })}
+          placeholder="First name"
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="words"
+          autoFocus
+          style={[stepStyles.textInput, { color: colors.text, fontFamily: font.body }]}
+        />
+      </HandDrawnBox>
       )}
     </OnboardingStep>
   )
@@ -763,19 +746,19 @@ function StepChildDob({
         />
 
         {tooOld && (
-          <View style={[stepStyles.ageBadge, { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1.5, borderColor: colors.text, marginTop: 8 }]}>
-            <Text style={[stepStyles.ageBadgeText, { color: colors.textMuted, fontFamily: font.body }]}>
+          <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="age-old" style={[stepStyles.ageBadge, { marginTop: 8 }]}>
+            <Text style={[stepStyles.ageBadgeText, { color: colors.textSecondary, fontFamily: font.body }]}>
               {t('kidsOnboard_tunedForAges')}
             </Text>
-          </View>
+          </HandDrawnBox>
         )}
 
         {child?.birthDate && (
-          <View style={[stepStyles.ageBadge, { backgroundColor: modeSoft, borderRadius: 18 }]}>
-            <Text style={[stepStyles.ageBadgeText, { color: mode, fontFamily: font.bodyBold }]}>
+          <HandDrawnBox fill={modeSoft} stroke={colors.text} radius={16} seed="age-badge" style={stepStyles.ageBadge}>
+            <Text style={[stepStyles.ageBadgeText, { color: colors.text, fontFamily: font.bodyBold }]}>
               {formatAge(child.birthDate)}
             </Text>
-          </View>
+          </HandDrawnBox>
         )}
       </View>
       )}
@@ -878,17 +861,7 @@ function StepChildCountry({
       ) : (
       <View>
         {/* Search input — sticker treatment to match design system */}
-        <View
-          style={[
-            stepStyles.countrySearch,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: 14,
-              shadowColor: colors.text,
-            },
-          ]}
-        >
+        <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="country-search" style={stepStyles.countrySearch}>
           <TextInput
             value={query}
             onChangeText={setQuery}
@@ -897,7 +870,7 @@ function StepChildCountry({
             autoCapitalize="none"
             style={[stepStyles.countrySearchInput, { color: colors.text, fontFamily: font.body }]}
           />
-        </View>
+        </HandDrawnBox>
 
         {/* Country chip grid — same chip treatment as allergies */}
         <ScrollView
@@ -910,29 +883,13 @@ function StepChildCountry({
             {filteredOptions.map((c) => {
               const isSelected = selected === c.code
               return (
-                <Pressable
+                <SiteChoice
                   key={c.code}
+                  label={c.name}
+                  selected={isSelected}
                   onPress={() => updateChild(childIdx, { countryCode: c.code })}
-                  style={[
-                    stepStyles.allergyChip,
-                    {
-                      backgroundColor: isSelected ? modeSoft : colors.surface,
-                      borderColor: colors.text,
-                      shadowColor: colors.text,
-                      borderRadius: radius.full,
-                    },
-                  ]}
-                >
-                  {isSelected && <Check size={14} color={colors.text} strokeWidth={3} />}
-                  <Text
-                    style={[
-                      stepStyles.allergyChipText,
-                      { color: colors.text, fontFamily: font.bodyBold },
-                    ]}
-                  >
-                    {c.name}
-                  </Text>
-                </Pressable>
+                  tone={modeSoft}
+                />
               )
             })}
             {filteredOptions.length === 0 && (
@@ -1038,22 +995,12 @@ function StepChildPhoto({
               borderWidth={3}
             />
           ) : (
-            <View
-              style={[
-                stepStyles.photoPlaceholder,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.text,
-                  borderRadius: radius.xl,
-                  shadowColor: colors.text,
-                },
-              ]}
-            >
+            <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={24} seed="photo-pick" style={stepStyles.photoPlaceholder}>
               <Camera size={36} color={colors.text} strokeWidth={1.8} />
               <Text style={[stepStyles.photoHint, { color: colors.text, fontFamily: font.body }]}>
                 {t('kidsOnboard_photoHint')}
               </Text>
-            </View>
+            </HandDrawnBox>
           )}
         </Pressable>
         <AvatarPickerModal
@@ -1139,46 +1086,21 @@ function StepChildAllergies({
         {ALLERGY_OPTIONS.map((allergy) => {
           const selected = child?.allergies.includes(allergy) ?? false
           return (
-            <Pressable
+            <SiteChoice
               key={allergy}
+              label={allergy}
+              selected={selected}
               onPress={() => toggleAllergy(childIdx, allergy)}
-              style={[
-                stepStyles.allergyChip,
-                {
-                  backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: colors.text,
-                  shadowColor: colors.text,
-                  borderRadius: radius.full,
-                },
-              ]}
-            >
-              {selected && <Check size={14} color={colors.text} strokeWidth={3} />}
-              <Text
-                style={[
-                  stepStyles.allergyChipText,
-                  { color: colors.text, fontFamily: font.bodyBold },
-                ]}
-              >
-                {allergy}
-              </Text>
-            </Pressable>
+              tone={modeSoft}
+              sticker={ALLERGY_STICKER[allergy]}
+            />
           )
         })}
       </View>
 
       {/* Free-text field appears when "Other" is selected */}
       {otherSelected && (
-        <View
-          style={[
-            stepStyles.otherInputWrap,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: 14,
-              shadowColor: colors.text,
-            },
-          ]}
-        >
+        <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="allergy-other" style={stepStyles.otherInputWrap}>
           <TextInput
             value={child?.allergiesOther ?? ''}
             onChangeText={(t) => updateChild(childIdx, { allergiesOther: t })}
@@ -1187,7 +1109,7 @@ function StepChildAllergies({
             style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.body }]}
             autoCapitalize="sentences"
           />
-        </View>
+        </HandDrawnBox>
       )}
       </>
       )}
@@ -1239,24 +1161,16 @@ function StepChildConditions({
           autoCapitalize="sentences"
         />
       ) : (
-      <TextInput
-        value={child?.conditionsText ?? ''}
-        onChangeText={(text) => updateChild(childIdx, { conditionsText: text })}
-        placeholder="e.g. Asthma, daily inhaler..."
-        placeholderTextColor={colors.textMuted}
-        multiline
-        style={[
-          stepStyles.textArea,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.text,
-            shadowColor: colors.text,
-            borderRadius: 14,
-            fontFamily: font.body,
-          },
-        ]}
-      />
+      <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="conditions">
+        <TextInput
+          value={child?.conditionsText ?? ''}
+          onChangeText={(text) => updateChild(childIdx, { conditionsText: text })}
+          placeholder="e.g. Asthma, daily inhaler..."
+          placeholderTextColor={colors.textMuted}
+          multiline
+          style={[stepStyles.textArea, { color: colors.text, fontFamily: font.body }]}
+        />
+      </HandDrawnBox>
       )}
     </OnboardingStep>
   )
@@ -1310,24 +1224,16 @@ function StepPartner({
         </View>
       ) : (
       <>
-      <TextInput
-        value={partner ?? ''}
-        onChangeText={setPartner}
-        placeholder="Partner's name"
-        placeholderTextColor={colors.textMuted}
-        autoCapitalize="words"
-        style={[
-          stepStyles.textInput,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor: colors.text,
-            shadowColor: colors.text,
-            borderRadius: 14,
-            fontFamily: font.body,
-          },
-        ]}
-      />
+      <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="partner-name">
+        <TextInput
+          value={partner ?? ''}
+          onChangeText={setPartner}
+          placeholder="Partner's name"
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="words"
+          style={[stepStyles.textInput, { color: colors.text, fontFamily: font.body }]}
+        />
+      </HandDrawnBox>
       <Text style={[stepStyles.hint, { color: colors.textMuted, fontFamily: font.body }]}>
         {t('kidsOnboard_partnerHint')}
       </Text>
@@ -1403,53 +1309,30 @@ function StepCaregiver({
         {CAREGIVER_ROLES.map((opt) => {
           const selected = role === opt.id
           return (
-            <Pressable
+            <SiteChoice
               key={opt.id}
+              label={opt.label}
+              selected={selected}
               onPress={() => setRole(opt.id)}
-              style={[
-                stepStyles.roleChip,
-                {
-                  backgroundColor: selected ? modeSoft : colors.surface,
-                  borderColor: colors.text,
-                  shadowColor: colors.text,
-                  borderRadius: radius.full,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  stepStyles.roleChipText,
-                  { color: colors.text, fontFamily: font.bodyBold },
-                ]}
-              >
-                {opt.label}
-              </Text>
-            </Pressable>
+              tone={modeSoft}
+              sticker={ROLE_STICKER[opt.id]}
+            />
           )
         })}
       </View>
 
       {/* Name input (shown after role selected) */}
       {role && (
-        <TextInput
-          value={name ?? ''}
-          onChangeText={setName}
-          placeholder={`${CAREGIVER_ROLES.find((r) => r.id === role)?.label}'s name`}
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="words"
-          style={[
-            stepStyles.textInput,
-            {
-              color: colors.text,
-              backgroundColor: colors.surface,
-              borderColor: colors.text,
-              shadowColor: colors.text,
-              borderRadius: 14,
-              marginTop: 16,
-              fontFamily: font.body,
-            },
-          ]}
-        />
+        <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="caregiver-name" style={{ marginTop: 16 }}>
+          <TextInput
+            value={name ?? ''}
+            onChangeText={setName}
+            placeholder={`${CAREGIVER_ROLES.find((r) => r.id === role)?.label}'s name`}
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="words"
+            style={[stepStyles.textInput, { color: colors.text, fontFamily: font.body }]}
+          />
+        </HandDrawnBox>
       )}
       </>
       )}
@@ -1482,18 +1365,7 @@ function CompletionScreen({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[
-            completeStyles.iconCircle,
-            {
-              backgroundColor: modeSoft,
-              borderWidth: 1.5,
-              borderColor: colors.text,
-            },
-          ]}
-        >
-          <SiteSticker name="baby" size={48} cut />
-        </View>
+        <CelebrateHero sticker="baby" tone={modeSoft} confetti={['star', 'bottle', 'stroller', 'heart', 'crib', 'bodysuit']} />
 
         <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
           {t('kidsOnboard_completionTitle')}
@@ -1511,17 +1383,8 @@ function CompletionScreen({
         {/* Child cards */}
         <View style={completeStyles.cards}>
           {children.map((child, i) => (
-            <View
-              key={i}
-              style={[
-                completeStyles.childCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.text,
-                  borderRadius: 18,
-                },
-              ]}
-            >
+            <FadeUp key={i} index={i} delay={700} style={{ alignSelf: 'stretch' }}>
+            <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={20} seed={`child-card-${i}`} style={completeStyles.childCard}>
               {child.photoUri ? (
                 <Image
                   source={{ uri: child.photoUri }}
@@ -1542,18 +1405,21 @@ function CompletionScreen({
                   {child.name}
                 </Text>
                 {child.birthDate && (
-                  <Text style={[completeStyles.childAge, { color: colors.textSecondary, fontFamily: font.body }]}>
-                    {formatAge(child.birthDate)}
-                  </Text>
+                  <View style={[completeStyles.ageTag, { backgroundColor: modeSoft, borderColor: colors.text }]}>
+                    <Text style={[completeStyles.childAge, { color: colors.text, fontFamily: font.bodyBold }]}>
+                      {formatAge(child.birthDate)}
+                    </Text>
+                  </View>
                 )}
               </View>
-            </View>
+            </HandDrawnBox>
+            </FadeUp>
           ))}
         </View>
       </ScrollView>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16, backgroundColor: colors.bg }]}>
-        <PillButton label="Let's Go" variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
+        <EyeAction label="Let's Go" onPress={onFinish} ink={colors.text} loading={saving} disabled={saving} sticker="star" fill={ACTION_TONES.yellow} delay={900} />
       </View>
     </View>
   )
@@ -1567,39 +1433,24 @@ const stepStyles = StyleSheet.create({
     gap: 16,
   },
   textInput: {
-    borderWidth: 1.5,
     paddingHorizontal: 20,
     height: 56,
     fontSize: 16,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
   },
   otherInputWrap: {
     marginTop: 16,
     paddingHorizontal: 20,
     height: 56,
-    borderWidth: 1.5,
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
   },
   otherInputText: {
     fontSize: 16,
   },
   textArea: {
-    borderWidth: 1.5,
     padding: 16,
     fontSize: 16,
     minHeight: 120,
     textAlignVertical: 'top',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
   },
   hint: {
     fontSize: 13,
@@ -1657,14 +1508,9 @@ const stepStyles = StyleSheet.create({
     fontSize: 15,
   },
   countrySearch: {
-    borderWidth: 1.5,
     paddingHorizontal: 18,
     height: 56,
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
   },
   countrySearchInput: {
     fontSize: 16,
@@ -1690,12 +1536,7 @@ const stepStyles = StyleSheet.create({
     height: 160,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
     gap: 8,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
   },
   photoHint: {
     fontSize: 13,
@@ -1704,33 +1545,6 @@ const stepStyles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-  },
-  allergyChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1.5,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
-  },
-  allergyChipText: {
-    fontSize: 14,
-  },
-  roleChip: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderWidth: 1.5,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
-  },
-  roleChipText: {
-    fontSize: 15,
   },
   // Diffuse-only spacing helpers (layout-only; no colors/shadows).
   diffuseBlock: {
@@ -1759,14 +1573,6 @@ const completeStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  iconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
   title: {
     fontSize: 28,
     letterSpacing: 0.2,
@@ -1788,7 +1594,15 @@ const completeStyles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     gap: 16,
+  },
+  ageTag: {
+    alignSelf: 'flex-start',
     borderWidth: 1.5,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginTop: 2,
+    transform: [{ rotate: '-2deg' }],
   },
   childPhoto: {
     width: 52,
@@ -1819,6 +1633,7 @@ const completeStyles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 24,
     paddingTop: 16,
+    alignItems: 'center',
   },
   button: {
     height: 56,

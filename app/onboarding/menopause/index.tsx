@@ -15,7 +15,13 @@
  * Semantic icons are Character blobs (the shared icon system).
  */
 
-import { SiteSticker } from '../../../components/stickers/SiteSticker'
+import { SiteSticker, type SiteStickerName } from '../../../components/stickers/SiteSticker'
+import { PillButton } from '../../../components/ui/PillButton'
+import { SiteChoice } from '../../../components/ui/SiteChoice'
+import { HandDrawnBox } from '../../../components/ui/HandDrawn'
+import { CelebrateHero } from '../../../components/onboarding/Celebrate'
+import { EyeAction, ACTION_TONES } from '../../../components/ui/AuthDock'
+import { FadeUp } from '../../../components/ui/Motion'
 import { useState, useCallback, useRef } from 'react'
 import {
   View,
@@ -28,9 +34,7 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { PillButton } from '../../../components/ui/PillButton'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { BloomChips } from '../../../components/ui/diffuse/pickers/BloomChips'
 import { ChoiceTimeline } from '../../../components/ui/diffuse/pickers/ChoiceTimeline'
@@ -90,6 +94,22 @@ const STAGE_OPTIONS: { id: MenopauseStage; label: string; desc: string; icon: Ch
   { id: 'meno', label: 'Around menopause', desc: 'Periods have mostly stopped recently', icon: 'phase' },
   { id: 'post', label: 'Postmenopause', desc: 'A year or more since my last period', icon: 'star' },
 ]
+
+// Site-look stickers (non-diffuse only)
+const STAGE_STICKERS: Record<MenopauseStage, SiteStickerName> = { peri: 'moon', meno: 'moon2', post: 'leaf' }
+const SYMPTOM_STICKERS: Partial<Record<MenopauseSymptomId, SiteStickerName>> = {
+  hot_flash: 'flame',
+  night_sweat: 'drop',
+  sleep: 'zz',
+  fatigue: 'cloud',
+  low_mood: 'face3',
+  anxiety: 'bubble',
+  brain_fog: 'brain',
+  palpitations: 'heart',
+  weight: 'ruler',
+  vaginal_dryness: 'flower',
+  libido: 'heart',
+}
 
 const GROUP_META: Record<MenopauseGroup, { label: string; icon: CharacterName }> = {
   vasomotor: { label: 'Temperature', icon: 'temperature' },
@@ -310,9 +330,15 @@ function StepIntro({ step, total, onContinue }: { step: number; total: number; o
       onContinue={onContinue}
       continueLabel={COPY.introCta}
     >
-      <View style={[styles.introCard, { backgroundColor: pal.accentSoft, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
-        <Text style={[styles.introBody, { color: pal.text, fontFamily: pal.fontBody }]}>{COPY.introBody}</Text>
-      </View>
+      {pal.diffuse ? (
+        <View style={[styles.introCard, { backgroundColor: pal.accentSoft, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
+          <Text style={[styles.introBody, { color: pal.text, fontFamily: pal.fontBody }]}>{COPY.introBody}</Text>
+        </View>
+      ) : (
+        <HandDrawnBox fill={pal.accentSoft} stroke={pal.text} radius={20} seed="meno-intro" style={styles.introCardSite}>
+          <Text style={[styles.introBody, { color: pal.text, fontFamily: pal.fontBody }]}>{COPY.introBody}</Text>
+        </HandDrawnBox>
+      )}
     </OnboardingStep>
   )
 }
@@ -352,31 +378,16 @@ function StepStage({ step, total, onContinue }: { step: number; total: number; o
           {STAGE_OPTIONS.map((opt) => {
             const selected = stage === opt.id
             return (
-              <Pressable
+              <SiteChoice
                 key={opt.id}
+                label={opt.label}
+                sub={opt.desc}
+                selected={selected}
                 onPress={() => setStage(opt.id)}
-                style={[
-                  styles.optionCard,
-                  { ...STICKER_SHADOW, shadowColor: pal.text },
-                  {
-                    backgroundColor: selected ? pal.accentSoft : pal.surface,
-                    borderColor: pal.border,
-                    borderWidth: 1.5,
-                    borderRadius: pal.radius.lg,
-                  },
-                ]}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: pal.bg, borderColor: pal.border }]}>
-                  <Character name={opt.icon} size={30} color={pal.accent} bg={pal.bg} />
-                </View>
-                <View style={styles.optionText}>
-                  <Text style={[styles.optionLabel, { color: pal.text, fontFamily: pal.fontDisplay }]}>{opt.label}</Text>
-                  <Text style={[styles.optionDesc, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{opt.desc}</Text>
-                </View>
-                <View style={[styles.check, { backgroundColor: selected ? pal.text : 'transparent', borderColor: pal.border }]}>
-                  {selected && <Ionicons name="checkmark" size={15} color={pal.bg} />}
-                </View>
-              </Pressable>
+                tone={pal.accentSoft}
+                sticker={STAGE_STICKERS[opt.id]}
+                align="start"
+              />
             )
           })}
         </View>
@@ -500,28 +511,14 @@ function StepSymptoms({
                   {items.map((s) => {
                     const selected = symptoms.includes(s.id)
                     return (
-                      <Pressable
+                      <SiteChoice
                         key={s.id}
+                        label={s.label}
+                        selected={selected}
                         onPress={() => toggle(s.id)}
-                        style={[
-                          styles.chip,
-                          { ...STICKER_SHADOW, shadowColor: pal.text },
-                          {
-                            backgroundColor: selected ? pal.accentSoft : pal.surface,
-                            borderColor: pal.border,
-                            borderRadius: pal.radius.full,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.chipText,
-                            { color: pal.text, fontFamily: pal.fontBodyMedium },
-                          ]}
-                        >
-                          {s.label}
-                        </Text>
-                      </Pressable>
+                        tone={pal.accentSoft}
+                        sticker={SYMPTOM_STICKERS[s.id]}
+                      />
                     )
                   })}
                 </View>
@@ -575,12 +572,14 @@ function StepHrt({ step, total, onContinue }: { step: number; total: number; onC
 
 function TogglePill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const pal = useMenoPalette()
+  if (!pal.diffuse) {
+    return <SiteChoice label={label} selected={active} onPress={onPress} tone={pal.accentSoft} style={{ flex: 1 }} />
+  }
   return (
     <Pressable
       onPress={onPress}
       style={[
         styles.togglePill,
-        !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
         {
           backgroundColor: active ? pal.accentSoft : pal.surface,
           borderColor: pal.border,
@@ -607,14 +606,19 @@ function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: 
   return (
     <View style={[completeStyles.root, { backgroundColor: pal.bg }]}>
       <ScrollView contentContainerStyle={completeStyles.content} showsVerticalScrollIndicator={false}>
-        <View style={[completeStyles.iconCircle, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
-          <SiteSticker name="flame" size={52} cut />
-        </View>
+        {pal.diffuse ? (
+          <View style={[completeStyles.iconCircle, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
+            <SiteSticker name="flame" size={52} cut />
+          </View>
+        ) : (
+          <CelebrateHero sticker="flame" tone={pal.accentSoft} confetti={['leaf', 'moon2', 'heart', 'star', 'thermo', 'flower']} />
+        )}
 
         <Text style={[completeStyles.title, { color: pal.text, fontFamily: pal.fontDisplay }]}>{COPY.doneTitle}</Text>
         <Text style={[completeStyles.message, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>{COPY.doneBody}</Text>
 
-        <View style={[completeStyles.summary, { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
+        {pal.diffuse ? (
+          <View style={[completeStyles.summary, { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
           {stageLabel && (
             <SummaryRow icon="phase" label="Stage" value={stageLabel} pal={pal} />
           )}
@@ -625,11 +629,31 @@ function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: 
             pal={pal}
             last
           />
-        </View>
+          </View>
+        ) : (
+          <FadeUp index={0} delay={700} style={{ alignSelf: 'stretch' }}>
+            <HandDrawnBox fill={pal.surface} stroke={pal.text} radius={20} seed="meno-summary" style={completeStyles.summarySite}>
+          {stageLabel && (
+            <SummaryRow icon="phase" label="Stage" value={stageLabel} pal={pal} />
+          )}
+          <SummaryRow
+            icon="health"
+            label="Tracking"
+            value={symptomCount > 0 ? `${symptomCount} thing${symptomCount === 1 ? '' : 's'}` : 'Nothing yet'}
+            pal={pal}
+            last
+          />
+            </HandDrawnBox>
+          </FadeUp>
+        )}
       </ScrollView>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <PillButton label={COPY.doneCta} variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
+        {pal.diffuse ? (
+          <PillButton label={COPY.doneCta} variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
+        ) : (
+          <EyeAction label={COPY.doneCta} onPress={onFinish} ink={pal.text} loading={saving} disabled={saving} sticker="leaf" fill={ACTION_TONES.yellow} delay={900} />
+        )}
       </View>
     </View>
   )
@@ -649,54 +673,30 @@ function SummaryRow({
   last?: boolean
 }) {
   return (
-    <View style={[completeStyles.summaryRow, !last && { borderBottomWidth: 1, borderBottomColor: pal.border }]}>
+    <View style={[completeStyles.summaryRow, !last && { borderBottomWidth: pal.diffuse ? 1 : 1.5, borderBottomColor: pal.border, ...(pal.diffuse ? null : { borderStyle: 'dashed' as const }) }]}>
       <Character name={icon} size={22} color={pal.accent} bg={pal.bg} />
       <Text style={[completeStyles.summaryLabel, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{label}</Text>
-      <Text style={[completeStyles.summaryValue, { color: pal.text, fontFamily: pal.fontDisplay }]}>{value}</Text>
+      {pal.diffuse ? (
+        <Text style={[completeStyles.summaryValue, { color: pal.text, fontFamily: pal.fontDisplay }]}>{value}</Text>
+      ) : (
+        <View style={[completeStyles.summaryTag, { backgroundColor: pal.accentSoft, borderColor: pal.text }]}>
+          <Text style={[completeStyles.summaryValue, { color: pal.text, fontFamily: pal.fontBodyMedium }]}>{value}</Text>
+        </View>
+      )}
     </View>
   )
 }
 
 // ─── Styles (layout only — all colors/fonts injected from tokens) ────────────
 
-// Canonical hard-offset sticker shadow — CURRENT variant only (Diffuse stays
-// shadowless per the design brief). Geometry lives here; shadowColor is injected
-// per-call from the resolved palette ink. Mirrors cycle/index.tsx's
-// durationChip/conditionChip/togglePill sticker shadow.
-const STICKER_SHADOW = {
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 0,
-  elevation: 0,
-} as const
-
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center', flex: 1 },
 
   introCard: { padding: 20, borderWidth: 1.5 },
+  introCardSite: { padding: 20 },
   introBody: { fontSize: 16, lineHeight: 24 },
 
   optionList: { gap: 12 },
-  optionCard: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
-  optionIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionText: { flex: 1, gap: 3 },
-  optionLabel: { fontSize: 18, letterSpacing: 0.2, textTransform: 'uppercase' },
-  optionDesc: { fontSize: 13, lineHeight: 18 },
-  check: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
   note: { fontSize: 13, lineHeight: 19, marginTop: 16 },
 
@@ -705,8 +705,6 @@ const styles = StyleSheet.create({
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   groupLabel: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1.5 },
-  chipText: { fontSize: 14.5 },
 
   toggleRow: { flexDirection: 'row', gap: 12 },
   togglePill: { flex: 1, paddingVertical: 18, alignItems: 'center', borderWidth: 1.5 },
@@ -735,6 +733,8 @@ const completeStyles = StyleSheet.create({
   title: { fontSize: 28, letterSpacing: 0.2, textTransform: 'uppercase', textAlign: 'center' },
   message: { fontSize: 16, textAlign: 'center', lineHeight: 24, maxWidth: 320 },
   summary: { width: '100%', borderWidth: 1.5, paddingHorizontal: 18, marginTop: 8 },
+  summarySite: { width: '100%', paddingHorizontal: 18, marginTop: 4 },
+  summaryTag: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, transform: [{ rotate: '-2deg' }] },
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15 },
   summaryLabel: { flex: 1, fontSize: 14 },
   summaryValue: { fontSize: 16 },

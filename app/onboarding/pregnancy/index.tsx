@@ -7,6 +7,7 @@
  */
 
 import { SiteSticker } from '../../../components/stickers/SiteSticker'
+import type { SiteStickerName } from '../../../components/stickers/SiteSticker'
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import {
   View,
@@ -21,11 +22,13 @@ import {
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { SiteChoice } from '../../../components/ui/SiteChoice'
 import { router } from 'expo-router'
-import { Heart, Star, Moon, Sun, Flower, Cloud, Smiley, Sleepy, Sad, Sparkle, Leaf } from '../../../components/ui/Stickers'
-import { PillButton } from '../../../components/ui/PillButton'
+import { HandDrawnBox } from '../../../components/ui/HandDrawn'
+import { CelebrateHero } from '../../../components/onboarding/Celebrate'
+import { EyeAction, ACTION_TONES } from '../../../components/ui/AuthDock'
+import { FadeUp } from '../../../components/ui/Motion'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, useDiffuseTheme, brand, stickers, font, getModeColor, getModeColorSoft, getDiffuseAccent, diffuseFields } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, font, getModeColor, getModeColorSoft, getDiffuseAccent, diffuseFields } from '../../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../../../components/ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../../../components/ui/diffuse/DiffusePrimitives'
 import { DiffuseField } from '../../../components/ui/diffuse/DiffuseField'
@@ -76,22 +79,22 @@ const STEPS: StepId[] = [
 
 const MOOD_OPTIONS: {
   id: PregnancyMood
-  icon: (size: number) => React.ReactNode
+  sticker: SiteStickerName
   label: string
 }[] = [
-  { id: 'excited', label: 'Excited', icon: (s) => <Sparkle size={s} fill={stickers.yellow} /> },
-  { id: 'happy', label: 'Happy', icon: (s) => <Smiley size={s} fill={stickers.yellow} /> },
-  { id: 'calm', label: 'Calm', icon: (s) => <Leaf size={s} fill={stickers.green} /> },
-  { id: 'anxious', label: 'Anxious', icon: (s) => <Cloud size={s} fill={stickers.blue} /> },
-  { id: 'tired', label: 'Tired', icon: (s) => <Sleepy size={s} fill={stickers.lilac} /> },
-  { id: 'nauseous', label: 'Nauseous', icon: (s) => <Sad size={s} fill={stickers.green} /> },
+  { id: 'excited', label: 'Excited', sticker: 'star' },
+  { id: 'happy', label: 'Happy', sticker: 'face1' },
+  { id: 'calm', label: 'Calm', sticker: 'leaf' },
+  { id: 'anxious', label: 'Anxious', sticker: 'cloud' },
+  { id: 'tired', label: 'Tired', sticker: 'zz' },
+  { id: 'nauseous', label: 'Nauseous', sticker: 'face4' },
 ]
 
-const BIRTH_PLACE_OPTIONS: { id: BirthPlace; label: string }[] = [
-  { id: 'hospital', label: 'Hospital' },
-  { id: 'birth_center', label: 'Birth center' },
-  { id: 'home_birth', label: 'Home birth' },
-  { id: 'undecided', label: 'Undecided' },
+const BIRTH_PLACE_OPTIONS: { id: BirthPlace; label: string; sticker: SiteStickerName }[] = [
+  { id: 'hospital', label: 'Hospital', sticker: 'doc' },
+  { id: 'birth_center', label: 'Birth center', sticker: 'heart' },
+  { id: 'home_birth', label: 'Home birth', sticker: 'house' },
+  { id: 'undecided', label: 'Undecided', sticker: 'cloud' },
 ]
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -539,34 +542,17 @@ function StepMood({
         </View>
       ) : (
         <View style={stepStyles.moodGrid}>
-          {MOOD_OPTIONS.map((opt) => {
-            const selected = mood === opt.id
-            return (
-              <Pressable
-                key={opt.id}
-                onPress={() => setMood(opt.id)}
-                style={[
-                  stepStyles.moodCard,
-                  {
-                    backgroundColor: selected ? modeSoft : colors.surface,
-                    borderColor: colors.text,
-                    shadowColor: colors.text,
-                    borderRadius: 18,
-                  },
-                ]}
-              >
-                <View style={stepStyles.moodIcon}>{opt.icon(40)}</View>
-                <Text
-                  style={[
-                    stepStyles.moodLabel,
-                    { color: selected ? mode : colors.textSecondary },
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </Pressable>
-            )
-          })}
+          {MOOD_OPTIONS.map((opt) => (
+            <SiteChoice
+              key={opt.id}
+              label={opt.label}
+              selected={mood === opt.id}
+              onPress={() => setMood(opt.id)}
+              tone={modeSoft}
+              sticker={opt.sticker}
+              style={stepStyles.moodCard}
+            />
+          ))}
         </View>
       )}
     </OnboardingStep>
@@ -621,34 +607,18 @@ function StepBirthPlace({
           onChange={(k) => setPlace(k as BirthPlace)}
         />
       ) : (
-        <View style={stepStyles.chipGrid}>
-          {BIRTH_PLACE_OPTIONS.map((opt) => {
-            const selected = place === opt.id
-            return (
-              <Pressable
-                key={opt.id}
-                onPress={() => setPlace(opt.id)}
-                style={[
-                  stepStyles.placeChip,
-                  {
-                    backgroundColor: selected ? modeSoft : colors.surface,
-                    borderColor: colors.text,
-                    shadowColor: colors.text,
-                    borderRadius: radius.full,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    stepStyles.placeChipText,
-                    { color: selected ? mode : colors.text },
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </Pressable>
-            )
-          })}
+        <View style={stepStyles.choiceCol}>
+          {BIRTH_PLACE_OPTIONS.map((opt) => (
+            <SiteChoice
+              key={opt.id}
+              label={opt.label}
+              selected={place === opt.id}
+              onPress={() => setPlace(opt.id)}
+              tone={modeSoft}
+              sticker={opt.sticker}
+              align="start"
+            />
+          ))}
         </View>
       )}
     </OnboardingStep>
@@ -695,22 +665,16 @@ function StepCareProvider({
           autoCapitalize="words"
         />
       ) : (
-        <TextInput
-          value={provider ?? ''}
-          onChangeText={setProvider}
-          placeholder={t('preg_onboard_careProviderPlaceholder')}
-          placeholderTextColor={colors.textMuted}
-          style={[
-            stepStyles.textInput,
-            {
-              color: colors.text,
-              backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: 14,
-            },
-          ]}
-          autoCapitalize="words"
-        />
+        <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="preg-provider">
+          <TextInput
+            value={provider ?? ''}
+            onChangeText={setProvider}
+            placeholder={t('preg_onboard_careProviderPlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            style={[stepStyles.textInput, { color: colors.text }]}
+            autoCapitalize="words"
+          />
+        </HandDrawnBox>
       )}
     </OnboardingStep>
   )
@@ -756,22 +720,16 @@ function StepConditions({
           autoCapitalize="sentences"
         />
       ) : (
-        <TextInput
-          value={conditions ?? ''}
-          onChangeText={setConditions}
-          placeholder={t('preg_onboard_conditionsPlaceholder')}
-          placeholderTextColor={colors.textMuted}
-          multiline
-          style={[
-            stepStyles.textArea,
-            {
-              color: colors.text,
-              backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: 14,
-            },
-          ]}
-        />
+        <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="preg-conditions">
+          <TextInput
+            value={conditions ?? ''}
+            onChangeText={setConditions}
+            placeholder={t('preg_onboard_conditionsPlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            multiline
+            style={[stepStyles.textArea, { color: colors.text }]}
+          />
+        </HandDrawnBox>
       )}
     </OnboardingStep>
   )
@@ -829,22 +787,16 @@ function StepPartner({
         </View>
       ) : (
         <>
-          <TextInput
-            value={partner ?? ''}
-            onChangeText={setPartner}
-            placeholder={t('preg_onboard_partnerNamePlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            style={[
-              stepStyles.textInput,
-              {
-                color: colors.text,
-                backgroundColor: colors.surface,
-                borderColor: colors.text,
-                borderRadius: 14,
-              },
-            ]}
-            autoCapitalize="words"
-          />
+          <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="preg-partner">
+            <TextInput
+              value={partner ?? ''}
+              onChangeText={setPartner}
+              placeholder={t('preg_onboard_partnerNamePlaceholder')}
+              placeholderTextColor={colors.textMuted}
+              style={[stepStyles.textInput, { color: colors.text }]}
+              autoCapitalize="words"
+            />
+          </HandDrawnBox>
           <Text style={[stepStyles.hint, { color: colors.textMuted }]}>
             {t('preg_onboard_partnerHint')}
           </Text>
@@ -877,18 +829,7 @@ function CompletionScreen({
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>
       <View style={completeStyles.content}>
-        <View
-          style={[
-            completeStyles.iconCircle,
-            {
-              backgroundColor: modeSoft,
-              borderWidth: 1.5,
-              borderColor: colors.text,
-            },
-          ]}
-        >
-          <SiteSticker name="heart" size={48} cut />
-        </View>
+        <CelebrateHero sticker="heart" tone={modeSoft} confetti={['star', 'baby', 'flower', 'moon', 'bodysuit', 'cloud']} />
 
         <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
           {t('preg_onboard_completionTitle')}
@@ -904,44 +845,37 @@ function CompletionScreen({
         </Text>
 
         {dueDate && days !== null && week !== null && (
-          <View
-            style={[
-              completeStyles.countdownCard,
-              {
-                backgroundColor: colors.surface,
-                borderRadius: 18,
-                borderWidth: 1.5,
-                borderColor: colors.text,
-              },
-            ]}
-          >
-            <Text
-              style={[completeStyles.countdownDays, { color: mode, fontFamily: font.displayBold }]}
-            >
-              {days}
-            </Text>
-            <Text
-              style={[
-                completeStyles.countdownLabel,
-                { color: colors.textSecondary, fontFamily: font.body },
-              ]}
-            >
-              {t('preg_onboard_completionCountdownLabel')}
-            </Text>
-            <Text
-              style={[
-                completeStyles.countdownWeek,
-                { color: colors.textMuted, fontFamily: font.body },
-              ]}
-            >
-              {t('preg_onboard_completionCurrentlyWeek', { week })}
-            </Text>
-          </View>
+          <FadeUp index={0} delay={700} style={{ alignSelf: 'stretch' }}>
+            <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={20} seed="preg-countdown" style={completeStyles.countdownCard}>
+              {/* the number sits on a tone tag — ink on tone, never tone on white */}
+              <View style={[completeStyles.countdownTag, { backgroundColor: modeSoft, borderColor: colors.text }]}>
+                <Text style={[completeStyles.countdownDays, { color: colors.text, fontFamily: font.displayBold }]}>
+                  {days}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  completeStyles.countdownLabel,
+                  { color: colors.textSecondary, fontFamily: font.body },
+                ]}
+              >
+                {t('preg_onboard_completionCountdownLabel')}
+              </Text>
+              <Text
+                style={[
+                  completeStyles.countdownWeek,
+                  { color: colors.textMuted, fontFamily: font.body },
+                ]}
+              >
+                {t('preg_onboard_completionCurrentlyWeek', { week })}
+              </Text>
+            </HandDrawnBox>
+          </FadeUp>
         )}
       </View>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <PillButton label="Let's Go" variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
+        <EyeAction label="Let's Go" onPress={onFinish} ink={colors.text} loading={saving} disabled={saving} sticker="star" fill={ACTION_TONES.pink} delay={900} />
       </View>
     </View>
   )
@@ -1036,54 +970,15 @@ const stepStyles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
   },
-  moodCard: {
-    width: '30%',
-    flexGrow: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderWidth: 1.5,
-    gap: 6,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
-  },
-  moodIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 44,
-  },
-  moodLabel: {
-    fontSize: 13,
-    fontFamily: font.bodyBold,
-  },
-  chipGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  placeChip: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderWidth: 1.5,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
-  },
-  placeChipText: {
-    fontSize: 15,
-    fontFamily: font.bodyBold,
-  },
+  moodCard: { width: '47%' },
+  choiceCol: { gap: 12 },
   textInput: {
-    borderWidth: 1.5,
     paddingHorizontal: 20,
     height: 56,
     fontSize: 16,
     fontFamily: font.body,
   },
   textArea: {
-    borderWidth: 1.5,
     padding: 16,
     fontSize: 16,
     fontFamily: font.body,
@@ -1129,14 +1024,6 @@ const completeStyles = StyleSheet.create({
     paddingHorizontal: 32,
     gap: 20,
   },
-  iconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
   title: {
     fontSize: 28,
     letterSpacing: 0.2,
@@ -1154,6 +1041,7 @@ const completeStyles = StyleSheet.create({
     width: '100%',
     gap: 4,
   },
+  countdownTag: { borderWidth: 1.5, borderRadius: 18, paddingHorizontal: 20, paddingVertical: 4, transform: [{ rotate: '-2deg' }] },
   countdownDays: {
     fontSize: 56,
     letterSpacing: 0,
