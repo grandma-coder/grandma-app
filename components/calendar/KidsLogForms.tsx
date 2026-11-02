@@ -2227,7 +2227,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   })
                   setFoodInput('')
                 }}
-                style={[styles.input, siteInputStyle(colors), { minHeight: 52, paddingVertical: 12, borderWidth: 1 }]}
+                style={[styles.input, siteInputStyle(colors), { height: 52, paddingVertical: 0, borderWidth: 1.5 }]}
               />
               {calorieMatches.length > 0 && (
                 <View style={[styles.calorieBanner, { backgroundColor: stickerPalette.greenSoft, borderWidth: 0, borderRadius: 18 }]}>
