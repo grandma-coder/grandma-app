@@ -1155,6 +1155,11 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     feedingDurations: [],
     feedingDays: 0,
   })
+  // The child whose range data has landed at least once. Until it matches the
+  // active child, the hero tiles show skeletons instead of the zeroed initial
+  // state ("Tap to log" / "No goal set"). Later reloads (focus, range change)
+  // keep showing the current numbers.
+  const [rangeLoadedFor, setRangeLoadedFor] = useState<string | null>(null)
 
   useEffect(() => {
     if (child) loadRangeData(child, dateRange, customRange)
@@ -1475,6 +1480,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       feedingTimes, feedingDurations,
       feedingDays: Object.keys(feedingDayMap).length,
     })
+    setRangeLoadedFor(c.id)
   }
 
   // No child available yet — could be a freshly-signed-in user with no
@@ -2073,6 +2079,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           return top ? (ACTIVITY_TYPE_META[top[0]]?.label ?? top[0]) : undefined
         })()}
         activityTypesCount={Object.values(rangeData.activityBreakdown).filter((c) => c > 0).length}
+        loading={rangeLoadedFor !== child.id}
         onPressSleep={() => { setFocusedRing('sleep'); setSleepModalVisible(true) }}
         onPressMood={() => setMoodModalVisible(true)}
         onPressCalories={() => setActivityModalVisible(true)}
@@ -2683,6 +2690,8 @@ interface HeroTilesProps {
   onLogMood?: () => void
   onLogFeeding?: () => void
   onLogActivity?: () => void
+  /** First load — light tiles show skeletons in their value areas. */
+  loading?: boolean
 }
 
 function HeroTiles(props: HeroTilesProps) {

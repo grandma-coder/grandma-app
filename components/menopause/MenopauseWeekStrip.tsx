@@ -14,6 +14,7 @@ import { SiteSticker } from '../stickers/SiteSticker'
 import { menoSticker } from './MenopauseLogSheet'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
+import { Skeleton } from '../ui/Skeleton'
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -23,10 +24,13 @@ export function MenopauseWeekStrip({
   rows,
   pal,
   onDatePress,
+  loading = false,
 }: {
   rows: MenopauseLogRow[]
   pal: MenoPalette
   onDatePress: (date: string) => void
+  /** First load — light look shows a ghost dot where a logged-day sticker goes. */
+  loading?: boolean
 }) {
   const { stickers, colors, font } = useTheme()
   const s = stickers as Record<string, string>
@@ -85,7 +89,7 @@ export function MenopauseWeekStrip({
               </Text>
               <Text style={{ fontFamily: font.displayBold, fontSize: 17, lineHeight: 20, color: colors.text }}>{day.dayNum}</Text>
               <View style={{ height: 16, alignItems: 'center', justifyContent: 'center' }}>
-                {logged ? <SiteSticker name={menoSticker(day.logs[0].type)} size={16} /> : null}
+                {loading ? <Skeleton width={14} height={14} radius={7} /> : logged ? <SiteSticker name={menoSticker(day.logs[0].type)} size={16} /> : null}
               </View>
             </Pressable>
           )

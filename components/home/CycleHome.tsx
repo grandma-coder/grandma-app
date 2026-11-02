@@ -34,6 +34,7 @@ import { LogActivitySheet, type LogType } from '../calendar/LogActivitySheet'
 import { CycleLogRouter } from '../calendar/CycleLogRouter'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from '../../lib/i18n'
+import { Skeleton, SkeletonRing } from '../ui/Skeleton'
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -70,7 +71,11 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   const parentName = useJourneyStore((s) => s.parentName)
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
-  const { data: history } = useCycleHistory()
+  const { data: history, isLoading: historyLoading } = useCycleHistory()
+  // First load only (no cached history yet): the ring/strip/day card would be
+  // built from a provisional "today − 10 days" config and then jump to the real
+  // day. Light look shows their skeleton instead; refetches keep the content.
+  const ringSkeleton = !diffuse && historyLoading && !history
   // Date-based label only changes day-to-day; memo it so it isn't rebuilt on
   // every render (string formatting via toLocaleDateString twice per call).
   const microLabel = useMemo(() => getMicroLabel(), [])
@@ -160,8 +165,9 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   // every cold open. Every consumer below reads the fallback-safe `cycleConfig`
   // (declared length → measured avg → 28) and `selectedInfo` derived from it —
   // none dereference `history` directly — so the home renders instantly with
-  // sensible defaults and the ring simply glides to the real day once the query
-  // resolves. No blank, no crash.
+  // sensible defaults. The one exception is the ring block itself: in the light
+  // look its first load shows CycleRingSkeleton (see `ringSkeleton`) so a fake
+  // "Day 11" never jumps to the real day. No blank, no crash.
 
   const dailyBlock = (
     <>
@@ -223,7 +229,8 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
             is frozen while the month sheet or a card log sheet is open. For a
             view-only caregiver the ring stays scrub-only — tap-a-date-to-log is
             disabled (onDatePress omitted). */}
-        {show('journey_ring') && (
+        {show('journey_ring') && ringSkeleton && <CycleRingSkeleton />}
+        {show('journey_ring') && !ringSkeleton && (
         <CycleJourneyRingFull
           cycleConfig={cycleConfig}
           onSelectedDateChange={handleRingDate}
@@ -296,6 +303,45 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   )
 }
 
+/** Ring + legend row + 7-day strip + day card, shaped like CycleJourneyRingFull. */
+function CycleRingSkeleton() {
+  return (
+    <View style={styles.skelWrap}>
+      <View style={styles.skelRingBox}>
+        <SkeletonRing size={232} />
+      </View>
+      <View style={styles.skelLegendRow}>
+        <View style={styles.skelLegend}>
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} width={56} height={14} radius={7} />)}
+        </View>
+        <Skeleton width={78} height={30} radius={15} />
+      </View>
+      <View style={styles.skelStrip}>
+        {Array.from({ length: 7 }, (_, i) => (
+          <Skeleton key={i} height={54} radius={14} width={undefined} style={{ flex: 1 }} />
+        ))}
+      </View>
+      <View style={styles.skelPanel}>
+        <View style={styles.skelStatusRow}>
+          <View style={{ flex: 1, gap: 8 }}>
+            <Skeleton height={26} width="70%" radius={8} />
+            <Skeleton height={10} width="45%" radius={5} />
+          </View>
+          <Skeleton width={72} height={24} radius={12} />
+        </View>
+        <View style={styles.skelStats}>
+          {[0, 1].map((i) => (
+            <View key={i} style={{ flex: 1, gap: 8 }}>
+              <Skeleton height={10} width="60%" radius={5} />
+              <Skeleton height={32} width="45%" radius={8} />
+            </View>
+          ))}
+        </View>
+      </View>
+    </View>
+  )
+}
+
 // One consistent vertical rhythm between every stacked section on the home, so
 // ring → log card → daily message → wallet all breathe the same amount.
 const SECTION_GAP = 16
@@ -306,4 +352,12 @@ const styles = StyleSheet.create({
   greetingWrap: { paddingHorizontal: 20, marginBottom: SECTION_GAP },
   section: { paddingHorizontal: 20, marginTop: SECTION_GAP },
   cardWrap: { paddingHorizontal: 20, marginTop: SECTION_GAP },
+  skelWrap: { width: '100%' },
+  skelRingBox: { height: 260, alignItems: 'center', justifyContent: 'center' },
+  skelLegendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginTop: 20, gap: 10 },
+  skelLegend: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  skelStrip: { flexDirection: 'row', gap: 6, paddingHorizontal: 20, marginTop: 10, marginBottom: 4 },
+  skelPanel: { paddingHorizontal: 24, paddingTop: 12, gap: 18 },
+  skelStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  skelStats: { flexDirection: 'row', gap: 24 },
 })

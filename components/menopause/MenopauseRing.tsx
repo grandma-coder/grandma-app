@@ -16,6 +16,7 @@ import { SiteSticker } from '../stickers/SiteSticker'
 import { menoSticker } from './MenopauseLogSheet'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
+import { Skeleton, SkeletonRing } from '../ui/Skeleton'
 
 const DAYS = 28
 const SIZE = 280
@@ -35,12 +36,15 @@ export function MenopauseRing({
   stageLabel,
   months,
   monthsCaption,
+  loading = false,
 }: {
   rows: MenopauseLogRow[]
   pal: MenoPalette
   stageLabel: string
   months: number | null
   monthsCaption: string
+  /** First load (logs not fetched yet) — light look draws a ghost ring + counter. */
+  loading?: boolean
 }) {
   // Sticker palette is shared across both variants (stickers stay active under
   // Diffuse) — used only for the soft "all clear" check tone.
@@ -75,6 +79,21 @@ export function MenopauseRing({
     }
     return out
   }, [rows])
+
+  if (loading && !pal.diffuse) {
+    // Ghost ring on the node orbit (stroke = node size) + ghost counter: stage
+    // eyebrow, the ring's own center block as the big number, caption below.
+    return (
+      <View style={styles.wrap}>
+        <SkeletonRing size={SIZE - 12} style={{ marginTop: 6 }} />
+        <View style={styles.center} pointerEvents="none">
+          <Skeleton width={84} height={10} radius={5} />
+          <View style={{ height: (SIZE - 12) * 0.18 + 16 }} />
+          <Skeleton width={120} height={10} radius={5} />
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View style={styles.wrap}>

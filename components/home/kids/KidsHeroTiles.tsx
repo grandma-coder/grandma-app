@@ -18,6 +18,7 @@ import { useTranslation } from '../../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { HandDrawnPill } from '../../ui/HandDrawn'
 import { FadeUp, useIdleSway } from '../../ui/Motion'
+import { Skeleton } from '../../ui/Skeleton'
 
 export interface KidsHeroTilesProps {
   sleepTotal: number
@@ -42,6 +43,8 @@ export interface KidsHeroTilesProps {
   onLogMood?: () => void
   onLogFeeding?: () => void
   onLogActivity?: () => void
+  /** First load (no range data yet): value areas show skeletons, not "Tap to log". */
+  loading?: boolean
 }
 
 const MOOD_KEYS = ['happy', 'calm', 'energetic', 'fussy', 'cranky'] as const
@@ -67,6 +70,17 @@ function CountUp({ value, decimals = 0, style }: { value: number; decimals?: num
   }, [value, v])
   const txt = decimals ? shown.toFixed(decimals) : Math.round(shown).toLocaleString()
   return <Text style={style}>{txt}</Text>
+}
+
+/** Value-area placeholder while the tile's data loads: big number, sub line, meter. */
+function TileValueSkeleton() {
+  return (
+    <View style={styles.skel}>
+      <Skeleton height={36} width="60%" radius={10} />
+      <Skeleton height={12} width="80%" radius={6} />
+      <Skeleton height={10} width="100%" radius={5} />
+    </View>
+  )
 }
 
 /** Hand-drawn meter: faint ink wave, filled in `color` up to `pct`. */
@@ -176,6 +190,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
   const hasMood = moodTotal > 0 && !!p.dominantMood
 
   const hasAct = p.activityCount > 0
+  const loading = !!p.loading
 
   const numStyle = [styles.num, { color: ink, fontFamily: font.displayBold }]
   const unitStyle = [styles.unit, { color: ink, fontFamily: font.display }]
@@ -187,7 +202,8 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
       <View style={styles.row}>
         <Tile index={0} flex={1.15} tone={stickers.blueSoft} sticker="moon"
           eyebrow={multi ? t('kidsTile_sleepAvg') : t('kidsTile_sleepNight')}
-          onPress={!hasSleep && p.onLogSleep ? p.onLogSleep : p.onPressSleep}>
+          onPress={loading ? undefined : !hasSleep && p.onLogSleep ? p.onLogSleep : p.onPressSleep}>
+          {loading ? <TileValueSkeleton /> : <>
           {hasSleep ? (
             <Text style={styles.numRow}>
               <CountUp value={sleepVal} decimals={1} style={numStyle} />
@@ -198,11 +214,13 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
             {sleepGoal > 0 ? t('kidsTile_ofNight', { h: Math.round(sleepGoal * 10) / 10 }) : t('kids_home_tile_no_goal')}
           </Text>
           <WaveMeter pct={sleepGoal > 0 ? sleepVal / sleepGoal : 0} color={stickers.blue} ink={ink} />
+          </>}
         </Tile>
 
         <Tile index={1} flex={1} tone={stickers.yellowSoft} sticker={hasMood ? MOOD_STICKER[p.dominantMood] ?? 'face3' : 'face3'}
           eyebrow={t('kids_home_tile_mood')}
-          onPress={!hasMood && p.onLogMood ? p.onLogMood : p.onPressMood}>
+          onPress={loading ? undefined : !hasMood && p.onLogMood ? p.onLogMood : p.onPressMood}>
+          {loading ? <TileValueSkeleton /> : <>
           <Text style={hasMood ? [styles.moodWord, { color: ink, fontFamily: font.display }] : emptyStyle} numberOfLines={hasMood ? 1 : 2}>
             {hasMood ? MOOD_LABEL[p.dominantMood] ?? 'Content' : t('kids_home_tile_mood_empty')}
           </Text>
@@ -217,13 +235,15 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
             })}
           </View>
           <Text style={subStyle}>{hasMood ? t('kidsTile_moodLogs', { n: moodTotal }) : t('kids_home_tile_tap_to_log')}</Text>
+          </>}
         </Tile>
       </View>
 
       <View style={styles.row}>
         <Tile index={2} flex={1} tone={stickers.pinkSoft} sticker={liquid ? 'bottle' : 'avocado'}
           eyebrow={multi ? (liquid ? t('kidsTile_feedAvg') : t('kidsTile_calAvg')) : (liquid ? t('kids_home_tile_feedings') : t('kids_home_tile_calories'))}
-          onPress={!hasFood && p.onLogFeeding ? p.onLogFeeding : p.onPressCalories}>
+          onPress={loading ? undefined : !hasFood && p.onLogFeeding ? p.onLogFeeding : p.onPressCalories}>
+          {loading ? <TileValueSkeleton /> : <>
           {hasFood ? (
             <Text style={styles.numRow}>
               <CountUp value={foodVal} decimals={liquid && multi ? 1 : 0} style={numStyle} />
@@ -234,11 +254,13 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
             {foodGoal > 0 ? t('kidsTile_ofDay', { n: Math.round(foodGoal).toLocaleString() }) : t('kids_home_tile_no_goal')}
           </Text>
           <WaveMeter pct={foodGoal > 0 ? foodVal / foodGoal : 0} color="#EE7B6D" ink={ink} />
+          </>}
         </Tile>
 
         <Tile index={3} flex={1.15} tone={stickers.greenSoft} sticker="shoe"
           eyebrow={t('kids_home_tile_activities')}
-          onPress={!hasAct && p.onLogActivity ? p.onLogActivity : p.onPressActivity}>
+          onPress={loading ? undefined : !hasAct && p.onLogActivity ? p.onLogActivity : p.onPressActivity}>
+          {loading ? <TileValueSkeleton /> : <>
           {hasAct ? (
             <Text style={styles.numRow}>
               <CountUp value={p.activityCount} style={numStyle} />
@@ -258,6 +280,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           ) : (
             <WaveMeter pct={p.activityActiveDays / days} color="#8BB356" ink={ink} />
           )}
+          </>}
         </Tile>
       </View>
     </View>
@@ -281,4 +304,5 @@ const styles = StyleSheet.create({
   meterFill: { position: 'absolute', left: 0, top: 0, height: 10, overflow: 'hidden' },
   dots: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 10 },
   dot: { width: 11, height: 11, borderRadius: 6, borderWidth: 1.5 },
+  skel: { gap: 10, marginTop: 8 },
 })

@@ -35,6 +35,7 @@ import { HomeGreeting } from './HomeGreeting'
 import { HomeJourneySwitcher } from './HomeJourneySwitcher'
 import { CaregiverIdentityHeader } from '../caregiver/CaregiverIdentityHeader'
 import { MonoCaps, Display } from '../ui/Typography'
+import { SkeletonPage } from '../ui/Skeleton'
 import { supabase } from '../../lib/supabase'
 import { pregnancyWeeks, getDaysToGo, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
@@ -230,13 +231,20 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   const [birthGuideVisible, setBirthGuideVisible] = useState(false)
 
   const [userId, setUserId] = useState<string | undefined>(undefined)
+  // The session lookup is async; until it resolves, the today-logs query runs
+  // with no user and returns {} — that's not real data, so it counts as loading.
+  const [sessionReady, setSessionReady] = useState(false)
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user.id)
+      setSessionReady(true)
     })
   }, [])
 
-  const { data: todayLogs = {}, refetch: refetchTodayLogs } = usePregnancyTodayLogs(userId)
+  const { data: todayLogsData, isLoading: todayLogsLoading, refetch: refetchTodayLogs } = usePregnancyTodayLogs(userId)
+  const todayLogs = todayLogsData ?? {}
+  // First load only — refetches keep the current content.
+  const todayLogsFirstLoad = !sessionReady || (todayLogsLoading && !todayLogsData)
 
   // Latest logged weight — drives the slim weight row's trailing value.
   // Kept to refresh the weight cache on focus / after logging; the value is
@@ -286,7 +294,12 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   // renders week 1, then flips to the real week (e.g. 40) once
   // AsyncStorage finishes loading — the visible "flash" the user reported.
   if (!pregHydrated) {
-    return <View style={[styles.root, { backgroundColor: bg }]} />
+    // Light look: the home's shape as skeletons instead of a blank screen.
+    return (
+      <View style={[styles.root, { backgroundColor: bg, paddingTop: diffuse ? 0 : topInset + 16 }]}>
+        {diffuse ? null : <SkeletonPage hero="block" />}
+      </View>
+    )
   }
 
   return (
@@ -372,6 +385,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
           }}
           onOpenBirthGuide={() => setBirthGuideVisible(true)}
           visibleCardIds={caregiverView?.visible ?? null}
+          loading={todayLogsFirstLoad}
         />
       </View>
       )}

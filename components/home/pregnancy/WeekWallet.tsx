@@ -36,6 +36,7 @@ import { WalletPicker, type WalletPickerItem } from '../WalletPicker'
 import { MemoriesSheet } from '../MemoriesSheet'
 import { QuietPill } from '../../ui/QuietPill'
 import { StickerTileGrid } from '../../ui/StickerTileGrid'
+import { Skeleton } from '../../ui/Skeleton'
 import { Display } from '../../ui/Typography'
 import type { SiteStickerName } from '../../stickers/SiteSticker'
 import { LogSheet } from '../../calendar/LogSheet'
@@ -64,6 +65,8 @@ interface WeekWalletProps {
   onOpenBirthGuide: () => void
   /** Caregiver share allowlist (card ids). Null → owner: show every card. */
   visibleCardIds?: Set<string> | null
+  /** Today's logs are on their first load (no data yet). */
+  loading?: boolean
 }
 
 const SHORTCUT_TONE: Record<string, WalletTone> = { rewards: 'coral', channels: 'peach', village: 'green' }
@@ -72,6 +75,7 @@ export function WeekWallet({
   weekNumber, todayLogs, userId,
   onLogMetric, onOpenAppointment, onOpenWeekDetail, onOpenBirthGuide,
   visibleCardIds = null,
+  loading = false,
 }: WeekWalletProps) {
   const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
@@ -116,6 +120,11 @@ export function WeekWallet({
       ? defaultCards.map((c) => c.id)
       : enabledKeys.filter((k): k is PregCardId => availableIds.includes(k as PregCardId))
   ).filter((id) => visibleCardIds === null || visibleCardIds.has(id))
+
+  // The default set's Kicks card depends on today's logs (hidden once kicks are
+  // logged today). While those logs first load, the light grid shows skeleton
+  // tiles instead of a Kicks tile that may vanish a moment later.
+  const tilesPending = loading && !diffuse && enabledKeys === null && displayedIds.includes('kicks')
 
   const toneFor = (id: PregCardId): WalletTone =>
     defaultCards.find((c) => c.id === id)?.tone ?? SHORTCUT_TONE[id] ?? 'surface'
@@ -264,6 +273,11 @@ export function WeekWallet({
               accessibilityLabel={t('kids_quickLogs_edit')}
             />
           </View>
+          {tilesPending ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+              {displayedIds.map((id) => <Skeleton key={id} width="31%" height={112} radius={22} />)}
+            </View>
+          ) : (
           <StickerTileGrid
             tiles={displayedIds.map((id) => ({
               key: id,
@@ -273,6 +287,7 @@ export function WeekWallet({
               onPress: () => onHeader(id, linkOnlyFor(id)),
             }))}
           />
+          )}
         </>
       )}
 

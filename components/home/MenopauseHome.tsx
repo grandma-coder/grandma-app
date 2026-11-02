@@ -26,6 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PaperCard } from '../ui/PaperCard'
 import { PillButton } from '../ui/PillButton'
 import { BrandedLoader } from '../ui/BrandedLoader'
+import { SkeletonPage } from '../ui/Skeleton'
 import { LogSheet } from '../calendar/LogSheet'
 import { Character } from '../characters/Characters'
 import { Ionicons } from '@expo/vector-icons'
@@ -123,7 +124,10 @@ export function MenopauseHome() {
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
 
-  const { data } = useMenopauseLogs()
+  const { data, isLoading: logsLoading } = useMenopauseLogs()
+  // First load only (no cached logs yet): the ring, its counter and the strip's
+  // logged-day stickers render as skeletons (light look). Refetches keep content.
+  const logsFirstLoad = logsLoading && !data
   const rows = useMemo<MenopauseLogRow[]>(() => data ?? [], [data])
 
   const microLabel = useMemo(() => getMicroLabel(), [])
@@ -204,6 +208,14 @@ export function MenopauseHome() {
   // Hydration gate — never render store-derived UI (stage / months / offer)
   // before AsyncStorage rehydrates, or the home flashes a null stage first.
   if (!hydrated) {
+    // Light look: the home's shape as skeletons instead of "Loading" text.
+    if (!pal.diffuse) {
+      return (
+        <View style={[styles.root, { backgroundColor: pal.bg, paddingTop: insets.top + 12 }]}>
+          <SkeletonPage hero="ring" />
+        </View>
+      )
+    }
     return (
       <View style={[styles.root, styles.loaderRoot, { backgroundColor: pal.bg }]}>
         <BrandedLoader label="Loading" />
@@ -421,12 +433,13 @@ const walletBlock = (
             stageLabel={stageLabel}
             months={months}
             monthsCaption={monthsCaption}
+            loading={logsFirstLoad}
           />
         </View>
 
         {/* Week strip — tap a day to log for it (cycle-home parity). */}
         <View style={styles.section}>
-          <MenopauseWeekStrip rows={rows} pal={pal} onDatePress={openLogForDate} />
+          <MenopauseWeekStrip rows={rows} pal={pal} onDatePress={openLogForDate} loading={logsFirstLoad} />
         </View>
 
         {/* Diffuse keeps its original order; the site look runs hero → log dock →
