@@ -381,7 +381,7 @@ export function CycleAnalytics() {
           {/* Cervical mucus: cream-only tile. Under Diffuse it's dropped from
               the surface (niche fertility sub-signal, usually empty) — its data
               + sheet still exist, just not featured as a top-level tile. */}
-          {!diffuse && (
+          {!diffuse && !!mucus?.series.length && (
             <GridTile
               tint={stickers.greenSoft}
               sticker={<Drop size={24} fill={stickers.green} />}
