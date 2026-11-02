@@ -108,6 +108,10 @@ export default function ConsentScreen() {
         <Text style={[styles.footnote, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('consent_footnote')}
         </Text>
+
+        <Text style={[styles.footnote, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body, marginTop: 12 }]}>
+          {t('disclaimer_medical')}
+        </Text>
       </View>
     </OnboardingStep>
   )

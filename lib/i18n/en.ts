@@ -610,7 +610,7 @@ export const en: TranslationKeys = {
   preg_contractions_thisSession: 'THIS SESSION',
   preg_contractions_durationSeconds: '{{seconds}}s duration',
   preg_contractions_intervalApart: '{{minutes}}m {{seconds}}s apart',
-  preg_contractions_rule511: 'The 5-1-1 rule: head to the hospital when contractions are 5 minutes apart, lasting 1 minute each, for at least 1 hour.',
+  preg_contractions_rule511: "A common guideline is 5-1-1: contractions 5 minutes apart, lasting 1 minute each, for 1 hour. Call your maternity unit or care provider — they'll tell you when to go in.",
 
   // KickCounter (Wave 2)
   preg_kicks_title: 'KICK COUNTER',
@@ -1057,7 +1057,7 @@ export const en: TranslationKeys = {
   sleepCalm_emptyHint: "Log a nap or a night and it shows up here.",
   sleepCalm_total: "{{total}}h in total · {{n}} nights",
   sleepCalm_q_Great: "Most days are landing close to or above target. Sleep regulation is doing its quiet magic — keep the rhythm.",
-  sleepCalm_q_Solid: "Sleep is consistent enough to support growth and mood. A few short nights are normal at this age.",
+  sleepCalm_q_Solid: "Sleep is consistent enough to support growth and mood. A few short nights are common at this age.",
   sleepCalm_q_Restless: "Several nights are running short. Watch for over-tiredness signs and try moving bedtime 15 minutes earlier for a few days.",
   sleepCalm_q_Poor: "Most nights are running short or fragmented. If this has continued for a week, consider checking in with your pediatrician about sleep routines or possible disruptions (illness, teething, schedule shifts).",
   sleepCalm_met: "reached the target",
@@ -1758,7 +1758,9 @@ export const en: TranslationKeys = {
   cycleSettings_lutealLength: 'Luteal phase',
   cycleSettings_lutealDesc: 'Days from ovulation to your period (usually ~14).',
   cycleSettings_days: 'days',
-  cycleSettings_footer: 'Predictions are estimates, not medical advice. For fertility concerns, talk to your doctor.',
+  cycleSettings_footer: "Predictions are estimates, not medical advice, and not a method of contraception. For fertility concerns, talk to your doctor.",
+  disclaimer_medical: "grandma.app is a tool for tracking and information. It is not a medical device, does not diagnose, treat or prevent any condition, and does not replace professional advice. Cycle and fertility estimates are not a method of contraception. If you have questions or symptoms, talk to a health professional. In an emergency, call your local emergency number.",
+  disclaimer_short: "For tracking and information only — not a medical device or a method of contraception. Talk to your doctor about any concern.",
 
   // ─── Phase 2: symptom-triggered Grandma ───────────────────────────────────
   symptomAssist_ask: 'Ask Grandma about this',

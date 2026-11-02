@@ -1761,6 +1761,8 @@ export interface TranslationKeys {
   cycleSettings_lutealDesc: string
   cycleSettings_days: string
   cycleSettings_footer: string
+  disclaimer_medical: string
+  disclaimer_short: string
   symptomAssist_ask: string
 
   cycleLogForm_cm_dry: string

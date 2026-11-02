@@ -53,6 +53,7 @@ import { Section } from './shared/Section'
 import { MoodStrip } from './shared/MoodStrip'
 import { cycleMoodToStrip } from '../../lib/moodTrend'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
+import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 
 /** Warm phase copy keyed by cycle phase — resolved through t() so it localizes. */
 const MONO = 'SpaceMono_400Regular'
@@ -439,6 +440,7 @@ export function CycleAnalytics() {
             {t('cycleAnalytics_seed_hint')}
           </Text>
         )}
+        <InsightsDisclaimer />
       </ScrollView>
 
       <CycleDetailSheet type={detailType} accent={accent} onClose={() => setDetailType(null)} />

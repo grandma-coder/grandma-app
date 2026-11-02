@@ -89,6 +89,7 @@ import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { FadeUp } from '../ui/Motion'
 import { bucketSeries } from './shared/bucketSeries'
+import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -942,6 +943,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             onPress={() => setOpenPillar('birth')}
           />
         </View>
+        <InsightsDisclaimer />
       </ScrollView>
 
       {/* Detail sheet */}

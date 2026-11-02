@@ -107,6 +107,10 @@ export default function AboutScreen() {
             <SiteRow label={t('about_help')} onPress={() => router.push('/profile/help')} />
             <SiteRow label={t('about_contact')} onPress={() => Linking.openURL('mailto:support@grandma.app')} last />
 
+            <Text style={{ marginTop: 24, fontFamily: font.body, fontSize: 14, lineHeight: 21, color: colors.textSecondary }}>
+              {t('disclaimer_medical')}
+            </Text>
+
             <Text style={[styles.version, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', textTransform: 'uppercase', letterSpacing: 1.4, fontSize: 10 }]}>
               grandma.app · v{version}
             </Text>

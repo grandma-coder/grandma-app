@@ -41,6 +41,7 @@ import { useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { monthsSinceDate, type MenopauseStage } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
+import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 
 const CHART_W = Dimensions.get('window').width - 80 // screen − card margins − card padding
 const MONTH_PIPS = 12
@@ -164,6 +165,7 @@ export function MenopauseAnalytics() {
               </SiteSection>
             </>
           )}
+          <InsightsDisclaimer />
         </ScrollView>
       </View>
     )
@@ -274,6 +276,7 @@ export function MenopauseAnalytics() {
             </MenoCard>
           </>
         )}
+        <InsightsDisclaimer />
       </ScrollView>
     </View>
   )

@@ -149,6 +149,7 @@ import { useTranslation } from '../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { FadeUp } from '../ui/Motion'
+import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -1341,6 +1342,7 @@ export function KidsAnalytics() {
             <ChevronRight size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.5 : 2} />
           </Pressable>
         ) : null}
+        <InsightsDisclaimer />
       </ScrollView>
 
       {/* ── Full-screen chart modals ── */}
