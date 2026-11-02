@@ -18,6 +18,7 @@
  */
 
 import { PREGNANCY_LOG_STICKER_MAP } from '../../lib/logStickers'
+import { healthLogText } from '../../lib/kidsHealthLogText'
 import { PREGNANCY_LOG_STICKER } from './PregnancyLogRouter'
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
@@ -319,7 +320,8 @@ function formatLogValue(log: PregnancyCalendarLog): string {
       if (v.sets)      parts.push(`${v.sets} sets`)
       if (v.reps)      parts.push(`${v.reps} reps`)
       if (v.name)      parts.push(v.name)
-      return parts.join(' · ') || log.value
+      // Unknown shape: readable leftovers only — never the raw JSON.
+      return parts.join(' · ') || healthLogText(log.value, null).text || ''
     }
   } catch {
     // Not JSON — use as-is

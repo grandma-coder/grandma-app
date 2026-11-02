@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react'
+import { healthLogText } from '../../lib/kidsHealthLogText'
 import {
   View,
   Text,
@@ -167,7 +168,7 @@ export default function MemoriesScreen() {
         childName: child?.name ?? 'Child',
         date: log.date,
         photos: log.photos ?? [],
-        notes: log.notes ?? log.value ?? '',
+        notes: log.notes ?? healthLogText(log.value, null).text ?? '',
       }
     }).filter((p) => p.photos.length > 0)
 

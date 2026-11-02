@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react'
+import { healthLogText } from '../../lib/kidsHealthLogText'
 import {
   View,
   Text,
@@ -132,7 +133,7 @@ export default function HealthHistoryScreen() {
 
     setEvents(((data ?? []) as any[]).map((log) => {
       const child = children.find((c) => c.id === log.child_id)
-      return { id: log.id, childId: log.child_id, childName: child?.name ?? 'Child', date: log.date, type: log.type, value: log.value ?? '', notes: log.notes ?? '' }
+      return { id: log.id, childId: log.child_id, childName: child?.name ?? 'Child', date: log.date, type: log.type, value: healthLogText(log.value, null).text ?? healthLogText(log.value, null).kind ?? '', notes: log.notes ?? '' }
     }))
     setLoading(false)
   }

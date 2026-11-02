@@ -136,6 +136,8 @@ interface ChildRoutine {
 // ─── Child colors (shared palette) ────────────────────────────────────────
 
 import { CHILD_COLORS, childColor } from '../ui/ChildPills'
+import { healthLogText } from '../../lib/kidsHealthLogText'
+import { QuietPill } from '../profile/SiteSettingsKit'
 
 // ─── Site look (light) helpers ─────────────────────────────────────────────
 // Calm ink outlines, card-less sticker rows, ink text. Used only by the light
@@ -648,7 +650,7 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
           // description if it differs from the eventType label; otherwise
           // just the eventType.
           if (parsed.eventType && typeof parsed.eventType === 'string') {
-            const desc = typeof parsed.description === 'string' ? parsed.description : ''
+            const desc = typeof parsed.description === 'string' ? parsed.description : typeof parsed.text === 'string' ? parsed.text : ''
             if (desc && desc !== parsed.eventType) {
               return `${parsed.eventType}: ${desc}`
             }
@@ -3987,18 +3989,16 @@ export function KidsCalendar() {
 
                     {/* ── Health / Temperature / Vaccine / Medicine / Note ── */}
                     {['health', 'temperature', 'vaccine', 'medicine', 'note'].includes(selectedLog.type) && (() => {
-                      const rawVal = selectedLog.value ?? ''
-                      let displayVal = rawVal
-                      try {
-                        const p = JSON.parse(rawVal)
-                        if (typeof p === 'object') displayVal = p.value ?? p.name ?? rawVal
-                      } catch {}
+                      // Health values come in several stored shapes — never render raw JSON.
+                      const { kind, text } = healthLogText(selectedLog.value, null)
+                      const shown = text && text !== selectedLog.type ? text : null
                       return (
                         <DetailHero
                           sticker={stickerForLog(selectedLog.type)}
-                          value={displayVal && displayVal !== selectedLog.type ? displayVal : null}
-                          valueSize={32}
-                          eyebrow={selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1)}
+                          value={shown}
+                          // Short readings ("37.2", "MMR") stay big; sentences read at body-heading size.
+                          valueSize={shown && shown.length > 14 ? 22 : 32}
+                          eyebrow={kind ?? (selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1))}
                         />
                       )
                     })()}
@@ -4045,26 +4045,13 @@ export function KidsCalendar() {
                       </View>
                     )}
 
-                    {/* Action buttons */}
-                    <View style={styles.popupActions}>
-                      <PillButton
-                        label={t('kids_calendar_detail_edit')}
-                        variant="ink"
-                        onPress={() => openEdit(selectedLog)}
-                        leading={<Pencil size={16} color="#FFFEF8" strokeWidth={2.2} />}
-                        height={52}
-                        style={{ flex: 1 }}
-                      />
-                      <PillButton
-                        label={t('kids_calendar_detail_delete')}
-                        variant="paper"
-                        // Route through the unlogTarget confirmation modal
-                        // so a stray tap doesn't permanently destroy a log.
-                        onPress={() => setUnlogTarget(selectedLog)}
-                        leading={<Trash2 size={16} color={ink} strokeWidth={2.2} />}
-                        height={52}
-                        style={{ flex: 1 }}
-                      />
+                    {/* Actions: edit is the main one (peach pill); delete stays a quiet link —
+                        it still routes through the unlogTarget confirmation. */}
+                    <View style={{ alignItems: 'center', gap: 14, marginTop: 8 }}>
+                      <QuietPill label={t('kids_calendar_detail_edit')} sticker="pencil" onPress={() => openEdit(selectedLog)} />
+                      <Pressable onPress={() => setUnlogTarget(selectedLog)} accessibilityRole="button" hitSlop={8}>
+                        <Text style={{ fontFamily: font.bodyMedium, fontSize: 14, color: colors.textMuted, textDecorationLine: 'underline' }}>{t('kids_calendar_detail_delete')}</Text>
+                      </Pressable>
                     </View>
                   </>
                 )}
