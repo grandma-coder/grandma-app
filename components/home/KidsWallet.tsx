@@ -67,6 +67,8 @@ interface KidsWalletProps {
 // Tone per shortcut-only card (contextual card tones come from the builder).
 const SHORTCUT_TONE: Record<string, WalletTone> = { channels: 'peach', village: 'green' }
 
+const FACTORY_ON: KidsCardId[] = ['vaccines', 'health', 'exams', 'reminders']
+
 export function KidsWallet({
   hasDiaper, hasGrowthLeap, growthLeapName,
   onOpenGoals, onOpenHealth, onOpenVaccines, onOpenDiaper, onOpenGrowthLeap, onOpenReminders,
@@ -106,7 +108,8 @@ export function KidsWallet({
   // restrict to the shared allowlist (owner → visibleCardIds null → no filter).
   const displayedIds: KidsCardId[] = (
     enabledKeys === null
-      ? defaultCards.map((c) => c.id)
+      // Factory set: only the few that matter for this journey; the rest wait in the ⚙ picker.
+      ? defaultCards.map((c) => c.id).filter((id) => (FACTORY_ON as string[]).includes(id))
       : enabledKeys.filter((k): k is KidsCardId => availableIds.includes(k as KidsCardId))
   ).filter((id) => visibleCardIds === null || visibleCardIds.has(id))
 

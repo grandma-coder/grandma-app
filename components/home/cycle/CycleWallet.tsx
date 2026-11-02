@@ -52,6 +52,8 @@ interface CycleWalletProps {
   visibleCardIds?: Set<string> | null
 }
 
+const FACTORY_ON: CycleCardId[] = ['reminders', 'pillars', 'exams']
+
 export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
   const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
@@ -93,7 +95,8 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
   // For a caregiver, restrict to the shared allowlist (owner → null → no filter).
   const displayedIds: CycleCardId[] = (
     enabledKeys === null
-      ? defaultCards.map((c) => c.id)
+      // Factory set: only the few that matter for this journey; the rest wait in the ⚙ picker.
+      ? defaultCards.map((c) => c.id).filter((id) => (FACTORY_ON as string[]).includes(id))
       : enabledKeys.filter((k): k is CycleCardId => availableIds.includes(k as CycleCardId))
   ).filter((id) => visibleCardIds === null || visibleCardIds.has(id))
 

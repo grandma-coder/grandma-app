@@ -71,6 +71,8 @@ interface WeekWalletProps {
 
 const SHORTCUT_TONE: Record<string, WalletTone> = { rewards: 'coral', channels: 'peach', village: 'green' }
 
+const FACTORY_ON: PregCardId[] = ['appointment', 'week_tip', 'kicks', 'exams']
+
 export function WeekWallet({
   weekNumber, todayLogs, userId,
   onLogMetric, onOpenAppointment, onOpenWeekDetail, onOpenBirthGuide,
@@ -117,7 +119,8 @@ export function WeekWallet({
   // For a caregiver, restrict to the shared allowlist (owner → null → no filter).
   const displayedIds: PregCardId[] = (
     enabledKeys === null
-      ? defaultCards.map((c) => c.id)
+      // Factory set: only the few that matter for this journey; the rest wait in the ⚙ picker.
+      ? defaultCards.map((c) => c.id).filter((id) => (FACTORY_ON as string[]).includes(id))
       : enabledKeys.filter((k): k is PregCardId => availableIds.includes(k as PregCardId))
   ).filter((id) => visibleCardIds === null || visibleCardIds.has(id))
 
