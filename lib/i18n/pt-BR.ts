@@ -906,6 +906,7 @@ export const ptBR: TranslationKeys = {
   kids_home_tile_activities: "ATIVIDADES",
   kids_home_tile_activity_empty_sub: "Registre uma atividade",
   kids_home_tile_no_goal: "Nenhuma meta definida",
+  kids_logForm_earlier: "Antes",
   feedCalm_milkPerDay: "MAMADAS · POR DIA",
   feedCalm_milk: "MAMADAS",
   feedCalm_feeds: "{{n}} mamadas",

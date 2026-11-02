@@ -906,6 +906,7 @@ export const es: TranslationKeys = {
   kids_home_tile_activities: "ACTIVIDADES",
   kids_home_tile_activity_empty_sub: "Registra una actividad",
   kids_home_tile_no_goal: "Sin meta establecida",
+  kids_logForm_earlier: "Antes",
   feedCalm_milkPerDay: "TOMAS · POR DÍA",
   feedCalm_milk: "TOMAS",
   feedCalm_feeds: "{{n}} tomas",

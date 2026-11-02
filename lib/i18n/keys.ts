@@ -1015,6 +1015,7 @@ export interface TranslationKeys {
   kids_home_tile_activities: string
   kids_home_tile_activity_empty_sub: string
   kids_home_tile_no_goal: string
+  kids_logForm_earlier: string
   feedCalm_milkPerDay: string
   feedCalm_milk: string
   feedCalm_feeds: string

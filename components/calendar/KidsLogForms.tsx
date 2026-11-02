@@ -947,6 +947,41 @@ function DateChip({
     setShowPicker(false)
   }
 
+  // Site look: one-tap day strip (today + the last 6 days) and an "Earlier" pill that
+  // opens iOS's compact calendar for anything older. No big wheel, no Done button.
+  if (!diffuse) {
+    const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return toDateStr(d) })
+    const inStrip = days.includes(value)
+    const label = (iso: string, i: number) => i === 0 ? t('common_today') : i === 1 ? t('common_yesterday')
+      : new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })
+    return (
+      <View style={{ gap: 8 }}>
+        <ScrollView horizontal style={{ flexGrow: 0 }} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
+          {days.map((iso, i) => (
+            <SiteChoice key={iso} compact tick={false} label={label(iso, i)} selected={value === iso} tone={siteToneFor()} onPress={() => { onChange(iso); setShowPicker(false) }} />
+          ))}
+          <SiteChoice compact tick={false} sticker="cal"
+            label={inStrip ? t('kids_logForm_earlier') : formatDateLabel(value, t)}
+            selected={!inStrip} tone={siteToneFor()} onPress={() => setShowPicker((v) => !v)} />
+        </ScrollView>
+        {showPicker ? (
+          <DateTimePicker
+            value={new Date(value + 'T12:00:00')}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'inline' : 'default'}
+            maximumDate={new Date()}
+            accentColor={INK}
+            themeVariant={isDark ? 'dark' : 'light'}
+            onChange={(e, d) => {
+              if (d && e.type !== 'dismissed') onChange(toDateStr(d))
+              setShowPicker(false)
+            }}
+          />
+        ) : null}
+      </View>
+    )
+  }
+
   const inkText = diffuse ? dTheme.colors.ink : (isDark ? colors.text : INK)
   const pickerBg = diffuse ? dTheme.colors.surface : colors.surface
   const pickerBorder = diffuse ? dTheme.colors.line2 : (isDark ? colors.border : INK)
