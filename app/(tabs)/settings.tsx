@@ -27,6 +27,7 @@ import { DiffuseListRow } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import { useChildStore } from '../../store/useChildStore'
+import { useJourneyStore } from '../../store/useJourneyStore'
 import { useBadgeStore, BADGE_DEFS, badgeName } from '../../store/useBadgeStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
@@ -65,6 +66,7 @@ export default function ProfileScreen() {
     : storedPregnancyWeek
 
   const [userName, setUserName] = useState<string | null>(null)
+  const parentName = useJourneyStore((s) => s.parentName)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null)
   const [joinedYear, setJoinedYear] = useState<number | null>(null)
@@ -135,7 +137,7 @@ export default function ProfileScreen() {
   }
 
   // ─── Derived values ───────────────────────────────────────────────────────
-  const nameParts = (userName ?? '').trim().split(/\s+/).filter(Boolean)
+  const nameParts = (userName || parentName || '').trim().split(/\s+/).filter(Boolean)
   const firstName = nameParts[0] ?? 'Hi'
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined
   const initial = (firstName[0] ?? 'I').toUpperCase()
