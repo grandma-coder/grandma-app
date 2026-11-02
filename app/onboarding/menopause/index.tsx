@@ -673,9 +673,11 @@ function SummaryRow({
   last?: boolean
 }) {
   return (
-    <View style={[completeStyles.summaryRow, !last && { borderBottomWidth: pal.diffuse ? 1 : 1.5, borderBottomColor: pal.border }]}>
-      <Character name={icon} size={22} color={pal.accent} bg={pal.bg} />
-      <Text style={[completeStyles.summaryLabel, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{label}</Text>
+    <View style={[completeStyles.summaryRow, !last && { borderBottomWidth: pal.diffuse ? 1 : 0.75, borderBottomColor: pal.border }]}>
+      {pal.diffuse
+        ? <Character name={icon} size={22} color={pal.accent} bg={pal.bg} />
+        : <SiteSticker name={icon === 'phase' ? 'moon' : 'thermo'} size={26} cut />}
+      <Text style={[completeStyles.summaryLabel, { color: pal.diffuse ? pal.textMuted : pal.text, fontFamily: pal.fontBody }]}>{label}</Text>
       {pal.diffuse ? (
         <Text style={[completeStyles.summaryValue, { color: pal.text, fontFamily: pal.fontDisplay }]}>{value}</Text>
       ) : (
