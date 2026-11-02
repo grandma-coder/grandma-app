@@ -21,9 +21,10 @@
 .hero { padding: 10px 0 50px; }
 .heroGrid { display: grid; grid-template-columns: 1fr 390px; gap: 56px; align-items: center; min-height: calc(100svh - 72px); }
 .rebus { margin: 0; font-size: clamp(34px, 4.6vw, 66px); line-height: 1.22; text-wrap: pretty; }
-.rebus .reb { display: inline-block; width: 1.3em; height: 1.3em; margin: 0 .04em 0 .29em; vertical-align: -.28em; transform-origin: 50% 60%; animation: pop .7s var(--spring) both; animation-delay: calc(.25s + var(--i) * .12s); cursor: pointer; }
+.rebus .reb { display: inline-block; width: 1.3em; height: 1.3em; margin: 0 .04em 0 .29em; vertical-align: -.28em; transform-origin: 50% 60%; animation: pop .7s var(--spring) backwards; animation-delay: calc(.25s + var(--i) * .12s); cursor: pointer; }
 .rebus .reb .ico { width: 100%; height: 100%; vertical-align: top; }
 .rebus .reb.boing { animation: boing .6s var(--spring); }
+/* backwards, not both: a held transform keeps WebKit's layer, and its filtered SVG stays rasterized at the tiny start size (blurry) */
 @keyframes pop { from { transform: scale(0) rotate(-30deg); } }
 @keyframes boing { 30% { transform: scale(1.3) rotate(12deg); } 60% { transform: scale(.9) rotate(-6deg); } }
 .sub { margin: 22px 0 0; font-size: clamp(17px, 1.6vw, 21px); color: var(--ink-2); max-width: 46ch; }
@@ -116,11 +117,8 @@
   .modes { position: sticky; top: 66px; z-index: 30; width: 100%; }
   .modes button { font-size: clamp(10px, 3vw, 11.5px); min-width: 0; }
   /* the device keeps its 390px layout box when scaled; clip it so the page never gets wider than the screen */
-  /* self-fitting before hydration: --s = min(1, min(82vw,340px)/390px, (100svh-240px)/800px), floor .25; tan(atan2(a,b)) divides two lengths */
+  /* usePhoneFit sets the real --s on hydration. No CSS self-fit: iOS Safari resolves tan(atan2()) of viewport lengths to 0, pinning the phone at the .25 floor */
   .phoneSlot { --s: .6; }
-  @supports (width: calc(tan(atan2(1px, 1px)) * 1px)) {
-    .phoneSlot { --s: max(.25, min(1, tan(atan2(min(82vw, 340px), 390px)), tan(atan2(100svh - 240px, 800px)))); }
-  }
   .phoneSlot { display: block; position: relative; width: calc(390px * var(--s, .8)); height: calc(800px * var(--s, .8)); overflow: hidden; border-radius: calc(56px * var(--s, .8)); }
   .phoneSlot > * { position: absolute; top: 0; left: 0; transform: scale(var(--s, .8)); transform-origin: 0 0; }
   .qjHero { margin-top: 16px; }

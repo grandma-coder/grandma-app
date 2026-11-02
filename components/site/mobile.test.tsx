@@ -319,16 +319,8 @@ describe('Log tab timer', () => {
 })
 
 describe('phone fit', () => {
-  it('leaves --s to the stylesheet when CSS can fit the phone itself', () => {
+  it('sets --s even when CSS claims tan/atan2 support (iOS Safari resolves it to 0 for viewport lengths)', () => {
     vi.stubGlobal('CSS', { supports: () => true })
-    window.innerWidth = 320; window.innerHeight = 568
-    setup(<Hero />)
-    expect(document.getElementById(PHONE_ID)!.style.getPropertyValue('--s')).toBe('')
-    vi.unstubAllGlobals()
-  })
-
-  it('Hero sets --s on the phone slot from the window size', () => {
-    vi.stubGlobal('CSS', { supports: () => false }) // no tan/atan2: the JS fallback fits it
     window.innerWidth = 320; window.innerHeight = 568
     setup(<Hero />)
     expect(document.getElementById(PHONE_ID)!.style.getPropertyValue('--s')).toBe('0.41')
