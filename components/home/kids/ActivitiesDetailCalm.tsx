@@ -19,7 +19,7 @@ const PILLAR: Record<PillarId, { sticker: SiteStickerName; tone: string }> = {
   movement: { sticker: 'shoe', tone: stickers.greenSoft },
   creative: { sticker: 'flower', tone: stickers.yellowSoft },
   learning: { sticker: 'books', tone: stickers.blueSoft },
-  social: { sticker: 'us', tone: stickers.pinkSoft },
+  social: { sticker: 'baby2', tone: stickers.pinkSoft },
   care: { sticker: 'heart', tone: stickers.peachSoft },
   therapy: { sticker: 'brain', tone: stickers.lilacSoft },
 }

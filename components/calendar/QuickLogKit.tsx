@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react'
 import Svg, { Path } from 'react-native-svg'
 import * as Haptics from 'expo-haptics'
 import { SiteChoice } from '../ui/SiteChoice'
-import { HandDrawnPill } from '../ui/HandDrawn'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { CHILD_COLORS } from '../ui/ChildPills'
 import { useTheme, useDiffuseTheme, diffuseFont, radius, getModeColorSoft } from '../../constants/theme'
@@ -140,12 +139,13 @@ export function ActiveChildChip({ childId, onChange }: ActiveChildChipProps) {
 }
 
 const kitStyles = StyleSheet.create({
-  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
+  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 2 },
   choice: { minWidth: 96, flexGrow: 1, alignItems: 'center', gap: 8, paddingVertical: 18, paddingHorizontal: 12, borderWidth: 1.5 },
   choiceLabel: { fontSize: 14, textAlign: 'center' },
-  tileCell: { minWidth: 96, flexGrow: 1, flexBasis: '28%' },
-  tileInner: { alignItems: 'center', gap: 8, paddingVertical: 16, paddingHorizontal: 10 },
-  tileTick: { position: 'absolute', top: 8, right: 8, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  tileCell: { width: '25%', alignItems: 'center', paddingTop: 2 },
+  tileDiscWrap: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center' },
+  tileDisc: { position: 'absolute', width: 56, height: 56, borderRadius: 28, borderWidth: 1.5 },
+  tileLabel: { fontSize: 13, marginTop: 1, textAlign: 'center', paddingHorizontal: 2 },
   moreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
   moreLabel: { fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' },
   moreBody: { gap: 12, paddingBottom: 4 },
@@ -164,7 +164,7 @@ const SITE_FOR_BLOB: Partial<Record<CharacterName, SiteStickerName>> = {
 // Option ids that deserve their own sticker (so a list of one concept doesn't repeat one icon).
 const ID_STICKER: Record<string, SiteStickerName> = {
   class: 'brain', school: 'backpack', study: 'pencil', reading: 'books', sport: 'shoe', swim: 'drop',
-  dance: 'star', music: 'bell', art: 'flower', playground: 'stroller', walk: 'leaf', therapy: 'heart', playdate: 'us',
+  dance: 'star', music: 'bell', art: 'flower', playground: 'stroller', walk: 'leaf', therapy: 'heart', playdate: 'baby2',
   pee: 'drop', poop: 'pumpkin', mixed: 'diaper',
 }
 const FACE_STICKER: Record<string, SiteStickerName> = {
@@ -172,13 +172,14 @@ const FACE_STICKER: Record<string, SiteStickerName> = {
 }
 
 function SiteChoiceTile({ option, on, onPress, tone }: { option: ChoiceOption; on: boolean; onPress: () => void; tone: string }) {
+  // No card: the sticker IS the button (like the home log dock). Selected = tone disc
+  // behind the sticker, a little pop, bold label + wavy underline.
   const { colors, font } = useTheme()
   const ink = colors.text
-  const [size, setSize] = useState({ w: 0, h: 0 })
   const sel = useRef(new Animated.Value(on ? 1 : 0)).current
   const press = useRef(new Animated.Value(0)).current
   useEffect(() => {
-    Animated.spring(sel, { toValue: on ? 1 : 0, friction: 6, tension: 160, useNativeDriver: true }).start()
+    Animated.spring(sel, { toValue: on ? 1 : 0, friction: 5, tension: 180, useNativeDriver: true }).start()
   }, [on, sel])
   const sticker: SiteStickerName | undefined =
     option.blob === 'mood' ? FACE_STICKER[option.face ?? option.id] ?? 'face3' : ID_STICKER[option.id] ?? SITE_FOR_BLOB[option.blob]
@@ -192,26 +193,22 @@ function SiteChoiceTile({ option, on, onPress, tone }: { option: ChoiceOption; o
       accessibilityLabel={option.label}
       style={kitStyles.tileCell}
     >
-      <Animated.View
-        onLayout={(e) => setSize({ w: Math.round(e.nativeEvent.layout.width), h: Math.round(e.nativeEvent.layout.height) })}
-        style={{ transform: [
-          { rotate: sel.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-2deg'] }) },
-          { scale: Animated.multiply(sel.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] }), press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.94] })) },
-        ] }}
-      >
-        <HandDrawnPill width={size.w} height={size.h} fill={colors.surface} stroke={ink} strokeWidth={2} radius={20} seed={option.id} />
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: sel }]}>
-          <HandDrawnPill width={size.w} height={size.h} fill={tone} stroke={ink} strokeWidth={2.6} radius={20} seed={option.id} />
+      <Animated.View style={[kitStyles.tileDiscWrap, { transform: [{ scale: press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.88] }) }] }]}>
+        <Animated.View style={[kitStyles.tileDisc, { backgroundColor: tone, borderColor: ink, opacity: sel, transform: [{ scale: sel }] }]} />
+        <Animated.View style={{ transform: [
+          { scale: sel.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) },
+          { rotate: sel.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-8deg'] }) },
+        ] }}>
+          {sticker ? <SiteSticker name={sticker} size={36} /> : <Character name={option.blob} size={36} color={option.color} face={option.face} />}
         </Animated.View>
-        <View style={kitStyles.tileInner}>
-          {sticker ? <SiteSticker name={sticker} size={40} cut /> : <Character name={option.blob} size={40} color={option.color} face={option.face} />}
-          <Text style={[kitStyles.choiceLabel, { color: ink, fontFamily: font.bodyBold }]} numberOfLines={2}>{option.label}</Text>
-        </View>
-        <Animated.View style={[kitStyles.tileTick, { backgroundColor: ink, opacity: sel, transform: [{ scale: sel }] }]}>
-          <Svg width={11} height={11} viewBox="0 0 18 18">
-            <Path d="M3.5 9.5 L7.5 13 L14.5 4.5" stroke={colors.surface} strokeWidth={3.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
-        </Animated.View>
+      </Animated.View>
+      <Text style={[kitStyles.tileLabel, { color: ink, fontFamily: on ? font.bodyBold : font.bodyMedium }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+        {option.label}
+      </Text>
+      <Animated.View style={{ opacity: sel, height: 6 }}>
+        <Svg width={36} height={6} viewBox="0 0 60 8">
+          <Path d="M2 5 C12 2 20 7 30 4 S48 2 58 5" stroke={ink} strokeWidth={3} fill="none" strokeLinecap="round" />
+        </Svg>
       </Animated.View>
     </Pressable>
   )

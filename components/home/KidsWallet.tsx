@@ -139,7 +139,7 @@ export function KidsWallet({
       case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
       case 'rewards': return <SiteSticker name="star" size={26} />
       case 'channels': return <SiteSticker name="bubble" size={26} />
-      case 'village': return <SiteSticker name="us" size={26} />
+      case 'village': return <SiteSticker name="house" size={26} />
     }
   }
 
@@ -211,7 +211,7 @@ export function KidsWallet({
   const SITE_STICKER: Record<KidsCardId, SiteStickerName> = {
     goals: 'star', health: 'heart', vaccines: 'syringe', exams: 'doc', diaper: 'diaper',
     growth_leap: 'brain', reminders: 'bell', memories: 'camera', ask_grandma: 'bubble',
-    rewards: 'star', channels: 'bubble', village: 'us',
+    rewards: 'star', channels: 'bubble', village: 'house',
   }
 
   return (
