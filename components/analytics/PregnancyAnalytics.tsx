@@ -64,12 +64,10 @@ import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { AnalyticsTitle } from './shared/AnalyticsTitle'
 import { PeriodSelector, type Period } from './shared/PeriodSelector'
 import { CustomRangeModal } from './shared/CustomRangeModal'
-import { BigChartCard } from './shared/BigChartCard'
-import { MiniStatTile } from './shared/MiniStatTile'
 import { Section } from './shared/Section'
 import { MoodStrip } from './shared/MoodStrip'
 import { pregMoodToStrip } from '../../lib/moodTrend'
-import { MiniLineChart, MiniBarChart, PillDivergingChart, GlowAreaLine, BlobCluster, SipColumns, PetalBurst, BeadedThread, CrescentBars, ConcentricArcs, TieredLozenges, SplitMeters, CheckpointPills, NutrientMatrix, type ArcDatum, type TierRow, type MeterRow, type CheckRow } from './shared/MiniCharts'
+import { MiniLineChart, PillDivergingChart, GlowAreaLine, BlobCluster, SipColumns, PetalBurst, BeadedThread, CrescentBars, ConcentricArcs, TieredLozenges, SplitMeters, CheckpointPills, NutrientMatrix, type ArcDatum, type TierRow, type MeterRow, type CheckRow } from './shared/MiniCharts'
 import { Display, Body } from '../ui/Typography'
 import {
   Heart,
@@ -84,13 +82,206 @@ import {
   Cross,
   Burst,
   Smiley,
-  Blob,
 } from '../ui/Stickers'
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { DetailSheetHeader } from '../ui/DetailSheetHeader'
+import { FadeUp } from '../ui/Motion'
+import { bucketSeries } from './shared/bucketSeries'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
+
+// ─── Site look (light rendering only) ──────────────────────────────────────
+const MONO = 'SpaceMono_400Regular'
+const HAIR = StyleSheet.hairlineWidth * 2
+
+// Pillar → site sticker (card-less, sits straight on the page).
+const WELLBEING_STICKER: Record<string, SiteStickerName> = {
+  sleep: 'moon', mood: 'face3', nutrition: 'avocado', exercise: 'shoe', hydration: 'drop',
+}
+const PILLAR_SITE_STICKER: Record<PillarKey, SiteStickerName> = {
+  wellbeing: 'flower', weight: 'bars', kicks: 'baby2', sleep: 'moon', mood: 'face3',
+  symptoms: 'thermo', hydration: 'drop', nutrition: 'avocado', exercise: 'shoe',
+  contractions: 'bell', birth: 'backpack',
+}
+
+/** Light bottom sheet: bg paper, 2.5px ink top border, 26px top radius, grabber at 25% ink. */
+function LightSheet({ visible, onClose, height, children }: {
+  visible: boolean
+  onClose: () => void
+  height?: number
+  children: React.ReactNode
+}) {
+  const { colors } = useTheme()
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View
+          style={[
+            styles.modalSheet,
+            {
+              height,
+              maxHeight: SCREEN_H * 0.92,
+              backgroundColor: colors.bg,
+              borderTopLeftRadius: 26,
+              borderTopRightRadius: 26,
+              borderTopWidth: 2.5,
+              borderTopColor: colors.text,
+            },
+          ]}
+        >
+          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
+          </View>
+          {children}
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+/** 34px close button: white disc, 2px ink ring (info buttons on the header use the same shape). */
+function SiteIconButton({ onPress, label, children }: { onPress: () => void; label: string; children: React.ReactNode }) {
+  const { colors } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: colors.text, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginTop: 16 },
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      {children}
+    </Pressable>
+  )
+}
+
+/** Thin bar: hairline track, soft-tone fill with an ink outline. */
+function SiteMeter({ pct, tone, height = 6 }: { pct: number; tone: string; height?: number }) {
+  const { colors } = useTheme()
+  const w = Math.max(0, Math.min(100, pct))
+  return (
+    <View style={{ height, borderRadius: 999, overflow: 'hidden', backgroundColor: colors.border }}>
+      <View style={{ width: `${w}%`, height: '100%', borderRadius: 999, borderWidth: 1, backgroundColor: tone, borderColor: w > 0 ? colors.text : 'transparent' }} />
+    </View>
+  )
+}
+
+/**
+ * Light bar chart: ink-outlined soft-tone bars with the TRUE value over each bar. A freak day
+ * can't flatten the rest — bars scale to a robust ceiling (2.5× the median logged day) and an
+ * over-ceiling bar is drawn full-height while its label keeps the real number. Long windows are
+ * averaged into ≤ 14 bars; `caption` says what one bar means (total vs average).
+ */
+function SiteBars({ data: rawData, labels: rawLabels, tone, height = 140, unit = '', target, caption }: {
+  data: number[]
+  labels: string[]
+  tone: string
+  height?: number
+  unit?: string
+  target?: number
+  caption?: string
+}) {
+  const { colors, font } = useTheme()
+  const b = bucketSeries(rawData, rawLabels, 14)
+  const data = b.data
+  const labels = b.labels
+  const bucketed = data.length < rawData.length
+  const trueMax = Math.max(...data, 0)
+  if (data.length === 0 || trueMax <= 0) return null
+  const logged = data.filter((v) => v > 0).sort((x, y) => x - y)
+  const median = logged.length ? logged[Math.floor(logged.length / 2)] : 0
+  let ceiling = trueMax
+  if (logged.length >= 3 && trueMax > median * 3) ceiling = median * 2.5
+  if (unit === 'h') ceiling = Math.min(ceiling, 24)
+  if (target !== undefined) ceiling = Math.max(ceiling, Math.min(target, 24))
+  ceiling = Math.max(ceiling, 0.1)
+  const BAR_AREA = Math.max(height - 40, 80)
+  const maxIdx = data.indexOf(trueMax)
+  const showAll = data.length <= 9
+  const fmt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? `${Math.round(v)}` : v.toFixed(1))
+  return (
+    <View style={{ width: '100%', paddingVertical: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, position: 'relative' }}>
+        {target !== undefined && target > 0 && (
+          <View
+            pointerEvents="none"
+            style={{ position: 'absolute', left: 0, right: 0, top: 16 + BAR_AREA * (1 - Math.min(target, ceiling) / ceiling), height: 1, backgroundColor: colors.text, opacity: 0.45 }}
+          />
+        )}
+        {data.map((v, i) => {
+          const h = v > 0 ? Math.max(4, (Math.min(v, ceiling) / ceiling) * BAR_AREA) : 3
+          const labelHere = v > 0 && (showAll || i === maxIdx)
+          return (
+            <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ fontSize: 11, height: 16, fontFamily: font.bodySemiBold, color: colors.text }} numberOfLines={1}>
+                {labelHere ? `${fmt(v)}${unit}` : ''}
+              </Text>
+              <View style={{ height: BAR_AREA, justifyContent: 'flex-end', width: '100%' }}>
+                <View style={{ height: h, borderRadius: 8, borderWidth: v > 0 ? 1.5 : 0, borderColor: colors.text, backgroundColor: v > 0 ? tone : colors.border }} />
+              </View>
+            </View>
+          )
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
+        {labels.map((l, i) => (
+          <Text key={i} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: colors.textSecondary, fontFamily: font.body }} numberOfLines={1}>
+            {l}
+          </Text>
+        ))}
+      </View>
+      {(caption || (target !== undefined && target > 0)) && (
+        <Text style={{ fontSize: 11, color: colors.textSecondary, fontFamily: font.body, marginTop: 8 }}>
+          {[caption ? `${caption}${bucketed ? ' (each bar = average of several days)' : ''}` : null, target !== undefined && target > 0 ? `Target line: ${target}${unit}` : null].filter(Boolean).join(' · ')}
+        </Text>
+      )}
+    </View>
+  )
+}
+
+/** Light quiet row: card-less sticker + label/sub + value, hairline above. */
+function SiteRow({ sticker, label, sub, value, valueSub, pct, tone, onPress, first }: {
+  sticker: SiteStickerName
+  label: string
+  sub?: string
+  value: string
+  valueSub?: string
+  pct?: number
+  tone: string
+  onPress?: () => void
+  first?: boolean
+}) {
+  const { colors, font } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      style={({ pressed }) => [
+        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderTopWidth: first ? 0 : HAIR, borderTopColor: colors.border },
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      <SiteSticker name={sticker} size={34} cut />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: font.display, fontSize: 16, lineHeight: 20, letterSpacing: 0.2, textTransform: 'uppercase', color: colors.text }} numberOfLines={1}>{label}</Text>
+        {sub ? <Text style={{ fontFamily: font.body, fontSize: 12, lineHeight: 16, color: colors.textSecondary, marginTop: 1 }} numberOfLines={1}>{sub}</Text> : null}
+        {pct !== undefined ? <View style={{ marginTop: 7 }}><SiteMeter pct={pct} tone={tone} /></View> : null}
+      </View>
+      <View style={{ alignItems: 'flex-end', maxWidth: 120 }}>
+        <Text style={{ fontFamily: font.displayBold, fontSize: 22, lineHeight: 26, color: colors.text }} numberOfLines={1}>{value}</Text>
+        {valueSub ? <Text style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.textSecondary }} numberOfLines={1}>{valueSub}</Text> : null}
+      </View>
+      {onPress ? <ChevronRight size={16} color={colors.text} strokeWidth={2.2} /> : null}
+    </Pressable>
+  )
+}
 
 // ─── Pillar config ─────────────────────────────────────────────────────────
 
@@ -199,6 +390,11 @@ function renderPillarGlyph(key: PillarKey, color: string, size = 18) {
 const SYMPTOM_HUE_KEYS = ['coral', 'yellow', 'blue', 'green', 'lilac'] as const
 function symptomHue(stickers: Record<string, string>, i: number): string {
   return stickers[SYMPTOM_HUE_KEYS[i % SYMPTOM_HUE_KEYS.length]]
+}
+// Light rendering: the soft tone of the same rank hue (ink-outlined bar fill).
+const SYMPTOM_SOFT_KEYS = ['peachSoft', 'yellowSoft', 'blueSoft', 'greenSoft', 'lilacSoft'] as const
+function symptomSoft(stickers: Record<string, string>, i: number): string {
+  return stickers[SYMPTOM_SOFT_KEYS[i % SYMPTOM_SOFT_KEYS.length]]
 }
 
 // ─── Trimester / week helpers ──────────────────────────────────────────────
@@ -404,23 +600,13 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             <AnalyticsTitle primary="Pregnancy," italic="week over week." />
             <View style={styles.actionRow}>
               {onExamsPress ? (
-                <Pressable
-                  onPress={onExamsPress}
-                  hitSlop={10}
-                  style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                  accessibilityLabel="Exams"
-                >
-                  <FlaskConical size={16} color={colors.text} strokeWidth={2} />
-                </Pressable>
+                <SiteIconButton onPress={onExamsPress} label="Exams">
+                  <FlaskConical size={16} color={colors.text} strokeWidth={2.2} />
+                </SiteIconButton>
               ) : null}
-              <Pressable
-                onPress={() => setShowInfo(true)}
-                hitSlop={10}
-                style={[styles.infoBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                accessibilityLabel="How analytics work"
-              >
-                <Info size={16} color={colors.text} strokeWidth={2} />
-              </Pressable>
+              <SiteIconButton onPress={() => setShowInfo(true)} label="How analytics work">
+                <Info size={16} color={colors.text} strokeWidth={2.2} />
+              </SiteIconButton>
             </View>
           </View>
         )}
@@ -459,15 +645,27 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             </View>
           </Pressable>
         ) : (
-          <BigChartCard
-            label={`WEIGHT GAIN · WEEK ${weekNumber}`}
-            value={weightValue}
-            unit={weightUnit}
-            blobColor={stickers.lilacSoft}
+          <Pressable
             onPress={() => setOpenPillar('weight')}
+            style={({ pressed }) => [{ marginHorizontal: 20, marginTop: 8, paddingTop: 4, opacity: pressed ? 0.8 : 1 }]}
           >
-            <MiniLineChart data={weights} color={stickers.lilac} />
-          </BigChartCard>
+            <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
+              {`WEIGHT GAIN · WEEK ${weekNumber}`}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+              <Text style={{ fontFamily: font.displayBold, fontSize: 52, lineHeight: 58, letterSpacing: -1.5, color: colors.text }}>
+                {weightValue}
+              </Text>
+              <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
+                {weeklyGain !== null
+                  ? `${prefWeightLabel} latest · ${weeklyGain >= 0 ? '+' : ''}${kgToDisplay(weeklyGain, prefWeightUnit).toFixed(1)} ${prefWeightLabel} avg per week`
+                  : `${prefWeightLabel} latest`}
+              </Text>
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <MiniLineChart data={weights} color={stickers.lilac} />
+            </View>
+          </Pressable>
         )}
 
         {/* 2×2 tappable stat grid */}
@@ -524,39 +722,42 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             </View>
           </View>
         ) : (
-          <View style={styles.grid}>
-            <View style={styles.gridRow}>
-              <MiniStatTile
-                label="KICKS / DAY"
-                value={avgKicks ? String(avgKicks) : '—'}
-                sticker={<Heart size={28} fill={stickers.pink} />}
-                tint={stickers.pinkSoft}
-                onPress={() => setOpenPillar('kicks')}
-              />
-              <MiniStatTile
-                label="SYMPTOMS"
-                value={symptomCount > 0 ? `${symptomCount} logged` : 'None'}
-                sticker={<Bolt size={28} fill={stickers.yellow} />}
-                tint={stickers.yellowSoft}
-                onPress={() => setOpenPillar('symptoms')}
-              />
-            </View>
-            <View style={styles.gridRow}>
-              <MiniStatTile
-                label="SLEEP"
-                value={sleepAvg}
-                sticker={<Moon size={28} fill={stickers.lilac} />}
-                tint={stickers.lilacSoft}
-                onPress={() => setOpenPillar('sleep')}
-              />
-              <MiniStatTile
-                label="WELLBEING"
-                value={wellbeing ? `${wellbeing.overall}%` : '—'}
-                sticker={<Crown size={28} fill={stickers.green} />}
-                tint={stickers.greenSoft}
-                onPress={() => setOpenPillar('wellbeing')}
-              />
-            </View>
+          <View style={{ paddingHorizontal: 20, marginTop: 14 }}>
+            <SiteRow
+              first
+              sticker={PILLAR_SITE_STICKER.kicks}
+              label="Kicks"
+              sub="Average per session"
+              value={avgKicks ? String(avgKicks) : '—'}
+              tone={stickers.pinkSoft}
+              onPress={() => setOpenPillar('kicks')}
+            />
+            <SiteRow
+              sticker={PILLAR_SITE_STICKER.symptoms}
+              label="Symptoms"
+              sub="Total logged this period"
+              value={symptomCount > 0 ? String(symptomCount) : 'None'}
+              tone={stickers.yellowSoft}
+              onPress={() => setOpenPillar('symptoms')}
+            />
+            <SiteRow
+              sticker={PILLAR_SITE_STICKER.sleep}
+              label="Sleep"
+              sub="Average per night"
+              value={sleepAvg}
+              pct={tk.sleep.pct}
+              tone={stickers.lilacSoft}
+              onPress={() => setOpenPillar('sleep')}
+            />
+            <SiteRow
+              sticker={PILLAR_SITE_STICKER.wellbeing}
+              label="Wellbeing"
+              sub="Score from the last 7 days"
+              value={wellbeing ? `${wellbeing.overall}%` : '—'}
+              pct={tk.wellbeing.pct}
+              tone={stickers.greenSoft}
+              onPress={() => setOpenPillar('wellbeing')}
+            />
           </View>
         )}
 
@@ -578,9 +779,9 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle="Glasses per day · target 8"
             onPress={() => setOpenPillar('hydration')}
           >
-            <View style={[styles.chartCard, diffuse
-              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
-              : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={diffuse
+              ? [styles.chartCard, { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }]
+              : styles.chartBare}>
               {diffuse ? (
                 // Filled sip-columns: fill LEVEL per day, ghost outline for the
                 // empty part, violet ring dot when the 8-glass target is met.
@@ -594,13 +795,13 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                   unit="gl"
                 />
               ) : (
-                <MiniBarChart
+                <SiteBars
                   data={hydrationData}
                   labels={hydrationHistory.map((h) => shortDay(h.date))}
-                  longLabels={hydrationHistory.map((h) => formatLogDate(h.date))}
-                  color={stickers.blue}
+                  tone={stickers.blueSoft}
                   target={8}
-                  unit="gl"
+                  unit=""
+                  caption="Glasses per day"
                 />
               )}
             </View>
@@ -614,9 +815,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             subtitle="4 nutrients × 7 days"
             onPress={() => setOpenPillar('nutrition')}
           >
-            <View style={diffuse
-              ? styles.chartBare
-              : [styles.chartCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={styles.chartBare}>
               <NutritionMini matrix={nutritionMatrix} />
             </View>
           </Section>
@@ -626,12 +825,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         {exerciseHistory.some((e) => e.minutes > 0) && (
           <Section
             title="Movement"
-            subtitle="Minutes per session · target 150 / week"
+            subtitle={diffuse ? 'Minutes per session · target 150 / week' : 'Minutes per day · target 150 / week'}
             onPress={() => setOpenPillar('exercise')}
           >
-            <View style={diffuse
-              ? styles.chartBare
-              : [styles.chartCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View style={styles.chartBare}>
               {diffuse ? (
                 // Radial petal burst — floats on the page (no card), the shape
                 // is self-contained enough to stand alone.
@@ -642,14 +839,13 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                   centerLabel={String(exerciseHistory.filter((e) => e.minutes > 0).length)}
                 />
               ) : (
-                <MiniBarChart
+                <SiteBars
                   data={exerciseHistory.map((e) => e.minutes)}
                   labels={exerciseHistory.map((e) => shortDay(e.date))}
-                  longLabels={exerciseHistory.map((e) => formatLogDate(e.date))}
-                  color={stickers.coral}
-                  palette={[stickers.coral, stickers.peach, stickers.yellow]}
+                  tone={stickers.peachSoft}
                   target={Math.round(150 / 7)}
-                  unit="min"
+                  unit="m"
+                  caption="Minutes per day"
                 />
               )}
             </View>
@@ -675,45 +871,18 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                 hues={symptomFreq.slice(0, 5).map((_, i) => symptomHue(stickers, i))}
               />
             ) : (
-            <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' }]}>
+            <View>
               {symptomFreq.map((s, i) => (
                 <View
                   key={s.symptom}
                   style={[
                     styles.listRow,
-                    i < symptomFreq.length - 1 && {
-                      borderBottomColor: diffuse ? dt.colors.line : colors.borderLight,
-                      borderBottomWidth: StyleSheet.hairlineWidth,
-                    },
+                    { borderTopWidth: i === 0 ? 0 : HAIR, borderTopColor: colors.border },
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.rank,
-                      diffuse
-                        ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-                        : { backgroundColor: stickers.yellowSoft, borderColor: 'rgba(20,19,19,0.12)' },
-                    ]}
-                  >
-                    <Text style={[styles.rankText, diffuse
-                      ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
-                      : { color: colors.text }]}>{i + 1}</Text>
-                  </View>
-                  <Text style={[styles.listLabel, diffuse
-                    ? { color: dt.colors.ink, fontFamily: diffuseFont.body }
-                    : { color: colors.text }]}>{s.symptom}</Text>
-                  <View
-                    style={[
-                      styles.countChip,
-                      diffuse
-                        ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-                        : { backgroundColor: stickers.yellowSoft, borderColor: 'rgba(20,19,19,0.12)' },
-                    ]}
-                  >
-                    <Text style={[styles.countText, diffuse
-                      ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase' }
-                      : { color: colors.text }]}>{t('preg_analytics_times_prefix', { count: s.count })}</Text>
-                  </View>
+                  <Text style={{ width: 22, fontSize: 11, letterSpacing: 1.2, fontFamily: MONO, color: colors.textSecondary }}>{i + 1}</Text>
+                  <Text style={[styles.listLabel, { color: colors.text }]}>{s.symptom}</Text>
+                  <Text style={{ fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: MONO, color: colors.text }}>{t('preg_analytics_times_prefix', { count: s.count })}</Text>
                 </View>
               ))}
             </View>
@@ -722,15 +891,17 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         )}
 
         {/* Labor & birth — grouped hero banners */}
-        <View style={{ paddingHorizontal: 20, marginTop: 28, gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ paddingHorizontal: 20, marginTop: 28, gap: diffuse ? 12 : 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: diffuse ? 0 : 6 }}>
             <View>
-              <Text style={{ fontSize: 20, color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.3 }}>
+              <Text style={diffuse
+                ? { fontSize: 20, color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
+                : { fontSize: 20, color: colors.text, fontFamily: font.display, letterSpacing: 0.2, textTransform: 'uppercase' }}>
                 {'Labor & birth'}
               </Text>
               <Text style={diffuse
                 ? { fontSize: 10, color: dt.colors.ink3, fontFamily: diffuseFont.mono, marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }
-                : { fontSize: 12, color: colors.textMuted, fontFamily: font.bodyMedium, marginTop: 2 }}>
+                : { fontSize: 10, color: colors.textMuted, fontFamily: MONO, marginTop: 3, letterSpacing: 1.4, textTransform: 'uppercase' }}>
                 {'Track contractions and how ready you are'}
               </Text>
             </View>
@@ -843,10 +1014,10 @@ function NutritionMini({
   const dt = useDiffuseTheme()
   const accent = getDiffuseAccent('preg', dt.isDark)
   const rows = [
-    { label: 'Iron',    arr: matrix.iron,    color: stickers.coral },
-    { label: 'Folic',   arr: matrix.folic,   color: stickers.green },
-    { label: 'Protein', arr: matrix.protein, color: stickers.peach },
-    { label: 'Calcium', arr: matrix.calcium, color: stickers.blue },
+    { label: 'Iron',    arr: matrix.iron,    color: stickers.coral, soft: stickers.peachSoft },
+    { label: 'Folic',   arr: matrix.folic,   color: stickers.green, soft: stickers.greenSoft },
+    { label: 'Protein', arr: matrix.protein, color: stickers.peach, soft: stickers.peachSoft },
+    { label: 'Calcium', arr: matrix.calcium, color: stickers.blue,  soft: stickers.blueSoft },
   ]
   if (diffuse) {
     // Dot matrix — one hue per nutrient row, filled dot = hit that day.
@@ -870,17 +1041,13 @@ function NutritionMini({
     )
   }
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 12 }}>
       {rows.map((r) => (
         <View key={r.label}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text style={diffuse
-              ? { color: dt.colors.ink, fontSize: 12, fontFamily: diffuseFont.body }
-              : { color: colors.text, fontSize: 12, fontFamily: font.bodyMedium }}>{r.label}</Text>
-            <Text style={diffuse
-              ? { color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 0.4 }
-              : { color: colors.textMuted, fontSize: 11 }}>
-              {r.arr.filter(Boolean).length}/{r.arr.length}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+            <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>{r.label}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 10, fontFamily: MONO, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+              {r.arr.filter(Boolean).length}/{r.arr.length}{' days'}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -889,10 +1056,11 @@ function NutritionMini({
                 key={i}
                 style={{
                   flex: 1,
-                  height: 14,
-                  borderRadius: 4,
-                  backgroundColor: diffuse ? (hit ? accent : dt.colors.line) : (hit ? r.color : stickers.greenSoft),
-                  opacity: diffuse ? 1 : (hit ? 1 : 0.35),
+                  height: 16,
+                  borderRadius: 5,
+                  borderWidth: hit ? 1.5 : 0,
+                  borderColor: colors.text,
+                  backgroundColor: hit ? r.soft : colors.border,
                 }}
               />
             ))}
@@ -1052,47 +1220,16 @@ function HeroBanner({
   }
 
   return (
-    <Pressable
+    <SiteRow
+      first={pillarKey === 'contractions'}
+      sticker={PILLAR_SITE_STICKER[pillarKey]}
+      label={label}
+      sub={subtitle || undefined}
+      value={title}
+      valueSub={`${badgeText} ${badgeCaption}`}
+      tone={palette.tint}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.hero,
-        {
-          marginHorizontal: 0,
-          marginTop: 0,
-          marginBottom: 0,
-          backgroundColor: palette.tint,
-          borderColor: 'rgba(20,19,19,0.12)',
-        },
-        pressed && { opacity: 0.92 },
-      ]}
-    >
-      <View style={[styles.heroChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        {renderPillarSticker(pillarKey, palette.chip, 26)}
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.heroLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-          {label}
-        </Text>
-        <Text style={[styles.heroValue, { color: colors.text, fontFamily: font.display }]}>
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text style={[styles.heroSub, { color: colors.textSecondary, fontFamily: font.bodyMedium }]} numberOfLines={2}>
-            {subtitle}
-          </Text>
-        ) : null}
-      </View>
-      <View style={styles.heroBadge}>
-        <View style={[styles.heroBadgeInner, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.heroBadgeNum, { color: colors.text, fontFamily: font.display }]}>
-            {badgeText}
-          </Text>
-          <Text style={[styles.heroBadgeT, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
-            {badgeCaption}
-          </Text>
-        </View>
-      </View>
-    </Pressable>
+    />
   )
 }
 
@@ -1222,114 +1359,34 @@ function PillarDetailModal(props: DetailProps) {
   }
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View
-          style={[
-            styles.modalSheet,
-            { height: sheetH, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
-          ]}
-        >
-          {/* Handle */}
-          <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
-            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
-          </View>
-
-          {/* Header — tinted band with layered sticker decoration */}
-          <View
-            style={[
-              styles.modalHeaderBand,
-              { backgroundColor: palette.tint, borderBottomColor: 'rgba(20,19,19,0.08)' },
-            ]}
-          >
-            {/* Background blob (large, soft, no stroke) */}
-            <View pointerEvents="none" style={styles.modalHeaderBlobBg}>
-              <Blob size={180} fill={palette.chip} variant={2} />
-            </View>
-            {/* Small accent burst top-right */}
-            <View pointerEvents="none" style={styles.modalHeaderBurst}>
-              <Burst size={36} fill={palette.chip} stroke={colors.text} />
-            </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 }}>
-              <View
-                style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: 999,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1.5,
-                  borderColor: 'rgba(20,19,19,0.14)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  shadowColor: '#141313',
-                  shadowOpacity: 0.08,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowRadius: 6,
-                  elevation: 2,
-                }}
-              >
-                {renderPillarSticker(pillarKey, palette.chip, 30)}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    color: colors.text,
-                    fontFamily: font.display,
-                    fontSize: 28,
-                    letterSpacing: -0.6,
-                    lineHeight: 32,
-                  }}
-                >
-                  {label}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.textSecondary,
-                    fontSize: 12,
-                    fontFamily: font.bodyMedium,
-                    letterSpacing: 0.2,
-                    marginTop: 4,
-                  }}
-                >
-                  {meta.blurb}
-                </Text>
-              </View>
-            </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              style={[
-                styles.modalClose,
-                {
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: 'rgba(20,19,19,0.14)',
-                },
-              ]}
-            >
-              <X size={14} color={colors.text} strokeWidth={2.2} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            style={{ flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: 20,
-              paddingTop: 18,
-              paddingBottom: insets.bottom + 24,
-              gap: 16,
-            }}
-          >
-            <Animated.View entering={FadeInDown.duration(220)}>
-              <DetailDispatcher {...props} pillarKey={pillarKey} accentColor={palette.chip} accentTint={palette.tint} />
-            </Animated.View>
-          </ScrollView>
-        </View>
+    <LightSheet visible onClose={onClose} height={sheetH}>
+      <View style={{ paddingHorizontal: 20 }}>
+        <DetailSheetHeader
+          title={label}
+          sticker={PILLAR_SITE_STICKER[pillarKey]}
+          tone={palette.tint}
+          onClose={onClose}
+        />
+        <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
+          {meta.blurb}
+        </Text>
       </View>
-    </Modal>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 14,
+          paddingBottom: insets.bottom + 28,
+          gap: 18,
+        }}
+      >
+        <FadeUp index={0} style={{ gap: 18 }}>
+          <DetailDispatcher {...props} pillarKey={pillarKey} accentColor={palette.chip} accentTint={palette.tint} />
+        </FadeUp>
+      </ScrollView>
+    </LightSheet>
   )
 }
 
@@ -1388,11 +1445,11 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
       {diffuse ? (
         <ScoreHero value={`${wellbeing.overall}%`} caption={t('preg_analytics_overall_last7')} />
       ) : (
-        <View style={[styles.scoreHero, { backgroundColor: stickers.greenSoft, borderColor: 'rgba(20,19,19,0.12)' }]}>
-          <Text style={{ color: colors.text, fontSize: 56, fontFamily: font.display, letterSpacing: -1 }}>
+        <View>
+          <Text style={{ color: colors.text, fontSize: 56, lineHeight: 62, fontFamily: font.displayBold, letterSpacing: -1.5 }}>
             {wellbeing.overall}%
           </Text>
-          <Body size={13} color={colors.textSecondary}>{t('preg_analytics_overall_last7')}</Body>
+          <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{t('preg_analytics_overall_last7')}</Text>
         </View>
       )}
 
@@ -1438,21 +1495,22 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
           </View>
         </View>
       ) : (
-        <PaperCard title="Five pillars">
-          <View style={{ gap: 12 }}>
+        <PaperCard title="Five pillars · score out of 10">
+          <View style={{ gap: 14 }}>
             {pillars.map((p) => {
               const v = wellbeing[p.key] as number
               const pct = Math.round((v / 10) * 100)
               return (
-                <View key={p.key}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ color: ink, fontSize: 14, fontFamily: font.bodyMedium }}>{p.label}</Text>
-                    <Text style={{ color: p.color, fontSize: 13, fontFamily: font.bodySemiBold }}>
-                      {v.toFixed(1)} / 10
-                    </Text>
-                  </View>
-                  <View style={{ height: 8, borderRadius: 999, backgroundColor: p.tint, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: p.color, borderRadius: 999 }} />
+                <View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <SiteSticker name={WELLBEING_STICKER[p.key as string] ?? 'star'} size={30} cut />
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <Text style={{ color: ink, fontSize: 14, fontFamily: font.bodySemiBold }}>{p.label}</Text>
+                      <Text style={{ color: ink, fontSize: 13, fontFamily: font.bodyBold }}>
+                        {v.toFixed(1)} / 10
+                      </Text>
+                    </View>
+                    <SiteMeter pct={pct} tone={p.tint} />
                   </View>
                 </View>
               )
@@ -1525,7 +1583,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
         items={[
           { label: 'Latest', value: lastW ? `${lastW.toFixed(1)} ${uLabel}` : '—' },
           { label: 'Total gain', value: totalGain !== null ? `${totalGain >= 0 ? '+' : ''}${totalGain.toFixed(1)} ${uLabel}` : '—' },
-          { label: 'Per week', value: avgWeekly !== null ? `${avgWeekly >= 0 ? '+' : ''}${avgWeekly.toFixed(2)}` : '—' },
+          { label: diffuse ? 'Per week' : 'Avg / week', value: avgWeekly !== null ? `${avgWeekly >= 0 ? '+' : ''}${avgWeekly.toFixed(2)}` : '—' },
         ]}
       />
 
@@ -1597,8 +1655,9 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
   const ink = diffuse ? dt.colors.ink : colors.text
   const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
-  const barFill = diffuse ? (accentColor ?? dAccent) : stickers.pink
-  const barTrack = diffuse ? dt.colors.line : stickers.pinkSoft
+  const barFill = diffuse ? (accentColor ?? dAccent) : stickers.pinkSoft
+  const barTrack = diffuse ? dt.colors.line : colors.border
+  const barEdge = diffuse ? 0 : 1
   const { t } = useTranslation()
   const avg = kickSessions.length > 0
     ? Math.round(kickSessions.reduce((a, b) => a + b.kicks, 0) / kickSessions.length)
@@ -1642,7 +1701,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
           diffuse ? (
             <BeadedThread data={kickValues} labels={kickLabels} color={stickers.pink} accent={accentColor ?? stickers.pink} />
           ) : (
-            <MiniBarChart data={kickValues} labels={kickLabels} color={stickers.pink} />
+            <SiteBars data={kickValues} labels={kickLabels} tone={stickers.pinkSoft} caption="Kicks per session" />
           )
         ) : (
           <Body size={13} color={muted}>
@@ -1662,12 +1721,12 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
               <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }}>
                 {t('preg_analytics_sessionsHittingTarget')}
               </Text>
-              <Text style={{ color: diffuse ? dt.colors.ink : stickers.pink, fontSize: 13, fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }}>
+              <Text style={{ color: diffuse ? dt.colors.ink : colors.text, fontSize: 13, fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold }}>
                 {meets10in2h} / {kickSessions.length} ({compliancePct}%)
               </Text>
             </View>
             <View style={{ height: diffuse ? 3 : 8, borderRadius: 999, backgroundColor: barTrack, overflow: 'hidden' }}>
-              <View style={{ width: `${compliancePct}%`, height: '100%', backgroundColor: barFill, borderRadius: 999 }} />
+              <View style={{ width: `${compliancePct}%`, height: '100%', backgroundColor: barFill, borderRadius: 999, borderWidth: compliancePct > 0 ? barEdge : 0, borderColor: colors.text }} />
             </View>
           </View>
         </PaperCard>
@@ -1682,10 +1741,10 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
                 <View key={b.label}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }}>{b.label}</Text>
-                    <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>{t('preg_analytics_stat_value_pct', { value: b.value, pct })}</Text>
+                    <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : font.body }}>{t('preg_analytics_stat_value_pct', { value: b.value, pct })}</Text>
                   </View>
                   <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: barTrack, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: barFill, borderRadius: 3 }} />
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: barFill, borderRadius: 3, borderWidth: pct > 0 ? barEdge : 0, borderColor: colors.text }} />
                   </View>
                 </View>
               )
@@ -1724,7 +1783,7 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: 'Average', value: avg ? `${avg.toFixed(1)}h` : '—' },
+          { label: diffuse ? 'Average' : 'Avg / night', value: avg ? `${avg.toFixed(1)}h` : '—' },
           { label: 'Best', value: best ? `${best.toFixed(1)}h` : '—' },
           { label: 'Worst', value: worst ? `${worst.toFixed(1)}h` : '—' },
         ]}
@@ -1735,7 +1794,7 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
           diffuse ? (
             <CrescentBars data={hours} labels={labels} color={accentColor ?? stickers.lilac} max={9} />
           ) : (
-            <MiniBarChart data={hours} labels={labels} color={stickers.lilac} />
+            <SiteBars data={hours} labels={labels} tone={stickers.lilacSoft} unit="h" caption="Hours per night" />
           )
         ) : (
           <Body size={13} color={muted}>
@@ -1745,8 +1804,8 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
       </PaperCard>
 
       {hours.length > 0 ? (
-        <PaperCard title="Sleep debt">
-          <Text style={{ color: ink, fontSize: 24, fontFamily: diffuse ? diffuseFont.display : font.display }}>
+        <PaperCard title={diffuse ? 'Sleep debt' : 'Sleep debt · total'}>
+          <Text style={{ color: ink, fontSize: 24, fontFamily: diffuse ? diffuseFont.display : font.displayBold }}>
             {debt.toFixed(1)}{'h'}
           </Text>
           <Body size={13} color={sec}>
@@ -1816,10 +1875,10 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
                     <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium, textTransform: 'capitalize' }}>
                       {mood}
                     </Text>
-                    <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>{t('preg_analytics_stat_value_pct', { value: n, pct })}</Text>
+                    <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : font.body }}>{t('preg_analytics_stat_value_pct', { value: n, pct })}</Text>
                   </View>
-                  <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: diffuse ? dt.colors.line : color + '33', overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 3 }} />
+                  <View style={{ height: diffuse ? 3 : 6, borderRadius: 3, backgroundColor: diffuse ? dt.colors.line : colors.border, overflow: 'hidden' }}>
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 3, borderWidth: diffuse || pct === 0 ? 0 : 1, borderColor: colors.text }} />
                   </View>
                 </View>
               )
@@ -1896,18 +1955,15 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
             <View style={{ gap: 8 }}>
               {symptomFreq.map((s, i) => {
                 const pct = Math.round((s.count / Math.max(total, 1)) * 100)
-                const hue = symptomHue(stickers, i)
                 return (
                   <View key={s.symptom}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Text style={{ color: ink, fontSize: 13, fontFamily: font.bodyMedium, textTransform: 'capitalize' }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <Text style={{ color: ink, fontSize: 13, fontFamily: font.bodySemiBold, textTransform: 'capitalize' }}>
                         {s.symptom}
                       </Text>
-                      <Text style={{ color: muted, fontSize: 12 }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
+                      <Text style={{ color: sec, fontSize: 12, fontFamily: font.body }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
                     </View>
-                    <View style={{ height: 6, borderRadius: 3, backgroundColor: hue + '33', overflow: 'hidden' }}>
-                      <View style={{ width: `${pct}%`, height: '100%', backgroundColor: hue, borderRadius: 3 }} />
-                    </View>
+                    <SiteMeter pct={pct} tone={symptomSoft(stickers, i)} />
                   </View>
                 )
               })}
@@ -2014,29 +2070,35 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
               height: 84,
               borderRadius: 999,
               backgroundColor: diffuse ? 'transparent' : tint,
-              borderWidth: 1.5,
-              borderColor: diffuse ? dt.colors.line2 : 'rgba(20,19,19,0.12)',
+              borderWidth: diffuse ? 1.5 : 2,
+              borderColor: diffuse ? dt.colors.line2 : colors.text,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Text style={{ fontFamily: df?.display ?? font.display, fontSize: 30, color: ink, letterSpacing: -0.5 }}>
+            <Text style={{ fontFamily: df?.display ?? font.displayBold, fontSize: 30, color: ink, letterSpacing: -0.5 }}>
               {todayGlasses}
             </Text>
-            <Text style={{ fontFamily: df?.mono ?? font.bodyMedium, fontSize: 10, color: sec, marginTop: -2 }}>
+            <Text style={{ fontFamily: df?.mono ?? MONO, fontSize: 10, color: sec, marginTop: -2 }}>
               {'of '}{TARGET}
             </Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: df?.display ?? font.display, fontSize: 22, color: ink, letterSpacing: -0.4 }}>
+            <Text style={{ fontFamily: df?.display ?? font.displayBold, fontSize: 22, color: ink, letterSpacing: -0.4 }}>
               {todayPct}{'% of goal'}
             </Text>
             <Text style={{ fontFamily: df?.body ?? font.bodyMedium, fontSize: 13, color: sec, marginTop: 2 }}>
               {todayRemaining > 0 ? `${todayRemaining} more glass${todayRemaining === 1 ? '' : 'es'} to go.` : 'Goal reached. Keep sipping.'}
             </Text>
-            <View style={{ marginTop: 10, height: diffuse ? 3 : 8, borderRadius: 999, backgroundColor: diffuse ? dt.colors.line : tint, overflow: 'hidden' }}>
-              <View style={{ width: `${todayPct}%`, height: '100%', backgroundColor: accent, borderRadius: 999 }} />
-            </View>
+            {diffuse ? (
+              <View style={{ marginTop: 10, height: 3, borderRadius: 999, backgroundColor: dt.colors.line, overflow: 'hidden' }}>
+                <View style={{ width: `${todayPct}%`, height: '100%', backgroundColor: accent, borderRadius: 999 }} />
+              </View>
+            ) : (
+              <View style={{ marginTop: 10 }}>
+                <SiteMeter pct={todayPct} tone={tint} height={8} />
+              </View>
+            )}
           </View>
         </View>
       </PaperCard>
@@ -2055,11 +2117,17 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                     <SoftBloom color={accent} opacity={dt.isDark ? 0.4 : 0.5} spread={0.5} radius="52%" />
                   </View>
                 ) : null}
-                <Drop
-                  size={30}
-                  fill={filled ? accent : 'transparent'}
-                  stroke={filled ? accent : (diffuse ? dt.colors.line2 : 'rgba(20,19,19,0.22)')}
-                />
+                {diffuse ? (
+                  <Drop
+                    size={30}
+                    fill={filled ? accent : 'transparent'}
+                    stroke={filled ? accent : dt.colors.line2}
+                  />
+                ) : (
+                  <View style={{ opacity: filled ? 1 : 0.2 }}>
+                    <SiteSticker name="drop" size={30} cut />
+                  </View>
+                )}
               </View>
             )
           })}
@@ -2072,7 +2140,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
       </PaperCard>
 
       {/* Last 7 days — diverging pills (met above / shortfall hatched below) */}
-      <PaperCard title="Last 7 days">
+      <PaperCard title={diffuse ? 'Last 7 days' : 'Glasses per day'}>
         {data.length > 0 ? (
           <>
             {diffuse ? (
@@ -2087,21 +2155,20 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                 unit="gl"
               />
             ) : (
-              <MiniBarChart
+              <SiteBars
                 data={data}
                 labels={labels}
-                longLabels={longLabels}
-                color={accent}
+                tone={tint}
                 height={140}
                 target={TARGET}
-                unit="gl"
+                caption="Glasses per day"
               />
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <Text style={{ fontSize: 11, color: sec, fontFamily: df?.body ?? font.bodyMedium }}>
                 {'Goal line at '}{TARGET}{' glasses'}
               </Text>
-              <Text style={{ fontSize: 11, color: diffuse ? dt.colors.ink : accent, fontFamily: df?.monoBold ?? font.bodySemiBold }}>
+              <Text style={{ fontSize: 11, color: diffuse ? dt.colors.ink : colors.text, fontFamily: df?.monoBold ?? font.bodyBold }}>
                 {hitRate}{'% hit rate'}
               </Text>
             </View>
@@ -2130,9 +2197,9 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
           accent={accent}
         />
         <MiniInfoTile
-          label="Volume"
+          label={diffuse ? 'Volume' : 'Total volume'}
           value={totalLitres ? `${totalLitres.toFixed(1)}L` : '—'}
-          caption={`${totalGlasses} glasses · 7d`}
+          caption={diffuse ? `${totalGlasses} glasses · 7d` : `${totalGlasses} glasses in total`}
           tint={tint}
           accent={accent}
         />
@@ -2164,8 +2231,8 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                     <Text style={{ width: 84, fontSize: 13, color: ink, fontFamily: font.bodyMedium }}>
                       {row.label}
                     </Text>
-                    <View style={{ flex: 1, height: 8, borderRadius: 999, backgroundColor: tint, overflow: 'hidden' }}>
-                      <View style={{ width: `${pct}%`, height: '100%', backgroundColor: accent, borderRadius: 999 }} />
+                    <View style={{ flex: 1 }}>
+                      <SiteMeter pct={pct} tone={tint} height={8} />
                     </View>
                     <Text style={{ width: 60, textAlign: 'right', fontSize: 13, color: ink, fontFamily: font.bodySemiBold }}>
                       {row.value.toFixed(1)}{' gl'}
@@ -2226,7 +2293,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                   width: 6,
                   height: 6,
                   borderRadius: 3,
-                  backgroundColor: accent,
+                  backgroundColor: diffuse ? accent : colors.text,
                   marginTop: 7,
                 }}
               />
@@ -2255,30 +2322,32 @@ function MiniInfoTile({
   const dt = useDiffuseTheme()
   return (
     <View
-      style={{
-        flex: 1,
-        backgroundColor: diffuse ? dt.colors.surface : tint,
-        borderWidth: 1,
-        borderColor: diffuse ? dt.colors.line : 'rgba(20,19,19,0.10)',
-        borderRadius: 18,
-        paddingVertical: 14,
-        paddingHorizontal: 12,
-      }}
+      style={diffuse
+        ? {
+            flex: 1,
+            backgroundColor: dt.colors.surface,
+            borderWidth: 1,
+            borderColor: dt.colors.line,
+            borderRadius: 18,
+            paddingVertical: 14,
+            paddingHorizontal: 12,
+          }
+        : { flex: 1, gap: 2 }}
     >
       <Text
         style={diffuse
           ? { fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, fontFamily: diffuseFont.mono }
-          : { fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary, fontFamily: font.bodySemiBold }}
+          : { fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.textSecondary, fontFamily: MONO }}
       >
         {label}
       </Text>
       <Text
         style={{
-          fontSize: 22,
+          fontSize: diffuse ? 22 : 26,
           color: diffuse ? dt.colors.ink : colors.text,
-          fontFamily: diffuse ? diffuseFont.display : font.display,
-          letterSpacing: -0.3,
-          marginTop: 4,
+          fontFamily: diffuse ? diffuseFont.display : font.displayBold,
+          letterSpacing: diffuse ? -0.3 : -0.5,
+          marginTop: diffuse ? 4 : 0,
         }}
         numberOfLines={1}
       >
@@ -2287,7 +2356,7 @@ function MiniInfoTile({
       <Text
         style={diffuse
           ? { fontSize: 9, color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 3 }
-          : { fontSize: 10, color: accent, fontFamily: font.bodySemiBold, marginTop: 2 }}
+          : { fontSize: 11, color: colors.textSecondary, fontFamily: font.body }}
         numberOfLines={1}
       >
         {caption}
@@ -2316,10 +2385,10 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
   }
   const { iron, folic, protein, calcium, dates } = nutritionMatrix
   const nutrients = [
-    { key: 'iron',    label: 'Iron',    arr: iron,    color: stickers.coral },
-    { key: 'folic',   label: 'Folic',   arr: folic,   color: stickers.green },
-    { key: 'protein', label: 'Protein', arr: protein, color: stickers.peach },
-    { key: 'calcium', label: 'Calcium', arr: calcium, color: stickers.blue },
+    { key: 'iron',    label: 'Iron',    arr: iron,    color: stickers.coral, soft: stickers.peachSoft },
+    { key: 'folic',   label: 'Folic',   arr: folic,   color: stickers.green, soft: stickers.greenSoft },
+    { key: 'protein', label: 'Protein', arr: protein, color: stickers.peach, soft: stickers.peachSoft },
+    { key: 'calcium', label: 'Calcium', arr: calcium, color: stickers.blue,  soft: stickers.blueSoft },
   ]
 
   return (
@@ -2337,7 +2406,7 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
             <View key={n.key}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                 <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }}>{n.label}</Text>
-                <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : undefined }}>
+                <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : font.body }}>
                   {n.arr.filter(Boolean).length}/{n.arr.length}{' days'}
                 </Text>
               </View>
@@ -2348,9 +2417,10 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
                     style={{
                       flex: 1,
                       height: 18,
-                      borderRadius: 4,
-                      backgroundColor: diffuse ? (hit ? dAccent : dt.colors.line) : (hit ? n.color : stickers.greenSoft),
-                      opacity: diffuse ? 1 : (hit ? 1 : 0.4),
+                      borderRadius: diffuse ? 4 : 5,
+                      backgroundColor: diffuse ? (hit ? dAccent : dt.colors.line) : (hit ? n.soft : colors.border),
+                      borderWidth: !diffuse && hit ? 1.5 : 0,
+                      borderColor: colors.text,
                     }}
                   />
                 ))}
@@ -2407,16 +2477,22 @@ function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, a
         items={[
           { label: 'Active days', value: String(activeDays) },
           { label: 'Total min', value: String(total) },
-          { label: 'Avg / session', value: avg ? `${avg}m` : '—' },
+          { label: diffuse ? 'Avg / session' : 'Avg / active day', value: avg ? `${avg}m` : '—' },
         ]}
       />
 
-      <PaperCard title="Minutes per session">
+      <PaperCard title={diffuse ? 'Minutes per session' : 'Minutes per active day'}>
         {minutes.length > 0 ? (
           diffuse ? (
             <PetalBurst data={minutes} color={stickers.coral} color2={stickers.peach} centerLabel={String(activeDays)} />
           ) : (
-            <MiniBarChart data={minutes} labels={labels} color={stickers.coral} />
+            <SiteBars
+              data={exerciseHistory.filter((e) => e.minutes > 0).map((e) => e.minutes)}
+              labels={exerciseHistory.filter((e) => e.minutes > 0).map((e) => shortDay(e.date))}
+              tone={stickers.peachSoft}
+              unit="m"
+              caption="Minutes per active day"
+            />
           )
         ) : (
           <Body size={13} color={colors.textMuted}>
@@ -2534,12 +2610,21 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
 
   return (
     <>
-      <View style={[styles.scoreHero, { backgroundColor: stickers.blueSoft, borderColor: 'rgba(20,19,19,0.12)' }]}>
-        <Text style={{ color: colors.text, fontSize: 56, fontFamily: font.display, letterSpacing: -1 }}>
-          {birthReady.pct}%
-        </Text>
-        <Body size={13} color={colors.textSecondary}>{t('preg_analytics_birth_readiness_5buckets')}</Body>
-      </View>
+      {diffuse ? (
+        <View style={[styles.scoreHero, { backgroundColor: stickers.blueSoft, borderColor: 'rgba(20,19,19,0.12)' }]}>
+          <Text style={{ color: colors.text, fontSize: 56, fontFamily: font.display, letterSpacing: -1 }}>
+            {birthReady.pct}%
+          </Text>
+          <Body size={13} color={colors.textSecondary}>{t('preg_analytics_birth_readiness_5buckets')}</Body>
+        </View>
+      ) : (
+        <View>
+          <Text style={{ color: colors.text, fontSize: 56, lineHeight: 62, fontFamily: font.displayBold, letterSpacing: -1.5 }}>
+            {birthReady.pct}%
+          </Text>
+          <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{t('preg_analytics_birth_readiness_5buckets')}</Text>
+        </View>
+      )}
 
       <PaperCard title="What's ready">
         {diffuse ? (
@@ -2555,17 +2640,15 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
               const pct = Math.min(100, Math.round((b.value / b.target) * 100))
               return (
                 <View key={b.label}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyMedium }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>
                       {b.label}
                     </Text>
-                    <Text style={{ color: b.color, fontSize: 13, fontFamily: font.bodySemiBold }}>
+                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyBold }}>
                       {b.value} / {b.target}
                     </Text>
                   </View>
-                  <View style={{ height: 8, borderRadius: 999, backgroundColor: b.tint, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: b.color, borderRadius: 999 }} />
-                  </View>
+                  <SiteMeter pct={pct} tone={b.tint} />
                 </View>
               )
             })}
@@ -2600,6 +2683,7 @@ function ScoreInfoModal({
   trimester: 1 | 2 | 3
 }) {
   const { colors, stickers, font } = useTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
@@ -2618,6 +2702,85 @@ function ScoreInfoModal({
     { range: '30 – 49',  label: 'Needs care',       color: stickers.peach },
     { range: '0 – 29',   label: 'Reach for support', color: stickers.coral },
   ]
+
+  if (!diffuse) {
+    return (
+      <LightSheet visible={visible} onClose={onClose} height={SCREEN_H * 0.86}>
+        <View style={{ paddingHorizontal: 20 }}>
+          <DetailSheetHeader
+            title="Wellbeing score guide"
+            sticker="flower"
+            tone={stickers.greenSoft}
+            onClose={onClose}
+          />
+          <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
+            {'Week '}{weekNumber}{' · '}{trimesterLabel(trimester)}
+          </Text>
+        </View>
+        <ScrollView
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: insets.bottom + 28, gap: 18 }}
+        >
+          {wellbeing && (
+            <View>
+              <Text style={{ color: colors.text, fontSize: 52, lineHeight: 58, fontFamily: font.displayBold, letterSpacing: -1.5 }}>
+                {wellbeing.overall}%
+              </Text>
+              <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{t('preg_analytics_your_score_last7')}</Text>
+            </View>
+          )}
+
+          <PaperCard title="Score scale">
+            <View style={{ gap: 10 }}>
+              {SCORE_BANDS.map((b) => (
+                <View key={b.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 14, height: 14, borderRadius: 4, borderWidth: 1.5, borderColor: colors.text, backgroundColor: b.color }} />
+                  <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: font.bodySemiBold }}>
+                    {b.label}
+                  </Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, letterSpacing: 1.2, fontFamily: MONO }}>{b.range}</Text>
+                </View>
+              ))}
+            </View>
+          </PaperCard>
+
+          <PaperCard title="How each pillar is scored">
+            <View style={{ gap: 16 }}>
+              {PILLAR_EXPLAIN.map((p) => (
+                <View key={p.key} style={{ flexDirection: 'row', gap: 12 }}>
+                  <SiteSticker name={WELLBEING_STICKER[p.key as string] ?? 'star'} size={30} cut />
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+                      <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: font.bodyBold }}>
+                        {p.label}
+                      </Text>
+                      {wellbeing && (
+                        <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyBold }}>
+                          {(wellbeing[p.key] as number).toFixed(1)}{' / 10'}
+                        </Text>
+                      )}
+                    </View>
+                    <Body size={13} color={colors.textSecondary}>{p.body}</Body>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </PaperCard>
+
+          <PaperCard title={trimesterLabel(trimester)}>
+            <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+              {trimester === 1
+                ? 'Many people log fewer entries early — it\'s ok if your score is rough now. Folic acid + sleep are the priorities.'
+                : trimester === 2
+                ? 'The honeymoon trimester — energy up, nausea down. Movement and balanced meals matter most here.'
+                : 'Pack the bag, plan support, and protect sleep. Steady wins now beat heroic stretches.'}
+            </Body>
+          </PaperCard>
+        </ScrollView>
+      </LightSheet>
+    )
+  }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -2777,39 +2940,36 @@ function PaperCard({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const blobColor = accent ?? stickers.lilac
+
+  // Light (site look): no box — a hairline rule, a mono eyebrow, content on the page.
+  if (!diffuse) {
+    return (
+      <View style={{ borderTopWidth: HAIR, borderTopColor: colors.border, paddingTop: 16 }}>
+        {title ? (
+          <Text style={[styles.siteEyebrow, { color: colors.textSecondary }]}>{title}</Text>
+        ) : null}
+        {children}
+      </View>
+    )
+  }
+
   return (
     <View
       style={[
         styles.paperCard,
-        diffuse
-          ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
-          : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' },
+        { backgroundColor: dt.colors.surface, borderColor: dt.colors.line },
       ]}
     >
-      {withBlob && !diffuse ? (
-        <View pointerEvents="none" style={styles.paperCardBlob}>
-          <Blob size={72} fill={blobColor} variant={2} stroke={colors.text} />
-        </View>
-      ) : null}
       {title ? (
         <Text
-          style={diffuse
-            ? {
-                fontSize: 10,
-                letterSpacing: 2,
-                textTransform: 'uppercase',
-                color: dt.colors.ink3,
-                fontFamily: diffuseFont.mono,
-                marginBottom: 12,
-              }
-            : {
-                fontSize: 11,
-                letterSpacing: 1.6,
-                textTransform: 'uppercase',
-                color: accent ?? colors.textMuted,
-                fontFamily: font.bodySemiBold,
-                marginBottom: 12,
-              }}
+          style={{
+            fontSize: 10,
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+            color: dt.colors.ink3,
+            fontFamily: diffuseFont.mono,
+            marginBottom: 12,
+          }}
         >
           {title}
         </Text>
@@ -2883,7 +3043,6 @@ function StatTilesRow({
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const bg = tint ?? colors.surface
 
   if (diffuse) {
     // De-carded: one hairline strip split by interior dividers, value on top +
@@ -2920,50 +3079,22 @@ function StatTilesRow({
     )
   }
 
+  // Light: bare number + mono caption, left-aligned — no boxes.
   return (
-    <View style={styles.statTilesRow}>
+    <View style={styles.statRowSite}>
       {items.map((it, i) => (
-        <View
-          key={it.label + i}
-          style={[
-            styles.statTile,
-            { backgroundColor: bg, borderColor: 'rgba(20,19,19,0.12)' },
-          ]}
-        >
+        <View key={it.label + i} style={styles.statCellSite}>
           <Text
-            style={{
-              fontSize: 9,
-              letterSpacing: 1.4,
-              textTransform: 'uppercase',
-              color: colors.textSecondary,
-              fontFamily: font.bodySemiBold,
-            }}
-          >
-            {it.label}
-          </Text>
-          <Text
-            style={{
-              fontSize: 22,
-              color: colors.text,
-              fontFamily: font.display,
-              marginTop: 4,
-              letterSpacing: -0.3,
-            }}
+            style={[styles.statValueSite, { color: colors.text, fontFamily: font.displayBold }]}
             numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
           >
             {it.value}
           </Text>
-          {color ? (
-            <View
-              style={{
-                marginTop: 8,
-                height: 3,
-                width: 24,
-                borderRadius: 999,
-                backgroundColor: color,
-              }}
-            />
-          ) : null}
+          <Text style={[styles.statLabelSite, { color: colors.textSecondary }]} numberOfLines={2}>
+            {it.label}
+          </Text>
         </View>
       ))}
     </View>
@@ -2986,7 +3117,7 @@ function WeightByWeekList({
   const min = Math.min(...rows.map((r) => r.weight))
   const max = Math.max(...rows.map((r) => r.weight))
   const range = Math.max(0.1, max - min)
-  const track = diffuse ? dt.colors.line : tint
+  const track = diffuse ? dt.colors.line : colors.border
   return (
     <View style={{ gap: 10 }}>
       {rows.map((w, i) => {
@@ -2998,22 +3129,22 @@ function WeightByWeekList({
           >
             <View
               style={{
-                width: 60,
-                paddingVertical: 4,
-                paddingHorizontal: 10,
+                width: diffuse ? 60 : 40,
+                paddingVertical: diffuse ? 4 : 0,
+                paddingHorizontal: diffuse ? 10 : 0,
                 borderRadius: 999,
-                backgroundColor: diffuse ? 'transparent' : tint,
-                borderWidth: 1,
-                borderColor: diffuse ? dt.colors.line2 : 'rgba(20,19,19,0.10)',
-                alignItems: 'center',
+                backgroundColor: 'transparent',
+                borderWidth: diffuse ? 1 : 0,
+                borderColor: dt.colors.line2,
+                alignItems: diffuse ? 'center' : 'flex-start',
               }}
             >
               <Text
                 style={{
                   fontSize: 11,
-                  color: diffuse ? dt.colors.ink3 : colors.text,
-                  fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold,
-                  letterSpacing: 0.4,
+                  color: diffuse ? dt.colors.ink3 : colors.textSecondary,
+                  fontFamily: diffuse ? diffuseFont.mono : MONO,
+                  letterSpacing: diffuse ? 0.4 : 1.2,
                 }}
               >
                 {'W'}{w.week}
@@ -3024,8 +3155,10 @@ function WeightByWeekList({
                 style={{
                   width: `${Math.max(8, pct)}%`,
                   height: '100%',
-                  backgroundColor: accent,
+                  backgroundColor: diffuse ? accent : tint,
                   borderRadius: 999,
+                  borderWidth: diffuse ? 0 : 1,
+                  borderColor: colors.text,
                 }}
               />
             </View>
@@ -3048,6 +3181,7 @@ function WeightByWeekList({
 }
 
 function Pill({ color, tint, label }: { color: string; tint: string; label: string }) {
+  const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   if (diffuse) {
@@ -3068,20 +3202,21 @@ function Pill({ color, tint, label }: { color: string; tint: string; label: stri
       </View>
     )
   }
+  // Light: soft tone fill + ink outline + ink label.
   return (
     <View
       style={{
         alignSelf: 'flex-start',
         marginTop: 12,
         paddingHorizontal: 12,
-        paddingVertical: 6,
+        paddingVertical: 5,
         borderRadius: 999,
         backgroundColor: tint,
-        borderWidth: 1,
-        borderColor: 'rgba(20,19,19,0.12)',
+        borderWidth: 1.5,
+        borderColor: colors.text,
       }}
     >
-      <Text style={{ color, fontSize: 12, fontFamily: font.bodySemiBold }}>{label}</Text>
+      <Text style={{ color: colors.text, fontSize: 12, fontFamily: font.bodyBold }}>{label}</Text>
     </View>
   )
 }
@@ -3599,6 +3734,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 14,
   },
+  // Site look — bare stat cells, mono eyebrows
+  statRowSite: { flexDirection: 'row', gap: 16 },
+  statCellSite: { flex: 1, gap: 4 },
+  statValueSite: { fontSize: 26, lineHeight: 30, letterSpacing: -0.5 },
+  statLabelSite: { fontFamily: MONO, fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', lineHeight: 13 },
+  siteEyebrow: { fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 10 },
+  siteMono: { fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
 
   // Mixed-layout helpers
   grid: {
