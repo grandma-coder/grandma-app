@@ -65,7 +65,7 @@ export function JourneyCard({
           style={{
             opacity: dimmed ? 0.55 : 1,
             transform: [
-              { rotate: sel.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-1.5deg'] }) },
+              { rotate: '0deg' },
               { scale: Animated.multiply(
                 sel.interpolate({ inputRange: [0, 1], outputRange: [1, 1.02] }),
                 press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] }),

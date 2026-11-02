@@ -72,7 +72,7 @@ export function SiteChoice({
         onLayout={(e) => setSize({ w: Math.round(e.nativeEvent.layout.width), h: Math.round(e.nativeEvent.layout.height) })}
         style={{
           transform: [
-            { rotate: sel.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-1.5deg'] }) },
+            { rotate: '0deg' },
             { scale: Animated.multiply(
               sel.interpolate({ inputRange: [0, 1], outputRange: [1, 1.03] }),
               press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.95] }),

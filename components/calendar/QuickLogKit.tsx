@@ -73,7 +73,7 @@ export function ChoiceStep({ options, value, onChange, multi = false, testID }: 
                 backgroundColor: on ? (diffuse ? dt.colors.surface : getModeColorSoft(mode)) : (diffuse ? 'transparent' : colors.surface),
                 borderRadius: radius.lg,
                 opacity: pressed ? 0.7 : 1,
-                ...(!diffuse && on ? { transform: [{ rotate: '-1.5deg' }, { scale: 1.04 }] } : null),
+                ...(!diffuse && on ? { transform: [{ scale: 1.03 }] } : null),
               },
             ]}
           >
