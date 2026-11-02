@@ -10,8 +10,8 @@ export const pregnancyPillars: Pillar[] = [
     intro: 'Every week your little one is doing something new, dear — from a poppy seed at week 4 to a watermelon by week 40. Tracking the journey week by week helps you understand both baby\'s growth and the changes happening in your own body.',
     tips: [
       { label: 'First trimester', text: 'Weeks 1-12: All major organs begin forming. Fatigue and nausea are common — rest when you can and don\'t push through exhaustion.', weekRange: [1, 13] },
-      { label: 'Second trimester', text: 'Weeks 13-26: Energy returns and baby kicks start around weeks 18-22. This is the best window for nursery planning and a babymoon.', weekRange: [14, 27] },
-      { label: 'Third trimester', text: 'Weeks 27-40: Baby gains roughly half a pound a week. Practice breathing exercises and finalize your birth plan by week 36.', weekRange: [28, 40] },
+      { label: 'Second trimester', text: 'Weeks 14-27: Energy returns and baby kicks start around weeks 18-22. This is the best window for nursery planning and a babymoon.', weekRange: [14, 27] },
+      { label: 'Third trimester', text: 'Weeks 28-40: Baby gains roughly half a pound a week. Practice breathing exercises and finalize your birth plan by week 36.', weekRange: [28, 40] },
       { label: 'First kicks', text: 'You\'ll feel flutters between weeks 16 and 25 — earlier for second-time moms. Track patterns starting around week 28.', weekRange: [16, 28] },
       { label: 'Anatomy scan', text: 'The big ultrasound happens between weeks 18-22, checking organs, spine, and (if you want to know) baby\'s sex.', weekRange: [18, 22] },
       { label: 'Viability milestone', text: 'At 24 weeks baby reaches viability, meaning survival outside the womb becomes possible with medical support. A reassuring milestone.', weekRange: [22, 26] },

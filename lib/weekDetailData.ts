@@ -244,7 +244,7 @@ const TRIMESTER_PREP: Record<1 | 2 | 3, PrepItem[]> = {
 
 function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 13) return 1
-  if (week <= 26) return 2
+  if (week <= 27) return 2
   return 3
 }
 

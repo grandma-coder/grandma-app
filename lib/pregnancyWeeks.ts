@@ -54,8 +54,9 @@ export function getWeekInfo(week: number): WeekInfo {
 }
 
 export function getTrimester(week: number): 1 | 2 | 3 {
+  // ACOG: 1st trimester weeks 1–13, 2nd 14–27, 3rd 28+.
   if (week <= 13) return 1
-  if (week <= 26) return 2
+  if (week <= 27) return 2
   return 3
 }
 
@@ -63,8 +64,10 @@ export function weekForDate(dueDate: string, dateStr: string): number {
   const due = new Date(dueDate + 'T00:00:00')
   const d = new Date(dateStr + 'T00:00:00')
   const diffMs = due.getTime() - d.getTime()
-  const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-  return Math.max(1, Math.min(42, 40 - Math.floor(daysLeft / 7)))
+  // Whole days between two dates — round, not ceil: a DST shift makes it 140.04, not 140.
+  const daysLeft = Math.round(diffMs / (1000 * 60 * 60 * 24))
+  // Completed weeks ("37 weeks pregnant") — same count as getCurrentWeekFromDueDate on the home.
+  return Math.max(1, Math.min(42, 40 - Math.ceil(daysLeft / 7)))
 }
 
 /**

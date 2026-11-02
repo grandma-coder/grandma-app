@@ -9,8 +9,9 @@ describe('getTrimester', () => {
     expect(getTrimester(14)).toBe(2)
     expect(getTrimester(26)).toBe(2)
   })
-  it('weeks 27+ are trimester 3', () => {
-    expect(getTrimester(27)).toBe(3)
+  it('weeks 28+ are trimester 3 (ACOG: 2nd runs 14–27)', () => {
+    expect(getTrimester(27)).toBe(2)
+    expect(getTrimester(28)).toBe(3)
     expect(getTrimester(40)).toBe(3)
   })
 })
