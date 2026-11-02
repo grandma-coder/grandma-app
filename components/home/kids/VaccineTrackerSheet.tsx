@@ -146,12 +146,9 @@ export function VaccineTrackerSheet({
       chip={childColor ? child.name : undefined}
       chipColor={childColor}
     >
-      <View style={styles.modalSectionRow}>
-        <View style={{ transform: [{ rotate: '-6deg' }] }}>
-          <CrossSticker size={22} fill="#F5D652" stroke={stickerInk} />
-        </View>
-        <Text style={[styles.modalSectionTitle, { color: colors.text, marginTop: 0, marginBottom: 0 }]}>{t('kids_home_health_vaccine_schedule')}</Text>
-      </View>
+      <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted, marginBottom: 10 }}>
+        {t('kids_home_health_vaccine_schedule')}
+      </Text>
       <VaccineScheduleTree
         child={child}
         healthHistory={healthHistory}

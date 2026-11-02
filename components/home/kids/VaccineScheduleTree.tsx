@@ -9,6 +9,8 @@
  * catalog, and the record/milestone types) come from `lib/vaccineSchedule.ts`.
  * Per-vaccine educational content comes from `lib/vaccineInfo.ts`.
  */
+import { ChevronRight } from 'lucide-react-native'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { useMemo, useRef, useState } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Modal, Platform } from 'react-native'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
@@ -502,52 +504,42 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
               {/* Squishy sticker age node */}
               <View style={{
                 width: 52, height: 44, borderRadius: 14,
-                backgroundColor: nodeBg, borderWidth: 1.5, borderColor: nodeBorder,
+                backgroundColor: isDoneMilestone ? stickers.greenSoft : isPartialMilestone ? stickers.yellowSoft : colors.surface,
+                borderWidth: 1.5, borderColor: ST_INK,
                 alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: isDoneMilestone || isPartialMilestone ? 1 : 0,
-                shadowRadius: 0, elevation: isDoneMilestone || isPartialMilestone ? 3 : 0,
               }}>
                 <Text style={{
                   fontSize: 11, fontFamily: font.display,
-                  color: isDoneMilestone || isPartialMilestone ? ST_INK : ink3,
-                  textAlign: 'center', lineHeight: 13, letterSpacing: -0.2,
+                  color: ST_INK,
+                  textAlign: 'center', lineHeight: 13, letterSpacing: 0.2, textTransform: 'uppercase',
                 }}>
                   {milestone.label.replace(/^Months$/i, 'mo').replace(/\bMonths\b/g, 'mo').replace(/\bYears\b/g, 'yr')}
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontFamily: font.display, color: ink, letterSpacing: -0.3 }}>
+                <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, letterSpacing: 0.3, textTransform: 'uppercase' }}>
                   {milestone.label}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
                   {isDoneMilestone && <Check size={10} color={ST_INK} strokeWidth={3} />}
                   <Text style={{
-                    fontSize: 11, fontFamily: font.bodySemiBold,
+                    fontSize: 10, fontFamily: 'SpaceMono_400Regular',
                     color: isDoneMilestone || isPartialMilestone ? ST_INK : ink3,
-                    textTransform: 'uppercase', letterSpacing: 0.8,
+                    textTransform: 'uppercase', letterSpacing: 1.2,
                   }}>
                     {badgeText}
                   </Text>
                 </View>
               </View>
-              <View style={{
-                width: 24, height: 24, borderRadius: 12,
-                backgroundColor: isExpanded ? nodeAccent : 'transparent',
-                borderWidth: 1.5, borderColor: isExpanded ? ST_INK : ST_LINE,
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Text style={{ fontSize: 10, color: isExpanded ? ST_INK : ink3, fontFamily: font.bodyBold }}>
-                  {isExpanded ? '−' : '+'}
-                </Text>
+              <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}>
+                <ChevronRight size={20} color={ST_INK} strokeWidth={2.4} />
               </View>
             </Pressable>
 
             {/* Branch content */}
             {isExpanded ? (
               <View style={{
-                borderLeftWidth: 2, borderLeftColor: nodeBorder,
-                borderStyle: 'dashed',
+                borderLeftWidth: 1.5, borderLeftColor: colors.border,
                 marginLeft: 25, marginBottom: isLast ? 0 : 4, paddingBottom: 4, paddingTop: 2,
               }}>
                 {milestone.vaccines.map((vax) => {
@@ -596,16 +588,18 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                             shadowOpacity: vax.status === 'future' ? 0 : 0.5,
                             shadowRadius: 0, elevation: vax.status === 'future' ? 0 : 2,
                           }}>
-                            <CrossSticker size={22} fill={stickerFill} stroke={stickerStroke} />
+                            <View style={{ opacity: vax.status === 'done' || vax.status === 'upcoming' ? 1 : 0.35 }}>
+                              <SiteSticker name="syringe" size={22} />
+                            </View>
                             {vax.status === 'done' && (
-                              <View style={{ position: 'absolute' }}>
-                                <Check size={10} color={ST_INK} strokeWidth={3.5} />
+                              <View style={{ position: 'absolute', right: -6, bottom: -4, width: 14, height: 14, borderRadius: 7, backgroundColor: ST_INK, alignItems: 'center', justifyContent: 'center' }}>
+                                <Check size={9} color="#FFFFFF" strokeWidth={3.5} />
                               </View>
                             )}
                           </View>
                           {/* Name */}
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 13, fontFamily: font.bodyMedium, color: ink }}>
+                            <Text style={{ fontSize: 14, fontFamily: font.bodySemiBold, color: ink }}>
                               {fullName}
                             </Text>
                             {timingLabel ? (
@@ -617,9 +611,11 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                         </Pressable>
                         {/* Meta / actions */}
                         {vax.status === 'done' ? (
-                          <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: metaColor }}>
-                            {vax.givenDate ? formatHealthDate(vax.givenDate) : ''}
-                          </Text>
+                          vax.givenDate ? (
+                            <View style={[s.vaxTag, { backgroundColor: stickers.greenSoft, borderColor: ST_INK }]}>
+                              <Text style={[s.vaxTagText, { color: ST_INK }]}>{formatHealthDate(vax.givenDate)}</Text>
+                            </View>
+                          ) : null
                         ) : vax.status === 'upcoming' || vax.status === 'overdue' ? (
                           apptDate ? (
                             <View style={{ gap: 4, alignItems: 'flex-end' }}>
@@ -627,9 +623,9 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                                 setExpandedKey(isPickerOpen ? null : vax.scheduleKey)
                                 setPickerDate(new Date(apptDate + 'T12:00:00'))
                               }}>
-                                <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: ST_INK }}>
-                                  {formatHealthDate(apptDate)}
-                                </Text>
+                                <View style={[s.vaxTag, { backgroundColor: stickers.yellowSoft, borderColor: ST_INK }]}>
+                                  <Text style={[s.vaxTagText, { color: ST_INK }]}>{formatHealthDate(apptDate)}</Text>
+                                </View>
                               </Pressable>
                               <Pressable
                                 onPress={() => onMarkVaccineGiven(
@@ -637,10 +633,10 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                                   apptDate,
                                   vax.scheduleKey,
                                 )}
-                                style={[s.hdVaxBtn, { backgroundColor: brand.success + '18', borderColor: brand.success + '50' }]}
+                                style={({ pressed }) => [s.hdVaxBtn, s.vaxBtnInk, { backgroundColor: stickers.greenSoft, transform: [{ translateY: pressed ? 2 : 0 }], shadowOffset: { width: 0, height: pressed ? 0 : 2 } }]}
                               >
-                                <Check size={10} color={brand.success} strokeWidth={3} />
-                                <Text style={[s.hdVaxBtnText, { color: brand.success }]}>{t('kids_home_vaccine_mark_given')}</Text>
+                                <Check size={12} color={ST_INK} strokeWidth={3} />
+                                <Text style={[s.hdVaxBtnText, { color: ST_INK }]}>{t('kids_home_vaccine_mark_given')}</Text>
                               </Pressable>
                             </View>
                           ) : (
@@ -649,9 +645,10 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                                 setExpandedKey(isPickerOpen ? null : vax.scheduleKey)
                                 setPickerDate(new Date())
                               }}
-                              style={[s.hdVaxBtn, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}
+                              style={({ pressed }) => [s.hdVaxBtn, s.vaxBtnInk, { backgroundColor: colors.surface, transform: [{ translateY: pressed ? 2 : 0 }], shadowOffset: { width: 0, height: pressed ? 0 : 2 } }]}
                             >
-                              <Text style={[s.hdVaxBtnText, { color: colors.textSecondary }]}>{t('kids_home_vaccine_set_date')}</Text>
+                              <SiteSticker name="cal" size={16} />
+                              <Text style={[s.hdVaxBtnText, { color: ST_INK }]}>{t('kids_home_vaccine_set_date')}</Text>
                             </Pressable>
                           )
                         ) : (
@@ -753,9 +750,8 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
             ) : (
               /* Collapsed: dashed stub + one-line summary for done milestones */
               <View style={{
-                borderLeftWidth: 2,
-                borderLeftColor: isDoneMilestone ? ST_GREEN : ST_LINE,
-                borderStyle: 'dashed',
+                borderLeftWidth: 1.5,
+                borderLeftColor: colors.border,
                 marginLeft: 25,
                 marginBottom: isLast ? 0 : 4,
                 paddingBottom: 6,
@@ -798,5 +794,8 @@ const s = StyleSheet.create({
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   modalClose: { width: 32, height: 32, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   hdVaxBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
-  hdVaxBtnText: { fontSize: 12, fontFamily: font.bodySemiBold },
+  hdVaxBtnText: { fontSize: 13, fontFamily: font.bodyBold },
+  vaxBtnInk: { borderWidth: 1.5, borderColor: '#161513', shadowColor: '#161513', shadowOpacity: 1, shadowRadius: 0 },
+  vaxTag: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 2, transform: [{ rotate: '-2deg' }] },
+  vaxTagText: { fontSize: 12, fontFamily: font.bodyBold },
 })
