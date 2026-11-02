@@ -5,6 +5,7 @@
  * Features: smooth curves, Y-axis labels, grid lines, value labels, gradient fills, rounded bars.
  */
 
+import { SiteSticker } from '../stickers/SiteSticker'
 import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native'
 import Svg, {
   Circle, Rect, Line, Path, G,
@@ -703,7 +704,7 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
               {/* Shine highlight — only render in light mode. On dark backgrounds
                   the white-55% blob reads as a stray gray dot, not a sticker
                   highlight, so we drop it rather than fight the contrast. */}
-              {!isDark && <View style={bubbleClusterStyles.shine} />}
+              {!isDark && diffuse && <View style={bubbleClusterStyles.shine} />}
               {diffuse ? (
                 <Character
                   name="mood"
@@ -712,11 +713,11 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
                   color={moodBlobFill(item.mood)}
                 />
               ) : (
-                <MoodFace
+                // Site look: the site's face stickers.
+                <SiteSticker
+                  name={({ happy: 'face4', calm: 'face3', energetic: 'star', fussy: 'face2', cranky: 'face1', sad: 'face1', tired: 'zz' } as const)[item.mood as 'happy'] ?? 'face3'}
                   size={Math.round(size * 0.55)}
-                  variant={variant}
-                  fill={fill}
-                  stroke={stroke}
+                  cut
                 />
               )}
             </View>

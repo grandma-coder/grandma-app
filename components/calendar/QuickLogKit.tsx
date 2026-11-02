@@ -161,6 +161,12 @@ const SITE_FOR_BLOB: Partial<Record<CharacterName, SiteStickerName>> = {
   period: 'drop', ovulation: 'egg', kick: 'shoe', ultrasound: 'camera', growth: 'ruler', activity: 'shoe',
   star: 'star', sparkle: 'star', sun: 'flower', heart: 'heart', health: 'heart',
 }
+// Option ids that deserve their own sticker (so a list of one concept doesn't repeat one icon).
+const ID_STICKER: Record<string, SiteStickerName> = {
+  class: 'brain', school: 'backpack', study: 'pencil', reading: 'books', sport: 'shoe', swim: 'drop',
+  dance: 'star', music: 'bell', art: 'flower', playground: 'stroller', walk: 'leaf', therapy: 'heart', playdate: 'us',
+  pee: 'drop', poop: 'pumpkin', mixed: 'diaper',
+}
 const FACE_STICKER: Record<string, SiteStickerName> = {
   happy: 'face4', calm: 'face3', content: 'face3', energetic: 'star', fussy: 'face2', sad: 'face1', cranky: 'face1', tired: 'zz',
 }
@@ -175,7 +181,7 @@ function SiteChoiceTile({ option, on, onPress, tone }: { option: ChoiceOption; o
     Animated.spring(sel, { toValue: on ? 1 : 0, friction: 6, tension: 160, useNativeDriver: true }).start()
   }, [on, sel])
   const sticker: SiteStickerName | undefined =
-    option.blob === 'mood' ? FACE_STICKER[option.face ?? option.id] ?? 'face3' : SITE_FOR_BLOB[option.blob]
+    option.blob === 'mood' ? FACE_STICKER[option.face ?? option.id] ?? 'face3' : ID_STICKER[option.id] ?? SITE_FOR_BLOB[option.blob]
   return (
     <Pressable
       onPress={() => { Haptics.selectionAsync().catch(() => {}); onPress() }}
