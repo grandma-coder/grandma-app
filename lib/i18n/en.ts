@@ -1543,6 +1543,8 @@ export const en: TranslationKeys = {
   kids_calendar_tabVisits: 'Visits',
   kids_calendar_viewMonth: 'Month',
   kids_calendar_viewWeek: 'Week',
+  agenda_showAll: 'Show all ({{count}})',
+  agenda_showLess: 'Show less',
   kids_calendar_nothingPlanned: 'Nothing planned for this day.',
   kids_calendar_tapToLog: 'Tap + above to log something.',
   kids_calendar_tapToLogRoutine: 'Tap to log',

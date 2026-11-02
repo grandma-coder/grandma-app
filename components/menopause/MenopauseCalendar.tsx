@@ -15,7 +15,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { AgendaHeader } from '../calendar/AgendaHeader'
 import { LogSheet } from '../calendar/LogSheet'
 import { Character, type CharacterName } from '../characters/Characters'
-import { diffuseFont, useTheme, useDiffuseTheme, getDiffuseAccent } from '../../constants/theme'
+import { diffuseFont, useTheme, useDiffuseTheme, getDiffuseAccent, getModeColorSoft } from '../../constants/theme'
+import { AgendaCalendar } from '../calendar/AgendaCalendar'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnalytics'
@@ -24,7 +25,7 @@ import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { MenopauseSymptomForm, MenopausePeriodForm } from './MenopauseLogForms'
 import { MenopauseLogSheet, menoSticker, type MenopauseLogPick } from './MenopauseLogSheet'
 import { SiteSticker } from '../stickers/SiteSticker'
-import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from './menoPalette'
+import { useMenoPalette, STICKER_SHADOW } from './menoPalette'
 import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
 
 const COPY = {
@@ -44,17 +45,10 @@ const COPY = {
   intensity: 'Intensity',
 }
 
-const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-
 // ─── Date helpers (local, never toISOString) ─────────────────────────────────
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-function startOfMonthGrid(year: number, month: number): Date {
-  const first = new Date(year, month, 1)
-  const dow = (first.getDay() + 6) % 7 // Monday-first
-  return new Date(year, month, 1 - dow)
 }
 function formatLongDate(dateStr: string): string {
   return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
@@ -81,13 +75,13 @@ function capitalize(s: string): string {
 
 export function MenopauseCalendar() {
   const pal = useMenoPalette()
-  const { stickers, colors, font } = useTheme()
+  const { stickers, colors, font, isDark } = useTheme()
   const dt = useDiffuseTheme()
   const s = stickers as Record<string, string>
   const insets = useSafeAreaInsets()
   const bottomInset = useScrollBottomInset(insets.bottom + 40)
 
-  const { data: rows } = useMenopauseLogs()
+  const { data: rows, isLoading: logsLoading } = useMenopauseLogs()
   const hydrated = useMenopauseStore((st) => st.hydrated)
   const stage = useMenopauseStore((st) => st.stage)
   const isPeri = hydrated && stage === 'peri'
@@ -112,19 +106,7 @@ export function MenopauseCalendar() {
     return m
   }, [rows])
 
-  const cells = useMemo(() => {
-    const start = startOfMonthGrid(visibleMonth.year, visibleMonth.month)
-    const out: { date: string; day: number; inMonth: boolean }[] = []
-    for (let i = 0; i < 42; i++) {
-      const d = new Date(start)
-      d.setDate(start.getDate() + i)
-      out.push({ date: localDateStr(d), day: d.getDate(), inMonth: d.getMonth() === visibleMonth.month })
-    }
-    return out
-  }, [visibleMonth])
-
   const selectedLogs = logsByDate.get(selectedDate) ?? []
-  const monthLabel = new Date(visibleMonth.year, visibleMonth.month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   function openAdd() {
     setGridOpen(true)
@@ -132,12 +114,6 @@ export function MenopauseCalendar() {
   function onPick(type: MenopauseLogPick) {
     if (type === 'period') setPeriodOpen(true)
     else setPickedSymptom(type)
-  }
-  function prevMonth() {
-    setVisibleMonth((m) => (m.month === 0 ? { year: m.year - 1, month: 11 } : { year: m.year, month: m.month - 1 }))
-  }
-  function nextMonth() {
-    setVisibleMonth((m) => (m.month === 11 ? { year: m.year + 1, month: 0 } : { year: m.year, month: m.month + 1 }))
   }
 
   return (
@@ -150,7 +126,7 @@ export function MenopauseCalendar() {
 
         {/* ─── Month grid — the SHARED DiffuseDotCalendar primitive (exact cycle-
             calendar parity: same header, nav, weekday row, grid, fonts) in the
-            Diffuse variant; hand-rolled grid only in the cream variant. */}
+            Diffuse variant; the shared AgendaCalendar (Week | Month) in the site look. */}
         {pal.diffuse ? (
           <View style={{ marginTop: 4 }}>
             <DiffuseDotCalendar
@@ -174,59 +150,18 @@ export function MenopauseCalendar() {
             />
           </View>
         ) : (
-        // Site look: card-less month — ink title row, mono weekdays, sticker on logged days.
-        <View style={styles.siteMonth}>
-          <View style={styles.monthHead}>
-            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 22, letterSpacing: 0.3, textTransform: 'uppercase' }}>{monthLabel}</Text>
-            <View style={styles.navRow}>
-              <NavBtn dir="back" onPress={prevMonth} pal={pal} />
-              <NavBtn dir="fwd" onPress={nextMonth} pal={pal} />
-            </View>
-          </View>
-
-          <View style={styles.dowRow}>
-            {DOW.map((d, i) => (
-              <Text key={i} style={[styles.dow, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
-                {d}
-              </Text>
-            ))}
-          </View>
-
-          <View style={styles.grid}>
-            {cells.map((c) => {
-              const dayLogs = logsByDate.get(c.date) ?? []
-              const logged = c.inMonth && dayLogs.length > 0
-              const isToday = c.date === today
-              const isSelected = c.date === selectedDate
-              return (
-                <Pressable
-                  key={c.date}
-                  onPress={() => setSelectedDate(c.date)}
-                  accessibilityRole="button"
-                  style={[styles.cellWrap]}
-                >
-                  <View
-                    style={[
-                      styles.cell,
-                      {
-                        width: '88%',
-                        opacity: c.inMonth ? 1 : 0.3,
-                        backgroundColor: isSelected ? pal.accentSoft : 'transparent',
-                        borderColor: isSelected || isToday ? colors.text : 'transparent',
-                        borderWidth: 1.5,
-                        borderRadius: 14,
-                      },
-                    ]}
-                  >
-                    <Text style={{ color: colors.text, fontFamily: isToday || isSelected ? font.bodyBold : font.body, fontSize: 14 }}>{c.day}</Text>
-                    <View style={styles.siteSlot}>
-                      {logged ? <SiteSticker name={menoSticker(dayLogs[0].type)} size={16} /> : null}
-                    </View>
-                  </View>
-                </Pressable>
-              )
-            })}
-          </View>
+        // Site look: the shared agenda calendar (Week | Month) — symptom sticker on logged days.
+        <View style={{ marginTop: 4 }}>
+          <AgendaCalendar
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            tone={getModeColorSoft('meno', isDark)}
+            loading={logsLoading && !rows}
+            renderDayDecoration={(date) => {
+              const dayLogs = logsByDate.get(date)
+              return dayLogs?.length ? <SiteSticker name={menoSticker(dayLogs[0].type)} size={13} /> : null
+            }}
+          />
         </View>
         )}
 
@@ -354,22 +289,6 @@ export function MenopauseCalendar() {
         <MenopausePeriodForm logDate={selectedDate} onSaved={() => setPeriodOpen(false)} />
       </LogSheet>
     </View>
-  )
-}
-
-// ─── Month nav button ─────────────────────────────────────────────────────────
-
-function NavBtn({ dir, onPress, pal }: { dir: 'back' | 'fwd'; onPress: () => void; pal: MenoPalette }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={dir === 'back' ? 'Previous month' : 'Next month'}
-      hitSlop={8}
-      style={({ pressed }) => [styles.navBtn, { borderColor: pal.diffuse ? pal.border : pal.text, borderWidth: pal.diffuse ? 1 : 1.5, backgroundColor: pal.diffuse ? 'transparent' : pal.surface, opacity: pressed ? 0.6 : 1 }]}
-    >
-      <Ionicons name={dir === 'back' ? 'chevron-back' : 'chevron-forward'} size={16} color={pal.diffuse ? pal.textSecondary : pal.text} />
-    </Pressable>
   )
 }
 

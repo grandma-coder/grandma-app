@@ -12,7 +12,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Modal } from 'react-nati
 import { X, Check } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CyclePhase, type CycleConfig } from '../../lib/cycleLogic'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
@@ -22,7 +22,10 @@ import type { TranslationKeys } from '../../lib/i18n/keys'
 import { LogSheet } from './LogSheet'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
-import { CycleMonthGrid } from './CycleMonthGrid'
+import { CycleMonthGrid, CycleSiteLegend, cycleSiteDay, useCycleLogDates } from './CycleMonthGrid'
+import { AgendaCalendar, AgendaDot } from './AgendaCalendar'
+import { monthGridDates } from './agendaDates'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { CycleDayDetail } from './CycleDayDetail'
 import { LogActivitySheet, type LogType } from './LogActivitySheet'
 import { Display, Body } from '../ui/Typography'
@@ -53,7 +56,7 @@ type ViewTab = 'cycle' | 'health'
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export function CycleCalendar() {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -75,7 +78,7 @@ export function CycleCalendar() {
   // Derive the real cycle config from the user's logged period_start history.
   // Falls back to a 10-days-ago default so the UI still renders for users
   // who haven't logged anything yet.
-  const { data: history } = useCycleHistory()
+  const { data: history, isLoading: historyLoading } = useCycleHistory()
   // User cycle settings override the measured average + hardcoded defaults.
   const cs = useCycleSettingsStore()
   const cycleConfig: CycleConfig = useMemo(() => {
@@ -90,6 +93,17 @@ export function CycleCalendar() {
   }, [history, cs.cycleLength, cs.periodLength, cs.lutealPhase])
 
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
+
+  // Site look: logged-day dots for the agenda calendar — the month around the
+  // selected day (whole weeks, so the week view is covered too).
+  const agendaRange = useMemo(() => {
+    const cells = monthGridDates(selectedDate)
+    return { start: cells[0].date, end: cells[cells.length - 1].date }
+  }, [selectedDate])
+  const { logsByDate: agendaLogs, isLoading: agendaLogsLoading } = useCycleLogDates(agendaRange.start, agendaRange.end)
+  const todayStr = toDateStr(new Date())
+  // First load: no real cycle yet → skeleton, never the fallback "10 days ago" cycle.
+  const agendaLoading = (historyLoading && !history) || agendaLogsLoading
 
   function handleSaved() {
     setSheetType(null)
@@ -119,6 +133,7 @@ export function CycleCalendar() {
 
         {tab === 'cycle' && (
           <>
+            {diffuse ? (
             <View style={{ marginBottom: 14 }}>
               <CycleMonthGrid
                 cycleConfig={cycleConfig}
@@ -135,6 +150,29 @@ export function CycleCalendar() {
                 })}
               />
             </View>
+            ) : (
+            <View style={{ marginBottom: 14 }}>
+              <AgendaCalendar
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                tone={getModeColorSoft('pre', isDark)}
+                loading={agendaLoading}
+                dayTint={(date) => cycleSiteDay(cycleConfig, date, todayStr, stickers).tint}
+                renderDayDecoration={(date) => {
+                  const { isOvulation } = cycleSiteDay(cycleConfig, date, todayStr, stickers)
+                  const logged = (agendaLogs.get(date)?.size ?? 0) > 0
+                  if (!isOvulation && !logged) return null
+                  return (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                      {isOvulation ? <SiteSticker name="egg" size={12} /> : null}
+                      {logged ? <AgendaDot color={colors.text} /> : null}
+                    </View>
+                  )
+                }}
+                footer={<CycleSiteLegend />}
+              />
+            </View>
+            )}
 
             <CycleDayDetail
               cycleConfig={cycleConfig}

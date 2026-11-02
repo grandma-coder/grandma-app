@@ -91,7 +91,7 @@ import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { LogTile, LogTileGrid } from './LogTile'
 import { ActivityPillCard } from './ActivityPillCard'
-import { AgendaWeekStrip } from './AgendaWeekStrip'
+import { AgendaCalendar, AgendaDots } from './AgendaCalendar'
 import { AppointmentDetailModal } from './AppointmentDetailModal'
 import { LogSheet } from './LogSheet'
 import { LogFormSticker } from './LogFormSticker'
@@ -2322,10 +2322,13 @@ export function PregnancyCalendar() {
   const apptCurveScrollRef = useRef<ScrollView>(null)
 
   const [userId, setUserId] = useState<string | undefined>(undefined)
+  // Site-look skeleton: the logs query can't start until the session is known.
+  const [sessionChecked, setSessionChecked] = useState(false)
   useEffect(() => {
     supabase.auth.getSession()
       .then(({ data: { session } }) => setUserId(session?.user.id))
       .catch(() => { /* transient network failure — retried on next mount */ })
+      .finally(() => setSessionChecked(true))
   }, [])
 
   // Auto-center the appointment S-curve on the next-up milestone whenever
@@ -2381,7 +2384,8 @@ export function PregnancyCalendar() {
   const month = viewDate.getMonth()
   const todayStr = toDateStr(new Date())
 
-  const { data: calLogs = {}, refetch } = usePregnancyCalendarLogs(userId, year, month)
+  const { data: calLogsData, isLoading: calLogsLoading, refetch } = usePregnancyCalendarLogs(userId, year, month)
+  const calLogs = useMemo(() => calLogsData ?? {}, [calLogsData])
   const { data: todayLogs = {}, refetch: refetchToday } = usePregnancyTodayLogs(userId)
 
   // Pulse newly-added log entries once to confirm the save.
@@ -3375,12 +3379,13 @@ export function PregnancyCalendar() {
                 )}
               </>
             ) : (
-              <AgendaWeekStrip
+              <AgendaCalendar
                 selectedDate={selectedDate}
                 onSelectDate={setSelectedDate}
-                dotsByDate={dotsByDate}
-                weekLabel={`Week ${weekNumber}`}
-                modeColor={brand.pregnancy}
+                tone={getModeColorSoft('preg', isDark)}
+                caption={t('profPreg_chipWeek', { n: weekNumber })}
+                loading={(!sessionChecked || calLogsLoading) && !calLogsData}
+                renderDayDecoration={(date) => <AgendaDots colors={dotsByDate[date] ?? []} />}
               />
             )}
             <View style={{ height: 12 }} />

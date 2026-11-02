@@ -1545,6 +1545,8 @@ export interface TranslationKeys {
   kids_calendar_tabVisits: string
   kids_calendar_viewMonth: string
   kids_calendar_viewWeek: string
+  agenda_showAll: string
+  agenda_showLess: string
   kids_calendar_nothingPlanned: string
   kids_calendar_tapToLog: string
   kids_calendar_tapToLogRoutine: string

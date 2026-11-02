@@ -59,6 +59,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 import { useTheme, brand, stickers, font, getModeColor, getModeColorSoft, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../constants/theme'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { InkBackButton } from '../ui/InkBackButton'
@@ -87,7 +88,8 @@ import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
 import { SegmentedTabs } from './SegmentedTabs'
-import { AgendaWeekStrip } from './AgendaWeekStrip'
+import { AgendaCalendar, AgendaDots } from './AgendaCalendar'
+import { upcomingWindow } from './agendaDates'
 import { LogMonthGrid } from './LogMonthGrid'
 import { logSticker } from './logStickers'
 import {
@@ -1454,6 +1456,10 @@ export function KidsCalendar() {
   const seenLogIdsRef = useRef<Set<string> | null>(null)
   const [pulsingLogIds, setPulsingLogIds] = useState<Set<string>>(() => new Set())
   const [loading, setLoading] = useState(false)
+  // Site-look skeleton: true once the first log fetch has settled.
+  const [logsReady, setLogsReady] = useState(false)
+  // Agenda list: groups ("date:childId") the user expanded past the next 3.
+  const [agendaExpanded, setAgendaExpanded] = useState<Set<string>>(() => new Set())
   const [profileNames, setProfileNames] = useState<Record<string, string>>({}) // userId → display name
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [selectedLog, setSelectedLog] = useState<ChildLog | null>(null)
@@ -1477,8 +1483,11 @@ export function KidsCalendar() {
   const [editNotes, setEditNotes] = useState('')
   const [editSaving, setEditSaving] = useState(false)
 
-  const year = viewDate.getFullYear()
-  const month = viewDate.getMonth()
+  // Site look: the agenda calendar steps the selected day by week or month, so
+  // the fetched months follow it. Diffuse drives viewDate from its own grid.
+  const monthAnchor = diffuse ? viewDate : new Date(selectedDate + 'T12:00:00')
+  const year = monthAnchor.getFullYear()
+  const month = monthAnchor.getMonth()
   const todayStr = toDateStr(new Date())
 
   // ── Fetch logs for visible month ────────────────────────────────────────
@@ -1490,6 +1499,7 @@ export function KidsCalendar() {
 
     if (childIds.length === 0) {
       setMonthLogs([])
+      setLogsReady(true)
       return
     }
 
@@ -1531,6 +1541,7 @@ export function KidsCalendar() {
       // silently fail — UI will show empty state
     } finally {
       setLoading(false)
+      setLogsReady(true)
     }
   }, [year, month, selectedChildId, children])
 
@@ -2449,6 +2460,7 @@ export function KidsCalendar() {
       pulse?: boolean
       logged?: boolean
       loggedBy?: string
+      childId: string
     }
 
     const rows: Row[] = []
@@ -2472,6 +2484,7 @@ export function KidsCalendar() {
           setRoutinePrefill({ routineId: r.id, childId: r.child_id, time: r.time ?? undefined, value: r.value ?? undefined, name: r.name })
           setSheetType((ROUTINE_SHEET_MAP[r.type] ?? 'feeding') as LogType)
         },
+        childId: r.child_id,
       })
     }
 
@@ -2504,6 +2517,7 @@ export function KidsCalendar() {
         pulse: pulsingLogIds.has(log.id),
         logged: true,
         loggedBy: loggedByName,
+        childId: log.child_id,
       })
     }
 
@@ -2568,6 +2582,68 @@ export function KidsCalendar() {
 
     const kidsTone = getModeColorSoft('kids', isDark)
 
+    // Site look: with "All kids", group the day by child (name + colour dot);
+    // each group shows the next 3 upcoming items + a quiet "Show all (N)".
+    const grouped = selectedChildId === 'all'
+    const nowCut = isToday ? nowHours : selectedDate > todayStr ? -Infinity : Infinity
+    const agendaGroups: { id: string; name: string | null; color: string; rows: Row[] }[] = []
+    if (grouped) {
+      const known = new Set<string>()
+      for (const c of children) {
+        known.add(c.id)
+        const childRows = rows.filter((r) => r.childId === c.id)
+        if (childRows.length) agendaGroups.push({ id: c.id, name: c.name, color: childColor(childIndexMap.get(c.id) ?? 0), rows: childRows })
+      }
+      const other = rows.filter((r) => !known.has(r.childId))
+      if (other.length) agendaGroups.push({ id: 'other', name: null, color: colors.text, rows: other })
+    } else if (rows.length) {
+      agendaGroups.push({ id: selectedChildId, name: null, color: colors.text, rows })
+    }
+
+    function renderSiteRow(r: Row, idx: number, hideChip: boolean) {
+      return (
+        <FadeUp key={r.key} index={Math.min(idx, 8)}>
+          <Pressable
+            onPress={r.onPress}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.siteRow,
+              idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
+              r.pulse && { backgroundColor: kidsTone, borderRadius: 16, borderTopWidth: 0 },
+              { opacity: pressed ? 0.6 : 1 },
+            ]}
+          >
+            <SiteEyebrow style={styles.siteRowTime}>{r.time}</SiteEyebrow>
+            <View style={styles.siteRowSticker}>
+              <SiteSticker name={stickerForLog(r.type)} size={38} />
+              {r.logged ? (
+                <View style={[styles.siteRowTick, { backgroundColor: colors.text, borderColor: colors.bg }]}>
+                  <Check size={10} color={colors.bg} strokeWidth={3.5} />
+                </View>
+              ) : null}
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{r.title}</Text>
+              {r.subtitle ? (
+                <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{r.subtitle}</Text>
+              ) : null}
+              {r.loggedBy ? (
+                <Text numberOfLines={1} style={{ fontFamily: font.body, fontSize: 12, color: colors.textMuted }}>
+                  {t('kids_calendar_detail_loggedBy')} {r.loggedBy}
+                </Text>
+              ) : null}
+            </View>
+            {r.chip && !hideChip ? (
+              <View style={[styles.siteRowChip, { borderColor: colors.text, backgroundColor: colors.surface }]}>
+                <View style={[styles.childDot, { backgroundColor: r.chip.color }]} />
+                <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 11, color: colors.text }}>{r.chip.label}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+        </FadeUp>
+      )
+    }
+
     return (
       <>
         <View style={styles.timelineHeader}>
@@ -2587,47 +2663,44 @@ export function KidsCalendar() {
           </FadeUp>
         ) : (
           <View>
-            {rows.map((r, idx) => (
-              <FadeUp key={r.key} index={Math.min(idx, 8)}>
-                <Pressable
-                  onPress={r.onPress}
-                  accessibilityRole="button"
-                  style={({ pressed }) => [
-                    styles.siteRow,
-                    idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
-                    r.pulse && { backgroundColor: kidsTone, borderRadius: 16, borderTopWidth: 0 },
-                    { opacity: pressed ? 0.6 : 1 },
-                  ]}
-                >
-                  <SiteEyebrow style={styles.siteRowTime}>{r.time}</SiteEyebrow>
-                  <View style={styles.siteRowSticker}>
-                    <SiteSticker name={stickerForLog(r.type)} size={38} />
-                    {r.logged ? (
-                      <View style={[styles.siteRowTick, { backgroundColor: colors.text, borderColor: colors.bg }]}>
-                        <Check size={10} color={colors.bg} strokeWidth={3.5} />
-                      </View>
-                    ) : null}
-                  </View>
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{r.title}</Text>
-                    {r.subtitle ? (
-                      <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{r.subtitle}</Text>
-                    ) : null}
-                    {r.loggedBy ? (
-                      <Text numberOfLines={1} style={{ fontFamily: font.body, fontSize: 12, color: colors.textMuted }}>
-                        {t('kids_calendar_detail_loggedBy')} {r.loggedBy}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {r.chip ? (
-                    <View style={[styles.siteRowChip, { borderColor: colors.text, backgroundColor: colors.surface }]}>
-                      <View style={[styles.childDot, { backgroundColor: r.chip.color }]} />
-                      <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 11, color: colors.text }}>{r.chip.label}</Text>
+            {agendaGroups.map((g, gi) => {
+              const groupKey = `${selectedDate}:${g.id}`
+              const expanded = agendaExpanded.has(groupKey)
+              const shown = expanded ? g.rows : upcomingWindow(g.rows, nowCut, 3)
+              return (
+                <View key={g.id} style={gi > 0 ? styles.agendaGroupGap : null}>
+                  {g.name ? (
+                    <View style={styles.agendaGroupHead}>
+                      <View style={[styles.childDot, { backgroundColor: g.color, borderWidth: 1, borderColor: colors.text }]} />
+                      <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 14, color: colors.text, flexShrink: 1 }}>{g.name}</Text>
                     </View>
                   ) : null}
-                </Pressable>
-              </FadeUp>
-            ))}
+                  {shown.map((r, idx) => renderSiteRow(r, idx, grouped))}
+                  {g.rows.length > 3 ? (
+                    <Pressable
+                      onPress={() => {
+                        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+                        setAgendaExpanded((prev) => {
+                          const next = new Set(prev)
+                          if (next.has(groupKey)) next.delete(groupKey)
+                          else next.add(groupKey)
+                          return next
+                        })
+                      }}
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded }}
+                      hitSlop={6}
+                      style={({ pressed }) => [styles.agendaShowAll, { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 }]}
+                    >
+                      <Text style={{ fontFamily: font.bodySemiBold, fontSize: 13, color: colors.textSecondary }}>
+                        {expanded ? t('agenda_showLess') : t('agenda_showAll', { count: g.rows.length })}
+                      </Text>
+                      <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={colors.textSecondary} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              )
+            })}
           </View>
         )}
       </>
@@ -3042,13 +3115,16 @@ export function KidsCalendar() {
             style={({ pressed }) => [
               styles.addLogBtn,
               {
-                backgroundColor: colors.text,
+                // Site look: ink-outlined disc on surface, ink glyph (same as AgendaHeader).
+                backgroundColor: colors.surface,
+                borderWidth: 1.5,
+                borderColor: colors.text,
                 opacity: pressed ? 0.8 : 1,
                 transform: [{ scale: pressed ? 0.94 : 1 }],
               },
             ]}
           >
-            <Plus size={18} color={colors.bg} strokeWidth={2.5} />
+            <Plus size={18} color={colors.text} strokeWidth={2.5} />
           </Pressable>
           )}
         </View>
@@ -3115,11 +3191,12 @@ export function KidsCalendar() {
                 )}
               </>
             ) : (
-              <AgendaWeekStrip
+              <AgendaCalendar
                 selectedDate={selectedDate}
                 onSelectDate={handleDayPress}
-                dotsByDate={dotsByDate}
-                modeColor={getModeColorSoft('kids', isDark)}
+                tone={getModeColorSoft('kids', isDark)}
+                loading={!logsReady}
+                renderDayDecoration={(date) => <AgendaDots colors={dotsByDate[date] ?? []} />}
               />
             )}
             <View style={{ height: 12 }} />
@@ -4129,6 +4206,9 @@ const styles = StyleSheet.create({
   siteInfoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16, justifyContent: 'center' },
   siteCallout: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderRadius: 18, padding: 14, marginBottom: 12 },
   siteEmpty: { alignItems: 'center', paddingVertical: 36, paddingHorizontal: 24 },
+  agendaGroupGap: { marginTop: 18 },
+  agendaGroupHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, paddingBottom: 2 },
+  agendaShowAll: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 4, borderTopWidth: 1 },
   siteRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4 },
   siteRowTime: { width: 62, fontSize: 10 },
   siteRowSticker: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },

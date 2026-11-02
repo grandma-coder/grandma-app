@@ -54,6 +54,91 @@ function startOfMonthGrid(year: number, month: number): Date {
   return new Date(year, month, 1 - dow)
 }
 
+/**
+ * Site-look look of one cycle day: soft coral for period, soft green for the
+ * fertile window (lighter when predicted), plus the ovulation flag (egg).
+ * Shared by this grid and the agenda calendar.
+ */
+export function cycleSiteDay(
+  cycleConfig: CycleConfig,
+  date: string,
+  today: string,
+  s: ReturnType<typeof useTheme>['stickers'],
+): { tint?: string; isOvulation: boolean } {
+  const info = getCycleInfo(cycleConfig, date)
+  const isPeriod = (info.phase as CyclePhase) === 'menstruation'
+  const isOvulation = !isPeriod && info.cycleDay === info.ovulationDay
+  const isFertile = !isPeriod && info.isFertile
+  const isPredicted = date > today
+  const tint = isPeriod ? s.coral + (isPredicted ? '22' : '44')
+    : isFertile || isOvulation ? s.green + (isPredicted ? '33' : '66')
+    : undefined
+  return { tint, isOvulation }
+}
+
+/** Site-look legend: period swatch · fertile swatch · ovulation egg. */
+export function CycleSiteLegend() {
+  const { colors, stickers } = useTheme()
+  const { t } = useTranslation()
+  return (
+    <View style={styles.siteLegend}>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendSwatch, { backgroundColor: stickers.coral + '44' }]} />
+        <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.menstruation)}</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendSwatch, { backgroundColor: stickers.green + '66' }]} />
+        <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t('cycleOnboarding_predict_fertile')}</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <SiteSticker name="egg" size={13} />
+        <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.ovulation)}</Text>
+      </View>
+    </View>
+  )
+}
+
+/**
+ * Which cycle-log types were logged on each day in [start, end] — feeds the
+ * "logged" dot on the month grid and on the shared agenda calendar.
+ */
+export function useCycleLogDates(start: string, end: string) {
+  const [userId, setUserId] = useState<string | undefined>()
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) =>
+      setUserId(session?.user.id),
+    )
+  }, [])
+
+  const { data: logs, isLoading } = useQuery({
+    queryKey: ['cycleLogs', 'monthGrid', userId, start, end],
+    queryFn: async (): Promise<{ date: string; type: string }[]> => {
+      if (!userId) return []
+      const { data, error } = await supabase
+        .from('cycle_logs')
+        .select('date, type')
+        .eq('user_id', userId)
+        .gte('date', start)
+        .lte('date', end)
+      if (error) throw error
+      return (data ?? []) as { date: string; type: string }[]
+    },
+    enabled: !!userId,
+  })
+
+  const logsByDate = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const l of logs ?? []) {
+      const set = map.get(l.date) ?? new Set<string>()
+      set.add(l.type)
+      map.set(l.date, set)
+    }
+    return map
+  }, [logs])
+
+  return { logsByDate, isLoading: isLoading && !logs }
+}
+
 export function CycleMonthGrid({
   cycleConfig, selectedDate, visibleMonth, onSelectDate, onPrevMonth, onNextMonth,
 }: Props) {
@@ -64,13 +149,6 @@ export function CycleMonthGrid({
   const ink = isDark ? colors.text : '#141313'
 
   const today = toDateStr(new Date())
-
-  const [userId, setUserId] = useState<string | undefined>()
-  useEffect(() => {
-    void supabase.auth.getSession().then(({ data: { session } }) =>
-      setUserId(session?.user.id),
-    )
-  }, [])
 
   // Build the 6×7 grid of dates
   const cells = useMemo(() => {
@@ -91,33 +169,7 @@ export function CycleMonthGrid({
   // Month range for log fetch
   const monthStart = cells[0].date
   const monthEnd = cells[cells.length - 1].date
-
-  // Fetch logs for the visible range
-  const { data: logs = [] } = useQuery({
-    queryKey: ['cycleLogs', 'monthGrid', userId, monthStart, monthEnd],
-    queryFn: async (): Promise<{ date: string; type: string }[]> => {
-      if (!userId) return []
-      const { data, error } = await supabase
-        .from('cycle_logs')
-        .select('date, type')
-        .eq('user_id', userId)
-        .gte('date', monthStart)
-        .lte('date', monthEnd)
-      if (error) throw error
-      return (data ?? []) as { date: string; type: string }[]
-    },
-    enabled: !!userId,
-  })
-
-  const logsByDate = useMemo(() => {
-    const map = new Map<string, Set<string>>()
-    for (const l of logs) {
-      const set = map.get(l.date) ?? new Set<string>()
-      set.add(l.type)
-      map.set(l.date, set)
-    }
-    return map
-  }, [logs])
+  const { logsByDate } = useCycleLogDates(monthStart, monthEnd)
 
   const monthLabel = new Date(visibleMonth.year, visibleMonth.month, 1)
     .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -217,19 +269,12 @@ export function CycleMonthGrid({
 
       <View style={styles.grid}>
         {cells.map((c) => {
-          const info = getCycleInfo(cycleConfig, c.date)
-          const isPeriod = (info.phase as CyclePhase) === 'menstruation'
-          const isOvulation = !isPeriod && info.cycleDay === info.ovulationDay
-          const isFertile = !isPeriod && info.isFertile
+          const day = cycleSiteDay(cycleConfig, c.date, today, stickers)
+          const isOvulation = day.isOvulation
           const isToday = c.date === today
           const isSelected = c.date === selectedDate
-          const isPredicted = c.date > today
           const hasLogs = (logsByDate.get(c.date)?.size ?? 0) > 0
-          // Soft tone fill only for period / fertile; predicted days sit lighter.
-          const fill = !c.inMonth ? 'transparent'
-            : isPeriod ? stickers.coral + (isPredicted ? '22' : '44')
-            : isFertile || isOvulation ? stickers.green + (isPredicted ? '33' : '66')
-            : 'transparent'
+          const fill = !c.inMonth ? 'transparent' : (day.tint ?? 'transparent')
 
           return (
             <Pressable
@@ -273,20 +318,7 @@ export function CycleMonthGrid({
         })}
       </View>
 
-      <View style={styles.siteLegend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendSwatch, { backgroundColor: stickers.coral + '44' }]} />
-          <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.menstruation)}</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendSwatch, { backgroundColor: stickers.green + '66' }]} />
-          <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t('cycleOnboarding_predict_fertile')}</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <SiteSticker name="egg" size={13} />
-          <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.ovulation)}</Text>
-        </View>
-      </View>
+      <CycleSiteLegend />
     </View>
   )
 }
