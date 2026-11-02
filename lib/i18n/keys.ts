@@ -1050,6 +1050,40 @@ export interface TranslationKeys {
   feedCalm_inAfternoon: string
   feedCalm_inEvening: string
   feedCalm_inNight: string
+  sleepCalm_emptyTitle: string
+  sleepCalm_emptyHint: string
+  sleepCalm_total: string
+  sleepCalm_q_Great: string
+  sleepCalm_q_Solid: string
+  sleepCalm_q_Restless: string
+  sleepCalm_q_Poor: string
+  sleepCalm_met: string
+  sleepCalm_short: string
+  sleepCalm_target: string
+  actCalm_emptyTitle: string
+  actCalm_emptyHint: string
+  actCalm_activities: string
+  actCalm_byKind: string
+  actCalm_recent: string
+  actCalm_p_movement: string
+  actCalm_p_creative: string
+  actCalm_p_learning: string
+  actCalm_p_social: string
+  actCalm_p_care: string
+  actCalm_p_therapy: string
+  diaperCalm_emptyTitle: string
+  diaperCalm_emptyHint: string
+  diaperCalm_diapers: string
+  diaperCalm_perDay: string
+  diaperCalm_one: string
+  diaperCalm_n: string
+  diaperCalm_logged: string
+  diaperCalm_c_yellow: string
+  diaperCalm_c_green: string
+  diaperCalm_c_brown: string
+  diaperCalm_c_black: string
+  diaperCalm_c_red: string
+  diaperCalm_c_orange: string
   kids_growthLeapShort: string
   kidsTile_sleepNight: string
   kidsTile_sleepAvg: string

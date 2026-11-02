@@ -319,6 +319,9 @@ import { CHILD_COLORS } from '../ui/ChildPills'
 import { LogSheet } from '../calendar/LogSheet'
 import { KidsHeroTiles } from './kids/KidsHeroTiles'
 import { FeedingDetailCalm } from './kids/FeedingDetailCalm'
+import { SleepDetailCalm } from './kids/SleepDetailCalm'
+import { ActivitiesDetailCalm } from './kids/ActivitiesDetailCalm'
+import { DiaperDetailCalm } from './kids/DiaperDetailCalm'
 import { SiteChoice } from '../ui/SiteChoice'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
@@ -2543,6 +2546,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
               mixed={rangeData.diaperMixed}
               diaperByDay={rangeData.diaperByDay}
               diaperColors={rangeData.diaperColors}
+              rangeDays={rangeData.activityRangeDays}
               dateRange={dateRange}
               startDate={sd}
               endDate={ed}
@@ -2572,6 +2576,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         dailySleep={rangeData.dailySleep}
         dailySleepTarget={rangeData.dailySleepTarget}
         dayLabels={rangeData.dayLabels}
+        rangeDays={rangeData.activityRangeDays}
         dateRange={dateRange}
         childName={child?.name}
         childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
@@ -3752,8 +3757,9 @@ const DIAPER_COLOR_META: Record<string, { label: string; swatch: string }> = {
   orange:  { label: 'Orange',  swatch: '#F97316' },
 }
 
-function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperByDay, diaperColors, dateRange, startDate, endDate, childName, childColor }: {
+function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperByDay, diaperColors, rangeDays, dateRange, startDate, endDate, childName, childColor }: {
   visible: boolean; onClose: () => void
+  rangeDays: number
   count: number; pee: number; poop: number; mixed: number
   diaperByDay: Record<string, { pee: number; poop: number; mixed: number }>
   diaperColors: Record<string, number>
@@ -3924,166 +3930,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           {/* Header */}
           <DetailSheetHeader title={t('kids_home_diaper_tracker_title')} sticker="diaper" tone={StickerPalette.blueSoft} childName={childName} childColor={childColor} onClose={onClose} />
-          <Text style={[s.modalSubtitle, { color: colors.textMuted }]}>
-            {rangeLabel}{' — '}{count}{' diaper'}{count !== 1 ? 's' : ''}{' · avg '}{avgPerDay}{'/day'}
-          </Text>
-
-          {/* Type sticker cards — pastel fill, ink border, icon-in-circle on top */}
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-            {[
-              { label: t('kids_home_diaper_pee'), count: pee, fill: StickerPalette.blueSoft, accent: StickerPalette.blue, Icon: Droplets, rotation: -3 },
-              { label: t('kids_home_diaper_poop'), count: poop, fill: StickerPalette.peachSoft, accent: StickerPalette.peach, Icon: BurstSticker as any, rotation: 2, isSticker: true, stickerFill: StickerPalette.peach },
-              { label: t('kids_home_diaper_mixed'), count: mixed, fill: StickerPalette.yellowSoft, accent: StickerPalette.yellow, Icon: Sparkles, rotation: -2 },
-            ].map(({ label, count: c, fill, accent, Icon, rotation, isSticker, stickerFill }) => (
-              <View
-                key={label}
-                style={{
-                  flex: 1,
-                  backgroundColor: fill,
-                  borderRadius: 22,
-                  borderWidth: 1.5,
-                  borderColor: DIAPER_STICKER_INK,
-                  paddingVertical: 14,
-                  paddingHorizontal: 8,
-                  alignItems: 'center',
-                  shadowColor: DIAPER_STICKER_INK,
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: 0.12,
-                  shadowRadius: 6,
-                  elevation: 3,
-                  
-                }}
-              >
-                {/* Icon sticker disc */}
-                <View
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    backgroundColor: accent,
-                    borderWidth: 1.5,
-                    borderColor: DIAPER_STICKER_INK,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 8,
-                  }}
-                >
-                  {isSticker
-                    ? <BurstSticker size={22} fill={stickerFill ?? accent} />
-                    : <Icon size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />}
-                </View>
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.4 }}>{c}</Text>
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{label}</Text>
-                <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.italic, fontStyle: 'italic', marginTop: 2 }}>
-                  {total > 0 ? Math.round((c / total) * 100) : 0}%
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Proportion bar — ink-bordered sticker */}
-          {total > 0 && (
-            <View
-              style={{
-                height: 14,
-                marginTop: 16,
-                borderRadius: 7,
-                borderWidth: 1.5,
-                borderColor: DIAPER_STICKER_INK,
-                overflow: 'hidden',
-                flexDirection: 'row',
-                backgroundColor: StickerPalette.cream,
-              }}
-            >
-              {pee > 0   && <View style={{ width: `${(pee   / total) * 100}%` as any, backgroundColor: DIAPER_COLORS.pee }} />}
-              {poop > 0  && <View style={{ width: `${(poop  / total) * 100}%` as any, backgroundColor: DIAPER_COLORS.poop }} />}
-              {mixed > 0 && <View style={{ width: `${(mixed / total) * 100}%` as any, backgroundColor: DIAPER_COLORS.mixed }} />}
-            </View>
-          )}
-
-          {/* Daily / weekly stacked bar chart — sticker bars */}
-          <View style={{ marginTop: 22 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.bodyBold, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>{t('kids_home_diaper_trend_label')}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 4 }}>
-              {buckets.map((b, i) => {
-                const h = b.total > 0 ? Math.max((b.total / bucketMax) * BAR_H, 8) : 6
-                const peeH   = b.total > 0 ? Math.round((b.pee   / b.total) * h) : 0
-                const poopH  = b.total > 0 ? Math.round((b.poop  / b.total) * h) : 0
-                const mixedH = Math.max(h - peeH - poopH, 0)
-                const tilt = (i % 2 === 0 ? -1 : 1) * 1.5
-                return (
-                  <View key={i} style={{ flex: 1 }}>
-                    <View style={{ height: BAR_H, flexDirection: 'column', justifyContent: 'flex-end' }}>
-                      <View
-                        style={{
-                          height: h,
-                          borderRadius: 8,
-                          overflow: 'hidden',
-                          borderWidth: b.total > 0 ? 1.5 : 1,
-                          borderColor: b.total > 0 ? DIAPER_STICKER_INK : 'rgba(20,19,19,0.18)',
-                          backgroundColor: b.total > 0 ? 'transparent' : StickerPalette.cream,
-                          shadowColor: DIAPER_STICKER_INK,
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: b.total > 0 ? 0.14 : 0,
-                          shadowRadius: 4,
-                          elevation: b.total > 0 ? 2 : 0,
-                          
-                        }}
-                      >
-                        {b.total > 0 && (
-                          <>
-                            {mixedH > 0 && <View style={{ height: mixedH, backgroundColor: DIAPER_COLORS.mixed }} />}
-                            {poopH  > 0 && <View style={{ height: poopH,  backgroundColor: DIAPER_COLORS.poop }} />}
-                            {peeH   > 0 && <View style={{ height: peeH,   backgroundColor: DIAPER_COLORS.pee }} />}
-                          </>
-                        )}
-                      </View>
-                    </View>
-                    <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: font.italic, fontStyle: 'italic', textAlign: 'center', marginTop: 6 }}>{b.label}</Text>
-                  </View>
-                )
-              })}
-            </View>
-          </View>
-
-          {/* Stool color — sticker-style swatch chips */}
-          {colorEntries.length > 0 && (
-            <View style={{ marginTop: 22 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.bodyBold, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                {t('kids_home_diaper_stool_color')} {poopTotal > 0 ? `· ${poopTotal} logged` : ''}
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {colorEntries.map(([color, cnt]) => {
-                  const meta = DIAPER_COLOR_META[color] ?? { label: color.charAt(0).toUpperCase() + color.slice(1), swatch: '#888' }
-                  return (
-                    <View
-                      key={color}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                        backgroundColor: StickerPalette.paper,
-                        borderRadius: 999,
-                        borderWidth: 1.5,
-                        borderColor: DIAPER_STICKER_INK,
-                        paddingHorizontal: 12,
-                        paddingVertical: 5,
-                        shadowColor: DIAPER_STICKER_INK,
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 3,
-                        elevation: 1,
-                      }}
-                    >
-                      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: meta.swatch, borderWidth: 1, borderColor: DIAPER_STICKER_INK }} />
-                      <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: font.bodySemiBold }}>{meta.label}</Text>
-                      <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.displayBold }}>{cnt}</Text>
-                    </View>
-                  )
-                })}
-              </View>
-            </View>
-          )}
+          <DiaperDetailCalm count={count} pee={pee} poop={poop} mixed={mixed} diaperByDay={diaperByDay} diaperColors={diaperColors} rangeDays={rangeDays} />
         </View>
       </View>
     </Modal>
@@ -4430,8 +4277,9 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
   )
 }
 
-function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQuality, dailySleep, dailySleepTarget, dayLabels, dateRange, childName, childColor }: {
+function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQuality, dailySleep, dailySleepTarget, dayLabels, rangeDays, dateRange, childName, childColor }: {
   visible: boolean; onClose: () => void
+  rangeDays: number
   sleepTotal: number; sleepTarget: number
   sleepQuality: string
   dailySleep: number[]
@@ -4537,69 +4385,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
             <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
           <DetailSheetHeader title={t('kids_home_sleep_modal_title')} sticker="moon" tone={StickerPalette.blueSoft} childName={childName} childColor={childColor} onClose={onClose} />
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 8, paddingBottom: 24, gap: 16 }} showsVerticalScrollIndicator={false}>
-            <View style={{ backgroundColor: ST_BLUE_SOFT, borderRadius: 22, borderWidth: 1.5, borderColor: ST_INK, padding: 18, gap: 6, shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 3 }}>
-              <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink, textTransform: 'uppercase', letterSpacing: 1.4 }}>{nights > 1 ? t('kidsTile_sleepAvg') : t('kids_home_sleep_modal_total_range')}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                <Text style={{ fontSize: 48, fontFamily: font.displayBold, color: ink, letterSpacing: -1.2, lineHeight: 54 }}>{sleepTotal > 0 ? (sleepTotal / nights).toFixed(1) : '—'}</Text>
-                <Text style={{ fontSize: 16, fontFamily: font.bodyMedium, color: ink3 }}>{t('kids_home_sleep_modal_hours_unit')}</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: q.tagBg, borderWidth: 1.2, borderColor: ST_INK }}>
-                  <Text style={{ fontSize: 11, fontFamily: font.bodyBold, color: ST_INK, textTransform: 'uppercase', letterSpacing: 0.6 }}>{q.tag}</Text>
-                </View>
-                <Text style={{ fontSize: 12, fontFamily: font.bodyMedium, color: ink3 }}>{t('kids_home_sleep_modal_pct_target', { pct, target: sleepTarget.toFixed(0) })}</Text>
-              </View>
-              {nights > 1 && sleepTotal > 0 ? (
-                <Text style={{ fontSize: 12, fontFamily: font.body, color: ink3 }}>{`${sleepTotal.toFixed(1)}h total · ${nights} nights`}</Text>
-              ) : null}
-            </View>
-            <View>
-              <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink3, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 8, paddingLeft: 2 }}>{t('kids_home_sleep_modal_past7')}</Text>
-              {/* Make the scope explicit when the active range is wider than
-                  7 days. The chart data is sourced from the last-7 mini-ring
-                  pipeline (see comment at dailySleep build site); the hero
-                  total above reflects the full active range — surface that
-                  difference instead of relying on the user to notice. */}
-              {dateRange !== '7days' && dateRange !== 'today' && dateRange !== 'yesterday' ? (
-                <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: ink3, marginBottom: 8, paddingLeft: 2, fontStyle: 'italic' }}>
-                  {t('kids_home_sleep_modal_chart_note')}
-                </Text>
-              ) : null}
-              <View style={{ backgroundColor: PAPER, borderRadius: 22, borderWidth: 1.5, borderColor: ST_INK, paddingHorizontal: 14, paddingVertical: 16, shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 3 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, gap: 6 }}>
-                  {dailySleep.map((hrs, i) => {
-                    // A day holds 24h at most — cap the bar so one bad entry can't flatten the week.
-                    const ratio = Math.max(Math.min(hrs, 24) / Math.min(maxHrs, 24), 0.02)
-                    // Bar color must agree with the legend underneath. The legend
-                    // says "below target ({dailySleepTarget}h/day)" — so any day
-                    // strictly below the target shows yellow. The previous 0.85
-                    // buffer painted 85–100% days green while the legend still
-                    // claimed they were below target, contradicting itself.
-                    const hitTarget = dailySleepTarget > 0 && hrs >= dailySleepTarget
-                    const barColor = hrs === 0 ? ST_BLUE_SOFT : (hitTarget ? ST_BLUE : ST_YELLOW)
-                    return (
-                      <View key={i} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
-                        <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: ink, height: 12 }}>{hrs > 0 ? hrs.toFixed(1) : ''}</Text>
-                        <View style={{ width: '100%', height: Math.max(ratio * 80, 4), backgroundColor: barColor, borderWidth: 1.5, borderColor: ST_INK, borderRadius: 8 }} />
-                        <Text style={{ fontSize: 9, fontFamily: font.bodyBold, color: ink3, textTransform: 'uppercase', letterSpacing: 0.6 }}>{(dayLabels[i] ?? '').slice(0, 3)}</Text>
-                      </View>
-                    )
-                  })}
-                </View>
-                {dailySleepTarget > 0 && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingLeft: 4 }}>
-                    <View style={{ width: 12, height: 4, backgroundColor: ST_YELLOW, borderRadius: 2, borderWidth: 1, borderColor: ST_INK }} />
-                    <Text style={{ fontSize: 10, fontFamily: font.bodyMedium, color: ink3 }}>{t('kids_home_sleep_below_target', { target: dailySleepTarget })}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-            <View style={{ backgroundColor: PAPER, borderRadius: 22, borderWidth: 1.5, borderColor: ST_INK, padding: 16, gap: 6, shadowColor: ST_INK, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 3 }}>
-              <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink3, textTransform: 'uppercase', letterSpacing: 1.4 }}>{t('kids_home_sleep_modal_quality_read', { sleepQuality })}</Text>
-              <Text style={{ fontSize: 14, fontFamily: font.body, color: ink, lineHeight: 22 }}>{q.blurb}</Text>
-            </View>
-          </ScrollView>
+          <SleepDetailCalm sleepTotal={sleepTotal} sleepTarget={sleepTarget} dailySleepTarget={dailySleepTarget} sleepQuality={sleepQuality} dailySleep={dailySleep} dayLabels={dayLabels} rangeDays={rangeDays} />
         </Pressable>
       </Pressable>
     </Modal>
@@ -5838,156 +5624,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
       <View style={s.modalOverlay}>
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={t('kids_home_activities_modal_title')} sticker="shoe" tone={StickerPalette.greenSoft} childName={childName} childColor={childColor} onClose={onClose} />
-
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-            {/* Top stat card — sticker */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-                padding: 16,
-                borderRadius: 22,
-                borderWidth: 1.5,
-                borderColor: DIAPER_STICKER_INK,
-                backgroundColor: StickerPalette.greenSoft,
-                shadowColor: DIAPER_STICKER_INK,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.1,
-                shadowRadius: 6,
-                elevation: 2,
-                marginBottom: 14,
-              }}
-            >
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: StickerPalette.green, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center' }}>
-                <Zap size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_home_activities_modal_title')}</Text>
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, marginTop: 2 }}>
-                  {activityCount > 0 ? activityCount.toLocaleString() : '—'}{' total'}
-                </Text>
-              </View>
-              {activeDays > 0 && rangeDays > 0 && (
-                <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: font.italic, fontStyle: 'italic' }}>
-                  {t('kids_home_activities_modal_days', { active: activeDays, total: rangeDays })}
-                </Text>
-              )}
-            </View>
-
-            {/* 3-tile analytics — sticker cards */}
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 8 }}>
-              {[
-                { Icon: Clock, value: `${activeDays}${rangeDays > 0 ? `/${rangeDays}` : ''}`, label: t('kids_home_activities_modal_active_days'), fill: StickerPalette.greenSoft, accent: StickerPalette.green, tilt: -2 },
-                { Icon: TrendingUp, value: topMeta ? topMeta.label.split(' ')[0] : '—', label: t('kids_home_activities_modal_top'), fill: StickerPalette.yellowSoft, accent: StickerPalette.yellow, tilt: 2 },
-                { Icon: Sparkles, value: String(distinctTypes), label: t('kids_home_activities_modal_types'), fill: StickerPalette.lilacSoft, accent: StickerPalette.lilac, tilt: -1.5 },
-              ].map((card, i) => (
-                <View
-                  key={i}
-                  style={{
-                    flex: 1,
-                    backgroundColor: card.fill,
-                    borderRadius: 22,
-                    borderWidth: 1.5,
-                    borderColor: DIAPER_STICKER_INK,
-                    paddingVertical: 14,
-                    paddingHorizontal: 8,
-                    alignItems: 'center',
-                    shadowColor: DIAPER_STICKER_INK,
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: 0.12,
-                    shadowRadius: 6,
-                    elevation: 2,
-                    
-                  }}
-                >
-                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: card.accent, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-                    <card.Icon size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
-                  </View>
-                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
-                  <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
-                </View>
-              ))}
-            </View>
-            {activityCount > 0 && (
-              <Text style={[s.feedingAvgText, { color: colors.textMuted }]}>
-                {t('kids_home_activities_modal_per_active_day', { avg: avgPerActiveDay })}
-                {topMeta ? ` · ${topMeta.label} leads (${topPct}%)` : ''}
-              </Text>
-            )}
-
-            {/* Ranking */}
-            {ranked.length > 0 ? (
-              <>
-                <Text style={[s.modalSectionTitle, { color: colors.text }]}>{t('kids_home_activities_modal_ranking')}</Text>
-                {ranked.map(([type, count]) => {
-                  const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: PILLAR_COLORS.activity }
-                  const typePct = activityCount > 0 ? Math.round((count / activityCount) * 100) : 0
-                  const isOpen = expandedType === type
-                  const typeEntries = entries.filter((e) => e.type === type)
-                  return (
-                    <View key={type} style={{ paddingVertical: 6 }}>
-                      <Pressable
-                        onPress={() => setExpandedType(isOpen ? null : type)}
-                        style={{ paddingVertical: 4 }}
-                      >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                          <View style={[s.modalCatDot, { backgroundColor: meta.color }]} />
-                          <Text style={[s.modalCatLabel, { color: colors.textSecondary }]}>{meta.label}</Text>
-                          <Text style={[s.modalCatValue, { color: colors.text }]}>{count.toLocaleString()}</Text>
-                          <Text style={{ color: meta.color, fontSize: 12, fontFamily: font.bodySemiBold, minWidth: 40, textAlign: 'right' }}>{typePct}%</Text>
-                          <ChevronRight
-                            size={14}
-                            color={colors.textMuted}
-                            strokeWidth={2}
-                            style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }], marginLeft: 2 }}
-                          />
-                        </View>
-                        <View style={{ height: 4, borderRadius: 2, backgroundColor: meta.color + '22', overflow: 'hidden' }}>
-                          <View style={{ width: `${typePct}%`, height: 4, borderRadius: 2, backgroundColor: meta.color }} />
-                        </View>
-                      </Pressable>
-                      {isOpen && (
-                        <View style={{ marginTop: 10, marginLeft: 18, gap: 8, borderLeftWidth: 1, borderLeftColor: meta.color + '40', paddingLeft: 12 }}>
-                          {typeEntries.length === 0 ? (
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium }}>
-                              {t('kids_home_activities_modal_no_entries')}
-                            </Text>
-                          ) : typeEntries.map((entry) => {
-                            const timeLabel = formatEntryTime(entry.startTime, entry.endTime)
-                            return (
-                              <View key={entry.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: meta.color, marginTop: 6 }} />
-                                <View style={{ flex: 1 }}>
-                                  <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>
-                                    {entry.name || meta.label}
-                                  </Text>
-                                  <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: font.bodyMedium, marginTop: 1 }}>
-                                    {formatEntryDate(entry.date)}{timeLabel ? ` · ${timeLabel}` : ''}
-                                  </Text>
-                                  {entry.notes ? (
-                                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.body, marginTop: 3, fontStyle: 'italic' }} numberOfLines={2}>
-                                      {entry.notes}
-                                    </Text>
-                                  ) : null}
-                                </View>
-                              </View>
-                            )
-                          })}
-                        </View>
-                      )}
-                    </View>
-                  )
-                })}
-              </>
-            ) : (
-              <View style={{ marginTop: 24, padding: 20, alignItems: 'center' }}>
-                <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center' }}>
-                  {t('kids_home_activities_modal_no_entries')}
-                </Text>
-              </View>
-            )}
-          </ScrollView>
+          <ActivitiesDetailCalm activityCount={activityCount} activeDays={activeDays} rangeDays={rangeDays} breakdown={breakdown} entries={entries} />
         </View>
       </View>
     </Modal>
