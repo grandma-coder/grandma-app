@@ -19,6 +19,7 @@ import {
   Alert,
 } from 'react-native'
 import DatePickerField from '../../../components/ui/DatePickerField'
+import { SiteChoice } from '../../../components/ui/SiteChoice'
 import { router } from 'expo-router'
 import { Heart, Star, Moon, Sun, Flower, Cloud, Smiley, Sleepy, Sad, Sparkle, Leaf } from '../../../components/ui/Stickers'
 import { PillButton } from '../../../components/ui/PillButton'
@@ -962,6 +963,10 @@ function TogglePill({
   const mode = getModeColor('pregnancy', isDark)
   const modeSoft = getModeColorSoft('pregnancy', isDark)
 
+  // Site look: the hand-drawn choice chip (ink label, tone fill, tick) — never tone-on-tone text.
+  if (!useIsDiffuse()) {
+    return <SiteChoice label={label} selected={active} onPress={onPress} tone={getModeColorSoft('pregnancy', isDark)} style={stepStyles.togglePill} />
+  }
   return (
     <Pressable
       onPress={onPress}
@@ -1021,13 +1026,6 @@ const stepStyles = StyleSheet.create({
   },
   togglePill: {
     flex: 1,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
   },
   togglePillText: {
     fontSize: 16,

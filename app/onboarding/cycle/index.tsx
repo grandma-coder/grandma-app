@@ -969,6 +969,10 @@ function TogglePill({
   const mode = getModeColor('pre-pregnancy', isDark)
   const modeSoft = getModeColorSoft('pre-pregnancy', isDark)
 
+  // Site look: the hand-drawn choice chip (ink label, tone fill, tick) — never tone-on-tone text.
+  if (!useIsDiffuse()) {
+    return <SiteChoice label={label} selected={active} onPress={onPress} tone={getModeColorSoft('pre-pregnancy', isDark)} style={stepStyles.togglePill} />
+  }
   return (
     <Pressable
       onPress={onPress}
@@ -1089,13 +1093,6 @@ const stepStyles = StyleSheet.create({
   },
   togglePill: {
     flex: 1,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 0,
   },
   togglePillText: {
     fontSize: 16,
