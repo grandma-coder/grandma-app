@@ -158,12 +158,11 @@ export default function CycleOnboarding() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        // No session (offline / signed-out edge): still enroll locally so the
-        // mode system has a behavior to switch to, then proceed.
-        useBehaviorStore.getState().enroll('pre-pregnancy')
-        useModeStore.getState().setCycleIntent(store.tryingToConceive ? 'ttc' : 'tracking')
+        // No session = signed out. Don't enroll a journey we couldn't save — it
+        // would open later as an empty home. Send them to sign in instead.
         store.clearAll()
-        return onboardingComplete('pre-pregnancy')
+        router.replace('/(auth)/welcome')
+        return
       }
 
       const userId = session.user.id

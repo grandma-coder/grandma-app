@@ -21,6 +21,10 @@ import {
   font as themeFont,
 } from '../../constants/theme'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
+import { router, useLocalSearchParams } from 'expo-router'
+import { useModeStore } from '../../store/useModeStore'
+import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
+import { otherReadyMode } from '../../lib/modeReadiness'
 import type { SiteStickerName } from '../stickers/SiteSticker'
 import { InkBackButton } from '../ui/InkBackButton'
 import { FadeUp, StickerEnter } from '../ui/Motion'
@@ -100,7 +104,21 @@ export function OnboardingStep({
   const dt = useDiffuseTheme()
 
   const backHandler = onBack ?? nav.onBack
-  const closeHandler = onClose ?? nav.onClose
+  // Required onboarding (Home sent us here because this journey has no data yet):
+  // closing must not drop the user back on an empty home. If another journey is
+  // ready, ✕ switches to it; otherwise there's no ✕ — the flow has to be finished.
+  const { required } = useLocalSearchParams<{ required?: string }>()
+  const currentMode = useModeStore((s) => s.mode) as Behavior
+  const escape = required === '1' ? otherReadyMode(currentMode) : null
+  const closeHandler = required === '1'
+    ? (escape
+        ? () => {
+            useBehaviorStore.getState().switchTo(escape)
+            useModeStore.getState().setMode(escape)
+            router.replace('/(tabs)')
+          }
+        : undefined)
+    : onClose ?? nav.onClose
 
   // ── Diffuse (v3) shell ────────────────────────────────────────────────────
   // Aura field + mono step header + hairline progress bar + serif question +

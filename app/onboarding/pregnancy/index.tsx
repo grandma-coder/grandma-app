@@ -192,16 +192,12 @@ export default function PregnancyOnboarding() {
       session = null
     }
     if (!session) {
-      // No session (offline / signed-out edge): enroll locally so the mode
-      // system has a behavior to switch to, then proceed.
-      useBehaviorStore.getState().enroll('pregnancy')
-      if (store.dueDate) {
-        pregnancyStore.setDueDate(store.dueDate)
-        pregnancyStore.setWeekNumber(calcWeekNumber(store.dueDate))
-      }
+      // No session = signed out. Don't enroll a journey we couldn't save — it
+      // would open later as an empty home. Send them to sign in instead.
       store.clearAll()
       completed = true
-      return onboardingComplete('pregnancy')
+      router.replace('/(auth)/welcome')
+      return
     }
 
     const userId = session.user.id

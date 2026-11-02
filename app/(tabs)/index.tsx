@@ -6,7 +6,7 @@
  */
 
 import { ScrollView, View, StyleSheet } from 'react-native'
-import { router } from 'expo-router'
+import { router, Redirect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
@@ -27,6 +27,8 @@ import { PillButton } from '../../components/ui/PillButton'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { useTranslation } from '../../lib/i18n'
+import { useModeReady, ONBOARDING_ROUTE } from '../../lib/modeReadiness'
+import type { Behavior } from '../../store/useBehaviorStore'
 
 export default function Home() {
   const insets = useSafeAreaInsets()
@@ -38,6 +40,8 @@ export default function Home() {
   const dt = useDiffuseTheme()
   const bottomInset = useScrollBottomInset()
   const { t } = useTranslation()
+  // A journey never opens on an empty home: missing its onboarding data → go do it.
+  const ready = useModeReady(mode as Behavior)
 
   // Under Diffuse the page canvas is the diffuse paper (matches the nav theme +
   // every other Diffuse screen); the current-system cream would read warmer and
@@ -51,6 +55,10 @@ export default function Home() {
   // the owner shared, with log entry points inert unless log_activity is granted
   // and the essentials card pinned. Gate on hydration so the caregiver's
   // permission-derived view never flashes the owner's full home on cold start.
+  if (ready === false) {
+    return <Redirect href={{ pathname: ONBOARDING_ROUTE[mode as Behavior], params: { required: '1' } } as any} />
+  }
+
   const isCaregiverContext = !!activeChild && activeChild.caregiverRole !== 'parent'
   if (isCaregiverContext && !caregiverHydrated) {
     return (

@@ -213,11 +213,11 @@ export default function KidsOnboarding() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        // No session (offline / signed-out edge): enroll locally so the mode
-        // system has a behavior to switch to, then proceed.
-        useBehaviorStore.getState().enroll('kids')
+        // No session = signed out. Don't enroll a journey we couldn't save — it
+        // would open later as an empty home. Send them to sign in instead.
         store.clearAll()
-        return onboardingComplete('kids')
+        router.replace('/(auth)/welcome')
+        return
       }
 
       const userId = session.user.id

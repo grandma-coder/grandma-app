@@ -64,6 +64,7 @@ import { hasPin, isBiometricInFlight } from '../lib/appLock'
 import LockScreen from './lock'
 import { useCaregiverStore } from '../store/useCaregiverStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
+import { useMenopauseStore } from '../store/useMenopauseStore'
 import { useDevStore } from '../store/useDevStore'
 import { initRevenueCat } from '../lib/revenue'
 import { runNotificationEngine } from '../lib/notificationEngine'
@@ -316,7 +317,7 @@ export default function RootLayout() {
           // instead of falling back to week 1 indefinitely.
           supabase
             .from('profiles')
-            .select('user_role, due_date')
+            .select('user_role, due_date, menopause_stage')
             .eq('id', uid)
             .single(),
         ),
@@ -375,6 +376,11 @@ export default function RootLayout() {
       // the user re-enters their due date manually.
       if (profile?.due_date && !usePregnancyStore.getState().dueDate) {
         usePregnancyStore.getState().setDueDate(profile.due_date)
+      }
+      // Same for the menopause stage: it is the menopause journey's "onboarded"
+      // marker (lib/modeReadiness), so a fresh install must not lose it.
+      if (profile?.menopause_stage && !useMenopauseStore.getState().stage) {
+        useMenopauseStore.getState().setStage(profile.menopause_stage)
       }
 
       // ─── Behaviors (restore enrolled list from server if local is empty) ─

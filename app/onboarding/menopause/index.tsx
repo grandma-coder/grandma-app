@@ -249,6 +249,13 @@ export default function MenopauseOnboarding() {
     try {
       const { data } = await supabase.auth.getSession()
       const userId = data.session?.user.id
+      if (!userId) {
+        // No session = signed out. Don't enroll a journey we couldn't save — it
+        // would open later as an empty home. Send them to sign in instead.
+        useMenopauseOnboardingStore.getState().reset()
+        router.replace('/(auth)/welcome')
+        return
+      }
       if (userId) {
         // upsert (NOT update): a menopause-first user has no profiles row yet,
         // and .update() matches 0 rows — silently losing stage + last period.
