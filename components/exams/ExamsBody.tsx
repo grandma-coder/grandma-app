@@ -15,7 +15,9 @@
 
 import { useMemo } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Image, type StyleProp, type ViewStyle } from 'react-native'
-import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../constants/theme'
+import { SiteSticker } from '../stickers/SiteSticker'
+import { ACTION_TONES } from '../ui/AuthDock'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseMetricTile, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { Character } from '../characters/Characters'
@@ -35,6 +37,12 @@ import { Display, Body, MonoCaps } from '../ui/Typography'
 import { logSticker } from '../calendar/logStickers'
 import { childColor } from '../ui/ChildPills'
 import { useTranslation } from '../../lib/i18n'
+
+const BEHAVIOR_MODE: Record<ExamBehavior, 'pre' | 'preg' | 'kids'> = {
+  'pre-pregnancy': 'pre',
+  pregnancy: 'preg',
+  kids: 'kids',
+}
 
 const BEHAVIOR_COLORS: Record<ExamBehavior, string> = {
   'pre-pregnancy': brand.prePregnancy,
@@ -111,6 +119,8 @@ export function ExamsBody({
   const inkMuted = diffuse ? dt.colors.ink3 : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)')
   const inkFaint = diffuse ? dt.colors.ink3 : (isDark ? colors.textFaint : 'rgba(20,19,19,0.35)')
 
+  const hairline = isDark ? colors.border : 'rgba(22,21,19,0.14)'
+
   const behaviorAccent = diffuse ? getDiffuseAccent(behavior, dt.isDark) : BEHAVIOR_COLORS[behavior]
 
   const body = (
@@ -124,19 +134,12 @@ export function ExamsBody({
             <DiffuseMetricTile value={stats.yearCount} label={t('exams_statThisYear')} />
           </View>
         ) : (
-          <View style={[styles.statsCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-            <StatCell value={stats.total} label={t('exams_statTotal')} ink={ink} inkMuted={inkMuted} font={font} />
-            <View style={[styles.statDivider, { backgroundColor: paperBorder }]} />
-            <StatCell
-              value={stats.flagged}
-              label={t('exams_statFlagged')}
-              accent={stats.flagged > 0 ? brand.error : undefined}
-              ink={ink}
-              inkMuted={inkMuted}
-              font={font}
-            />
-            <View style={[styles.statDivider, { backgroundColor: paperBorder }]} />
-            <StatCell value={stats.yearCount} label={t('exams_statThisYear')} ink={ink} inkMuted={inkMuted} font={font} />
+          <View style={[styles.statsStrip, { borderColor: hairline }]}>
+            <StatCell value={stats.total} label={t('exams_statTotal')} ink={colors.text} inkMuted={colors.textMuted} font={font} />
+            <View style={[styles.statDivider, { backgroundColor: hairline }]} />
+            <StatCell value={stats.flagged} label={t('exams_statFlagged')} ink={colors.text} inkMuted={colors.textMuted} font={font} />
+            <View style={[styles.statDivider, { backgroundColor: hairline }]} />
+            <StatCell value={stats.yearCount} label={t('exams_statThisYear')} ink={colors.text} inkMuted={colors.textMuted} font={font} />
           </View>
         )
       )}
@@ -147,7 +150,7 @@ export function ExamsBody({
           <MonoCaps size={11} color={inkFaint} style={{ marginBottom: 12, letterSpacing: 1.8 }}>
             {t('exams_insight_overTime')}
           </MonoCaps>
-          <View style={diffuse ? undefined : [styles.chartCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={undefined}>
             <BeadedThread
               data={insights.months.map((m) => m.count)}
               labels={insights.months.map((m) => m.label)}
@@ -178,36 +181,16 @@ export function ExamsBody({
       )}
 
       {!isLoading && exams.length === 0 && !diffuse && (
-        <View style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder }]}>
-          <View style={[styles.emptyStickerWrap, { backgroundColor: '#F3ECD9', borderColor: paperBorder }]}>
-            {logSticker('exam', 56, isDark)}
-          </View>
-          <Display size={22} color={ink} align="center" style={{ marginTop: 16 }}>
+        <View style={styles.emptyWrap}>
+          <SiteSticker name="doc" size={72} cut />
+          <Display size={20} color={colors.text} align="center" style={{ marginTop: 14, textTransform: 'uppercase', letterSpacing: 0.2 }}>
             {t('exams_emptyTitle')}
           </Display>
-          <Text style={[styles.emptyTagline, { color: ink, fontFamily: font.italic }]}>
-            {t('exams_emptyTagline')}
-          </Text>
-          <Body size={13} color={inkMuted} align="center" style={{ marginTop: 12 }}>
+          <Body size={14} color={colors.textSecondary} align="center" style={{ marginTop: 8 }}>
             {t('exams_emptyBody')}
           </Body>
-          <Pressable
-            onPress={onAddExam}
-            style={({ pressed }) => [
-              styles.emptyCta,
-              {
-                backgroundColor: behaviorAccent,
-                borderColor: isDark ? colors.border : '#141313',
-                shadowColor: '#141313',
-                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                shadowOpacity: 1,
-                shadowRadius: 0,
-                elevation: 4,
-                transform: [{ translateY: pressed ? 2 : 0 }],
-              },
-            ]}
-          >
-            <Text style={[styles.emptyCtaText, { color: '#141313', fontFamily: font.bodySemiBold }]}>
+          <Pressable onPress={onAddExam} hitSlop={10} style={({ pressed }) => [{ marginTop: 16, opacity: pressed ? 0.6 : 1 }]}>
+            <Text style={[styles.emptyLink, { color: colors.text, fontFamily: font.bodyBold }]}>
               {t('exams_addExam')}
             </Text>
           </Pressable>
@@ -219,7 +202,7 @@ export function ExamsBody({
           <MonoCaps size={11} color={inkFaint} style={{ marginBottom: 10, letterSpacing: 1.8 }}>
             {monthLabel(monthKey)}
           </MonoCaps>
-          <View style={{ gap: 10 }}>
+          <View>
             {items.map((exam) => (
               <ExamCard
                 key={exam.id}
@@ -262,26 +245,20 @@ export function ExamsBody({
 function StatCell({
   value,
   label,
-  accent,
   ink,
   inkMuted,
   font,
 }: {
   value: number
   label: string
-  accent?: string
   ink: string
   inkMuted: string
   font: ReturnType<typeof useTheme>['font']
 }) {
   return (
     <View style={styles.statCell}>
-      <Text style={[styles.statValue, { color: accent ?? ink, fontFamily: font.display }]}>
-        {value}
-      </Text>
-      <Text style={[styles.statLabel, { color: inkMuted, fontFamily: font.bodySemiBold }]}>
-        {label.toUpperCase()}
-      </Text>
+      <Text style={[styles.statValue, { color: ink, fontFamily: font.displayBold }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: inkMuted }]}>{label.toUpperCase()}</Text>
     </View>
   )
 }
@@ -367,83 +344,62 @@ function ExamCard({
     )
   }
 
+  const { colors } = useTheme()
+  const softTone = getModeColorSoft(BEHAVIOR_MODE[exam.behavior])
+  const hairline = isDark ? colors.border : 'rgba(22,21,19,0.14)'
+  const tagBase = { borderColor: colors.text }
+
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: paper, borderColor: paperBorder, opacity: pressed ? 0.92 : 1 },
-      ]}
+      style={({ pressed }) => [styles.row, { borderTopColor: hairline, opacity: pressed ? 0.65 : 1 }]}
     >
       {thumbUrl ? (
-        <Image source={{ uri: thumbUrl }} style={styles.cardThumb} />
+        <Image source={{ uri: thumbUrl }} style={styles.rowThumb} />
       ) : (
-        <View style={[styles.cardIconWrap, { backgroundColor: accent + '1A', borderColor: accent + '40' }]}>
-          {logSticker('exam', 32, isDark)}
+        <View style={styles.rowSticker}>
+          <SiteSticker name="doc" size={40} cut />
         </View>
       )}
 
       <View style={styles.cardBody}>
-        <View style={styles.cardTopRow}>
-          <Text
-            style={[styles.cardTitle, { color: ink, fontFamily: font.display }]}
-            numberOfLines={1}
-          >
-            {exam.title}
-          </Text>
-          {flaggedCount > 0 && (
-            <View style={[styles.flagPill, { backgroundColor: brand.error + '15', borderColor: brand.error + '50' }]}>
-              <Text style={[styles.flagPillText, { color: brand.error, fontFamily: font.bodySemiBold }]}>
-                {t('exams_flaggedCount', { count: String(flaggedCount) })}
-              </Text>
-            </View>
-          )}
-        </View>
+        <Text style={[styles.cardTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
+          {exam.title}
+        </Text>
 
         {exam.result && (
-          <Text
-            style={[styles.cardResult, { color: ink, fontFamily: font.italic }]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.cardResult, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
             {exam.result}
           </Text>
         )}
 
-        <View style={styles.cardMetaRow}>
-          <Text style={[styles.cardMeta, { color: inkMuted, fontFamily: font.bodyMedium }]}>
-            {formatExamDate(exam.examDate)}
-          </Text>
-          {provider && (
-            <>
-              <Text style={[styles.cardDot, { color: inkMuted }]}>{t('common_dotSeparator')}</Text>
-              <Text
-                style={[styles.cardMeta, { color: inkMuted, fontFamily: font.bodyMedium }]}
-                numberOfLines={1}
-              >
-                {provider}
-              </Text>
-            </>
-          )}
-        </View>
+        <Text style={[styles.cardMeta, { color: colors.textMuted }]} numberOfLines={1}>
+          {[formatExamDate(exam.examDate), provider].filter(Boolean).join(' · ').toUpperCase()}
+        </Text>
 
         <View style={styles.cardChipRow}>
-          <View style={[styles.behaviorPill, { backgroundColor: accent + '1A', borderColor: accent + '50' }]}>
-            <Text style={[styles.behaviorPillText, { color: accent, fontFamily: font.bodySemiBold }]}>
+          {flaggedCount > 0 && (
+            <View style={[styles.tag, tagBase, { backgroundColor: ACTION_TONES.peach }]}>
+              <Text style={[styles.tagText, { color: colors.text, fontFamily: font.bodyBold }]}>
+                {t('exams_flaggedCount', { count: String(flaggedCount) })}
+              </Text>
+            </View>
+          )}
+          <View style={[styles.tag, tagBase, { backgroundColor: softTone }]}>
+            <Text style={[styles.tagText, { color: colors.text, fontFamily: font.bodyBold }]}>
               {examBehaviorLabel(exam.behavior)}
             </Text>
           </View>
           {markChild && (
-            <View style={[styles.behaviorPill, { backgroundColor: childColor(childIndex) + '1A', borderColor: childColor(childIndex) + '50' }]}>
-              <Text style={[styles.behaviorPillText, { color: childColor(childIndex), fontFamily: font.bodySemiBold }]}>
-                {childName}
-              </Text>
+            <View style={[styles.tag, tagBase, { backgroundColor: childColor(childIndex) }]}>
+              <Text style={[styles.tagText, { color: colors.text, fontFamily: font.bodyBold }]}>{childName}</Text>
             </View>
           )}
           {exam.photos.length > 0 && (
-            <Text style={[styles.cardPhotos, { color: inkMuted, fontFamily: font.bodyMedium }]}>
-              {exam.photos.length === 1
+            <Text style={[styles.cardPhotos, { color: colors.textMuted }]}>
+              {(exam.photos.length === 1
                 ? t('exams_photoCount', { count: String(exam.photos.length) })
-                : t('exams_photosCount', { count: String(exam.photos.length) })}
+                : t('exams_photosCount', { count: String(exam.photos.length) })).toUpperCase()}
             </Text>
           )}
         </View>
@@ -469,84 +425,41 @@ const styles = StyleSheet.create({
   chartBlock: { marginBottom: 22 },
   chartCard: { borderWidth: 1, borderRadius: 22, padding: 14 },
 
-  // Stats summary
-  statsCard: {
+  // Stats strip — quiet numbers, hairline separators
+  statsStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 22,
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-    marginBottom: 18,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    paddingVertical: 14,
+    marginBottom: 22,
   },
-  statCell: { flex: 1, alignItems: 'center', gap: 2 },
-  statDivider: { width: 1, height: 36, opacity: 0.6 },
-  statValue: { fontSize: 32, letterSpacing: -1, lineHeight: 36 },
-  statLabel: { fontSize: 9.5, letterSpacing: 1.8, opacity: 0.7 },
+  statCell: { flex: 1, alignItems: 'center', gap: 4 },
+  statDivider: { width: 1, height: 36 },
+  statValue: { fontSize: 30, lineHeight: 34 },
+  statLabel: { fontSize: 10, letterSpacing: 1.4, fontFamily: 'SpaceMono_400Regular' },
 
   // Empty state
-  emptyCard: {
-    padding: 28,
-    paddingBottom: 24,
-    borderRadius: 24,
-    borderWidth: 1,
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  emptyStickerWrap: {
-    width: 88,
-    height: 88,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyTagline: {
-    fontSize: 16,
-    marginTop: 6,
-    textAlign: 'center',
-    opacity: 0.7,
-  },
-  emptyCta: {
-    marginTop: 20,
-    paddingHorizontal: 22,
-    paddingVertical: 12,
-    borderRadius: 999,
-    borderWidth: 1.5,
-  },
-  emptyCtaText: {
-    fontSize: 14,
-    letterSpacing: 0.2,
-  },
+  emptyWrap: { alignItems: 'center', marginTop: 40, paddingHorizontal: 24 },
+  emptyLink: { fontSize: 15, textDecorationLine: 'underline' },
 
   // Month group
   monthGroup: { marginBottom: 22 },
 
-  // Exam card
-  card: {
+  // Exam row (card-less, hairline divider)
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 22,
-    borderWidth: 1,
     gap: 14,
+    paddingVertical: 14,
+    borderTopWidth: 1,
   },
-  cardThumb: { width: 64, height: 64, borderRadius: 14 },
-  cardIconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardBody: { flex: 1, gap: 4 },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { fontSize: 17, letterSpacing: -0.3, lineHeight: 20, flex: 1 },
-  cardResult: { fontSize: 13, opacity: 0.85, fontStyle: 'italic' },
-  cardMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  cardMeta: { fontSize: 11.5 },
-  cardDot: { fontSize: 11 },
+  rowThumb: { width: 52, height: 52, borderRadius: 12 },
+  rowSticker: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
+  cardBody: { flex: 1, gap: 3 },
+  cardTitle: { fontSize: 16, letterSpacing: 0.2, lineHeight: 20, textTransform: 'uppercase' },
+  cardResult: { fontSize: 14 },
+  cardMeta: { fontSize: 10, letterSpacing: 1.4, fontFamily: 'SpaceMono_400Regular', marginTop: 2 },
   cardChipRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -554,19 +467,12 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 6,
   },
-  cardPhotos: { fontSize: 11, opacity: 0.6 },
-  behaviorPill: {
+  cardPhotos: { fontSize: 10, letterSpacing: 1.4, fontFamily: 'SpaceMono_400Regular' },
+  tag: {
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
-  behaviorPillText: { fontSize: 10, letterSpacing: 0.3 },
-  flagPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  flagPillText: { fontSize: 10, letterSpacing: 0.3 },
+  tagText: { fontSize: 11 },
 })
