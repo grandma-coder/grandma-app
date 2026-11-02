@@ -25,7 +25,7 @@ export const CYCLE_LOG_STICKER: Record<string, SiteStickerName> = {
 }
 
 export const MENOPAUSE_LOG_STICKER: Record<string, SiteStickerName> = {
-  hot_flash: 'flame', night_sweat: 'drop', sleep: 'moon', low_mood: 'face1', brain_fog: 'brain',
-  fatigue: 'cloud', anxiety: 'bubble', palpitations: 'heart', joint_pain: 'foot', headache: 'thermo',
+  hot_flash: 'flame', night_sweat: 'thermo', sleep: 'moon', low_mood: 'face1', brain_fog: 'brain',
+  fatigue: 'cloud', anxiety: 'bubble', palpitations: 'heart', joint_pain: 'foot', headache: 'headache',
   weight: 'scale', vaginal_dryness: 'leaf', libido: 'flower', period: 'drop', hrt: 'pill', note: 'pencil',
 }

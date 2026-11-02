@@ -55,7 +55,7 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
     onPick(type)
   }
 
-  const heading = title ?? 'Log activity'
+  const heading = title ?? 'Log a symptom'
 
   // ── Site look (light): ink-topped sheet, card-less sticker launchers ──────
   if (!diffuse) {

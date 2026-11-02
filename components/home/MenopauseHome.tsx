@@ -452,7 +452,7 @@ const walletBlock = (
       {/* Reused U7 log sheets — the parent supplies the sheet shell + title. */}
       <LogSheet
         visible={activeSheet === 'symptom'}
-        sticker={pendingSymptom ? menoSticker(pendingSymptom) : 'pencil'}
+        sticker="thermo"
         title="Log a symptom"
         onClose={() => { setActiveSheet(null); setLogDate(null) }}
       >
@@ -478,7 +478,7 @@ const walletBlock = (
         onClose={() => setGridOpen(false)}
         onPick={onGridPick}
         isPeri={stage === 'peri'}
-        title="Log activity"
+        title="Log a symptom"
       />
 
       {/* Quick-log Edit picker — choose which signals are pinned (shared with the

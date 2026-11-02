@@ -340,7 +340,7 @@ export function MenopauseCalendar() {
         onClose={() => setGridOpen(false)}
         onPick={onPick}
         isPeri={isPeri}
-        title="Log activity"
+        title="Log a symptom"
       />
       <LogSheet visible={!!pickedSymptom} sticker={pickedSymptom ? menoSticker(pickedSymptom) : 'pencil'} title={COPY.sheetSymptom} onClose={() => setPickedSymptom(null)}>
         {pickedSymptom ? (
