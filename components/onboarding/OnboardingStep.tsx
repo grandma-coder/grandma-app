@@ -287,7 +287,7 @@ export function OnboardingStep({
 }
 
 /** Wavy progress line: faint ink track, pink fill that springs to `pct`. */
-function WaveProgress({ pct, ink }: { pct: number; ink: string }) {
+export function WaveProgress({ pct, ink }: { pct: number; ink: string }) {
   const [w, setW] = useState(0)
   const fill = useRef(new Animated.Value(0)).current
   useEffect(() => {

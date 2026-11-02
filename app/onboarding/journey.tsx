@@ -22,6 +22,9 @@ import { SiteSticker, type SiteStickerName } from '../../components/stickers/Sit
 import { PillButton } from '../../components/ui/PillButton'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { WaveProgress } from '../../components/onboarding/OnboardingStep'
+import { EyeAction, ACTION_TONES } from '../../components/ui/AuthDock'
+import { JourneyCard } from '../../components/onboarding/JourneyCard'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
 import { BlobPicker, type BlobOption } from '../../components/ui/diffuse/pickers/BlobPicker'
@@ -327,11 +330,13 @@ export default function JourneyScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader
-          hideBack={!isAddMode}
-          title={isAddMode ? t('onboardingJourney_addTitle') : '1 / 10'}
-          style={{ marginBottom: 24 }}
-        />
+        {isAddMode ? (
+          <ScreenHeader title={t('onboardingJourney_addTitle')} style={{ marginBottom: 24 }} />
+        ) : (
+          <View style={styles.progressRow}>
+            <WaveProgress pct={0.1} ink={ink} />
+          </View>
+        )}
 
         {/* Heading */}
         <Display size={32} color={ink}>
@@ -345,103 +350,45 @@ export default function JourneyScreen() {
           {isAddMode ? t('onboardingJourney_addSubtitle') : t('onboardingJourney_subtitle')}
         </Body>
 
-        {/* Social proof — trust cue before the first commitment (first-time only) */}
-        {!isAddMode && (
-          <View style={[styles.socialProof, { backgroundColor: getModeColorSoft('pre', isDark), borderColor: paperBorder, borderWidth: 1.5, borderRadius: 14 }]}>
-            <View style={styles.socialAvatars}>
-              <View style={[styles.avatarDot, { backgroundColor: stickers.pink, borderColor: paper }]} />
-              <View style={[styles.avatarDot, { backgroundColor: stickers.lilac, borderColor: paper, marginLeft: -8 }]} />
-              <View style={[styles.avatarDot, { backgroundColor: stickers.blue, borderColor: paper, marginLeft: -8 }]} />
-            </View>
-            <Text style={[styles.socialText, { color: ink, fontFamily: font.bodyBold }]}>
-              {t('onboardingJourney_socialProof')}
-            </Text>
-          </View>
-        )}
-
         {/* Journey cards */}
         <View style={styles.cards}>
-          {JOURNEYS.map((journey) => {
+          {JOURNEYS.map((journey, i) => {
             const isEnrolled = enrolledBehaviors.includes(journey.id)
-            const isSelected = newSelections.includes(journey.id)
             const isDimmed = isAddMode && isEnrolled
-            const softBg = getModeColorSoft(journey.modeKey, isDark)
-            const accent = getModeColor(journey.modeKey, isDark)
-
             return (
-              <Pressable
+              <JourneyCard
                 key={journey.id}
+                index={i}
+                title={journey.title}
+                subtitle={journey.subtitle}
+                sticker={SITE_STICKER[journey.modeKey]}
+                tone={getModeColorSoft(journey.modeKey, isDark)}
+                selected={newSelections.includes(journey.id)}
+                dimmed={isDimmed}
+                activeLabel={t('onboardingJourney_activeBadge')}
                 onPress={() => !isDimmed && handleToggle(journey.id)}
-                disabled={isDimmed}
-                style={({ pressed }) => [
-                  styles.card,
-                  {
-                    backgroundColor: isSelected || isDimmed ? softBg : paper,
-                    borderColor: paperBorder,
-                    borderWidth: 1.5,
-                    borderRadius: 18,
-                    shadowColor: ink,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 0,
-                    opacity: isDimmed ? 0.55 : 1,
-                  },
-                  isSelected && { transform: [{ rotate: '-1.5deg' }, { scale: 1.02 }] },
-                  pressed && !isDimmed && { transform: [{ scale: 0.98 }] },
-                ]}
-              >
-                {/* Sticker circle */}
-                <View style={[styles.stickerCircle, { backgroundColor: paper, borderColor: paperBorder }]}>
-                  <SiteSticker name={SITE_STICKER[journey.modeKey]} size={36} cut />
-                </View>
-
-                {/* Text */}
-                <View style={styles.cardText}>
-                  <Text style={[styles.cardTitle, { fontFamily: font.display, color: isDimmed ? ink4 : ink }]}>
-                    {journey.title}
-                  </Text>
-                  <Text style={[styles.cardSubtitle, { fontFamily: font.body, color: ink3 }]}>
-                    {journey.subtitle}
-                  </Text>
-                </View>
-
-                {/* Status indicator */}
-                {isDimmed ? (
-                  <View style={[styles.activeBadge, { backgroundColor: ink }]}>
-                    <Text style={[styles.activeBadgeText, { fontFamily: 'SpaceMono_700Bold', color: bg }]}>
-                      {t('onboardingJourney_activeBadge')}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={[styles.chevronCircle, { backgroundColor: isSelected ? ink : paper, borderColor: paperBorder, borderWidth: 1.5 }]}>
-                    <Ionicons
-                      name={isSelected ? 'checkmark' : 'chevron-forward'}
-                      size={16}
-                      color={isSelected ? bg : ink}
-                    />
-                  </View>
-                )}
-              </Pressable>
+              />
             )
           })}
         </View>
       </ScrollView>
 
-      {/* Fixed CTA */}
-      {hasSelection && (
-        <View
-          style={[
-            styles.bottomBar,
-            { paddingBottom: insets.bottom + 16, backgroundColor: bg },
-          ]}
-        >
-          <PillButton
-            label={isAddMode ? t('onboardingJourney_addCta') : t('auth_continue')}
-            variant="ink"
-            onPress={handleContinue}
-          />
-        </View>
-      )}
+      {/* Continue — the disc wears the sticker of the journey you just picked */}
+      {hasSelection && (() => {
+        const last = JOURNEYS.find((j) => j.id === newSelections[newSelections.length - 1])
+        return (
+          <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10, backgroundColor: bg }]}>
+            <EyeAction
+              key={last?.id}
+              label={isAddMode ? t('onboardingJourney_addCta') : t('auth_continue')}
+              onPress={handleContinue}
+              ink={ink}
+              sticker={last ? SITE_STICKER[last.modeKey] : 'star'}
+              fill={last ? getModeColorSoft(last.modeKey, isDark) : ACTION_TONES.yellow}
+            />
+          </View>
+        )
+      })()}
     </View>
   )
 }
@@ -519,8 +466,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 12,
+    alignItems: 'center',
   },
+  progressRow: { paddingHorizontal: 40, marginBottom: 28, marginTop: 14 },
 
   emptyWrap: {
     flex: 1,

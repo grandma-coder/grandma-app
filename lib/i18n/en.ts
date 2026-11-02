@@ -2157,8 +2157,8 @@ export const en: TranslationKeys = {
   auth_passwordUpdatedMsg: 'Please sign in with your new password.',
 
   // Onboarding — journey screen
-  onboardingJourney_trying: 'Trying',
-  onboardingJourney_cycleSubtitle: 'Cycle & fertility',
+  onboardingJourney_trying: "Cycle",
+  onboardingJourney_cycleSubtitle: "Track it, or try for a baby",
   onboardingJourney_pregnant: 'Pregnant',
   onboardingJourney_pregnantSubtitle: 'Week by week',
   onboardingJourney_parenting: 'Parenting',
