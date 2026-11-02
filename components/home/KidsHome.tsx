@@ -5385,7 +5385,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
       <View style={s.modalOverlay}>
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={stage === 'liquid' ? 'Feeding' : 'Nutrition'} sticker="bottle" tone={StickerPalette.pinkSoft} childName={childName} childColor={childColor} onClose={onClose} />
-          {isLiquid || feedingCount > 0 || caloriesTotal > 0 ? (
+          {true ? (
             <FeedingDetailCalm
               caloriesTotal={isLiquid && stage !== 'mixed' ? 0 : caloriesTotal} caloriesTarget={caloriesTarget} categories={categories}
               feedingCount={feedingCount} feedingBreast={feedingBreast} feedingBottle={feedingBottle}

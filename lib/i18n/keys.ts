@@ -1015,6 +1015,41 @@ export interface TranslationKeys {
   kids_home_tile_activities: string
   kids_home_tile_activity_empty_sub: string
   kids_home_tile_no_goal: string
+  feedCalm_milkPerDay: string
+  feedCalm_milk: string
+  feedCalm_feeds: string
+  feedCalm_mlByBottle: string
+  feedCalm_breast: string
+  feedCalm_bottle: string
+  feedCalm_avgBottle: string
+  feedCalm_breastVsBottle: string
+  feedCalm_onlyBreast: string
+  feedCalm_onlyBottle: string
+  feedCalm_side: string
+  feedCalm_left: string
+  feedCalm_right: string
+  feedCalm_bothSides: string
+  feedCalm_timeOfDay: string
+  feedCalm_mostIn: string
+  feedCalm_sessions: string
+  feedCalm_sessionLine: string
+  feedCalm_sessionLineDay: string
+  feedCalm_solidsPerDay: string
+  feedCalm_solids: string
+  feedCalm_ofDay: string
+  feedCalm_of: string
+  feedCalm_emptyTitle: string
+  feedCalm_emptyHint: string
+  feedCalm_dawn: string
+  feedCalm_morning: string
+  feedCalm_afternoon: string
+  feedCalm_evening: string
+  feedCalm_night: string
+  feedCalm_inMorning: string
+  feedCalm_inDawn: string
+  feedCalm_inAfternoon: string
+  feedCalm_inEvening: string
+  feedCalm_inNight: string
   kids_growthLeapShort: string
   kidsTile_sleepNight: string
   kidsTile_sleepAvg: string

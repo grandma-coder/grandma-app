@@ -1,55 +1,95 @@
 /**
- * FeedingDetailCalm — the feeding pop-up body, calm version (site look).
+ * FeedingDetailCalm — the feeding / nutrition pop-up body (site look, calm).
  *
- * One clear hero number, then quiet rows: no stacks of coloured boxes. Hairline dividers,
- * small stickers, one thin split bar per comparison, a light time-of-day strip. Sections
- * fade up one after another.
+ * One hero number, then quiet rows separated by hairlines. Every section only appears when
+ * it has something true to say:
+ *
+ *   milk feeds   breast + bottle (solids logged as "feeding" don't count as milk)
+ *   stats        only the feed types that happened; "per bottle" = bottle ml ÷ bottles
+ *   breast×bottle split only when both happened, else a one-line "only breast/bottle"
+ *   which side   only when sides were logged ("both" folds half into each side)
+ *   time of day  breastfeeds only (that's what's timed) — labelled as such
+ *   length       breastfeeds with a duration
+ *   solids       kcal per day + top groups per day, when calories were logged
+ *   empty        nothing in the range → a friendly empty state
+ *
+ * Per-day numbers divide by the days in the selected range, so they match the home tiles;
+ * a one-day range drops "per day".
  */
 
 import { ScrollView, Text, View, StyleSheet } from 'react-native'
 import { useTheme, stickers } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { FadeUp } from '../../ui/Motion'
 
 const BUCKETS = [
-  { key: 'dawn', label: 'Dawn', from: 5, to: 9 },
-  { key: 'morning', label: 'Morning', from: 9, to: 12 },
-  { key: 'afternoon', label: 'Afternoon', from: 12, to: 17 },
-  { key: 'evening', label: 'Evening', from: 17, to: 22 },
-  { key: 'night', label: 'Night', from: 22, to: 5 },
-]
-const bucketOf = (h: number) => BUCKETS.find((b) => (b.from < b.to ? h >= b.from && h < b.to : h >= b.from || h < b.to))?.key ?? 'night'
+  { key: 'dawn', from: 5, to: 9 },
+  { key: 'morning', from: 9, to: 12 },
+  { key: 'afternoon', from: 12, to: 17 },
+  { key: 'evening', from: 17, to: 22 },
+  { key: 'night', from: 22, to: 5 },
+] as const
+type BucketKey = (typeof BUCKETS)[number]['key']
+const bucketOf = (h: number): BucketKey =>
+  BUCKETS.find((b) => (b.from < b.to ? h >= b.from && h < b.to : h >= b.from || h < b.to))?.key ?? 'night'
 
-export function FeedingDetailCalm(p: {
+export interface FeedingDetailCalmProps {
   feedingCount: number; feedingBreast: number; feedingBottle: number; feedingMl: number; avgMl: number
   feedingLeft: number; feedingRight: number; feedingBoth: number
   feedingTimes: number[]; feedingDurations: number[]; feedingDays: number
-  /** Mixed stage: solids on top of milk. */
   caloriesTotal?: number; caloriesTarget?: number
   categories?: { label: string; cals: number; color: string }[]
   /** Days in the selected range — every per-day number divides by this (matches the home tiles). */
   rangeDays?: number
-}) {
+}
+
+export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
   const ink2 = colors.textSecondary
   const days = Math.max(1, p.rangeDays ?? p.feedingDays)
-  const perDay = Math.round((p.feedingCount / days) * 10) / 10
-  const bb = p.feedingBreast + p.feedingBottle
-  const breastPct = bb > 0 ? Math.round((p.feedingBreast / bb) * 100) : 0
+  const oneDay = days === 1
+  const r1 = (n: number) => Math.round(n * 10) / 10
+
+  const milk = p.feedingBreast + p.feedingBottle
+  const breastPct = milk > 0 ? Math.round((p.feedingBreast / milk) * 100) : 0
+  const perBottle = p.feedingBottle > 0 && p.feedingMl > 0 ? Math.round(p.feedingMl / p.feedingBottle) : 0
 
   const sideKnown = p.feedingLeft + p.feedingRight + p.feedingBoth
   const leftPct = sideKnown > 0 ? Math.round(((p.feedingLeft + p.feedingBoth / 2) / sideKnown) * 100) : 0
 
-  const counts: Record<string, number> = { dawn: 0, morning: 0, afternoon: 0, evening: 0, night: 0 }
+  const counts: Record<BucketKey, number> = { dawn: 0, morning: 0, afternoon: 0, evening: 0, night: 0 }
   for (const h of p.feedingTimes) counts[bucketOf(h)]++
   const maxB = Math.max(1, ...Object.values(counts))
-  const peak = BUCKETS.reduce((a, b) => (counts[b.key] > counts[a.key] ? b : a), BUCKETS[0])
+  const peak = BUCKETS.reduce((a, b) => (counts[b.key] > counts[a.key] ? b : a), BUCKETS[0]).key
+  const inPart: Record<BucketKey, string> = {
+    dawn: t('feedCalm_inDawn'), morning: t('feedCalm_inMorning'), afternoon: t('feedCalm_inAfternoon'),
+    evening: t('feedCalm_inEvening'), night: t('feedCalm_inNight'),
+  }
 
   const totalMin = p.feedingDurations.reduce((a, b) => a + b, 0)
   const avgMin = p.feedingDurations.length ? Math.round(totalMin / p.feedingDurations.length) : 0
 
+  const kcal = p.caloriesTotal ?? 0
+  const kcalGoal = p.caloriesTarget ?? 0
+  const cats = (p.categories ?? []).filter((c) => c.cals > 0).slice(0, 4)
+
   const eyebrow = [styles.eyebrow, { color: ink2 }]
+  const Divider = () => <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+  // ── Empty ──
+  if (milk === 0 && kcal === 0) {
+    return (
+      <View style={styles.empty} testID="feeding-empty">
+        <SiteSticker name="bottle" size={56} cut />
+        <Text style={[styles.emptyTitle, { color: ink, fontFamily: font.display }]}>{t('feedCalm_emptyTitle')}</Text>
+        <Text style={[styles.line, { color: ink2, fontFamily: font.body, textAlign: 'center' }]}>{t('feedCalm_emptyHint')}</Text>
+      </View>
+    )
+  }
+
   const Stat = ({ sticker, value, label }: { sticker: SiteStickerName; value: string; label: string }) => (
     <View style={styles.stat}>
       <SiteSticker name={sticker} size={26} />
@@ -60,8 +100,8 @@ export function FeedingDetailCalm(p: {
   const Split = ({ a, aLabel, bLabel, aColor, bColor }: { a: number; aLabel: string; bLabel: string; aColor: string; bColor: string }) => (
     <View style={{ gap: 6 }}>
       <View style={[styles.split, { borderColor: ink }]}>
-        <View style={{ flex: Math.max(a, 1), backgroundColor: aColor }} />
-        <View style={{ flex: Math.max(100 - a, 1), backgroundColor: bColor }} />
+        {a > 0 ? <View style={{ flex: a, backgroundColor: aColor }} /> : null}
+        {a < 100 ? <View style={{ flex: 100 - a, backgroundColor: bColor }} /> : null}
       </View>
       <View style={styles.splitLabels}>
         <Text style={[styles.small, { color: ink, fontFamily: font.bodySemiBold }]}>{aLabel}</Text>
@@ -69,62 +109,77 @@ export function FeedingDetailCalm(p: {
       </View>
     </View>
   )
-  const Divider = () => <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+  let i = 0
+  let first = true
+  const sep = () => { if (first) { first = false; return null } return <Divider /> }
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
-      {p.feedingCount > 0 ? (<>
-      <FadeUp index={0}>
-        <Text style={eyebrow}>FEEDS · PER DAY</Text>
-        <View style={styles.heroRow}>
-          <Text style={[styles.hero, { color: ink, fontFamily: font.displayBold }]}>{perDay}</Text>
-          <Text style={[styles.heroSub, { color: ink2, fontFamily: font.body }]}>
-            {`${p.feedingCount} feeds${p.feedingMl > 0 ? ` · ${p.feedingMl.toLocaleString()} ml` : ''}`}
-          </Text>
-        </View>
-      </FadeUp>
+      {milk > 0 ? (
+        <FadeUp index={i++}>
+          {sep()}
+          <Text style={eyebrow}>{oneDay ? t('feedCalm_milk') : t('feedCalm_milkPerDay')}</Text>
+          <View style={styles.heroRow}>
+            <Text style={[styles.hero, { color: ink, fontFamily: font.displayBold }]} testID="feeding-hero">
+              {oneDay ? milk : r1(milk / days)}
+            </Text>
+            <Text style={[styles.heroSub, { color: ink2, fontFamily: font.body }]}>
+              {[!oneDay ? t('feedCalm_feeds', { n: milk }) : null, p.feedingMl > 0 ? t('feedCalm_mlByBottle', { ml: p.feedingMl.toLocaleString() }) : null]
+                .filter(Boolean).join(' · ')}
+            </Text>
+          </View>
+          <View style={styles.stats}>
+            {p.feedingBreast > 0 ? <Stat sticker="heart" value={`${p.feedingBreast}`} label={t('feedCalm_breast')} /> : null}
+            {p.feedingBottle > 0 ? <Stat sticker="bottle" value={`${p.feedingBottle}`} label={t('feedCalm_bottle')} /> : null}
+            {perBottle > 0 ? <Stat sticker="drop" value={`${perBottle} ml`} label={t('feedCalm_avgBottle')} /> : null}
+          </View>
+        </FadeUp>
+      ) : null}
 
-      <FadeUp index={1}>
-        <View style={styles.stats}>
-          <Stat sticker="heart" value={`${p.feedingBreast}`} label="Breast" />
-          <Stat sticker="bottle" value={`${p.feedingBottle}`} label="Bottle" />
-          <Stat sticker="drop" value={p.avgMl > 0 ? `${p.avgMl} ml` : '—'} label="Avg bottle" />
-        </View>
-      </FadeUp>
-      </>) : null}
-
-      {bb > 0 ? (
-        <FadeUp index={2}>
-          <Divider />
-          <Text style={eyebrow}>BREAST VS BOTTLE</Text>
-          <Split a={breastPct} aLabel={`Breast ${breastPct}%`} bLabel={`Bottle ${100 - breastPct}%`} aColor={stickers.pinkSoft} bColor={stickers.blueSoft} />
+      {milk > 0 ? (
+        <FadeUp index={i++}>
+          {sep()}
+          <Text style={eyebrow}>{t('feedCalm_breastVsBottle')}</Text>
+          {p.feedingBreast > 0 && p.feedingBottle > 0 ? (
+            <Split a={breastPct} aLabel={`${t('feedCalm_breast')} ${breastPct}%`} bLabel={`${t('feedCalm_bottle')} ${100 - breastPct}%`} aColor={stickers.pinkSoft} bColor={stickers.blueSoft} />
+          ) : (
+            <Text style={[styles.line, { color: ink, fontFamily: font.body }]}>
+              {p.feedingBreast > 0 ? t('feedCalm_onlyBreast') : t('feedCalm_onlyBottle')}
+            </Text>
+          )}
         </FadeUp>
       ) : null}
 
       {sideKnown > 0 ? (
-        <FadeUp index={3}>
-          <Divider />
-          <Text style={eyebrow}>BREAST SIDE</Text>
-          <Split a={leftPct} aLabel={`Left ${leftPct}%`} bLabel={`Right ${100 - leftPct}%`} aColor={stickers.pinkSoft} bColor={stickers.lilacSoft} />
+        <FadeUp index={i++}>
+          {sep()}
+          <Text style={eyebrow}>{t('feedCalm_side')}</Text>
+          <Split a={leftPct} aLabel={t('feedCalm_left', { p: leftPct })} bLabel={t('feedCalm_right', { p: 100 - leftPct })} aColor={stickers.pinkSoft} bColor={stickers.lilacSoft} />
+          {p.feedingBoth > 0 ? (
+            <Text style={[styles.small, { color: ink2, fontFamily: font.body, marginTop: 6 }]}>{t('feedCalm_bothSides', { n: p.feedingBoth })}</Text>
+          ) : null}
         </FadeUp>
       ) : null}
 
       {p.feedingTimes.length > 0 ? (
-        <FadeUp index={4}>
-          <Divider />
+        <FadeUp index={i++}>
+          {sep()}
           <View style={styles.rowBetween}>
-            <Text style={eyebrow}>TIME OF DAY</Text>
-            <Text style={[styles.small, { color: ink2, fontFamily: font.body }]}>{`most in the ${peak.label.toLowerCase()}`}</Text>
+            <Text style={eyebrow}>{t('feedCalm_timeOfDay')}</Text>
+            <Text style={[styles.small, { color: ink2, fontFamily: font.body }]}>{t('feedCalm_mostIn', { part: inPart[peak] })}</Text>
           </View>
           <View style={styles.bars}>
             {BUCKETS.map((b) => {
               const c = counts[b.key]
-              const isPeak = b.key === peak.key && c > 0
+              const isPeak = b.key === peak && c > 0
               return (
                 <View key={b.key} style={styles.barCol}>
                   <Text style={[styles.small, { color: ink, fontFamily: font.bodySemiBold }]}>{c || ''}</Text>
                   <View style={[styles.bar, { height: 6 + (c / maxB) * 54, backgroundColor: isPeak ? stickers.peach : stickers.peachSoft, borderColor: isPeak ? ink : 'transparent' }]} />
-                  <Text style={[styles.small, { color: isPeak ? ink : ink2, fontFamily: isPeak ? font.bodyBold : font.body }]}>{b.label}</Text>
+                  <Text style={[styles.small, { color: isPeak ? ink : ink2, fontFamily: isPeak ? font.bodyBold : font.body }]} numberOfLines={1}>
+                    {t(`feedCalm_${b.key}` as 'feedCalm_dawn')}
+                  </Text>
                 </View>
               )
             })}
@@ -132,38 +187,37 @@ export function FeedingDetailCalm(p: {
         </FadeUp>
       ) : null}
 
-      {(p.caloriesTotal ?? 0) > 0 ? (
-        <FadeUp index={6}>
-          <Divider />
-          <Text style={eyebrow}>SOLIDS · PER DAY</Text>
+      {avgMin > 0 ? (
+        <FadeUp index={i++}>
+          {sep()}
+          <Text style={eyebrow}>{t('feedCalm_sessions')}</Text>
+          <Text style={[styles.line, { color: ink, fontFamily: font.bodySemiBold }]}>
+            {oneDay ? t('feedCalm_sessionLineDay', { avg: avgMin }) : t('feedCalm_sessionLine', { avg: avgMin, day: Math.round(totalMin / days) })}
+          </Text>
+        </FadeUp>
+      ) : null}
+
+      {kcal > 0 ? (
+        <FadeUp index={i++}>
+          {sep()}
+          <Text style={eyebrow}>{oneDay ? t('feedCalm_solids') : t('feedCalm_solidsPerDay')}</Text>
           <View style={styles.heroRow}>
-            <Text style={[styles.statValue, { color: ink, fontFamily: font.displayBold, fontSize: 30, marginTop: 0 }]}>
-              {Math.round((p.caloriesTotal ?? 0) / days).toLocaleString()} kcal
+            <Text style={[styles.solidHero, { color: ink, fontFamily: font.displayBold }]} testID="solids-hero">
+              {Math.round(kcal / days).toLocaleString()} kcal
             </Text>
-            {(p.caloriesTarget ?? 0) > 0 ? (
-              <Text style={[styles.heroSub, { color: ink2, fontFamily: font.body }]}>{`of ${Math.round((p.caloriesTarget ?? 0) / days).toLocaleString()} a day`}</Text>
+            {kcalGoal > 0 ? (
+              <Text style={[styles.heroSub, { color: ink2, fontFamily: font.body }]}>
+                {oneDay ? t('feedCalm_of', { n: Math.round(kcalGoal).toLocaleString() }) : t('feedCalm_ofDay', { n: Math.round(kcalGoal / days).toLocaleString() })}
+              </Text>
             ) : null}
           </View>
-          {(p.categories ?? []).slice(0, 4).map((c) => (
+          {cats.map((c) => (
             <View key={c.label} style={styles.catRow}>
               <View style={[styles.catDot, { backgroundColor: c.color, borderColor: ink }]} />
               <Text style={[styles.line, { color: ink, fontFamily: font.body, flex: 1 }]}>{c.label}</Text>
               <Text style={[styles.line, { color: ink, fontFamily: font.bodySemiBold }]}>{Math.round(c.cals / days).toLocaleString()} kcal</Text>
             </View>
           ))}
-        </FadeUp>
-      ) : null}
-
-      {avgMin > 0 ? (
-        <FadeUp index={5}>
-          <Divider />
-          <Text style={eyebrow}>BREAST SESSIONS</Text>
-          <Text style={[styles.line, { color: ink, fontFamily: font.body }]}>
-            <Text style={{ fontFamily: font.bodyBold }}>{`${avgMin} min`}</Text>
-            {' on average · '}
-            <Text style={{ fontFamily: font.bodyBold }}>{`${Math.round(totalMin / days)} min`}</Text>
-            {' a day'}
-          </Text>
         </FadeUp>
       ) : null}
     </ScrollView>
@@ -175,7 +229,8 @@ const styles = StyleSheet.create({
   heroRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' },
   hero: { fontSize: 56, lineHeight: 62, letterSpacing: -1.5 },
   heroSub: { fontSize: 15 },
-  stats: { flexDirection: 'row', marginTop: 18 },
+  solidHero: { fontSize: 30, lineHeight: 36 },
+  stats: { flexDirection: 'row', marginTop: 18, gap: 8 },
   stat: { flex: 1, alignItems: 'flex-start', gap: 2 },
   statValue: { fontSize: 22, marginTop: 4 },
   statLabel: { fontSize: 13 },
@@ -183,11 +238,13 @@ const styles = StyleSheet.create({
   split: { flexDirection: 'row', height: 12, borderRadius: 6, borderWidth: 1.5, overflow: 'hidden' },
   splitLabels: { flexDirection: 'row', justifyContent: 'space-between' },
   small: { fontSize: 12 },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 4 },
   barCol: { flex: 1, alignItems: 'center', gap: 4 },
   bar: { width: '100%', borderRadius: 8, borderWidth: 1.5 },
   line: { fontSize: 15, lineHeight: 22 },
   catRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
   catDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 1.5 },
+  empty: { alignItems: 'center', gap: 10, paddingVertical: 40, paddingHorizontal: 24 },
+  emptyTitle: { fontSize: 22, textTransform: 'uppercase', letterSpacing: 0.3 },
 })
