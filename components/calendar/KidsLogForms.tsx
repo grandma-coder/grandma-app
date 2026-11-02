@@ -47,6 +47,8 @@ import {
 } from 'lucide-react-native'
 import { useTheme, brand, stickers as stickerPalette, font, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
+import { SiteChoice } from '../ui/SiteChoice'
+import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
@@ -88,6 +90,8 @@ type FormKind = 'feeding' | 'sleep' | 'health' | 'mood' | 'memory' | 'activity' 
 
 function FormHeaderSticker({ kind }: { kind: FormKind }) {
   const { t } = useTranslation()
+  // Site look: the sheet title already carries the sticker — this chip would repeat it.
+  if (!useIsDiffuse()) return null
   // Sticker + pastel chip color per form
   const map: Record<FormKind, { node: ReactElement; bg: string; label: string }> = {
     feeding: { node: <Drop size={28} fill={stickerPalette.peach} />,  bg: stickerPalette.peachSoft, label: t('kids_logForm_labelFeeding') },
@@ -774,11 +778,14 @@ function ChildSelector({
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
         {children.map((c, idx) => (
-          <ChildPill
+          <SiteChoice
             key={c.id}
+            compact
+            wobble
+            tick={false}
             label={c.name}
-            active={selected === c.id}
-            color={childColor(idx)}
+            selected={selected === c.id}
+            tone={childColor(idx)}
             onPress={() => onSelect(c.id)}
           />
         ))}
@@ -3976,53 +3983,26 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
     return <DiffuseSaveButton onPress={onPress} saving={saving} disabled={disabled} onSkip={onSkip} />
   }
 
+  // Site look: the save action is a tone disc with a pencil (write it down) + hand label;
+  // "skip this time" is a quiet text link under it.
   return (
-    <View style={{ gap: 10, marginTop: 4 }}>
-      {onSkip && (
-        <Pressable
-          onPress={onSkip}
-          disabled={saving}
-          style={({ pressed }) => [
-            styles.saveBtnGhost,
-            {
-              borderColor: isDark ? colors.borderStrong : INK,
-              borderWidth: 1.5,
-              opacity: saving ? 0.4 : 1,
-            },
-            pressed && { opacity: 0.7 },
-          ]}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <MinusCircle size={16} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.saveBtnGhostText, { color: colors.textMuted }]}>{t('kids_logForm_skipThisTime')}</Text>
-          </View>
-        </Pressable>
-      )}
-      <Pressable
+    <View style={{ alignItems: 'center', gap: 6, marginTop: 8 }}>
+      <EyeAction
+        label={t('common_save')}
         onPress={onPress}
-        disabled={saving || disabled}
-        style={({ pressed }) => [
-          styles.saveBtnPrimary,
-          {
-            backgroundColor: disabled
-              ? (colors.surface)
-              : (isDark ? colors.text : INK),
-            borderColor: disabled
-              ? (isDark ? colors.border : INK)
-              : (isDark ? colors.text : INK),
-          },
-          pressed && !disabled && { transform: [{ scale: 0.98 }], opacity: 0.92 },
-        ]}
-      >
-        {saving ? (
-          <ActivityIndicator color={disabled ? INK : '#FFFEF8'} />
-        ) : (
-          <Text style={[
-            styles.saveBtnPrimaryText,
-            { color: disabled ? (isDark ? colors.textMuted : 'rgba(20,19,19,0.4)') : '#FFFEF8' },
-          ]}>{t('common_save')}</Text>
-        )}
-      </Pressable>
+        ink={colors.text}
+        loading={saving}
+        disabled={disabled}
+        sticker="pencil"
+        fill={ACTION_TONES.yellow}
+      />
+      {onSkip ? (
+        <Pressable onPress={onSkip} disabled={saving} hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, paddingVertical: 6 })}>
+          <Text style={{ fontFamily: font.bodySemiBold, fontSize: 14, color: colors.textMuted, textDecorationLine: 'underline' }}>
+            {t('kids_logForm_skipThisTime')}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   )
 }
@@ -4155,7 +4135,7 @@ const styles = StyleSheet.create({
   // Breast feeding
   lastSideBanner: { padding: 12, borderWidth: 1 },
   lastSideLabel: { fontSize: 13, fontWeight: '500', lineHeight: 20 },
-  sectionLabel: { fontSize: 11, fontFamily: font.bodyMedium, textTransform: 'uppercase', letterSpacing: 1.2 },
+  sectionLabel: { fontSize: 16, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 },
   sideRow: { flexDirection: 'row', gap: 8 },
   sideBtn: { flex: 1, alignItems: 'center', paddingVertical: 16, gap: 8, borderWidth: 1 },
   breastIcon: { flexDirection: 'row', gap: 2, alignItems: 'flex-end' },

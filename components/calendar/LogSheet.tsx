@@ -11,6 +11,9 @@ import { X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { Display } from '../ui/Typography'
+import { InkBackButton } from '../ui/InkBackButton'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { StickerEnter } from '../ui/Motion'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 
 interface LogSheetProps {
@@ -26,6 +29,8 @@ interface LogSheetProps {
   /** Optional pinned action bar rendered below the scroll area (not scrolled).
    *  Used by the quick-log pickers to keep SAVE always visible. */
   footer?: ReactNode
+  /** Site look: a sticker beside the title. */
+  sticker?: SiteStickerName
 }
 
 export function LogSheet(props: LogSheetProps) {
@@ -33,7 +38,7 @@ export function LogSheet(props: LogSheetProps) {
   return diffuse ? <DiffuseLogSheet {...props} /> : <CurrentLogSheet {...props} />
 }
 
-function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight, footer }: LogSheetProps) {
+function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight, footer, sticker }: LogSheetProps) {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
 
@@ -70,7 +75,8 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
 
           <View style={styles.header}>
             <View style={styles.titleRow}>
-              <Display size={24} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2 }}>{title}</Display>
+              {sticker ? <StickerEnter delay={180} tilt={-8}><SiteSticker name={sticker} size={34} cut /></StickerEnter> : null}
+              <Display size={24} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2, flexShrink: 1 }}>{title}</Display>
               {chip ? (
                 <View style={[styles.chip, { backgroundColor: paper, borderColor: ink }]}>
                   <Text style={[styles.chipText, { color: ink }]}>{chip}</Text>
@@ -78,11 +84,7 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
               ) : null}
               {titleRight}
             </View>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <View style={[styles.closeBtn, { backgroundColor: paper, borderColor: ink, borderWidth: 2 }]}>
-                <X size={18} color={ink} />
-              </View>
-            </Pressable>
+            <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label="Close" style={{ marginBottom: 0 }} />
           </View>
 
           <ScrollView
