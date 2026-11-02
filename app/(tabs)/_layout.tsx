@@ -6,7 +6,7 @@
  * Smooth fade transition when behavior switches via Profile.
  */
 
-import { useState, useEffect, useRef, useCallback, ReactElement } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Text, Pressable, Modal, Animated, StyleSheet, Dimensions, Easing, ScrollView } from 'react-native'
 import { Tabs, router } from 'expo-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -28,11 +28,11 @@ import { useCaregiverStore } from '../../store/useCaregiverStore'
 import { useProfile } from '../../lib/useProfile'
 import { getModeConfig, getCaregiverTabVisibility } from '../../lib/modeConfig'
 import { isCaregiver } from '../../lib/caregiverPermissions'
-import { useTheme, brand, getModeColor, getModeAccent, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
+import { useTheme, brand, stickers, getModeColor, getModeAccent, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { SiteSticker, type SiteStickerName } from '../../components/stickers/SiteSticker'
 import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import { useTranslation } from '../../lib/i18n'
-import { Burst, Blob, Flower, Squishy, Heart, Star, Drop, StickerPalette } from '../../components/stickers/BrandStickers'
+import { StickerPalette } from '../../components/stickers/BrandStickers'
 import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
@@ -56,7 +56,6 @@ const SWISS_MED = 'HankenGrotesk_500Medium'
 // On open: items stack at the + pivot, then fan out in a leque with
 // staggered timing. Scrim adapts to light/dark (cream wash / ink wash).
 
-type StickerRenderer = (props: { size: number }) => ReactElement
 interface WheelItem {
   id: string
   labelKey: 'menu_grandmaTalk' | 'menu_insights' | 'menu_dailyRewards' | 'menu_garage' | 'menu_channels' | 'menu_community'
@@ -64,7 +63,8 @@ interface WheelItem {
   icon: LucideIcon
   route: string
   rotation: number // degrees of playful tilt
-  sticker: StickerRenderer
+  site: SiteStickerName // site-look tile sticker
+  tone: string // site-look tile fill
   accent: string // Diffuse: bloom color behind the line icon (parallel to the sticker fill)
 }
 
@@ -76,7 +76,8 @@ const WHEEL_ITEMS: WheelItem[] = [
     icon: Sparkles,
     route: '/insights',
     rotation: -6,
-    sticker: ({ size }) => <Burst size={size} fill={StickerPalette.yellow} points={12} />,
+    site: 'brain',
+    tone: stickers.yellowSoft,
     accent: StickerPalette.yellow,
   },
   {
@@ -86,7 +87,8 @@ const WHEEL_ITEMS: WheelItem[] = [
     icon: Gift,
     route: '/daily-rewards',
     rotation: 4,
-    sticker: ({ size }) => <Flower size={size} petal={StickerPalette.pink} center={StickerPalette.yellow} />,
+    site: 'star',
+    tone: stickers.pinkSoft,
     accent: StickerPalette.pink,
   },
   {
@@ -96,7 +98,8 @@ const WHEEL_ITEMS: WheelItem[] = [
     icon: MessageCircle,
     route: '/grandma-talk',
     rotation: -8,
-    sticker: ({ size }) => <Blob size={size} fill={StickerPalette.lilac} variant={1} />,
+    site: 'bubble',
+    tone: stickers.lilacSoft,
     accent: StickerPalette.lilac,
   },
   {
@@ -106,7 +109,8 @@ const WHEEL_ITEMS: WheelItem[] = [
     icon: ShoppingBag,
     route: '/village',
     rotation: 6,
-    sticker: ({ size }) => <Squishy w={size * 1.15} h={size * 0.78} fill={StickerPalette.green} />,
+    site: 'bodysuit',
+    tone: stickers.greenSoft,
     accent: StickerPalette.green,
   },
   {
@@ -116,7 +120,8 @@ const WHEEL_ITEMS: WheelItem[] = [
     icon: Users,
     route: '/community',
     rotation: -4,
-    sticker: ({ size }) => <Blob size={size} fill={StickerPalette.peach} variant={2} />,
+    site: 'globe',
+    tone: stickers.blueSoft,
     accent: StickerPalette.peach,
   },
 ]
@@ -209,7 +214,7 @@ function CenterTabButton() {
 
   // Theme-aware scrim — fully opaque paper/ink so the home screen never
   // bleeds through and competes with the menu's typography.
-  const scrimColor = diffuse ? dt.colors.bg : (isDark ? '#0E0B08' : StickerPalette.cream)
+  const scrimColor = diffuse ? dt.colors.bg : (isDark ? '#0E0B08' : colors.bg)
   const inkColor = diffuse ? dt.colors.ink : (isDark ? '#F5EDDC' : '#141313')
   const ink3Color = diffuse ? dt.colors.ink3 : (isDark ? 'rgba(245,237,220,0.55)' : '#6E6763')
 
@@ -344,131 +349,97 @@ function CenterTabButton() {
           </>
         ) : (
         <>
-
-        {/* Decorative sticker confetti — sits above scrim, below tiles.
-            Hidden under Diffuse (the calm variant has no collage confetti). */}
-        {!diffuse && (<>
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.confetti, { top: 76, left: 26, transform: [{ rotate: '-18deg' }], opacity: overlayAnim }]}
+        {/* ── Site look: sticker-tile menu ─────────────────────────────────
+            Header up top, a 2-column grid of tone-filled ink cards anchored
+            above the eye, and an ink ✕ disc sitting exactly where the eye was. */}
+        <View
+          pointerEvents="box-none"
+          style={[styles.menuStack, { top: insets.top + 24, bottom: insets.bottom + 128 }]}
         >
-          <Star size={40} fill={StickerPalette.yellow} />
-        </Animated.View>
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.confetti, { top: 120, right: 28, transform: [{ rotate: '14deg' }], opacity: overlayAnim }]}
-        >
-          <Heart size={32} fill={StickerPalette.coral} />
-        </Animated.View>
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.confetti, { top: 200, left: 36, transform: [{ rotate: '8deg' }], opacity: overlayAnim }]}
-        >
-          <Drop size={28} fill={StickerPalette.blue} />
-        </Animated.View>
-        </>)}
-
-        {/* Prompt — "where to, dear?" serif + italic accent.
-            Sits well below the status bar in its own band so it never
-            collides with the home greeting underneath. */}
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.prompt, { top: insets.top + 88, opacity: overlayAnim }]}
-        >
-          <Text style={[styles.promptKicker, { color: ink3Color }]}>{t('tabFan_kicker')}</Text>
-          <Text style={[styles.promptLine, { color: inkColor }]}>
-            {t('tabFan_whereTo')}
-            <Text style={[styles.promptItalic, { color: accentColor }]}>{`${userName}?`}</Text>
+        <Animated.View pointerEvents="none" style={[styles.menuHead, { opacity: overlayAnim }]}>
+          <Text style={[styles.menuEyebrow, { color: ink3Color }]}>
+            {t('tabFan_kicker').replace(/·/g, '').trim()}
           </Text>
-          <View style={[styles.promptRule, { backgroundColor: ink3Color }]} />
-          <Text style={[styles.promptCaps, { color: ink3Color }]}>{t('tabFan_pickCorner')}</Text>
+          <Text style={[styles.menuTitle, { color: inkColor }]}>
+            {t('tabFan_whereTo')}
+            <Text style={{ color: getModeAccent(mode, isDark) }}>{`${userName}?`}</Text>
+          </Text>
+          <Svg width={120} height={10} viewBox="0 0 200 12" style={{ marginTop: 6 }}>
+            <Path d={WAVE} stroke={getModeAccent(mode, isDark)} strokeWidth={4} fill="none" strokeLinecap="round" />
+          </Svg>
+          <Text style={[styles.menuHint, { color: ink3Color }]}>{t('tabFan_pickCorner')}</Text>
         </Animated.View>
 
-        {/* Fan items */}
-        {items.map((item, i) => {
-          const Icon = item.icon
-          const anim = itemAnims[i]
-          const total = items.length
-          const t01 = total === 1 ? 0.5 : i / (total - 1)
-          const deg = FAN_START_DEG + (FAN_END_DEG - FAN_START_DEG) * t01
-          const rad = (deg * Math.PI) / 180
-          const finalX = Math.cos(rad) * FAN_RADIUS
-          const finalY = Math.sin(rad) * FAN_RADIUS
-
-          // Items start stacked at pivot with scale 0.55 + no rotation, end at their fanned position.
-          const translateX = anim.interpolate({ inputRange: [0, 1], outputRange: [0, finalX] })
-          const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [0, finalY] })
-          const itemScale = anim.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] })
-          const itemOpacity = anim.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 0.6, 1] })
-          const itemRotate = anim.interpolate({
-            inputRange: [0, 1],
-            outputRange: ['0deg', `${item.rotation}deg`],
-          })
-
-          return (
-            <Animated.View
-              key={item.id}
-              pointerEvents="box-none"
-              style={[
-                styles.fanItemWrap,
-                {
-                  left: pivotX,
-                  top: pivotY,
-                  opacity: itemOpacity,
-                  transform: [
-                    { translateX },
-                    { translateY },
-                    { translateX: -60 }, // center the 120-wide tile on the pivot
-                    { translateY: -STICKER_SIZE / 2 - 18 },
-                    { scale: itemScale },
-                    { rotate: itemRotate },
-                  ],
-                },
-              ]}
-            >
-              <Pressable
-                onPress={() => handleItem(item.route)}
-                style={({ pressed }) => [
-                  styles.fanItem,
-                  pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
+        <View pointerEvents="box-none" style={styles.menuGrid}>
+          {items.map((item, i) => {
+            const anim = itemAnims[i]
+            const lone = items.length % 2 === 1 && i === items.length - 1
+            const tilt = i % 2 === 0 ? -1.5 : 1.5
+            return (
+              <Animated.View
+                key={item.id}
+                style={[
+                  lone ? styles.menuCellWide : styles.menuCell,
+                  {
+                    opacity: anim,
+                    transform: [
+                      { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
+                      { scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) },
+                      { rotate: lone ? '0deg' : `${tilt}deg` },
+                    ],
+                  },
                 ]}
               >
-                {/* Icon glyph — Diffuse: Lucide line icon over a soft bloom;
-                    current: collage sticker with the icon stacked on top. */}
-                {diffuse ? (
-                  <View style={styles.stickerStack}>
-                    <DiffuseBloomIcon color={item.accent} size={STICKER_SIZE * 0.72} intensity={0.55}>
-                      <Icon size={ICON_SIZE + 2} color={dt.colors.ink3} strokeWidth={1.5} />
-                    </DiffuseBloomIcon>
-                  </View>
-                ) : (
-                  <View style={styles.stickerStack}>
-                    <View style={StyleSheet.absoluteFill}>{item.sticker({ size: STICKER_SIZE })}</View>
-                    <Icon size={ICON_SIZE} color="#141313" strokeWidth={2} />
-                  </View>
-                )}
-
-                {/* Label — Diffuse: hairline chip + mono; current: paper chip. */}
-                <View style={{ transform: [{ rotate: `${-item.rotation}deg` }], alignItems: 'center', marginTop: 8 }}>
-                  <View style={[styles.labelPill, diffuse
-                    ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-                    : { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.labelText, diffuse
-                      ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 }
-                      : { color: inkColor }]} numberOfLines={1}>
+                <Pressable
+                  onPress={() => handleItem(item.route)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(item.labelKey)}
+                  style={({ pressed }) => [
+                    styles.menuCard,
+                    lone && styles.menuCardWide,
+                    {
+                      backgroundColor: isDark ? colors.surface : item.tone,
+                      borderColor: inkColor,
+                      shadowColor: inkColor,
+                      transform: [{ translateY: pressed ? 2 : 0 }],
+                      shadowOffset: { width: 0, height: pressed ? 1 : 3 },
+                    },
+                  ]}
+                >
+                  <SiteSticker name={item.site} size={lone ? 48 : 52} cut />
+                  <View style={lone ? { flex: 1, marginLeft: 12 } : { marginTop: 10 }}>
+                    <Text style={[styles.menuLabel, { color: inkColor }]} numberOfLines={1}>
                       {t(item.labelKey)}
                     </Text>
+                    <Text style={[styles.menuSub, { color: isDark ? ink3Color : '#4F4B43' }]} numberOfLines={1}>
+                      {t(item.subtitleKey)}
+                    </Text>
                   </View>
-                  <Text style={[styles.subtitle, diffuse
-                    ? { color: dt.colors.ink3, fontFamily: diffuseFont.body }
-                    : { color: ink3Color }]} numberOfLines={1}>
-                    {t(item.subtitleKey)}
-                  </Text>
-                </View>
-              </Pressable>
+                </Pressable>
+              </Animated.View>
+            )
+          })}
+        </View>
+        </View>
+
+        {/* Close — an ink disc with ✕ over the eye's spot in the tab bar. */}
+        <Animated.View
+          style={[styles.menuClose, { top: pivotY - 44, left: pivotX - 33, opacity: overlayAnim }]}
+        >
+          <Pressable
+            onPress={animateClose}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Close menu"
+            style={[styles.menuCloseDisc, { backgroundColor: inkColor }]}
+          >
+            <Animated.View style={{ transform: [{ rotate: spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['-90deg', '0deg'] }) }] }}>
+              <Svg width={22} height={22} viewBox="0 0 22 22">
+                <Path d="M4 4 L18 18 M18 4 L4 18" stroke={scrimColor} strokeWidth={3} strokeLinecap="round" />
+              </Svg>
             </Animated.View>
-          )
-        })}
+          </Pressable>
+        </Animated.View>
         </>
         )}
       </Modal>
@@ -1015,6 +986,89 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.8,
     textTransform: 'uppercase',
+  },
+  // ── Site-look sticker-tile menu ──
+  menuStack: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    justifyContent: 'flex-end',
+  },
+  menuHead: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  menuEyebrow: {
+    fontFamily: 'SpaceMono_400Regular',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  menuTitle: {
+    fontFamily: font.display,
+    fontSize: 32,
+    lineHeight: 40,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  menuHint: {
+    fontFamily: font.display,
+    fontSize: 15,
+    marginTop: 8,
+  },
+  menuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 16,
+  },
+  menuCell: {
+    width: '48%',
+  },
+  menuCellWide: {
+    width: '100%',
+  },
+  menuCard: {
+    borderWidth: 1.5,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 18,
+    minHeight: 150,
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
+  menuCardWide: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 0,
+    paddingVertical: 14,
+  },
+  menuLabel: {
+    fontFamily: font.display,
+    fontSize: 22,
+    lineHeight: 28,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+  },
+  menuSub: {
+    fontFamily: font.body,
+    fontSize: 14,
+    marginTop: 2,
+  },
+  menuClose: {
+    position: 'absolute',
+    width: 66,
+    height: 66,
+  },
+  menuCloseDisc: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fanItemWrap: {
     position: 'absolute',
