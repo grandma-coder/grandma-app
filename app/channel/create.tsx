@@ -19,7 +19,7 @@ import {
   encodeStickerUrl,
   presetBlob,
 } from '../../lib/channelSticker'
-import { Character } from '../../components/characters/Characters'
+import { ChannelGlyph } from '../../components/community/ChannelGlyph'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 
@@ -169,7 +169,7 @@ export default function CreateChannel() {
                 <View style={[styles.iconPreview, diffuse
                   ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                   : { backgroundColor: s.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-                  <Character name={presetBlob(icon.index)} size={48} bg={previewBg} />
+                  <ChannelGlyph name={presetBlob(icon.index)} size={48} bg={previewBg} />
                 </View>
               )
             })()}
@@ -198,7 +198,7 @@ export default function CreateChannel() {
                         },
                   ]}
                 >
-                  <Character name={presetBlob(i)} size={26} bg={tileBg} />
+                  <ChannelGlyph name={presetBlob(i)} size={26} bg={tileBg} />
                 </Pressable>
               )
             })}

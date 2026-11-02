@@ -44,7 +44,7 @@ import { InkBackButton } from '../../../components/ui/InkBackButton'
 import { SiteSticker } from '../../../components/stickers/SiteSticker'
 import { useSavedToast } from '../../../components/ui/SavedToast'
 import { channelSticker, channelBlob, personBlob } from '../../../lib/channelSticker'
-import { Character } from '../../../components/characters/Characters'
+import { ChannelGlyph } from '../../../components/community/ChannelGlyph'
 import { getChannels, type Channel } from '../../../lib/channels'
 import {
   isChannelMember,
@@ -441,7 +441,7 @@ export default function ChannelInfoScreen() {
               <View style={[s.channelIcon, diffuse
                 ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                 : { backgroundColor: sticker.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-                <Character name={blob} size={52} bg={iconBg} />
+                <ChannelGlyph name={blob} size={52} bg={iconBg} />
               </View>
             )
           })()}
@@ -505,19 +505,19 @@ export default function ChannelInfoScreen() {
           ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
           : { backgroundColor: 'transparent', borderRadius: 0, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border }]}>
           <View style={s.stat}>
-            <Character name="community" size={18} color={diffuse ? dt.colors.ink3 : colors.text} />
+            <ChannelGlyph name="community" size={18} color={diffuse ? dt.colors.ink3 : colors.text} />
             <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{channel.memberCount}</Text>
             <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '400' }]}>{t('channelInfo_statMembers')}</Text>
           </View>
           <View style={[s.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <View style={s.stat}>
-            <Character name="star" size={18} color={diffuse ? dt.colors.ink3 : colors.text} />
+            <ChannelGlyph name="star" size={18} color={diffuse ? dt.colors.ink3 : colors.text} />
             <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{channel.avgRating > 0 ? channel.avgRating.toFixed(1) : '—'}</Text>
             <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '400' }]}>{t('channelInfo_statRating')}</Text>
           </View>
           <View style={[s.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <View style={s.stat}>
-            <Character name="photo" size={18} color={diffuse ? dt.colors.ink3 : colors.text} />
+            <ChannelGlyph name="photo" size={18} color={diffuse ? dt.colors.ink3 : colors.text} />
             <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{sharedMedia.length}</Text>
             <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '400' }]}>{t('channelInfo_statMedia')}</Text>
           </View>
@@ -570,9 +570,9 @@ export default function ChannelInfoScreen() {
                 <View style={[s.ownerAvatar, diffuse
                   ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                   : { backgroundColor: os.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-                  <Character name={personBlob(channel.createdBy ?? 'owner')} size={20} bg={avatarBg} />
+                  <ChannelGlyph name={personBlob(channel.createdBy ?? 'owner')} size={20} bg={avatarBg} />
                   <View style={[s.ownerCrownBadge, { backgroundColor: diffuse ? dt.colors.bg : colors.surface }]}>
-                    <Character name="crown" size={11} color={crownColor} />
+                    <ChannelGlyph name="crown" size={11} color={crownColor} />
                   </View>
                 </View>
               )
@@ -608,13 +608,13 @@ export default function ChannelInfoScreen() {
                 <View style={[s.memberAvatar, diffuse
                   ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                   : { backgroundColor: ms.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-                  <Character name={personBlob(m.user_id)} size={16} bg={memberBg} />
+                  <ChannelGlyph name={personBlob(m.user_id)} size={16} bg={memberBg} />
                 </View>
                 <Text style={[s.memberName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>
                   {m.name ?? t('channelInfo_memberFallback')}
                 </Text>
                 {m.user_id === channel.createdBy && (
-                  <Character name="crown" size={14} color={diffuse ? dt.colors.ink3 : colors.text} />
+                  <ChannelGlyph name="crown" size={14} color={diffuse ? dt.colors.ink3 : colors.text} />
                 )}
               </View>
             )
@@ -651,27 +651,27 @@ export default function ChannelInfoScreen() {
                 ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
                 : cardless]}>
                 <View style={s.metricsHeader}>
-                  <Character name="chart" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
+                  <ChannelGlyph name="chart" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
                   <Text style={[s.metricsTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontSize: 18 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_metricsTitle')}</Text>
                 </View>
                 <View style={s.metricsGrid}>
                   <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: 'transparent', borderRadius: 14, borderWidth: 1.5, borderColor: colors.text }]}>
-                    <Character name="community" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
+                    <ChannelGlyph name="community" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
                     <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{metrics.totalMembers}</Text>
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4 }]}>{t('channelInfo_metricMembers')}</Text>
                   </View>
                   <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: 'transparent', borderRadius: 14, borderWidth: 1.5, borderColor: colors.text }]}>
-                    <Character name="chat" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
+                    <ChannelGlyph name="chat" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
                     <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{metrics.totalMessages}</Text>
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4 }]}>{t('channelInfo_metricMessages')}</Text>
                   </View>
                   <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: 'transparent', borderRadius: 14, borderWidth: 1.5, borderColor: colors.text }]}>
-                    <Character name="photo" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
+                    <ChannelGlyph name="photo" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
                     <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{metrics.totalMedia}</Text>
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4 }]}>{t('channelInfo_metricMedia')}</Text>
                   </View>
                   <View style={[s.metricItem, diffuse ? { backgroundColor: 'transparent', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line } : { backgroundColor: 'transparent', borderRadius: 14, borderWidth: 1.5, borderColor: colors.text }]}>
-                    <Character name="activity" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
+                    <ChannelGlyph name="activity" size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
                     <Text style={[s.metricValue, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{metrics.activeToday}</Text>
                     <Text style={[s.metricLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4 }]}>{t('channelInfo_metricActiveToday')}</Text>
                   </View>
@@ -729,7 +729,7 @@ export default function ChannelInfoScreen() {
                     <View style={[s.memberAvatar, diffuse
                       ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                       : { backgroundColor: rs.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-                      <Character name={personBlob(req.user_id)} size={16} bg={reqBg} />
+                      <ChannelGlyph name={personBlob(req.user_id)} size={16} bg={reqBg} />
                     </View>
                     <Text style={[s.memberName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>
                       {req.user_name ?? t('channelInfo_memberFallback')}

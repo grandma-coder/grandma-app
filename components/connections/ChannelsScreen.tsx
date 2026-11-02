@@ -34,6 +34,8 @@ import { useChannelsStore } from '../../store/useChannelsStore'
 import { channelSticker, channelBlob } from '../../lib/channelSticker'
 import { Star as StarSticker } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
+import { ChannelGlyph } from '../community/ChannelGlyph'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { useConfirmDialog } from '../ui/useConfirm'
 import { useTranslation } from '../../lib/i18n'
 
@@ -239,7 +241,7 @@ export function ChannelsScreen() {
           {/* Trending */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Character name="trending" size={16} color={diffuse ? dt.colors.ink3 : accent} />
+              {diffuse ? <Character name="trending" size={16} color={dt.colors.ink3} /> : <SiteSticker name="bars" size={20} />}
               <Text style={[styles.sectionTitle, { marginBottom: 0 }, sectionTitleStyle(diffuse, dt, colors, font)]}>{t('channelsDiscover_trending')}</Text>
             </View>
             {trending.map((c) => (
@@ -351,12 +353,12 @@ function BannerCarousel({ channels, myIds, accent, onJoin }: { channels: Channel
               {diffuse ? (
                 <View style={[styles.bannerIcon, { borderWidth: 1, borderColor: dt.colors.line2 }]}>
                   <DiffuseBloomIcon color={sticker.fill} size={40} intensity={0.45}>
-                    <Character name={blob} size={30} bg={dt.colors.surface} />
+                    <ChannelGlyph name={blob} size={30} bg={dt.colors.surface} />
                   </DiffuseBloomIcon>
                 </View>
               ) : (
                 <View style={[styles.bannerIcon, { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.text }]}>
-                  <Character name={blob} size={34} bg={colors.surface} />
+                  <ChannelGlyph name={blob} size={34} bg={colors.surface} />
                 </View>
               )}
               <View style={styles.bannerContent}>
@@ -495,12 +497,12 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
       {diffuse ? (
         <View style={[styles.cardIcon, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
           <DiffuseBloomIcon color={sticker.fill} size={32} intensity={0.45}>
-            <Character name={blob} size={24} bg={dt.colors.surface} />
+            <ChannelGlyph name={blob} size={24} bg={dt.colors.surface} />
           </DiffuseBloomIcon>
         </View>
       ) : (
         <View style={[styles.cardIcon, { backgroundColor: sticker.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-          <Character name={blob} size={26} bg={sticker.tint} />
+          <ChannelGlyph name={blob} size={26} bg={sticker.tint} />
         </View>
       )}
       <View style={styles.cardContent}>
@@ -577,12 +579,12 @@ function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Chan
       {diffuse ? (
         <View style={[styles.compactIcon, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
           <DiffuseBloomIcon color={sticker.fill} size={34} intensity={0.45}>
-            <Character name={blob} size={26} bg={dt.colors.surface} />
+            <ChannelGlyph name={blob} size={26} bg={dt.colors.surface} />
           </DiffuseBloomIcon>
         </View>
       ) : (
         <View style={[styles.compactIcon, { backgroundColor: sticker.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-          <Character name={blob} size={30} bg={sticker.tint} />
+          <ChannelGlyph name={blob} size={30} bg={sticker.tint} />
         </View>
       )}
       <Text style={[styles.compactName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]} numberOfLines={1}>

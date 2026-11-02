@@ -56,7 +56,7 @@ import { InkBackButton } from '../../components/ui/InkBackButton'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { channelSticker, channelBlob, personBlob } from '../../lib/channelSticker'
-import { Character } from '../../components/characters/Characters'
+import { ChannelGlyph } from '../../components/community/ChannelGlyph'
 import { getChannels, type Channel } from '../../lib/channels'
 import {
   sendMessage,
@@ -854,7 +854,7 @@ export default function ChannelChat() {
               const blob = channelBlob(channel.name, channel.category)
               return (
                 <View style={[{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }, !diffuse && { width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: colors.text, backgroundColor: getModeColorSoft(mode, isDark) }]}>
-                  <Character name={blob} size={diffuse ? 22 : 20} bg={diffuse ? dt.colors.bg : getModeColorSoft(mode, isDark)} />
+                  <ChannelGlyph name={blob} size={diffuse ? 22 : 20} bg={diffuse ? dt.colors.bg : getModeColorSoft(mode, isDark)} />
                 </View>
               )
             })()
@@ -1023,7 +1023,7 @@ export default function ChannelChat() {
                   <DiffuseEmptyState
                     icon={
                       <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
-                        {blob ? <Character name={blob} size={26} bg={dt.colors.surface} /> : <MessageCircle size={22} color={dt.colors.ink3} strokeWidth={1.6} />}
+                        {blob ? <ChannelGlyph name={blob} size={26} bg={dt.colors.surface} /> : <MessageCircle size={22} color={dt.colors.ink3} strokeWidth={1.6} />}
                       </DiffuseBloomIcon>
                     }
                     title={emptyTitle}
@@ -1033,7 +1033,7 @@ export default function ChannelChat() {
               }
               return (
                 <EmptyState
-                  icon={blob ? <Character name={blob} size={40} bg={s?.tint ?? stickers.lilacSoft} /> : undefined}
+                  icon={blob ? <ChannelGlyph name={blob} size={40} bg={s?.tint ?? stickers.lilacSoft} /> : undefined}
                   iconBg={s?.tint ?? stickers.lilacSoft}
                   title={emptyTitle}
                   message={emptyMsg}
@@ -1314,7 +1314,7 @@ export default function ChannelChat() {
                 <View style={[styles.ratingStickerBubble, diffuse
                   ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                   : { backgroundColor: s.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-                  <Character name={blob} size={34} bg={diffuse ? dt.colors.bg : s.tint} />
+                  <ChannelGlyph name={blob} size={34} bg={diffuse ? dt.colors.bg : s.tint} />
                 </View>
               )
             })()}
@@ -1649,7 +1649,7 @@ function MessageBubbleBase({
       <View style={[styles.avatar, diffuse
         ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
         : { backgroundColor: s.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-        <Character name={personBlob(authorKey)} size={20} bg={avatarBg} />
+        <ChannelGlyph name={personBlob(authorKey)} size={20} bg={avatarBg} />
       </View>
 
       <View style={[styles.bubbleContent, !diffuse && { backgroundColor: isMine ? tone : colors.surface, borderWidth: 1.5, borderColor: colors.text, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 10 }]}>
