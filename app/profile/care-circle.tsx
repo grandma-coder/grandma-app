@@ -942,7 +942,7 @@ export default function CareCircleScreen() {
                     onPress={() => setEditingMember(m)}
                     style={styles.siteMemberTop}
                     accessibilityRole="button"
-                    accessibilityLabel={`Edit ${title}`}
+                    accessibilityLabel={t('careCircle_editMember', { name: title })}
                   >
                     {m.photoUrl && !isIconAvatar(m.photoUrl) ? (
                       <View style={[styles.sitePhoto, { borderColor: colors.text }]}>

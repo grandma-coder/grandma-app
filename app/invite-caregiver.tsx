@@ -410,7 +410,7 @@ export default function InviteCaregiver() {
               </Pressable>
 
               {!diffuse ? (
-                <PillButton variant="ink" label="Copy link" onPress={copyLink} style={{ alignSelf: 'stretch' }} />
+                <PillButton variant="ink" label={t('inviteCaregiver_copyLink')} onPress={copyLink} style={{ alignSelf: 'stretch' }} />
               ) : null}
 
               <Pressable

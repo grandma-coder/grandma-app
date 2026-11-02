@@ -279,7 +279,7 @@ export function CycleAnalytics() {
               {/* Say what the number averages over. */}
               {history?.avg != null && (
                 <Text style={[styles.siteCaption, { color: colors.textSecondary, fontFamily: font.body }]}>
-                  {`Average of your ${(history?.cycles ?? []).filter((c) => c.lengthDays != null).length} closed cycles. Chart shows the last 8; long gaps are capped, labels keep the real days.`}
+                  {t('cycleAnalytics_avgClosedCycles', { count: (history?.cycles ?? []).filter((c) => c.lengthDays != null).length })}
                 </Text>
               )}
             </View>

@@ -230,7 +230,7 @@ function CycleLengthDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <HeroRow size={40} value={<>{data.avg}</>} unit={t('cycleAnalytics_daysAvg')} note={`Average of your ${data.cycles.filter((c) => c.lengthDays !== null).length} closed cycles (period start to next period start).`} />
+      <HeroRow size={40} value={<>{data.avg}</>} unit={t('cycleAnalytics_daysAvg')} note={t('cycleAnalytics_avgClosedCyclesDetail', { count: data.cycles.filter((c) => c.lengthDays !== null).length })} />
 
       <View style={detailStyles.minMaxRow}>
         <StatChip label={t('cycleDetail_statMin')} value={`${data.min}d`} tint={stickers.blueSoft} />
@@ -351,6 +351,7 @@ function CycleLengthBars({ values, avg, color }: { values: number[]; avg: number
 // Outliers (a skipped period = 80+ days) are capped visually at 1.5x the average
 // so the rest stay readable; the label still shows the true number.
 function LightCycleBars({ values, avg, fill }: { values: number[]; avg: number; fill: string }) {
+  const { t } = useTranslation()
   const { colors, font } = useTheme()
   if (values.length === 0) return null
   const cap = Math.max(1, Math.round(avg * 1.5))
@@ -375,7 +376,7 @@ function LightCycleBars({ values, avg, fill }: { values: number[]; avg: number; 
         ))}
       </View>
       <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12, lineHeight: 17, marginTop: 8 }}>
-        {`Days per cycle, oldest to newest. Your average is ${avg} days.${values.some((v) => v > cap) ? ' Bars stop at 1.5x your average; the number is the real length.' : ''}`}
+        {t(values.some((v) => v > cap) ? 'cycleAnalytics_barsCaptionCapped' : 'cycleAnalytics_barsCaption', { avg })}
       </Text>
     </View>
   )

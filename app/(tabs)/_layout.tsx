@@ -432,7 +432,7 @@ function CenterTabButton() {
             onPress={animateClose}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Close menu"
+            accessibilityLabel={t('tabs_closeMenu')}
             style={[styles.menuCloseDisc, { backgroundColor: inkColor }]}
           >
             <Animated.View style={{ transform: [{ rotate: spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['-90deg', '0deg'] }) }] }}>

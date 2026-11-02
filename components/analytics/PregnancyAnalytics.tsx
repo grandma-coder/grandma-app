@@ -188,6 +188,7 @@ function SiteBars({ data: rawData, labels: rawLabels, tone, height = 140, unit =
   target?: number
   caption?: string
 }) {
+  const { t } = useTranslation()
   const { colors, font } = useTheme()
   const b = bucketSeries(rawData, rawLabels, 14)
   const data = b.data
@@ -239,7 +240,7 @@ function SiteBars({ data: rawData, labels: rawLabels, tone, height = 140, unit =
       </View>
       {(caption || (target !== undefined && target > 0)) && (
         <Text style={{ fontSize: 11, color: colors.textSecondary, fontFamily: font.body, marginTop: 8 }}>
-          {[caption ? `${caption}${bucketed ? ' (each bar = average of several days)' : ''}` : null, target !== undefined && target > 0 ? `Target line: ${target}${unit}` : null].filter(Boolean).join(' · ')}
+          {[caption ? `${caption}${bucketed ? ' (each bar = average of several days)' : ''}` : null, target !== undefined && target > 0 ? t('analytics_targetLine', { target, unit }) : null].filter(Boolean).join(' · ')}
         </Text>
       )}
     </View>
@@ -737,7 +738,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               first
               sticker={PILLAR_SITE_STICKER.kicks}
               label="Kicks"
-              sub="Average per session"
+              sub={t('pregAnalytics_avgPerSession')}
               value={avgKicks ? String(avgKicks) : '—'}
               tone={stickers.pinkSoft}
               onPress={() => setOpenPillar('kicks')}
@@ -745,7 +746,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             <SiteRow
               sticker={PILLAR_SITE_STICKER.symptoms}
               label="Symptoms"
-              sub="Total logged this period"
+              sub={t('pregAnalytics_totalLoggedThisPeriod')}
               value={symptomCount > 0 ? String(symptomCount) : 'None'}
               tone={stickers.yellowSoft}
               onPress={() => setOpenPillar('symptoms')}
@@ -753,7 +754,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             <SiteRow
               sticker={PILLAR_SITE_STICKER.sleep}
               label="Sleep"
-              sub="Average per night"
+              sub={t('pregAnalytics_avgPerNight')}
               value={sleepAvg}
               pct={tk.sleep.pct}
               tone={stickers.lilacSoft}
@@ -762,7 +763,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             <SiteRow
               sticker={PILLAR_SITE_STICKER.wellbeing}
               label="Wellbeing"
-              sub="Score from the last 7 days"
+              sub={t('pregAnalytics_scoreLast7Days')}
               value={wellbeing ? `${wellbeing.overall}%` : '—'}
               pct={tk.wellbeing.pct}
               tone={stickers.greenSoft}
@@ -835,7 +836,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         {exerciseHistory.some((e) => e.minutes > 0) && (
           <Section
             title="Movement"
-            subtitle={diffuse ? 'Minutes per session · target 150 / week' : 'Minutes per day · target 150 / week'}
+            subtitle={diffuse ? 'Minutes per session · target 150 / week' : t('pregAnalytics_minutesPerDayTarget')}
             onPress={() => setOpenPillar('exercise')}
           >
             <View style={styles.chartBare}>
@@ -855,7 +856,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                   tone={stickers.peachSoft}
                   target={Math.round(150 / 7)}
                   unit="m"
-                  caption="Minutes per day"
+                  caption={t('pregAnalytics_minutesPerDay')}
                 />
               )}
             </View>
@@ -923,7 +924,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               label="CONTRACTIONS"
               title={contractions.length > 0 ? `${contractions.length}` : '—'}
               subtitle={contractions.length > 0
-                ? `Last session: ${contractions[contractions.length - 1].count} contraction${contractions[contractions.length - 1].count === 1 ? '' : 's'}`
+                ? t(contractions[contractions.length - 1].count === 1 ? 'pregAnalytics_lastSessionContractions_one' : 'pregAnalytics_lastSessionContractions_other', { count: contractions[contractions.length - 1].count })
                 : (tk.contractions.takeaway ?? '')}
               badgeText=""
               badgeCaption="SESSIONS"
@@ -1507,7 +1508,7 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
           </View>
         </View>
       ) : (
-        <PaperCard title="Five pillars · score out of 10">
+        <PaperCard title={t('pregAnalytics_fivePillarsScore')}>
           <View style={{ gap: 14 }}>
             {pillars.map((p) => {
               const v = wellbeing[p.key] as number
@@ -1713,7 +1714,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
           diffuse ? (
             <BeadedThread data={kickValues} labels={kickLabels} color={stickers.pink} accent={accentColor ?? stickers.pink} />
           ) : (
-            <SiteBars data={kickValues} labels={kickLabels} tone={stickers.pinkSoft} caption="Kicks per session" />
+            <SiteBars data={kickValues} labels={kickLabels} tone={stickers.pinkSoft} caption={t('pregAnalytics_kicksPerSession')} />
           )
         ) : (
           <Body size={13} color={muted}>
@@ -1816,7 +1817,7 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
       </PaperCard>
 
       {hours.length > 0 ? (
-        <PaperCard title={diffuse ? 'Sleep debt' : 'Sleep debt · total'}>
+        <PaperCard title={diffuse ? 'Sleep debt' : t('pregAnalytics_sleepDebtTotal')}>
           <Text style={{ color: ink, fontSize: 24, fontFamily: diffuse ? diffuseFont.display : font.displayBold }}>
             {debt.toFixed(1)}{'h'}
           </Text>
@@ -2493,7 +2494,7 @@ function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, a
         ]}
       />
 
-      <PaperCard title={diffuse ? 'Minutes per session' : 'Minutes per active day'}>
+      <PaperCard title={diffuse ? 'Minutes per session' : t('pregAnalytics_minutesPerActiveDay')}>
         {minutes.length > 0 ? (
           diffuse ? (
             <PetalBurst data={minutes} color={stickers.coral} color2={stickers.peach} centerLabel={String(activeDays)} />
@@ -2503,7 +2504,7 @@ function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, a
               labels={barDayLabels(exerciseHistory.filter((e) => e.minutes > 0).map((e) => e.date))}
               tone={stickers.peachSoft}
               unit="m"
-              caption="Minutes per active day"
+              caption={t('pregAnalytics_minutesPerActiveDay')}
             />
           )
         ) : (

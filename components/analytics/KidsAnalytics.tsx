@@ -3192,9 +3192,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             {isMilkPhase ? (
               <>
                 <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
-                <StatPill label="Breast (total)" value={`${totalBreast}`} color={brand.secondary} />
+                <StatPill label={t('kidsAnalytics_breastTotal')} value={`${totalBreast}`} color={brand.secondary} />
                 <StatPill
-                  label="Bottle (total)"
+                  label={t('kidsAnalytics_bottleTotal')}
                   value={totalBottleMl > 0 ? `${Math.round(totalBottleMl)}ml` : `${totalBottle}×`}
                   color={brand.accent}
                 />
@@ -3202,8 +3202,8 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             ) : isMixedPhase ? (
               <>
                 <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
-                <StatPill label="Milk feeds (total)" value={`${totalBreast + totalBottle}`} color={brand.secondary} />
-                <StatPill label="Foods tried (total)" value={`${variety}`} color={brand.accent} />
+                <StatPill label={t('kidsAnalytics_milkFeedsTotal')} value={`${totalBreast + totalBottle}`} color={brand.secondary} />
+                <StatPill label={t('kidsAnalytics_foodsTriedTotal')} value={`${variety}`} color={brand.accent} />
               </>
             ) : (
               <>
@@ -3318,9 +3318,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {insight.demotedAvailable && renderDetailsToggle(<>
           {/* Stats at top */}
           <StatRow>
-            <StatPill label="Avg per night" value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
+            <StatPill label={t('kidsAnalytics_avgPerNight')} value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
             <StatPill label="Quality" value={getBestQuality(analytics.sleep.qualityCounts)} color={brand.success} />
-            <StatPill label="Target per night" value={`${target}h`} color={colors.textMuted} />
+            <StatPill label={t('kidsAnalytics_targetPerNight')} value={`${target}h`} color={colors.textMuted} />
           </StatRow>
 
           {/* Highlighted bar chart */}
@@ -3602,9 +3602,9 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {renderDetailsToggle(<>
           {/* Stats */}
           <StatRow>
-            <StatPill label="Active days (total)" value={act.hasData ? `${act.activeDays}/${windowDays}` : '—'} color={COLOR} />
-            <StatPill label="Sessions (total)" value={act.hasData ? `${act.totalSessions}` : '—'} color={brand.secondary} />
-            <StatPill label="Activity types" value={act.hasData ? `${act.uniqueTypes.length}` : '—'} color={brand.accent} />
+            <StatPill label={t('kidsAnalytics_activeDaysTotal')} value={act.hasData ? `${act.activeDays}/${windowDays}` : '—'} color={COLOR} />
+            <StatPill label={t('kidsAnalytics_sessionsTotal')} value={act.hasData ? `${act.totalSessions}` : '—'} color={brand.secondary} />
+            <StatPill label={t('kidsAnalytics_activityTypes')} value={act.hasData ? `${act.uniqueTypes.length}` : '—'} color={brand.accent} />
           </StatRow>
 
           {/* Weekly sessions bar chart */}
@@ -4212,7 +4212,7 @@ function HighlightBarChart({
       </View>
       {target !== undefined && target > 0 && (
         <Text style={{ fontSize: 11, color: colors.textSecondary, fontFamily: font.body, marginTop: 8 }}>
-          {`Target line: ${target}${unit}`}
+          {t('analytics_targetLine', { target, unit })}
         </Text>
       )}
     </View>

@@ -169,7 +169,7 @@ export default function HealthHistoryScreen() {
             <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="syringe" size={30} cut />
             <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>Health History</Text>
-            <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Log health event">
+            <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('healthHistory_logEvent')}>
               <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: ink, borderWidth: 1.5 }]}>
                 <Ionicons name="add" size={20} color={ink} />
               </View>

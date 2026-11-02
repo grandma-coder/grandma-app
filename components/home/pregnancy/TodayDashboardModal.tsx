@@ -446,7 +446,7 @@ function CalmBody(p: {
               emptyBar={colors.border} barBorder={ink} showValues valueFont={font.bodyBold}
             />
             <Text style={[styles.rowSub, { color: colors.textMuted, fontFamily: font.body, marginTop: 8 }]}>
-              {'Glasses per day (goal 8)'}
+              {t('pregTodayDashboard_glassesPerDayGoal')}
             </Text>
           </>
         )}

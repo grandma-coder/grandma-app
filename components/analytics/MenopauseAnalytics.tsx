@@ -38,6 +38,7 @@ import { symptomBlob } from '../menopause/menopauseIcons'
 import { menoSticker } from '../menopause/MenopauseLogSheet'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { monthsSinceDate, type MenopauseStage } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 
@@ -77,6 +78,7 @@ function severitySeries(rows: MenopauseLogRow[], type: string): { data: number[]
 }
 
 export function MenopauseAnalytics() {
+  const { t } = useTranslation()
   const palette = useMenoPalette()
   const insets = useSafeAreaInsets()
   const bottomInset = useScrollBottomInset(insets.bottom + 100)
@@ -128,7 +130,7 @@ export function MenopauseAnalytics() {
                 </View>
                 {vaso.length >= 1 ? (
                   <>
-                    <SiteNote>{`Average ${vasoAvg.toFixed(1)} per day with events · bars show the last ${lastVaso.length} days with events`}</SiteNote>
+                    <SiteNote>{t('menoAnalytics_vasoAverageNote', { avg: vasoAvg.toFixed(1), count: lastVaso.length })}</SiteNote>
                     <SiteBars values={lastVaso.map((d) => d.count)} labels={lastVaso.map((d) => shortDate(d.date))} tone={palette.accentSoft} capped />
                   </>
                 ) : (
@@ -138,7 +140,7 @@ export function MenopauseAnalytics() {
 
               {symptomStats.length > 0 && (
                 <SiteSection eyebrow="TOP SYMPTOMS">
-                  <SiteNote>Bar and number = total times logged · average severity per entry, out of 5</SiteNote>
+                  <SiteNote>{t('menoAnalytics_symptomsBarNote')}</SiteNote>
                   {symptomStats.slice(0, 6).map((s, i) => (
                     <SiteSymptomRow
                       key={s.id}
@@ -155,7 +157,7 @@ export function MenopauseAnalytics() {
               )}
 
               <SiteSection eyebrow="SLEEP & MOOD SEVERITY">
-                <SiteNote>Average severity on each day you logged it, 1 (barely there) to 5 (intense)</SiteNote>
+                <SiteNote>{t('menoAnalytics_severityNote')}</SiteNote>
                 <SiteTrend sticker="zz" title="Sleep trouble" series={sleepSeries} tone={palette.accentSoft} />
                 <View style={{ height: 14 }} />
                 <SiteTrend sticker="face1" title="Low mood" series={moodSeries} tone={palette.accentSoft} />
@@ -615,6 +617,7 @@ function SiteBars({ values, labels, tone, capped = false, fixedMax }: { values: 
 }
 
 function SiteTrend({ sticker, title, series, tone }: { sticker: SiteStickerName; title: string; series: { data: number[]; labels: string[] }; tone: string }) {
+  const { t } = useTranslation()
   const { colors, font } = useTheme()
   const data = series.data.slice(-14)
   const labels = series.labels.slice(-14)
@@ -627,7 +630,7 @@ function SiteTrend({ sticker, title, series, tone }: { sticker: SiteStickerName;
       {data.length >= 1 ? (
         <SiteBars values={data} labels={labels} tone={tone} fixedMax={5} />
       ) : (
-        <SiteNote>Not logged yet — nothing to chart.</SiteNote>
+        <SiteNote>{t('menoAnalytics_notLoggedYet')}</SiteNote>
       )}
     </View>
   )

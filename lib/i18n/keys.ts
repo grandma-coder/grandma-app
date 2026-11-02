@@ -3717,4 +3717,39 @@ export interface TranslationKeys {
   pregnancyMemories_emptyMsg: string
   kidsMemories_emptyMsg: string
   cycleMemories_addCta: string
+  kidsAnalytics_activeDaysTotal: string
+  kidsAnalytics_activityTypes: string
+  kidsAnalytics_avgPerNight: string
+  kidsAnalytics_bottleTotal: string
+  kidsAnalytics_breastTotal: string
+  kidsAnalytics_foodsTriedTotal: string
+  kidsAnalytics_milkFeedsTotal: string
+  kidsAnalytics_sessionsTotal: string
+  kidsAnalytics_targetPerNight: string
+  analytics_targetLine: string
+  pregAnalytics_avgPerSession: string
+  pregAnalytics_avgPerNight: string
+  pregAnalytics_totalLoggedThisPeriod: string
+  pregAnalytics_scoreLast7Days: string
+  pregAnalytics_minutesPerDayTarget: string
+  pregAnalytics_minutesPerDay: string
+  pregAnalytics_minutesPerActiveDay: string
+  pregAnalytics_lastSessionContractions_one: string
+  pregAnalytics_lastSessionContractions_other: string
+  pregAnalytics_fivePillarsScore: string
+  pregAnalytics_kicksPerSession: string
+  pregAnalytics_sleepDebtTotal: string
+  pregTodayDashboard_glassesPerDayGoal: string
+  menoAnalytics_vasoAverageNote: string
+  menoAnalytics_symptomsBarNote: string
+  menoAnalytics_severityNote: string
+  menoAnalytics_notLoggedYet: string
+  cycleAnalytics_avgClosedCycles: string
+  cycleAnalytics_avgClosedCyclesDetail: string
+  cycleAnalytics_barsCaption: string
+  cycleAnalytics_barsCaptionCapped: string
+  tabs_closeMenu: string
+  inviteCaregiver_copyLink: string
+  careCircle_editMember: string
+  healthHistory_logEvent: string
 }
