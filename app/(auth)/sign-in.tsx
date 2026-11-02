@@ -217,8 +217,8 @@ export default function SignIn() {
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
       {/* Decorative sticker — collage art */}
-      <View style={styles.stickerTR}>
-        <SiteSticker name="flower" size={64} cut />
+      <View style={[styles.stickerTR, { top: insets.top + 14 }]}>
+        <SiteSticker name="flower" size={48} cut />
       </View>
 
       <KeyboardAvoidingView
@@ -419,9 +419,8 @@ const styles = StyleSheet.create({
 
   stickerTR: {
     position: 'absolute',
-    top: 80,
-    right: 10,
-    transform: [{ rotate: '14deg' }],
+    right: 26,
+    transform: [{ rotate: '12deg' }],
     zIndex: 0,
   },
 

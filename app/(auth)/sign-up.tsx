@@ -176,12 +176,9 @@ export default function SignUp() {
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      {/* Decorative stickers — collage art */}
-      <View style={[styles.stickerTR, { transform: [{ rotate: '-8deg' }] }]}>
-        <SiteSticker name="flower" size={60} cut />
-      </View>
-      <View style={[styles.stickerTR2, { transform: [{ rotate: '16deg' }] }]}>
-        <SiteSticker name="heart" size={44} cut />
+      {/* Decorative sticker — one per auth screen, level with the back button */}
+      <View style={[styles.stickerTR, { top: insets.top + 14, transform: [{ rotate: '12deg' }] }]}>
+        <SiteSticker name="heart" size={48} cut />
       </View>
 
       <KeyboardAvoidingView
@@ -293,14 +290,7 @@ const styles = StyleSheet.create({
 
   stickerTR: {
     position: 'absolute',
-    top: 80,
-    right: 20,
-    zIndex: 0,
-  },
-  stickerTR2: {
-    position: 'absolute',
-    top: 130,
-    right: 70,
+    right: 26,
     zIndex: 0,
   },
 

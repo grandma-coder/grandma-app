@@ -152,8 +152,8 @@ export default function ResetPassword() {
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      <View style={styles.stickerTR}>
-        <SiteSticker name="lock" size={52} cut />
+      <View style={[styles.stickerTR, { top: insets.top + 14 }]}>
+        <SiteSticker name="lock" size={48} cut />
       </View>
 
       <KeyboardAvoidingView
@@ -237,7 +237,7 @@ export default function ResetPassword() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  stickerTR: { position: 'absolute', top: 90, right: 20, transform: [{ rotate: '14deg' }], zIndex: 0 },
+  stickerTR: { position: 'absolute', right: 26, transform: [{ rotate: '12deg' }], zIndex: 0 },
   container: { flexGrow: 1, paddingHorizontal: 24, zIndex: 1 },
   heading: { fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase', marginTop: 10 },
   headingItalic: { fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 8 },
