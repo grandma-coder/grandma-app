@@ -62,6 +62,8 @@ const PLAIN = {
   thermo: require('../../assets/stickers-site/thermo.png'),
   us: require('../../assets/stickers-site/us.png'),
   zz: require('../../assets/stickers-site/zz.png'),
+  poop: require('../../assets/stickers-site/poop.png'),
+  pee: require('../../assets/stickers-site/pee.png'),
 } as const
 
 const CUT = {
@@ -121,6 +123,8 @@ const CUT = {
   thermo: require('../../assets/stickers-site/thermo-cut.png'),
   us: require('../../assets/stickers-site/us-cut.png'),
   zz: require('../../assets/stickers-site/zz-cut.png'),
+  poop: require('../../assets/stickers-site/poop-cut.png'),
+  pee: require('../../assets/stickers-site/pee-cut.png'),
 } as const
 
 export type SiteStickerName = keyof typeof PLAIN

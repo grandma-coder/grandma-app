@@ -139,7 +139,7 @@ export function ActiveChildChip({ childId, onChange }: ActiveChildChipProps) {
 }
 
 const kitStyles = StyleSheet.create({
-  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 2 },
+  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 2, justifyContent: 'center' },
   choice: { minWidth: 96, flexGrow: 1, alignItems: 'center', gap: 8, paddingVertical: 18, paddingHorizontal: 12, borderWidth: 1.5 },
   choiceLabel: { fontSize: 14, textAlign: 'center' },
   tileCell: { width: '25%', alignItems: 'center', paddingTop: 2 },
@@ -165,13 +165,26 @@ const SITE_FOR_BLOB: Partial<Record<CharacterName, SiteStickerName>> = {
 const ID_STICKER: Record<string, SiteStickerName> = {
   class: 'brain', school: 'backpack', study: 'pencil', reading: 'books', sport: 'shoe', swim: 'drop',
   dance: 'star', music: 'bell', art: 'flower', playground: 'stroller', walk: 'leaf', therapy: 'heart', playdate: 'baby2',
-  pee: 'drop', poop: 'pumpkin', mixed: 'diaper',
+  pee: 'pee', poop: 'poop', mixed: 'diaper',
 }
 const FACE_STICKER: Record<string, SiteStickerName> = {
   happy: 'face4', calm: 'face3', content: 'face3', energetic: 'star', fussy: 'face2', sad: 'face1', cranky: 'face1', tired: 'zz',
 }
 
 function SiteChoiceTile({ option, on, onPress, tone }: { option: ChoiceOption; on: boolean; onPress: () => void; tone: string }) {
+  const sticker: SiteStickerName | undefined =
+    option.blob === 'mood' ? FACE_STICKER[option.face ?? option.id] ?? 'face3' : ID_STICKER[option.id] ?? SITE_FOR_BLOB[option.blob]
+  return (
+    <StickerChoice label={option.label} sticker={sticker} on={on} onPress={onPress} tone={tone}
+      fallback={<Character name={option.blob} size={36} color={option.color} face={option.face} />} />
+  )
+}
+
+/** Card-less sticker option: the sticker is the button; selected = tone disc + pop + bold label + wavy underline. */
+export function StickerChoice({ label, sticker, on, onPress, tone, width = '25%', fallback }: {
+  label: string; sticker?: SiteStickerName; on: boolean; onPress: () => void; tone: string
+  width?: `${number}%`; fallback?: React.ReactNode
+}) {
   // No card: the sticker IS the button (like the home log dock). Selected = tone disc
   // behind the sticker, a little pop, bold label + wavy underline.
   const { colors, font } = useTheme()
@@ -181,8 +194,6 @@ function SiteChoiceTile({ option, on, onPress, tone }: { option: ChoiceOption; o
   useEffect(() => {
     Animated.spring(sel, { toValue: on ? 1 : 0, friction: 5, tension: 180, useNativeDriver: true }).start()
   }, [on, sel])
-  const sticker: SiteStickerName | undefined =
-    option.blob === 'mood' ? FACE_STICKER[option.face ?? option.id] ?? 'face3' : ID_STICKER[option.id] ?? SITE_FOR_BLOB[option.blob]
   return (
     <Pressable
       onPress={() => { Haptics.selectionAsync().catch(() => {}); onPress() }}
@@ -190,8 +201,8 @@ function SiteChoiceTile({ option, on, onPress, tone }: { option: ChoiceOption; o
       onPressOut={() => Animated.spring(press, { toValue: 0, friction: 4, tension: 200, useNativeDriver: true }).start()}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
-      accessibilityLabel={option.label}
-      style={kitStyles.tileCell}
+      accessibilityLabel={label}
+      style={[kitStyles.tileCell, { width }]}
     >
       <Animated.View style={[kitStyles.tileDiscWrap, { transform: [{ scale: press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.88] }) }] }]}>
         <Animated.View style={[kitStyles.tileDisc, { backgroundColor: tone, borderColor: ink, opacity: sel, transform: [{ scale: sel }] }]} />
@@ -199,11 +210,11 @@ function SiteChoiceTile({ option, on, onPress, tone }: { option: ChoiceOption; o
           { scale: sel.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) },
           { rotate: sel.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-8deg'] }) },
         ] }}>
-          {sticker ? <SiteSticker name={sticker} size={36} /> : <Character name={option.blob} size={36} color={option.color} face={option.face} />}
+          {sticker ? <SiteSticker name={sticker} size={36} /> : fallback}
         </Animated.View>
       </Animated.View>
       <Text style={[kitStyles.tileLabel, { color: ink, fontFamily: on ? font.bodyBold : font.bodyMedium }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-        {option.label}
+        {label}
       </Text>
       <Animated.View style={{ opacity: sel, height: 6 }}>
         <Svg width={36} height={6} viewBox="0 0 60 8">

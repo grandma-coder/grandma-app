@@ -85,8 +85,8 @@ export function DiaperDetailCalm(p: DiaperDetailCalmProps) {
   }
 
   const types: { key: 'pee' | 'poop' | 'mixed'; sticker: SiteStickerName; n: number; label: string }[] = [
-    { key: 'pee', sticker: 'drop', n: p.pee, label: t('kids_home_diaper_pee') },
-    { key: 'poop', sticker: 'pumpkin', n: p.poop, label: t('kids_home_diaper_poop') },
+    { key: 'pee', sticker: 'pee', n: p.pee, label: t('kids_home_diaper_pee') },
+    { key: 'poop', sticker: 'poop', n: p.poop, label: t('kids_home_diaper_poop') },
     { key: 'mixed', sticker: 'diaper', n: p.mixed, label: t('kids_home_diaper_mixed') },
   ]
   const shown = types.filter((x) => x.n > 0)

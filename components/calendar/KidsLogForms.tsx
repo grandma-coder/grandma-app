@@ -62,7 +62,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { useModeStore } from '../../store/useModeStore'
 import { supabase } from '../../lib/supabase'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
-import { ChoiceStep, MoreSection, ActiveChildChip, type ChoiceOption } from './QuickLogKit'
+import { ChoiceStep, MoreSection, ActiveChildChip, StickerChoice, type ChoiceOption } from './QuickLogKit'
 import { StepSlider } from '../ui/StepSlider'
 import { diffuseLogHue } from './DiffuseLogTimeline'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
@@ -840,7 +840,7 @@ const MEAL_STICKERS: Record<string, SiteStickerName> = {
   breakfast: 'egg',
   morning_snack: 'banana',
   lunch: 'lettuce',
-  afternoon_snack: 'banana',
+  afternoon_snack: 'rasp',
   dinner: 'pumpkin',
   night_snack: 'moon',
 }
@@ -2042,15 +2042,14 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         <FormHeaderSticker kind="feeding" />
 
         {/* Feed type toggle */}
-        <View style={styles.siteRow}>
+        <View style={styles.stickerGrid}>
           {(['breast', 'bottle', 'solids'] as FeedingType[]).map((ft) => (
-            <SiteChoice
+            <StickerChoice
               key={ft}
-              style={{ flex: 1 }}
-              tick={false}
+              width="33.33%"
               label={ft.charAt(0).toUpperCase() + ft.slice(1)}
               sticker={ft === 'breast' ? 'heart' : ft === 'bottle' ? 'bottle' : 'avocado'}
-              selected={feedType === ft}
+              on={feedType === ft}
               tone={siteTone}
               onPress={() => setFeedType(ft)}
             />
@@ -2060,15 +2059,14 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         {feedType === 'solids' ? (
           <>
             {/* Meal moment */}
-            <View style={styles.chipGrid}>
+            <View style={styles.stickerGrid}>
               {MEAL_MOMENTS.map((m) => (
-                <SiteChoice
+                <StickerChoice
                   key={m.id}
-                  compact
-                  tick={false}
+                  width="33.33%"
                   label={m.label}
                   sticker={MEAL_STICKERS[m.id]}
-                  selected={meal === m.id}
+                  on={meal === m.id}
                   tone={siteTone}
                   onPress={() => setMeal(m.id)}
                 />
@@ -4007,6 +4005,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  stickerGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 2 },
   form: { gap: 16, paddingBottom: 8 },
   topRow: { gap: 10 },
   dateTimeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
