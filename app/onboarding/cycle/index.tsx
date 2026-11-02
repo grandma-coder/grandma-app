@@ -22,6 +22,8 @@ import { useTranslation } from '../../../lib/i18n'
 import type { TranslationKeys } from '../../../lib/i18n/keys'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { SiteChoice, SiteStepper } from '../../../components/ui/SiteChoice'
+import type { SiteStickerName } from '../../../components/stickers/SiteSticker'
+import { HandDrawnBox } from '../../../components/ui/HandDrawn'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
@@ -509,6 +511,13 @@ function StepPeriodDuration({
 
 // ─── STEP 4: Conditions ────────────────────────────────────────────────────
 
+const CONDITION_STICKER: Record<ConditionChip, SiteStickerName> = {
+  pcos: 'egg',
+  endometriosis: 'flame',
+  other: 'pencil',
+  prefer_not_to_say: 'lock',
+}
+
 const CONDITION_OPTIONS: { id: ConditionChip; labelKey: keyof TranslationKeys }[] = [
   { id: 'pcos', labelKey: 'cycleOnboarding_condition_pcos' },
   { id: 'endometriosis', labelKey: 'cycleOnboarding_condition_endometriosis' },
@@ -578,48 +587,22 @@ function StepConditions({
         </>
       ) : (
         <>
-          <View style={stepStyles.chipGrid}>
-            {CONDITION_OPTIONS.map((opt) => {
-              const selected = conditions.includes(opt.id)
-              return (
-                <Pressable
-                  key={opt.id}
-                  onPress={() => toggle(opt.id)}
-                  style={[
-                    stepStyles.conditionChip,
-                    {
-                      backgroundColor: selected ? modeSoft : colors.surface,
-                      borderColor: colors.text,
-                      shadowColor: colors.text,
-                      borderRadius: radius.full,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      stepStyles.conditionChipText,
-                      { color: colors.text, fontFamily: font.bodyBold },
-                    ]}
-                  >
-                    {t(opt.labelKey)}
-                  </Text>
-                </Pressable>
-              )
-            })}
+          <View style={stepStyles.choiceCol}>
+            {CONDITION_OPTIONS.map((opt) => (
+              <SiteChoice
+                key={opt.id}
+                label={t(opt.labelKey)}
+                selected={conditions.includes(opt.id)}
+                onPress={() => toggle(opt.id)}
+                tone={modeSoft}
+                sticker={CONDITION_STICKER[opt.id]}
+                align="start"
+              />
+            ))}
           </View>
 
           {otherSelected && (
-            <View
-              style={[
-                stepStyles.otherInputWrap,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.text,
-                  borderRadius: 14,
-                  shadowColor: colors.text,
-                },
-              ]}
-            >
+            <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="other" style={stepStyles.otherInputWrap}>
               <TextInput
                 value={conditionsOther ?? ''}
                 onChangeText={setConditionsOther}
@@ -628,7 +611,7 @@ function StepConditions({
                 style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.body }]}
                 autoCapitalize="sentences"
               />
-            </View>
+            </HandDrawnBox>
           )}
         </>
       )}
@@ -1014,6 +997,7 @@ function TogglePill({
 
 const stepStyles = StyleSheet.create({
   gridChip: { width: '31%' },
+  choiceCol: { gap: 12 },
   unknownChip: { alignSelf: 'center', marginTop: 6 },
   subQ: { fontSize: 20, letterSpacing: 0.3, textTransform: 'uppercase', marginTop: 34, marginBottom: 12 },
   centered: {
@@ -1069,11 +1053,7 @@ const stepStyles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 20,
     height: 56,
-    borderWidth: 1.5,
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
     elevation: 0,
   },
   otherInputText: {

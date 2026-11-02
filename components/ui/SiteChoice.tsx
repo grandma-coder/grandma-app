@@ -25,6 +25,7 @@ export function SiteChoice({
   style,
   sub,
   radius = 18,
+  align = 'center',
 }: {
   label: string
   selected: boolean
@@ -36,6 +37,8 @@ export function SiteChoice({
   /** Optional second line (muted). */
   sub?: string
   radius?: number
+  /** 'start' for full-width list rows (sticker + label on the left, tick on the right). */
+  align?: 'center' | 'start'
 }) {
   const { colors, font } = useTheme()
   const ink = colors.text
@@ -72,9 +75,9 @@ export function SiteChoice({
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: sel }]}>
           <HandDrawnPill width={size.w} height={size.h} fill={tone} stroke={ink} strokeWidth={2.6} radius={radius} seed={label} />
         </Animated.View>
-        <View style={styles.inner}>
+        <View style={[styles.inner, align === 'start' && styles.innerStart]}>
           {sticker ? <SiteSticker name={sticker} size={24} cut /> : null}
-          <View style={{ flexShrink: 1, alignItems: sticker ? 'flex-start' : 'center' }}>
+          <View style={{ flexShrink: 1, flexGrow: align === 'start' ? 1 : 0, alignItems: sticker || align === 'start' ? 'flex-start' : 'center' }}>
             <Text style={[styles.label, { color: ink, fontFamily: font.bodyBold }]} numberOfLines={2}>{label}</Text>
             {sub ? <Text style={[styles.sub, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>{sub}</Text> : null}
           </View>
@@ -141,6 +144,7 @@ export function SiteStepper({
 
 const styles = StyleSheet.create({
   inner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 18, minHeight: 54 },
+  innerStart: { justifyContent: 'flex-start', paddingHorizontal: 16 },
   label: { fontSize: 16 },
   sub: { fontSize: 13, marginTop: 1 },
   tick: { width: 14, marginLeft: -2 },
