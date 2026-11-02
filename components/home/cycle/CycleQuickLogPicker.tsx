@@ -10,6 +10,8 @@ import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
 import { Character, CharacterName } from '../../characters/Characters'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogTimeline'
 import { CYCLE_QUICK_LOGS } from '../../../lib/cycleQuickLogs'
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
@@ -49,18 +51,28 @@ const CYCLE_BLOB_OVERRIDE: Record<string, { char: CharacterName; hue: keyof Retu
 // the SHARED canonical map the Diffuse variant + calendar timeline use (keyed by
 // the def's cycle log type). One source of truth = the picker, the home card,
 // and the calendar all show the same icon; distinctness is concept + hue.
-function blobFor(logType: string, stickers: ReturnType<typeof useTheme>['stickers']): { node: React.ReactElement; soft: string } {
+// Site-look stickers per cycle log type (light branch).
+const SITE_FOR: Record<string, SiteStickerName> = {
+  mood: 'face3', symptom: 'heart', basal_temp: 'thermo', lh: 'otest', cm: 'drop', intercourse: 'heart',
+  period_start: 'drop', period_end: 'drop', pregnancy_test: 'otest', sex_drive: 'heart',
+  clots: 'drop', weight: 'bars', water: 'drop', activity: 'shoe',
+}
+
+function blobFor(logType: string, stickers: ReturnType<typeof useTheme>['stickers'], diffuse: boolean): { node: React.ReactElement; soft: string } {
   const override = CYCLE_BLOB_OVERRIDE[logType]
   const name = override?.char ?? DIFFUSE_LOG_CHARACTER[logType] ?? 'note'
   const hue = override ? stickers[override.hue] : diffuseLogHue(logType)
   return {
-    node: <Character name={name} size={22} color={hue} />,
+    node: !diffuse && SITE_FOR[logType]
+      ? <SiteSticker name={SITE_FOR[logType]} size={26} />
+      : <Character name={name} size={22} color={hue} />,
     soft: softForHue(hue, stickers),
   }
 }
 
 export function CycleQuickLogPicker({ visible, onClose }: Props) {
   const { stickers: themeStickers } = useTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const enabledKeys = useCycleQuickLogStore((s) => s.enabledKeys)
   const setEnabled = useCycleQuickLogStore((s) => s.setEnabled)
@@ -85,7 +97,7 @@ export function CycleQuickLogPicker({ visible, onClose }: Props) {
   }
 
   const items: QuickLogGridItem[] = CYCLE_QUICK_LOGS.map((q) => {
-    const s = blobFor(q.sheet, themeStickers)
+    const s = blobFor(q.sheet, themeStickers, diffuse)
     return {
       key: q.key,
       label: t(q.labelKey),

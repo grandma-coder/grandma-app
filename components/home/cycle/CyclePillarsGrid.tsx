@@ -11,6 +11,7 @@ import { Character } from '../../characters/Characters'
 import { Display, Body } from '../../ui/Typography'
 import { Leaf, Flower, Moon, Heart } from '../../ui/Stickers'
 import { ChevronRight } from 'lucide-react-native'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { prePregPillars } from '../../../lib/prePregPillars'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -125,6 +126,30 @@ export function CyclePillarsGrid({ bare = false, onNavigate }: CyclePillarsGridP
           </Pressable>
         </View>
       )}
+      {!diffuse ? (
+        // Site look: card-less sticker + label rows split by hairlines.
+        <View>
+          {TILES.map((tile, i) => (
+            <Pressable
+              key={tile.id}
+              onPress={() => openPillar(tile.id)}
+              accessibilityRole="button"
+              accessibilityLabel={tile.title}
+              style={({ pressed }) => [
+                styles.siteRow,
+                { borderTopColor: colors.border, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <SiteSticker name={tile.sticker} size={44} />
+              <View style={[styles.textCol, { flex: 1 }]}>
+                <Display size={18} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{tile.title}</Display>
+                <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>{tile.subtitle}</Text>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
+            </Pressable>
+          ))}
+        </View>
+      ) : (
       <View style={styles.grid}>
         {TILES.map((tile) => (
           <Pressable
@@ -163,6 +188,7 @@ export function CyclePillarsGrid({ bare = false, onNavigate }: CyclePillarsGridP
           </Pressable>
         ))}
       </View>
+      )}
     </View>
   )
 }
@@ -212,5 +238,7 @@ const styles = StyleSheet.create({
   },
   textCol: {
     gap: 2,
+    flexShrink: 1,
   },
+  siteRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 },
 })

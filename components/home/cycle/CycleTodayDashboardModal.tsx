@@ -18,6 +18,7 @@ import { toDateStr, type CyclePhase } from '../../../lib/cycleLogic'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { PaperCard } from '../../ui/PaperCard'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
 import { Thermometer as ThermometerLine, Droplet as DropletLine, Heart as HeartLine } from 'lucide-react-native'
 import { SymptomSticker } from '../../calendar/symptomStickers'
@@ -42,6 +43,10 @@ const MOOD_META: Record<string, { Sticker: typeof Sad; fill: string }> = {
   okay:  { Sticker: Sleepy, fill: '#C8B6E8' },
   good:  { Sticker: Smiley, fill: '#F5D652' },
   great: { Sticker: Smiley, fill: '#BDD48C' },
+}
+
+const MOOD_SITE: Record<string, SiteStickerName> = {
+  low: 'face1', down: 'face1', okay: 'face2', good: 'face3', great: 'face4',
 }
 
 function phaseLabel(phase: CyclePhase): string {
@@ -160,7 +165,8 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
   const ink = diffuse ? dt.colors.ink : colors.text
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
   // Under diffuse, tiles are plain paper (no color wash); tint=undefined.
-  const tileTint = (c: string) => (diffuse ? undefined : c)
+  // Light: white tiles (calm); only the mood hero keeps a soft tone.
+  const tileTint = (_c: string) => (diffuse ? undefined : colors.surface)
 
   return (
     <LogSheet
@@ -169,20 +175,19 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
       onClose={onClose}
       chip={phaseLabel(phase)}
       chipColor={accent}
+      sticker={diffuse ? undefined : 'cal'}
     >
       <View style={{ gap: 14 }}>
         {/* Mood — full-width hero tile */}
-        <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={18} flat>
+        <PaperCard tint={diffuse ? undefined : stickers.yellowSoft} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
             <MonoCaps size={10} color={muted}>{t('cycleDash_mood')}</MonoCaps>
           </View>
           <View style={styles.moodRow}>
             {diffuse ? (
               <Character name="mood" size={48} color={moodMeta?.fill ?? stickers.yellow} />
-            ) : moodMeta ? (
-              <moodMeta.Sticker size={48} fill={moodMeta.fill} />
             ) : (
-              <Smiley size={48} fill={stickers.yellow} />
+              <SiteSticker name={moodValue && MOOD_SITE[moodValue] ? MOOD_SITE[moodValue] : 'face3'} size={52} />
             )}
             <View style={{ flex: 1 }}>
               <Display size={28} color={ink}>
@@ -199,7 +204,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.blueSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="temperature" size={18} color={stickers.blue} /> : <Drop size={16} fill={stickers.blue} />}
+              {diffuse ? <Character name="temperature" size={18} color={stickers.blue} /> : <SiteSticker name="thermo" size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_bbt')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -212,7 +217,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="water" size={18} color={stickers.yellow} /> : <Drop size={16} fill={stickers.yellow} />}
+              {diffuse ? <Character name="water" size={18} color={stickers.yellow} /> : <SiteSticker name="otest" size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_lh')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -225,7 +230,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="water" size={18} color={stickers.green} /> : <Drop size={16} fill={stickers.green} />}
+              {diffuse ? <Character name="water" size={18} color={stickers.green} /> : <SiteSticker name="drop" size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_cm')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -241,7 +246,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.pinkSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="heart" size={18} color={stickers.pink} /> : <Heart size={16} fill={intimacy ? stickers.pink : stickers.pinkSoft} />}
+              {diffuse ? <Character name="heart" size={18} color={stickers.pink} /> : <SiteSticker name="heart" size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_intimacy')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -254,7 +259,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
           <PaperCard tint={tileTint(stickers.peachSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="period" size={18} color={stickers.coral} /> : <Drop size={16} fill={periodStart ? stickers.coral : stickers.pinkSoft} />}
+              {diffuse ? <Character name="period" size={18} color={stickers.coral} /> : <SiteSticker name="drop" size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_period')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -297,7 +302,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
         {/* 7-day BBT sparkline */}
         <PaperCard tint={diffuse ? undefined : colors.surface} radius={20} padding={18} flat>
           <View style={styles.tileHeader}>
-            {diffuse ? <Character name="temperature" size={18} color={stickers.blue} /> : <Drop size={16} fill={stickers.blue} />}
+            {diffuse ? <Character name="temperature" size={18} color={stickers.blue} /> : <SiteSticker name="thermo" size={22} />}
             <MonoCaps size={10} color={muted}>{t('cycleDash_bbtLast7')}</MonoCaps>
           </View>
           {loading ? (
@@ -305,7 +310,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
               <ActivityIndicator color={muted} />
             </View>
           ) : bbtHist.length >= 2 ? (
-            <Sparkline points={fillDays(bbtHist).values} color={accent} ink={ink} />
+            <Sparkline points={fillDays(bbtHist).values} color={diffuse ? accent : ink} ink={ink} dotFill={diffuse ? accent : stickers.pinkSoft} muted={muted} />
           ) : (
             <Body size={12} color={muted} style={{ marginTop: 8, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {t('cycleDash_bbtNeedMore')}
@@ -319,7 +324,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function Sparkline({ points, color, ink }: { points: number[]; color: string; ink: string }) {
+function Sparkline({ points, color, ink, dotFill, muted }: { points: number[]; color: string; ink: string; dotFill: string; muted: string }) {
   const W = 280
   const H = 90
   const PAD = 6
@@ -336,9 +341,14 @@ function Sparkline({ points, color, ink }: { points: number[]; color: string; in
       <Svg width={W} height={H}>
         <SvgPath d={d} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         {xs.map((x, i) => points[i] > 0 ? (
-          <SvgCircle key={i} cx={x} cy={ys[i]} r={3} fill={color} stroke={ink} strokeWidth={1} />
+          <SvgCircle key={i} cx={x} cy={ys[i]} r={3.5} fill={dotFill} stroke={ink} strokeWidth={1.5} />
         ) : null)}
       </Svg>
+      {positive.length > 0 ? (
+        <Text style={{ marginTop: 4, color: muted, fontFamily: 'SpaceMono_400Regular', fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+          {`${Math.min(...positive)}° – ${Math.max(...positive)}° · daily BBT`}
+        </Text>
+      ) : null}
     </View>
   )
 }

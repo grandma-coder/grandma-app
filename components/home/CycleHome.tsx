@@ -12,7 +12,6 @@ import { useCallback, useMemo, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
-import { Display } from '../ui/Typography'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import type { CaregiverView } from '../../lib/caregiverPermissions'
@@ -164,6 +163,35 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   // sensible defaults and the ring simply glides to the real day once the query
   // resolves. No blank, no crash.
 
+  const dailyBlock = (
+    <>
+        {/* Daily Message — women's-general daily-question → collectible card.
+            Same mode-agnostic component the pregnancy home uses; it reads the
+            active mode and pulls from the pre-pregnancy question/card bank. */}
+        {show('daily_message') && (
+        <View style={styles.section}>
+          <DailyMessageCard />
+        </View>
+        )}
+    </>
+  )
+  const walletBlock = (
+    <>
+        {walletHasVisibleCard && (
+        <View style={styles.cardWrap}>
+          {/* Wallet heading — a display-font title (same across all 3 homes) so
+              the card stack reads as a proper "Quick access" section. */}
+          {diffuse ? (
+            <Text style={{ marginBottom: 12, fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: dt.colors.ink }}>
+              {t('home_wallet_label')}
+            </Text>
+          ) : null /* light: CycleWallet draws its own heading row + tile grid */}
+          <CycleWallet visibleCardIds={caregiverView?.visible ?? null} />
+        </View>
+        )}
+    </>
+  )
+
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
       <ScrollView
@@ -221,29 +249,8 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
         />
         )}
 
-        {/* Daily Message — women's-general daily-question → collectible card.
-            Same mode-agnostic component the pregnancy home uses; it reads the
-            active mode and pulls from the pre-pregnancy question/card bank. */}
-        {show('daily_message') && (
-        <View style={styles.section}>
-          <DailyMessageCard />
-        </View>
-        )}
-
-        {walletHasVisibleCard && (
-        <View style={styles.cardWrap}>
-          {/* Wallet heading — a display-font title (same across all 3 homes) so
-              the card stack reads as a proper "Quick access" section. */}
-          {diffuse ? (
-            <Text style={{ marginBottom: 12, fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: dt.colors.ink }}>
-              {t('home_wallet_label')}
-            </Text>
-          ) : (
-            <Display size={18} style={{ marginBottom: 12 }}>{t('home_wallet_label')}</Display>
-          )}
-          <CycleWallet visibleCardIds={caregiverView?.visible ?? null} />
-        </View>
-        )}
+        {/* Light: ring → log dock → quick-access tiles → quiet daily card. Diffuse keeps its order. */}
+        {diffuse ? <>{dailyBlock}{walletBlock}</> : <>{walletBlock}{dailyBlock}</>}
       </ScrollView>
 
       {/* Full-month picker — the lightweight "fuller calendar" affordance. Tap a

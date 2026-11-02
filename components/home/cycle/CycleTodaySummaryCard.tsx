@@ -13,11 +13,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft, getModeAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { QuietPill } from '../../ui/QuietPill'
 import { Character } from '../../characters/Characters'
-import { SiteSticker } from '../../stickers/SiteSticker'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { LogDock } from '../../ui/LogDock'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogTimeline'
 import { moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
@@ -79,6 +80,16 @@ const CM_LABEL: Record<string, string> = {
 
 const LH_LABEL: Record<string, string> = {
   negative: 'Neg', faint: 'Faint', positive: 'Pos', peak: 'Peak',
+}
+
+// Site-look dock sticker per chip key (mood face is value-driven, resolved in the component).
+const DOCK_STICKER: Record<string, SiteStickerName> = {
+  mood: 'face3', symptoms: 'heart', bbt: 'thermo', lh: 'otest', cm: 'drop', intimacy: 'heart',
+  period_start: 'drop', period_end: 'drop', pregnancy_test: 'otest', sex_drive: 'heart',
+  clots: 'drop', weight: 'bars', water: 'drop', activity: 'shoe',
+}
+const MOOD_FACE: Record<string, SiteStickerName> = {
+  low: 'face1', down: 'face1', okay: 'face2', good: 'face3', great: 'face4',
 }
 
 export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActiveChange, onLogConfirmed }: Props) {
@@ -380,6 +391,20 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
         )}
       </View>
 
+      {!diffuse ? (
+        // Site look: launchers like the tab bar — sticker + hand-lettered label, no pills.
+        <LogDock
+          accent={getModeAccent('pre-pregnancy')}
+          items={visibleChips.map((c) => ({
+            key: c.key,
+            label: sheetTitle[c.sheet],
+            sticker: c.key === 'mood' && moodValue && MOOD_FACE[moodValue] ? MOOD_FACE[moodValue] : (DOCK_STICKER[c.key] ?? 'star'),
+            done: c.done,
+            onPress: () => setSheetType(c.sheet),
+          }))}
+        />
+      ) : (
+      <>
       {/* Tappable signal pills — neutral hairline; only a completed signal
           tints soft green (no mode-accent). */}
       <View style={styles.chipsRow}>
@@ -423,6 +448,8 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
           ]}
         />
       </View>
+      </>
+      )}
 
       {/* (See results moved to the header row; no footer band — it left dead
           space between this card and the Daily Message below. Matches the

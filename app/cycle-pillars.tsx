@@ -15,6 +15,14 @@ import { prePregPillars } from '../lib/prePregPillars'
 import { getPillarSticker } from '../lib/pillarStickerMap'
 import { Display, Body } from '../components/ui/Typography'
 import { useTranslation } from '../lib/i18n'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
+
+const SITE_PILLAR: Record<string, SiteStickerName> = {
+  fertility: 'flower', 'fertility-basics': 'flower', 'nutrition-prep': 'leaf',
+  'emotional-readiness': 'heart', 'financial-planning': 'bars', 'partner-journey': 'me',
+  'health-checkups': 'thermo',
+}
 
 const TINT_BY_INDEX = ['greenSoft', 'lilacSoft', 'peachSoft', 'blueSoft', 'yellowSoft', 'pinkSoft'] as const
 
@@ -37,9 +45,11 @@ export default function CyclePillarsIndex() {
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
+        {diffuse ? (
+        <>
         <Pressable
           onPress={() => router.back()}
-          style={[styles.back, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline } : { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.back, { backgroundColor: 'transparent', borderColor: dt.colors.hairline }]}
           accessibilityRole="button"
           accessibilityLabel={t('cyclePillars_back')}
         >
@@ -47,10 +57,41 @@ export default function CyclePillarsIndex() {
         </Pressable>
 
         <Display size={32} color={ink}>{t('cyclePillars_title')}</Display>
-        <Text style={[styles.subtitle, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.italic } : { color: stickers.coral, fontFamily: font.italic }]}>
+        <Text style={[styles.subtitle, { color: dt.colors.ink2, fontFamily: diffuseFont.italic }]}>
           {t('cyclePillars_subtitle')}
         </Text>
+        </>
+        ) : (
+        <>
+        <InkBackButton ink={colors.text} paper={colors.bg} label={t('cyclePillars_back')} />
+        <Display size={30} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('cyclePillars_title')}</Display>
+        <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
+          {t('cyclePillars_subtitle')}
+        </Text>
+        </>
+        )}
 
+        {!diffuse ? (
+          // Site look: card-less sticker rows split by hairlines.
+          <View>
+            {prePregPillars.map((p, i) => (
+              <Pressable
+                key={p.id}
+                onPress={() => router.push(`/pillar/${p.id}` as any)}
+                accessibilityRole="button"
+                accessibilityLabel={p.name}
+                style={({ pressed }) => [styles.siteRow, { borderTopColor: colors.border, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.7 : 1 }]}
+              >
+                <SiteSticker name={SITE_PILLAR[p.id] ?? 'star'} size={48} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Display size={18} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{p.name}</Display>
+                  <Body size={13} color={colors.textSecondary} numberOfLines={2}>{p.description}</Body>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Pressable>
+            ))}
+          </View>
+        ) : (
         <View style={styles.grid}>
           {prePregPillars.map((p, i) => {
             const Sticker = getPillarSticker(p.id)
@@ -77,6 +118,7 @@ export default function CyclePillarsIndex() {
             )
           })}
         </View>
+        )}
       </ScrollView>
     </View>
   )
@@ -91,6 +133,7 @@ const styles = StyleSheet.create({
   },
   subtitle: { fontSize: 16, lineHeight: 22, marginBottom: 24, marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  siteRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
   tile: {
     width: '47.5%', padding: 14, borderWidth: 1,
     gap: 8, minHeight: 150, justifyContent: 'flex-start',

@@ -1,15 +1,12 @@
 /**
  * dayStickers — per-day glyphs around the CycleJourneyRingFull.
  *
- * Reuses the existing brand sticker set (Drop / Leaf / Moon / LogOvulation)
- * so wheel icons match the Log Activity sheet visual language: filled
- * phase color + ink stroke, no white-on-color disc.
+ * Site stickers (drop / leaf / egg / moon) — card-less, no phase disc.
  */
 
 import { View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
-import { Drop, Moon, Leaf } from '../../ui/Stickers'
-import { LogOvulation } from '../../stickers/RewardStickers'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { Character, type CharacterName } from '../../characters/Characters'
 import type { CyclePhase } from '../../../lib/cycleLogic'
 
@@ -23,13 +20,18 @@ interface Props {
   glyph?: string
 }
 
-export function DaySticker({ phase, size, bg }: Props) {
+// Site stickers per phase: period drop, follicular leaf, ovulation egg, luteal moon.
+const PHASE_SITE: Record<CyclePhase, SiteStickerName> = {
+  menstruation: 'drop',
+  follicular: 'leaf',
+  ovulation: 'egg',
+  luteal: 'moon',
+}
+
+export function DaySticker({ phase, size }: Props) {
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      {phase === 'menstruation' && <Drop size={size} fill={bg} />}
-      {phase === 'follicular'   && <Leaf size={size} fill={bg} />}
-      {phase === 'ovulation'    && <LogOvulation size={size} fill={bg} />}
-      {phase === 'luteal'       && <Moon size={size} fill={bg} />}
+      <SiteSticker name={PHASE_SITE[phase]} size={size} />
     </View>
   )
 }

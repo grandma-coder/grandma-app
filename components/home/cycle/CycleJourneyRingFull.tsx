@@ -98,18 +98,6 @@ function phaseAccent(phase: CyclePhase, stickers: ReturnType<typeof useTheme>['s
   }
 }
 
-// Saturated dark variant of each phase hue — high contrast against the soft
-// tints, so the selected day's outline + label read clearly (the mid `accent`
-// is nearly the same lightness as its own `*Soft` tint and washes out).
-function phaseInk(phase: CyclePhase, stickers: ReturnType<typeof useTheme>['stickers']): string {
-  switch (phase) {
-    case 'menstruation': return stickers.coralInk
-    case 'follicular':   return stickers.greenInk
-    case 'ovulation':    return stickers.peachInk
-    case 'luteal':       return stickers.lilacInk
-  }
-}
-
 type TFn = (key: TranslationKey) => string
 
 function phaseTitleItalic(phase: CyclePhase, t: TFn): string {
@@ -262,7 +250,7 @@ function StripCell({
           : {
               backgroundColor: tint,
               borderColor: isSelected ? ink : todayRing ? accentColor! : 'transparent',
-              borderStyle: todayRing ? 'dashed' : 'solid',
+              borderStyle: 'solid',
             },
       ]}
     >
@@ -709,10 +697,10 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
                 </>
               ) : (
                 <>
-                  <Text style={[styles.centerLabel, { color: accent, fontFamily: 'SpaceMono_400Regular' }]}>
+                  <Text style={[styles.centerLabel, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
                     {t('cycle_ring_label_day')}
                   </Text>
-                  <Text style={[styles.centerNumber, { color: accent, fontFamily: font.display }]}>
+                  <Text style={[styles.centerNumber, { color: colors.text, fontFamily: font.displayBold }]}>
                     {selectedDay}
                   </Text>
                   <Text style={[styles.centerStatus, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
@@ -725,7 +713,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
         </View>
       </View>
 
-      <Text style={[styles.hint, { color: diffuse ? dt.colors.ink3 : colors.textFaint, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 1.4 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 8.5 : 10 }]}>
+      <Text style={[styles.hint, { color: diffuse ? dt.colors.ink3 : colors.textFaint, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular', letterSpacing: diffuse ? 1.4 : 1.4, textTransform: 'uppercase', fontSize: diffuse ? 8.5 : 9 }]}>
         {t('cycle_ring_drag_hint')}
       </Text>
 
@@ -797,7 +785,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
             key={s.date}
             weekday={s.weekday}
             day={s.dayOfMonth}
-            ink={phaseInk(s.phase, stickers)}
+            ink={colors.text}
             tint={phaseTint(s.phase, stickers)}
             isSelected={s.isSelected}
             isToday={s.isToday}
@@ -825,7 +813,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
         <View style={styles.statusRow}>
           <View style={styles.statusBlock}>
             <Text style={[styles.statusTitle, !diffuse && { letterSpacing: 0.2, textTransform: 'uppercase', fontSize: 24 }, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]} numberOfLines={1}>
-              {t('cycle_ring_phase_prefix')}<Text style={[styles.statusTitleAccent, { color: diffuse ? dt.colors.ink : accent, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>{titleItalic}</Text>
+              {t('cycle_ring_phase_prefix')}<Text style={[styles.statusTitleAccent, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>{titleItalic}</Text>
             </Text>
             <Text style={[styles.dateLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 10 }]}>
               {t('cycle_ring_date_phase', { date: formatLongDate(selectedDate), phase: phaseLabel(selPhase, t) })}

@@ -65,7 +65,8 @@ export function CycleJourneyRing({
   const { colors, stickers, font, radius, isDark } = useTheme()
   const { t } = useTranslation()
   const ink = isDark ? colors.text : '#141313'
-  const coral = stickers.coral
+  // Site look: ink text; phase colour only softly tints fills.
+  const todayFill = stickers.pink
 
   // 28-day visualization regardless of actual cycleLength — Slice 1 keeps it
   // simple; we map cycleDay/cycleLength onto the 28-step ring proportionally.
@@ -173,8 +174,8 @@ export function CycleJourneyRing({
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}>
       <View style={styles.left}>
-        <Text style={[styles.title, { color: ink, fontFamily: font.display }]}>
-          {t('cycle_ring_phase_prefix')}<Text style={{ fontFamily: font.italic, color: coral }}>{titleItalic}</Text>
+        <Text style={[styles.title, { color: ink, fontFamily: font.display, textTransform: 'uppercase' }]}>
+          {t('cycle_ring_phase_prefix')}<Text style={{ fontFamily: font.italic, color: ink }}>{titleItalic}</Text>
         </Text>
         <Text style={[styles.subline, { color: colors.textMuted, fontFamily: font.body }]}>
           {subline}
@@ -187,7 +188,7 @@ export function CycleJourneyRing({
             {phaseLabel}
           </Text>
         </View>
-        <Text style={[styles.hint, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
+        <Text style={[styles.hint, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
           {hint}
         </Text>
       </View>
@@ -213,13 +214,13 @@ export function CycleJourneyRing({
                   width: isToday ? 26 : 18,
                   height: isToday ? 26 : 18,
                   borderRadius: 999,
-                  backgroundColor: isToday ? coral : phaseTint(d, stickers),
-                  borderWidth: isToday ? 2 : 1,
+                  backgroundColor: isToday ? todayFill : phaseTint(d, stickers),
+                  borderWidth: isToday ? 2 : 1.5,
                   borderColor: ink,
                   alignItems: 'center',
                   justifyContent: 'center',
                   zIndex: isToday ? 2 : 1,
-                  ...(isToday ? { shadowColor: ink, shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 1.5, height: 1.5 }, elevation: 3 } : null),
+                  ...(isToday ? { shadowColor: ink, shadowOpacity: 0.1, shadowRadius: 0, shadowOffset: { width: 0, height: 2 }, elevation: 3 } : null),
                 }}
                 pointerEvents="none"
               />
@@ -228,9 +229,9 @@ export function CycleJourneyRing({
         </Animated.View>
 
         <View style={styles.center} pointerEvents="none">
-          <Text style={[styles.dayLabel, { color: coral, fontFamily: font.bodyBold }]}>{t('cycle_ring_label_day')}</Text>
-          <Text style={[styles.dayNum, { color: coral, fontFamily: font.displayBold }]}>{cycleDay}</Text>
-          <Text style={[styles.dayOf, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
+          <Text style={[styles.dayLabel, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>{t('cycle_ring_label_day')}</Text>
+          <Text style={[styles.dayNum, { color: ink, fontFamily: font.displayBold }]}>{cycleDay}</Text>
+          <Text style={[styles.dayOf, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
             {t('cycle_ring_of_n', { n: cycleLength })}
           </Text>
         </View>
@@ -250,15 +251,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   left: { flex: 1, gap: 4 },
-  title: { fontSize: 24, lineHeight: 28, letterSpacing: -0.4 },
+  title: { fontSize: 22, lineHeight: 26, letterSpacing: 0.3 },
   subline: { fontSize: 11, lineHeight: 16, marginTop: 2 },
   periodLine: { fontSize: 11, lineHeight: 16 },
   phasePill: {
     alignSelf: 'flex-start', marginTop: 8,
     borderWidth: 1.5, borderRadius: 999,
     paddingVertical: 5, paddingHorizontal: 11,
-    shadowColor: '#141313', shadowOpacity: 1, shadowRadius: 0,
-    shadowOffset: { width: 2, height: 2 }, elevation: 2,
+    shadowOpacity: 0,
   },
   phasePillText: { fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase' },
   hint: { fontSize: 9, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 10 },

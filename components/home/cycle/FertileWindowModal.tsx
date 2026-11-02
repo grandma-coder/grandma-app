@@ -147,12 +147,12 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
   }, [curve, info.cycleDay, info.cycleLength])
 
   return (
-    <LogSheet visible={visible} title="Fertile Window" onClose={onClose}>
+    <LogSheet visible={visible} title="Fertile Window" onClose={onClose} sticker={diffuse ? undefined : 'flower'}>
       <ScrollView style={{ maxHeight: 600 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('fertileModal_peak_in')}</Text>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>{t('fertileModal_peak_in')}</Text>
           <View style={[styles.countdown, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.big, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.displayLight } : { color: stickers.coral, fontFamily: font.displayBold }]}>
+            <Text style={[styles.big, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.displayLight } : { color: ink, fontFamily: font.displayBold }]}>
               {daysToPeak}<Text style={diffuse ? { fontSize: 12, color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { fontSize: 13, color: colors.textMuted, fontFamily: font.body }}>{t('fertileModal_days_suffix')}</Text>
             </Text>
             <View style={{ alignItems: 'flex-end' }}>
@@ -163,14 +163,14 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('fertileModal_7day_forecast')}</Text>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>{t('fertileModal_7day_forecast')}</Text>
           <View style={[styles.forecast, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.pills}>
               {fc.map((f, i) => {
                 const isToday = i === 0
                 const b = diffuse ? pillBucket(f.pct) : null
-                const bg = diffuse ? b!.bg : (f.pct >= 60 ? stickers.coral : f.pct >= 30 ? stickers.pink : f.pct >= 15 ? stickers.pinkSoft : colors.surfaceRaised)
-                const fg = diffuse ? b!.fg : (f.pct >= 60 ? '#fff' : ink)
+                const bg = diffuse ? b!.bg : (f.pct >= 60 ? stickers.pink : f.pct >= 30 ? stickers.pinkSoft : f.pct >= 15 ? stickers.peachSoft : colors.surface)
+                const fg = diffuse ? b!.fg : ink
                 const bc = diffuse ? (isToday ? dt.colors.hairline : dt.colors.line) : (isToday ? ink : colors.border)
                 return (
                   <View
@@ -189,16 +189,16 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
               })}
             </View>
             <View style={[styles.legend, { borderTopColor: diffuse ? dt.colors.line2 : colors.border }]}>
-              <LegendItem color={diffuse ? 'transparent' : colors.surfaceRaised} label="Low" />
-              <LegendItem color={diffuse ? diffuseAccent + '18' : stickers.pinkSoft} label="Mid" />
-              <LegendItem color={diffuse ? diffuseAccent + '2E' : stickers.pink} label="High" />
-              <LegendItem color={diffuse ? diffuseAccent + '55' : stickers.coral} label="Peak" />
+              <LegendItem color={diffuse ? 'transparent' : colors.surface} label="Low" />
+              <LegendItem color={diffuse ? diffuseAccent + '18' : stickers.peachSoft} label="Mid" />
+              <LegendItem color={diffuse ? diffuseAccent + '2E' : stickers.pinkSoft} label="High" />
+              <LegendItem color={diffuse ? diffuseAccent + '55' : stickers.pink} label="Peak" />
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('fertileModal_log_signal_today')}</Text>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>{t('fertileModal_log_signal_today')}</Text>
           <View style={styles.qlog}>
             <PillButton label="BBT" variant="paper" onPress={() => setOpenLog('bbt')} style={{ flex: 1 }} />
             <PillButton label="LH"  variant="paper" onPress={() => setOpenLog('lh')}  style={{ flex: 1 }} />
@@ -207,10 +207,10 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('fertileModal_confidence')}</Text>
-          <View style={[styles.conf, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: stickers.greenSoft, borderColor: colors.border }]}>
-            <View style={[styles.confBadge, diffuse ? { borderColor: dt.colors.line2, backgroundColor: 'transparent', shadowOpacity: 0 } : { borderColor: ink, backgroundColor: colors.surface }]}>
-              <Text style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, fontSize: 13 } : { color: stickers.coral, fontFamily: font.displayBold, fontSize: 14 }}>{conf.pct}%</Text>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>{t('fertileModal_confidence')}</Text>
+          <View style={[styles.conf, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={[styles.confBadge, diffuse ? { borderColor: dt.colors.line2, backgroundColor: 'transparent', shadowOpacity: 0 } : { borderColor: ink, backgroundColor: stickers.greenSoft, shadowOpacity: 0 }]}>
+              <Text style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, fontSize: 13 } : { color: ink, fontFamily: font.displayBold, fontSize: 14 }}>{conf.pct}%</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold, fontSize: 13 } : { color: ink, fontFamily: font.bodyBold, fontSize: 13 }}>
@@ -225,7 +225,7 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
 
         {pastWindows.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('cycleDetail_pastWindows')}</Text>
+            <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>{t('cycleDetail_pastWindows')}</Text>
             <View style={[styles.history, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
               {pastWindows.map((w, i) => (
                 <View
@@ -241,7 +241,7 @@ export function FertileWindowModal({ visible, onClose, cycleConfig }: Props) {
         )}
 
         <View style={{ marginTop: 8 }}>
-          <PillButton label="Open full fertility log" variant={diffuse ? 'paper' : 'accent'} accentColor={diffuse ? undefined : stickers.pink} onPress={onClose} />
+          <PillButton label="Open full fertility log" variant={diffuse ? 'paper' : 'ink'} onPress={onClose} />
         </View>
       </ScrollView>
 
@@ -265,7 +265,7 @@ function LegendItem({ color, label }: { color: string; label: string }) {
   return (
     <View style={styles.legendItem}>
       <View style={{ width: 12, height: 12, borderRadius: 999, backgroundColor: color, borderWidth: diffuse ? StyleSheet.hairlineWidth : 1, borderColor: diffuse ? dt.colors.line2 : '#141313' }} />
-      <Text style={diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1.1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.bodyBold, fontSize: 9, letterSpacing: 1.1, textTransform: 'uppercase' }}>{label}</Text>
+      <Text style={diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 9, letterSpacing: 1.1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 9, letterSpacing: 1.1, textTransform: 'uppercase' }}>{label}</Text>
     </View>
   )
 }

@@ -7,14 +7,15 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { useQueryClient } from '@tanstack/react-query'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
 import { ALL_SYMPTOMS } from '../../../lib/cycleSymptoms'
 import { SymptomSticker } from '../../calendar/symptomStickers'
-import { LogSheet } from '../../calendar/LogSheet'
-import { PillButton } from '../../ui/PillButton'
+import { LogSheet, SheetFooterAction } from '../../calendar/LogSheet'
+import { SiteChoice } from '../../ui/SiteChoice'
+import { EyeAction, ACTION_TONES } from '../../ui/AuthDock'
 import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
@@ -69,11 +70,23 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
   }
 
   return (
-    <LogSheet visible={visible} title={t('cycleSignals_pickerTitle')} onClose={onClose}>
+    <LogSheet visible={visible} title={t('cycleSignals_pickerTitle')} onClose={onClose} sticker={diffuse ? undefined : 'heart'}>
       <ScrollView style={{ maxHeight: 480 }} contentContainerStyle={styles.body}>
         <View style={styles.grid}>
           {ALL_SYMPTOMS.map((s) => {
             const on = picked.includes(s.id)
+            if (!diffuse) {
+              return (
+                <SiteChoice
+                  key={s.id}
+                  label={s.label}
+                  selected={on}
+                  onPress={() => toggle(s.id)}
+                  tone={getModeColorSoft('pre-pregnancy')}
+                  compact
+                />
+              )
+            }
             return (
               <Pressable
                 key={s.id}
@@ -103,13 +116,18 @@ export function MoodSymptomPickerSheet({ visible, onClose, initialSelected = [] 
             <DiffuseArrow color={getDiffuseAccent('pre-pregnancy', dt.isDark)} size={16} />
           </Pressable>
         ) : (
-          <PillButton
-            label={saving ? t('cycleSignals_saving') : t('cycleSignals_saveSymptoms', { count: picked.length })}
-            variant="accent"
-            accentColor={stickers.pink}
-            onPress={save}
-            disabled={saving}
-          />
+          <SheetFooterAction>
+            <EyeAction
+              label={saving ? t('cycleSignals_saving') : t('cycleSignals_saveSymptoms', { count: picked.length })}
+              onPress={save}
+              ink={colors.text}
+              loading={saving}
+              disabled={saving}
+              sticker="heart"
+              fill={ACTION_TONES.pink}
+              size={64}
+            />
+          </SheetFooterAction>
         )}
       </ScrollView>
     </LogSheet>

@@ -18,6 +18,7 @@ import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { getCycleInfo, dailyFertilityCurve, type CycleConfig } from '../../../lib/cycleLogic'
 import { PaperCard } from '../../ui/PaperCard'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { FertileWindowModal } from './FertileWindowModal'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -26,10 +27,11 @@ interface Props {
 }
 
 function bucketTint(pct: number, stickers: ReturnType<typeof useTheme>['stickers'], colors: ReturnType<typeof useTheme>['colors']): { bg: string; fg: string } {
-  if (pct >= 60) return { bg: stickers.coral, fg: '#fff' }
-  if (pct >= 30) return { bg: stickers.pink, fg: '#141313' }
-  if (pct >= 15) return { bg: stickers.pinkSoft, fg: '#141313' }
-  return { bg: colors.surfaceRaised, fg: colors.textMuted }
+  // Site look: soft tone fills, ink text always.
+  if (pct >= 60) return { bg: stickers.pink, fg: colors.text }
+  if (pct >= 30) return { bg: stickers.pinkSoft, fg: colors.text }
+  if (pct >= 15) return { bg: stickers.peachSoft, fg: colors.text }
+  return { bg: colors.surface, fg: colors.textSecondary }
 }
 
 function statusFor(pct: number): { label: string; tint: 'low' | 'mid' | 'high' | 'peak' } {
@@ -112,10 +114,13 @@ export function FertileWindowCard({ cycleConfig }: Props) {
     <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
       <Pressable onPress={() => setModalOpen(true)} accessibilityRole="button">
         <PaperCard radius={radius.lg} padding={14} style={diffuse ? { borderColor: dt.colors.line } : undefined}>
-          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodyBold }]}>{t('prepreg_fertile')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {!diffuse ? <SiteSticker name="flower" size={26} /> : null}
+            <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>{t('prepreg_fertile')}</Text>
+          </View>
 
           <View style={styles.head}>
-            <Text style={[styles.pct, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.displayLight } : { color: stickers.coral, fontFamily: font.displayBold }]}>
+            <Text style={[styles.pct, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.displayLight } : { color: ink, fontFamily: font.displayBold }]}>
               {todayPct}<Text style={[styles.pctSmall, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.body }]}>%</Text>
             </Text>
             <View style={[
@@ -123,13 +128,14 @@ export function FertileWindowCard({ cycleConfig }: Props) {
               diffuse
                 ? { backgroundColor: 'transparent', borderColor: status.tint === 'peak' ? dt.colors.hairline : dt.colors.line2, shadowOpacity: 0 }
                 : {
-                    backgroundColor: status.tint === 'peak' ? stickers.coral : status.tint === 'high' ? stickers.pink : stickers.pinkSoft,
+                    backgroundColor: status.tint === 'peak' ? stickers.pink : status.tint === 'high' ? stickers.pinkSoft : stickers.peachSoft,
                     borderColor: ink,
+                    shadowOpacity: 0,
                   },
             ]}>
               <Text style={diffuse
                 ? { color: status.tint === 'peak' ? diffuseAccent : dt.colors.ink3, fontFamily: diffuseFont.monoBold, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }
-                : { color: status.tint === 'peak' ? '#fff' : ink, fontFamily: font.bodyBold, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                : { color: ink, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }}>
                 {status.label}
               </Text>
             </View>
@@ -170,7 +176,7 @@ export function FertileWindowCard({ cycleConfig }: Props) {
               <Text style={diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: font.body, fontSize: 11 }}>
                 {t('prepreg_fertileWindowBestDays')}
               </Text>
-              <Text style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, fontSize: 10, letterSpacing: 0.6 } : { color: stickers.coral, fontFamily: font.bodyBold, fontSize: 11 }}>
+              <Text style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, fontSize: 10, letterSpacing: 0.6 } : { color: ink, fontFamily: font.bodyBold, fontSize: 11 }}>
                 {bestDays} {t('common_arrowRight')}
               </Text>
             </View>

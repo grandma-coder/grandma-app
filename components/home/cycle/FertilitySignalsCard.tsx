@@ -23,6 +23,7 @@ import { useCycleHistory } from '../../../lib/cycleAnalytics'
 import { PaperCard } from '../../ui/PaperCard'
 import { Drop, Heart, Pill, Sparkle } from '../../ui/Stickers'
 import { PillButton } from '../../ui/PillButton'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { LogSheet } from '../../calendar/LogSheet'
 import { BbtForm, LhForm, CmForm, IntercourseForm } from '../../calendar/CycleLogForms'
 import { useTranslation } from '../../../lib/i18n'
@@ -53,6 +54,8 @@ function tileHue(tile: Tile, stickers: ReturnType<typeof useTheme>['stickers']):
     case 'intercourse': return stickers.pink
   }
 }
+
+const SITE_TILE: Record<Tile, SiteStickerName> = { bbt: 'thermo', lh: 'otest', cm: 'drop', intercourse: 'heart' }
 
 export function FertilitySignalsCard() {
   const { colors, stickers, font, radius, isDark } = useTheme()
@@ -283,18 +286,14 @@ export function FertilitySignalsCard() {
       <PaperCard radius={radius.lg} padding={14}>
         <View style={styles.head}>
           <View>
-            <Text style={[styles.label, { color: colors.textMuted, fontFamily: font.bodyBold }]}>
+            <Text style={[styles.label, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
               {t('cycleSignals_title')}
             </Text>
-            <Text style={[styles.headline, { color: ink, fontFamily: font.display }]}>
+            <Text style={[styles.headline, { color: ink, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
               {headline}
             </Text>
           </View>
-          <View style={[styles.sticker, { backgroundColor: stickers.pinkSoft, borderColor: ink }]}>
-            {isPeakToday
-              ? <Sparkle size={20} fill={stickers.yellow} />
-              : <Heart size={20} fill={stickers.pink} />}
-          </View>
+          <SiteSticker name={isPeakToday ? 'flower' : 'heart'} size={36} />
         </View>
 
         <View style={styles.grid}>
@@ -305,26 +304,28 @@ export function FertilitySignalsCard() {
               <Pressable
                 key={tile.key}
                 onPress={() => setOpenSheet(tile.key)}
-                style={[
-                  styles.tile,
-                  {
-                    backgroundColor: tileBg(tile),
-                    borderColor: colors.border,
-                  },
-                ]}
+                accessibilityRole="button"
+                accessibilityLabel={tile.label}
+                style={styles.siteTile}
               >
-                <View style={{ opacity: filled ? 1 : 0.55, marginBottom: 2 }}>
-                  {renderTileSticker(tile.key, peak, !filled)}
+                <View style={{ opacity: filled ? 1 : 0.5 }}>
+                  <SiteSticker name={SITE_TILE[tile.key]} size={38} />
+                  {filled ? (
+                    <View style={[styles.tickDot, { backgroundColor: ink, borderColor: colors.bg }]}>
+                      <Text style={{ color: colors.bg, fontSize: 8, lineHeight: 10, fontFamily: font.bodyBold }}>✓</Text>
+                    </View>
+                  ) : null}
                 </View>
-                <Text style={[styles.tileKey, { color: peak ? '#fff' : colors.textMuted, fontFamily: font.bodyBold }]}>
+                <Text style={[styles.tileKey, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
                   {tile.label}
                 </Text>
                 <Text
                   style={[
                     styles.tileV,
                     {
-                      color: peak ? '#fff' : filled ? ink : colors.textMuted,
+                      color: filled ? ink : colors.textMuted,
                       fontFamily: filled ? font.display : font.body,
+                      backgroundColor: peak ? stickers.pinkSoft : 'transparent',
                     },
                   ]}
                   numberOfLines={1}
@@ -351,16 +352,20 @@ export function FertilitySignalsCard() {
                   style={{
                     flex: 1,
                     height: h,
-                    backgroundColor: isToday ? stickers.coral : stickers.pink,
+                    backgroundColor: s.v == null ? 'transparent' : isToday ? stickers.pink : stickers.pinkSoft,
                     borderRadius: 3,
-                    borderWidth: 1,
+                    borderWidth: 1.5,
                     borderColor: ink,
-                    ...(isToday ? { shadowColor: ink, shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 1, height: 1 } } : null),
                   }}
                 />
               )
             })}
           </View>
+        )}
+        {!isEmpty && (
+          <Text style={{ marginTop: 6, color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            BBT · last 7 days (taller = warmer)
+          </Text>
         )}
 
         {isEmpty && (
@@ -373,8 +378,7 @@ export function FertilitySignalsCard() {
             </Text>
             <PillButton
               label={t('cycleSignals_logFirstSignal')}
-              variant="accent"
-              accentColor={stickers.pink}
+              variant="ink"
               onPress={() => setOpenSheet('bbt')}
             />
           </View>
@@ -411,6 +415,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderRadius: 14,
     paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center', gap: 2,
   },
+  siteTile: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 6 },
+  tickDot: { position: 'absolute', right: -4, top: -2, width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   tileKey: { fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 },
   tileV: { fontSize: 13, lineHeight: 16 },
   spark: {

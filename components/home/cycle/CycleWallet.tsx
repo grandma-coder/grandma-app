@@ -31,7 +31,9 @@ import { CyclePillarsGrid } from './CyclePillarsGrid'
 import { MemoriesSheet } from '../MemoriesSheet'
 import { NotifyRoutine, LogOvulation, NotifyGoalAchieved } from '../../stickers/RewardStickers'
 import { Character } from '../../characters/Characters'
-import { SiteSticker } from '../../stickers/SiteSticker'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { StickerTileGrid } from '../../ui/StickerTileGrid'
+import { Display } from '../../ui/Typography'
 import { GrandmaLogo } from '../../ui/GrandmaLogo'
 
 /**
@@ -123,7 +125,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
       case 'ask_grandma': return <GrandmaLogo size={26} palette="rose" outline={colors.text} />
       case 'rewards': return <SiteSticker name="star" size={26} />
       case 'channels': return <SiteSticker name="bubble" size={26} />
-      case 'village': return <SiteSticker name="us" size={26} />
+      case 'village': return <SiteSticker name="house" size={26} />
     }
   }
 
@@ -174,8 +176,36 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
 
   const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
 
+  const SITE_STICKER: Record<CycleCardId, SiteStickerName> = {
+    reminders: 'bell', pillars: 'flower', memories: 'camera', exams: 'doc',
+    ask_grandma: 'bubble', rewards: 'star', channels: 'bubble', village: 'house',
+  }
+
   return (
     <View>
+      {!diffuse ? (
+        <>
+          {/* Site look: heading + edit on one row, shortcuts as a sticker tile grid. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <Display size={18} style={{ flex: 1 }}>{t('home_wallet_label')}</Display>
+            <QuietPill
+              leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
+              onPress={() => setPickerOpen(true)}
+              accessibilityLabel={t('kids_quickLogs_edit')}
+            />
+          </View>
+          <StickerTileGrid
+            tiles={displayedIds.map((id) => ({
+              key: id,
+              label: titleFor(id),
+              sticker: SITE_STICKER[id],
+              tone: softFor(id),
+              onPress: () => onHeader(id),
+            }))}
+          />
+        </>
+      ) : (
+        <>
       {/* Edit affordance — opens the wallet customization picker. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
         <QuietPill
@@ -203,6 +233,8 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
           />
         )
       })}
+        </>
+      )}
 
       {/* Reminders — pop-up sheet (shared add + list, cycle-scoped) */}
       <LogSheet visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>

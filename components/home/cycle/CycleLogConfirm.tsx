@@ -25,6 +25,7 @@ import Svg, { Path } from 'react-native-svg'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../../ui/diffuse/DiffuseKit'
 import { Character } from '../../characters/Characters'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import type { CyclePhase } from '../../../lib/cycleLogic'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -69,7 +70,8 @@ export function CycleLogConfirm({ visible, phase, onDone }: Props) {
   // check/accent hue keeps the phase character (tint.ink) rather than flat ink.
   const circleFill = diffuse ? dt.colors.surface : tint.fill
   const phaseAccent = tint.ink                 // phase-charactered hue, both variants
-  const ringInk = diffuse ? phaseAccent : tint.ink
+  // Light: ink check / dots / outline, phase colour only softly tints the fill.
+  const ringInk = diffuse ? phaseAccent : colors.text
   // Diffuse: a real dim scrim (translucent ink) so the moment is focused —
   // not the old cream-on-cream wash that let the home bleed through.
   const scrimColor = diffuse ? (isDark ? 'rgba(10,9,8,0.72)' : 'rgba(30,26,22,0.44)') : colors.bg
@@ -192,7 +194,7 @@ export function CycleLogConfirm({ visible, phase, onDone }: Props) {
             <Animated.View
               style={[
                 styles.circle,
-                { backgroundColor: circleFill, borderColor: diffuse ? dt.colors.line2 : ringInk + '55' },
+                { backgroundColor: circleFill, borderColor: diffuse ? dt.colors.line2 : colors.text, borderWidth: diffuse ? 1 : 1.5 },
                 circleStyle,
               ]}
             >
@@ -218,7 +220,7 @@ export function CycleLogConfirm({ visible, phase, onDone }: Props) {
             </Animated.View>
             {/* Sparkle accent on completion — the little "ta-da". */}
             <Animated.View pointerEvents="none" style={[styles.sparkle, sparkleStyle]}>
-              <Character name="sparkle" size={22} color={phaseAccent} />
+              {diffuse ? <Character name="sparkle" size={22} color={phaseAccent} /> : <SiteSticker name="star" size={24} />}
             </Animated.View>
           </View>
 
@@ -226,6 +228,7 @@ export function CycleLogConfirm({ visible, phase, onDone }: Props) {
             style={[
               styles.title,
               { color: titleColor, fontFamily: diffuse ? diffuseFont.display : font.display },
+              !diffuse && { textTransform: 'uppercase', letterSpacing: 0.3 },
             ]}
           >
             {phaseStep === 'done' ? t('cycleConfirm_doneTitle') : t('cycleConfirm_updatingTitle')}
@@ -235,7 +238,7 @@ export function CycleLogConfirm({ visible, phase, onDone }: Props) {
               styles.caption,
               diffuse
                 ? { color: captionColor, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 10 }
-                : { color: captionColor, fontFamily: font.italic, fontStyle: 'italic', fontSize: 13 },
+                : { color: captionColor, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 10 },
             ]}
           >
             {phaseStep === 'done' ? t('cycleConfirm_doneCaption') : t('cycleConfirm_updatingCaption')}
