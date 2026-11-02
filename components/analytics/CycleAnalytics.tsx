@@ -23,6 +23,8 @@ import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseStatCard } from '../ui/diffuse/DiffusePrimitives'
 import { UnlockToast } from '../ui/diffuse/UnlockToast'
 import { Character } from '../characters/Characters'
+import { ChevronRight } from 'lucide-react-native'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { Moon, Burst, Flower, Heart, Drop, Star } from '../ui/Stickers'
 import {
@@ -53,6 +55,9 @@ import { cycleMoodToStrip } from '../../lib/moodTrend'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
 
 /** Warm phase copy keyed by cycle phase — resolved through t() so it localizes. */
+const MONO = 'SpaceMono_400Regular'
+const HAIR = StyleSheet.hairlineWidth * 2
+
 const PHASE_VOICE_KEYS: Record<CyclePhase, { word: TranslationKey; line: TranslationKey }> = {
   menstruation: { word: 'cycleAnalytics_phaseWord_menstruation', line: 'cycleAnalytics_phaseLine_menstruation' },
   follicular: { word: 'cycleAnalytics_phaseWord_follicular', line: 'cycleAnalytics_phaseLine_follicular' },
@@ -223,20 +228,21 @@ export function CycleAnalytics() {
         {/* ── Hero: kicker · phase word + glyph · warm day line ───────── */}
         <View style={styles.hero}>
           <View style={styles.heroTopRow}>
-            <Text style={[styles.heroKicker, diffuse ? { color: muted, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+            <Text style={[styles.heroKicker, diffuse ? { color: muted, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: MONO, fontSize: 10, letterSpacing: 1.4 }]}>
               {t('cycleAnalytics_yourCycleToday')}
             </Text>
             <View pointerEvents="none" style={styles.heroGlyph}>
               {diffuse ? (
                 <PhaseGlyph phase={info.phase} color={accent} />
               ) : (
-                <PhaseSticker phase={info.phase} stickers={stickers} />
+                <PhaseSticker phase={info.phase} />
               )}
             </View>
           </View>
           <Text
-            style={[styles.heroWord, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}
+            style={[styles.heroWord, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { fontSize: 32, lineHeight: 38, letterSpacing: 0.3, textTransform: 'uppercase' }]}
             numberOfLines={1}
+            adjustsFontSizeToFit={!diffuse}
           >
             {voice.word}
           </Text>
@@ -256,12 +262,12 @@ export function CycleAnalytics() {
             accessibilityRole="button"
             accessibilityLabel={t('cycleAnalytics_viewLengthDetail')}
           >
-            <View style={[styles.flowCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
+            <View style={[styles.flowCard, styles.siteCard, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text }]}>
               <View style={styles.flowHead}>
-                <Text style={[styles.cardKicker, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+                <Text style={[styles.cardKicker, { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
                   {t('cycleAnalytics_lengthTrendTitle')}
                 </Text>
-                <Text style={[styles.flowFertile, { color: accent, fontFamily: font.bodySemiBold }]}>
+                <Text style={[styles.flowFertile, { color: colors.text, fontFamily: font.bodyBold }]}>
                   {history?.avg != null ? t('cycleAnalytics_avgDaysShort', { n: history.avg }) : t('cycleAnalytics_noWindowYet')}
                 </Text>
               </View>
@@ -270,6 +276,12 @@ export function CycleAnalytics() {
                 avg={history?.avg ?? null}
                 color={accent}
               />
+              {/* Say what the number averages over. */}
+              {history?.avg != null && (
+                <Text style={[styles.siteCaption, { color: colors.textSecondary, fontFamily: font.body }]}>
+                  {`Average of your ${(history?.cycles ?? []).filter((c) => c.lengthDays != null).length} closed cycles. Chart shows the last 8; long gaps are capped, labels keep the real days.`}
+                </Text>
+              )}
             </View>
           </Pressable>
         )}
@@ -277,13 +289,14 @@ export function CycleAnalytics() {
         {/* ── Uniform stat grid — one tappable tile per signal, no random
             tilts so the whole board reads as one system. Intercourse only
             shows for trying-to-conceive users (otherwise noise). ────────── */}
-        <View style={styles.grid}>
+        <GridWrap>
           <GridTile
+            siteSticker="cal"
             tint={stickers.pinkSoft}
             sticker={<Star size={22} fill={stickers.pink} stroke={colors.text} />}
             diffuseIcon={<Character name="sparkle" size={26} color={stickerPalette.pink} />}
             value={avgLabel === '—' ? '—' : `${avgLabel}${t('cycle_ring_unit_d')}`}
-            sub={t('cycleAnalytics_lengthSub')}
+            sub={diffuse ? t('cycleAnalytics_lengthSub') : `${t('cycleAnalytics_lengthSub')} · ${closed} closed cycles`}
             label={t('cycleAnalytics_tileLabel_length')}
             hue={stickerPalette.pink}
             onPress={() => setDetailType('cycleLength')}
@@ -294,6 +307,7 @@ export function CycleAnalytics() {
             tint={stickers.lilacSoft}
             sticker={<Moon size={24} fill={stickers.lilac} />}
             diffuseIcon={<Character name="period" size={26} color={stickerPalette.lilac} />}
+            siteSticker="moon"
             value={regularLabel}
             sub={regularSub}
             label={t('cycleAnalytics_tileLabel_regularity')}
@@ -306,6 +320,7 @@ export function CycleAnalytics() {
             tint={stickers.yellowSoft}
             sticker={<Flower size={24} petal={stickers.pink} center={stickers.yellow} />}
             diffuseIcon={<Character name="ovulation" size={26} color={stickerPalette.pink} />}
+            siteSticker="flower"
             value={fertileLabel}
             sub={fertileSub}
             label={t('cycleAnalytics_tileLabel_fertile')}
@@ -318,6 +333,7 @@ export function CycleAnalytics() {
             tint={stickers.blueSoft}
             sticker={<Drop size={24} fill={stickers.blue} />}
             diffuseIcon={<Character name="temperature" size={26} color={stickerPalette.blue} />}
+            siteSticker="thermo"
             value={bbtLabel}
             sub={bbtSub}
             label={t('cycleAnalytics_tileLabel_bbt')}
@@ -334,6 +350,7 @@ export function CycleAnalytics() {
               tint={stickers.greenSoft}
               sticker={<Drop size={24} fill={stickers.green} />}
               diffuseIcon={<Character name="water" size={26} color={stickerPalette.green} />}
+              siteSticker="drop"
               value={mucusLabel}
               sub={mucusSub}
               label={t('cycleAnalytics_tileLabel_mucus')}
@@ -345,6 +362,7 @@ export function CycleAnalytics() {
             tint={stickers.pinkSoft}
             sticker={<Burst size={24} fill={stickers.coral} points={8} />}
             diffuseIcon={<Character name="activity" size={26} color={stickerPalette.coral} />}
+            siteSticker="bubble"
             value={pmsLabel}
             sub={pmsSub}
             label={t('cycleAnalytics_tileLabel_pms')}
@@ -361,8 +379,9 @@ export function CycleAnalytics() {
               tint={stickers.greenSoft}
               sticker={<Heart size={22} fill={stickers.pink} />}
               diffuseIcon={<Character name="mood" size={26} color={stickerPalette.coral} />}
+              siteSticker="face3"
               value={moodLabel}
-              sub={moodSub}
+              sub={mood?.avgScore == null ? moodSub : `${moodSub} · last 30 days`}
               label={t('cycleAnalytics_tileLabel_mood')}
               hue={stickerPalette.coral}
               onPress={() => setDetailType('mood')}
@@ -380,9 +399,10 @@ export function CycleAnalytics() {
               onPress={() => setDetailType('intercourse')}
               lock={unlocks.intercourse}
               lockHint={t('cycleInsights_lock_intimacy')}
+              siteSticker="heart"
             />
           )}
-        </View>
+        </GridWrap>
 
         {/* NOTE: the BBT "This Cycle's Rhythm" section was removed under Diffuse —
             it duplicated the BASAL TEMP tile. BBT's BeadedThread now lives only
@@ -467,7 +487,10 @@ function CycleLengthTrend({
   const padX = 14
   const padTop = 26
   const padBottom = 26
-  const values = closed.map((c) => c.lengthDays)
+  // Light: cap absurd outliers (a missed period = 90d) so the chart stays legible;
+  // the printed label always keeps the real number.
+  const capAt = (v: number) => (diffuse ? v : Math.min(v, Math.round(avg * 1.5)))
+  const values = closed.map((c) => capAt(c.lengthDays))
   const lo = Math.min(...values, avg) - 2
   const hi = Math.max(...values, avg) + 2
   const span = Math.max(1, hi - lo)
@@ -475,30 +498,35 @@ function CycleLengthTrend({
   const y = (v: number) => padTop + (1 - (v - lo) / span) * (H - padTop - padBottom)
   const avgY = y(avg)
 
-  const pts = closed.map((c, i) => ({ x: x(i), y: y(c.lengthDays), v: c.lengthDays, i }))
+  const pts = closed.map((c, i) => ({ x: x(i), y: y(capAt(c.lengthDays)), v: c.lengthDays, i }))
   const path = pts.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ')
 
   return (
     <View>
       <Svg width={W} height={H}>
         {/* average baseline */}
-        <SvgLine x1={padX} y1={avgY} x2={W - padX} y2={avgY} stroke={line} strokeWidth={1.5} strokeDasharray="3 4" />
-        <SvgText x={W - padX} y={avgY - 6} fontSize={9} fontWeight="700" fill={muted} textAnchor="end" fontFamily={diffuse ? diffuseFont.mono : font.bodySemiBold}>
+        <SvgLine x1={padX} y1={avgY} x2={W - padX} y2={avgY} stroke={diffuse ? line : colors.text} strokeOpacity={diffuse ? 1 : 0.35} strokeWidth={1.5} strokeDasharray="3 4" />
+        <SvgText x={W - padX} y={avgY - 6} fontSize={9} fontWeight="700" fill={diffuse ? muted : colors.textSecondary} textAnchor="end" fontFamily={diffuse ? diffuseFont.mono : font.bodySemiBold}>
           {`AVG ${avg}`}
         </SvgText>
         {/* thread */}
-        <SvgPath d={path} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.5} />
+        <SvgPath d={path} stroke={color} strokeWidth={diffuse ? 2 : 1.5} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={diffuse ? 0.5 : 0.3} />
         {/* beads + length labels */}
         {pts.map((p) => {
           const off = Math.abs(p.v - avg) > 2
           const last = p.i === pts.length - 1
           const hue = off ? offHue : color
           return (
-            <SvgCircle key={p.i} cx={p.x} cy={p.y} r={last ? 6 : 5} fill={last ? (diffuse ? dt.colors.surface : '#FFFEF8') : hue} stroke={hue} strokeWidth={last ? 2 : 0} />
+            diffuse ? (
+            <SvgCircle key={p.i} cx={p.x} cy={p.y} r={last ? 6 : 5} fill={last ? dt.colors.surface : hue} stroke={hue} strokeWidth={last ? 2 : 0} />
+          ) : (
+            // Light: ink-outlined bead, soft tone fill; current (open) cycle hollow.
+            <SvgCircle key={p.i} cx={p.x} cy={p.y} r={6} fill={last ? colors.surface : hue} stroke={colors.text} strokeWidth={1.5} />
+          )
           )
         })}
         {pts.map((p) => (
-          <SvgText key={`l${p.i}`} x={p.x} y={p.y - 11} fontSize={10} fontWeight="700" fill={ink} textAnchor="middle" fontFamily={diffuse ? diffuseFont.monoBold : font.bodySemiBold}>
+          <SvgText key={`l${p.i}`} x={p.x} y={p.y - 11} fontSize={10} fontWeight="700" fill={ink} textAnchor="middle" fontFamily={diffuse ? diffuseFont.monoBold : font.bodyBold}>
             {String(p.v)}
           </SvgText>
         ))}
@@ -510,7 +538,7 @@ function CycleLengthTrend({
 /** A uniform half-width stat tile: sticker + value + warm sub-line. No tilt —
  *  the grid reads as one calm system. Shares TiltChip's inner layout. */
 function GridTile({
-  tint, sticker, diffuseIcon, value, sub, label, hue, onPress, lock, lockHint,
+  tint, sticker, diffuseIcon, value, sub, label, hue, onPress, lock, lockHint, siteSticker,
 }: {
   tint: string
   sticker: React.ReactNode
@@ -522,6 +550,7 @@ function GridTile({
   onPress?: () => void
   lock?: LockState
   lockHint?: string
+  siteSticker?: SiteStickerName
 }) {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
@@ -547,48 +576,58 @@ function GridTile({
     )
   }
 
+  // Light: a quiet row — card-less sticker, mono eyebrow, one value, chevron.
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={({ pressed }) => [
-        styles.gridTile,
-        { backgroundColor: tint, borderColor: colors.border, opacity: pressed ? 0.9 : 1 },
+        styles.siteRow,
+        { borderBottomColor: colors.border, opacity: pressed ? 0.7 : 1 },
       ]}
     >
-      <View style={[styles.gridTileChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        {sticker}
-      </View>
+      <SiteSticker name={siteSticker ?? 'star'} size={36} cut />
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text
-          style={[styles.chipValue, { color: colors.text, fontFamily: font.display }]}
-          numberOfLines={1}
-        >
-          {value}
+        <Text style={[styles.siteEyebrow, { color: colors.textMuted }]} numberOfLines={1}>
+          {label}
         </Text>
-        <Text
-          style={[styles.chipSub, { color: colors.textMuted, fontFamily: font.body }]}
-          numberOfLines={2}
-        >
+        <Text style={[styles.siteRowSub, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
           {sub}
         </Text>
       </View>
+      <Text
+        style={[styles.siteRowValue, { color: colors.text, fontFamily: font.displayBold }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {value}
+      </Text>
+      <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
     </Pressable>
   )
 }
 
+/** Stat rows: diffuse keeps the original wrap grid; light is one ink-outlined card
+ *  of hairline-divided rows. */
+function GridWrap({ children }: { children: React.ReactNode }) {
+  const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  if (diffuse) return <View style={styles.grid}>{children}</View>
+  return (
+    <View style={[styles.siteCard, styles.siteGrid, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text }]}>
+      <View style={styles.siteGridClip}>
+        <View style={{ marginBottom: -HAIR }}>{children}</View>
+      </View>
+    </View>
+  )
+}
+
 /** Phase-specific decorative sticker for the hero. */
-function PhaseSticker({ phase, stickers }: { phase: CyclePhase; stickers: ReturnType<typeof useTheme>['stickers'] }) {
-  switch (phase) {
-    case 'menstruation':
-      return <Drop size={46} fill={stickers.coral} />
-    case 'follicular':
-      return <Star size={46} fill={stickers.green} />
-    case 'ovulation':
-      return <Flower size={48} petal={stickers.pink} center={stickers.yellow} />
-    case 'luteal':
-    default:
-      return <Moon size={46} fill={stickers.lilac} />
-  }
+function PhaseSticker({ phase }: { phase: CyclePhase; stickers?: ReturnType<typeof useTheme>['stickers'] }) {
+  const name: SiteStickerName =
+    phase === 'menstruation' ? 'drop' : phase === 'follicular' ? 'leaf' : phase === 'ovulation' ? 'flower' : 'moon'
+  return <SiteSticker name={name} size={52} cut />
 }
 
 /** Diffuse: the hero phase glyph as a thin Lucide line icon (over a bloom). */
@@ -629,6 +668,65 @@ function RecentCyclesCard({
   const currentDay = open
     ? Math.max(1, Math.floor((today.getTime() - new Date(open.startDate + 'T00:00:00').getTime()) / 86400000) + 1)
     : null
+
+  if (!diffuse) {
+    const lens = closed.map((c) => c.lengthDays as number)
+    const BAR_CAP = 45 // visual cap — the printed number is always the real length
+    return (
+      <View style={[styles.siteCard, styles.recentCardSite, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text }]}>
+        <Text style={[styles.siteEyebrow, { color: colors.textMuted }]}>{t('cycleAnalytics_recentCycles')}</Text>
+        <Text style={[styles.siteRowSub, { color: colors.textSecondary, fontFamily: font.body, marginBottom: 6 }]}>
+          Days from one period start to the next (total per cycle).
+        </Text>
+
+        {open && currentDay !== null ? (
+          <View style={[styles.recentOpenRowSite, { backgroundColor: stickers.pinkSoft, borderColor: colors.text }]}>
+            <SiteSticker name="drop" size={30} cut />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 17, letterSpacing: 0.3, textTransform: 'uppercase' }}>
+                {t('cycleAnalytics_dayNumber', { currentDay })}
+              </Text>
+              <Text style={{ color: colors.textSecondary, fontFamily: font.body, fontSize: 12 }}>
+                {t('cycleAnalytics_startedDate', { date: formatRange(open.startDate, null) })}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        {closed.length > 0 ? (
+          <View style={{ marginTop: open ? 6 : 0 }}>
+            {closed.map((c, i) => {
+              const len = c.lengthDays as number
+              return (
+                <View key={c.startDate + i} style={[styles.recentRowSite, i > 0 && { borderTopWidth: HAIR, borderTopColor: colors.border }]}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={{ color: colors.text, fontFamily: font.bodySemiBold, fontSize: 13 }}>
+                      {formatRange(c.startDate, c.endDate)}
+                    </Text>
+                    <View style={[styles.siteBarTrack, { backgroundColor: colors.borderLight }]}>
+                      <View style={{ height: '100%', width: `${Math.min(100, (Math.min(len, BAR_CAP) / BAR_CAP) * 100)}%`, backgroundColor: stickers.pinkSoft, borderRadius: 999, borderWidth: 1.5, borderColor: colors.text }} />
+                    </View>
+                  </View>
+                  <Text style={{ color: colors.text, fontFamily: font.displayBold, fontSize: 18 }}>
+                    {len}{t('cycle_ring_unit_d')}
+                  </Text>
+                </View>
+              )
+            })}
+          </View>
+        ) : (
+          <Text style={{ marginTop: 8, color: colors.textSecondary, fontFamily: font.body, fontSize: 13, lineHeight: 19 }}>
+            {t('cycleAnalytics_log_cycles_hint')}
+          </Text>
+        )}
+        {lens.some((l) => l > BAR_CAP) && (
+          <Text style={[styles.siteRowSub, { color: colors.textMuted, fontFamily: font.body, marginTop: 6 }]}>
+            Bars stop at {BAR_CAP} days; the number shows the real length.
+          </Text>
+        )}
+      </View>
+    )
+  }
 
   return (
     <View style={[styles.recentCard, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -833,6 +931,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
+
+  // Site look (light)
+  siteCard: {
+    borderWidth: 1.5,
+    borderRadius: 18,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
+  },
+  siteGrid: { marginHorizontal: 20, marginTop: 16 },
+  siteGridClip: { overflow: 'hidden', borderRadius: 16 },
+  siteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    minHeight: 64,
+    borderBottomWidth: HAIR,
+  },
+  siteEyebrow: { fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
+  siteRowSub: { fontSize: 12, lineHeight: 16, marginTop: 2 },
+  siteRowValue: { fontSize: 22, lineHeight: 26, maxWidth: '38%', textAlign: 'right' },
+  siteCaption: { fontSize: 12, lineHeight: 17, marginTop: 6 },
+  siteBarTrack: { height: 6, borderRadius: 999, overflow: 'hidden', marginTop: 7 },
+  recentCardSite: { marginHorizontal: 20, marginTop: 24, paddingVertical: 16, paddingHorizontal: 16 },
+  recentOpenRowSite: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginTop: 4,
+  },
+  recentRowSite: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
 
   // Chips
   chipValue: {

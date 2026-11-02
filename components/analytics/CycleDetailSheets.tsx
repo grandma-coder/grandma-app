@@ -6,24 +6,29 @@
  */
 
 import React, { createContext, useContext } from 'react'
-import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Dimensions } from 'react-native'
+import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Dimensions, Modal, Pressable } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Rect, Line as SvgLine, Text as SvgText } from 'react-native-svg'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
-import { LogSheet } from '../calendar/LogSheet'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { DiffuseSheet, DiffuseMetricTile, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { Body, Display } from '../ui/Typography'
 import { useCycleHistory, useRegularity, usePMSStats, useFertileWindow, useMoodStats, useBBTStats, useCervicalMucusStats, useIntercourseStats, type MoodId, type MucusType } from '../../lib/cycleAnalytics'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
-import { Burst, Flower } from '../ui/Stickers'
 import { Character } from '../characters/Characters'
 import { SymptomBlob, CustomSymptomBlob } from '../calendar/symptomStickers'
 import { symptomLabel, resolveSymptomId } from '../../lib/cycleSymptoms'
-import { MiniBarChart, MiniLineChart, BeadedThread } from './shared/MiniCharts'
+import { MiniLineChart, BeadedThread } from './shared/MiniCharts'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import { useTranslation } from '../../lib/i18n'
+
+const MONO = 'SpaceMono_400Regular'
+const HAIR = StyleSheet.hairlineWidth * 2
+const SCREEN_H = Dimensions.get('window').height
 
 export type CycleDetailType =
   | 'cycleLength'
@@ -67,6 +72,7 @@ function useSheetClose(): () => void {
 
 export function CycleDetailSheet({ type, accent, onClose }: Props) {
   const { t } = useTranslation()
+  const { stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const visible = type !== null
 
@@ -120,17 +126,69 @@ export function CycleDetailSheet({ type, accent, onClose }: Props) {
   }
 
   return (
-    <LogSheet visible={visible} title={title} onClose={onClose}>
+    <LightSheet
+      visible={visible}
+      onClose={onClose}
+      title={title}
+      sticker={type ? SHEET_STICKER[type] : 'cal'}
+      tone={type ? stickers[SHEET_TONE[type]] : stickers.pinkSoft}
+    >
       <SheetCloseContext.Provider value={onClose}>
-        <ScrollView
-          style={{ maxHeight: 540 }}
-          contentContainerStyle={styles.body}
-          showsVerticalScrollIndicator={false}
-        >
-          {bodySwitch}
-        </ScrollView>
+        {bodySwitch}
       </SheetCloseContext.Provider>
-    </LogSheet>
+    </LightSheet>
+  )
+}
+
+const SHEET_STICKER: Record<CycleDetailType, SiteStickerName> = {
+  cycleLength: 'cal', regularity: 'moon', pms: 'bubble', fertile: 'flower',
+  mood: 'face3', bbt: 'thermo', mucus: 'drop', intercourse: 'heart',
+}
+const SHEET_TONE: Record<CycleDetailType, 'pinkSoft' | 'lilacSoft' | 'peachSoft' | 'yellowSoft' | 'greenSoft' | 'blueSoft'> = {
+  cycleLength: 'pinkSoft', regularity: 'lilacSoft', pms: 'peachSoft', fertile: 'yellowSoft',
+  mood: 'greenSoft', bbt: 'blueSoft', mucus: 'greenSoft', intercourse: 'pinkSoft',
+}
+
+/** Light bottom sheet: bg paper, 2.5px ink top border, 26px top radius, grabber at 25% ink. */
+function LightSheet({ visible, onClose, title, sticker, tone, children }: {
+  visible: boolean
+  onClose: () => void
+  title: string
+  sticker: SiteStickerName
+  tone: string
+  children: React.ReactNode
+}) {
+  const { colors } = useTheme()
+  const insets = useSafeAreaInsets()
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View
+          style={{
+            maxHeight: SCREEN_H * 0.88,
+            backgroundColor: colors.bg,
+            borderTopLeftRadius: 26,
+            borderTopRightRadius: 26,
+            borderTopWidth: 2.5,
+            borderColor: colors.text,
+          }}
+        >
+          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
+          </View>
+          <View style={{ paddingHorizontal: 20 }}>
+            <DetailSheetHeader title={title} sticker={sticker} tone={tone} onClose={onClose} />
+          </View>
+          <ScrollView
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: insets.bottom + 28 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
   )
 }
 
@@ -172,10 +230,7 @@ function CycleLengthDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <View style={detailStyles.heroRow}>
-        <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>{data.avg}</Display>
-        <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleAnalytics_daysAvg')}</Text>
-      </View>
+      <HeroRow size={40} value={<>{data.avg}</>} unit={t('cycleAnalytics_daysAvg')} note={`Average of your ${data.cycles.filter((c) => c.lengthDays !== null).length} closed cycles (period start to next period start).`} />
 
       <View style={detailStyles.minMaxRow}>
         <StatChip label={t('cycleDetail_statMin')} value={`${data.min}d`} tint={stickers.blueSoft} />
@@ -184,24 +239,24 @@ function CycleLengthDetail() {
       </View>
 
       <View>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_lastNCycles', { n: values.length })}
         </Text>
         {diffuse ? (
           <CycleLengthBars values={values} avg={data.avg} color={phaseAccent} />
         ) : (
-          <MiniBarChart data={values} labels={labels} color={stickers.pink} />
+          <LightCycleBars values={values} avg={data.avg} fill={stickers.pinkSoft} />
         )}
       </View>
 
       <View style={{ gap: 8 }}>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_history')}
         </Text>
         {recentCycles.map((c) => (
           <View
             key={c.startDate}
-            style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}
+            style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.border }]}
           >
             <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>
               {formatRange(c.startDate, c.endDate)}
@@ -291,7 +346,67 @@ function CycleLengthBars({ values, avg, color }: { values: number[]; avg: number
   )
 }
 
+// ─── Cycle length bars (light) ─────────────────────────────────────────────
+// Ink-outlined soft bars, one per closed cycle, real day count printed on each.
+// Outliers (a skipped period = 80+ days) are capped visually at 1.5x the average
+// so the rest stay readable; the label still shows the true number.
+function LightCycleBars({ values, avg, fill }: { values: number[]; avg: number; fill: string }) {
+  const { colors, font } = useTheme()
+  if (values.length === 0) return null
+  const cap = Math.max(1, Math.round(avg * 1.5))
+  const H = 120
+  return (
+    <View>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: H + 20, gap: 6 }}>
+        {values.map((v, i) => {
+          const capped = v > cap
+          const h = Math.max(6, (Math.min(v, cap) / cap) * H)
+          return (
+            <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
+              <Text style={{ color: colors.text, fontFamily: font.bodyBold, fontSize: 11, height: 16 }}>{capped ? `${v}↑` : v}</Text>
+              <View style={{ width: '100%', maxWidth: 28, height: h, backgroundColor: fill, borderWidth: 1.5, borderColor: colors.text, borderRadius: 8 }} />
+            </View>
+          )
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+        {values.map((_, i) => (
+          <Text key={i} style={{ flex: 1, textAlign: 'center', color: colors.textSecondary, fontFamily: font.body, fontSize: 10 }}>{`C${i + 1}`}</Text>
+        ))}
+      </View>
+      <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12, lineHeight: 17, marginTop: 8 }}>
+        {`Days per cycle, oldest to newest. Your average is ${avg} days.${values.some((v) => v > cap) ? ' Bars stop at 1.5x your average; the number is the real length.' : ''}`}
+      </Text>
+    </View>
+  )
+}
+
 // ─── Shared detail helpers ────────────────────────────────────────────────
+
+/** Hero number + unit. Diffuse keeps the original Display markup; light uses
+ *  displayBold ink with a quiet note saying what the number is an average of. */
+function HeroRow({ size, value, unit, note }: { size: number; value: React.ReactNode; unit: string; note?: string }) {
+  const { colors, font } = useTheme()
+  const diffuse = useIsDiffuse()
+  const dt = useDiffuseTheme()
+  if (diffuse) {
+    return (
+      <View style={detailStyles.heroRow}>
+        <Display size={size} color={dt.colors.ink}>{value}</Display>
+        <Text style={[detailStyles.heroUnit, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 }]}>{unit}</Text>
+      </View>
+    )
+  }
+  return (
+    <View>
+      <View style={detailStyles.heroRow}>
+        <Text style={{ color: colors.text, fontFamily: font.displayBold, fontSize: size + 12, lineHeight: size + 18, letterSpacing: -1.5 }}>{value}</Text>
+        <Text style={[detailStyles.heroUnit, { color: colors.textSecondary, fontFamily: font.body, flexShrink: 1 }]}>{unit}</Text>
+      </View>
+      {note ? <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12, lineHeight: 17, marginTop: 2 }}>{note}</Text> : null}
+    </View>
+  )
+}
 
 function StatChip({ label, value, tint }: { label: string; value: string; tint: string }) {
   const { colors, font } = useTheme()
@@ -301,10 +416,11 @@ function StatChip({ label, value, tint }: { label: string; value: string; tint: 
     return <DiffuseMetricTile value={value} label={label} style={{ flex: 1 }} />
   }
 
+  // Light: no coloured box — mono eyebrow over a bold ink number.
   return (
-    <View style={[detailStyles.statChip, { backgroundColor: tint, borderColor: colors.border }]}>
-      <Text style={[detailStyles.statLabel, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>{label}</Text>
-      <Text style={[detailStyles.statValue, { color: colors.text, fontFamily: font.display }]}>{value}</Text>
+    <View style={{ flex: 1, gap: 2 }}>
+      <Text style={[detailStyles.statLabel, { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.2 }]} numberOfLines={1}>{label}</Text>
+      <Text style={[detailStyles.statValue, { color: colors.text, fontFamily: font.displayBold, fontSize: 22 }]} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
     </View>
   )
 }
@@ -391,24 +507,21 @@ function RegularityDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <View style={detailStyles.heroRow}>
-        <Display size={56} color={diffuse ? dt.colors.ink : colors.text}>{data.percent}%</Display>
-        <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleDetail_regular')}</Text>
-      </View>
+      <HeroRow size={56} value={<>{data.percent}%</>} unit={t('cycleDetail_regular')} note="Share of your closed cycles that landed within 2 days of your average length." />
 
       <View style={{ gap: 6 }}>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_legend')}
         </Text>
         <View style={regStyles.legendRow}>
-          <LegendDot color={stickers.green} text="≤ 2 days" />
-          <LegendDot color={stickers.yellow} text="≤ 4 days" />
-          <LegendDot color={stickers.coral} text="> 4 days" />
+          <LegendDot color={stickers.green} text="≤ 2 days off avg" />
+          <LegendDot color={stickers.yellow} text="≤ 4 days off avg" />
+          <LegendDot color={stickers.coral} text="> 4 days off avg" />
         </View>
       </View>
 
       <View style={{ gap: 6 }}>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_perCycleDeviation')}
         </Text>
         {data.deviations.slice(-10).map((d) => {
@@ -417,10 +530,10 @@ function RegularityDetail() {
           return (
             <View
               key={d.cycleIdx}
-              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}
+              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.border }]}
             >
               <View style={regStyles.rowLeft}>
-                <View style={[regStyles.dot, { backgroundColor: dotColor }]} />
+                <View style={[regStyles.dot, { backgroundColor: dotColor }, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]} />
                 <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{t('cycleDetail_cycleN', { n: d.cycleIdx })}</Body>
               </View>
               <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
@@ -440,8 +553,8 @@ function LegendDot({ color, text }: { color: string; text: string }) {
   const dt = useDiffuseTheme()
   return (
     <View style={regStyles.legendItem}>
-      <View style={[regStyles.dot, { backgroundColor: color }]} />
-      <Text style={{ fontSize: diffuse ? 10 : 12, color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.6 : 0, textTransform: diffuse ? 'uppercase' : 'none' }}>{text}</Text>
+      <View style={[regStyles.dot, { backgroundColor: color }, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]} />
+      <Text style={{ fontSize: diffuse ? 10 : 12, color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.6 : 0, textTransform: diffuse ? 'uppercase' : 'none' }}>{text}</Text>
     </View>
   )
 }
@@ -463,9 +576,9 @@ const regStyles = StyleSheet.create({
     gap: 10,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
 })
 
@@ -514,7 +627,7 @@ function PMSDetail() {
   // Warm headline: only surfaced in Diffuse when there's a dominant phase to
   // report. Falls back to a gentle nudge when there isn't enough data yet
   // (e.g. < 2 cycles logged, or no taggable symptom occurrences).
-  const headline = diffuse && data.overallDominantPhase
+  const headline = data.overallDominantPhase
     ? data.avgDaysBeforePeriod
       ? t('cycleDetail_pmsHeadline', {
           phase: phaseWord(data.overallDominantPhase),
@@ -529,24 +642,31 @@ function PMSDetail() {
   return (
     <View style={{ gap: 18 }}>
       {data.avgDays !== null && (
-        <View style={detailStyles.heroRow}>
-          <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>{data.avgDays}</Display>
-          <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>
-            {t('cycleDetail_daysOfSymptomsPerCycle')}
-          </Text>
-        </View>
+        <HeroRow size={40} value={<>{data.avgDays}</>} unit={t('cycleDetail_daysOfSymptomsPerCycle')} note="Average per closed cycle. The counts below are totals across every cycle you logged." />
       )}
 
       {headline && (
-        <Text style={[pmsStyles.headline, { color: dt.colors.ink2, fontFamily: diffuseFont.italic }]}>
+        <Text style={[pmsStyles.headline, diffuse ? { color: dt.colors.ink2, fontFamily: diffuseFont.italic } : { color: colors.textSecondary, fontFamily: font.body, fontStyle: 'normal' }]}>
           {headline}
         </Text>
       )}
 
       <View style={{ gap: 8 }}>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, { marginBottom: 0 }, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_topSymptoms')}
         </Text>
+        {!diffuse && (
+          <>
+            <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12, lineHeight: 17 }}>
+              Times each symptom was logged, in total. The strip shows which phase of the cycle it landed in.
+            </Text>
+            <View style={regStyles.legendRow}>
+              {PHASE_ORDER.map((ph) => (
+                <LegendDot key={ph} color={PHASE_HUE(stickers)[ph]} text={phaseWord(ph)} />
+              ))}
+            </View>
+          </>
+        )}
         {data.topSymptoms.length === 0 ? (
           <Body size={13} color={colors.textMuted}>{t('preg_analytics_no_symptoms')}</Body>
         ) : (
@@ -556,7 +676,7 @@ function PMSDetail() {
             // SymptomId. null → a genuine free-text 'Other' symptom.
             const resolvedId = resolveSymptomId(s.name)
             const label = resolvedId ? symptomLabel(resolvedId) : s.name
-            const hasPhaseData = diffuse && s.dominantPhase !== null
+            const hasPhaseData = s.dominantPhase !== null
             return (
               <View key={s.name} style={pmsStyles.symptomRow}>
                 <View style={pmsStyles.symptomLeft}>
@@ -567,14 +687,12 @@ function PMSDetail() {
                       <CustomSymptomBlob size={40} />
                     )
                   ) : (
-                    <View style={[pmsStyles.chip, { backgroundColor: stickers.peachSoft, borderColor: colors.border }]}>
-                      <Burst size={20} fill={stickers.peach} points={8} wobble={0.2} />
-                    </View>
+                    <SiteSticker name="bubble" size={32} cut />
                   )}
                   <View style={{ flex: 1, gap: 2 }}>
                     <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{label}</Body>
                     {hasPhaseData && (
-                      <Text style={[pmsStyles.mostlyCaption, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+                      <Text style={[pmsStyles.mostlyCaption, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1 }]}>
                         {t('cycleDetail_pmsMostly', { phase: phaseWord(s.dominantPhase as CyclePhase) })}
                       </Text>
                     )}
@@ -584,9 +702,9 @@ function PMSDetail() {
                   {hasPhaseData ? (
                     <PhaseStrip phaseCounts={s.phaseCounts} />
                   ) : (
-                    <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: diffuse ? phaseAccent : stickers.peachSoft }]} />
+                    <View style={[pmsStyles.bar, { width: `${pct}%`, backgroundColor: diffuse ? phaseAccent : stickers.peachSoft }, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]} />
                   )}
-                  <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{s.count}</Body>
+                  <Body size={13} color={diffuse ? dt.colors.ink3 : colors.text}>{diffuse ? s.count : `${s.count}×`}</Body>
                 </View>
               </View>
             )
@@ -604,21 +722,24 @@ function PMSDetail() {
 // are dimmed so the eye lands on the phase that matters.
 const PHASE_ORDER: CyclePhase[] = ['menstruation', 'follicular', 'ovulation', 'luteal']
 
+const PHASE_HUE = (stickers: ReturnType<typeof useTheme>['stickers']): Record<CyclePhase, string> => ({
+  menstruation: stickers.coral,
+  follicular: stickers.green,
+  ovulation: stickers.pink,
+  luteal: stickers.lilac,
+})
+
 function PhaseStrip({ phaseCounts, height = 8 }: { phaseCounts: Record<CyclePhase, number>; height?: number }) {
-  const { stickers } = useTheme()
-  const hueForPhase: Record<CyclePhase, string> = {
-    menstruation: stickers.coral,
-    follicular: stickers.green,
-    ovulation: stickers.pink,
-    luteal: stickers.lilac,
-  }
+  const { stickers, colors } = useTheme()
+  const diffuse = useIsDiffuse()
+  const hueForPhase = PHASE_HUE(stickers)
   const total = PHASE_ORDER.reduce((sum, p) => sum + phaseCounts[p], 0)
   if (total === 0) return null
 
   const maxCount = Math.max(...PHASE_ORDER.map((p) => phaseCounts[p]))
 
   return (
-    <View style={[pmsStyles.phaseStrip, { height, borderRadius: height / 2 }]}>
+    <View style={[pmsStyles.phaseStrip, { height, borderRadius: height / 2 }, !diffuse && { height: 10, borderRadius: 5, borderWidth: 1.5, borderColor: colors.text }]}>
       {PHASE_ORDER.map((phase) => {
         const count = phaseCounts[phase]
         if (count === 0) return null
@@ -628,7 +749,7 @@ function PhaseStrip({ phaseCounts, height = 8 }: { phaseCounts: Record<CyclePhas
             style={{
               flex: count,
               minWidth: 4,
-              height,
+              height: '100%',
               backgroundColor: hueForPhase[phase],
               opacity: count === maxCount ? 1 : 0.5,
             }}
@@ -657,7 +778,7 @@ const pmsStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    width: 120,
+    width: 130,
   },
   chip: {
     width: 32,
@@ -723,16 +844,14 @@ function FertileDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <View style={[fertStyles.currentCard, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line } : { backgroundColor: stickers.pinkSoft, borderColor: colors.border }]}>
+      <View style={[fertStyles.currentCard, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line } : { backgroundColor: stickers.yellowSoft, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
         {diffuse ? (
           <Character name="ovulation" size={40} color={stickers.pink} />
         ) : (
-          <View style={[fertStyles.currentChip, { backgroundColor: colors.surface }]}>
-            <Flower size={40} petal={stickers.pink} center={stickers.yellow} />
-          </View>
+          <SiteSticker name="flower" size={52} cut />
         )}
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
             {t('cycleDetail_thisCycle')}
           </Text>
           <Display size={22} color={diffuse ? dt.colors.ink : colors.text}>
@@ -746,13 +865,13 @@ function FertileDetail() {
 
       {data.history.length > 0 && (
         <View style={{ gap: 6 }}>
-          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
             {t('cycleDetail_pastWindows')}
           </Text>
           {data.history.map((w) => (
             <View
               key={w.cycleIdx}
-              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}
+              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.border }]}
             >
               <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{t('cycleDetail_cycleN', { n: w.cycleIdx })}</Body>
               <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
@@ -783,6 +902,10 @@ const fertStyles = StyleSheet.create({
     justifyContent: 'center',
   },
 })
+
+const MOOD_STICKER: Record<MoodId, SiteStickerName> = {
+  great: 'face4', energetic: 'star', good: 'face3', okay: 'face2', low: 'face1',
+}
 
 const MOOD_LABELS: Record<MoodId, string> = {
   great: 'Great',
@@ -821,13 +944,10 @@ function MoodDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <View style={detailStyles.heroRow}>
-        <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>{data.avgScore}</Display>
-        <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleDetail_fiveAvg')}</Text>
-      </View>
+      <HeroRow size={40} value={<>{data.avgScore}</>} unit={t('cycleDetail_fiveAvg')} note="Average of the last 30 days of mood logs, where 5 is great. The counts below are totals, all time." />
 
       <View style={{ gap: 8 }}>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_distribution')}
         </Text>
         {diffuse ? (
@@ -839,14 +959,17 @@ function MoodDetail() {
             const pct = (row.count / maxCount) * 100
             return (
               <View key={row.mood} style={moodStyles.row}>
-                <Body size={13} color={colors.text} style={{ width: 80 }}>
+                <SiteSticker name={MOOD_STICKER[row.mood]} size={30} cut />
+                <Body size={13} color={colors.text} style={{ width: 74 }}>
                   {MOOD_LABELS[row.mood]}
                 </Body>
                 <View style={[moodStyles.barTrack, { backgroundColor: colors.borderLight }]}>
-                  <View style={[moodStyles.barFill, { width: `${pct}%`, backgroundColor: stickers.pink }]} />
+                  {row.count > 0 && (
+                    <View style={[moodStyles.barFill, { width: `${Math.max(pct, 6)}%`, backgroundColor: stickers.greenSoft, borderWidth: 1.5, borderColor: colors.text }]} />
+                  )}
                 </View>
-                <Body size={13} color={colors.textSecondary} style={{ width: 30, textAlign: 'right' }}>
-                  {row.count}
+                <Body size={13} color={colors.text} style={{ width: 34, textAlign: 'right' }}>
+                  {row.count}×
                 </Body>
               </View>
             )
@@ -856,13 +979,13 @@ function MoodDetail() {
 
       {data.recent.length > 0 && (
         <View style={{ gap: 6 }}>
-          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+          <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
             {t('cycleDetail_lastNEntries', { n: data.recent.length })}
           </Text>
           {data.recent.map((r, i) => (
             <View
               key={`${r.date}-${i}`}
-              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}
+              style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.border }]}
             >
               <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{formatShort(r.date)}</Body>
               <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{MOOD_LABELS[r.mood]}</Body>
@@ -930,12 +1053,7 @@ function BBTDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <View style={detailStyles.heroRow}>
-        <Display size={40} color={diffuse ? dt.colors.ink : colors.text}>{tempU(latest).toFixed(1)}{degLabel}</Display>
-        <Text style={[detailStyles.heroUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.body }]}>
-          {t('cycleDetail_bbtLatest')}
-        </Text>
-      </View>
+      <HeroRow size={40} value={<>{tempU(latest).toFixed(1)}{degLabel}</>} unit={t('cycleDetail_bbtLatest')} />
 
       <View style={detailStyles.minMaxRow}>
         <StatChip
@@ -948,7 +1066,7 @@ function BBTDetail() {
       </View>
 
       <View>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_bbtThisCycle')}
         </Text>
         {diffuse ? (
@@ -1006,18 +1124,18 @@ function MucusDetail() {
       </View>
 
       <View style={{ gap: 6 }}>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_mucusThisCycle')}
         </Text>
         {data.series.map((s, i) => {
           const fertile = s.type === 'eggwhite' || s.type === 'watery'
           return (
-            <View key={`${s.date}-${i}`} style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}>
+            <View key={`${s.date}-${i}`} style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.border }]}>
               <View style={mucusStyles.left}>
-                <View style={[mucusStyles.dot, { backgroundColor: fertile ? fertileHue : (diffuse ? dt.colors.line2 : stickers.blueSoft) }]} />
+                <View style={[mucusStyles.dot, { backgroundColor: fertile ? fertileHue : (diffuse ? dt.colors.line2 : stickers.blueSoft) }, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]} />
                 <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{t('cycleAnalytics_dayNumber', { currentDay: s.cycleDay })}</Body>
               </View>
-              <Body size={13} color={fertile ? fertileHue : (diffuse ? dt.colors.ink3 : colors.textSecondary)}>
+              <Body size={13} color={diffuse ? (fertile ? fertileHue : dt.colors.ink3) : colors.text}>
                 {MUCUS_LABELS[s.type]}
               </Body>
             </View>
@@ -1030,7 +1148,7 @@ function MucusDetail() {
 
 const mucusStyles = StyleSheet.create({
   left: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  dot: { width: 12, height: 12, borderRadius: 6 },
 })
 
 // ─── Intercourse (TTC timing) ───────────────────────────────────────────────
@@ -1074,13 +1192,13 @@ function IntercourseDetail() {
       </Body>
 
       <View style={{ gap: 6 }}>
-        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_recent')}
         </Text>
         {data.recent.map((r, i) => (
-          <View key={`${r.date}-${i}`} style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.borderLight }]}>
+          <View key={`${r.date}-${i}`} style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.border }]}>
             <View style={mucusStyles.left}>
-              <View style={[mucusStyles.dot, { backgroundColor: r.inFertile ? (diffuse ? phaseAccent : stickers.pink) : (diffuse ? dt.colors.line2 : stickers.blueSoft) }]} />
+              <View style={[mucusStyles.dot, { backgroundColor: r.inFertile ? (diffuse ? phaseAccent : stickers.pink) : (diffuse ? dt.colors.line2 : stickers.blueSoft) }, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]} />
               <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{formatShort(r.date)}</Body>
             </View>
             <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>
@@ -1132,6 +1250,7 @@ export function ErrorState() {
 }
 
 const styles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   body: {
     paddingBottom: 8,
     gap: 16,
