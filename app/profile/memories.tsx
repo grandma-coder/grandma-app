@@ -497,9 +497,9 @@ export default function MemoriesScreen() {
             </Body>
             <PillButton
               label={t('memories_addFirst')}
-              variant="ink"
+              variant="paper"
               onPress={pickPhotos}
-              leading={<Camera size={16} color={colors.bg} strokeWidth={2} />}
+              leading={<Camera size={16} color={colors.text} strokeWidth={2} />}
               style={{ marginTop: 8 }}
             />
           </View>

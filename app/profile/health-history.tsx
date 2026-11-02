@@ -337,9 +337,9 @@ export default function HealthHistoryScreen() {
                             const h = Math.min(50, Math.max(10, (num / 20) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
-                                <Text style={[styles.barValue, { color: wColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{num}</Text>
+                                <Text style={[styles.barValue, { color: wColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{diffuse ? num : Math.round(num * 10) / 10}</Text>
                                 <View style={[styles.bar, { height: h, backgroundColor: diffuse ? dt.colors.line2 : stickers.blueSoft, borderColor: diffuse ? 'transparent' : ink, borderWidth: diffuse ? 1 : 1.5, borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
-                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
+                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
                               </View>
                             )
                           })}
@@ -356,9 +356,9 @@ export default function HealthHistoryScreen() {
                             const h = Math.min(50, Math.max(10, (num / 120) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
-                                <Text style={[styles.barValue, { color: hColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{num}</Text>
+                                <Text style={[styles.barValue, { color: hColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{diffuse ? num : Math.round(num * 10) / 10}</Text>
                                 <View style={[styles.bar, { height: h, backgroundColor: diffuse ? dt.colors.line2 : stickers.peachSoft, borderColor: diffuse ? 'transparent' : ink, borderWidth: diffuse ? 1 : 1.5, borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
-                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
+                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
                               </View>
                             )
                           })}

@@ -177,7 +177,7 @@ export default function SettingsScreen() {
           <View>
             <SiteEyebrow>{t('settings_display')}</SiteEyebrow>
             <SiteRow
-              sticker={isDark ? 'moon' : 'star'}
+              sticker="moon"
               label={t('settings_darkMode')}
               right={<SiteToggle value={isDark} onValueChange={toggleDark} label={t('settings_darkMode')} />}
               last
@@ -199,7 +199,7 @@ export default function SettingsScreen() {
               right={<UnitSwitch options={['celsius', 'fahrenheit']} labels={['°C', '°F']} value={tempUnit} onChange={(v) => setTempUnitStore(v === 'fahrenheit' ? 'f' : 'c')} />}
             />
             <SiteRow
-              sticker="ruler"
+              sticker="scale"
               label={t('settings_weight')}
               right={<UnitSwitch options={['kg', 'lbs']} labels={['kg', 'lbs']} value={weightUnit} onChange={(v) => setWeightUnitStore(v === 'lbs' ? 'lb' : 'kg')} />}
               last
@@ -208,7 +208,9 @@ export default function SettingsScreen() {
             <SiteEyebrow>{t('settings_account')}</SiteEyebrow>
             <View style={{ gap: 12, marginTop: 12 }}>
               <QuietPill label={t('profile_signOut')} onPress={() => setSignOutModalVisible(true)} />
-              <QuietPill label={t('settings_deleteAccount')} onPress={handleDeleteAccount} />
+              <Pressable onPress={handleDeleteAccount} accessibilityRole="button" hitSlop={8} style={{ alignSelf: 'center', paddingVertical: 8 }}>
+                <Text style={{ fontFamily: font.bodyMedium, fontSize: 14, color: colors.textMuted, textDecorationLine: 'underline' }}>{t('settings_deleteAccount')}</Text>
+              </Pressable>
             </View>
           </View>
         )}

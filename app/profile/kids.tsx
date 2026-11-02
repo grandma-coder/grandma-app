@@ -355,9 +355,9 @@ export default function KidsProfileScreen() {
 
         <PillButton
           label="Add a Child"
-          variant="ink"
+          variant="paper"
           onPress={() => setShowAddSheet(true)}
-          leading={<Ionicons name="add" size={18} color={colors.bg} />}
+          leading={<Ionicons name="add" size={18} color={colors.text} />}
           style={{ marginTop: 8 }}
         />
       </ScrollView>
