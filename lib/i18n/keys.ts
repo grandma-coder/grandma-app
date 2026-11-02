@@ -3950,4 +3950,15 @@ export interface TranslationKeys {
   apptQuestions_count: string
   apptQuestions_nextVisitTitle: string
   apptQuestions_nextVisitHint: string
+  cycleReminder_title: string
+  cycleReminder_body: string
+  cycleReminder_bodyOne: string
+  cycleSettings_sectionReminders: string
+  cycleSettings_reminderLabel: string
+  cycleSettings_reminderDesc: string
+  cycleSettings_reminderDaysBefore: string
+  cycleSettings_reminderAllow: string
+  cycleSettings_reminderAllowDesc: string
+  cycleSettings_reminderDenied: string
+  cycleSettings_reminderDeniedDesc: string
 }

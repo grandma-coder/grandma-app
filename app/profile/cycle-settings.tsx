@@ -7,19 +7,27 @@
  * Cream + diffuse. Stepper rows (− value +) — simple, dual-themed, no slider dep.
  */
 
-import { View, Text, Pressable, ScrollView, Switch, StyleSheet } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, Text, Pressable, ScrollView, Switch, StyleSheet, AppState, Linking } from 'react-native'
 import { Minus, Plus } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../../components/ui/Typography'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
-import { SiteHeader, SiteEyebrow, SiteToggle } from '../../components/profile/SiteSettingsKit'
+import { SiteHeader, SiteEyebrow, SiteToggle, SiteRow } from '../../components/profile/SiteSettingsKit'
+import { SiteChoice } from '../../components/ui/SiteChoice'
 import {
   useCycleSettingsStore,
   CYCLE_LENGTH_RANGE, PERIOD_LENGTH_RANGE, LUTEAL_RANGE,
+  REMINDER_DAYS_OPTIONS, type ReminderDaysBefore,
 } from '../../store/useCycleSettingsStore'
+import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { resolvePeriodReminderEnabled, resyncPeriodReminder, syncPeriodReminder } from '../../lib/cycleReminders'
+import {
+  getNotificationPermissionStatus, requestNotificationPermission, type NotificationPermissionStatus,
+} from '../../lib/pushNotifications'
 
 export default function CycleSettingsScreen() {
   const { colors, font, stickers, radius } = useTheme()
@@ -38,6 +46,43 @@ export default function CycleSettingsScreen() {
   const cardBorder = diffuse ? dt.colors.line : colors.border
 
   const autoCycle = s.cycleLength === null
+
+  // ── Period reminder ──
+  // Default ON once there is cycle history (store keeps null until the user
+  // chooses). Permission is only requested from a user action here — never on
+  // launch; the background sync in CycleHome just skips when not granted.
+  const { data: history } = useCycleHistory()
+  const reminderOn = resolvePeriodReminderEnabled(s.periodReminder, !!history?.cycles.length)
+  const [permission, setPermission] = useState<NotificationPermissionStatus>('unavailable')
+  useEffect(() => {
+    let alive = true
+    const refresh = () => { void getNotificationPermissionStatus().then((p) => { if (alive) setPermission(p) }) }
+    refresh()
+    // Back from the OS Settings app → pick up a newly granted permission.
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') refresh() })
+    return () => { alive = false; sub.remove() }
+  }, [])
+
+  async function askPermission() {
+    const granted = await requestNotificationPermission()
+    setPermission(granted ? 'granted' : await getNotificationPermissionStatus())
+    if (granted) void resyncPeriodReminder(history)
+  }
+
+  function onReminderToggle(on: boolean) {
+    s.setPeriodReminder(on)
+    if (!on) {
+      void syncPeriodReminder(null) // cancel right away
+      return
+    }
+    if (permission !== 'granted') void askPermission()
+    else void resyncPeriodReminder(history)
+  }
+
+  function onDaysBeforeChange(n: ReminderDaysBefore) {
+    s.setPeriodReminderDaysBefore(n)
+    void resyncPeriodReminder(history)
+  }
 
   function Stepper({
     label, desc, value, unit, min, max, onChange, disabled,
@@ -133,6 +178,55 @@ export default function CycleSettingsScreen() {
               onChange={s.setLutealPhase}
             />
 
+            <SiteEyebrow>{t('cycleSettings_sectionReminders')}</SiteEyebrow>
+            <SiteRow
+              sticker="bell"
+              label={t('cycleSettings_reminderLabel')}
+              desc={t('cycleSettings_reminderDesc')}
+              right={<SiteToggle value={reminderOn} onValueChange={onReminderToggle} label={t('cycleSettings_reminderLabel')} />}
+              last={!reminderOn}
+            />
+            {reminderOn && (
+              <>
+                <SiteRow
+                  label={t('cycleSettings_reminderDaysBefore')}
+                  right={
+                    <View style={styles.daysRow}>
+                      {REMINDER_DAYS_OPTIONS.map((n) => (
+                        <SiteChoice
+                          key={n}
+                          compact
+                          tick={false}
+                          label={String(n)}
+                          selected={s.periodReminderDaysBefore === n}
+                          onPress={() => onDaysBeforeChange(n)}
+                          tone={getModeColorSoft('pre-pregnancy')}
+                          style={styles.dayPill}
+                        />
+                      ))}
+                    </View>
+                  }
+                  last={permission !== 'undetermined' && permission !== 'denied'}
+                />
+                {permission === 'undetermined' && (
+                  <SiteRow
+                    label={t('cycleSettings_reminderAllow')}
+                    desc={t('cycleSettings_reminderAllowDesc')}
+                    onPress={() => void askPermission()}
+                    last
+                  />
+                )}
+                {permission === 'denied' && (
+                  <SiteRow
+                    label={t('cycleSettings_reminderDenied')}
+                    desc={t('cycleSettings_reminderDeniedDesc')}
+                    onPress={() => void Linking.openSettings()}
+                    last
+                  />
+                )}
+              </>
+            )}
+
             <Text style={[styles.footer, { color: colors.textMuted, fontFamily: font.body }]}>
               {t('cycleSettings_footer')}
             </Text>
@@ -207,6 +301,39 @@ export default function CycleSettingsScreen() {
           />
         </View>
 
+        {/* Period reminder — the opt-out must exist in every look. */}
+        <View style={{ marginTop: 18 }}>
+          <MonoCaps color={inkMuted} style={{ letterSpacing: 1.5 }}>{t('cycleSettings_sectionReminders')}</MonoCaps>
+        </View>
+        <View style={[styles.card, diffuse && styles.cardFlat, { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }]}>
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowLabel, { color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{t('cycleSettings_reminderLabel')}</Text>
+              <Text style={[styles.rowDesc, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{t('cycleSettings_reminderDesc')}</Text>
+            </View>
+            <Switch
+              value={reminderOn}
+              onValueChange={onReminderToggle}
+              trackColor={{ false: diffuse ? dt.colors.line2 : colors.borderStrong, true: accent }}
+              thumbColor={diffuse ? dt.colors.surface : '#FFFFFF'}
+              ios_backgroundColor={diffuse ? dt.colors.line2 : colors.borderStrong}
+            />
+          </View>
+          {reminderOn && (
+            <>
+              <View style={[styles.divider, { backgroundColor: line }]} />
+              <Stepper
+                label={t('cycleSettings_reminderDaysBefore')}
+                value={s.periodReminderDaysBefore}
+                unit={t('cycleSettings_days')}
+                min={REMINDER_DAYS_OPTIONS[0]}
+                max={REMINDER_DAYS_OPTIONS[REMINDER_DAYS_OPTIONS.length - 1]}
+                onChange={(n) => onDaysBeforeChange(n as ReminderDaysBefore)}
+              />
+            </>
+          )}
+        </View>
+
         <Text style={[styles.footer, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('cycleSettings_footer')}
         </Text>
@@ -237,5 +364,7 @@ const styles = StyleSheet.create({
   stepBtn: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   stepValue: { fontSize: 19, minWidth: 58, textAlign: 'center' },
   stepUnit: { fontSize: 12 },
+  daysRow: { flexDirection: 'row', gap: 8 },
+  dayPill: { minWidth: 44 },
   footer: { fontSize: 12, textAlign: 'center', marginTop: 22, lineHeight: 18, paddingHorizontal: 20 },
 })

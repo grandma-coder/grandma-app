@@ -16,6 +16,7 @@ import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import type { CaregiverView } from '../../lib/caregiverPermissions'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { useCycleReminderSync } from '../../lib/cycleReminders'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useChildStore } from '../../store/useChildStore'
 import { EssentialsWalletCard } from './EssentialsWalletCard'
@@ -72,6 +73,8 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   const { data: profile } = useProfile()
   const displayName = profile?.name ?? parentName
   const { data: history, isLoading: historyLoading } = useCycleHistory()
+  // Local "period may start soon" reminder — owner only, never for a caregiver.
+  useCycleReminderSync({ disabled: !!caregiverView })
   // First load only (no cached history yet): the ring/strip/day card would be
   // built from a provisional "today − 10 days" config and then jump to the real
   // day. Light look shows their skeleton instead; refetches keep the content.

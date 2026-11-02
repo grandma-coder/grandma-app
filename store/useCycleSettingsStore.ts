@@ -14,16 +14,28 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 //   lutealPhase  — luteal-phase length in days (default 14); ovulation =
 //                  cycleLength − lutealPhase.
 //
+//   periodReminder — local "period may start soon" notification. null = the
+//                  user hasn't chosen yet → ON when there is cycle history
+//                  (see resolvePeriodReminderEnabled in lib/cycleReminders).
+//   periodReminderDaysBefore — 1, 2 or 3 days before the estimated period.
+//
 // Persisted locally (device preference, like units) — no server column needed.
+export type ReminderDaysBefore = 1 | 2 | 3
+export const REMINDER_DAYS_OPTIONS: readonly ReminderDaysBefore[] = [1, 2, 3]
+
 interface CycleSettingsStore {
   cycleLength: number | null
   periodLength: number
   lutealPhase: number
+  periodReminder: boolean | null
+  periodReminderDaysBefore: ReminderDaysBefore
   hydrated: boolean
 
   setCycleLength: (v: number | null) => void
   setPeriodLength: (v: number) => void
   setLutealPhase: (v: number) => void
+  setPeriodReminder: (v: boolean) => void
+  setPeriodReminderDaysBefore: (v: ReminderDaysBefore) => void
   setHydrated: (v: boolean) => void
 }
 
@@ -38,17 +50,27 @@ export const useCycleSettingsStore = create<CycleSettingsStore>()(
       cycleLength: null,
       periodLength: 5,
       lutealPhase: 14,
+      periodReminder: null,
+      periodReminderDaysBefore: 2,
       hydrated: false,
 
       setCycleLength: (cycleLength) => set({ cycleLength }),
       setPeriodLength: (periodLength) => set({ periodLength }),
       setLutealPhase: (lutealPhase) => set({ lutealPhase }),
+      setPeriodReminder: (periodReminder) => set({ periodReminder }),
+      setPeriodReminderDaysBefore: (periodReminderDaysBefore) => set({ periodReminderDaysBefore }),
       setHydrated: (hydrated) => set({ hydrated }),
     }),
     {
       name: 'grandma-cycle-settings',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ cycleLength: s.cycleLength, periodLength: s.periodLength, lutealPhase: s.lutealPhase }),
+      partialize: (s) => ({
+        cycleLength: s.cycleLength,
+        periodLength: s.periodLength,
+        lutealPhase: s.lutealPhase,
+        periodReminder: s.periodReminder,
+        periodReminderDaysBefore: s.periodReminderDaysBefore,
+      }),
       onRehydrateStorage: () => () => {
         useCycleSettingsStore.setState({ hydrated: true })
       },

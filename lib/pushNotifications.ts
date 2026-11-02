@@ -132,6 +132,71 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return status === 'granted'
 }
 
+export type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable'
+
+/**
+ * Read the current permission WITHOUT prompting. 'unavailable' when the native
+ * module is missing (old dev client). Use this for background syncs; only a
+ * user action (e.g. turning a reminder toggle on) should call
+ * requestNotificationPermission().
+ */
+export async function getNotificationPermissionStatus(): Promise<NotificationPermissionStatus> {
+  const Notifications = getNotifs()
+  if (!Notifications) return 'unavailable'
+  try {
+    const { status } = await Notifications.getPermissionsAsync()
+    return status === 'granted' || status === 'denied' ? status : 'undetermined'
+  } catch {
+    return 'unavailable'
+  }
+}
+
+/** Cancel one locally-scheduled notification by its stable identifier. */
+export async function cancelLocalNotification(identifier: string): Promise<void> {
+  await cancelById(identifier)
+}
+
+/**
+ * Schedule a one-shot local notification at an exact Date under a stable
+ * identifier (scheduling the same identifier again replaces it). On Android the
+ * notification goes to `channel` (created on demand). No permission prompt here:
+ * returns false when the module is missing, permission isn't granted, or the
+ * date is not in the future.
+ */
+export async function scheduleLocalNotificationAt(opts: {
+  identifier: string
+  title: string
+  body: string
+  date: Date
+  data?: Record<string, unknown>
+  channel?: { id: string; name: string }
+}): Promise<boolean> {
+  const Notifications = getNotifs()
+  if (!Notifications) return false
+  if (opts.date.getTime() <= Date.now()) return false
+  try {
+    if ((await getNotificationPermissionStatus()) !== 'granted') return false
+    if (Platform.OS === 'android' && opts.channel) {
+      await Notifications.setNotificationChannelAsync(opts.channel.id, {
+        name: opts.channel.name,
+        importance: Notifications.AndroidImportance.DEFAULT,
+      })
+    }
+    await Notifications.scheduleNotificationAsync({
+      identifier: opts.identifier,
+      content: { title: opts.title, body: opts.body, data: opts.data ?? {} },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: opts.date,
+        ...(Platform.OS === 'android' && opts.channel ? { channelId: opts.channel.id } : {}),
+      },
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 function easProjectId(): string | undefined {
   return (
     Constants.expoConfig?.extra?.eas?.projectId ??
