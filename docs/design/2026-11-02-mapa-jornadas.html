@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa das jornadas — manter, limpar, consertar, criar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141313; --dim:#6b665c; --line:#e3ddcf; --bg:#FAF6EC; --paper:#fff;
+    --yellow:#FFF1B8; --blue:#CFE1FA; --pink:#F9CFE0; --green:#D7F0DD; --lilac:#DCCFF9; --peach:#FBD3B3; --warn:#c2410c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:16px;line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto;padding:40px 20px 80px}
+  h1,h2,h3{font-family:'Architects Daughter',cursive;font-weight:400;text-transform:uppercase;letter-spacing:.3px;margin:0}
+  h1{font-size:44px;line-height:1.05}
+  h2{font-size:30px;margin-top:64px}
+  h3{font-size:20px}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim)}
+  p{margin:8px 0;max-width:72ch}
+  .lede{font-size:19px;color:#3d3a34;margin-top:14px}
+  img.stk{width:28px;height:28px;object-fit:contain;vertical-align:middle}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .tile{flex:1 1 220px;border:1.5px solid var(--ink);border-radius:20px;padding:18px;background:var(--paper)}
+  .tile h3{display:flex;gap:10px;align-items:center}
+  .strip{margin:18px 0 8px;overflow-x:auto;border:1.5px solid var(--ink);border-radius:18px;background:#f0eadc}
+  .strip img{display:block;height:360px;width:auto}
+  .verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px}
+  .v{border-left:4px solid var(--ink);padding:6px 0 6px 14px}
+  .v ul{margin:6px 0 0;padding-left:18px}
+  .v li{margin:4px 0}
+  .v.keep{border-color:#5fa36f}.v.rev{border-color:#d9a400}.v.cut{border-color:#9b8f7a}.v.fix{border-color:var(--warn)}
+  .tag{display:inline-block;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;border:1.5px solid var(--ink);border-radius:999px;padding:2px 8px;margin-left:6px;background:var(--paper)}
+  .journey{margin-top:40px;padding-top:28px;border-top:1.5px solid var(--line)}
+  .journey h3{font-size:26px;display:flex;gap:12px;align-items:center}
+  /* phone mockups */
+  .mocks{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;align-items:flex-start}
+  .mock{width:300px}
+  .mock .cap{font-size:14px;color:var(--dim);margin-top:10px}
+  .phone{width:300px;height:600px;border:2px solid var(--ink);border-radius:38px;background:var(--bg);padding:26px 18px 18px;position:relative;overflow:hidden;box-shadow:0 4px 0 var(--ink)}
+  .phone .t{font-family:'Architects Daughter',cursive;text-transform:uppercase;font-size:22px;line-height:1.1}
+  .phone .e{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1.3px;text-transform:uppercase;color:var(--dim)}
+  .hair{border-top:1.5px solid var(--line);margin:12px 0}
+  .note{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1.5px solid var(--line);font-size:13.5px;line-height:1.35}
+  .note img{width:30px;height:30px;flex:none}
+  .pill{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--ink);border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px;background:var(--paper)}
+  .pill.peach{background:var(--peach)}
+  .disc{width:62px;height:62px;border-radius:50%;border:2px solid var(--ink);background:var(--yellow);display:flex;align-items:center;justify-content:center;margin:0 auto}
+  .disc img{width:34px;height:34px}
+  .dock{display:flex;justify-content:space-between;margin-top:8px}
+  .dock div{text-align:center;font-family:'Architects Daughter',cursive;font-size:11px;text-transform:uppercase;width:52px;position:relative}
+  .dock img{width:34px;height:34px;display:block;margin:0 auto 2px}
+  .tick{position:absolute;top:-4px;right:4px;width:16px;height:16px;border-radius:50%;background:var(--ink);color:#fff;font-size:10px;line-height:16px}
+  .skel{background:#ece5d5;border-radius:10px;animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.45}}
+  @media (prefers-reduced-motion:reduce){.skel{animation:none}}
+  .frames{display:flex;gap:10px}
+  .frame{flex:1;border:1.5px solid var(--ink);border-radius:16px;background:var(--paper);padding:10px;text-align:center;font-size:12px}
+  .frame .n{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1px}
+  /* flow strip */
+  .flow{display:flex;gap:0;margin-top:20px;flex-wrap:wrap}
+  .step{flex:1 1 190px;border:1.5px solid var(--ink);background:var(--paper);padding:16px;position:relative;margin:0 -1.5px -1.5px 0}
+  .step:first-child{border-radius:18px 0 0 18px}.step:last-child{border-radius:0 18px 18px 0}
+  .step .num{font-family:'Architects Daughter',cursive;font-size:30px;line-height:1}
+  .step b{display:block;margin:4px 0}
+  .step ul{margin:6px 0 0;padding-left:16px;font-size:14px}
+  .size{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+  table{border-collapse:collapse;width:100%;margin-top:14px;font-size:15px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1.5px solid var(--line);vertical-align:top}
+  th{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--dim);font-weight:400}
+  .decide li{margin:8px 0}
+  .decide{list-style:none;padding:0}
+  .decide li::before{content:'☐';margin-right:10px;font-size:18px}
+  @media (max-width:600px){h1{font-size:32px}h2{font-size:24px}.strip img{height:280px}.step{border-radius:0!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="eyebrow">grandma.app · revisão de produto · 2 nov 2026</div>
+<h1>Mapa das jornadas</h1>
+<p class="lede">O que manter, o que limpar, o que consertar e o que vale criar — jornada por jornada. Regra de ouro: o nosso estilo, nunca overwhelming. Cada tela responde a uma pergunta só: <em>está tudo bem?</em> ou <em>o que eu faço agora?</em></p>
+
+<div class="row" style="margin-top:28px">
+  <div class="tile"><h3><img class="stk" src="../../assets/stickers-site/leaf.png" alt="">Calmo</h3><p>Um número principal por bloco, linhas finas, sem pilha de cards coloridos. Se não ajuda a decidir, sai.</p></div>
+  <div class="tile"><h3><img class="stk" src="../../assets/stickers-site/pencil.png" alt="">Útil</h3><p>Cada função nova usa dados que o app já tem e economiza um passo real: consulta, quem cuida, previsão.</p></div>
+  <div class="tile"><h3><img class="stk" src="../../assets/stickers-site/heart.png" alt="">Nosso</h3><p>Stickers, letra à mão, tinta. O carinho aparece em poucos momentos fortes, não em todo canto.</p></div>
+</div>
+
+<h2>Por jornada</h2>
+<p>Prints atuais (home → calendário → insights). Veredito abaixo de cada faixa.</p>
+
+<section class="journey">
+  <h3><img class="stk" src="../../assets/stickers-site/heart.png" alt="">Gravidez</h3>
+  <div class="strip"><img src="journey-map/preg.jpg" alt="Prints da jornada de gravidez: home, calendário e insights"></div>
+  <div class="verdicts">
+    <div class="v keep"><div class="eyebrow">Manter</div><ul><li>Card da semana: fruta, medidas, régua</li><li>Dock de logs com stickers</li><li>Timeline do dia na agenda</li><li>Contrações e prontidão para o parto</li></ul></div>
+    <div class="v rev"><div class="eyebrow">Revisar</div><ul><li>Quick access abre com 7 tiles → 4 de fábrica (pré-natal, dica da semana, chutes, exames); o resto o usuário liga no ⚙</li><li>Mensagem do dia solta no fim da home → vira parte da carta da avó</li><li>Insights com 7 blocos seguidos → carta da avó; gráficos ficam no detalhe</li></ul></div>
+    <div class="v cut"><div class="eyebrow">Cortar</div><ul><li>Seletor de período com 5 opções (Week · Month · 3 mo · Year · Custom) → 3: 7 dias, 30 dias, tudo</li><li>Anel “week over week” repetido no insights (já está no carrossel da home)</li></ul></div>
+    <div class="v fix"><div class="eyebrow">Consertar</div><ul><li>“Loading your readiness…” e barra branca no lugar do gráfico enquanto carrega</li></ul></div>
+  </div>
+</section>
+
+<section class="journey">
+  <h3><img class="stk" src="../../assets/stickers-site/flower.png" alt="">Ciclo</h3>
+  <div class="strip"><img src="journey-map/pre.jpg" alt="Prints da jornada de ciclo"></div>
+  <div class="verdicts">
+    <div class="v keep"><div class="eyebrow">Manter</div><ul><li>Anel do ciclo com fases</li><li>Faixa da semana colorida por fase</li><li>Calendário do mês com legenda</li><li>Tendência de duração do ciclo</li></ul></div>
+    <div class="v rev"><div class="eyebrow">Revisar</div><ul><li>Dois cards de dia empilhados (“A rising day” + “Log for Fri”) → um card do dia só</li><li>Legenda do anel ocupa 2 linhas → chips menores numa linha</li><li>Insights repete números da home (fertilidade, próxima menstruação)</li></ul></div>
+    <div class="v cut"><div class="eyebrow">Cortar</div><ul><li>Linha “Cervical mucus —” vazia nos insights quando nunca foi registrado</li></ul></div>
+    <div class="v fix"><div class="eyebrow">Consertar</div><ul><li>A home volta mostrando um dia passado selecionado (30/out) quando hoje é 2/nov — deve sempre reabrir em hoje</li></ul></div>
+  </div>
+</section>
+
+<section class="journey">
+  <h3><img class="stk" src="../../assets/stickers-site/baby.png" alt="">Kids</h3>
+  <div class="strip"><img src="journey-map/kids.jpg" alt="Prints da jornada de kids"></div>
+  <div class="verdicts">
+    <div class="v keep"><div class="eyebrow">Manter</div><ul><li>Chips dos filhos e tiles (sono, humor, calorias, atividades)</li><li>Detalhes calmos por tile</li><li>Vacinas e relatório para o médico</li></ul></div>
+    <div class="v rev"><div class="eyebrow">Revisar</div><ul><li>Agenda “Today · 23 pending” mistura 3 filhos → agrupar por filho, mostrar os próximos 3 e “ver todos”</li><li>Quick access 6 → 4 de fábrica (vacinas, saúde, exames, lembretes)</li><li>Insights: nota por pilar em lista longa → carta da avó</li></ul></div>
+    <div class="v cut"><div class="eyebrow">Cortar</div><ul><li>Linhas “Tap to see details” sem número nos insights</li></ul></div>
+    <div class="v fix"><div class="eyebrow">Consertar</div><ul><li>Tom alarmante: “4.5 · needs care”, “Kenji needs some attention” → linguagem de avó, não de alerta</li></ul></div>
+  </div>
+</section>
+
+<section class="journey">
+  <h3><img class="stk" src="../../assets/stickers-site/flame.png" alt="">Menopausa</h3>
+  <div class="strip"><img src="journey-map/meno.jpg" alt="Prints da jornada de menopausa"></div>
+  <div class="verdicts">
+    <div class="v keep"><div class="eyebrow">Manter</div><ul><li>Anel de 28 dias com sintomas</li><li>Contador “meses desde a última menstruação”</li><li>Dock de sintomas e sabedoria da avó</li></ul></div>
+    <div class="v rev"><div class="eyebrow">Revisar</div><ul><li>Quick access com só 2 tiles parece vazio → incluir exames e relatório</li><li>Card “Still spotting?” sempre visível → só quando a última menstruação tem menos de 12 meses</li></ul></div>
+    <div class="v cut"><div class="eyebrow">Cortar</div><ul><li>Gráfico de severidade de humor quando há só 1–2 registros</li></ul></div>
+    <div class="v fix"><div class="eyebrow">Consertar</div><ul><li>Botão preto sólido “Log a period” → pílula pêssego com lápis</li><li>Gráfico “Low mood” mostra zeros gigantes</li></ul></div>
+  </div>
+</section>
+
+<h2>Insights vira a carta da avó</h2>
+<p>Ninguém abre o app para ver gráfico. A aba fica, mas mostra o que a avó notou na semana e uma sugestão. Os gráficos continuam um toque abaixo, no detalhe de cada tile — que já existe. O motor de “Grandma noticed” já existe e é baseado em regras: sem custo de IA.</p>
+<div class="mocks">
+  <div class="mock">
+    <div class="phone">
+      <div class="e">semana 37 · 27 out – 2 nov</div>
+      <div class="t" style="margin-top:6px">Querida Amara,</div>
+      <p style="font-size:14px;margin:10px 0 4px">Foi uma semana boa. Três coisas que eu notei:</p>
+      <div class="note"><img src="../../assets/stickers-site/moon.png" alt=""><div><b>Você dormiu melhor</b><br>7,5 h por noite, 40 min a mais que na semana passada.</div></div>
+      <div class="note"><img src="../../assets/stickers-site/foot.png" alt=""><div><b>Chutes firmes</b><br>10 por sessão, dentro do seu normal.</div></div>
+      <div class="note"><img src="../../assets/stickers-site/glass.png" alt=""><div><b>Água caiu na quinta</b><br>5 copos. Nos outros dias, 8.</div></div>
+      <div class="e" style="margin-top:14px">para esta semana</div>
+      <p style="font-size:14px;margin:6px 0 12px">Deixe a mala da maternidade pronta até sexta.</p>
+      <span class="pill peach"><img class="stk" style="width:18px;height:18px" src="../../assets/stickers-site/backpack.png" alt="">Abrir checklist</span>
+    </div>
+    <div class="cap">Uma tela, três notas e uma sugestão. Tocar numa nota abre o gráfico daquele tema.</div>
+  </div>
+  <div class="mock">
+    <div class="phone">
+      <div class="e">hoje · aba atual</div>
+      <div class="t" style="margin-top:6px">Pregnancy, week over week.</div>
+      <div class="skel" style="height:130px;margin:14px 0"></div>
+      <div class="skel" style="height:22px;width:70%;margin:8px 0"></div>
+      <div class="skel" style="height:22px;width:55%;margin:8px 0"></div>
+      <div class="skel" style="height:90px;margin:14px 0"></div>
+      <div class="skel" style="height:90px;margin:14px 0"></div>
+      <div class="skel" style="height:90px;margin:14px 0"></div>
+    </div>
+    <div class="cap">Hoje: anel, peso, 4 pilares, humor, água, movimento, sintomas, parto — tudo em sequência.</div>
+  </div>
+</div>
+
+<h2>Transversais</h2>
+
+<h3 style="margin-top:28px">Momento de salvar</h3>
+<p>Hoje o pop-up só fecha. Proposta: o sticker volta voando para o dock e ganha o ✓, com uma vibração de sucesso. É o momento de prazer do app, e é o mesmo em todas as jornadas.</p>
+<div class="frames" style="max-width:640px;margin-top:14px">
+  <div class="frame"><div class="n">1 · toque</div><div class="disc" style="margin:10px auto"><img src="../../assets/stickers-site/pencil.png" alt=""></div>Disco afunda, vibração leve</div>
+  <div class="frame"><div class="n">2 · fecha</div><img class="stk" style="width:40px;height:40px;margin:16px 0 6px" src="../../assets/stickers-site/glass.png" alt=""><br>Pop-up desce, o sticker sobe</div>
+  <div class="frame"><div class="n">3 · pousa</div><div class="dock" style="margin:12px 0"><div><img src="../../assets/stickers-site/face3.png" alt="">mood</div><div><img src="../../assets/stickers-site/glass.png" alt=""><span class="tick">✓</span>water</div></div>✓ aparece, vibração de sucesso</div>
+</div>
+
+<h3 style="margin-top:36px">Carregando e vazio</h3>
+<p>Nada de “Loading…” cru nem área branca. Carregando = formas do nosso estilo pulsando no lugar do conteúdo. Vazio = sticker, uma frase da avó e um botão.</p>
+<div class="mocks">
+  <div class="mock"><div class="phone" style="height:300px">
+    <div class="e">hidratação</div>
+    <div style="display:flex;gap:8px;align-items:flex-end;height:120px;margin-top:20px">
+      <div class="skel" style="flex:1;height:60%"></div><div class="skel" style="flex:1;height:85%"></div><div class="skel" style="flex:1;height:50%"></div><div class="skel" style="flex:1;height:75%"></div><div class="skel" style="flex:1;height:65%"></div><div class="skel" style="flex:1;height:90%"></div>
+    </div>
+    <div class="skel" style="height:14px;width:60%;margin-top:16px"></div>
+  </div><div class="cap">Carregando: barras fantasmas no formato do gráfico.</div></div>
+  <div class="mock"><div class="phone" style="height:300px;text-align:center">
+    <img src="../../assets/stickers-site/cal.png" alt="" style="width:64px;height:64px;margin-top:30px">
+    <div class="t" style="font-size:18px;margin-top:10px">Dia tranquilo</div>
+    <p style="font-size:14px;color:var(--dim);margin:8px auto 18px">Nada registrado ainda. Quer começar pelo humor?</p>
+    <span class="pill peach"><img class="stk" style="width:18px;height:18px" src="../../assets/stickers-site/face3.png" alt="">Registrar humor</span>
+  </div><div class="cap">Vazio: convite para agir, não aviso.</div></div>
+</div>
+
+<h3 style="margin-top:36px">Quick access</h3>
+<p>Fica. O ⚙ ao lado já deixa o usuário escolher. Mudança: menos atalhos de fábrica, só os que importam em cada jornada.</p>
+<table>
+  <tr><th>Jornada</th><th>Atalhos de fábrica (máx. 4)</th><th>Disponíveis no ⚙</th></tr>
+  <tr><td>Gravidez</td><td>Pré-natal · Dica da semana · Contar chutes · Exames</td><td>Lembretes, memórias, guia do parto</td></tr>
+  <tr><td>Ciclo</td><td>Lembretes · Seus pilares · Exames</td><td>Memórias</td></tr>
+  <tr><td>Kids</td><td>Vacinas · Saúde · Exames · Lembretes</td><td>Metas, saltos de desenvolvimento</td></tr>
+  <tr><td>Menopausa</td><td>Lembretes · Exames · Relatório para o médico</td><td>Canais</td></tr>
+</table>
+
+<h2>Funcionalidades novas</h2>
+<p>Todas usam dados que o app já guarda. Nenhuma pede tela pesada nova.</p>
+<table>
+  <tr><th>Ideia</th><th>Por que é útil</th><th>Onde entra</th><th>Esforço</th></tr>
+  <tr><td><b>Relatório para o médico nas 4 jornadas</b></td><td>Kids já gera PDF. Grávida leva peso, sintomas e chutes; menopausa leva sintomas para a conversa de reposição hormonal (HRT); ciclo leva os ciclos.</td><td>Detalhe dos insights e quick access</td><td>Médio</td></tr>
+  <tr><td><b>Perguntas para a consulta</b></td><td>Anotar dúvidas durante a semana e chegar na consulta com a lista pronta.</td><td>Agenda → consulta</td><td>Pequeno</td></tr>
+  <tr><td><b>Lembrete do ciclo</b></td><td>“Sua menstruação deve vir em 2 dias.” A previsão já existe.</td><td>Notificações</td><td>Pequeno</td></tr>
+  <tr><td><b>Gatilhos de fogacho</b></td><td>Marcação opcional (café, álcool, estresse, calor). Depois a avó diz o que mais aparece.</td><td>Log de sintoma da menopausa</td><td>Pequeno</td></tr>
+  <tr><td><b>Passagem de turno</b></td><td>Resumo automático para quem cuida: “desde as 14h: mamou 2x, dormiu 1h10”.</td><td>Kids → Care Circle</td><td>Médio</td></tr>
+</table>
+<div class="mocks">
+  <div class="mock"><div class="phone">
+    <div class="e">relatório para o médico</div>
+    <div class="t" style="margin-top:6px">Leve para a consulta</div>
+    <div class="hair"></div>
+    <div class="e">período</div>
+    <div style="display:flex;gap:6px;margin:8px 0 14px"><span class="pill" style="background:var(--lilac)">30 dias</span><span class="pill">90 dias</span><span class="pill">Tudo</span></div>
+    <div class="e">incluir</div>
+    <div class="note"><img src="../../assets/stickers-site/scale.png" alt=""><div><b>Peso</b> · 12 registros</div></div>
+    <div class="note"><img src="../../assets/stickers-site/headache.png" alt=""><div><b>Sintomas</b> · 46 registros</div></div>
+    <div class="note"><img src="../../assets/stickers-site/foot.png" alt=""><div><b>Chutes</b> · 14 sessões</div></div>
+    <div class="note"><img src="../../assets/stickers-site/doc.png" alt=""><div><b>Perguntas</b> · 3 anotadas</div></div>
+    <div style="text-align:center;margin-top:18px"><div class="disc"><img src="../../assets/stickers-site/doc.png" alt=""></div><div class="t" style="font-size:14px;margin-top:6px">Gerar PDF</div></div>
+  </div><div class="cap">Mesmo fluxo nas 4 jornadas; muda só a lista do que entra.</div></div>
+  <div class="mock"><div class="phone">
+    <div class="e">agenda · consulta · qui 5 nov</div>
+    <div class="t" style="margin-top:6px">Pré-natal semana 37</div>
+    <p style="font-size:13px;color:var(--dim);margin:4px 0 0">Dra. Silva · 10h</p>
+    <div class="hair"></div>
+    <div class="e">minhas perguntas</div>
+    <div class="note"><span style="font-size:18px">☐</span><div>A dor nas costas à noite é normal?</div></div>
+    <div class="note"><span style="font-size:18px">☐</span><div>Quando ir para a maternidade?</div></div>
+    <div class="note"><span style="font-size:18px">☑</span><div style="color:var(--dim);text-decoration:line-through">Pedir o exame de estreptococo</div></div>
+    <div style="margin-top:14px"><span class="pill"><img class="stk" style="width:18px;height:18px" src="../../assets/stickers-site/pencil.png" alt="">Anotar pergunta</span></div>
+  </div><div class="cap">Perguntas presas à consulta; aparecem de novo no dia, com a lembrança.</div></div>
+</div>
+
+<h2>Ordem de trabalho</h2>
+<div class="flow">
+  <div class="step"><div class="num">1</div><b>Consertos rápidos</b><span class="size">1 sessão</span><ul><li>Botão preto da menopausa</li><li>Zeros no gráfico de humor</li><li>Ciclo reabre em hoje</li><li>Tom “needs care”</li><li>Período com 3 opções</li></ul></div>
+  <div class="step"><div class="num">2</div><b>Salvar, carregar, vazio</b><span class="size">1–2 sessões</span><ul><li>Momento de salvar no dock</li><li>Formas pulsando ao carregar</li><li>Estados vazios com convite</li></ul></div>
+  <div class="step"><div class="num">3</div><b>Limpeza por jornada</b><span class="size">2 sessões</span><ul><li>Atalhos de fábrica</li><li>Um card do dia no ciclo</li><li>Agenda de Kids agrupada</li></ul></div>
+  <div class="step"><div class="num">4</div><b>Carta da avó</b><span class="size">2–3 sessões</span><ul><li>Protótipo na gravidez</li><li>Depois ciclo, kids, menopausa</li></ul></div>
+  <div class="step"><div class="num">5</div><b>Funções novas</b><span class="size">por item</span><ul><li>Relatório nas 4 jornadas</li><li>Perguntas para a consulta</li><li>Lembrete do ciclo</li><li>Gatilhos · passagem de turno</li></ul></div>
+</div>
+<p style="margin-top:14px">Em cada passo: prints antes e depois, modo claro e escuro, e revisão contigo antes de seguir.</p>
+
+<h2>Para você decidir</h2>
+<ul class="decide">
+  <li>Insights vira carta da avó (gráficos ficam no detalhe de cada tile)?</li>
+  <li>Atalhos de fábrica da tabela acima?</li>
+  <li>Seletor de período com 3 opções (7 dias, 30 dias, tudo)?</li>
+  <li>Quais funções novas entram primeiro? Minha ordem: relatório → perguntas → lembrete → gatilhos → passagem de turno.</li>
+  <li>Comunidade: estado vazio com vida, ou atrás de flag até ter gente?</li>
+</ul>
+
+</div>
+</body>
+</html>
