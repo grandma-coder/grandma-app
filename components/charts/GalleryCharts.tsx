@@ -168,7 +168,7 @@ export function HormoneWave({
             position: 'absolute',
             right: 10,
             top: 8,
-            color: colors.textMuted,
+            color: colors.text,
             fontSize: 9,
             letterSpacing: 1.4,
             textTransform: 'uppercase',
@@ -328,7 +328,7 @@ export function LiquidFillBottle({
               fontWeight: '700',
               letterSpacing: 1.5,
               textTransform: 'uppercase',
-              color: colors.textMuted,
+              color: colors.text,
               marginTop: 2,
             }}
           >
@@ -537,7 +537,7 @@ export function WeeksProgressBeads({
             key={i}
             style={{
               fontSize: 9,
-              color: i === activeIndex ? colors.text : colors.textMuted,
+              color: colors.text,
               fontWeight: i === activeIndex ? '700' : '500',
               fontFamily: font.display,
             }}
@@ -803,7 +803,7 @@ export function PolarClock24h({
               y={l.y}
               textAnchor="middle"
               fontSize="8"
-              fill={colors.textMuted}
+              fill={colors.text}
             >
               {l.t}
             </SvgText>
@@ -838,7 +838,7 @@ export function PolarClock24h({
           </Text>
         ) : null}
         {centerSub ? (
-          <Text style={{ fontSize: 9, color: colors.textMuted, marginTop: 2 }}>
+          <Text style={{ fontSize: 9, color: colors.text, marginTop: 2 }}>
             {centerSub}
           </Text>
         ) : null}
@@ -913,7 +913,7 @@ export function MoodStripLollipop({
             key={i}
             style={{
               fontSize: 10,
-              color: colors.textMuted,
+              color: colors.text,
               fontWeight: '600',
               width: `${100 / cols}%`,
               textAlign: 'center',
@@ -1175,7 +1175,7 @@ export function RadarWellness({
               y={cy + Math.sin(a) * (rMax + 18) + 3}
               textAnchor="middle"
               fontSize="9"
-              fill={colors.textMuted}
+              fill={colors.text}
             >
               {lbl}
             </SvgText>

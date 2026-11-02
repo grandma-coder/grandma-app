@@ -153,11 +153,14 @@ export function AgendaWeekStrip({
       >
         {days.map(({ date, dateStr }) => {
           const isSelected = dateStr === selectedDate
-          const isToday = dateStr === todayStr && !isSelected
+          const isTodayRaw = dateStr === todayStr
+          const isToday = isTodayRaw && !isSelected
           const dots = dotsByDate?.[dateStr] ?? []
           const selectedFill = modeColor || ST_YELLOW
-          const labelColor = isSelected ? ST_INK : textMuted
-          const numColor = isSelected ? ST_INK : ink
+          // Site look: ink day numbers/labels; selected = soft tone + ink outline;
+          // today = solid 2px ink ring (also when selected).
+          const labelColor = isDark ? (isSelected ? colors.text : textMuted) : (isSelected ? ST_INK : colors.textSecondary)
+          const numColor = isDark ? ink : ST_INK
 
           // ── Diffuse: borderless day cell — soft accent bloom behind a hairline
           // ring for the selected day (matches the Kids DiffuseWeekStrip). ──
@@ -203,13 +206,10 @@ export function AgendaWeekStrip({
                   isSelected && {
                     backgroundColor: selectedFill,
                     borderWidth: 1.5,
-                    borderColor: ST_INK,
-                    shadowColor: ST_INK,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 0,
+                    borderColor: colors.text,
                   },
-                  isToday && { backgroundColor: colors.surface, borderWidth: 2, borderColor: modeColor || ST_INK },
+                  isToday && { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.text },
+                  isTodayRaw && isSelected && { borderWidth: 2 },
                 ]}
               >
                 <Text style={[styles.num, { color: numColor }]}>

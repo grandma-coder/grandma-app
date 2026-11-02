@@ -6,7 +6,7 @@
  */
 
 import { View, Pressable, Text, StyleSheet } from 'react-native'
-import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, stickers } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 
 const ST_INK = '#141313'
@@ -78,9 +78,10 @@ function CurrentSegmentedTabs({ options, value, onChange, activeBg, activeFg }: 
 
   const trackBg = colors.surface
   const trackBorder = colors.text
-  const inactiveFg = colors.textSecondary
-  const resolvedActiveBg = activeBg ?? colors.text
-  const resolvedActiveFg = activeFg ?? colors.bg
+  const inactiveFg = colors.text
+  // Site look: selected = soft tone fill + ink outline + ink label.
+  const resolvedActiveBg = activeBg ?? (isDark ? colors.surfaceRaised ?? colors.surface : stickers.yellowSoft)
+  const resolvedActiveFg = activeFg ?? colors.text
 
   return (
     <View

@@ -39,9 +39,10 @@ export function MiniStatTile({ label, value, sticker, tint, onPress }: Props) {
         style={[
           styles.chip,
           {
-            backgroundColor: colors.surface,
-            borderColor: colors.text,
-            borderWidth: 1.5,
+            // card-less sticker: no disc/outline around it
+            backgroundColor: 'transparent',
+            borderColor: 'transparent',
+            borderWidth: 0,
           },
         ]}
       >

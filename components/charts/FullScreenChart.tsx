@@ -19,7 +19,7 @@ interface FullScreenChartProps {
 }
 
 export function FullScreenChart({ visible, title, onClose, children }: FullScreenChartProps) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   const insets = useSafeAreaInsets()
 
   async function handleShare() {
@@ -36,11 +36,11 @@ export function FullScreenChart({ visible, title, onClose, children }: FullScree
           <Pressable onPress={onClose} style={styles.iconBtn}>
             <X size={24} color={colors.text} />
           </Pressable>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+          <Text style={[styles.title, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]} numberOfLines={1}>
             {title}
           </Text>
           <Pressable onPress={handleShare} style={styles.iconBtn}>
-            <Share2 size={20} color={colors.textSecondary} />
+            <Share2 size={20} color={colors.text} />
           </Pressable>
         </View>
 

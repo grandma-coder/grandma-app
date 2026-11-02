@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useModeStore } from '../../../store/useModeStore'
 import { PillButton } from '../../ui/PillButton'
@@ -171,16 +171,16 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
         <Pressable
           style={[
             styles.sheet,
-            { backgroundColor: colors.bg, borderColor: colors.border },
+            { backgroundColor: colors.bg, borderColor: colors.text, borderTopWidth: 2.5, borderTopLeftRadius: 26, borderTopRightRadius: 26 },
           ]}
           onPress={(e) => e.stopPropagation()}
         >
           <View style={styles.handle}>
-            <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
+            <View style={[styles.handleBar, { backgroundColor: colors.text, opacity: 0.25 }]} />
           </View>
 
           <Text
-            style={[styles.title, { color: colors.text, fontFamily: font.display }]}
+            style={[styles.title, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}
           >
             {t('kids_home_custom_range_title')}
           </Text>
@@ -199,6 +199,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 maximumDate={today}
                 themeVariant={isDark ? 'dark' : 'light'}
+                accentColor={getModeColorSoft(mode, isDark)}
                 onChange={(_e, d) => handleChange('from', d)}
               />
             )}
@@ -216,6 +217,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
                 minimumDate={from}
                 maximumDate={today}
                 themeVariant={isDark ? 'dark' : 'light'}
+                accentColor={getModeColorSoft(mode, isDark)}
                 onChange={(_e, d) => handleChange('to', d)}
               />
             )}
@@ -258,8 +260,9 @@ function DateRow({
   diffuse?: boolean
   accent?: string
 }) {
-  const { colors, font } = useTheme()
+  const { colors, font, isDark } = useTheme()
   const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   if (diffuse) {
     const dCol = dt.colors
     return (
@@ -304,17 +307,19 @@ function DateRow({
       style={[
         styles.dateRow,
         {
-          backgroundColor: colors.surface,
-          borderColor: active ? colors.text : colors.border,
+          backgroundColor: active ? getModeColorSoft(mode, isDark) : colors.surface,
+          borderColor: colors.text,
+          borderWidth: 1.5,
+          borderRadius: 18,
         },
       ]}
     >
       <Text
         style={{
           color: colors.textMuted,
-          fontFamily: font.bodySemiBold,
-          fontSize: 11,
-          letterSpacing: 1.5,
+          fontFamily: 'SpaceMono_400Regular',
+          fontSize: 10,
+          letterSpacing: 1.4,
           textTransform: 'uppercase',
         }}
       >
@@ -323,8 +328,8 @@ function DateRow({
       <Text
         style={{
           color: colors.text,
-          fontFamily: font.display,
-          fontSize: 20,
+          fontFamily: font.bodyBold,
+          fontSize: 18,
           marginTop: 2,
         }}
       >

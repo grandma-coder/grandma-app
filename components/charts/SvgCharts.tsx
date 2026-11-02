@@ -187,7 +187,7 @@ export function LineChart({
                   strokeDasharray={i === 0 ? undefined : '3,5'}
                   strokeLinecap="round"
                 />
-                <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
+                <SvgText x={leftPad - 10} y={y + 4} fill={colors.text} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
                   {formatNum(tick)}
                 </SvgText>
               </G>
@@ -259,7 +259,7 @@ export function LineChart({
         {labels && (
           <View style={[styles.labelRow, { width, paddingLeft: leftPad, paddingRight: rightPad }]}>
             {labels.map((l, i) => (
-              <Text key={i} style={[styles.label, { color: colors.textMuted }]}>{l}</Text>
+              <Text key={i} style={[styles.label, { color: colors.text }]}>{l}</Text>
             ))}
           </View>
         )}
@@ -327,7 +327,7 @@ export function BarChart({
                   strokeDasharray={i === 0 ? undefined : '3,5'}
                   strokeLinecap="round"
                 />
-                <SvgText x={leftPad - 10} y={y + 4} fill={colors.textMuted} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
+                <SvgText x={leftPad - 10} y={y + 4} fill={colors.text} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
                   {formatNum(tick)}
                 </SvgText>
               </G>
@@ -380,7 +380,7 @@ export function BarChart({
         {labels && (
           <View style={[styles.labelRow, { width, paddingLeft: leftPad, paddingRight: rightPad }]}>
             {labels.map((l, i) => (
-              <Text key={i} style={[styles.label, { color: colors.textMuted }]}>{l}</Text>
+              <Text key={i} style={[styles.label, { color: colors.text }]}>{l}</Text>
             ))}
           </View>
         )}
@@ -411,14 +411,14 @@ export function HeatmapGrid({ data, rowLabels, colLabels, color, onPress }: Heat
         {colLabels && (
           <View style={[styles.heatColLabels, { marginLeft: rowLabels ? 34 : 0 }]}>
             {colLabels.map((l, i) => (
-              <Text key={i} style={[styles.heatLabel, { width: cellSize + gap, color: colors.textMuted }]}>{l}</Text>
+              <Text key={i} style={[styles.heatLabel, { width: cellSize + gap, color: colors.text }]}>{l}</Text>
             ))}
           </View>
         )}
         {data.map((row, ri) => (
           <View key={ri} style={styles.heatRow}>
             {rowLabels && (
-              <Text style={[styles.heatRowLabel, { color: colors.textMuted }]}>{rowLabels[ri] ?? ''}</Text>
+              <Text style={[styles.heatRowLabel, { color: colors.text }]}>{rowLabels[ri] ?? ''}</Text>
             )}
             {row.map((val, ci) => (
               <View
@@ -616,14 +616,15 @@ export function MoodStickerStrip({ days }: MoodStickerStripProps) {
                       width: size,
                       height: size,
                       borderRadius: size / 2,
-                      backgroundColor: fill + '40',
-                      borderColor: fill + '70',
-                      shadowColor: fill,
+                      // Site look: card-less mood sticker — no bubble, shine or glow.
+                      backgroundColor: 'transparent',
+                      borderColor: 'transparent',
+                      borderWidth: 0,
+                      shadowOpacity: 0,
+                      elevation: 0,
                     },
                   ]}
                 >
-                  {/* Shine crescent */}
-                  <View style={moodStyles.shineCrescent} />
                   <MoodFace
                     size={Math.round(size * 0.72)}
                     variant={variant}
@@ -632,8 +633,8 @@ export function MoodStickerStrip({ days }: MoodStickerStripProps) {
                   />
                 </View>
               ) : (
-                // Empty day — dashed circle
-                <View style={[moodStyles.emptyCircle, { borderColor: colors.border }]} />
+                // Empty day — quiet solid ring
+                <View style={[moodStyles.emptyCircle, { borderColor: colors.border, borderStyle: 'solid' }]} />
               )}
               <Text style={[moodStyles.dayLabel, { color: day.dominantMood ? colors.textMuted : colors.textMuted + '66' }]}>
                 {day.label}

@@ -192,13 +192,8 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
           borderColor: isDark ? colors.border : ST_INK,
           borderWidth: 1.5,
           borderRadius: radius.full,
-          // Soft sticker shadow on active state only
-          shadowColor: ST_INK,
-          shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
-          shadowOpacity: active ? 0.1 : 0,
-          shadowRadius: 0,
-          elevation: active ? 3 : 0,
-          transform: [{ translateY: active && pressed ? 1 : 0 }],
+          // Site look: flat — selection is the child's tone + ink outline, no shadow.
+          transform: [{ scale: pressed ? 0.97 : 1 }],
         },
       ]}
     >
@@ -206,7 +201,7 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
         <View
           style={[
             styles.pillDot,
-            { backgroundColor: active ? ST_INK : color, borderColor: active ? 'transparent' : 'rgba(20,19,19,0.18)' },
+            { backgroundColor: color, borderColor: isDark ? colors.border : ST_INK },
           ]}
         />
       )}
@@ -222,7 +217,7 @@ export function ChildPill({ label, age, active, color, onPress, showDot = true }
         <Text
           style={[
             styles.pillAge,
-            { color: active ? ink : ink, opacity: active ? 0.7 : 0.55 },
+            { color: ink, opacity: active ? 0.75 : 0.6 },
           ]}
         >
           {age}

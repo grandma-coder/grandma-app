@@ -7,8 +7,9 @@
 import React from 'react'
 import { View, Pressable, StyleSheet } from 'react-native'
 import { Check } from 'lucide-react-native'
-import { useTheme, radius } from '../../constants/theme'
+import { useTheme, radius, stickers } from '../../constants/theme'
 import { Body } from '../ui/Typography'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 
 export interface QuickLogGridItem {
   key: string
@@ -20,7 +21,39 @@ export interface QuickLogGridItem {
 }
 
 export function QuickLogPickerGrid({ items }: { items: QuickLogGridItem[] }): React.ReactElement {
-  const { colors } = useTheme()
+  const { colors, font, isDark } = useTheme()
+  const diffuse = useIsDiffuse()
+  if (!diffuse) {
+    // Site look: card-less sticker tiles. Selected = soft tone disc behind the
+    // sticker + ink tick; label stays ink.
+    return (
+      <View style={styles.siteGrid}>
+        {items.map((it) => {
+          const tone = it.socketTint && it.socketTint !== 'transparent' ? it.socketTint : (isDark ? colors.surfaceRaised : stickers.yellowSoft)
+          return (
+            <Pressable
+              key={it.key}
+              onPress={it.onToggle}
+              accessibilityRole="button"
+              accessibilityState={{ selected: it.selected }}
+              accessibilityLabel={it.label}
+              style={({ pressed }) => [styles.siteTile, { opacity: pressed ? 0.7 : 1 }]}
+            >
+              <View style={[styles.siteDisc, it.selected && { backgroundColor: tone, borderWidth: 1.5, borderColor: colors.text }]}>
+                {it.icon}
+                {it.selected ? (
+                  <View style={[styles.siteTick, { backgroundColor: colors.surface, borderColor: colors.text }]}>
+                    <Check size={11} color={colors.text} strokeWidth={3} />
+                  </View>
+                ) : null}
+              </View>
+              <Body size={13} color={colors.text} numberOfLines={2} style={[styles.siteLabel, { fontFamily: it.selected ? font.bodyBold : font.bodyMedium }]}>{it.label}</Body>
+            </Pressable>
+          )
+        })}
+      </View>
+    )
+  }
   return (
     <View style={styles.grid}>
       {items.map((it) => (
@@ -47,6 +80,11 @@ export function QuickLogPickerGrid({ items }: { items: QuickLogGridItem[] }): Re
 }
 
 const styles = StyleSheet.create({
+  siteGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
+  siteTile: { width: '33.333%', alignItems: 'center', gap: 6, paddingHorizontal: 4 },
+  siteDisc: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
+  siteTick: { position: 'absolute', top: -2, right: -2, width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  siteLabel: { textAlign: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tile: {
     width: '48%',

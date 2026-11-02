@@ -1,11 +1,11 @@
 /**
  * PeriodSelector — 4-pill time range selector (Week / Month / 3 mo / Year).
- * Paper pills with ink-filled active state, matches the 2026 redesign reference.
+ * Paper pills; active = soft tone fill + ink outline + ink label, matches the 2026 redesign reference.
  */
 
 import { useEffect, useRef } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
-import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, stickers } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 
 export type Period = 'week' | 'month' | '3mo' | 'year' | 'custom'
@@ -28,7 +28,7 @@ interface Props {
 }
 
 export function PeriodSelector({ value, onChange, customLabel, showCustom = true }: Props) {
-  const { colors, font } = useTheme()
+  const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const options = showCustom ? OPTIONS : OPTIONS.filter((o) => o.key !== 'custom')
@@ -75,7 +75,7 @@ export function PeriodSelector({ value, onChange, customLabel, showCustom = true
             style={[
               styles.pill,
               {
-                backgroundColor: active ? colors.text : colors.surface,
+                backgroundColor: active ? (isDark ? colors.surfaceRaised ?? colors.surface : stickers.yellowSoft) : colors.surface,
                 borderColor: colors.text,
               },
             ]}
@@ -84,7 +84,7 @@ export function PeriodSelector({ value, onChange, customLabel, showCustom = true
               style={[
                 styles.label,
                 {
-                  color: active ? colors.bg : colors.text,
+                  color: colors.text,
                   fontFamily: font.bodyBold,
                 },
               ]}

@@ -48,7 +48,7 @@ export function PhaseFlowChart({
 
   if (curve.length < 2) {
     return (
-      <View style={[styles.empty, { height, borderColor: diffuse ? dt.colors.line2 : colors.borderLight }]}>
+      <View style={[styles.empty, { height, borderColor: diffuse ? dt.colors.line2 : colors.borderLight }, !diffuse && { borderStyle: 'solid' }]}>
         <Text style={{ color: mutedC, fontFamily: bodyFont, fontSize: 12 }}>
           {t('phaseFlowChart_emptyHint')}
         </Text>

@@ -9,6 +9,7 @@ import Svg, { Path, Circle, Line, Rect, Defs, Pattern, G, LinearGradient, Radial
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { bucketSeries } from './bucketSeries'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 
 const DEFAULT_CHART_W = Dimensions.get('window').width - 76
 
@@ -90,8 +91,8 @@ export function MiniBarChart({
             x2={chartW - padX}
             y1={chartH - padBottom}
             y2={chartH - padBottom}
-            stroke={colors.border}
-            strokeWidth={1}
+            stroke={colors.text}
+            strokeWidth={1.5}
           />
           {/* Target line */}
           {targetY !== null ? (
@@ -127,6 +128,8 @@ export function MiniBarChart({
                 rx={radius}
                 ry={radius}
                 fill={fill}
+                stroke={colors.text}
+                strokeWidth={1.5}
               />
             )
           })}
@@ -168,7 +171,7 @@ export function MiniBarChart({
               style={[
                 styles.barLabel,
                 {
-                  color: i === selected ? colors.text : colors.textMuted,
+                  color: colors.text,
                   fontFamily: i === selected ? font.bodySemiBold : font.body,
                 },
               ]}
@@ -315,7 +318,7 @@ export function PillDivergingChart({
               style={[
                 styles.barLabel,
                 {
-                  color: i === selected ? colors.text : colors.textMuted,
+                  color: colors.text,
                   fontFamily: i === selected ? font.bodySemiBold : font.body,
                 },
               ]}
@@ -475,7 +478,7 @@ export function MiniLineChart({
                 cy={p.y}
                 r={isSel ? 6 : isLast ? 5 : 3}
                 fill={isSel ? accent : isLast ? colors.text : accent}
-                stroke={colors.surface}
+                stroke={colors.text}
                 strokeWidth={1.5}
               />
             )
@@ -616,8 +619,8 @@ export function GlowAreaLine({ data, color, color2, height = 150, width = DEFAUL
           ) : null}
           {/* Bright end cap */}
           <Circle cx={end.x} cy={end.y} r={7} fill={color} opacity={0.25} />
-          <Circle cx={end.x} cy={end.y} r={4} fill={color} stroke={colors.surface} strokeWidth={1.5} />
-          {sel ? <Circle cx={sel.x} cy={sel.y} r={5} fill={color} stroke={colors.surface} strokeWidth={1.5} /> : null}
+          <Circle cx={end.x} cy={end.y} r={4} fill={color} stroke={colors.text} strokeWidth={1.5} />
+          {sel ? <Circle cx={sel.x} cy={sel.y} r={5} fill={color} stroke={colors.text} strokeWidth={1.5} /> : null}
         </Svg>
         {interactive
           ? points.map((p, i) => (
@@ -745,7 +748,7 @@ function LabelRow({ labels, activeIndex }: { labels: string[]; activeIndex?: num
   return (
     <View style={[styles.labelRow, { width: CW, alignSelf: 'center', marginTop: 4 }]}>
       {labels.map((l, i) => (
-        <Text key={i} numberOfLines={1} style={[styles.barLabel, { color: i === activeIndex ? colors.text : colors.textMuted, fontFamily: i === activeIndex ? font.bodySemiBold : font.body }]}>{l}</Text>
+        <Text key={i} numberOfLines={1} style={[styles.barLabel, { color: colors.text, fontFamily: i === activeIndex ? font.bodySemiBold : font.body }]}>{l}</Text>
       ))}
     </View>
   )
@@ -1360,8 +1363,9 @@ export function MilestoneTrail({
 function EmptyChart({ height }: { height: number }) {
   const { colors, font } = useTheme()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
   return (
-    <View style={[styles.empty, { height, borderColor: colors.borderLight }]}>
+    <View style={[styles.empty, { height, borderColor: colors.borderLight }, !diffuse && { borderStyle: 'solid' }]}>
       <Text
         style={{
           color: colors.textMuted,
