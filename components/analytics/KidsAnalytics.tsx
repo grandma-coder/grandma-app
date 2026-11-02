@@ -428,6 +428,67 @@ function tipByPillar(tips: TipData[]): Partial<Record<PillarKey, TipData>> {
   return map
 }
 
+// ─── Neutral pillar stat (light UI) ─────────────────────────────────────────
+// What a pillar row / detail header shows instead of a `/10` grade: a plain
+// count or average from the logs, plus how much of the window has logs
+// (drives the thin bar — "how much was logged", never "how well").
+
+type PillarStatUnitKey =
+  | 'kids_analytics_unit_h_day'
+  | 'kids_analytics_unit_meals'
+  | 'kids_analytics_unit_feeds'
+  | 'kids_analytics_unit_moods'
+  | 'kids_analytics_unit_measures'
+  | 'kids_analytics_unit_active_days'
+
+interface PillarStat {
+  value: string
+  unitKey: PillarStatUnitKey
+  /** Share of days in the window with at least one log, 0..1. */
+  coverage: number
+}
+
+function dayCoverage(perDay: number[]): number {
+  if (perDay.length === 0) return 0
+  return perDay.filter((v) => v > 0).length / perDay.length
+}
+
+function pillarStat(key: PillarKey, a: AnalyticsData): PillarStat | null {
+  switch (key) {
+    case 'sleep':
+      if (!a.sleep.hasData) return null
+      return { value: a.sleep.avgHours.toFixed(1), unitKey: 'kids_analytics_unit_h_day', coverage: dayCoverage(a.sleep.dailyHours) }
+    case 'nutrition': {
+      if (!a.nutrition.hasData) return null
+      const total = a.nutrition.mealFrequency.reduce((x, y) => x + y, 0)
+      return {
+        value: String(total),
+        unitKey: a.nutrition.mode === 'milk' ? 'kids_analytics_unit_feeds' : 'kids_analytics_unit_meals',
+        coverage: dayCoverage(a.nutrition.mealFrequency),
+      }
+    }
+    case 'mood': {
+      if (!a.mood.hasData) return null
+      const total = a.mood.dominantMoods.reduce((x, m) => x + m.count, 0)
+      const series = Object.values(a.mood.dailyCounts)
+      const perDay = (series[0] ?? []).map((_, i) => series.reduce((sum, arr) => sum + (arr[i] ?? 0), 0))
+      return { value: String(total), unitKey: 'kids_analytics_unit_moods', coverage: dayCoverage(perDay) }
+    }
+    case 'growth': {
+      if (!a.growth.hasData) return null
+      const count = a.growth.weights.length + a.growth.heights.length
+      // Growth isn't daily — three measurements fill the bar.
+      return { value: String(count), unitKey: 'kids_analytics_unit_measures', coverage: Math.min(1, count / 3) }
+    }
+    case 'activity':
+      if (!a.activity.hasData) return null
+      return { value: String(a.activity.activeDays), unitKey: 'kids_analytics_unit_active_days', coverage: dayCoverage(a.activity.dailySessions) }
+    case 'health':
+      // Reference pillar — no stat; the row says "Reference".
+      return null
+  }
+}
+
 // ─── Health Tips (data-driven, age-aware) ─────────────────────────────────
 
 function getHealthTips(
@@ -435,7 +496,10 @@ function getHealthTips(
   analytics: AnalyticsData,
   ageMonths: number,
   childName: string,
+  neutral = false,
 ): TipData[] {
+  // Light UI: counts and averages only — no grades, no alarm words.
+  if (neutral) return getNeutralHealthTips(scores, analytics, ageMonths, childName)
   const tips: TipData[] = []
 
   // ── Sleep
@@ -588,6 +652,151 @@ function getHealthTips(
   return tips.slice(0, 4)
 }
 
+/**
+ * Light-UI twin of getHealthTips: same pillars, same selection, but every
+ * title/body is a neutral count or average in Grandma's voice — no grades
+ * ("great", "needs attention"), no clinical read ("check hydration", "may
+ * indicate"). Scores only decide which suggestion to add, never what's shown.
+ * See docs/compliance/2026-11-02-regras-saude.md.
+ */
+function getNeutralHealthTips(
+  scores: WellnessScores,
+  analytics: AnalyticsData,
+  ageMonths: number,
+  childName: string,
+): TipData[] {
+  const tips: TipData[] = []
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+  // ── Sleep
+  if (scores.sleep.hasData) {
+    const target = getAgeSleepTarget(ageMonths)
+    const avg = analytics.sleep.avgHours
+    const q = analytics.sleep.qualityCounts
+    const totalQ = q.great + q.good + q.restless + q.poor
+    const goodCount = q.great + q.good
+    if (avg > 0) {
+      const below = avg < target * 0.85
+      tips.push({
+        title: 'Sleep this week',
+        body: `${avg.toFixed(1)} h a day on average — about ${target} h is the usual guide at this age.`,
+        detail: `${childName} averaged ${avg.toFixed(1)} h of sleep a day on the days you logged. At ${ageMonths} months the usual guide is about ${target} h a day, naps included.${totalQ > 0 ? ` ${goodCount} of ${totalQ} sessions were logged as good or great.` : ''}${below ? ' An earlier bedtime, dim lights 30 min before sleep and a steady wind-down routine can help.' : ''}`,
+        color: PILLAR_CONFIG.sleep.color,
+        icon: Moon,
+      })
+    }
+  } else {
+    tips.push({
+      title: 'Start logging sleep',
+      body: `Log sleep to see ${childName}'s daily hours next to the usual ${getAgeSleepTarget(ageMonths)} h guide.`,
+      detail: `At ${ageMonths} months the usual guide is about ${getAgeSleepTarget(ageMonths)} h of sleep a day, naps included. Log each sleep session in Calendar → Sleep.`,
+      color: PILLAR_CONFIG.sleep.color,
+      icon: Moon,
+    })
+  }
+
+  // ── Nutrition
+  if (scores.nutrition.hasData) {
+    const n = analytics.nutrition
+    const totalMeals = n.mealFrequency.reduce((a, b) => a + b, 0)
+    const daysLogged = n.mealFrequency.filter((m) => m > 0).length
+    const avgMeals = daysLogged > 0 ? (totalMeals / daysLogged).toFixed(1) : '0'
+    const goodTotal = n.eatQuality.good.reduce((a, b) => a + b, 0)
+    const goodPct = totalMeals > 0 ? Math.round((goodTotal / totalMeals) * 100) : 0
+    const isMilk = n.mode === 'milk'
+    const noun = isMilk ? ['feed', 'feeds'] : ['meal', 'meals']
+    const suggest = scores.nutrition.value < 7
+    tips.push({
+      title: isMilk ? 'Feeds this week' : 'Meals this week',
+      body: isMilk
+        ? `Logged ${plural(totalMeals, noun[0], noun[1])}, about ${avgMeals} a day.`
+        : `Logged ${plural(totalMeals, noun[0], noun[1])}, about ${avgMeals} a day; ${goodPct}% marked "ate well".${suggest ? ' Try 1–2 new foods this week.' : ''}`,
+      detail: isMilk
+        ? `${childName} had about ${avgMeals} feeds a day on the days you logged. Logging every feed keeps the picture clear.`
+        : `${childName} had about ${avgMeals} meals a day on the days you logged, with ${goodPct}% marked "ate well". New foods often take 10–15 tries before a child accepts them — offer them next to familiar ones, at steady mealtimes.`,
+      color: PILLAR_CONFIG.nutrition.color,
+      icon: Utensils,
+    })
+  }
+
+  // ── Mood
+  if (scores.mood.hasData) {
+    const moods = analytics.mood.dominantMoods
+    const cranky = moods.find((m) => m.mood === 'cranky')?.count ?? 0
+    const fussy = moods.find((m) => m.mood === 'fussy')?.count ?? 0
+    const totalMoods = moods.reduce((a, m) => a + m.count, 0)
+    const fussyCount = cranky + fussy
+    const topMood = moods[0]?.mood ?? 'calm'
+    tips.push({
+      title: 'Moods this week',
+      body: `Logged ${plural(totalMoods, 'mood', 'moods')} — ${topMood} came up most; ${fussyCount} cranky or fussy.`,
+      detail: fussyCount > 0
+        ? `${childName}'s most logged mood was "${topMood}", with ${fussyCount} of ${totalMoods} moods logged as cranky or fussy. Fussy spells often come with teething (common from 6 to 24 months), growth spurts, short sleep or a change in routine. Extra comfort and a steady routine can help — if you're worried, talk to your pediatrician.`
+        : `${childName}'s most logged mood was "${topMood}", with no cranky or fussy moods logged. Steady routines and enough sleep tend to go hand in hand with calm days.`,
+      color: PILLAR_CONFIG.mood.color,
+      icon: Smile,
+    })
+  }
+
+  // ── Activity (age guide — not a score)
+  const activityTarget = ageMonths < 12 ? '20–30 min tummy time' : '60 min active play'
+  tips.push({
+    title: 'Daily activity guide',
+    body: `Usual guide: ${activityTarget} a day for ${getAgeLabel(ageMonths)}.`,
+    detail: ageMonths < 12
+      ? 'Tummy time builds neck, shoulder and core strength for rolling, sitting and crawling. Start with 2–3 min sessions and build up to 20–30 min spread across the day. Get on the floor together to make it fun.'
+      : 'Active play supports movement skills, sleep and mood. Outdoor play adds daylight, fresh air and lots to explore. Even 3 × 20-minute sessions add up.',
+    color: PILLAR_CONFIG.activity.color,
+    icon: TrendingUp,
+  })
+
+  // ── Growth logging nudge
+  if (!scores.growth.hasData) {
+    tips.push({
+      title: 'Log growth',
+      body: `Record ${childName}'s weight and height to see them over time.`,
+      detail: 'A growth chart gets more useful with each measurement. Log weight, height and head size after each pediatrician visit in Calendar → Growth.',
+      color: PILLAR_CONFIG.growth.color,
+      icon: TrendingUp,
+    })
+  }
+
+  // ── Diapers
+  if (analytics.diaper.hasData) {
+    const { totalCount } = analytics.diaper
+    const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
+    const avgPerDay = (totalCount / windowDays).toFixed(1)
+    const green = analytics.diaper.colorCounts['green'] ?? 0
+    if (ageMonths < 6 && totalCount / windowDays < 6) {
+      tips.push({
+        title: 'Diapers this week',
+        body: `${avgPerDay} diapers a day on average — a common guide for young babies is 6+ wet a day.`,
+        detail: `${childName} averaged ${avgPerDay} diapers a day over the last ${windowDays} days. A common guide for babies under 6 months is 6 or more wet diapers a day. If you're unsure about feeding, call your pediatrician.`,
+        color: brand.secondary,
+        icon: Heart,
+      })
+    } else if (green > 3) {
+      tips.push({
+        title: 'Diapers this week',
+        body: `${green} green diapers logged this week.`,
+        detail: 'Green stools are common with diet changes or iron supplements. If they come along with fussiness or anything else that worries you, talk to your pediatrician.',
+        color: brand.secondary,
+        icon: Heart,
+      })
+    }
+  } else if (ageMonths < 24) {
+    tips.push({
+      title: 'Track diapers',
+      body: `Log ${childName}'s diaper changes to see daily patterns.`,
+      detail: 'Diaper logs show daily patterns at a glance — counts, wet vs dirty and colors. Log each change in Calendar → Diaper.',
+      color: brand.secondary,
+      icon: Heart,
+    })
+  }
+
+  return tips.slice(0, 4)
+}
+
 // ─── Grandma Context Builder ───────────────────────────────────────────────
 
 function buildGrandmaContext(
@@ -595,25 +804,33 @@ function buildGrandmaContext(
   analytics: AnalyticsData,
   childName: string,
   ageMonths: number,
+  // Light UI: no `/10` anywhere in the context, so Grandma can't read a
+  // grade back to the parent. Counts and averages only.
+  neutral = false,
 ): string {
-  const lines: string[] = [
-    `Analytics for ${childName} (${getAgeLabel(ageMonths)}) — this week:`,
-    `Overall thriving score: ${scores.overall.toFixed(1)}/10`,
-  ]
+  const lines: string[] = neutral
+    ? [`Analytics for ${childName} (${getAgeLabel(ageMonths)}) — ${analytics.totalLogs} logs in this window:`]
+    : [
+      `Analytics for ${childName} (${getAgeLabel(ageMonths)}) — this week:`,
+      `Overall thriving score: ${scores.overall.toFixed(1)}/10`,
+    ]
+  const gradePrefix = (v: number) => (neutral ? '' : `${v.toFixed(1)}/10 — `)
 
   if (scores.sleep.hasData) {
     const target = getAgeSleepTarget(ageMonths)
-    lines.push(`Sleep: ${scores.sleep.value.toFixed(1)}/10 — avg ${analytics.sleep.avgHours.toFixed(1)}h/night (target ${target}h)`)
+    lines.push(neutral
+      ? `Sleep: avg ${analytics.sleep.avgHours.toFixed(1)}h/day on logged days (usual guide ${target}h)`
+      : `Sleep: ${scores.sleep.value.toFixed(1)}/10 — avg ${analytics.sleep.avgHours.toFixed(1)}h/night (target ${target}h)`)
   }
   if (scores.nutrition.hasData) {
     const totalMeals = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
     const good = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
     const pct = totalMeals > 0 ? Math.round((good / totalMeals) * 100) : 0
-    lines.push(`Nutrition: ${scores.nutrition.value.toFixed(1)}/10 — ${pct}% meals eaten well`)
+    lines.push(`Nutrition: ${gradePrefix(scores.nutrition.value)}${neutral ? `${totalMeals} logged, ` : ''}${pct}% meals eaten well`)
   }
   if (scores.mood.hasData) {
     const top = analytics.mood.dominantMoods[0]
-    lines.push(`Mood: ${scores.mood.value.toFixed(1)}/10 — dominant: ${top?.mood ?? 'no data'}`)
+    lines.push(`Mood: ${gradePrefix(scores.mood.value)}dominant: ${top?.mood ?? 'no data'}`)
   }
   if (scores.health.hasData) {
     // Health is reference-only (not part of `overall`) — give Grandma the
@@ -646,7 +863,12 @@ function buildGrandmaContext(
     return min
   }, null)
   if (lowest && scores[lowest].value < 7) {
-    lines.push(`Main concern: ${PILLAR_CONFIG[lowest].label} at ${scores[lowest].value.toFixed(1)}/10`)
+    lines.push(neutral
+      ? `Worth a closer look: ${PILLAR_CONFIG[lowest].label}`
+      : `Main concern: ${PILLAR_CONFIG[lowest].label} at ${scores[lowest].value.toFixed(1)}/10`)
+  }
+  if (neutral) {
+    lines.push('Please talk about these as counts and patterns — no scores, grades or diagnoses.')
   }
 
   return lines.join('\n')
@@ -955,7 +1177,9 @@ export function KidsAnalytics() {
         )}
 
         {analytics && (() => {
-          const tips = getHealthTips(analytics.scores, analytics, ageMonths, childName)
+          // Light UI gets the neutral copy (counts/averages, no grades);
+          // Diffuse keeps its existing copy.
+          const tips = getHealthTips(analytics.scores, analytics, ageMonths, childName, !diffuse)
           const tipMap = tipByPillar(tips)
           // Task 8's cross-log pattern engine — surface only the single
           // most-important observation (most-important-first per
@@ -1052,14 +1276,14 @@ export function KidsAnalytics() {
           // ── Current system (unchanged): ring → grandma → tip rows → routines.
           return (
             <>
-              <KidsWellnessRingCard scores={analytics.scores} onPillarPress={setSelectedPillar} />
+              <KidsWellnessRingCard scores={analytics.scores} logCount={analytics.totalLogs} periodIsWeek={period === 'week'} onPillarPress={setSelectedPillar} />
               <GrandmaInsightCard scores={analytics.scores} analytics={analytics} childName={childName} ageMonths={ageMonths} crossLine={crossLine} />
               <View style={styles.pillarSection}>
                 <Text style={[styles.pillarSectionTitle, { color: colors.text, fontFamily: font.display, fontSize: 18, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 0 }]}>
                   {t('kids_analytics_thriving_breakdown')}
                 </Text>
                 {PILLAR_ORDER.map((key) => (
-                  <PillarRow key={key} pillarKey={key} score={analytics.scores[key]} tip={tipMap[key]} onPress={() => setSelectedPillar(key)} />
+                  <PillarRow key={key} pillarKey={key} score={analytics.scores[key]} stat={pillarStat(key, analytics)} tip={tipMap[key]} onPress={() => setSelectedPillar(key)} />
                 ))}
                 <RoutineComplianceSection data={analytics.routineCompliance} />
               </View>
@@ -1181,6 +1405,8 @@ export function KidsAnalytics() {
       <ScoreInfoModal
         visible={showScoreInfo}
         scores={analytics?.scores ?? null}
+        logCount={analytics?.totalLogs ?? null}
+        periodIsWeek={period === 'week'}
         ageMonths={ageMonths}
         childName={childName}
         onClose={() => setShowScoreInfo(false)}
@@ -1204,10 +1430,13 @@ export function KidsAnalytics() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function ScoreInfoModal({
-  visible, scores, ageMonths, childName, onClose,
+  visible, scores, logCount = null, periodIsWeek = true, ageMonths, childName, onClose,
 }: {
   visible: boolean
   scores: WellnessScores | null
+  /** Light UI hero: logs in the window (not a score). */
+  logCount?: number | null
+  periodIsWeek?: boolean
   ageMonths: number
   childName: string
   onClose: () => void
@@ -1303,6 +1532,16 @@ function ScoreInfoModal({
   }
 
   const eyebrowS = [styles.siteEyebrow, { color: colors.textSecondary }]
+  // Light UI: what each area COUNTS — no score scale, no weights, no
+  // per-pillar number (see docs/compliance/2026-11-02-regras-saude.md).
+  const PILLAR_COUNTS: Record<PillarKey, string> = {
+    nutrition: `Counts ${ageMonths < 6 ? 'breast and bottle feeds' : 'meals and feeds'} and how each went (ate well / a little / didn't eat). ${ageMonths < 6 ? 'Under 6 months, breast and bottle feeds count.' : ageMonths < 12 ? 'Mixed stage — milk and first solids are both counted.' : 'Variety and how often are counted too.'}`,
+    sleep: `Adds up sleep hours a day, naps included, and the quality you log (great / good / restless / poor). Usual guide for ${getAgeLabel(ageMonths)}: about ${getAgeSleepTarget(ageMonths)} h a day.`,
+    mood: `Counts the moods you log — which come up most, and how often.`,
+    health: `A reference: vaccines on record and any fever, injury or doctor notes from your logs.`,
+    growth: `Weight and height measurements you've logged, shown over time.`,
+    activity: `Counts active days (any logged session) and the kinds of play you log.`,
+  }
   const ageLine =
     'Sleep target: ' + getAgeSleepTarget(ageMonths) + 'h/day\n' +
     (ageMonths < 6 ? 'Nutrition: breast/formula only (8–12 feeds/day)' :
@@ -1314,7 +1553,7 @@ function ScoreInfoModal({
     <LightSheet visible={visible} onClose={onClose} height={SCREEN_H * 0.86}>
       <View style={{ paddingHorizontal: 20 }}>
         <DetailSheetHeader
-          title={t('kids_analytics_score_guide_title')}
+          title={t('kids_analytics_guide_title')}
           sticker="bars"
           tone={stickers.blueSoft}
           onClose={onClose}
@@ -1325,13 +1564,13 @@ function ScoreInfoModal({
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: insets.bottom + 28 }}
       >
-        {scores && (
+        {logCount !== null && (
           <FadeUp index={0}>
             <View style={styles.siteHeroRow}>
-              <Text style={[styles.siteHero, { color: colors.text, fontFamily: font.displayBold }]}>{scores.overall.toFixed(1)}</Text>
+              <Text style={[styles.siteHero, { color: colors.text, fontFamily: font.displayBold }]}>{logCount}</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.siteBody, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('kids_analytics_score_child_label', { childName })}</Text>
-                <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0, marginTop: 4 }]}>{t('kids_analytics_score_weighted_avg')}</Text>
+                <Text style={[styles.siteBody, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t(periodIsWeek ? 'kids_analytics_logs_week' : 'kids_analytics_logs_window')}</Text>
+                <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0, marginTop: 4 }]}>{childName}{' · '}{getAgeLabel(ageMonths)}</Text>
               </View>
             </View>
           </FadeUp>
@@ -1339,39 +1578,25 @@ function ScoreInfoModal({
 
         <FadeUp index={1}>
           <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
-          <Text style={eyebrowS}>{t('kids_analytics_score_scale_label')}</Text>
-          {SCORE_BANDS.map((b) => (
-            <View key={b.label} style={styles.bandRowSite}>
-              <View style={[styles.bandSwatch, { backgroundColor: b.color, borderColor: colors.text }]} />
-              <Text style={[styles.siteBody, { color: colors.text, fontFamily: font.body, flex: 1 }]}>{b.label}</Text>
-              <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{b.range}</Text>
-            </View>
-          ))}
-        </FadeUp>
-
-        <FadeUp index={2}>
-          <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
-          <Text style={eyebrowS}>{t('kids_analytics_pillar_scoring_label')}</Text>
+          <Text style={eyebrowS}>{t('kids_analytics_guide_areas_label')}</Text>
           {PILLAR_ORDER.map((key, idx) => {
             const config = PILLAR_CONFIG[key]
-            const score = scores?.[key]
             return (
               <View key={key} style={[styles.pillarInfoRowSite, idx > 0 && { borderTopWidth: HAIR, borderTopColor: colors.border }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                   <SiteSticker name={PILLAR_SITE_STICKER[key]} size={28} cut />
                   <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display, flex: 1 }]}>{config.label}</Text>
-                  <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{WEIGHTS[key]}</Text>
-                  {key !== 'health' && score?.hasData && (
-                    <Text style={[styles.siteNum, { color: colors.text, fontFamily: font.displayBold }]}>{score.value.toFixed(1)}</Text>
+                  {key === 'health' && (
+                    <Text style={[styles.siteMono, { color: colors.textSecondary }]}>Reference</Text>
                   )}
                 </View>
-                <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body }]}>{PILLAR_EXPLAIN[key]}</Text>
+                <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body }]}>{PILLAR_COUNTS[key]}</Text>
               </View>
             )
           })}
         </FadeUp>
 
-        <FadeUp index={3}>
+        <FadeUp index={2}>
           <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
           <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display, marginBottom: 6 }]}>
             {childName}{' at '}{getAgeLabel(ageMonths)}
@@ -1487,9 +1712,14 @@ function TipDetailModal({
 
 function KidsWellnessRingCard({
   scores,
+  logCount,
+  periodIsWeek,
   onPillarPress,
 }: {
   scores: WellnessScores
+  /** Light UI center: how many logs are in the window (not a score). */
+  logCount: number
+  periodIsWeek: boolean
   onPillarPress: (key: PillarKey) => void
 }) {
   const { t } = useTranslation()
@@ -1535,9 +1765,12 @@ function KidsWellnessRingCard({
         blobColor={stickers.pinkSoft}
         labelAlign="center"
       >
+        {/* Center = a neutral count of logs in the window, never the
+            internal wellness score or a "needs care" grade. */}
         <HealthScoreRing
-          score={Number(overall.toFixed(1))}
-          caption={caption}
+          score={Number.isFinite(logCount) ? Math.max(0, logCount) : 0}
+          decimals={0}
+          caption={t(periodIsWeek ? 'kids_analytics_logs_week' : 'kids_analytics_logs_window')}
           segments={segments}
           size={220}
           onSegmentPress={(id) => onPillarPress(id as PillarKey)}
@@ -1873,14 +2106,15 @@ function GrandmaInsightCard({
   const [detailOpen, setDetailOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const highlights = buildInsightHighlights(scores, analytics, childName, ageMonths, crossLine)
+  // Light UI: neutral wording (counts/averages, no `/10`, no grade labels).
+  const highlights = buildInsightHighlights(scores, analytics, childName, ageMonths, crossLine, { neutral: !diffuse })
 
   function handleDiscussPress() {
     setConfirmOpen(true)
   }
 
   function handleConfirmYes() {
-    const ctx = buildGrandmaContext(scores, analytics, childName, ageMonths)
+    const ctx = buildGrandmaContext(scores, analytics, childName, ageMonths, !diffuse)
     setConfirmOpen(false)
     setTimeout(() => {
       AsyncStorage.setItem('grandma-insight-context', ctx).catch(() => {})
@@ -2133,12 +2367,15 @@ function GrandmaInsightDetailSheet({
             <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>
               {t('kids_analytics_grandma_says_label')}
             </Text>
+            {/* Neutral title + log count — no "is needs attention", no `/10`. */}
             <Text style={[styles.insightDetailOverall, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
-              {childName}{' is '}{highlights.overallLabel}
+              {t('kids_analytics_insight_title_patterns', { childName })}
             </Text>
-            <Text style={[styles.insightDetailOverallSub, { color: colors.textSecondary, fontFamily: font.body }]}>
-              {t('kids_analytics_insight_overall_week', { score: highlights.overallScore.toFixed(1) })}
-            </Text>
+            {highlights.logCount > 0 && (
+              <Text style={[styles.insightDetailOverallSub, { color: colors.textSecondary, fontFamily: font.body }]}>
+                {t('kids_analytics_insight_based_on', { count: highlights.logCount })}
+              </Text>
+            )}
           </View>
           <SiteClose onPress={onClose} />
         </View>
@@ -2147,7 +2384,7 @@ function GrandmaInsightDetailSheet({
           {highlights.strength && (
             <HighlightRow
               icon={<SiteSticker name="star" size={30} cut />}
-              label={t('kids_analytics_insight_strength_label')}
+              label={t('kids_analytics_insight_steady_label')}
               title={PILLAR_CONFIG[highlights.strength.pillar].label}
               body={highlights.strength.reason}
             />
@@ -2156,7 +2393,7 @@ function GrandmaInsightDetailSheet({
           {highlights.concern && (
             <HighlightRow
               icon={<SiteSticker name="eye" size={30} cut />}
-              label={t('kids_analytics_insight_concern_label')}
+              label={t('kids_analytics_grandma_noticed_label')}
               title={PILLAR_CONFIG[highlights.concern.pillar].label}
               body={highlights.concern.reason}
             />
@@ -2166,8 +2403,8 @@ function GrandmaInsightDetailSheet({
             <HighlightRow
               icon={<SiteSticker name="bars" size={30} cut />}
               label={t('kids_analytics_insight_trend_label')}
-              title={`${PILLAR_CONFIG[highlights.trend.pillar].label} ${highlights.trend.direction === 'improving' ? '↑' : '↓'} ${highlights.trend.direction}`}
-              body={`${highlights.trend.delta}% week-over-week change.`}
+              title={`${PILLAR_CONFIG[highlights.trend.pillar].label} ${highlights.trend.direction === 'improving' ? '↑ steadier' : '↓ less steady'}`}
+              body="Compared with last week."
             />
           )}
         </View>
@@ -2677,9 +2914,11 @@ function RoutineComplianceModal({
 // PILLAR ROW — score bar with trend + takeaway
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function PillarRow({ pillarKey, score, tip, onPress }: {
+function PillarRow({ pillarKey, score, stat = null, tip, onPress }: {
   pillarKey: PillarKey
   score: PillarScore
+  /** Light UI: neutral count/average shown instead of a `/10` grade. */
+  stat?: PillarStat | null
   tip?: TipData
   onPress: () => void
 }) {
@@ -2691,6 +2930,7 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
   const safeValue = Number.isFinite(score.value) ? score.value : 0
   const pct = score.hasData ? Math.max(0, Math.min(100, (safeValue / 10) * 100)) : 0
   const palette = pillarPalette(pillarKey, stickers)
+  const coveragePct = stat ? Math.round(Math.max(0, Math.min(1, stat.coverage)) * 100) : 0
 
   // Prefer the data-driven tip body; fall back to a generic takeaway.
   const body = tip
@@ -2765,29 +3005,33 @@ function PillarRow({ pillarKey, score, tip, onPress }: {
             <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display }]}>
               {config.label}
             </Text>
-            {score.hasData && score.trend !== 0 && (
-              <View style={styles.trendBadge}>
+            {/* Trend = direction only (steadier / less steady than last
+                week). The % was a change in an internal score — not shown. */}
+            {score.hasData && score.trend !== 0 && pillarKey !== 'health' && (
+              <View style={styles.trendBadge} accessibilityLabel={score.trend > 0 ? 'steadier than last week' : 'less steady than last week'}>
                 {score.trend > 0
                   ? <ArrowUpRight size={12} color={colors.text} strokeWidth={2.5} />
                   : <ArrowDownRight size={12} color={colors.text} strokeWidth={2.5} />}
-                <Text style={[styles.siteMono, { color: colors.text }]}>{Math.abs(score.trend)}%</Text>
               </View>
             )}
           </View>
 
-          <View style={[styles.siteBarTrack, { backgroundColor: colors.border }]}>
-            <View style={[styles.siteBarFill, { width: `${pct}%`, backgroundColor: palette.tint, borderColor: pct > 0 ? colors.text : 'transparent' }]} />
-          </View>
+          {/* Bar = how much of the window has logs (never a grade). */}
+          {pillarKey !== 'health' && (
+            <View style={[styles.siteBarTrack, { backgroundColor: colors.border }]}>
+              <View style={[styles.siteBarFill, { width: `${coveragePct}%`, backgroundColor: palette.tint, borderColor: coveragePct > 0 ? colors.text : 'transparent' }]} />
+            </View>
+          )}
         </View>
 
         <View style={styles.pillarPaperScore}>
           {pillarKey === 'health' ? (
             // Health is reference-only — no `/10` grade, ever.
             <Text style={[styles.siteMono, { color: colors.textSecondary }]}>Reference</Text>
-          ) : score.hasData && Number.isFinite(score.value) ? (
+          ) : stat ? (
             <>
-              <Text style={[styles.siteNum, { color: colors.text, fontFamily: font.displayBold }]}>{score.value.toFixed(1)}</Text>
-              <Text style={[styles.siteMono, { color: colors.textSecondary, marginLeft: 2 }]}>/10</Text>
+              <Text style={[styles.siteNum, { color: colors.text, fontFamily: font.displayBold }]}>{stat.value}</Text>
+              <Text style={[styles.siteMono, { color: colors.textSecondary, marginLeft: 4 }]}>{t(stat.unitKey)}</Text>
             </>
           ) : (
             <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{'—'}</Text>
@@ -2833,6 +3077,7 @@ function PillarDetailModal({
   onClose: () => void
   onFullScreen: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -2840,6 +3085,7 @@ function PillarDetailModal({
   if (!pillarKey) return null
   const config = PILLAR_CONFIG[pillarKey]
   const score = analytics.scores[pillarKey]
+  const lightStat = pillarStat(pillarKey, analytics)
   const palette = pillarPalette(pillarKey, stickers)
 
   const sheetH = SCREEN_H * 0.87
@@ -2881,9 +3127,10 @@ function PillarDetailModal({
           <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>
             Reference — vaccines on record, not scored
           </Text>
-        ) : score.hasData ? (
+        ) : lightStat ? (
+          // Neutral count/average — never a `/10` grade or label.
           <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>
-            {score.value.toFixed(1)}{'/10 — '}{score.label}
+            {lightStat.value}{' '}{t(lightStat.unitKey)}
           </Text>
         ) : null}
       </View>

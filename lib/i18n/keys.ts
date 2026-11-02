@@ -1323,6 +1323,19 @@ export interface TranslationKeys {
   kids_analytics_insight_overall_week: string
   kids_analytics_pillar_no_data_hint: string
   kids_analytics_no_data_short: string
+  kids_analytics_logs_week: string
+  kids_analytics_logs_window: string
+  kids_analytics_insight_title_patterns: string
+  kids_analytics_insight_based_on: string
+  kids_analytics_insight_steady_label: string
+  kids_analytics_guide_title: string
+  kids_analytics_guide_areas_label: string
+  kids_analytics_unit_h_day: string
+  kids_analytics_unit_meals: string
+  kids_analytics_unit_feeds: string
+  kids_analytics_unit_moods: string
+  kids_analytics_unit_measures: string
+  kids_analytics_unit_active_days: string
 
   // ─── Pillars ───────────────────────────────────────────────────────────
   pillar_title: string

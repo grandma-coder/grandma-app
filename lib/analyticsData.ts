@@ -108,7 +108,7 @@ export interface RoutineComplianceData {
 
 export interface PillarScore {
   value: number       // 0-10 scale
-  label: string       // e.g. 'excellent', 'good', 'needs attention'
+  label: string       // internal ordering band ('band-1'..'band-5' | 'no data') — never render; see scoreLabel
   trend: number       // percentage change from prior week (-100 to +100)
   hasData: boolean
   confidence: number  // 0..1 — how much data backs this score

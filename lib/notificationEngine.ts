@@ -122,8 +122,10 @@ export async function generateWellnessNotifications(
         notifications.push({
           user_id: userId,
           type: 'wellness_drop',
-          title: `${childName}'s ${name} needs attention`,
-          body: `${name} score is ${score.value}/10. ${score.trend < -20 ? `Down ${Math.abs(score.trend)}% this week.` : 'Review the analytics for insights.'}`,
+          // Neutral wording: no `/10`, no "needs attention" — the score only
+          // decides WHEN to nudge (see docs/compliance/2026-11-02-regras-saude.md).
+          title: `A look at ${childName}'s ${name.toLowerCase()}`,
+          body: `Grandma noticed a pattern in ${childName}'s ${name.toLowerCase()} logs this week. Tap to see the counts.`,
           data: { childId, pillar: key, score: score.value, dedupeKey },
         })
       }
@@ -136,8 +138,8 @@ export async function generateWellnessNotifications(
         notifications.push({
           user_id: userId,
           type: 'wellness_improve',
-          title: `${childName}'s ${name} is improving!`,
-          body: `${name} score rose to ${score.value}/10 — up ${score.trend}% this week. Keep it up!`,
+          title: `${childName}'s ${name.toLowerCase()}: steadier this week`,
+          body: `${name} logs look steadier than last week. Tap to see the counts.`,
           data: { childId, pillar: key, score: score.value, dedupeKey },
         })
       }

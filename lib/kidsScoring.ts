@@ -37,12 +37,20 @@ export function getNutritionModeForAge(ageMonths: number): { mode: NutritionMode
   return { mode: 'solids', feedTarget: 4 }
 }
 
+/**
+ * Internal ordering band for a 0-10 pillar value. NEVER render this to the
+ * user: a graded label ("excellent", "needs attention") on a child reads as
+ * clinical judgement (MHRA / app-store risk — see
+ * docs/compliance/2026-11-02-regras-saude.md). The UI shows neutral counts,
+ * averages and trends instead; this band only helps code pick which pillar
+ * to mention first.
+ */
 export function scoreLabel(score: number): string {
-  if (score >= 8.5) return 'excellent'
-  if (score >= 7) return 'good'
-  if (score >= 5) return 'fair'
-  if (score >= 3) return 'needs attention'
-  return 'low'
+  if (score >= 8.5) return 'band-5'
+  if (score >= 7) return 'band-4'
+  if (score >= 5) return 'band-3'
+  if (score >= 3) return 'band-2'
+  return 'band-1'
 }
 
 /**

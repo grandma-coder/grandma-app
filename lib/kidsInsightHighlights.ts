@@ -45,6 +45,78 @@ export interface InsightHighlights {
   actions: string[]
   /** Top cross-log observation line from `computeCrossInsights` (Task 8), or null when none fired. */
   crossLine: string | null
+  /** How many logs back this read (`analytics.totalLogs`, 0 when unknown). */
+  logCount: number
+}
+
+export interface InsightOptions {
+  /**
+   * Neutral wording (light UI). No `/10` value, no graded label
+   * ("excellent", "needs attention", "strength", "main area to work on") —
+   * only counts, averages and steadier/less-steady trends, in Grandma's
+   * voice. Scores still decide WHICH pillar is mentioned first; they are just
+   * never printed. See docs/compliance/2026-11-02-regras-saude.md.
+   * Default false keeps the legacy (Diffuse) copy unchanged.
+   */
+  neutral?: boolean
+}
+
+function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`
+}
+
+/**
+ * One neutral, factual sentence about a pillar — a count or an average from
+ * the logs, never a grade. Optional chaining throughout: some callers (and
+ * tests) pass partial analytics fixtures.
+ */
+export function neutralPillarFact(key: PillarKey, analytics: AnalyticsData, ageMonths: number): string {
+  const a = analytics as Partial<AnalyticsData> | undefined
+  switch (key) {
+    case 'sleep': {
+      if (a?.sleep?.hasData) {
+        const target = getAgeSleepTarget(ageMonths)
+        return `Sleep averaged ${a.sleep.avgHours.toFixed(1)} h a day on logged days — about ${target} h is the usual guide at this age.`
+      }
+      break
+    }
+    case 'nutrition': {
+      const n = a?.nutrition
+      if (n?.hasData) {
+        const total = n.mealFrequency.reduce((x, y) => x + y, 0)
+        if (n.mode === 'milk') return `Logged ${plural(total, 'feed', 'feeds')}.`
+        const good = (n.eatQuality?.good ?? []).reduce((x, y) => x + y, 0)
+        const pct = total > 0 ? Math.round((good / total) * 100) : 0
+        return `Logged ${plural(total, 'meal', 'meals')}, ${pct}% marked "ate well".`
+      }
+      break
+    }
+    case 'mood': {
+      const moods = a?.mood?.dominantMoods ?? []
+      const total = moods.reduce((x, m) => x + m.count, 0)
+      if (a?.mood?.hasData && total > 0) {
+        return `Logged ${plural(total, 'mood', 'moods')} — ${moods[0].mood} came up most.`
+      }
+      break
+    }
+    case 'activity': {
+      const act = a?.activity
+      if (act?.hasData) {
+        return `Active on ${act.activeDays} of the last ${act.dailySessions.length} days.`
+      }
+      break
+    }
+    case 'growth': {
+      const g = a?.growth
+      if (g?.hasData) {
+        return `${plural(g.weights.length + g.heights.length, 'growth measurement', 'growth measurements')} on record.`
+      }
+      break
+    }
+    case 'health':
+      break
+  }
+  return `Grandma noticed a pattern in ${PILLAR_LABELS[key].toLowerCase()} — tap to see the week.`
 }
 
 // Confidence floor below which a pillar's score is too thin (too few logged
@@ -59,7 +131,10 @@ export function buildInsightHighlights(
   childName: string,
   ageMonths: number,
   crossLine: string | null,
+  opts: InsightOptions = {},
 ): InsightHighlights {
+  const neutral = !!opts.neutral
+  const logCount = (analytics as Partial<AnalyticsData> | undefined)?.totalLogs ?? 0
   const lowest = NARRATIVE_PILLAR_ORDER.reduce<PillarKey | null>((min, key) => {
     if (!scores[key].hasData) return min
     if (!min || scores[key].value < scores[min].value) return key
@@ -85,7 +160,9 @@ export function buildInsightHighlights(
     scores.overall >= 5 ? 'is developing' :
     'needs some attention'
 
-  const parts: string[] = [`${childName} ${overallPhrase} — ${scores.overall.toFixed(1)}/10 overall.`]
+  const parts: string[] = neutral
+    ? (logCount > 0 ? [`Grandma looked at ${plural(logCount, 'log', 'logs')} for ${childName}.`] : [])
+    : [`${childName} ${overallPhrase} — ${scores.overall.toFixed(1)}/10 overall.`]
 
   // When the overall read itself is too thin (few logged days across
   // pillars), don't dress up any single pillar's value as a confident
@@ -105,6 +182,7 @@ export function buildInsightHighlights(
       const pct = total > 0 ? Math.round((good / total) * 100) : 0
       reason = `Nutrition needs attention — ${pct}% of meals eaten well this week (score: ${scores.nutrition.value.toFixed(1)}/10).`
     }
+    if (neutral) reason = neutralPillarFact(lowest, analytics, ageMonths)
     parts.push(reason)
     concern = { pillar: lowest, score: scores[lowest].value, reason }
   }
@@ -120,6 +198,7 @@ export function buildInsightHighlights(
       const pct = total > 0 ? Math.round((good / total) * 100) : 0
       reason = `Nutrition is a strength — ${pct}% of meals eaten well (${scores.nutrition.value.toFixed(1)}/10).`
     }
+    if (neutral) reason = neutralPillarFact(highest, analytics, ageMonths)
     parts.push(reason)
     strength = { pillar: highest, score: scores[highest].value, reason }
   }
@@ -134,7 +213,9 @@ export function buildInsightHighlights(
   // chaining because some callers pass partial analytics fixtures.
   const healthConcerns = analytics.health?.concernEvents ?? 0
   if (healthConcerns > 0) {
-    parts.push(`${healthConcerns} health concern${healthConcerns === 1 ? '' : 's'} flagged this week — worth a look.`)
+    parts.push(neutral
+      ? `${plural(healthConcerns, 'fever, injury or doctor note', 'fever, injury or doctor notes')} logged this week.`
+      : `${healthConcerns} health concern${healthConcerns === 1 ? '' : 's'} flagged this week — worth a look.`)
   }
 
   let trend: InsightTrend | null = null
@@ -155,7 +236,9 @@ export function buildInsightHighlights(
   if (trendPillar) {
     const direction: 'improving' | 'declining' = scores[trendPillar].trend > 0 ? 'improving' : 'declining'
     const delta = Math.abs(scores[trendPillar].trend)
-    parts.push(`${PILLAR_LABELS[trendPillar]} ${direction} ${delta}% this week.`)
+    parts.push(neutral
+      ? `${PILLAR_LABELS[trendPillar]}: ${direction === 'improving' ? 'steadier' : 'less steady'} than last week.`
+      : `${PILLAR_LABELS[trendPillar]} ${direction} ${delta}% this week.`)
     trend = { pillar: trendPillar, direction, delta }
   }
 
@@ -166,8 +249,9 @@ export function buildInsightHighlights(
     strength,
     concern,
     trend,
-    actions: buildInsightActions(concern, trend, analytics, ageMonths),
+    actions: buildInsightActions(concern, trend, analytics, ageMonths, neutral),
     crossLine,
+    logCount,
   }
 }
 
@@ -176,6 +260,7 @@ export function buildInsightActions(
   trend: InsightTrend | null,
   analytics: AnalyticsData,
   ageMonths: number,
+  neutral = false,
 ): string[] {
   const actions: string[] = []
   if (concern) {
@@ -208,7 +293,9 @@ export function buildInsightActions(
     }
   }
   if (trend && trend.direction === 'declining' && (!concern || trend.pillar !== concern.pillar)) {
-    actions.push(`${PILLAR_LABELS[trend.pillar]} dropped ${trend.delta}% this week — worth a closer look.`)
+    actions.push(neutral
+      ? `${PILLAR_LABELS[trend.pillar]} looks less steady than last week — worth a closer look.`
+      : `${PILLAR_LABELS[trend.pillar]} dropped ${trend.delta}% this week — worth a closer look.`)
   }
   return actions.slice(0, 2)
 }

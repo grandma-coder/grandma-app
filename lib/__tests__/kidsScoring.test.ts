@@ -1,4 +1,4 @@
-import { scoreSleep, scoreHealth, scoreNutrition, scoreGrowth, scoreMood, scoreActivity, buildScores, getAgeSleepTarget, dataConfidence } from '../kidsScoring'
+import { scoreSleep, scoreHealth, scoreNutrition, scoreGrowth, scoreMood, scoreActivity, buildScores, getAgeSleepTarget, dataConfidence, scoreLabel } from '../kidsScoring'
 import { buildHealthData } from '../analyticsData'
 import type { SleepData, HealthData, NutritionData, GrowthData, MoodData, ActivityData } from '../analyticsData'
 
@@ -380,5 +380,16 @@ describe('scoreSleep folds in hours vs target', () => {
   })
   it('meeting the target scores high', () => {
     expect(scoreSleep(good, 26).value).toBeGreaterThanOrEqual(8)
+  })
+})
+
+// Pillar labels are internal ordering bands only — never a graded word that
+// could leak into the UI as clinical judgement (compliance, 2026-11-02).
+describe('scoreLabel is a neutral internal band', () => {
+  it('maps 0-10 to band-1..band-5 with no judgement words', () => {
+    expect([9, 7.5, 6, 4, 1].map(scoreLabel)).toEqual(['band-5', 'band-4', 'band-3', 'band-2', 'band-1'])
+    for (let v = 0; v <= 10; v += 0.5) {
+      expect(scoreLabel(v)).not.toMatch(/excellent|good|fair|needs|attention|care|low|poor|bad|critical/i)
+    }
   })
 })

@@ -47,6 +47,8 @@ interface Props {
   size?: number
   /** Called when a sticker chip is tapped. Receives the segment's id. */
   onSegmentPress?: (id: string) => void
+  /** Decimal places for the center number (default 1). Use 0 for counts. */
+  decimals?: number
 }
 
 const STAGGER_MS = 80
@@ -62,6 +64,7 @@ export function HealthScoreRing({
   segments,
   size = 220,
   onSegmentPress,
+  decimals = 1,
 }: Props) {
   const { colors, font } = useTheme()
   const cx = size / 2
@@ -193,8 +196,9 @@ export function HealthScoreRing({
   // ─── Center score animated props + style ─────────────────────────────────
   const scoreTextProps = useAnimatedProps(() => {
     const v = scoreV.value
-    // Show 1 decimal so the running digits feel alive
-    return { text: v.toFixed(1), defaultValue: v.toFixed(1) } as any
+    // 1 decimal by default so the running digits feel alive; counts pass 0.
+    const txt = decimals > 0 ? v.toFixed(decimals) : String(Math.round(v))
+    return { text: txt, defaultValue: txt } as any
   })
   const scoreContainerStyle = useAnimatedStyle(() => ({
     opacity: scoreOpacity.value,

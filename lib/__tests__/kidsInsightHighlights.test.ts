@@ -1,4 +1,14 @@
-import { buildInsightHighlights } from '../kidsInsightHighlights'
+import { buildInsightHighlights, buildInsightActions } from '../kidsInsightHighlights'
+
+// The light UI renders the NEUTRAL copy (counts, averages, steadier/less
+// steady trends — never a `/10` value or a graded label; see
+// docs/compliance/2026-11-02-regras-saude.md). The honesty gates below are
+// mode-independent, so they run against the neutral output. The legacy
+// (Diffuse) copy keeps its own block at the bottom.
+const NEUTRAL = { neutral: true }
+
+// Words the neutral copy must never use about a child.
+const JUDGEMENT = /\/10|needs (some )?attention|needs care|excellent|is a strength|main area to work on|main focus|declining|improving|\bpoor\b|\bbad\b|critical/i
 
 // Safe analytics stub — has `.hasData: false` on the two pillars whose
 // narrative branches touch `analytics` directly (sleep/nutrition), so no
@@ -26,8 +36,10 @@ describe('buildInsightHighlights honesty', () => {
       'Rio',
       26,
       'On the 3 shortest-sleep nights, the next day was crankier.',
+      NEUTRAL,
     )
-    expect(h.message).not.toMatch(/strength/i)
+    expect(h.strength).toBeNull()
+    expect(h.message).not.toMatch(JUDGEMENT)
     expect(h.crossLine).toMatch(/crankier/)
   })
 
@@ -42,10 +54,10 @@ describe('buildInsightHighlights honesty', () => {
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const withLine = buildInsightHighlights(scores as any, emptyAnalytics, 'Mika', 30, 'A cross-log line.')
+    const withLine = buildInsightHighlights(scores as any, emptyAnalytics, 'Mika', 30, 'A cross-log line.', NEUTRAL)
     expect(withLine.crossLine).toBe('A cross-log line.')
 
-    const withoutLine = buildInsightHighlights(scores as any, emptyAnalytics, 'Mika', 30, null)
+    const withoutLine = buildInsightHighlights(scores as any, emptyAnalytics, 'Mika', 30, null, NEUTRAL)
     expect(withoutLine.crossLine).toBeNull()
   })
 
@@ -62,11 +74,10 @@ describe('buildInsightHighlights honesty', () => {
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Kai', 30, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Kai', 30, null, NEUTRAL)
     expect(h.strength).toBeNull()
     expect(h.concern).toBeNull()
-    expect(h.message).not.toMatch(/strength/i)
-    expect(h.message).not.toMatch(/main area to work on|main focus/i)
+    expect(h.message).not.toMatch(JUDGEMENT)
     expect(h.message).toMatch(/log a few more days/i)
   })
 
@@ -88,10 +99,13 @@ describe('buildInsightHighlights honesty', () => {
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 9, label: 'excellent', trend: 0, hasData: true, confidence: 0.9 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Noa', 20, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Noa', 20, null, NEUTRAL)
     expect(h.strength).not.toBeNull()
     expect(h.strength?.pillar).toBe('activity')
-    expect(h.message).toMatch(/strength/i)
+    // Neutral: the steady pillar is described by a plain fact, not called a
+    // "strength" — and no `/10` appears.
+    expect(h.strength?.reason).not.toMatch(JUDGEMENT)
+    expect(h.message).not.toMatch(JUDGEMENT)
   })
 })
 
@@ -127,9 +141,9 @@ describe('buildInsightHighlights — per-pillar gate isolated from the overall g
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Zoe', 24, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Zoe', 24, null, NEUTRAL)
     expect(h.strength).toBeNull()
-    expect(h.message).not.toMatch(/strength/i)
+    expect(h.message).not.toMatch(JUDGEMENT)
   })
 
   it('does not call a low-value pillar a concern when only its OWN confidence is low (overallConfidence clears the bar)', () => {
@@ -152,9 +166,9 @@ describe('buildInsightHighlights — per-pillar gate isolated from the overall g
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Theo', 28, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Theo', 28, null, NEUTRAL)
     expect(h.concern).toBeNull()
-    expect(h.message).not.toMatch(/main area to work on|main focus/i)
+    expect(h.message).not.toMatch(JUDGEMENT)
     expect(h.strength).not.toBeNull()
     expect(h.strength?.pillar).toBe('nutrition')
   })
@@ -186,9 +200,9 @@ describe('buildInsightHighlights — trend confidence gate isolated from the ove
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Milo', 24, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Milo', 24, null, NEUTRAL)
     expect(h.trend).toBeNull()
-    expect(h.message).not.toMatch(/declining|improving/i)
+    expect(h.message).not.toMatch(/than last week/i)
   })
 
   it('still surfaces the trend sentence once the trending pillar\'s own confidence clears the bar', () => {
@@ -202,10 +216,14 @@ describe('buildInsightHighlights — trend confidence gate isolated from the ove
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Milo', 24, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Milo', 24, null, NEUTRAL)
     expect(h.trend).not.toBeNull()
     expect(h.trend?.pillar).toBe('sleep')
-    expect(h.message).toMatch(/declining/i)
+    expect(h.trend?.direction).toBe('declining')
+    // Neutral trend: direction in plain words, no % of an internal score.
+    expect(h.message).toMatch(/Sleep: less steady than last week\./)
+    expect(h.message).not.toMatch(/%/)
+    expect(h.message).not.toMatch(JUDGEMENT)
   })
 })
 
@@ -225,12 +243,12 @@ describe('buildInsightHighlights excludes health from strength/concern/trend', (
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null, NEUTRAL)
     // Health (10) would win the highest-value pick over nutrition (6) if it
     // weren't excluded. Nutrition alone doesn't clear the strength bar
     // (>= 8), so no strength should fire at all — never a fallback to health.
     expect(h.strength).toBeNull()
-    expect(h.message).not.toMatch(/strength/i)
+    expect(h.message).not.toMatch(JUDGEMENT)
   })
 
   it('never calls health "the main area to work on", even as the lowest-value, high-confidence pillar', () => {
@@ -244,11 +262,11 @@ describe('buildInsightHighlights excludes health from strength/concern/trend', (
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null, NEUTRAL)
     // Health (1) would win the lowest-value pick over nutrition (9) if it
     // weren't excluded. With no other pillar below 7, no concern should fire.
     expect(h.concern).toBeNull()
-    expect(h.message).not.toMatch(/main area to work on|main focus/i)
+    expect(h.message).not.toMatch(JUDGEMENT)
   })
 
   it('never surfaces a health trend sentence, even with the single largest |trend|', () => {
@@ -262,9 +280,9 @@ describe('buildInsightHighlights excludes health from strength/concern/trend', (
       growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
       activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
     }
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Sam', 24, null, NEUTRAL)
     expect(h.trend).toBeNull()
-    expect(h.message).not.toMatch(/declining|improving/i)
+    expect(h.message).not.toMatch(/than last week/i)
   })
 })
 
@@ -285,18 +303,128 @@ describe('buildInsightHighlights — optional health concern note', () => {
 
   it('mentions health concerns when concernEvents > 0', () => {
     const analytics = { ...emptyAnalytics, health: { concernEvents: 2 } }
-    const h = buildInsightHighlights(scores as any, analytics, 'Rio', 24, null)
-    expect(h.message).toMatch(/2 health concerns flagged/i)
+    const h = buildInsightHighlights(scores as any, analytics, 'Rio', 24, null, NEUTRAL)
+    expect(h.message).toMatch(/2 fever, injury or doctor notes logged this week\./)
+    expect(h.message).not.toMatch(/concern/i)
   })
 
   it('says nothing about health when concernEvents is 0', () => {
     const analytics = { ...emptyAnalytics, health: { concernEvents: 0 } }
-    const h = buildInsightHighlights(scores as any, analytics, 'Rio', 24, null)
-    expect(h.message).not.toMatch(/health concern/i)
+    const h = buildInsightHighlights(scores as any, analytics, 'Rio', 24, null, NEUTRAL)
+    expect(h.message).not.toMatch(/fever, injury or doctor/i)
   })
 
   it('does not crash when analytics.health is missing from a partial fixture', () => {
-    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Rio', 24, null)
-    expect(h.message).not.toMatch(/health concern/i)
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Rio', 24, null, NEUTRAL)
+    expect(h.message).not.toMatch(/fever, injury or doctor/i)
+  })
+})
+
+// Light UI: what the neutral copy DOES say — counts and averages from the
+// logs, in Grandma's voice, never a grade.
+describe('buildInsightHighlights — neutral copy (light UI)', () => {
+  const scores = {
+    overall: 4.5,
+    overallConfidence: 0.9,
+    nutrition: { value: 9, label: 'band-5', trend: 0, hasData: true, confidence: 0.9 },
+    sleep: { value: 3, label: 'band-2', trend: 0, hasData: true, confidence: 0.9 },
+    mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    health: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+  }
+  const analytics = {
+    totalLogs: 24,
+    sleep: { hasData: true, avgHours: 9.25 },
+    nutrition: {
+      hasData: true,
+      mode: 'solids',
+      mealFrequency: [3, 3, 2, 2, 2],
+      eatQuality: { good: [3, 2, 2, 1, 1], little: [0, 1, 0, 1, 1], none: [0, 0, 0, 0, 0] },
+    },
+  } as any
+
+  it('opens with the log count instead of a score, and states facts for the pillars it picks', () => {
+    const h = buildInsightHighlights(scores as any, analytics, 'Kenji', 26, null, NEUTRAL)
+    expect(h.logCount).toBe(24)
+    expect(h.message).toMatch(/^Grandma looked at 24 logs for Kenji\./)
+    // Lowest-scoring pillar is still mentioned first — as an average, not a grade.
+    expect(h.concern?.pillar).toBe('sleep')
+    expect(h.concern?.reason).toBe('Sleep averaged 9.3 h a day on logged days — about 12 h is the usual guide at this age.')
+    expect(h.strength?.pillar).toBe('nutrition')
+    expect(h.strength?.reason).toBe('Logged 12 meals, 75% marked "ate well".')
+    expect(h.message).not.toMatch(JUDGEMENT)
+    expect(h.message).not.toMatch(/4\.5/)
+  })
+
+  it('counts feeds (not meals or "ate well") for a milk-phase baby', () => {
+    const milk = {
+      ...analytics,
+      nutrition: { hasData: true, mode: 'milk', mealFrequency: [8, 7], eatQuality: { good: [], little: [], none: [] } },
+    }
+    const h = buildInsightHighlights(scores as any, milk, 'Ana', 2, null, NEUTRAL)
+    expect(h.strength?.reason).toBe('Logged 15 feeds.')
+  })
+
+  it('falls back to a gentle "Grandma noticed" line when the pillar data is not in the fixture', () => {
+    const h = buildInsightHighlights(scores as any, { ...emptyAnalytics, totalLogs: 1 }, 'Kai', 26, null, NEUTRAL)
+    expect(h.concern?.reason).toBe('Grandma noticed a pattern in sleep — tap to see the week.')
+    expect(h.message).toMatch(/^Grandma looked at 1 log for Kai\./)
+  })
+
+  it('omits the opening line when the log count is unknown', () => {
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Kai', 26, null, NEUTRAL)
+    expect(h.logCount).toBe(0)
+    expect(h.message).not.toMatch(/Grandma looked at/)
+  })
+
+  it('says "steadier than last week" for an upward trend', () => {
+    const up = { ...scores, nutrition: { ...scores.nutrition, trend: 25 } }
+    const h = buildInsightHighlights(up as any, analytics, 'Kenji', 26, null, NEUTRAL)
+    expect(h.message).toMatch(/Nutrition: steadier than last week\./)
+    expect(h.message).not.toMatch(/25%/)
+  })
+
+  it('neutral next-step for a declining trend never prints a percentage', () => {
+    const actions = buildInsightActions(null, { pillar: 'activity', direction: 'declining', delta: 40 }, analytics, 26, true)
+    expect(actions).toEqual(['Activity looks less steady than last week — worth a closer look.'])
+  })
+})
+
+// The Diffuse UI still renders the legacy copy (out of scope for the light
+// compliance pass). Keep it covered so it doesn't change by accident.
+describe('buildInsightHighlights — legacy (Diffuse) copy', () => {
+  const base = {
+    overallConfidence: 0.9,
+    mood: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    health: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    growth: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+  }
+
+  it('keeps the overall score sentence, strength and concern wording', () => {
+    const scores = {
+      ...base,
+      overall: 8,
+      nutrition: { value: 3, label: 'band-2', trend: 0, hasData: true, confidence: 0.9 },
+      sleep: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+      activity: { value: 9, label: 'band-5', trend: 0, hasData: true, confidence: 0.9 },
+    }
+    const h = buildInsightHighlights(scores as any, emptyAnalytics, 'Noa', 20, null)
+    expect(h.message).toMatch(/^Noa is on track — 8\.0\/10 overall\./)
+    expect(h.message).toMatch(/Activity is a strength at 9\.0\/10\./)
+    expect(h.message).toMatch(/Nutrition is the main area to work on at 3\.0\/10\./)
+  })
+
+  it('keeps the % trend sentence and the "health concerns flagged" note', () => {
+    const scores = {
+      ...base,
+      overall: 6,
+      nutrition: { value: 6, label: 'band-3', trend: 0, hasData: true, confidence: 0.9 },
+      sleep: { value: 5, label: 'band-3', trend: -53, hasData: true, confidence: 0.9 },
+      activity: { value: 0, label: 'no data', trend: 0, hasData: false, confidence: 0 },
+    }
+    const h = buildInsightHighlights(scores as any, { ...emptyAnalytics, health: { concernEvents: 2 } }, 'Milo', 24, null)
+    expect(h.message).toMatch(/Sleep declining 53% this week\./)
+    expect(h.message).toMatch(/2 health concerns flagged/i)
   })
 })
