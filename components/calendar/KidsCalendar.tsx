@@ -45,27 +45,24 @@ import {
   Pencil,
   Check,
   Plus,
-  Repeat,
   RotateCcw,
   CheckCircle2,
-  AlertCircle,
   Circle,
   Settings2,
   Bell,
-  Sparkles,
   MinusCircle,
   Minus,
   Baby,
   Sun,
-  Syringe,
-  Pill,
-  Thermometer,
-  FileText,
 } from 'lucide-react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers, font, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../constants/theme'
+import { useTheme, brand, stickers, font, getModeColor, getModeColorSoft, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField } from '../../constants/theme'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { InkBackButton } from '../ui/InkBackButton'
+import { PillButton } from '../ui/PillButton'
+import { FadeUp } from '../ui/Motion'
 import { useIsDiffuse, useScrollBottomInset, SoftBloom, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import {
   DiffuseSheet,
@@ -89,12 +86,8 @@ import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
 import { SegmentedTabs } from './SegmentedTabs'
-import { ActivityPillCard } from './ActivityPillCard'
-import { LogTile, LogTileGrid } from './LogTile'
-import { SectionHeader } from './SectionHeader'
 import { AgendaWeekStrip } from './AgendaWeekStrip'
 import { LogMonthGrid } from './LogMonthGrid'
-import { Display, Body } from '../ui/Typography'
 import { logSticker } from './logStickers'
 import {
   type RoutinePrefill,
@@ -138,13 +131,229 @@ interface ChildRoutine {
 // ─── Child colors (shared palette) ────────────────────────────────────────
 
 import { CHILD_COLORS, childColor } from '../ui/ChildPills'
-import { MoodFace } from '../stickers/RewardStickers'
-import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
-import { stickerForEmoji } from '../../lib/emojiToSticker'
 
-function EmojiSticker({ size = 20, children, style }: { size?: number; children: string | undefined; style?: any }) {
-  const S = stickerForEmoji(children ?? '')
-  return <View style={style}><S size={size} /></View>
+// ─── Site look (light) helpers ─────────────────────────────────────────────
+// Calm ink outlines, card-less sticker rows, ink text. Used only by the light
+// (non-diffuse) rendering; every diffuse path keeps its own primitives.
+
+const LOG_STICKER: Record<string, SiteStickerName> = {
+  feeding: 'bottle', food: 'bottle', sleep: 'moon', wake_up: 'cloud',
+  health: 'thermo', temperature: 'thermo', medicine: 'syringe', vaccine: 'syringe',
+  mood: 'face3', memory: 'camera', photo: 'camera', diaper: 'diaper',
+  growth: 'ruler', milestone: 'star', activity: 'shoe', note: 'pencil', exam: 'doc',
+}
+const stickerForLog = (type: string): SiteStickerName => LOG_STICKER[type] ?? 'pencil'
+
+const SITE_MONO = 'SpaceMono_400Regular'
+
+/** Mono uppercase eyebrow / meta label. */
+function SiteEyebrow({ children, color, style }: { children: React.ReactNode; color?: string; style?: any }) {
+  const { colors } = useTheme()
+  return (
+    <Text style={[{ fontFamily: SITE_MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: color ?? colors.textMuted }, style]}>
+      {children}
+    </Text>
+  )
+}
+
+/** Hand-lettered uppercase title. */
+function SiteTitle({ children, size = 24, style, numberOfLines }: { children: React.ReactNode; size?: number; style?: any; numberOfLines?: number }) {
+  const { colors, font } = useTheme()
+  return (
+    <Text numberOfLines={numberOfLines} style={[{ fontFamily: font.display, fontSize: size, lineHeight: Math.round(size * 1.15), letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }, style]}>
+      {children}
+    </Text>
+  )
+}
+
+/** White chip, ink outline; on = soft tone fill. Ink label always. */
+function SiteChip({ label, on, onPress, tone, leading, minWidth }: { label: string; on: boolean; onPress: () => void; tone: string; leading?: React.ReactNode; minWidth?: number }) {
+  const { colors, font } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: on }}
+      style={({ pressed }) => ({
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+        minWidth, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+        borderWidth: 1.5, borderColor: colors.text,
+        backgroundColor: on ? tone : colors.surface,
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      {leading}
+      <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: colors.text }}>{label}</Text>
+    </Pressable>
+  )
+}
+
+/** Sheet frame: bg, 2.5px ink top border, 26 radius top corners. */
+function siteSheetFrame(colors: { bg: string; text: string }, bottomInset: number) {
+  return {
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    borderTopWidth: 2.5,
+    borderColor: colors.text,
+    paddingBottom: bottomInset,
+  } as const
+}
+
+function SiteGrabber() {
+  const { colors } = useTheme()
+  return (
+    <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+      <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
+    </View>
+  )
+}
+
+/** White field, 1.5px ink border, Hanken 16. */
+function siteField(colors: { text: string; surface: string }, fontFamily: string) {
+  return {
+    backgroundColor: colors.surface,
+    borderColor: colors.text,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 16,
+    fontFamily,
+    color: colors.text,
+  } as const
+}
+
+/** Card-less sticker + label launcher (like the home LogDock). */
+function SiteLauncher({ label, sticker, onPress }: { label: string; sticker: SiteStickerName; onPress: () => void }) {
+  const { colors, font } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ width: '25%', alignItems: 'center', paddingVertical: 10, gap: 6, opacity: pressed ? 0.6 : 1 })}
+    >
+      <SiteSticker name={sticker} size={44} />
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ fontFamily: font.display, fontSize: 13, letterSpacing: 0.4, textTransform: 'uppercase', color: colors.text }}>
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
+/** Routine form fields (name, type, time, days) shared by the manager and the edit dialog. */
+function SiteRoutineForm({
+  form, setForm, namePlaceholder, tone, t,
+}: {
+  form: { name: string; type: string; time: string; days: number[] }
+  setForm: React.Dispatch<React.SetStateAction<{ name: string; type: string; time: string; days: number[] }>>
+  namePlaceholder: string
+  tone: string
+  t: (key: TranslationKey) => string
+}) {
+  const { colors, font } = useTheme()
+  const ink = colors.text
+  return (
+    <View style={{ gap: 14 }}>
+      <TextInput
+        value={form.name}
+        onChangeText={(v) => setForm((f) => ({ ...f, name: v }))}
+        placeholder={namePlaceholder}
+        placeholderTextColor={colors.textMuted}
+        underlineColorAndroid="transparent"
+        style={[siteField(colors, font.bodySemiBold), { height: 52 }]}
+      />
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2, paddingHorizontal: 2 }}>
+        {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((rtype) => (
+          <SiteChip
+            key={rtype}
+            label={t(LOG_META[rtype].labelKey)}
+            on={form.type === rtype}
+            tone={tone}
+            leading={<SiteSticker name={stickerForLog(rtype)} size={22} />}
+            onPress={() => setForm((f) => ({ ...f, type: rtype }))}
+          />
+        ))}
+      </ScrollView>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Clock size={18} color={ink} strokeWidth={2.2} />
+        <TextInput
+          value={form.time}
+          onChangeText={(txt) => setForm((f) => ({ ...f, time: txt }))}
+          placeholder="HH:MM"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="numbers-and-punctuation"
+          style={[siteField(colors, font.bodySemiBold), { flex: 1 }]}
+        />
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
+        {DAY_NAMES.map((name, i) => {
+          const active = form.days.includes(i)
+          return (
+            <Pressable
+              key={i}
+              onPress={() => setForm((f) => ({ ...f, days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort() }))}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={name}
+              style={({ pressed }) => ({
+                width: 38, height: 38, borderRadius: 19,
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1.5, borderColor: ink,
+                backgroundColor: active ? tone : colors.surface,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: ink }}>{name.charAt(0)}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+/** Card-less detail hero: big sticker, big number, mono eyebrow. */
+function DetailHero({ sticker, value, unit, eyebrow, valueSize = 44 }: { sticker: SiteStickerName; value?: string | null; unit?: string; eyebrow?: string; valueSize?: number }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ alignItems: 'center', paddingVertical: 14, gap: 6, marginBottom: 6 }}>
+      <SiteSticker name={sticker} size={72} />
+      {value ? (
+        <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6} style={{ fontFamily: font.displayBold, fontSize: valueSize, lineHeight: valueSize + 6, color: colors.text, textAlign: 'center', marginTop: 4 }}>
+          {value}
+          {unit ? <Text style={{ fontFamily: font.bodyBold, fontSize: 18 }}>{' ' + unit}</Text> : null}
+        </Text>
+      ) : null}
+      {eyebrow ? <SiteEyebrow>{eyebrow}</SiteEyebrow> : null}
+    </View>
+  )
+}
+
+/** Static ink-outlined info pill (white, or soft tone), optional leading sticker/icon. */
+function InfoPill({ label, tone, leading }: { label: string; tone?: string; leading?: React.ReactNode }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1.5, borderColor: colors.text, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: tone ?? colors.surface }}>
+      {leading}
+      <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: colors.text }}>{label}</Text>
+    </View>
+  )
+}
+
+/** Eyebrow label + body text, no card. */
+function DetailNote({ label, text }: { label: string; text: string }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ marginBottom: 16, gap: 6 }}>
+      <SiteEyebrow>{label}</SiteEyebrow>
+      <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 22, color: colors.text }}>{text}</Text>
+    </View>
+  )
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -561,75 +770,33 @@ function LogActivitySheet({
     )
   }
 
-  const paper = colors.surface
-  const paperBorder = colors.border
-  const bg = colors.bg
   const ink = colors.text
-  const accent = isDark ? colors.primary : '#7048B8'
 
   return (
     <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
-      <View
-        style={[
-          styles.fabSheet,
-          {
-            backgroundColor: bg,
-            paddingBottom: insets.bottom + 16,
-          },
-        ]}
-      >
-        <View style={styles.fabSheetHandle}>
-          <View style={[styles.fabSheetHandleBar, { backgroundColor: paperBorder }]} />
-        </View>
+      <View style={[styles.fabSheet, siteSheetFrame(colors, insets.bottom + 16)]}>
+        <SiteGrabber />
         <View style={styles.fabSheetTitleWrap}>
-          <Display size={22} color={ink}>{t('kids_calendar_logActivity')}</Display>
+          <SiteTitle size={24}>{t('kids_calendar_logActivity')}</SiteTitle>
         </View>
         <View style={styles.fabSheetBody}>
-          <LogTileGrid>
-            {QUICK_LOGS.map((log) => {
-              const tint = KIDS_TINT_BY_TYPE[log.id] ?? 'activity'
-              return (
-                <LogTile
-                  key={log.id}
-                  label={log.label}
-                  tint={tint}
-                  icon={logSticker(log.id, 36, isDark)}
-                  onPress={() => handleSelect(log.id)}
-                />
-              )
-            })}
-          </LogTileGrid>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>
+            {QUICK_LOGS.map((log) => (
+              <SiteLauncher key={log.id} label={log.label} sticker={stickerForLog(log.id)} onPress={() => handleSelect(log.id)} />
+            ))}
+          </View>
 
           <Pressable
             onPress={() => { onClose(); onManageRoutines() }}
-            style={({ pressed }) => [
-              styles.manageRoutinesBtn,
-              {
-                backgroundColor: isDark ? colors.surfaceRaised : '#E9DFFB',
-                borderColor: ink,
-                borderWidth: 1.5,
-                shadowColor: ink,
-                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                shadowOpacity: 1,
-                shadowRadius: 0,
-                elevation: 4,
-                transform: [{ translateY: pressed ? 2 : 0 }],
-              },
-            ]}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.manageRoutinesBtn, { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 }]}
           >
-            <View style={{
-              width: 30, height: 30, borderRadius: 15,
-              backgroundColor: colors.surface,
-              borderWidth: 1.5, borderColor: ink,
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Repeat size={15} color={ink} strokeWidth={2.4} />
-            </View>
-            <Body size={14} color={ink} style={{ fontFamily: font.bodyBold, flex: 1, letterSpacing: 0.2 }}>
+            <SiteSticker name="cal" size={30} />
+            <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink, flex: 1 }}>
               {t('kids_calendar_manageRoutines')}
-            </Body>
-            <ChevronRightSmall size={16} color={ink} />
+            </Text>
+            <ChevronRightSmall size={18} color={ink} />
           </Pressable>
         </View>
       </View>
@@ -2396,43 +2563,67 @@ export function KidsCalendar() {
       )
     }
 
+    const kidsTone = getModeColorSoft('kids', isDark)
+
     return (
       <>
         <View style={styles.timelineHeader}>
-          <Display size={22} color={colors.text}>{dayLabel}</Display>
-          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{summary}</Body>
+          <SiteTitle size={28}>{dayLabel}</SiteTitle>
+          <SiteEyebrow style={{ marginTop: 6 }}>{summary}</SiteEyebrow>
         </View>
 
         {rows.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Body size={14} color={colors.textSecondary} align="center">
+          <FadeUp style={styles.siteEmpty}>
+            <SiteSticker name="cal" size={64} />
+            <Text style={{ fontFamily: font.bodyBold, fontSize: 16, color: colors.text, textAlign: 'center', marginTop: 12 }}>
               {t('kids_calendar_nothingPlanned')}
-            </Body>
-            <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
+            </Text>
+            <Text style={{ fontFamily: font.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 4 }}>
               {t('kids_calendar_tapToLog')}
-            </Body>
-          </View>
+            </Text>
+          </FadeUp>
         ) : (
-          <View style={{ gap: 10 }}>
-            {rows.map((r) => (
-              <View key={r.key} style={styles.timelineRow}>
-                <View style={styles.timelineGutter}>
-                  <Text style={[styles.timelineTime, { color: colors.textMuted }]}>{r.time}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <ActivityPillCard
-                    icon={r.icon}
-                    title={r.title}
-                    subtitle={r.subtitle}
-                    tint={r.tint}
-                    chip={r.chip}
-                    onPress={r.onPress}
-                    pulse={r.pulse}
-                    logged={r.logged}
-                    loggedBy={r.loggedBy}
-                  />
-                </View>
-              </View>
+          <View>
+            {rows.map((r, idx) => (
+              <FadeUp key={r.key} index={Math.min(idx, 8)}>
+                <Pressable
+                  onPress={r.onPress}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [
+                    styles.siteRow,
+                    idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
+                    r.pulse && { backgroundColor: kidsTone, borderRadius: 16, borderTopWidth: 0 },
+                    { opacity: pressed ? 0.6 : 1 },
+                  ]}
+                >
+                  <SiteEyebrow style={styles.siteRowTime}>{r.time}</SiteEyebrow>
+                  <View style={styles.siteRowSticker}>
+                    <SiteSticker name={stickerForLog(r.type)} size={38} />
+                    {r.logged ? (
+                      <View style={[styles.siteRowTick, { backgroundColor: colors.text, borderColor: colors.bg }]}>
+                        <Check size={10} color={colors.bg} strokeWidth={3.5} />
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{r.title}</Text>
+                    {r.subtitle ? (
+                      <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{r.subtitle}</Text>
+                    ) : null}
+                    {r.loggedBy ? (
+                      <Text numberOfLines={1} style={{ fontFamily: font.body, fontSize: 12, color: colors.textMuted }}>
+                        {t('kids_calendar_detail_loggedBy')} {r.loggedBy}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {r.chip ? (
+                    <View style={[styles.siteRowChip, { borderColor: colors.text, backgroundColor: colors.surface }]}>
+                      <View style={[styles.childDot, { backgroundColor: r.chip.color }]} />
+                      <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 11, color: colors.text }}>{r.chip.label}</Text>
+                    </View>
+                  ) : null}
+                </Pressable>
+              </FadeUp>
             ))}
           </View>
         )}
@@ -2456,8 +2647,9 @@ export function KidsCalendar() {
         )
       }
       return (
-        <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Body size={14} color={colors.textSecondary} align="center">{t('kids_calendar_addChildToSeeJourney')}</Body>
+        <View style={styles.siteEmpty}>
+          <SiteSticker name="baby" size={64} />
+          <Text style={{ fontFamily: font.bodyBold, fontSize: 16, color: colors.text, textAlign: 'center', marginTop: 12 }}>{t('kids_calendar_addChildToSeeJourney')}</Text>
         </View>
       )
     }
@@ -2568,75 +2760,94 @@ export function KidsCalendar() {
       )
     }
 
+    const addVisit = (
+      <View style={{ marginTop: 20 }}>
+        <PillButton
+          label={t('kids_calendar_addVisit')}
+          variant="ink"
+          onPress={() => { setRoutinePrefill(null); setSheetType('health') }}
+          leading={<Plus size={18} color="#fff" strokeWidth={2.6} />}
+        />
+      </View>
+    )
+
     if (visits.length === 0 && upcomingRoutines.length === 0) {
       return (
-        <View style={{ gap: 10 }}>
-          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Body size={14} color={colors.textSecondary} align="center">{t('kids_calendar_noVisitsYet')}</Body>
-            <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
+        <View>
+          <FadeUp style={styles.siteEmpty}>
+            <SiteSticker name="thermo" size={64} />
+            <Text style={{ fontFamily: font.bodyBold, fontSize: 16, color: colors.text, textAlign: 'center', marginTop: 12 }}>{t('kids_calendar_noVisitsYet')}</Text>
+            <Text style={{ fontFamily: font.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 4 }}>
               {t('kids_calendar_visitHint')}
-            </Body>
-          </View>
-          <Pressable
-            onPress={() => { setRoutinePrefill(null); setSheetType('health') }}
-            style={[styles.addVisitBtn, { backgroundColor: brand.kids }]}
-          >
-            <Plus size={18} color="#fff" strokeWidth={3} />
-            <Text style={styles.addVisitBtnText}>{t('kids_calendar_addVisit')}</Text>
-          </Pressable>
+            </Text>
+          </FadeUp>
+          {addVisit}
         </View>
       )
     }
 
+    const visitRows: { key: string; type: string; title: string; sub: string; chip?: { label: string; color: string }; onPress: () => void }[] = []
+    for (const r of upcomingRoutines) {
+      const ci = childIndexMap.get(r.child_id) ?? 0
+      const childName = children.find((c) => c.id === r.child_id)?.name ?? ''
+      visitRows.push({
+        key: `r-${r.id}`,
+        type: r.type,
+        title: r.name,
+        sub: `${r.time ? fmtTime(r.time) + ' · ' : ''}${t('kids_calendar_recurringLabel')}`,
+        chip: childName ? { label: childName, color: childColor(ci) } : undefined,
+        onPress: () => {
+          setRoutinePrefill({ routineId: r.id, childId: r.child_id, time: r.time ?? undefined, value: r.value ?? undefined, name: r.name })
+          setSheetType((ROUTINE_SHEET_MAP[r.type] ?? 'health') as LogType)
+        },
+      })
+    }
+    for (const log of visits) {
+      const ci = childIndexMap.get(log.child_id) ?? 0
+      const childName = children.find((c) => c.id === log.child_id)?.name ?? ''
+      visitRows.push({
+        key: `l-${log.id}`,
+        type: log.type,
+        title: logTitle(log),
+        sub: `${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`,
+        chip: childName ? { label: childName, color: childColor(ci) } : undefined,
+        onPress: () => { setSelectedLog(log); setEditing(false) },
+      })
+    }
+
     return (
-      <View style={{ gap: 10 }}>
+      <View>
         <View style={styles.timelineHeader}>
-          <Display size={22} color={colors.text}>{t('kids_calendar_visits')}</Display>
-          <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{t('kids_calendar_visitsStats', { logged: visits.length, scheduled: upcomingRoutines.length })}</Body>
+          <SiteTitle size={28}>{t('kids_calendar_visits')}</SiteTitle>
+          <SiteEyebrow style={{ marginTop: 6 }}>{t('kids_calendar_visitsStats', { logged: visits.length, scheduled: upcomingRoutines.length })}</SiteEyebrow>
         </View>
 
-        {upcomingRoutines.map((r) => {
-          const ci = childIndexMap.get(r.child_id) ?? 0
-          const childName = children.find((c) => c.id === r.child_id)?.name ?? ''
-          return (
-            <ActivityPillCard
-              key={`r-${r.id}`}
-              icon={logSticker(r.type, 28, isDark)}
-              title={r.name}
-              subtitle={`${r.time ? fmtTime(r.time) + ' · ' : ''}${t('kids_calendar_recurringLabel')}`}
-              tint="health"
-              chip={childName ? { label: childName, color: childColor(ci) } : undefined}
-              onPress={() => {
-                setRoutinePrefill({ routineId: r.id, childId: r.child_id, time: r.time ?? undefined, value: r.value ?? undefined, name: r.name })
-                setSheetType((ROUTINE_SHEET_MAP[r.type] ?? 'health') as LogType)
-              }}
-            />
-          )
-        })}
+        {visitRows.map((r, idx) => (
+          <FadeUp key={r.key} index={Math.min(idx, 8)}>
+            <Pressable
+              onPress={r.onPress}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.siteRow, idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border }, { opacity: pressed ? 0.6 : 1 }]}
+            >
+              <View style={styles.siteRowSticker}>
+                <SiteSticker name={stickerForLog(r.type)} size={38} />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{r.title}</Text>
+                <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{r.sub}</Text>
+              </View>
+              {r.chip ? (
+                <View style={[styles.siteRowChip, { borderColor: colors.text, backgroundColor: colors.surface }]}>
+                  <View style={[styles.childDot, { backgroundColor: r.chip.color }]} />
+                  <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 11, color: colors.text }}>{r.chip.label}</Text>
+                </View>
+              ) : null}
+              <ChevronRight size={16} color={colors.textMuted} />
+            </Pressable>
+          </FadeUp>
+        ))}
 
-        {visits.map((log) => {
-          const ci = childIndexMap.get(log.child_id) ?? 0
-          const childName = children.find((c) => c.id === log.child_id)?.name ?? ''
-          return (
-            <ActivityPillCard
-              key={`l-${log.id}`}
-              icon={logSticker(log.type, 28, isDark)}
-              title={logTitle(log)}
-              subtitle={`${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`}
-              tint="health"
-              chip={childName ? { label: childName, color: childColor(ci) } : undefined}
-              onPress={() => { setSelectedLog(log); setEditing(false) }}
-            />
-          )
-        })}
-
-        <Pressable
-          onPress={() => { setRoutinePrefill(null); setSheetType('health') }}
-          style={[styles.addVisitBtn, { backgroundColor: brand.kids }]}
-        >
-          <Plus size={18} color="#fff" strokeWidth={3} />
-          <Text style={styles.addVisitBtnText}>{t('kids_calendar_addVisit')}</Text>
-        </Pressable>
+        {addVisit}
       </View>
     )
   }
@@ -2654,7 +2865,7 @@ export function KidsCalendar() {
     : children.filter((c) => c.id === selectedChildId)
   const hiddenKidsCount = children.length - visibleKids.length
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.10)'
-  const fadeBg = diffuse ? dt.colors.bg : (isDark ? colors.bg : '#F0E5D2')
+  const fadeBg = diffuse ? dt.colors.bg : colors.bg
   const fadeTransparent = fadeBg + '00'
 
   return (
@@ -2670,8 +2881,6 @@ export function KidsCalendar() {
               contentContainerStyle={styles.childSelectorRow}
             >
               {(() => {
-                const ST_INK = '#141313'
-                const ST_LILAC = '#C8B6E8'
                 const allActive = selectedChildId === 'all'
                 // ── Diffuse: hairline mono pill (active = hairline border + surface) ──
                 if (diffuse) {
@@ -2701,27 +2910,21 @@ export function KidsCalendar() {
                     style={({ pressed }) => [
                       styles.childSelectorChip,
                       {
-                        backgroundColor: allActive ? ST_LILAC : (colors.surface),
-                        borderColor: allActive ? ST_INK : paperBorder,
-                        borderWidth: allActive ? 1.5 : 1,
+                        backgroundColor: allActive ? getModeColorSoft('kids', isDark) : colors.surface,
+                        borderColor: colors.text,
+                        borderWidth: 1.5,
                         borderRadius: radius.full,
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: allActive ? (pressed ? 1 : 3) : 0 },
-                        shadowOpacity: allActive ? 1 : 0,
-                        shadowRadius: 0,
-                        elevation: allActive ? 4 : 0,
-                        transform: [{ translateY: allActive && pressed ? 2 : 0 }],
+                        opacity: pressed ? 0.7 : 1,
                       },
                     ]}
                   >
-                    <Text style={[styles.childSelectorText, { fontFamily: allActive ? font.bodyBold : font.bodySemiBold, color: allActive ? ST_INK : (colors.text) }]}>
+                    <Text style={[styles.childSelectorText, { fontFamily: font.bodyBold, color: colors.text }]}>
                       {t('kids_calendar_allKids')}
                     </Text>
                   </Pressable>
                 )
               })()}
               {visibleKids.map((c) => {
-                const ST_INK = '#141313'
                 const i = children.findIndex((ch) => ch.id === c.id)
                 const active = selectedChildId === c.id
                 const kidColor = childColor(i)
@@ -2762,21 +2965,16 @@ export function KidsCalendar() {
                     style={({ pressed }) => [
                       styles.childSelectorChip,
                       {
-                        backgroundColor: active ? kidColor : (colors.surface),
-                        borderColor: active ? ST_INK : paperBorder,
-                        borderWidth: active ? 1.5 : 1,
+                        backgroundColor: active ? getModeColorSoft('kids', isDark) : colors.surface,
+                        borderColor: colors.text,
+                        borderWidth: 1.5,
                         borderRadius: radius.full,
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
-                        shadowOpacity: active ? 1 : 0,
-                        shadowRadius: 0,
-                        elevation: active ? 4 : 0,
-                        transform: [{ translateY: active && pressed ? 2 : 0 }],
+                        opacity: pressed ? 0.7 : 1,
                       },
                     ]}
                   >
-                    <View style={[styles.childDot, { backgroundColor: active ? ST_INK : kidColor }]} />
-                    <Text style={[styles.childSelectorText, { fontFamily: active ? font.bodyBold : font.bodySemiBold, color: active ? ST_INK : (colors.text) }]}>
+                    <View style={[styles.childDot, { backgroundColor: kidColor, borderWidth: 1, borderColor: colors.text }]} />
+                    <Text style={[styles.childSelectorText, { fontFamily: font.bodyBold, color: colors.text }]}>
                       {c.name}
                     </Text>
                   </Pressable>
@@ -2797,8 +2995,8 @@ export function KidsCalendar() {
                         }
                       : {
                           backgroundColor: colors.surface,
-                          borderColor: paperBorder,
-                          borderWidth: 1,
+                          borderColor: colors.text,
+                          borderWidth: 1.5,
                           borderRadius: radius.full,
                         },
                   ]}
@@ -2836,16 +3034,18 @@ export function KidsCalendar() {
           ) : (
           <Pressable
             onPress={() => setLogSheetOpen(true)}
+            hitSlop={6}
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.addLogBtn,
               {
-                backgroundColor: brand.kids,
-                opacity: pressed ? 0.85 : 1,
+                backgroundColor: colors.text,
+                opacity: pressed ? 0.8 : 1,
                 transform: [{ scale: pressed ? 0.94 : 1 }],
               },
             ]}
           >
-            <Plus size={18} color="#FFFEF8" strokeWidth={2.5} />
+            <Plus size={18} color={colors.bg} strokeWidth={2.5} />
           </Pressable>
           )}
         </View>
@@ -2859,7 +3059,7 @@ export function KidsCalendar() {
             ]}
             value={view}
             onChange={(k) => setView(k as 'timeline' | 'visits')}
-            activeBg={isDark ? brand.kids + '40' : '#9EC5FF'}
+            activeBg={getModeColorSoft('kids', isDark)}
             activeFg={colors.text}
           />
         </View>
@@ -2916,7 +3116,7 @@ export function KidsCalendar() {
                 selectedDate={selectedDate}
                 onSelectDate={handleDayPress}
                 dotsByDate={dotsByDate}
-                modeColor={brand.kids}
+                modeColor={getModeColorSoft('kids', isDark)}
               />
             )}
             <View style={{ height: 12 }} />
@@ -2966,57 +3166,33 @@ export function KidsCalendar() {
         <Pressable style={styles.kidPickerOverlay} onPress={() => setKidPickerOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}
-            style={[
-              styles.kidPickerSheet,
-              {
-                backgroundColor: isDark ? colors.bg : '#FFFEF8',
-                borderColor: isDark ? colors.border : '#141313',
-                paddingBottom: insets.bottom + 20,
-              },
-            ]}
+            style={[styles.kidPickerSheet, siteSheetFrame(colors, insets.bottom + 20)]}
           >
-            <View style={{ alignItems: 'center', paddingTop: 10 }}>
-              <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
-            </View>
+            <SiteGrabber />
             <View style={styles.kidPickerHeader}>
-              <Text style={[styles.kidPickerTitle, { color: colors.text, fontFamily: font.displayBold }]}>
-                {t('kids_calendar_pickAKid')}
-              </Text>
-              <Pressable
-                onPress={() => setKidPickerOpen(false)}
-                hitSlop={12}
-                style={{
-                  width: 32, height: 32, borderRadius: 999,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1.2, borderColor: isDark ? colors.border : '#141313',
-                  alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <X size={14} color={colors.text} strokeWidth={2.4} />
-              </Pressable>
+              <SiteTitle size={24}>{t('kids_calendar_pickAKid')}</SiteTitle>
+              <InkBackButton onPress={() => setKidPickerOpen(false)} ink={colors.text} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
             </View>
 
-            <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8, gap: 8 }}>
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}>
               {/* All Kids row */}
               <Pressable
                 onPress={() => { setSelectedChildId('all'); setKidPickerOpen(false) }}
-                style={[
+                accessibilityRole="button"
+                accessibilityState={{ selected: selectedChildId === 'all' }}
+                style={({ pressed }) => [
                   styles.kidPickerRow,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: selectedChildId === 'all' ? '#141313' : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
-                    borderWidth: selectedChildId === 'all' ? 1.5 : 1,
-                  },
+                  { backgroundColor: selectedChildId === 'all' ? getModeColorSoft('kids', isDark) : 'transparent', opacity: pressed ? 0.7 : 1 },
                 ]}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', width: 54 }}>
                   {children.slice(0, 4).map((c, i) => (
                     <View
                       key={c.id}
                       style={{
                         width: 18, height: 18, borderRadius: 9,
                         backgroundColor: childColor(i),
-                        borderWidth: 1.2, borderColor: '#141313',
+                        borderWidth: 1.5, borderColor: colors.text,
                         marginLeft: i === 0 ? 0 : -6,
                       }}
                     />
@@ -3025,9 +3201,8 @@ export function KidsCalendar() {
                 <Text style={[styles.kidPickerName, { color: colors.text, fontFamily: font.bodyBold }]}>
                   {t('kids_calendar_allKids')}
                 </Text>
-                <Text style={[styles.kidPickerMeta, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-                  {t('kids_calendar_nKids', { n: children.length })}
-                </Text>
+                <SiteEyebrow>{t('kids_calendar_nKids', { n: children.length })}</SiteEyebrow>
+                {selectedChildId === 'all' ? <Check size={18} color={colors.text} strokeWidth={2.6} /> : null}
               </Pressable>
 
               {children.map((c, i) => {
@@ -3037,35 +3212,27 @@ export function KidsCalendar() {
                   <Pressable
                     key={c.id}
                     onPress={() => { setSelectedChildId(c.id); setActiveChild(c); setKidPickerOpen(false) }}
-                    style={[
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    style={({ pressed }) => [
                       styles.kidPickerRow,
-                      {
-                        backgroundColor: active ? kc + '22' : (colors.surface),
-                        borderColor: active ? '#141313' : (isDark ? colors.border : 'rgba(20,19,19,0.10)'),
-                        borderWidth: active ? 1.5 : 1,
-                      },
+                      { backgroundColor: active ? getModeColorSoft('kids', isDark) : 'transparent', opacity: pressed ? 0.7 : 1 },
                     ]}
                   >
                     <View style={{
-                      width: 32, height: 32, borderRadius: 16,
-                      backgroundColor: kc, borderWidth: 1.2, borderColor: '#141313',
+                      width: 36, height: 36, borderRadius: 18,
+                      backgroundColor: kc, borderWidth: 1.5, borderColor: colors.text,
                       alignItems: 'center', justifyContent: 'center',
+                      marginRight: 18,
                     }}>
-                      <Text style={{ fontFamily: font.displayBold, fontSize: 13, color: '#141313' }}>
+                      <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: colors.text }}>
                         {c.name.charAt(0).toUpperCase()}
                       </Text>
                     </View>
                     <Text style={[styles.kidPickerName, { color: colors.text, fontFamily: font.bodyBold }]}>
                       {c.name}
                     </Text>
-                    {active && (
-                      <View style={{
-                        paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999,
-                        backgroundColor: kc, borderWidth: 1, borderColor: '#141313',
-                      }}>
-                        <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: '#141313' }}>{t('kids_calendar_selected')}</Text>
-                      </View>
-                    )}
+                    {active ? <Check size={18} color={colors.text} strokeWidth={2.6} /> : null}
                   </Pressable>
                 )
               })}
@@ -3121,7 +3288,7 @@ export function KidsCalendar() {
         />
       )}
 
-      {/* ─── Routine Manager (sticker-on-paper) ─────────────────────── */}
+      {/* ─── Routine Manager (site look) ─────────────────────────────── */}
       {!diffuse && (
       <Modal
         visible={showRoutineManager}
@@ -3137,369 +3304,95 @@ export function KidsCalendar() {
         }}
       >
         {(() => {
-          const ST_INK = colors.text
-          const ST_PAPER = colors.surface
-          const ST_CREAM = colors.surfaceRaised
-          const ST_SHEET = colors.surfaceRaised
-          // Mode-colored accent (powder blue for Kids), matching how the
-          // Pregnancy routine manager uses getModeColor('preg', …) for lavender.
-          const ST_PURPLE = getModeColor('kids', isDark)
+          const ink = colors.text
+          const tone = getModeColorSoft('kids', isDark)
           const closeManager = () => {
             setShowRoutineManager(false)
             setRoutineEditing(null)
             setRoutineFilterKid(null)
             setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
           }
+          const visibleRoutines = routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid) : routines
           return (
             <>
               <Pressable style={styles.popupBackdrop} onPress={closeManager} />
-              <View
-                style={[
-                  styles.popupSheet,
-                  {
-                    backgroundColor: ST_SHEET,
-                    borderTopLeftRadius: radius.xl,
-                    borderTopRightRadius: radius.xl,
-                    borderTopWidth: 1.5,
-                    borderLeftWidth: 1.5,
-                    borderRightWidth: 1.5,
-                    borderColor: isDark ? colors.border : ST_INK,
-                    paddingBottom: insets.bottom + 20,
-                  },
-                ]}
-              >
-                {/* Drag handle */}
-                <View style={styles.popupHandleWrap}>
-                  <View style={[styles.popupHandle, { backgroundColor: isDark ? colors.border : colors.borderLight }]} />
-                </View>
+              <View style={[styles.popupSheet, siteSheetFrame(colors, insets.bottom + 20)]}>
+                <SiteGrabber />
 
                 {/* Header */}
                 <View style={[styles.popupHeader, { paddingBottom: 12 }]}>
-                  <View
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: radius.full,
-                      backgroundColor: isDark ? colors.surfaceRaised : brand.primaryTint,
-                      borderWidth: 1.5,
-                      borderColor: ST_INK,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Repeat size={22} color={ST_PURPLE} strokeWidth={2.2} />
-                  </View>
+                  <SiteSticker name="cal" size={44} />
                   <View style={styles.popupHeaderText}>
-                    <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 24, letterSpacing: -0.5, fontFamily: font.display }}>
-                      {t('kids_calendar_routines')}
-                    </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 13, fontFamily: font.bodyMedium }}>
+                    <SiteTitle size={24}>{t('kids_calendar_routines')}</SiteTitle>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body }}>
                       {t('kids_calendar_routinesSubtitle')}
                     </Text>
                   </View>
-                  <Pressable
-                    onPress={closeManager}
-                    style={({ pressed }) => ({
-                      width: 36, height: 36, borderRadius: radius.full,
-                      backgroundColor: ST_CREAM,
-                      borderWidth: 1.5, borderColor: ST_INK,
-                      alignItems: 'center', justifyContent: 'center',
-                      shadowColor: ST_INK,
-                      shadowOffset: { width: 0, height: pressed ? 1 : 2 },
-                      shadowOpacity: 1, shadowRadius: 0, elevation: 3,
-                      transform: [{ translateY: pressed ? 1 : 0 }],
-                    })}
-                  >
-                    <X size={15} color={ST_INK} strokeWidth={2.5} />
-                  </Pressable>
+                  <InkBackButton onPress={closeManager} ink={ink} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
                 </View>
 
                 <ScrollView style={styles.popupBody} showsVerticalScrollIndicator={false}>
-                  {/* ─── New Routine Form (paper card) — hidden while editing ── */}
+                  {/* ─── New Routine form — hidden while editing ── */}
                   {!routineEditing && (
-                  <View
-                    style={{
-                      backgroundColor: ST_PAPER,
-                      borderRadius: radius.lg,
-                      borderWidth: 1.5,
-                      borderColor: isDark ? colors.border : ST_INK,
-                      padding: 16,
-                      gap: 12,
-                      shadowColor: ST_INK,
-                      shadowOffset: { width: 0, height: 3 },
-                      shadowOpacity: isDark ? 0 : 0.12,
-                      shadowRadius: 0,
-                      elevation: 2,
-                    }}
-                  >
-                    <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
-                      {t('kids_calendar_newRoutine')}
-                    </Text>
-                    {/* (form fields below — duplicated in Edit Modal) */}
-
-                    {/* Name */}
-                    <View style={{
-                      backgroundColor: ST_CREAM,
-                      borderColor: isDark ? colors.border : ST_INK,
-                      borderWidth: 1.5,
-                      borderRadius: radius.full,
-                      height: 56,
-                      justifyContent: 'center',
-                    }}>
-                      <TextInput
-                        value={routineForm.name}
-                        onChangeText={(t) => setRoutineForm((f) => ({ ...f, name: t }))}
-                        placeholder="Routine name (e.g. Morning bottle)"
-                        placeholderTextColor={colors.textMuted}
-                        underlineColorAndroid="transparent"
-                        style={{
-                          color: isDark ? colors.text : ST_INK,
-                          paddingHorizontal: 22,
-                          paddingVertical: 0,
-                          fontSize: 15,
-                          fontFamily: font.bodySemiBold,
-                        }}
+                    <View style={{ gap: 14 }}>
+                      <SiteTitle size={18}>{t('kids_calendar_newRoutine')}</SiteTitle>
+                      <SiteRoutineForm
+                        form={routineForm}
+                        setForm={setRoutineForm}
+                        namePlaceholder="Routine name (e.g. Morning bottle)"
+                        tone={tone}
+                        t={t}
+                      />
+                      <PillButton
+                        label={t('kids_calendar_addRoutine')}
+                        variant="ink"
+                        onPress={saveRoutine}
+                        disabled={!routineForm.name.trim() || routineSaving}
+                        loading={routineSaving}
                       />
                     </View>
-
-                    {/* Type chips */}
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingHorizontal: 2 }}>
-                      {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((rtype) => {
-                        const meta = LOG_META[rtype]
-                        const active = routineForm.type === rtype
-                        // Solid pastel fills (avoid alpha — hard shadow bleeds through translucent bgs on iOS)
-                        const activeBgLight = ({
-                          feeding: stickers.blueSoft,
-                          food: stickers.blueSoft,
-                          sleep: stickers.lilacSoft,
-                          diaper: stickers.blueSoft,
-                          activity: stickers.greenSoft,
-                          mood: stickers.peachSoft,
-                          health: stickers.pinkSoft,
-                        } as Record<string, string>)[rtype] || brand.primaryTint
-                        const activeBg = isDark ? meta.color : activeBgLight
-                        const labelColor = active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK)
-                        return (
-                          <Pressable
-                            key={rtype}
-                            onPress={() => setRoutineForm((f) => ({ ...f, type: rtype }))}
-                            style={({ pressed }) => ({
-                              paddingHorizontal: 14,
-                              paddingVertical: 8,
-                              borderRadius: radius.full,
-                              borderWidth: 1.5,
-                              borderColor: isDark && !active ? colors.border : ST_INK,
-                              backgroundColor: active ? activeBg : ST_CREAM,
-                              shadowColor: ST_INK,
-                              shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
-                              shadowOpacity: active ? (1) : 0,
-                              shadowRadius: 0, elevation: active ? 3 : 0,
-                              transform: [{ translateY: active && pressed ? 1 : 0 }],
-                            })}
-                          >
-                            <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
-                              {t(meta.labelKey)}
-                            </Text>
-                          </Pressable>
-                        )
-                      })}
-                    </ScrollView>
-
-                    {/* Time */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <View style={{
-                        width: 32, height: 32, borderRadius: radius.full,
-                        backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
-                        alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <Clock size={14} color={isDark ? colors.text : ST_INK} strokeWidth={2.2} />
-                      </View>
-                      <TextInput
-                        value={routineForm.time}
-                        onChangeText={(txt) => setRoutineForm((f) => ({ ...f, time: txt }))}
-                        placeholder="HH:MM"
-                        placeholderTextColor={colors.textMuted}
-                        style={{
-                          flex: 1,
-                          color: isDark ? colors.text : ST_INK,
-                          backgroundColor: ST_CREAM,
-                          borderColor: isDark ? colors.border : ST_INK,
-                          borderWidth: 1.5,
-                          borderRadius: radius.full,
-                          paddingHorizontal: 16,
-                          paddingVertical: 10,
-                          fontSize: 15,
-                          fontFamily: font.bodySemiBold,
-                        }}
-                        keyboardType="numbers-and-punctuation"
-                      />
-                    </View>
-
-                    {/* Days */}
-                    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
-                      {DAY_NAMES.map((name, i) => {
-                        const active = routineForm.days.includes(i)
-                        return (
-                          <Pressable
-                            key={i}
-                            onPress={() => setRoutineForm((f) => ({
-                              ...f,
-                              days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort(),
-                            }))}
-                            style={({ pressed }) => ({
-                              width: 36, height: 36, borderRadius: radius.full,
-                              alignItems: 'center', justifyContent: 'center',
-                              borderWidth: 1.5, borderColor: isDark && !active ? colors.border : ST_INK,
-                              backgroundColor: active ? ST_PURPLE : ST_CREAM,
-                              shadowColor: ST_INK,
-                              shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
-                              shadowOpacity: active ? (1) : 0,
-                              shadowRadius: 0, elevation: active ? 3 : 0,
-                              transform: [{ translateY: active && pressed ? 1 : 0 }],
-                            })}
-                          >
-                            <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
-                              {name.charAt(0)}
-                            </Text>
-                          </Pressable>
-                        )
-                      })}
-                    </View>
-
-                    {/* Save sticker button */}
-                    <Pressable
-                      onPress={saveRoutine}
-                      disabled={!routineForm.name.trim() || routineSaving}
-                      style={({ pressed }) => {
-                        const isDisabled = !routineForm.name.trim() || routineSaving
-                        return {
-                          height: 56,
-                          borderRadius: radius.full,
-                          backgroundColor: isDisabled ? ST_PURPLE + '88' : ST_PURPLE,
-                          borderWidth: 2, borderColor: ST_INK,
-                          alignItems: 'center', justifyContent: 'center',
-                          shadowColor: ST_INK,
-                          shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-                          shadowOpacity: 1, shadowRadius: 0, elevation: 5,
-                          transform: [{ translateY: pressed && !isDisabled ? 2 : 0 }],
-                          marginTop: 4,
-                        }
-                      }}
-                    >
-                      {routineSaving
-                        ? <ActivityIndicator color="#FFF" size="small" />
-                        : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 15, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                            {t('kids_calendar_addRoutine')}
-                          </Text>
-                      }
-                    </Pressable>
-                  </View>
                   )}
 
                   {/* ─── Existing Routines ─────────────────────────── */}
                   {routines.length > 0 && (
-                    <View style={{ marginTop: 20 }}>
-                      <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3, marginBottom: 12, paddingHorizontal: 4 }}>
-                        {t('kids_logForm_activeRoutines', { count: routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid).length : routines.length })}
-                      </Text>
+                    <View style={{ marginTop: 28 }}>
+                      <SiteTitle size={18} style={{ marginBottom: 12 }}>
+                        {t('kids_logForm_activeRoutines', { count: visibleRoutines.length })}
+                      </SiteTitle>
 
                       {/* Kid filter pills */}
                       {children.length > 1 && (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 4, paddingBottom: 12 }}>
-                          {(() => {
-                            const allActive = routineFilterKid === null
-                            return (
-                              <Pressable
-                                onPress={() => setRoutineFilterKid(null)}
-                                style={({ pressed }) => ({
-                                  paddingHorizontal: 14,
-                                  paddingVertical: 8,
-                                  borderRadius: radius.full,
-                                  borderWidth: 1.5, borderColor: ST_INK,
-                                  backgroundColor: allActive ? stickers.lilac : ST_CREAM,
-                                  shadowColor: ST_INK,
-                                  shadowOffset: { width: 0, height: allActive ? (pressed ? 1 : 2) : 0 },
-                                  shadowOpacity: allActive ? 1 : 0,
-                                  shadowRadius: 0, elevation: allActive ? 3 : 0,
-                                  transform: [{ translateY: allActive && pressed ? 1 : 0 }],
-                                })}
-                              >
-                                <Text style={{ color: ST_INK, fontSize: 13, fontFamily: allActive ? font.bodyBold : font.bodySemiBold }}>
-                                  {t('kids_calendar_allKids')}
-                                </Text>
-                              </Pressable>
-                            )
-                          })()}
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12, paddingHorizontal: 2 }}>
+                          <SiteChip label={t('kids_calendar_allKids')} on={routineFilterKid === null} tone={tone} onPress={() => setRoutineFilterKid(null)} />
                           {children.map((child, i) => {
-                            const cc = childColor(i)
                             const active = routineFilterKid === child.id
                             return (
-                              <Pressable
+                              <SiteChip
                                 key={child.id}
+                                label={child.name}
+                                on={active}
+                                tone={tone}
+                                leading={<View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: childColor(i), borderWidth: 1, borderColor: ink }} />}
                                 onPress={() => setRoutineFilterKid(active ? null : child.id)}
-                                style={({ pressed }) => ({
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  gap: 6,
-                                  paddingHorizontal: 14,
-                                  paddingVertical: 8,
-                                  borderRadius: radius.full,
-                                  borderWidth: 1.5, borderColor: ST_INK,
-                                  backgroundColor: active ? cc : ST_CREAM,
-                                  shadowColor: ST_INK,
-                                  shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
-                                  shadowOpacity: active ? 1 : 0,
-                                  shadowRadius: 0, elevation: active ? 3 : 0,
-                                  transform: [{ translateY: active && pressed ? 1 : 0 }],
-                                })}
-                              >
-                                <View style={{ width: 7, height: 7, borderRadius: radius.full, backgroundColor: active ? ST_INK : cc, borderWidth: 1, borderColor: ST_INK }} />
-                                <Text style={{ color: ST_INK, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
-                                  {child.name}
-                                </Text>
-                              </Pressable>
+                              />
                             )
                           })}
                         </ScrollView>
                       )}
 
-                      {(routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid) : routines).map((r) => {
-                        const meta = LOG_META[r.type] ?? { label: r.type, icon: Calendar, color: colors.textMuted }
-                        const Icon = meta.icon
+                      {visibleRoutines.map((r, idx) => {
                         const childName = children.find((c) => c.id === r.child_id)?.name
                         return (
                           <View
                             key={r.id}
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 10,
-                              padding: 12,
-                              marginBottom: 10,
-                              backgroundColor: ST_PAPER,
-                              borderRadius: radius.md,
-                              borderWidth: 1.5,
-                              borderColor: isDark ? colors.border : ST_INK,
-                              shadowColor: ST_INK,
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: isDark ? 0 : 0.08,
-                              shadowRadius: 0,
-                              elevation: 2,
-                            }}
+                            style={[styles.siteRow, idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}
                           >
-                            <View style={{
-                              width: 32, height: 32, borderRadius: radius.full,
-                              backgroundColor: isDark ? meta.color : (meta.color + '40'),
-                              borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
-                              alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              <Icon size={14} color={isDark ? '#FFF' : ST_INK} strokeWidth={2.2} />
+                            <View style={styles.siteRowSticker}>
+                              <SiteSticker name={stickerForLog(r.type)} size={36} />
                             </View>
                             <View style={{ flex: 1, gap: 2 }}>
-                              <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 14, fontFamily: font.displayBold }}>
-                                {r.name}
-                              </Text>
-                              <Text style={{ color: colors.textMuted, fontSize: 12, fontFamily: font.bodyMedium }}>
+                              <Text numberOfLines={1} style={{ color: ink, fontSize: 15, fontFamily: font.bodyBold }}>{r.name}</Text>
+                              <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.body }}>
                                 {r.time ? fmtTime(r.time) : t('kids_logForm_anytime')}
                                 {' · '}
                                 {r.days_of_week.length === 7 ? t('kids_logForm_daily') : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}
@@ -3511,33 +3404,19 @@ export function KidsCalendar() {
                                 setRoutineEditing(r)
                                 setRoutineForm({ name: r.name, type: r.type, time: r.time ?? '09:00', days: r.days_of_week })
                               }}
-                              style={({ pressed }) => ({
-                                width: 32, height: 32, borderRadius: radius.full,
-                                backgroundColor: ST_CREAM,
-                                borderWidth: 1.5, borderColor: ST_INK,
-                                alignItems: 'center', justifyContent: 'center',
-                                shadowColor: ST_INK,
-                                shadowOffset: { width: 0, height: pressed ? 0 : 2 },
-                                shadowOpacity: 1, shadowRadius: 0, elevation: 2,
-                                transform: [{ translateY: pressed ? 1 : 0 }],
-                              })}
+                              hitSlop={8}
+                              accessibilityRole="button"
+                              style={({ pressed }) => ({ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1 })}
                             >
-                              <Pencil size={13} color={ST_INK} strokeWidth={2.2} />
+                              <Pencil size={18} color={ink} strokeWidth={2.2} />
                             </Pressable>
                             <Pressable
                               onPress={() => deleteRoutine(r.id)}
-                              style={({ pressed }) => ({
-                                width: 32, height: 32, borderRadius: radius.full,
-                                backgroundColor: stickers.peachSoft,
-                                borderWidth: 1.5, borderColor: ST_INK,
-                                alignItems: 'center', justifyContent: 'center',
-                                shadowColor: ST_INK,
-                                shadowOffset: { width: 0, height: pressed ? 0 : 2 },
-                                shadowOpacity: 1, shadowRadius: 0, elevation: 2,
-                                transform: [{ translateY: pressed ? 1 : 0 }],
-                              })}
+                              hitSlop={8}
+                              accessibilityRole="button"
+                              style={({ pressed }) => ({ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1 })}
                             >
-                              <Trash2 size={13} color={brand.error} strokeWidth={2.2} />
+                              <Trash2 size={18} color={ink} strokeWidth={2.2} />
                             </Pressable>
                           </View>
                         )
@@ -3552,7 +3431,7 @@ export function KidsCalendar() {
       </Modal>
       )}
 
-      {/* ─── Edit Routine Modal (sticker popup) ─────────────────────── */}
+      {/* ─── Edit Routine Modal (site look) ──────────────────────────── */}
       {!diffuse && (
       <Modal
         visible={!!routineEditing}
@@ -3561,226 +3440,40 @@ export function KidsCalendar() {
         onRequestClose={cancelRoutineEdit}
       >
         {(() => {
-          const ST_INK = colors.text
-          const ST_PAPER = colors.surface
-          const ST_CREAM = colors.surfaceRaised
-          // Mode-colored accent (powder blue for Kids), matching how the
-          // Pregnancy routine manager uses getModeColor('preg', …) for lavender.
-          const ST_PURPLE = getModeColor('kids', isDark)
+          const ink = colors.text
+          const tone = getModeColorSoft('kids', isDark)
           return (
             <Pressable
-              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 20 }}
+              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', paddingHorizontal: 20 }}
               onPress={cancelRoutineEdit}
             >
               <Pressable onPress={(e) => e.stopPropagation()}>
-                <View
-                  style={{
-                    backgroundColor: ST_PAPER,
-                    borderRadius: radius.lg,
-                    borderWidth: 1.5,
-                    borderColor: isDark ? colors.border : ST_INK,
-                    padding: 18,
-                    gap: 12,
-                    shadowColor: ST_INK,
-                    shadowOffset: { width: 0, height: 5 },
-                    shadowOpacity: 1,
-                    shadowRadius: 0,
-                    elevation: 8,
-                  }}
-                >
-                  {/* Header row with title + close */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <View style={{
-                        width: 36, height: 36, borderRadius: radius.full,
-                        backgroundColor: brand.primaryTint,
-                        borderWidth: 1.5, borderColor: ST_INK,
-                        alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <Pencil size={16} color={ST_PURPLE} strokeWidth={2.4} />
-                      </View>
-                      <Text style={{ color: ST_INK, fontSize: 20, fontFamily: font.displayBold, letterSpacing: -0.3 }}>
-                        {t('kids_calendar_editRoutine')}
-                      </Text>
-                    </View>
-                    <Pressable
-                      onPress={cancelRoutineEdit}
-                      style={({ pressed }) => ({
-                        width: 32, height: 32, borderRadius: radius.full,
-                        backgroundColor: ST_CREAM,
-                        borderWidth: 1.5, borderColor: ST_INK,
-                        alignItems: 'center', justifyContent: 'center',
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: pressed ? 0 : 2 },
-                        shadowOpacity: 1, shadowRadius: 0, elevation: 2,
-                        transform: [{ translateY: pressed ? 1 : 0 }],
-                      })}
-                    >
-                      <X size={14} color={ST_INK} strokeWidth={2.5} />
-                    </Pressable>
+                <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: ink, shadowColor: ink, gap: 16 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <SiteSticker name="pencil" size={36} />
+                    <SiteTitle size={22} style={{ flex: 1 }}>{t('kids_calendar_editRoutine')}</SiteTitle>
+                    <InkBackButton onPress={cancelRoutineEdit} ink={ink} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
                   </View>
 
-                  {/* Name */}
-                  <View style={{
-                    backgroundColor: ST_CREAM,
-                    borderColor: isDark ? colors.border : ST_INK,
-                    borderWidth: 1.5,
-                    borderRadius: radius.full,
-                    height: 56,
-                    justifyContent: 'center',
-                  }}>
-                    <TextInput
-                      value={routineForm.name}
-                      onChangeText={(t) => setRoutineForm((f) => ({ ...f, name: t }))}
-                      placeholder="Routine name"
-                      placeholderTextColor={colors.textMuted}
-                      underlineColorAndroid="transparent"
-                      style={{
-                        color: isDark ? colors.text : ST_INK,
-                        paddingHorizontal: 22,
-                        paddingVertical: 0,
-                        fontSize: 15,
-                        fontFamily: font.bodySemiBold,
-                      }}
-                    />
-                  </View>
+                  <SiteRoutineForm
+                    form={routineForm}
+                    setForm={setRoutineForm}
+                    namePlaceholder="Routine name"
+                    tone={tone}
+                    t={t}
+                  />
 
-                  {/* Type chips */}
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingHorizontal: 2 }}>
-                    {['feeding', 'food', 'sleep', 'diaper', 'activity', 'mood', 'health'].map((rtype) => {
-                      const meta = LOG_META[rtype]
-                      const active = routineForm.type === rtype
-                      const activeBgLight = ({
-                        feeding: stickers.blueSoft, food: stickers.blueSoft, sleep: stickers.lilacSoft,
-                        diaper: stickers.blueSoft, activity: stickers.greenSoft, mood: stickers.peachSoft, health: stickers.pinkSoft,
-                      } as Record<string, string>)[rtype] || brand.primaryTint
-                      const activeBg = isDark ? meta.color : activeBgLight
-                      const labelColor = active ? (isDark ? '#FFF' : ST_INK) : (isDark ? colors.text : ST_INK)
-                      return (
-                        <Pressable
-                          key={rtype}
-                          onPress={() => setRoutineForm((f) => ({ ...f, type: rtype }))}
-                          style={({ pressed }) => ({
-                            paddingHorizontal: 14, paddingVertical: 8,
-                            borderRadius: radius.full, borderWidth: 1.5,
-                            borderColor: isDark && !active ? colors.border : ST_INK,
-                            backgroundColor: active ? activeBg : ST_CREAM,
-                            shadowColor: ST_INK,
-                            shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
-                            shadowOpacity: active ? (1) : 0,
-                            shadowRadius: 0, elevation: active ? 3 : 0,
-                            transform: [{ translateY: active && pressed ? 1 : 0 }],
-                          })}
-                        >
-                          <Text style={{ color: labelColor, fontSize: 13, fontFamily: active ? font.bodyBold : font.bodySemiBold }}>
-                            {t(meta.labelKey)}
-                          </Text>
-                        </Pressable>
-                      )
-                    })}
-                  </ScrollView>
-
-                  {/* Time */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{
-                      width: 32, height: 32, borderRadius: radius.full,
-                      backgroundColor: ST_CREAM, borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Clock size={14} color={isDark ? colors.text : ST_INK} strokeWidth={2.2} />
-                    </View>
-                    <TextInput
-                      value={routineForm.time}
-                      onChangeText={(txt) => setRoutineForm((f) => ({ ...f, time: txt }))}
-                      placeholder="HH:MM"
-                      placeholderTextColor={colors.textMuted}
-                      style={{
-                        flex: 1,
-                        color: isDark ? colors.text : ST_INK,
-                        backgroundColor: ST_CREAM,
-                        borderColor: isDark ? colors.border : ST_INK,
-                        borderWidth: 1.5, borderRadius: radius.full,
-                        paddingHorizontal: 16, paddingVertical: 10,
-                        fontSize: 15, fontFamily: font.bodySemiBold,
-                      }}
-                      keyboardType="numbers-and-punctuation"
-                    />
-                  </View>
-
-                  {/* Days */}
-                  <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
-                    {DAY_NAMES.map((name, i) => {
-                      const active = routineForm.days.includes(i)
-                      return (
-                        <Pressable
-                          key={i}
-                          onPress={() => setRoutineForm((f) => ({
-                            ...f,
-                            days: active ? f.days.filter((d) => d !== i) : [...f.days, i].sort(),
-                          }))}
-                          style={({ pressed }) => ({
-                            width: 36, height: 36, borderRadius: radius.full,
-                            alignItems: 'center', justifyContent: 'center',
-                            borderWidth: 1.5, borderColor: isDark && !active ? colors.border : ST_INK,
-                            backgroundColor: active ? ST_PURPLE : ST_CREAM,
-                            shadowColor: ST_INK,
-                            shadowOffset: { width: 0, height: active ? (pressed ? 1 : 2) : 0 },
-                            shadowOpacity: active ? (1) : 0,
-                            shadowRadius: 0, elevation: active ? 3 : 0,
-                            transform: [{ translateY: active && pressed ? 1 : 0 }],
-                          })}
-                        >
-                          <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: active ? '#FFF' : (isDark ? colors.text : ST_INK) }}>
-                            {name.charAt(0)}
-                          </Text>
-                        </Pressable>
-                      )
-                    })}
-                  </View>
-
-                  {/* Action row: Cancel + Update */}
-                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
-                    <Pressable
-                      onPress={cancelRoutineEdit}
-                      style={({ pressed }) => ({
-                        flex: 1, height: 52,
-                        borderRadius: radius.full,
-                        backgroundColor: ST_CREAM,
-                        borderWidth: 1.5, borderColor: ST_INK,
-                        alignItems: 'center', justifyContent: 'center',
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                        shadowOpacity: 1, shadowRadius: 0, elevation: 4,
-                        transform: [{ translateY: pressed ? 2 : 0 }],
-                      })}
-                    >
-                      <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        {t('common_cancel')}
-                      </Text>
-                    </Pressable>
-                    <Pressable
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                    <PillButton label={t('common_cancel')} variant="paper" onPress={cancelRoutineEdit} height={52} style={{ flex: 1 }} />
+                    <PillButton
+                      label={t('common_update')}
+                      variant="ink"
                       onPress={saveRoutine}
                       disabled={!routineForm.name.trim() || routineSaving}
-                      style={({ pressed }) => ({
-                        flex: 1.4, height: 52,
-                        borderRadius: radius.full,
-                        backgroundColor: ST_PURPLE,
-                        borderWidth: 2, borderColor: ST_INK,
-                        alignItems: 'center', justifyContent: 'center',
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-                        shadowOpacity: 1, shadowRadius: 0, elevation: 5,
-                        transform: [{ translateY: pressed ? 2 : 0 }],
-                        opacity: (!routineForm.name.trim() || routineSaving) ? 0.4 : 1,
-                      })}
-                    >
-                      {routineSaving
-                        ? <ActivityIndicator color="#FFF" size="small" />
-                        : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                            {t('common_update')}
-                          </Text>
-                      }
-                    </Pressable>
+                      loading={routineSaving}
+                      height={52}
+                      style={{ flex: 1.3 }}
+                    />
                   </View>
                 </View>
               </Pressable>
@@ -3822,7 +3515,7 @@ export function KidsCalendar() {
         </DiffuseSheet>
       )}
 
-      {/* ─── Delete Routine Confirm (sticker popup) ─────────────────── */}
+      {/* ─── Delete Routine Confirm (site look) ──────────────────────── */}
       {!diffuse && (
       <Modal
         visible={!!confirmDeleteRoutineId}
@@ -3831,95 +3524,30 @@ export function KidsCalendar() {
         onRequestClose={() => !routineDeleting && setConfirmDeleteRoutineId(null)}
       >
         {(() => {
-          const ST_INK = colors.text
-          const ST_PAPER = colors.surface
-          const ST_CREAM = colors.surfaceRaised
-          const ST_RED = brand.error
+          const ink = colors.text
           return (
             <Pressable
-              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 32 }}
+              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', paddingHorizontal: 28 }}
               onPress={() => !routineDeleting && setConfirmDeleteRoutineId(null)}
             >
               <Pressable onPress={(e) => e.stopPropagation()}>
-                <View
-                  style={{
-                    backgroundColor: ST_PAPER,
-                    borderRadius: radius.xl,
-                    borderWidth: 1.5,
-                    borderColor: isDark ? colors.border : ST_INK,
-                    padding: 22,
-                    gap: 14,
-                    alignItems: 'center',
-                    shadowColor: ST_INK,
-                    shadowOffset: { width: 0, height: 5 },
-                    shadowOpacity: 1, shadowRadius: 0, elevation: 8,
-                  }}
-                >
-                  {/* Sticker trash icon */}
-                  <View style={{
-                    width: 60, height: 60, borderRadius: radius.full,
-                    backgroundColor: stickers.peachSoft,
-                    borderWidth: 1.5, borderColor: isDark ? colors.border : ST_INK,
-                    alignItems: 'center', justifyContent: 'center',
-                    shadowColor: ST_INK,
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: 1, shadowRadius: 0, elevation: 4,
-                  }}>
-                    <Trash2 size={26} color={ST_RED} strokeWidth={2.2} />
-                  </View>
-
-                  <Text style={{ color: isDark ? colors.text : ST_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, textAlign: 'center' }}>
-                    {t('kids_calendar_deleteRoutineConfirm')}
-                  </Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: font.bodyMedium, textAlign: 'center', lineHeight: 20 }}>
+                <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: ink, shadowColor: ink, gap: 12, alignItems: 'center' }]}>
+                  <Trash2 size={34} color={ink} strokeWidth={2} />
+                  <SiteTitle size={22} style={{ textAlign: 'center' }}>{t('kids_calendar_deleteRoutineConfirm')}</SiteTitle>
+                  <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body, textAlign: 'center', lineHeight: 20 }}>
                     {t('kids_calendar_deleteRoutineConfirmMsg')}
                   </Text>
-
-                  {/* Action row */}
-                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 6, alignSelf: 'stretch' }}>
-                    <Pressable
-                      onPress={() => setConfirmDeleteRoutineId(null)}
-                      disabled={routineDeleting}
-                      style={({ pressed }) => ({
-                        flex: 1, height: 52,
-                        borderRadius: radius.full,
-                        backgroundColor: ST_CREAM,
-                        borderWidth: 1.5, borderColor: ST_INK,
-                        alignItems: 'center', justifyContent: 'center',
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                        shadowOpacity: 1, shadowRadius: 0, elevation: 4,
-                        transform: [{ translateY: pressed ? 2 : 0 }],
-                        opacity: routineDeleting ? 0.5 : 1,
-                      })}
-                    >
-                      <Text style={{ color: ST_INK, fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        {t('common_cancel')}
-                      </Text>
-                    </Pressable>
-                    <Pressable
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 8, alignSelf: 'stretch' }}>
+                    <PillButton label={t('common_cancel')} variant="paper" onPress={() => setConfirmDeleteRoutineId(null)} disabled={routineDeleting} height={52} style={{ flex: 1 }} />
+                    <PillButton
+                      label={t('common_delete')}
+                      variant="ink"
                       onPress={() => confirmDeleteRoutineId && performRoutineDelete(confirmDeleteRoutineId)}
                       disabled={routineDeleting}
-                      style={({ pressed }) => ({
-                        flex: 1, height: 52,
-                        borderRadius: radius.full,
-                        backgroundColor: ST_RED,
-                        borderWidth: 2, borderColor: ST_INK,
-                        alignItems: 'center', justifyContent: 'center',
-                        shadowColor: ST_INK,
-                        shadowOffset: { width: 0, height: pressed ? 2 : 4 },
-                        shadowOpacity: 1, shadowRadius: 0, elevation: 5,
-                        transform: [{ translateY: pressed ? 2 : 0 }],
-                        opacity: routineDeleting ? 0.6 : 1,
-                      })}
-                    >
-                      {routineDeleting
-                        ? <ActivityIndicator color="#FFF" size="small" />
-                        : <Text style={{ color: '#FFF', fontFamily: font.bodyBold, fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                            {t('common_delete')}
-                          </Text>
-                      }
-                    </Pressable>
+                      loading={routineDeleting}
+                      height={52}
+                      style={{ flex: 1 }}
+                    />
                   </View>
                 </View>
               </Pressable>
@@ -3951,7 +3579,7 @@ export function KidsCalendar() {
         />
       )}
 
-      {/* ─── Log Detail Popup with Edit ───────────────────────────────── */}
+      {/* ─── Log Detail Popup with Edit (site look) ───────────────────── */}
       {!diffuse && (
       <Modal
         visible={!!selectedLog}
@@ -3961,111 +3589,85 @@ export function KidsCalendar() {
       >
         <Pressable style={styles.popupBackdrop} onPress={() => { setSelectedLog(null); setEditing(false) }} />
         {selectedLog && (() => {
-          const meta = LOG_META[selectedLog.type] ?? { label: selectedLog.type, icon: Calendar, color: colors.textMuted }
-          const Icon = meta.icon
+          const ink = colors.text
+          const tone = getModeColorSoft('kids', isDark)
           const logChild = children.find((c) => c.id === selectedLog.child_id)
           const ci = childIndexMap.get(selectedLog.child_id) ?? 0
           const hasPhotos = selectedLog.photos && selectedLog.photos.length > 0
+          const faceFor: Record<string, SiteStickerName> = { great: 'face4', good: 'face3', restless: 'face2', poor: 'face1' }
           return (
-            <View style={[styles.popupSheet, { backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingBottom: insets.bottom + 20 }]}>
-              {/* Handle */}
-              <View style={styles.popupHandleWrap}>
-                <View style={[styles.popupHandle, { backgroundColor: colors.border }]} />
-              </View>
+            <View style={[styles.popupSheet, siteSheetFrame(colors, insets.bottom + 20)]}>
+              <SiteGrabber />
 
               {/* Header */}
               <View style={styles.popupHeader}>
-                <View style={[styles.popupIconLarge, { backgroundColor: meta.color + '15' }]}>
-                  <Icon size={24} color={meta.color} strokeWidth={2} />
-                </View>
+                <SiteSticker name={stickerForLog(selectedLog.type)} size={44} />
                 <View style={styles.popupHeaderText}>
-                  <Text style={[styles.popupTitle, { color: colors.text }]}>{logTitle(selectedLog)}</Text>
+                  <SiteTitle size={22} numberOfLines={2}>{logTitle(selectedLog)}</SiteTitle>
                   {logChild && (
-                    <View style={[styles.popupChildTag, { backgroundColor: childColor(ci) + '15' }]}>
-                      <Text style={[styles.popupChildName, { color: childColor(ci) }]}>{logChild.name}</Text>
+                    <View style={[styles.siteRowChip, { alignSelf: 'flex-start', borderColor: ink, backgroundColor: colors.surface }]}>
+                      <View style={[styles.childDot, { backgroundColor: childColor(ci) }]} />
+                      <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 12, color: ink }}>{logChild.name}</Text>
                     </View>
                   )}
                 </View>
-                <Pressable onPress={() => { setSelectedLog(null); setEditing(false) }} style={styles.popupClose}>
-                  <X size={20} color={colors.textMuted} />
-                </Pressable>
+                <InkBackButton onPress={() => { setSelectedLog(null); setEditing(false) }} ink={ink} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
               </View>
 
               <ScrollView style={styles.popupBody} showsVerticalScrollIndicator={false}>
                 {/* Date & Time */}
-                <View style={[styles.popupRow, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                  <Clock size={16} color={colors.textMuted} />
-                  <Text style={[styles.popupRowText, { color: colors.text }]}>
+                <View style={styles.siteMetaRow}>
+                  <Clock size={16} color={ink} strokeWidth={2.2} />
+                  <Text style={{ fontFamily: font.bodySemiBold, fontSize: 14, color: ink }}>
                     {`${formatDayLabel(selectedLog.date, todayStr, t)} ${t('common_at')} ${activityTimeDisplay(selectedLog)}`}
                   </Text>
                 </View>
 
                 {/* Logged by */}
                 {selectedLog.logged_by && profileNames[selectedLog.logged_by] && (
-                  <View style={[styles.popupRow, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                    <CheckCircle2 size={16} color={brand.success} strokeWidth={2} />
-                    <Text style={[styles.popupRowText, { color: colors.textSecondary }]}>
-                      {t('kids_calendar_detail_loggedBy')} <Text style={{ color: colors.text, fontWeight: '600' }}>{profileNames[selectedLog.logged_by]}</Text>
+                  <View style={styles.siteMetaRow}>
+                    <Check size={16} color={ink} strokeWidth={2.6} />
+                    <Text style={{ fontFamily: font.body, fontSize: 14, color: colors.textSecondary }}>
+                      {t('kids_calendar_detail_loggedBy')} <Text style={{ fontFamily: font.bodyBold, color: ink }}>{profileNames[selectedLog.logged_by]}</Text>
                     </Text>
                   </View>
                 )}
 
                 {editing ? (
                   /* ── Edit Mode ── */
-                  <>
-                    <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                      <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>{t('kids_calendar_detail_details')}</Text>
+                  <View style={{ gap: 16, marginTop: 8 }}>
+                    <View style={{ gap: 6 }}>
+                      <SiteEyebrow>{t('kids_calendar_detail_details')}</SiteEyebrow>
                       <TextInput
                         value={editValue}
                         onChangeText={setEditValue}
                         placeholder={t('kids_calendar_detail_detailsPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                         multiline
-                        style={[styles.editInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.md }]}
+                        style={[siteField(colors, font.body), { minHeight: 48 }]}
                       />
                     </View>
-                    <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                      <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>{t('kids_calendar_detail_notes')}</Text>
+                    <View style={{ gap: 6 }}>
+                      <SiteEyebrow>{t('kids_calendar_detail_notes')}</SiteEyebrow>
                       <TextInput
                         value={editNotes}
                         onChangeText={setEditNotes}
                         placeholder={t('kids_calendar_detail_notesPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                         multiline
-                        style={[styles.editInput, { color: colors.text, borderColor: colors.border, borderRadius: radius.md }]}
+                        style={[siteField(colors, font.body), { minHeight: 48 }]}
                       />
                     </View>
 
-                    <View style={styles.editActions}>
-                      <Pressable
-                        onPress={() => setEditing(false)}
-                        style={[styles.editCancelBtn, { borderColor: colors.border, borderRadius: radius.lg }]}
-                      >
-                        <Text style={[styles.editCancelText, { color: colors.textSecondary }]}>{t('common_cancel')}</Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={saveEdit}
-                        disabled={editSaving}
-                        style={({ pressed }) => [
-                          styles.editSaveBtn,
-                          { backgroundColor: colors.primary, borderRadius: radius.lg },
-                          pressed && { opacity: 0.9 },
-                        ]}
-                      >
-                        {editSaving
-                          ? <ActivityIndicator color="#FFF" size="small" />
-                          : <>
-                              <Check size={16} color="#FFF" strokeWidth={2.5} />
-                              <Text style={styles.editSaveText}>{t('common_save')}</Text>
-                            </>
-                        }
-                      </Pressable>
+                    <View style={[styles.editActions, { marginTop: 4 }]}>
+                      <PillButton label={t('common_cancel')} variant="paper" onPress={() => setEditing(false)} height={52} style={{ flex: 1 }} />
+                      <PillButton label={t('common_save')} variant="ink" onPress={saveEdit} disabled={editSaving} loading={editSaving} height={52} style={{ flex: 1 }} />
                     </View>
-                  </>
+                  </View>
                 ) : (
                   /* ── View Mode ── */
                   <>
-                    {/* ── Food Rich Card ── */}
+                    {/* ── Food ── */}
                     {(selectedLog.type === 'food') && (() => {
                       let fp: Record<string, any> = {}
                       try { fp = JSON.parse(selectedLog.value ?? '{}') } catch {}
@@ -4076,73 +3678,42 @@ export function KidsCalendar() {
                       const mealName = fp.meal ? (mealLabels[fp.meal] ?? fp.meal) : ''
                       const mealTime = fp.time ? fmtTime(fp.time) : ''
                       const cals = fp.estimatedCals ? Number(fp.estimatedCals) : null
-                      const qualityMap: Record<string, { label: string; color: string }> = {
-                        ate_well: { label: '😊 Ate well', color: stickers.green },
-                        ate_little: { label: '😐 Ate a little', color: stickers.yellow },
-                        did_not_eat: { label: '😔 Did not eat', color: stickers.coral },
+                      const qualityMap: Record<string, { label: string; face: SiteStickerName }> = {
+                        ate_well: { label: 'Ate well', face: 'face4' },
+                        ate_little: { label: 'Ate a little', face: 'face2' },
+                        did_not_eat: { label: 'Did not eat', face: 'face1' },
                       }
                       const quality = fp.quality ? qualityMap[fp.quality] : null
                       return (
                         <>
-                          {/* Calorie hero */}
-                          {cals !== null && (
-                            <View style={{ backgroundColor: stickers.coral + '22', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: stickers.coral + '40' }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
-                                <Text style={{ color: stickers.coralInk, fontSize: 64, fontWeight: '800', lineHeight: 68, letterSpacing: -2, fontFamily: font.display }}>{cals}</Text>
-                                <Text style={{ color: stickers.coralInk, fontSize: 20, fontWeight: '700', marginBottom: 10 }}>{t('common_kcal')}</Text>
-                              </View>
-                              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_estimatedCals')}</Text>
-                            </View>
-                          )}
+                          <DetailHero sticker="bottle" value={cals !== null ? String(cals) : null} unit={cals !== null ? t('common_kcal') : undefined} eyebrow={cals !== null ? t('kids_calendar_detail_estimatedCals') : undefined} />
 
-                          {/* Meal chips row */}
                           {(mealTime || mealName || quality) && (
-                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                              {mealTime !== '' && (
-                                <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                  <Clock size={13} color={colors.textMuted} />
-                                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{mealTime}</Text>
-                                </View>
-                              )}
-                              {mealName !== '' && (
-                                <View style={{ backgroundColor: stickers.coral + '22', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                  <Text style={{ color: stickers.coralInk, fontSize: 13, fontWeight: '700' }}>{mealName}</Text>
-                                </View>
-                              )}
-                              {quality !== null && (
-                                <View style={{ backgroundColor: quality.color + '25', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                  <Text style={{ color: quality.color, fontSize: 13, fontWeight: '700' }}>{quality.label}</Text>
-                                </View>
-                              )}
+                            <View style={styles.siteInfoRow}>
+                              {mealTime !== '' && <InfoPill label={mealTime} leading={<Clock size={13} color={ink} strokeWidth={2.2} />} />}
+                              {mealName !== '' && <InfoPill label={mealName} tone={tone} />}
+                              {quality !== null && <InfoPill label={quality.label} leading={<SiteSticker name={quality.face} size={20} />} />}
                             </View>
                           )}
 
-                          {/* What they ate (notes) */}
-                          {selectedLog.notes && (
-                            <View style={{ backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 }}>
-                              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>{t('kids_calendar_detail_whatTheyAte')}</Text>
-                              <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>{selectedLog.notes}</Text>
-                            </View>
-                          )}
+                          {selectedLog.notes ? <DetailNote label={t('kids_calendar_detail_whatTheyAte')} text={selectedLog.notes} /> : null}
 
-                          {/* New food badge */}
                           {fp.isNewFood && (
-                            <View style={{ backgroundColor: stickers.lilac + '22', borderRadius: 18, padding: 14, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: stickers.lilac + '40' }}>
-                              <Sparkles size={18} color={stickers.lilacInk} />
+                            <View style={[styles.siteCallout, { borderColor: ink, backgroundColor: tone }]}>
+                              <SiteSticker name="star" size={28} />
                               <View style={{ flex: 1 }}>
-                                <Text style={{ color: stickers.lilacInk, fontSize: 13, fontWeight: '700' }}>{t('kids_calendar_detail_newFoodIntro')}</Text>
-                                {fp.newFoodName && <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{fp.newFoodName}</Text>}
+                                <Text style={{ color: ink, fontSize: 14, fontFamily: font.bodyBold }}>{t('kids_calendar_detail_newFoodIntro')}</Text>
+                                {fp.newFoodName && <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body, marginTop: 2 }}>{fp.newFoodName}</Text>}
                               </View>
                             </View>
                           )}
 
-                          {/* Reaction alert */}
                           {fp.hasReaction && (
-                            <View style={{ backgroundColor: stickers.coral + '22', borderRadius: 18, padding: 14, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: stickers.coral + '40' }}>
-                              <AlertCircle size={18} color={stickers.coral} />
+                            <View style={[styles.siteCallout, { borderColor: ink, backgroundColor: stickers.peachSoft }]}>
+                              <SiteSticker name="bell" size={28} />
                               <View style={{ flex: 1 }}>
-                                <Text style={{ color: stickers.coral, fontSize: 13, fontWeight: '700' }}>{t('kids_calendar_detail_reactionNoted')}</Text>
-                                {fp.reactionFood && <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{fp.reactionFood}</Text>}
+                                <Text style={{ color: ink, fontSize: 14, fontFamily: font.bodyBold }}>{t('kids_calendar_detail_reactionNoted')}</Text>
+                                {fp.reactionFood && <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body, marginTop: 2 }}>{fp.reactionFood}</Text>}
                               </View>
                             </View>
                           )}
@@ -4150,171 +3721,105 @@ export function KidsCalendar() {
                       )
                     })()}
 
-                    {/* ── Feeding Rich Card ── */}
+                    {/* ── Feeding ── */}
                     {(selectedLog.type === 'feeding') && (() => {
                       let fp: Record<string, any> = {}
                       try { fp = JSON.parse(selectedLog.value ?? '{}') } catch {}
                       const isBreast = fp.feedType === 'breast'
-                      const accentColor = stickers.pink
                       return (
                         <>
-                          <View style={{ backgroundColor: accentColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: accentColor + '30' }}>
-                            {isBreast ? (
-                              <>
-                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: font.display }}>{fp.duration ? `${fp.duration}` : '—'}</Text>
-                                <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>{t('kids_calendar_detail_minutesUnit')}</Text>
-                                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_breastfeeding')}</Text>
-                              </>
-                            ) : (
-                              <>
-                                <Text style={{ color: accentColor, fontSize: 48, fontWeight: '800', lineHeight: 52, fontFamily: font.display }}>{fp.amount ? `${fp.amount}` : '—'}</Text>
-                                <Text style={{ color: accentColor, fontSize: 16, fontWeight: '700', marginTop: 2 }}>{t('kids_calendar_detail_mlUnit')}</Text>
-                                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_bottleFeeding')}</Text>
-                              </>
-                            )}
-                          </View>
+                          <DetailHero
+                            sticker="bottle"
+                            value={isBreast ? (fp.duration ? `${fp.duration}` : '—') : (fp.amount ? `${fp.amount}` : '—')}
+                            unit={isBreast ? t('kids_calendar_detail_minutesUnit') : t('kids_calendar_detail_mlUnit')}
+                            eyebrow={isBreast ? t('kids_calendar_detail_breastfeeding') : t('kids_calendar_detail_bottleFeeding')}
+                          />
                           {isBreast && fp.side && (
-                            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-                              <View style={{ backgroundColor: accentColor + '20', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                <Text style={{ color: accentColor, fontSize: 13, fontWeight: '700' }}>
-                                  {fp.side === 'left' ? '← Left' : fp.side === 'right' ? 'Right →' : '↔ Both sides'}
-                                </Text>
-                              </View>
+                            <View style={styles.siteInfoRow}>
+                              <InfoPill tone={tone} label={fp.side === 'left' ? '← Left' : fp.side === 'right' ? 'Right →' : '↔ Both sides'} />
                             </View>
                           )}
-                          {selectedLog.notes && (
-                            <View style={{ backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 }}>
-                              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>{t('kids_calendar_detail_notes2')}</Text>
-                              <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>{selectedLog.notes}</Text>
-                            </View>
-                          )}
+                          {selectedLog.notes ? <DetailNote label={t('kids_calendar_detail_notes2')} text={selectedLog.notes} /> : null}
                         </>
                       )
                     })()}
 
-                    {/* ── Sleep Rich Card ── */}
+                    {/* ── Sleep ── */}
                     {selectedLog.type === 'sleep' && (() => {
                       let sp: Record<string, any> = {}
                       try { sp = JSON.parse(selectedLog.value ?? '{}') } catch {}
-                      const sleepColor = stickers.lilac
                       // Duration is stored as "10h 10m", "45m", "2h" — display it directly
                       const durStr = sp.duration ? String(sp.duration) : null
-                      const qualityMap: Record<string, { emoji: string; color: string }> = {
-                        great:    { emoji: '😴', color: stickers.green },
-                        good:     { emoji: '😊', color: stickers.blue },
-                        restless: { emoji: '😤', color: stickers.yellow },
-                        poor:     { emoji: '😞', color: stickers.coral },
-                      }
-                      const q = sp.quality ? qualityMap[sp.quality.toLowerCase()] ?? null : null
+                      const qFace = sp.quality ? faceFor[String(sp.quality).toLowerCase()] ?? null : null
                       return (
                         <>
-                          <View style={{ backgroundColor: sleepColor + '15', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: sleepColor + '30' }}>
-                            <EmojiSticker size={52}>{'🌙'}</EmojiSticker>
-                            {durStr ? (
-                              <Text style={{ color: sleepColor, fontSize: 56, fontWeight: '800', lineHeight: 64, letterSpacing: -2, marginTop: 6, fontFamily: font.display }}>{durStr}</Text>
-                            ) : (
-                              <Text style={{ color: sleepColor, fontSize: 20, fontWeight: '700', marginTop: 8 }}>{t('kids_calendar_detail_sleepLogged')}</Text>
-                            )}
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_sleepSession')}</Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                          <DetailHero
+                            sticker="moon"
+                            value={durStr ?? t('kids_calendar_detail_sleepLogged')}
+                            valueSize={durStr ? 44 : 26}
+                            eyebrow={t('kids_calendar_detail_sleepSession')}
+                          />
+                          <View style={styles.siteInfoRow}>
                             {sp.startTime && sp.endTime && (
-                              <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                <Clock size={13} color={colors.textMuted} />
-                                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{`${fmtTime(sp.startTime)} – ${fmtTime(sp.endTime)}`}</Text>
-                              </View>
+                              <InfoPill label={`${fmtTime(sp.startTime)} – ${fmtTime(sp.endTime)}`} leading={<Clock size={13} color={ink} strokeWidth={2.2} />} />
                             )}
-                            {q && (
-                              <View style={{ backgroundColor: q.color + '25', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                <Text style={{ color: q.color, fontSize: 13, fontWeight: '700' }}>{q.emoji} {sp.quality.charAt(0).toUpperCase() + sp.quality.slice(1)}</Text>
-                              </View>
+                            {sp.quality && (
+                              <InfoPill label={sp.quality.charAt(0).toUpperCase() + sp.quality.slice(1)} leading={qFace ? <SiteSticker name={qFace} size={20} /> : undefined} />
                             )}
                           </View>
                         </>
                       )
                     })()}
 
-                    {/* ── Activity Rich Card ── */}
+                    {/* ── Activity ── */}
                     {selectedLog.type === 'activity' && (() => {
                       let ap: Record<string, any> = {}
                       try { ap = JSON.parse(selectedLog.value ?? '{}') } catch {}
-                      const actColor = stickers.green
-                      const emojiMap: Record<string, string> = {
-                        class: '📚', sport: '⚽', swim: '🏊', dance: '💃',
-                        music: '🎵', art: '🎨', playground: '🛝', walk: '🚶',
-                        therapy: '🧩', playdate: '👫', other: '🎯',
-                      }
-                      const emoji = ap.activityType ? (emojiMap[ap.activityType] ?? '🎯') : '🎯'
                       const durRaw = ap.duration ? String(ap.duration).replace(/[^\d.]/g, '') : null
                       const durUnit = durRaw ? (Number(durRaw) >= 60 ? `${Math.floor(Number(durRaw) / 60)}h ${Number(durRaw) % 60}m` : `${durRaw} min`) : null
                       return (
                         <>
-                          <View style={{ backgroundColor: actColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: actColor + '30' }}>
-                            <Text style={{ fontSize: 52, lineHeight: 56 }}>{emoji}</Text>
-                            {ap.name ? (
-                              <Text style={{ color: actColor, fontSize: 26, fontWeight: '800', marginTop: 10, textAlign: 'center', fontFamily: font.display }}>{ap.name}</Text>
-                            ) : null}
-                            {durUnit && (
-                              <>
-                                <Text style={{ color: actColor, fontSize: 20, fontWeight: '700', marginTop: ap.name ? 4 : 10 }}>{durUnit}</Text>
-                              </>
-                            )}
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_activity')}</Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                            {ap.activityType && (
-                              <View style={{ backgroundColor: actColor + '20', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                <Text style={{ color: actColor, fontSize: 13, fontWeight: '700' }}>{ap.activityType.charAt(0).toUpperCase() + ap.activityType.slice(1)}</Text>
-                              </View>
-                            )}
+                          <DetailHero
+                            sticker="shoe"
+                            value={ap.name ? String(ap.name) : durUnit}
+                            valueSize={ap.name ? 30 : 44}
+                            eyebrow={t('kids_calendar_detail_activity')}
+                          />
+                          <View style={styles.siteInfoRow}>
+                            {ap.name && durUnit ? <InfoPill label={durUnit} /> : null}
+                            {ap.activityType && <InfoPill tone={tone} label={ap.activityType.charAt(0).toUpperCase() + ap.activityType.slice(1)} />}
                             {ap.startTime && ap.endTime && (
-                              <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                <Clock size={13} color={colors.textMuted} />
-                                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>{`${fmtTime(ap.startTime)} – ${fmtTime(ap.endTime)}`}</Text>
-                              </View>
+                              <InfoPill label={`${fmtTime(ap.startTime)} – ${fmtTime(ap.endTime)}`} leading={<Clock size={13} color={ink} strokeWidth={2.2} />} />
                             )}
                           </View>
                         </>
                       )
                     })()}
 
-                    {/* ── Diaper Rich Card ── */}
+                    {/* ── Diaper ── */}
                     {selectedLog.type === 'diaper' && (() => {
                       let dp: Record<string, any> = {}
                       try { dp = JSON.parse(selectedLog.value ?? '{}') } catch {}
-                      const diaperColor = stickers.blue
-                      const typeMap: Record<string, { emoji: string; label: string }> = {
-                        pee:   { emoji: '💧', label: 'Pee' },
-                        poop:  { emoji: '💩', label: 'Poop' },
-                        mixed: { emoji: '🔄', label: 'Both' },
+                      const typeMap: Record<string, { sticker: SiteStickerName; label: string }> = {
+                        pee:   { sticker: 'pee', label: 'Pee' },
+                        poop:  { sticker: 'poop', label: 'Poop' },
+                        mixed: { sticker: 'diaper', label: 'Both' },
                       }
-                      const dt = dp.diaperType ? (typeMap[dp.diaperType] ?? { emoji: '🍼', label: dp.diaperType }) : null
+                      const dtype = dp.diaperType ? (typeMap[dp.diaperType] ?? { sticker: 'diaper' as SiteStickerName, label: String(dp.diaperType) }) : null
                       return (
                         <>
-                          <View style={{ backgroundColor: diaperColor + '12', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: diaperColor + '30' }}>
-                            <EmojiSticker size={64}>{dt?.emoji ?? '🍼'}</EmojiSticker>
-                            <Text style={{ color: diaperColor, fontSize: 24, fontWeight: '800', marginTop: 8, fontFamily: font.display }}>{dt?.label ?? 'Diaper'}</Text>
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 6, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_diaperChange')}</Text>
-                          </View>
+                          <DetailHero sticker={dtype?.sticker ?? 'diaper'} value={dtype?.label ?? 'Diaper'} valueSize={34} eyebrow={t('kids_calendar_detail_diaperChange')} />
                           {(dp.color || dp.consistency) && (
-                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                              {dp.color && (
-                                <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{t('kids_calendar_detail_colorLabel', { value: dp.color.charAt(0).toUpperCase() + dp.color.slice(1) })}</Text>
-                                </View>
-                              )}
-                              {dp.consistency && (
-                                <View style={{ backgroundColor: colors.surface, borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8 }}>
-                                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>{dp.consistency.charAt(0).toUpperCase() + dp.consistency.slice(1)}</Text>
-                                </View>
-                              )}
+                            <View style={styles.siteInfoRow}>
+                              {dp.color && <InfoPill label={t('kids_calendar_detail_colorLabel', { value: dp.color.charAt(0).toUpperCase() + dp.color.slice(1) })} />}
+                              {dp.consistency && <InfoPill label={dp.consistency.charAt(0).toUpperCase() + dp.consistency.slice(1)} />}
                             </View>
                           )}
                         </>
                       )
                     })()}
 
-                    {/* ── Mood Rich Card ── */}
+                    {/* ── Mood ── */}
                     {selectedLog.type === 'mood' && (() => {
                       // A mood logged from a routine stores JSON
                       // ({ mood, routineId, routineName, … }); a direct mood
@@ -4326,35 +3831,19 @@ export function KidsCalendar() {
                         const p = JSON.parse(rawMood)
                         if (p && typeof p === 'object') moodVal = p.mood ?? p.value ?? p.label ?? ''
                       } catch {}
-                      const moodMeta: Record<string, { label: string; color: string }> = {
-                        happy:     { label: 'Happy',     color: stickers.green },
-                        calm:      { label: 'Calm',      color: stickers.blue },
-                        fussy:     { label: 'Fussy',     color: stickers.yellow },
-                        cranky:    { label: 'Cranky',    color: stickers.coral },
-                        energetic: { label: 'Energetic', color: stickers.lilac },
+                      const moodMeta: Record<string, { label: string; face: SiteStickerName }> = {
+                        happy:     { label: 'Happy',     face: 'face4' },
+                        calm:      { label: 'Calm',      face: 'face3' },
+                        fussy:     { label: 'Fussy',     face: 'face2' },
+                        cranky:    { label: 'Cranky',    face: 'face1' },
+                        energetic: { label: 'Energetic', face: 'face4' },
                       }
-                      const m = moodMeta[moodVal] ?? { label: moodVal || 'Mood', color: brand.accent }
-                      return (
-                        <View style={{ backgroundColor: m.color + '12', borderRadius: 24, paddingVertical: 32, paddingHorizontal: 20, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: m.color + '30' }}>
-                          <MoodFace size={84} variant={moodFaceVariant(moodVal)} fill={moodFaceFill(moodVal)} />
-                          <Text style={{ color: m.color, fontSize: 32, fontWeight: '800', marginTop: 10, letterSpacing: -1, fontFamily: font.display }}>{m.label}</Text>
-                          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_calendar_detail_todaysMood')}</Text>
-                        </View>
-                      )
+                      const m = moodMeta[moodVal] ?? { label: moodVal || 'Mood', face: 'face3' as SiteStickerName }
+                      return <DetailHero sticker={m.face} value={m.label} valueSize={34} eyebrow={t('kids_calendar_detail_todaysMood')} />
                     })()}
 
-                    {/* ── Health / Temperature / Vaccine / Medicine ── */}
+                    {/* ── Health / Temperature / Vaccine / Medicine / Note ── */}
                     {['health', 'temperature', 'vaccine', 'medicine', 'note'].includes(selectedLog.type) && (() => {
-                      const healthColor = brand.error
-                      const ST_INK = '#141313'
-                      const typeIconMap: Record<string, typeof Heart> = {
-                        temperature: Thermometer,
-                        vaccine: Syringe,
-                        medicine: Pill,
-                        health: Heart,
-                        note: FileText,
-                      }
-                      const IconCmp = typeIconMap[selectedLog.type] ?? Heart
                       const rawVal = selectedLog.value ?? ''
                       let displayVal = rawVal
                       try {
@@ -4362,132 +3851,66 @@ export function KidsCalendar() {
                         if (typeof p === 'object') displayVal = p.value ?? p.name ?? rawVal
                       } catch {}
                       return (
-                        <>
-                          <View style={{
-                            backgroundColor: healthColor + '12',
-                            borderRadius: 24,
-                            paddingVertical: 24,
-                            paddingHorizontal: 20,
-                            marginBottom: 12,
-                            alignItems: 'center',
-                            borderWidth: 1.5,
-                            borderColor: isDark ? colors.border : ST_INK,
-                            shadowColor: ST_INK,
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.08,
-                            shadowRadius: 4,
-                            elevation: 1,
-                          }}>
-                            {/* Sticker icon — circle with ink stroke, hand-drawn feel */}
-                            <View style={{
-                              width: 72,
-                              height: 72,
-                              borderRadius: 36,
-                              backgroundColor: '#FFFEF8',
-                              borderWidth: 2,
-                              borderColor: isDark ? colors.border : ST_INK,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              shadowColor: ST_INK,
-                              shadowOffset: { width: 0, height: 3 },
-                              shadowOpacity: 0.12,
-                              shadowRadius: 0,
-                              elevation: 2,
-                              transform: [{ rotate: '-3deg' }],
-                            }}>
-                              <IconCmp size={36} color={healthColor} strokeWidth={2.2} />
-                            </View>
-                            {displayVal && displayVal !== selectedLog.type ? (
-                              <Text style={{ color: healthColor, fontSize: 28, fontWeight: '800', marginTop: 14, textAlign: 'center', letterSpacing: -0.8, fontFamily: font.display }}>{displayVal}</Text>
-                            ) : null}
-                            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 1, textTransform: 'uppercase' }}>
-                              {selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1)}
-                            </Text>
-                          </View>
-                        </>
+                        <DetailHero
+                          sticker={stickerForLog(selectedLog.type)}
+                          value={displayVal && displayVal !== selectedLog.type ? displayVal : null}
+                          valueSize={32}
+                          eyebrow={selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1)}
+                        />
                       )
                     })()}
 
                     {/* Notes for non-food/feeding types */}
-                    {!['food', 'feeding'].includes(selectedLog.type) && selectedLog.notes && (
-                      <View style={{ backgroundColor: colors.surface, borderRadius: 20, padding: 16, marginBottom: 12 }}>
-                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>{t('kids_calendar_detail_notes')}</Text>
-                        <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>{selectedLog.notes}</Text>
-                      </View>
-                    )}
+                    {!['food', 'feeding'].includes(selectedLog.type) && selectedLog.notes ? (
+                      <DetailNote label={t('kids_calendar_detail_notes')} text={selectedLog.notes} />
+                    ) : null}
 
                     {/* Fallback for unknown types */}
                     {!['food', 'feeding', 'sleep', 'activity', 'diaper', 'mood', 'health', 'temperature', 'vaccine', 'medicine', 'note'].includes(selectedLog.type) && (
                       <>
                         {formatLogDisplay(selectedLog.type, selectedLog.value, null) !== '' && (
-                          <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                            <Text style={[styles.popupSectionLabel, { color: colors.textMuted }]}>{t('kids_calendar_detail_details')}</Text>
-                            <Text style={[styles.popupSectionValue, { color: colors.text }]}>
-                              {formatLogDisplay(selectedLog.type, selectedLog.value, null)}
-                            </Text>
-                          </View>
+                          <DetailNote label={t('kids_calendar_detail_details')} text={formatLogDisplay(selectedLog.type, selectedLog.value, null)} />
                         )}
                       </>
                     )}
 
                     {hasPhotos && (
-                      <View style={styles.popupPhotos}>
-                        <Text style={[styles.popupSectionLabel, { color: colors.textMuted, marginBottom: 8, paddingHorizontal: 16 }]}>{t('kids_calendar_detail_photos')}</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.popupPhotoScroll}>
+                      <View style={{ marginBottom: 16, gap: 8 }}>
+                        <SiteEyebrow>{t('kids_calendar_detail_photos')}</SiteEyebrow>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
                           {selectedLog.photos.map((uri, i) => (
-                            <Image key={i} source={{ uri }} style={[styles.popupPhoto, { borderRadius: radius.lg }]} />
+                            <Image key={i} source={{ uri }} style={[styles.popupPhoto, { borderRadius: 16, borderWidth: 1.5, borderColor: ink }]} />
                           ))}
                         </ScrollView>
                       </View>
                     )}
 
                     {!formatLogDisplay(selectedLog.type, selectedLog.value, null) && !selectedLog.notes && !hasPhotos && (
-                      <View style={[styles.popupSection, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-                        <Text style={[styles.popupSectionValue, { color: colors.textMuted, fontStyle: 'italic' }]}>
-                          {t('kids_calendar_detail_nothing')}
-                        </Text>
-                      </View>
+                      <Text style={{ fontFamily: font.body, fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginBottom: 12 }}>
+                        {t('kids_calendar_detail_nothing')}
+                      </Text>
                     )}
 
                     {/* Action buttons */}
                     <View style={styles.popupActions}>
-                      <Pressable
+                      <PillButton
+                        label={t('kids_calendar_detail_edit')}
+                        variant="ink"
                         onPress={() => openEdit(selectedLog)}
-                        style={({ pressed }) => [
-                          styles.popupEditBtn,
-                          {
-                            backgroundColor: colors.text,
-                            borderColor: colors.text,
-                            borderWidth: 1.5,
-                            borderRadius: 999,
-                          },
-                          pressed && { transform: [{ scale: 0.98 }], opacity: 0.92 },
-                        ]}
-                      >
-                        <Pencil size={16} color="#FFFEF8" strokeWidth={2} />
-                        <Text style={[styles.popupEditText, { color: '#FFFEF8' }]}>{t('kids_calendar_detail_edit')}</Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={() => {
-                          // Route through the unlogTarget confirmation modal
-                          // so a stray tap doesn't permanently destroy a log.
-                          // handleDeleteLog was firing immediately on press —
-                          // no confirm, no undo.
-                          setUnlogTarget(selectedLog)
-                        }}
-                        style={({ pressed }) => [
-                          styles.popupDeleteBtn,
-                          {
-                            backgroundColor: colors.surface,
-                            borderColor: isDark ? colors.border : '#141313',
-                            borderRadius: 999,
-                          },
-                          pressed && { opacity: 0.7 },
-                        ]}
-                      >
-                        <Trash2 size={16} color={brand.error} />
-                        <Text style={[styles.popupDeleteText, { color: brand.error }]}>{t('kids_calendar_detail_delete')}</Text>
-                      </Pressable>
+                        leading={<Pencil size={16} color="#FFFEF8" strokeWidth={2.2} />}
+                        height={52}
+                        style={{ flex: 1 }}
+                      />
+                      <PillButton
+                        label={t('kids_calendar_detail_delete')}
+                        variant="paper"
+                        // Route through the unlogTarget confirmation modal
+                        // so a stray tap doesn't permanently destroy a log.
+                        onPress={() => setUnlogTarget(selectedLog)}
+                        leading={<Trash2 size={16} color={ink} strokeWidth={2.2} />}
+                        height={52}
+                        style={{ flex: 1 }}
+                      />
                     </View>
                   </>
                 )}
@@ -4533,57 +3956,44 @@ export function KidsCalendar() {
         </DiffuseSheet>
       )}
 
-      {/* ── Unlog Confirmation Modal ── */}
+      {/* ── Unlog Confirmation Modal (site look) ── */}
       {!diffuse && (
       <Modal visible={!!unlogTarget} animationType="fade" transparent onRequestClose={() => setUnlogTarget(null)}>
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
           onPress={() => setUnlogTarget(null)}
         >
-          <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 24, paddingBottom: insets.bottom + 16, gap: 16 }}>
-            {/* Handle */}
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center' }} />
+          <Pressable onPress={(e) => e.stopPropagation()} style={[siteSheetFrame(colors, insets.bottom + 16), { paddingHorizontal: 24 }]}>
+            <SiteGrabber />
             {unlogTarget && (() => {
-              const meta = LOG_META[unlogTarget.type] ?? { label: unlogTarget.type, icon: Calendar, color: colors.textMuted }
-              const Icon = meta.icon
               const detail = formatLogDisplay(unlogTarget.type, unlogTarget.value, unlogTarget.notes)
               return (
-                <>
+                <View style={{ gap: 16 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: meta.color + '20', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon size={20} color={meta.color} strokeWidth={2} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{logTitle(unlogTarget)}</Text>
-                      {detail ? <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }} numberOfLines={1}>{detail}</Text> : null}
-                      <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>{activityTimeDisplay(unlogTarget)}</Text>
+                    <SiteSticker name={stickerForLog(unlogTarget.type)} size={44} />
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={{ color: colors.text, fontSize: 16, fontFamily: font.bodyBold }}>{logTitle(unlogTarget)}</Text>
+                      {detail ? <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body }} numberOfLines={1}>{detail}</Text> : null}
+                      <SiteEyebrow>{activityTimeDisplay(unlogTarget)}</SiteEyebrow>
                     </View>
                   </View>
-                  <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center' }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body, textAlign: 'center' }}>
                     {t('kids_calendar_unlogConfirm')}
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Pressable
-                      onPress={() => setUnlogTarget(null)}
-                      style={{ flex: 1, height: 52, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '700' }}>{t('common_cancel')}</Text>
-                    </Pressable>
-                    <Pressable
+                    <PillButton label={t('common_cancel')} variant="paper" onPress={() => setUnlogTarget(null)} height={52} style={{ flex: 1 }} />
+                    <PillButton
+                      label={t('kids_calendar_unlogBtn')}
+                      variant="ink"
                       onPress={handleUnlog}
                       disabled={unlogging}
-                      style={({ pressed }) => ({
-                        flex: 1, height: 52, borderRadius: radius.full,
-                        backgroundColor: brand.error, alignItems: 'center', justifyContent: 'center',
-                        opacity: pressed || unlogging ? 0.7 : 1,
-                      })}
-                    >
-                      {unlogging
-                        ? <ActivityIndicator color="#FFF" size="small" />
-                        : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Trash2 size={15} color="#FFF" strokeWidth={2.5} /><Text style={{ color: '#FFF', fontSize: 15, fontWeight: '800' }}>{t('kids_calendar_unlogBtn')}</Text></View>}
-                    </Pressable>
+                      loading={unlogging}
+                      leading={<Trash2 size={15} color="#fff" strokeWidth={2.4} />}
+                      height={52}
+                      style={{ flex: 1 }}
+                    />
                   </View>
-                </>
+                </View>
               )
             })()}
           </Pressable>
@@ -4634,7 +4044,7 @@ export function KidsCalendar() {
         </Modal>
       )}
 
-      {/* ── Day Complete Congrats Modal ── */}
+      {/* ── Day Complete Congrats Modal (site look) ── */}
       {!diffuse && (
       <Modal
         visible={showDayCongrats}
@@ -4643,26 +4053,23 @@ export function KidsCalendar() {
         onRequestClose={() => setShowDayCongrats(false)}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}
           onPress={() => setShowDayCongrats(false)}
         >
           <Pressable onPress={(e) => e.stopPropagation()} style={{ width: '100%' }}>
-            <View style={{ backgroundColor: colors.surface, borderRadius: 32, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: brand.accent + '40' }}>
-              {/* Star burst */}
-              <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: brand.accent + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 2, borderColor: brand.accent + '50' }}>
-                <EmojiSticker size={40}>{'🌟'}</EmojiSticker>
-              </View>
+            <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text, alignItems: 'center', padding: 28 }]}>
+              <SiteSticker name="star" size={72} />
 
-              <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8, textAlign: 'center', fontFamily: font.display }}>
+              <SiteTitle size={28} style={{ textAlign: 'center', marginTop: 12, marginBottom: 8 }}>
                 {t('kids_calendar_congrats_title')}
-              </Text>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>
+              </SiteTitle>
+              <Text style={{ color: colors.text, fontSize: 16, fontFamily: font.bodyBold, textAlign: 'center', marginBottom: 6 }}>
                 {t('kids_calendar_congrats_allLogged', { day: formatDayLabel(selectedDate, todayStr, t) })}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 28 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body, textAlign: 'center', lineHeight: 20, marginBottom: 24 }}>
                 {selectedChildId === 'all'
-                  ? "Every child\u2019s day is fully tracked. Keep up the incredible work!"
-                  : `${children.find(c => c.id === selectedChildId)?.name ?? 'Their'}\u2019s day is fully tracked. You\u2019re doing great!`}
+                  ? "Every child’s day is fully tracked. Keep up the incredible work!"
+                  : `${children.find(c => c.id === selectedChildId)?.name ?? 'Their'}’s day is fully tracked. You’re doing great!`}
               </Text>
 
               {/* Stats row */}
@@ -4672,41 +4079,24 @@ export function KidsCalendar() {
                 const totalCals = foodLogs.reduce((sum, l) => {
                   try { const v = JSON.parse(l.value ?? '{}'); return sum + (Number(v.estimatedCals) || 0) } catch { return sum }
                 }, 0)
+                const stats: { n: number; label: string }[] = [
+                  { n: loggedToday.length, label: t('kids_calendar_congrats_activities') },
+                  ...(totalCals > 0 ? [{ n: totalCals, label: t('kids_calendar_congrats_kcal') }] : []),
+                  { n: selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length, label: t('kids_calendar_congrats_routines') },
+                ]
                 return (
-                  <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28, width: '100%' }}>
-                    <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                      <Text style={{ color: brand.accent, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{loggedToday.length}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>{t('kids_calendar_congrats_activities')}</Text>
-                    </View>
-                    {totalCals > 0 && (
-                      <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                        <Text style={{ color: stickers.coral, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{totalCals}</Text>
-                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>{t('kids_calendar_congrats_kcal')}</Text>
+                  <View style={{ flexDirection: 'row', marginBottom: 24, width: '100%', borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: colors.text, paddingVertical: 14 }}>
+                    {stats.map((st, i) => (
+                      <View key={i} style={{ flex: 1, alignItems: 'center', gap: 2, borderLeftWidth: i === 0 ? 0 : 1, borderLeftColor: colors.border }}>
+                        <Text style={{ color: colors.text, fontSize: 30, fontFamily: font.displayBold }}>{st.n}</Text>
+                        <SiteEyebrow style={{ textAlign: 'center' }}>{st.label}</SiteEyebrow>
                       </View>
-                    )}
-                    <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: 20, padding: 16, alignItems: 'center' }}>
-                      <Text style={{ color: stickers.green, fontSize: 28, fontWeight: '800', fontFamily: font.display }}>{selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>{t('kids_calendar_congrats_routines')}</Text>
-                    </View>
+                    ))}
                   </View>
                 )
               })()}
 
-              <Pressable
-                onPress={() => setShowDayCongrats(false)}
-                style={({ pressed }) => ({
-                  backgroundColor: brand.accent,
-                  borderRadius: 999,
-                  paddingVertical: 16,
-                  paddingHorizontal: 40,
-                  opacity: pressed ? 0.9 : 1,
-                })}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>{t('kids_calendar_congrats_btn')}</Text>
-                  <EmojiSticker size={18}>{'🎉'}</EmojiSticker>
-                </View>
-              </Pressable>
+              <PillButton label={t('kids_calendar_congrats_btn')} variant="ink" onPress={() => setShowDayCongrats(false)} style={{ alignSelf: 'stretch' }} />
             </View>
           </Pressable>
         </Pressable>
@@ -4731,6 +4121,16 @@ const styles = StyleSheet.create({
   timelineGutter: { width: 52, alignItems: 'flex-end' },
   timelineTime: { fontSize: 11, fontWeight: '600' },
   emptyCard: { padding: 24, borderRadius: 20, borderWidth: 1, alignItems: 'center' },
+  siteDialog: { borderWidth: 1.5, borderRadius: 18, padding: 20, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
+  siteMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  siteInfoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16, justifyContent: 'center' },
+  siteCallout: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderRadius: 18, padding: 14, marginBottom: 12 },
+  siteEmpty: { alignItems: 'center', paddingVertical: 36, paddingHorizontal: 24 },
+  siteRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4 },
+  siteRowTime: { width: 62, fontSize: 10 },
+  siteRowSticker: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+  siteRowTick: { position: 'absolute', right: -2, top: -2, width: 16, height: 16, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  siteRowChip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, maxWidth: 96 },
   addVisitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: 999, marginTop: 8 },
   addVisitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
@@ -4741,10 +4141,10 @@ const styles = StyleSheet.create({
   childScrollClip: { flex: 1, position: 'relative', overflow: 'hidden', marginBottom: 12 },
   childScrollFade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: 28 },
   kidPickerOverlay: { flex: 1, backgroundColor: 'rgba(20,19,19,0.5)', justifyContent: 'flex-end' },
-  kidPickerSheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1.5, borderLeftWidth: 1.5, borderRightWidth: 1.5, maxHeight: '78%' },
+  kidPickerSheet: { maxHeight: '78%' },
   kidPickerHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 14 },
   kidPickerTitle: { fontSize: 22, letterSpacing: -0.4 },
-  kidPickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18 },
+  kidPickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 16 },
   kidPickerName: { flex: 1, fontSize: 15, letterSpacing: -0.1 },
   kidPickerMeta: { fontSize: 12 },
   childSelectorText: { fontSize: 14, fontWeight: '600' },
@@ -4784,7 +4184,7 @@ const styles = StyleSheet.create({
   dayLogList: { gap: 8 },
   dayLogItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 10 },
   loggedItem: { borderWidth: 1 },
-  pendingRoutineItem: { borderWidth: 1, borderStyle: 'dashed' },
+  pendingRoutineItem: { borderWidth: 1 },
   listDivider: { height: StyleSheet.hairlineWidth, marginVertical: 8 },
   dayLogIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   loggedBadge: { position: 'absolute', bottom: -2, right: -2, width: 14, height: 14, borderRadius: 7, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
@@ -4851,7 +4251,7 @@ const styles = StyleSheet.create({
   // FAB + Sheet
   fabBtn: { position: 'absolute', right: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 6, zIndex: 10 },
   childRowWrap: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  addLogBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 3 },
+  addLogBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   addLogBtnDiffuse: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   toggleWrap: { marginBottom: 14 },
   weekStripCard: { borderRadius: 24, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 14 },
@@ -4860,9 +4260,9 @@ const styles = StyleSheet.create({
   calViewChipText: { fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
   fabSheetTitleWrap: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
   fabSheetBody: { paddingHorizontal: 20, gap: 14 },
-  manageRoutinesBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 999, borderWidth: 1 },
+  manageRoutinesBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 16, marginTop: 8, borderTopWidth: 1.5 },
   fabSheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,8,6,0.55)' },
-  fabSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '90%', borderTopLeftRadius: 32, borderTopRightRadius: 32 },
+  fabSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '90%' },
   fabSheetHandle: { alignItems: 'center', paddingTop: 12, paddingBottom: 4 },
   fabSheetHandleBar: { width: 36, height: 4, borderRadius: 2 },
   fabSheetTitle: { fontSize: 18, fontWeight: '800', paddingHorizontal: 20, paddingBottom: 16 },

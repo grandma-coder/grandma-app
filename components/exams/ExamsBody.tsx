@@ -33,6 +33,7 @@ import {
 } from '../../lib/examData'
 import { toDateStr } from '../../lib/cycleLogic'
 import { BeadedThread } from '../analytics/shared/MiniCharts'
+import { ExamMonthBars } from './ExamMonthBars'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import { logSticker } from '../calendar/logStickers'
 import { childColor } from '../ui/ChildPills'
@@ -150,7 +151,7 @@ export function ExamsBody({
           <MonoCaps size={11} color={inkFaint} style={{ marginBottom: 12, letterSpacing: 1.8 }}>
             {t('exams_insight_overTime')}
           </MonoCaps>
-          <View style={undefined}>
+          {diffuse ? (
             <BeadedThread
               data={insights.months.map((m) => m.count)}
               labels={insights.months.map((m) => m.label)}
@@ -159,7 +160,9 @@ export function ExamsBody({
               height={130}
               showValues
             />
-          </View>
+          ) : (
+            <ExamMonthBars months={insights.months} tone={getModeColorSoft(behavior, isDark)} flaggedLabel={t('exams_statFlagged')} />
+          )}
         </View>
       )}
 

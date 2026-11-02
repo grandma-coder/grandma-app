@@ -410,6 +410,8 @@ export interface ExamMonthBucket {
   /** short label, e.g. "Jun" */
   label: string
   count: number
+  /** exams that month with at least one flagged finding */
+  flagged: number
 }
 
 export interface ExamInsights {
@@ -442,6 +444,7 @@ export function buildExamInsights(exams: Exam[], todayStr: string): ExamInsights
   const providers = new Set<string>()
   const flags: ExamFlag[] = []
   const monthCounts = new Map<string, number>()
+  const monthFlagged = new Map<string, number>()
   let flaggedExams = 0
   let yearCount = 0
   let latest: string | null = null
@@ -468,6 +471,7 @@ export function buildExamInsights(exams: Exam[], todayStr: string): ExamInsights
 
     const mKey = e.examDate.slice(0, 7)
     monthCounts.set(mKey, (monthCounts.get(mKey) ?? 0) + 1)
+    if (eFlags.length > 0) monthFlagged.set(mKey, (monthFlagged.get(mKey) ?? 0) + 1)
   }
 
   // Fill contiguous months earliest→latest so the chart has no phantom gaps.
@@ -481,7 +485,7 @@ export function buildExamInsights(exams: Exam[], todayStr: string): ExamInsights
     let guard = 0
     while ((y < ly || (y === ly && m <= lm)) && guard < 24) {
       const key = `${y}-${String(m).padStart(2, '0')}`
-      months.push({ key, label: MONTH_SHORT[m - 1], count: monthCounts.get(key) ?? 0 })
+      months.push({ key, label: MONTH_SHORT[m - 1], count: monthCounts.get(key) ?? 0, flagged: monthFlagged.get(key) ?? 0 })
       m++
       if (m > 12) { m = 1; y++ }
       guard++
