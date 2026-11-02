@@ -260,7 +260,10 @@ export function MenopauseCalendar() {
                 })}
               </View>
             ) : (
-              <Text style={[styles.detailEmpty, { color: colors.textSecondary, fontFamily: font.body }]}>{COPY.empty}</Text>
+              <View style={{ alignItems: 'center', gap: 8, paddingVertical: 14 }}>
+                <SiteSticker name="cal" size={44} />
+                <Text style={[styles.detailEmpty, { color: colors.textSecondary, fontFamily: font.body, textAlign: 'center' }]}>{COPY.empty}</Text>
+              </View>
             )}
 
             <Pressable

@@ -827,6 +827,41 @@ export default function ChannelChat() {
 
   // ─── Render ───────────────────────────────────────────────────────────
 
+  const channelEmptyNode =
+            (() => {
+              // Empty state wears the channel's own blob identity + tint, and
+              // the copy adapts to whether you've joined yet.
+              const s = channel
+                ? channelSticker(channel.id, isDark, channel.avatarUrl)
+                : null
+              const blob = channel ? channelBlob(channel.name, channel.category) : null
+              const emptyTitle = isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')
+              const emptyMsg = isMember
+                ? t('channelScreen_emptyMemberMsg')
+                : t('channelScreen_emptyJoinMsg', { channel: channel?.name ? `#${channel.name}` : t('channelScreen_thisChannel') })
+              if (diffuse) {
+                return (
+                  <DiffuseEmptyState
+                    icon={
+                      <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
+                        {blob ? <ChannelGlyph name={blob} size={26} bg={dt.colors.surface} /> : <MessageCircle size={22} color={dt.colors.ink3} strokeWidth={1.6} />}
+                      </DiffuseBloomIcon>
+                    }
+                    title={emptyTitle}
+                    message={emptyMsg}
+                  />
+                )
+              }
+              return (
+                <EmptyState
+                  icon={blob ? <ChannelGlyph name={blob} size={40} bg={s?.tint ?? stickers.lilacSoft} /> : undefined}
+                  iconBg={s?.tint ?? stickers.lilacSoft}
+                  title={emptyTitle}
+                  message={emptyMsg}
+                />
+              )
+            })()
+
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
@@ -1006,41 +1041,9 @@ export default function ChannelChat() {
           onContentSizeChange={() => {
             flatListRef.current?.scrollToEnd({ animated: false })
           }}
-          ListEmptyComponent={
-            (() => {
-              // Empty state wears the channel's own blob identity + tint, and
-              // the copy adapts to whether you've joined yet.
-              const s = channel
-                ? channelSticker(channel.id, isDark, channel.avatarUrl)
-                : null
-              const blob = channel ? channelBlob(channel.name, channel.category) : null
-              const emptyTitle = isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')
-              const emptyMsg = isMember
-                ? t('channelScreen_emptyMemberMsg')
-                : t('channelScreen_emptyJoinMsg', { channel: channel?.name ? `#${channel.name}` : t('channelScreen_thisChannel') })
-              if (diffuse) {
-                return (
-                  <DiffuseEmptyState
-                    icon={
-                      <DiffuseBloomIcon color={accent} size={44} intensity={0.5}>
-                        {blob ? <ChannelGlyph name={blob} size={26} bg={dt.colors.surface} /> : <MessageCircle size={22} color={dt.colors.ink3} strokeWidth={1.6} />}
-                      </DiffuseBloomIcon>
-                    }
-                    title={emptyTitle}
-                    message={emptyMsg}
-                  />
-                )
-              }
-              return (
-                <EmptyState
-                  icon={blob ? <ChannelGlyph name={blob} size={40} bg={s?.tint ?? stickers.lilacSoft} /> : undefined}
-                  iconBg={s?.tint ?? stickers.lilacSoft}
-                  title={emptyTitle}
-                  message={emptyMsg}
-                />
-              )
-            })()
-          }
+          ListEmptyComponent={channelEmptyNode}
+          // Only system "joined / left" rows → still an empty room; show the invite under them.
+          ListFooterComponent={messages.length > 0 && messages.every((m) => m.message_type === 'system_join' || m.message_type === 'system_leave') ? channelEmptyNode : null}
           renderItem={({ item }) =>
             item.message_type === 'system_join' || item.message_type === 'system_leave' ? (
               <SystemMessage message={item} />

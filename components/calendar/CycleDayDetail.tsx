@@ -88,6 +88,10 @@ function formatLongDate(d: string): string {
   })
 }
 
+
+// Same faces the dock shows for each mood value.
+const MOOD_FACE: Record<string, SiteStickerName> = { low: 'face1', down: 'face1', okay: 'face2', good: 'face3', great: 'face4' }
+
 export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
@@ -198,7 +202,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
               key={g.type}
               style={[styles.siteRow, i > 0 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border } : null]}
             >
-              <SiteSticker name={LOG_STICKER[g.type] ?? 'pencil'} size={28} />
+              <SiteSticker name={(g.type === 'mood' && MOOD_FACE[String(g.summary).toLowerCase()]) || (LOG_STICKER[g.type] ?? 'pencil')} size={28} />
               <Text style={[styles.logLabel, { color: ink, fontFamily: font.bodyBold }]}>
                 {g.label}
               </Text>
@@ -213,9 +217,18 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
         </View>
         )
       ) : (
-        <Text style={[styles.empty, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textFaint, fontFamily: font.body }]}>
-          {t('cycleDayDetail_emptyDay')}
-        </Text>
+        diffuse ? (
+          <Text style={[styles.empty, { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
+            {t('cycleDayDetail_emptyDay')}
+          </Text>
+        ) : (
+          <View style={{ alignItems: 'center', gap: 8, paddingVertical: 14 }}>
+            <SiteSticker name="cal" size={44} />
+            <Text style={[styles.empty, { color: colors.textSecondary, fontFamily: font.body, textAlign: 'center' }]}>
+              {t('cycleDayDetail_emptyDay')}
+            </Text>
+          </View>
+        )
       )}
 
       {diffuse ? (
