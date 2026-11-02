@@ -333,7 +333,7 @@ function StepLastPeriod({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_lastPeriod')}
-      sticker={<SiteSticker name="flower" size={48} cut />}
+      sticker={<SiteSticker name="cal" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
       continueDisabled={!date}
@@ -392,7 +392,7 @@ function StepCycleLength({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_cycleLength')}
-      sticker={<SiteSticker name="moon" size={44} cut />}
+      sticker={<SiteSticker name="moon" size={48} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -508,7 +508,7 @@ function StepPeriodDuration({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_periodDuration')}
-      sticker={<SiteSticker name="drop" size={44} cut />}
+      sticker={<SiteSticker name="drop" size={48} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -590,7 +590,7 @@ function StepConditions({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_conditions')}
-      sticker={<SiteSticker name="leaf" size={48} cut />}
+      sticker={<SiteSticker name="doc" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -707,7 +707,7 @@ function StepTempUnit({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_tempUnit')}
-      sticker={<SiteSticker name="star" size={48} cut />}
+      sticker={<SiteSticker name="globe" size={48} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -765,7 +765,7 @@ function StepTTCDuration({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_ttcDuration')}
-      sticker={<SiteSticker name="flower" size={48} cut />}
+      sticker={<SiteSticker name="otest" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -836,7 +836,7 @@ function StepTTCTemperature({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_trackingTemp')}
-      sticker={<SiteSticker name="star" size={48} cut />}
+      sticker={<SiteSticker name="thermo" size={48} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (

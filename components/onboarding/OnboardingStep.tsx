@@ -8,7 +8,7 @@
  * optional Skip, Fraunces display question, ink Continue pill.
  */
 
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, isValidElement, useContext, useEffect, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -217,6 +217,8 @@ export function OnboardingStep({
 
   const pct = Math.max(0, Math.min(1, progress ?? (total > 0 ? step / total : 0)))
   const ctaLabel = continueLabel.replace(/[→✓]/g, '').trim()
+  const headerSticker = isValidElement<{ name?: string }>(sticker) ? sticker.props.name : undefined
+  const cta = pickCta(question, headerSticker)
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
@@ -278,8 +280,8 @@ export function OnboardingStep({
           disabled={continueDisabled}
           index={2}
           delay={200}
-          sticker={ctaSticker ?? CTA_ROTATION[(step - 1) % CTA_ROTATION.length].sticker}
-          fill={ctaTone ?? CTA_ROTATION[(step - 1) % CTA_ROTATION.length].tone}
+          sticker={ctaSticker ?? cta.sticker}
+          fill={ctaTone ?? cta.tone}
         />
       </View>
     </View>
@@ -314,15 +316,17 @@ export function WaveProgress({ pct, ink }: { pct: number; ink: string }) {
 
 const PROGRESS_PINK = '#E0709A'
 
-// Default continue disc per step — a different sticker and tone each time.
-const CTA_ROTATION: { sticker: SiteStickerName; tone: string }[] = [
-  { sticker: 'heart', tone: ACTION_TONES.pink },
-  { sticker: 'star', tone: ACTION_TONES.yellow },
-  { sticker: 'flower', tone: ACTION_TONES.lilac },
-  { sticker: 'leaf', tone: ACTION_TONES.green },
-  { sticker: 'cloud', tone: ACTION_TONES.blue },
-  { sticker: 'bell', tone: ACTION_TONES.peach },
-]
+// Continue disc defaults: picked from the question text so every screen gets its own
+// sticker + tone (stable across renders), never repeating the header sticker.
+const CTA_STICKERS: SiteStickerName[] = ['heart', 'star', 'flower', 'leaf', 'cloud', 'bell', 'moon', 'shoe', 'pola', 'egg', 'backpack', 'owl']
+const CTA_TONES = [ACTION_TONES.pink, ACTION_TONES.yellow, ACTION_TONES.lilac, ACTION_TONES.green, ACTION_TONES.blue, ACTION_TONES.peach]
+function pickCta(question: string, avoid?: string): { sticker: SiteStickerName; tone: string } {
+  let h = 0
+  for (let i = 0; i < question.length; i++) h = (h * 31 + question.charCodeAt(i)) >>> 0
+  let k = h % CTA_STICKERS.length
+  if (CTA_STICKERS[k] === avoid) k = (k + 1) % CTA_STICKERS.length
+  return { sticker: CTA_STICKERS[k], tone: CTA_TONES[(h >>> 4) % CTA_TONES.length] }
+}
 
 const styles = StyleSheet.create({
   root: { flex: 1 },

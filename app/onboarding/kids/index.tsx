@@ -662,7 +662,7 @@ function StepChildName({
       total={total}
       auraMode="kids"
       question={`${label}What is their name?`}
-      sticker={<SiteSticker name="heart" size={44} cut />}
+      sticker={<SiteSticker name="pencil" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!child?.name.trim()}
     >
@@ -736,7 +736,7 @@ function StepChildDob({
       total={total}
       auraMode="kids"
       question={`When was ${childName} born?`}
-      sticker={<SiteSticker name="star" size={48} cut />}
+      sticker={<SiteSticker name="cal" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!child?.birthDate}
     >
@@ -840,7 +840,7 @@ function StepChildCountry({
       total={total}
       auraMode="kids"
       question={`Where does ${childName} live?`}
-      sticker={<SiteSticker name="cloud" size={56} cut />}
+      sticker={<SiteSticker name="house" size={48} cut />}
       onContinue={onContinue}
     >
       {diffuse ? (
@@ -994,7 +994,7 @@ function StepChildPhoto({
       total={total}
       auraMode="kids"
       question={`Pick a photo or icon for ${childName}`}
-      sticker={<SiteSticker name="flower" size={48} cut />}
+      sticker={<SiteSticker name="camera" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1100,7 +1100,7 @@ function StepChildAllergies({
       total={total}
       auraMode="kids"
       question={`Any allergies for ${childName}?`}
-      sticker={<SiteSticker name="leaf" size={48} cut />}
+      sticker={<SiteSticker name="rasp" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1224,7 +1224,7 @@ function StepChildConditions({
       total={total}
       auraMode="kids"
       question={`Any conditions or medications for ${childName}?`}
-      sticker={<SiteSticker name="moon" size={44} cut />}
+      sticker={<SiteSticker name="thermo" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1368,7 +1368,7 @@ function StepCaregiver({
       total={total}
       auraMode="kids"
       question="Want to add a caregiver?"
-      sticker={<SiteSticker name="baby" size={48} cut />}
+      sticker={<SiteSticker name="bubble" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >

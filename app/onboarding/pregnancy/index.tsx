@@ -406,7 +406,7 @@ function StepDueDate({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_dueDate')}
-      sticker={<SiteSticker name="heart" size={48} cut />}
+      sticker={<SiteSticker name="cal" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!dueDate}
     >
@@ -469,7 +469,7 @@ function StepFirstPregnancy({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_firstPregnancy')}
-      sticker={<SiteSticker name="star" size={44} cut />}
+      sticker={<SiteSticker name="star" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={first === null}
     >
@@ -517,7 +517,7 @@ function StepMood({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_mood')}
-      sticker={<SiteSticker name="star" size={48} cut />}
+      sticker={<SiteSticker name="face2" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -605,7 +605,7 @@ function StepBirthPlace({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_birthPlace')}
-      sticker={<SiteSticker name="cloud" size={56} cut />}
+      sticker={<SiteSticker name="house" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -679,7 +679,7 @@ function StepCareProvider({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_careProvider')}
-      sticker={<SiteSticker name="flower" size={48} cut />}
+      sticker={<SiteSticker name="doc" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -740,7 +740,7 @@ function StepConditions({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_conditions')}
-      sticker={<SiteSticker name="moon" size={44} cut />}
+      sticker={<SiteSticker name="thermo" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -802,7 +802,7 @@ function StepPartner({
       total={TOTAL_STEPS}
       auraMode="pregnancy"
       question={t('preg_onboard_step_partner')}
-      sticker={<SiteSticker name="heart" size={48} cut />}
+      sticker={<SiteSticker name="bubble" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >

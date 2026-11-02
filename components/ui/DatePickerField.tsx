@@ -30,6 +30,7 @@ import { useTheme, brand, font, useDiffuseTheme, diffuseFont } from '../../const
 import { useModeStore } from '../../store/useModeStore'
 import { Star as StarSticker } from './Stickers'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
+import { HandDrawnBox } from './HandDrawn'
 import { useTranslation } from '../../lib/i18n'
 
 const ST_INK = '#141313'
@@ -149,6 +150,20 @@ export default function DatePickerField({
   // Inline render — iOS only. Android falls through to the trigger pattern
   // because there's no in-page DateTimePicker on Android.
   if (inline && Platform.OS === 'ios') {
+    const wheel = (
+      <DateTimePicker
+        value={value ? new Date(value + 'T00:00:00') : draft}
+        mode="date"
+        display="spinner"
+        onChange={handleInlineChange}
+        maximumDate={maximumDate}
+        minimumDate={minimumDate}
+        textColor={isDark ? colors.text : ST_INK}
+        accentColor={ST_INK}
+        themeVariant={isDark ? 'dark' : 'light'}
+        style={{ width: '100%', height: 216 }}
+      />
+    )
     return (
       <View style={styles.inlineWrap}>
         {label ? (
@@ -156,18 +171,11 @@ export default function DatePickerField({
             {label}
           </Text>
         ) : null}
-        <DateTimePicker
-          value={value ? new Date(value + 'T00:00:00') : draft}
-          mode="date"
-          display="spinner"
-          onChange={handleInlineChange}
-          maximumDate={maximumDate}
-          minimumDate={minimumDate}
-          textColor={isDark ? colors.text : ST_INK}
-          accentColor={ST_INK}
-          themeVariant={isDark ? 'dark' : 'light'}
-          style={{ width: '100%' }}
-        />
+        {diffuse ? wheel : (
+          <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={22} seed="datewheel" style={styles.inlineCard}>
+            {wheel}
+          </HandDrawnBox>
+        )}
       </View>
     )
   }
@@ -350,6 +358,13 @@ export default function DatePickerField({
 const styles = StyleSheet.create({
   inlineWrap: {
     width: '100%',
+    alignItems: 'center',
+  },
+  inlineCard: {
+    alignSelf: 'stretch',
+    height: 232,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   inlineLabel: {
