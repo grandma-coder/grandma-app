@@ -3808,4 +3808,8 @@ export const ja: TranslationKeys = {
   handoff_durHm: "{{h}}時間{{m}}分",
   handoff_durH: "{{h}}時間",
   handoff_durM: "{{m}}分",
+  meno_calendar_lightDay: "軽めの日",
+  meno_calendar_heavierDay: "重めの日",
+  preg_calendar_weekShort: "{{n}}週",
+  preg_calendar_trimesterShort: "T{{n}}",
 }

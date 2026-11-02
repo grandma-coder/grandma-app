@@ -66,3 +66,24 @@ export function weekForDate(dueDate: string, dateStr: string): number {
   const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
   return Math.max(1, Math.min(42, 40 - Math.floor(daysLeft / 7)))
 }
+
+/**
+ * If `dateStr` is the first day of a pregnancy week, that week number (else null).
+ * Same week count as the calendar caption (`getCurrentWeekFromDueDate`): the due date is
+ * 40w0d, so a week starts every 7 days counted back from it. Only weeks 1–42 are labelled.
+ * `trimesterStart` is 2 on the first day of week 14 and 3 on the first day of week 28.
+ */
+export function pregnancyWeekStart(
+  dueDate: string,
+  dateStr: string,
+): { week: number; trimesterStart: 2 | 3 | null } | null {
+  if (!dueDate || !dateStr) return null
+  const due = Date.UTC(+dueDate.slice(0, 4), +dueDate.slice(5, 7) - 1, +dueDate.slice(8, 10))
+  const d = Date.UTC(+dateStr.slice(0, 4), +dateStr.slice(5, 7) - 1, +dateStr.slice(8, 10))
+  if (Number.isNaN(due) || Number.isNaN(d)) return null
+  const daysLeft = Math.round((due - d) / 86_400_000)
+  if (daysLeft % 7 !== 0) return null
+  const week = 40 - daysLeft / 7
+  if (week < 1 || week > 42) return null
+  return { week, trimesterStart: week === 14 ? 2 : week === 28 ? 3 : null }
+}

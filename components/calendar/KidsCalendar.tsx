@@ -9,7 +9,7 @@
  * Tapping an activity opens a detail popup with edit/delete.
  */
 
-import { KIDS_LOG_STICKER } from '../../lib/logStickers'
+import { KIDS_LOG_STICKER, kidsDayMarks } from '../../lib/logStickers'
 import { useState, useMemo, useEffect, useCallback, useRef, Fragment } from 'react'
 import {
   View,
@@ -88,7 +88,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
 import { SegmentedTabs } from './SegmentedTabs'
-import { AgendaCalendar, AgendaDots } from './AgendaCalendar'
+import { AgendaCalendar, DayMarks, KidDayMarks, type KidDayMark } from './AgendaCalendar'
 import { upcomingWindow } from './agendaDates'
 import { LogMonthGrid } from './LogMonthGrid'
 import { AppointmentQuestions, QuestionCountHint, isKidsVisitLog } from './AppointmentQuestions'
@@ -2435,6 +2435,38 @@ export function KidsCalendar() {
     return out
   }, [childIdsByDate, childIndexMap])
 
+  // Light agenda calendar marks — only SPECIAL logs (vaccine, fever, medicine, doctor visit,
+  // growth, milestone); feeds, diapers, sleep, mood never mark. One child → that child's
+  // stickers. All kids → one mark per child who logged (their colour says whose day it
+  // was): a plain dot, or their top special sticker inside a ring of their colour.
+  const kidsMarksPerChild = selectedChildId === 'all' && children.length > 1
+  const kidMarksByDate = useMemo(() => {
+    const typesByDate = new Map<string, Map<string, Set<string>>>()
+    for (const log of monthLogs) {
+      if (!kidsMarksPerChild && selectedChildId !== 'all' && log.child_id !== selectedChildId) continue
+      const byChild = typesByDate.get(log.date) ?? new Map<string, Set<string>>()
+      const types = byChild.get(log.child_id) ?? new Set<string>()
+      types.add(log.type)
+      byChild.set(log.child_id, types)
+      typesByDate.set(log.date, byChild)
+    }
+    const single: Record<string, SiteStickerName[]> = {}
+    const perChild: Record<string, { marks: KidDayMark[]; more: boolean }> = {}
+    for (const [date, byChild] of typesByDate) {
+      if (!kidsMarksPerChild) {
+        single[date] = kidsDayMarks([...byChild.values()].flatMap((set) => [...set]))
+        continue
+      }
+      const rows = [...byChild.entries()]
+        .map(([cid, types]) => ({ idx: childIndexMap.get(cid) ?? 0, specials: kidsDayMarks(types) }))
+        // Children with a special log first, then in the usual child order.
+        .sort((a, b) => Number(b.specials.length > 0) - Number(a.specials.length > 0) || a.idx - b.idx)
+      const marks = rows.map((r) => ({ color: childColor(r.idx), sticker: r.specials[0] ?? null }))
+      perChild[date] = { marks, more: rows.slice(0, 2).some((r) => r.specials.length > 1) }
+    }
+    return { single, perChild }
+  }, [monthLogs, kidsMarksPerChild, selectedChildId, childIndexMap])
+
   // ── Timeline rendering ────────────────────────────────────────────────────
 
   function renderTimelineCards() {
@@ -3221,7 +3253,13 @@ export function KidsCalendar() {
                 onSelectDate={handleDayPress}
                 tone={getModeColorSoft('kids', isDark)}
                 loading={!logsReady}
-                renderDayDecoration={(date) => <AgendaDots colors={dotsByDate[date] ?? []} />}
+                renderDayDecoration={(date) => {
+                  if (kidsMarksPerChild) {
+                    const day = kidMarksByDate.perChild[date]
+                    return day ? <KidDayMarks marks={day.marks} max={2} more={day.more} /> : null
+                  }
+                  return <DayMarks stickers={kidMarksByDate.single[date] ?? []} max={2} />
+                }}
               />
             )}
             <View style={{ height: 12 }} />

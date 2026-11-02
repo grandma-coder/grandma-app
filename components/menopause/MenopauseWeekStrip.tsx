@@ -10,8 +10,9 @@ import { useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { diffuseFont, useTheme } from '../../constants/theme'
 import { symptomStickerKey } from './menopauseIcons'
-import { SiteSticker } from '../stickers/SiteSticker'
-import { menoSticker } from './MenopauseLogSheet'
+import { DayMarks } from '../calendar/AgendaCalendar'
+import { menopauseDayMarks } from '../../lib/logStickers'
+import { menopauseDayLevel, menopauseDayTint } from '../../lib/menopauseDayLoad'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
 import { Skeleton } from '../ui/Skeleton'
@@ -32,7 +33,7 @@ export function MenopauseWeekStrip({
   /** First load — light look shows a ghost dot where a logged-day sticker goes. */
   loading?: boolean
 }) {
-  const { stickers, colors, font } = useTheme()
+  const { stickers, colors, font, isDark } = useTheme()
   const s = stickers as Record<string, string>
 
   const days = useMemo(() => {
@@ -66,7 +67,10 @@ export function MenopauseWeekStrip({
         const logged = day.logs.length > 0
         const hue = logged ? s[symptomStickerKey(day.logs[0].type)] : null
         if (!pal.diffuse) {
-          // Site look: card-less day cells — today = soft tone + ink outline; a logged day shows its sticker.
+          // Site look: card-less day cells, tinted peach by how heavy the day was (same tint as
+          // the calendar); today = ink outline. Marks only what stands out: period, HRT, the
+          // strongest symptom (max 2 + overflow dot).
+          const tint = menopauseDayTint(menopauseDayLevel(day.logs), stickers.peach, isDark)
           return (
             <Pressable
               key={day.key}
@@ -76,7 +80,7 @@ export function MenopauseWeekStrip({
               style={({ pressed }) => [
                 styles.cell,
                 {
-                  backgroundColor: day.isToday ? pal.accentSoft : 'transparent',
+                  backgroundColor: tint ?? 'transparent',
                   borderColor: day.isToday ? colors.text : 'transparent',
                   borderWidth: 1.5,
                   borderRadius: 14,
@@ -89,7 +93,7 @@ export function MenopauseWeekStrip({
               </Text>
               <Text style={{ fontFamily: font.displayBold, fontSize: 17, lineHeight: 20, color: colors.text }}>{day.dayNum}</Text>
               <View style={{ height: 16, alignItems: 'center', justifyContent: 'center' }}>
-                {loading ? <Skeleton width={14} height={14} radius={7} /> : logged ? <SiteSticker name={menoSticker(day.logs[0].type)} size={16} /> : null}
+                {loading ? <Skeleton width={14} height={14} radius={7} /> : logged ? <DayMarks stickers={menopauseDayMarks(day.logs)} max={2} size={14} /> : null}
               </View>
             </Pressable>
           )

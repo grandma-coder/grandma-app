@@ -3808,4 +3808,8 @@ export const hi: TranslationKeys = {
   handoff_durHm: "{{h}} घंटे {{m}} मिनट",
   handoff_durH: "{{h}} घंटे",
   handoff_durM: "{{m}} मिनट",
+  meno_calendar_lightDay: "हल्का दिन",
+  meno_calendar_heavierDay: "भारी दिन",
+  preg_calendar_weekShort: "स{{n}}",
+  preg_calendar_trimesterShort: "ति{{n}}",
 }

@@ -3808,4 +3808,8 @@ export const ptBR: TranslationKeys = {
   handoff_durHm: "{{h}} h {{m}}",
   handoff_durH: "{{h}} h",
   handoff_durM: "{{m}} min",
+  meno_calendar_lightDay: "Dia leve",
+  meno_calendar_heavierDay: "Dia mais pesado",
+  preg_calendar_weekShort: "S{{n}}",
+  preg_calendar_trimesterShort: "T{{n}}",
 }

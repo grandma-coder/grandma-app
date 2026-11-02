@@ -4090,4 +4090,8 @@ export interface TranslationKeys {
   handoff_durHm: string
   handoff_durH: string
   handoff_durM: string
+  meno_calendar_lightDay: string
+  meno_calendar_heavierDay: string
+  preg_calendar_weekShort: string
+  preg_calendar_trimesterShort: string
 }

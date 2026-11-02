@@ -3808,4 +3808,8 @@ export const ar: TranslationKeys = {
   handoff_durHm: "{{h}} س {{m}} د",
   handoff_durH: "{{h}} س",
   handoff_durM: "{{m}} د",
+  meno_calendar_lightDay: "يوم خفيف",
+  meno_calendar_heavierDay: "يوم أثقل",
+  preg_calendar_weekShort: "أ{{n}}",
+  preg_calendar_trimesterShort: "ث{{n}}",
 }

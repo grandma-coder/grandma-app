@@ -3808,4 +3808,8 @@ export const de: TranslationKeys = {
   handoff_durHm: "{{h}} Std. {{m}}",
   handoff_durH: "{{h}} Std.",
   handoff_durM: "{{m}} Min.",
+  meno_calendar_lightDay: "Leichter Tag",
+  meno_calendar_heavierDay: "Schwererer Tag",
+  preg_calendar_weekShort: "W{{n}}",
+  preg_calendar_trimesterShort: "T{{n}}",
 }

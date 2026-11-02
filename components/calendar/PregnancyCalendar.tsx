@@ -75,7 +75,7 @@ import { DiffuseListRow, DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffu
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { kgToDisplay, weightLabel } from '../../lib/units'
-import { getTrimester, weekForDate } from '../../lib/pregnancyWeeks'
+import { getTrimester, weekForDate, pregnancyWeekStart } from '../../lib/pregnancyWeeks'
 import { pregnancyWeeks, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
@@ -3397,7 +3397,17 @@ export function PregnancyCalendar() {
                 tone={getModeColorSoft('preg', isDark)}
                 caption={t('profPreg_chipWeek', { n: weekNumber })}
                 loading={(!sessionChecked || calLogsLoading) && !calLogsData}
-                renderDayDecoration={(date) => <DayMarks stickers={pregnancyDayMarks((calLogs[date] ?? []).map((l) => l.log_type))} max={2} />}
+                renderDayDecoration={(date) => {
+                  // Special logs only (visits, exams, scans, contractions, birth prep, symptoms).
+                  // The day a new week starts carries "W37" (or "T2" / "T3" when a trimester starts).
+                  const start = pregnancyWeekStart(dueDate, date)
+                  const label = start
+                    ? (start.trimesterStart
+                      ? t('preg_calendar_trimesterShort', { n: start.trimesterStart })
+                      : t('preg_calendar_weekShort', { n: start.week }))
+                    : null
+                  return <DayMarks stickers={pregnancyDayMarks((calLogs[date] ?? []).map((l) => l.log_type))} max={2} label={label} />
+                }}
               />
             )}
             <View style={{ height: 12 }} />

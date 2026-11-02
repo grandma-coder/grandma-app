@@ -3808,4 +3808,8 @@ export const zh: TranslationKeys = {
   handoff_durHm: "{{h}} 小时 {{m}} 分",
   handoff_durH: "{{h}} 小时",
   handoff_durM: "{{m}} 分钟",
+  meno_calendar_lightDay: "较轻的一天",
+  meno_calendar_heavierDay: "较重的一天",
+  preg_calendar_weekShort: "{{n}}周",
+  preg_calendar_trimesterShort: "T{{n}}",
 }

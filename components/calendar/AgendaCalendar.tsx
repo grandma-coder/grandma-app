@@ -5,8 +5,9 @@
  * outline, month label, arrow buttons, Space Mono weekday row, day cells, today
  * ring and selected marker; only the per-day decoration changes per journey:
  *   - cycle: phase tint (`dayTint`) + ovulation egg / log dot
- *   - menopause: the day's symptom sticker
- *   - pregnancy / kids: log dots
+ *   - menopause: intensity tint (`dayTint`) + period / HRT / strongest-symptom stickers
+ *   - pregnancy: special-log stickers + "W37" on the day a week starts
+ *   - kids: special-log stickers (one child) or per-child dots / ringed stickers (all kids)
  * Week shows one row (the old AgendaWeekStrip look); Month shows the whole month
  * with the same cells. The arrows (and a horizontal swipe) step one week or one
  * month. The view choice is shared + persisted (useAgendaViewStore).
@@ -273,15 +274,66 @@ export function AgendaDot({ color, outline }: { color: string; outline?: string 
 /**
  * At-a-glance day marks: up to `max` tiny stickers for what was logged that day (already in
  * priority order — e.g. heart for intimacy first), plus a small ink dot when there's more.
+ * An optional `label` (e.g. pregnancy "W37") comes first and takes one of the `max` slots.
  */
-export function DayMarks({ stickers: names, max = 2, size = 12 }: { stickers: SiteStickerName[]; max?: number; size?: number }) {
+export function DayMarks({
+  stickers: names,
+  max = 2,
+  size = 12,
+  label,
+}: {
+  stickers: SiteStickerName[]
+  max?: number
+  size?: number
+  label?: string | null
+}) {
   const { colors } = useTheme()
   const uniq = Array.from(new Set(names))
-  if (uniq.length === 0) return null
+  if (uniq.length === 0 && !label) return null
+  const room = label ? Math.max(0, max - 1) : max
   return (
     <View style={[styles.dotRow, { gap: 1 }]}>
-      {uniq.slice(0, max).map((n) => <SiteSticker key={n} name={n} size={size} />)}
-      {uniq.length > max ? <AgendaDot color={colors.text} /> : null}
+      {label ? <Text numberOfLines={1} style={[styles.markLabel, { color: colors.text }]}>{label}</Text> : null}
+      {uniq.slice(0, room).map((n) => <SiteSticker key={n} name={n} size={size} />)}
+      {uniq.length > room ? <AgendaDot color={colors.text} /> : null}
+    </View>
+  )
+}
+
+/** One child's mark for the "All kids" view: their special sticker in a thin ring of their colour, or a plain dot. */
+export interface KidDayMark {
+  color: string
+  sticker: SiteStickerName | null
+}
+
+/**
+ * "All kids" day marks: one mark per child (whose day it was), at most `max`, then an ink
+ * overflow dot (also when `more` says a shown child had more special logs).
+ */
+export function KidDayMarks({ marks, max = 2, size = 12, more = false }: { marks: KidDayMark[]; max?: number; size?: number; more?: boolean }) {
+  const { colors } = useTheme()
+  if (marks.length === 0) return null
+  return (
+    <View style={styles.dotRow}>
+      {marks.slice(0, max).map((m, i) => (m.sticker ? (
+        <View
+          key={i}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: 1.25,
+            borderColor: m.color,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <SiteSticker name={m.sticker} size={size - 4} />
+        </View>
+      ) : (
+        <AgendaDot key={i} color={m.color} />
+      )))}
+      {marks.length > max || more ? <AgendaDot color={colors.text} /> : null}
     </View>
   )
 }
@@ -412,6 +464,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 2,
     alignItems: 'center',
+  },
+  markLabel: {
+    fontFamily: MONO,
+    fontSize: 8,
+    lineHeight: 11,
+    letterSpacing: 0.4,
   },
   dot: {
     width: 5,

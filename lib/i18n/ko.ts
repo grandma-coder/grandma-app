@@ -3808,4 +3808,8 @@ export const ko: TranslationKeys = {
   handoff_durHm: "{{h}}시간 {{m}}분",
   handoff_durH: "{{h}}시간",
   handoff_durM: "{{m}}분",
+  meno_calendar_lightDay: "가벼운 날",
+  meno_calendar_heavierDay: "더 힘든 날",
+  preg_calendar_weekShort: "{{n}}주",
+  preg_calendar_trimesterShort: "{{n}}분기",
 }

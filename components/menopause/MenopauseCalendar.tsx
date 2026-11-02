@@ -16,7 +16,10 @@ import { AgendaHeader } from '../calendar/AgendaHeader'
 import { LogSheet } from '../calendar/LogSheet'
 import { Character, type CharacterName } from '../characters/Characters'
 import { diffuseFont, useTheme, useDiffuseTheme, getDiffuseAccent, getModeColorSoft } from '../../constants/theme'
-import { AgendaCalendar } from '../calendar/AgendaCalendar'
+import { AgendaCalendar, DayMarks } from '../calendar/AgendaCalendar'
+import { menopauseDayMarks } from '../../lib/logStickers'
+import { menopauseDayLevel, menopauseDayTint, type MenopauseDayLevel } from '../../lib/menopauseDayLoad'
+import { useTranslation } from '../../lib/i18n'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnalytics'
@@ -150,17 +153,21 @@ export function MenopauseCalendar() {
             />
           </View>
         ) : (
-        // Site look: the shared agenda calendar (Week | Month) — symptom sticker on logged days.
+        // Site look: the shared agenda calendar (Week | Month). Each day is tinted peach by how
+        // heavy it was (sum of symptom intensities) and marks only what stands out: period,
+        // HRT, then the day's strongest symptom (max 2 + overflow dot).
         <View style={{ marginTop: 4 }}>
           <AgendaCalendar
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
             tone={getModeColorSoft('meno', isDark)}
             loading={logsLoading && !rows}
+            dayTint={(date) => menopauseDayTint(menopauseDayLevel(logsByDate.get(date) ?? []), stickers.peach, isDark)}
             renderDayDecoration={(date) => {
               const dayLogs = logsByDate.get(date)
-              return dayLogs?.length ? <SiteSticker name={menoSticker(dayLogs[0].type)} size={13} /> : null
+              return dayLogs?.length ? <DayMarks stickers={menopauseDayMarks(dayLogs)} max={2} /> : null
             }}
+            footer={<MenopauseDayLegend />}
           />
         </View>
         )}
@@ -292,10 +299,39 @@ export function MenopauseCalendar() {
   )
 }
 
+/** Site-look legend under the calendar: light → heavier day swatches · period drop. */
+export function MenopauseDayLegend() {
+  const { colors, stickers, isDark } = useTheme()
+  const { t } = useTranslation()
+  const levels: MenopauseDayLevel[] = [1, 2, 3]
+  const label = { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase' as const }
+  return (
+    <View style={styles.legend}>
+      <View style={styles.legendItem}>
+        <Text style={label}>{t('meno_calendar_lightDay')}</Text>
+        <View style={styles.legendRamp}>
+          {levels.map((lv) => (
+            <View key={lv} style={[styles.legendSwatch, { backgroundColor: menopauseDayTint(lv, stickers.peach, isDark) }]} />
+          ))}
+        </View>
+        <Text style={label}>{t('meno_calendar_heavierDay')}</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <SiteSticker name="drop" size={13} />
+        <Text style={label}>{t('prepreg_period')}</Text>
+      </View>
+    </View>
+  )
+}
+
 const CELL = `${100 / 7}%`
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', columnGap: 16, rowGap: 6, marginTop: 10 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendRamp: { flexDirection: 'row', gap: 3 },
+  legendSwatch: { width: 12, height: 12, borderRadius: 6 },
   scroll: { paddingHorizontal: 16 },
 
   card: { padding: 16, borderWidth: 1, marginTop: 4 },
