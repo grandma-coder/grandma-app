@@ -37,13 +37,13 @@ export function ReactionPicker({ visible, current, onPick, onMore, onClose }: Pr
   const barBg = diffuse ? dt.colors.surface : colors.surface
   const barBorder = diffuse ? dt.colors.line : colors.border
   const activeBg = diffuse ? dt.colors.surfaceRaised : colors.bgWarm
-  const ink = diffuse ? dt.colors.ink3 : colors.textMuted
+  const ink = diffuse ? dt.colors.ink3 : colors.text
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable
-          style={[styles.bar, { backgroundColor: barBg, borderColor: barBorder, borderRadius: radius.full }]}
+          style={[styles.bar, { backgroundColor: barBg, borderColor: diffuse ? barBorder : colors.text, borderRadius: radius.full }, !diffuse && { borderWidth: 1.5 }]}
           onPress={(e) => e.stopPropagation()}
         >
           {REACTION_TYPES.map((type) => {
@@ -54,7 +54,9 @@ export function ReactionPicker({ visible, current, onPick, onMore, onClose }: Pr
                 onPress={() => onPick(type)}
                 style={({ pressed }) => [
                   styles.emojiBtn,
-                  isCurrent && { backgroundColor: activeBg, borderRadius: 999 },
+                  isCurrent && (diffuse
+                    ? { backgroundColor: activeBg, borderRadius: 999 }
+                    : { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1.5, borderColor: colors.text }),
                   pressed && { transform: [{ scale: 1.15 }] },
                 ]}
               >
@@ -63,7 +65,7 @@ export function ReactionPicker({ visible, current, onPick, onMore, onClose }: Pr
             )
           })}
           {/* Divider + More (reply / delete / report / block) */}
-          <View style={[styles.divider, { backgroundColor: barBorder }]} />
+          <View style={[styles.divider, { backgroundColor: diffuse ? barBorder : colors.text }]} />
           <Pressable onPress={onMore} style={({ pressed }) => [styles.emojiBtn, pressed && { opacity: 0.6 }]}>
             <MoreHorizontal size={24} color={ink} strokeWidth={2} />
           </Pressable>

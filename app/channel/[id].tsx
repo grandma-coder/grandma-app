@@ -52,6 +52,8 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { ReactionPicker } from '../../components/channels/ReactionPicker'
 import { PollCard } from '../../components/channels/PollCard'
 import { PollComposer } from '../../components/channels/PollComposer'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { channelSticker, channelBlob, personBlob } from '../../lib/channelSticker'
 import { Character } from '../../components/characters/Characters'
@@ -834,21 +836,25 @@ export default function ChannelChat() {
           { paddingTop: insets.top + 8, borderBottomColor: diffuse ? dt.colors.line : colors.border },
         ]}
       >
-        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerBtn}>
-          <ArrowLeft size={24} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-        </Pressable>
+        {diffuse ? (
+          <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerBtn}>
+            <ArrowLeft size={24} color={dt.colors.ink} strokeWidth={1.6} />
+          </Pressable>
+        ) : (
+          <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0, width: 40, height: 40 }} />
+        )}
         <Pressable
           onPress={() => router.push(`/channel/info/${id}` as any)}
           style={styles.headerCenter}
         >
           {channel?.channelType === 'private' ? (
-            <Lock size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
+            diffuse ? <Lock size={16} color={dt.colors.ink3} strokeWidth={2} /> : <SiteSticker name="lock" size={24} cut />
           ) : channel ? (
             (() => {
               const blob = channelBlob(channel.name, channel.category)
               return (
-                <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
-                  <Character name={blob} size={22} bg={diffuse ? dt.colors.bg : colors.bg} />
+                <View style={[{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }, !diffuse && { width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: colors.text, backgroundColor: getModeColorSoft(mode, isDark) }]}>
+                  <Character name={blob} size={diffuse ? 22 : 20} bg={diffuse ? dt.colors.bg : getModeColorSoft(mode, isDark)} />
                 </View>
               )
             })()
@@ -856,29 +862,29 @@ export default function ChannelChat() {
           <Text
             style={[styles.headerTitle, diffuse
               ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-              : { color: colors.text, fontFamily: font.display }]}
+              : { color: colors.text, fontFamily: font.display, fontSize: 18, textTransform: 'uppercase', letterSpacing: 0.3 }]}
             numberOfLines={1}
           >
             {channel?.name ?? t('channelScreen_nameFallback')}
           </Text>
           <Text style={[styles.memberCount, diffuse
             ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
-            : { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
+            : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10 }]}>
             {channel?.memberCount ?? 0}
           </Text>
-          <Users size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
+          <Users size={12} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={2} />
         </Pressable>
         <View style={styles.headerActions}>
         {/* Share — public: always, private: members only */}
         {(channel?.channelType !== 'private' || isMember) && (
           <Pressable onPress={handleShareChannel} hitSlop={8} style={styles.headerIconBtn}>
-            <Share2 size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+            <Share2 size={18} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
           </Pressable>
         )}
         <Pressable onPress={handleFavoriteToggle} hitSlop={8} style={styles.headerIconBtn}>
           <Star
             size={18}
-            color={isFavorited ? (diffuse ? dt.colors.ink : stickers.yellow) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+            color={isFavorited ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink3 : colors.text)}
             strokeWidth={diffuse ? 1.6 : 2}
             fill={isFavorited ? (diffuse ? dt.colors.ink : stickers.yellow) : 'none'}
           />
@@ -895,9 +901,9 @@ export default function ChannelChat() {
                   borderRadius: 999,
                 }
               : {
-                  backgroundColor: isMember ? 'transparent' : accent,
-                  borderWidth: isMember ? 1 : 0,
-                  borderColor: isMember ? colors.borderStrong : 'transparent',
+                  backgroundColor: isMember ? 'transparent' : getModeColorSoft(mode, isDark),
+                  borderWidth: 1.5,
+                  borderColor: colors.text,
                   borderRadius: radius.full,
                 },
           ]}
@@ -907,7 +913,7 @@ export default function ChannelChat() {
               styles.joinLeaveText,
               diffuse
                 ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
-                : { color: isMember ? colors.textSecondary : colors.textInverse, fontFamily: font.bodyBold },
+                : { color: colors.text, fontFamily: font.bodyBold },
             ]}
           >
             {isMember && isOwner
@@ -930,7 +936,7 @@ export default function ChannelChat() {
           onPress={() => setShowRating(true)}
           style={[styles.rateBar, diffuse
             ? { backgroundColor: dt.colors.surface, borderBottomColor: dt.colors.line }
-            : { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
+            : { backgroundColor: 'transparent', borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }]}
         >
           <View style={styles.rateBarLeft}>
             {channel.avgRating > 0 ? (
@@ -939,19 +945,19 @@ export default function ChannelChat() {
                   <Star
                     key={i}
                     size={14}
-                    color={diffuse ? dt.colors.ink3 : stickers.yellow}
-                    strokeWidth={diffuse ? 1.6 : 2}
+                    color={diffuse ? dt.colors.ink3 : colors.text}
+                    strokeWidth={diffuse ? 1.6 : 1.5}
                     fill={i <= Math.round(channel.avgRating) ? (diffuse ? dt.colors.ink3 : stickers.yellow) : 'none'}
                   />
                 ))}
-                <Text style={[styles.rateBarScore, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold } : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{channel.avgRating.toFixed(1)}</Text>
-                <Text style={[styles.rateBarCount, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted }]}>({channel.ratingCount})</Text>
+                <Text style={[styles.rateBarScore, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold } : { color: colors.text, fontFamily: 'SpaceMono_400Regular', fontSize: 12 }]}>{channel.avgRating.toFixed(1)}</Text>
+                <Text style={[styles.rateBarCount, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10 }]}>({channel.ratingCount})</Text>
               </>
             ) : (
-              <Text style={[styles.rateBarPrompt, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted }]}>{t('channelScreen_noRatingsYet')}</Text>
+              <Text style={[styles.rateBarPrompt, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.body }]}>{t('channelScreen_noRatingsYet')}</Text>
             )}
           </View>
-          <Text style={[styles.rateBarAction, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 } : { color: accent, fontFamily: font.bodyBold }]}>
+          <Text style={[styles.rateBarAction, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 } : { color: colors.text, fontFamily: font.bodyBold, textDecorationLine: 'underline' }]}>
             {myRating > 0 ? t('channelScreen_editRating') : t('channelScreen_rateChannel')}
           </Text>
         </Pressable>
@@ -965,12 +971,12 @@ export default function ChannelChat() {
             styles.pinnedBanner,
             diffuse
               ? { backgroundColor: dt.colors.surface, borderBottomColor: dt.colors.line }
-              : { backgroundColor: getModeColorSoft(mode, isDark), borderBottomColor: colors.border },
+              : { backgroundColor: getModeColorSoft(mode, isDark), borderBottomColor: colors.text, borderBottomWidth: 1.5 },
           ]}
         >
-          <Pin size={14} color={diffuse ? dt.colors.ink3 : accent} strokeWidth={diffuse ? 1.6 : 2} />
+          <Pin size={14} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
           <Text
-            style={[styles.pinnedBannerText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text }]}
+            style={[styles.pinnedBannerText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.body }]}
             numberOfLines={1}
           >
             <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold } : { fontFamily: font.bodyBold }}>
@@ -1046,6 +1052,7 @@ export default function ChannelChat() {
                   onSave={() => handleSave(item.id)}
                   onLongPress={() => setReactionPickerPost(item)}
                   onThreadPress={() => router.push(`/channel/thread/${item.id}` as any)}
+                  isMine={!!currentUserId && item.author_id === currentUserId}
                 />
                 {/* Poll (Phase 3) — poll-messages are prefixed 📊; PollCard
                     self-loads and renders null if there's no poll row. */}
@@ -1066,7 +1073,7 @@ export default function ChannelChat() {
               styles.mentionOverlay,
               diffuse
                 ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: 20, shadowOpacity: 0, elevation: 0 }
-                : { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderRadius: radius.md },
+                : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 14, shadowOpacity: 0, elevation: 0 },
             ]}
           >
             {mentionResults.map((member) => (
@@ -1079,8 +1086,8 @@ export default function ChannelChat() {
                   pressed && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surface },
                 ]}
               >
-                <AtSign size={14} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
-                <Text style={[styles.mentionName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text }]}>
+                <AtSign size={14} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+                <Text style={[styles.mentionName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodySemiBold }]}>
                   {member.name}
                 </Text>
               </Pressable>
@@ -1125,7 +1132,7 @@ export default function ChannelChat() {
                 : { backgroundColor: colors.surface, borderTopColor: colors.borderLight },
             ]}
           >
-            <Reply size={14} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
+            <Reply size={14} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
             <Text
               style={[styles.replyBarText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary }]}
               numberOfLines={1}
@@ -1136,7 +1143,7 @@ export default function ChannelChat() {
               </Text>
             </Text>
             <Pressable onPress={() => setReplyTo(null)} hitSlop={8}>
-              <X size={16} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
+              <X size={16} color={diffuse ? dt.colors.ink3 : colors.text} />
             </Pressable>
           </View>
         )}
@@ -1153,17 +1160,17 @@ export default function ChannelChat() {
                     paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
                   }
                 : {
-                    backgroundColor: colors.surface,
+                    backgroundColor: colors.bg,
                     borderTopColor: colors.border,
                     paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
                   },
             ]}
           >
             <Pressable onPress={pickPhoto} hitSlop={4} style={styles.inputIconBtn}>
-              <Camera size={22} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.6 : 2} />
+              <Camera size={22} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
             <Pressable onPress={() => setShowPollComposer(true)} hitSlop={4} style={styles.inputIconBtn}>
-              <BarChart3 size={22} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.6 : 2} />
+              <BarChart3 size={22} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
             <TextInput
               ref={inputRef}
@@ -1185,9 +1192,12 @@ export default function ChannelChat() {
                     }
                   : {
                       color: colors.text,
-                      backgroundColor: colors.surfaceRaised,
-                      borderRadius: radius.lg,
-                      borderColor: colors.borderLight,
+                      backgroundColor: colors.surface,
+                      borderRadius: 22,
+                      borderColor: colors.text,
+                      borderWidth: 1.5,
+                      fontFamily: font.body,
+                      fontSize: 16,
                     },
               ]}
             />
@@ -1216,18 +1226,20 @@ export default function ChannelChat() {
                   styles.sendBtn,
                   {
                     backgroundColor:
-                      text.trim() || photos.length > 0 ? accent : colors.surfaceRaised,
+                      text.trim() || photos.length > 0 ? colors.text : colors.borderLight,
                     borderRadius: radius.full,
+                    width: 38,
+                    height: 38,
                   },
                   pressed && { opacity: 0.8 },
                 ]}
               >
                 {sending ? (
-                  <ActivityIndicator color={colors.textInverse} size="small" />
+                  <ActivityIndicator color={colors.bg} size="small" />
                 ) : (
                   <Send
                     size={18}
-                    color={text.trim() || photos.length > 0 ? colors.textInverse : colors.textMuted}
+                    color={text.trim() || photos.length > 0 ? colors.bg : colors.textMuted}
                     strokeWidth={2}
                   />
                 )}
@@ -1258,9 +1270,9 @@ export default function ChannelChat() {
               onPress={handleJoinLeave}
               style={[styles.joinPromptBtn, diffuse
                 ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2, flexDirection: 'row', gap: 8, alignItems: 'center' }
-                : { backgroundColor: accent, borderRadius: radius.full }]}
+                : { backgroundColor: getModeColorSoft(mode, isDark), borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text }]}
             >
-              <Text style={[styles.joinPromptBtnText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' } : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_joinPromptBtn')}</Text>
+              <Text style={[styles.joinPromptBtnText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_joinPromptBtn')}</Text>
               {diffuse && <DiffuseArrow color={dt.colors.ink} size={16} />}
             </Pressable>
           </View>
@@ -1293,7 +1305,7 @@ export default function ChannelChat() {
         <View style={styles.ratingOverlay}>
           <View style={[styles.ratingCard, diffuse
             ? { backgroundColor: dt.colors.bg, borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
-            : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+            : { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1.5, borderColor: colors.text }]}>
             {/* Sticker accent — channel's own sticker */}
             {channel && (() => {
               const s = channelSticker(channel.id, isDark, channel.avatarUrl)
@@ -1301,7 +1313,7 @@ export default function ChannelChat() {
               return (
                 <View style={[styles.ratingStickerBubble, diffuse
                   ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-                  : { backgroundColor: s.tint }]}>
+                  : { backgroundColor: s.tint, borderWidth: 1.5, borderColor: colors.text }]}>
                   <Character name={blob} size={34} bg={diffuse ? dt.colors.bg : s.tint} />
                 </View>
               )
@@ -1315,7 +1327,7 @@ export default function ChannelChat() {
             </Text>
 
             {/* Star selector */}
-            <AnimatedStarRow value={myRating} onChange={setMyRating} starColor={diffuse ? dt.colors.ink : stickers.yellow} />
+            <AnimatedStarRow value={myRating} onChange={setMyRating} starColor={diffuse ? dt.colors.ink : colors.text} />
 
             {/* Review text */}
             <TextInput
@@ -1326,28 +1338,28 @@ export default function ChannelChat() {
               multiline
               style={[styles.ratingInput, diffuse
                 ? { color: dt.colors.ink, backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, fontFamily: diffuseFont.body }
-                : { color: colors.text, backgroundColor: colors.surfaceRaised, borderRadius: radius.lg }]}
+                : { color: colors.text, backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1.5, borderColor: colors.text, fontFamily: font.body, fontSize: 16 }]}
             />
 
             {/* Buttons */}
             <View style={styles.ratingButtons}>
               <Pressable
                 onPress={() => setShowRating(false)}
-                style={[styles.ratingCancelBtn, diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.border, borderRadius: radius.lg }]}
+                style={[styles.ratingCancelBtn, diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]}
               >
-                <Text style={[styles.ratingCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 } : { color: colors.textSecondary }]}>{t('channelScreen_ratingCancel')}</Text>
+                <Text style={[styles.ratingCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingCancel')}</Text>
               </Pressable>
               <Pressable
                 onPress={handleSubmitRating}
                 disabled={myRating === 0 || savingRating}
                 style={[styles.ratingSubmitBtn, diffuse
                   ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2, opacity: myRating === 0 ? 0.4 : 1 }
-                  : { backgroundColor: accent, borderRadius: radius.full, opacity: myRating === 0 ? 0.4 : 1 }]}
+                  : { backgroundColor: getModeColorSoft(mode, isDark), borderWidth: 1.5, borderColor: colors.text, borderRadius: radius.full, opacity: myRating === 0 ? 0.4 : 1 }]}
               >
                 {savingRating ? (
-                  <ActivityIndicator color={diffuse ? dt.colors.ink : colors.textInverse} size="small" />
+                  <ActivityIndicator color={colors.text} size="small" />
                 ) : (
-                  <Text style={[styles.ratingSubmitText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 } : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingSubmit')}</Text>
+                  <Text style={[styles.ratingSubmitText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 12 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingSubmit')}</Text>
                 )}
               </Pressable>
             </View>
@@ -1454,17 +1466,17 @@ function ShareChannelSheet({
         <Pressable
           style={[styles.shareSheet, diffuse
             ? { backgroundColor: dt.colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
-            : { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
+            : { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2.5, borderColor: colors.text }]}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.textMuted + '55' }]} />
-          <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_shareTitle')}</Text>
+          <View style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.text + '40' }]} />
+          <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelScreen_shareTitle')}</Text>
 
           <Pressable
             onPress={onCopy}
             style={({ pressed }) => [
               styles.shareAction,
-              diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.borderStrong, borderRadius: radius.full },
+              diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full },
               pressed && { opacity: 0.75 },
             ]}
           >
@@ -1476,16 +1488,16 @@ function ShareChannelSheet({
             onPress={onShare}
             style={({ pressed }) => [
               styles.shareActionFilled,
-              diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: accent, borderRadius: radius.full },
+              diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: getModeColorSoft(mode, isDark), borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
               pressed && { opacity: 0.85 },
             ]}
           >
-            <Share2 size={18} color={diffuse ? dt.colors.ink : colors.textInverse} strokeWidth={diffuse ? 1.6 : 2.5} />
-            <Text style={[styles.shareActionTextFilled, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13 } : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelScreen_shareAction')}</Text>
+            <Share2 size={18} color={colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[styles.shareActionTextFilled, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_shareAction')}</Text>
           </Pressable>
 
           <Pressable onPress={onClose} style={styles.shareCancel}>
-            <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted }]}>{t('channelScreen_ratingCancel')}</Text>
+            <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingCancel')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -1519,11 +1531,11 @@ function LeaveChannelSheet({
         <Pressable
           style={[styles.shareSheet, diffuse
             ? { backgroundColor: dt.colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
-            : { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}
+            : { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2.5, borderColor: colors.text }]}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.textMuted + '55' }]} />
-          <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>{t('channelScreen_leaveTitle')}</Text>
+          <View style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.text + '40' }]} />
+          <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelScreen_leaveTitle')}</Text>
           <Text style={[styles.leaveBody, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
             {t('channelScreen_leaveBodyPrefix')}
             <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
@@ -1535,7 +1547,7 @@ function LeaveChannelSheet({
             disabled={leaving}
             style={({ pressed }) => [
               styles.leaveConfirmBtn,
-              diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error } : { backgroundColor: brand.error, borderRadius: radius.full },
+              diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error } : { backgroundColor: brand.error, borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
               pressed && { opacity: 0.85 },
               leaving && { opacity: 0.6 },
             ]}
@@ -1548,7 +1560,7 @@ function LeaveChannelSheet({
           </Pressable>
 
           <Pressable onPress={onCancel} style={styles.shareCancel}>
-            <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted }]}>{t('channelScreen_stayBtn')}</Text>
+            <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_stayBtn')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -1561,7 +1573,7 @@ function LeaveChannelSheet({
 // ─── System Message (join/leave) ──────────────────────────────────────────
 
 function SystemMessage({ message }: { message: ChannelPost }) {
-  const { colors } = useTheme()
+  const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const isJoin = message.message_type === 'system_join'
@@ -1570,17 +1582,17 @@ function SystemMessage({ message }: { message: ChannelPost }) {
     <View style={styles.systemMsg}>
       <View style={[styles.systemMsgDot, diffuse
         ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-        : { backgroundColor: isJoin ? brand.success + '30' : brand.error + '30' }]}>
+        : { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.text }]}>
         {isJoin ? (
-          <LogIn size={12} color={diffuse ? dt.colors.ink3 : brand.success} strokeWidth={diffuse ? 1.6 : 2} />
+          <LogIn size={12} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
         ) : (
-          <LogOut size={12} color={diffuse ? dt.colors.ink3 : brand.error} strokeWidth={diffuse ? 1.6 : 2} />
+          <LogOut size={12} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
         )}
       </View>
-      <Text style={[styles.systemMsgText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal', letterSpacing: 0.5 } : { color: colors.textMuted }]}>
+      <Text style={[styles.systemMsgText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal', letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.body }]}>
         {message.content}
       </Text>
-      <Text style={[styles.systemMsgTime, diffuse ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono } : { color: colors.textMuted }]}>
+      <Text style={[styles.systemMsgTime, diffuse ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
         {formatTime(message.created_at)}
       </Text>
     </View>
@@ -1595,6 +1607,8 @@ interface MessageBubbleProps {
   onLongPress: () => void
   onThreadPress: () => void
   onSave: () => void
+  /** Light branch: my own message wears the soft tone instead of white. */
+  isMine?: boolean
 }
 
 // Memoized so an incoming message / reaction elsewhere in the list doesn't
@@ -1607,8 +1621,11 @@ function MessageBubbleBase({
   onLongPress,
   onThreadPress,
   onSave,
+  isMine = false,
 }: MessageBubbleProps) {
   const { colors, radius, isDark, font } = useTheme()
+  const mode = useModeStore((st) => st.mode)
+  const tone = getModeColorSoft(mode, isDark)
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -1625,23 +1642,23 @@ function MessageBubbleBase({
       delayLongPress={400}
       style={({ pressed }) => [
         styles.bubble,
-        pressed && { backgroundColor: diffuse ? dt.colors.surface : colors.surfaceRaised },
+        pressed && diffuse && { backgroundColor: dt.colors.surface },
       ]}
     >
       {/* Avatar — author's person blob (hairline frame under diffuse) */}
       <View style={[styles.avatar, diffuse
         ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-        : { backgroundColor: s.tint }]}>
+        : { backgroundColor: s.tint, borderWidth: 1.5, borderColor: colors.text }]}>
         <Character name={personBlob(authorKey)} size={20} bg={avatarBg} />
       </View>
 
-      <View style={styles.bubbleContent}>
+      <View style={[styles.bubbleContent, !diffuse && { backgroundColor: isMine ? tone : colors.surface, borderWidth: 1.5, borderColor: colors.text, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 10 }]}>
         {/* Inline reply reference */}
         {message.reply_to_content && (
           <View style={[styles.inlineReplyRef, diffuse
             ? { backgroundColor: 'transparent', borderLeftColor: dt.colors.line2, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, borderLeftWidth: 3, borderRadius: 12 }
-            : { backgroundColor: colors.surfaceRaised, borderLeftColor: colors.primary }]}>
-            <Text style={[styles.inlineReplyAuthor, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.primary, fontFamily: font.bodyBold }]}>
+            : { backgroundColor: 'transparent', borderLeftColor: colors.text, borderLeftWidth: 2, borderRadius: 0 }]}>
+            <Text style={[styles.inlineReplyAuthor, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }]}>
               {message.reply_to_author ?? t('channelScreen_someoneLower')}
             </Text>
             <Text style={[styles.inlineReplyText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
@@ -1658,15 +1675,15 @@ function MessageBubbleBase({
           {/* Verified-expert badge (Phase 3) */}
           {message.author_is_expert && (
             <View style={styles.expertBadge}>
-              <BadgeCheck size={13} color={diffuse ? dt.stickers.blue : brand.primary} strokeWidth={2} fill="none" />
+              <BadgeCheck size={13} color={diffuse ? dt.stickers.blue : colors.text} strokeWidth={2} fill="none" />
               {message.author_expert_title ? (
-                <Text style={[styles.expertTitle, { color: diffuse ? dt.stickers.blue : brand.primary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>
+                <Text style={[styles.expertTitle, { color: diffuse ? dt.stickers.blue : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>
                   {message.author_expert_title}
                 </Text>
               ) : null}
             </View>
           )}
-          <Text style={[styles.timestamp, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.body }]}>
+          <Text style={[styles.timestamp, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10 }]}>
             {formatTime(message.created_at)}
           </Text>
         </View>
@@ -1675,9 +1692,9 @@ function MessageBubbleBase({
         {message.is_pinned && (
           <View style={[styles.pinnedTag, diffuse
             ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-            : { backgroundColor: brand.accent + '15' }]}>
-            <Pin size={10} color={diffuse ? dt.colors.ink3 : brand.accent} strokeWidth={diffuse ? 1.6 : 2} />
-            <Text style={[styles.pinnedTagText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 } : { color: brand.accent }]}>{t('channelScreen_pinned')}</Text>
+            : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.text }]}>
+            <Pin size={10} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+            <Text style={[styles.pinnedTagText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_pinned')}</Text>
           </View>
         )}
 
@@ -1688,15 +1705,15 @@ function MessageBubbleBase({
         <View style={styles.bubbleFooter}>
           {/* Reaction — tap = quick heart, long-press (bubble) = picker.
               Shows the chosen emoji when a non-heart reaction is set. */}
-          <Pressable onPress={onReaction} onLongPress={onLongPress} hitSlop={6} style={styles.reactionBtn}>
+          <Pressable onPress={onReaction} onLongPress={onLongPress} hitSlop={6} style={[styles.reactionBtn, !diffuse && { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1.5, borderColor: message.user_reacted ? colors.text : 'transparent', backgroundColor: message.user_reacted ? tone : 'transparent' }]}>
             {message.my_reaction && message.my_reaction !== 'heart' ? (
               <Text style={{ fontSize: 14 }}>{REACTION_EMOJI[message.my_reaction]}</Text>
             ) : (
               <Heart
                 size={14}
-                color={message.user_reacted ? (diffuse ? dt.colors.ink : brand.error) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+                color={message.user_reacted ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink3 : colors.text)}
                 strokeWidth={diffuse ? 1.6 : 2}
-                fill={message.user_reacted ? (diffuse ? dt.colors.ink : brand.error) : 'none'}
+                fill={message.user_reacted ? (diffuse ? dt.colors.ink : colors.text) : 'none'}
               />
             )}
             {message.reaction_count > 0 && (
@@ -1705,7 +1722,7 @@ function MessageBubbleBase({
                   styles.reactionCount,
                   diffuse
                     ? { color: message.user_reacted ? dt.colors.ink : dt.colors.ink3, fontFamily: diffuseFont.mono }
-                    : { color: message.user_reacted ? brand.error : colors.textMuted },
+                    : { color: colors.text, fontFamily: 'SpaceMono_400Regular', fontSize: 11, fontWeight: '400' },
                 ]}
               >
                 {message.reaction_count}
@@ -1718,9 +1735,9 @@ function MessageBubbleBase({
             <Pressable onPress={onSave} hitSlop={6} style={styles.reactionBtn}>
               <Bookmark
                 size={14}
-                color={message.saved ? (diffuse ? dt.colors.ink : brand.primary) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+                color={message.saved ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink3 : colors.text)}
                 strokeWidth={diffuse ? 1.6 : 2}
-                fill={message.saved ? (diffuse ? dt.colors.ink : brand.primary) : 'none'}
+                fill={message.saved ? (diffuse ? dt.colors.ink : colors.text) : 'none'}
               />
             </Pressable>
           )}
@@ -1728,8 +1745,8 @@ function MessageBubbleBase({
           {/* Reply count — tap to open thread */}
           {message.reply_count > 0 && (
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
-              <MessageCircle size={14} color={diffuse ? dt.colors.ink3 : colors.primary} strokeWidth={diffuse ? 1.6 : 2} />
-              <Text style={[styles.replyLinkText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10 } : { color: colors.primary }]}>
+              <MessageCircle size={14} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+              <Text style={[styles.replyLinkText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10 } : { color: colors.text, fontFamily: font.bodyBold }]}>
                 {`${message.reply_count === 1 ? t('channelScreen_replyCountOne', { count: message.reply_count }) : t('channelScreen_replyCountMany', { count: message.reply_count })} — ${t('channelScreen_viewThread')}`}
               </Text>
             </Pressable>
@@ -1738,8 +1755,8 @@ function MessageBubbleBase({
           {/* Thread CTA for messages with no replies yet */}
           {(message.reply_count ?? 0) === 0 && (
             <Pressable onPress={onThreadPress} style={styles.replyLink}>
-              <MessageCircle size={12} color={diffuse ? dt.colors.ink4 : colors.textMuted} strokeWidth={1.5} />
-              <Text style={[styles.replyLinkText, diffuse ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontSize: 11 }]}>
+              <MessageCircle size={12} color={diffuse ? dt.colors.ink4 : colors.text} strokeWidth={1.5} />
+              <Text style={[styles.replyLinkText, diffuse ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontSize: 11, fontFamily: font.body }]}>
                 {t('channelScreen_replyInThread')}
               </Text>
             </Pressable>
@@ -1762,7 +1779,8 @@ const MessageBubble = memo(MessageBubbleBase, (a, b) => {
     m.my_reaction === n.my_reaction &&
     m.saved === n.saved &&
     m.reply_count === n.reply_count &&
-    m.is_pinned === n.is_pinned
+    m.is_pinned === n.is_pinned &&
+    a.isMine === b.isMine
   )
 })
 
@@ -1797,7 +1815,7 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
       <View style={{ gap: 8 }}>
         {/* User's personal note */}
         {userNote && (
-          <Text style={[styles.messageText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text }]}>{userNote}</Text>
+          <Text style={[styles.messageText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.body }]}>{userNote}</Text>
         )}
 
         {/* Shared post card */}
@@ -1805,26 +1823,26 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
           onPress={() => router.push(`/garage/${garageId}` as any)}
           style={[styles.shareCard, diffuse
             ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderColor: dt.colors.line }
-            : { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}
+            : { backgroundColor: colors.surface, borderRadius: 14, borderColor: colors.text, borderWidth: 1.5 }]}
         >
           {coverPhoto && (
-            <Image source={{ uri: coverPhoto }} style={[styles.shareCardImage, { borderTopLeftRadius: diffuse ? 20 : radius.lg, borderTopRightRadius: diffuse ? 20 : radius.lg }]} />
+            <Image source={{ uri: coverPhoto }} style={[styles.shareCardImage, { borderTopLeftRadius: diffuse ? 20 : 12, borderTopRightRadius: diffuse ? 20 : 12 }]} />
           )}
           <View style={styles.shareCardBody}>
-            <Text style={[styles.shareCardLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2 } : { color: colors.primary }]}>
+            <Text style={[styles.shareCardLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4 }]}>
               {t('channelScreen_sharedFromGarage')}
             </Text>
             {quotedCaption && (
-              <Text style={[styles.shareCardCaption, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text }]} numberOfLines={2}>
+              <Text style={[styles.shareCardCaption, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }]} numberOfLines={2}>
                 {quotedCaption}
               </Text>
             )}
             {sharedAuthor && (
-              <Text style={[styles.shareCardAuthor, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted }]}>
+              <Text style={[styles.shareCardAuthor, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: font.body }]}>
                 {t('channelScreen_byAuthor', { author: sharedAuthor })}
               </Text>
             )}
-            <Text style={[styles.shareCardCta, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 } : { color: colors.primary }]}>
+            <Text style={[styles.shareCardCta, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 } : { color: colors.text, fontFamily: font.bodyBold, textDecorationLine: 'underline' }]}>
               {t('channelScreen_tapToView')}
             </Text>
           </View>
@@ -1843,7 +1861,7 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
         {hasMentions
           ? parts.map((part, i) =>
               part.startsWith('@') ? (
-                <Text key={i} style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.primary, fontFamily: font.bodySemiBold }}>{part}</Text>
+                <Text key={i} style={diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold, textDecorationLine: 'underline' }}>{part}</Text>
               ) : (
                 <Text key={i}>{part}</Text>
               )

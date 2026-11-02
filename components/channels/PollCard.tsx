@@ -10,8 +10,10 @@ import { useState, useCallback } from 'react'
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { useFocusEffect } from 'expo-router'
-import { useTheme, useDiffuseTheme, diffuseFont, brand } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, brand, getModeColorSoft } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { SiteChoice } from '../ui/SiteChoice'
+import { useModeStore } from '../../store/useModeStore'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { getPollForPost, castVote, type Poll } from '../../lib/polls'
 
@@ -20,6 +22,8 @@ export function PollCard({ postId }: { postId: string }) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const mode = useModeStore((st) => st.mode)
+  const tone = getModeColorSoft(mode)
 
   const [poll, setPoll] = useState<Poll | null>(null)
   const [loading, setLoading] = useState(true)
@@ -61,8 +65,10 @@ export function PollCard({ postId }: { postId: string }) {
   if (!poll) return null
 
   return (
-    <View style={[styles.card, { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: line, borderRadius: radius.lg }]}>
-      <Text style={[styles.question, { color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
+    <View style={[styles.card, diffuse
+      ? { backgroundColor: 'transparent', borderColor: line, borderRadius: radius.lg }
+      : { backgroundColor: 'transparent', borderWidth: 0, padding: 0, paddingVertical: 4 }]}>
+      <Text style={[styles.question, { color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]}>
         {poll.question}
       </Text>
 
@@ -70,6 +76,39 @@ export function PollCard({ postId }: { postId: string }) {
         {poll.options.map((opt) => {
           const pct = poll.total_votes > 0 ? Math.round((opt.votes / poll.total_votes) * 100) : 0
           const mine = poll.my_option_id === opt.id
+          if (!diffuse) {
+            if (!showResults) {
+              return (
+                <SiteChoice
+                  key={opt.id}
+                  label={opt.label}
+                  selected={false}
+                  onPress={() => vote(opt.id)}
+                  tone={tone}
+                  align="start"
+                  tick={false}
+                  radius={14}
+                  style={voting || closed ? { opacity: 0.6 } : undefined}
+                />
+              )
+            }
+            return (
+              <View key={opt.id} style={styles.siteResult}>
+                <View style={styles.siteResultTop}>
+                  <View style={styles.optionLeft}>
+                    {mine && <Check size={14} color={colors.text} strokeWidth={2.5} />}
+                    <Text style={[styles.optionLabel, { color: colors.text, fontFamily: mine ? font.bodyBold : font.body }]} numberOfLines={2}>{opt.label}</Text>
+                  </View>
+                  <Text style={[styles.pct, { color: colors.text, fontFamily: 'SpaceMono_400Regular' }]}>
+                    {opt.votes} · {pct}%
+                  </Text>
+                </View>
+                <View style={[styles.siteTrack, { borderColor: colors.text, backgroundColor: colors.surface }]}>
+                  <View style={[styles.siteFill, { width: `${pct}%`, backgroundColor: mine ? tone : colors.borderLight, borderRightWidth: pct > 0 && pct < 100 ? 1.5 : 0, borderRightColor: colors.text }]} />
+                </View>
+              </View>
+            )
+          }
           return (
             <Pressable
               key={opt.id}
@@ -103,7 +142,7 @@ export function PollCard({ postId }: { postId: string }) {
         })}
       </View>
 
-      <Text style={[styles.footer, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>
+      <Text style={[styles.footer, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }, !diffuse && { fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.4 }]}>
         {poll.total_votes === 1
           ? t('poll_votesOne', { count: poll.total_votes })
           : t('poll_votesMany', { count: poll.total_votes })}
@@ -122,5 +161,9 @@ const styles = StyleSheet.create({
   optionLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
   optionLabel: { fontSize: 14, flex: 1 },
   pct: { fontSize: 13 },
+  siteResult: { gap: 6 },
+  siteResultTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  siteTrack: { height: 10, borderRadius: 5, borderWidth: 1.5, overflow: 'hidden' },
+  siteFill: { height: '100%' },
   footer: { fontSize: 11, marginTop: 10 },
 })

@@ -12,6 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont, brand } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { Display, DisplayItalic } from '../../components/ui/Typography'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
@@ -54,7 +56,9 @@ export default function SavedPostsScreen() {
         onPress={() => router.push(`/channel/${item.channel_id}` as any)}
         style={({ pressed }) => [
           styles.card,
-          { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg },
+          diffuse
+            ? { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }
+            : { backgroundColor: 'transparent', borderColor: colors.border, borderWidth: 0, borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: 0, paddingHorizontal: 0 },
           pressed && { opacity: 0.7 },
         ]}
       >
@@ -63,7 +67,7 @@ export default function SavedPostsScreen() {
             {item.author_name ?? t('channelScreen_someoneFallback')}
           </Text>
           <Pressable onPress={() => handleUnsave(item.id)} hitSlop={8}>
-            <Bookmark size={16} color={accent} strokeWidth={2} fill={accent} />
+            <Bookmark size={16} color={diffuse ? accent : colors.text} strokeWidth={2} fill={diffuse ? accent : colors.text} />
           </Pressable>
         </View>
         <Text
@@ -78,14 +82,26 @@ export default function SavedPostsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
-
-      <View style={styles.titleBlock}>
-        <Display size={32} color={ink}>{t('savedPosts_title')}</Display>
-        <DisplayItalic size={17} color={diffuse ? dt.colors.ink : stickers.coral} style={{ marginTop: 6 }}>
-          {t('savedPosts_subtitle')}
-        </DisplayItalic>
-      </View>
+      {diffuse ? (
+        <>
+          <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
+          <View style={styles.titleBlock}>
+            <Display size={32} color={ink}>{t('savedPosts_title')}</Display>
+            <DisplayItalic size={17} color={dt.colors.ink} style={{ marginTop: 6 }}>
+              {t('savedPosts_subtitle')}
+            </DisplayItalic>
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={[styles.headerWrap, styles.siteHeader, { paddingTop: insets.top + 8 }]}>
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+            <SiteSticker name="pola" size={34} cut />
+            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{t('savedPosts_title')}</Text>
+          </View>
+          <Text style={[styles.siteSub, { color: colors.textSecondary, fontFamily: font.body }]}>{t('savedPosts_subtitle')}</Text>
+        </>
+      )}
 
       {loading ? (
         <View style={styles.center}><ActivityIndicator color={inkMuted} /></View>
@@ -93,7 +109,7 @@ export default function SavedPostsScreen() {
         <View style={styles.center}>
           <EmptyState
             icon={<Bookmark size={40} color={inkMuted} strokeWidth={1.5} />}
-            iconBg={diffuse ? dt.colors.surface : stickers.lilacSoft}
+            iconBg={diffuse ? dt.colors.surface : colors.surface}
             title={t('savedPosts_emptyTitle')}
             message={t('savedPosts_emptyBody')}
           />
@@ -114,6 +130,9 @@ export default function SavedPostsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   headerWrap: { paddingHorizontal: 16 },
+  siteHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  siteTitle: { flex: 1, fontSize: 26, textTransform: 'uppercase', letterSpacing: 0.3 },
+  siteSub: { fontSize: 14, lineHeight: 20, paddingHorizontal: 24, marginTop: 10, marginBottom: 8 },
   titleBlock: { marginTop: 4, marginBottom: 8, paddingHorizontal: 24 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   list: { paddingHorizontal: 20, paddingTop: 8, gap: 12 },

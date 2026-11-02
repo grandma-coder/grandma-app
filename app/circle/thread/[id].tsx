@@ -10,9 +10,11 @@ import { View, Text, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platf
 import { useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Heart, MessageCircle, Send } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { ScreenHeader } from '../../../components/ui/ScreenHeader'
+import { InkBackButton } from '../../../components/ui/InkBackButton'
+import { SiteSticker } from '../../../components/stickers/SiteSticker'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
 import { getCirclePost, getCircleReplies, createCirclePost, toggleReaction, type CirclePost } from '../../../lib/circles'
@@ -93,19 +95,19 @@ export default function CircleThreadScreen() {
   function reactionRow(post: CirclePost, isParent: boolean, showReplies: boolean) {
     return (
       <View style={styles.postFooter}>
-        <Pressable onPress={() => handleReact(post, isParent)} hitSlop={8} style={styles.stat}>
+        <Pressable onPress={() => handleReact(post, isParent)} hitSlop={8} style={[styles.stat, !diffuse && { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1.5, borderColor: post.has_reacted ? colors.text : 'transparent', backgroundColor: post.has_reacted ? getModeColorSoft('kids') : 'transparent' }]}>
           <Heart
             size={14}
-            color={post.has_reacted ? accent : inkMuted}
-            fill={post.has_reacted ? accent : 'transparent'}
+            color={diffuse ? (post.has_reacted ? accent : inkMuted) : colors.text}
+            fill={post.has_reacted ? (diffuse ? accent : colors.text) : 'transparent'}
             strokeWidth={1.8}
           />
-          <Text style={[styles.statText, { color: post.has_reacted ? accent : inkMuted, fontFamily: statFont }]}>{post.reaction_count}</Text>
+          <Text style={[styles.statText, { color: diffuse ? (post.has_reacted ? accent : inkMuted) : colors.text, fontFamily: diffuse ? statFont : 'SpaceMono_400Regular' }]}>{post.reaction_count}</Text>
         </Pressable>
         {showReplies ? (
           <View style={styles.stat}>
-            <MessageCircle size={14} color={inkMuted} strokeWidth={1.8} />
-            <Text style={[styles.statText, { color: inkMuted, fontFamily: statFont }]}>{post.reply_count}</Text>
+            <MessageCircle size={14} color={diffuse ? inkMuted : colors.text} strokeWidth={1.8} />
+            <Text style={[styles.statText, { color: diffuse ? inkMuted : colors.text, fontFamily: diffuse ? statFont : 'SpaceMono_400Regular' }]}>{post.reply_count}</Text>
           </View>
         ) : null}
       </View>
@@ -114,8 +116,8 @@ export default function CircleThreadScreen() {
 
   function renderReply({ item }: { item: CirclePost }) {
     return (
-      <View style={[styles.reply, { borderLeftColor: cardBorder }]}>
-        <Text style={[styles.handle, { color: accent, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>{item.handle}</Text>
+      <View style={[styles.reply, { borderLeftColor: diffuse ? cardBorder : colors.text }]}>
+        <Text style={[styles.handle, { color: diffuse ? accent : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }, !diffuse && { fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.4 }]}>{item.handle}</Text>
         <Text style={[styles.content, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{item.content}</Text>
         {reactionRow(item, false, false)}
       </View>
@@ -128,9 +130,17 @@ export default function CircleThreadScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : insets.top}
     >
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title={t('circles_threadTitle')} />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title={t('circles_threadTitle')} />
+        </View>
+      ) : (
+        <View style={[styles.headerWrap, styles.siteHeader, { paddingTop: insets.top + 8 }]}>
+          <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          <SiteSticker name="bubble" size={34} cut />
+          <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{t('circles_threadTitle')}</Text>
+        </View>
+      )}
 
       <FlatList
         data={replies}
@@ -142,8 +152,8 @@ export default function CircleThreadScreen() {
           loading && !parent ? (
             <View style={styles.center}><ActivityIndicator color={inkMuted} /></View>
           ) : parent ? (
-            <View style={[styles.parent, { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }]}>
-              <Text style={[styles.handle, { color: accent, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>{parent.handle}</Text>
+            <View style={[styles.parent, diffuse ? { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg } : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
+              <Text style={[styles.handle, { color: diffuse ? accent : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }, !diffuse && { fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.4 }]}>{parent.handle}</Text>
               <Text style={[styles.parentContent, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{parent.content}</Text>
               {reactionRow(parent, true, true)}
             </View>
@@ -154,7 +164,7 @@ export default function CircleThreadScreen() {
             <View style={styles.center}>
               <EmptyState
                 icon={<MessageCircle size={36} color={inkMuted} strokeWidth={1.5} />}
-                iconBg={diffuse ? dt.colors.surface : stickers.lilacSoft}
+                iconBg={diffuse ? dt.colors.surface : colors.surface}
                 title={t('circles_threadEmptyTitle')}
                 message={t('circles_threadEmptyBody')}
               />
@@ -176,9 +186,10 @@ export default function CircleThreadScreen() {
               styles.input,
               {
                 color: ink,
-                backgroundColor: diffuse ? dt.colors.bg : colors.bgWarm,
-                borderColor: cardBorder,
-                borderRadius: radius.md,
+                backgroundColor: diffuse ? dt.colors.bg : colors.surface,
+                borderColor: diffuse ? cardBorder : colors.text,
+                borderRadius: diffuse ? radius.md : 22,
+                borderWidth: diffuse ? 1 : 1.5,
                 fontFamily: diffuse ? diffuseFont.body : font.body,
               },
             ]}
@@ -186,11 +197,11 @@ export default function CircleThreadScreen() {
           <Pressable
             onPress={handleSend}
             disabled={!canSend}
-            style={[styles.send, { backgroundColor: canSend ? accent : (diffuse ? dt.colors.line : colors.borderLight), borderRadius: radius.full }]}
+            style={[styles.send, diffuse ? { backgroundColor: canSend ? accent : dt.colors.line, borderRadius: radius.full } : { width: 40, height: 40, backgroundColor: canSend ? colors.text : colors.borderLight, borderRadius: radius.full }]}
           >
             {sending
-              ? <ActivityIndicator size="small" color={onAccent} />
-              : <Send size={17} color={canSend ? onAccent : inkMuted} strokeWidth={2} />}
+              ? <ActivityIndicator size="small" color={diffuse ? onAccent : colors.bg} />
+              : <Send size={17} color={canSend ? (diffuse ? onAccent : colors.bg) : inkMuted} strokeWidth={2} />}
           </Pressable>
         </View>
         <Text style={[styles.composerHint, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
@@ -204,6 +215,8 @@ export default function CircleThreadScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   headerWrap: { paddingHorizontal: 16 },
+  siteHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  siteTitle: { flex: 1, fontSize: 26, textTransform: 'uppercase', letterSpacing: 0.3 },
   list: { paddingHorizontal: 20, gap: 10 },
   center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
   parent: { padding: 16, borderWidth: 1, marginBottom: 8 },

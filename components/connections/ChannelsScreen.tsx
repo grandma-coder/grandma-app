@@ -23,7 +23,7 @@ import {
   Star,
   Bookmark,
 } from 'lucide-react-native'
-import { useTheme, shadows, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, shadows, getModeColor, getModeColorSoft, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { BrandedLoader } from '../ui/BrandedLoader'
@@ -167,7 +167,7 @@ export function ChannelsScreen() {
       {/* Header — editorial serif, matches The Village */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={[styles.heading, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+          <Text style={[styles.heading, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && styles.siteHeading]}>
             {t('channelsDiscover_heading')}
           </Text>
           <Pressable
@@ -175,7 +175,8 @@ export function ChannelsScreen() {
             hitSlop={8}
             style={({ pressed }) => [
               styles.savedBtn,
-              { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.line : colors.border },
+              { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.line : colors.text },
+              !diffuse && { borderWidth: 1.5 },
               pressed && { opacity: 0.7 },
             ]}
           >
@@ -195,7 +196,7 @@ export function ChannelsScreen() {
       {/* Search */}
       <View style={[styles.searchBar, diffuse
         ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.md }
-        : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md }]}>
+        : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 14 }]}>
         <Search size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2} />
         <TextInput
           value={search}
@@ -281,11 +282,11 @@ export function ChannelsScreen() {
         styles.fab,
         diffuse
           ? { backgroundColor: dt.colors.surface, borderRadius: radius.full, borderWidth: 1, borderColor: dt.colors.hairline }
-          : { backgroundColor: accent, borderRadius: radius.full, ...shadows.cardPop },
+          : { backgroundColor: getModeColorSoft(mode), borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
         pressed && { transform: [{ scale: 0.93 }] },
       ]}
     >
-      <Plus size={26} color={diffuse ? dt.colors.ink : colors.textInverse} strokeWidth={diffuse ? 1.8 : 2.6} />
+      <Plus size={26} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.8 : 2.6} />
     </Pressable>
     </View>
   )
@@ -300,7 +301,7 @@ function sectionTitleStyle(
 ) {
   return diffuse
     ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase' as const, letterSpacing: 1.6 }
-    : { color: colors.textMuted, fontFamily: font.bodySemiBold }
+    : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, textTransform: 'uppercase' as const, letterSpacing: 1.4 }
 }
 
 // ─── Auto-scrolling Banner Carousel ────────────────────────────────────────
@@ -344,7 +345,7 @@ function BannerCarousel({ channels, myIds, accent, onJoin }: { channels: Channel
               onPress={() => router.push(`/channel/${c.id}` as any)}
               style={[styles.banner, diffuse
                 ? { width: BANNER_W, backgroundColor: dt.colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: dt.colors.line, overflow: 'hidden' }
-                : { width: BANNER_W, backgroundColor: sticker.tint, borderRadius: radius.lg }]}
+                : { width: BANNER_W, backgroundColor: sticker.tint, borderRadius: 18, borderWidth: 1.5, borderColor: colors.text }]}
             >
               {diffuse && <SoftBloom color={sticker.fill} cx="90%" cy="20%" opacity={dt.isDark ? 0.22 : 0.3} spread={0.5} />}
               {diffuse ? (
@@ -354,8 +355,8 @@ function BannerCarousel({ channels, myIds, accent, onJoin }: { channels: Channel
                   </DiffuseBloomIcon>
                 </View>
               ) : (
-                <View style={[styles.bannerIcon, { backgroundColor: sticker.tint }]}>
-                  <Character name={blob} size={34} bg={sticker.tint} />
+                <View style={[styles.bannerIcon, { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.text }]}>
+                  <Character name={blob} size={34} bg={colors.surface} />
                 </View>
               )}
               <View style={styles.bannerContent}>
@@ -389,12 +390,12 @@ function BannerCarousel({ channels, myIds, accent, onJoin }: { channels: Channel
                   hitSlop={6}
                   style={({ pressed }) => [styles.bannerJoin, diffuse
                     ? { backgroundColor: 'transparent', borderRadius: radius.full, borderWidth: 1, borderColor: dt.colors.line2 }
-                    : { backgroundColor: accent, borderRadius: radius.full },
+                    : { backgroundColor: colors.surface, borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
                     pressed && { opacity: 0.7 }]}
                 >
                   <Text style={[styles.bannerJoinText, diffuse
                     ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, textTransform: 'uppercase', letterSpacing: 1 }
-                    : { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinBtn')}</Text>
+                    : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinBtn')}</Text>
                 </Pressable>
               )}
             </Pressable>
@@ -451,7 +452,7 @@ function EmptyState({ title, body }: { title: string; body: string }) {
         <StarSticker size={34} fill={stickers.yellow} />
         <StarSticker size={26} fill={stickers.pink} />
       </View>
-      <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>{title}</Text>
+      <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{title}</Text>
       <Text style={[styles.emptyBody, { color: colors.textMuted, fontFamily: font.body }]}>{body}</Text>
     </View>
   )
@@ -487,7 +488,7 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
         styles.card,
         diffuse
           ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.lg, shadowOpacity: 0, elevation: 0 }
-          : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg },
+          : { backgroundColor: 'transparent', borderColor: colors.border, borderWidth: 0, borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: 0, paddingHorizontal: 0, marginBottom: 0, shadowOpacity: 0, elevation: 0 },
         pressed && { opacity: diffuse ? 0.6 : 0.85 },
       ]}
     >
@@ -498,7 +499,7 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
           </DiffuseBloomIcon>
         </View>
       ) : (
-        <View style={[styles.cardIcon, { backgroundColor: sticker.tint }]}>
+        <View style={[styles.cardIcon, { backgroundColor: sticker.tint, borderWidth: 1.5, borderColor: colors.text }]}>
           <Character name={blob} size={26} bg={sticker.tint} />
         </View>
       )}
@@ -518,8 +519,8 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
               <Text style={[styles.unreadText, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold }]}>{unread! > 99 ? '99+' : unread}</Text>
             </View>
           ) : (
-            <View style={[styles.unreadBadge, { backgroundColor: accent }]}>
-              <Text style={[styles.unreadText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{unread! > 99 ? '99+' : unread}</Text>
+            <View style={styles.unreadBadge}>
+              <Text style={[styles.unreadText, { color: colors.text, fontFamily: diffuseFont.monoBold }]}>{unread! > 99 ? '99+' : unread}</Text>
             </View>
           )
         ) : (
@@ -539,8 +540,8 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
               <Text style={[styles.joinedText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 0.8 }]}>{t('channelsDiscover_joinedBadge')}</Text>
             </View>
           ) : (
-            <View style={[styles.joinedBadge, { backgroundColor: stickers.greenSoft, borderRadius: radius.full }]}>
-              <Text style={[styles.joinedText, { color: stickers.greenInk, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinedBadge')}</Text>
+            <View style={[styles.joinedBadge, { backgroundColor: 'transparent', borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text }]}>
+              <Text style={[styles.joinedText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinedBadge')}</Text>
             </View>
           )
         )}
@@ -558,6 +559,7 @@ function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Chan
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const mode = useModeStore((st) => st.mode)
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
   const blob = channelBlob(channel.name, channel.category)
 
@@ -568,7 +570,7 @@ function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Chan
         styles.compactCard,
         diffuse
           ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.lg, shadowOpacity: 0, elevation: 0 }
-          : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg },
+          : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, shadowOpacity: 0, elevation: 0 },
         pressed && { opacity: diffuse ? 0.6 : 0.85 },
       ]}
     >
@@ -579,7 +581,7 @@ function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Chan
           </DiffuseBloomIcon>
         </View>
       ) : (
-        <View style={[styles.compactIcon, { backgroundColor: sticker.tint }]}>
+        <View style={[styles.compactIcon, { backgroundColor: sticker.tint, borderWidth: 1.5, borderColor: colors.text }]}>
           <Character name={blob} size={30} bg={sticker.tint} />
         </View>
       )}
@@ -600,8 +602,8 @@ function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Chan
             <Text style={[styles.joinedText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 0.8 }]}>{t('channelsDiscover_joinedBadge')}</Text>
           </View>
         ) : (
-          <View style={[styles.joinedBadge, { backgroundColor: stickers.greenSoft, borderRadius: radius.full, marginTop: 4 }]}>
-            <Text style={[styles.joinedText, { color: stickers.greenInk, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinedBadge')}</Text>
+          <View style={[styles.joinedBadge, { backgroundColor: 'transparent', borderRadius: radius.full, marginTop: 4, borderWidth: 1.5, borderColor: colors.text }]}>
+            <Text style={[styles.joinedText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinedBadge')}</Text>
           </View>
         )
       ) : (
@@ -610,8 +612,8 @@ function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Chan
             <Text style={[styles.joinBtnText, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, textTransform: 'uppercase', letterSpacing: 1 }]}>{t('channelsDiscover_joinBtn')}</Text>
           </Pressable>
         ) : (
-          <Pressable onPress={onJoin} hitSlop={6} style={({ pressed }) => [styles.joinBtn, { backgroundColor: accent, borderRadius: radius.full }, pressed && { opacity: 0.7 }]}>
-            <Text style={[styles.joinBtnText, { color: colors.textInverse, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinBtn')}</Text>
+          <Pressable onPress={onJoin} hitSlop={6} style={({ pressed }) => [styles.joinBtn, { backgroundColor: getModeColorSoft(mode), borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text }, pressed && { opacity: 0.7 }]}>
+            <Text style={[styles.joinBtnText, { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelsDiscover_joinBtn')}</Text>
           </Pressable>
         )
       )}
@@ -626,6 +628,7 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingBottom: 96 }, // clears the absolute + FAB (bottom 24 + 56 tall)
   header: { marginBottom: 18 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  siteHeading: { fontSize: 28, letterSpacing: 0.3, lineHeight: 34, textTransform: 'uppercase' },
   heading: { fontSize: 36, letterSpacing: -1, lineHeight: 40, flex: 1 },
   savedBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   subheading: { fontSize: 14, marginTop: 6, lineHeight: 18 },
@@ -679,7 +682,7 @@ const styles = StyleSheet.create({
   joinedText: { fontSize: 10 },
 
   // Unread badge
-  unreadBadge: { minWidth: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  unreadBadge: { minWidth: 22, alignItems: 'flex-end', justifyContent: 'center' },
   unreadText: { fontSize: 11 },
   // Unread indicator (diffuse) — accent dot + mono count, no filled pill
   unreadDotRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },

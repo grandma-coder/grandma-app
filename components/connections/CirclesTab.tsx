@@ -13,6 +13,7 @@ import { useTranslation } from '../../lib/i18n'
 import { useModeStore } from '../../store/useModeStore'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { Character } from '../characters/Characters'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { circleBlob } from '../../lib/circleBlob'
 import { getCircles, type Circle, type CircleJourney } from '../../lib/circles'
 
@@ -45,6 +46,27 @@ export function CirclesTab() {
   const iconTint = diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft
 
   function renderItem({ item }: { item: Circle }) {
+    if (!diffuse) {
+      return (
+        <Pressable
+          onPress={() => router.push(`/circle/${item.id}` as any)}
+          style={({ pressed }) => [styles.siteRow, { borderBottomColor: colors.border }, pressed && { opacity: 0.7 }]}
+        >
+          <View style={[styles.siteDisc, { backgroundColor: iconTint, borderColor: colors.text }]}>
+            <SiteSticker name="owl" size={28} cut />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.name, { color: colors.text, fontFamily: font.bodySemiBold }]}>{item.name}</Text>
+            {item.description ? (
+              <Text style={[styles.desc, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
+                {item.description}
+              </Text>
+            ) : null}
+          </View>
+          <ChevronRight size={16} color={colors.text} strokeWidth={2} />
+        </Pressable>
+      )
+    }
     return (
       <Pressable
         onPress={() => router.push(`/circle/${item.id}` as any)}
@@ -55,18 +77,17 @@ export function CirclesTab() {
         ]}
       >
         <View style={[styles.iconBubble, { backgroundColor: iconTint }]}>
-          {/* bg = the bubble's own fill so cut-out details (e.g. selfcare's steam) blend into the socket */}
           <Character name={circleBlob(item.name)} size={30} bg={iconTint} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.name, { color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{item.name}</Text>
+          <Text style={[styles.name, { color: ink, fontFamily: diffuseFont.bodySemiBold }]}>{item.name}</Text>
           {item.description ? (
-            <Text style={[styles.desc, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={2}>
+            <Text style={[styles.desc, { color: inkMuted, fontFamily: diffuseFont.body }]} numberOfLines={2}>
               {item.description}
             </Text>
           ) : null}
         </View>
-        <ChevronRight size={16} color={inkMuted} strokeWidth={diffuse ? 1.5 : 2} />
+        <ChevronRight size={16} color={inkMuted} strokeWidth={1.5} />
       </Pressable>
     )
   }
@@ -82,7 +103,7 @@ export function CirclesTab() {
           data={circles}
           keyExtractor={(c) => c.id}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, !diffuse && { gap: 0 }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <Text style={[styles.empty, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{t('circles_empty')}</Text>
@@ -98,6 +119,8 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 20, paddingBottom: 32, gap: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderWidth: 1 },
+  siteRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  siteDisc: { width: 48, height: 48, borderRadius: 24, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   iconBubble: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   name: { fontSize: 16 },
   desc: { fontSize: 13, marginTop: 2, lineHeight: 18 },

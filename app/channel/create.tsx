@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowLeft, Check, Camera, Lock, Globe } from 'lucide-react-native'
-import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { useConfirmDialog } from '../../components/ui/useConfirm'
@@ -20,6 +20,8 @@ import {
   presetBlob,
 } from '../../lib/channelSticker'
 import { Character } from '../../components/characters/Characters'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 
 
 const CATEGORIES = [
@@ -120,6 +122,8 @@ export default function CreateChannel() {
   }
 
   const styles = makeStyles(colors, radius, spacing)
+  const tone = getModeColorSoft(mode)
+  const site = !diffuse
 
   return (
     <View style={[styles.screen, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
@@ -129,11 +133,16 @@ export default function CreateChannel() {
       >
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <Pressable onPress={() => router.back()} style={[styles.backBtn, diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
-            <ArrowLeft size={22} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-          </Pressable>
-          <Text style={[styles.headerTitle, diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_header')}</Text>
-          <View style={{ width: 40 }} />
+          {diffuse ? (
+            <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
+              <ArrowLeft size={22} color={dt.colors.ink} strokeWidth={1.6} />
+            </Pressable>
+          ) : (
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          )}
+          {site && <SiteSticker name="bubble" size={34} cut />}
+          <Text style={[styles.headerTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : { flex: 1, marginLeft: 10, fontSize: 24, fontWeight: '400', letterSpacing: 0.3 }]} numberOfLines={1}>{t('channelCreate_header')}</Text>
+          {diffuse && <View style={{ width: 40 }} />}
         </View>
 
         <ScrollView
@@ -148,7 +157,7 @@ export default function CreateChannel() {
             {(() => {
               if (icon.kind === 'photo') {
                 return (
-                  <View style={[styles.iconPreview, { backgroundColor: colors.surfaceRaised }]}>
+                  <View style={[styles.iconPreview, { backgroundColor: colors.surfaceRaised }, site && { borderWidth: 1.5, borderColor: colors.text }]}>
                     <Image source={{ uri: icon.uri }} style={styles.iconImage} />
                   </View>
                 )
@@ -159,7 +168,7 @@ export default function CreateChannel() {
               return (
                 <View style={[styles.iconPreview, diffuse
                   ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-                  : { backgroundColor: s.tint }]}>
+                  : { backgroundColor: s.tint, borderWidth: 1.5, borderColor: colors.text }]}>
                   <Character name={presetBlob(icon.index)} size={48} bg={previewBg} />
                 </View>
               )
@@ -185,7 +194,7 @@ export default function CreateChannel() {
                         }
                       : {
                           backgroundColor: selected ? s.tint : 'transparent',
-                          borderColor: selected ? s.fill : colors.border,
+                          borderColor: selected ? colors.text : colors.border,
                         },
                   ]}
                 >
@@ -204,18 +213,18 @@ export default function CreateChannel() {
                     }
                   : {
                       backgroundColor: icon.kind === 'photo' ? colors.surfaceRaised : 'transparent',
-                      borderColor: icon.kind === 'photo' ? colors.primary : colors.border,
+                      borderColor: icon.kind === 'photo' ? colors.text : colors.border,
                     },
               ]}
             >
-              <Camera size={22} color={diffuse ? dt.colors.ink3 : colors.textSecondary} strokeWidth={diffuse ? 1.6 : 2} />
+              <Camera size={22} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
           </View>
 
           {/* Name */}
-          <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelName')}</Text>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : styles.labelSite]}>{t('channelCreate_labelName')}</Text>
           <TextInput
-            style={[styles.input, diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, color: dt.colors.ink, fontFamily: diffuseFont.body, borderRadius: 20 }]}
+            style={[styles.input, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, color: dt.colors.ink, fontFamily: diffuseFont.body, borderRadius: 20 } : styles.inputSite]}
             placeholder={t('channelCreate_namePlaceholder')}
             placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             value={name}
@@ -226,9 +235,9 @@ export default function CreateChannel() {
           <Text style={[styles.charCount, diffuse && { color: dt.colors.ink4, fontFamily: diffuseFont.mono }]}>{name.length}/50</Text>
 
           {/* Description */}
-          <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelDescription')}</Text>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : styles.labelSite]}>{t('channelCreate_labelDescription')}</Text>
           <TextInput
-            style={[styles.input, styles.inputMulti, diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, color: dt.colors.ink, fontFamily: diffuseFont.body, borderRadius: 20 }]}
+            style={[styles.input, styles.inputMulti, diffuse ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, color: dt.colors.ink, fontFamily: diffuseFont.body, borderRadius: 20 } : styles.inputSite]}
             placeholder={t('channelCreate_descriptionPlaceholder')}
             placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             value={description}
@@ -239,7 +248,7 @@ export default function CreateChannel() {
           <Text style={[styles.charCount, diffuse && { color: dt.colors.ink4, fontFamily: diffuseFont.mono }]}>{description.length}/200</Text>
 
           {/* Privacy toggle */}
-          <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelType')}</Text>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : styles.labelSite]}>{t('channelCreate_labelType')}</Text>
           <View style={styles.chipRow}>
             <Pressable
               onPress={() => setIsPrivate(false)}
@@ -247,15 +256,15 @@ export default function CreateChannel() {
                 styles.chip,
                 diffuse
                   ? { backgroundColor: !isPrivate ? dt.colors.surface : 'transparent', borderColor: !isPrivate ? dt.colors.hairline : dt.colors.line }
-                  : !isPrivate && styles.chipSelected,
+                  : [styles.chipSite, !isPrivate && { backgroundColor: tone, borderColor: colors.text }],
               ]}
             >
-              <Globe size={14} color={diffuse ? (!isPrivate ? dt.colors.ink : dt.colors.ink3) : (!isPrivate ? colors.primary : colors.textSecondary)} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
+              <Globe size={14} color={diffuse ? (!isPrivate ? dt.colors.ink : dt.colors.ink3) : colors.text} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
               <Text style={[
                 styles.chipText,
                 diffuse
                   ? { color: !isPrivate ? dt.colors.ink : dt.colors.ink3, fontFamily: !isPrivate ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
-                  : !isPrivate && styles.chipTextSelected,
+                  : styles.chipTextSite,
               ]}>{t('channelCreate_typePublic')}</Text>
             </Pressable>
             <Pressable
@@ -264,15 +273,15 @@ export default function CreateChannel() {
                 styles.chip,
                 diffuse
                   ? { backgroundColor: isPrivate ? dt.colors.surface : 'transparent', borderColor: isPrivate ? dt.colors.hairline : dt.colors.line }
-                  : isPrivate && styles.chipSelected,
+                  : [styles.chipSite, isPrivate && { backgroundColor: tone, borderColor: colors.text }],
               ]}
             >
-              <Lock size={14} color={diffuse ? (isPrivate ? dt.colors.ink : dt.colors.ink3) : (isPrivate ? colors.primary : colors.textSecondary)} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
+              <Lock size={14} color={diffuse ? (isPrivate ? dt.colors.ink : dt.colors.ink3) : colors.text} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
               <Text style={[
                 styles.chipText,
                 diffuse
                   ? { color: isPrivate ? dt.colors.ink : dt.colors.ink3, fontFamily: isPrivate ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
-                  : isPrivate && styles.chipTextSelected,
+                  : styles.chipTextSite,
               ]}>{t('channelCreate_typePrivate')}</Text>
             </Pressable>
           </View>
@@ -283,7 +292,7 @@ export default function CreateChannel() {
           )}
 
           {/* Category */}
-          <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelCategory')}</Text>
+          <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : styles.labelSite]}>{t('channelCreate_labelCategory')}</Text>
           <View style={styles.chipRow}>
             {CATEGORIES.map((c) => {
               const selected = category === c
@@ -295,17 +304,17 @@ export default function CreateChannel() {
                     styles.chip,
                     diffuse
                       ? { backgroundColor: selected ? dt.colors.surface : 'transparent', borderColor: selected ? dt.colors.hairline : dt.colors.line }
-                      : selected && styles.chipSelected,
+                      : [styles.chipSite, selected && { backgroundColor: tone, borderColor: colors.text }],
                   ]}
                 >
                   {selected && (
-                    <Check size={14} color={diffuse ? dt.colors.ink : colors.primary} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
+                    <Check size={14} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} style={{ marginRight: 4 }} />
                   )}
                   <Text style={[
                     styles.chipText,
                     diffuse
                       ? { color: selected ? dt.colors.ink : dt.colors.ink3, fontFamily: selected ? diffuseFont.monoBold : diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
-                      : selected && styles.chipTextSelected,
+                      : styles.chipTextSite,
                   ]}>
                     {t(CATEGORY_KEY[c])}
                   </Text>
@@ -317,7 +326,7 @@ export default function CreateChannel() {
           {/* Custom category input when "Other" selected */}
           {category === 'Other' && (
             <View style={{ marginTop: 12 }}>
-              <Text style={[styles.label, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 }]}>{t('channelCreate_labelYourCategory')}</Text>
+              <Text style={[styles.label, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4 } : styles.labelSite]}>{t('channelCreate_labelYourCategory')}</Text>
               <TextInput
                 value={customCategory}
                 onChangeText={setCustomCategory}
@@ -327,7 +336,7 @@ export default function CreateChannel() {
                   styles.input,
                   diffuse
                     ? { borderColor: dt.colors.line, color: dt.colors.ink, backgroundColor: dt.colors.surface, fontFamily: diffuseFont.body, borderRadius: 20 }
-                    : { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface },
+                    : styles.inputSite,
                 ]}
                 autoFocus
               />
@@ -421,7 +430,7 @@ function ChannelCreatedModal({
       <View style={modalStyles.overlay}>
         <View style={[modalStyles.card, diffuse
           ? { backgroundColor: dt.colors.bg, borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
-          : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+          : { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1.5, borderColor: colors.text }]}>
           {/* Sticker cluster */}
           <View style={modalStyles.clusterWrap}>
             {/* hero */}
@@ -434,7 +443,7 @@ function ChannelCreatedModal({
                 opacity: heroAnim,
               }}
             >
-              <View style={[modalStyles.heroBg, { backgroundColor: hero.tint }]}>
+              <View style={[modalStyles.heroBg, { backgroundColor: hero.tint }, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]}>
                 <HeroIcon size={64} fill={hero.fill} />
               </View>
             </Animated.View>
@@ -465,7 +474,7 @@ function ChannelCreatedModal({
             })}
           </View>
 
-          <Text style={[modalStyles.title, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>{t('channelCreate_successTitle')}</Text>
+          <Text style={[modalStyles.title, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelCreate_successTitle')}</Text>
           <Text style={[modalStyles.desc, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary }]}>
             <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontWeight: '800', color: colors.text }}>#{channelName}</Text>
             {' '}{t('channelCreate_successMsg')}
@@ -562,6 +571,10 @@ function makeStyles(
       justifyContent: 'center',
       borderWidth: 1.5,
     },
+    labelSite: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, fontWeight: '400', textTransform: 'uppercase', letterSpacing: 1.4, color: colors.textMuted },
+    inputSite: { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 14, color: colors.text, fontFamily: font.body, fontSize: 16 },
+    chipSite: { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 },
+    chipTextSite: { color: colors.text, fontFamily: font.bodyBold },
     label: {
       fontSize: 11,
       fontWeight: '600',

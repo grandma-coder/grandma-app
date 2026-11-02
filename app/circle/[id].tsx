@@ -11,9 +11,11 @@ import { View, Text, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platf
 import { useLocalSearchParams, useFocusEffect, router } from 'expo-router'
 import { Heart, MessageCircle, ShieldCheck, Send } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { Display, DisplayItalic } from '../../components/ui/Typography'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
@@ -93,29 +95,31 @@ export default function CircleScreen() {
         onPress={() => router.push(`/circle/thread/${item.id}`)}
         style={({ pressed }) => [
           styles.post,
-          { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg },
+          diffuse
+            ? { backgroundColor: cardBg, borderColor: cardBorder, borderRadius: radius.lg }
+            : { backgroundColor: 'transparent', borderColor: colors.border, borderWidth: 0, borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: 0, paddingHorizontal: 0 },
           pressed && { opacity: 0.7 },
         ]}
       >
-        <Text style={[styles.handle, { color: accent, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>{item.handle}</Text>
+        <Text style={[styles.handle, { color: diffuse ? accent : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }, !diffuse && { fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.4 }]}>{item.handle}</Text>
         <Text style={[styles.content, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{item.content}</Text>
         <View style={styles.postFooter}>
           <Pressable
             onPress={() => handleReact(item)}
             hitSlop={8}
-            style={styles.stat}
+            style={[styles.stat, !diffuse && { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1.5, borderColor: item.has_reacted ? colors.text : 'transparent', backgroundColor: item.has_reacted ? getModeColorSoft('kids') : 'transparent' }]}
           >
             <Heart
               size={14}
-              color={item.has_reacted ? accent : inkMuted}
-              fill={item.has_reacted ? accent : 'transparent'}
+              color={diffuse ? (item.has_reacted ? accent : inkMuted) : colors.text}
+              fill={item.has_reacted ? (diffuse ? accent : colors.text) : 'transparent'}
               strokeWidth={1.8}
             />
-            <Text style={[styles.statText, { color: item.has_reacted ? accent : inkMuted, fontFamily: statFont }]}>{item.reaction_count}</Text>
+            <Text style={[styles.statText, { color: diffuse ? (item.has_reacted ? accent : inkMuted) : colors.text, fontFamily: diffuse ? statFont : 'SpaceMono_400Regular' }]}>{item.reaction_count}</Text>
           </Pressable>
           <View style={styles.stat}>
-            <MessageCircle size={14} color={inkMuted} strokeWidth={1.8} />
-            <Text style={[styles.statText, { color: inkMuted, fontFamily: statFont }]}>{item.reply_count}</Text>
+            <MessageCircle size={14} color={diffuse ? inkMuted : colors.text} strokeWidth={1.8} />
+            <Text style={[styles.statText, { color: diffuse ? inkMuted : colors.text, fontFamily: diffuse ? statFont : 'SpaceMono_400Regular' }]}>{item.reply_count}</Text>
           </View>
         </View>
       </Pressable>
@@ -130,7 +134,15 @@ export default function CircleScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : insets.top}
     >
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
+      ) : (
+        <View style={[styles.headerWrap, styles.siteHeader, { paddingTop: insets.top + 8 }]}>
+          <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          <SiteSticker name="bubble" size={34} cut />
+          <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{circle?.name ?? ''}</Text>
+        </View>
+      )}
 
       <FlatList
         data={posts}
@@ -140,18 +152,24 @@ export default function CircleScreen() {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={styles.head}>
+            {diffuse && (
             <View style={[styles.headIcon, { backgroundColor: diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft }]}>
               {/* bg = the bubble fill so blob cut-out details blend into the socket */}
               <Character name={circleBlob(circle?.name ?? '')} size={44} bg={diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft} />
             </View>
-            <Display size={30} color={ink} align="center">{circle?.name ?? ''}</Display>
+            )}
+            {diffuse && <Display size={30} color={ink} align="center">{circle?.name ?? ''}</Display>}
             {circle?.description ? (
-              <DisplayItalic size={15} color={inkMuted} align="center" style={{ marginTop: 6 }}>
-                {circle.description}
-              </DisplayItalic>
+              diffuse ? (
+                <DisplayItalic size={15} color={inkMuted} align="center" style={{ marginTop: 6 }}>
+                  {circle.description}
+                </DisplayItalic>
+              ) : (
+                <Text style={{ color: colors.textSecondary, fontFamily: font.body, fontSize: 14, lineHeight: 20, textAlign: 'center' }}>{circle.description}</Text>
+              )
             ) : null}
-            <View style={[styles.anonPill, { backgroundColor: diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft, borderRadius: radius.full }]}>
-              <ShieldCheck size={13} color={accent} strokeWidth={2} />
+            <View style={[styles.anonPill, { backgroundColor: diffuse ? dt.stickers.lilacSoft : getModeColorSoft('preg'), borderRadius: radius.full }, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]}>
+              {diffuse ? <ShieldCheck size={13} color={accent} strokeWidth={2} /> : <SiteSticker name="lock" size={16} cut />}
               <Text style={[styles.anonText, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{t('circles_anonPill')}</Text>
             </View>
           </View>
@@ -163,7 +181,7 @@ export default function CircleScreen() {
             <View style={styles.center}>
               <EmptyState
                 icon={<MessageCircle size={40} color={inkMuted} strokeWidth={1.5} />}
-                iconBg={diffuse ? dt.colors.surface : stickers.lilacSoft}
+                iconBg={diffuse ? dt.colors.surface : colors.surface}
                 title={t('circles_readEmptyTitle')}
                 message={t('circles_readEmptyBody')}
               />
@@ -185,9 +203,10 @@ export default function CircleScreen() {
               styles.input,
               {
                 color: ink,
-                backgroundColor: diffuse ? dt.colors.bg : colors.bgWarm,
-                borderColor: cardBorder,
-                borderRadius: radius.md,
+                backgroundColor: diffuse ? dt.colors.bg : colors.surface,
+                borderColor: diffuse ? cardBorder : colors.text,
+                borderRadius: diffuse ? radius.md : 22,
+                borderWidth: diffuse ? 1 : 1.5,
                 fontFamily: diffuse ? diffuseFont.body : font.body,
               },
             ]}
@@ -195,11 +214,11 @@ export default function CircleScreen() {
           <Pressable
             onPress={handleSend}
             disabled={!canSend}
-            style={[styles.send, { backgroundColor: canSend ? accent : (diffuse ? dt.colors.line : colors.borderLight), borderRadius: radius.full }]}
+            style={[styles.send, diffuse ? { backgroundColor: canSend ? accent : dt.colors.line, borderRadius: radius.full } : { width: 40, height: 40, backgroundColor: canSend ? colors.text : colors.borderLight, borderRadius: radius.full }]}
           >
             {sending
-              ? <ActivityIndicator size="small" color={onAccent} />
-              : <Send size={17} color={canSend ? onAccent : inkMuted} strokeWidth={2} />}
+              ? <ActivityIndicator size="small" color={diffuse ? onAccent : colors.bg} />
+              : <Send size={17} color={canSend ? (diffuse ? onAccent : colors.bg) : inkMuted} strokeWidth={2} />}
           </Pressable>
         </View>
         <Text style={[styles.composerHint, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
@@ -213,6 +232,8 @@ export default function CircleScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   headerWrap: { paddingHorizontal: 16 },
+  siteHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  siteTitle: { flex: 1, fontSize: 26, textTransform: 'uppercase', letterSpacing: 0.3 },
   list: { paddingHorizontal: 20, gap: 10 },
   head: { alignItems: 'center', paddingTop: 4, paddingBottom: 16 },
   headIcon: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },

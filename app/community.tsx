@@ -13,12 +13,15 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../constants/theme'
 import { ChannelsTab } from '../components/connections/ChannelsTab'
 import { CirclesTab } from '../components/connections/CirclesTab'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteSticker } from '../components/stickers/SiteSticker'
 import { useTranslation } from '../lib/i18n'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { useModeStore } from '../store/useModeStore'
 import { getUnreadNotificationCount } from '../lib/channelPosts'
 
 type CommunityTab = 'channels' | 'anonymous'
@@ -32,6 +35,7 @@ export default function CommunityScreen() {
   const params = useLocalSearchParams<{ tab?: string }>()
   const [tab, setTab] = useState<CommunityTab>(params.tab === 'anonymous' ? 'anonymous' : 'channels')
   const [notifCount, setNotifCount] = useState(0)
+  const mode = useModeStore((st) => st.mode)
 
   useFocusEffect(
     useCallback(() => {
@@ -46,29 +50,47 @@ export default function CommunityScreen() {
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
+        {diffuse ? (
         <ScreenHeader
           title={t('community_title')}
           right={
             <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8}>
-              <View style={[styles.bellBtn, diffuse
-                ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-                : { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Ionicons name="notifications-outline" size={18} color={diffuse ? dt.colors.ink : colors.text} />
+              <View style={[styles.bellBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
+                <Ionicons name="notifications-outline" size={18} color={dt.colors.ink} />
                 {notifCount > 0 && (
-                  <View style={[styles.notifBadge, { backgroundColor: diffuse ? dt.colors.error : brand.error }]}>
-                    <Text style={[styles.notifBadgeText, { color: diffuse ? dt.colors.surface : colors.textInverse, fontFamily: diffuse ? diffuseFont.monoBold : undefined }]}>{notifCount > 9 ? '9+' : notifCount}</Text>
+                  <View style={[styles.notifBadge, { backgroundColor: dt.colors.error }]}>
+                    <Text style={[styles.notifBadgeText, { color: dt.colors.surface, fontFamily: diffuseFont.monoBold }]}>{notifCount > 9 ? '9+' : notifCount}</Text>
                   </View>
                 )}
               </View>
             </Pressable>
           }
         />
+        ) : (
+          <View style={styles.siteHeader}>
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+            <SiteSticker name="bubble" size={34} cut />
+            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
+              {t('community_title')}
+            </Text>
+            <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8}>
+              <View style={[styles.bellBtn, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}>
+                <SiteSticker name="bell" size={20} cut />
+                {notifCount > 0 && (
+                  <View style={[styles.notifBadge, { backgroundColor: colors.text }]}>
+                    <Text style={[styles.notifBadgeText, { color: colors.bg, fontFamily: font.bodyBold }]}>{notifCount > 9 ? '9+' : notifCount}</Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* Two-tab switcher: Channels | Anonymous */}
       <View style={[styles.tabBar, diffuse
         ? { backgroundColor: 'transparent', borderColor: dt.colors.line, gap: 8 }
-        : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        : { backgroundColor: 'transparent', borderColor: 'transparent', padding: 0, gap: 8 }]}>
         {(['channels', 'anonymous'] as const).map((tk) => {
           const active = tab === tk
           return (
@@ -82,7 +104,7 @@ export default function CommunityScreen() {
                         borderWidth: 1,
                         borderColor: active ? dt.colors.hairline : dt.colors.line,
                       }
-                    : { backgroundColor: active ? colors.text : 'transparent' },
+                    : { backgroundColor: active ? getModeColorSoft(mode) : colors.surface, borderWidth: 1.5, borderColor: colors.text },
                 ]}
               >
                 <Text
@@ -98,7 +120,7 @@ export default function CommunityScreen() {
                         }
                       : {
                           fontFamily: active ? font.bodySemiBold : font.bodyMedium,
-                          color: active ? colors.bg : colors.textMuted,
+                          color: colors.text,
                         },
                   ]}
                 >
@@ -122,6 +144,8 @@ export default function CommunityScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  siteHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  siteTitle: { flex: 1, fontSize: 26, textTransform: 'uppercase', letterSpacing: 0.3 },
   bellBtn: {
     width: 34, height: 34, borderRadius: 999, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center', position: 'relative',
