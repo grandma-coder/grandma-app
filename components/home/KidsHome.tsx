@@ -324,6 +324,7 @@ import { ActivitiesDetailCalm } from './kids/ActivitiesDetailCalm'
 import { DiaperDetailCalm } from './kids/DiaperDetailCalm'
 import { SiteChoice } from '../ui/SiteChoice'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
+import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { InkBackButton } from '../ui/InkBackButton'
 import { StickerEnter } from '../ui/Motion'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
@@ -5896,21 +5897,14 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
           <View style={[s.gsDragHandle, { backgroundColor: colors.borderStrong }]} />
 
           {/* Header */}
-          <View style={s.gsHeader}>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.gsTitle, { color: colors.text }]}>{t('kids_home_goals_set_title')}</Text>
-              <Text style={[s.gsSubtitle, { color: colors.textMuted }]}>
-                {t('kids_home_goals_subtitle', { childName, ageLabel })}
-              </Text>
-            </View>
-            <Pressable onPress={onClose} style={[s.gsCloseBtn, { backgroundColor: StickerPalette.paper, borderColor: DIAPER_STICKER_INK, borderWidth: 1.5 }]}>
-              <X size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
-            </Pressable>
-          </View>
+          <DetailSheetHeader title={t('kids_home_goals_set_title')} sticker="star" tone={StickerPalette.yellowSoft} childName={childName} onClose={onClose} />
+          <Text style={[s.gsSubtitle, { color: colors.textMuted, marginBottom: 6 }]}>
+            {t('kids_home_goals_subtitle', { childName, ageLabel })}
+          </Text>
 
           {/* Age suggestion banner — sticker pill */}
-          <View style={[s.gsAgeBanner, { backgroundColor: StickerPalette.blueSoft, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK }]}>
-            <Sparkles size={12} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+          <View style={[s.gsAgeBanner, { backgroundColor: 'transparent', paddingHorizontal: 0 }]}>
+            <SiteSticker name="ruler" size={18} />
             <Text style={[s.gsAgeBannerText, { color: DIAPER_STICKER_INK }]}>
               {t('kids_home_goals_suggested_banner', { ageLabel })}
             </Text>
@@ -5933,32 +5927,24 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                 m.key === 'feedings' || m.key === 'feedingMl' ? StickerPalette.pinkSoft :
                 m.key === 'calories' ? StickerPalette.peachSoft :
                 StickerPalette.greenSoft
-              const tilt = (idx % 2 === 0 ? -0.6 : 0.6)
+              const sticker = m.key === 'sleep' ? 'moon' : m.key === 'feedings' || m.key === 'feedingMl' ? 'bottle' : m.key === 'calories' ? 'avocado' : 'shoe'
               return (
                 <View
                   key={m.key}
                   style={[
                     s.gsCard,
                     {
-                      backgroundColor: StickerPalette.paper,
-                      borderColor: DIAPER_STICKER_INK,
-                      borderWidth: 1.5,
-                      shadowColor: DIAPER_STICKER_INK,
-                      shadowOffset: { width: 0, height: 3 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 6,
-                      elevation: 2,
-                      
+                      backgroundColor: 'transparent',
+                      borderWidth: 0,
+                      borderBottomWidth: idx < metrics.length - 1 ? 1 : 0,
+                      borderBottomColor: colors.border,
+                      borderRadius: 0,
+                      paddingHorizontal: 0,
                     },
                   ]}
                 >
-                  <View
-                    style={[
-                      s.gsCardIcon,
-                      { backgroundColor: stickerFill, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK },
-                    ]}
-                  >
-                    <Icon size={20} color={DIAPER_STICKER_INK} strokeWidth={2} />
+                  <View style={[s.gsCardIcon, { backgroundColor: stickerFill, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK }]}>
+                    <SiteSticker name={sticker} size={26} />
                   </View>
                   <View style={s.gsCardInfo}>
                     <Text style={[s.gsCardLabel, { color: DIAPER_STICKER_INK }]}>{m.label}</Text>
@@ -5967,7 +5953,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                   <View style={s.gsStepper}>
                     <Pressable
                       onPress={() => m.setValue(String(Math.max(0, (Number(m.value) || 0) - m.step)))}
-                      style={[s.gsStepBtn, { backgroundColor: StickerPalette.cream, borderColor: DIAPER_STICKER_INK, borderWidth: 1.5 }]}
+                      style={({ pressed }) => [s.gsStepBtn, { backgroundColor: StickerPalette.paper, borderColor: DIAPER_STICKER_INK, borderWidth: 1.5, transform: [{ scale: pressed ? 0.9 : 1 }] }]}
                       hitSlop={6}
                     >
                       <Minus size={13} color={DIAPER_STICKER_INK} strokeWidth={2.4} />
@@ -5980,7 +5966,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                     </View>
                     <Pressable
                       onPress={() => m.setValue(String((Number(m.value) || 0) + m.step))}
-                      style={[s.gsStepBtn, { backgroundColor: StickerPalette.cream, borderColor: DIAPER_STICKER_INK, borderWidth: 1.5 }]}
+                      style={({ pressed }) => [s.gsStepBtn, { backgroundColor: StickerPalette.paper, borderColor: DIAPER_STICKER_INK, borderWidth: 1.5, transform: [{ scale: pressed ? 0.9 : 1 }] }]}
                       hitSlop={6}
                     >
                       <Plus size={13} color={DIAPER_STICKER_INK} strokeWidth={2.4} />
@@ -5993,34 +5979,10 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
 
           {/* Footer — sticker buttons */}
           <View style={s.gsFooter}>
-            <Pressable
-              onPress={handleReset}
-              style={[
-                s.gsUseSuggestedBtn,
-                { borderColor: DIAPER_STICKER_INK, borderWidth: 1.5, backgroundColor: StickerPalette.paper },
-              ]}
-            >
-              <Sparkles size={13} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
-              <Text style={[s.gsUseSuggestedText, { color: DIAPER_STICKER_INK }]}>{t('kids_home_goals_use_suggested')}</Text>
+            <Pressable onPress={handleReset} hitSlop={10} style={({ pressed }) => ({ flex: 1, alignItems: 'center', opacity: pressed ? 0.6 : 1 })}>
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: DIAPER_STICKER_INK, textDecorationLine: 'underline' }}>{t('kids_home_goals_use_suggested')}</Text>
             </Pressable>
-            <Pressable
-              onPress={handleSave}
-              style={[
-                s.gsSaveBtn,
-                {
-                  backgroundColor: StickerPalette.coral,
-                  borderWidth: 1.5,
-                  borderColor: DIAPER_STICKER_INK,
-                  shadowColor: DIAPER_STICKER_INK,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 8,
-                  elevation: 4,
-                },
-              ]}
-            >
-              <Text style={[s.gsSaveBtnText, { color: DIAPER_STICKER_INK }]}>{t('kids_home_goals_save')}</Text>
-            </Pressable>
+            <EyeAction label={t('kids_home_goals_save')} onPress={handleSave} ink={DIAPER_STICKER_INK} sticker="star" fill={ACTION_TONES.yellow} size={64} />
           </View>
         </View>
       </View>
@@ -6482,17 +6444,19 @@ function RemindersModal({
                 <Character name="bell" size={16} color={dt.colors.ink3} />
               </View>
             ) : (
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5D652', borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
-                <Bell size={16} color="#141313" strokeWidth={2} />
-              </View>
+              <SiteSticker name="bell" size={32} cut />
             )}
-            <Text style={[s.reminderModalTitle, { color: diffuse ? dt.colors.ink : colors.text }, diffuse && { fontFamily: diffuseFont.display }]}>{t('kids_home_section_reminders')}</Text>
+            <Text style={[s.reminderModalTitle, { color: diffuse ? dt.colors.ink : colors.text }, diffuse ? { fontFamily: diffuseFont.display } : { fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 24 }]}>{t('kids_home_section_reminders')}</Text>
           </View>
-          <Pressable onPress={onClose} hitSlop={12}>
-            <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: diffuse ? 'transparent' : colors.surfaceRaised, borderWidth: 1, borderColor: diffuse ? dt.colors.hairline : colors.border }}>
-              <X size={15} color={diffuse ? dt.colors.ink : colors.textMuted} strokeWidth={2.5} />
-            </View>
-          </Pressable>
+          {diffuse ? (
+            <Pressable onPress={onClose} hitSlop={12}>
+              <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }}>
+                <X size={15} color={dt.colors.ink} strokeWidth={2.5} />
+              </View>
+            </Pressable>
+          ) : (
+            <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label="Close" style={{ marginBottom: 0 }} />
+          )}
         </View>
 
         {/* Metric tiles */}
@@ -6503,22 +6467,17 @@ function RemindersModal({
             <DiffuseMetricTile value={`${completionRate}%`} label={t('kids_home_reminders_modal_completion')} />
           </View>
         ) : (
-        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 4, marginBottom: 4 }}>
-          {/* Active */}
-          <View style={{ flex: 1, backgroundColor: '#F5B896', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
-            <Text style={{ fontSize: 26, fontFamily: font.display, color: '#141313', letterSpacing: -0.5 }}>{active.length}</Text>
-            <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>{t('kids_home_reminders_modal_tab_active')}</Text>
-          </View>
-          {/* Done this week */}
-          <View style={{ flex: 1, backgroundColor: '#BDD48C', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
-            <Text style={{ fontSize: 26, fontFamily: font.display, color: '#141313', letterSpacing: -0.5 }}>{thisWeek}</Text>
-            <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>{t('kids_home_reminders_modal_done_week')}</Text>
-          </View>
-          {/* Completion */}
-          <View style={{ flex: 1, backgroundColor: '#9DC3E8', borderRadius: 16, borderWidth: 1.5, borderColor: '#141313', paddingVertical: 12, alignItems: 'center', gap: 2 }}>
-            <Text style={{ fontSize: 26, fontFamily: font.display, color: '#141313', letterSpacing: -0.5 }}>{completionRate}%</Text>
-            <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: '#141313', textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.7 }}>{t('kids_home_reminders_modal_completion')}</Text>
-          </View>
+        <View style={{ flexDirection: 'row', marginHorizontal: 20, marginTop: 6, marginBottom: 6 }}>
+          {[
+            { v: String(active.length), l: t('kids_home_reminders_modal_tab_active') },
+            { v: String(thisWeek), l: t('kids_home_reminders_modal_done_week') },
+            { v: `${completionRate}%`, l: t('kids_home_reminders_modal_completion') },
+          ].map((m, i) => (
+            <View key={i} style={{ flex: 1, paddingVertical: 6, borderLeftWidth: i ? 1 : 0, borderLeftColor: colors.border, paddingLeft: i ? 14 : 0 }}>
+              <Text style={{ fontSize: 28, fontFamily: font.displayBold, color: colors.text, letterSpacing: -0.5 }}>{m.v}</Text>
+              <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2 }}>{m.l}</Text>
+            </View>
+          ))}
         </View>
         )}
 
@@ -6545,7 +6504,7 @@ function RemindersModal({
                     paddingHorizontal: 16,
                     borderRadius: 999,
                     borderWidth: diffuse ? 1 : 1.5,
-                    backgroundColor: diffuse ? (isAll ? dt.colors.surface : 'transparent') : (isAll ? '#F5D652' : (colors.surface)),
+                    backgroundColor: diffuse ? (isAll ? dt.colors.surface : 'transparent') : (isAll ? StickerPalette.yellowSoft : (colors.surface)),
                     borderColor: diffuse ? (isAll ? dt.colors.hairline : dt.colors.line) : (isDark ? (isAll ? '#F5D652' : colors.border) : '#141313'),
                   }}
                 >
@@ -8056,7 +8015,7 @@ const s = StyleSheet.create({
   gsStepValue: { alignItems: 'center', minWidth: 52 },
   gsStepNum: { fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, lineHeight: 26 },
   gsStepUnit: { fontSize: 9, fontFamily: font.bodyMedium, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 1 },
-  gsFooter: { marginTop: 20, gap: 10 },
+  gsFooter: { marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 10 },
   gsUseSuggestedBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 13, borderRadius: 999, borderWidth: 1 },
   gsUseSuggestedText: { fontSize: 13, fontFamily: font.bodySemiBold },
   gsSaveBtn: { alignItems: 'center', paddingVertical: 17, borderRadius: 999 },
