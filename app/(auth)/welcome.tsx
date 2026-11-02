@@ -172,7 +172,7 @@ export default function Welcome() {
     <View style={[styles.root, { backgroundColor: bg, paddingTop: insets.top + 12 }]}>
       {/* ── Brand — the site's top bar mark ── */}
       <Animated.View style={[styles.brandRow, { opacity: fadeIn }]}>
-        <SiteBrand color={ink} />
+        <SiteBrand color={ink} size={34} blink />
       </Animated.View>
 
       {/* ── Hero — the site's rebus headline + sub ── */}
@@ -229,6 +229,8 @@ const styles = StyleSheet.create({
 
   brandRow: {
     paddingHorizontal: 24,
+    paddingTop: 18,
+    alignItems: 'center',
   },
   hero: {
     flex: 1,

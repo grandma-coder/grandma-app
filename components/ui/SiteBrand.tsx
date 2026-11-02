@@ -13,11 +13,34 @@ import { font } from '../../constants/theme'
 import { SiteSticker, SITE_STICKER_NAMES, type SiteStickerName } from '../stickers/SiteSticker'
 import { useIdleSway } from './Motion'
 
-export function SiteBrand({ color, size = 22 }: { color: string; size?: number }) {
+export function SiteBrand({ color, size = 22, blink = false }: { color: string; size?: number; blink?: boolean }) {
   const sway = useIdleSway(5, 3)
+  const lid = useRef(new Animated.Value(1)).current
+
+  // Blink: the eye squashes shut for ~80ms every 2.5–4.5s, sometimes twice in a row.
+  useEffect(() => {
+    if (!blink) return
+    let alive = true
+    let timer: ReturnType<typeof setTimeout>
+    const once = (then?: () => void) =>
+      Animated.sequence([
+        Animated.timing(lid, { toValue: 0.08, duration: 70, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+        Animated.timing(lid, { toValue: 1, duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start(() => then?.())
+    const schedule = () => {
+      timer = setTimeout(() => {
+        if (!alive) return
+        const double = Math.random() < 0.3
+        once(double ? () => setTimeout(() => once(schedule), 90) : schedule)
+      }, 2500 + Math.random() * 2000)
+    }
+    timer = setTimeout(() => once(schedule), 900)
+    return () => { alive = false; clearTimeout(timer); lid.stopAnimation() }
+  }, [blink, lid])
+
   return (
     <View style={styles.brand} accessibilityRole="header" accessibilityLabel="grandma">
-      <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
+      <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }, { scaleY: lid }] }}>
         <SiteSticker name="eye" size={size * 1.55} />
       </Animated.View>
       <Text style={[styles.brandText, { color, fontSize: size }]}>grandma</Text>
