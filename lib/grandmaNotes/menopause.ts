@@ -5,6 +5,7 @@
 // week. Self-care suggestions only — never a therapy or treatment.
 import { computeSymptomStats, computeVasomotorFrequency, type MenopauseLogRow } from '../menopauseAnalytics'
 import type { MenopauseSymptomId } from '../menopauseSymptoms'
+import { TRIGGER_LABEL_KEY, TRIGGER_STICKER, countMenopauseTriggers } from '../menopauseTriggers'
 import { inRange, pickTop, weekWindows } from './shared'
 import type { GrandmaLetter, NoteCandidate, NoteKey, Translate } from './types'
 import type { SiteStickerName } from '../../components/stickers/SiteSticker'
@@ -77,6 +78,20 @@ export function buildMenopauseNote(input: MenopauseNoteInput, t: Translate): Gra
       body: prevCount > 0
         ? t('gn_meno_top_prev_body', { count: top.count, prev: prevCount })
         : t('gn_meno_top_body', { count: top.count }),
+    })
+  }
+
+  // What she noted before a hot flash / night sweat — a plain count, never advice.
+  // Needs ≥3 tagged flash/sweat logs this week and one trigger noted at least twice
+  // ("other" never names a pattern). Sits below a week-over-week flash change.
+  const trig = countMenopauseTriggers(thisRows)
+  const topTrig = trig.counts[0]
+  if (trig.tagged >= 3 && topTrig && topTrig.count >= 2) {
+    c.push({
+      id: `trigger-${topTrig.id}`, sticker: TRIGGER_STICKER[topTrig.id],
+      weight: 3 + Math.min(topTrig.count, 6) * 0.25,
+      title: t('gn_meno_trigger_title'),
+      body: t('gn_meno_trigger_body', { trigger: t(TRIGGER_LABEL_KEY[topTrig.id]), count: topTrig.count }),
     })
   }
 

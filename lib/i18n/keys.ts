@@ -3930,4 +3930,15 @@ export interface TranslationKeys {
   gn_sug_meno_walk: string
   gn_sug_meno_sleep: string
   gn_sug_meno_layers: string
+  meno_trigger_question: string
+  meno_trigger_coffee: string
+  meno_trigger_alcohol: string
+  meno_trigger_spicy_food: string
+  meno_trigger_stress: string
+  meno_trigger_warm_room: string
+  meno_trigger_poor_sleep: string
+  meno_trigger_other: string
+  meno_trigger_most_noted: string
+  gn_meno_trigger_title: string
+  gn_meno_trigger_body: string
 }

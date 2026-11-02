@@ -30,6 +30,15 @@ import { menoSticker } from './MenopauseLogSheet'
 import { toDateStr } from '../../lib/cycleLogic'
 import { saveMenopauseLog } from '../../lib/menopauseLogs'
 import {
+  MENOPAUSE_TRIGGERS,
+  TRIGGER_LABEL_KEY,
+  TRIGGER_STICKER,
+  TRIGGER_SYMPTOMS,
+  encodeMenopauseTriggers,
+  type MenopauseTrigger,
+} from '../../lib/menopauseTriggers'
+import { useTranslation } from '../../lib/i18n'
+import {
   ALL_MENOPAUSE_SYMPTOMS,
   menopauseSymptomLabel,
   type MenopauseSymptomId,
@@ -82,7 +91,13 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
   const [symptomId, setSymptomId] = useState<MenopauseSymptomId | null>(initialId ?? null)
   const [severity, setSeverity] = useState(3)
   const [notes, setNotes] = useState('')
+  const [triggers, setTriggers] = useState<MenopauseTrigger[]>([])
   const [saving, setSaving] = useState(false)
+  const { t } = useTranslation()
+  // Optional "What might have set it off?" tags — hot flash / night sweat only.
+  const showTriggers = site && !!symptomId && TRIGGER_SYMPTOMS.has(symptomId)
+  const toggleTrigger = (id: MenopauseTrigger) =>
+    setTriggers((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
 
   async function handleSave() {
     if (!symptomId || saving) return
@@ -93,6 +108,8 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
         date: logDate ?? toDateStr(new Date()),
         type: symptomId,
         severity,
+        // Triggers ride in the existing `value` text column as JSON (see menopauseTriggers).
+        value: showTriggers ? encodeMenopauseTriggers(triggers) : null,
         notes: notes.trim() || null,
       })
       onSaved()
@@ -210,6 +227,24 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
           <Text style={[styles.severityHint, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
             {COPY.severityHint[severity - 1]}
           </Text>
+        </View>
+      )}
+
+      {showTriggers && (
+        <View style={{ gap: 4 }}>
+          <SiteEyebrow>{t('meno_trigger_question')}</SiteEyebrow>
+          <View style={styles.stickerWrap}>
+            {MENOPAUSE_TRIGGERS.map((id) => (
+              <StickerChoice
+                key={id}
+                label={t(TRIGGER_LABEL_KEY[id])}
+                sticker={TRIGGER_STICKER[id]}
+                on={triggers.includes(id)}
+                onPress={() => toggleTrigger(id)}
+                tone={pal.accentSoft}
+              />
+            ))}
+          </View>
         </View>
       )}
 
