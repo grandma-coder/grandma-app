@@ -673,7 +673,7 @@ function SummaryRow({
   last?: boolean
 }) {
   return (
-    <View style={[completeStyles.summaryRow, !last && { borderBottomWidth: pal.diffuse ? 1 : 1.5, borderBottomColor: pal.border, ...(pal.diffuse ? null : { borderStyle: 'dashed' as const }) }]}>
+    <View style={[completeStyles.summaryRow, !last && { borderBottomWidth: pal.diffuse ? 1 : 1.5, borderBottomColor: pal.border }]}>
       <Character name={icon} size={22} color={pal.accent} bg={pal.bg} />
       <Text style={[completeStyles.summaryLabel, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{label}</Text>
       {pal.diffuse ? (

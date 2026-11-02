@@ -921,7 +921,7 @@ function PredictRow({
   colors: any; font: any; last?: boolean
 }) {
   return (
-    <View style={[completeStyles.predictRow, !last && { borderBottomWidth: 1.5, borderBottomColor: colors.text, borderStyle: 'dashed' }]}>
+    <View style={[completeStyles.predictRow, !last && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}>
       <View style={completeStyles.predictIcon}>{icon}</View>
       <Text style={[completeStyles.predictLabel, { color: colors.text, fontFamily: font.body }]}>{label}</Text>
       {/* the date sits on a tone tag — ink on pink, never pink on white */}
