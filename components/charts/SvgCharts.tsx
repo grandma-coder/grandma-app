@@ -187,7 +187,7 @@ export function LineChart({
                   strokeDasharray={i === 0 ? undefined : '3,5'}
                   strokeLinecap="round"
                 />
-                <SvgText x={leftPad - 10} y={y + 4} fill={colors.text} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
+                <SvgText x={leftPad - 10} y={y + 4} fill={colors.text} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="HankenGrotesk_500Medium">
                   {formatNum(tick)}
                 </SvgText>
               </G>
@@ -205,7 +205,7 @@ export function LineChart({
                 stroke={lineColor} strokeWidth={1.25} strokeDasharray="5,5" opacity={0.5}
                 strokeLinecap="round"
               />
-              <SvgText x={width - rightPad + 4} y={avgY + 3} fill={lineColor} fontSize={10} fontWeight="600" opacity={0.7} fontFamily="DMSans_500Medium">
+              <SvgText x={width - rightPad + 4} y={avgY + 3} fill={lineColor} fontSize={10} fontWeight="600" opacity={0.7} fontFamily="HankenGrotesk_500Medium">
                 avg
               </SvgText>
             </G>
@@ -244,7 +244,7 @@ export function LineChart({
                       x={p.x} y={p.y - 13}
                       fill={isMax ? lineColor : colors.text}
                       fontSize={11} fontWeight="700" textAnchor="middle"
-                      fontFamily="Fraunces_600SemiBold"
+                      fontFamily="HankenGrotesk_700Bold"
                     >
                       {formatNum(p.v)}{unit}
                     </SvgText>
@@ -327,7 +327,7 @@ export function BarChart({
                   strokeDasharray={i === 0 ? undefined : '3,5'}
                   strokeLinecap="round"
                 />
-                <SvgText x={leftPad - 10} y={y + 4} fill={colors.text} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="DMSans_500Medium">
+                <SvgText x={leftPad - 10} y={y + 4} fill={colors.text} fontSize={11} fontWeight="600" textAnchor="end" fontFamily="HankenGrotesk_500Medium">
                   {formatNum(tick)}
                 </SvgText>
               </G>
@@ -366,7 +366,7 @@ export function BarChart({
                   <SvgText
                     x={x + barW / 2} y={y - 8}
                     fill={colors.text} fontSize={12} fontWeight="700" textAnchor="middle"
-                    fontFamily="Fraunces_600SemiBold"
+                    fontFamily="HankenGrotesk_700Bold"
                   >
                     {formatNum(v)}
                   </SvgText>

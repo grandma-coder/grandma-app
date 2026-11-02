@@ -3981,7 +3981,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
           {sleepDuration ? (
             <View style={{ backgroundColor: colors.surface, borderRadius: 18, paddingVertical: 16, alignItems: 'center', borderWidth: 1.5, borderColor: colors.text }}>
               <Text style={{ color: colors.text, fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: font.display }}>{sleepDuration}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_logForm_totalSleep')}</Text>
+              <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_logForm_totalSleep')}</Text>
             </View>
           ) : null}
 
@@ -3990,10 +3990,10 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
       ) : (
         <View style={{ paddingVertical: 24, alignItems: 'center', gap: 10 }}>
           <Moon size={32} color={colors.textMuted} strokeWidth={1.5} />
-          <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
+          <Text style={{ fontFamily: 'HankenGrotesk_600SemiBold', color: colors.textSecondary, fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
             {t('kids_logForm_noBedtimeFound')}
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 18 }}>
+          <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 18 }}>
             {t('kids_logForm_logBedtimeFirst')}
           </Text>
         </View>

@@ -2937,7 +2937,7 @@ function ScoreInfoModal({
                     <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: font.bodyMedium }}>
                       {b.label}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 13 }}>{b.range}</Text>
+                    <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 13 }}>{b.range}</Text>
                   </View>
                 ))}
               </View>

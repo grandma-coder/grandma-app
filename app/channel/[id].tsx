@@ -1707,7 +1707,7 @@ function MessageBubbleBase({
               Shows the chosen emoji when a non-heart reaction is set. */}
           <Pressable onPress={onReaction} onLongPress={onLongPress} hitSlop={6} style={[styles.reactionBtn, !diffuse && { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1.5, borderColor: message.user_reacted ? colors.text : 'transparent', backgroundColor: message.user_reacted ? tone : 'transparent' }]}>
             {message.my_reaction && message.my_reaction !== 'heart' ? (
-              <Text style={{ fontSize: 14 }}>{REACTION_EMOJI[message.my_reaction]}</Text>
+              <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 14 }}>{REACTION_EMOJI[message.my_reaction]}</Text>
             ) : (
               <Heart
                 size={14}

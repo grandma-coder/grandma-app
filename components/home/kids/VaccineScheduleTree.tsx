@@ -268,7 +268,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
       )
     }
     return (
-      <Text style={{ color: ink3, fontSize: 13, marginBottom: 8 }}>
+      <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: ink3, fontSize: 13, marginBottom: 8 }}>
         {t('kids_home_vaccine_schedule_empty')}
       </Text>
     )

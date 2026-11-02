@@ -1997,7 +1997,7 @@ function WellnessScoreArc({
                 alignItems: isTop || isBot ? 'center' : isLeft ? 'flex-end' : 'flex-start',
               }}
             >
-              <Text style={{
+              <Text style={{ fontFamily: 'HankenGrotesk_400Regular',
                 fontSize: 13,
                 fontWeight: isActive ? '900' : '800',
                 color: PILLAR_CONFIG[key].color,
@@ -3399,7 +3399,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           : [styles.siteEyebrow, { color: colors.text, marginBottom: 0 }]}>
           {showDetails ? 'Hide details' : 'Show details'}
         </Text>
-        <Text style={{ color: diffuse ? dt.colors.ink3 : colors.text, fontSize: 15 }}>{showDetails ? '▾' : '▸'}</Text>
+        <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: diffuse ? dt.colors.ink3 : colors.text, fontSize: 15 }}>{showDetails ? '▾' : '▸'}</Text>
       </Pressable>
       {showDetails && <View style={{ gap: 16 }}>{content}</View>}
     </View>

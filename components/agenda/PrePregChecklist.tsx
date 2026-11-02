@@ -50,7 +50,7 @@ export function PrePregChecklist({ items, onToggle }: PrePregChecklistProps) {
                 {t('prepreg_checklistProgress_complete', { pct })}
               </Text>
               <Text style={{ fontFamily: diffuseFont.display, fontSize: 40, color: dt.colors.ink, letterSpacing: -1, marginTop: 6 }}>
-                {completed}<Text style={{ fontSize: 18, color: dt.colors.ink3 }}>{` / ${total}`}</Text>
+                {completed}<Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 18, color: dt.colors.ink3 }}>{` / ${total}`}</Text>
               </Text>
             </View>
           </View>

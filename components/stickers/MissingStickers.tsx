@@ -197,7 +197,7 @@ const PregnancyDashboardHero = ({ size = 100 }) => <S size={size}>
 const PregnancySymptomEmpty = ({ size = 100 }) => <S size={size}>
   <Path d="M16 84 C16 50 46 14 88 14 C88 50 58 84 16 84 Z" fill={MINT} stroke={STROKE} strokeWidth="1.6"/>
   <Path d="M22 80 Q50 56 82 22" fill="none" stroke={STROKE} strokeWidth="1.4"/>
-  <SvgText x="50" y="62" textAnchor="middle" fontSize="14" fill={STROKE} fontFamily="serif" fontStyle="italic">·</SvgText>
+  <SvgText x="50" y="62" textAnchor="middle" fontSize="14" fill={STROKE} fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic">·</SvgText>
 </S>;
 
 // Birth plan hero — hospital + heart
@@ -305,7 +305,7 @@ const KidsOnboardingBabyName = ({ size = 100 }) => <S size={size}>
   <Circle cx="14" cy="52" r="4" fill={ROYAL} stroke={STROKE} strokeWidth="1.4"/>
   <Circle cx="86" cy="52" r="4" fill={ROYAL} stroke={STROKE} strokeWidth="1.4"/>
   <Line x1="26" y1="50" x2="74" y2="50" stroke={STROKE} strokeWidth="1.4" strokeDasharray="3 3"/>
-  <SvgText x="50" y="60" textAnchor="middle" fontSize="11" fontFamily="serif" fontStyle="italic" fill={STROKE}>name</SvgText>
+  <SvgText x="50" y="60" textAnchor="middle" fontSize="11" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fill={STROKE}>name</SvgText>
   <Path d="M22 24 q4 -4 8 0 q4 4 0 8 z" fill={HOT_PINK} stroke={STROKE} strokeWidth="1.2"/>
 </S>;
 
@@ -410,7 +410,7 @@ const KidsVaultHospital = ({ size = 100 }) => <S size={size}>
 // Document empty — folder with question
 const KidsVaultDocumentEmpty = ({ size = 100 }) => <S size={size}>
   <Path d="M16 30 h26 l6 6 h36 v44 q0 4 -4 4 h-60 q-4 0 -4 -4 z" fill={CREAM} stroke={STROKE} strokeWidth="1.6" strokeLinejoin="round"/>
-  <SvgText x="50" y="68" textAnchor="middle" fontFamily="serif" fontSize="22" fill={STROKE} fontStyle="italic">?</SvgText>
+  <SvgText x="50" y="68" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontSize="22" fill={STROKE} fontStyle="italic">?</SvgText>
 </S>;
 
 // Document upload — paper with plus
@@ -559,7 +559,7 @@ const InsightsEmpty = ({ size = 100 }) => <S size={size}>
   <Rect x="26" y="64" width="12" height="16" fill={CREAM} stroke={STROKE} strokeWidth="1.4"/>
   <Rect x="42" y="56" width="12" height="24" fill={CREAM} stroke={STROKE} strokeWidth="1.4"/>
   <Rect x="58" y="48" width="12" height="32" fill={CREAM} stroke={STROKE} strokeWidth="1.4"/>
-  <SvgText x="78" y="38" textAnchor="end" fontFamily="serif" fontStyle="italic" fontSize="14" fill={STROKE}>z z z</SvgText>
+  <SvgText x="78" y="38" textAnchor="end" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="14" fill={STROKE}>z z z</SvgText>
 </S>;
 
 // Notifications empty — sleeping bell
@@ -568,8 +568,8 @@ const NotificationsEmpty = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="36" r="3" fill={CREAM} stroke={STROKE} strokeWidth="1.4"/>
   <Path d="M28 64 h44" stroke={STROKE} strokeWidth="1.6"/>
   <Circle cx="50" cy="72" r="3" fill={CREAM} stroke={STROKE} strokeWidth="1.4"/>
-  <SvgText x="74" y="36" fontFamily="serif" fontStyle="italic" fontSize="16" fill={STROKE}>z</SvgText>
-  <SvgText x="82" y="28" fontFamily="serif" fontStyle="italic" fontSize="12" fill={STROKE}>z</SvgText>
+  <SvgText x="74" y="36" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="16" fill={STROKE}>z</SvgText>
+  <SvgText x="82" y="28" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="12" fill={STROKE}>z</SvgText>
 </S>;
 
 // Leaderboard hero — trophy
@@ -585,21 +585,21 @@ const LeaderboardHero = ({ size = 100 }) => <S size={size}>
 // Rank 1 ribbon
 const LeaderboardRank1 = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="42" r="24" fill={YELLOW} stroke={STROKE} strokeWidth="1.6"/>
-  <SvgText x="50" y="50" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="22" fill={STROKE}>1</SvgText>
+  <SvgText x="50" y="50" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="22" fill={STROKE}>1</SvgText>
   <Path d="M34 60 l-8 28 l16 -8 l8 8 l8 -8 l16 8 l-8 -28" fill={HOT_PINK} stroke={STROKE} strokeWidth="1.6" strokeLinejoin="round"/>
 </S>;
 
 // Rank 2 ribbon
 const LeaderboardRank2 = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="42" r="24" fill="#D8D8D8" stroke={STROKE} strokeWidth="1.6"/>
-  <SvgText x="50" y="50" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="22" fill={STROKE}>2</SvgText>
+  <SvgText x="50" y="50" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="22" fill={STROKE}>2</SvgText>
   <Path d="M34 60 l-8 28 l16 -8 l8 8 l8 -8 l16 8 l-8 -28" fill={BLUE} stroke={STROKE} strokeWidth="1.6" strokeLinejoin="round"/>
 </S>;
 
 // Rank 3 ribbon
 const LeaderboardRank3 = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="42" r="24" fill={PEACH} stroke={STROKE} strokeWidth="1.6"/>
-  <SvgText x="50" y="50" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="22" fill={STROKE}>3</SvgText>
+  <SvgText x="50" y="50" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="22" fill={STROKE}>3</SvgText>
   <Path d="M34 60 l-8 28 l16 -8 l8 8 l8 -8 l16 8 l-8 -28" fill={MINT} stroke={STROKE} strokeWidth="1.6" strokeLinejoin="round"/>
 </S>;
 
@@ -608,7 +608,7 @@ const LeaderboardEmpty = ({ size = 100 }) => <S size={size}>
   <Rect x="40" y="46" width="20" height="34" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
   <Rect x="16" y="58" width="24" height="22" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
   <Rect x="60" y="64" width="24" height="16" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
-  <SvgText x="50" y="38" textAnchor="middle" fontFamily="serif" fontStyle="italic" fontSize="16" fill={STROKE}>—</SvgText>
+  <SvgText x="50" y="38" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="16" fill={STROKE}>—</SvgText>
 </S>;
 
 // Badges hero — sticker album
@@ -714,7 +714,7 @@ const ChannelThreadEmpty = ({ size = 100 }) => <S size={size}>
 const GarageListingSell = ({ size = 100 }) => <S size={size}>
   <Path d="M20 50 l30 -30 h28 v28 l-30 30 z" fill={HOT_PINK} stroke={STROKE} strokeWidth="1.6" strokeLinejoin="round"/>
   <Circle cx="64" cy="36" r="5" fill={CREAM} stroke={STROKE} strokeWidth="1.4"/>
-  <SvgText x="40" y="58" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="13" fill={CREAM} transform="rotate(-45 40 58)">SELL</SvgText>
+  <SvgText x="40" y="58" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="13" fill={CREAM} transform="rotate(-45 40 58)">SELL</SvgText>
 </S>;
 
 // Garage — trade (arrows loop)
@@ -744,7 +744,7 @@ const GarageCreateHero = ({ size = 100 }) => <S size={size}>
 const GarageEmpty = ({ size = 100 }) => <S size={size}>
   <Path d="M14 50 l36 -32 l36 32 v34 h-72 z" fill={CREAM} stroke={STROKE} strokeWidth="1.6" strokeLinejoin="round"/>
   <Path d="M50 18 v66 M14 50 h72" fill="none" stroke={STROKE} strokeWidth="1.4" opacity=".4"/>
-  <SvgText x="50" y="72" textAnchor="middle" fontFamily="serif" fontStyle="italic" fontSize="16" fill={STROKE}>—</SvgText>
+  <SvgText x="50" y="72" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="16" fill={STROKE}>—</SvgText>
 </S>;
 
 // Garage share card bg
@@ -752,7 +752,7 @@ const GarageShareCard = ({ size = 100 }) => <S size={size}>
   <Rect x="10" y="14" width="80" height="72" rx="10" fill={CREAM} stroke={STROKE} strokeWidth="1.6"/>
   <Path d="M10 28 q40 -12 80 0" fill="none" stroke={HOT_PINK} strokeWidth="2.2"/>
   <Path d="M10 80 q40 -12 80 0" fill="none" stroke={HOT_PINK} strokeWidth="2.2"/>
-  <SvgText x="50" y="56" textAnchor="middle" fontFamily="serif" fontStyle="italic" fontSize="13" fill={STROKE}>share</SvgText>
+  <SvgText x="50" y="56" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="13" fill={STROKE}>share</SvgText>
 </S>;
 
 // Vault — tests section

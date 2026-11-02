@@ -1893,7 +1893,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       onPress={() => setShowCountryPicker(!showCountryPicker)}
                       style={[sheetStyles.countryBtn, !diffuse && sheetStyles.inputSite, { backgroundColor: paper, borderColor: paperBorder }]}
                     >
-                      <Text style={{ fontSize: 16 }}>{COUNTRY_CODES.find((c) => c.code === countryCode)?.flag ?? '🌍'}</Text>
+                      <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 16 }}>{COUNTRY_CODES.find((c) => c.code === countryCode)?.flag ?? '🌍'}</Text>
                       <Text style={[sheetStyles.countryCode, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }]}>{countryCode}</Text>
                       <ChevronRight size={14} color={mutedColor} style={{ transform: [{ rotate: showCountryPicker ? '90deg' : '0deg' }] }} />
                     </Pressable>
@@ -1914,7 +1914,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                           onPress={() => { setCountryCode(c.code); setShowCountryPicker(false) }}
                           style={({ pressed }) => [sheetStyles.countryRow, pressed && { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}
                         >
-                          <Text style={{ fontSize: 18 }}>{c.flag}</Text>
+                          <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 18 }}>{c.flag}</Text>
                           <Text style={[sheetStyles.countryLabel, { color: textColor, fontFamily: bodyFont }]}>{c.label}</Text>
                           <Text style={[sheetStyles.countryCodeText, { color: mutedColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{c.code}</Text>
                         </Pressable>

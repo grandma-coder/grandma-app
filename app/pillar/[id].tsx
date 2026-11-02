@@ -105,7 +105,7 @@ export default function PillarDetail() {
               { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.line2 : colors.border, borderRadius: radius.full, borderWidth: diffuse ? 1 : 1.5 },
             ]}
           >
-            {Sticker ? <Sticker size={88} /> : <Text style={{ fontSize: 56 }}>{pillar.icon}</Text>}
+            {Sticker ? <Sticker size={88} /> : <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 56 }}>{pillar.icon}</Text>}
           </View>
         </View>
 

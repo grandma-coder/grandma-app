@@ -788,7 +788,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
             >
               {t('cycleLog_month')}
             </Text>
-            <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, marginLeft: 5 }}>▾</Text>
+            <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: diffuse ? dt.colors.ink3 : colors.textMuted, fontSize: 11, marginLeft: 5 }}>▾</Text>
           </Pressable>
         ) : null}
       </View>

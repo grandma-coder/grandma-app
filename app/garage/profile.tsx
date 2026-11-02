@@ -372,7 +372,7 @@ function PostThumbnail({
         <Image source={{ uri: coverUrl }} style={[s.thumbImage, frame]} />
       ) : (
         <View style={[s.thumbPlaceholder, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surface }, frame]}>
-          {diffuse ? <Text style={{ fontSize: 24 }}>{t('garage_profile_thumbPlaceholderIcon')}</Text> : <SiteSticker name="bodysuit" size={32} cut />}
+          {diffuse ? <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 24 }}>{t('garage_profile_thumbPlaceholderIcon')}</Text> : <SiteSticker name="bodysuit" size={32} cut />}
         </View>
       )}
       {/* Multi-media indicator */}

@@ -323,7 +323,7 @@ export function LiquidFillBottle({
         </Text>
         {label ? (
           <Text
-            style={{
+            style={{ fontFamily: 'HankenGrotesk_700Bold',
               fontSize: 9,
               fontWeight: '700',
               letterSpacing: 1.5,
@@ -675,7 +675,7 @@ export function PulseBubblesLive({
           heartStyle,
         ]}
       >
-        <Text style={{ color: '#fff', fontSize: 18 }}>{t('galleryCharts_heartGlyph')}</Text>
+        <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: '#fff', fontSize: 18 }}>{t('galleryCharts_heartGlyph')}</Text>
       </Animated.View>
     </View>
   )
@@ -838,7 +838,7 @@ export function PolarClock24h({
           </Text>
         ) : null}
         {centerSub ? (
-          <Text style={{ fontSize: 9, color: colors.text, marginTop: 2 }}>
+          <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 9, color: colors.text, marginTop: 2 }}>
             {centerSub}
           </Text>
         ) : null}
@@ -1081,7 +1081,7 @@ function BlockTowerRow({
         textAnchor="middle"
         fontSize={10}
         fill={colors.text}
-        fontFamily="Fraunces_600SemiBold"
+        fontFamily="HankenGrotesk_700Bold"
       >
         {label}
       </SvgText>

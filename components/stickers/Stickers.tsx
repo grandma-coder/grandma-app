@@ -80,7 +80,7 @@ const PillarFinancialPlanning = ({ size = 100 }) => <PillarSVG size={size}>
   <Rect x="44" y="36" width="14" height="3" rx="1.5" fill={STROKE}/>
   <Path d="M70 32 q4 -10 12 -10 q-2 6 0 12" fill="none" stroke={STROKE} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
   <Circle cx="78" cy="20" r="6" fill={YELLOW} stroke={STROKE} strokeWidth="1.6"/>
-  <SvgText x="78" y="24" fontFamily="Fraunces, serif" fontSize="8" textAnchor="middle" fontWeight="700" fill={STROKE}>$</SvgText>
+  <SvgText x="78" y="24" fontFamily="ArchitectsDaughter_400Regular" fontSize="8" textAnchor="middle" fontWeight="700" fill={STROKE}>$</SvgText>
 </PillarSVG>;
 
 // Partner Alignment — two interlocking rings with heart spark

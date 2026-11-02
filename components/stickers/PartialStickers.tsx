@@ -68,14 +68,14 @@ const AuthWelcomeHero = ({ size = 100 }) => <S size={size}>
 const PrepregCalendarPeriodDay = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="50" r="40" fill={CREAM} stroke={STK} strokeWidth="1.6"/>
   <Path d="M50 24 C50 24 38 42 38 56 c0 10 6 16 12 16 c6 0 12 -6 12 -16 c0 -14 -12 -32 -12 -32 z" fill={HOT_PINK} stroke={STK} strokeWidth="1.5"/>
-  <SvgText x="50" y="86" textAnchor="middle" fontFamily="serif" fontWeight="600" fontSize="11" fill={STK}>D1</SvgText>
+  <SvgText x="50" y="86" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="600" fontSize="11" fill={STK}>D1</SvgText>
 </S>;
 
 const PrepregCalendarFertileDay = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="50" r="40" fill={CREAM} stroke={STK} strokeWidth="1.6"/>
   <Path d="M50 22 l5 15 l15 5 l-15 5 l-5 15 l-5 -15 l-15 -5 l15 -5 z" fill={YELLOW} stroke={STK} strokeWidth="1.4" strokeLinejoin="round"/>
   <Path d="M50 50 q-3 -3 0 -6 q3 3 0 6 z" fill={HOT_PINK} stroke={STK} strokeWidth="0.9"/>
-  <SvgText x="50" y="86" textAnchor="middle" fontFamily="serif" fontWeight="600" fontStyle="italic" fontSize="10" fill={STK}>fertile</SvgText>
+  <SvgText x="50" y="86" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="600" fontStyle="italic" fontSize="10" fill={STK}>fertile</SvgText>
 </S>;
 
 /* =================================================================== */
@@ -103,8 +103,8 @@ const PregnancyJourneyRing = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="50" r="36" fill="none" stroke={CREAM} strokeWidth="9"/>
   <Path d="M50 14 a36 36 0 1 1 -18 67" fill="none" stroke={VIOLET} strokeWidth="9" strokeLinecap="round"/>
   <Circle cx="50" cy="50" r="20" fill={CREAM} stroke={STK} strokeWidth="1.6"/>
-  <SvgText x="50" y="48" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="13" fill={STK}>W 24</SvgText>
-  <SvgText x="50" y="60" textAnchor="middle" fontFamily="serif" fontStyle="italic" fontSize="10" fill={STK} opacity=".6">of 40</SvgText>
+  <SvgText x="50" y="48" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="13" fill={STK}>W 24</SvgText>
+  <SvgText x="50" y="60" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="10" fill={STK} opacity=".6">of 40</SvgText>
 </S>;
 
 /* =================================================================== */
@@ -115,8 +115,8 @@ const KidsHomeSleepCircle = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="50" r="40" fill="none" stroke={CREAM} strokeWidth="8"/>
   <Path d="M50 10 a40 40 0 1 1 -28 11" fill="none" stroke={VIOLET} strokeWidth="8" strokeLinecap="round"/>
   <Path d="M58 32 C44 32 32 42 32 56 c0 12 10 20 22 20 c6 0 11 -2 14 -5 c-10 0 -20 -8 -20 -22 c0 -8 4 -14 10 -17 z" fill={PURPLE} stroke={STK} strokeWidth="1.5"/>
-  <SvgText x="78" y="32" fontFamily="serif" fontStyle="italic" fontSize="14" fill={STK}>z</SvgText>
-  <SvgText x="86" y="24" fontFamily="serif" fontStyle="italic" fontSize="10" fill={STK}>z</SvgText>
+  <SvgText x="78" y="32" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="14" fill={STK}>z</SvgText>
+  <SvgText x="86" y="24" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="10" fill={STK}>z</SvgText>
 </S>;
 
 const KidsHomeMoodAnalysis = ({ size = 100 }) => <S size={size}>
@@ -139,7 +139,7 @@ const KidsHomeGrowthLeaps = ({ size = 100 }) => <S size={size}>
   <Circle cx="48" cy="70" r="4" fill={CREAM} stroke={STK} strokeWidth="1.4"/>
   <Circle cx="66" cy="40" r="4" fill={CREAM} stroke={STK} strokeWidth="1.4"/>
   <Circle cx="86" cy="22" r="6" fill={HOT_PINK} stroke={STK} strokeWidth="1.6"/>
-  <SvgText x="86" y="26" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="9" fill={STK}>5</SvgText>
+  <SvgText x="86" y="26" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="9" fill={STK}>5</SvgText>
 </S>;
 
 const KidsHomeMilkTracker = ({ size = 100 }) => <S size={size}>
@@ -147,15 +147,15 @@ const KidsHomeMilkTracker = ({ size = 100 }) => <S size={size}>
   <Path d="M30 56 h40 v22 a8 8 0 0 1 -8 8 h-24 a8 8 0 0 1 -8 -8 z" fill={BLUE} stroke={STK} strokeWidth="1.6" strokeLinejoin="round"/>
   <Line x1="38" y1="40" x2="62" y2="40" stroke={STK} strokeWidth="1" opacity=".4"/>
   <Line x1="38" y1="48" x2="62" y2="48" stroke={STK} strokeWidth="1" opacity=".4"/>
-  <SvgText x="50" y="74" textAnchor="middle" fontFamily="serif" fontWeight="600" fontSize="13" fill={CREAM}>120 ml</SvgText>
+  <SvgText x="50" y="74" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="600" fontSize="13" fill={CREAM}>120 ml</SvgText>
 </S>;
 
 const KidsHomeJourneyRing = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="50" r="36" fill="none" stroke={CREAM} strokeWidth="9"/>
   <Path d="M50 14 a36 36 0 1 1 -32 19" fill="none" stroke={ROYAL} strokeWidth="9" strokeLinecap="round"/>
   <Circle cx="50" cy="50" r="20" fill={CREAM} stroke={STK} strokeWidth="1.6"/>
-  <SvgText x="50" y="48" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="13" fill={STK}>1y 6m</SvgText>
-  <SvgText x="50" y="60" textAnchor="middle" fontFamily="serif" fontStyle="italic" fontSize="10" fill={STK} opacity=".6">old</SvgText>
+  <SvgText x="50" y="48" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="13" fill={STK}>1y 6m</SvgText>
+  <SvgText x="50" y="60" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="10" fill={STK} opacity=".6">old</SvgText>
 </S>;
 
 const KidsFoodDashboardHero = ({ size = 100 }) => <S size={size}>
@@ -189,7 +189,7 @@ const KidsVaultVaccinesSection = ({ size = 100 }) => <S size={size}>
 const KidsVaultEmergencyCard = ({ size = 100 }) => <S size={size}>
   <Rect x="14" y="22" width="72" height="56" rx="6" fill={CREAM} stroke={STK} strokeWidth="1.8"/>
   <Rect x="14" y="22" width="72" height="14" rx="6" fill={RED} stroke={STK} strokeWidth="1.6"/>
-  <SvgText x="50" y="32" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="10" fill={CREAM}>EMERGENCY</SvgText>
+  <SvgText x="50" y="32" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="10" fill={CREAM}>EMERGENCY</SvgText>
   <Rect x="42" y="46" width="16" height="22" fill={RED} stroke={STK} strokeWidth="1.6"/>
   <Rect x="34" y="54" width="32" height="6" fill={RED} stroke={STK} strokeWidth="1.6"/>
 </S>;
@@ -213,7 +213,7 @@ const ActivityFeeding = ({ size = 100 }) => <S size={size}>
 const ActivitySleep = ({ size = 100 }) => <S size={size}>
   <Rect x="8" y="8" width="84" height="84" rx="14" fill={PURPLE} stroke={STK} strokeWidth="1.6"/>
   <Path d="M62 30 C46 30 32 42 32 56 c0 14 12 22 26 22 c8 0 14 -2 18 -6 c-12 -2 -22 -10 -22 -24 c0 -10 4 -16 8 -18 z" fill={CREAM} stroke={STK} strokeWidth="1.6"/>
-  <SvgText x="74" y="34" fontFamily="serif" fontStyle="italic" fontSize="14" fill={STK}>z</SvgText>
+  <SvgText x="74" y="34" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="14" fill={STK}>z</SvgText>
 </S>;
 
 const ActivityDiaper = ({ size = 100 }) => <S size={size}>
@@ -233,7 +233,7 @@ const ActivityGrowth = ({ size = 100 }) => <S size={size}>
   <Rect x="8" y="8" width="84" height="84" rx="14" fill={GREEN} stroke={STK} strokeWidth="1.6"/>
   <Rect x="40" y="20" width="20" height="60" rx="3" fill={CREAM} stroke={STK} strokeWidth="1.6"/>
   {[28,38,48,58,68,78].map((y,i)=>(<Line key={i} x1="42" y1={y} x2={i%2===0?52:48} y2={y} stroke={STK} strokeWidth="1.4"/>))}
-  <SvgText x="50" y="56" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="11" fill={STK} transform="rotate(-90 50 56)">cm</SvgText>
+  <SvgText x="50" y="56" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="11" fill={STK} transform="rotate(-90 50 56)">cm</SvgText>
 </S>;
 
 const ActivityMedicine = ({ size = 100 }) => <S size={size}>
@@ -319,7 +319,7 @@ const IconNotificationVaccine = ({ size = 100 }) => <S size={size}>
     <Line x1="66" y1="50" x2="74" y2="50" stroke={STK} strokeWidth="1.8" strokeLinecap="round"/>
   </G>
   <Circle cx="78" cy="22" r="10" fill={RED} stroke={STK} strokeWidth="1.6"/>
-  <SvgText x="78" y="26" textAnchor="middle" fontFamily="sans-serif" fontWeight="700" fontSize="13" fill={CREAM}>!</SvgText>
+  <SvgText x="78" y="26" textAnchor="middle" fontFamily="HankenGrotesk_700Bold" fontWeight="700" fontSize="13" fill={CREAM}>!</SvgText>
 </S>;
 
 const IconNotificationAppointment = ({ size = 100 }) => <S size={size}>
@@ -404,7 +404,7 @@ const ScanTypeFood = ({ size = 100 }) => <S size={size}>
 const ScanTypeNutrition = ({ size = 100 }) => <S size={size}>
   <Rect x="14" y="14" width="72" height="72" rx="14" fill={YELLOW} stroke={STK} strokeWidth="1.6"/>
   <Rect x="26" y="26" width="48" height="56" rx="3" fill={CREAM} stroke={STK} strokeWidth="1.6"/>
-  <SvgText x="34" y="40" fontFamily="sans-serif" fontSize="8" fontWeight="700" fill={STK}>NUTRITION</SvgText>
+  <SvgText x="34" y="40" fontFamily="HankenGrotesk_700Bold" fontSize="8" fontWeight="700" fill={STK}>NUTRITION</SvgText>
   <Line x1="32" y1="46" x2="68" y2="46" stroke={STK} strokeWidth="1" opacity=".4"/>
   <Line x1="32" y1="54" x2="60" y2="54" stroke={STK} strokeWidth="1" opacity=".4"/>
   <Line x1="32" y1="62" x2="56" y2="62" stroke={STK} strokeWidth="1" opacity=".4"/>
@@ -437,7 +437,7 @@ const PaywallFeatureGrandma = ({ size = 100 }) => <S size={size}>
   <Ellipse cx="50" cy="50" rx="26" ry="16" fill={CREAM} stroke={STK} strokeWidth="1.6"/>
   <Path d="M50 56 C42 50 36 46 36 42 C36 38 40 36 44 38 C46 36 50 38 50 42 C50 38 54 36 56 38 C60 36 64 38 64 42 C64 46 58 50 50 56 Z" fill={HOT_PINK} stroke={STK} strokeWidth="1.4"/>
   <Path d="M86 22 l1.5 4 l4 1.5 l-4 1.5 l-1.5 4 l-1.5 -4 l-4 -1.5 l4 -1.5 z" fill={CREAM} stroke={STK} strokeWidth="1"/>
-  <SvgText x="50" y="86" textAnchor="middle" fontFamily="serif" fontStyle="italic" fontSize="11" fill={STK}>unlimited</SvgText>
+  <SvgText x="50" y="86" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="11" fill={STK}>unlimited</SvgText>
 </S>;
 
 const InsightsHero = ({ size = 100 }) => <S size={size}>
@@ -457,7 +457,7 @@ const InsightsPillarCard = ({ size = 100 }) => <S size={size}>
   <Line x1="48" y1="38" x2="68" y2="38" stroke={STK} strokeWidth="1.4" strokeLinecap="round" opacity=".4"/>
   <Path d="M22 56 q14 -4 24 0 q14 -4 24 0" fill="none" stroke={ROYAL} strokeWidth="2.2" strokeLinecap="round"/>
   <Line x1="22" y1="72" x2="78" y2="72" stroke={STK} strokeWidth="1" opacity=".3"/>
-  <SvgText x="50" y="83" textAnchor="middle" fontFamily="sans-serif" fontSize="9" fontWeight="600" opacity=".6">PILLAR</SvgText>
+  <SvgText x="50" y="83" textAnchor="middle" fontFamily="HankenGrotesk_700Bold" fontSize="9" fontWeight="600" opacity=".6">PILLAR</SvgText>
 </S>;
 
 /* =================================================================== */
@@ -512,7 +512,7 @@ const VaultSectionUltrasound = ({ size = 100 }) => <S size={size}>
   <Circle cx="50" cy="48" r="22" fill={STK} opacity=".7"/>
   <Path d="M48 38 c-6 4 -8 12 -4 16 c4 4 4 12 -2 14" fill="none" stroke={CREAM} strokeWidth="2" strokeLinecap="round"/>
   <Ellipse cx="58" cy="40" rx="4" ry="3" fill={CREAM} opacity=".4"/>
-  <SvgText x="50" y="80" textAnchor="middle" fontFamily="serif" fontStyle="italic" fontSize="11" fill={STK}>20 wk</SvgText>
+  <SvgText x="50" y="80" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontStyle="italic" fontSize="11" fill={STK}>20 wk</SvgText>
 </S>;
 
 const VaultSectionBirthPlan = ({ size = 100 }) => <S size={size}>
@@ -540,7 +540,7 @@ const PrepregHomeWisdom = ({ size = 100 }) => <S size={size}>
 const PillarTipCardAccent = ({ size = 100 }) => <S size={size}>
   {Array.from({length:12}).map((_,i)=>{const a=(i/12)*Math.PI*2;const r1 = i % 2 === 0 ? 40 : 28; const x=50+Math.cos(a)*r1, y=50+Math.sin(a)*r1; return <Circle key={i} cx={x} cy={y} r="2" fill={YELLOW} stroke={STK} strokeWidth="0.8"/>;})}
   <Circle cx="50" cy="50" r="20" fill={HOT_PINK} stroke={STK} strokeWidth="1.6"/>
-  <SvgText x="50" y="55" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="16" fill={CREAM}>!</SvgText>
+  <SvgText x="50" y="55" textAnchor="middle" fontFamily="ArchitectsDaughter_400Regular" fontWeight="700" fontSize="16" fill={CREAM}>!</SvgText>
 </S>;
 
 /* =================================================================== */

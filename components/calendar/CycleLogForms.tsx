@@ -641,7 +641,7 @@ export function SymptomsForm({
             borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? dt.colors.line2 : colors.text, ...(diffuse ? { borderStyle: 'dashed' as const } : null),
             alignItems: 'center', justifyContent: 'center',
           }}>
-            <Text style={{ color: diffuse ? dt.colors.ink3 : colors.text, fontWeight: '700', fontSize: 12 }}>+</Text>
+            <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: diffuse ? dt.colors.ink3 : colors.text, fontWeight: '700', fontSize: 12 }}>+</Text>
           </View>
           <Text style={diffuse
             ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }

@@ -108,7 +108,7 @@ export default function CyclePillarsIndex() {
                 ]}
               >
                 <View style={[styles.stickerChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                  {Sticker ? <Sticker size={28} /> : <Text style={{ fontSize: 24 }}>{p.icon}</Text>}
+                  {Sticker ? <Sticker size={28} /> : <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 24 }}>{p.icon}</Text>}
                 </View>
                 <Display size={18} color={ink}>{p.name}</Display>
                 <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} numberOfLines={2}>

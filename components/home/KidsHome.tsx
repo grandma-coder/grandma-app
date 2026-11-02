@@ -1610,7 +1610,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
               onPress={() => setOverflowKidsVisible(true)}
               style={[s.addChildBtn, { borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.05)' }]}
             >
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>+{children.length - 3}</Text>
+              <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>+{children.length - 3}</Text>
             </Pressable>
           )}
         </View>
@@ -4247,13 +4247,13 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', paddingHorizontal: 20 }} onPress={onClose}>
         <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20, gap: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 }}>{t('kids_home_activity_breakdown_title')}</Text>
+            <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.text, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 }}>{t('kids_home_activity_breakdown_title')}</Text>
             <Pressable onPress={onClose} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' }}>
               <X size={14} color={colors.textMuted} strokeWidth={2.5} />
             </Pressable>
           </View>
           {entries.length === 0 ? (
-            <Text style={{ color: colors.textMuted, fontSize: 14 }}>{t('kids_home_activity_empty')}</Text>
+            <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 14 }}>{t('kids_home_activity_empty')}</Text>
           ) : entries.map(([type, count]) => {
             const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: colors.primary }
             const pct = total > 0 ? Math.round((count / total) * 100) : 0
@@ -4261,9 +4261,9 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
               <View key={type}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
-                  <Text style={{ flex: 1, color: colors.textSecondary, fontSize: 14, fontWeight: '600' }}>{meta.label}</Text>
-                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{count.toLocaleString()}</Text>
-                  <Text style={{ color: meta.color, fontSize: 12, fontWeight: '700', minWidth: 38, textAlign: 'right' }}>{pct}%</Text>
+                  <Text style={{ fontFamily: 'HankenGrotesk_600SemiBold', flex: 1, color: colors.textSecondary, fontSize: 14, fontWeight: '600' }}>{meta.label}</Text>
+                  <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.text, fontSize: 14, fontWeight: '700' }}>{count.toLocaleString()}</Text>
+                  <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: meta.color, fontSize: 12, fontWeight: '700', minWidth: 38, textAlign: 'right' }}>{pct}%</Text>
                 </View>
                 <View style={{ height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                   <View style={{ width: `${pct}%`, height: 4, borderRadius: 2, backgroundColor: meta.color }} />
@@ -4271,7 +4271,7 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
               </View>
             )
           })}
-          <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
+          <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
             {total.toLocaleString()} {t('kids_home_activity_total_suffix')}
           </Text>
         </Pressable>

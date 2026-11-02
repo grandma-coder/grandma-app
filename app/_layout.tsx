@@ -10,6 +10,7 @@
  * - Logged in, has enrolled behaviors or children → (tabs)
  */
 
+import '../lib/fontDefaults' // first: default Hanken on StyleSheet text styles
 import { useCallback, useEffect, useState } from 'react'
 import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'

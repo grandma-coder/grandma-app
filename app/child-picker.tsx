@@ -144,7 +144,7 @@ export default function ChildPicker() {
                 styles.avatar,
                 diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 },
               ]}>
-                <Text style={{ fontSize: 24 }}>{t('childPicker_avatarIcon')}</Text>
+                <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 24 }}>{t('childPicker_avatarIcon')}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[
