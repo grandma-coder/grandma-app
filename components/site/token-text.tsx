@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
+import type { CSSProperties, MouseEvent, ReactNode } from 'react'
 import { Sticker } from '@/components/stickers/sticker'
 import { PATHS, type StickerName } from '@/components/stickers/paths'
 import s from './site.module.css'
@@ -14,20 +14,6 @@ function boing(e: MouseEvent<HTMLSpanElement>) {
   el.classList.remove(s.boing)
   void el.getBoundingClientRect()
   el.classList.add(s.boing)
-}
-
-/**
- * A hero sticker that pops in (and boings on tap). WebKit can keep the filtered SVG rasterized at the animation's tiny
- * start scale long after it ends (blurry stickers on iOS / the Instagram in-app browser), so each finished animation
- * remounts the SVG and it repaints at full size.
- */
-function Rebus({ name, i }: { name: StickerName; i: number }) {
-  const [paint, setPaint] = useState(0)
-  return (
-    <span className={s.reb} style={{ '--i': i } as CSSProperties} onClick={boing} onAnimationEnd={() => setPaint((n) => n + 1)} aria-hidden="true">
-      <Sticker key={paint} name={name} className={s.ico} />
-    </span>
-  )
 }
 
 /**
@@ -49,7 +35,9 @@ export function TokenText({ text, rebus = false }: { text: string; rebus?: boole
       <span key={i} style={{ whiteSpace: 'nowrap' }}>
         {word}
         {rebus ? (
-          <Rebus name={name} i={i} />
+          <span className={s.reb} style={{ '--i': i } as CSSProperties} onClick={boing} aria-hidden="true">
+            <Sticker name={name} className={s.ico} />
+          </span>
         ) : (
           <Sticker name={name} className={`${s.ico} ${s.tok}`} />
         )}
