@@ -862,8 +862,8 @@ export default function ChannelChat() {
           <Text
             style={[styles.headerTitle, diffuse
               ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-              : { color: colors.text, fontFamily: font.display, fontSize: 18, textTransform: 'uppercase', letterSpacing: 0.3 }]}
-            numberOfLines={1}
+              : { color: colors.text, fontFamily: font.display, fontSize: 16, lineHeight: 18, textTransform: 'uppercase', letterSpacing: 0.3 }]}
+            numberOfLines={diffuse ? 1 : 2}
           >
             {channel?.name ?? t('channelScreen_nameFallback')}
           </Text>
