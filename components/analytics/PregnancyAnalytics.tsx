@@ -35,7 +35,9 @@ import { useTranslation } from '../../lib/i18n'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { kgToDisplay, weightLabel } from '../../lib/units'
-import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
+import { getCurrentWeekFromDueDate, getWeekData } from '../../lib/pregnancyData'
+import { buildPregnancyNote } from '../../lib/grandmaNotes/pregnancy'
+import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
 import { PregnancyJourneyRing } from '../pregnancy/PregnancyJourneyRing'
 import {
   usePregnancyWeightHistory,
@@ -446,6 +448,16 @@ function shortDay(isoDate: string): string {
   }
 }
 
+/** Localized weekday name for a note ("Thursday" / "quinta-feira"). */
+function weekdayName(isoDate: string, language: string): string {
+  const d = new Date(isoDate + 'T12:00:00')
+  try {
+    return d.toLocaleDateString(language, { weekday: 'long' })
+  } catch {
+    return d.toLocaleDateString('en-US', { weekday: 'long' })
+  }
+}
+
 function formatLogDate(isoDate: string): string {
   try {
     const d = new Date(isoDate + 'T12:00:00')
@@ -466,7 +478,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const accent = getDiffuseAccent('preg', dt.isDark)
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const insets = useSafeAreaInsets()
   // Display unit for weight (B4). Data is canonical kg; convert for display only.
   const prefWeightUnit = useUnitsStore((s) => s.weightUnit)
@@ -564,6 +576,21 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
     exercise: exerciseHistory, nutrition: nutritionMatrix, days: Math.min(7, windowDays),
   }), [sleepHistory, moodTrend, hydrationHistory, exerciseHistory, nutritionMatrix, windowDays])
 
+  // Light: Grandma's weekly note — pure rules over the logs already loaded here.
+  const notesLetter = useMemo(() => (diffuse ? null : buildPregnancyNote({
+    week: weekNumber,
+    sleep: sleepHistory,
+    moods: moodTrend,
+    water: hydrationHistory,
+    exercise: exerciseHistory,
+    nutrition: nutritionMatrix,
+    kicks: kickSessions,
+    // momTip is English-only — other languages get the curated, translated line.
+    momTip: language === 'en' ? getWeekData(weekNumber).momTip : null,
+    formatDay: (iso) => weekdayName(iso, language),
+  }, t)), [diffuse, weekNumber, sleepHistory, moodTrend, hydrationHistory, exerciseHistory,
+    nutritionMatrix, kickSessions, language, t])
+
   // Quick takeaways
   const tk = useMemo(() => buildTakeaways({
     weightHistory, kickSessions, sleepHistory, moodTrend, symptomFreq,
@@ -638,19 +665,34 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             />
           </View>
         ) : (
-          <View style={styles.titleRow}>
-            <AnalyticsTitle primary="Pregnancy," italic="week over week." />
-            <View style={styles.actionRow}>
-              {onExamsPress ? (
-                <SiteIconButton onPress={onExamsPress} label="Exams">
-                  <FlaskConical size={16} color={colors.text} strokeWidth={2.2} />
-                </SiteIconButton>
-              ) : null}
-              <SiteIconButton onPress={() => setShowInfo(true)} label="How analytics work">
-                <Info size={16} color={colors.text} strokeWidth={2.2} />
-              </SiteIconButton>
-            </View>
-          </View>
+          <>
+            {/* Light: the tab opens with Grandma's weekly note; the charts
+                and sections follow under "The details". */}
+            <GrandmaNotesTitle
+              right={(
+                <>
+                  {onExamsPress ? (
+                    <SiteIconButton onPress={onExamsPress} label="Exams">
+                      <FlaskConical size={16} color={colors.text} strokeWidth={2.2} />
+                    </SiteIconButton>
+                  ) : null}
+                  <SiteIconButton onPress={() => setShowInfo(true)} label="How analytics work">
+                    <Info size={16} color={colors.text} strokeWidth={2.2} />
+                  </SiteIconButton>
+                </>
+              )}
+            />
+            <GrandmaNote
+              letter={notesLetter}
+              loading={statsLoading}
+              onNotePress={(area) => setOpenPillar(area as PillarKey)}
+              onAction={notesLetter?.suggestion?.actionArea
+                ? () => setOpenPillar(notesLetter.suggestion!.actionArea as PillarKey)
+                : undefined}
+            />
+            <PeriodSelector value={period} onChange={handlePeriodChange} customLabel={customLabel} />
+            <NotesDetailsEyebrow />
+          </>
         )}
 
         {/* Journey ring — the hero (moved here from Calendar → Journey). Shows
@@ -659,8 +701,11 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
           <PregnancyJourneyRing weekNumber={weekNumber} dueDate={dueDate} />
         ) : null}
 
-        {/* PeriodSelector self-gates to Diffuse segment pills. */}
-        <PeriodSelector value={period} onChange={handlePeriodChange} customLabel={customLabel} />
+        {/* PeriodSelector self-gates to Diffuse segment pills. Light renders
+            it above "The details" instead. */}
+        {diffuse ? (
+          <PeriodSelector value={period} onChange={handlePeriodChange} customLabel={customLabel} />
+        ) : null}
 
         {/* Hero: Weight gain chart — tap to expand */}
         {diffuse ? (

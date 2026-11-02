@@ -54,7 +54,8 @@ import { MoodStrip } from './shared/MoodStrip'
 import { cycleMoodToStrip } from '../../lib/moodTrend'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
-import { Skeleton } from '../ui/Skeleton'
+import { buildCycleNote } from '../../lib/grandmaNotes/cycle'
+import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
 import { SkeletonChartSection, SkeletonStatRows } from './shared/AnalyticsSkeleton'
 
 /** Warm phase copy keyed by cycle phase — resolved through t() so it localizes. */
@@ -227,6 +228,15 @@ export function CycleAnalytics() {
     ? t('cycleAnalytics_intercourseSub_inWindow')
     : t('cycleAnalytics_intercourseSub_log')
 
+  // Light: Grandma's weekly note — pure rules over the stats already loaded here.
+  const notesLetter = useMemo(() => (diffuse ? null : buildCycleNote({
+    history,
+    info: hasData ? info : null,
+    pms,
+    mood,
+    bbt,
+  }, t)), [diffuse, history, hasData, info, pms, mood, bbt, t])
+
   if (!diffuse && firstLoad) {
     return (
       <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -235,13 +245,9 @@ export function CycleAnalytics() {
           showsVerticalScrollIndicator={false}
         >
           <AnalyticsHeader hide />
-          <View style={styles.hero}>
-            <Text style={[styles.heroKicker, { color: colors.textMuted, fontFamily: MONO, fontSize: 10, letterSpacing: 1.4 }]}>
-              {t('cycleAnalytics_yourCycleToday')}
-            </Text>
-            <Skeleton height={34} width="55%" radius={8} style={{ marginTop: 6 }} />
-            <Skeleton height={14} width="80%" radius={6} style={{ marginTop: 10 }} />
-          </View>
+          <GrandmaNotesTitle />
+          <GrandmaNote letter={null} loading />
+          <NotesDetailsEyebrow />
           <View style={[styles.flowCard, styles.siteCard, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text }]}>
             <SkeletonChartSection bars={6} height={90} />
           </View>
@@ -261,7 +267,21 @@ export function CycleAnalytics() {
       >
         <AnalyticsHeader hide />
 
+        {/* Light: the tab opens with Grandma's weekly note; the trend, tiles
+            and recent cycles follow under "The details". */}
+        {!diffuse && (
+          <>
+            <GrandmaNotesTitle />
+            <GrandmaNote
+              letter={notesLetter}
+              onNotePress={(area) => setDetailType(area as CycleDetailType)}
+            />
+            <NotesDetailsEyebrow />
+          </>
+        )}
+
         {/* ── Hero: kicker · phase word + glyph · warm day line ───────── */}
+        {diffuse && (
         <View style={styles.hero}>
           <View style={styles.heroTopRow}>
             <Text style={[styles.heroKicker, diffuse ? { color: muted, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: MONO, fontSize: 10, letterSpacing: 1.4 }]}>
@@ -286,6 +306,7 @@ export function CycleAnalytics() {
             {t('cycleAnalytics_day_voiceline', { day: info.cycleDay, line: voice.line })}
           </Text>
         </View>
+        )}
 
         {/* Cycle-length trend hero — CREAM/current variant only. Under Diffuse
             this card is intentionally omitted: it duplicated the CYCLE LENGTH

@@ -118,6 +118,8 @@ import { supabase } from '../../lib/supabase'
 import { runWellnessNotifications } from '../../lib/notificationEngine'
 import { ChildPill, CHILD_COLORS, formatChildAge as sharedFormatChildAge } from '../ui/ChildPills'
 import { AnalyticsTitle } from './shared/AnalyticsTitle'
+import { buildKidsNote } from '../../lib/grandmaNotes/kids'
+import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
 import { MoodFace } from '../stickers/RewardStickers'
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
@@ -971,6 +973,13 @@ export function KidsAnalytics() {
   const sex: Sex | null = resolvedSex.isFallback ? null : resolvedSex.sex
   const chartW = SCREEN_W - 72
 
+  // Light: Grandma's note about the selected child — pure rules over the
+  // analytics already loaded for this page (no extra queries).
+  const notesLetter = useMemo(() => {
+    if (diffuse || (isLoading && !analytics)) return null
+    return buildKidsNote({ analytics, childName, ageMonths }, t)
+  }, [diffuse, isLoading, analytics, childName, ageMonths, t])
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     await refetch()
@@ -1041,34 +1050,33 @@ export function KidsAnalytics() {
             />
           </View>
         ) : (
-          <View style={styles.headerEditorial}>
-            <View style={{ flex: 1 }}>
-              <AnalyticsTitle
-                primary={`${childName}'s patterns`}
-                italic="so far."
-              />
-              <Text
-                style={[
-                  styles.headerSub,
-                  { color: colors.textSecondary, fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
-                ]}
-              >
-                {getAgeLabel(ageMonths)}
-              </Text>
-            </View>
-            <View style={styles.headerActions}>
-              <Pressable
-                onPress={() => setShowScoreInfo(true)}
-                hitSlop={10}
-                style={({ pressed }) => [
-                  styles.infoBtnNew,
-                  { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 2, width: 34, height: 34 },
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Info size={16} color={colors.text} strokeWidth={2.2} />
-              </Pressable>
-            </View>
+          // Light: the tab opens with Grandma's note about the selected child,
+          // addressed to the parent. Selectors + details follow below.
+          <View style={{ marginHorizontal: -20 }}>
+            <GrandmaNotesTitle
+              right={(
+                <Pressable
+                  onPress={() => setShowScoreInfo(true)}
+                  hitSlop={10}
+                  accessibilityLabel="How analytics work"
+                  style={({ pressed }) => [
+                    styles.infoBtnNew,
+                    { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 2, width: 34, height: 34 },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Info size={16} color={colors.text} strokeWidth={2.2} />
+                </Pressable>
+              )}
+            />
+            <GrandmaNote
+              letter={notesLetter}
+              loading={isLoading && !analytics}
+              range={analytics?.dateRange
+                ? { from: analytics.dateRange.from.slice(0, 10), to: analytics.dateRange.to.slice(0, 10) }
+                : undefined}
+              onNotePress={(area) => setSelectedPillar(area as PillarKey)}
+            />
           </View>
         )}
 
@@ -1164,6 +1172,8 @@ export function KidsAnalytics() {
             ))}
           </ScrollView>
         )}
+
+        {!diffuse && <NotesDetailsEyebrow style={{ marginHorizontal: 4, marginTop: 0, marginBottom: -8 }} />}
 
         {isLoading && (diffuse ? (
           <View style={styles.loadingWrap}>

@@ -42,6 +42,8 @@ import { useTranslation } from '../../lib/i18n'
 import { monthsSinceDate, type MenopauseStage } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import { buildMenopauseNote } from '../../lib/grandmaNotes/menopause'
+import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
 import { SkeletonChartSection, SkeletonHeadline, SkeletonStatRows } from './shared/AnalyticsSkeleton'
 
 const CHART_W = Dimensions.get('window').width - 80 // screen − card margins − card padding
@@ -111,6 +113,13 @@ export function MenopauseAnalytics() {
       ? 'Tracking your symptoms over time'
       : `${months} ${months === 1 ? 'month' : 'months'} since your last period`
 
+  // Light: Grandma's weekly note — pure rules over the logs already loaded here.
+  const notesLetter = useMemo(() => (palette.diffuse ? null : buildMenopauseNote({
+    rows,
+    monthsSincePeriod: stage === 'post' ? null : months,
+    stickerFor: menoSticker,
+  }, t)), [palette.diffuse, rows, stage, months, t])
+
   // ── Site look (light): card-less sections, sticker rows, thin bars with true values ──
   if (!palette.diffuse) {
     const lastVaso = vaso.slice(-14)
@@ -119,13 +128,11 @@ export function MenopauseAnalytics() {
       <View style={[styles.root, { backgroundColor: palette.bg }]}>
         <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
           <AnalyticsHeader hide />
-          {/* Stage + months come from the persisted store; until it rehydrates the
-              hero is a ghost, not a generic "Your patterns" that swaps a beat later. */}
-          {hydrated ? (
-            <SiteHero stageWord={stageWord} heroLine={heroLine} />
-          ) : (
-            <SkeletonHeadline big={32} style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 12 }} />
-          )}
+          {/* Grandma's weekly note opens the tab. Months come from the persisted
+              store, so the note ghosts until it rehydrates and the logs land. */}
+          <GrandmaNotesTitle />
+          <GrandmaNote letter={notesLetter} loading={logsLoading || !hydrated} />
+          <NotesDetailsEyebrow />
           {stage === 'peri' && <SiteMonths months={months} palette={palette} />}
           {logsLoading ? (
             // First load of the logs: ghost chart + symptom rows, not the empty state.
