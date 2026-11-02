@@ -10,7 +10,7 @@ export async function loadRemoteFlags(): Promise<void> {
     const { data, error } = await supabase.from('feature_flags').select('key, enabled')
     if (error || !data) return
     const on = (key: string) => data.some((r: { key: string; enabled: boolean }) => r.key === key && r.enabled === true)
-    useFeatureFlags.getState().setRemoteFlags({ grandmaChat: on('grandma_chat') })
+    useFeatureFlags.getState().setRemoteFlags({ grandmaChat: on('grandma_chat'), dailyRewards: on('daily_rewards') })
   } catch {
     // keep defaults (off)
   }

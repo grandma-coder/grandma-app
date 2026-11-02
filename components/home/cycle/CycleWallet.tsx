@@ -8,7 +8,7 @@
  * (useCycleWalletStore). Uncustomized (enabledKeys null) → builder order.
  */
 
-import { useGrandmaChatEnabled } from '../../../store/useFeatureFlags'
+import { useGrandmaChatEnabled, useDailyRewardsEnabled } from '../../../store/useFeatureFlags'
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { router } from 'expo-router'
@@ -84,8 +84,9 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
     .filter((k) => !defaultCards.some((c) => c.id === k)) as CycleCardId[]
   // "Talk to Grandma" follows the remote grandma_chat flag (command center): off = not offered or shown.
   const chatOn = useGrandmaChatEnabled()
+  const rewardsOn = useDailyRewardsEnabled()
   const availableIds: CycleCardId[] = [...defaultCards.map((c) => c.id), ...shortcutOnlyIds]
-    .filter((id) => id !== 'ask_grandma' || chatOn)
+    .filter((id) => (id !== 'ask_grandma' || chatOn) && (id !== 'rewards' || rewardsOn))
 
   // For a caregiver, restrict to the shared allowlist (owner → null → no filter).
   const displayedIds: CycleCardId[] = (

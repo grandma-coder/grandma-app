@@ -56,7 +56,8 @@ export function buildKidsWalletCards(input: BuildKidsWalletCardsInput): KidsWall
   cards.push({ id: 'memories', tone: 'pink', linkOnly: true })
   // "Talk to Grandma" is behind the remote grandma_chat flag (command center); off = no card.
   if (useFeatureFlags.getState().grandmaChat) cards.push({ id: 'ask_grandma', tone: 'mode', linkOnly: true })
-  cards.push({ id: 'rewards', tone: 'coral', linkOnly: true })
+  // Daily Rewards is behind the remote daily_rewards flag; off = no card.
+  if (useFeatureFlags.getState().dailyRewards) cards.push({ id: 'rewards', tone: 'coral', linkOnly: true })
 
   return cards
 }

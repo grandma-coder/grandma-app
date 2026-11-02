@@ -19,3 +19,8 @@ REVOKE INSERT, UPDATE, DELETE ON public.feature_flags FROM anon, authenticated;
 INSERT INTO public.feature_flags (key, enabled, note)
 VALUES ('grandma_chat', false, 'Talk to Grandma AI chat (Anthropic API). Off = hidden in the app and refused by the edge functions.')
 ON CONFLICT (key) DO NOTHING;
+
+-- Daily Rewards (points, streaks, badges, leaderboard): OFF for launch.
+INSERT INTO public.feature_flags (key, enabled, note)
+VALUES ('daily_rewards', false, 'Daily Rewards: points, streaks, badges and leaderboard. Off = hidden in the app.')
+ON CONFLICT (key) DO NOTHING;

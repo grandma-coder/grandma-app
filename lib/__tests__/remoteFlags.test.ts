@@ -5,7 +5,7 @@ import { loadRemoteFlags } from '../remoteFlags'
 import { useFeatureFlags } from '../../store/useFeatureFlags'
 
 describe('loadRemoteFlags — grandma chat kill switch', () => {
-  beforeEach(() => { useFeatureFlags.setState({ grandmaChat: false }); mockSelect.mockReset() })
+  beforeEach(() => { useFeatureFlags.setState({ grandmaChat: false, dailyRewards: false }); mockSelect.mockReset() })
 
   it('starts off and is never persisted', () => {
     expect(useFeatureFlags.getState().grandmaChat).toBe(false)
@@ -30,6 +30,19 @@ describe('loadRemoteFlags — grandma chat kill switch', () => {
     }
     mockSelect.mockRejectedValue(new Error('offline'))
     await loadRemoteFlags()
+    expect(useFeatureFlags.getState().grandmaChat).toBe(false)
+  })
+
+  it('daily rewards is its own flag: off by default, on only with its own row', async () => {
+    expect(useFeatureFlags.getState().dailyRewards).toBe(false)
+    const opts = (useFeatureFlags as unknown as { persist: { getOptions: () => { partialize: (s: object) => object } } }).persist.getOptions()
+    expect(opts.partialize(useFeatureFlags.getState())).not.toHaveProperty('dailyRewards')
+    mockSelect.mockResolvedValue({ data: [{ key: 'grandma_chat', enabled: true }], error: null })
+    await loadRemoteFlags()
+    expect(useFeatureFlags.getState().dailyRewards).toBe(false)
+    mockSelect.mockResolvedValue({ data: [{ key: 'daily_rewards', enabled: true }], error: null })
+    await loadRemoteFlags()
+    expect(useFeatureFlags.getState().dailyRewards).toBe(true)
     expect(useFeatureFlags.getState().grandmaChat).toBe(false)
   })
 })

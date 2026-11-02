@@ -6,6 +6,7 @@
  * so dark mode auto-brightens.
  */
 
+import { useFeatureFlags } from '../store/useFeatureFlags'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   View,
@@ -177,7 +178,8 @@ function navigateForNotification(item: AppNotification) {
       break
     case 'streak':
     case 'streak_broken':
-      router.push('/daily-rewards')
+      // Daily Rewards may be switched off remotely (daily_rewards flag) — then there's nowhere to go.
+      if (useFeatureFlags.getState().dailyRewards) router.push('/daily-rewards')
       break
     case 'insight':
     case 'milestone':

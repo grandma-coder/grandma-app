@@ -5,6 +5,8 @@
  * preg=lavender, kids=powder-blue, using accent/accent-soft tokens.
  */
 
+import { Redirect } from 'expo-router'
+import { useDailyRewardsEnabled } from '../store/useFeatureFlags'
 import { useState, useEffect, useMemo } from 'react'
 import {
   View,
@@ -163,7 +165,7 @@ const POINTS_ROWS: { rowKey: string; pts: string; color: keyof typeof stickerPal
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-export default function DailyRewardsScreen() {
+function DailyRewardsScreen() {
   const { colors, font, isDark, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -1554,3 +1556,11 @@ const styles = StyleSheet.create({
   catBadgeTier: { fontSize: 9, textTransform: 'uppercase', letterSpacing: 1 },
   catBadgeDate: { fontSize: 10 },
 })
+
+// Daily Rewards is behind the remote daily_rewards flag (command center): off = a deep link or
+// stale entry point lands back home.
+export default function DailyRewardsScreenRoute() {
+  const enabled = useDailyRewardsEnabled()
+  if (!enabled) return <Redirect href="/(tabs)" />
+  return <DailyRewardsScreen />
+}

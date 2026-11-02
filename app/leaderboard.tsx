@@ -6,6 +6,8 @@
  * Tap a row → paper profile sheet with sticker accents.
  */
 
+import { Redirect } from 'expo-router'
+import { useDailyRewardsEnabled } from '../store/useFeatureFlags'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   View,
@@ -404,7 +406,7 @@ function AnimatedStarIcon({ size, fill }: { size: number; fill: string }) {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function LeaderboardScreen() {
+function LeaderboardScreen() {
   const { colors, radius, stickers, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -1683,3 +1685,11 @@ const styles = StyleSheet.create({
   profileStatValue: { fontSize: 24, letterSpacing: -0.5 },
   profileStatLabel: { fontSize: 10, letterSpacing: 1.5 },
 })
+
+// The leaderboard is behind the remote daily_rewards flag (command center): off = a deep link or
+// stale entry point lands back home.
+export default function LeaderboardScreenRoute() {
+  const enabled = useDailyRewardsEnabled()
+  if (!enabled) return <Redirect href="/(tabs)" />
+  return <LeaderboardScreen />
+}

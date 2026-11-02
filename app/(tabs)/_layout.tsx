@@ -30,7 +30,7 @@ import { getModeConfig, getCaregiverTabVisibility } from '../../lib/modeConfig'
 import { isCaregiver } from '../../lib/caregiverPermissions'
 import { useTheme, brand, stickers, getModeColor, getModeAccent, font, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { SiteSticker, type SiteStickerName } from '../../components/stickers/SiteSticker'
-import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
+import { useGrandmaChatEnabled, useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 import { useTranslation } from '../../lib/i18n'
 import { StickerPalette } from '../../components/stickers/BrandStickers'
 import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
@@ -158,7 +158,9 @@ function CenterTabButton() {
   const itemAnims = useRef(WHEEL_ITEMS.map(() => new Animated.Value(0))).current
   // "Talk to Grandma" is behind the remote grandma_chat flag (command center); off = not in the menu.
   const chatOn = useGrandmaChatEnabled()
-  const items = WHEEL_ITEMS.filter((it) => it.id !== 'chat' || chatOn)
+  // Daily Rewards is behind the remote daily_rewards flag; off = not in the menu.
+  const rewardsOn = useDailyRewardsEnabled()
+  const items = WHEEL_ITEMS.filter((it) => (it.id !== 'chat' || chatOn) && (it.id !== 'rewards' || rewardsOn))
   // Aurora swirl — a slow continuous rotation of the pastel bloom field behind
   // the menu, so it drifts like the reference gradient instead of sitting flat.
   const auroraSpin = useRef(new Animated.Value(0)).current

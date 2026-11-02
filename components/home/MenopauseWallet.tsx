@@ -6,7 +6,7 @@
  * WalletCard primitive owns the dual-variant (cream / Diffuse) chrome; this file
  * supplies tone + icon + title + tap target per card.
  */
-import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
+import { useGrandmaChatEnabled, useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { View } from 'react-native'
@@ -80,7 +80,8 @@ export function MenopauseWallet() {
   // keys (in their order), dropping any id no longer available.
   // "Talk to Grandma" follows the remote grandma_chat flag (command center): off = not offered or shown.
   const chatOn = useGrandmaChatEnabled()
-  const available = AVAILABLE.filter((id) => id !== 'ask_grandma' || chatOn)
+  const rewardsOn = useDailyRewardsEnabled()
+  const available = AVAILABLE.filter((id) => (id !== 'ask_grandma' || chatOn) && (id !== 'rewards' || rewardsOn))
   const displayedIds: MenoWalletId[] =
     enabledKeys === null
       ? available
