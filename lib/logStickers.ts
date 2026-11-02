@@ -18,7 +18,7 @@ export const PREGNANCY_LOG_STICKER_MAP: Record<string, SiteStickerName> = {
 }
 
 export const CYCLE_LOG_STICKER: Record<string, SiteStickerName> = {
-  period_start: 'drop', period_end: 'drop', mood: 'face3', symptom: 'thermo', symptoms: 'thermo',
+  period_start: 'drop', period_end: 'leaf', mood: 'face3', symptom: 'headache', symptoms: 'headache',
   bbt: 'thermo', basal_temp: 'thermo', lh: 'otest', pregnancy_test: 'otest', cm: 'egg', clots: 'drop', intimacy: 'heart',
   intercourse: 'heart', sex_drive: 'flower', water: 'glass', weight: 'scale', activity: 'dumbbell',
   ovulation: 'egg', exam: 'doc', meds: 'pill',

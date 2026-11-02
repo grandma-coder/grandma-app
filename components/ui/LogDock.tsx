@@ -66,7 +66,7 @@ function DockItem({ item, index, accent }: { item: LogDockItem; index: number; a
           </View>
         ) : null}
       </Animated.View>
-      <Text style={[styles.label, { color: item.done ? ink : colors.textSecondary, fontFamily: font.display }]} numberOfLines={1}>
+      <Text style={[styles.label, { color: item.done ? ink : colors.textSecondary, fontFamily: font.display }]} numberOfLines={2}>
         {item.label}
       </Text>
       <View style={{ height: 8, opacity: item.done ? 1 : 0 }}>
@@ -89,6 +89,6 @@ export function LogDock({ items, accent }: { items: LogDockItem[]; accent: strin
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6 },
   item: { width: '20%', alignItems: 'center', paddingTop: 4 },
-  label: { fontSize: 13, letterSpacing: 0.4, textTransform: 'uppercase', marginTop: 4 },
+  label: { fontSize: 13, lineHeight: 15, letterSpacing: 0.4, textTransform: 'uppercase', marginTop: 4, textAlign: 'center' },
   tick: { position: 'absolute', right: -6, top: -4, width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 })
