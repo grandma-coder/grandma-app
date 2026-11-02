@@ -21,6 +21,8 @@ import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useTheme } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useJourneyStore } from '../../store/useJourneyStore'
+import { HandDrawnBox } from '../../components/ui/HandDrawn'
+import { ACTION_TONES } from '../../components/ui/AuthDock'
 import { useTranslation } from '../../lib/i18n'
 
 export default function AboutYouScreen() {
@@ -67,6 +69,8 @@ export default function AboutYouScreen() {
         onContinue={persistAndGo}
         onSkip={persistAndGo}
         continueDisabled={!name.trim()}
+        ctaSticker="pencil"
+        ctaTone={ACTION_TONES.yellow}
       >
         <View style={styles.fields}>
           {diffuse ? (
@@ -77,24 +81,17 @@ export default function AboutYouScreen() {
               autoCapitalize="words"
             />
           ) : (
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder={t('aboutYou_namePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              autoCapitalize="words"
-              autoFocus
-              style={[
-                styles.input,
-                {
-                  color: colors.text,
-                  backgroundColor: colors.surface,
-                  borderColor: colors.text,
-                  borderRadius: 14,
-                  fontFamily: font.body,
-                },
-              ]}
-            />
+            <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="name">
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder={t('aboutYou_namePlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="words"
+                autoFocus
+                style={[styles.input, { color: colors.text, fontFamily: font.body }]}
+              />
+            </HandDrawnBox>
           )}
 
           <DatePickerField
@@ -106,6 +103,7 @@ export default function AboutYouScreen() {
             modalTitle={t('aboutYou_dobLabel')}
             maximumDate={maxDob}
             minimumDate={minDob}
+            defaultDate={new Date(now.getFullYear() - 30, 0, 1)}
           />
         </View>
       </OnboardingStep>
@@ -116,7 +114,6 @@ export default function AboutYouScreen() {
 const styles = StyleSheet.create({
   fields: { gap: 20 },
   input: {
-    borderWidth: 1.5,
     paddingHorizontal: 18,
     height: 60,
     fontSize: 17,

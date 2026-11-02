@@ -58,6 +58,8 @@ interface DatePickerFieldProps {
    * RN's DateTimePicker has no in-page mode on Android.
    */
   inline?: boolean
+  /** Where the wheel starts when there's no value yet (defaults to today). */
+  defaultDate?: Date
 }
 
 function toISO(d: Date): string {
@@ -97,6 +99,7 @@ export default function DatePickerField({
   modalTitle,
   accentColor,
   inline = false,
+  defaultDate,
 }: DatePickerFieldProps) {
   const { colors, isDark } = useTheme()
   const { t } = useTranslation()
@@ -110,7 +113,7 @@ export default function DatePickerField({
     return modeAccent(mode, isDark)
   }, [accentColor, mode, isDark])
 
-  const draftInitial = value ? new Date(value) : new Date()
+  const draftInitial = value ? new Date(value) : defaultDate ?? new Date()
   const [draft, setDraft] = useState<Date>(draftInitial)
 
   function handleOpen() {
@@ -148,6 +151,11 @@ export default function DatePickerField({
   if (inline && Platform.OS === 'ios') {
     return (
       <View style={styles.inlineWrap}>
+        {label ? (
+          <Text style={[styles.inlineLabel, { color: diffuse ? dt.colors.ink3 : colors.text, fontFamily: diffuse ? undefined : font.display }]}>
+            {label}
+          </Text>
+        ) : null}
         <DateTimePicker
           value={value ? new Date(value + 'T00:00:00') : draft}
           mode="date"
@@ -343,6 +351,13 @@ const styles = StyleSheet.create({
   inlineWrap: {
     width: '100%',
     alignItems: 'center',
+  },
+  inlineLabel: {
+    alignSelf: 'flex-start',
+    fontSize: 17,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    marginBottom: 2,
   },
   label: {
     fontSize: 11,
