@@ -1,11 +1,13 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import {
-  useTheme, radius, spacing,
+  useTheme, spacing,
   useDiffuseTheme, diffuseFont, diffuseRadius,
 } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { Leaf, Cross, Heart, Drop } from '../ui/Stickers'
 import { MissingStickers } from '../stickers/MissingStickers'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { Ionicons } from '@expo/vector-icons'
 import type { BirthType, BirthStickerKind } from '../../lib/birthData'
 import { useTranslation } from '../../lib/i18n'
 
@@ -64,42 +66,49 @@ export function BirthTypeCard({ birthType, onPress }: BirthTypeCardProps) {
     )
   }
 
+  const siteSticker: SiteStickerName =
+    birthType.id === 'home-birth' ? 'house'
+    : birthType.sticker === 'csection' || birthType.sticker === 'cross' ? 'doc'
+    : birthType.sticker === 'water' || birthType.sticker === 'drop' ? 'drop'
+    : birthType.sticker === 'leaf' ? 'leaf'
+    : 'heart'
+
+  // Site look: card-less sticker + label row, hairline divider, quiet "learn more".
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.85 }]}>
-      <View
-        style={[
-          styles.container,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-          },
-        ]}
-      >
-        <View style={styles.header}>
-          <View style={styles.iconWrap}>
-            <StickerIcon kind={birthType.sticker} size={56} />
-          </View>
-          <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>
-            {birthType.title}
-          </Text>
-        </View>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={birthType.title}
+      style={({ pressed }) => [styles.row, { borderBottomColor: colors.border }, pressed && { opacity: 0.7 }]}
+    >
+      <View style={styles.iconWrap}>
+        <SiteSticker name={siteSticker} size={44} cut />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.title, { color: colors.text, fontFamily: font.display }]}>
+          {birthType.title}
+        </Text>
         <Text style={[styles.description, { color: colors.textSecondary, fontFamily: font.body }]}>
           {birthType.description}
         </Text>
-        <Text style={[styles.learnMore, { color: colors.primary, fontFamily: font.bodySemiBold }]}>
-          {t('common_learnMore')}
-        </Text>
+        <View style={styles.learnRow}>
+          <Text style={[styles.learnMore, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
+            {t('common_learnMore')}
+          </Text>
+          <Ionicons name="chevron-forward" size={13} color={colors.text} />
+        </View>
       </View>
     </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    padding: spacing.lg,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    paddingVertical: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   header: {
     flexDirection: 'row',
@@ -114,17 +123,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 22,
-    letterSpacing: -0.4,
-    flex: 1,
+    fontSize: 20,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   description: {
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: spacing.sm,
+    marginTop: 4,
   },
+  learnRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
   learnMore: {
-    fontSize: 13,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
   },
   // ── Diffuse ──
   dContainer: {

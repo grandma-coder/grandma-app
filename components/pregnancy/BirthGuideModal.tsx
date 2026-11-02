@@ -8,18 +8,19 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native'
-import { X, ChevronRight } from 'lucide-react-native'
+import { ChevronRight } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
-  useTheme, brand, font,
+  useTheme, font, getModeColorSoft,
   useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius,
 } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
 import { DiffuseSheet, DiffuseSectionHeader, DiffuseListRow } from '../ui/diffuse/DiffusePrimitives'
 import { Character, type CharacterName } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
-import { Display, MonoCaps, Body } from '../ui/Typography'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { BirthDetailModal } from './BirthDetailModal'
 import {
   Leaf, Cross, Cloud, Drop, ClockFace, Bolt, Key, Pill, Lungs, Heart, Moon,
@@ -75,6 +76,12 @@ export const BIRTH_TOPIC_CHARACTER: Record<BirthTopicKey, CharacterName> = {
   recovery: 'night',
 }
 
+export const BIRTH_TOPIC_SITE_STICKER: Record<BirthTopicKey, SiteStickerName> = {
+  natural: 'leaf', csection: 'doc', home: 'house', water: 'drop',
+  'labor-stages': 'cal', 'warning-signs': 'bell', 'hospital-bag': 'backpack',
+  'pain-relief': 'syringe', positions: 'me', 'partner-guide': 'heart', recovery: 'moon',
+}
+
 export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const { colors, isDark } = useTheme()
   const diffuse = useIsDiffuse()
@@ -84,8 +91,6 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
 
   const ink = colors.text
-  const inkMuted = colors.textMuted
-  const paper = colors.surface
   const paperBorder = isDark ? colors.border : colors.text
 
   const handleClose = () => {
@@ -174,6 +179,31 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
     )
   }
 
+  const soft = getModeColorSoft('preg', isDark)
+  const hairline = colors.border
+  const renderRow = (item: { key: BirthTopicKey; title: string; subtitle: string }, last: boolean) => (
+    <Pressable
+      key={item.key}
+      onPress={() => setDetailTopic(item.key)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.title}. ${item.subtitle}`}
+      style={({ pressed }) => [
+        styles.lRow,
+        { borderBottomColor: hairline, borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth },
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      <View style={styles.lSticker}>
+        <SiteSticker name={BIRTH_TOPIC_SITE_STICKER[item.key]} size={34} cut />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.lRowTitle, { color: ink, fontFamily: font.bodyBold }]}>{item.title}</Text>
+        <Text style={[styles.lRowSub, { color: colors.textSecondary, fontFamily: font.body }]}>{item.subtitle}</Text>
+      </View>
+      <ChevronRight size={16} color={ink} strokeWidth={2.2} />
+    </Pressable>
+  )
+
   return (
     <>
       <Modal
@@ -188,7 +218,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
             style={[
               styles.sheet,
               {
-                backgroundColor: isDark ? colors.bg : '#FFFEF8',
+                backgroundColor: colors.bg,
                 borderColor: paperBorder,
                 paddingBottom: insets.bottom + 16,
               },
@@ -196,38 +226,21 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
           >
             {/* Handle */}
             <View style={styles.handleWrap}>
-              <View style={[styles.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(20,19,19,0.18)' }]} />
+              <View style={[styles.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(22,21,19,0.25)' }]} />
             </View>
 
-            {/* Header — Display title + sticker close */}
             <View style={styles.headerRow}>
-              <View style={{ flex: 1, paddingRight: 12 }}>
-                <Display size={26} color={ink}>{t('preg_birthGuide_title')}</Display>
-                <Body size={13} color={inkMuted} style={{ marginTop: 4 }}>
+              <View style={{ flex: 1 }}>
+                <DetailSheetHeader
+                  title={t('preg_birthGuide_title')}
+                  sticker="books"
+                  tone={soft}
+                  onClose={handleClose}
+                />
+                <Text style={[styles.lSubtitle, { color: colors.textSecondary, fontFamily: font.body }]}>
                   {t('preg_birthGuide_subtitle')}
-                </Body>
+                </Text>
               </View>
-              <Pressable
-                onPress={handleClose}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel="Close birth guide"
-                style={({ pressed }) => [
-                  styles.closeChip,
-                  {
-                    backgroundColor: paper,
-                    borderColor: paperBorder,
-                    shadowColor: colors.text,
-                    shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                    shadowOpacity: 1,
-                    shadowRadius: 0,
-                    elevation: 4,
-                    transform: [{ translateY: pressed ? 2 : 0 }],
-                  },
-                ]}
-              >
-                <X size={16} color={ink} strokeWidth={2.4} />
-              </Pressable>
             </View>
 
             <ScrollView
@@ -235,95 +248,17 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
             >
-              {/* Birth type grid — sticker hero per card */}
-              <View style={styles.grid}>
-                {BIRTH_TYPES.map((item) => (
-                  <Pressable
-                    key={item.key}
-                    onPress={() => setDetailTopic(item.key)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${item.title}. ${item.subtitle}`}
-                    style={({ pressed }) => [
-                      styles.typeCard,
-                      {
-                        backgroundColor: isDark ? colors.surfaceRaised : item.bg,
-                        borderColor: paperBorder,
-                        shadowColor: colors.text,
-                        shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                        shadowOpacity: 1,
-                        shadowRadius: 0,
-                        elevation: 4,
-                        transform: [{ translateY: pressed ? 2 : 0 }],
-                      },
-                    ]}
-                  >
-                    <View style={styles.typeStickerRow}>
-                      {item.sticker(38)}
-                    </View>
-                    <Body size={14} color={ink} style={{ fontFamily: font.displayBold, marginTop: 6 }}>
-                      {item.title}
-                    </Body>
-                    <Body size={11} color={inkMuted} style={{ marginTop: 2, lineHeight: 15 }}>
-                      {item.subtitle}
-                    </Body>
-                  </Pressable>
-                ))}
+              <View>
+                {BIRTH_TYPES.map((item, i) => renderRow(item, i === BIRTH_TYPES.length - 1))}
               </View>
 
               {/* Also in this guide */}
-              <MonoCaps
-                size={11}
-                color={isDark ? colors.textMuted : colors.text}
-                style={{ marginTop: 22, marginBottom: 10, letterSpacing: 1.6 }}
-              >
+              <Text style={[styles.lEyebrow, { color: colors.textMuted }]}>
                 {t('preg_birthGuide_alsoIn')}
-              </MonoCaps>
+              </Text>
 
-              <View style={styles.extraList}>
-                {EXTRA_TOPICS.map((item) => (
-                  <Pressable
-                    key={item.key}
-                    onPress={() => setDetailTopic(item.key)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${item.title}. ${item.subtitle}`}
-                    style={({ pressed }) => [
-                      styles.extraRow,
-                      {
-                        backgroundColor: paper,
-                        borderColor: paperBorder,
-                        shadowColor: colors.text,
-                        shadowOffset: { width: 0, height: pressed ? 1 : 2 },
-                        shadowOpacity: 1,
-                        shadowRadius: 0,
-                        elevation: 3,
-                        transform: [{ translateY: pressed ? 1 : 0 }],
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.extraTile,
-                        {
-                          backgroundColor: isDark ? colors.surfaceRaised : item.tileBg,
-                          borderColor: paperBorder,
-                        },
-                      ]}
-                    >
-                      {item.sticker(28)}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Body size={14} color={ink} style={{ fontFamily: font.displayBold }}>
-                        {item.title}
-                      </Body>
-                      <Body size={12} color={inkMuted} style={{ marginTop: 2, lineHeight: 16 }}>
-                        {item.subtitle}
-                      </Body>
-                    </View>
-                    <View style={[styles.extraChevron, { backgroundColor: paper, borderColor: paperBorder }]}>
-                      <ChevronRight size={14} color={ink} strokeWidth={2.2} />
-                    </View>
-                  </Pressable>
-                ))}
+              <View>
+                {EXTRA_TOPICS.map((item, i) => renderRow(item, i === EXTRA_TOPICS.length - 1))}
               </View>
             </ScrollView>
           </View>
@@ -349,9 +284,7 @@ const styles = StyleSheet.create({
   sheet: {
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    borderTopWidth: 1.5,
-    borderLeftWidth: 1.5,
-    borderRightWidth: 1.5,
+    borderTopWidth: 2.5,
     height: '90%',
   },
   handleWrap: {
@@ -426,6 +359,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
+  lRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
+  lSticker: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  lRowTitle: { fontSize: 15 },
+  lRowSub: { fontSize: 13, lineHeight: 18, marginTop: 2 },
+  lSubtitle: { fontSize: 14, lineHeight: 20, marginBottom: 4 },
+  lEyebrow: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 28, marginBottom: 4 },
   // ── Diffuse ──
   dSubtitle: {
     fontSize: 14,

@@ -12,11 +12,11 @@ import {
   Platform,
   UIManager,
 } from 'react-native'
-import { X, ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info, TriangleAlert, Lightbulb, Stethoscope, BookOpen } from 'lucide-react-native'
+import { ChevronDown, ChevronUp, ExternalLink, Info, TriangleAlert, Lightbulb, Stethoscope, BookOpen } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Linking } from 'react-native'
 import {
-  useTheme, font,
+  useTheme, font, getModeColorSoft,
   useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius,
 } from '../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
@@ -30,7 +30,9 @@ import {
 import { getBirthTopic } from '../../lib/birthGuideData'
 import type { BirthTopicKey, BirthSection, BirthCallout, BirthSource } from '../../lib/birthGuideData'
 import { Character } from '../characters/Characters'
-import { BIRTH_TOPIC_CHARACTER } from './BirthGuideModal'
+import { BIRTH_TOPIC_CHARACTER, BIRTH_TOPIC_SITE_STICKER } from './BirthGuideModal'
+import { SiteSticker } from '../stickers/SiteSticker'
+import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -188,6 +190,11 @@ export function BirthDetailModal({
     )
   }
 
+  const lInk = colors.text
+  const lMuted = colors.textSecondary
+  const lHair = colors.border
+  const soft = getModeColorSoft('preg', isDark)
+
   return (
     <Modal
       visible={visible}
@@ -201,63 +208,27 @@ export function BirthDetailModal({
           style={[
             styles.sheet,
             {
-              backgroundColor: isDark ? colors.bg : '#FFFEF8',
-              borderColor: paperBorder,
+              backgroundColor: colors.bg,
+              borderColor: lInk,
               paddingBottom: insets.bottom + 16,
             },
           ]}
         >
           {/* Handle */}
           <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(20,19,19,0.18)' }]} />
-          </View>
-
-          {/* Header — close + hero card */}
-          <View style={styles.headerRow}>
-            <View style={{ flex: 1 }} />
-            <Pressable
-              onPress={handleClose}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-              style={({ pressed }) => [
-                styles.closeChip,
-                {
-                  backgroundColor: paper,
-                  borderColor: paperBorder,
-                  shadowColor: INK,
-                  shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                  shadowOpacity: 1,
-                  shadowRadius: 0,
-                  elevation: 4,
-                  transform: [{ translateY: pressed ? 2 : 0 }],
-                },
-              ]}
-            >
-              <X size={16} color={ink} strokeWidth={2.4} />
-            </Pressable>
+            <View style={[styles.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(22,21,19,0.25)' }]} />
           </View>
 
           <View style={styles.heroPad}>
-            <View
-              style={[
-                styles.hero,
-                {
-                  backgroundColor: isDark ? colors.surfaceRaised : topic.heroColor,
-                  borderColor: paperBorder,
-                },
-              ]}
-            >
-              <View style={styles.heroSticker}>{renderSticker(54)}</View>
-              <View style={{ flex: 1 }}>
-                <Display size={22} color={ink}>
-                  {topic.title}
-                </Display>
-                <Body size={13} color={inkMuted} style={{ marginTop: 4, lineHeight: 18 }}>
-                  {topic.subtitle}
-                </Body>
-              </View>
-            </View>
+            <DetailSheetHeader
+              title={topic.title}
+              sticker={BIRTH_TOPIC_SITE_STICKER[topicKey]}
+              tone={soft}
+              onClose={handleClose}
+            />
+            <Text style={[styles.lSubtitle, { color: lMuted, fontFamily: font.body }]}>
+              {topic.subtitle}
+            </Text>
           </View>
 
           {/* Accordion sections — full content from birthGuideData */}
@@ -267,17 +238,9 @@ export function BirthDetailModal({
             showsVerticalScrollIndicator={false}
           >
             {topic.disclaimer && (
-              <View
-                style={[
-                  styles.disclaimer,
-                  {
-                    backgroundColor: isDark ? colors.surfaceRaised : '#FFF7E0',
-                    borderColor: paperBorder,
-                  },
-                ]}
-              >
-                <Info size={14} color={ink} strokeWidth={2.2} style={{ marginTop: 2 }} />
-                <Body size={12} color={inkMuted} style={{ flex: 1, lineHeight: 17 }}>
+              <View style={[styles.disclaimer, { borderColor: lHair }]}>
+                <Info size={14} color={lInk} strokeWidth={2.2} style={{ marginTop: 2 }} />
+                <Body size={12} color={lMuted} style={{ flex: 1, lineHeight: 17 }}>
                   {topic.disclaimer}
                 </Body>
               </View>
@@ -291,10 +254,10 @@ export function BirthDetailModal({
                 index={index}
                 isOpen={openIndex === index}
                 onToggle={() => toggle(index)}
-                ink={ink}
-                inkMuted={inkMuted}
-                paper={paper}
-                paperBorder={paperBorder}
+                ink={lInk}
+                inkMuted={lMuted}
+                paper={colors.bg}
+                paperBorder={lHair}
                 isDark={isDark}
               />
             ))}
@@ -302,17 +265,17 @@ export function BirthDetailModal({
             {topic.sources && topic.sources.length > 0 && (
               <SourcesBlock
                 sources={topic.sources}
-                ink={ink}
-                inkMuted={inkMuted}
-                paper={paper}
-                paperBorder={paperBorder}
+                ink={lInk}
+                inkMuted={lMuted}
+                paper={colors.bg}
+                paperBorder={lHair}
                 label={t('preg_birthDetail_sources')}
               />
             )}
           </ScrollView>
 
           {chatOn && (<>
-          {/* Ask Grandma CTA — sticker pill */}
+          {/* Ask Grandma CTA */}
           <View style={styles.ctaPad}>
             <Pressable
               onPress={handleAskGrandma}
@@ -321,21 +284,16 @@ export function BirthDetailModal({
               style={({ pressed }) => [
                 styles.cta,
                 {
-                  backgroundColor: '#F5D652',
-                  borderColor: paperBorder,
-                  shadowColor: INK,
-                  shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                  shadowOpacity: 1,
-                  shadowRadius: 0,
-                  elevation: 4,
-                  transform: [{ translateY: pressed ? 2 : 0 }],
+                  backgroundColor: soft,
+                  borderColor: lInk,
+                  opacity: pressed ? 0.8 : 1,
                 },
               ]}
             >
-              <MessageCircle size={16} color={INK} strokeWidth={2.2} />
-              <Body size={14} color={INK} style={{ fontFamily: font.bodyBold }}>
+              <SiteSticker name="bubble" size={22} cut />
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: lInk }}>
                 {t('preg_birthDetail_askGrandma')}
-              </Body>
+              </Text>
             </Pressable>
           </View>
           </>)}
@@ -460,76 +418,31 @@ function AccordionItem({
     )
   }
 
+  const num = String(index + 1).padStart(2, '0')
   return (
-    <View style={styles.accordionItem}>
+    <View style={[styles.lAccItem, { borderBottomColor: paperBorder }]}>
       <Pressable
         onPress={onToggle}
-        style={({ pressed }) => [
-          styles.accordionHeader,
-          {
-            backgroundColor: paper,
-            borderColor: paperBorder,
-            opacity: pressed ? 0.92 : 1,
-            borderBottomLeftRadius: isOpen ? 0 : 14,
-            borderBottomRightRadius: isOpen ? 0 : 14,
-            borderBottomWidth: isOpen ? 0 : 1.5,
-          },
-        ]}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isOpen }}
+        style={({ pressed }) => [styles.lAccHeader, { opacity: pressed ? 0.7 : 1 }]}
       >
-        <View
-          style={[
-            styles.numCircle,
-            {
-              backgroundColor: numFill,
-              borderColor: isDark ? 'rgba(255,255,255,0.2)' : INK,
-            },
-          ]}
-        >
-          <Body size={11} color={INK} style={{ fontFamily: font.displayBold }}>
-            {index + 1}
-          </Body>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Body size={14} color={ink} style={{ fontFamily: font.bodyBold }}>
-            {sectionTitle}
-          </Body>
-        </View>
-        <View
-          style={[
-            styles.chevWrap,
-            {
-              backgroundColor: paper,
-              borderColor: paperBorder,
-            },
-          ]}
-        >
-          {isOpen
-            ? <ChevronUp size={13} color={ink} strokeWidth={2.4} />
-            : <ChevronDown size={13} color={ink} strokeWidth={2.4} />}
-        </View>
+        <Text style={[styles.lNum, { color: inkMuted }]}>{num}</Text>
+        <Text style={[styles.lAccTitle, { color: ink, fontFamily: font.bodyBold }]}>{sectionTitle}</Text>
+        {isOpen
+          ? <ChevronUp size={16} color={ink} strokeWidth={2.2} />
+          : <ChevronDown size={16} color={ink} strokeWidth={2.2} />}
       </Pressable>
 
       {isOpen && (
-        <View
-          style={[
-            styles.accordionBody,
-            {
-              backgroundColor: paper,
-              borderColor: paperBorder,
-            },
-          ]}
-        >
-          <Body size={13} color={inkMuted} style={{ lineHeight: 20 }}>
-            {sectionContent}
-          </Body>
+        <View style={styles.lAccBody}>
+          <Text style={[styles.lBody, { color: inkMuted, fontFamily: font.body }]}>{sectionContent}</Text>
           {section.bullets && section.bullets.length > 0 && (
             <View style={styles.bulletList}>
               {section.bullets.map((bullet, i) => (
                 <View key={i} style={styles.bulletRow}>
-                  <View style={[styles.bulletDot, { backgroundColor: numFill, borderColor: isDark ? 'rgba(255,255,255,0.3)' : INK }]} />
-                  <Body size={13} color={ink} style={{ flex: 1, lineHeight: 19 }}>
-                    {bullet}
-                  </Body>
+                  <View style={[styles.lDot, { backgroundColor: ink }]} />
+                  <Text style={[styles.lBullet, { color: ink, fontFamily: font.body }]}>{bullet}</Text>
                 </View>
               ))}
             </View>
@@ -538,27 +451,15 @@ function AccordionItem({
           {section.subsections && section.subsections.length > 0 && (
             <View style={styles.subList}>
               {section.subsections.map((sub, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.subCard,
-                    { borderColor: paperBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FBF6E8' },
-                  ]}
-                >
-                  <Body size={13} color={ink} style={{ fontFamily: font.bodyBold, marginBottom: 6 }}>
-                    {sub.title}
-                  </Body>
-                  <Body size={13} color={inkMuted} style={{ lineHeight: 20 }}>
-                    {sub.content}
-                  </Body>
+                <View key={i} style={[styles.lSub, { borderLeftColor: ink }]}>
+                  <Text style={[styles.lSubTitle, { color: ink, fontFamily: font.bodyBold }]}>{sub.title}</Text>
+                  <Text style={[styles.lBody, { color: inkMuted, fontFamily: font.body }]}>{sub.content}</Text>
                   {sub.bullets && sub.bullets.length > 0 && (
                     <View style={[styles.bulletList, { marginTop: 8 }]}>
                       {sub.bullets.map((bullet, j) => (
                         <View key={j} style={styles.bulletRow}>
-                          <View style={[styles.bulletDot, { backgroundColor: numFill, borderColor: isDark ? 'rgba(255,255,255,0.3)' : INK }]} />
-                          <Body size={12} color={ink} style={{ flex: 1, lineHeight: 18 }}>
-                            {bullet}
-                          </Body>
+                          <View style={[styles.lDot, { backgroundColor: ink }]} />
+                          <Text style={[styles.lBullet, { color: ink, fontFamily: font.body }]}>{bullet}</Text>
                         </View>
                       ))}
                     </View>
@@ -617,27 +518,17 @@ function CalloutBlock({ callout, ink, inkMuted, paperBorder, isDark, diffuse, dt
   }
 
   return (
-    <View
-      style={[
-        styles.callout,
-        {
-          backgroundColor: palette.bg,
-          borderColor: paperBorder,
-        },
-      ]}
-    >
-      <View style={[styles.calloutIcon, { backgroundColor: palette.accent, borderColor: paperBorder }]}>
-        <IconCmp size={14} color={INK} strokeWidth={2.2} />
-      </View>
+    <View style={[styles.lCallout, { borderLeftColor: palette.accent }]}>
+      <IconCmp size={15} color={ink} strokeWidth={2.2} style={{ marginTop: 2 }} />
       <View style={{ flex: 1 }}>
         {callout.title && (
-          <Body size={13} color={ink} style={{ fontFamily: font.bodyBold, marginBottom: 3 }}>
+          <Text style={[styles.lSubTitle, { color: ink, fontFamily: font.bodyBold, marginBottom: 3 }]}>
             {callout.title}
-          </Body>
+          </Text>
         )}
-        <Body size={12} color={inkMuted} style={{ lineHeight: 18 }}>
+        <Text style={[styles.lBody, { color: inkMuted, fontFamily: font.body, fontSize: 13, lineHeight: 19 }]}>
           {callout.text}
-        </Body>
+        </Text>
       </View>
     </View>
   )
@@ -709,7 +600,7 @@ function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label, diffu
   }
 
   return (
-    <View style={[styles.sourcesCard, { backgroundColor: paper, borderColor: paperBorder }]}>
+    <View style={[styles.lSources, { borderTopColor: paperBorder }]}>
       <Pressable
         onPress={toggle}
         accessibilityRole="button"
@@ -718,12 +609,12 @@ function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label, diffu
         style={({ pressed }) => [styles.sourcesHeader, { opacity: pressed ? 0.7 : 1 }]}
       >
         <BookOpen size={13} color={inkMuted} strokeWidth={2.2} />
-        <Body size={12} color={inkMuted} style={{ flex: 1, fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+        <Text style={[styles.lEyebrow, { flex: 1, color: inkMuted }]}>
           {`${label} (${sources.length})`}
-        </Body>
+        </Text>
         {open
-          ? <ChevronUp size={14} color={inkMuted} strokeWidth={2.4} />
-          : <ChevronDown size={14} color={inkMuted} strokeWidth={2.4} />}
+          ? <ChevronUp size={14} color={ink} strokeWidth={2.2} />
+          : <ChevronDown size={14} color={ink} strokeWidth={2.2} />}
       </Pressable>
 
       {open && (
@@ -735,14 +626,10 @@ function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label, diffu
               style={({ pressed }) => [styles.sourceRow, { opacity: pressed ? 0.6 : 1 }]}
             >
               <View style={{ flex: 1 }}>
-                <Body size={12} color={ink} style={{ fontFamily: font.bodyBold, lineHeight: 17 }}>
-                  {s.label}
-                </Body>
-                <Body size={11} color={inkMuted} style={{ lineHeight: 15, marginTop: 2 }}>
-                  {s.org}
-                </Body>
+                <Text style={{ color: ink, fontFamily: font.bodyBold, fontSize: 13, lineHeight: 18 }}>{s.label}</Text>
+                <Text style={{ color: inkMuted, fontFamily: font.body, fontSize: 12, lineHeight: 16, marginTop: 2 }}>{s.org}</Text>
               </View>
-              <ExternalLink size={13} color={inkMuted} strokeWidth={2.2} />
+              <ExternalLink size={13} color={ink} strokeWidth={2.2} />
             </Pressable>
           ))}
         </View>
@@ -760,9 +647,7 @@ const styles = StyleSheet.create({
   sheet: {
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    borderTopWidth: 1.5,
-    borderLeftWidth: 1.5,
-    borderRightWidth: 1.5,
+    borderTopWidth: 2.5,
     height: '90%',
   },
   handleWrap: {
@@ -790,7 +675,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroPad: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4 },
+  heroPad: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 },
   hero: {
     borderRadius: 22,
     borderWidth: 1.5,
@@ -805,7 +690,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 8 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
   accordionItem: {},
   accordionHeader: {
     flexDirection: 'row',
@@ -872,9 +757,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    borderWidth: 1.2,
-    borderRadius: 14,
-    padding: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 14,
     marginBottom: 4,
   },
   sourcesCard: {
@@ -894,7 +778,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 8,
   },
-  ctaPad: { paddingHorizontal: 16, paddingTop: 8 },
+  ctaPad: { paddingHorizontal: 20, paddingTop: 8 },
   cta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -904,6 +788,20 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     paddingVertical: 14,
   },
+  lSubtitle: { fontSize: 14, lineHeight: 20, marginTop: 2, marginBottom: 6 },
+  lAccItem: { borderBottomWidth: StyleSheet.hairlineWidth },
+  lAccHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 16 },
+  lNum: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4 },
+  lAccTitle: { flex: 1, fontSize: 15, lineHeight: 20 },
+  lAccBody: { paddingBottom: 18, gap: 8 },
+  lBody: { fontSize: 14, lineHeight: 21 },
+  lBullet: { flex: 1, fontSize: 14, lineHeight: 20 },
+  lDot: { width: 5, height: 5, borderRadius: 3, marginTop: 8, flexShrink: 0 },
+  lSub: { borderLeftWidth: 2, paddingLeft: 12, gap: 4 },
+  lSubTitle: { fontSize: 14, lineHeight: 19 },
+  lCallout: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderLeftWidth: 3, paddingLeft: 12, paddingVertical: 4, marginTop: 12 },
+  lSources: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 16, marginTop: 8 },
+  lEyebrow: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
   // ── Diffuse ──
   dHero: {
     padding: 16,

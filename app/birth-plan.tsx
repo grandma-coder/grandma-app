@@ -7,11 +7,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { BirthTypeCard } from '../components/pregnancy/BirthTypeCard'
 import { BirthDetailModal } from '../components/pregnancy/BirthDetailModal'
-import { Flower, Star, Heart, Bottle, Sparkle } from '../components/ui/Stickers'
-import { MissingStickers } from '../components/stickers/MissingStickers'
+import { SiteSticker } from '../components/stickers/SiteSticker'
+import { InkBackButton } from '../components/ui/InkBackButton'
 import { birthTypes, hospitalBagChecklist } from '../lib/birthData'
 import type { BirthTopicKey } from '../lib/birthGuideData'
-import { useTheme, spacing, radius, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { useTheme, spacing, radius, getModeColor, getModeColorSoft, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 import { Character } from '../components/characters/Characters'
@@ -30,11 +30,12 @@ const BAG_STATE_KEY = 'grandma:hospital_bag_checklist:v1'
 
 export default function BirthPlan() {
   const insets = useSafeAreaInsets()
-  const { colors, font, stickers, isDark } = useTheme()
+  const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const accent = diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)
+  const soft = getModeColorSoft('preg', isDark)
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
   const [checked, setChecked] = useState<Record<string, boolean>>({})
   const [hydrated, setHydrated] = useState(false)
@@ -94,63 +95,56 @@ export default function BirthPlan() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
-          onPress={() => router.back()}
-          style={[
-            styles.backBtn,
-            diffuse
-              ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-              : { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-        >
-          {diffuse ? (
+        {diffuse ? (
+          <Pressable
+            onPress={() => router.back()}
+            style={[styles.backBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
             <ArrowLeft size={22} color={dt.colors.ink} strokeWidth={1.8} />
-          ) : (
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
-          )}
-        </Pressable>
+          </Pressable>
+        ) : (
+          <InkBackButton ink={colors.text} paper={colors.surface} />
+        )}
 
-        <View style={{ alignItems: 'center', marginBottom: 8 }}>
-          {diffuse ? (
-            <DiffuseBloomIcon color={accent} size={96} intensity={0.5}>
-              <Character name="note" size={52} color={dt.colors.ink3} />
-            </DiffuseBloomIcon>
-          ) : (
-            <MissingStickers.PregnancyBirthPlanHero size={120} />
-          )}
-        </View>
-        <Text
-          style={[
-            styles.title,
-            diffuse
-              ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-              : { color: colors.text, fontFamily: font.display },
-          ]}
-        >
-          {t('preg_birthPlan_title')}
-        </Text>
-        <Text
-          style={[
-            styles.subtitleItalic,
-            diffuse
-              ? { color: dt.colors.ink3, fontFamily: diffuseFont.italic }
-              : { color: stickers.coral, fontFamily: font.italic },
-          ]}
-        >
-          {t('preg_birthPlan_italicSubtitle')}
-        </Text>
+        {diffuse ? (
+          <>
+            <View style={{ alignItems: 'center', marginBottom: 8 }}>
+              <DiffuseBloomIcon color={accent} size={96} intensity={0.5}>
+                <Character name="note" size={52} color={dt.colors.ink3} />
+              </DiffuseBloomIcon>
+            </View>
+            <Text style={[styles.title, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+              {t('preg_birthPlan_title')}
+            </Text>
+            <Text style={[styles.subtitleItalic, { color: dt.colors.ink3, fontFamily: diffuseFont.italic }]}>
+              {t('preg_birthPlan_italicSubtitle')}
+            </Text>
+          </>
+        ) : (
+          <>
+            <View style={styles.lHeaderRow}>
+              <SiteSticker name="pencil" size={52} cut />
+              <Text style={[styles.lTitle, { color: colors.text, fontFamily: font.display }]}>
+                {t('preg_birthPlan_title')}
+              </Text>
+            </View>
+            <Text style={[styles.lSubtitle, { color: colors.textSecondary, fontFamily: font.body }]}>
+              {t('preg_birthPlan_italicSubtitle')}
+            </Text>
+          </>
+        )}
 
         {/* Birth Types */}
         <View style={styles.sectionLabelRow}>
-          <Flower size={16} petal={stickers.pink} />
+          {diffuse ? null : <SiteSticker name="flower" size={22} cut />}
           <Text
             style={[
               styles.sectionLabel,
               diffuse
                 ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
-                : { color: colors.textMuted, fontFamily: font.bodyMedium },
+                : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, fontSize: 10 },
             ]}
           >
             {t('preg_birthPlan_typesOfBirth')}
@@ -169,13 +163,13 @@ export default function BirthPlan() {
 
         {/* Hospital Bag */}
         <View style={styles.sectionLabelRow}>
-          <MissingStickers.PregnancyHospitalBag size={24} />
+          {diffuse ? null : <SiteSticker name="backpack" size={24} cut />}
           <Text
             style={[
               styles.sectionLabel,
               diffuse
                 ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
-                : { color: colors.textMuted, fontFamily: font.bodyMedium },
+                : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, fontSize: 10 },
             ]}
           >
             {t('preg_birthPlan_hospitalBagHeader', { done: doneCount, total })}
@@ -195,12 +189,8 @@ export default function BirthPlan() {
                 <Character name="sparkle" size={16} color={dt.colors.ink3} />
               )}
             </DiffuseBloomIcon>
-          ) : isMom ? (
-            <Heart size={20} fill={stickers.pink} />
-          ) : isBaby ? (
-            <Bottle size={20} fill={stickers.blue} />
           ) : (
-            <Sparkle size={20} fill={stickers.yellow} />
+            <SiteSticker name={isMom ? 'heart' : isBaby ? 'bottle' : 'star'} size={26} cut />
           )
           return (
             <View
@@ -213,11 +203,8 @@ export default function BirthPlan() {
                       borderColor: dt.colors.line,
                       borderRadius: radius.lg,
                     }
-                  : {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                      borderRadius: radius.lg,
-                    },
+                  : styles.lBagSection,
+                !diffuse && { borderBottomColor: colors.border },
               ]}
             >
               <View style={styles.bagCategoryRow}>
@@ -227,7 +214,7 @@ export default function BirthPlan() {
                     styles.bagCategory,
                     diffuse
                       ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-                      : { color: colors.text, fontFamily: font.display },
+                      : { color: colors.text, fontFamily: font.display, fontSize: 18, letterSpacing: 0.3, textTransform: 'uppercase' },
                   ]}
                 >
                   {section.category}
@@ -254,8 +241,9 @@ export default function BirthPlan() {
                               backgroundColor: isChecked ? accent : 'transparent',
                             }
                           : {
-                              borderColor: isChecked ? accent : colors.borderStrong,
-                              backgroundColor: isChecked ? accent : 'transparent',
+                              borderColor: colors.text,
+                              borderWidth: 1.5,
+                              backgroundColor: isChecked ? soft : colors.surface,
                             },
                       ]}
                     >
@@ -263,7 +251,7 @@ export default function BirthPlan() {
                         diffuse ? (
                           <Check size={14} color={dt.colors.surface} strokeWidth={2.4} />
                         ) : (
-                          <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                          <Ionicons name="checkmark" size={14} color={colors.text} />
                         )
                       )}
                     </View>
@@ -324,6 +312,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 20,
   },
+  lHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6 },
+  lTitle: { flex: 1, fontSize: 30, lineHeight: 34, letterSpacing: 0.3, textTransform: 'uppercase' },
+  lSubtitle: { fontSize: 15, lineHeight: 22, marginBottom: 24 },
+  lBagSection: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: spacing.md, marginBottom: spacing.md },
   title: {
     fontSize: 40,
     letterSpacing: -0.8,
