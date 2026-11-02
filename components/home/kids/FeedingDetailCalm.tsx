@@ -23,6 +23,19 @@ import { useTranslation } from '../../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { FadeUp } from '../../ui/Motion'
 
+// Food group → a cute sticker + soft tone (labels arrive capitalised or lower-case).
+const GROUP: Record<string, { sticker: SiteStickerName; tone: string }> = {
+  fruit: { sticker: 'banana', tone: stickers.yellowSoft },
+  vegetable: { sticker: 'lettuce', tone: stickers.greenSoft },
+  grain: { sticker: 'corn', tone: stickers.peachSoft },
+  protein: { sticker: 'egg', tone: stickers.pinkSoft },
+  dairy: { sticker: 'bottle', tone: stickers.blueSoft },
+  drink: { sticker: 'drop', tone: stickers.blueSoft },
+  snack: { sticker: 'rasp', tone: stickers.lilacSoft },
+  mixed: { sticker: 'avocado', tone: stickers.greenSoft },
+}
+const groupOf = (label: string) => GROUP[label.toLowerCase()] ?? GROUP.mixed
+
 const BUCKETS = [
   { key: 'dawn', from: 5, to: 9 },
   { key: 'morning', from: 9, to: 12 },
@@ -74,7 +87,8 @@ export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
 
   const kcal = p.caloriesTotal ?? 0
   const kcalGoal = p.caloriesTarget ?? 0
-  const cats = (p.categories ?? []).filter((c) => c.cals > 0).slice(0, 4)
+  const cats = (p.categories ?? []).filter((c) => c.cals > 0).sort((a, b) => b.cals - a.cals)
+  const catMax = Math.max(1, ...cats.map((c) => c.cals))
 
   const eyebrow = [styles.eyebrow, { color: ink2 }]
   const Divider = () => <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -211,13 +225,34 @@ export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
               </Text>
             ) : null}
           </View>
-          {cats.map((c) => (
-            <View key={c.label} style={styles.catRow}>
-              <View style={[styles.catDot, { backgroundColor: c.color, borderColor: ink }]} />
-              <Text style={[styles.line, { color: ink, fontFamily: font.body, flex: 1 }]}>{c.label}</Text>
-              <Text style={[styles.line, { color: ink, fontFamily: font.bodySemiBold }]}>{Math.round(c.cals / days).toLocaleString()} kcal</Text>
+          {cats.length > 0 ? (
+            <View style={styles.cats}>
+              {cats.map((c) => {
+                const g = groupOf(c.label)
+                const perDay = Math.round(c.cals / days)
+                const share = Math.round((c.cals / Math.max(1, kcal)) * 100)
+                return (
+                  <View key={c.label} style={styles.catRow}>
+                    <View style={[styles.catDisc, { backgroundColor: g.tone, borderColor: ink }]}>
+                      <SiteSticker name={g.sticker} size={26} />
+                    </View>
+                    <View style={{ flex: 1, gap: 5 }}>
+                      <View style={styles.rowBetween}>
+                        <Text style={[styles.line, { color: ink, fontFamily: font.bodySemiBold, textTransform: 'capitalize' }]}>{c.label}</Text>
+                        <Text style={[styles.line, { color: ink, fontFamily: font.bodyBold }]}>
+                          {perDay.toLocaleString()} kcal
+                          <Text style={{ color: ink2, fontFamily: font.body }}>{`  ${share}%`}</Text>
+                        </Text>
+                      </View>
+                      <View style={[styles.catTrack, { backgroundColor: colors.border }]}>
+                        <View style={[styles.catFill, { width: `${(c.cals / catMax) * 100}%`, backgroundColor: g.tone, borderColor: ink }]} />
+                      </View>
+                    </View>
+                  </View>
+                )
+              })}
             </View>
-          ))}
+          ) : null}
         </FadeUp>
       ) : null}
     </ScrollView>
@@ -243,8 +278,11 @@ const styles = StyleSheet.create({
   barCol: { flex: 1, alignItems: 'center', gap: 4 },
   bar: { width: '100%', borderRadius: 8, borderWidth: 1.5 },
   line: { fontSize: 15, lineHeight: 22 },
-  catRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
-  catDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 1.5 },
+  cats: { marginTop: 16, gap: 14 },
+  catRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  catDisc: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  catTrack: { height: 8, borderRadius: 4, overflow: 'hidden' },
+  catFill: { height: 8, borderRadius: 4, borderWidth: 1 },
   empty: { alignItems: 'center', gap: 10, paddingVertical: 40, paddingHorizontal: 24 },
   emptyTitle: { fontSize: 22, textTransform: 'uppercase', letterSpacing: 0.3 },
 })

@@ -47,7 +47,8 @@ describe('feeding detail — every case says something true and clear', () => {
     const v = r({ caloriesTotal: 7000, caloriesTarget: 8400, categories: [{ label: 'Fruit', cals: 700, color: '#0f0' }] })
     expect(v.getByTestId('solids-hero').props.children).toEqual(['1,000', ' kcal'])
     expect(v.getByText('of 1,200 a day')).toBeTruthy()
-    expect(v.getByText('100 kcal')).toBeTruthy()
+    expect(v.getByText(/^100 kcal/)).toBeTruthy()
+    expect(v.getByText('Fruit')).toBeTruthy()
     expect(v.queryByText(/MILK FEEDS/)).toBeNull()
   })
 
