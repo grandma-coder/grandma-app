@@ -492,28 +492,14 @@ function StepPeriodDuration({
       ) : (
         <View style={stepStyles.chipGrid}>
           {options.map((n) => (
-            <Pressable
+            <SiteChoice
               key={n}
+              label={`${n} ${t('cycleOnboarding_days')}`}
+              selected={duration === n}
               onPress={() => setDuration(n)}
-              style={[
-                stepStyles.durationChip,
-                {
-                  backgroundColor: duration === n ? modeSoft : colors.surface,
-                  borderColor: duration === n ? mode : colors.text,
-                  shadowColor: colors.text,
-                  borderRadius: radius.full,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  stepStyles.durationChipText,
-                  { color: duration === n ? mode : colors.text, fontFamily: font.bodyBold },
-                ]}
-              >
-                {n} {t('cycleOnboarding_days')}
-              </Text>
-            </Pressable>
+              tone={modeSoft}
+              style={stepStyles.gridChip}
+            />
           ))}
         </View>
       )}
@@ -1027,6 +1013,7 @@ function TogglePill({
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const stepStyles = StyleSheet.create({
+  gridChip: { width: '31%' },
   unknownChip: { alignSelf: 'center', marginTop: 6 },
   subQ: { fontSize: 20, letterSpacing: 0.3, textTransform: 'uppercase', marginTop: 34, marginBottom: 12 },
   centered: {
@@ -1075,7 +1062,8 @@ const stepStyles = StyleSheet.create({
   chipGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
+    justifyContent: 'space-between',
   },
   otherInputWrap: {
     marginTop: 16,

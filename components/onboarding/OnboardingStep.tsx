@@ -318,7 +318,7 @@ const PROGRESS_PINK = '#E0709A'
 
 // Continue disc defaults: picked from the question text so every screen gets its own
 // sticker + tone (stable across renders), never repeating the header sticker.
-const CTA_STICKERS: SiteStickerName[] = ['heart', 'star', 'flower', 'leaf', 'cloud', 'bell', 'moon', 'shoe', 'pola', 'egg', 'backpack', 'owl']
+const CTA_STICKERS: SiteStickerName[] = ['heart', 'star', 'flower', 'leaf', 'cloud', 'bell', 'moon', 'shoe', 'pola', 'egg', 'backpack', 'phone']
 const CTA_TONES = [ACTION_TONES.pink, ACTION_TONES.yellow, ACTION_TONES.lilac, ACTION_TONES.green, ACTION_TONES.blue, ACTION_TONES.peach]
 function pickCta(question: string, avoid?: string): { sticker: SiteStickerName; tone: string } {
   let h = 0
