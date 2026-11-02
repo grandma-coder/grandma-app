@@ -9,6 +9,8 @@
  * Used by components/home/PregnancyHome.tsx and VitalsCarousel.
  */
 
+import { SheetFooterAction } from './LogSheet'
+import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import React, { useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, Image, ActivityIndicator, ScrollView,
@@ -285,13 +287,21 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
           </Pressable>
         )}
 
-        <SaveMealButton
-          onPress={save}
-          saving={saving}
-          disabled={foods.length === 0}
-          isDark={isDark}
-          colors={colors}
-        />
+        {diffuse ? (
+          <SaveMealButton
+            onPress={save}
+            saving={saving}
+            disabled={foods.length === 0}
+            isDark={isDark}
+            colors={colors}
+          />
+        ) : (
+          <SheetFooterAction>
+            <View style={{ alignItems: 'center' }}>
+              <EyeAction label={t('common_save')} onPress={save} ink={colors.text} loading={saving} disabled={foods.length === 0} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+            </View>
+          </SheetFooterAction>
+        )}
       </View>
     </ScrollView>
   )

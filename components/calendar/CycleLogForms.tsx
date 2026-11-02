@@ -9,6 +9,8 @@
  *
  * Backwards-compat alias: IntercourseForm re-exports IntimacyForm.
  */
+import { SheetFooterAction } from './LogSheet'
+import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { useEffect, useMemo, useState } from 'react'
 import {
   View, Text, Pressable, Alert, StyleSheet, ActivityIndicator, TextInput,
@@ -252,22 +254,13 @@ function SaveStickerButton({
     )
   }
 
+  // Site look: pencil disc pinned in the sheet footer — always visible, no scrolling to save.
   return (
-    <Pressable
-      onPress={loading || disabled ? undefined : onPress}
-      style={[
-        styles.saveBtn,
-        { backgroundColor: colors.text, opacity: disabled ? 0.5 : 1, borderColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1 },
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={colors.bg} />
-      ) : (
-        <Text style={[styles.saveLabel, { color: colors.bg, fontFamily: font.bodyBold }]}>
-          {label}
-        </Text>
-      )}
-    </Pressable>
+    <SheetFooterAction>
+      <View style={{ alignItems: 'center' }}>
+        <EyeAction label={label} onPress={onPress} ink={colors.text} loading={loading} disabled={disabled} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+      </View>
+    </SheetFooterAction>
   )
 }
 

@@ -8,6 +8,8 @@
  * - components/home/pregnancy/RemindersSection.tsx (via reminder card tap)
  */
 
+import { SheetFooterAction } from './LogSheet'
+import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import React, { useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, Dimensions, ActivityIndicator, Alert,
@@ -151,19 +153,11 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
           )}
         </Pressable>
       ) : (
-        <Pressable
-          onPress={handleSave}
-          style={[styles.saveBtn, {
-            backgroundColor: brand.pregnancy,
-            opacity: !value.trim() || saving ? 0.6 : 1,
-          }]}
-          disabled={saving || !value.trim()}
-        >
-          {saving
-            ? <ActivityIndicator color={colors.textInverse} />
-            : <Text style={[styles.saveText, { color: colors.textInverse }]}>{t('common_save')}</Text>
-          }
-        </Pressable>
+        <SheetFooterAction>
+          <View style={{ alignItems: 'center' }}>
+            <EyeAction label={t('common_save')} onPress={handleSave} ink={colors.text} loading={saving} disabled={saving || !value.trim()} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+          </View>
+        </SheetFooterAction>
       )}
     </View>
   )

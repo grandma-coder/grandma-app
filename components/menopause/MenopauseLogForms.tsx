@@ -19,7 +19,8 @@
 
 import { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native'
-import { PillButton } from '../ui/PillButton'
+import { SheetFooterAction } from '../calendar/LogSheet'
+import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { StepSlider } from '../ui/StepSlider'
 import { Character } from '../characters/Characters'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -168,13 +169,11 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
         />
       </View>
 
-      <PillButton
-        label={COPY.save}
-        variant="ink"
-        onPress={handleSave}
-        loading={saving}
-        disabled={!symptomId || saving}
-      />
+      <SheetFooterAction>
+        <View style={{ alignItems: 'center' }}>
+          <EyeAction label={COPY.save} onPress={handleSave} ink={useTheme().colors.text} loading={saving} disabled={!symptomId || saving} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+        </View>
+      </SheetFooterAction>
     </View>
   )
 }
@@ -253,13 +252,11 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
         {COPY.periodNote}
       </Text>
 
-      <PillButton
-        label={COPY.save}
-        variant="ink"
-        onPress={handleSave}
-        loading={saving}
-        disabled={!flow || saving}
-      />
+      <SheetFooterAction>
+        <View style={{ alignItems: 'center' }}>
+          <EyeAction label={COPY.save} onPress={handleSave} ink={useTheme().colors.text} loading={saving} disabled={!flow || saving} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+        </View>
+      </SheetFooterAction>
     </View>
   )
 }
