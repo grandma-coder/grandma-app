@@ -331,6 +331,8 @@ import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { KidsLogRouter, type KidsLogType } from '../calendar/KidsLogRouter'
 import { useKidsTodayLogs } from '../../lib/analyticsData'
 import { KidsTodaySummaryCard } from './kids/KidsTodaySummaryCard'
+import { HandoffSheet } from './kids/HandoffSheet'
+import { QuietPill } from '../ui/QuietPill'
 import { MonoCaps, Display } from '../ui/Typography'
 
 const MOOD_COLORS: Record<string, string> = {
@@ -615,6 +617,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   const [diaperModalVisible, setDiaperModalVisible] = useState(false)
   const [goalsModalVisible, setGoalsModalVisible] = useState(false)
   const [logSheetType, setLogSheetType] = useState<KidsLogType | null>(null)
+  // Handoff — share a "since …" summary with whoever takes the child next (light look only).
+  const [handoffVisible, setHandoffVisible] = useState(false)
 
   // Reminders
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -2102,6 +2106,20 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           onLogMetric={readOnly ? undefined : (type) => setLogSheetType(type as KidsLogType)}
         />
       </View>
+      )}
+
+      {/* ─── Handoff — quiet pill under today's launcher; open to caregivers too
+          (read-only share of what's logged). Site look only; Diffuse untouched. */}
+      {!diffuse && (
+        <View style={{ marginTop: 12, flexDirection: 'row', justifyContent: 'flex-end' }}>
+          <QuietPill
+            label={t('handoff_action')}
+            leading={<SiteSticker name="bubble" size={18} />}
+            onPress={() => setHandoffVisible(true)}
+            accessibilityLabel={t('handoff_action')}
+          />
+          <HandoffSheet visible={handoffVisible} onClose={() => setHandoffVisible(false)} child={child} />
+        </View>
       )}
 
       {/* (Ring legend / stats strip removed — hero tiles + detail modals cover this) */}

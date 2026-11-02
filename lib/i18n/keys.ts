@@ -4053,4 +4053,41 @@ export interface TranslationKeys {
   report_meno_stage_post: string
   report_meno_lastPeriod: string
   report_meno_monthsSince: string
+  // ─── Kids handoff (share summary) ─────────────────────────────────────
+  handoff_action: string
+  handoff_since: string
+  handoff_summary: string
+  handoff_chip2h: string
+  handoff_chip4h: string
+  handoff_chipMorning: string
+  handoff_chipPick: string
+  handoff_share: string
+  handoff_copy: string
+  handoff_copied: string
+  handoff_title: string
+  handoff_empty: string
+  handoff_footer: string
+  handoff_fed: string
+  handoff_bottle: string
+  handoff_bottleMl: string
+  handoff_bottles: string
+  handoff_bottlesMl: string
+  handoff_breast: string
+  handoff_breasts: string
+  handoff_solids: string
+  handoff_slept: string
+  handoff_asleepSince: string
+  handoff_diapers: string
+  handoff_at: string
+  handoff_temp: string
+  handoff_vaccine: string
+  handoff_medicine: string
+  handoff_doctor: string
+  handoff_injury: string
+  handoff_mood: string
+  handoff_activities: string
+  handoff_note: string
+  handoff_durHm: string
+  handoff_durH: string
+  handoff_durM: string
 }
