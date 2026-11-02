@@ -34,7 +34,10 @@ import { router } from 'expo-router'
 import { Edit2, Check, ChevronRight, X } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
+import { SiteSticker, type SiteStickerName } from '../../components/stickers/SiteSticker'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteChoice } from '../../components/ui/SiteChoice'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
@@ -153,7 +156,7 @@ const NESTING_ITEMS = [
 
 // ─── Animated hero heart — gentle pulse + sway ────────────────────────────────
 
-function AnimatedHeartHero({ size = 64, fill }: { size?: number; fill: string }) {
+function AnimatedHeartHero({ size = 64, fill, site = false }: { size?: number; fill: string; site?: boolean }) {
   const pulse = useRef(new Animated.Value(0)).current
   const sway = useRef(new Animated.Value(0)).current
 
@@ -180,7 +183,7 @@ function AnimatedHeartHero({ size = 64, fill }: { size?: number; fill: string })
 
   return (
     <Animated.View style={{ transform: [{ scale }, { rotate }] }}>
-      <HeartSticker size={size} fill={fill} />
+      {site ? <SiteSticker name="heart" size={size} cut /> : <HeartSticker size={size} fill={fill} />}
     </Animated.View>
   )
 }
@@ -197,8 +200,8 @@ interface EditFieldModalProps {
 }
 
 function EditFieldModal({ visible, label, value, onSave, onClose, multiline = false }: EditFieldModalProps) {
-  const { colors, font, isDark, stickers: st } = usePregTheme()
-  const paper = colors.surface
+  const { colors, font, isDark, stickers: st, diffuse } = usePregTheme()
+  const paper = diffuse ? colors.surface : colors.bg
   const paperBorder = colors.border
   const [text, setText] = useState(value)
   useEffect(() => { setText(value) }, [value])
@@ -206,7 +209,7 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.editOverlay}>
-        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
+        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
           <ModalHeader label={label} onClose={onClose} stickers={st} />
           <TextInput
             value={text}
@@ -221,6 +224,7 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
                 height: multiline ? 110 : 56,
                 fontFamily: font.body,
               },
+              !diffuse && { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 16, ...(multiline ? {} : { height: 52 }) },
             ]}
             autoFocus
             placeholderTextColor={colors.textMuted}
@@ -229,7 +233,7 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
             <PillButton label="Cancel" variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
             <PillButton
               label="Save"
-              variant="accent"
+              variant={diffuse ? 'accent' : 'ink'}
               accentColor={st.lilac}
               onPress={() => { onSave(text); onClose() }}
               height={52}
@@ -305,11 +309,42 @@ function modalAccent(label: string, stickers: ReturnType<typeof useTheme>['stick
   return { node: blob('sparkle', stickers.lilac), tint: stickers.lilacSoft }
 }
 
+function siteStickerForLabel(label: string): SiteStickerName {
+  const k = label.toLowerCase()
+  if (k.includes('blood') || k.includes('rh')) return 'drop'
+  if (k.includes('conception') || k.includes('cord')) return 'heart'
+  if (k.includes('location')) return 'house'
+  if (k.includes('pain')) return 'flame'
+  if (k.includes('atmos')) return 'moon'
+  if (k.includes('feed') || k.includes('breast')) return 'bottle'
+  if (k.includes('duration') || k.includes('scan') || k.includes('week')) return 'cal'
+  if (k.includes('height')) return 'ruler'
+  if (k.includes('weight')) return 'bars'
+  if (k.includes('position')) return 'baby2'
+  if (k.includes('sex') || k.includes('baby')) return 'baby'
+  if (k.includes('health')) return 'thermo'
+  return 'pencil'
+}
+
 function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose: () => void; stickers: ReturnType<typeof useTheme>['stickers'] }) {
-  const { colors, font, isDark } = usePregTheme()
+  const { colors, font, isDark, diffuse } = usePregTheme()
   const { t } = useTranslation()
   const ink = colors.text
   const accent = modalAccent(label, st)
+  if (!diffuse) {
+    return (
+      <View style={styles.modalHeader}>
+        <SiteSticker name={siteStickerForLabel(label)} size={40} cut />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.siteModalTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>{label}</Text>
+          <Text style={[styles.modalHeaderSub, { color: colors.textSecondary, fontFamily: font.body }]}>
+            {t('profPreg_pickOneThatFits')}
+          </Text>
+        </View>
+        <InkBackButton icon="close" ink={ink} paper={colors.surface} label="Close" onPress={onClose} style={{ marginBottom: 0 }} />
+      </View>
+    )
+  }
   return (
     <View style={styles.modalHeader}>
       <View style={[styles.modalHeaderBadge, { backgroundColor: accent.tint, borderColor: ink }]}>
@@ -338,8 +373,8 @@ function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose:
 }
 
 function OptionsSheet({ visible, label, value, options, onSave, onClose }: OptionsSheetProps) {
-  const { colors, font, isDark, stickers: st } = usePregTheme()
-  const paper = colors.surface
+  const { colors, font, isDark, stickers: st, diffuse } = usePregTheme()
+  const paper = diffuse ? colors.surface : colors.bg
   const paperBorder = colors.border
   const ink = colors.text
 
@@ -372,11 +407,17 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.editOverlay}>
-        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
+        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
           <ModalHeader label={label} onClose={onClose} stickers={st} />
           <ScrollView style={{ maxHeight: 380, marginTop: 4 }} showsVerticalScrollIndicator={false}>
             {options.map((opt) => {
               const active = opt === selected
+              if (!diffuse) {
+                return (
+                  <SiteChoice key={opt} align="start" label={opt} selected={active} tone={getModeColorSoft('pregnancy')}
+                    onPress={() => setSelected(opt)} style={{ marginBottom: 10 }} />
+                )
+              }
               return (
                 <Pressable
                   key={opt}
@@ -422,6 +463,7 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
                   fontFamily: font.body,
                   marginTop: 8,
                 },
+                !diffuse && { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 16, height: 52 },
               ]}
             />
           )}
@@ -436,7 +478,7 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
             />
             <PillButton
               label="Save"
-              variant="accent"
+              variant={diffuse ? 'accent' : 'ink'}
               accentColor={st.lilac}
               onPress={handleSave}
               disabled={showOtherInput && !otherText.trim()}
@@ -467,8 +509,8 @@ const WHEEL_VISIBLE = 5
 const WHEEL_PAD = ((WHEEL_VISIBLE - 1) / 2) * WHEEL_ITEM_HEIGHT
 
 function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: WheelSheetProps) {
-  const { colors, font, isDark, stickers: st } = usePregTheme()
-  const paper = colors.surface
+  const { colors, font, isDark, stickers: st, diffuse } = usePregTheme()
+  const paper = diffuse ? colors.surface : colors.bg
   const paperBorder = colors.border
   const initialIndex = Math.max(0, options.indexOf(value))
   const [selected, setSelected] = useState(initialIndex >= 0 ? initialIndex : 0)
@@ -486,7 +528,7 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.editOverlay}>
-        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }]}>
+        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
           <ModalHeader label={label} onClose={onClose} stickers={st} />
           <View style={{ height: WHEEL_VISIBLE * WHEEL_ITEM_HEIGHT, marginTop: 4 }}>
             <View
@@ -497,9 +539,9 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
                 left: 0,
                 right: 0,
                 height: WHEEL_ITEM_HEIGHT,
-                borderTopWidth: 1,
-                borderBottomWidth: 1,
-                borderColor: paperBorder,
+                borderTopWidth: diffuse ? 1 : 1.5,
+                borderBottomWidth: diffuse ? 1 : 1.5,
+                borderColor: diffuse ? paperBorder : colors.text,
               }}
             />
             <ScrollView
@@ -525,7 +567,7 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
                         fontSize: active ? 22 : 16,
                         opacity: active ? 1 : 0.35,
                         color: colors.text,
-                        fontFamily: active ? font.bodySemiBold : font.body,
+                        fontFamily: active ? (diffuse ? font.bodySemiBold : font.bodyBold) : font.body,
                       }}
                     >
                       {opt}{unit ? ` ${unit}` : ''}
@@ -539,7 +581,7 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
             <PillButton label="Cancel" variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
             <PillButton
               label="Save"
-              variant="accent"
+              variant={diffuse ? 'accent' : 'ink'}
               accentColor={st.lilac}
               onPress={() => { onSave(options[selected]); onClose() }}
               height={52}
@@ -559,14 +601,34 @@ interface SectionCardProps {
   subtitle?: string
   badge: React.ReactNode
   badgeTint: string
+  /** Site look: card-less sticker beside the title. */
+  sticker?: SiteStickerName
   children: React.ReactNode
 }
 
-function SectionCard({ title, subtitle, badge, badgeTint, children }: SectionCardProps) {
-  const { colors, font, isDark } = usePregTheme()
+function SectionCard({ title, subtitle, badge, badgeTint, sticker, children }: SectionCardProps) {
+  const { colors, font, isDark, diffuse } = usePregTheme()
   const paper = colors.surface
   const paperBorder = colors.border
   const ink = colors.text
+  if (!diffuse) {
+    return (
+      <View style={[styles.sectionSite, { borderTopColor: colors.border }]}>
+        <View style={styles.sectionHeader}>
+          <SiteSticker name={sticker ?? 'pencil'} size={38} cut />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.siteSectionTitle, { color: ink, fontFamily: font.display }]}>{title}</Text>
+            {subtitle ? (
+              <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, fontFamily: font.body }]}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+        {children}
+      </View>
+    )
+  }
   return (
     <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }]}>
       <View style={styles.sectionHeader}>
@@ -598,8 +660,11 @@ interface InfoRowProps {
 }
 
 function InfoRow({ label, value, onEdit, dotColor }: InfoRowProps) {
-  const { colors, font, isDark } = usePregTheme()
+  const { colors, font, isDark, diffuse, stickers: st } = usePregTheme()
   const ink = colors.text
+  const SOFT_DOTS = [st.pinkSoft, st.lilacSoft, st.blueSoft, st.greenSoft, st.yellowSoft, st.peachSoft]
+  const dotIdx = dotColor ? ROW_DOTS.indexOf(dotColor) : -1
+  const dotFill = diffuse ? (dotColor ?? '#E0D5F3') : (dotIdx >= 0 ? SOFT_DOTS[dotIdx] : st.lilacSoft)
   const inkSoft = colors.textSecondary
   const muted = colors.textFaint
   return (
@@ -607,7 +672,7 @@ function InfoRow({ label, value, onEdit, dotColor }: InfoRowProps) {
       onPress={onEdit}
       style={({ pressed }) => [
         styles.infoRow,
-        { borderBottomColor: colors.borderLight, opacity: pressed ? 0.6 : 1 },
+        { borderBottomColor: diffuse ? colors.borderLight : colors.border, opacity: pressed ? 0.6 : 1 },
       ]}
     >
       <View style={styles.infoLeft}>
@@ -615,18 +680,19 @@ function InfoRow({ label, value, onEdit, dotColor }: InfoRowProps) {
           style={[
             styles.infoDot,
             {
-              backgroundColor: dotColor ?? '#E0D5F3',
+              backgroundColor: dotFill,
               borderColor: ink,
+              borderWidth: diffuse ? 1.2 : 1.5,
             },
           ]}
         />
         <Text style={[styles.infoLabel, { color: inkSoft, fontFamily: font.bodyMedium }]}>{label}</Text>
       </View>
       <View style={styles.infoRight}>
-        <Text style={[styles.infoValue, { color: value ? ink : muted, fontFamily: font.bodySemiBold }]}>
+        <Text style={[styles.infoValue, { color: value ? ink : (diffuse ? muted : colors.textMuted), fontFamily: font.bodySemiBold }]}>
           {value || '—'}
         </Text>
-        {onEdit && <Edit2 size={14} color={muted} strokeWidth={2} />}
+        {onEdit && <Edit2 size={14} color={diffuse ? muted : ink} strokeWidth={2} />}
       </View>
     </Pressable>
   )
@@ -635,9 +701,10 @@ function InfoRow({ label, value, onEdit, dotColor }: InfoRowProps) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PregnancyProfileScreen() {
-  const { colors, font, stickers, isDark } = usePregTheme()
+  const { colors, font, stickers, isDark, diffuse } = usePregTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  const ink = colors.text
 
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate) ?? ''
@@ -954,17 +1021,56 @@ export default function PregnancyProfileScreen() {
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader
-          title="Pregnancy Profile"
-          right={saving ? <ActivityIndicator color={colors.text} size="small" /> : undefined}
-        />
+        {diffuse ? (
+          <ScreenHeader
+            title="Pregnancy Profile"
+            right={saving ? <ActivityIndicator color={colors.text} size="small" /> : undefined}
+          />
+        ) : (
+          <View style={styles.siteHeader}>
+            <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
+            <SiteSticker name="heart" size={30} cut />
+            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>Pregnancy Profile</Text>
+            {saving ? <ActivityIndicator color={ink} size="small" /> : null}
+          </View>
+        )}
       </View>
 
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. Hero — sticker-on-paper with motion */}
+        {/* 1. Hero — site look: card-less sticker + name + ink-outlined tags */}
+        {!diffuse ? (
+          <View style={styles.heroSite}>
+            <Text style={[styles.heroEyebrow, { color: colors.textMuted }]}>{t('profPreg_taglineExpecting')}</Text>
+            <AnimatedHeartHero size={92} fill={stickers.pink} site />
+            <Display size={32} color={ink} style={{ marginTop: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+              {profile.name || 'You'}
+            </Display>
+            {weekNumber != null && trimester != null && (
+              <View style={styles.heroChips}>
+                <View style={[styles.heroChip, { backgroundColor: stickers.lilacSoft, borderColor: ink, borderWidth: 1.5 }]}>
+                  <Text style={[styles.heroChipText, { color: ink, fontFamily: font.bodyBold }]}>{t('profPreg_chipWeek', { n: weekNumber })}</Text>
+                </View>
+                <View style={[styles.heroChip, { backgroundColor: stickers.greenSoft, borderColor: ink, borderWidth: 1.5 }]}>
+                  <Text style={[styles.heroChipText, { color: ink, fontFamily: font.bodyBold }]}>{t('profPreg_chipTrimester', { n: trimester })}</Text>
+                </View>
+              </View>
+            )}
+            {daysToGo !== null && (
+              <View style={[styles.heroDaysRibbon, { borderColor: ink, borderWidth: 1.5, backgroundColor: colors.surface }]}>
+                <Text style={[styles.heroDaysText, { color: ink, fontFamily: font.bodyBold }]}>{t('profPreg_daysToGo', { n: daysToGo })}</Text>
+              </View>
+            )}
+            {bp.birthLocation ? (
+              <View style={[styles.heroPill, { backgroundColor: colors.surface, borderColor: ink, borderWidth: 1.5, marginTop: 12 }]}>
+                <Ionicons name="location-outline" size={12} color={ink} />
+                <Text style={[styles.heroPillText, { color: ink, fontFamily: font.bodyMedium }]}>{bp.birthLocation}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : (
         <PaperCard
           tint={isDark ? colors.surface : colors.bgWarm}
           radius={28}
@@ -1049,10 +1155,12 @@ export default function PregnancyProfileScreen() {
             </View>
           ) : null}
         </PaperCard>
+        )}
 
         {/* 2. Pregnancy Info */}
         <SectionCard
           title="Pregnancy Info"
+          sticker="cal"
           subtitle="your pregnancy at a glance"
           badge={<Character name="clock" size={26} />}
           badgeTint={stickers.lilacSoft}
@@ -1164,18 +1272,19 @@ export default function PregnancyProfileScreen() {
         {/* Birth Planning — link to the full birth-plan screen */}
         <SectionCard
           title="Birth Planning"
+          sticker="pencil"
           subtitle="plan how you want to welcome baby"
           badge={<Character name="calendar" size={26} />}
           badgeTint={stickers.greenSoft}
         >
           <Pressable
             onPress={() => router.push('/birth-plan')}
-            style={[styles.linkRow, { borderBottomColor: colors.borderLight }]}
+            style={[styles.linkRow, { borderBottomColor: diffuse ? colors.borderLight : colors.border }]}
           >
-            <Text style={[styles.infoLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{t('profPreg_openBirthPlan')}</Text>
+            <Text style={[styles.infoLabel, { color: diffuse ? colors.textMuted : ink, fontFamily: font.bodyMedium }]}>{t('profPreg_openBirthPlan')}</Text>
             <View style={styles.infoRight}>
               <Text style={[styles.infoValue, { color: colors.textSecondary, fontFamily: font.body }]}>{t('profPreg_birthPlanSubLabel')}</Text>
-              <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
+              <ChevronRight size={14} color={diffuse ? colors.textMuted : ink} strokeWidth={2} />
             </View>
           </Pressable>
         </SectionCard>
@@ -1183,6 +1292,7 @@ export default function PregnancyProfileScreen() {
         {/* 3. Birth Preferences */}
         <SectionCard
           title="Birth Preferences"
+          sticker="heart"
           subtitle="the way you'd love it to feel"
           badge={<Character name="heart" size={26} />}
           badgeTint={stickers.pinkSoft}
@@ -1242,18 +1352,19 @@ export default function PregnancyProfileScreen() {
         {/* 4. Birth Team */}
         <SectionCard
           title="Birth Team"
+          sticker="bubble"
           subtitle="people in your corner"
           badge={<Character name="community" size={26} />}
           badgeTint={stickers.blueSoft}
         >
           <Pressable
             onPress={() => router.push('/profile/care-circle')}
-            style={[styles.linkRow, { borderBottomColor: colors.borderLight }]}
+            style={[styles.linkRow, { borderBottomColor: diffuse ? colors.borderLight : colors.border }]}
           >
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('profPreg_manageBirthTeam')}</Text>
+            <Text style={[styles.infoLabel, { color: diffuse ? colors.textMuted : ink, fontFamily: font.bodyMedium }]}>{t('profPreg_manageBirthTeam')}</Text>
             <View style={styles.infoRight}>
               <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{t('profPreg_careCircle')}</Text>
-              <ChevronRight size={14} color={colors.textMuted} strokeWidth={2} />
+              <ChevronRight size={14} color={diffuse ? colors.textMuted : ink} strokeWidth={2} />
             </View>
           </Pressable>
         </SectionCard>
@@ -1261,6 +1372,7 @@ export default function PregnancyProfileScreen() {
         {/* 5. Health Flags */}
         <SectionCard
           title="Health Flags"
+          sticker="thermo"
           subtitle="anything your team should know"
           badge={<Character name="health" size={26} />}
           badgeTint={stickers.peachSoft}
@@ -1282,6 +1394,7 @@ export default function PregnancyProfileScreen() {
         {/* 6. Baby Info */}
         <SectionCard
           title="Baby Info"
+          sticker="baby"
           subtitle="the little one we're waiting for"
           badge={<Character name="baby" size={28} />}
           badgeTint={stickers.yellowSoft}
@@ -1339,6 +1452,7 @@ export default function PregnancyProfileScreen() {
         {/* 7. Emergency Contacts */}
         <SectionCard
           title="Emergency Contacts"
+          sticker="phone"
           subtitle="who to reach if it's urgent"
           badge={<Character name="key" size={26} />}
           badgeTint={stickers.peachSoft}
@@ -1347,10 +1461,10 @@ export default function PregnancyProfileScreen() {
             onPress={() => router.push('/profile/emergency-insurance')}
             style={styles.linkRow}
           >
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('profPreg_emergencyCard')}</Text>
+            <Text style={[styles.infoLabel, { color: diffuse ? colors.textMuted : ink, fontFamily: font.bodyMedium }]}>{t('profPreg_emergencyCard')}</Text>
             <View style={styles.infoRight}>
-              <Text style={[styles.infoValue, { color: brand.pregnancy }]}>{t('profPreg_manageArrow')}</Text>
-              <ChevronRight size={14} color={brand.pregnancy} strokeWidth={2} />
+              <Text style={[styles.infoValue, { color: diffuse ? brand.pregnancy : ink, fontFamily: font.bodySemiBold }]}>{t('profPreg_manageArrow')}</Text>
+              <ChevronRight size={14} color={diffuse ? brand.pregnancy : ink} strokeWidth={2} />
             </View>
           </Pressable>
         </SectionCard>
@@ -1358,6 +1472,7 @@ export default function PregnancyProfileScreen() {
         {/* 8. Postpartum Prep */}
         <SectionCard
           title="Postpartum Prep"
+          sticker="flower"
           subtitle="things future-you will thank you for"
           badge={<Character name="selfcare" size={24} />}
           badgeTint={stickers.lilacSoft}
@@ -1366,18 +1481,18 @@ export default function PregnancyProfileScreen() {
             <Pressable
               key={item}
               onPress={() => setPostpartumDone((p) => ({ ...p, [item]: !p[item] }))}
-              style={[styles.checkRow, { borderBottomColor: colors.borderLight }]}
+              style={[styles.checkRow, { borderBottomColor: diffuse ? colors.borderLight : colors.border }]}
             >
               <View
                 style={[
                   styles.checkbox,
                   {
-                    backgroundColor: postpartumDone[item] ? stickers.green : 'transparent',
-                    borderColor: postpartumDone[item] ? stickers.green : colors.border,
+                    backgroundColor: postpartumDone[item] ? (diffuse ? stickers.green : stickers.greenSoft) : 'transparent',
+                    borderColor: diffuse ? (postpartumDone[item] ? stickers.green : colors.border) : colors.text,
                   },
                 ]}
               >
-                {postpartumDone[item] && <Check size={12} color={colors.bg} strokeWidth={3} />}
+                {postpartumDone[item] && <Check size={12} color={diffuse ? colors.bg : ink} strokeWidth={3} />}
               </View>
               <Text
                 style={[
@@ -1397,6 +1512,7 @@ export default function PregnancyProfileScreen() {
         {/* 9. Breastfeeding Plan */}
         <SectionCard
           title="Breastfeeding Plan"
+          sticker="bottle"
           subtitle="how you'd like to feed baby"
           badge={<Character name="milk" size={26} />}
           badgeTint={stickers.pinkSoft}
@@ -1436,6 +1552,7 @@ export default function PregnancyProfileScreen() {
         {/* 10. Nesting Checklist */}
         <SectionCard
           title="Nesting Checklist"
+          sticker="crib"
           subtitle="getting your nest baby-ready"
           badge={<Character name="night" size={26} />}
           badgeTint={stickers.blueSoft}
@@ -1444,18 +1561,18 @@ export default function PregnancyProfileScreen() {
             <Pressable
               key={item}
               onPress={() => setNestingDone((p) => ({ ...p, [item]: !p[item] }))}
-              style={[styles.checkRow, { borderBottomColor: colors.borderLight }]}
+              style={[styles.checkRow, { borderBottomColor: diffuse ? colors.borderLight : colors.border }]}
             >
               <View
                 style={[
                   styles.checkbox,
                   {
-                    backgroundColor: nestingDone[item] ? stickers.green : 'transparent',
-                    borderColor: nestingDone[item] ? stickers.green : colors.border,
+                    backgroundColor: nestingDone[item] ? (diffuse ? stickers.green : stickers.greenSoft) : 'transparent',
+                    borderColor: diffuse ? (nestingDone[item] ? stickers.green : colors.border) : colors.text,
                   },
                 ]}
               >
-                {nestingDone[item] && <Check size={12} color={colors.bg} strokeWidth={3} />}
+                {nestingDone[item] && <Check size={12} color={diffuse ? colors.bg : ink} strokeWidth={3} />}
               </View>
               <Text
                 style={[
@@ -1575,6 +1692,13 @@ const styles = StyleSheet.create({
   headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
   scroll: { paddingHorizontal: 20, paddingTop: 8 },
 
+  siteHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 8 },
+  siteTitle: { flex: 1, fontSize: 26, textTransform: 'uppercase', letterSpacing: 0.3 },
+  siteModalTitle: { fontSize: 22, textTransform: 'uppercase', letterSpacing: 0.3 },
+  siteSectionTitle: { fontSize: 17, textTransform: 'uppercase', letterSpacing: 0.3 },
+  sectionSite: { borderTopWidth: 1, paddingTop: 16, paddingBottom: 8, marginBottom: 6 },
+  heroSite: { alignItems: 'center', paddingBottom: 18 },
+  heroEyebrow: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 },
   heroCard: { marginBottom: 18, alignItems: 'center', position: 'relative' as const, overflow: 'hidden' },
   heroSticker: { marginBottom: 4 },
   heroFloatA: { position: 'absolute', top: 14, left: 18 },

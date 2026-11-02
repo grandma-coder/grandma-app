@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { FileText, Download, ChevronUp, ChevronDown } from 'lucide-react-native'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
@@ -43,28 +44,26 @@ export function DocumentSection({
   onViewDocument,
   onAddDocument,
 }: DocumentSectionProps) {
-  const { colors } = useTheme()
+  const { colors, font } = useTheme()
   const dt = useDiffuseTheme()
   const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
+  const Wrap = diffuse ? PaperCard : View
+  const wrapProps = diffuse
+    ? { radius: 28, padding: 20, style: styles.container, flat: true, tint: dt.colors.surface, borderColor: dt.colors.line }
+    : { style: [styles.container, styles.siteWrap, { borderBottomColor: colors.border }] }
   return (
-    <PaperCard
-      radius={28}
-      padding={20}
-      style={styles.container}
-      {...(diffuse ? { flat: true, tint: dt.colors.surface, borderColor: dt.colors.line } : {})}
-    >
+    <Wrap {...(wrapProps as any)}>
       <Pressable onPress={() => setExpanded(!expanded)} style={styles.header}>
         {diffuse ? (
           <DiffuseBloomIcon color={dt.colors.ink3} size={40} intensity={0.4}>
             <Text style={styles.icon}>{icon}</Text>
           </DiffuseBloomIcon>
         ) : (
-          <View style={[styles.iconCircle, { backgroundColor: colors.surfaceGlass, borderColor: colors.border }]}>
-            <Text style={styles.icon}>{icon}</Text>
-          </View>
+          // Site look: card-less sticker, no disc.
+          <SiteSticker name="doc" size={40} cut />
         )}
         <View style={styles.headerText}>
           <View style={styles.titleRow}>
@@ -73,7 +72,7 @@ export function DocumentSection({
                 styles.title,
                 diffuse
                   ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400', fontSize: 17, letterSpacing: -0.3 }
-                  : { color: colors.text },
+                  : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 16, fontWeight: '400', flexShrink: 1 },
               ]}
             >
               {title}
@@ -83,7 +82,7 @@ export function DocumentSection({
                 styles.count,
                 diffuse
                   ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 }
-                  : { color: colors.textMuted },
+                  : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 10 },
               ]}
             >
               {t('vault_filesCount', { count: documents.length })}
@@ -92,7 +91,7 @@ export function DocumentSection({
           <Text
             style={[
               styles.description,
-              diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted },
+              diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body },
             ]}
             numberOfLines={expanded ? undefined : 1}
           >
@@ -106,7 +105,7 @@ export function DocumentSection({
             <ChevronDown size={18} color={dt.colors.ink3} strokeWidth={1.8} />
           )
         ) : (
-          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textMuted} />
+          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.text} />
         )}
       </Pressable>
 
@@ -118,7 +117,7 @@ export function DocumentSection({
                 styles.emptyText,
                 diffuse
                   ? { color: dt.colors.ink3, fontFamily: diffuseFont.body }
-                  : { color: colors.textMuted },
+                  : { color: colors.textSecondary, fontFamily: font.body },
               ]}
             >
               {t('vault_noDocuments2')}
@@ -133,7 +132,7 @@ export function DocumentSection({
                 {diffuse ? (
                   <FileText size={18} color={dt.colors.ink3} strokeWidth={1.8} />
                 ) : (
-                  <Ionicons name="document-outline" size={18} color={colors.textSecondary} />
+                  <SiteSticker name="doc" size={26} />
                 )}
                 <View style={styles.docInfo}>
                   <Text
@@ -141,7 +140,7 @@ export function DocumentSection({
                       styles.docTitle,
                       diffuse
                         ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold }
-                        : { color: colors.text },
+                        : { color: colors.text, fontFamily: font.bodySemiBold, fontWeight: '400' },
                     ]}
                     numberOfLines={1}
                   >
@@ -152,7 +151,7 @@ export function DocumentSection({
                       styles.docMeta,
                       diffuse
                         ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.8, textTransform: 'uppercase' }
-                        : { color: colors.textMuted },
+                        : { color: colors.textSecondary, fontFamily: font.body },
                     ]}
                   >
                     {doc.fileType?.toUpperCase()}
@@ -163,14 +162,14 @@ export function DocumentSection({
                 {diffuse ? (
                   <Download size={18} color={dt.colors.ink3} strokeWidth={1.8} />
                 ) : (
-                  <Ionicons name="download-outline" size={18} color={colors.textMuted} />
+                  <Ionicons name="download-outline" size={18} color={colors.text} />
                 )}
               </Pressable>
             ))
           )}
 
           {onAddDocument && (
-            <Pressable onPress={onAddDocument} style={[styles.addBtn, diffuse && styles.addBtnDiffuse]}>
+            <Pressable onPress={onAddDocument} style={[styles.addBtn, diffuse && styles.addBtnDiffuse, !diffuse && [styles.addBtnSite, { borderColor: colors.text, backgroundColor: colors.surface }]]}>
               {diffuse ? (
                 <>
                   <Text style={[styles.addTextDiffuse, { color: dt.colors.ink }]}>{t('vault_addDocument')}</Text>
@@ -178,15 +177,15 @@ export function DocumentSection({
                 </>
               ) : (
                 <>
-                  <Ionicons name="add" size={16} color={colors.accent} />
-                  <Text style={[styles.addText, { color: colors.accent }]}>{t('vault_addDocument')}</Text>
+                  <Ionicons name="add" size={16} color={colors.text} />
+                  <Text style={[styles.addText, { color: colors.text, fontFamily: font.bodyBold, fontWeight: '400' }]}>{t('vault_addDocument')}</Text>
                 </>
               )}
             </Pressable>
           )}
         </View>
       )}
-    </PaperCard>
+    </Wrap>
   )
 }
 
@@ -266,6 +265,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 8,
   },
+  siteWrap: { paddingVertical: 12, borderBottomWidth: 1 },
+  addBtnSite: { alignSelf: 'center', paddingHorizontal: 20, borderWidth: 1.5, borderRadius: 999 },
   addBtnDiffuse: {
     gap: 8,
   },

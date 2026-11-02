@@ -27,14 +27,18 @@ import {
   Search,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
 import { searchCountries, countryByCode } from '../../lib/countries'
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
-import { LogSheet } from '../../components/calendar/LogSheet'
+import { LogSheet, SheetFooterAction } from '../../components/calendar/LogSheet'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { EyeAction, ACTION_TONES } from '../../components/ui/AuthDock'
+import { SiteChoice } from '../../components/ui/SiteChoice'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { Display, MonoCaps, Body } from '../../components/ui/Typography'
@@ -81,12 +85,14 @@ function useKidsTheme() {
   // Paper surface + hairline that previously hardcoded '#FFFEF8' /
   // 'rgba(20,19,19,0.08)'. Under Diffuse these follow the v3 palette; under the
   // current variant they resolve to the original cream values.
-  const paper = diffuse ? colors.surface : (theme.isDark ? colors.surface : '#FFFEF8')
-  const hairline = diffuse ? colors.border : (theme.isDark ? colors.border : 'rgba(20,19,19,0.08)')
+  // Site look (light): white paper + clean 1.5px ink outlines.
+  const paper = diffuse ? colors.surface : (theme.isDark ? colors.surface : colors.surface)
+  const hairline = diffuse ? colors.border : (theme.isDark ? colors.border : colors.text)
+  const bw = diffuse ? 1 : 1.5
   // Readable dark ink for text sitting on a light-tinted chip. Diffuse routes it
   // to the v3 ink; current variant keeps the original warm '#3A3533'.
-  const chipInk = diffuse ? colors.text : '#3A3533'
-  return { ...theme, diffuse, colors, font, paper, hairline, chipInk }
+  const chipInk = colors.text
+  return { ...theme, diffuse, colors, font, paper, hairline, chipInk, bw }
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────
@@ -253,7 +259,7 @@ function AvatarField({ value, onChange, accent, initial }: {
 // ─── Main Screen ──────────────────────────────────────────────────────────
 
 export default function KidsProfileScreen() {
-  const { colors, isDark, stickers, paper, hairline } = useKidsTheme()
+  const { colors, font, isDark, stickers, paper, hairline, diffuse, bw } = useKidsTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const children = useChildStore((s) => s.children)
@@ -291,6 +297,18 @@ export default function KidsProfileScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        {!diffuse ? (
+          <View style={styles.siteHeader}>
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+            <SiteSticker name="baby" size={30} cut />
+            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>Kids Profile</Text>
+            <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Add a child">
+              <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: colors.text, borderWidth: bw }]}>
+                <Ionicons name="add" size={20} color={colors.text} />
+              </View>
+            </Pressable>
+          </View>
+        ) : (
         <ScreenHeader
           title="Kids Profile"
           right={
@@ -309,12 +327,13 @@ export default function KidsProfileScreen() {
             </Pressable>
           }
         />
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {children.length === 0 && (
-          <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
-            <Character name="baby" size={64} />
+          <View style={[styles.emptyCard, !diffuse && styles.emptyCardSite, { backgroundColor: diffuse ? colors.surface : 'transparent' }]}>
+            {diffuse ? <Character name="baby" size={64} /> : <SiteSticker name="baby" size={72} cut />}
             <Display size={20} align="center" color={colors.text}>
               {t('profKids_noChildren')}
             </Display>
@@ -371,16 +390,18 @@ export default function KidsProfileScreen() {
 const KID_COLORS = ['#9DC3E8', '#F2B2C7', '#BDD48C', '#C8B6E8', '#F5D652', '#F5B896']
 
 function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; index: number; onEdit: () => void; onDelete: () => void }) {
-  const { colors, font, stickers, isDark, paper, hairline, chipInk } = useKidsTheme()
+  const { colors, font, stickers, isDark, paper, hairline, chipInk, diffuse, bw } = useKidsTheme()
   const accent = KID_COLORS[index % KID_COLORS.length]
+  const kidSoft = [stickers.blueSoft, stickers.pinkSoft, stickers.greenSoft, stickers.lilacSoft, stickers.yellowSoft, stickers.peachSoft][index % 6]
+  const site = !diffuse && !isDark
 
   // Collect summary tags
-  const tags: { label: string; color: string }[] = []
-  if (child.bloodType) tags.push({ label: child.bloodType, color: stickers.coral })
-  child.allergies.forEach((a) => tags.push({ label: a, color: stickers.coral }))
-  child.conditions.forEach((c) => tags.push({ label: c, color: '#E8A435' }))
-  child.medications.forEach((m) => tags.push({ label: m, color: stickers.blue }))
-  child.dietaryRestrictions.forEach((r) => tags.push({ label: r, color: '#E8A435' }))
+  const tags: { label: string; color: string; soft: string }[] = []
+  if (child.bloodType) tags.push({ label: child.bloodType, color: stickers.coral, soft: stickers.pinkSoft })
+  child.allergies.forEach((a) => tags.push({ label: a, color: stickers.coral, soft: stickers.pinkSoft }))
+  child.conditions.forEach((c) => tags.push({ label: c, color: '#E8A435', soft: stickers.yellowSoft }))
+  child.medications.forEach((m) => tags.push({ label: m, color: stickers.blue, soft: stickers.blueSoft }))
+  child.dietaryRestrictions.forEach((r) => tags.push({ label: r, color: '#E8A435', soft: stickers.yellowSoft }))
   const uniqueTags = tags.filter((t, i, arr) => arr.findIndex((x) => x.label === t.label) === i)
   const visibleTags = uniqueTags.slice(0, 5)
   const extraCount = uniqueTags.length - visibleTags.length
@@ -404,9 +425,10 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
       style={({ pressed }) => [
         styles.childCard,
         {
-          backgroundColor: paper,
+          backgroundColor: site ? kidSoft : paper,
           borderColor: hairline,
         },
+        !diffuse && { borderWidth: bw, borderRadius: 18, shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0 : 0.1, shadowRadius: 0, elevation: 0 },
         pressed && { opacity: 0.9 },
       ]}
     >
@@ -422,6 +444,8 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
             borderWidth={1.5}
             bucket={PHOTO_BUCKETS.child}
           />
+        ) : site ? (
+          <SiteSticker name="baby" size={48} cut />
         ) : (
           <View
             style={[
@@ -438,12 +462,13 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
               style={[
                 styles.childName,
                 { color: colors.text, fontFamily: font.display },
+                site && { textTransform: 'uppercase', letterSpacing: 0.3 },
               ]}
             >
               {child.name}
             </Text>
             {child.sex ? (
-              <View style={[styles.sexBadge, { backgroundColor: sexColor + '30' }]}>
+              <View style={[styles.sexBadge, { backgroundColor: sexColor + '30' }, site && { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.text }]}>
                 <Text
                   style={[
                     styles.sexBadgeText,
@@ -467,10 +492,10 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
         </View>
         <View style={styles.cardActions}>
           <Pressable onPress={onEdit} hitSlop={8}>
-            <Pencil size={16} color={colors.text} strokeWidth={2} />
+            {site ? <SiteSticker name="pencil" size={24} /> : <Pencil size={16} color={colors.text} strokeWidth={2} />}
           </Pressable>
           <Pressable onPress={onDelete} hitSlop={8}>
-            <Trash2 size={15} color={colors.textMuted} strokeWidth={2} />
+            <Trash2 size={15} color={site ? colors.text : colors.textMuted} strokeWidth={2} />
           </Pressable>
         </View>
       </View>
@@ -478,7 +503,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
       {visibleTags.length > 0 && (
         <View style={styles.tagRow}>
           {visibleTags.map((t, i) => (
-            <View key={`${t.label}-${i}`} style={[styles.miniChip, { backgroundColor: t.color + (isDark ? '24' : '20') }]}>
+            <View key={`${t.label}-${i}`} style={[styles.miniChip, { backgroundColor: t.color + (isDark ? '24' : '20') }, site && { backgroundColor: t.soft, borderWidth: 1.5, borderColor: colors.text }]}>
               <Text
                 style={[
                   styles.miniChipText,
@@ -490,8 +515,8 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
             </View>
           ))}
           {extraCount > 0 && (
-            <View style={[styles.miniChip, { backgroundColor: colors.surfaceRaised }]}>
-              <Text style={[styles.miniChipText, { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
+            <View style={[styles.miniChip, { backgroundColor: colors.surfaceRaised }, site && { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.text }]}>
+              <Text style={[styles.miniChipText, { color: site ? colors.text : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
                 +{extraCount}
               </Text>
             </View>
@@ -500,15 +525,15 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
       )}
 
       {foodSummary ? (
-        <Text style={[styles.foodLine, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
+        <Text style={[styles.foodLine, { color: site ? colors.text : colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
           {foodSummary}
         </Text>
       ) : null}
 
       {child.pediatrician?.name ? (
         <View style={styles.pedRow}>
-          <Character name="checkup" size={12} color={colors.textMuted} />
-          <Text style={[styles.pedText, { color: colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
+          {site ? <SiteSticker name="thermo" size={18} /> : <Character name="checkup" size={12} color={colors.textMuted} />}
+          <Text style={[styles.pedText, { color: site ? colors.text : colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
             {child.pediatrician.name}{child.pediatrician.phone ? ` · ${child.pediatrician.phone}` : ''}
           </Text>
         </View>
@@ -519,15 +544,18 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
 
 // ─── Autocomplete Chip Input ──────────────────────────────────────────────
 
-function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder }: {
+function ChipInput({ label, value, onChange, suggestions, chipColor, softColor, placeholder }: {
   label: string
   value: string[]
   onChange: (v: string[]) => void
   suggestions: string[]
   chipColor: string
+  /** Site look: soft tone fill for the ink-outlined tags. */
+  softColor?: string
   placeholder: string
 }) {
-  const { colors, font, isDark, paper, hairline, chipInk } = useKidsTheme()
+  const { colors, font, isDark, paper, hairline, chipInk, diffuse, bw } = useKidsTheme()
+  const site = !diffuse && !isDark
   const { t } = useTranslation()
   const border = hairline
   const chipFg = isDark ? chipColor : chipInk
@@ -567,7 +595,7 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
       {uniqueValue.length > 0 && (
         <View style={formStyles.chipRow}>
           {uniqueValue.map((item) => (
-            <View key={item} style={[formStyles.chipTag, { backgroundColor: chipColor + (isDark ? '28' : '24') }]}>
+            <View key={item} style={[formStyles.chipTag, { backgroundColor: chipColor + (isDark ? '28' : '24') }, site && { backgroundColor: softColor ?? colors.surface, borderWidth: 1.5, borderColor: colors.text }]}>
               <Text style={[formStyles.chipTagText, { color: chipFg, fontFamily: font.bodySemiBold }]}>{item}</Text>
               <Pressable onPress={() => remove(item)} hitSlop={6}>
                 <Ionicons name="close" size={13} color={chipFg} />
@@ -577,14 +605,14 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
         </View>
       )}
 
-      <View style={[formStyles.inputRow, { backgroundColor: paper, borderColor: border }]}>
+      <View style={[formStyles.inputRow, { backgroundColor: paper, borderColor: border, borderWidth: bw }, !diffuse && { borderRadius: 16 }]}>
         <Search size={16} color={colors.textMuted} strokeWidth={2} />
         <TextInput
           value={query}
           onChangeText={(t) => { setQuery(t); setShowSuggestions(t.length >= 1) }}
           placeholder={placeholder}
           placeholderTextColor={colors.textMuted}
-          style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }]}
+          style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}
           onSubmitEditing={handleSubmit}
           returnKeyType="done"
           onFocus={() => { if (query.length >= 1) setShowSuggestions(true) }}
@@ -593,7 +621,7 @@ function ChipInput({ label, value, onChange, suggestions, chipColor, placeholder
       </View>
 
       {showSuggestions && query.trim().length > 0 && (
-        <View style={[formStyles.dropdown, { backgroundColor: paper, borderColor: border }]}>
+        <View style={[formStyles.dropdown, { backgroundColor: paper, borderColor: border, borderWidth: bw }, !diffuse && { borderRadius: 16 }]}>
           {filtered.map((s) => (
             <Pressable key={s} onPress={() => add(s)} style={({ pressed }) => [formStyles.dropdownItem, pressed && { backgroundColor: colors.surfaceRaised }]}>
               <Text style={[formStyles.dropdownText, { color: colors.text, fontFamily: font.body }]}>{s}</Text>
@@ -626,8 +654,9 @@ function EditChildSheet({
   onClose: () => void
   onSaved: (updated: ChildWithRole) => void
 }) {
-  const { colors, font, stickers, isDark, paper, hairline } = useKidsTheme()
+  const { colors, font, stickers, isDark, paper, hairline, diffuse, bw } = useKidsTheme()
   const { t } = useTranslation()
+  const soft = getModeColorSoft('kids')
 
   const [photo, setPhoto] = useState<string | null>(child.photoUrl ?? null)
   const [name, setName] = useState(child.name)
@@ -726,7 +755,7 @@ function EditChildSheet({
   }
 
   return (
-    <LogSheet visible title={`Edit ${child.name}`} onClose={onClose}>
+    <LogSheet visible title={`Edit ${child.name}`} onClose={onClose} sticker="baby">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
           <AvatarField
@@ -740,7 +769,10 @@ function EditChildSheet({
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelSex')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
-            {SEX_OPTIONS.map((opt) => (
+            {!diffuse ? SEX_OPTIONS.map((opt) => (
+              <SiteChoice key={opt.value} compact label={opt.label} selected={sex === opt.value} tone={soft}
+                onPress={() => setSex(sex === opt.value ? '' : opt.value)} />
+            )) : SEX_OPTIONS.map((opt) => (
               <Pressable
                 key={opt.value}
                 onPress={() => setSex(sex === opt.value ? '' : opt.value)}
@@ -767,11 +799,13 @@ function EditChildSheet({
               formStyles.dateBtn,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
+                borderColor: diffuse ? colors.border : colors.text,
+                borderWidth: bw,
               },
+              !diffuse && { borderRadius: 16 },
             ]}
           >
-            <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }]}>
+            <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}>
               {birthDate
                 ? `${new Date(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
                 : 'Select date'}
@@ -793,7 +827,10 @@ function EditChildSheet({
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('children_bloodType')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
-            {BLOOD_TYPES.map((bt) => (
+            {!diffuse ? BLOOD_TYPES.map((bt) => (
+              <SiteChoice key={bt} compact tick={false} label={bt} selected={bloodType === bt} tone={stickers.pinkSoft}
+                onPress={() => setBloodType(bloodType === bt ? '' : bt)} />
+            )) : BLOOD_TYPES.map((bt) => (
               <Pressable
                 key={bt}
                 onPress={() => setBloodType(bloodType === bt ? '' : bt)}
@@ -818,7 +855,9 @@ function EditChildSheet({
                 {
                   backgroundColor: paper,
                   borderColor: countryDropdownOpen ? colors.text : hairline,
+                  borderWidth: bw,
                 },
+                !diffuse && { borderRadius: 16 },
               ]}
             >
               <Search size={16} color={colors.textMuted} strokeWidth={2} />
@@ -828,7 +867,7 @@ function EditChildSheet({
                 onFocus={() => setCountryDropdownOpen(true)}
                 placeholder="Search country..."
                 placeholderTextColor={colors.textMuted}
-                style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }]}
+                style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}
               />
               {countryCode && (
                 <Text style={{ fontSize: 13, color: colors.text, fontFamily: font.bodySemiBold }}>
@@ -848,7 +887,9 @@ function EditChildSheet({
                     {
                       backgroundColor: paper,
                       borderColor: hairline,
+                      borderWidth: bw,
                     },
+                    !diffuse && { borderRadius: 16 },
                   ]}
                 >
                   {matches.map((c) => (
@@ -859,7 +900,7 @@ function EditChildSheet({
                         setCountryQuery(c.name)
                         setCountryDropdownOpen(false)
                       }}
-                      style={[formStyles.dropdownItem, { backgroundColor: c.code === countryCode ? colors.surfaceRaised : 'transparent' }]}
+                      style={[formStyles.dropdownItem, { backgroundColor: c.code === countryCode ? (diffuse ? colors.surfaceRaised : soft) : 'transparent' }]}
                     >
                       <Text style={[formStyles.dropdownText, { color: colors.text, fontFamily: c.code === countryCode ? font.bodySemiBold : font.body }]}>
                         {c.name}
@@ -873,15 +914,15 @@ function EditChildSheet({
 
           {/* Health — chips with autocomplete */}
           <SectionHeader label="Health & Medical" />
-          <ChipInput label="Allergies" value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} placeholder="Search allergies..." />
-          <ChipInput label="Medications" value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} placeholder="Search medications..." />
-          <ChipInput label="Conditions" value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} placeholder="e.g. Asthma, Eczema" />
+          <ChipInput label="Allergies" value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} softColor={stickers.pinkSoft} placeholder="Search allergies..." />
+          <ChipInput label="Medications" value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} softColor={stickers.blueSoft} placeholder="Search medications..." />
+          <ChipInput label="Conditions" value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} softColor={stickers.peachSoft} placeholder="e.g. Asthma, Eczema" />
 
           {/* Food */}
           <SectionHeader label="Food Preferences" />
-          <ChipInput label="Preferred Foods" value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} placeholder="e.g. Banana, Rice" />
-          <ChipInput label="Disliked Foods" value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} placeholder="e.g. Broccoli, Spinach" />
-          <ChipInput label="Dietary Restrictions" value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} placeholder="e.g. Gluten-free, No pork" />
+          <ChipInput label="Preferred Foods" value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} softColor={stickers.greenSoft} placeholder="e.g. Banana, Rice" />
+          <ChipInput label="Disliked Foods" value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} softColor={stickers.yellowSoft} placeholder="e.g. Broccoli, Spinach" />
+          <ChipInput label="Dietary Restrictions" value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} softColor={stickers.lilacSoft} placeholder="e.g. Gluten-free, No pork" />
 
           {/* Pediatrician */}
           <SectionHeader label="Pediatrician" />
@@ -893,14 +934,20 @@ function EditChildSheet({
           <SectionHeader label="Additional Notes" />
           <FormField label="Notes" value={notes} onChangeText={setNotes} placeholder="Any important information..." multiline />
 
-          <PillButton
-            label={saving ? 'Saving…' : 'Save Changes'}
-            variant="ink"
-            onPress={handleSave}
-            disabled={saving || !canSave}
-            leading={<Ionicons name="checkmark-circle" size={18} color={colors.bg} />}
-            style={{ marginTop: 8 }}
-          />
+          {diffuse ? (
+            <PillButton
+              label={saving ? 'Saving…' : 'Save Changes'}
+              variant="ink"
+              onPress={handleSave}
+              disabled={saving || !canSave}
+              leading={<Ionicons name="checkmark-circle" size={18} color={colors.bg} />}
+              style={{ marginTop: 8 }}
+            />
+          ) : (
+            <SheetFooterAction>
+              <EyeAction label={saving ? 'Saving…' : 'Save Changes'} onPress={handleSave} ink={colors.text} loading={saving} disabled={!canSave} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+            </SheetFooterAction>
+          )}
         </View>
       </ScrollView>
     </LogSheet>
@@ -918,8 +965,9 @@ function AddChildSheet({
   onClose: () => void
   onAdded: (child: ChildWithRole) => void
 }) {
-  const { colors, font, stickers, isDark, paper, hairline } = useKidsTheme()
+  const { colors, font, stickers, isDark, paper, hairline, diffuse, bw } = useKidsTheme()
   const { t } = useTranslation()
+  const soft = getModeColorSoft('kids')
 
   const [photo, setPhoto] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -1011,7 +1059,7 @@ function AddChildSheet({
   }
 
   return (
-    <LogSheet visible={visible} title="Add a Child" onClose={() => { reset(); onClose() }}>
+    <LogSheet visible={visible} title="Add a Child" onClose={() => { reset(); onClose() }} sticker="baby">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
           <AvatarField
@@ -1025,7 +1073,10 @@ function AddChildSheet({
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelSex')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
-            {SEX_OPTIONS.map((opt) => (
+            {!diffuse ? SEX_OPTIONS.map((opt) => (
+              <SiteChoice key={opt.value} compact label={opt.label} selected={sex === opt.value} tone={soft}
+                onPress={() => setSex(sex === opt.value ? '' : opt.value)} />
+            )) : SEX_OPTIONS.map((opt) => (
               <Pressable
                 key={opt.value}
                 onPress={() => setSex(sex === opt.value ? '' : opt.value)}
@@ -1052,11 +1103,13 @@ function AddChildSheet({
               formStyles.dateBtn,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
+                borderColor: diffuse ? colors.border : colors.text,
+                borderWidth: bw,
               },
+              !diffuse && { borderRadius: 16 },
             ]}
           >
-            <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }]}>
+            <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}>
               {birthDate
                 ? `${new Date(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
                 : 'Select date'}
@@ -1078,7 +1131,10 @@ function AddChildSheet({
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('children_bloodType')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
-            {BLOOD_TYPES.map((bt) => (
+            {!diffuse ? BLOOD_TYPES.map((bt) => (
+              <SiteChoice key={bt} compact tick={false} label={bt} selected={bloodType === bt} tone={stickers.pinkSoft}
+                onPress={() => setBloodType(bloodType === bt ? '' : bt)} />
+            )) : BLOOD_TYPES.map((bt) => (
               <Pressable
                 key={bt}
                 onPress={() => setBloodType(bloodType === bt ? '' : bt)}
@@ -1103,7 +1159,9 @@ function AddChildSheet({
                 {
                   backgroundColor: paper,
                   borderColor: countryDropdownOpen ? colors.text : hairline,
+                  borderWidth: bw,
                 },
+                !diffuse && { borderRadius: 16 },
               ]}
             >
               <Search size={16} color={colors.textMuted} strokeWidth={2} />
@@ -1113,7 +1171,7 @@ function AddChildSheet({
                 onFocus={() => setCountryDropdownOpen(true)}
                 placeholder="Search country..."
                 placeholderTextColor={colors.textMuted}
-                style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }]}
+                style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}
               />
               {countryCode && (
                 <Text style={{ fontSize: 13, color: colors.text, fontFamily: font.bodySemiBold }}>
@@ -1133,7 +1191,9 @@ function AddChildSheet({
                     {
                       backgroundColor: paper,
                       borderColor: hairline,
+                      borderWidth: bw,
                     },
+                    !diffuse && { borderRadius: 16 },
                   ]}
                 >
                   {matches.map((c) => (
@@ -1144,7 +1204,7 @@ function AddChildSheet({
                         setCountryQuery(c.name)
                         setCountryDropdownOpen(false)
                       }}
-                      style={[formStyles.dropdownItem, { backgroundColor: c.code === countryCode ? colors.surfaceRaised : 'transparent' }]}
+                      style={[formStyles.dropdownItem, { backgroundColor: c.code === countryCode ? (diffuse ? colors.surfaceRaised : soft) : 'transparent' }]}
                     >
                       <Text style={[formStyles.dropdownText, { color: colors.text, fontFamily: c.code === countryCode ? font.bodySemiBold : font.body }]}>
                         {c.name}
@@ -1157,14 +1217,14 @@ function AddChildSheet({
           </View>
 
           <SectionHeader label="Health & Medical" />
-          <ChipInput label="Allergies" value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} placeholder="Search allergies..." />
-          <ChipInput label="Medications" value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} placeholder="Search medications..." />
-          <ChipInput label="Conditions" value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} placeholder="e.g. Asthma, Eczema" />
+          <ChipInput label="Allergies" value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} softColor={stickers.pinkSoft} placeholder="Search allergies..." />
+          <ChipInput label="Medications" value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} softColor={stickers.blueSoft} placeholder="Search medications..." />
+          <ChipInput label="Conditions" value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} softColor={stickers.peachSoft} placeholder="e.g. Asthma, Eczema" />
 
           <SectionHeader label="Food Preferences" />
-          <ChipInput label="Preferred Foods" value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} placeholder="e.g. Banana, Rice" />
-          <ChipInput label="Disliked Foods" value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} placeholder="e.g. Broccoli, Spinach" />
-          <ChipInput label="Dietary Restrictions" value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} placeholder="e.g. Gluten-free, No pork" />
+          <ChipInput label="Preferred Foods" value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} softColor={stickers.greenSoft} placeholder="e.g. Banana, Rice" />
+          <ChipInput label="Disliked Foods" value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} softColor={stickers.yellowSoft} placeholder="e.g. Broccoli, Spinach" />
+          <ChipInput label="Dietary Restrictions" value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} softColor={stickers.lilacSoft} placeholder="e.g. Gluten-free, No pork" />
 
           <SectionHeader label="Pediatrician" />
           <FormField label="Doctor Name" value={pedName} onChangeText={setPedName} placeholder="Dr. Smith" />
@@ -1174,14 +1234,20 @@ function AddChildSheet({
           <SectionHeader label="Additional Notes" />
           <FormField label="Notes" value={notes} onChangeText={setNotes} placeholder="Any important information..." multiline />
 
-          <PillButton
-            label={saving ? 'Adding…' : 'Add Child'}
-            variant="ink"
-            onPress={handleSave}
-            disabled={saving || !canSave}
-            leading={<Ionicons name="add" size={18} color={colors.bg} />}
-            style={{ marginTop: 8 }}
-          />
+          {diffuse ? (
+            <PillButton
+              label={saving ? 'Adding…' : 'Add Child'}
+              variant="ink"
+              onPress={handleSave}
+              disabled={saving || !canSave}
+              leading={<Ionicons name="add" size={18} color={colors.bg} />}
+              style={{ marginTop: 8 }}
+            />
+          ) : (
+            <SheetFooterAction>
+              <EyeAction label={saving ? 'Adding…' : 'Add Child'} onPress={handleSave} ink={colors.text} loading={saving} disabled={!canSave} sticker="baby" fill={ACTION_TONES.yellow} size={64} />
+            </SheetFooterAction>
+          )}
         </View>
       </ScrollView>
     </LogSheet>
@@ -1206,7 +1272,7 @@ function SectionHeader({ label }: { label: string }) {
 function FormField({ label, value, onChangeText, placeholder, multiline, hint, keyboardType }: {
   label: string; value: string; onChangeText: (t: string) => void; placeholder: string; multiline?: boolean; hint?: string; keyboardType?: any
 }) {
-  const { colors, font, paper, hairline } = useKidsTheme()
+  const { colors, font, paper, hairline, diffuse, bw } = useKidsTheme()
   const border = hairline
   return (
     <View style={formStyles.field}>
@@ -1220,7 +1286,8 @@ function FormField({ label, value, onChangeText, placeholder, multiline, hint, k
         keyboardType={keyboardType}
         style={[
           formStyles.input,
-          { color: colors.text, backgroundColor: paper, borderColor: border, fontFamily: font.body },
+          { color: colors.text, backgroundColor: paper, borderColor: border, fontFamily: font.body, borderWidth: bw },
+          !diffuse && { borderRadius: 16, fontSize: 16 },
           multiline && { height: 96, textAlignVertical: 'top', paddingTop: 14 },
         ]}
       />
@@ -1234,6 +1301,8 @@ function FormField({ label, value, onChangeText, placeholder, multiline, hint, k
 const styles = StyleSheet.create({
   root: { flex: 1 },
   headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  siteHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 8 },
+  siteTitle: { flex: 1, fontSize: 26, textTransform: 'uppercase', letterSpacing: 0.3 },
   headerAddBtn: {
     width: 38,
     height: 38,
@@ -1255,6 +1324,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
   },
+
+  emptyCardSite: { shadowOpacity: 0, elevation: 0, padding: 24 },
 
   childCard: {
     padding: 16,

@@ -42,7 +42,10 @@ import {
 } from 'lucide-react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteChoice } from '../../components/ui/SiteChoice'
 import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
@@ -114,12 +117,13 @@ export default function EmergencyInsuranceScreen() {
   const { t } = useTranslation()
   const toast = useSavedToast()
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const paperBorder = diffuse ? dt.colors.line : (isDark ? colors.border : colors.text)
   const coralInk = diffuse ? dt.colors.ink : stickers.coralInk
   const peachInk = diffuse ? dt.colors.ink : stickers.peachInk
   const textColor = diffuse ? dt.colors.ink : colors.text
   const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
   const secondaryColor = diffuse ? dt.colors.ink2 : colors.textSecondary
+  const ink = colors.text
 
   const store = useEmergencyInsuranceStore()
   const [loading, setLoading] = useState(true)
@@ -227,15 +231,32 @@ export default function EmergencyInsuranceScreen() {
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader />
-        <View style={styles.titleBlock}>
-          <Text style={[styles.bigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
-            {t('emergencyInsurance_title')}
-          </Text>
-          <Text style={[styles.bigSubtitle, { color: diffuse ? dt.colors.ink3 : coralInk, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
-            {t('emergencyInsurance_subtitle')}
-          </Text>
-        </View>
+        {diffuse ? (
+          <>
+            <ScreenHeader />
+            <View style={styles.titleBlock}>
+              <Text style={[styles.bigTitle, { color: textColor, fontFamily: diffuseFont.display }]}>
+                {t('emergencyInsurance_title')}
+              </Text>
+              <Text style={[styles.bigSubtitle, { color: dt.colors.ink3, fontFamily: diffuseFont.italic }]}>
+                {t('emergencyInsurance_subtitle')}
+              </Text>
+            </View>
+          </>
+        ) : (
+          <View style={styles.siteHeader}>
+            <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
+            <SiteSticker name="bell" size={30} cut />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                {t('emergencyInsurance_title')}
+              </Text>
+              <Text style={[styles.siteSubtitle, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={1}>
+                {t('emergencyInsurance_subtitle')}
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {loading ? (
@@ -255,9 +276,9 @@ export default function EmergencyInsuranceScreen() {
                   <Character name="community" size={17} />
                 </DiffuseBloomIcon>
               ) : (
-                <HeartSticker size={16} fill={stickers.coral} />
+                <SiteSticker name="heart" size={28} cut />
               )}
-              <Text style={[styles.sectionLabel, { color: mutedColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('emergencyInsurance_sectionContacts')}</Text>
+              <Text style={[styles.sectionLabel, { color: diffuse ? mutedColor : secondaryColor, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }]}>{t('emergencyInsurance_sectionContacts')}</Text>
             </View>
             {diffuse ? (
               <Pressable onPress={openAddContact} hitSlop={8} style={styles.addPillDiffuse}>
@@ -266,10 +287,9 @@ export default function EmergencyInsuranceScreen() {
               </Pressable>
             ) : (
               <Pressable onPress={openAddContact} hitSlop={8}>
-                <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
-                  <SparkleSticker size={14} fill={coralInk} stroke={coralInk} />
-                  <Plus size={14} color={coralInk} strokeWidth={3} />
-                  <Text style={[styles.addPillText, { color: coralInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_add')}</Text>
+                <View style={[styles.addPill, { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: ink }]}>
+                  <Plus size={14} color={ink} strokeWidth={3} />
+                  <Text style={[styles.addPillText, { color: ink, fontFamily: font.bodyBold }]}>{t('emergencyInsurance_add')}</Text>
                 </View>
               </Pressable>
             )}
@@ -278,7 +298,7 @@ export default function EmergencyInsuranceScreen() {
           {store.contacts.length === 0 ? (
             <Pressable
               onPress={openAddContact}
-              style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder, borderStyle: diffuse ? 'solid' : 'dashed' }]}
+              style={diffuse ? [styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder, borderStyle: 'solid' }] : styles.emptySite}
             >
               <View style={styles.emptyIllustration}>
                 {diffuse ? (
@@ -286,27 +306,28 @@ export default function EmergencyInsuranceScreen() {
                     <Character name="heart" size={30} color={dt.colors.ink3} />
                   </DiffuseBloomIcon>
                 ) : (
-                  <CrossSticker size={140} fill={stickers.coral} />
+                  <SiteSticker name="heart" size={96} cut />
                 )}
               </View>
-              <Text style={[styles.emptyTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+              <Text style={[styles.emptyTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 19 }]}>
                 {t('emergencyInsurance_emptyContacts')}
               </Text>
-              <Body size={14} align="center" color={mutedColor}>
+              <Body size={14} align="center" color={diffuse ? mutedColor : secondaryColor}>
                 {t('emergencyInsurance_emptyContactsHint')}
               </Body>
             </Pressable>
           ) : (
-            <View style={[styles.cardGroup, diffuse && styles.cardGroupDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+            <View style={diffuse ? [styles.cardGroup, styles.cardGroupDiffuse, { backgroundColor: paper, borderColor: paperBorder }] : undefined}>
               {store.contacts.map((contact, idx) => (
                 <Pressable
                   key={contact.id}
                   onPress={() => openEditContact(contact)}
                   style={[
                     styles.contactRow,
+                    !diffuse && { paddingHorizontal: 4 },
                     idx < store.contacts.length - 1 && {
                       borderBottomWidth: diffuse ? StyleSheet.hairlineWidth : 1,
-                      borderBottomColor: diffuse ? dt.colors.line : colors.borderLight,
+                      borderBottomColor: diffuse ? dt.colors.line : colors.border,
                     },
                   ]}
                 >
@@ -315,13 +336,11 @@ export default function EmergencyInsuranceScreen() {
                       <Character name="heart" size={18} color={dt.colors.ink3} />
                     </View>
                   ) : (
-                    <View style={[styles.contactAvatar, { backgroundColor: stickers.coral + (isDark ? '32' : '40') }]}>
-                      <CrossSticker size={20} fill={stickers.coral} />
-                    </View>
+                    <SiteSticker name="phone" size={44} cut />
                   )}
                   <View style={styles.contactInfo}>
                     <View style={styles.contactNameRow}>
-                      <Text style={[styles.contactName, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+                      <Text style={[styles.contactName, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.bodyBold, fontSize: diffuse ? undefined : 17, letterSpacing: diffuse ? undefined : 0 }]}>
                         {contact.name}
                       </Text>
                       {contact.isPrimary && (
@@ -331,9 +350,9 @@ export default function EmergencyInsuranceScreen() {
                             <Text style={[styles.primaryText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2 }]}>{t('emergencyInsurance_primaryBadge')}</Text>
                           </View>
                         ) : (
-                          <View style={[styles.primaryBadge, { backgroundColor: stickers.yellow + (isDark ? '32' : '50') }]}>
-                            <Star size={10} color={stickers.yellowInk} strokeWidth={2.5} fill={stickers.yellowInk} />
-                            <Text style={[styles.primaryText, { color: stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_primaryBadge')}</Text>
+                          <View style={[styles.primaryBadge, { backgroundColor: stickers.yellowSoft, borderWidth: 1.5, borderColor: ink }]}>
+                            <Star size={10} color={ink} strokeWidth={2.5} fill={ink} />
+                            <Text style={[styles.primaryText, { color: ink, fontFamily: font.bodyBold }]}>{t('emergencyInsurance_primaryBadge')}</Text>
                           </View>
                         )
                       )}
@@ -341,12 +360,12 @@ export default function EmergencyInsuranceScreen() {
                     <Text style={[styles.contactMeta, { color: secondaryColor, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
                       {relationshipLabel(contact.relationship)}
                     </Text>
-                    <Text style={[styles.contactPhone, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 0.6 : undefined }]}>
+                    <Text style={[styles.contactPhone, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, letterSpacing: diffuse ? 0.6 : undefined }, !diffuse && { fontSize: 16 }]}>
                       {contact.phone}
                     </Text>
                   </View>
                   <Pressable onPress={() => confirmDeleteContact(contact)} hitSlop={8}>
-                    <Trash2 size={16} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
+                    <Trash2 size={16} color={diffuse ? mutedColor : ink} strokeWidth={diffuse ? 1.6 : 2} />
                   </Pressable>
                 </Pressable>
               ))}
@@ -361,9 +380,9 @@ export default function EmergencyInsuranceScreen() {
                   <Character name="health" size={15} color={dt.colors.ink3} />
                 </DiffuseBloomIcon>
               ) : (
-                <StarSticker size={16} fill={stickers.peach} />
+                <SiteSticker name="doc" size={28} cut />
               )}
-              <Text style={[styles.sectionLabel, { color: mutedColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{t('emergencyInsurance_sectionPlans')}</Text>
+              <Text style={[styles.sectionLabel, { color: diffuse ? mutedColor : secondaryColor, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }]}>{t('emergencyInsurance_sectionPlans')}</Text>
             </View>
             {diffuse ? (
               <Pressable onPress={openAddPlan} hitSlop={8} style={styles.addPillDiffuse}>
@@ -372,10 +391,9 @@ export default function EmergencyInsuranceScreen() {
               </Pressable>
             ) : (
               <Pressable onPress={openAddPlan} hitSlop={8}>
-                <View style={[styles.addPill, { backgroundColor: stickers.peachSoft }]}>
-                  <SparkleSticker size={14} fill={peachInk} stroke={peachInk} />
-                  <Plus size={14} color={peachInk} strokeWidth={3} />
-                  <Text style={[styles.addPillText, { color: peachInk, fontFamily: font.bodySemiBold }]}>{t('emergencyInsurance_add')}</Text>
+                <View style={[styles.addPill, { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: ink }]}>
+                  <Plus size={14} color={ink} strokeWidth={3} />
+                  <Text style={[styles.addPillText, { color: ink, fontFamily: font.bodyBold }]}>{t('emergencyInsurance_add')}</Text>
                 </View>
               </Pressable>
             )}
@@ -384,21 +402,21 @@ export default function EmergencyInsuranceScreen() {
           {store.plans.length === 0 ? (
             <Pressable
               onPress={openAddPlan}
-              style={[styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder, borderStyle: diffuse ? 'solid' : 'dashed' }]}
+              style={diffuse ? [styles.emptyCard, { backgroundColor: paper, borderColor: paperBorder, borderStyle: 'solid' }] : styles.emptySite}
             >
-              <View style={[styles.emptyIllustration, !diffuse && { transform: [{ rotate: '-6deg' }] }]}>
+              <View style={styles.emptyIllustration}>
                 {diffuse ? (
                   <DiffuseBloomIcon color={dt.colors.ink} size={64} intensity={0.4}>
                     <Character name="health" size={30} color={dt.colors.ink3} />
                   </DiffuseBloomIcon>
                 ) : (
-                  <Squishy w={140} h={94} fill={stickers.peach} />
+                  <SiteSticker name="doc" size={96} cut />
                 )}
               </View>
-              <Text style={[styles.emptyTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+              <Text style={[styles.emptyTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 19 }]}>
                 {t('emergencyInsurance_emptyPlans')}
               </Text>
-              <Body size={14} align="center" color={mutedColor}>
+              <Body size={14} align="center" color={diffuse ? mutedColor : secondaryColor}>
                 {t('emergencyInsurance_emptyPlansHint')}
               </Body>
             </Pressable>
@@ -408,7 +426,7 @@ export default function EmergencyInsuranceScreen() {
                 <Pressable
                   key={plan.id}
                   onPress={() => openEditPlan(plan)}
-                  style={[styles.planCard, diffuse && styles.planCardDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}
+                  style={diffuse ? [styles.planCard, styles.planCardDiffuse, { backgroundColor: paper, borderColor: paperBorder }] : [styles.planSite, { borderBottomColor: colors.border }]}
                 >
                   <View style={styles.planHeader}>
                     {diffuse ? (
@@ -416,12 +434,10 @@ export default function EmergencyInsuranceScreen() {
                         <Building2 size={18} color={dt.colors.ink3} strokeWidth={1.6} />
                       </DiffuseBloomIcon>
                     ) : (
-                      <View style={[styles.planTypeIcon, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
-                        <Building2 size={18} color={stickers.peachInk} strokeWidth={2} />
-                      </View>
+                      <SiteSticker name="doc" size={44} cut />
                     )}
                     <View style={styles.planHeaderText}>
-                      <Text style={[styles.planProvider, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+                      <Text style={[styles.planProvider, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.bodyBold }, !diffuse && { fontSize: 18 }]}>
                         {plan.providerName}
                       </Text>
                       {diffuse ? (
@@ -431,15 +447,15 @@ export default function EmergencyInsuranceScreen() {
                           </Text>
                         </View>
                       ) : (
-                        <View style={[styles.planTypeBadge, { backgroundColor: stickers.peach + (isDark ? '32' : '40') }]}>
-                          <Text style={[styles.planTypeText, { color: stickers.peachInk, fontFamily: font.bodySemiBold }]}>
+                        <View style={[styles.planTypeBadge, { backgroundColor: stickers.peachSoft, borderWidth: 1.5, borderColor: ink }]}>
+                          <Text style={[styles.planTypeText, { color: ink, fontFamily: font.bodyBold }]}>
                             {planTypeLabel(plan.planType)}
                           </Text>
                         </View>
                       )}
                     </View>
                     <Pressable onPress={() => confirmDeletePlan(plan)} hitSlop={8}>
-                      <Trash2 size={16} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
+                      <Trash2 size={16} color={diffuse ? mutedColor : ink} strokeWidth={diffuse ? 1.6 : 2} />
                     </Pressable>
                   </View>
 
@@ -518,8 +534,8 @@ function PlanField({ label, value }: { label: string; value: string }) {
   const dt = useDiffuseTheme()
   return (
     <View style={styles.planField}>
-      <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{label}</MonoCaps>
-      <Text style={[styles.planFieldValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, letterSpacing: diffuse ? 0.6 : undefined }]}>{value}</Text>
+      <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{label}</MonoCaps>
+      <Text style={[styles.planFieldValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, letterSpacing: diffuse ? 0.6 : undefined }, !diffuse && { fontSize: 15 }]}>{value}</Text>
     </View>
   )
 }
@@ -551,11 +567,12 @@ function ContactFormModal({
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const paperBorder = diffuse ? dt.colors.line : (isDark ? colors.border : colors.text)
   const textColor = diffuse ? dt.colors.ink : colors.text
   const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
   const bodyFont = diffuse ? diffuseFont.body : font.body
   const isEdit = !!contact
+  const ink = colors.text
 
   const [name, setName] = useState('')
   const [relationship, setRelationship] = useState<ContactRelationship>('spouse')
@@ -616,20 +633,24 @@ function ContactFormModal({
       >
         {/* Modal header */}
         <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
-          <Pressable onPress={onClose} hitSlop={10}>
-            <View style={[styles.modalHeaderBtn, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.hairline : paperBorder }]}>
-              <Ionicons name="close" size={20} color={textColor} />
-            </View>
-          </Pressable>
+          {diffuse ? (
+            <Pressable onPress={onClose} hitSlop={10}>
+              <View style={[styles.modalHeaderBtn, { backgroundColor: 'transparent', borderColor: dt.colors.hairline }]}>
+                <Ionicons name="close" size={20} color={textColor} />
+              </View>
+            </Pressable>
+          ) : (
+            <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label="Close" onPress={onClose} style={{ marginBottom: 0 }} />
+          )}
           <View style={styles.modalTitleCenter}>
-            <Text style={[styles.modalBigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+            <Text style={[styles.modalBigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 22 }]}>
               {isEdit ? t('emergencyInsurance_editContact') : t('emergencyInsurance_addContact')}
             </Text>
-            <Text style={[styles.modalItalic, { color: diffuse ? dt.colors.ink3 : stickers.coralInk, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
+            <Text style={[styles.modalItalic, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.italic : font.body }]}>
               {t('emergencyInsurance_someoneToCall')}
             </Text>
           </View>
-          <View style={styles.modalHeaderBtn} />
+          {diffuse ? <View style={styles.modalHeaderBtn} /> : <SiteSticker name="phone" size={38} cut />}
         </View>
 
         <ScrollView
@@ -638,7 +659,7 @@ function ContactFormModal({
           keyboardShouldPersistTaps="handled"
         >
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldName')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
             <User size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={name}
@@ -653,7 +674,7 @@ function ContactFormModal({
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldRelationship')}</MonoCaps>
           <Pressable
             onPress={() => setShowRelPicker(!showRelPicker)}
-            style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}
+            style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}
           >
             <Ionicons name="people-outline" size={18} color={mutedColor} />
             <Text style={[styles.inputText, { color: textColor, flex: 1, fontFamily: bodyFont }]}>
@@ -661,7 +682,15 @@ function ContactFormModal({
             </Text>
             <ChevronDown size={18} color={mutedColor} />
           </Pressable>
-          {showRelPicker && (
+          {showRelPicker && !diffuse && (
+            <View style={styles.relChips}>
+              {RELATIONSHIPS.map((rel) => (
+                <SiteChoice key={rel.id} compact tick={false} label={rel.label} selected={relationship === rel.id} tone={getModeColorSoft('kids')}
+                  onPress={() => { setRelationship(rel.id); setShowRelPicker(false) }} />
+              ))}
+            </View>
+          )}
+          {showRelPicker && diffuse && (
             <View style={[styles.pickerList, diffuse && styles.pickerListDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
               {RELATIONSHIPS.map((rel) => {
                 const active = relationship === rel.id
@@ -686,7 +715,7 @@ function ContactFormModal({
           )}
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldPhone')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Phone size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={phone}
@@ -699,7 +728,7 @@ function ContactFormModal({
           </View>
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldEmailOptional')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Mail size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={email}
@@ -714,13 +743,13 @@ function ContactFormModal({
 
           <Pressable
             onPress={() => setIsPrimary(!isPrimary)}
-            style={[styles.toggleRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}
+            style={[styles.toggleRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}
           >
             <Star
               size={18}
-              color={isPrimary ? (diffuse ? dt.colors.ink : stickers.yellowInk) : mutedColor}
+              color={isPrimary ? (diffuse ? dt.colors.ink : ink) : mutedColor}
               strokeWidth={diffuse ? 1.6 : 2}
-              fill={isPrimary ? (diffuse ? dt.colors.ink : stickers.yellowInk) : 'transparent'}
+              fill={isPrimary ? (diffuse ? dt.colors.ink : stickers.yellowSoft) : 'transparent'}
             />
             <Text style={[styles.toggleLabel, { color: textColor, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{t('emergencyInsurance_primaryContact')}</Text>
             <View
@@ -736,7 +765,7 @@ function ContactFormModal({
           </Pressable>
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: diffuse ? 16 : 28 }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: 16 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -792,7 +821,7 @@ function PlanFormModal({
   const { t } = useTranslation()
   const toast = useSavedToast()
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const paperBorder = diffuse ? dt.colors.line : colors.border
+  const paperBorder = diffuse ? dt.colors.line : (isDark ? colors.border : colors.text)
   const accent = diffuse ? dt.colors.ink : stickers.peachInk
   const accentBg = diffuse ? dt.colors.surface : stickers.peachSoft
   const coral = diffuse ? dt.colors.ink : stickers.coral
@@ -801,6 +830,7 @@ function PlanFormModal({
   const secondaryColor = diffuse ? dt.colors.ink2 : colors.textSecondary
   const bodyFont = diffuse ? diffuseFont.body : font.body
   const isEdit = !!plan
+  const ink = colors.text
 
   const [planType, setPlanType] = useState<InsurancePlanType>('health')
   const [providerName, setProviderName] = useState('')
@@ -885,20 +915,24 @@ function PlanFormModal({
       >
         {/* Modal header */}
         <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
-          <Pressable onPress={onClose} hitSlop={10}>
-            <View style={[styles.modalHeaderBtn, { backgroundColor: diffuse ? 'transparent' : paper, borderColor: diffuse ? dt.colors.hairline : paperBorder }]}>
-              <Ionicons name="close" size={20} color={textColor} />
-            </View>
-          </Pressable>
+          {diffuse ? (
+            <Pressable onPress={onClose} hitSlop={10}>
+              <View style={[styles.modalHeaderBtn, { backgroundColor: 'transparent', borderColor: dt.colors.hairline }]}>
+                <Ionicons name="close" size={20} color={textColor} />
+              </View>
+            </Pressable>
+          ) : (
+            <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label="Close" onPress={onClose} style={{ marginBottom: 0 }} />
+          )}
           <View style={styles.modalTitleCenter}>
-            <Text style={[styles.modalBigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+            <Text style={[styles.modalBigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 22 }]}>
               {isEdit ? t('emergencyInsurance_editPlan') : t('emergencyInsurance_addPlan')}
             </Text>
-            <Text style={[styles.modalItalic, { color: diffuse ? dt.colors.ink3 : stickers.coralInk, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
+            <Text style={[styles.modalItalic, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.italic : font.body }]}>
               {t('emergencyInsurance_keepCardOnHand')}
             </Text>
           </View>
-          <View style={styles.modalHeaderBtn} />
+          {diffuse ? <View style={styles.modalHeaderBtn} /> : <SiteSticker name="doc" size={38} cut />}
         </View>
 
         <ScrollView
@@ -907,21 +941,17 @@ function PlanFormModal({
           keyboardShouldPersistTaps="handled"
         >
           {/* Scan card banner */}
-          <View style={[styles.scanBanner, diffuse && styles.scanBannerDiffuse, { backgroundColor: accentBg, borderColor: paperBorder }, !diffuse && { transform: [{ rotate: '-1deg' }] }]}>
+          <View style={[styles.scanBanner, diffuse && styles.scanBannerDiffuse, { backgroundColor: accentBg, borderColor: paperBorder }, !diffuse && { borderWidth: 1.5, borderRadius: 18 }]}>
             {diffuse ? (
               <SoftBloom color={dt.colors.ink} cx="88%" cy="18%" opacity={dt.isDark ? 0.14 : 0.1} spread={0.5} />
-            ) : (
-              <View style={styles.scanBurstDecor} pointerEvents="none">
-                <BurstSticker size={120} fill={stickers.peach} stroke={stickers.peach} />
-              </View>
-            )}
+            ) : null}
             <View style={styles.scanBannerContent}>
               {diffuse ? (
                 <DiffuseBloomIcon color={dt.colors.ink} size={34} intensity={0.42}>
                   <CreditCard size={18} color={dt.colors.ink3} strokeWidth={1.6} />
                 </DiffuseBloomIcon>
               ) : (
-                <CreditCard size={20} color={coral} strokeWidth={2} />
+                <SiteSticker name="camera" size={36} cut />
               )}
               <View style={styles.scanBannerText}>
                 <Text style={[styles.scanBannerTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
@@ -940,26 +970,26 @@ function PlanFormModal({
                   styles.scanBtn,
                   diffuse
                     ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }
-                    : { backgroundColor: coral },
+                    : { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: ink },
                   pressed && { opacity: 0.85 },
                   scanning && { opacity: 0.5 },
                 ]}
               >
-                <Camera size={16} color={diffuse ? dt.colors.ink : '#FFFEF8'} strokeWidth={diffuse ? 1.6 : 2.5} />
-                <Text style={[styles.scanBtnText, { color: diffuse ? dt.colors.ink : colors.surface, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1.2 : undefined }]}>{t('emergencyInsurance_scanCamera')}</Text>
+                <Camera size={16} color={diffuse ? dt.colors.ink : ink} strokeWidth={diffuse ? 1.6 : 2.5} />
+                <Text style={[styles.scanBtnText, { color: diffuse ? dt.colors.ink : ink, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, letterSpacing: diffuse ? 1.2 : undefined }]}>{t('emergencyInsurance_scanCamera')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => handleScanCard(false)}
                 disabled={scanning}
                 style={({ pressed }) => [
                   styles.scanBtn,
-                  { backgroundColor: 'transparent', borderWidth: 1, borderColor: diffuse ? dt.colors.line2 : paperBorder },
+                  { backgroundColor: diffuse ? 'transparent' : colors.surface, borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? dt.colors.line2 : paperBorder },
                   pressed && { opacity: 0.85 },
                   scanning && { opacity: 0.5 },
                 ]}
               >
                 <ImageIcon size={16} color={textColor} strokeWidth={diffuse ? 1.6 : 2.5} />
-                <Text style={[styles.scanBtnText, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1.2 : undefined }]}>{t('emergencyInsurance_scanGallery')}</Text>
+                <Text style={[styles.scanBtnText, { color: textColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold, letterSpacing: diffuse ? 1.2 : undefined }]}>{t('emergencyInsurance_scanGallery')}</Text>
               </Pressable>
             </View>
             {scanning && (
@@ -974,7 +1004,9 @@ function PlanFormModal({
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldType')}</MonoCaps>
           <View style={styles.chipRow}>
-            {PLAN_TYPES.map((t) => {
+            {!diffuse ? PLAN_TYPES.map((pt) => (
+              <SiteChoice key={pt.id} compact style={{ flex: 1 }} label={pt.label} sticker={pt.id === 'health' ? 'heart' : pt.id === 'dental' ? 'face4' : 'eye'} selected={planType === pt.id} tone={stickers.peachSoft} onPress={() => setPlanType(pt.id)} />
+            )) : PLAN_TYPES.map((t) => {
               const active = planType === t.id
               const chipColor = diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? coral : colors.textMuted)
               const chipFill = diffuse ? (active ? dt.colors.ink : dt.colors.ink3) : (active ? coral : stickers.peach)
@@ -1013,7 +1045,7 @@ function PlanFormModal({
           </View>
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldProvider')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Building2 size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={providerName}
@@ -1026,7 +1058,7 @@ function PlanFormModal({
           </View>
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldPlanNameOptional')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
             <FileText size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={planName}
@@ -1038,7 +1070,7 @@ function PlanFormModal({
           </View>
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldPolicyNumber')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
             <CreditCard size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={policyNumber}
@@ -1052,7 +1084,7 @@ function PlanFormModal({
           <View style={styles.twoCol}>
             <View style={styles.twoColItem}>
               <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldGroupNumber')}</MonoCaps>
-              <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <TextInput
                   value={groupNumber}
                   onChangeText={setGroupNumber}
@@ -1064,7 +1096,7 @@ function PlanFormModal({
             </View>
             <View style={styles.twoColItem}>
               <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldMemberId')}</MonoCaps>
-              <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+              <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
                 <TextInput
                   value={memberId}
                   onChangeText={setMemberId}
@@ -1077,7 +1109,7 @@ function PlanFormModal({
           </View>
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldInsurancePhone')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder }]}>
             <Phone size={18} color={mutedColor} strokeWidth={diffuse ? 1.6 : 2} />
             <TextInput
               value={phone}
@@ -1090,7 +1122,7 @@ function PlanFormModal({
           </View>
 
           <MonoCaps color={mutedColor}>{t('emergencyInsurance_fieldNotesOptional')}</MonoCaps>
-          <View style={[styles.inputRow, diffuse && styles.inputRowDiffuse, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: diffuse ? 16 : 28 }]}>
+          <View style={[styles.inputRow, diffuse ? styles.inputRowDiffuse : styles.inputRowSite, { backgroundColor: paper, borderColor: paperBorder, height: undefined, minHeight: 96, alignItems: 'flex-start', paddingTop: 16, paddingBottom: 16, borderRadius: 16 }]}>
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -1122,6 +1154,13 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
 
   headerWrap: { paddingHorizontal: 16, paddingBottom: 6 },
+  siteHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 8 },
+  siteTitle: { fontSize: 24, textTransform: 'uppercase', letterSpacing: 0.3 },
+  siteSubtitle: { fontSize: 13, marginTop: 1 },
+  emptySite: { alignItems: 'center', padding: 24, gap: 12 },
+  planSite: { paddingVertical: 16, borderBottomWidth: 1 },
+  relChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  inputRowSite: { borderRadius: 16, paddingHorizontal: 16, height: 52, borderWidth: 1.5 },
   titleBlock: {
     paddingHorizontal: 4,
     paddingTop: 14,
@@ -1358,7 +1397,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 16,
   },
-  inputText: { flex: 1, fontSize: 15 },
+  inputText: { flex: 1, fontSize: 16 },
 
   pickerList: { marginTop: 4, overflow: 'hidden', borderWidth: 1, borderRadius: 28 },
   pickerListDiffuse: { borderRadius: 16 },
