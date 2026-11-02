@@ -317,6 +317,8 @@ function getRecommendedCalories(bd: string): number {
 // CHILD_COLORS imported from shared component
 import { CHILD_COLORS } from '../ui/ChildPills'
 import { LogSheet } from '../calendar/LogSheet'
+import { KidsHeroTiles } from './kids/KidsHeroTiles'
+import { SiteChoice } from '../ui/SiteChoice'
 import { KidsLogRouter, type KidsLogType } from '../calendar/KidsLogRouter'
 import { useKidsTodayLogs } from '../../lib/analyticsData'
 import { KidsTodaySummaryCard } from './kids/KidsTodaySummaryCard'
@@ -1552,6 +1554,11 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
             const active = c.id === child.id
             const kidColor = CHILD_COLORS[(colorIdxByChildId.get(c.id) ?? 0) % CHILD_COLORS.length]
             const ST_INK = '#141313'
+            if (!diffuse) return (
+              <SiteChoice key={c.id} compact tick={false} label={c.name} selected={active}
+                onPress={() => setActiveChild(c)} tone={kidColor} sticker={active ? 'baby' : undefined}
+                sub={formatAge(c.birthDate)} />
+            )
             return (
               <Pressable key={c.id} onPress={() => setActiveChild(c)}
                 style={({ pressed }) => [s.childPill, diffuse ? {
@@ -1673,6 +1680,26 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           const active = dateRange === opt.key
           const ST_INK = '#141313'
           const ST_YELLOW = '#F5D652'
+          const onPick = () => {
+            if (opt.key === 'custom') {
+              setCustomDraft({ start: customRange?.start ?? new Date(), end: customRange?.end ?? new Date() })
+              setCustomPickerActive('start')
+              setCustomPickerVisible(true)
+            } else {
+              setDateRange(opt.key)
+            }
+          }
+          const rangeLabel = opt.key === 'custom' && customRange
+            ? `${fmtShortDate(customRange.start)}–${fmtShortDate(customRange.end)}`
+            : opt.key === 'today' ? t('common_today')
+            : opt.key === 'yesterday' ? t('common_yesterday')
+            : opt.key === '7days' ? t('kids_home_range_7days')
+            : opt.key === '30days' ? t('kids_home_range_30days')
+            : t('kids_home_range_custom')
+          if (!diffuse) return (
+            <SiteChoice key={opt.key} compact tick={false} label={rangeLabel} selected={active}
+              onPress={onPick} tone={stickers.yellowSoft} sticker={opt.key === 'custom' ? 'cal' : undefined} />
+          )
           return (
             <Pressable
               key={opt.key}
@@ -2646,7 +2673,7 @@ interface HeroTilesProps {
 
 function HeroTiles(props: HeroTilesProps) {
   const diffuse = useIsDiffuse()
-  return diffuse ? <DiffuseHeroTiles {...props} /> : <CurrentHeroTiles {...props} />
+  return diffuse ? <DiffuseHeroTiles {...props} /> : <KidsHeroTiles {...props} />
 }
 
 // ─── Diffuse hero tiles — soft stat cards, hairline, role type, sticker icons ─

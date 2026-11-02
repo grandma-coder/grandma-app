@@ -10,6 +10,7 @@ import type { ReactNode } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
+import { BlinkEye } from '../ui/SiteBrand'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
@@ -50,14 +51,19 @@ export function HomeGreeting({
         <View style={styles.logo}>
           {/* Monochrome line-art mark — ink outline + ink heart on an empty
               (canvas-colored) body, no animation. A quiet static brand glyph. */}
-          <GrandmaLogo
-            size={logoSize}
-            body={canvas}
-            accent={ink}
-            outline={ink}
-            motion="none"
-            animate={false}
-          />
+          {diffuse ? (
+            <GrandmaLogo
+              size={logoSize}
+              body={canvas}
+              accent={ink}
+              outline={ink}
+              motion="none"
+              animate={false}
+            />
+          ) : (
+            // Site look: the eye sticker, swaying and blinking.
+            <BlinkEye size={logoSize} />
+          )}
         </View>
       ) : null}
       <View style={{ flex: 1 }}>

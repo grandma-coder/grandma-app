@@ -1015,6 +1015,14 @@ export interface TranslationKeys {
   kids_home_tile_activities: string
   kids_home_tile_activity_empty_sub: string
   kids_home_tile_no_goal: string
+  kidsTile_sleepNight: string
+  kidsTile_sleepAvg: string
+  kidsTile_ofNight: string
+  kidsTile_calAvg: string
+  kidsTile_feedAvg: string
+  kidsTile_ofDay: string
+  kidsTile_activeDays: string
+  kidsTile_moodLogs: string
   kids_home_mood_mostly: string
   kids_home_mood_tap_details: string
   kids_home_mood_empty_title: string

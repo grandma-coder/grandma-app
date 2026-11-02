@@ -89,7 +89,7 @@ export function ActionDisc({
         }}
       >
         <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-          <HandDrawnPill width={size} height={size} fill={fill} stroke={ink} strokeWidth={size > 70 ? 3 : 2.4} seed={label} />
+          <HandDrawnPill wobble width={size} height={size} fill={fill} stroke={ink} strokeWidth={size > 70 ? 3 : 2.4} seed={label} />
           {loading ? <ActivityIndicator color={ink} /> : children}
         </View>
       </Animated.View>

@@ -13,10 +13,9 @@ import { font } from '../../constants/theme'
 import { SiteSticker, SITE_STICKER_NAMES, type SiteStickerName } from '../stickers/SiteSticker'
 import { useIdleSway } from './Motion'
 
-export function SiteBrand({ color, size = 22, blink = false }: { color: string; size?: number; blink?: boolean }) {
-  const sway = useIdleSway(5, 3)
+/** Eyelid scale for a blinking eye: shuts for ~80ms every 2.5–4.5s, sometimes twice. */
+export function useBlink(blink = true) {
   const lid = useRef(new Animated.Value(1)).current
-
   // Blink: the eye squashes shut for ~80ms every 2.5–4.5s, sometimes twice in a row.
   useEffect(() => {
     if (!blink) return
@@ -37,6 +36,23 @@ export function SiteBrand({ color, size = 22, blink = false }: { color: string; 
     timer = setTimeout(() => once(schedule), 900)
     return () => { alive = false; clearTimeout(timer); lid.stopAnimation() }
   }, [blink, lid])
+  return lid
+}
+
+/** The site's eye sticker, swaying and blinking — the app's living brand mark. */
+export function BlinkEye({ size = 40 }: { size?: number }) {
+  const lid = useBlink(true)
+  const sway = useIdleSway(5, 5)
+  return (
+    <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }, { scaleY: lid }] }}>
+      <SiteSticker name="eye" size={size} />
+    </Animated.View>
+  )
+}
+
+export function SiteBrand({ color, size = 22, blink = false }: { color: string; size?: number; blink?: boolean }) {
+  const lid = useBlink(blink)
+  const sway = useIdleSway(5, 3)
 
   return (
     <View style={styles.brand} accessibilityRole="header" accessibilityLabel="grandma">

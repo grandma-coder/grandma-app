@@ -46,7 +46,7 @@ export function InkBackButton({
           transform: [{ scale: press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.92] }) }],
         }}
       >
-        <HandDrawnPill width={44} height={44} fill={paper} stroke={ink} strokeWidth={2.2} seed={icon} />
+        <HandDrawnPill wobble width={44} height={44} fill={paper} stroke={ink} strokeWidth={2.2} seed={icon} />
         <Animated.View style={{ transform: [{ translateX: press.interpolate({ inputRange: [0, 1], outputRange: [0, icon === 'close' ? 0 : -3] }) }] }}>
           <Ionicons name={icon} size={20} color={ink} />
         </Animated.View>

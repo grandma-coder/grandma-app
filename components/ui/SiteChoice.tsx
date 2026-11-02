@@ -26,6 +26,8 @@ export function SiteChoice({
   sub,
   radius = 18,
   align = 'center',
+  compact = false,
+  tick = true,
 }: {
   label: string
   selected: boolean
@@ -39,6 +41,10 @@ export function SiteChoice({
   radius?: number
   /** 'start' for full-width list rows (sticker + label on the left, tick on the right). */
   align?: 'center' | 'start'
+  /** Smaller pill for filter rows (child picker, date range). */
+  compact?: boolean
+  /** Show the ✓ when selected (off for single-select filter rows). */
+  tick?: boolean
 }) {
   const { colors, font } = useTheme()
   const ink = colors.text
@@ -75,17 +81,17 @@ export function SiteChoice({
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: sel }]}>
           <HandDrawnPill width={size.w} height={size.h} fill={tone} stroke={ink} strokeWidth={2.6} radius={radius} seed={label} />
         </Animated.View>
-        <View style={[styles.inner, align === 'start' && styles.innerStart]}>
+        <View style={[styles.inner, align === 'start' && styles.innerStart, compact && styles.innerCompact]}>
           {sticker ? <SiteSticker name={sticker} size={24} cut /> : null}
           <View style={{ flexShrink: 1, flexGrow: align === 'start' ? 1 : 0, alignItems: sticker || align === 'start' ? 'flex-start' : 'center' }}>
             <Text style={[styles.label, { color: ink, fontFamily: font.bodyBold }]} numberOfLines={2}>{label}</Text>
             {sub ? <Text style={[styles.sub, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>{sub}</Text> : null}
           </View>
-          <Animated.View style={[styles.tick, { opacity: sel, transform: [{ scale: sel }] }]}>
+          {tick ? <Animated.View style={[styles.tick, { opacity: sel, transform: [{ scale: sel }] }]}>
             <Svg width={14} height={14} viewBox="0 0 18 18">
               <Path d="M3.5 9.5 L7.5 13 L14.5 4.5" stroke={ink} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
-          </Animated.View>
+          </Animated.View> : null}
         </View>
       </Animated.View>
     </Pressable>
@@ -123,7 +129,7 @@ export function SiteStepper({
     return (
       <Pressable onPress={() => step(d)} disabled={disabled} hitSlop={8} accessibilityRole="button" accessibilityLabel={d < 0 ? 'Decrease' : 'Increase'}
         style={({ pressed }) => [styles.stepBtn, { opacity: disabled ? 0.35 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] }]}>
-        <HandDrawnPill width={52} height={52} fill={tone} stroke={ink} strokeWidth={2.4} seed={icon} />
+        <HandDrawnPill wobble width={52} height={52} fill={tone} stroke={ink} strokeWidth={2.4} seed={icon} />
         <Ionicons name={icon} size={24} color={ink} />
       </Pressable>
     )
@@ -144,6 +150,7 @@ export function SiteStepper({
 
 const styles = StyleSheet.create({
   inner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 18, minHeight: 54 },
+  innerCompact: { paddingVertical: 9, paddingHorizontal: 16, minHeight: 44, gap: 8 },
   innerStart: { justifyContent: 'flex-start', paddingHorizontal: 16 },
   label: { fontSize: 16 },
   sub: { fontSize: 13, marginTop: 1 },

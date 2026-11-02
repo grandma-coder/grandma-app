@@ -1,5 +1,6 @@
 /**
- * Hand-drawn shapes — the wobbly ink line of the site's stickers, for buttons and pills.
+ * Ink-outlined shapes for the site look. Clean by default; `wobble` adds the hand-drawn
+ * line of the site's stickers for a few signature buttons only.
  *
  * wobblyPillPath() walks a pill's outline and nudges each point along its normal with a
  * smooth, seeded wobble (a few low-frequency sines), then joins the points with quadratic
@@ -86,6 +87,7 @@ export function HandDrawnPill({
   strokeWidth = 2.4,
   seed,
   radius,
+  wobble = false,
 }: {
   width: number
   height: number
@@ -95,10 +97,16 @@ export function HandDrawnPill({
   seed: string
   /** Corner radius; omit for a full pill. */
   radius?: number
+  /**
+   * Hand wobble on the outline. Off by default — a clean ink line is calmer and some
+   * people find a constantly wobbly UI uncomfortable. Turn it on only for a few
+   * signature buttons (action discs, back/close, stepper ±).
+   */
+  wobble?: boolean
 }) {
   const d = useMemo(
-    () => (width > 0 ? wobblyPillPath(width, height, seed, Math.min(1.4, Math.min(width, height) * 0.03), 2, radius ?? Infinity) : ''),
-    [width, height, seed, radius],
+    () => (width > 0 ? wobblyPillPath(width, height, seed, wobble ? Math.min(1.4, Math.min(width, height) * 0.03) : 0, 2, radius ?? Infinity) : ''),
+    [width, height, seed, radius, wobble],
   )
   if (!d) return null
   return (

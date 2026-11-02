@@ -89,7 +89,7 @@ export function CelebrateHero({
         }}
       >
         <View style={styles.disc}>
-          <HandDrawnPill width={132} height={132} fill={tone} stroke={colors.text} strokeWidth={3} seed={sticker + 'hero'} />
+          <HandDrawnPill wobble width={132} height={132} fill={tone} stroke={colors.text} strokeWidth={3} seed={sticker + 'hero'} />
           <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
             <SiteSticker name={sticker} size={70} cut />
           </Animated.View>

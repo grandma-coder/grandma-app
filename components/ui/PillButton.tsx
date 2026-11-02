@@ -96,7 +96,7 @@ function CurrentPillButton({
     >
       {/* the hand-drawn ink shadow the button sits on */}
       <View style={[styles.layer, { top: SHADOW, height }]}>
-        <HandDrawnPill width={width} height={height} fill={v.shadow} seed={label + 'shadow'} />
+        <HandDrawnPill wobble width={width} height={height} fill={v.shadow} seed={label + 'shadow'} />
       </View>
       <Animated.View
         style={[
@@ -112,7 +112,7 @@ function CurrentPillButton({
         ]}
       >
         {/* wobbly ink outline, like the tab bar's hand-drawn edge */}
-        <HandDrawnPill width={width} height={height} fill={v.bg} stroke={v.border} strokeWidth={2.6} seed={label} />
+        <HandDrawnPill wobble width={width} height={height} fill={v.bg} stroke={v.border} strokeWidth={2.6} seed={label} />
         {loading ? (
           <ActivityIndicator color={v.fg} />
         ) : (
