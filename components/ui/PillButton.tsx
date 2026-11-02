@@ -12,8 +12,9 @@
  * unchanged.
  */
 
-import { ReactNode } from 'react'
-import { Pressable, Text, StyleSheet, ViewStyle, StyleProp, View } from 'react-native'
+import { ReactNode, useRef } from 'react'
+import { Pressable, Text, StyleSheet, ViewStyle, StyleProp, View, Animated, ActivityIndicator } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useTheme, useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
@@ -54,6 +55,8 @@ function CurrentPillButton({
   height = 58,
 }: PillButtonProps) {
   const { colors, font, isDark } = useTheme()
+  // 0 = resting on its shadow, 1 = pushed all the way down onto it.
+  const press = useRef(new Animated.Value(0)).current
 
   const ink = colors.text
   const paper = colors.surface
@@ -69,36 +72,57 @@ function CurrentPillButton({
   const v = variants[variant]
   const isInactive = disabled || loading
 
+  const pressIn = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+    Animated.spring(press, { toValue: 1, friction: 7, tension: 300, useNativeDriver: true }).start()
+  }
+  const pressOut = () => {
+    Animated.spring(press, { toValue: 0, friction: 4, tension: 200, useNativeDriver: true }).start()
+  }
+
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={isInactive ? undefined : pressIn}
+      onPressOut={isInactive ? undefined : pressOut}
       disabled={isInactive}
-      style={({ pressed }) => [
-        styles.base,
-        {
-          height,
-          backgroundColor: v.bg,
-          borderColor: v.border,
-          borderWidth: 1.5,
-          shadowColor: v.shadow,
-          shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-          shadowOpacity: 1,
-          shadowRadius: 0,
-          elevation: 4,
-          opacity: isInactive ? 0.55 : 1,
-          transform: [{ translateY: pressed && !isInactive ? 2 : 0 }],
-        },
-        style,
-      ]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: isInactive, busy: loading }}
+      style={[{ height: height + SHADOW, opacity: isInactive ? 0.55 : 1 }, style]}
     >
-      {leading ? <View style={styles.slot}>{leading}</View> : null}
-      <Text style={[styles.label, { fontFamily: font.bodyBold, color: v.fg }]}>
-        {loading ? '…' : label}
-      </Text>
-      {trailing ? <View style={styles.slot}>{trailing}</View> : null}
+      {/* the hard ink shadow the button sits on */}
+      <View style={[styles.shadow, { height, top: SHADOW, backgroundColor: v.shadow }]} />
+      <Animated.View
+        style={[
+          styles.base,
+          {
+            height,
+            backgroundColor: v.bg,
+            borderColor: v.border,
+            borderWidth: 2,
+            transform: [
+              { translateY: press.interpolate({ inputRange: [0, 1], outputRange: [0, SHADOW - 1] }) },
+              { scale: press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.985] }) },
+            ],
+          },
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={v.fg} />
+        ) : (
+          <>
+            {leading ? <View style={styles.slot}>{leading}</View> : null}
+            <Text style={[styles.label, { fontFamily: font.bodyBold, color: v.fg }]}>{label}</Text>
+            {trailing ? <View style={styles.slot}>{trailing}</View> : null}
+          </>
+        )}
+      </Animated.View>
     </Pressable>
   )
 }
+
+const SHADOW = 4
 
 // ─── Diffuse (containerless) ───────────────────────────────────────────────
 
@@ -197,6 +221,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 20,
   },
+  shadow: { position: 'absolute', left: 0, right: 0, borderRadius: 999 },
   label: { fontSize: 16, letterSpacing: -0.2 },
   slot: { alignItems: 'center', justifyContent: 'center' },
 })

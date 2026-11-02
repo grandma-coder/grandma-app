@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { PillButton } from '../../components/ui/PillButton'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseOAuthRow, DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -256,39 +257,25 @@ export default function SignIn() {
 
           {/* Social auth */}
           {appleAvailable && (
-            <Pressable
+            <PillButton
+              label={t('auth_continueWithApple')}
               onPress={handleApple}
+              variant="ink"
+              loading={oauthLoading === 'apple'}
               disabled={oauthLoading !== null}
-              style={({ pressed }) => [
-                styles.socialBtn,
-                { backgroundColor: ink, shadowColor: ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0, opacity: pressed ? 0.88 : oauthLoading === 'apple' ? 0.6 : 1 },
-              ]}
-            >
-              <Ionicons name="logo-apple" size={18} color={bg} />
-              <Text style={[styles.socialBtnText, { fontFamily: font.bodyBold, color: bg }]}>
-                {t('auth_continueWithApple')}
-              </Text>
-            </Pressable>
+              leading={<Ionicons name="logo-apple" size={19} color={bg} />}
+              style={styles.socialGap}
+            />
           )}
-          <Pressable
+          <PillButton
+            label={t('auth_continueWithGoogle')}
             onPress={handleGoogle}
+            variant="paper"
+            loading={oauthLoading === 'google'}
             disabled={oauthLoading !== null}
-            style={({ pressed }) => [
-              styles.socialBtn,
-              {
-                backgroundColor: paper,
-                borderWidth: 1.5,
-                borderColor: paperBorder,
-                shadowColor: ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0,
-                opacity: pressed ? 0.88 : oauthLoading === 'google' ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Ionicons name="logo-google" size={18} color={ink} />
-            <Text style={[styles.socialBtnText, { fontFamily: font.bodyBold, color: ink }]}>
-              {t('auth_continueWithGoogle')}
-            </Text>
-          </Pressable>
+            leading={<Ionicons name="logo-google" size={18} color={ink} />}
+            style={styles.socialGap}
+          />
 
           {/* Divider */}
           <View style={styles.divider}>
@@ -335,23 +322,13 @@ export default function SignIn() {
           </Pressable>
 
           {/* CTA */}
-          <Pressable
+          <PillButton
+            label={loading ? t('auth_signingIn') : t('auth_signInArrow')}
             onPress={signIn}
+            variant="accent"
+            accentColor="#F7C6D9"
             disabled={loading}
-            style={({ pressed }) => [
-              styles.cta,
-              {
-                backgroundColor: ink,
-                shadowColor: ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0,
-                opacity: pressed ? 0.88 : loading ? 0.6 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}
-          >
-            <Text style={[styles.ctaText, { fontFamily: font.bodyBold, color: bg }]}>
-              {loading ? t('auth_signingIn') : t('auth_signInArrow')}
-            </Text>
-          </Pressable>
+          />
 
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-up')}>
@@ -408,6 +385,7 @@ function InputField({
         autoCapitalize={autoCapitalize}
         style={[styles.inputText, { fontFamily: font.body, color: ink }]}
         selectionColor={ink}
+        placeholder={secureTextEntry ? '••••••••' : 'your@email.com'}
         placeholderTextColor={ink4}
       />
     </View>
@@ -451,17 +429,8 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
 
-  socialBtn: {
-    height: 58,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  socialBtnText: {
-    fontSize: 16,
+  socialGap: {
+    marginBottom: 12,
   },
 
   divider: {

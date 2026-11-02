@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { PillButton } from '../../components/ui/PillButton'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -247,22 +248,12 @@ export default function SignUp() {
           </View>
 
           {/* CTA */}
-          <Pressable
+          <PillButton
+            label={loading ? t('auth_creating') : t('auth_continue')}
             onPress={signUp}
+            variant="ink"
             disabled={loading}
-            style={({ pressed }) => [
-              styles.cta,
-              { backgroundColor: ink, shadowColor: ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
-              {
-                opacity: pressed ? 0.88 : loading ? 0.6 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}
-          >
-            <Text style={[styles.ctaText, { fontFamily: font.bodyBold, color: bg }]}>
-              {loading ? t('auth_creating') : t('auth_continue')}
-            </Text>
-          </Pressable>
+          />
 
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-in')}>

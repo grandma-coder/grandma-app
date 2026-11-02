@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { PillButton } from '../../components/ui/PillButton'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA } from '../../components/ui/diffuse/DiffuseActions'
@@ -210,25 +211,12 @@ export default function ResetPassword() {
             />
           </View>
 
-          <Pressable
+          <PillButton
+            label={loading ? t('auth_updating') : t('auth_updatePassword')}
             onPress={handleUpdate}
+            variant="ink"
             disabled={loading}
-            accessibilityRole="button"
-            accessibilityLabel="Update password"
-            accessibilityState={{ busy: loading }}
-            style={({ pressed }) => [
-              styles.cta,
-              { backgroundColor: ink, shadowColor: ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
-              {
-                opacity: pressed ? 0.88 : loading ? 0.6 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}
-          >
-            <Text style={[styles.ctaText, { fontFamily: font.bodyBold, color: bg }]}>
-              {loading ? t('auth_updating') : t('auth_updatePassword')}
-            </Text>
-          </Pressable>
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

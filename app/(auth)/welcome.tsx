@@ -21,6 +21,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 import { SiteBrand, RebusHeadline } from '../../components/ui/SiteBrand'
+import { PillButton } from '../../components/ui/PillButton'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseOAuthRow, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -187,92 +188,37 @@ export default function Welcome() {
         ]}
       >
         {appleAvailable && (
-          <Pressable
+          <PillButton
+            label={t('auth_continueWithApple')}
             onPress={handleApple}
+            variant="ink"
+            loading={loading === 'apple'}
             disabled={loading !== null}
-            style={({ pressed }) => [
-              styles.authBtn,
-              diffuse
-                ? {
-                    backgroundColor: 'transparent',
-                    borderWidth: 1,
-                    borderColor: dt.colors.line2,
-                    opacity: pressed ? 0.6 : loading === 'apple' ? 0.5 : 1,
-                  }
-                : {
-                    backgroundColor: ink,
-                    borderWidth: 1.5,
-                    borderColor: ink,
-                    shadowColor: ink,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 0,
-                    opacity: pressed ? 0.88 : loading === 'apple' ? 0.6 : 1,
-                  },
-            ]}
-          >
-            {loading === 'apple' ? (
-              <ActivityIndicator color={diffuse ? dt.colors.ink : bg} />
-            ) : (
-              <>
-                <Ionicons name="logo-apple" size={18} color={diffuse ? dt.colors.ink : bg} />
-                <Text style={[styles.authBtnText, diffuse
-                  ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
-                  : { fontFamily: font.bodyBold, color: bg }]}>
-                  {t('auth_continueWithApple')}
-                </Text>
-              </>
-            )}
-          </Pressable>
+            leading={<Ionicons name="logo-apple" size={19} color={bg} />}
+            style={styles.fullWidth}
+          />
         )}
+        <PillButton
+          label={t('auth_continueWithGoogle')}
+          onPress={handleGoogle}
+          variant="paper"
+          loading={loading === 'google'}
+          disabled={loading !== null}
+          leading={<Ionicons name="logo-google" size={18} color={ink} />}
+          style={styles.fullWidth}
+        />
 
         <Pressable
-          onPress={handleGoogle}
-          disabled={loading !== null}
-          style={({ pressed }) => [
-            styles.authBtn,
-            diffuse
-              ? {
-                  backgroundColor: 'transparent',
-                  borderWidth: 1,
-                  borderColor: dt.colors.line2,
-                  opacity: pressed ? 0.6 : loading === 'google' ? 0.5 : 1,
-                }
-              : {
-                  backgroundColor: paper,
-                  borderWidth: 1.5,
-                  borderColor: ink,
-                  shadowColor: ink,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 0,
-                  opacity: pressed ? 0.88 : loading === 'google' ? 0.6 : 1,
-                },
-          ]}
+          onPress={() => router.push('/(auth)/sign-in')}
+          hitSlop={12}
+          accessibilityRole="link"
+          style={({ pressed }) => [styles.signInRow, { opacity: pressed ? 0.6 : 1 }]}
         >
-          {loading === 'google' ? (
-            <ActivityIndicator color={ink} />
-          ) : (
-            <>
-              <Ionicons name="logo-google" size={18} color={ink} />
-              <Text style={[styles.authBtnText, diffuse
-                ? { fontFamily: diffuseFont.mono, color: dt.colors.ink, letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 13 }
-                : { fontFamily: font.bodyBold, color: ink }]}>
-                {t('auth_continueWithGoogle')}
-              </Text>
-            </>
-          )}
-        </Pressable>
-
-        <Text style={[styles.signInLink, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink3 }]}>
-          {t('auth_hasAccount')}{' '}
-          <Text
-            onPress={() => router.push('/(auth)/sign-in')}
-            style={{ color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }}
-          >
-            {t('auth_signIn')}
+          <Text style={[styles.signInLink, { fontFamily: font.body, color: ink3 }]}>
+            {t('auth_hasAccount')}{' '}
+            <Text style={{ color: ink, fontFamily: font.bodyBold, textDecorationLine: 'underline' }}>{t('auth_signIn')}</Text>
           </Text>
-        </Text>
+        </Pressable>
       </Animated.View>
     </View>
   )
@@ -312,20 +258,14 @@ const styles = StyleSheet.create({
   // Auth section
   authSection: {
     paddingHorizontal: 20,
-    gap: 10,
+    gap: 12,
     alignItems: 'center',
   },
-  authBtn: {
-    width: '100%',
-    height: 58,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+  fullWidth: {
+    alignSelf: 'stretch',
   },
-  authBtnText: {
-    fontSize: 16,
+  signInRow: {
+    paddingVertical: 8,
   },
   signInLink: {
     fontSize: 13,
