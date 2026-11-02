@@ -17,6 +17,8 @@ import {
 import { router, useLocalSearchParams } from 'expo-router'
 import { ArrowLeft, Hash, Check } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
@@ -28,7 +30,7 @@ import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../lib/i18n'
 
 export default function ShareToChannel() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
@@ -118,11 +120,22 @@ export default function ShareToChannel() {
     <View style={[s.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 8, borderBottomColor: diffuse ? dt.colors.line : colors.border }]}>
-        <Pressable onPress={() => router.back()} style={s.headerBtn}>
-          <ArrowLeft size={24} color={diffuse ? dt.colors.ink : colors.text} />
-        </Pressable>
-        <Text style={[s.headerTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>{t('garage_share_header')}</Text>
-        <View style={s.headerBtn} />
+        {diffuse ? (
+          <Pressable onPress={() => router.back()} style={s.headerBtn}>
+            <ArrowLeft size={24} color={dt.colors.ink} />
+          </Pressable>
+        ) : (
+          <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+        )}
+        {diffuse ? (
+          <Text style={[s.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>{t('garage_share_header')}</Text>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <SiteSticker name="bubble" size={28} cut />
+            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 20, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('garage_share_header')}</Text>
+          </View>
+        )}
+        <View style={diffuse ? s.headerBtn : { width: 44 }} />
       </View>
 
       {loading ? (
@@ -140,17 +153,17 @@ export default function ShareToChannel() {
               {post && (
                 <View style={[s.previewCard, diffuse
                   ? { backgroundColor: dt.colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line, borderRadius: radius.xl }
-                  : { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                  : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 }]}>
                   {post.media?.[0]?.url && (
-                    <Image source={{ uri: post.media[0].url }} style={s.previewImage} />
+                    <Image source={{ uri: post.media[0].url }} style={[s.previewImage, !diffuse && { borderWidth: 1.5, borderColor: colors.text, borderRadius: 10 }]} />
                   )}
                   <View style={s.previewText}>
-                    <Text style={[s.previewCaption, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text }]} numberOfLines={2}>
+                    <Text style={[s.previewCaption, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]} numberOfLines={2}>
                       {post.caption?.split('\n')[0] ?? t('garage_share_postFallback')}
                     </Text>
                     <Text style={[s.previewAuthor, diffuse
                       ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
-                      : { color: colors.textMuted }]}>
+                      : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontWeight: undefined, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
                       {t('garage_share_postBy', { name: post.author_name ?? 'you' })}
                     </Text>
                   </View>
@@ -166,13 +179,13 @@ export default function ShareToChannel() {
                 multiline
                 style={[s.messageInput, diffuse
                   ? { color: dt.colors.ink, fontFamily: diffuseFont.body, backgroundColor: dt.colors.surface, borderColor: dt.colors.line, borderRadius: radius.lg }
-                  : { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+                  : { color: colors.text, fontFamily: font.body, fontWeight: undefined, fontSize: 16, backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 14 }]}
               />
 
               {joinedChannels.length > 0 && (
                 <Text style={[s.sectionLabel, diffuse
                   ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.6 }
-                  : { color: colors.textMuted }]}>{t('garage_share_myChannels')}</Text>
+                  : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontWeight: undefined, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('garage_share_myChannels')}</Text>
               )}
             </View>
           }
@@ -185,7 +198,7 @@ export default function ShareToChannel() {
                 {isFirstOther && otherChannels.length > 0 && (
                   <Text style={[s.sectionLabel, diffuse
                     ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.6 }
-                    : { color: colors.textMuted }]}>{t('garage_share_otherChannels')}</Text>
+                    : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontWeight: undefined, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('garage_share_otherChannels')}</Text>
                 )}
                 <Pressable
                   onPress={() => {
@@ -195,39 +208,37 @@ export default function ShareToChannel() {
                     }
                     confirmAndShare(item.id, item.name)
                   }}
-                  style={[s.channelRow, { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight }]}
+                  style={[s.channelRow, { borderBottomColor: diffuse ? dt.colors.line : colors.border, borderBottomWidth: diffuse ? 1 : StyleSheet.hairlineWidth }]}
                 >
                   {diffuse ? (
                     <DiffuseBloomIcon size={40} intensity={0.45}><Hash size={16} color={dt.colors.ink3} strokeWidth={1.8} /></DiffuseBloomIcon>
                   ) : (
-                    <View style={[s.channelIcon, { backgroundColor: colors.primaryTint }]}>
-                      <Hash size={16} color={colors.primary} strokeWidth={2} />
-                    </View>
+                    <SiteSticker name="bubble" size={32} cut />
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={[s.channelName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text }]}>{item.name}</Text>
+                    <Text style={[s.channelName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.body } : { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{item.name}</Text>
                     {item.description && (
-                      <Text style={[s.channelDesc, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted }]} numberOfLines={1}>
+                      <Text style={[s.channelDesc, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body, fontWeight: undefined }]} numberOfLines={1}>
                         {item.description}
                       </Text>
                     )}
                   </View>
                   {sharing === item.id ? (
-                    <ActivityIndicator color={diffuse ? dt.colors.ink : colors.primary} size="small" />
+                    <ActivityIndicator color={diffuse ? dt.colors.ink : colors.text} size="small" />
                   ) : isJoined ? (
                     diffuse ? (
                       <View style={[s.shareBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2, borderRadius: radius.full }]}>
                         <Text style={[s.shareBtnText, { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, textTransform: 'uppercase', letterSpacing: 1.6 }]}>{t('garage_share_shareBtn')}</Text>
                       </View>
                     ) : (
-                      <View style={[s.shareBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}>
-                        <Text style={s.shareBtnText}>{t('garage_share_shareBtn')}</Text>
+                      <View style={[s.shareBtn, { backgroundColor: colors.text, borderRadius: 999 }]}>
+                        <Text style={[s.shareBtnText, { color: colors.surface, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('garage_share_shareBtn')}</Text>
                       </View>
                     )
                   ) : (
                     <Text style={[s.notJoined, diffuse
                       ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
-                      : { color: colors.textMuted }]}>{t('garage_share_notJoined')}</Text>
+                      : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontWeight: undefined, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('garage_share_notJoined')}</Text>
                   )}
                 </Pressable>
               </>

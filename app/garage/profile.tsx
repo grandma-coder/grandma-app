@@ -23,7 +23,10 @@ import {
   User,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { PillButton } from '../../components/ui/PillButton'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { useTheme, brand, getModeColorSoft, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { isIconAvatar } from '../../components/ui/AvatarPicker'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { PaperAlert } from '../../components/ui/PaperAlert'
@@ -40,7 +43,7 @@ const THUMB_SIZE = (SCREEN_W - 4) / 3 // 3 columns, 2px gaps
 type Tab = 'posts' | 'saved'
 
 export default function GarageProfileScreen() {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
@@ -159,50 +162,59 @@ export default function GarageProfileScreen() {
     <View style={[s.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={s.headerBtn}>
-          <ArrowLeft size={24} color={diffuse ? dt.colors.ink : colors.text} />
-        </Pressable>
-        <Text style={[s.headerTitle, diffuse
-          ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-          : { color: colors.text }]}>{t('garage_profile_myVillage')}</Text>
-        <View style={s.headerBtn} />
+        {diffuse ? (
+          <Pressable onPress={() => router.back()} style={s.headerBtn}>
+            <ArrowLeft size={24} color={dt.colors.ink} />
+          </Pressable>
+        ) : (
+          <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+        )}
+        {diffuse ? (
+          <Text style={[s.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>{t('garage_profile_myVillage')}</Text>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <SiteSticker name="house" size={28} cut />
+            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 22, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('garage_profile_myVillage')}</Text>
+          </View>
+        )}
+        <View style={diffuse ? s.headerBtn : { width: 44 }} />
       </View>
 
       {/* User profile section */}
       <View style={s.profileSection}>
         {/* Avatar */}
         {userPhoto && !isIconAvatar(userPhoto) ? (
-          <Image source={{ uri: userPhoto }} style={[s.profileAvatar, { borderColor: diffuse ? dt.colors.line2 : colors.primary }]} />
+          <Image source={{ uri: userPhoto }} style={[s.profileAvatar, { borderColor: diffuse ? dt.colors.line2 : colors.text }, !diffuse && { borderWidth: 1.5 }]} />
         ) : (
           <View style={[s.profileAvatarPlaceholder, diffuse
             ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-            : { backgroundColor: colors.surfaceRaised, borderColor: colors.primary }]}>
-            <User size={32} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={1.5} />
+            : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}>
+            <User size={32} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={1.5} />
           </View>
         )}
 
         {/* Stats */}
         <View style={s.profileStats}>
           <View style={s.statItem}>
-            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>{postCount}</Text>
-            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2 } : { color: colors.textMuted }]}>{t('garage_profile_posts')}</Text>
+            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.displayBold, fontWeight: undefined, fontSize: 24 }]}>{postCount}</Text>
+            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontWeight: undefined, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('garage_profile_posts')}</Text>
           </View>
           <View style={s.statItem}>
-            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>{savedCount}</Text>
-            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2 } : { color: colors.textMuted }]}>{t('garage_profile_saved')}</Text>
+            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.displayBold, fontWeight: undefined, fontSize: 24 }]}>{savedCount}</Text>
+            <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontWeight: undefined, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('garage_profile_saved')}</Text>
           </View>
         </View>
       </View>
 
       {/* Name & info */}
       <View style={s.profileInfo}>
-        <Text style={[s.profileName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text }]}>
+        <Text style={[s.profileName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>
           {userName || userEmail?.split('@')[0] || t('garage_profile_myProfile')}
         </Text>
         {memberSince && (
           <Text style={[s.profileMeta, diffuse
             ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
-            : { color: colors.textMuted }]}>
+            : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontWeight: undefined, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
             {t('garage_profile_memberSince', { date: memberSince })}
           </Text>
         )}
@@ -210,24 +222,24 @@ export default function GarageProfileScreen() {
 
 
       {/* Tab bar */}
-      <View style={[s.tabBar, { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight }]}>
+      <View style={[s.tabBar, { borderBottomColor: diffuse ? dt.colors.line : colors.border }]}>
         <Pressable
           onPress={() => setTab('posts')}
-          style={[s.tabBtn, tab === 'posts' && { borderBottomColor: diffuse ? dt.colors.hairline : colors.primary, borderBottomWidth: 2 }]}
+          style={[s.tabBtn, tab === 'posts' && { borderBottomColor: diffuse ? dt.colors.hairline : colors.text, borderBottomWidth: 2 }]}
         >
           <Grid3X3
             size={22}
-            color={tab === 'posts' ? (diffuse ? dt.colors.ink : colors.primary) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+            color={tab === 'posts' ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
             strokeWidth={2}
           />
         </Pressable>
         <Pressable
           onPress={() => setTab('saved')}
-          style={[s.tabBtn, tab === 'saved' && { borderBottomColor: diffuse ? dt.colors.hairline : colors.primary, borderBottomWidth: 2 }]}
+          style={[s.tabBtn, tab === 'saved' && { borderBottomColor: diffuse ? dt.colors.hairline : colors.text, borderBottomWidth: 2 }]}
         >
           <Bookmark
             size={22}
-            color={tab === 'saved' ? (diffuse ? dt.colors.ink : colors.primary) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
+            color={tab === 'saved' ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink3 : colors.textMuted)}
             strokeWidth={2}
           />
         </Pressable>
@@ -261,23 +273,20 @@ export default function GarageProfileScreen() {
         <View style={s.emptyState}>
           {tab === 'posts' ? (
             <>
-              <ShoppingBag size={40} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[s.emptyTitle, { color: colors.text }]}>{t('garage_profile_emptyPostsTitle')}</Text>
-              <Text style={[s.emptyBody, { color: colors.textSecondary }]}>
+              <SiteSticker name="bodysuit" size={64} cut />
+              <Text style={[s.emptyTitle, { color: colors.text, fontFamily: font.display, fontWeight: undefined, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('garage_profile_emptyPostsTitle')}</Text>
+              <Text style={[s.emptyBody, { color: colors.textSecondary, fontFamily: font.body, fontWeight: undefined }]}>
                 {t('garage_profile_emptyPostsBody')}
               </Text>
-              <Pressable
-                onPress={() => router.push('/garage/create' as any)}
-                style={[s.emptyBtn, { backgroundColor: colors.primary, borderRadius: radius.lg }]}
-              >
-                <Text style={s.emptyBtnText}>{t('garage_profile_createFirst')}</Text>
-              </Pressable>
+              <View style={{ alignSelf: 'stretch', marginTop: 12 }}>
+                <PillButton variant="ink" label={t('garage_profile_createFirst')} onPress={() => router.push('/garage/create' as any)} />
+              </View>
             </>
           ) : (
             <>
-              <Bookmark size={40} color={colors.textMuted} strokeWidth={1.5} />
-              <Text style={[s.emptyTitle, { color: colors.text }]}>{t('garage_profile_emptySavedTitle')}</Text>
-              <Text style={[s.emptyBody, { color: colors.textSecondary }]}>
+              <SiteSticker name="heart" size={64} cut />
+              <Text style={[s.emptyTitle, { color: colors.text, fontFamily: font.display, fontWeight: undefined, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('garage_profile_emptySavedTitle')}</Text>
+              <Text style={[s.emptyBody, { color: colors.textSecondary, fontFamily: font.body, fontWeight: undefined }]}>
                 {t('garage_profile_emptySavedBody')}
               </Text>
             </>
@@ -340,6 +349,7 @@ function PostThumbnail({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const frame = diffuse ? null : { borderWidth: 1.5, borderColor: colors.text, borderRadius: 12 }
   const hasMedia = post.media.length > 0
   const coverUrl = hasMedia ? post.media[0].url : null
 
@@ -356,18 +366,18 @@ function PostThumbnail({
           ]
         )
       }}
-      style={s.thumbWrap}
+      style={[s.thumbWrap, !diffuse && { padding: 5 }]}
     >
       {coverUrl ? (
-        <Image source={{ uri: coverUrl }} style={s.thumbImage} />
+        <Image source={{ uri: coverUrl }} style={[s.thumbImage, frame]} />
       ) : (
-        <View style={[s.thumbPlaceholder, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}>
-          <Text style={{ fontSize: 24 }}>{t('garage_profile_thumbPlaceholderIcon')}</Text>
+        <View style={[s.thumbPlaceholder, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surface }, frame]}>
+          {diffuse ? <Text style={{ fontSize: 24 }}>{t('garage_profile_thumbPlaceholderIcon')}</Text> : <SiteSticker name="bodysuit" size={32} cut />}
         </View>
       )}
       {/* Multi-media indicator */}
       {post.media.length > 1 && (
-        <View style={s.multiIndicator}>
+        <View style={[s.multiIndicator, !diffuse && { top: 12, right: 12 }]}>
           <Grid3X3 size={14} color="#FFFFFF" strokeWidth={2.5} />
         </View>
       )}

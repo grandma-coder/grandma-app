@@ -24,7 +24,9 @@ import {
 import { router, useLocalSearchParams } from 'expo-router'
 import { MessageCircle, Send, Bookmark, User, MoreHorizontal, Play } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, getModeColor, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { useTheme, getModeColor, getModeColorSoft, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -223,7 +225,15 @@ export default function PostDetail() {
     >
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
-        <ScreenHeader title="Post" onBack={() => router.back()} />
+        {diffuse ? (
+          <ScreenHeader title="Post" onBack={() => router.back()} />
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <InkBackButton onPress={() => router.back()} ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+            <SiteSticker name="bodysuit" size={30} cut />
+            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase' }}>Post</Text>
+          </View>
+        )}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
@@ -232,17 +242,17 @@ export default function PostDetail() {
           <View style={styles.authorRow}>
             <View style={[styles.avatar, diffuse
               ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderRadius: radius.full }
-              : { backgroundColor: stickers.pinkSoft, borderColor: colors.border, borderRadius: radius.full }]}>
+              : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]}>
               <User size={18} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.authorName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+              <Text style={[styles.authorName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.bodyBold }, !diffuse && { fontSize: 16, letterSpacing: 0 }]}>
                 {post.author_name ?? t('garage_detail_communityMember')}
               </Text>
               {post.category && (
                 <Text style={[styles.categoryText, diffuse
                   ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.4 }
-                  : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+                  : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.4 }]}>
                   {post.category}
                 </Text>
               )}
@@ -265,10 +275,10 @@ export default function PostDetail() {
               }}
             >
               {post.media.map((item, i) => (
-                <View key={i} style={styles.mediaContainer}>
-                  <Image source={{ uri: item.url }} style={styles.mediaContent} />
+                <View key={i} style={[styles.mediaContainer, !diffuse && { paddingHorizontal: 16, height: SCREEN_W - 32 }]}>
+                  <Image source={{ uri: item.url }} style={[styles.mediaContent, !diffuse && { borderWidth: 1.5, borderColor: colors.text, borderRadius: 18 }]} />
                   {item.type === 'video' && (
-                    <View style={styles.videoOverlay}>
+                    <View style={[styles.videoOverlay, !diffuse && { left: 16, right: 16, borderRadius: 18 }]}>
                       <Play size={36} color="#FFFFFF" fill="#FFFFFF" />
                     </View>
                   )}
@@ -295,52 +305,54 @@ export default function PostDetail() {
         <View style={styles.actionsRow}>
           <View style={styles.actionsLeft}>
             <ActionChip
-              tint={stickers.pinkSoft}
+              tint={colors.surface}
               active={post.user_liked}
-              activeTint={stickers.peachSoft}
-              border={colors.border}
+              activeTint={getModeColorSoft(mode, isDark)}
+              border={colors.text}
               radiusFull={radius.full}
               onPress={handleLike}
               accessibilityLabel={post.user_liked ? t('garage_detail_unlike') : t('garage_detail_like')}
             >
               <Animated.View style={{ transform: [{ scale: likeScale }] }}>
-                <HeartSticker size={22} fill={diffuse ? (post.user_liked ? accent : dt.colors.ink3) : (post.user_liked ? stickers.coral : stickers.pink)} />
+                {diffuse
+                  ? <HeartSticker size={22} fill={post.user_liked ? accent : dt.colors.ink3} />
+                  : <SiteSticker name="heart" size={26} cut />}
               </Animated.View>
             </ActionChip>
 
             <ActionChip
-              tint={stickers.blueSoft}
-              border={colors.border}
+              tint={colors.surface}
+              border={colors.text}
               radiusFull={radius.full}
               onPress={() => {}}
               accessibilityLabel={t('garage_detail_commentsA11y')}
             >
-              <MessageCircle size={20} color={diffuse ? dt.colors.ink3 : stickers.blueInk} strokeWidth={2.4} />
+              <MessageCircle size={20} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={2.4} />
             </ActionChip>
 
             <ActionChip
-              tint={stickers.yellowSoft}
-              border={colors.border}
+              tint={colors.surface}
+              border={colors.text}
               radiusFull={radius.full}
               onPress={handleShare}
               accessibilityLabel={t('garage_detail_shareA11y')}
             >
-              <Send size={19} color={diffuse ? dt.colors.ink3 : stickers.yellowInk} strokeWidth={2.4} />
+              <Send size={19} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={2.4} />
             </ActionChip>
           </View>
 
           <ActionChip
-            tint={post.user_saved ? stickers.lilac : stickers.lilacSoft}
-            border={colors.border}
+            tint={post.user_saved ? getModeColorSoft(mode, isDark) : colors.surface}
+            border={colors.text}
             radiusFull={radius.full}
             onPress={handleSave}
             accessibilityLabel={post.user_saved ? t('garage_detail_saved') : t('garage_detail_save')}
           >
             <Bookmark
               size={20}
-              color={diffuse ? (post.user_saved ? accent : dt.colors.ink3) : stickers.lilacInk}
+              color={diffuse ? (post.user_saved ? accent : dt.colors.ink3) : colors.text}
               strokeWidth={2.4}
-              fill={diffuse ? (post.user_saved ? accent : 'none') : (post.user_saved ? stickers.lilacInk : 'none')}
+              fill={diffuse ? (post.user_saved ? accent : 'none') : (post.user_saved ? colors.text : 'none')}
             />
           </ActionChip>
         </View>
@@ -362,7 +374,9 @@ export default function PostDetail() {
         )}
 
         {/* Timestamp — italic accent */}
-        <Text style={[styles.timestamp, { color: diffuse ? dt.colors.ink3 : accent, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
+        <Text style={[styles.timestamp, diffuse
+          ? { color: dt.colors.ink3, fontFamily: diffuseFont.italic }
+          : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
           {new Date(post.created_at).toLocaleDateString('en-US', {
             month: 'long',
             day: 'numeric',
@@ -372,7 +386,7 @@ export default function PostDetail() {
 
         {/* Comments divider */}
         <View style={[styles.commentsDivider, { borderTopColor: diffuse ? dt.colors.line : colors.border }]}>
-          <Text style={[styles.commentsHeader, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+          <Text style={[styles.commentsHeader, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { fontSize: 18, letterSpacing: 0.3, textTransform: 'uppercase' }]}>
             {comments.length > 0 ? t('garage_detail_comments', { count: comments.length }) : 'Comments'}
           </Text>
         </View>
@@ -386,22 +400,22 @@ export default function PostDetail() {
           </View>
         ) : (
           comments.map((comment) => (
-            <View key={comment.id} style={styles.commentRow}>
+            <View key={comment.id} style={[styles.commentRow, !diffuse && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingVertical: 12 }]}>
               <View style={[styles.commentAvatar, diffuse
                 ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderRadius: radius.full }
-                : { backgroundColor: stickers.blueSoft, borderColor: colors.border, borderRadius: radius.full }]}>
+                : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]}>
                 <User size={14} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={2} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.commentContent, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-                  <Text style={[styles.commentAuthor, { fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
+                  <Text style={[styles.commentAuthor, { fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]}>
                     {comment.author_name ?? t('garage_detail_member')}{' '}
                   </Text>
                   <CommentText text={comment.content} />
                 </Text>
                 <Text style={[styles.commentTime, diffuse
                   ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1 }
-                  : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+                  : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
                   {formatTimeAgo(comment.created_at)}
                 </Text>
               </View>
@@ -421,7 +435,7 @@ export default function PostDetail() {
             >
               <View style={[styles.mentionAvatar, diffuse
                 ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderRadius: radius.full }
-                : { backgroundColor: stickers.pinkSoft, borderColor: colors.border, borderRadius: radius.full }]}>
+                : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]}>
                 <User size={12} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={2} />
               </View>
               <Text style={[styles.mentionName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
@@ -450,10 +464,10 @@ export default function PostDetail() {
       >
         <View style={[styles.commentAvatar, diffuse
           ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, borderRadius: radius.full }
-          : { backgroundColor: stickers.pinkSoft, borderColor: colors.border, borderRadius: radius.full }]}>
+          : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]}>
           <User size={14} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={2} />
         </View>
-        <View style={[styles.inputWrap, { backgroundColor: diffuse ? dt.colors.surface : colors.surface, borderColor: diffuse ? dt.colors.line : colors.border, borderRadius: radius.md }]}>
+        <View style={[styles.inputWrap, { backgroundColor: diffuse ? dt.colors.surface : colors.surface, borderColor: diffuse ? dt.colors.line : colors.text, borderWidth: diffuse ? 1 : 1.5, borderRadius: diffuse ? radius.md : 14 }]}>
           <TextInput
             value={commentText}
             onChangeText={handleCommentTextChange}
@@ -479,14 +493,15 @@ export default function PostDetail() {
                   opacity: sending ? 0.5 : pressed ? 0.85 : 1,
                 }
               : {
-                  backgroundColor: canSend ? stickers.yellow : colors.surfaceRaised,
-                  borderColor: canSend ? ink : colors.border,
+                  backgroundColor: canSend ? colors.text : colors.surface,
+                  borderColor: colors.text,
+                  borderWidth: 1.5,
                   borderRadius: radius.full,
                   opacity: sending ? 0.5 : pressed ? 0.85 : 1,
                 },
           ]}
         >
-          <Send size={18} color={diffuse ? (canSend ? accent : dt.colors.ink4) : (canSend ? ink : colors.textMuted)} strokeWidth={2.4} />
+          <Send size={18} color={diffuse ? (canSend ? accent : dt.colors.ink4) : (canSend ? colors.surface : colors.textMuted)} strokeWidth={2.4} />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -526,6 +541,7 @@ function ActionChip({
           : {
               backgroundColor: active && activeTint ? activeTint : tint,
               borderColor: border,
+              borderWidth: 1.5,
               borderRadius: radiusFull,
             },
         pressed && { opacity: 0.82, transform: [{ scale: 0.94 }] },

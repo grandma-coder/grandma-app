@@ -28,6 +28,9 @@ import { useIsDiffuse, DiffuseArrow } from '../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 import { PartialStickers } from '../components/stickers/PartialStickers'
 import { useTranslation } from '../lib/i18n'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteSticker } from '../components/stickers/SiteSticker'
+import { getModeColorSoft } from '../constants/theme'
 
 const FREE_SCAN_LIMIT = 3
 
@@ -42,7 +45,7 @@ function getScanTypes(t: (key: any) => string) {
 
 export default function Scan() {
   const insets = useSafeAreaInsets()
-  const { colors } = useTheme()
+  const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
@@ -311,28 +314,29 @@ export default function Scan() {
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         {/* Header */}
         <View style={styles.header}>
-          <Pressable
-            onPress={() => router.back()}
-            style={[
-              styles.backButton,
-              diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
-            ]}
-          >
-            {diffuse ? (
+          {diffuse ? (
+            <Pressable
+              onPress={() => router.back()}
+              style={[styles.backButton, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}
+            >
               <ArrowLeft size={22} color={dt.colors.ink} strokeWidth={1.8} />
-            ) : (
-              <Ionicons name="arrow-back" size={22} color={colors.text} />
-            )}
-          </Pressable>
-          <Text
-            style={[
-              styles.title,
-              diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
-            ]}
-          >
-            {t('scan_screenTitle')}
-          </Text>
-          <View style={{ width: 40 }} />
+            </Pressable>
+          ) : (
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          )}
+          {diffuse ? (
+            <Text style={[styles.title, { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' }]}>
+              {t('scan_screenTitle')}
+            </Text>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <SiteSticker name="camera" size={30} cut />
+              <Text style={{ fontFamily: font.display, fontSize: 22, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}>
+                {t('scan_screenTitle')}
+              </Text>
+            </View>
+          )}
+          <View style={{ width: 44 }} />
         </View>
 
         {/* Scan type selector */}
@@ -345,7 +349,12 @@ export default function Scan() {
                 onPress={() => setScanType(type.id)}
                 style={[
                   styles.typeChip,
-                  active && styles.typeChipActive,
+                  diffuse
+                    ? active && styles.typeChipActive
+                    : {
+                        backgroundColor: active ? getModeColorSoft(mode, isDark) : 'transparent',
+                        borderColor: active ? colors.text : 'transparent',
+                      },
                   diffuse && {
                     backgroundColor: 'transparent',
                     borderColor: active ? accent : dt.colors.line,
@@ -356,7 +365,7 @@ export default function Scan() {
                 <Text
                   style={[
                     styles.typeLabel,
-                    active && styles.typeLabelActive,
+                    diffuse ? (active && styles.typeLabelActive) : { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined },
                     diffuse && {
                       fontFamily: active ? diffuseFont.monoBold : diffuseFont.mono,
                       textTransform: 'uppercase',
@@ -376,7 +385,9 @@ export default function Scan() {
         <View
           style={[
             styles.previewContainer,
-            diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line },
+            diffuse
+              ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
+              : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
           ]}
         >
           {imageUri ? (
@@ -388,12 +399,12 @@ export default function Scan() {
                   <ScanLine size={40} color={dt.colors.ink3} strokeWidth={1.6} />
                 </DiffuseBloomIcon>
               ) : (
-                <Ionicons name="scan-outline" size={64} color={colors.textMuted} />
+                <SiteSticker name="camera" size={72} cut />
               )}
               <Text
                 style={[
                   styles.placeholderText,
-                  diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.body },
+                  diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body, textAlign: 'center', paddingHorizontal: 24 },
                 ]}
               >
                 {t('scan_placeholderText')}
@@ -404,7 +415,7 @@ export default function Scan() {
             <View
               style={[
                 styles.loadingOverlay,
-                diffuse && { backgroundColor: dt.isDark ? 'rgba(20,19,19,0.9)' : 'rgba(243,236,217,0.92)' },
+                { backgroundColor: diffuse ? (dt.isDark ? 'rgba(20,19,19,0.9)' : 'rgba(243,236,217,0.92)') : (isDark ? 'rgba(20,19,19,0.9)' : 'rgba(251,246,234,0.94)') },
               ]}
             >
               <BrandedLoader logoSize={72} sublabel={t('scan_grandmaLooking')} />
@@ -417,7 +428,9 @@ export default function Scan() {
           <Pressable
             style={({ pressed }) => [
               styles.actionButton,
-              diffuse && { backgroundColor: 'transparent', borderWidth: 1, borderColor: accent },
+              diffuse
+                ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: accent }
+                : { backgroundColor: colors.text, borderRadius: 999, paddingVertical: 16 },
               pressed && { opacity: 0.85 },
             ]}
             onPress={() => pickImage(true)}
@@ -426,11 +439,12 @@ export default function Scan() {
             {diffuse ? (
               <Camera size={20} color={accent} strokeWidth={1.8} />
             ) : (
-              <Ionicons name="camera" size={22} color={colors.textInverse} />
+              <Ionicons name="camera" size={22} color={colors.surface} />
             )}
             <Text
               style={[
                 styles.actionText,
+                !diffuse && { color: colors.surface, fontFamily: font.bodyBold, fontWeight: undefined, fontSize: 16 },
                 diffuse && {
                   color: accent,
                   fontFamily: diffuseFont.monoBold,
@@ -448,7 +462,9 @@ export default function Scan() {
             style={({ pressed }) => [
               styles.actionButton,
               styles.actionButtonSecondary,
-              diffuse && { backgroundColor: 'transparent', borderColor: dt.colors.line2 },
+              diffuse
+                ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
+                : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 999, paddingVertical: 16 },
               pressed && { opacity: 0.85 },
             ]}
             onPress={() => pickImage(false)}
@@ -462,6 +478,7 @@ export default function Scan() {
             <Text
               style={[
                 styles.actionTextSecondary,
+                !diffuse && { fontFamily: font.bodyBold, fontWeight: undefined, fontSize: 16 },
                 diffuse && {
                   color: dt.colors.ink,
                   fontFamily: diffuseFont.mono,

@@ -29,7 +29,7 @@ import {
 } from '../lib/channelPosts'
 import { runNotificationEngine } from '../lib/notificationEngine'
 import { toDateStr } from '../lib/cycleLogic'
-import { useTheme, getModeColor, radius, spacing, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { useTheme, getModeColor, getModeColorSoft, radius, spacing, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../components/ui/diffuse/DiffusePrimitives'
 import { useModeStore } from '../store/useModeStore'
@@ -37,6 +37,8 @@ import { useBehaviorStore, type Behavior } from '../store/useBehaviorStore'
 import { useChildStore } from '../store/useChildStore'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
 import { Display } from '../components/ui/Typography'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
 import { EmptyState } from '../components/ui/EmptyState'
 import { MissingStickers } from '../components/stickers/MissingStickers'
 import { useTranslation } from '../lib/i18n'
@@ -107,6 +109,18 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
   appointment:      { character: 'clock',     stickerKey: 'lilac',  category: 'Pregnancy' },
   // Other
   reminder:         { character: 'bell',      stickerKey: 'yellow', category: 'Other'    },
+}
+
+// Light (site look): one Site sticker per notification type.
+const SITE_STICKER: Record<string, SiteStickerName> = {
+  wellness_drop: 'thermo', wellness_improve: 'flower', missing_data: 'pencil',
+  routine_reminder: 'cal', routine_missed: 'cal',
+  health_alert: 'thermo', vaccine_due: 'syringe',
+  goal_achieved: 'star', goal_missed: 'star', streak: 'flame', streak_broken: 'flame',
+  insight: 'brain', milestone: 'star', daily_summary: 'doc', weekly_report: 'bars',
+  mention: 'bubble', reply: 'bubble', like: 'heart', channel: 'bubble',
+  care_circle_invite: 'heart', care_circle_accepted: 'heart',
+  pregnancy_week: 'baby', appointment: 'cal', reminder: 'bell',
 }
 
 const DEFAULT_CONFIG: TypeConfig = { character: 'bell', stickerKey: 'lilac', category: 'Other' }
@@ -384,21 +398,27 @@ export default function NotificationsScreen() {
       {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: insets.top + 8, borderBottomColor: diffuse ? dt.colors.line : colors.border }]}>
         <View style={styles.topBarRow}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <View
-              style={[
-                styles.backBtn,
-                diffuse
-                  ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-                  : { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <ArrowLeft size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-            </View>
-          </Pressable>
+          {diffuse ? (
+            <Pressable onPress={() => router.back()} hitSlop={12}>
+              <View style={[styles.backBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
+                <ArrowLeft size={18} color={dt.colors.ink} strokeWidth={1.6} />
+              </View>
+            </Pressable>
+          ) : (
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          )}
 
           <View style={styles.titleWrap}>
-            <Display size={26}>{t('notifications_title')}</Display>
+            {diffuse ? (
+              <Display size={26}>{t('notifications_title')}</Display>
+            ) : (
+              <>
+                <SiteSticker name="bell" size={30} cut />
+                <Text style={{ fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}>
+                  {t('notifications_title')}
+                </Text>
+              </>
+            )}
             {unreadCount > 0 && (
               diffuse ? (
                 <View style={[styles.titleCount, {
@@ -411,10 +431,10 @@ export default function NotificationsScreen() {
                 </View>
               ) : (
                 <View style={[styles.titleCount, {
-                  backgroundColor: stickers.coral,
-                  borderColor: isDark ? 'transparent' : colors.text,
+                  backgroundColor: getModeColorSoft(mode, isDark),
+                  borderColor: colors.text,
                 }]}>
-                  <Text style={[styles.titleCountText, { color: colors.surface, fontFamily: font.bodySemiBold }]}>
+                  <Text style={[styles.titleCountText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Text>
                 </View>
@@ -475,11 +495,10 @@ export default function NotificationsScreen() {
                       }
                     : {
                         backgroundColor: isActive
-                          ? (b === 'all' ? colors.text : chipColor + '26')
+                          ? (b === 'all' ? colors.text : getModeColorSoft(behaviorToMode(b), isDark))
                           : colors.surface,
-                        borderColor: isActive
-                          ? (b === 'all' ? colors.text : (isDark ? chipColor : colors.text))
-                          : colors.borderStrong,
+                        borderColor: colors.text,
+                        borderWidth: 1.5,
                       },
                 ]}
               >
@@ -504,9 +523,9 @@ export default function NotificationsScreen() {
                         }
                       : {
                           color: isActive
-                            ? (b === 'all' ? colors.surface : (isDark ? chipColor : colors.text))
-                            : colors.textMuted,
-                          fontFamily: font.bodySemiBold,
+                            ? (b === 'all' ? colors.surface : colors.text)
+                            : colors.textSecondary,
+                          fontFamily: font.bodyBold,
                         },
                   ]}
                 >
@@ -556,8 +575,9 @@ export default function NotificationsScreen() {
                       borderWidth: 1,
                     }
                   : {
-                      backgroundColor: isActive && tab === 'All' ? colors.text : colors.surface,
-                      borderColor: isActive ? colors.text : colors.borderStrong,
+                      backgroundColor: isActive ? (tab === 'All' ? colors.text : getModeColorSoft(mode, isDark)) : colors.surface,
+                      borderColor: colors.text,
+                      borderWidth: 1.5,
                     },
               ]}
             >
@@ -575,8 +595,8 @@ export default function NotificationsScreen() {
                     : {
                         color: isActive
                           ? (tab === 'All' ? colors.surface : colors.text)
-                          : colors.textMuted,
-                        fontFamily: font.bodySemiBold,
+                          : colors.textSecondary,
+                        fontFamily: font.bodyBold,
                       },
                 ]}
               >
@@ -606,22 +626,15 @@ export default function NotificationsScreen() {
             <Text style={[styles.sectionHeaderText, diffuse
               ? { fontFamily: diffuseFont.mono, color: dt.colors.ink3 }
               : {
-                  fontFamily: font.bodySemiBold,
+                  fontFamily: 'SpaceMono_400Regular',
                   color: colors.textMuted,
+                  letterSpacing: 1.4,
+                  fontSize: 10,
                 }]}>{section.title}</Text>
           </View>
         )}
         renderItem={({ item }) => {
           const cfg = getTypeConfig(item.type)
-          const stickerColor = stickers[cfg.stickerKey]
-          const stickerInk = isDark ? colors.borderLight : colors.text
-          const cardBg = item.is_read
-            ? colors.surface
-            : (isDark ? colors.surfaceRaised : stickerColor + '14')
-          const cardBorder = item.is_read
-            ? colors.border
-            : (isDark ? stickerColor + '40' : stickerColor + '70')
-
           if (diffuse) {
             // Per-concept sticker hue — the Character family's own colors, not a
             // flat accent wash — matching DiffuseLogIcon / DiffuseTimelineNode.
@@ -680,70 +693,34 @@ export default function NotificationsScreen() {
           }
 
           return (
-            <View style={styles.rowOuter}>
+            <View style={[styles.rowOuter, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
               <Pressable
                 onPress={() => handleTap(item)}
-                style={({ pressed }) => [
-                  styles.row,
-                  {
-                    backgroundColor: cardBg,
-                    borderColor: cardBorder,
-                    shadowOpacity: isDark ? 0 : 0.04,
-                  },
-                  pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
-                ]}
+                style={({ pressed }) => [styles.siteRow, pressed && { opacity: 0.7 }]}
               >
-                {/* Character-blob badge — soft sticker-tinted circle holding the blob */}
-                <View
-                  style={[styles.stickerBadge, {
-                    backgroundColor: stickerColor + (isDark ? '2E' : '26'),
-                    borderColor: stickerColor + (isDark ? '55' : '80'),
-                  }]}
-                >
-                  <Character name={cfg.character} size={24} color={stickerColor} bg={cardBg} />
-                </View>
+                <SiteSticker name={SITE_STICKER[item.type] ?? 'bell'} size={36} cut />
                 <View style={styles.rowContent}>
-                  <View style={styles.rowTitleRow}>
-                    <Text
-                      style={[styles.rowTitle, {
-                        color: colors.text,
-                        fontFamily: font.display,
-                      }]}
-                      numberOfLines={2}
-                    >
-                      {item.title}
-                    </Text>
-                    {!item.is_read && (
-                      <View style={[styles.unreadDot, {
-                        backgroundColor: stickerColor,
-                        borderColor: stickerInk,
-                      }]} />
-                    )}
-                  </View>
+                  <Text
+                    style={{ color: colors.text, fontFamily: font.bodyBold, fontSize: 15, lineHeight: 20 }}
+                    numberOfLines={2}
+                  >
+                    {item.title}
+                  </Text>
                   {item.body ? (
                     <Text
-                      style={[styles.rowBody, { color: colors.textMuted, fontFamily: font.body }]}
+                      style={{ color: colors.textSecondary, fontFamily: font.body, fontSize: 14, lineHeight: 19, marginTop: 2 }}
                       numberOfLines={2}
                     >
                       {item.body}
                     </Text>
                   ) : null}
-                  <View style={styles.rowFooter}>
-                    <Text style={[styles.rowTime, { color: colors.textFaint, fontFamily: font.body }]}>
-                      {timeAgo(item.created_at)}
-                    </Text>
-                    <Text
-                      style={[styles.categoryChip, {
-                        fontFamily: font.bodySemiBold,
-                        color: isDark ? stickerColor : colors.text,
-                        backgroundColor: stickerColor + (isDark ? '24' : '30'),
-                        borderColor: stickerColor + (isDark ? '40' : '80'),
-                      }]}
-                    >
-                      {cfg.category.toUpperCase()}
-                    </Text>
-                  </View>
+                  <Text style={{ color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 6 }}>
+                    {timeAgo(item.created_at)} · {cfg.category}
+                  </Text>
                 </View>
+                {!item.is_read && (
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.text, marginTop: 8 }} />
+                )}
               </Pressable>
             </View>
           )
@@ -906,6 +883,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowContent: { flex: 1 },
+  siteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 14 },
   rowTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   rowTitle: { fontSize: 14, flex: 1, lineHeight: 19, letterSpacing: -0.2 },
   unreadDot: {

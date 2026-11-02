@@ -22,7 +22,8 @@ import {
 import { router, useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, Heart, RotateCcw, MessageCircle, Plus, Search, User, LayoutGrid, Layers } from 'lucide-react-native'
-import { useTheme, shadows, getModeColor, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
+import { SiteSticker } from '../stickers/SiteSticker'
+import { useTheme, shadows, getModeColor, getModeColorSoft, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useSavedToast } from '../ui/SavedToast'
 import { PillButton } from '../ui/PillButton'
@@ -37,6 +38,8 @@ import {
 } from '../../lib/garagePosts'
 import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../lib/i18n'
+
+const hardShadow = (ink: string) => ({ shadowColor: ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 })
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -233,9 +236,18 @@ export function GarageScreen() {
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={styles.headerRow}>
         <View style={{ flex: 1, paddingRight: 12 }}>
-          <Text style={[styles.headerTitle, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
-            {t('garage_screen_header_title')}
-          </Text>
+          {diffuse ? (
+            <Text style={[styles.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
+              {t('garage_screen_header_title')}
+            </Text>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <SiteSticker name="house" size={30} cut />
+              <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase', flexShrink: 1 }} numberOfLines={1}>
+                {t('garage_screen_header_title')}
+              </Text>
+            </View>
+          )}
           <Text style={[styles.headerSubtitle, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
             {t('garage_screen_header_subtitle')}
           </Text>
@@ -262,7 +274,9 @@ export function GarageScreen() {
             border={colors.border}
             accessibilityLabel="My Village"
           >
-            <Character name="heart" size={20} color={accent} bg={diffuse ? 'transparent' : stickers.pinkSoft} />
+            {diffuse
+              ? <Character name="heart" size={20} color={accent} bg="transparent" />
+              : <SiteSticker name="heart" size={22} cut />}
           </CircleBtn>
           <CircleBtn
             onPress={() => router.push('/garage/create' as any)}
@@ -316,7 +330,8 @@ export function GarageScreen() {
                   styles.cardBehind,
                   {
                     backgroundColor: diffuse ? dt.colors.surface : colors.surface,
-                    borderColor: diffuse ? dt.colors.line : colors.border,
+                    borderColor: diffuse ? dt.colors.line : colors.text,
+                    borderWidth: diffuse ? 1 : 1.5,
                     borderRadius: radius.lg,
                     transform: [{ scale: nextCardScale }],
                   },
@@ -335,14 +350,15 @@ export function GarageScreen() {
                   styles.cardBase,
                   {
                     backgroundColor: diffuse ? dt.colors.surface : colors.surface,
-                    borderColor: diffuse ? dt.colors.line : colors.border,
+                    borderColor: diffuse ? dt.colors.line : colors.text,
+                    borderWidth: diffuse ? 1 : 1.5,
                     borderRadius: radius.lg,
                     transform: [
                       { translateX: pan.x },
                       { translateY: pan.y },
                       { rotate },
                     ],
-                    ...(diffuse ? {} : shadows.cardPop),
+                    ...(diffuse ? {} : hardShadow(colors.text)),
                   },
                 ]}
               >
@@ -355,14 +371,14 @@ export function GarageScreen() {
                     styles.stamp,
                     styles.stampKeep,
                     {
-                      borderColor: diffuse ? dt.colors.success : stickers.green,
+                      borderColor: diffuse ? dt.colors.success : colors.text,
                       opacity: keepStampOpacity,
                       borderRadius: radius.sm,
-                      backgroundColor: diffuse ? dt.colors.surface : colors.surface,
+                      backgroundColor: diffuse ? dt.colors.surface : stickers.greenSoft,
                     },
                   ]}
                 >
-                  <Text style={[styles.stampText, { color: diffuse ? dt.colors.success : stickers.greenInk, fontFamily: diffuse ? diffuseFont.monoBold : font.display }, diffuse && { fontSize: 20, letterSpacing: 2, textTransform: 'uppercase' }]}>
+                  <Text style={[styles.stampText, { color: diffuse ? dt.colors.success : colors.text, fontFamily: diffuse ? diffuseFont.monoBold : font.display }, diffuse && { fontSize: 20, letterSpacing: 2, textTransform: 'uppercase' }]}>
                     {t('garage_screen_stamp_keep')}
                   </Text>
                 </Animated.View>
@@ -374,14 +390,14 @@ export function GarageScreen() {
                     styles.stamp,
                     styles.stampPass,
                     {
-                      borderColor: diffuse ? dt.colors.error : stickers.coral,
+                      borderColor: diffuse ? dt.colors.error : colors.text,
                       opacity: passStampOpacity,
                       borderRadius: radius.sm,
-                      backgroundColor: diffuse ? dt.colors.surface : colors.surface,
+                      backgroundColor: diffuse ? dt.colors.surface : stickers.pinkSoft,
                     },
                   ]}
                 >
-                  <Text style={[styles.stampText, { color: diffuse ? dt.colors.error : stickers.coralInk, fontFamily: diffuse ? diffuseFont.monoBold : font.display }, diffuse && { fontSize: 20, letterSpacing: 2, textTransform: 'uppercase' }]}>
+                  <Text style={[styles.stampText, { color: diffuse ? dt.colors.error : colors.text, fontFamily: diffuse ? diffuseFont.monoBold : font.display }, diffuse && { fontSize: 20, letterSpacing: 2, textTransform: 'uppercase' }]}>
                     {t('garage_screen_stamp_pass')}
                   </Text>
                 </Animated.View>
@@ -405,39 +421,39 @@ export function GarageScreen() {
           <ActionButton
             label="Pass"
             tint={diffuse ? 'transparent' : colors.surface}
-            border={diffuse ? dt.colors.line2 : colors.border}
+            border={diffuse ? dt.colors.line2 : colors.text}
             onPress={() => forceSwipe('left')}
             disabled={!current}
           >
-            <X size={26} color={diffuse ? dt.colors.error : stickers.coral} strokeWidth={3} />
+            <X size={26} color={diffuse ? dt.colors.error : colors.text} strokeWidth={3} />
           </ActionButton>
 
           <ActionButton
             small
             label="Undo"
             tint={diffuse ? 'transparent' : colors.surface}
-            border={diffuse ? dt.colors.line2 : colors.border}
+            border={diffuse ? dt.colors.line2 : colors.text}
             onPress={undo}
             disabled={index === 0 || !lastSwipe.current}
           >
-            <RotateCcw size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2.5} />
+            <RotateCcw size={18} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={2.5} />
           </ActionButton>
 
           <ActionButton
             small
             label="Details"
             tint={diffuse ? 'transparent' : colors.surface}
-            border={diffuse ? dt.colors.line2 : colors.border}
+            border={diffuse ? dt.colors.line2 : colors.text}
             onPress={() => current && router.push(`/garage/${current.id}` as any)}
             disabled={!current}
           >
-            <MessageCircle size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={2.5} />
+            <MessageCircle size={18} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={2.5} />
           </ActionButton>
 
           <ActionButton
             label="Keep"
-            tint={diffuse ? 'transparent' : accent}
-            border={accent}
+            tint={diffuse ? 'transparent' : getModeColorSoft(mode, isDark)}
+            border={diffuse ? accent : colors.text}
             onPress={() => forceSwipe('right')}
             disabled={!current}
           >
@@ -465,6 +481,7 @@ function CircleBtn({
 }) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { colors } = useTheme()
   return (
     <Pressable
       hitSlop={8}
@@ -475,7 +492,7 @@ function CircleBtn({
         styles.headerCircleBtn,
         diffuse
           ? { backgroundColor: 'transparent', borderRadius: radiusFull, borderColor: dt.colors.line2 }
-          : { backgroundColor: tint, borderRadius: radiusFull, borderColor: border },
+          : { backgroundColor: colors.surface, borderRadius: radiusFull, borderColor: colors.text, borderWidth: 1.5 },
         pressed && { opacity: 0.85 },
       ]}
     >
@@ -509,9 +526,7 @@ function GalleryGrid({
               <Character name="gift" size={30} bg={dt.colors.bg} />
             </DiffuseBloomIcon>
           ) : (
-            <View style={[styles.doneIconBubble, { backgroundColor: stickers.yellowSoft }]}>
-              <Character name="gift" size={40} bg={stickers.yellowSoft} />
-            </View>
+            <SiteSticker name="house" size={64} cut />
           )}
           <Text style={[styles.galleryEmptyText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
             {emptyText}
@@ -553,8 +568,9 @@ function GalleryTile({
         styles.gridTile,
         {
           backgroundColor: diffuse ? dt.colors.surface : colors.surface,
-          borderColor: diffuse ? dt.colors.line : colors.border,
+          borderColor: diffuse ? dt.colors.line : colors.text,
           borderRadius: radius.md,
+          ...(diffuse ? {} : { borderWidth: 1.5, ...hardShadow(colors.text) }),
         },
         pressed && { opacity: 0.72 },
       ]}
@@ -566,7 +582,7 @@ function GalleryTile({
           <Image source={{ uri: cover }} style={styles.gridImage} />
         ) : (
           <View style={[styles.gridImage, styles.gridImageEmpty, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}>
-            <Character name="gift" size={28} bg={diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised} />
+            {diffuse ? <Character name="gift" size={28} bg={dt.colors.surfaceRaised} /> : <SiteSticker name="bodysuit" size={32} cut />}
           </View>
         )}
         {post.like_count > 0 && (
@@ -579,7 +595,7 @@ function GalleryTile({
       {post.caption ? (
         <Text
           numberOfLines={1}
-          style={[styles.gridCaption, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}
+          style={[styles.gridCaption, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyBold }]}
         >
           {post.caption.split('\n')[0]}
         </Text>
@@ -610,7 +626,7 @@ function SwipeCard({
               <Character name="gift" size={34} bg={dt.colors.surfaceRaised} />
             </DiffuseBloomIcon>
           ) : (
-            <Character name="gift" size={56} bg={colors.surfaceRaised} />
+            <SiteSticker name="bodysuit" size={64} cut />
           )}
         </View>
       )}
@@ -619,10 +635,10 @@ function SwipeCard({
       {post.category && (
         <View style={[styles.catChip, diffuse
           ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line2, borderRadius: radius.full }
-          : { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
+          : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]}>
           <Text style={[styles.catChipText, diffuse
             ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.4 }
-            : { color: colors.text, fontFamily: font.bodySemiBold }]}>
+            : { color: colors.text, fontFamily: font.bodyBold }]}>
             {post.category}
           </Text>
         </View>
@@ -680,10 +696,11 @@ function ActionButton({
         {
           backgroundColor: tint,
           borderColor: border,
+          ...(diffuse ? {} : { borderWidth: 1.5 }),
           opacity: disabled ? 0.4 : pressed ? 0.82 : 1,
           transform: [{ scale: pressed && !disabled ? 0.92 : 1 }],
         },
-        !small && !diffuse && shadows.subtle,
+        !small && !diffuse && { ...hardShadow(border) },
       ]}
     >
       {children}
@@ -692,9 +709,10 @@ function ActionButton({
 }
 
 function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: string) => void }) {
-  const { colors, radius, font } = useTheme()
+  const { colors, radius, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const mode = useModeStore((s) => s.mode)
   return (
     <ScrollView
       horizontal
@@ -717,8 +735,9 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
                     borderRadius: radius.full,
                   }
                 : {
-                    backgroundColor: isActive ? colors.text : colors.surface,
-                    borderColor: isActive ? colors.text : colors.border,
+                    backgroundColor: isActive ? getModeColorSoft(mode, isDark) : colors.surface,
+                    borderColor: colors.text,
+                    borderWidth: 1.5,
                     borderRadius: radius.full,
                   },
             ]}
@@ -735,8 +754,8 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
                       fontSize: 11,
                     }
                   : {
-                      color: isActive ? colors.bg : colors.textSecondary,
-                      fontFamily: isActive ? font.bodySemiBold : font.bodyMedium,
+                      color: colors.text,
+                      fontFamily: font.bodyBold,
                     },
               ]}
             >
@@ -773,19 +792,16 @@ function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefr
 
   return (
     <View style={styles.doneWrap}>
-      <View style={[styles.doneIconBubble, { backgroundColor: empty ? stickers.yellowSoft : stickers.pinkSoft }]}>
-        <Character name={empty ? 'gift' : 'community'} size={44} bg={empty ? stickers.yellowSoft : stickers.pinkSoft} />
-      </View>
-      <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display }]}>
+      <SiteSticker name={empty ? 'house' : 'heart'} size={72} cut />
+      <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
         {title}
       </Text>
-      <Text style={[styles.doneBody, { color: colors.textMuted, fontFamily: font.body }]}>
+      <Text style={[styles.doneBody, { color: colors.textSecondary, fontFamily: font.body }]}>
         {body}
       </Text>
       <View style={styles.doneBtn}>
         <PillButton
-          variant="accent"
-          accentColor={accent}
+          variant="ink"
           label={cta}
           onPress={onRefresh}
         />
@@ -815,17 +831,15 @@ function DeckError({ accent, onRetry }: { accent: string; onRetry: () => void })
 
   return (
     <View style={styles.doneWrap}>
-      <View style={[styles.doneIconBubble, { backgroundColor: stickers.blueSoft }]}>
-        <Character name="cloud" size={42} bg={stickers.blueSoft} />
-      </View>
-      <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display }]}>
+      <SiteSticker name="cloud" size={72} cut />
+      <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
         {t('garage_screen_error_title')}
       </Text>
-      <Text style={[styles.doneBody, { color: colors.textMuted, fontFamily: font.body }]}>
+      <Text style={[styles.doneBody, { color: colors.textSecondary, fontFamily: font.body }]}>
         {t('garage_screen_error_body')}
       </Text>
       <View style={styles.doneBtn}>
-        <PillButton variant="accent" accentColor={accent} label="Try again" onPress={onRetry} />
+        <PillButton variant="ink" label="Try again" onPress={onRetry} />
       </View>
     </View>
   )

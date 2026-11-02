@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../constants/theme'
 import { ScreenHeader } from '../components/ui/ScreenHeader'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteSticker } from '../components/stickers/SiteSticker'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { GarageScreen } from '../components/connections/GarageScreen'
 import { getUnreadNotificationCount } from '../lib/channelPosts'
@@ -34,7 +36,8 @@ export default function VillageScreen() {
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
-        <ScreenHeader
+        {diffuse ? (
+          <ScreenHeader
           right={
             <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8}>
               <View style={[styles.bellBtn, diffuse
@@ -50,6 +53,21 @@ export default function VillageScreen() {
             </Pressable>
           }
         />
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+            <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Notifications">
+              <View>
+                <SiteSticker name="bell" size={34} cut />
+                {notifCount > 0 && (
+                  <View style={[styles.notifBadge, { backgroundColor: colors.text }]}>
+                    <Text style={[styles.notifBadgeText, { color: colors.surface }]}>{notifCount > 9 ? '9+' : notifCount}</Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          </View>
+        )}
       </View>
       <GarageScreen />
     </View>

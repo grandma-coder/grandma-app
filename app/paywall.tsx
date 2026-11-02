@@ -18,7 +18,10 @@ import {
   BillingPeriod,
 } from '../lib/revenue'
 import { supabase } from '../lib/supabase'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
+import { InkBackButton } from '../components/ui/InkBackButton'
+import { SiteChoice } from '../components/ui/SiteChoice'
+import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
+import { useTheme, getModeColorSoft, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 import { useModeStore } from '../store/useModeStore'
@@ -63,19 +66,8 @@ function FeatureStickerIcon({ kind, size = 32 }: { kind: FeatureSticker; size?: 
     )
   }
 
-  const stroke = colors.text
-  switch (kind) {
-    case 'heart':
-      return <Heart size={size} fill={stickers.pink} stroke={stroke} />
-    case 'cross':
-      return <Cross size={size} fill={stickers.coral} stroke={stroke} />
-    case 'sparkle':
-      return <Sparkle size={size} fill={stickers.yellow} stroke={stroke} />
-    case 'star':
-      return <Star size={size} fill={stickers.lilac} stroke={stroke} />
-    case 'sun':
-      return <Sun size={size} fill={stickers.yellow} stroke={stroke} />
-  }
+  const siteName: Record<FeatureSticker, SiteStickerName> = { heart: 'heart', cross: 'camera', sparkle: 'bubble', star: 'syringe', sun: 'star' }
+  return <SiteSticker name={siteName[kind]} size={size} cut />
 }
 
 export default function Paywall() {
@@ -248,7 +240,16 @@ export default function Paywall() {
         { backgroundColor: diffuse ? dt.colors.bg : colors.bg, paddingTop: insets.top + 28, paddingBottom: insets.bottom + 16 },
       ]}
     >
-      <Pressable
+      {!diffuse && (
+        <InkBackButton
+          icon="close"
+          ink={colors.text}
+          paper={colors.surface}
+          label="Close"
+          style={{ position: 'absolute', right: 20, top: insets.top + 8, marginBottom: 0, zIndex: 10 }}
+        />
+      )}
+      {diffuse && <Pressable
         onPress={() => router.back()}
         hitSlop={10}
         style={[
@@ -266,7 +267,7 @@ export default function Paywall() {
         ) : (
           <Ionicons name="close" size={20} color={colors.text} />
         )}
-      </Pressable>
+      </Pressable>}
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         <View style={styles.heroBlock}>
@@ -290,37 +291,35 @@ export default function Paywall() {
               </View>
             </>
           ) : (
-            <>
-              <View style={[styles.floatSticker, { top: 4, left: 28, transform: [{ rotate: '-14deg' }], opacity: 0.55 }]} pointerEvents="none">
-                <Sparkle size={28} fill={stickers.yellow} stroke={ink} />
-              </View>
-              <View style={[styles.floatSticker, { top: 0, right: 24, transform: [{ rotate: '12deg' }], opacity: 0.6 }]} pointerEvents="none">
-                <Star size={32} fill={stickers.lilac} stroke={ink} />
-              </View>
-              <View style={[styles.floatSticker, { bottom: 12, left: 18, transform: [{ rotate: '-8deg' }], opacity: 0.55 }]} pointerEvents="none">
-                <Heart size={26} fill={stickers.pink} stroke={ink} />
-              </View>
-            </>
+            null
           )}
 
-          <GrandmaLogo
-            size={110}
-            mode="auto"
-            motion={selectedTier === 'premium_family' ? 'sparkle' : 'default'}
-          />
+          {diffuse ? (
+            <GrandmaLogo
+              size={110}
+              mode="auto"
+              motion={selectedTier === 'premium_family' ? 'sparkle' : 'default'}
+            />
+          ) : (
+            <SiteSticker name="star" size={84} cut />
+          )}
           <Display
-            size={38}
+            size={diffuse ? 38 : 30}
             align="center"
             color={ink}
-            style={{ marginTop: 18, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: -0.5, lineHeight: 42 }}
+            style={diffuse
+              ? { marginTop: 18, fontFamily: diffuseFont.display, letterSpacing: -0.5, lineHeight: 42 }
+              : { marginTop: 14, fontFamily: font.display, letterSpacing: 0.3, lineHeight: 34, textTransform: 'uppercase' }}
           >
             {t('paywall_unlockTitle')}
           </Display>
           <Body
-            size={18}
+            size={diffuse ? 18 : 16}
             align="center"
-            color={coral}
-            style={{ marginTop: 8, fontFamily: diffuse ? diffuseFont.italic : font.italic, fontStyle: 'italic' }}
+            color={diffuse ? coral : colors.textSecondary}
+            style={diffuse
+              ? { marginTop: 8, fontFamily: diffuseFont.italic, fontStyle: 'italic' }
+              : { marginTop: 8, fontFamily: font.body, paddingHorizontal: 12 }}
           >
             {t('paywall_heroTagline')}
           </Body>
@@ -328,14 +327,33 @@ export default function Paywall() {
             size={12}
             align="center"
             color={diffuse ? dt.colors.ink3 : colors.textMuted}
-            style={{ marginTop: 8, paddingHorizontal: 12, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : undefined }}
+            style={diffuse
+              ? { marginTop: 8, paddingHorizontal: 12, fontFamily: diffuseFont.mono, letterSpacing: 0.5 }
+              : { marginTop: 10, paddingHorizontal: 12, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }}
           >
             {trialLine}
           </Body>
         </View>
 
         {/* Tier toggle */}
-        <View
+        {!diffuse && (
+          <View style={styles.siteTierRow}>
+            {(['premium_solo', 'premium_family'] as const).map((tier) => (
+              <SiteChoice
+                key={tier}
+                style={{ flex: 1 }}
+                label={TIER_COPY[tier].title}
+                sub={TIER_COPY[tier].seats}
+                sticker={tier === 'premium_solo' ? 'heart' : 'flower'}
+                tone={getModeColorSoft(mode, isDark)}
+                selected={selectedTier === tier}
+                tick={false}
+                onPress={() => { setSelectedTier(tier); setSelectedPeriod('annual') }}
+              />
+            ))}
+          </View>
+        )}
+        {diffuse && <View
           style={[
             styles.tierToggle,
             {
@@ -398,7 +416,7 @@ export default function Paywall() {
               </Pressable>
             )
           })}
-        </View>
+        </View>}
 
         {/* Tier features */}
         <View style={styles.features}>
@@ -420,11 +438,33 @@ export default function Paywall() {
             <BrandedLoader logoSize={72} />
           </View>
         ) : (
-          <View style={styles.packages}>
+          <View style={diffuse ? styles.packages : styles.sitePackages}>
             {(['annual', 'monthly'] as const).map((period) => {
               const isSelected = selectedPeriod === period
               const isAnnual = period === 'annual'
               const price = priceFor(selectedTier, period)
+              if (!diffuse) {
+                return (
+                  <View key={period} style={{ width: '100%' }}>
+                    <SiteChoice
+                      align="start"
+                      label={isAnnual ? t('paywall_annual') : t('paywall_monthly')}
+                      sub={`${price}${isAnnual ? '/year' : '/month'}`}
+                      sticker={isAnnual ? 'star' : 'cal'}
+                      tone={getModeColorSoft(mode, isDark)}
+                      selected={isSelected}
+                      onPress={() => setSelectedPeriod(period)}
+                    />
+                    {isAnnual && (
+                      <View style={[styles.siteBadge, { backgroundColor: colors.text }]} pointerEvents="none">
+                        <Body size={10} color={colors.textInverse} style={{ fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                          {t('paywall_bestValue')}
+                        </Body>
+                      </View>
+                    )}
+                  </View>
+                )
+              }
               return (
                 <Pressable
                   key={period}
@@ -526,20 +566,30 @@ export default function Paywall() {
           </View>
         )}
 
-        <PillButton
-          label={ctaLabel}
-          variant="accent"
-          accentColor={brand.pregnancy}
-          height={64}
-          onPress={handlePurchase}
-          disabled={ctaDisabled}
-          leading={<Sparkle size={22} fill={stickers.yellow} stroke={ink} />}
-        />
+        {diffuse ? (
+          <PillButton
+            label={ctaLabel}
+            variant="accent"
+            accentColor={brand.pregnancy}
+            height={64}
+            onPress={handlePurchase}
+            disabled={ctaDisabled}
+            leading={<Sparkle size={22} fill={stickers.yellow} stroke={ink} />}
+          />
+        ) : (
+          <PillButton
+            label={ctaLabel}
+            variant="ink"
+            height={60}
+            onPress={handlePurchase}
+            disabled={ctaDisabled}
+          />
+        )}
 
         <Pressable onPress={handleRestore} disabled={purchasing} style={styles.restoreButton} hitSlop={8}>
           <Body
-            size={diffuse ? 12 : 14}
-            color={diffuse ? dt.colors.ink3 : colors.text}
+            size={diffuse ? 12 : 13}
+            color={diffuse ? dt.colors.ink3 : colors.textSecondary}
             style={{
               fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium,
               textDecorationLine: diffuse ? 'none' : 'underline',
@@ -616,6 +666,9 @@ const styles = StyleSheet.create({
   },
 
   packages: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  sitePackages: { gap: 12, marginBottom: 20 },
+  siteTierRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
+  siteBadge: { position: 'absolute', top: -8, right: 14, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999 },
   packageCard: {
     flex: 1,
     borderRadius: 24,
