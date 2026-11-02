@@ -394,7 +394,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
           accent={getModeAccent('pre-pregnancy')}
           items={visibleChips.map((c) => ({
             key: c.key,
-            label: sheetTitle[c.sheet],
+            label: c.sheet === 'mood' ? t('agenda_mood') : sheetTitle[c.sheet],
             sticker: c.key === 'mood' && moodValue && MOOD_FACE[moodValue] ? MOOD_FACE[moodValue] : (DOCK_STICKER[c.key] ?? 'star'),
             done: c.done,
             onPress: () => setSheetType(c.sheet),
