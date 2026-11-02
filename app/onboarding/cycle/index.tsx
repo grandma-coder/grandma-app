@@ -720,34 +720,18 @@ function StepTTCDuration({
           onChange={(k) => setDuration(k as TryingDuration)}
         />
       ) : (
-        <View style={stepStyles.chipGrid}>
-          {TTC_DURATION_OPTIONS.map((opt) => {
-            const selected = duration === opt.id
-            return (
-              <Pressable
-                key={opt.id}
-                onPress={() => setDuration(opt.id)}
-                style={[
-                  stepStyles.conditionChip,
-                  {
-                    backgroundColor: selected ? modeSoft : colors.surface,
-                    borderColor: colors.text,
-                    shadowColor: colors.text,
-                    borderRadius: radius.full,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    stepStyles.conditionChipText,
-                    { color: colors.text, fontFamily: font.bodyBold },
-                  ]}
-                >
-                  {t(opt.labelKey)}
-                </Text>
-              </Pressable>
-            )
-          })}
+        <View style={stepStyles.choiceCol}>
+          {TTC_DURATION_OPTIONS.map((opt, i) => (
+            <SiteChoice
+              key={opt.id}
+              label={t(opt.labelKey)}
+              selected={duration === opt.id}
+              onPress={() => setDuration(opt.id)}
+              tone={modeSoft}
+              sticker={(['egg', 'cal', 'moon2'] as const)[i]}
+              align="start"
+            />
+          ))}
         </View>
       )}
     </OnboardingStep>
@@ -841,23 +825,16 @@ function StepTTCSupplements({
           autoCapitalize="sentences"
         />
       ) : (
-        <TextInput
-          value={supplements ?? ''}
-          onChangeText={setSupplements}
-          placeholder={t('cycleOnboarding_supplementsPlaceholder')}
-          placeholderTextColor={colors.textMuted}
-          multiline
-          style={[
-            stepStyles.textArea,
-            {
-              color: colors.text,
-              backgroundColor: colors.surface,
-              borderColor: colors.text,
-              borderRadius: 14,
-              fontFamily: font.body,
-            },
-          ]}
-        />
+        <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={18} seed="supplements">
+          <TextInput
+            value={supplements ?? ''}
+            onChangeText={setSupplements}
+            placeholder={t('cycleOnboarding_supplementsPlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            multiline
+            style={[stepStyles.textArea, { color: colors.text, fontFamily: font.body, borderWidth: 0 }]}
+          />
+        </HandDrawnBox>
       )}
     </OnboardingStep>
   )
