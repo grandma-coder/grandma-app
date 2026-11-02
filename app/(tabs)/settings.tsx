@@ -39,7 +39,7 @@ import { getSubtitleFor } from '../../lib/profileStatus'
 import { ProfileHero, type KidPill } from '../../components/profile/ProfileHero'
 import { BadgesStrip, type BadgeEntry } from '../../components/profile/BadgesStrip'
 import { MyJourneyPillGrid } from '../../components/profile/MyJourneyPillGrid'
-import { StatRow } from '../../components/ui/StatRow'
+import { SiteRow, QuietPill } from '../../components/profile/SiteSettingsKit'
 import { childColor } from '../../components/ui/ChildPills'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { Character } from '../../components/characters/Characters'
@@ -266,16 +266,7 @@ export default function ProfileScreen() {
                   borderRadius: radius.lg,
                   paddingHorizontal: 16,
                 }
-              : {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.text,
-                  borderWidth: 1.5,
-                  borderRadius: 18,
-                  shadowColor: colors.text,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 0,
-                },
+              : { borderWidth: 0, paddingHorizontal: 8 },
           ]}
         >
           {diffuse ? (
@@ -383,8 +374,8 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
-              <StatRow
-                icon={<SiteSticker name="heart" size={26} />}
+              <SiteRow
+                sticker="heart"
                 label={t('profile_careCircle')}
                 value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
                 onPress={() => router.push('/profile/care-circle')}
@@ -392,8 +383,8 @@ export default function ProfileScreen() {
 
               {/* Pregnancy-only row — surfaces current week / due date */}
               {isPregnancyBehavior && (
-                <StatRow
-                  icon={<SiteSticker name="egg" size={26} />}
+                <SiteRow
+                  sticker="egg"
                   label="Pregnancy"
                   value={pregnancySummary}
                   onPress={() => router.push('/profile/pregnancy')}
@@ -402,16 +393,16 @@ export default function ProfileScreen() {
 
               {/* Pre-pregnancy-only row — cycle tracking entry point */}
               {isPrePregBehavior && (
-                <StatRow
-                  icon={<SiteSticker name="drop" size={26} />}
+                <SiteRow
+                  sticker="drop"
                   label="Cycle"
                   value="Tracking"
                   onPress={() => router.push('/(tabs)')}
                 />
               )}
               {isPrePregBehavior && (
-                <StatRow
-                  icon={<SiteSticker name="cal" size={26} />}
+                <SiteRow
+                  sticker="cal"
                   label={t('cycleSettings_rowTitle')}
                   onPress={() => router.push('/profile/cycle-settings')}
                 />
@@ -419,73 +410,76 @@ export default function ProfileScreen() {
 
               {/* Kids-only rows — hidden in pregnancy / pre-pregnancy modes */}
               {showKidsItems && (
-                <StatRow
-                  icon={<SiteSticker name="baby" size={26} />}
+                <SiteRow
+                  sticker="baby"
                   label="Kids Profile"
                   value={children.length === 1 ? '1 child' : `${children.length} children`}
                   onPress={() => router.push('/profile/kids')}
                 />
               )}
               {showMemoriesRow && (
-                <StatRow
-                  icon={<SiteSticker name="camera" size={26} />}
+                <SiteRow
+                  sticker="camera"
                   label={t('profile_memories')}
                   value="—"
                   onPress={() => setShowMemories(true)}
                 />
               )}
               {showKidsItems && (
-                <StatRow
-                  icon={<SiteSticker name="thermo" size={26} />}
+                <SiteRow
+                  sticker="thermo"
                   label={t('profile_healthHistory')}
                   value={joinedYear ? `Since ${joinedYear}` : '—'}
                   onPress={() => router.push('/profile/health-history')}
                 />
               )}
-              <StatRow
-                icon={<SiteSticker name="phone" size={26} />}
+              <SiteRow
+                sticker="phone"
                 label={t('profile_emergencyInsurance')}
                 value={hasEmergency ? 'Ready' : 'Not set'}
                 onPress={() => router.push('/profile/emergency-insurance')}
               />
-              <StatRow
-                icon={<SiteSticker name="bell" size={26} />}
+              <SiteRow
+                sticker="bell"
                 label={t('profile_notifications')}
                 onPress={() => router.push('/profile/notifications')}
               />
-              <StatRow
-                icon={<SiteSticker name="lock" size={26} />}
+              <SiteRow
+                sticker="lock"
                 label={t('profile_accountSecurity')}
                 onPress={() => router.push('/profile/account')}
               />
-              <StatRow
-                icon={<SiteSticker name="eye" size={26} />}
+              <SiteRow
+                sticker="eye"
                 label={t('profile_dataPrivacy')}
                 onPress={() => router.push('/profile/privacy')}
               />
-              <StatRow
-                icon={<SiteSticker name="star" size={26} />}
+              <SiteRow
+                sticker="star"
                 label={t('profile_subscription')}
                 value={isPremium ? 'Premium' : 'Upgrade'}
                 onPress={() => router.push('/paywall')}
               />
-              <StatRow
-                icon={<SiteSticker name="books" size={26} />}
+              <SiteRow
+                sticker="books"
                 label={t('profile_help')}
                 onPress={() => router.push('/profile/help')}
               />
-              <StatRow
-                icon={<SiteSticker name="doc" size={26} />}
+              <SiteRow
+                sticker="doc"
                 label={t('profile_about')}
                 onPress={() => router.push('/profile/about')}
-                isLast
+                last
               />
             </>
           )}
         </View>
 
         {/* Sign out */}
-        <Pressable
+        {!diffuse && (
+          <QuietPill label={t('profile_signOut')} onPress={handleSignOut} style={{ marginHorizontal: 20, marginTop: 16 }} />
+        )}
+        {diffuse && <Pressable
           onPress={handleSignOut}
           style={({ pressed }) => [
             styles.signOutBtn,
@@ -511,7 +505,7 @@ export default function ProfileScreen() {
           >
             {t('profile_signOut')}
           </Text>
-        </Pressable>
+        </Pressable>}
 
         <Pressable onPress={handleVersionPress} hitSlop={8}>
           <Text

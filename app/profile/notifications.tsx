@@ -18,6 +18,8 @@ import { Character, type CharacterName } from '../../components/characters/Chara
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
+import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle } from '../../components/profile/SiteSettingsKit'
+import type { SiteStickerName } from '../../components/stickers/SiteSticker'
 import {
   getNotificationPrefs,
   saveNotificationPrefs,
@@ -64,6 +66,16 @@ function dateToTime(d: Date): string {
 function formatTime(hhmm: string): string {
   const d = timeToDate(hhmm)
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+
+const SITE_STICKER: Record<StickerName, SiteStickerName> = {
+  sun: 'bell',
+  sparkle: 'brain',
+  star: 'cal',
+  moon: 'moon',
+  heart: 'heart',
+  flower: 'flower',
+  leaf: 'doc',
 }
 
 const GROUPS: { id: NotifToggle['group']; label: string }[] = [
@@ -159,23 +171,70 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={t('notifications_title')} sticker="bell" subtitle={t('notificationsSettings_subtitle')} />
+      )}
 
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Big serif title */}
-        <View style={styles.titleBlock}>
+        {diffuse && <View style={styles.titleBlock}>
           <Display size={34} color={diffuse ? dt.colors.ink : colors.text}>{t('notifications_title')}</Display>
           <DisplayItalic size={18} color={diffuse ? accent : stickers.coral} style={{ marginTop: 6 }}>
             {t('notificationsSettings_subtitle')}
           </DisplayItalic>
-        </View>
+        </View>}
 
-        {GROUPS.map((group) => {
+        {!diffuse && GROUPS.map((group) => {
+          const items = NOTIFICATION_SETTINGS.filter((n) => n.group === group.id)
+          return (
+            <View key={group.id}>
+              <SiteEyebrow>{group.label}</SiteEyebrow>
+              {items.map((notif, i) => (
+                <View key={notif.id}>
+                  <SiteRow
+                    sticker={SITE_STICKER[notif.sticker]}
+                    label={notif.label}
+                    desc={notif.description}
+                    right={<SiteToggle value={prefs[notif.id]} onValueChange={() => handleToggle(notif.id)} label={notif.label} />}
+                    last={i === items.length - 1 && !(notif.id === 'daily_reminder' && prefs.daily_reminder)}
+                  />
+                  {notif.id === 'daily_reminder' && prefs.daily_reminder && (
+                    <View style={[styles.timeRow, { paddingLeft: 42, borderBottomWidth: i === items.length - 1 ? 0 : 1, borderBottomColor: colors.border }]}>
+                      <Pressable
+                        onPress={() => setShowTimePicker((s) => !s)}
+                        style={[styles.timePill, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}
+                        accessibilityLabel="Set daily reminder time"
+                      >
+                        <Body size={13} color={colors.textMuted} style={{ fontFamily: font.bodyMedium }}>{'Remind me at '}</Body>
+                        <Body size={14} color={colors.text} style={{ fontFamily: font.bodyBold }}>{formatTime(prefs.daily_reminder_time)}</Body>
+                      </Pressable>
+                      {showTimePicker && (
+                        <DateTimePicker
+                          value={timeToDate(prefs.daily_reminder_time)}
+                          mode="time"
+                          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                          themeVariant={isDark ? 'dark' : 'light'}
+                          accentColor={colors.text}
+                          style={{ height: 140 }}
+                          onChange={handleTimeChange}
+                        />
+                      )}
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )
+        })}
+
+        {diffuse && GROUPS.map((group) => {
           const items = NOTIFICATION_SETTINGS.filter((n) => n.group === group.id)
           return (
             <View key={group.id} style={{ marginBottom: spacing.lg }}>

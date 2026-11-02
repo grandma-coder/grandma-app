@@ -25,6 +25,7 @@ import { Heart, Cross, Sparkle, Star, Leaf, GrandmaEye } from '../../components/
 import { Character, type CharacterName } from '../../components/characters/Characters'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
+import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle } from '../../components/profile/SiteSettingsKit'
 
 type StickerKind =
   | 'heart' | 'crossPink' | 'crossCoral' | 'sparkle' | 'star' | 'leaf' | 'eye'
@@ -282,11 +283,55 @@ export default function PrivacyScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={t('privacy_title')} sticker="eye" subtitle={t('privacy_subtitle')} />
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!diffuse && (
+          <View>
+            <SiteEyebrow>{t('privacy_sectionDataSharing')}</SiteEyebrow>
+            <SiteRow sticker="heart" label={t('privacy_toggleShareCareCircle')} desc={t('privacy_toggleShareCareCircleDesc')}
+              right={<SiteToggle value={settings.share_with_caregivers} onValueChange={(v) => updateSetting('share_with_caregivers', v)} label={t('privacy_toggleShareCareCircle')} />} />
+            <SiteRow sticker="thermo" label={t('privacy_toggleShareHealth')} desc={t('privacy_toggleShareHealthDesc')}
+              right={<SiteToggle value={settings.share_health_data} onValueChange={(v) => updateSetting('share_health_data', v)} label={t('privacy_toggleShareHealth')} />} />
+            <SiteRow sticker="camera" label={t('privacy_toggleSharePhotos')} desc={t('privacy_toggleSharePhotosDesc')}
+              right={<SiteToggle value={settings.share_photos} onValueChange={(v) => updateSetting('share_photos', v)} label={t('privacy_toggleSharePhotos')} />} last />
+
+            <SiteEyebrow>{t('privacy_sectionAI')}</SiteEyebrow>
+            <SiteRow sticker="brain" label={t('privacy_toggleAI')} desc={t('privacy_toggleAIDesc')}
+              right={<SiteToggle value={settings.ai_data_usage} onValueChange={(v) => updateSetting('ai_data_usage', v)} label={t('privacy_toggleAI')} />} />
+            <SiteRow sticker="bars" label={t('privacy_toggleAnalytics')} desc={t('privacy_toggleAnalyticsDesc')}
+              right={<SiteToggle value={settings.analytics} onValueChange={(v) => updateSetting('analytics', v)} label={t('privacy_toggleAnalytics')} />} />
+            <SiteRow sticker="bubble" label={t('privacy_toggleMarketing')} desc={t('privacy_toggleMarketingDesc')}
+              right={<SiteToggle value={settings.marketing} onValueChange={(v) => updateSetting('marketing', v)} label={t('privacy_toggleMarketing')} />} last />
+
+            <SiteEyebrow>{t('privacy_sectionRights')}</SiteEyebrow>
+            <SiteRow sticker="eye" label={t('privacy_dataInventory')} desc={t('privacy_dataInventoryDesc')} onPress={() => router.push('/profile/data-inventory')} />
+            <SiteRow sticker="leaf" label={t('privacy_transparency')} desc={t('privacy_transparencyDesc')} onPress={() => router.push('/profile/data-transparency')} last />
+
+            <SiteEyebrow>{t('privacy_sectionYourData')}</SiteEyebrow>
+            <SiteRow sticker="doc" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} loading={exporting} />
+            <SiteRow sticker="doc" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} />
+            <SiteRow sticker="bubble" label={t('privacy_clearChat')} desc={t('privacy_clearChatDesc')} onPress={handleClearChat} loading={clearingChat} />
+            <SiteRow sticker="camera" label={t('privacy_clearMemories')} desc={t('privacy_clearMemoriesDesc')} onPress={handleClearMemories} loading={clearingMemories} />
+            <SiteRow sticker="syringe" label={t('privacy_clearHealth')} desc={t('privacy_clearHealthDesc')} onPress={handleClearHealthRecords} last />
+
+            <SiteEyebrow>{t('privacy_sectionLegal')}</SiteEyebrow>
+            <SiteRow sticker="books" label={t('privacy_privacyPolicy')} desc={t('privacy_privacyPolicyDesc')} onPress={() => router.push('/legal/privacy')} />
+            <SiteRow sticker="doc" label={t('privacy_termsOfService')} desc={t('privacy_termsOfServiceDesc')} onPress={() => router.push('/legal/terms')} last />
+
+            <Text style={[styles.footer, { color: colors.textMuted, fontFamily: font.body }]}>
+              {t('privacy_footer')}
+            </Text>
+          </View>
+        )}
+
+        {diffuse && (<>
         {/* Big Fraunces title */}
         <View style={styles.titleBlock}>
           <Display size={34} color={diffuse ? dt.colors.ink : colors.text}>{t('privacy_title')}</Display>
@@ -364,6 +409,7 @@ export default function PrivacyScreen() {
         <Text style={[styles.footer, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('privacy_footer')}
         </Text>
+        </>)}
       </ScrollView>
     </View>
   )

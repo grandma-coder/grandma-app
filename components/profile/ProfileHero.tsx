@@ -3,7 +3,6 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
-import { Heart as HeartSticker, Squishy, Star as StarSticker } from '../ui/Stickers'
 import { AvatarView } from '../ui/AvatarPicker'
 
 export interface KidPill {
@@ -43,7 +42,7 @@ export function ProfileHero({
   kidPills,
   onKidPillPress,
 }: ProfileHeroProps) {
-  const { colors, stickers, font } = useTheme()
+  const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
 
@@ -69,29 +68,13 @@ export function ProfileHero({
         accent={accentColor}
         initial={initial}
         borderColor={diffuse ? dt.colors.line2 : colors.text}
-        borderWidth={diffuse ? 1 : 3}
+        borderWidth={diffuse ? 1 : 2}
       />
-      {/* Corner star sticker — hidden under Diffuse (no collage accents). */}
-      {!diffuse && (
-        <View style={styles.avatarStar}>
-          <StarSticker size={38} fill={stickers.yellow} />
-        </View>
-      )}
     </View>
   )
 
   return (
     <View style={styles.root}>
-      {/* Decorative collage stickers — hidden under Diffuse. */}
-      {!diffuse && (<>
-      <View style={styles.stickerLeft}>
-        <Squishy w={64} h={44} fill={stickers.yellow} />
-      </View>
-      <View style={styles.stickerRight}>
-        <HeartSticker size={40} fill={stickers.pink} />
-      </View>
-      </>)}
-
       {onAvatarPress ? (
         <Pressable
           onPress={onAvatarPress}
@@ -107,7 +90,7 @@ export function ProfileHero({
       <Pressable onPress={handleNameTap} hitSlop={6}>
         <View style={styles.nameRow}>
           <Text
-            style={[styles.firstName, { fontFamily: diffuse ? diffuseFont.display : font.display, color: diffuse ? dt.colors.ink : colors.text }]}
+            style={[styles.firstName, diffuse ? null : styles.nameSite, { fontFamily: diffuse ? diffuseFont.display : font.display, color: diffuse ? dt.colors.ink : colors.text }]}
             allowFontScaling={false}
           >
             {firstName}
@@ -116,6 +99,7 @@ export function ProfileHero({
             <Text
               style={[
                 styles.lastName,
+                diffuse ? null : styles.nameSite,
                 { fontFamily: diffuse ? diffuseFont.italic : font.italic, color: diffuse ? dt.colors.ink : colors.text },
               ]}
               allowFontScaling={false}
@@ -130,7 +114,7 @@ export function ProfileHero({
       {subtitle ? (
         <Text style={[styles.subtitle, diffuse
           ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 11 }
-          : { color: colors.textMuted }]}>
+          : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 10, marginTop: 6 }]}>
           {subtitle}
         </Text>
       ) : null}
@@ -146,14 +130,14 @@ export function ProfileHero({
                 styles.kidPill,
                 diffuse
                   ? { backgroundColor: 'transparent', borderColor: dt.colors.line2, flexDirection: 'row', alignItems: 'center', gap: 6 }
-                  : { backgroundColor: k.color + '25', borderColor: k.color + '60' },
+                  : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', gap: 6 },
                 pressed && { opacity: 0.7 },
               ]}
             >
-              {diffuse ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: k.color }} /> : null}
+              <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: k.color }} />
               <Text style={[styles.kidPillText, diffuse
                 ? { color: dt.colors.ink2, fontFamily: diffuseFont.body, fontWeight: '400' }
-                : { color: k.color }]} numberOfLines={1}>
+                : { color: colors.text, fontFamily: font.bodyBold }]} numberOfLines={1}>
                 {k.name}
               </Text>
             </Pressable>
@@ -198,6 +182,7 @@ const styles = StyleSheet.create({
   initial: { fontSize: 44, fontWeight: '600' },
   avatarStar: { position: 'absolute', bottom: -4, right: -4 },
   nameRow: { flexDirection: 'row', alignItems: 'baseline' },
+  nameSite: { textTransform: 'uppercase', letterSpacing: 0.3, fontStyle: 'normal' },
   firstName: { fontSize: 28, fontWeight: '600', letterSpacing: -0.3 },
   lastName: { fontSize: 28, fontWeight: '400', fontStyle: 'italic', letterSpacing: -0.2 },
   subtitle: { fontSize: 13, marginTop: 2, fontWeight: '500' },

@@ -39,6 +39,7 @@ import {
 import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../components/ui/AvatarPicker'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { SiteHeader, SiteEyebrow } from '../../components/profile/SiteSettingsKit'
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -96,17 +97,6 @@ function PhotoAvatar({
 
   return (
     <View style={avatarStyles.container}>
-      {!diffuse && (
-        <>
-          <View style={avatarStyles.stickerLeft}>
-            <Squishy w={56} h={38} fill={stickers.yellow} />
-          </View>
-          <View style={avatarStyles.stickerRight}>
-            <HeartSticker size={32} fill={stickers.pink} />
-          </View>
-        </>
-      )}
-
       <Pressable
         onPress={() => setPickerOpen(true)}
         style={({ pressed }) => [pressed && { opacity: 0.85 }]}
@@ -117,12 +107,8 @@ function PhotoAvatar({
           accent={accentColor}
           initial={initial}
           borderColor={diffuse ? dt.colors.hairline : colors.text}
+          borderWidth={diffuse ? undefined : 2}
         />
-        {!diffuse && (
-          <View style={avatarStyles.starAccent}>
-            <StarSticker size={32} fill={stickers.yellow} />
-          </View>
-        )}
         <View
           style={[
             avatarStyles.cameraBadge,
@@ -309,9 +295,13 @@ export default function PersonalProfile() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title={t('personal_headerTitle')} />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title={t('personal_headerTitle')} />
+        </View>
+      ) : (
+        <SiteHeader title={t('personal_headerTitle')} sticker="me" />
+      )}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -341,11 +331,15 @@ export default function PersonalProfile() {
             {t('personal_avatarHint')}
           </Body>
 
+          {diffuse ? (
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
             <MonoCaps color={sectionLabelColor}>{t('personal_sectionAbout')}</MonoCaps>
             <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
           </View>
+          ) : (
+            <SiteEyebrow style={{ marginTop: 18, marginBottom: 0 }}>{t('personal_sectionAbout')}</SiteEyebrow>
+          )}
 
           {/* Name */}
           <PaperField
@@ -360,11 +354,15 @@ export default function PersonalProfile() {
 
           {/* Language is set in Settings (single source of truth: useLanguageStore) */}
 
+          {diffuse ? (
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
             <MonoCaps color={sectionLabelColor}>{t('personal_sectionHealth')}</MonoCaps>
             <View style={[styles.dividerLine, { backgroundColor: dividerColor }]} />
           </View>
+          ) : (
+            <SiteEyebrow style={{ marginTop: 18, marginBottom: 0 }}>{t('personal_sectionHealth')}</SiteEyebrow>
+          )}
 
           {/* Health Notes */}
           <PaperField
@@ -419,7 +417,7 @@ function PaperField({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const border = diffuse ? dt.colors.line : colors.border
+  const border = diffuse ? dt.colors.line : colors.text
   return (
     <View style={styles.field}>
       <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{label}</MonoCaps>
@@ -437,6 +435,7 @@ function PaperField({
             borderColor: border,
             fontFamily: diffuse ? diffuseFont.body : font.body,
           },
+          !diffuse && styles.inputSite,
           multiline && { height: 96, textAlignVertical: 'top', paddingTop: 14 },
         ]}
       />
@@ -463,7 +462,7 @@ function LocationField({
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const border = diffuse ? dt.colors.line : colors.border
+  const border = diffuse ? dt.colors.line : colors.text
   const [query, setQuery] = useState(value)
   const [results, setResults] = useState<LocationResult[]>([])
   const [showResults, setShowResults] = useState(false)
@@ -513,6 +512,7 @@ function LocationField({
       <View
         style={[
           styles.inputRow,
+          !diffuse && styles.inputRowSite,
           { backgroundColor: paper, borderColor: border },
         ]}
       >
@@ -522,7 +522,7 @@ function LocationField({
           onChangeText={search}
           placeholder={t('personal_locationPlaceholder')}
           placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
-          style={[styles.inputInner, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+          style={[styles.inputInner, !diffuse && { fontSize: 16 }, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
           onFocus={() => { if (results.length > 0) setShowResults(true) }}
           onBlur={() => setTimeout(() => setShowResults(false), 200)}
         />
@@ -544,6 +544,7 @@ function LocationField({
           style={[
             styles.dropdownAbsolute,
             diffuse && styles.dropdownFlat,
+            !diffuse && styles.dropdownSite,
             { backgroundColor: paper, borderColor: border },
           ]}
         >
@@ -591,9 +592,9 @@ function AllergyField({
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const paper = diffuse ? dt.colors.surface : colors.surface
-  const border = diffuse ? dt.colors.line : colors.border
-  const chipBg = diffuse ? 'transparent' : stickers.coral + (isDark ? '24' : '22')
-  const chipFg = diffuse ? dt.colors.ink : stickers.coralInk
+  const border = diffuse ? dt.colors.line : colors.text
+  const chipBg = diffuse ? 'transparent' : stickers.peachSoft
+  const chipFg = diffuse ? dt.colors.ink : colors.text
 
   const [query, setQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -636,7 +637,7 @@ function AllergyField({
               style={[
                 styles.chip,
                 { backgroundColor: chipBg },
-                diffuse && { borderWidth: 1, borderColor: dt.colors.line2 },
+                diffuse ? { borderWidth: 1, borderColor: dt.colors.line2 } : { borderWidth: 1.5, borderColor: colors.text },
               ]}
             >
               <Body size={13} color={chipFg} style={{ fontFamily: diffuse ? diffuseFont.bodyMedium : font.bodySemiBold }}>
@@ -653,6 +654,7 @@ function AllergyField({
       <View
         style={[
           styles.inputRow,
+          !diffuse && styles.inputRowSite,
           { backgroundColor: paper, borderColor: border },
         ]}
       >
@@ -665,7 +667,7 @@ function AllergyField({
           }}
           placeholder={t('personal_allergyPlaceholder')}
           placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
-          style={[styles.inputInner, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+          style={[styles.inputInner, !diffuse && { fontSize: 16 }, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}
           onSubmitEditing={handleSubmit}
           returnKeyType="done"
           onFocus={() => {
@@ -679,6 +681,7 @@ function AllergyField({
         <View
           style={[
             styles.dropdown,
+            !diffuse && styles.dropdownSite,
             { backgroundColor: paper, borderColor: border },
           ]}
         >
@@ -785,6 +788,9 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
+  inputSite: { borderWidth: 1.5, borderRadius: 16, height: 52, fontSize: 16 },
+  inputRowSite: { borderWidth: 1.5, borderRadius: 16, height: 52 },
+  dropdownSite: { borderWidth: 1.5, borderRadius: 16 },
   dropdownFlat: {
     shadowOpacity: 0,
     elevation: 0,

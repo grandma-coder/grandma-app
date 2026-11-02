@@ -17,6 +17,8 @@ import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../../components/ui/Typography'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { SiteHeader, SiteEyebrow } from '../../components/profile/SiteSettingsKit'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 
 interface Entry {
   titleKey: string
@@ -52,11 +54,40 @@ export default function DataTransparencyScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={t('dataTrans_title')} sticker="leaf" subtitle={t('dataTrans_subtitle')} />
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!diffuse && (
+          <View>
+            <Text style={{ fontFamily: font.body, fontSize: 16, lineHeight: 25, color: colors.textSecondary, marginTop: 4 }}>{t('dataTrans_intro')}</Text>
+
+            <SiteEyebrow>{t('dataTrans_sectionCollect')}</SiteEyebrow>
+            {ENTRIES.map((e, i) => (
+              <View key={e.titleKey} style={[{ paddingVertical: 16 }, i < ENTRIES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+                <Text style={{ fontFamily: font.bodySemiBold, fontSize: 16, color: colors.text }}>{t(e.titleKey as any)}</Text>
+                <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 23, color: colors.textSecondary, marginTop: 4 }}>{t(e.bodyKey as any)}</Text>
+              </View>
+            ))}
+
+            <SiteEyebrow>{t('dataTrans_sectionNever')}</SiteEyebrow>
+            {NEVER_KEYS.map((k, i) => (
+              <View key={k} style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 }, i < NEVER_KEYS.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+                <SiteSticker name="lock" size={26} />
+                <Text style={{ flex: 1, fontFamily: font.body, fontSize: 15, lineHeight: 22, color: colors.text }}>{t(k as any)}</Text>
+              </View>
+            ))}
+
+            <Text style={[styles.footer, { color: colors.textMuted, fontFamily: font.body }]}>{t('dataTrans_footer')}</Text>
+          </View>
+        )}
+
+        {diffuse && (<>
         <View style={styles.titleBlock}>
           <Display size={34} color={ink}>{t('dataTrans_title')}</Display>
           <DisplayItalic size={18} color={diffuse ? dt.colors.ink : stickers.coral} style={{ marginTop: 6 }}>
@@ -108,6 +139,7 @@ export default function DataTransparencyScreen() {
         <Text style={[styles.footer, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('dataTrans_footer')}
         </Text>
+        </>)}
       </ScrollView>
     </View>
   )

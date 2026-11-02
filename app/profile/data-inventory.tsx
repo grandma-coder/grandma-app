@@ -27,6 +27,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { SiteHeader, SiteEyebrow, QuietPill } from '../../components/profile/SiteSettingsKit'
 
 // Each category maps to how the export bundle counts it. `by` decides which
 // filter to use: 'user' = column on a user-scoped table, 'child' = child_id in
@@ -146,11 +147,57 @@ export default function DataInventoryScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={t('dataInv_title')} sticker="eye" subtitle={t('dataInv_subtitle')} />
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!diffuse && (
+          <View>
+            <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 22, color: colors.textSecondary, marginTop: 4 }}>{t('dataInv_intro')}</Text>
+
+            <SiteEyebrow>{t('dataInv_sectionHolding')}</SiteEyebrow>
+            {CATEGORIES.map((cat, i) => (
+              <View
+                key={cat.key}
+                style={[styles.siteInvRow, i < CATEGORIES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
+              >
+                <Text style={{ flex: 1, fontFamily: font.body, fontSize: 15, color: colors.text }}>{t(cat.labelKey as any)}</Text>
+                {loading
+                  ? <ActivityIndicator size="small" color={colors.textMuted} />
+                  : <Text style={{ fontFamily: font.displayBold, fontSize: 20, color: colors.text }}>
+                      {counts[cat.key] === null ? '—' : counts[cat.key]}
+                    </Text>}
+              </View>
+            ))}
+
+            <SiteEyebrow>{t('dataInv_sectionSupport')}</SiteEyebrow>
+            <Pressable onPress={copyUserId} style={styles.siteInvRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: font.bodySemiBold, fontSize: 15, color: colors.text }}>{t('dataInv_userId')}</Text>
+                <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 12, letterSpacing: 0.5, color: colors.textMuted, marginTop: 3 }}>{shortId}</Text>
+              </View>
+              {copied
+                ? <Check size={18} color={colors.text} strokeWidth={2.5} />
+                : <Copy size={18} color={colors.textMuted} strokeWidth={2} />}
+            </Pressable>
+            <Text style={[styles.footnote, { color: colors.textMuted, fontFamily: font.body, paddingHorizontal: 0 }]}>{t('dataInv_userIdHint')}</Text>
+
+            <QuietPill
+              label={t('dataInv_exportBtn')}
+              onPress={handleExport}
+              disabled={exporting}
+              sticker="doc"
+              style={{ marginTop: 24 }}
+            />
+          </View>
+        )}
+
+        {diffuse && (<>
         <View style={styles.titleBlock}>
           <Display size={34} color={ink}>{t('dataInv_title')}</Display>
           <DisplayItalic size={18} color={diffuse ? dt.colors.ink : stickers.coral} style={{ marginTop: 6 }}>
@@ -220,6 +267,7 @@ export default function DataInventoryScreen() {
             {t('dataInv_exportBtn')}
           </Text>
         </Pressable>
+        </>)}
       </ScrollView>
     </View>
   )
@@ -230,6 +278,7 @@ const styles = StyleSheet.create({
   headerWrap: { paddingHorizontal: 16 },
   scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 48 },
   titleBlock: { marginTop: 4, marginBottom: 12, paddingHorizontal: 4 },
+  siteInvRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
   intro: { fontSize: 14, lineHeight: 20, paddingHorizontal: 4 },
   card: {
     padding: 4,

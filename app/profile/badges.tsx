@@ -24,6 +24,8 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, MonoCaps } from '../../components/ui/Typography'
 import { BadgeIcon } from '../../components/stickers/BadgeIcon'
 import { useTranslation } from '../../lib/i18n'
+import { SiteHeader } from '../../components/profile/SiteSettingsKit'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 
 export default function BadgeWalletScreen() {
   const { colors, font } = useTheme()
@@ -59,12 +61,17 @@ export default function BadgeWalletScreen() {
   const paperBorder = diffuse ? dt.colors.line : colors.border
   const ink = diffuse ? dt.colors.ink : colors.text
   const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
+  const bigNum = { fontFamily: font.displayBold, textTransform: 'none' as const, letterSpacing: 0 }
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title={t('badgeWallet_title')} />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title={t('badgeWallet_title')} />
+        </View>
+      ) : (
+        <SiteHeader title={t('badgeWallet_title')} sticker="star" />
+      )}
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -73,19 +80,19 @@ export default function BadgeWalletScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Summary paper card */}
-        <View style={[styles.summary, { backgroundColor: paper, borderColor: paperBorder }]}>
+        <View style={[styles.summary, diffuse ? { backgroundColor: paper, borderColor: paperBorder } : styles.summarySite]}>
           <View style={styles.summaryItem}>
-            <Display size={28} color={ink}>{earnedCount}</Display>
+            <Display size={28} color={ink} style={diffuse ? undefined : bigNum}>{earnedCount}</Display>
             <MonoCaps color={ink3}>{t('badgeWallet_earned')}</MonoCaps>
           </View>
-          <View style={[styles.summaryDivider, { backgroundColor: paperBorder }]} />
+          <View style={[styles.summaryDivider, { backgroundColor: diffuse ? paperBorder : colors.border }]} />
           <View style={styles.summaryItem}>
-            <Display size={28} color={ink3}>{totalCount - earnedCount}</Display>
+            <Display size={28} color={ink3} style={diffuse ? undefined : bigNum}>{totalCount - earnedCount}</Display>
             <MonoCaps color={ink3}>{t('badgeWallet_locked')}</MonoCaps>
           </View>
-          <View style={[styles.summaryDivider, { backgroundColor: paperBorder }]} />
+          <View style={[styles.summaryDivider, { backgroundColor: diffuse ? paperBorder : colors.border }]} />
           <View style={styles.summaryItem}>
-            <Display size={28} color={ink}>{totalPoints}</Display>
+            <Display size={28} color={ink} style={diffuse ? undefined : bigNum}>{totalPoints}</Display>
             <MonoCaps color={ink3}>{t('badgeWallet_points')}</MonoCaps>
           </View>
         </View>
@@ -100,15 +107,13 @@ export default function BadgeWalletScreen() {
               <View style={styles.sectionHeader}>
                 {/* Under Diffuse the bright brand dot becomes a quiet hairline marker
                     (no filled color pips); serif title, mono count. */}
-                <View
+                {diffuse && <View
                   style={[
                     styles.sectionDot,
-                    diffuse
-                      ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }
-                      : { backgroundColor: section.color },
+                    { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline },
                   ]}
-                />
-                <Text style={[styles.sectionTitle, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{section.label}</Text>
+                />}
+                <Text style={[styles.sectionTitle, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && styles.sectionTitleSite]}>{section.label}</Text>
                 <Text
                   style={
                     diffuse
@@ -138,11 +143,7 @@ export default function BadgeWalletScreen() {
                               borderColor: isEarned ? dt.colors.line2 : dt.colors.line,
                               borderRadius: 20,
                             }
-                          : {
-                              backgroundColor: isEarned ? def.color + '10' : colors.surfaceRaised,
-                              borderColor: isEarned ? def.color + '25' : colors.border,
-                              borderRadius: 20,
-                            },
+                          : { backgroundColor: 'transparent', borderColor: 'transparent', borderWidth: 0, paddingHorizontal: 4 },
                       ]}
                     >
                       {isEarned ? (
@@ -156,8 +157,8 @@ export default function BadgeWalletScreen() {
                           <Lock size={16} color={dt.colors.ink3} strokeWidth={1.6} />
                         </View>
                       ) : (
-                        <View style={[styles.lockedIcon, { backgroundColor: colors.surface }]}>
-                          <Lock size={16} color={colors.textMuted} strokeWidth={2} />
+                        <View style={[styles.badgeStickerWrap, { opacity: 0.4 }]}>
+                          <SiteSticker name="lock" size={40} />
                         </View>
                       )}
                       <Text
@@ -190,8 +191,8 @@ export default function BadgeWalletScreen() {
                           </Text>
                         </View>
                       ) : (
-                        <View style={[styles.tierPill, { backgroundColor: isEarned ? getTierColor(def.tier) + '24' : 'transparent' }]}>
-                          <Text style={[styles.tierText, { color: isEarned ? getTierColor(def.tier) : colors.textMuted, fontFamily: font.bodySemiBold }]}>
+                        <View style={styles.tierPillDiffuse}>
+                          <Text style={[styles.tierText, { color: isEarned ? colors.text : colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.2 }]}>
                             {def.tier}
                           </Text>
                         </View>
@@ -231,6 +232,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
   },
+  summarySite: { paddingVertical: 8 },
+  sectionTitleSite: { textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 16 },
   summaryItem: { flex: 1, alignItems: 'center', gap: 4 },
   summaryDivider: { width: 1, height: 36 },
 

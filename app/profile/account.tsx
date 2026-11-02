@@ -23,6 +23,8 @@ import { useSavedToast } from '../../components/ui/SavedToast'
 import { Heart, Star, Moon, Cross, Sparkle } from '../../components/ui/Stickers'
 import { useAppLockStore } from '../../store/useAppLockStore'
 import { hasPin, clearPin, isBiometricAvailable } from '../../lib/appLock'
+import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle, QuietPill, useSiteInput } from '../../components/profile/SiteSettingsKit'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function AccountScreen() {
   const { colors, font, stickers, isDark } = useTheme()
@@ -31,6 +33,7 @@ export default function AccountScreen() {
   const insets = useSafeAreaInsets()
   const toast = useSavedToast()
   const { t } = useTranslation()
+  const input = useSiteInput()
 
   const paper = diffuse ? dt.colors.surface : colors.surface
   const paperBorder = diffuse ? dt.colors.line : colors.border
@@ -164,11 +167,103 @@ export default function AccountScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={t('account_title')} sticker="lock" subtitle={t('account_subtitle')} />
+      )}
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        {!diffuse && (
+          <View>
+            {/* Email */}
+            <SiteEyebrow>{t('account_sectionEmail')}</SiteEyebrow>
+            <View style={[styles.siteField, input.box]}>
+              <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder={t('account_emailPlaceholder')}
+                placeholderTextColor={input.placeholder}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={[styles.siteInput, input.text]}
+              />
+            </View>
+            <QuietPill
+              label={saving ? t('account_saving') : t('account_updateEmail')}
+              onPress={handleChangeEmail}
+              disabled={saving}
+              style={{ marginTop: 12, backgroundColor: colors.surface }}
+            />
+
+            {/* Password */}
+            <SiteEyebrow>{t('account_sectionPassword')}</SiteEyebrow>
+            <View style={[styles.siteField, input.box]}>
+              <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
+              <TextInput
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder={t('account_newPasswordPlaceholder')}
+                placeholderTextColor={input.placeholder}
+                secureTextEntry={!showPassword}
+                style={[styles.siteInput, input.text]}
+              />
+              <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.textMuted} />
+              </Pressable>
+            </View>
+            <Body size={12} color={colors.textMuted} style={{ marginTop: 8, paddingHorizontal: 4 }}>{t('account_minChars')}</Body>
+            <QuietPill
+              label={saving ? t('account_saving') : t('account_changePassword')}
+              onPress={handleChangePassword}
+              disabled={saving || newPassword.length < 6}
+              style={{ marginTop: 12, backgroundColor: colors.surface }}
+            />
+
+            {/* App Lock */}
+            <SiteEyebrow>{t('account_sectionAppLock')}</SiteEyebrow>
+            <SiteRow
+              sticker="lock"
+              label={t('account_appLockLabel')}
+              desc={t('account_appLockDesc')}
+              right={<SiteToggle value={lockEnabled && pinSet} onValueChange={handleToggleLock} label={t('account_appLockLabel')} />}
+              last={!(lockEnabled && pinSet)}
+            />
+            {lockEnabled && pinSet && (
+              <>
+                <SiteRow
+                  label={t('account_changePin')}
+                  onPress={() => router.push('/lock?mode=set')}
+                  last={!biometricAvail}
+                />
+                {biometricAvail && (
+                  <SiteRow
+                    label={t('account_biometricLabel')}
+                    desc={t('account_biometricDesc')}
+                    right={<SiteToggle value={biometricEnabled} onValueChange={setBiometricEnabled} label={t('account_biometricLabel')} />}
+                    last
+                  />
+                )}
+              </>
+            )}
+
+            {/* Sessions */}
+            <SiteEyebrow>{t('account_sectionSessions')}</SiteEyebrow>
+            <SiteRow sticker="moon" label={t('account_signOutAllDevices')} onPress={handleSignOutAll} last />
+
+            {/* Danger zone */}
+            <SiteEyebrow>{t('account_sectionDanger')}</SiteEyebrow>
+            <QuietPill label={t('account_deleteAccount')} onPress={handleDeleteAccount} style={{ marginTop: 12 }} />
+            <Text style={[styles.dangerHint, { color: colors.textMuted, fontFamily: font.body }]}>
+              {t('account_deleteHint')}
+            </Text>
+          </View>
+        )}
+
+        {diffuse && (<>
         {/* Big Fraunces title */}
         <View style={styles.titleBlock}>
           <Display size={32} color={diffuse ? dt.colors.ink : colors.text}>{t('account_title')}</Display>
@@ -394,6 +489,7 @@ export default function AccountScreen() {
         <Text style={[styles.dangerHint, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('account_deleteHint')}
         </Text>
+        </>)}
       </ScrollView>
     </View>
   )
@@ -439,6 +535,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4, paddingHorizontal: 0 },
   rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowLabel: { fontSize: 15 },
+  siteField: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, paddingHorizontal: 16, marginTop: 10 },
+  siteInput: { flex: 1, padding: 0 },
   titleBlock: { marginTop: 4, marginBottom: 18, paddingHorizontal: 4 },
   sectionLabel: {
     flexDirection: 'row',

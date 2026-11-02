@@ -15,6 +15,7 @@ import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../../components/ui/Typography'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { SiteHeader, SiteEyebrow, SiteToggle } from '../../components/profile/SiteSettingsKit'
 import {
   useCycleSettingsStore,
   CYCLE_LENGTH_RANGE, PERIOD_LENGTH_RANGE, LUTEAL_RANGE,
@@ -51,21 +52,24 @@ export default function CycleSettingsScreen() {
         onPress={active ? onPress : undefined}
         style={({ pressed }) => [
           styles.stepBtn,
-          { borderColor: line, backgroundColor: diffuse ? 'transparent' : colors.bg, opacity: active ? (pressed ? 0.6 : 1) : 0.35 },
+          diffuse
+            ? { borderColor: line, backgroundColor: 'transparent' }
+            : { borderColor: colors.text, borderWidth: 1.5, backgroundColor: colors.surface },
+          { opacity: active ? (pressed ? 0.6 : 1) : 0.35 },
         ]}
       >
         {icon}
       </Pressable>
     )
     return (
-      <View style={[styles.row, disabled && { opacity: 0.4 }]}>
+      <View style={[styles.row, !diffuse && { paddingHorizontal: 0 }, disabled && { opacity: 0.4 }]}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.rowLabel, { color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{label}</Text>
           {desc ? <Text style={[styles.rowDesc, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{desc}</Text> : null}
         </View>
         <View style={styles.stepper}>
           {btn(!disabled && value > min, dec, <Minus size={16} color={ink} strokeWidth={2} />)}
-          <Text style={[styles.stepValue, { color: ink, fontFamily: diffuse ? diffuseFont.mono : font.display }]}>
+          <Text style={[styles.stepValue, { color: ink, fontFamily: diffuse ? diffuseFont.mono : font.displayBold }]}>
             {disabled ? '—' : `${value}`}<Text style={[styles.stepUnit, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}> {unit}</Text>
           </Text>
           {btn(!disabled && value < max, inc, <Plus size={16} color={ink} strokeWidth={2} />)}
@@ -76,9 +80,66 @@ export default function CycleSettingsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
+      ) : (
+        <SiteHeader title={t('cycleSettings_title')} sticker="drop" subtitle={t('cycleSettings_subtitle')} />
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!diffuse && (
+          <View>
+            <Text style={[styles.intro, { color: colors.textSecondary, fontFamily: font.body, paddingHorizontal: 0, fontSize: 15, marginTop: 4 }]}>
+              {t('cycleSettings_intro')}
+            </Text>
+
+            <SiteEyebrow>{t('cycleSettings_sectionCycle')}</SiteEyebrow>
+            <View style={styles.row2}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('cycleSettings_autoLabel')}</Text>
+                <Text style={[styles.rowDesc, { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleSettings_autoDesc')}</Text>
+              </View>
+              <SiteToggle value={autoCycle} onValueChange={(on) => s.setCycleLength(on ? null : 28)} label={t('cycleSettings_autoLabel')} />
+            </View>
+            <View style={[styles.hair, { backgroundColor: colors.border }]} />
+            <Stepper
+              label={t('cycleSettings_cycleLength')}
+              value={s.cycleLength ?? 28}
+              unit={t('cycleSettings_days')}
+              min={CYCLE_LENGTH_RANGE.min}
+              max={CYCLE_LENGTH_RANGE.max}
+              onChange={s.setCycleLength}
+              disabled={autoCycle}
+            />
+
+            <SiteEyebrow>{t('cycleSettings_sectionPhases')}</SiteEyebrow>
+            <Stepper
+              label={t('cycleSettings_periodLength')}
+              desc={t('cycleSettings_periodDesc')}
+              value={s.periodLength}
+              unit={t('cycleSettings_days')}
+              min={PERIOD_LENGTH_RANGE.min}
+              max={PERIOD_LENGTH_RANGE.max}
+              onChange={s.setPeriodLength}
+            />
+            <View style={[styles.hair, { backgroundColor: colors.border }]} />
+            <Stepper
+              label={t('cycleSettings_lutealLength')}
+              desc={t('cycleSettings_lutealDesc')}
+              value={s.lutealPhase}
+              unit={t('cycleSettings_days')}
+              min={LUTEAL_RANGE.min}
+              max={LUTEAL_RANGE.max}
+              onChange={s.setLutealPhase}
+            />
+
+            <Text style={[styles.footer, { color: colors.textMuted, fontFamily: font.body }]}>
+              {t('cycleSettings_footer')}
+            </Text>
+          </View>
+        )}
+
+        {diffuse && (<>
         <View style={styles.titleBlock}>
           <Display size={32} color={ink}>{t('cycleSettings_title')}</Display>
           <DisplayItalic size={17} color={diffuse ? dt.colors.ink : stickers.coral} style={{ marginTop: 6 }}>
@@ -149,6 +210,7 @@ export default function CycleSettingsScreen() {
         <Text style={[styles.footer, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('cycleSettings_footer')}
         </Text>
+        </>)}
       </ScrollView>
     </View>
   )
@@ -165,6 +227,8 @@ const styles = StyleSheet.create({
     shadowColor: '#141313', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
   },
   cardFlat: { shadowOpacity: 0, elevation: 0 },
+  hair: { height: 1 },
+  row2: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
   divider: { height: 1, marginHorizontal: 18 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 18, gap: 12 },
   rowLabel: { fontSize: 15 },

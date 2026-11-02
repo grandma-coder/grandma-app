@@ -21,13 +21,13 @@ interface BadgesStripProps {
  * horizontal row of 58px circles each containing the badge's own sticker.
  */
 export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
-  const { colors, radius } = useTheme()
+  const { colors, radius, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
-  const circleBg = diffuse ? dt.colors.surface : colors.surfaceRaised
-  const circleBorder = diffuse ? dt.colors.line2 : colors.border
+  const circleBg = diffuse ? dt.colors.surface : colors.surface
+  const circleBorder = diffuse ? dt.colors.line2 : colors.text
 
   return (
     <View
@@ -37,21 +37,17 @@ export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
           backgroundColor: dt.colors.surface,
           borderColor: dt.colors.line,
           borderRadius: radius.lg,
-        } : {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderRadius: radius.lg,
-        },
+        } : styles.cardSite,
       ]}
     >
       <View style={styles.header}>
         <Text style={[styles.headerLabel, diffuse
           ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.6 }
-          : { color: colors.textMuted }]}>{t('badges_title')}</Text>
+          : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('badges_title')}</Text>
         <Pressable onPress={onSeeAll} hitSlop={8}>
           <Text style={[styles.allLink, diffuse
             ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 10 }
-            : { color: colors.textMuted }]}>
+            : { color: colors.text, fontFamily: font.bodyBold, fontSize: 12 }]}>
             {t('badges_stripAllCount', { total })}
           </Text>
         </Pressable>
@@ -82,16 +78,18 @@ export function BadgesStrip({ badges, total, onSeeAll }: BadgesStripProps) {
               <View
                 style={[
                   styles.circle,
-                  { backgroundColor: circleBg, borderColor: circleBorder },
+                  diffuse
+                    ? { backgroundColor: circleBg, borderColor: circleBorder }
+                    : { backgroundColor: 'transparent', borderWidth: 0 },
                 ]}
               >
                 <BreathingBadge>
-                  <BadgeIcon badgeId={b.badgeId} size={40} />
+                  <BadgeIcon badgeId={b.badgeId} size={diffuse ? 40 : 48} />
                 </BreathingBadge>
               </View>
               <Text style={[styles.dayLabel, diffuse
                 ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.4 }
-                : { color: colors.textMuted }]}>
+                : { color: colors.textSecondary, fontFamily: font.body }]}>
                 {b.label}
               </Text>
             </View>
@@ -136,6 +134,7 @@ function BreathingBadge({ children }: { children: React.ReactNode }) {
 }
 
 const styles = StyleSheet.create({
+  cardSite: { backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 4 },
   card: {
     marginHorizontal: 20,
     marginTop: 18,

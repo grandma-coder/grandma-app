@@ -14,6 +14,7 @@ import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../../components/ui/Typography'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { SiteHeader, SiteEyebrow } from '../../components/profile/SiteSettingsKit'
 
 const RULES = [
   { titleKey: 'guidelines_rule1Title', bodyKey: 'guidelines_rule1Body' },
@@ -38,11 +39,46 @@ export default function CommunityGuidelinesScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={t('guidelines_title')} sticker="bubble" subtitle={t('guidelines_subtitle')} />
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!diffuse && (
+          <View>
+            <Text style={[styles.siteIntro, { color: colors.textSecondary, fontFamily: font.body }]}>{t('guidelines_intro')}</Text>
+
+            <View style={{ marginTop: 12 }}>
+              {RULES.map((r, i) => (
+                <View
+                  key={r.titleKey}
+                  style={[styles.siteRule, i < RULES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
+                >
+                  <Text style={{ width: 28, marginTop: 2, fontFamily: 'SpaceMono_400Regular', fontSize: 12, letterSpacing: 1, color: colors.textMuted }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: font.bodySemiBold, fontSize: 16, color: colors.text }}>{t(r.titleKey as any)}</Text>
+                    <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 23, color: colors.textSecondary, marginTop: 4 }}>{t(r.bodyKey as any)}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <SiteEyebrow>{t('guidelines_sectionReport')}</SiteEyebrow>
+            <View style={[styles.reportCard, { backgroundColor: stickers.lilacSoft, borderRadius: 18 }]}>
+              <Text style={[styles.reportBody, { color: colors.text, fontFamily: font.body }]}>{t('guidelines_reportBody')}</Text>
+            </View>
+
+            <Text style={[styles.footer, { color: colors.textMuted, fontFamily: font.body }]}>{t('guidelines_footer')}</Text>
+          </View>
+        )}
+
+        {diffuse && (<>
         <View style={styles.titleBlock}>
           <Display size={34} color={ink}>{t('guidelines_title')}</Display>
           <DisplayItalic size={18} color={diffuse ? dt.colors.ink : stickers.coral} style={{ marginTop: 6 }}>
@@ -88,6 +124,7 @@ export default function CommunityGuidelinesScreen() {
         <Text style={[styles.footer, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('guidelines_footer')}
         </Text>
+        </>)}
       </ScrollView>
     </View>
   )
@@ -98,6 +135,8 @@ const styles = StyleSheet.create({
   headerWrap: { paddingHorizontal: 16 },
   scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 48 },
   titleBlock: { marginTop: 4, marginBottom: 12, paddingHorizontal: 4 },
+  siteIntro: { fontSize: 16, lineHeight: 25, marginTop: 4 },
+  siteRule: { flexDirection: 'row', gap: 6, paddingVertical: 16 },
   intro: { fontSize: 14, lineHeight: 21, paddingHorizontal: 4 },
   ruleCard: {
     padding: 18,

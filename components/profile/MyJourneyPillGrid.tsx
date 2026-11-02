@@ -1,11 +1,12 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColor } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
 import { ModeTrying, ModePregnant, ModeParent, ModeMenopause } from '../stickers/RewardStickers'
 import { useTranslation } from '../../lib/i18n'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 
 const ICON_BY_BEHAVIOR = {
   'pre-pregnancy': ModeTrying,
@@ -13,6 +14,14 @@ const ICON_BY_BEHAVIOR = {
   kids: ModeParent,
   menopause: ModeMenopause,
 } as const
+
+// Same stickers as the journey picker (onboarding/journey).
+const SITE_STICKER: Record<Behavior, SiteStickerName> = {
+  'pre-pregnancy': 'flower',
+  pregnancy: 'heart',
+  kids: 'baby',
+  menopause: 'flame',
+}
 
 const PILL_ORDER: Array<{ behavior: Behavior; label: string }> = [
   { behavior: 'pre-pregnancy', label: 'Cycle' },
@@ -74,21 +83,17 @@ export function MyJourneyPillGrid() {
             backgroundColor: dt.colors.surface,
             borderColor: dt.colors.line,
             borderRadius: radius.lg,
-          } : {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-          },
+          } : styles.cardSite,
         ]}
       >
         <Text style={[styles.header, diffuse
           ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1.6 }
-          : { color: colors.textMuted }]}>{t('profile_myJourneyHeader')}</Text>
+          : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>{t('profile_myJourneyHeader')}</Text>
         <View style={styles.grid}>
           {pills.map(({ behavior, label }) => {
             const isActive = behavior === currentBehavior
             const isEnrolled = enrolled.includes(behavior)
-            const accent = getModeColor(behavior, isDark)
+            const softFill = getModeColorSoft(behavior, isDark)
             const dAccent = getDiffuseAccent(behavior, dt.isDark)
             const Icon = ICON_BY_BEHAVIOR[behavior]
             return (
@@ -104,9 +109,10 @@ export function MyJourneyPillGrid() {
                     borderColor: isActive ? dt.colors.hairline : dt.colors.line,
                     opacity: isActive ? 1 : isEnrolled ? 0.75 : 0.4,
                   } : {
-                    backgroundColor: isActive ? accent : colors.surfaceRaised,
-                    borderColor: colors.border,
-                    opacity: isActive ? 1 : isEnrolled ? 0.6 : 0.35,
+                    backgroundColor: isActive ? softFill : colors.surface,
+                    borderColor: colors.text,
+                    borderWidth: 1.5,
+                    opacity: isActive ? 1 : isEnrolled ? 1 : 0.55,
                   },
                   pressed && { opacity: (isActive ? 1 : 0.6) * 0.8 },
                 ]}
@@ -116,13 +122,13 @@ export function MyJourneyPillGrid() {
                     <SoftBloom color={dAccent} opacity={dt.isDark ? 0.4 : 0.5} spread={0.5} radius="55%" />
                   </View>
                 ) : null}
-                <Icon size={36} />
+                {diffuse ? <Icon size={36} /> : <SiteSticker name={SITE_STICKER[behavior]} size={40} />}
                 <Text
                   style={[
                     styles.pillLabel,
                     diffuse
                       ? { fontFamily: diffuseFont.display, color: dt.colors.ink }
-                      : { fontFamily: font.display, color: colors.text },
+                      : { fontFamily: font.display, color: colors.text, textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 13 },
                   ]}
                   allowFontScaling={false}
                   numberOfLines={1}
@@ -134,11 +140,11 @@ export function MyJourneyPillGrid() {
                 {isActive ? (
                   <Text style={[styles.activeHint, diffuse
                     ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 8.5 }
-                    : { color: colors.text }]}>{t('profile_myJourneyActive')}</Text>
+                    : { color: colors.text, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1, textTransform: 'uppercase', fontSize: 8.5 }]}>{t('profile_myJourneyActive')}</Text>
                 ) : !isEnrolled ? (
                   <Text style={[styles.activeHint, diffuse
                     ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 8.5 }
-                    : { color: colors.textMuted }]}>{t('profile_myJourneyAdd')}</Text>
+                    : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1, textTransform: 'uppercase', fontSize: 8.5 }]}>{t('profile_myJourneyAdd')}</Text>
                 ) : null}
               </Pressable>
             )
@@ -149,6 +155,7 @@ export function MyJourneyPillGrid() {
 }
 
 const styles = StyleSheet.create({
+  cardSite: { marginHorizontal: 20, marginTop: 20, paddingHorizontal: 4, borderWidth: 0 },
   card: {
     marginHorizontal: 20,
     marginTop: 12,

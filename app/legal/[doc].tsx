@@ -18,6 +18,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, MonoCaps } from '../../components/ui/Typography'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { getLegalDocument, type LegalDoc } from '../../lib/legalContent'
+import { SiteHeader, SiteEyebrow } from '../../components/profile/SiteSettingsKit'
 
 export default function LegalReaderScreen() {
   const { doc } = useLocalSearchParams<{ doc: string }>()
@@ -32,6 +33,7 @@ export default function LegalReaderScreen() {
 
   const scrollRef = useRef<ScrollView>(null)
   const offsets = useRef<Record<string, number>>({})
+  const sectionsTop = useRef(0)
 
   const ink = diffuse ? dt.colors.ink : colors.text
   const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
@@ -43,16 +45,69 @@ export default function LegalReaderScreen() {
 
   function scrollTo(id: string) {
     const y = offsets.current[id]
-    if (y != null) scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true })
+    if (y != null) scrollRef.current?.scrollTo({ y: Math.max(0, (diffuse ? 0 : sectionsTop.current) + y - 12), animated: true })
   }
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={document.title} sticker="doc" />
+      )}
 
       <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!diffuse && (
+          <View>
+            <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted, marginTop: 6 }}>
+              {document.effectiveDate}
+            </Text>
+            <Text style={[styles.siteIntro, { color: colors.textSecondary, fontFamily: font.body }]}>{document.intro}</Text>
+
+            {which === 'terms' && (
+              <View style={[styles.callout, { backgroundColor: stickers.peachSoft, borderRadius: 18, marginTop: 20 }]}>
+                <AlertTriangle size={18} color={colors.text} strokeWidth={2} />
+                <Text style={[styles.calloutText, { color: colors.text, fontFamily: font.body, fontSize: 14, lineHeight: 21 }]}>
+                  {document.sections.find((s) => s.id === 'notmedical')?.body}
+                </Text>
+              </View>
+            )}
+
+            <SiteEyebrow>{t('legal_contents')}</SiteEyebrow>
+            {document.sections.map((s, i) => (
+              <Pressable
+                key={s.id}
+                onPress={() => scrollTo(s.id)}
+                style={[styles.tocRow, { paddingHorizontal: 0 }, i < document.sections.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
+              >
+                <Text style={[styles.tocNum, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>{String(i + 1).padStart(2, '0')}</Text>
+                <Text style={[styles.tocLabel, { color: colors.text, fontFamily: font.body }]}>{s.title}</Text>
+              </Pressable>
+            ))}
+
+            <View style={{ marginTop: 32, gap: 28 }} onLayout={(e) => { sectionsTop.current = e.nativeEvent.layout.y }}>
+              {document.sections.map((s, i) => (
+                <View key={s.id} onLayout={(e) => { offsets.current[s.id] = e.nativeEvent.layout.y }}>
+                  <Text style={{ fontFamily: font.display, fontSize: 18, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text, marginBottom: 8 }}>
+                    {i + 1}. {s.title}
+                  </Text>
+                  <Text style={[styles.siteBody, { color: colors.textSecondary, fontFamily: font.body }]}>{s.body}</Text>
+                </View>
+              ))}
+            </View>
+
+            <Pressable onPress={() => Linking.openURL(document.hostedUrl)} style={[styles.hostedRow, { paddingHorizontal: 0 }]}>
+              <ExternalLink size={15} color={colors.text} strokeWidth={2} />
+              <Text style={[styles.hostedText, { color: colors.text, fontFamily: font.body }]}>
+                {t('legal_hostedPrefix')} {document.hostedUrl.replace('https://', '')}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {diffuse && (<>
         <View style={styles.titleBlock}>
           <Display size={32} color={ink}>{document.title}</Display>
           <Text style={[styles.effective, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>
@@ -118,6 +173,7 @@ export default function LegalReaderScreen() {
             {t('legal_hostedPrefix')} {document.hostedUrl.replace('https://', '')}
           </Text>
         </Pressable>
+        </>)}
       </ScrollView>
     </View>
   )
@@ -128,6 +184,8 @@ const styles = StyleSheet.create({
   headerWrap: { paddingHorizontal: 16 },
   scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 56 },
   titleBlock: { marginTop: 4, marginBottom: 12, paddingHorizontal: 4 },
+  siteIntro: { fontSize: 16, lineHeight: 25, marginTop: 14 },
+  siteBody: { fontSize: 15, lineHeight: 24 },
   effective: { fontSize: 12, marginTop: 8, letterSpacing: 0.4 },
   intro: { fontSize: 14, lineHeight: 21, paddingHorizontal: 4 },
   callout: { flexDirection: 'row', gap: 12, padding: 16, marginTop: 18, alignItems: 'flex-start' },

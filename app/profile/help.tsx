@@ -15,6 +15,7 @@ import { useTranslation } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../../components/ui/Typography'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { SiteHeader, SiteEyebrow, useSiteInput } from '../../components/profile/SiteSettingsKit'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -78,6 +79,7 @@ export default function HelpScreen() {
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
 
+  const input = useSiteInput()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState<string | null>(null)
 
@@ -111,11 +113,77 @@ export default function HelpScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={t('help_title')} sticker="books" subtitle={t('help_subtitle')} />
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        {!diffuse && (
+          <View>
+            <View style={[styles.search, input.box, { marginTop: 10 }]}>
+              <Search size={17} color={colors.textMuted} strokeWidth={2} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={t('help_searchPlaceholder')}
+                placeholderTextColor={input.placeholder}
+                style={[styles.searchInput, input.text]}
+                returnKeyType="search"
+              />
+            </View>
+
+            {filtered.length === 0 && (
+              <Text style={[styles.empty, { color: colors.textMuted, fontFamily: font.body }]}>{t('help_noResults')}</Text>
+            )}
+
+            {filtered.map((cat) => (
+              <View key={cat.key}>
+                <SiteEyebrow>{t(cat.labelKey as any)}</SiteEyebrow>
+                {cat.items.map((it, i) => {
+                  const id = `${cat.key}-${it.qKey}`
+                  const isOpen = open === id
+                  const isLast = i === cat.items.length - 1
+                  return (
+                    <View key={it.qKey} style={!isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                      <Pressable onPress={() => toggle(id)} style={[styles.qRow, { paddingHorizontal: 0 }]}>
+                        <Text style={[styles.question, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t(it.qKey as any)}</Text>
+                        <ChevronDown
+                          size={17}
+                          color={colors.textMuted}
+                          strokeWidth={2}
+                          style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
+                        />
+                      </Pressable>
+                      {isOpen && (
+                        <Text style={[styles.answer, { color: colors.textSecondary, fontFamily: font.body, paddingHorizontal: 0 }]}>{t(it.aKey as any)}</Text>
+                      )}
+                    </View>
+                  )
+                })}
+              </View>
+            ))}
+
+            <View style={styles.siteContact}>
+              <Text style={{ fontFamily: font.display, fontSize: 19, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}>
+                {t('help_stillStuck')}
+              </Text>
+              <Text style={[styles.contactBody, { color: colors.textSecondary, fontFamily: font.body }]}>{t('help_stillStuckBody')}</Text>
+              <Pressable
+                onPress={() => Linking.openURL('mailto:support@grandma.app')}
+                style={({ pressed }) => [styles.contactBtn, { backgroundColor: colors.text, borderRadius: 999, opacity: pressed ? 0.8 : 1 }]}
+              >
+                <Mail size={16} color={colors.bg} strokeWidth={2} />
+                <Text style={[styles.contactBtnText, { color: colors.bg, fontFamily: font.bodyBold }]}>{t('help_contactUs')}</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
+        {diffuse && (<>
         <View style={styles.titleBlock}>
           <Display size={34} color={ink}>{t('help_title')}</Display>
           <DisplayItalic size={18} color={diffuse ? dt.colors.ink : stickers.coral} style={{ marginTop: 6 }}>
@@ -193,6 +261,7 @@ export default function HelpScreen() {
             </Text>
           </Pressable>
         </View>
+        </>)}
       </ScrollView>
     </View>
   )
@@ -221,6 +290,7 @@ const styles = StyleSheet.create({
   qRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 15, paddingHorizontal: 18 },
   question: { fontSize: 14, flex: 1, lineHeight: 19 },
   answer: { fontSize: 13, lineHeight: 20, paddingHorizontal: 18, paddingBottom: 16, paddingTop: 0 },
+  siteContact: { marginTop: 32, alignItems: 'flex-start' },
   contactCard: { padding: 20, marginTop: 26, alignItems: 'flex-start' },
   contactTitle: { fontSize: 19 },
   contactBody: { fontSize: 13, lineHeight: 19, marginTop: 6, marginBottom: 16 },

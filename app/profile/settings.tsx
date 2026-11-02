@@ -24,6 +24,10 @@ import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseK
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
 import { signOut } from '../../lib/signOut'
+import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle, QuietPill } from '../../components/profile/SiteSettingsKit'
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { useModeStore } from '../../store/useModeStore'
+import { getModeColorSoft } from '../../constants/theme'
 
 const INK = '#141313'
 const CREAM = '#F5EDDC'
@@ -36,6 +40,8 @@ export default function SettingsScreen() {
   const setTheme = useThemeStore((s) => s.setTheme)
   const theme = useThemeStore((s) => s.theme)
   const { t, language } = useTranslation()
+  const mode = useModeStore((s) => s.mode)
+  const toneSoft = getModeColorSoft(mode, isDark)
   const setLanguage = useLanguageStore((s) => s.setLanguage)
 
   const paper = diffuse ? dt.colors.surface : colors.surface
@@ -121,9 +127,9 @@ export default function SettingsScreen() {
                 borderWidth: 1,
               }
             : {
-                backgroundColor: isSelected ? '#F5D652' : paper,
-                borderColor: isSelected ? INK : paperBorder,
-                borderWidth: isSelected ? 1.5 : 1,
+                backgroundColor: isSelected ? toneSoft : paper,
+                borderColor: isSelected ? colors.text : colors.border,
+                borderWidth: 1.5,
               },
           pressed && { opacity: 0.85 },
         ]}
@@ -137,8 +143,9 @@ export default function SettingsScreen() {
                   borderColor: dt.colors.line2,
                 }
               : {
-                  backgroundColor: isSelected ? '#FFFEF8' : (isDark ? colors.surfaceRaised : '#F5EDDC'),
-                  borderColor: isDark ? 'rgba(255,255,255,0.18)' : INK,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.text,
+                  borderWidth: 1.5,
                 },
           ]}
         >
@@ -150,18 +157,63 @@ export default function SettingsScreen() {
           <Text style={[styles.langNative, { color: ink, fontFamily: diffuse ? (isSelected ? diffuseFont.bodySemiBold : diffuseFont.body) : font.bodySemiBold }]}>{item.nativeName}</Text>
           <Text style={[styles.langName, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.8 : undefined }]}>{item.name}</Text>
         </View>
-        {isSelected && <Check size={20} color={diffuse ? dt.colors.ink : INK} strokeWidth={diffuse ? 1.8 : 2.6} />}
+        {isSelected && <Check size={20} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.8 : 2.6} />}
       </Pressable>
     )
   }
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title={t('settings_title')} />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title={t('settings_title')} />
+        </View>
+      ) : (
+        <SiteHeader title={t('settings_title')} sticker="me" />
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!diffuse && (
+          <View>
+            <SiteEyebrow>{t('settings_display')}</SiteEyebrow>
+            <SiteRow
+              sticker={isDark ? 'moon' : 'star'}
+              label={t('settings_darkMode')}
+              right={<SiteToggle value={isDark} onValueChange={toggleDark} label={t('settings_darkMode')} />}
+              last
+            />
+
+            <SiteEyebrow>{t('settings_language')}</SiteEyebrow>
+            <SiteRow
+              sticker="globe"
+              label={t('settings_selectLanguage')}
+              value={currentLang?.nativeName}
+              onPress={() => setLangModalVisible(true)}
+              last
+            />
+
+            <SiteEyebrow>{t('settings_units')}</SiteEyebrow>
+            <SiteRow
+              sticker="thermo"
+              label={t('settings_temperature')}
+              right={<UnitSwitch options={['celsius', 'fahrenheit']} labels={['°C', '°F']} value={tempUnit} onChange={(v) => setTempUnitStore(v === 'fahrenheit' ? 'f' : 'c')} />}
+            />
+            <SiteRow
+              sticker="ruler"
+              label={t('settings_weight')}
+              right={<UnitSwitch options={['kg', 'lbs']} labels={['kg', 'lbs']} value={weightUnit} onChange={(v) => setWeightUnitStore(v === 'lbs' ? 'lb' : 'kg')} />}
+              last
+            />
+
+            <SiteEyebrow>{t('settings_account')}</SiteEyebrow>
+            <View style={{ gap: 12, marginTop: 12 }}>
+              <QuietPill label={t('profile_signOut')} onPress={() => setSignOutModalVisible(true)} />
+              <QuietPill label={t('settings_deleteAccount')} onPress={handleDeleteAccount} />
+            </View>
+          </View>
+        )}
+
+        {diffuse && (<>
         {/* ── Display ── */}
         <SectionLabel ink={inkMuted}>{t('settings_display')}</SectionLabel>
         <View style={[styles.card, diffuse ? styles.cardDiffuse : cardShadow(isDark), { backgroundColor: paper, borderColor: paperBorder }]}>
@@ -339,6 +391,7 @@ export default function SettingsScreen() {
             {t('settings_deleteAccount')}
           </Text>
         </Pressable>
+        </>)}
       </ScrollView>
 
       {/* ── Sign Out Confirmation Modal ── */}
@@ -356,9 +409,10 @@ export default function SettingsScreen() {
             style={[
               styles.signOutSheet,
               {
-                backgroundColor: diffuse ? dt.colors.bg : paper,
-                borderColor: diffuse ? dt.colors.line : paperBorder,
-                borderRadius: radius.lg,
+                backgroundColor: diffuse ? dt.colors.bg : colors.bg,
+                borderColor: diffuse ? dt.colors.line : colors.text,
+                borderRadius: diffuse ? radius.lg : 26,
+                borderWidth: diffuse ? 1 : 1.5,
               },
             ]}
             onPress={(e) => e.stopPropagation()}
@@ -366,7 +420,7 @@ export default function SettingsScreen() {
             <Display size={28} color={ink} style={{ marginBottom: 6, textAlign: 'center' }}>
               {t('settings_signOutTitle')}
             </Display>
-            <DisplayItalic size={16} color={diffuse ? dt.colors.ink3 : stickers.coral} style={{ textAlign: 'center', marginBottom: 18 }}>
+            <DisplayItalic size={16} color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={{ textAlign: 'center', marginBottom: 18, fontFamily: diffuse ? undefined : font.body, fontSize: diffuse ? undefined : 14, lineHeight: diffuse ? undefined : 20 }}>
               {t('settings_signOutEverywhereHint')}
             </DisplayItalic>
 
@@ -377,7 +431,7 @@ export default function SettingsScreen() {
                 styles.modalBtn,
                 diffuse
                   ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline }
-                  : { backgroundColor: brand.pregnancySoft, borderColor: paperBorder },
+                  : { backgroundColor: stickers.peachSoft, borderColor: colors.text, borderWidth: 1.5 },
                 { opacity: pressed ? (diffuse ? 0.7 : 0.85) : 1 },
               ]}
             >
@@ -393,11 +447,11 @@ export default function SettingsScreen() {
                 styles.modalBtn,
                 diffuse
                   ? { backgroundColor: 'transparent', borderColor: dt.colors.error, marginTop: 8 }
-                  : { backgroundColor: stickers.peachSoft, borderColor: stickers.coral, marginTop: 8 },
+                  : { backgroundColor: stickers.peachSoft, borderColor: colors.text, borderWidth: 1.5, marginTop: 8 },
                 { opacity: pressed ? (diffuse ? 0.7 : 0.85) : 1 },
               ]}
             >
-              <Text style={[styles.modalBtnText, { color: diffuse ? dt.colors.error : stickers.coral, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }, diffuse && { letterSpacing: 1.6, textTransform: 'uppercase' }]}>
+              <Text style={[styles.modalBtnText, { color: diffuse ? dt.colors.error : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold }, diffuse && { letterSpacing: 1.6, textTransform: 'uppercase' }]}>
                 {t('account_signOutAllDevices')}
               </Text>
             </Pressable>
@@ -434,6 +488,9 @@ export default function SettingsScreen() {
           <View style={styles.modalHeader}>
             <View style={{ width: 38 }} />
             <Display size={20} color={ink}>{t('settings_selectLanguage')}</Display>
+            {!diffuse ? (
+              <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label="Close" onPress={() => setLangModalVisible(false)} style={{ marginBottom: 0 }} />
+            ) : (
             <Pressable onPress={() => setLangModalVisible(false)} hitSlop={10}>
               <View
                 style={[
@@ -454,6 +511,7 @@ export default function SettingsScreen() {
                 <X size={16} color={ink} strokeWidth={diffuse ? 1.8 : 2.4} />
               </View>
             </Pressable>
+            )}
           </View>
           <FlatList
             data={SUPPORTED_LANGUAGES}
@@ -508,8 +566,8 @@ function UnitSwitch({ options, labels, value, onChange }: {
   const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const trackBg = diffuse ? 'transparent' : (isDark ? colors.surfaceRaised : '#F5EDDC')
-  const trackBorder = diffuse ? dt.colors.line : (isDark ? colors.border : INK)
+  const trackBg = diffuse ? 'transparent' : colors.surface
+  const trackBorder = diffuse ? dt.colors.line : colors.text
   return (
     <View
       style={[
@@ -517,7 +575,7 @@ function UnitSwitch({ options, labels, value, onChange }: {
         {
           backgroundColor: trackBg,
           borderColor: trackBorder,
-          borderWidth: diffuse ? 1 : 1.2,
+          borderWidth: diffuse ? 1 : 1.5,
         },
       ]}
     >
@@ -535,16 +593,7 @@ function UnitSwitch({ options, labels, value, onChange }: {
                     borderWidth: 1,
                     borderColor: dt.colors.hairline,
                   }
-                : {
-                    backgroundColor: '#F5D652',
-                    borderWidth: 1.2,
-                    borderColor: isDark ? 'rgba(255,255,255,0.18)' : INK,
-                    shadowColor: isDark ? CREAM : INK,
-                    shadowOffset: { width: 0, height: pressed ? 0 : 2 },
-                    shadowOpacity: 1,
-                    shadowRadius: 0,
-                    elevation: 2,
-                  }),
+                : { backgroundColor: colors.text }),
             ]}
           >
             <Text
@@ -558,7 +607,7 @@ function UnitSwitch({ options, labels, value, onChange }: {
                       textTransform: 'uppercase',
                     }
                   : {
-                      color: active ? INK : (isDark ? colors.textSecondary : 'rgba(20,19,19,0.55)'),
+                      color: active ? colors.bg : colors.textSecondary,
                       fontFamily: active ? font.bodySemiBold : font.bodySemiBold,
                     },
               ]}

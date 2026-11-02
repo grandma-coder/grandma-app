@@ -21,6 +21,8 @@ import { Display, DisplayItalic } from '../../components/ui/Typography'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 import { Character, type CharacterName } from '../../components/characters/Characters'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { SiteHeader, SiteRow } from '../../components/profile/SiteSettingsKit'
+import type { SiteStickerName } from '../../components/stickers/SiteSticker'
 
 interface Pillar {
   sticker: 'heart' | 'cross' | 'leaf'
@@ -35,6 +37,12 @@ const PILLAR_CHARACTER: Record<Pillar['sticker'], CharacterName> = {
   heart: 'heart',
   cross: 'checkup',
   leaf: 'key',
+}
+
+const PILLAR_SITE: Record<Pillar['sticker'], SiteStickerName> = {
+  heart: 'heart',
+  cross: 'thermo',
+  leaf: 'lock',
 }
 
 export default function AboutScreen() {
@@ -63,11 +71,52 @@ export default function AboutScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-        <ScreenHeader title="" />
-      </View>
+      {diffuse ? (
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+          <ScreenHeader title="" />
+        </View>
+      ) : (
+        <SiteHeader title={t('about_title')} sticker="heart" />
+      )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {!diffuse && (
+          <View>
+            <View style={[styles.hero, { marginBottom: 8 }]}>
+              <GrandmaLogo size={64} />
+              <Text style={{ marginTop: 14, textAlign: 'center', fontFamily: font.body, fontSize: 16, lineHeight: 24, color: colors.textSecondary }}>
+                {t('about_tagline')}
+              </Text>
+            </View>
+
+            {pillars.map((p, i) => (
+              <SiteRow
+                key={p.titleKey}
+                sticker={PILLAR_SITE[p.sticker]}
+                label={t(p.titleKey as any)}
+                desc={t(p.bodyKey as any)}
+                onPress={p.onPress}
+                last={i === pillars.length - 1}
+              />
+            ))}
+
+            <View style={{ height: 28 }} />
+            <SiteRow label={t('about_privacyPolicy')} onPress={() => router.push('/legal/privacy')} />
+            <SiteRow label={t('about_terms')} onPress={() => router.push('/legal/terms')} />
+            <SiteRow label={t('guidelines_title')} onPress={() => router.push('/profile/community-guidelines')} />
+            <SiteRow label={t('about_help')} onPress={() => router.push('/profile/help')} />
+            <SiteRow label={t('about_contact')} onPress={() => Linking.openURL('mailto:support@grandma.app')} last />
+
+            <Text style={[styles.version, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', textTransform: 'uppercase', letterSpacing: 1.4, fontSize: 10 }]}>
+              grandma.app · v{version}
+            </Text>
+            <Text style={[styles.copyright, { color: colors.textMuted, fontFamily: font.body }]}>
+              {t('about_copyright')}
+            </Text>
+          </View>
+        )}
+
+        {diffuse && (<>
         <View style={styles.hero}>
           <GrandmaLogo size={72} />
           <Display size={32} color={ink} align="center" style={{ marginTop: 16 }}>{t('about_title')}</Display>
@@ -130,6 +179,7 @@ export default function AboutScreen() {
         <Text style={[styles.copyright, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
           {t('about_copyright')}
         </Text>
+        </>)}
       </ScrollView>
     </View>
   )
