@@ -20,6 +20,8 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import { X } from 'lucide-react-native'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, brand, stickers as stickerPalette, font } from '../../constants/theme'
 import { Character } from '../characters/Characters'
+import { SiteChoice } from '../ui/SiteChoice'
+import { getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
@@ -220,12 +222,10 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
             </View>
             <Text style={[dstyles.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]} numberOfLines={2}>Log Meal</Text>
           </View>
-        ) : (
-          <LogFormSticker type="nutrition" label="Log Meal" tint={stickerPalette.greenSoft} />
-        )}
+        ) : null}
 
         {photoUri ? (
-          <View style={styles.photoBox}>
+          <View style={[styles.photoBox, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]}>
             <Image source={{ uri: photoUri }} style={styles.photo} />
             <Pressable
               onPress={() => { setPhotoUri(null); setFoods([]) }}
@@ -251,7 +251,23 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
           />
         )}
 
-        {foods.length > 0 && (
+        {foods.length > 0 && !diffuse && (
+          <View style={{ gap: 2 }}>
+            <Text style={{ fontSize: 34, lineHeight: 40, fontFamily: font.displayBold, color: colors.text }}>
+              {t('pregMeal_approx_kcal', { count: totalCals })}
+            </Text>
+            {foods.map((f, i) => (
+              <View key={`${f.name}-${i}`} style={[styles.foodRow, { borderBottomColor: colors.borderLight }]}>
+                <Text style={[styles.foodName, { color: colors.text }]} numberOfLines={1}>
+                  {f.name.charAt(0).toUpperCase() + f.name.slice(1)}
+                </Text>
+                <Text style={[styles.foodCals, { color: colors.textSecondary }]}>{t('pregMeal_kcal_count', { count: f.cals })}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {foods.length > 0 && diffuse && (
           <View style={[styles.summaryBox, diffuse
             ? { backgroundColor: 'transparent', borderColor: dt.colors.line, shadowOpacity: 0, elevation: 0 }
             : {
@@ -277,7 +293,12 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
           </View>
         )}
 
-        {photoUri && !scanning && foods.length === 0 && (
+        {photoUri && !scanning && foods.length === 0 && !diffuse && (
+          <SiteChoice compact tick={false} sticker="camera" label={t('pregMeal_scan_again')} selected={false}
+            tone={getModeColorSoft('preg', isDark)} onPress={() => scan(photoUri)} style={{ alignSelf: 'flex-start' }} />
+        )}
+
+        {photoUri && !scanning && foods.length === 0 && diffuse && (
           <Pressable
             onPress={() => scan(photoUri)}
             style={[styles.scanAgainBtn, { borderColor: diffuse ? dt.colors.line : colors.border }]}

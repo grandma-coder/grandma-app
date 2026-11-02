@@ -11,11 +11,23 @@ import {
   ContractionTimerLogForm,
 } from './PregnancyLogForms'
 import { PregnancyMealForm } from './PregnancyMealForm'
+import type { SiteStickerName } from '../stickers/SiteSticker'
 
 export type PregnancyLogType =
   | 'mood' | 'weight' | 'symptom' | 'appointment' | 'exam_result' | 'kick_count'
   | 'sleep' | 'exercise' | 'nutrition' | 'kegel' | 'water' | 'vitamins'
   | 'nesting' | 'birth_prep' | 'contraction'
+
+/**
+ * Site look: the sticker each pregnancy log form wants beside its `LogSheet` title
+ * (`<LogSheet sticker={PREGNANCY_LOG_STICKER[type]} …>`). The forms no longer draw
+ * their own header chip in the light look, so the sheet title carries the sticker.
+ */
+export const PREGNANCY_LOG_STICKER: Record<PregnancyLogType, SiteStickerName> = {
+  mood: 'face3', weight: 'me', symptom: 'thermo', appointment: 'doc', exam_result: 'otest',
+  kick_count: 'shoe', sleep: 'moon', exercise: 'flower', nutrition: 'avocado', kegel: 'leaf',
+  water: 'drop', vitamins: 'star', nesting: 'crib', birth_prep: 'backpack', contraction: 'flame',
+}
 
 export function PregnancyLogRouter({
   type, date, onSaved,

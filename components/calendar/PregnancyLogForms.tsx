@@ -14,6 +14,7 @@ import {
   View,
   Text,
   TextInput,
+  type TextInputProps,
   Pressable,
   Alert,
   StyleSheet,
@@ -51,6 +52,9 @@ import { ExamForm } from '../exams/ExamForm'
 import { StepSlider } from '../ui/StepSlider'
 import { NumberStepper } from '../ui/NumberStepper'
 import { diffuseLogHue, DIFFUSE_LOG_CHARACTER } from './DiffuseLogTimeline'
+import { SiteChoice, SiteStepper } from '../ui/SiteChoice'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { StickerChoice, MoreSection } from './QuickLogKit'
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
@@ -173,6 +177,110 @@ const MOOD_LABEL_KEYS = {
   energetic: 'preg_mood_energetic',
 } as const
 
+// ─── Site look (light) pieces ──────────────────────────────────────────────
+// Light-mode forms: one main question first, card-less sticker options, quiet
+// extras behind "More", save pinned in the sheet footer. Diffuse never uses these.
+
+/** The form's one main question — hand-lettered, uppercase, ink. */
+function SiteQuestion({ children }: { children: React.ReactNode }) {
+  const { colors } = useTheme()
+  return (
+    <Text style={[sl.question, { color: colors.text, fontFamily: font.display }]}>{children}</Text>
+  )
+}
+
+/** Quiet mono label for a secondary field. */
+function SiteEyebrow({ children }: { children: React.ReactNode }) {
+  const { colors } = useTheme()
+  return <Text style={[sl.eyebrow, { color: colors.textMuted }]}>{children}</Text>
+}
+
+/** White field with a clean 1.5px ink outline. */
+function SiteInput(props: TextInputProps) {
+  const { colors } = useTheme()
+  return (
+    <TextInput
+      placeholderTextColor={colors.textMuted}
+      {...props}
+      style={[
+        sl.input,
+        { color: colors.text, backgroundColor: colors.surface, borderColor: colors.text, fontFamily: font.body },
+        props.multiline ? sl.inputMulti : null,
+        props.style,
+      ]}
+    />
+  )
+}
+
+interface SiteOption { id: string; label: string; sticker: SiteStickerName }
+
+/** Card-less sticker options (single or multi — the caller decides what "on" means). */
+function SiteStickerGrid({
+  options, isOn, onPress, width = '33.33%',
+}: {
+  options: SiteOption[]
+  isOn: (id: string) => boolean
+  onPress: (id: string) => void
+  width?: `${number}%`
+}) {
+  const { isDark } = useTheme()
+  const tone = getModeColorSoft('preg', isDark)
+  return (
+    <View style={sl.grid}>
+      {options.map((o) => (
+        <StickerChoice key={o.id} width={width} label={o.label} sticker={o.sticker} on={isOn(o.id)} tone={tone} onPress={() => onPress(o.id)} />
+      ))}
+    </View>
+  )
+}
+
+/** A few common values as one-tap pills (the current value always shows, even if custom). */
+function SitePresets({
+  value, onChange, presets, unit,
+}: { value: number; onChange: (v: number) => void; presets: number[]; unit: string }) {
+  const { isDark } = useTheme()
+  const tone = getModeColorSoft('preg', isDark)
+  const all = presets.includes(value) ? presets : [...presets, value].sort((a, b) => a - b)
+  return (
+    <View style={sl.pills}>
+      {all.map((p) => (
+        <SiteChoice key={p} compact tick={false} label={`${p} ${unit}`} selected={value === p} tone={tone} onPress={() => onChange(p)} />
+      ))}
+    </View>
+  )
+}
+
+/** Centered stepper block with its unit — for plain counts (hours, sets, glasses). */
+function SiteCounter({
+  value, onChange, min, max, unit,
+}: { value: number; onChange: (v: number) => void; min: number; max: number; unit: string }) {
+  const { isDark } = useTheme()
+  return (
+    <View style={{ paddingVertical: 4 }}>
+      <SiteStepper value={value} onChange={onChange} min={min} max={max} unit={unit} tone={getModeColorSoft('preg', isDark)} />
+    </View>
+  )
+}
+
+const MOOD_STICKER: Record<(typeof MOOD_IDS)[number], SiteStickerName> = {
+  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face1', energetic: 'star',
+}
+const APPOINTMENT_STICKER: Record<string, SiteStickerName> = {
+  'Regular checkup': 'doc', Ultrasound: 'camera', 'Blood test': 'syringe', 'Glucose test': 'drop',
+  'Group B strep': 'otest', Specialist: 'heart', Other: 'pencil',
+}
+const EXERCISE_STICKER: Record<string, SiteStickerName> = {
+  Yoga: 'flower', Walk: 'shoe', Swim: 'drop', Stretching: 'leaf', Pilates: 'star', Other: 'pencil',
+}
+const NESTING_STICKER: Record<string, SiteStickerName> = {
+  Nursery: 'crib', Cleaning: 'drop', Laundry: 'bodysuit', Shopping: 'stroller', Organizing: 'books', Other: 'pencil',
+}
+const BIRTH_PREP_STICKER: Record<string, SiteStickerName> = {
+  'Hospital bag': 'backpack', 'Birth plan': 'doc', Classes: 'brain', Postpartum: 'flower',
+  'Baby gear': 'stroller', Admin: 'cal', Other: 'pencil',
+}
+
+
 export function PregnancyMoodForm({
   date,
   onSaved,
@@ -201,6 +309,24 @@ export function PregnancyMoodForm({
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_mood_question')}</SiteQuestion>
+        <SiteStickerGrid
+          width="20%"
+          options={MOOD_IDS.map((id) => ({ id, label: t(MOOD_LABEL_KEYS[id]), sticker: MOOD_STICKER[id] }))}
+          isOn={(id) => mood === id}
+          onPress={setMood}
+        />
+        <MoreSection label={t('kids_logForm_more')}>
+          <SiteInput value={notes} onChangeText={setNotes} placeholder={t('preg_form_mood_notesPlaceholder')} multiline />
+        </MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={!mood} />
+      </View>
+    )
   }
 
   return (
@@ -335,6 +461,39 @@ export function PregnancySymptomsForm({
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_symptoms_question')}</SiteQuestion>
+        <View style={sl.pills}>
+          {SYMPTOM_OPTIONS.map((opt) => (
+            <SiteChoice key={opt.id} compact label={t(opt.key)} selected={selected.includes(opt.id)}
+              tone={getModeColorSoft('preg', isDark)} onPress={() => toggle(opt.id)} />
+          ))}
+        </View>
+        {/* Symptom-triggered Grandma — offer to ask about the selected symptoms. */}
+        {selected.length > 0 && canAskGrandma() ? (
+          <SiteChoice compact tick={false} sticker="bubble" label={t('symptomAssist_ask')} selected={false}
+            tone={getModeColorSoft('preg', isDark)} style={{ alignSelf: 'flex-start' }}
+            onPress={async () => {
+              const labels = selected.map((id) => {
+                const opt = SYMPTOM_OPTIONS.find((o) => o.id === id)
+                return opt ? t(opt.key) : id
+              })
+              try { await savePregnancyLog(date, 'symptom', selected.join(', '), notes || undefined) } catch { /* still offer chat */ }
+              askGrandmaAboutSymptoms(labels)
+              onSaved()
+            }}
+          />
+        ) : null}
+        <MoreSection label={t('kids_logForm_more')}>
+          <SiteInput value={notes} onChangeText={setNotes} placeholder={t('preg_form_symptoms_notesPlaceholder')} multiline />
+        </MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={selected.length === 0} />
+      </View>
+    )
   }
 
   return (
@@ -511,6 +670,27 @@ export function AppointmentForm({
 
   // Diffuse hairline input style (shared across the 3 text fields below).
   const dInput = { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, fontFamily: diffuseFont.body } as const
+
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{`Visit on ${formatDate(date)}`}</SiteQuestion>
+        <SiteStickerGrid
+          options={APPOINTMENT_TYPES.map((x) => ({ id: x, label: x, sticker: APPOINTMENT_STICKER[x] ?? 'doc' }))}
+          isOn={(id) => type === id}
+          onPress={setType}
+        />
+        {isOther && (
+          <SiteInput value={customType} onChangeText={setCustomType} placeholder="Describe the appointment" autoFocus />
+        )}
+        <MoreSection label="More">
+          <SiteInput value={doctor} onChangeText={setDoctor} placeholder="Doctor name (optional)" />
+          <SiteInput value={notes} onChangeText={setNotes} placeholder="Notes (optional)" multiline />
+        </MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={!canSave} />
+      </View>
+    )
+  }
 
   return (
     <View style={styles.form}>
@@ -700,6 +880,46 @@ export function KickCountForm({
   // Diffuse ink ramp for the neutralized tap button / dots / copy.
   const dInk = dt.colors.ink
   const dInk3 = dt.colors.ink3
+
+  if (!diffuse) {
+    const tone = getModeColorSoft('preg', isDark)
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>Count baby's kicks</SiteQuestion>
+        <View style={styles.kickCenter}>
+          <Pressable
+            onPress={() => setCount((c) => c + 1)}
+            accessibilityRole="button"
+            accessibilityLabel={t('preg_form_kick_tap')}
+            style={({ pressed }) => [sl.kickBtn, {
+              backgroundColor: goalReached ? tone : colors.surface,
+              borderColor: colors.text,
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+            }]}
+          >
+            <SiteSticker name="shoe" size={58} cut />
+            <Text style={[sl.eyebrow, { color: colors.text, marginTop: 6 }]}>{t('preg_form_kick_tap')}</Text>
+          </Pressable>
+          <Text style={{ fontSize: 56, lineHeight: 62, fontFamily: font.displayBold, color: colors.text, marginTop: 10 }}>
+            {count}
+            <Text style={{ fontSize: 20, fontFamily: font.bodyMedium, color: colors.textMuted }}>{count === 1 ? ' kick' : ' kicks'}</Text>
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
+            {dots.map((filled, i) => (
+              <View key={i} style={{
+                width: 11, height: 11, borderRadius: 999, borderWidth: 1.5, borderColor: colors.text,
+                backgroundColor: filled ? tone : 'transparent', opacity: filled ? 1 : 0.35,
+              }} />
+            ))}
+          </View>
+          <Text style={{ fontSize: 13, fontFamily: font.bodyMedium, color: colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
+            {goalReached ? 'Goal reached! Great session.' : 'Goal: 10 kicks in 2 hours'}
+          </Text>
+        </View>
+        <SaveButton onPress={save} saving={saving} disabled={count === 0} label="Save Session" />
+      </View>
+    )
+  }
 
   return (
     <View style={styles.form}>
@@ -945,6 +1165,20 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
     }
   }
 
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_sleep_hoursSlept')}</SiteQuestion>
+        <SiteCounter value={hours} onChange={setHours} min={3} max={12} unit={hours === 1 ? 'hour' : 'hours'} />
+        <MoreSection label={t('kids_logForm_more')}>
+          <SiteEyebrow>{t('preg_form_sleep_qualityRange')}</SiteEyebrow>
+          <SiteCounter value={quality} onChange={setQuality} min={1} max={10} unit="/ 10" />
+        </MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={false} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       {diffuse ? (
@@ -1011,6 +1245,28 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_exercise_typeLabel')}</SiteQuestion>
+        <SiteStickerGrid
+          options={EXERCISE_TYPES.map((x) => ({ id: x, label: x, sticker: EXERCISE_STICKER[x] ?? 'shoe' }))}
+          isOn={(id) => exerciseType === id}
+          onPress={setExerciseType}
+        />
+        {isOther && (
+          <SiteInput value={customType} onChangeText={setCustomType} placeholder="What kind of movement?" autoFocus />
+        )}
+        <SiteEyebrow>{t('preg_form_exercise_minutesFieldLabel')}</SiteEyebrow>
+        <SitePresets value={minutes} onChange={setMinutes} presets={[15, 20, 30, 45, 60, 90]} unit="min" />
+        <MoreSection label={t('kids_logForm_more')}>
+          <SiteCounter value={minutes} onChange={setMinutes} min={5} max={120} unit="min" />
+        </MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={!canSave} />
+      </View>
+    )
   }
 
   return (
@@ -1120,6 +1376,24 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
     }
   }
 
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_nutrition_coverageLabel')}</SiteQuestion>
+        <View style={sl.pills}>
+          {NUTRITION_TAGS.map((tag) => (
+            <SiteChoice key={tag} compact label={tag} selected={tags.includes(tag)}
+              tone={getModeColorSoft('preg', isDark)} onPress={() => toggle(tag)} />
+          ))}
+        </View>
+        <MoreSection label={t('kids_logForm_more')}>
+          <SiteInput value={nutritionNotes} onChangeText={setNutritionNotes} placeholder="Notes (optional)" multiline />
+        </MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={tags.length === 0} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       {diffuse ? (
@@ -1202,6 +1476,16 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
     }
   }
 
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_kegel_setsCompletedLabel')}</SiteQuestion>
+        <SiteCounter value={sets} onChange={setSets} min={1} max={20} unit={sets === 1 ? 'set' : 'sets'} />
+        <SaveButton onPress={save} saving={saving} disabled={false} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       {diffuse ? (
@@ -1266,6 +1550,24 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
     glasses >= GOAL ? 'Beautifully hydrated today.'
     : glasses >= GOAL / 2 ? `Halfway there — ${remaining} more to go.`
     : `${remaining} more to reach today's goal.`
+
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_water_glassesTodayLabel')}</SiteQuestion>
+        <SiteCounter value={glasses} onChange={setGlasses} min={0} max={20} unit={`/ ${GOAL}`} />
+        <View style={sl.drops}>
+          {Array.from({ length: GOAL }, (_, i) => (
+            <View key={i} style={{ opacity: i < glasses ? 1 : 0.25 }}>
+              <SiteSticker name="drop" size={26} />
+            </View>
+          ))}
+        </View>
+        <Text style={{ fontSize: 14, textAlign: 'center', color: colors.textSecondary, fontFamily: font.body }}>{hint}</Text>
+        <SaveButton onPress={save} saving={saving} disabled={false} />
+      </View>
+    )
+  }
 
   return (
     <View style={styles.form}>
@@ -1375,6 +1677,21 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
     }
   }
 
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_vitamins_question')}</SiteQuestion>
+        <SiteStickerGrid
+          width="50%"
+          options={OPTIONS.map((o) => ({ id: o.label, label: o.label, sticker: o.value ? 'face3' : 'face2' }))}
+          isOn={(id) => taken !== null && OPTIONS.find((o) => o.value === taken)?.label === id}
+          onPress={(id) => setTaken(OPTIONS.find((o) => o.label === id)?.value ?? null)}
+        />
+        <SaveButton onPress={save} saving={saving} disabled={taken === null} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       {diffuse ? (
@@ -1459,6 +1776,26 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteInput value={nestingTitle} onChangeText={setNestingTitle} placeholder="Task name (e.g. Set up crib)" />
+        <SiteEyebrow>{t('preg_form_nesting_categoryLabel')}</SiteEyebrow>
+        <SiteStickerGrid
+          options={NESTING_CATEGORIES.map((x) => ({ id: x, label: x, sticker: NESTING_STICKER[x] ?? 'house' }))}
+          isOn={(id) => nestingCategory === id}
+          onPress={setNestingCategory}
+        />
+        {isOther && (
+          <SiteInput value={customCategory} onChangeText={setCustomCategory} placeholder="Custom category" autoFocus />
+        )}
+        <SiteChoice compact label={t('preg_form_nesting_alreadyDone')} selected={done}
+          tone={getModeColorSoft('preg', isDark)} onPress={() => setDone((d) => !d)} style={{ alignSelf: 'flex-start' }} />
+        <SaveButton onPress={save} saving={saving} disabled={!nestingTitle} />
+      </View>
+    )
   }
 
   return (
@@ -1573,6 +1910,30 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteInput value={birthPrepTitle} onChangeText={setBirthPrepTitle} placeholder="Task name (e.g. Pack hospital bag)" />
+        <SiteEyebrow>{t('preg_form_nesting_categoryLabel')}</SiteEyebrow>
+        <SiteStickerGrid
+          options={BIRTH_PREP_CATEGORIES.map((x) => ({ id: x, label: x, sticker: BIRTH_PREP_STICKER[x] ?? 'doc' }))}
+          isOn={(id) => birthPrepCategory === id}
+          onPress={setBirthPrepCategory}
+        />
+        {isOther && (
+          <SiteInput value={customCategory} onChangeText={setCustomCategory} placeholder="Custom category" autoFocus />
+        )}
+        <SiteChoice compact label={t('preg_form_nesting_alreadyDone')} selected={done}
+          tone={getModeColorSoft('preg', isDark)} onPress={() => setDone((d) => !d)} style={{ alignSelf: 'flex-start' }} />
+        <MoreSection label={t('kids_logForm_more')}>
+          <SiteEyebrow>{t('preg_form_birthprep_dueByWeek')}</SiteEyebrow>
+          <SiteCounter value={dueWeek} onChange={setDueWeek} min={20} max={42} unit={`week${dueWeek === 1 ? '' : 's'}`} />
+        </MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={!birthPrepTitle} />
+      </View>
+    )
   }
 
   return (
@@ -1690,6 +2051,25 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
     }
   }
 
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_contraction_durationLabel')}</SiteQuestion>
+        <SitePresets value={durationSec} onChange={setDurationSec} presets={[30, 45, 60, 90]} unit="sec" />
+        <SiteEyebrow>{t('preg_form_contraction_intervalLabel')}</SiteEyebrow>
+        <SitePresets value={intervalMin} onChange={setIntervalMin} presets={[3, 5, 10, 15, 20]} unit="min" />
+        <MoreSection label={t('kids_logForm_more')}>
+          <SiteEyebrow>{t('preg_form_contraction_durationLabel')}</SiteEyebrow>
+          <SiteCounter value={durationSec} onChange={setDurationSec} min={10} max={180} unit="sec" />
+          <SiteEyebrow>{t('preg_form_contraction_intervalLabel')}</SiteEyebrow>
+          <SiteCounter value={intervalMin} onChange={setIntervalMin} min={1} max={30} unit={intervalMin === 1 ? 'minute' : 'minutes'} />
+          <SiteInput value={contractionNotes} onChangeText={setContractionNotes} placeholder="Notes (intensity, location)" multiline />
+        </MoreSection>
+        <SaveButton onPress={save} saving={saving} disabled={false} />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.form}>
       {diffuse ? (
@@ -1767,6 +2147,27 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!diffuse) {
+    return (
+      <View style={styles.form}>
+        <SiteQuestion>{t('preg_form_weight_fieldLabel')}</SiteQuestion>
+        <View style={{ paddingVertical: 8 }}>
+          <NumberStepper
+            value={weight}
+            onChange={setWeight}
+            step={weightUnit === 'lb' ? 0.2 : 0.1}
+            min={weightUnit === 'lb' ? 44 : 20}
+            max={weightUnit === 'lb' ? 550 : 250}
+            precision={1}
+            unit={weightLabel(weightUnit)}
+            color={getModeColorSoft('preg', isDark)}
+          />
+        </View>
+        <SaveButton onPress={save} saving={saving} disabled={weight <= 0} />
+      </View>
+    )
   }
 
   return (
@@ -2022,6 +2423,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#FFFFFF',
   },
+})
+
+// ─── Site look (light) styles ───────────────────────────────────────────────
+const sl = StyleSheet.create({
+  question: { fontSize: 18, letterSpacing: 0.3, textTransform: 'uppercase' },
+  eyebrow: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
+  input: { borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 16, minHeight: 50, fontSize: 16 },
+  inputMulti: { minHeight: 84, paddingTop: 14, paddingBottom: 14, textAlignVertical: 'top' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 2 },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  drops: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  kickBtn: { width: 168, height: 168, borderRadius: 84, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 })
 
 // ─── Diffuse styles ─────────────────────────────────────────────────────────

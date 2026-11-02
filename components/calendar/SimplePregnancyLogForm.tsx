@@ -14,7 +14,8 @@ import React, { useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, Dimensions, ActivityIndicator, Alert,
 } from 'react-native'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, brand, font } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, brand, font, getModeColorSoft } from '../../constants/theme'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
@@ -25,6 +26,10 @@ import {
 } from '../stickers/RewardStickers'
 
 const SCREEN_W = Dimensions.get('window').width
+
+const SITE_STICKER: Record<'weight' | 'water' | 'sleep' | 'exercise', SiteStickerName> = {
+  weight: 'me', water: 'drop', sleep: 'moon', exercise: 'shoe',
+}
 
 export type SimpleLogType = 'weight' | 'water' | 'sleep' | 'exercise'
 
@@ -50,7 +55,7 @@ const CONFIGS: Record<SimpleLogType, {
 }
 
 export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
-  const { colors } = useTheme()
+  const { colors, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const dAccent = getDiffuseAccent('preg', dt.isDark)
@@ -97,6 +102,50 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
   }
 
   const canSave = !!value.trim()
+
+  if (!diffuse) {
+    const tone = getModeColorSoft('preg', isDark)
+    return (
+      <View style={styles.form}>
+        <View style={styles.header}>
+          <SiteSticker name={SITE_STICKER[type]} size={34} cut />
+          <Text style={[styles.title, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{cfg.label}</Text>
+        </View>
+
+        <View style={[styles.siteInput, { backgroundColor: colors.surface, borderColor: colors.text }]}>
+          <Text
+            style={{ flex: 1, fontSize: value ? 30 : 16, fontFamily: value ? font.displayBold : font.body, color: value ? colors.text : colors.textMuted }}
+            numberOfLines={1}
+          >
+            {value || cfg.placeholder}
+          </Text>
+          <Text style={{ fontSize: 13, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>{cfg.unit}</Text>
+        </View>
+
+        <View style={styles.numpad}>
+          {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map((key) => (
+            <Pressable
+              key={key}
+              onPress={() => {
+                if (key === '⌫') setValue((v) => v.slice(0, -1))
+                else if (key === '.' && (value.includes('.') || cfg.keyboard === 'number-pad')) return
+                else setValue((v) => v + key)
+              }}
+              style={({ pressed }) => [styles.key, { backgroundColor: pressed ? tone : 'transparent' }]}
+            >
+              <Text style={{ fontSize: 24, fontFamily: font.displayBold, color: colors.text }}>{key}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <SheetFooterAction>
+          <View style={{ alignItems: 'center' }}>
+            <EyeAction label={t('common_save')} onPress={handleSave} ink={colors.text} loading={saving} disabled={saving || !value.trim()} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+          </View>
+        </SheetFooterAction>
+      </View>
+    )
+  }
 
   return (
     <View style={styles.form}>
@@ -173,6 +222,10 @@ const styles = StyleSheet.create({
   },
   inputText: { fontSize: 18, fontFamily: font.display, flex: 1 },
   unit: { fontSize: 13, fontFamily: font.body },
+  siteInput: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderRadius: 14, paddingHorizontal: 18, minHeight: 60, borderWidth: 1.5,
+  },
   numpad: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   key: {
     width: (SCREEN_W - 48 - 16) / 3 - 6,
