@@ -79,7 +79,7 @@ export function buildCycleReport(input: CycleReportInput, ctx: ReportContext): R
   sections.push({
     id: 'cycles',
     title: t('report_sec_cycles'),
-    sticker: 'cal',
+    sticker: 'drop',
     count: cycles.length,
     summary: cycles.length
       ? [
@@ -122,7 +122,7 @@ export function buildCycleReport(input: CycleReportInput, ctx: ReportContext): R
   sections.push({
     id: 'symptoms',
     title: t('report_sec_symptomsByPhase'),
-    sticker: 'bubble',
+    sticker: 'headache',
     count: occurrences,
     summary: [],
     table: {

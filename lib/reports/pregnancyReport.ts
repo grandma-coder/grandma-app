@@ -126,7 +126,7 @@ export function buildPregnancyReport(input: PregnancyReportInput, ctx: ReportCon
   sections.push({
     id: 'weight',
     title: t('report_sec_weight'),
-    sticker: 'ruler',
+    sticker: 'scale',
     count: weights.length,
     summary: weightSummary,
     table: { columns: [t('report_col_date'), t('report_col_weight', { unit: weightLabel(unit) })], numeric: [1], ...weightRows },
@@ -143,7 +143,7 @@ export function buildPregnancyReport(input: PregnancyReportInput, ctx: ReportCon
   sections.push({
     id: 'symptoms',
     title: t('report_sec_symptoms'),
-    sticker: 'bubble',
+    sticker: 'headache',
     count: symptomValues.length,
     summary: [],
     table: {
@@ -164,7 +164,7 @@ export function buildPregnancyReport(input: PregnancyReportInput, ctx: ReportCon
   sections.push({
     id: 'kicks',
     title: t('report_sec_kicks'),
-    sticker: 'baby',
+    sticker: 'foot',
     count: kicks.length,
     summary: kicks.length
       ? [
@@ -195,7 +195,7 @@ export function buildPregnancyReport(input: PregnancyReportInput, ctx: ReportCon
   sections.push({
     id: 'contractions',
     title: t('report_sec_contractions'),
-    sticker: 'bars',
+    sticker: 'stopwatch',
     count: contractionLogs.length,
     summary: contractionLogs.length ? [{ label: t('report_sum_total'), value: String(contractionLogs.length) }] : [],
     table: {
@@ -215,7 +215,7 @@ export function buildPregnancyReport(input: PregnancyReportInput, ctx: ReportCon
   sections.push({
     id: 'sleep',
     title: t('report_sec_sleep'),
-    sticker: 'zz',
+    sticker: 'moon',
     count: sleep.length,
     summary: sleep.length
       ? [
@@ -238,7 +238,7 @@ export function buildPregnancyReport(input: PregnancyReportInput, ctx: ReportCon
   sections.push({
     id: 'water',
     title: t('report_sec_water'),
-    sticker: 'drop',
+    sticker: 'glass',
     count: water.length,
     summary: water.length
       ? [
