@@ -16,7 +16,8 @@
     "privacy": "Privacy",
     "terms": "Terms",
     "rights": "© 2026 grandma.app",
-    "navLabel": "Footer"
+    "navLabel": "Footer",
+    "whatsapp": "WhatsApp"
   },
   "privacy": {
     "metaTitle": "Privacy Policy | Grandma",
@@ -229,16 +230,20 @@
       "question": "Which phase are you in?",
       "emailPlaceholder": "you@email.com",
       "emailAria": "Your email",
+      "namePlaceholder": "Your name (optional)",
+      "nameAria": "Your name (optional)",
       "join": "Join the list",
       "note": "One email when it's your turn. That's it.",
       "joinedInline": "You're on the list! We'll let you know.",
       "joinedTitle": "You're on the list!",
       "joinedBody": "We'll let you know as soon as invites open.",
       "installHint": "On your phone, tap <b>Share → Add to Home Screen</b> and grandma will be right there.",
+      "whatsapp": "Join our WhatsApp channel →",
       "errors": {
         "email_required": "Please enter your email.",
         "email_invalid": "That email doesn't look right.",
         "email_too_long": "That email is too long.",
+        "name_too_long": "That name is too long.",
         "mode_required": "Pick the phase you're in.",
         "rate_limited": "Too many tries from this connection. Please try again in an hour.",
         "generic": "Something went wrong on our side. Please try again."

@@ -102,6 +102,18 @@
 .qjHero { margin-top: 26px; width: min(470px, 100%); padding: 6px; box-shadow: inset 0 0 0 2px var(--ink), 0 3px 0 rgba(22,21,19,.12); }
 .qjHero input { font-size: 17px; padding: 0 16px; }
 .qjHero button { padding: 14px 22px; font-size: 16px; }
+.qjForm { margin-top: 26px; width: min(470px, 100%); display: grid; gap: 8px; }
+.qjForm .qjHero { margin-top: 0; width: 100%; }
+/* optional name, a pill over the email one */
+.nameIn { display: block; width: 100%; box-sizing: border-box; height: 50px; margin-top: 18px; border: 0; border-radius: 99px; background: #fff; padding: 0 18px; font: 400 16px var(--sans); color: var(--ink); outline: none; box-shadow: inset 0 0 0 1.5px var(--ink); }
+.nameIn:focus { box-shadow: inset 0 0 0 2.5px var(--ink); }
+.nameIn + .email { margin-top: 8px; }
+.qjForm .nameIn { margin-top: 0; height: 54px; padding: 0 22px; font-size: 17px; box-shadow: inset 0 0 0 2px var(--ink), 0 3px 0 rgba(22,21,19,.12); }
+.qjForm .nameIn:focus { box-shadow: inset 0 0 0 2.5px var(--ink), 0 3px 0 rgba(22,21,19,.12); }
+/* WhatsApp channel, once joined */
+.wa { display: inline-flex; margin-top: 10px; border: 1.5px solid var(--ink); border-radius: 99px; background: #DCF8C6; padding: 10px 16px; font-weight: 700; font-size: 14px; line-height: 1.25; color: var(--ink); text-decoration: none; transition: transform .2s var(--spring); }
+.wa:active { transform: scale(.96); }
+.done .wa { margin-top: 14px; }
 .qjNote { margin: 10px 0 0 18px; font-size: 13px; color: var(--ink-2); }
 .qjNote a, .meta a, .popNote a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
 .err { margin: 10px 0 0 18px; font-size: 13px; font-weight: 600; color: var(--err); }
@@ -121,7 +133,9 @@
   .phoneSlot { --s: .6; }
   .phoneSlot { display: block; position: relative; width: calc(390px * var(--s, .8)); height: calc(800px * var(--s, .8)); overflow: hidden; border-radius: calc(56px * var(--s, .8)); }
   .phoneSlot > * { position: absolute; top: 0; left: 0; transform: scale(var(--s, .8)); transform-origin: 0 0; }
-  .qjHero { margin-top: 16px; }
+  .qjHero, .qjForm { margin-top: 16px; }
+  .qjForm .qjHero { margin-top: 0; }
+  .qjForm .nameIn { height: 50px; padding: 0 16px; font-size: 16px; }
   .qjHero input { font-size: 16px; padding: 0 12px; }
   .qjHero button { padding: 12px 16px; font-size: 15px; }
   .qjNote, .err { margin: 8px 0 0 14px; font-size: 12px; }

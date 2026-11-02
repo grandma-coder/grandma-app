@@ -9,13 +9,14 @@ import { MODES, type Mode } from '@/lib/modes'
 import { Sticker } from '@/components/stickers/sticker'
 import { useDemo } from '@/components/demo/demo'
 import { useJoined } from './joined-context'
+import { WHATSAPP_CHANNEL } from './links'
 import s from './site.module.css'
 
 export type QuickJoinVariant = 'hero' | 'section' | 'pop'
 
 const INITIAL: WaitlistState = { status: 'idle' }
 const UTM = ['utm_source', 'utm_medium', 'utm_campaign'] as const
-const ERRORS = ['email_required', 'email_invalid', 'email_too_long', 'mode_required'] as const
+const ERRORS = ['email_required', 'email_invalid', 'email_too_long', 'name_too_long', 'mode_required'] as const
 
 /** UTM params and an external referrer, read once on mount (the schema accepts them as optional fields). */
 function useAttribution() {
@@ -34,15 +35,16 @@ function errorKey(state: WaitlistState): (typeof ERRORS)[number] | 'rate_limited
   if (state.status === 'rate_limited') return 'rate_limited'
   if (state.status === 'error') return 'generic'
   if (state.status !== 'invalid') return null
-  const code = state.fieldErrors.email ?? state.fieldErrors.mode
+  const code = state.fieldErrors.email ?? state.fieldErrors.mode ?? state.fieldErrors.name
   return code && (ERRORS as readonly string[]).includes(code) ? (code as (typeof ERRORS)[number]) : 'generic'
 }
 
 /**
- * Every email field on the page. All post to `joinWaitlist`; the first success flips every QuickJoin
+ * Every join form on the page: an optional name, then the email. All post to `joinWaitlist`; the first success flips every QuickJoin
  * (through JoinedContext) to its joined state. A failure stays on this field, with the typed email kept.
- * - hero: one-line pill, hidden `mode` from the demo phase
- * - section / pop: phase radios (default: the demo phase, not linked back to it) + email
+ * - hero: name field over the one-line email pill, hidden `mode` from the demo phase
+ * - section / pop: phase radios (default: the demo phase, not linked back to it) + name + email
+ * Once joined, each points at the WhatsApp channel.
  */
 export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
   const t = useTranslations('v3')
@@ -50,7 +52,9 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
   const { state: demo, data } = useDemo()
   const { isJoined, joined } = useJoined()
   const [state, action, pending] = useActionState(joinWaitlist, INITIAL)
+  // both controlled: React resets the form after each action, which would wipe what was typed on an error
   const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
   const [picked, setPicked] = useState<Mode | null>(null)
   const attrib = useAttribution()
   const box = useRef<HTMLDivElement>(null)
@@ -81,6 +85,16 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
       aria-invalid={state.status === 'invalid' || undefined} aria-describedby={err ? errId : undefined}
     />
   )
+  const nameField = (
+    <input
+      type="text" name="name" autoComplete="name" maxLength={80} className={s.nameIn}
+      value={name} onChange={(e) => setName(e.target.value)}
+      placeholder={t('waitlist.namePlaceholder')} aria-label={t('waitlist.nameAria')}
+    />
+  )
+  const whatsapp = (
+    <a className={s.wa} href={WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer">{t('waitlist.whatsapp')}</a>
+  )
   const hidden = (
     <>
       <input type="hidden" name="locale" value={locale} />
@@ -101,14 +115,20 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
     return (
       <div ref={box}>
         {isJoined ? (
-          <div ref={done} tabIndex={-1} role="status" className={`${s.qj} ${s.qjHero} ${s.joined}`}>
-            <Sticker name="star" className={s.ico} /><span>{t('waitlist.joinedInline')}</span>
-          </div>
+          <>
+            <div ref={done} tabIndex={-1} role="status" className={`${s.qj} ${s.qjHero} ${s.joined}`}>
+              <Sticker name="star" className={s.ico} /><span>{t('waitlist.joinedInline')}</span>
+            </div>
+            {whatsapp}
+          </>
         ) : (
-          <form action={action} noValidate data-tour="join" className={`${s.qj} ${s.qjHero}`} aria-busy={pending || undefined}>
+          <form action={action} noValidate data-tour="join" className={s.qjForm} aria-busy={pending || undefined}>
             {hidden}
-            {field(t('hero.emailPlaceholder'), t('hero.emailAria'))}
-            <button type="submit" disabled={pending}>{t('hero.join')}</button>
+            {nameField}
+            <div className={`${s.qj} ${s.qjHero}`}>
+              {field(t('hero.emailPlaceholder'), t('hero.emailAria'))}
+              <button type="submit" disabled={pending}>{t('hero.join')}</button>
+            </div>
           </form>
         )}
         {error}
@@ -129,6 +149,7 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
             <Sticker name="phone" className={s.ico} />
             <span>{t.rich('waitlist.installHint', { b: (c) => <b>{c}</b> })}</span>
           </div>
+          <div>{whatsapp}</div>
         </div>
       ) : (
         <>
@@ -147,6 +168,7 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
           </fieldset>
           <form action={action} noValidate aria-busy={pending || undefined}>
             {hidden}
+            {nameField}
             <div className={s.email}>
               {field(t(pop ? 'pop.emailPlaceholder' : 'waitlist.emailPlaceholder'), t(pop ? 'pop.emailAria' : 'waitlist.emailAria'))}
               <button type="submit" className={`${s.pill} ${s.dark}`} disabled={pending}>{t(pop ? 'pop.submit' : 'waitlist.join')}</button>

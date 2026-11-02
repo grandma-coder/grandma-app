@@ -18,6 +18,7 @@ vi.mock('@/i18n/navigation', () => ({
 
 import { useDemo } from '@/components/demo/demo'
 import { SiteShell } from './site-shell'
+import { WHATSAPP_CHANNEL } from './links'
 import { QuickJoin } from './quick-join'
 import { Hero } from './hero'
 import { PhaseSwitch } from './phase-switch'
@@ -55,7 +56,8 @@ function setup(children: ReactNode, locale: 'en' | 'pt' = 'en') {
 }
 
 const phaseButton = (name: string) => within(screen.getByRole('group', { name: en.v3.phases.aria })).getByRole('button', { name })
-const emailFields = () => screen.queryAllByRole('textbox') as HTMLInputElement[]
+const emailFields = () => (screen.queryAllByRole('textbox') as HTMLInputElement[]).filter((i) => i.type === 'email')
+const nameFields = () => screen.queryAllByRole('textbox', { name: en.v3.waitlist.nameAria }) as HTMLInputElement[]
 const submitOf = (input: HTMLInputElement) => within(input.closest('form')!).getByRole('button')
 const reduceMotion = (reduce: boolean) => {
   window.matchMedia = ((q: string) => ({ matches: reduce && q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
@@ -84,6 +86,23 @@ describe('QuickJoin', () => {
     expect(fd.get('mode')).toBe('kids')
     expect(fd.get('locale')).toBe('en')
     expect(fd.get('company')).toBe('')
+  })
+
+  it('posts the optional name, keeps it on a failed submit, and points at the WhatsApp channel once joined', async () => {
+    join.mockResolvedValueOnce({ status: 'error' }).mockResolvedValueOnce({ status: 'success' })
+    const user = setup(<QuickJoin variant="hero" />)
+    expect(nameFields()).toHaveLength(1)
+    await user.type(nameFields()[0], 'Ana')
+    await user.type(emailFields()[0], 'ana@example.com')
+    await user.click(submitOf(emailFields()[0]))
+    await screen.findByRole('alert')
+    expect((join.mock.calls[0][1] as FormData).get('name')).toBe('Ana')
+    expect(nameFields()[0].value).toBe('Ana')
+    await user.click(submitOf(emailFields()[0]))
+    await screen.findByText(en.v3.waitlist.joinedInline)
+    const wa = screen.getByRole('link', { name: en.v3.waitlist.whatsapp })
+    expect(wa.getAttribute('href')).toBe(WHATSAPP_CHANNEL)
+    expect(wa.getAttribute('target')).toBe('_blank')
   })
 
   it('a failed submit keeps the typed email and shows the error under that field only', async () => {

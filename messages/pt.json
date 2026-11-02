@@ -16,7 +16,8 @@
     "privacy": "Privacidade",
     "terms": "Termos",
     "rights": "© 2026 grandma.app",
-    "navLabel": "Rodapé"
+    "navLabel": "Rodapé",
+    "whatsapp": "WhatsApp"
   },
   "privacy": {
     "metaTitle": "Política de Privacidade | Grandma",
@@ -229,16 +230,20 @@
       "question": "Em que fase você está?",
       "emailPlaceholder": "seu@email.com",
       "emailAria": "Seu email",
+      "namePlaceholder": "Seu nome (opcional)",
+      "nameAria": "Seu nome (opcional)",
       "join": "Entrar na lista",
       "note": "Um email quando for a sua vez. Só isso.",
       "joinedInline": "Você está na lista! A gente avisa.",
       "joinedTitle": "Você está na lista!",
       "joinedBody": "A gente avisa assim que os convites abrirem.",
       "installHint": "No celular, toque em <b>Compartilhar → Adicionar à Tela de Início</b> e a grandma fica aqui pertinho.",
+      "whatsapp": "Entra no nosso canal do WhatsApp →",
       "errors": {
         "email_required": "Digite o seu email.",
         "email_invalid": "Esse email não parece certo.",
         "email_too_long": "Esse email é longo demais.",
+        "name_too_long": "Esse nome é longo demais.",
         "mode_required": "Escolha a fase em que você está.",
         "rate_limited": "Muitas tentativas a partir desta conexão. Tente de novo daqui a uma hora.",
         "generic": "Algo deu errado do nosso lado. Tente de novo."
