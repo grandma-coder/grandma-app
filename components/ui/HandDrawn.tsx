@@ -97,7 +97,7 @@ export function HandDrawnPill({
   radius?: number
 }) {
   const d = useMemo(
-    () => (width > 0 ? wobblyPillPath(width, height, seed, 1.4, 2, radius ?? Infinity) : ''),
+    () => (width > 0 ? wobblyPillPath(width, height, seed, Math.min(1.4, Math.min(width, height) * 0.03), 2, radius ?? Infinity) : ''),
     [width, height, seed, radius],
   )
   if (!d) return null

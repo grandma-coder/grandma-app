@@ -24,7 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
-import { EyeAction } from '../../components/ui/AuthDock'
+import { EyeAction, ACTION_TONES } from '../../components/ui/AuthDock'
 import { HandDrawnBox } from '../../components/ui/HandDrawn'
 import { Stagger, StickerEnter } from '../../components/ui/Motion'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
@@ -215,7 +215,7 @@ export default function ResetPassword() {
           </HandDrawnBox>
 
           <View style={{ alignItems: 'center', marginTop: 4 }}>
-            <EyeAction label={loading ? t('auth_updating') : t('auth_updatePassword')} onPress={handleUpdate} ink={ink} loading={loading} />
+            <EyeAction label={loading ? t('auth_updating') : t('auth_updatePassword')} onPress={handleUpdate} ink={ink} loading={loading} sticker="lock" fill={ACTION_TONES.lilac} />
           </View>
           </Stagger>
         </ScrollView>

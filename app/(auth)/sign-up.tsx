@@ -20,7 +20,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
-import { EyeAction } from '../../components/ui/AuthDock'
+import { EyeAction, ACTION_TONES } from '../../components/ui/AuthDock'
 import { HandDrawnBox, HandRule } from '../../components/ui/HandDrawn'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { Stagger, StickerEnter } from '../../components/ui/Motion'
@@ -249,7 +249,7 @@ export default function SignUp() {
 
           {/* CTA */}
           <View style={{ alignItems: 'center', marginTop: 4 }}>
-            <EyeAction label={loading ? t('auth_creating') : t('auth_continue')} onPress={signUp} ink={ink} loading={loading} />
+            <EyeAction label={loading ? t('auth_creating') : t('auth_continue')} onPress={signUp} ink={ink} loading={loading} sticker="star" fill={ACTION_TONES.yellow} />
           </View>
 
           {/* Switch */}

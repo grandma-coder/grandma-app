@@ -23,6 +23,7 @@ import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useConsentStore } from '../../store/useConsentStore'
+import { SiteCheckRow } from '../../components/ui/SiteCheck'
 import { useTranslation } from '../../lib/i18n'
 
 const PRIVACY_URL = 'https://grandma.app/privacy'
@@ -51,31 +52,23 @@ export default function ConsentScreen() {
   }
 
   function Row({ checked, onToggle, children }: { checked: boolean; onToggle: () => void; children: React.ReactNode }) {
+    if (!diffuse) return <SiteCheckRow checked={checked} onToggle={onToggle}>{children}</SiteCheckRow>
     return (
       <Pressable
         onPress={onToggle}
-        style={[
-          styles.row,
-          { borderColor: line, backgroundColor: diffuse ? 'transparent' : colors.surface, borderRadius: diffuse ? radius.md : 18 },
-          !diffuse && { borderWidth: 1.5, shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
-        ]}
+        style={[styles.row, { borderColor: line, backgroundColor: 'transparent', borderRadius: radius.md }]}
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
       >
         <View
           style={[
             styles.box,
-            {
-              borderColor: checked ? accent : line,
-              backgroundColor: checked ? accent : 'transparent',
-              borderRadius: diffuse ? 8 : 7,
-            },
-            !diffuse && { borderWidth: 1.5 },
+            { borderColor: checked ? accent : line, backgroundColor: checked ? accent : 'transparent', borderRadius: 8 },
           ]}
         >
-          {checked && <Check size={16} color={diffuse ? dt.colors.bg : colors.textInverse} strokeWidth={3} />}
+          {checked && <Check size={16} color={dt.colors.bg} strokeWidth={3} />}
         </View>
-        <Text style={[styles.rowText, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
+        <Text style={[styles.rowText, { color: ink, fontFamily: diffuseFont.body }]}>
           {children}
         </Text>
       </Pressable>

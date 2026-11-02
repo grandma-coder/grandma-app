@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
-import { ActionDisc, EyeAction } from '../../components/ui/AuthDock'
+import { ActionDisc, EyeAction, ACTION_TONES } from '../../components/ui/AuthDock'
 import { GoogleG } from '../../components/ui/GoogleG'
 import { HandDrawnBox, HandRule } from '../../components/ui/HandDrawn'
 import { InkBackButton } from '../../components/ui/InkBackButton'
@@ -315,7 +315,7 @@ export default function SignIn() {
 
           {/* CTA — the pink eye disc is the primary action */}
           <View style={styles.eyeRow}>
-            <EyeAction label={loading ? t('auth_signingIn') : t('auth_signIn')} onPress={signIn} ink={ink} loading={loading} />
+            <EyeAction label={loading ? t('auth_signingIn') : t('auth_signIn')} onPress={signIn} ink={ink} loading={loading} sticker="house" fill={ACTION_TONES.yellow} />
           </View>
 
           {/* Switch */}
