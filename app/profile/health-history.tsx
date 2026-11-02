@@ -842,7 +842,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
               mode="date"
               maximumDate={new Date()}
               minimumDate={new Date(2015, 0, 1)}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
               themeVariant={(diffuse ? dt.isDark : isDark) ? 'dark' : 'light'}
               onChange={(_, d) => { if (Platform.OS === 'android') setShowDatePicker(false); if (d) setEventDate(d) }}
             />

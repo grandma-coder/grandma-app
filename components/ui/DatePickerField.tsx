@@ -317,7 +317,7 @@ export default function DatePickerField({
               <DateTimePicker
                 value={draft}
                 mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                display={Platform.OS === 'ios' ? (diffuse ? 'spinner' : 'inline') : 'default'}
                 onChange={handleChange}
                 maximumDate={maximumDate}
                 minimumDate={minimumDate}

@@ -125,7 +125,7 @@ function CurrentDateModal({
             <DateTimePicker
               value={value}
               mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
               onChange={handleChange}
               minimumDate={minimumDate}
               maximumDate={maximumDate}
