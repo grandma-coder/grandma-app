@@ -23,6 +23,10 @@ import { SheetFooterAction } from '../calendar/LogSheet'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { StepSlider } from '../ui/StepSlider'
 import { Character } from '../characters/Characters'
+import { SiteChoice } from '../ui/SiteChoice'
+import { StickerChoice } from '../calendar/QuickLogKit'
+import { SiteSticker } from '../stickers/SiteSticker'
+import { menoSticker } from './MenopauseLogSheet'
 import { toDateStr } from '../../lib/cycleLogic'
 import { saveMenopauseLog } from '../../lib/menopauseLogs'
 import {
@@ -54,14 +58,26 @@ const COPY = {
   savedErrorBody: 'Something went wrong saving your log. Please try again.',
 }
 
+// Site look (light) bits: Space Mono eyebrow + the white ink-outlined field.
+const SITE_MONO = 'SpaceMono_400Regular'
+function SiteEyebrow({ children }: { children: string }) {
+  const { colors } = useTheme()
+  return (
+    <Text style={{ fontFamily: SITE_MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
+      {children}
+    </Text>
+  )
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Symptom form
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved: () => void; initialId?: MenopauseSymptomId; logDate?: string }) {
   const pal = useMenoPalette()
-  const { stickers } = useTheme()
+  const { stickers, colors, font } = useTheme()
   const st = stickers as Record<string, string>
+  const site = !pal.diffuse
   // Pre-select when opened from a home quick-log chip (skips straight to severity).
   const [symptomId, setSymptomId] = useState<MenopauseSymptomId | null>(initialId ?? null)
   const [severity, setSeverity] = useState(3)
@@ -91,6 +107,14 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
       {initialId ? (
         // Compact mode — opened from a log tile with the symptom already chosen:
         // skip the picker, go straight to severity + note.
+        site ? (
+          <View style={styles.lockedHead}>
+            <SiteSticker name={menoSticker(initialId)} size={40} />
+            <Text style={[styles.lockedLabel, { color: colors.text, fontFamily: font.display, letterSpacing: 0.3, textTransform: 'uppercase' }]}>
+              {menopauseSymptomLabel(initialId)}
+            </Text>
+          </View>
+        ) : (
         <View style={styles.lockedHead}>
           <View style={[styles.lockedIcon, { backgroundColor: st[`${symptomStickerKey(initialId)}Soft`], borderColor: pal.border }]}>
             <Character name={symptomBlob(initialId)} size={22} color={st[`${symptomStickerKey(initialId)}Ink`]} bg={st[`${symptomStickerKey(initialId)}Soft`]} />
@@ -99,6 +123,29 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
             {menopauseSymptomLabel(initialId)}
           </Text>
         </View>
+        )
+      ) : (
+      site ? (
+      <>
+      <SiteEyebrow>{COPY.symptomPick}</SiteEyebrow>
+      {GROUP_ORDER.map((group) => (
+        <View key={group} style={{ gap: 4 }}>
+          <SiteEyebrow>{GROUP_META[group].label}</SiteEyebrow>
+          <View style={styles.stickerWrap}>
+            {ALL_MENOPAUSE_SYMPTOMS.filter((s) => s.group === group).map((s) => (
+              <StickerChoice
+                key={s.id}
+                label={s.label}
+                sticker={menoSticker(s.id)}
+                on={symptomId === s.id}
+                onPress={() => setSymptomId(s.id)}
+                tone={pal.accentSoft}
+              />
+            ))}
+          </View>
+        </View>
+      ))}
+      </>
       ) : (
       <>
       <Text style={[styles.sectionLabel, { color: pal.textMuted, fontFamily: pal.fontBodySemiBold }]}>
@@ -132,14 +179,34 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
         )
       })}
       </>
+      )
       )}
 
       {symptomId && (
         <View style={styles.severityBlock}>
+          {site ? <SiteEyebrow>{COPY.severityQ}</SiteEyebrow> : (
           <Text style={[styles.sectionLabel, { color: pal.textMuted, fontFamily: pal.fontBodySemiBold }]}>
             {COPY.severityQ}
           </Text>
+          )}
+          {site ? (
+            <View style={styles.severityRow}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <SiteChoice
+                  key={n}
+                  label={String(n)}
+                  selected={severity === n}
+                  onPress={() => setSeverity(n)}
+                  tone={pal.accentSoft}
+                  compact
+                  tick={false}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+          ) : (
           <StepSlider min={1} max={5} value={severity} onChange={setSeverity} color={pal.accent} />
+          )}
           <Text style={[styles.severityHint, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
             {COPY.severityHint[severity - 1]}
           </Text>
@@ -147,9 +214,11 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
       )}
 
       <View style={styles.noteBlock}>
+        {site ? <SiteEyebrow>{COPY.noteLabel}</SiteEyebrow> : (
         <Text style={[styles.sectionLabel, { color: pal.textMuted, fontFamily: pal.fontBodySemiBold }]}>
           {COPY.noteLabel}
         </Text>
+        )}
         <TextInput
           value={notes}
           onChangeText={setNotes}
@@ -160,10 +229,12 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
             styles.noteInput,
             {
               backgroundColor: pal.surface,
-              borderColor: pal.border,
-              borderRadius: pal.radius.md,
+              borderColor: site ? colors.text : pal.border,
+              borderWidth: site ? 1.5 : 1,
+              borderRadius: site ? 14 : pal.radius.md,
               color: pal.text,
               fontFamily: pal.fontBody,
+              fontSize: site ? 16 : 15,
             },
           ]}
         />
@@ -171,7 +242,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
 
       <SheetFooterAction>
         <View style={{ alignItems: 'center' }}>
-          <EyeAction label={COPY.save} onPress={handleSave} ink={useTheme().colors.text} loading={saving} disabled={!symptomId || saving} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+          <EyeAction label={COPY.save} onPress={handleSave} ink={colors.text} loading={saving} disabled={!symptomId || saving} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
         </View>
       </SheetFooterAction>
     </View>
@@ -192,6 +263,8 @@ const FLOW_OPTIONS: { id: Flow; label: string }[] = [
 
 export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void; logDate?: string }) {
   const pal = useMenoPalette()
+  const { colors } = useTheme()
+  const site = !pal.diffuse
   const [flow, setFlow] = useState<Flow | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -227,6 +300,29 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
 
   return (
     <View style={styles.form}>
+      {site ? (
+        <>
+          <View style={styles.periodHead}>
+            <SiteSticker name={menoSticker('period')} size={44} />
+            <SiteEyebrow>{COPY.periodQ}</SiteEyebrow>
+          </View>
+          <View style={styles.severityRow}>
+            {FLOW_OPTIONS.map((o) => (
+              <SiteChoice
+                key={o.id}
+                label={o.label}
+                selected={flow === o.id}
+                onPress={() => setFlow(o.id)}
+                tone={pal.accentSoft}
+                compact
+                tick={false}
+                style={{ flex: 1 }}
+              />
+            ))}
+          </View>
+        </>
+      ) : (
+        <>
       <View style={styles.periodHead}>
         <View style={[styles.periodIcon, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
           <Character name="period" size={30} color={pal.accent} bg={pal.bg} />
@@ -247,6 +343,8 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
           />
         ))}
       </View>
+        </>
+      )}
 
       <Text style={[styles.periodNote, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
         {COPY.periodNote}
@@ -254,7 +352,7 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
 
       <SheetFooterAction>
         <View style={{ alignItems: 'center' }}>
-          <EyeAction label={COPY.save} onPress={handleSave} ink={useTheme().colors.text} loading={saving} disabled={!flow || saving} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+          <EyeAction label={COPY.save} onPress={handleSave} ink={colors.text} loading={saving} disabled={!flow || saving} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
         </View>
       </SheetFooterAction>
     </View>
@@ -329,6 +427,8 @@ const styles = StyleSheet.create({
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   groupLabel: { fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  stickerWrap: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 },
+  severityRow: { flexDirection: 'row', gap: 8 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1 },
   chipText: { fontSize: 14.5 },
 

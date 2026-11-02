@@ -10,6 +10,8 @@ import { useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { diffuseFont, useTheme } from '../../constants/theme'
 import { symptomStickerKey } from './menopauseIcons'
+import { SiteSticker } from '../stickers/SiteSticker'
+import { menoSticker } from './MenopauseLogSheet'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
 
@@ -26,7 +28,7 @@ export function MenopauseWeekStrip({
   pal: MenoPalette
   onDatePress: (date: string) => void
 }) {
-  const { stickers } = useTheme()
+  const { stickers, colors, font } = useTheme()
   const s = stickers as Record<string, string>
 
   const days = useMemo(() => {
@@ -59,6 +61,35 @@ export function MenopauseWeekStrip({
       {days.map((day) => {
         const logged = day.logs.length > 0
         const hue = logged ? s[symptomStickerKey(day.logs[0].type)] : null
+        if (!pal.diffuse) {
+          // Site look: card-less day cells — today = soft tone + ink outline; a logged day shows its sticker.
+          return (
+            <Pressable
+              key={day.key}
+              onPress={() => onDatePress(day.key)}
+              accessibilityRole="button"
+              accessibilityLabel={`Log for ${day.weekday} ${day.dayNum}`}
+              style={({ pressed }) => [
+                styles.cell,
+                {
+                  backgroundColor: day.isToday ? pal.accentSoft : 'transparent',
+                  borderColor: day.isToday ? colors.text : 'transparent',
+                  borderWidth: 1.5,
+                  borderRadius: 14,
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
+                {day.weekday}
+              </Text>
+              <Text style={{ fontFamily: font.displayBold, fontSize: 17, lineHeight: 20, color: colors.text }}>{day.dayNum}</Text>
+              <View style={{ height: 16, alignItems: 'center', justifyContent: 'center' }}>
+                {logged ? <SiteSticker name={menoSticker(day.logs[0].type)} size={16} /> : null}
+              </View>
+            </Pressable>
+          )
+        }
         return (
           <Pressable
             key={day.key}

@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { Character } from '../characters/Characters'
 import { diffuseFont, useTheme } from '../../constants/theme'
 import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
+import { SiteSticker } from '../stickers/SiteSticker'
+import { menoSticker } from './MenopauseLogSheet'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
 
@@ -42,7 +44,7 @@ export function MenopauseRing({
 }) {
   // Sticker palette is shared across both variants (stickers stay active under
   // Diffuse) — used only for the soft "all clear" check tone.
-  const { stickers } = useTheme()
+  const { stickers, colors, font } = useTheme()
   const checkColor = stickers.greenInk
   const sticker = stickers as Record<string, string>
 
@@ -80,6 +82,19 @@ export function MenopauseRing({
       <View style={[styles.guide, { borderColor: pal.border }]} />
 
       {/* Center counter — stage + months-since-last-period. */}
+      {!pal.diffuse ? (
+      <View style={styles.center} pointerEvents="none">
+        <Text style={{ fontSize: 10, letterSpacing: 1.4, textAlign: 'center', color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }} numberOfLines={1}>
+          {stageLabel.toUpperCase()}
+        </Text>
+        <Text style={{ fontSize: 64, lineHeight: 70, color: colors.text, fontFamily: font.displayBold }}>
+          {months === null ? '—' : months}
+        </Text>
+        <Text style={[styles.caption, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
+          {monthsCaption}
+        </Text>
+      </View>
+      ) : (
       <View style={styles.center} pointerEvents="none">
         <Text
           style={[
@@ -97,6 +112,7 @@ export function MenopauseRing({
           {monthsCaption}
         </Text>
       </View>
+      )}
 
       {/* Day nodes. */}
       {nodes.map((n) => {
@@ -106,6 +122,28 @@ export function MenopauseRing({
         const hue = key ? sticker[key] : pal.accent
         const hueSoft = key ? sticker[`${key}Soft`] : pal.accentSoft
         const hueInk = key ? sticker[`${key}Ink`] : pal.accent
+        if (!pal.diffuse) {
+          // Site look: quiet ink-outlined dots; a logged day carries its sticker on a soft tone.
+          return (
+            <View
+              key={n.key}
+              style={[
+                styles.node,
+                { left: n.x, top: n.y },
+                logged
+                  ? { backgroundColor: hueSoft, borderColor: colors.text, borderWidth: 1.5 }
+                  : { backgroundColor: colors.surface, borderColor: colors.textFaint, borderWidth: 1 },
+                n.isToday ? { borderWidth: 2, borderColor: colors.text } : null,
+              ]}
+            >
+              {logged ? (
+                <SiteSticker name={menoSticker(n.logs[0].type)} size={16} />
+              ) : n.isToday ? (
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.text }} />
+              ) : null}
+            </View>
+          )
+        }
         return (
           <View
             key={n.key}

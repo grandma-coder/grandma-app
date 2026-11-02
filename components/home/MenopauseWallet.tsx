@@ -23,6 +23,9 @@ import { QuietPill } from '../ui/QuietPill'
 import { Character } from '../characters/Characters'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
+import { StickerTileGrid } from '../ui/StickerTileGrid'
+import { Display } from '../ui/Typography'
+import type { SiteStickerName } from '../stickers/SiteSticker'
 
 type MenoWalletId = 'ask_grandma' | 'reminders' | 'rewards' | 'community'
 
@@ -94,6 +97,42 @@ export function MenopauseWallet() {
     icon: iconFor(id),
     soft: softFor(id),
   }))
+
+  const SITE_STICKER: Record<MenoWalletId, SiteStickerName> = {
+    ask_grandma: 'bubble', reminders: 'bell', rewards: 'star', community: 'house',
+  }
+
+  // Site look: heading + edit on one row, shortcuts as a sticker tile grid.
+  if (!diffuse) {
+    return (
+      <View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 12 }}>
+          <Display size={18} style={{ flex: 1 }}>{t('home_wallet_label')}</Display>
+          <QuietPill
+            leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
+            onPress={() => setPickerOpen(true)}
+            accessibilityLabel={t('kids_quickLogs_edit')}
+          />
+        </View>
+        <StickerTileGrid
+          tiles={displayedIds.map((id) => ({
+            key: id,
+            label: titleFor(id),
+            sticker: SITE_STICKER[id],
+            tone: softFor(id),
+            onPress: () => onHeader(id),
+          }))}
+        />
+        <WalletPicker
+          visible={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          items={pickerItems}
+          enabledKeys={displayedIds}
+          onSave={setEnabled}
+        />
+      </View>
+    )
+  }
 
   return (
     <View>

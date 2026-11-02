@@ -41,7 +41,9 @@ import { useTranslation } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
 import { MenopauseRing } from '../menopause/MenopauseRing'
 import { MenopauseWeekStrip } from '../menopause/MenopauseWeekStrip'
-import { MenopauseLogSheet, type MenopauseLogPick } from '../menopause/MenopauseLogSheet'
+import { MenopauseLogSheet, menoSticker, type MenopauseLogPick } from '../menopause/MenopauseLogSheet'
+import { LogDock, type LogDockItem } from '../ui/LogDock'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { QuietPill } from '../ui/QuietPill'
 import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { SlidersHorizontal } from 'lucide-react-native'
@@ -58,6 +60,7 @@ import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnaly
 import {
   ALL_MENOPAUSE_SYMPTOMS,
   menopauseSymptomLabel,
+  resolveMenopauseSymptomId,
   type MenopauseSymptomId,
 } from '../../lib/menopauseSymptoms'
 import { supabase } from '../../lib/supabase'
@@ -78,6 +81,17 @@ const WISDOM: Record<MenopauseStage, string> = {
 }
 
 const WISDOM_FALLBACK = 'However this season arrives, you do not have to navigate it alone.'
+
+// Short labels for the 5-per-row log dock (full names stay in the log sheet).
+const DOCK_LABEL: Record<MenopauseSymptomId, string> = {
+  hot_flash: 'Hot flash', night_sweat: 'Sweats', sleep: 'Sleep', fatigue: 'Fatigue',
+  low_mood: 'Mood', anxiety: 'Anxiety', brain_fog: 'Fog', joint_pain: 'Joints',
+  headache: 'Head', palpitations: 'Heart', weight: 'Weight', vaginal_dryness: 'Dryness', libido: 'Libido',
+}
+
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -135,7 +149,9 @@ export function MenopauseHome() {
       ALL_MENOPAUSE_SYMPTOMS.map((s) => ({
         key: s.id,
         label: menopauseSymptomLabel(s.id),
-        icon: <Character name={symptomBlob(s.id)} size={26} color={hueInkOf(s.id)} />,
+        icon: pal.diffuse
+          ? <Character name={symptomBlob(s.id)} size={26} color={hueInkOf(s.id)} />
+          : <SiteSticker name={menoSticker(s.id)} size={26} />,
         soft: hueSoftOf(s.id),
       })),
     [stickers], // eslint-disable-line react-hooks/exhaustive-deps
@@ -214,6 +230,174 @@ export function MenopauseHome() {
     else { setPendingSymptom(type); setActiveSheet('symptom') }
   }
 
+  // Site look: tracked symptoms as a tab-bar-style sticker dock; a tick when logged today.
+  const todayStr = localDateStr(now)
+  const loggedToday = new Set<string>()
+  for (const r of rows) {
+    if (r.date !== todayStr) continue
+    const id = resolveMenopauseSymptomId(r.type)
+    if (id) loggedToday.add(id)
+  }
+  const dockItems: LogDockItem[] = [
+    ...trackedIds.map((id) => ({
+      key: id,
+      label: DOCK_LABEL[id] ?? menopauseSymptomLabel(id),
+      sticker: menoSticker(id),
+      done: loggedToday.has(id),
+      onPress: () => openSymptom(id),
+    })),
+    { key: 'more', label: 'More', sticker: 'pencil' as const, done: false, onPress: openMore },
+  ]
+
+        const offerBlock = showOffer && (
+          pal.diffuse ? (
+            <View style={[styles.section, styles.diffuseSoftCard, { backgroundColor: pal.accentSoft, borderColor: pal.accent, borderRadius: pal.radius.lg }]}>
+              <DiffuseSectionHeader
+                title="A gentle milestone"
+                icon={<Character name="celebrate" size={21} color={pal.accent} />}
+              />
+              <Text style={[styles.offerBody, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
+                It&apos;s been 12 months since your last period — many people consider this menopause.
+                Update your stage?
+              </Text>
+              <View style={styles.offerActions}>
+                <PillButton label="Update to menopause" variant="ink" onPress={confirmMenopause} loading={confirming} style={styles.offerCta} />
+                <Pressable
+                  onPress={() => setOfferDismissed(true)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Dismiss the menopause update prompt"
+                  style={styles.dismiss}
+                >
+                  <Text style={[styles.dismissText, { color: pal.textMuted, fontFamily: pal.fontBodyMedium }]}>Not now</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={18} borderColor={pal.accent} style={styles.section}>
+              <View style={styles.rowHead}>
+                <SiteSticker name="star" size={28} />
+                <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>A gentle milestone</Text>
+              </View>
+              <Text style={[styles.offerBody, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
+                It&apos;s been 12 months since your last period — many people consider this menopause.
+                Update your stage?
+              </Text>
+              <View style={styles.offerActions}>
+                <PillButton label="Update to menopause" variant="ink" onPress={confirmMenopause} loading={confirming} style={styles.offerCta} />
+                <Pressable
+                  onPress={() => setOfferDismissed(true)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Dismiss the menopause update prompt"
+                  style={styles.dismiss}
+                >
+                  <Text style={[styles.dismissText, { color: pal.textMuted, fontFamily: pal.fontBodyMedium }]}>Not now</Text>
+                </Pressable>
+              </View>
+            </PaperCard>
+          )
+        )
+const quickBlock = (
+          pal.diffuse ? (
+          <View style={styles.section}>
+            <DiffuseSectionHeader
+              eyebrow="TODAY"
+              title="Quick log"
+              right={
+                <QuietPill
+                  leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
+                  onPress={() => setQuickPickerOpen(true)}
+                  accessibilityLabel="Edit quick-log signals"
+                />
+              }
+            />
+            <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
+              Tap a signal to note how you&apos;re feeling today.
+            </Text>
+            <View style={styles.chipWrap}>
+              {trackedIds.map((id) => (
+                <QuickChip key={id} id={id} pal={pal} onPress={() => openSymptom(id)} />
+              ))}
+              <MoreChip pal={pal} onPress={openMore} />
+            </View>
+          </View>
+        ) : (
+          <View style={styles.section}>
+            <View style={styles.quickHead}>
+              <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Quick log</Text>
+              <QuietPill
+                leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
+                onPress={() => setQuickPickerOpen(true)}
+                accessibilityLabel="Edit quick-log signals"
+              />
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <LogDock items={dockItems} accent={pal.accent} />
+            </View>
+          </View>
+        ))
+const wisdomBlock = (
+          pal.diffuse ? (
+          <View style={[styles.section, styles.diffuseSoftCard, { backgroundColor: pal.accentSoft, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
+            <DiffuseSectionHeader
+              eyebrow="FROM GRANDMA"
+              title="A note for today"
+              icon={<Character name="selfcare" size={21} color={pal.accent} />}
+            />
+            <Text style={[styles.wisdomText, { color: pal.text, fontFamily: pal.fontDisplay }]}>{wisdomLine}</Text>
+          </View>
+        ) : (
+          <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={18} style={styles.section}>
+            <View style={styles.rowHead}>
+              <SiteSticker name="owl" size={28} />
+              <Text style={[styles.eyebrow, { color: pal.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, fontSize: 10 }]}>FROM GRANDMA</Text>
+            </View>
+            <Text style={[styles.wisdomText, { color: pal.text, fontFamily: pal.fontBody, fontSize: 16, lineHeight: 24, letterSpacing: 0 }]}>{wisdomLine}</Text>
+          </PaperCard>
+        ))
+const periodBlock = stage === 'peri' && (
+          pal.diffuse ? (
+            <View style={[styles.section, styles.diffuseSoftCard, { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
+              <View style={styles.periodRow}>
+                <View style={[styles.periodBlob, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
+                  <Character name="period" size={24} color={pal.accent} bg={pal.accentSoft} />
+                </View>
+                <View style={styles.periodCopy}>
+                  <Text style={[styles.cardTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Still spotting?</Text>
+                  <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
+                    Log a period to keep your counter accurate.
+                  </Text>
+                </View>
+              </View>
+              <PillButton label="Log a period" variant="ink" onPress={() => setActiveSheet('period')} style={styles.periodCta} />
+            </View>
+          ) : (
+            <PaperCard radius={pal.radius.lg} padding={18} style={styles.section}>
+              <View style={styles.periodRow}>
+                <SiteSticker name="drop" size={44} />
+                <View style={styles.periodCopy}>
+                  <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Still spotting?</Text>
+                  <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
+                    Log a period to keep your counter accurate.
+                  </Text>
+                </View>
+              </View>
+              <PillButton label="Log a period" variant="ink" onPress={() => setActiveSheet('period')} style={styles.periodCta} />
+            </PaperCard>
+          )
+        )
+const walletBlock = (
+<View style={styles.section}>
+          {pal.diffuse ? (
+            <Text style={[styles.walletHeading, { color: pal.text, fontFamily: pal.fontDisplay }]}>
+              {t('home_wallet_label')}
+            </Text>
+          ) : null}
+          <MenopauseWallet />
+        </View>
+)
+
   return (
     <View style={[styles.root, { backgroundColor: pal.bg }]}>
       <ScrollView
@@ -244,173 +428,31 @@ export function MenopauseHome() {
           <MenopauseWeekStrip rows={rows} pal={pal} onDatePress={openLogForDate} />
         </View>
 
-        {/* ─── 12-month offer — never automatic; a warm, dismissible prompt ─── */}
-        {showOffer && (
-          pal.diffuse ? (
-            <View style={[styles.section, styles.diffuseSoftCard, { backgroundColor: pal.accentSoft, borderColor: pal.accent, borderRadius: pal.radius.lg }]}>
-              <DiffuseSectionHeader
-                title="A gentle milestone"
-                icon={<Character name="celebrate" size={21} color={pal.accent} />}
-              />
-              <Text style={[styles.offerBody, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
-                It&apos;s been 12 months since your last period — many people consider this menopause.
-                Update your stage?
-              </Text>
-              <View style={styles.offerActions}>
-                <PillButton label="Update to menopause" variant="ink" onPress={confirmMenopause} loading={confirming} style={styles.offerCta} />
-                <Pressable
-                  onPress={() => setOfferDismissed(true)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Dismiss the menopause update prompt"
-                  style={styles.dismiss}
-                >
-                  <Text style={[styles.dismissText, { color: pal.textMuted, fontFamily: pal.fontBodyMedium }]}>Not now</Text>
-                </Pressable>
-              </View>
-            </View>
-          ) : (
-            <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={18} borderColor={pal.accent} style={styles.section}>
-              <View style={styles.rowHead}>
-                <Character name="celebrate" size={22} color={pal.accent} bg={pal.accentSoft} />
-                <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>A gentle milestone</Text>
-              </View>
-              <Text style={[styles.offerBody, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
-                It&apos;s been 12 months since your last period — many people consider this menopause.
-                Update your stage?
-              </Text>
-              <View style={styles.offerActions}>
-                <PillButton label="Update to menopause" variant="ink" onPress={confirmMenopause} loading={confirming} style={styles.offerCta} />
-                <Pressable
-                  onPress={() => setOfferDismissed(true)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Dismiss the menopause update prompt"
-                  style={styles.dismiss}
-                >
-                  <Text style={[styles.dismissText, { color: pal.textMuted, fontFamily: pal.fontBodyMedium }]}>Not now</Text>
-                </Pressable>
-              </View>
-            </PaperCard>
-          )
-        )}
-
-        {/* ─── Quick log — tracked symptoms → reuse U7's symptom form ───────── */}
+        {/* Diffuse keeps its original order; the site look runs hero → log dock →
+            quick access tiles → quiet cards. */}
         {pal.diffuse ? (
-          <View style={styles.section}>
-            <DiffuseSectionHeader
-              eyebrow="TODAY"
-              title="Quick log"
-              right={
-                <QuietPill
-                  leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
-                  onPress={() => setQuickPickerOpen(true)}
-                  accessibilityLabel="Edit quick-log signals"
-                />
-              }
-            />
-            <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
-              Tap a signal to note how you&apos;re feeling today.
-            </Text>
-            <View style={styles.chipWrap}>
-              {trackedIds.map((id) => (
-                <QuickChip key={id} id={id} pal={pal} onPress={() => openSymptom(id)} />
-              ))}
-              <MoreChip pal={pal} onPress={openMore} />
-            </View>
-          </View>
+          <>
+            {offerBlock}
+            {quickBlock}
+            {wisdomBlock}
+            {periodBlock}
+            {walletBlock}
+          </>
         ) : (
-          <PaperCard radius={pal.radius.lg} padding={18} style={styles.section}>
-            <View style={styles.quickHead}>
-              <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Quick log</Text>
-              <QuietPill
-                leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
-                onPress={() => setQuickPickerOpen(true)}
-                accessibilityLabel="Edit quick-log signals"
-              />
-            </View>
-            <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
-              Tap a signal to note how you&apos;re feeling today.
-            </Text>
-            <View style={styles.chipWrap}>
-              {trackedIds.map((id) => (
-                <QuickChip key={id} id={id} pal={pal} onPress={() => openSymptom(id)} />
-              ))}
-              <MoreChip pal={pal} onPress={openMore} />
-            </View>
-          </PaperCard>
+          <>
+            {quickBlock}
+            {walletBlock}
+            {offerBlock}
+            {wisdomBlock}
+            {periodBlock}
+          </>
         )}
-
-        {/* Recent moved to the Agenda tab (MenopauseTimeline) — the date-grouped
-            log timeline, mirroring where cycle/kids surface their logged entries. */}
-
-        {/* ─── Grandma Wisdom — one stage-appropriate line ─────────────────── */}
-        {pal.diffuse ? (
-          <View style={[styles.section, styles.diffuseSoftCard, { backgroundColor: pal.accentSoft, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
-            <DiffuseSectionHeader
-              eyebrow="FROM GRANDMA"
-              title="A note for today"
-              icon={<Character name="selfcare" size={21} color={pal.accent} />}
-            />
-            <Text style={[styles.wisdomText, { color: pal.text, fontFamily: pal.fontDisplay }]}>{wisdomLine}</Text>
-          </View>
-        ) : (
-          <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={18} style={styles.section}>
-            <View style={styles.rowHead}>
-              <Character name="selfcare" size={22} color={pal.accent} bg={pal.accentSoft} />
-              <Text style={[styles.eyebrow, { color: pal.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, fontSize: 10 }]}>FROM GRANDMA</Text>
-            </View>
-            <Text style={[styles.wisdomText, { color: pal.text, fontFamily: pal.fontDisplay }]}>{wisdomLine}</Text>
-          </PaperCard>
-        )}
-
-        {/* ─── Peri only — log a period affordance ─────────────────────────── */}
-        {stage === 'peri' && (
-          pal.diffuse ? (
-            <View style={[styles.section, styles.diffuseSoftCard, { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
-              <View style={styles.periodRow}>
-                <View style={[styles.periodBlob, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
-                  <Character name="period" size={24} color={pal.accent} bg={pal.accentSoft} />
-                </View>
-                <View style={styles.periodCopy}>
-                  <Text style={[styles.cardTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Still spotting?</Text>
-                  <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
-                    Log a period to keep your counter accurate.
-                  </Text>
-                </View>
-              </View>
-              <PillButton label="Log a period" variant="ink" onPress={() => setActiveSheet('period')} style={styles.periodCta} />
-            </View>
-          ) : (
-            <PaperCard radius={pal.radius.lg} padding={18} style={styles.section}>
-              <View style={styles.periodRow}>
-                <View style={[styles.periodBlob, { backgroundColor: pal.accentSoft, borderColor: pal.border }]}>
-                  <Character name="period" size={24} color={pal.accent} bg={pal.accentSoft} />
-                </View>
-                <View style={styles.periodCopy}>
-                  <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Still spotting?</Text>
-                  <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
-                    Log a period to keep your counter accurate.
-                  </Text>
-                </View>
-              </View>
-              <PillButton label="Log a period" variant="ink" onPress={() => setActiveSheet('period')} style={styles.periodCta} />
-            </PaperCard>
-          )
-        )}
-
-        {/* ─── Wallet — the shared "Quick access" stack every behavior home has ─ */}
-        <View style={styles.section}>
-          <Text style={[styles.walletHeading, !pal.diffuse && styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>
-            {t('home_wallet_label')}
-          </Text>
-          <MenopauseWallet />
-        </View>
       </ScrollView>
 
       {/* Reused U7 log sheets — the parent supplies the sheet shell + title. */}
       <LogSheet
         visible={activeSheet === 'symptom'}
+        sticker={pendingSymptom ? menoSticker(pendingSymptom) : 'pencil'}
         title="Log a symptom"
         onClose={() => { setActiveSheet(null); setLogDate(null) }}
       >
@@ -422,6 +464,7 @@ export function MenopauseHome() {
       </LogSheet>
       <LogSheet
         visible={activeSheet === 'period'}
+        sticker="drop"
         title="Log a period"
         onClose={() => { setActiveSheet(null); setLogDate(null) }}
       >

@@ -35,6 +35,9 @@ import {
 } from '../../lib/menopauseAnalytics'
 import { menopauseSymptomLabel, type MenopauseSymptomId } from '../../lib/menopauseSymptoms'
 import { symptomBlob } from '../menopause/menopauseIcons'
+import { menoSticker } from '../menopause/MenopauseLogSheet'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { useTheme } from '../../constants/theme'
 import { monthsSinceDate, type MenopauseStage } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 
@@ -103,6 +106,66 @@ export function MenopauseAnalytics() {
     months == null
       ? 'Tracking your symptoms over time'
       : `${months} ${months === 1 ? 'month' : 'months'} since your last period`
+
+  // ── Site look (light): card-less sections, sticker rows, thin bars with true values ──
+  if (!palette.diffuse) {
+    const lastVaso = vaso.slice(-14)
+    const vasoAvg = vaso.length ? vasoTotal / vaso.length : 0
+    return (
+      <View style={[styles.root, { backgroundColor: palette.bg }]}>
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
+          <AnalyticsHeader hide />
+          <SiteHero stageWord={stageWord} heroLine={heroLine} />
+          {stage === 'peri' && <SiteMonths months={months} palette={palette} />}
+          {!hasData ? (
+            <SiteEmpty />
+          ) : (
+            <>
+              <SiteSection eyebrow="HOT FLASHES & NIGHT SWEATS">
+                <View style={siteStyles.bigRow}>
+                  <SiteSticker name="flame" size={40} />
+                  <SiteBigNumber value={String(vasoTotal)} unit={vasoTotal === 1 ? 'event in total' : 'events in total'} />
+                </View>
+                {vaso.length >= 1 ? (
+                  <>
+                    <SiteNote>{`Average ${vasoAvg.toFixed(1)} per day with events · bars show events per day (last ${lastVaso.length} days)`}</SiteNote>
+                    <SiteBars values={lastVaso.map((d) => d.count)} labels={lastVaso.map((d) => shortDate(d.date))} tone={palette.accentSoft} capped />
+                  </>
+                ) : (
+                  <SiteNote>Log a hot flash or night sweat to see your rhythm.</SiteNote>
+                )}
+              </SiteSection>
+
+              {symptomStats.length > 0 && (
+                <SiteSection eyebrow="TOP SYMPTOMS">
+                  <SiteNote>Bar and number = total times logged · average severity per entry, out of 5</SiteNote>
+                  {symptomStats.slice(0, 6).map((s, i) => (
+                    <SiteSymptomRow
+                      key={s.id}
+                      first={i === 0}
+                      sticker={menoSticker(s.id)}
+                      label={menopauseSymptomLabel(s.id as MenopauseSymptomId)}
+                      count={s.count}
+                      max={symptomStats[0].count}
+                      sub={s.avgSeverity > 0 ? `avg ${s.avgSeverity.toFixed(1)}/5` : `${s.count === 1 ? 'time' : 'times'}`}
+                      tone={palette.accentSoft}
+                    />
+                  ))}
+                </SiteSection>
+              )}
+
+              <SiteSection eyebrow="SLEEP & MOOD SEVERITY">
+                <SiteNote>Average severity on each day you logged it, 1 (barely there) to 5 (intense)</SiteNote>
+                <SiteTrend sticker="zz" title="Sleep trouble" series={sleepSeries} tone={palette.accentSoft} />
+                <View style={{ height: 14 }} />
+                <SiteTrend sticker="face1" title="Low mood" series={moodSeries} tone={palette.accentSoft} />
+              </SiteSection>
+            </>
+          )}
+        </ScrollView>
+      </View>
+    )
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: palette.bg }]}>
@@ -436,6 +499,179 @@ function FallbackLine({ palette, text }: { palette: MenoPalette; text: string })
     </View>
   )
 }
+
+/* ── Site look (light) building blocks ─────────────────────────────────── */
+
+const SITE_MONO = 'SpaceMono_400Regular'
+
+function SiteEyebrow({ children }: { children: string }) {
+  const { colors } = useTheme()
+  return (
+    <Text style={{ fontFamily: SITE_MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>
+      {children}
+    </Text>
+  )
+}
+
+function SiteNote({ children }: { children: string }) {
+  const { colors, font } = useTheme()
+  return <Text style={{ fontFamily: font.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginTop: 6 }}>{children}</Text>
+}
+
+function SiteSection({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
+  const { colors } = useTheme()
+  return (
+    <View style={[siteStyles.section, { borderTopColor: colors.border }]}>
+      <SiteEyebrow>{eyebrow}</SiteEyebrow>
+      {children}
+    </View>
+  )
+}
+
+function SiteBigNumber({ value, unit }: { value: string; unit?: string }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, flexShrink: 1 }}>
+      <Text style={{ fontFamily: font.displayBold, fontSize: 44, lineHeight: 48, color: colors.text }}>{value}</Text>
+      {unit ? <Text style={{ fontFamily: font.body, fontSize: 14, color: colors.textSecondary, paddingBottom: 6, flexShrink: 1 }}>{unit}</Text> : null}
+    </View>
+  )
+}
+
+function SiteHero({ stageWord, heroLine }: { stageWord: string; heroLine: string }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View style={{ flex: 1 }}>
+        <SiteEyebrow>YOUR MENOPAUSE</SiteEyebrow>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: font.display, fontSize: 30, lineHeight: 36, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text, marginTop: 4 }}>
+          {stageWord}
+        </Text>
+        <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 21, color: colors.textSecondary, marginTop: 4 }}>{heroLine}</Text>
+      </View>
+      <SiteSticker name="thermo" size={52} />
+    </View>
+  )
+}
+
+/** Months since last period: one big number + 12 thin ink-outlined segments. */
+function SiteMonths({ months, palette }: { months: number | null; palette: MenoPalette }) {
+  const { colors, font } = useTheme()
+  const filled = months == null ? 0 : Math.min(months, MONTH_PIPS)
+  return (
+    <SiteSection eyebrow="SINCE YOUR LAST PERIOD">
+      <View style={siteStyles.bigRow}>
+        <SiteSticker name="cal" size={40} />
+        <SiteBigNumber value={months == null ? '—' : String(months)} unit={months == null ? 'log your last period' : months === 1 ? 'month' : 'months'} />
+      </View>
+      <View style={siteStyles.pipRow}>
+        {Array.from({ length: MONTH_PIPS }, (_, i) => (
+          <View key={i} style={[siteStyles.pip, { borderColor: i < filled ? colors.text : colors.border, backgroundColor: i < filled ? palette.accentSoft : 'transparent' }]} />
+        ))}
+      </View>
+      {months != null && months >= MONTH_PIPS ? (
+        <Text style={{ fontFamily: font.body, fontSize: 12, lineHeight: 18, color: colors.textSecondary, marginTop: 10 }}>
+          Many people consider 12 months a natural milestone — it&apos;s a conversation to have with your clinician, not a diagnosis here.
+        </Text>
+      ) : null}
+    </SiteSection>
+  )
+}
+
+/** Thin vertical bars: soft tone + ink outline, the real value printed above each bar.
+ *  `capped` clips the bar height of absurd outliers (value label still shows the truth). */
+function SiteBars({ values, labels, tone, capped = false, fixedMax }: { values: number[]; labels: string[]; tone: string; capped?: boolean; fixedMax?: number }) {
+  const { colors, font } = useTheme()
+  const H = 84
+  const max = Math.max(...values, 1)
+  let scaleMax = fixedMax ?? max
+  if (capped && !fixedMax) {
+    const sorted = [...values].sort((a, b) => a - b)
+    const median = sorted[Math.floor(sorted.length / 2)] || 1
+    scaleMax = Math.min(max, Math.max(median * 3, 4))
+  }
+  const fmt = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1))
+  return (
+    <View style={{ marginTop: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: H + 18, gap: 4 }}>
+        {values.map((v, i) => {
+          const clipped = v > scaleMax
+          const h = Math.max(4, Math.round((Math.min(v, scaleMax) / scaleMax) * H))
+          return (
+            <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 10, color: colors.text, marginBottom: 2 }}>{fmt(v)}{clipped ? '+' : ''}</Text>
+              <View style={{ width: 12, height: h, borderRadius: 6, borderWidth: 1.5, borderColor: colors.text, backgroundColor: tone }} />
+            </View>
+          )
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 4, marginTop: 4 }}>
+        {labels.map((l, i) => (
+          <Text key={i} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ flex: 1, textAlign: 'center', fontFamily: SITE_MONO, fontSize: 8, color: colors.textMuted }}>{l}</Text>
+        ))}
+      </View>
+    </View>
+  )
+}
+
+function SiteTrend({ sticker, title, series, tone }: { sticker: SiteStickerName; title: string; series: { data: number[]; labels: string[] }; tone: string }) {
+  const { colors, font } = useTheme()
+  const data = series.data.slice(-14)
+  const labels = series.labels.slice(-14)
+  return (
+    <View style={{ marginTop: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <SiteSticker name={sticker} size={32} />
+        <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{title}</Text>
+      </View>
+      {data.length >= 1 ? (
+        <SiteBars values={data} labels={labels} tone={tone} fixedMax={5} />
+      ) : (
+        <SiteNote>Not logged yet — nothing to chart.</SiteNote>
+      )}
+    </View>
+  )
+}
+
+function SiteSymptomRow({ first, sticker, label, count, max, sub, tone }: { first: boolean; sticker: SiteStickerName; label: string; count: number; max: number; sub: string; tone: string }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={[siteStyles.symRow, !first && { borderTopWidth: 1, borderTopColor: colors.border }]}>
+      <SiteSticker name={sticker} size={36} />
+      <View style={{ flex: 1, gap: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+          <Text numberOfLines={1} style={{ flex: 1, fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{label}</Text>
+          <Text style={{ fontFamily: font.displayBold, fontSize: 18, color: colors.text }}>{count}</Text>
+        </View>
+        <View style={{ height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: colors.text, overflow: 'hidden', backgroundColor: colors.surface }}>
+          <View style={{ width: `${Math.max(6, Math.round((count / Math.max(max, 1)) * 100))}%`, height: '100%', backgroundColor: tone }} />
+        </View>
+        <Text style={{ fontFamily: font.body, fontSize: 12, color: colors.textSecondary }}>{sub}</Text>
+      </View>
+    </View>
+  )
+}
+
+function SiteEmpty() {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingVertical: 36, gap: 8 }}>
+      <SiteSticker name="bars" size={64} />
+      <Text style={{ fontFamily: font.display, fontSize: 22, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text, marginTop: 6 }}>No patterns yet</Text>
+      <Text style={{ fontFamily: font.body, fontSize: 14, lineHeight: 20, textAlign: 'center', color: colors.textSecondary }}>
+        Log a few symptoms and your hot-flash rhythm, top symptoms, and sleep &amp; mood trends will show up here.
+      </Text>
+    </View>
+  )
+}
+
+const siteStyles = StyleSheet.create({
+  section: { marginHorizontal: 24, marginTop: 18, paddingTop: 18, borderTopWidth: 1 },
+  bigRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
+  pipRow: { flexDirection: 'row', gap: 4, marginTop: 14 },
+  pip: { flex: 1, height: 8, borderRadius: 4, borderWidth: 1.5 },
+  symRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+})
 
 const styles = StyleSheet.create({
   root: { flex: 1 },

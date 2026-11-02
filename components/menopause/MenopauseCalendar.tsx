@@ -22,7 +22,8 @@ import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnaly
 import { menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../../lib/menopauseSymptoms'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { MenopauseSymptomForm, MenopausePeriodForm } from './MenopauseLogForms'
-import { MenopauseLogSheet, type MenopauseLogPick } from './MenopauseLogSheet'
+import { MenopauseLogSheet, menoSticker, type MenopauseLogPick } from './MenopauseLogSheet'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from './menoPalette'
 import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
 
@@ -80,7 +81,7 @@ function capitalize(s: string): string {
 
 export function MenopauseCalendar() {
   const pal = useMenoPalette()
-  const { stickers } = useTheme()
+  const { stickers, colors, font } = useTheme()
   const dt = useDiffuseTheme()
   const s = stickers as Record<string, string>
   const insets = useSafeAreaInsets()
@@ -173,15 +174,10 @@ export function MenopauseCalendar() {
             />
           </View>
         ) : (
-        <View
-          style={[
-            styles.card,
-            { ...STICKER_SHADOW, shadowColor: pal.text },
-            { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg },
-          ]}
-        >
+        // Site look: card-less month — ink title row, mono weekdays, sticker on logged days.
+        <View style={styles.siteMonth}>
           <View style={styles.monthHead}>
-            <Text style={[styles.monthLabel, { color: pal.text, fontFamily: pal.fontDisplay }]}>{monthLabel}</Text>
+            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 22, letterSpacing: 0.3, textTransform: 'uppercase' }}>{monthLabel}</Text>
             <View style={styles.navRow}>
               <NavBtn dir="back" onPress={prevMonth} pal={pal} />
               <NavBtn dir="fwd" onPress={nextMonth} pal={pal} />
@@ -190,7 +186,7 @@ export function MenopauseCalendar() {
 
           <View style={styles.dowRow}>
             {DOW.map((d, i) => (
-              <Text key={i} style={[styles.dow, { color: pal.textMuted, fontFamily: pal.diffuse ? diffuseFont.mono : pal.fontBodySemiBold }]}>
+              <Text key={i} style={[styles.dow, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
                 {d}
               </Text>
             ))}
@@ -202,28 +198,31 @@ export function MenopauseCalendar() {
               const logged = c.inMonth && dayLogs.length > 0
               const isToday = c.date === today
               const isSelected = c.date === selectedDate
-              const hueKeys = logged ? [...new Set(dayLogs.map((l) => symptomStickerKey(l.type)))].slice(0, 3) : []
               return (
                 <Pressable
                   key={c.date}
                   onPress={() => setSelectedDate(c.date)}
-                  style={[
-                    styles.cell,
-                    {
-                      opacity: c.inMonth ? 1 : 0.3,
-                      backgroundColor: isSelected ? pal.accentSoft : 'transparent',
-                      borderColor: isSelected ? pal.accent : 'transparent',
-                      borderWidth: isSelected ? 1.5 : 0,
-                    },
-                  ]}
+                  accessibilityRole="button"
+                  style={[styles.cellWrap]}
                 >
-                  <Text style={[styles.dayNum, { color: pal.text, fontFamily: pal.fontDisplay }]}>{c.day}</Text>
-                  <View style={styles.dotSlot}>
-                    {hueKeys.map((k) => (
-                      <View key={k} style={[styles.dot, { backgroundColor: s[k] }]} />
-                    ))}
+                  <View
+                    style={[
+                      styles.cell,
+                      {
+                        width: '88%',
+                        opacity: c.inMonth ? 1 : 0.3,
+                        backgroundColor: isSelected ? pal.accentSoft : 'transparent',
+                        borderColor: isSelected || isToday ? colors.text : 'transparent',
+                        borderWidth: 1.5,
+                        borderRadius: 14,
+                      },
+                    ]}
+                  >
+                    <Text style={{ color: colors.text, fontFamily: isToday || isSelected ? font.bodyBold : font.body, fontSize: 14 }}>{c.day}</Text>
+                    <View style={styles.siteSlot}>
+                      {logged ? <SiteSticker name={menoSticker(dayLogs[0].type)} size={16} /> : null}
+                    </View>
                   </View>
-                  {isToday ? <View style={[styles.todayRing, { borderColor: pal.accent }]} pointerEvents="none" /> : null}
                 </Pressable>
               )
             })}
@@ -232,6 +231,48 @@ export function MenopauseCalendar() {
         )}
 
         {/* ─── Selected-day detail ───────────────────────────────────────── */}
+        {!pal.diffuse ? (
+          <View style={styles.detail}>
+            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 20, letterSpacing: 0.3, textTransform: 'uppercase' }}>
+              {formatLongDate(selectedDate)}
+              {selectedDate === today ? ' · Today' : ''}
+            </Text>
+            <Text style={{ color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 8 }}>
+              {COPY.loggedThisDay}
+            </Text>
+
+            {selectedLogs.length > 0 ? (
+              <View style={{ marginTop: 6 }}>
+                {selectedLogs.map((row, i) => {
+                  const sub = entrySubtitle(row)
+                  return (
+                    <View
+                      key={`${row.type}-${i}`}
+                      style={[styles.siteRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}
+                    >
+                      <SiteSticker name={menoSticker(row.type)} size={38} />
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{entryTitle(row)}</Text>
+                        {sub ? <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{sub}</Text> : null}
+                      </View>
+                    </View>
+                  )
+                })}
+              </View>
+            ) : (
+              <Text style={[styles.detailEmpty, { color: colors.textSecondary, fontFamily: font.body }]}>{COPY.empty}</Text>
+            )}
+
+            <Pressable
+              onPress={openAdd}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.siteAdd, { backgroundColor: pal.accentSoft, borderColor: colors.text, opacity: pressed ? 0.7 : 1 }]}
+            >
+              <SiteSticker name="pencil" size={24} cut />
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: colors.text }}>{COPY.logActivity}</Text>
+            </Pressable>
+          </View>
+        ) : (
         <View style={styles.detail}>
           <Text style={[styles.detailTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>
             {formatLongDate(selectedDate)}
@@ -289,6 +330,7 @@ export function MenopauseCalendar() {
             <Text style={[styles.addBtnText, { color: pal.accent, fontFamily: pal.fontBodySemiBold }]}>{COPY.logActivity}</Text>
           </Pressable>
         </View>
+        )}
       </ScrollView>
 
       {/* ─── Log flow: tile grid → per-symptom / period form, all for the
@@ -300,12 +342,12 @@ export function MenopauseCalendar() {
         isPeri={isPeri}
         title="Log activity"
       />
-      <LogSheet visible={!!pickedSymptom} title={COPY.sheetSymptom} onClose={() => setPickedSymptom(null)}>
+      <LogSheet visible={!!pickedSymptom} sticker={pickedSymptom ? menoSticker(pickedSymptom) : 'pencil'} title={COPY.sheetSymptom} onClose={() => setPickedSymptom(null)}>
         {pickedSymptom ? (
           <MenopauseSymptomForm initialId={pickedSymptom} logDate={selectedDate} onSaved={() => setPickedSymptom(null)} />
         ) : null}
       </LogSheet>
-      <LogSheet visible={periodOpen} title={COPY.sheetPeriod} onClose={() => setPeriodOpen(false)}>
+      <LogSheet visible={periodOpen} sticker="drop" title={COPY.sheetPeriod} onClose={() => setPeriodOpen(false)}>
         <MenopausePeriodForm logDate={selectedDate} onSaved={() => setPeriodOpen(false)} />
       </LogSheet>
     </View>
@@ -321,9 +363,9 @@ function NavBtn({ dir, onPress, pal }: { dir: 'back' | 'fwd'; onPress: () => voi
       accessibilityRole="button"
       accessibilityLabel={dir === 'back' ? 'Previous month' : 'Next month'}
       hitSlop={8}
-      style={({ pressed }) => [styles.navBtn, { borderColor: pal.border, opacity: pressed ? 0.6 : 1 }]}
+      style={({ pressed }) => [styles.navBtn, { borderColor: pal.diffuse ? pal.border : pal.text, borderWidth: pal.diffuse ? 1 : 1.5, backgroundColor: pal.diffuse ? 'transparent' : pal.surface, opacity: pressed ? 0.6 : 1 }]}
     >
-      <Ionicons name={dir === 'back' ? 'chevron-back' : 'chevron-forward'} size={16} color={pal.textSecondary} />
+      <Ionicons name={dir === 'back' ? 'chevron-back' : 'chevron-forward'} size={16} color={pal.diffuse ? pal.textSecondary : pal.text} />
     </Pressable>
   )
 }
@@ -335,6 +377,11 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 16 },
 
   card: { padding: 16, borderWidth: 1, marginTop: 4 },
+  siteMonth: { marginTop: 8, paddingHorizontal: 4 },
+  cellWrap: { width: CELL as unknown as number, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
+  siteSlot: { height: 16, alignItems: 'center', justifyContent: 'center' },
+  siteRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4 },
+  siteAdd: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 18, borderWidth: 1.5, borderRadius: 999, marginTop: 18, alignSelf: 'center' },
   monthHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   monthLabel: { fontSize: 22, letterSpacing: -0.4 },
   navRow: { flexDirection: 'row', gap: 8 },
@@ -366,7 +413,6 @@ const styles = StyleSheet.create({
     bottom: 3,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderStyle: 'dashed',
   },
 
   detail: { marginTop: 20, paddingHorizontal: 4 },
