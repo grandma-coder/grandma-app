@@ -661,18 +661,13 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                       {/* Inline date picker — sticker-paper card */}
                       {isPickerOpen && (
                         <View style={{
-                          marginTop: 6, marginBottom: 12, marginLeft: 10, marginRight: 4,
+                          marginTop: 4, marginBottom: 12, marginLeft: 10, marginRight: 4,
                           backgroundColor: colors.surface,
                           borderWidth: 1.5, borderColor: ST_INK,
-                          borderRadius: 22, padding: 12,
-                          shadowColor: ST_INK,
-                          shadowOffset: { width: 0, height: 3 },
-                          shadowOpacity: 1,
-                          shadowRadius: 0,
-                          elevation: 3,
+                          borderRadius: 20, padding: 10,
                         }}>
                           <Text style={{
-                            fontSize: 11, fontFamily: font.bodySemiBold,
+                            fontSize: 10, fontFamily: 'SpaceMono_400Regular',
                             color: ink3, textTransform: 'uppercase', letterSpacing: 1.4,
                             paddingHorizontal: 4, paddingBottom: 4,
                           }}>
@@ -681,7 +676,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                           <DateTimePicker
                             value={pickerDate}
                             mode="date"
-                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            display={Platform.OS === 'ios' ? 'inline' : 'default'}
                             minimumDate={new Date()}
                             themeVariant={isDark ? 'dark' : 'light'}
                             accentColor={ST_INK}
@@ -700,7 +695,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                                 const mo = String(d.getMonth() + 1).padStart(2, '0')
                                 const day = String(d.getDate()).padStart(2, '0')
                                 onSetVaccineDate(vax.scheduleKey, `${y}-${mo}-${day}`)
-                                if (Platform.OS === 'android') setExpandedKey(null)
+                                setExpandedKey(null) // one tap on a day saves and closes
                                 // Release the guard on the next tick so the
                                 // picker can be reopened cleanly.
                                 setTimeout(() => { datePickerWroteRef.current = null }, 0)
@@ -711,36 +706,6 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                               }
                             }}
                           />
-                          {Platform.OS === 'ios' && (
-                            <Pressable
-                              onPress={() => setExpandedKey(null)}
-                              style={({ pressed }) => ({
-                                alignSelf: 'center',
-                                marginTop: 6,
-                                paddingHorizontal: 28,
-                                height: 44,
-                                borderRadius: 999,
-                                borderWidth: 2,
-                                borderColor: ST_INK,
-                                backgroundColor: ST_YELLOW,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                shadowColor: ST_INK,
-                                shadowOffset: { width: 0, height: pressed ? 1 : 3 },
-                                shadowOpacity: 1,
-                                shadowRadius: 0,
-                                elevation: 4,
-                                transform: [{ translateY: pressed ? 2 : 0 }],
-                              })}
-                            >
-                              <Text style={{
-                                fontSize: 14, fontFamily: font.bodyBold,
-                                color: ST_INK, letterSpacing: -0.2,
-                              }}>
-                                {t('common_done')}
-                              </Text>
-                            </Pressable>
-                          )}
                         </View>
                       )}
                     </View>
