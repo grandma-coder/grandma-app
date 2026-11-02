@@ -53,6 +53,8 @@ export interface TranslationKeys {
   tab_calendar: string
   tab_analytics: string
   tab_profile: string
+  tab_notes: string
+  tab_settings: string
   tab_library: string
   tab_vault: string
 

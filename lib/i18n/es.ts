@@ -47,6 +47,8 @@ export const es: TranslationKeys = {
   tab_calendar: "Calendario",
   tab_analytics: "Análisis",
   tab_profile: "Perfil",
+  tab_notes: "Notas",
+  tab_settings: "Ajustes",
   tab_library: "Biblioteca",
   tab_vault: "Bóveda",
   menu_grandmaTalk: "Habla con\nla Abuela",

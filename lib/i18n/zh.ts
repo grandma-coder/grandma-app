@@ -47,6 +47,8 @@ export const zh: TranslationKeys = {
   tab_calendar: "日历",
   tab_analytics: "分析",
   tab_profile: "个人",
+  tab_notes: "笔记",
+  tab_settings: "设置",
   tab_library: "知识库",
   tab_vault: "保险箱",
   menu_grandmaTalk: "和奶奶\n聊天",

@@ -47,6 +47,8 @@ export const hi: TranslationKeys = {
   tab_calendar: "कैलेंडर",
   tab_analytics: "विश्लेषण",
   tab_profile: "प्रोफ़ाइल",
+  tab_notes: "नोट्स",
+  tab_settings: "सेटिंग्स",
   tab_library: "लाइब्रेरी",
   tab_vault: "तिजोरी",
   menu_grandmaTalk: "दादी से\nबात करो",

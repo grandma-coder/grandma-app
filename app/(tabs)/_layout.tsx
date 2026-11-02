@@ -534,10 +534,10 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
   const vaultIcon: LucideIcon = BarChart3
 
   const TAB_CFG: Record<string, TabStickerCfg> = {
-    index:    { icon: Home,      label: modeConfig.tabs.index.label   || t('tab_home'),      color: StickerPalette.yellow },
-    agenda:   { icon: Calendar,  label: modeConfig.tabs.agenda.label  || t('tab_calendar'),  color: StickerPalette.blue },
-    vault:    { icon: vaultIcon, label: modeConfig.tabs.vault.label   || t('tab_analytics'), color: StickerPalette.green },
-    settings: { icon: User,      label: modeConfig.tabs.settings.label || t('tab_profile'),  color: StickerPalette.lilac },
+    index:    { icon: Home,      label: t('tab_home'),      color: StickerPalette.yellow },
+    agenda:   { icon: Calendar,  label: t('tab_calendar'),  color: StickerPalette.blue },
+    vault:    { icon: vaultIcon, label: t('tab_notes'), color: StickerPalette.green },
+    settings: { icon: User,      label: t('tab_settings'),  color: StickerPalette.lilac },
   }
 
   // Filter to visible routes — expo-router converts href:null into
@@ -555,7 +555,7 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
   const inkColor = isDark ? StickerPalette.cream : STICKER_INK
   const labelMutedColor = isDark ? 'rgba(245,237,220,0.6)' : colors.textMuted
   const accent = getModeAccent(mode, isDark)
-  const TAB_STICKER: Record<string, SiteStickerName> = { index: 'house', agenda: 'cal', vault: 'bars', settings: 'me' }
+  const TAB_STICKER: Record<string, SiteStickerName> = { index: 'house', agenda: 'cal', vault: 'notebook', settings: 'me' }
 
   return (
     <View style={[stripStyles.wrap, { paddingBottom: insets.bottom, backgroundColor: paperColor }]}>
@@ -635,10 +635,10 @@ function DiffuseStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
   const vaultIcon: LucideIcon = BarChart3
 
   const TAB_CFG: Record<string, TabStickerCfg> = {
-    index:    { icon: Home,      label: modeConfig.tabs.index.label    || t('tab_home'),      color: StickerPalette.yellow },
-    agenda:   { icon: Calendar,  label: modeConfig.tabs.agenda.label   || t('tab_calendar'),  color: StickerPalette.blue },
-    vault:    { icon: vaultIcon, label: modeConfig.tabs.vault.label    || t('tab_analytics'), color: StickerPalette.green },
-    settings: { icon: User,      label: modeConfig.tabs.settings.label || t('tab_profile'),   color: StickerPalette.lilac },
+    index:    { icon: Home,      label: t('tab_home'),      color: StickerPalette.yellow },
+    agenda:   { icon: Calendar,  label: t('tab_calendar'),  color: StickerPalette.blue },
+    vault:    { icon: vaultIcon, label: t('tab_notes'), color: StickerPalette.green },
+    settings: { icon: User,      label: t('tab_settings'),   color: StickerPalette.lilac },
   }
 
   const visible = state.routes.filter((r) => {

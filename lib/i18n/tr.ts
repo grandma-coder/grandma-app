@@ -47,6 +47,8 @@ export const tr: TranslationKeys = {
   tab_calendar: "Takvim",
   tab_analytics: "Analizler",
   tab_profile: "Profil",
+  tab_notes: "Notlar",
+  tab_settings: "Ayarlar",
   tab_library: "Kütüphane",
   tab_vault: "Kasa",
   menu_grandmaTalk: "Büyükanne\nile Sohbet",

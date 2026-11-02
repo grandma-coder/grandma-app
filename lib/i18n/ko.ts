@@ -47,6 +47,8 @@ export const ko: TranslationKeys = {
   tab_calendar: "캘린더",
   tab_analytics: "분석",
   tab_profile: "프로필",
+  tab_notes: "노트",
+  tab_settings: "설정",
   tab_library: "라이브러리",
   tab_vault: "금고",
   menu_grandmaTalk: "할머니와\n대화",

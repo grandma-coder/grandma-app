@@ -47,6 +47,8 @@ export const ptBR: TranslationKeys = {
   tab_calendar: "Calendário",
   tab_analytics: "Análises",
   tab_profile: "Perfil",
+  tab_notes: "Notas",
+  tab_settings: "Ajustes",
   tab_library: "Biblioteca",
   tab_vault: "Cofre",
   menu_grandmaTalk: "Papo com\na Vovó",

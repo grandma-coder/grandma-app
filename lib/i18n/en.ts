@@ -50,6 +50,8 @@ export const en: TranslationKeys = {
   tab_calendar: 'Calendar',
   tab_analytics: 'Analytics',
   tab_profile: 'Profile',
+  tab_notes: "Notes",
+  tab_settings: "Settings",
   tab_library: 'Library',
   tab_vault: 'Vault',
 

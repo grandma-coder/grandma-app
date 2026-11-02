@@ -47,6 +47,8 @@ export const ar: TranslationKeys = {
   tab_calendar: "التقويم",
   tab_analytics: "التحليلات",
   tab_profile: "الملف الشخصي",
+  tab_notes: "ملاحظات",
+  tab_settings: "الإعدادات",
   tab_library: "المكتبة",
   tab_vault: "الخزنة",
   menu_grandmaTalk: "تحدثي مع\nالجدة",

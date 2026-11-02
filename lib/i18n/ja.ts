@@ -47,6 +47,8 @@ export const ja: TranslationKeys = {
   tab_calendar: "カレンダー",
   tab_analytics: "分析",
   tab_profile: "プロフィール",
+  tab_notes: "ノート",
+  tab_settings: "設定",
   tab_library: "ライブラリ",
   tab_vault: "金庫",
   menu_grandmaTalk: "おばあちゃん\nトーク",
