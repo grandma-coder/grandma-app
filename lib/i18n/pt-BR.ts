@@ -906,6 +906,7 @@ export const ptBR: TranslationKeys = {
   kids_home_tile_activities: "ATIVIDADES",
   kids_home_tile_activity_empty_sub: "Registre uma atividade",
   kids_home_tile_no_goal: "Nenhuma meta definida",
+  kids_growthLeapShort: "Salto",
   kidsTile_sleepNight: "ÚLTIMA NOITE",
   kidsTile_sleepAvg: "SONO · MÉDIA / NOITE",
   kidsTile_ofNight: "de {{h}}h por noite",

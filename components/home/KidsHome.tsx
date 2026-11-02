@@ -1555,7 +1555,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
             const kidColor = CHILD_COLORS[(colorIdxByChildId.get(c.id) ?? 0) % CHILD_COLORS.length]
             const ST_INK = '#141313'
             if (!diffuse) return (
-              <SiteChoice key={c.id} compact tick={false} label={c.name} selected={active}
+              <SiteChoice key={c.id} compact wobble tick={false} label={c.name} selected={active}
                 onPress={() => setActiveChild(c)} tone={kidColor} sticker={active ? 'baby' : undefined}
                 sub={formatAge(c.birthDate)} />
             )
@@ -1697,7 +1697,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
             : opt.key === '30days' ? t('kids_home_range_30days')
             : t('kids_home_range_custom')
           if (!diffuse) return (
-            <SiteChoice key={opt.key} compact tick={false} label={rangeLabel} selected={active}
+            <SiteChoice key={opt.key} compact wobble tick={false} label={rangeLabel} selected={active}
               onPress={onPick} tone={stickers.yellowSoft} sticker={opt.key === 'custom' ? 'cal' : undefined} />
           )
           return (
@@ -2094,9 +2094,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         <Text style={{ marginTop: 16, marginBottom: 12, fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: dt.colors.ink }}>
           {t('home_wallet_label')}
         </Text>
-      ) : (
-        <Display size={18} style={{ marginTop: 16, marginBottom: 12 }}>{t('home_wallet_label')}</Display>
-      ))}
+      ) : null /* site look: KidsWallet renders its own heading row with the edit control */)}
 
       {/* ─── Wallet stack (Set Goals → Rewards) ─────────────── */}
       {walletHasVisibleCard && (() => {

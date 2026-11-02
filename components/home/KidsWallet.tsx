@@ -28,6 +28,9 @@ import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { QuietPill } from '../ui/QuietPill'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { SlidersHorizontal } from 'lucide-react-native'
+import { StickerTileGrid } from '../ui/StickerTileGrid'
+import { Display } from '../ui/Typography'
+import type { SiteStickerName } from '../stickers/SiteSticker'
 import { Character } from '../characters/Characters'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { MemoriesSheet } from './MemoriesSheet'
@@ -147,7 +150,7 @@ export function KidsWallet({
       case 'vaccines': return t('kids_vaccines_title')
       case 'exams': return t('wallet_exams_title')
       case 'diaper': return t('kids_home_diaper_tracker_title')
-      case 'growth_leap': return growthLeapName ?? t('kids_growthLeaps')
+      case 'growth_leap': return growthLeapName ? (diffuse ? growthLeapName : `${t('kids_growthLeapShort')} · ${growthLeapName}`) : t('kids_growthLeaps')
       case 'reminders': return t('wallet_reminders_title')
       case 'memories': return t('wallet_memories_title')
       case 'ask_grandma': return t('wallet_askGrandma_title')
@@ -205,8 +208,16 @@ export function KidsWallet({
 
   const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
 
+  const SITE_STICKER: Record<KidsCardId, SiteStickerName> = {
+    goals: 'star', health: 'heart', vaccines: 'syringe', exams: 'doc', diaper: 'diaper',
+    growth_leap: 'brain', reminders: 'bell', memories: 'camera', ask_grandma: 'bubble',
+    rewards: 'star', channels: 'bubble', village: 'us',
+  }
+
   return (
     <View>
+      {diffuse ? (
+        <>
       {/* Edit affordance — icon-only (no "EDIT" text), standardized with the
           summary card + cycle wallet edit controls. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 6 }}>
@@ -233,6 +244,29 @@ export function KidsWallet({
           />
         )
       })}
+        </>
+      ) : (
+        <>
+          {/* Site look: heading + edit on one row, shortcuts as a sticker tile grid. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 12 }}>
+            <Display size={18} style={{ flex: 1 }}>{t('home_wallet_label')}</Display>
+            <QuietPill
+              leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
+              onPress={() => setPickerOpen(true)}
+              accessibilityLabel={t('kids_quickLogs_edit')}
+            />
+          </View>
+          <StickerTileGrid
+            tiles={displayedIds.map((id) => ({
+              key: id,
+              label: titleFor(id),
+              sticker: SITE_STICKER[id],
+              tone: softFor(id),
+              onPress: () => onHeader(id),
+            }))}
+          />
+        </>
+      )}
 
       <WalletPicker
         visible={pickerOpen}

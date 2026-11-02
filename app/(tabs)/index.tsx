@@ -136,11 +136,14 @@ export default function Home() {
         )}
       </ScrollView>
       )}
+      {/* Paper band behind the status bar so scrolled content never runs under the clock. */}
+      <View pointerEvents="none" style={[styles.statusBand, { height: insets.top, backgroundColor: bg }]} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
+  statusBand: { position: 'absolute', top: 0, left: 0, right: 0 },
   root: { flex: 1 },
   loaderRoot: { alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 20 },

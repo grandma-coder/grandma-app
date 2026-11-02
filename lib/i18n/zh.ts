@@ -906,6 +906,7 @@ export const zh: TranslationKeys = {
   kids_home_tile_activities: "ACTIVITIES",
   kids_home_tile_activity_empty_sub: "Log an activity",
   kids_home_tile_no_goal: "No goal set",
+  kids_growthLeapShort: "Leap",
   kidsTile_sleepNight: "LAST NIGHT",
   kidsTile_sleepAvg: "SLEEP · AVG / NIGHT",
   kidsTile_ofNight: "of {{h}}h a night",

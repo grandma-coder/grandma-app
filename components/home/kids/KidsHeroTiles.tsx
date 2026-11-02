@@ -249,7 +249,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
             {hasAct ? t('kidsTile_activeDays', { a: p.activityActiveDays, d: days }) : t('kids_home_tile_activity_empty_sub')}
           </Text>
           {/* active days as hand-drawn dots (up to 14), else a meter */}
-          {days <= 14 ? (
+          {days === 1 ? null : days <= 14 ? (
             <View style={styles.dots}>
               {Array.from({ length: days }).map((_, i) => (
                 <View key={i} style={[styles.dot, { borderColor: ink, backgroundColor: i < p.activityActiveDays ? '#8BB356' : 'transparent' }]} />

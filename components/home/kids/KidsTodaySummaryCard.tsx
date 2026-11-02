@@ -14,7 +14,7 @@ import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { SlidersHorizontal } from 'lucide-react-native'
-import { useTheme, diffuseFont, useDiffuseTheme, getModeColorSoft } from '../../../constants/theme'
+import { useTheme, diffuseFont, useDiffuseTheme, getModeColorSoft, getModeAccent } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { Character, type CharacterName } from '../../characters/Characters'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
@@ -24,6 +24,7 @@ import { QuietPill } from '../../ui/QuietPill'
 import { KIDS_QUICK_LOGS } from '../../../lib/kidsQuickLogs'
 import { useKidsQuickLogStore } from '../../../store/useKidsQuickLogStore'
 import { KidsQuickLogPicker } from './KidsQuickLogPicker'
+import { LogDock } from '../../ui/LogDock'
 
 interface Props {
   /** Active child — keys the today query + scopes the logs. */
@@ -50,7 +51,8 @@ const CHAR_FOR: Record<string, { name: CharacterName; hue: keyof ReturnType<type
 
 // Site-look icons (non-diffuse): obvious sticker matches; anything else keeps its Character blob.
 const SITE_FOR: Record<string, SiteStickerName> = {
-  sleep: 'zz', feeding: 'bottle', diaper: 'diaper', wake_up: 'flower', health: 'thermo', memory: 'camera', exam: 'doc',
+  sleep: 'moon', mood: 'face3', feeding: 'bottle', activity: 'shoe', diaper: 'diaper',
+  wake_up: 'cloud', health: 'thermo', memory: 'camera', exam: 'doc',
 }
 
 export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Props) {
@@ -143,6 +145,20 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
         />
       </View>
 
+      {!diffuse ? (
+        // Site look: launchers like the tab bar — sticker + hand-lettered label, no pills.
+        <LogDock
+          accent={getModeAccent('kids')}
+          items={pills.map((p) => ({
+            key: p.key,
+            label: p.label,
+            sticker: SITE_FOR[p.key] ?? 'star',
+            done: p.done,
+            onPress: onLogMetric ? () => onLogMetric(p.logType) : undefined,
+          }))}
+        />
+      ) : (
+      <>
       {/* Tappable log chips — neutral hairline; a completed log tints soft green. */}
       <View style={styles.chipsRow}>
         {pills.map((p) => {
@@ -186,6 +202,9 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
           ]}
         />
       </View>
+
+      </>
+      )}
 
       {/* (See results moved to the header row; no footer band — it left dead
           space. Matches the cycle + pregnancy cards.) */}

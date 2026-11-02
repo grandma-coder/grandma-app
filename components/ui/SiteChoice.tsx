@@ -28,6 +28,7 @@ export function SiteChoice({
   align = 'center',
   compact = false,
   tick = true,
+  wobble = false,
 }: {
   label: string
   selected: boolean
@@ -45,6 +46,8 @@ export function SiteChoice({
   compact?: boolean
   /** Show the ✓ when selected (off for single-select filter rows). */
   tick?: boolean
+  /** Hand-drawn outline — for top-of-screen filter pills only. */
+  wobble?: boolean
 }) {
   const { colors, font } = useTheme()
   const ink = colors.text
@@ -77,9 +80,9 @@ export function SiteChoice({
           ],
         }}
       >
-        <HandDrawnPill width={size.w} height={size.h} fill={colors.surface} stroke={ink} strokeWidth={2.2} radius={radius} seed={label} />
+        <HandDrawnPill wobble={wobble} width={size.w} height={size.h} fill={colors.surface} stroke={ink} strokeWidth={2.2} radius={radius} seed={label} />
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: sel }]}>
-          <HandDrawnPill width={size.w} height={size.h} fill={tone} stroke={ink} strokeWidth={2.6} radius={radius} seed={label} />
+          <HandDrawnPill wobble={wobble} width={size.w} height={size.h} fill={tone} stroke={ink} strokeWidth={2.6} radius={radius} seed={label} />
         </Animated.View>
         <View style={[styles.inner, align === 'start' && styles.innerStart, compact && styles.innerCompact]}>
           {sticker ? <SiteSticker name={sticker} size={24} cut /> : null}
