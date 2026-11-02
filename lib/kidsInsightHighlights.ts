@@ -72,13 +72,20 @@ export function buildInsightHighlights(
     return max
   }, null)
 
+  // Full predicates so the sentence always reads right ("Kenji needs attention…",
+  // not "Kenji is needs attention…").
   const overallLabel =
     scores.overall >= 8.5 ? 'excellent' :
     scores.overall >= 7 ? 'on track' :
     scores.overall >= 5 ? 'developing' :
     'needs attention'
+  const overallPhrase =
+    scores.overall >= 8.5 ? 'is doing excellently' :
+    scores.overall >= 7 ? 'is on track' :
+    scores.overall >= 5 ? 'is developing' :
+    'needs some attention'
 
-  const parts: string[] = [`${childName} is ${overallLabel} at ${scores.overall.toFixed(1)}/10 overall.`]
+  const parts: string[] = [`${childName} ${overallPhrase} — ${scores.overall.toFixed(1)}/10 overall.`]
 
   // When the overall read itself is too thin (few logged days across
   // pillars), don't dress up any single pillar's value as a confident

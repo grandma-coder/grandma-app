@@ -31,7 +31,6 @@ interface Props {
 
 export function BigChartCard({ label, value, unit, children, blobColor, labelAlign = 'left', onPress, hideValue }: Props) {
   const { colors, font, stickers } = useTheme()
-  const blobFill = blobColor ?? stickers.yellow
   const Container: any = onPress ? Pressable : View
 
   return (
@@ -46,10 +45,6 @@ export function BigChartCard({ label, value, unit, children, blobColor, labelAli
         pressed && { opacity: 0.92 },
       ]}
     >
-      {/* Offset blob sticker — top-right corner */}
-      <View style={styles.blob} pointerEvents="none">
-        <Blob size={72} fill={blobFill} variant={0} stroke={colors.text} />
-      </View>
 
       <Text
         style={[
