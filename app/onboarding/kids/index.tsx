@@ -132,16 +132,11 @@ const ALLERGY_OPTIONS = [
   'Wheat', 'Fish', 'Shellfish', 'Sesame', 'Other',
 ]
 
-const ALLERGY_STICKER: Record<string, SiteStickerName> = {
+// Only stickers that actually read as the allergen — no sticker beats a misleading one.
+const ALLERGY_STICKER: Partial<Record<string, SiteStickerName>> = {
   Milk: 'bottle',
   Eggs: 'egg',
-  Peanuts: 'corn',
-  'Tree nuts': 'leaf',
-  Soy: 'lettuce',
   Wheat: 'corn',
-  Fish: 'drop',
-  Shellfish: 'rasp',
-  Sesame: 'plum',
   Other: 'pencil',
 }
 
@@ -1540,6 +1535,8 @@ const stepStyles = StyleSheet.create({
   },
   photoHint: {
     fontSize: 13,
+    textAlign: 'center',
+    paddingHorizontal: 18,
   },
   chipGrid: {
     flexDirection: 'row',
