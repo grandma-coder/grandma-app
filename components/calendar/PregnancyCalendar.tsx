@@ -64,7 +64,7 @@ import {
   Clock,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, font, radius, useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius } from '../../constants/theme'
+import { useTheme, brand, stickers as stickersLight, stickersDark, getModeColor, getModeColorSoft, font, radius, useDiffuseTheme, getDiffuseAccent, diffuseFont, diffuseRadius } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { DiffuseTimelineRow, DiffuseNowMarker, DiffuseLogIcon, DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
 import { Character } from '../characters/Characters'
@@ -103,6 +103,10 @@ import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import { PregnancyLogRouter, type PregnancyLogType } from './PregnancyLogRouter'
 import { useTranslation } from '../../lib/i18n'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { InkBackButton } from '../ui/InkBackButton'
+import { PillButton } from '../ui/PillButton'
+import { FadeUp } from '../ui/Motion'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -318,6 +322,157 @@ function formatLogValue(log: PregnancyCalendarLog): string {
   return log.value
 }
 
+// ─── Site look (light) helpers ─────────────────────────────────────────────
+// Calm ink outlines, card-less sticker rows, ink text. Used only by the light
+// (non-diffuse) rendering; every diffuse path keeps its own primitives.
+
+const PREG_LOG_STICKER: Record<string, SiteStickerName> = {
+  mood: 'face3', symptom: 'thermo', vitamins: 'leaf', water: 'drop', sleep: 'moon',
+  exercise: 'shoe', kick_count: 'baby', weight: 'ruler', appointment: 'cal', exam_result: 'doc',
+  nutrition: 'avocado', kegel: 'flower', nesting: 'house', birth_prep: 'backpack', contraction: 'flame',
+}
+const stickerForPregLog = (type: string): SiteStickerName => PREG_LOG_STICKER[type] ?? 'pencil'
+const MOOD_FACE: Record<string, SiteStickerName> = {
+  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face2', energetic: 'face4', sad: 'face1',
+}
+
+const SITE_MONO = 'SpaceMono_400Regular'
+
+/** Mono uppercase eyebrow / meta label. */
+function SiteEyebrow({ children, color, style }: { children: React.ReactNode; color?: string; style?: any }) {
+  const { colors } = useTheme()
+  return (
+    <Text style={[{ fontFamily: SITE_MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: color ?? colors.textMuted }, style]}>
+      {children}
+    </Text>
+  )
+}
+
+/** Hand-lettered uppercase title. */
+function SiteTitle({ children, size = 24, style, numberOfLines }: { children: React.ReactNode; size?: number; style?: any; numberOfLines?: number }) {
+  const { colors, font } = useTheme()
+  return (
+    <Text numberOfLines={numberOfLines} style={[{ fontFamily: font.display, fontSize: size, lineHeight: Math.round(size * 1.15), letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }, style]}>
+      {children}
+    </Text>
+  )
+}
+
+/** White chip, ink outline; on = soft tone fill. Ink label always. */
+function SiteChip({ label, on, onPress, tone, leading }: { label: string; on: boolean; onPress: () => void; tone: string; leading?: React.ReactNode }) {
+  const { colors, font } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: on }}
+      style={({ pressed }) => ({
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+        borderWidth: 1.5, borderColor: colors.text,
+        backgroundColor: on ? tone : colors.surface,
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      {leading}
+      <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: colors.text }}>{label}</Text>
+    </Pressable>
+  )
+}
+
+/** Sheet frame: bg, 2.5px ink top border, 26 radius top corners. */
+function siteSheetFrame(colors: { bg: string; text: string }, bottomInset: number) {
+  return {
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    borderTopWidth: 2.5,
+    borderColor: colors.text,
+    paddingBottom: bottomInset,
+  } as const
+}
+
+function SiteGrabber() {
+  const { colors } = useTheme()
+  return (
+    <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+      <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
+    </View>
+  )
+}
+
+/** White field, 1.5px ink border, Hanken 16. */
+function siteField(colors: { text: string; surface: string }, fontFamily: string) {
+  return {
+    backgroundColor: colors.surface,
+    borderColor: colors.text,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 16,
+    fontFamily,
+    color: colors.text,
+  } as const
+}
+
+/** Card-less sticker + label launcher (like the home LogDock). */
+function SiteLauncher({ label, sticker, onPress }: { label: string; sticker: SiteStickerName; onPress: () => void }) {
+  const { colors, font } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ width: '25%', alignItems: 'center', paddingVertical: 10, gap: 6, opacity: pressed ? 0.6 : 1 })}
+    >
+      <SiteSticker name={sticker} size={44} />
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ fontFamily: font.display, fontSize: 13, letterSpacing: 0.4, textTransform: 'uppercase', color: colors.text }}>
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
+/** Card-less detail hero: big sticker, big number, mono eyebrow. */
+function DetailHero({ sticker, value, unit, eyebrow, valueSize = 44 }: { sticker: SiteStickerName; value?: string | null; unit?: string; eyebrow?: string; valueSize?: number }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ alignItems: 'center', paddingVertical: 14, gap: 6, marginBottom: 6 }}>
+      <SiteSticker name={sticker} size={72} />
+      {value ? (
+        <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6} style={{ fontFamily: font.displayBold, fontSize: valueSize, lineHeight: valueSize + 6, color: colors.text, textAlign: 'center', marginTop: 4 }}>
+          {value}
+          {unit ? <Text style={{ fontFamily: font.bodyBold, fontSize: 18 }}>{' ' + unit}</Text> : null}
+        </Text>
+      ) : null}
+      {eyebrow ? <SiteEyebrow>{eyebrow}</SiteEyebrow> : null}
+    </View>
+  )
+}
+
+/** Static ink-outlined info pill (white, or soft tone), optional leading sticker/icon. */
+function InfoPill({ label, tone, leading }: { label: string; tone?: string; leading?: React.ReactNode }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1.5, borderColor: colors.text, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: tone ?? colors.surface }}>
+      {leading}
+      <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: colors.text }}>{label}</Text>
+    </View>
+  )
+}
+
+/** Eyebrow label + body text, no card. */
+function DetailNote({ label, text }: { label: string; text: string }) {
+  const { colors, font } = useTheme()
+  return (
+    <View style={{ marginBottom: 16, gap: 6 }}>
+      <SiteEyebrow>{label}</SiteEyebrow>
+      <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 22, color: colors.text }}>{text}</Text>
+    </View>
+  )
+}
+
 // ─── Quick Log Sheet + FAB ────────────────────────────────────────────────────
 
 function QuickLogSheet({
@@ -341,6 +496,43 @@ function QuickLogSheet({
   const paperBorder = diffuse ? dt.colors.line : colors.border
   const bg = diffuse ? dt.colors.bg : colors.bg
   const ink = diffuse ? dt.colors.ink : colors.text
+
+  if (!diffuse) {
+    return (
+      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+        <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
+        <View style={[styles.fabSheet, siteSheetFrame(colors, insets.bottom + 16), { paddingHorizontal: 0, paddingTop: 0 }]}>
+          <SiteGrabber />
+          <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 12 }}>
+            <SiteTitle size={24}>{t('pregCal_log_something')}</SiteTitle>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>
+              {ALL_LOG_TYPES.map((type) => (
+                <SiteLauncher
+                  key={type}
+                  label={LOG_META[type].label}
+                  sticker={stickerForPregLog(type)}
+                  onPress={() => { onClose(); onSelect(type) }}
+                />
+              ))}
+            </View>
+            <Pressable
+              onPress={() => { onClose(); onManageRoutines() }}
+              accessibilityRole="button"
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 16, marginTop: 8, borderTopWidth: 1.5, borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 })}
+            >
+              <SiteSticker name="cal" size={30} />
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink, flex: 1 }}>
+                {t('pregCal_manage_routines')}
+              </Text>
+              <ChevronRight size={18} color={ink} strokeWidth={2.4} />
+            </Pressable>
+          </ScrollView>
+        </View>
+      </Modal>
+    )
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -664,6 +856,175 @@ function RoutineManager({
       </View>
     </>
   )
+
+  // ─── Site look (light) ─────────────────────────────────────────────────────
+  if (!diffuse) {
+    const tone = getModeColorSoft('preg', isDark)
+    const siteForm = (
+      <View style={{ gap: 14 }}>
+        <TextInput
+          value={form.name}
+          onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
+          placeholder="Routine name"
+          placeholderTextColor={colors.textMuted}
+          underlineColorAndroid="transparent"
+          style={[siteField(colors, font.bodySemiBold), { height: 52 }]}
+        />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2, paddingHorizontal: 2 }}>
+          {ALL_LOG_TYPES.map((rt) => (
+            <SiteChip
+              key={rt}
+              label={LOG_META[rt].label}
+              on={form.type === rt}
+              tone={tone}
+              leading={<SiteSticker name={stickerForPregLog(rt)} size={22} />}
+              onPress={() => setForm((p) => ({ ...p, type: rt }))}
+            />
+          ))}
+        </ScrollView>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Clock size={18} color={ST_INK} strokeWidth={2.2} />
+          <TextInput
+            value={form.time}
+            onChangeText={(v) => setForm((p) => ({ ...p, time: v }))}
+            placeholder="08:00"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="numbers-and-punctuation"
+            style={[siteField(colors, font.bodySemiBold), { flex: 1 }]}
+          />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
+          {DAY_LABELS.map((label, idx) => {
+            const active = form.days.includes(idx)
+            return (
+              <Pressable
+                key={idx}
+                onPress={() => toggleDay(idx)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                style={({ pressed }) => ({
+                  width: 38, height: 38, borderRadius: 19,
+                  alignItems: 'center', justifyContent: 'center',
+                  borderWidth: 1.5, borderColor: ST_INK,
+                  backgroundColor: active ? tone : colors.surface,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: ST_INK }}>{label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      </View>
+    )
+    const iconBtn = { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: ST_INK, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' } as const
+    const nameInvalid = !form.name.trim() || saving
+
+    return (
+      <>
+        {/* ─── Manager sheet ─── */}
+        <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+          <View style={styles.modalOverlay}>
+            <View style={[siteSheetFrame(colors, insets.bottom + 20), { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '90%' }]}>
+              <SiteGrabber />
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 14, gap: 12 }}>
+                <SiteSticker name="cal" size={44} />
+                <View style={{ flex: 1, gap: 4 }}>
+                  <SiteTitle size={22} numberOfLines={2}>{t('pregCal_manage_routines')}</SiteTitle>
+                  <SiteEyebrow>{t('pregCal_recurring_desc')}</SiteEyebrow>
+                </View>
+                <InkBackButton onPress={onClose} ink={ST_INK} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}>
+                {!editingRoutine && (
+                  <View style={{ gap: 14 }}>
+                    <SiteTitle size={18}>{t('pregCal_new_routine')}</SiteTitle>
+                    {siteForm}
+                    <PillButton label={t('pregCal_add_routine')} variant="ink" onPress={handleSave} disabled={nameInvalid} loading={saving} height={54} />
+                  </View>
+                )}
+
+                {routines.length > 0 && (
+                  <View style={{ marginTop: 24 }}>
+                    <SiteEyebrow style={{ marginBottom: 6 }}>{t('pregCal_active_routines', { count: routines.length })}</SiteEyebrow>
+                    {routines.map((r, idx) => {
+                      const daysLabel = r.days_of_week.length === 7
+                        ? 'Every day'
+                        : r.days_of_week.map((d) => WEEKDAYS[d]).join(', ')
+                      return (
+                        <View
+                          key={r.id}
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border }}
+                        >
+                          <SiteSticker name={stickerForPregLog(r.type)} size={36} />
+                          <View style={{ flex: 1, gap: 2 }}>
+                            <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: ST_INK }}>{r.name}</Text>
+                            <Text numberOfLines={1} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>
+                              {r.time ? `${fmtTime(r.time)} · ` : ''}{daysLabel}
+                            </Text>
+                          </View>
+                          <Pressable onPress={() => openEdit(r)} accessibilityRole="button" accessibilityLabel={t('common_edit')} style={({ pressed }) => [iconBtn, { opacity: pressed ? 0.6 : 1 }]}>
+                            <Pencil size={14} color={ST_INK} strokeWidth={2.2} />
+                          </Pressable>
+                          <Pressable onPress={() => setConfirmDeleteId(r.id)} accessibilityRole="button" accessibilityLabel={t('common_delete')} style={({ pressed }) => [iconBtn, { opacity: pressed ? 0.6 : 1 }]}>
+                            <Trash2 size={14} color={ST_INK} strokeWidth={2.2} />
+                          </Pressable>
+                        </View>
+                      )
+                    })}
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ─── Edit routine sheet ─── */}
+        <Modal visible={!!editingRoutine} animationType="slide" transparent onRequestClose={cancelEdit}>
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={cancelEdit}>
+            <Pressable onPress={(e) => e.stopPropagation()} style={siteSheetFrame(colors, insets.bottom + 16)}>
+              <SiteGrabber />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 14 }}>
+                <SiteSticker name="pencil" size={36} />
+                <View style={{ flex: 1 }}>
+                  <SiteTitle size={22}>{t('pregCal_edit_routine')}</SiteTitle>
+                </View>
+                <InkBackButton onPress={cancelEdit} ink={ST_INK} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
+              </View>
+              <View style={{ paddingHorizontal: 20, gap: 16 }}>
+                {siteForm}
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <PillButton label={t('common_cancel')} variant="paper" onPress={cancelEdit} height={52} style={{ flex: 1 }} />
+                  <PillButton label={t('pregCal_update')} variant="ink" onPress={handleSave} disabled={nameInvalid} loading={saving} height={52} style={{ flex: 1.4 }} />
+                </View>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {/* ─── Delete confirm sheet ─── */}
+        <Modal visible={!!confirmDeleteId} animationType="fade" transparent onRequestClose={() => !deleting && setConfirmDeleteId(null)}>
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => !deleting && setConfirmDeleteId(null)}>
+            <Pressable onPress={(e) => e.stopPropagation()} style={[siteSheetFrame(colors, insets.bottom + 16), { paddingHorizontal: 24 }]}>
+              <SiteGrabber />
+              <View style={{ alignItems: 'center', gap: 10, paddingBottom: 18 }}>
+                <SiteSticker name="bell" size={56} />
+                <SiteTitle size={22} style={{ textAlign: 'center' }}>{t('pregCal_delete_routine_title')}</SiteTitle>
+                <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 22, color: colors.textSecondary, textAlign: 'center' }}>
+                  {t('pregCal_delete_routine_desc')}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <PillButton label={t('common_cancel')} variant="paper" onPress={() => setConfirmDeleteId(null)} disabled={deleting} height={52} style={{ flex: 1 }} />
+                <PillButton label={t('common_delete')} variant="ink" onPress={performDelete} disabled={deleting} loading={deleting} height={52} style={{ flex: 1 }} />
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      </>
+    )
+  }
 
   return (
     <>
@@ -1219,7 +1580,7 @@ function LogDetailPopup({
   onEdit: () => void
   onDeleted: () => void
 }) {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -1301,6 +1662,50 @@ function LogDetailPopup({
     }
     await invalidatePregnancyLogQueries()
     onDeleted()
+  }
+
+  if (!diffuse) {
+    const tone = getModeColorSoft('preg', isDark)
+    const moodKey = rawValue.toLowerCase()
+    const heroSticker: SiteStickerName = log.log_type === 'mood' ? (MOOD_FACE[moodKey] ?? 'face3') : stickerForPregLog(log.log_type)
+    return (
+      <View style={styles.detailBody}>
+        <DetailHero sticker={heroSticker} value={metric || null} unit={unit || undefined} eyebrow={sublabel} valueSize={isText ? 34 : 56} />
+
+        <View style={styles.siteMetaRow}>
+          <Clock size={16} color={ink} strokeWidth={2.2} />
+          <Text style={{ fontFamily: font.bodySemiBold, fontSize: 14, color: ink, flex: 1 }}>
+            {t('pregCal_date_at_time', { date: dateLabel, time: formatTime(log.created_at) })}
+          </Text>
+        </View>
+
+        {pills.length > 1 && (
+          <View style={[styles.detailPillsRow, { marginTop: 4 }]}>
+            {pills.slice(1).map((p, i) => (
+              <InfoPill key={i} label={p.label} tone={i === 0 ? tone : undefined} />
+            ))}
+          </View>
+        )}
+
+        {plainNotes ? <DetailNote label={t('kids_calendar_detail_notes')} text={plainNotes} /> : null}
+
+        <View style={styles.detailActions}>
+          <PillButton label={t('common_edit')} variant="ink" onPress={onEdit} height={54} style={{ flex: 1 }} />
+          <PillButton label={t('common_delete')} variant="paper" onPress={handleDelete} height={54} style={{ flex: 1 }} />
+        </View>
+
+        <PaperAlert
+          visible={confirmingDelete}
+          title="Delete this log?"
+          message="This cannot be undone."
+          buttons={[
+            { label: 'Cancel', variant: 'secondary' },
+            { label: 'Delete', variant: 'danger', onPress: confirmDelete },
+          ]}
+          onRequestClose={() => setConfirmingDelete(false)}
+        />
+      </View>
+    )
   }
 
   return (
@@ -1885,7 +2290,7 @@ const diffuseStripStyles = StyleSheet.create({
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function PregnancyCalendar() {
-  const { colors, isDark } = useTheme()
+  const { colors, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const dAccent = getDiffuseAccent('preg', dt.isDark)
@@ -2292,8 +2697,8 @@ export function PregnancyCalendar() {
             </>
           ) : (
             <>
-              <Display size={22} color={colors.text}>{dayLabel}</Display>
-              <Body size={12} color={colors.textMuted} style={{ marginTop: 2 }}>{summary}</Body>
+              <SiteTitle size={28}>{dayLabel}</SiteTitle>
+              <SiteEyebrow style={{ marginTop: 6 }}>{summary}</SiteEyebrow>
             </>
           )}
         </View>
@@ -2305,14 +2710,15 @@ export function PregnancyCalendar() {
               message={t('pregCal_tap_to_add')}
             />
           ) : (
-            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Body size={14} color={colors.textSecondary} align="center">
+            <FadeUp style={styles.siteEmpty}>
+              <SiteSticker name="cal" size={64} />
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 16, color: colors.text, textAlign: 'center', marginTop: 12 }}>
                 {t('pregCal_nothing_planned')}
-              </Body>
-              <Body size={12} color={colors.textMuted} align="center" style={{ marginTop: 4 }}>
+              </Text>
+              <Text style={{ fontFamily: font.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 4 }}>
                 {t('pregCal_tap_to_add')}
-              </Body>
-            </View>
+              </Text>
+            </FadeUp>
           )
         ) : diffuse ? (
           // Connector-spine timeline (v4 §06): a vertical spine threads every
@@ -2345,24 +2751,36 @@ export function PregnancyCalendar() {
             ) : null}
           </View>
         ) : (
-          <View style={{ gap: 10 }}>
-            {rows.map((r) => (
-              <View key={r.key} style={styles.timelineRow}>
-                <View style={styles.timelineGutter}>
-                  <Text style={[styles.timelineTime, { color: colors.textMuted }]}>{r.time}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <ActivityPillCard
-                    icon={r.icon}
-                    title={r.title}
-                    subtitle={r.subtitle}
-                    tint={r.tint}
-                    onPress={r.onPress}
-                    pulse={r.pulse}
-                    logged={r.logged}
-                  />
-                </View>
-              </View>
+          <View>
+            {rows.map((r, idx) => (
+              <FadeUp key={r.key} index={Math.min(idx, 8)}>
+                <Pressable
+                  onPress={r.onPress}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [
+                    styles.siteRow,
+                    idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
+                    r.pulse && { backgroundColor: getModeColorSoft('preg', isDark), borderRadius: 16, borderTopWidth: 0 },
+                    { opacity: pressed ? 0.6 : 1 },
+                  ]}
+                >
+                  <SiteEyebrow style={styles.siteRowTime}>{r.time}</SiteEyebrow>
+                  <View style={styles.siteRowSticker}>
+                    <SiteSticker name={stickerForPregLog(r.type)} size={38} />
+                    {r.logged ? (
+                      <View style={[styles.siteRowTick, { backgroundColor: colors.text, borderColor: colors.bg }]}>
+                        <Check size={10} color={colors.bg} strokeWidth={3.5} />
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{r.title}</Text>
+                    {r.subtitle ? (
+                      <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{r.subtitle}</Text>
+                    ) : null}
+                  </View>
+                </Pressable>
+              </FadeUp>
             ))}
           </View>
         )}
@@ -2430,6 +2848,148 @@ export function PregnancyCalendar() {
     const donePath = buildPath(doneSlice)
 
     const trimester = weekNumber <= 13 ? 1 : weekNumber <= 27 ? 2 : 3
+
+    if (!diffuse) {
+      const tone = getModeColorSoft('preg', isDark)
+      const sk = isDark ? stickersDark : stickersLight
+      const ink = colors.text
+      const legendDot = (fill: string) => (
+        <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: fill, borderWidth: 1.5, borderColor: ink }} />
+      )
+      return (
+        <View style={{ gap: 6 }}>
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, paddingHorizontal: 4 }}>
+            <View style={{ flex: 1 }}>
+              <SiteTitle size={28}>{t('pregCal_pregnancy_path')}</SiteTitle>
+              <SiteEyebrow style={{ marginTop: 6 }}>{t('pregCal_milestones_40w', { count: STANDARD_APPOINTMENTS.length })}</SiteEyebrow>
+            </View>
+            <InfoPill label={t('pregCal_trimester', { n: trimester })} tone={tone} />
+          </View>
+
+          {/* Curve — horizontally scrollable, no card */}
+          <ScrollView
+            ref={apptCurveScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 8, marginHorizontal: -16 }}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+            decelerationRate="fast"
+          >
+            <View>
+              <Svg width={VB_W} height={VB_H} viewBox={`0 0 ${VB_W} ${VB_H}`}>
+                <SvgPath d={fullPath} fill="none" stroke={colors.border} strokeWidth={3} strokeLinecap="round" />
+                {doneSlice.length > 1 && (
+                  <SvgPath d={donePath} fill="none" stroke={ink} strokeWidth={3} strokeLinecap="round" />
+                )}
+                {curveBeads.map((b) => {
+                  const fill = b.status === 'done' ? tone : b.status === 'next' ? sk.yellowSoft : colors.surface
+                  const r = b.status === 'next' ? 9 : 7
+                  return (
+                    <SvgG key={b.appt.id}>
+                      <SvgCircle cx={b.x} cy={b.y} r={r} fill={fill} stroke={ink} strokeWidth={1.5} />
+                    </SvgG>
+                  )
+                })}
+              </Svg>
+              <View style={{ width: VB_W, height: 24, marginTop: 4 }}>
+                {curveBeads.map((b) => (
+                  <Pressable
+                    key={b.appt.id}
+                    onPress={() => setSelectedAppt(b.appt)}
+                    hitSlop={10}
+                    style={{ position: 'absolute', left: b.x - 22, width: 44, alignItems: 'center', paddingVertical: 2 }}
+                  >
+                    <Text style={{ color: b.status === 'future' ? colors.textMuted : ink, fontSize: 10, fontFamily: SITE_MONO, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                      {t('pregCal_week_label', { week: b.appt.week })}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Legend */}
+          <View style={{ flexDirection: 'row', gap: 16, paddingHorizontal: 4, paddingBottom: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {legendDot(tone)}
+              <SiteEyebrow color={ink}>{t('common_done')}</SiteEyebrow>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {legendDot(sk.yellowSoft)}
+              <SiteEyebrow color={ink}>{t('pregCal_status_soon')}</SiteEyebrow>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {legendDot(colors.surface)}
+              <SiteEyebrow color={ink}>{t('pregCal_status_upcoming')}</SiteEyebrow>
+            </View>
+          </View>
+
+          {/* Milestones — card-less sticker rows */}
+          <View>
+            {STANDARD_APPOINTMENTS.map((appt, idx) => {
+              const isDone = weekNumber > appt.week
+              const isNext = !isDone && weekNumber >= appt.week - 2
+              const sub = isDone
+                ? `${t('common_done')} · ${t('pregCal_week_label', { week: appt.week })}`
+                : `${t('pregCal_week_label', { week: appt.week })} · ${appt.prepNote.length > 60 ? appt.prepNote.slice(0, 57) + '…' : appt.prepNote}`
+              return (
+                <FadeUp key={appt.id} index={Math.min(idx, 8)}>
+                  <Pressable
+                    onPress={() => setSelectedAppt(appt)}
+                    accessibilityRole="button"
+                    style={({ pressed }) => [
+                      styles.siteRow,
+                      idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
+                      isNext && { backgroundColor: tone, borderRadius: 16, borderTopWidth: 0 },
+                      { opacity: pressed ? 0.6 : 1 },
+                    ]}
+                  >
+                    <View style={styles.siteRowSticker}>
+                      <SiteSticker name="cal" size={38} />
+                      {isDone ? (
+                        <View style={[styles.siteRowTick, { backgroundColor: ink, borderColor: colors.bg }]}>
+                          <Check size={10} color={colors.bg} strokeWidth={3.5} />
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text numberOfLines={2} style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink }}>{appt.name}</Text>
+                      <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{sub}</Text>
+                    </View>
+                    {isNext ? (
+                      <View style={[styles.siteRowChip, { borderColor: ink, backgroundColor: colors.surface }]}>
+                        <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 11, color: ink }}>{t('pregCal_status_soon')}</Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                </FadeUp>
+              )
+            })}
+          </View>
+
+          {/* Add appointment / exam */}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+            <PillButton
+              label={t('pregCal_appointment_btn')}
+              variant="ink"
+              onPress={() => setLogForm({ type: 'appointment', date: todayStr })}
+              leading={<Plus size={16} color={colors.bg} strokeWidth={3} />}
+              height={54}
+              style={{ flex: 1 }}
+            />
+            <PillButton
+              label={t('pregCal_upload_exam_btn')}
+              variant="paper"
+              onPress={() => setLogForm({ type: 'exam_result', date: todayStr })}
+              leading={<SiteSticker name="camera" size={20} />}
+              height={54}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </View>
+      )
+    }
 
     return (
       <View style={{ gap: 14 }}>
@@ -3232,6 +3792,13 @@ const styles = StyleSheet.create({
   detailNotesBox: { borderRadius: 18, borderWidth: 1.5, padding: 14, marginBottom: 14 },
   detailNotesText: { fontSize: 14, fontFamily: font.bodyMedium, lineHeight: 20 },
   detailActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  siteMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  siteEmpty: { alignItems: 'center', paddingVertical: 36, paddingHorizontal: 24 },
+  siteRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4 },
+  siteRowTime: { width: 62, fontSize: 10 },
+  siteRowSticker: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+  siteRowTick: { position: 'absolute', right: -2, top: -2, width: 16, height: 16, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  siteRowChip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, maxWidth: 96 },
   detailEditBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 8,
