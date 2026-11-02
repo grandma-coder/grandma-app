@@ -254,7 +254,6 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   const { data: todayLogsData, isLoading: todayLogsLoading, refetch: refetchTodayLogs } = usePregnancyTodayLogs(userId)
   const todayLogs = todayLogsData ?? {}
   // First load only — refetches keep the current content.
-  const todayLogsFirstLoad = !sessionReady || (todayLogsLoading && !todayLogsData)
 
   // Latest logged weight — drives the slim weight row's trailing value.
   // Kept to refresh the weight cache on focus / after logging; the value is
@@ -395,7 +394,8 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
           }}
           onOpenBirthGuide={() => setBirthGuideVisible(true)}
           visibleCardIds={caregiverView?.visible ?? null}
-          loading={todayLogsFirstLoad}
+          // Quick access is navigation — never hold it behind today's logs (a slow or failed
+          // query left the tiles as skeletons forever). The kicks tile can simply update later.
         />
       </View>
       )}

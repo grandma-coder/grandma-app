@@ -68,7 +68,21 @@ const ExpoSecureStoreAdapter = {
   removeItem: (key: string) => removeChunkedItem(key),
 }
 
+// Reads from PostgREST get a timeout: without one, a stalled database leaves every query
+// pending forever and every loading skeleton stuck on screen. Writes, storage uploads and edge
+// functions keep the default (aborting a save that would have succeeded is worse than waiting).
+const READ_TIMEOUT_MS = 12000
+export const fetchWithReadTimeout: typeof fetch = (input, init) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url
+  const method = (init?.method ?? (typeof input === 'object' && 'method' in input ? (input as Request).method : 'GET')).toUpperCase()
+  if (!url.includes('/rest/v1/') || (method !== 'GET' && method !== 'HEAD') || init?.signal) return fetch(input, init)
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), READ_TIMEOUT_MS)
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer))
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  global: { fetch: fetchWithReadTimeout },
   auth: {
     storage: ExpoSecureStoreAdapter,
     autoRefreshToken: true,

@@ -1,6 +1,8 @@
 import { QueryClient } from '@tanstack/react-query'
 
-export const queryClient = new QueryClient()
+// One retry (not the default three) so a failing read turns into an empty / error state in
+// seconds instead of leaving a skeleton up for a minute.
+export const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } })
 
 /**
  * Invalidate every query that reads from `pregnancy_logs`. Call this after
