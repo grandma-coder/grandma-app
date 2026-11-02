@@ -1917,6 +1917,7 @@ export const ptBR: TranslationKeys = {
   auth_welcome_tagline: "te vê.",
   auth_welcome_body: "Pra você não ter que lembrar de tudo sozinha. Do seu ciclo à menopausa, e em cada fase dos seus filhos, a gente cuida de cada detalhe.",
   auth_welcome_rebus: "Seu ciclo [flower], sua gravidez [heart], seus filhos [baby]. Num app só [phone].",
+  auth_startHere: "Começar",
   auth_signInError: "Erro de entrada",
   auth_welcome_back: "bem-vinda de volta, querida.",
   auth_welcome_waiting: "Grandma estava esperando.",

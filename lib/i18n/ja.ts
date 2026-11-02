@@ -1917,6 +1917,7 @@ export const ja: TranslationKeys = {
   auth_welcome_tagline: "sees you.",
   auth_welcome_body: "So you don't have to remember it all on your own. From your cycle to menopause, and through every stage of your kids, we take care of every detail.",
   auth_welcome_rebus: "Your cycle [flower], your pregnancy [heart], your kids [baby]. One app [phone].",
+  auth_startHere: "Start here",
   auth_signInError: "Sign-In Error",
   auth_welcome_back: "back, dear.",
   auth_welcome_waiting: "Grandma's been waiting.",

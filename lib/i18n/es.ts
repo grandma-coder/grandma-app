@@ -1917,6 +1917,7 @@ export const es: TranslationKeys = {
   auth_welcome_tagline: "te ve.",
   auth_welcome_body: "Para que no tengas que recordarlo todo sola. De tu ciclo a la menopausia, y en cada etapa de tus hijos, cuidamos cada detalle.",
   auth_welcome_rebus: "Tu ciclo [flower], tu embarazo [heart], tus hijos [baby]. Una sola app [phone].",
+  auth_startHere: "Empezar",
   auth_signInError: "Error de inicio de sesión",
   auth_welcome_back: "de vuelta, querida.",
   auth_welcome_waiting: "Grandma ha estado esperando.",

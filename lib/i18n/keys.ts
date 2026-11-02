@@ -2101,6 +2101,8 @@ export interface TranslationKeys {
   auth_welcome_body: string
   /** Site hero headline; [flower] [heart] [baby] [phone] are inline stickers. */
   auth_welcome_rebus: string
+  /** Welcome dock: the eye disc that starts email sign-up. */
+  auth_startHere: string
   auth_signInError: string
 
   // Auth — sign-in screen
