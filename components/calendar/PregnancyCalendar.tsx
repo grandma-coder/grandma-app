@@ -17,6 +17,7 @@
  * - Routine Manager: full CRUD against pregnancy_routines table
  */
 
+import { PREGNANCY_LOG_STICKER } from './PregnancyLogRouter'
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
   View,
@@ -3406,6 +3407,7 @@ export function PregnancyCalendar() {
       {/* Log Form Sheet */}
       <LogSheet
         visible={logForm !== null}
+        sticker={logForm ? PREGNANCY_LOG_STICKER[logForm.type as keyof typeof PREGNANCY_LOG_STICKER] : undefined}
         title={logForm ? LOG_FORM_TITLE[logForm.type] : ''}
         onClose={() => setLogForm(null)}
       >

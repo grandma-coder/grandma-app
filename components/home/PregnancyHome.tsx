@@ -40,7 +40,7 @@ import { pregnancyWeeks, getDaysToGo, getCurrentWeekFromDueDate } from '../../li
 import type { PregnancyWeekData } from '../../lib/pregnancyData'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import { toDateStr } from '../../lib/cycleLogic'
-import { PregnancyLogRouter, type PregnancyLogType } from '../calendar/PregnancyLogRouter'
+import { PregnancyLogRouter, PREGNANCY_LOG_STICKER, type PregnancyLogType } from '../calendar/PregnancyLogRouter'
 import { LogSheet } from '../calendar/LogSheet'
 
 import { WeekCard } from './pregnancy/WeekCard'
@@ -407,6 +407,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
       {/* Inline log forms — same shell as the calendar */}
       <LogSheet
         visible={activeLog !== null}
+        sticker={activeLog ? PREGNANCY_LOG_STICKER[activeLog] : undefined}
         title={activeLog ? t(INLINE_LOG_TITLE_KEY[activeLog] as any) : ''}
         onClose={() => {
           setActiveLog(null)

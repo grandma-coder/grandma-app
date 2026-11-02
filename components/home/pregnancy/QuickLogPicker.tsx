@@ -5,6 +5,9 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '../../../constants/theme'
 import { PillButton } from '../../ui/PillButton'
+import { EyeAction, ACTION_TONES } from '../../ui/AuthDock'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
 import { Character } from '../../characters/Characters'
@@ -47,8 +50,16 @@ function blobFor(logType: string, stickers: ReturnType<typeof useTheme>['sticker
   }
 }
 
+// Site look: each pregnancy log type → a card-less Site sticker.
+const SITE_STICKER: Record<string, SiteStickerName> = {
+  mood: 'face3', water: 'drop', sleep: 'zz', nutrition: 'avocado', weight: 'ruler', kick_count: 'shoe',
+  symptom: 'thermo', exercise: 'flame', vitamins: 'syringe', kegel: 'flower', contraction: 'bell',
+  appointment: 'cal', exam_result: 'doc', nesting: 'house', birth_prep: 'bodysuit',
+}
+
 export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
-  const { stickers } = useTheme()
+  const { stickers, colors } = useTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const enabledKeys = useQuickLogStore((s) => s.enabledKeys)
   const setEnabled = useQuickLogStore((s) => s.setEnabled)
@@ -79,8 +90,8 @@ export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
     return {
       key: q.key,
       label: t(q.labelKey),
-      icon: s.node,
-      socketTint: s.soft,
+      icon: diffuse ? s.node : <SiteSticker name={SITE_STICKER[q.logType] ?? 'star'} size={30} cut />,
+      socketTint: diffuse ? s.soft : 'transparent',
       selected: draft.includes(q.key),
       onToggle: () => toggleDraft(q.key),
     }
@@ -90,15 +101,26 @@ export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
     <LogSheet
       visible={visible}
       title={t('kids_quickLogs_pickTitle')}
+      sticker={diffuse ? undefined : 'pencil'}
       onClose={onClose}
-      footer={
+      footer={diffuse ? (
         <PillButton
           label={dirty ? t('common_save') : t('common_done')}
           variant="ink"
           onPress={dirty ? save : onClose}
           disabled={draft.length === 0}
         />
-      }
+      ) : (
+        <EyeAction
+          label={dirty ? t('common_save') : t('common_done')}
+          onPress={dirty ? save : onClose}
+          ink={colors.text}
+          disabled={draft.length === 0}
+          sticker={dirty ? 'pencil' : 'star'}
+          fill={ACTION_TONES.lilac}
+          size={64}
+        />
+      )}
     >
       <QuickLogPickerGrid items={items} />
     </LogSheet>

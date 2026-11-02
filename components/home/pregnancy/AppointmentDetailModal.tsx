@@ -8,32 +8,26 @@
 
 import { useGrandmaChatEnabled } from '../../../store/useFeatureFlags'
 import React from 'react'
-import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { X } from 'lucide-react-native'
+import { ChevronRight } from 'lucide-react-native'
 import { Character } from '../../characters/Characters'
-import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
 import { DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
 import { useTranslatedContent } from '../../../lib/useTranslatedContent'
-import { PaperCard } from '../../ui/PaperCard'
-import { StickerButton } from '../../ui/StickerButton'
-import { Display, MonoCaps, Body } from '../../ui/Typography'
-import {
-  LogUltrasound, LogExamResult, LogAppointment, HealthCheckup,
-  TipRead, NotifyInsight,
-} from '../../stickers/RewardStickers'
+import { LogSheet } from '../../calendar/LogSheet'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { FadeUp } from '../../ui/Motion'
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 
-type StickerFn = (props: { size?: number; fill?: string; stroke?: string }) => React.ReactElement
-
-const TYPE_LABEL: Record<StandardAppointment['type'], { label: string; Sticker: StickerFn }> = {
-  ultrasound: { label: 'Ultrasound',  Sticker: LogUltrasound },
-  blood_test: { label: 'Blood test',  Sticker: LogExamResult },
-  checkup:    { label: 'Checkup',     Sticker: HealthCheckup },
-  test:       { label: 'Test',        Sticker: LogAppointment },
-  vaccine:    { label: 'Vaccine',     Sticker: HealthCheckup },
+const TYPE_LABEL: Record<StandardAppointment['type'], { label: string; sticker: SiteStickerName }> = {
+  ultrasound: { label: 'Ultrasound',  sticker: 'baby' },
+  blood_test: { label: 'Blood test',  sticker: 'drop' },
+  checkup:    { label: 'Checkup',     sticker: 'doc' },
+  test:       { label: 'Test',        sticker: 'cal' },
+  vaccine:    { label: 'Vaccine',     sticker: 'syringe' },
 }
 
 interface Props {
@@ -44,7 +38,7 @@ interface Props {
 }
 
 export function AppointmentDetailModal({ visible, appointment, currentWeek, onClose }: Props) {
-  const { colors, stickers } = useTheme()
+  const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -144,131 +138,95 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
     )
   }
 
+  const ink = colors.text
+  const eyebrow = [styles.eyebrow, { color: colors.textMuted }]
+  const Divider = () => <View style={[styles.divider, { backgroundColor: colors.border }]} />
+  const Action = ({ label, onPress }: { label: string; onPress: () => void }) => (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.action, { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 }]}
+    >
+      <Text style={[styles.actionLabel, { color: ink, fontFamily: font.bodyBold }]}>{label}</Text>
+      <ChevronRight size={18} color={ink} strokeWidth={2} />
+    </Pressable>
+  )
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <Pressable style={styles.overlayBg} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: colors.bgWarm }]}>
-          <View style={styles.handle} />
-          <Pressable
-            onPress={onClose}
-            style={styles.close}
-            accessibilityRole="button"
-            accessibilityLabel="Close appointment details"
-            hitSlop={10}
-          >
-            <X size={18} color={colors.textMuted} strokeWidth={2} />
-          </Pressable>
+    <LogSheet
+      visible={visible}
+      title={appointment.name}
+      sticker={typeInfo.sticker}
+      chip={typeInfo.label}
+      onClose={onClose}
+    >
+      <View style={{ paddingBottom: 12 }}>
+        <FadeUp index={0}>
+          <Text style={eyebrow}>{t('pregnancy_appt_weekTiming', { week: appointment.week, timing: timingLabel })}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary, fontFamily: font.body }]}>{description}</Text>
+        </FadeUp>
 
-          <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={[styles.typeBadge, { backgroundColor: stickers.yellowSoft }]}>
-                <typeInfo.Sticker size={20} />
-                <Text style={[styles.typeLabel, { color: colors.text }]}>{typeInfo.label}</Text>
-              </View>
-              <Display size={28} color={colors.text} style={{ marginTop: 8 }}>
-                {appointment.name}
-              </Display>
-              <Body size={13} color={colors.textMuted} style={{ marginTop: 4 }}>
-                {t('pregnancy_appt_weekTiming', { week: appointment.week, timing: timingLabel })}
-              </Body>
+        <FadeUp index={1}>
+          <Divider />
+          <View style={styles.sectionHead}>
+            <SiteSticker name="pencil" size={24} cut />
+            <Text style={eyebrow}>{t('pregnancy_appt_prep')}</Text>
+          </View>
+          <Text style={[styles.body, { color: colors.textSecondary, fontFamily: font.body }]}>{prepNote}</Text>
+        </FadeUp>
+
+        <FadeUp index={2}>
+          <Divider />
+          <View style={styles.sectionHead}>
+            <SiteSticker name="eye" size={24} cut />
+            <Text style={eyebrow}>{t('pregnancy_appt_whatToExpect')}</Text>
+          </View>
+          <Text style={[styles.body, { color: colors.textSecondary, fontFamily: font.body }]}>{whatToExpect}</Text>
+        </FadeUp>
+
+        <FadeUp index={3}>
+          <Divider />
+          <View style={styles.sectionHead}>
+            <SiteSticker name="bubble" size={24} cut />
+            <Text style={eyebrow}>{t('pregnancy_appt_questionsToAsk')}</Text>
+          </View>
+          {appointment.questions.map((q, i) => (
+            <View key={i} style={styles.questionRow}>
+              <Text style={[styles.questionNum, { color: ink, fontFamily: font.displayBold, backgroundColor: getModeColorSoft('pregnancy'), borderColor: ink }]}>{i + 1}</Text>
+              <Text style={[styles.body, { flex: 1, color: ink, fontFamily: font.body }]}>{q}</Text>
             </View>
+          ))}
+        </FadeUp>
 
-            <Body size={14} color={colors.textSecondary} style={styles.description}>
-              {description}
-            </Body>
-
-            {/* Prep */}
-            <PaperCard tint={stickers.yellowSoft} radius={16} padding={14} flat style={styles.card}>
-              <View style={styles.cardHeader}>
-                <TipRead size={20} />
-                <MonoCaps size={10} color={colors.textMuted}>{t('pregnancy_appt_prep')}</MonoCaps>
-              </View>
-              <Body size={13} color={colors.text} style={{ lineHeight: 19 }}>
-                {prepNote}
-              </Body>
-            </PaperCard>
-
-            {/* What to expect */}
-            <PaperCard tint={stickers.blueSoft} radius={16} padding={14} flat style={styles.card}>
-              <View style={styles.cardHeader}>
-                <LogUltrasound size={20} />
-                <MonoCaps size={10} color={colors.textMuted}>{t('pregnancy_appt_whatToExpect')}</MonoCaps>
-              </View>
-              <Body size={13} color={colors.text} style={{ lineHeight: 19 }}>
-                {whatToExpect}
-              </Body>
-            </PaperCard>
-
-            {/* Questions */}
-            <PaperCard tint={stickers.greenSoft} radius={16} padding={14} flat style={styles.card}>
-              <View style={styles.cardHeader}>
-                <NotifyInsight size={20} />
-                <MonoCaps size={10} color={colors.textMuted}>{t('pregnancy_appt_questionsToAsk')}</MonoCaps>
-              </View>
-              {appointment.questions.map((q, i) => (
-                <View key={i} style={styles.questionRow}>
-                  <Body size={13} color={colors.textMuted}>{i + 1}.</Body>
-                  <Body size={13} color={colors.text} style={{ flex: 1, lineHeight: 19 }}>{q}</Body>
-                </View>
-              ))}
-            </PaperCard>
-
-            {/* CTAs */}
-            <View style={styles.ctaRow}>
-              <StickerButton
-                label={t('pregnancy_appt_scheduleInAgenda')}
-                color={stickers.lilac}
-                colorSoft={stickers.lilacSoft}
-                onPress={() => { onClose(); router.push('/(tabs)/agenda') }}
-              />
-              {chatOn && (
-              <StickerButton
-                label={t('pregnancy_appt_askGrandma')}
-                color={stickers.yellow}
-                colorSoft={stickers.yellowSoft}
-                active={false}
-                onPress={() => { onClose(); router.push('/grandma-talk') }}
-              />
-              )}
-            </View>
-          </ScrollView>
-        </View>
+        <FadeUp index={4}>
+          <View style={{ marginTop: 18 }}>
+            <Action label={t('pregnancy_appt_scheduleInAgenda')} onPress={() => { onClose(); router.push('/(tabs)/agenda') }} />
+            {chatOn && (
+              <Action label={t('pregnancy_appt_askGrandma')} onPress={() => { onClose(); router.push('/grandma-talk') }} />
+            )}
+          </View>
+        </FadeUp>
       </View>
-    </Modal>
+    </LogSheet>
   )
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end' },
-  overlayBg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,19,19,0.55)' },
-  sheet: {
-    borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    paddingTop: 12, maxHeight: '88%',
+  eyebrow: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
+  description: { fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 14 },
+  divider: { height: StyleSheet.hairlineWidth, marginVertical: 14 },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  body: { fontSize: 14, lineHeight: 21 },
+  questionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 5 },
+  questionNum: {
+    width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, overflow: 'hidden',
+    textAlign: 'center', fontSize: 12, lineHeight: 19,
   },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(245,237,220,0.2)', alignSelf: 'center', marginBottom: 16 },
-  close: { position: 'absolute', top: 12, right: 20, padding: 8, zIndex: 10 },
-
-  header: { paddingHorizontal: 24, marginBottom: 16 },
-  typeBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+  action: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 16,
   },
-  typeLabel: { fontSize: 11, fontFamily: font.bodySemiBold },
-
-  description: { paddingHorizontal: 24, marginBottom: 16, lineHeight: 20 },
-
-  card: { marginHorizontal: 20, marginBottom: 12 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-
-  questionRow: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    paddingVertical: 4,
-  },
-
-  ctaRow: { paddingHorizontal: 20, marginTop: 8, gap: 10 },
+  actionLabel: { fontSize: 15 },
 })
 
 // ─── Diffuse styles — hairline cards, mono data voice, containerless CTAs ────

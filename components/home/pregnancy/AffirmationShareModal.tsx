@@ -26,10 +26,12 @@ import {
   AffirmationMode,
 } from './affirmationTemplates'
 import { useSavedToast } from '../../ui/SavedToast'
-import { useTheme, useDiffuseTheme, diffuseFont } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { PillButton } from '../../ui/PillButton'
 import { StickerButton } from '../../ui/StickerButton'
+import { InkBackButton } from '../../ui/InkBackButton'
+import { SiteChoice } from '../../ui/SiteChoice'
 import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
@@ -99,20 +101,26 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
 
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: chromeBorder }]}>
-          <PillButton
-            label={t('common_close')}
-            onPress={onClose}
-            variant="paper"
-            height={38}
-            style={styles.headerSideBtn}
-          />
+          {diffuse ? (
+            <PillButton
+              label={t('common_close')}
+              onPress={onClose}
+              variant="paper"
+              height={38}
+              style={styles.headerSideBtn}
+            />
+          ) : (
+            <View style={styles.headerSideBtn}>
+              <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
+            </View>
+          )}
           <View style={styles.headerCenter}>
             <Text
               style={[
                 styles.headerTitle,
                 diffuse
                   ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-                  : { color: colors.text, fontFamily: font.display },
+                  : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 },
               ]}
               numberOfLines={1}
             >
@@ -134,7 +142,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
             styles.instructions,
             diffuse
               ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 11 }
-              : { color: colors.textMuted, fontFamily: font.bodyMedium },
+              : { color: colors.textSecondary, fontFamily: font.body },
           ]}
         >
           {styleMode === 'text' ? t('affirmationShare_hintTextOnly') : t('affirmationShare_hintWithBg')}
@@ -142,28 +150,53 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
 
         {/* Background / text-only toggle */}
         <View style={styles.toggleWrap}>
-          <StickerButton
-            label={t('affirmationShare_withBackground')}
-            color={stickers.yellow}
-            colorSoft={stickers.yellowSoft}
-            colorDark="#C4A828"
-            active={styleMode === 'bg'}
-            onPress={() => setStyleMode('bg')}
-            height={52}
-            fontSize={14}
-            style={styles.toggleBtn}
-          />
-          <StickerButton
-            label={t('affirmationShare_textOnly')}
-            color={stickers.lilac}
-            colorSoft={stickers.lilacSoft}
-            colorDark="#8B74C5"
-            active={styleMode === 'text'}
-            onPress={() => setStyleMode('text')}
-            height={52}
-            fontSize={14}
-            style={styles.toggleBtn}
-          />
+          {diffuse ? (
+            <>
+              <StickerButton
+                label={t('affirmationShare_withBackground')}
+                color={stickers.yellow}
+                colorSoft={stickers.yellowSoft}
+                colorDark="#C4A828"
+                active={styleMode === 'bg'}
+                onPress={() => setStyleMode('bg')}
+                height={52}
+                fontSize={14}
+                style={styles.toggleBtn}
+              />
+              <StickerButton
+                label={t('affirmationShare_textOnly')}
+                color={stickers.lilac}
+                colorSoft={stickers.lilacSoft}
+                colorDark="#8B74C5"
+                active={styleMode === 'text'}
+                onPress={() => setStyleMode('text')}
+                height={52}
+                fontSize={14}
+                style={styles.toggleBtn}
+              />
+            </>
+          ) : (
+            <>
+              <SiteChoice
+                label={t('affirmationShare_withBackground')}
+                selected={styleMode === 'bg'}
+                onPress={() => setStyleMode('bg')}
+                tone={getModeColorSoft('pregnancy')}
+                sticker="pola"
+                compact
+                style={styles.toggleBtn}
+              />
+              <SiteChoice
+                label={t('affirmationShare_textOnly')}
+                selected={styleMode === 'text'}
+                onPress={() => setStyleMode('text')}
+                tone={getModeColorSoft('pregnancy')}
+                sticker="pencil"
+                compact
+                style={styles.toggleBtn}
+              />
+            </>
+          )}
         </View>
 
         {/* Tile grid */}
@@ -214,6 +247,7 @@ function TemplateTile({
   const shotRef = useRef<ViewShot | null>(null)
   const toast = useSavedToast()
   const { t } = useTranslation()
+  const diffuse = useIsDiffuse()
 
   const checkOpacity = useRef(new Animated.Value(0)).current
   const checkScale = useRef(new Animated.Value(0.5)).current
@@ -329,6 +363,15 @@ function TemplateTile({
           backgroundColor: tileBg,
           borderColor: styleMode === 'text' ? 'rgba(245,237,220,0.12)' : borderCol,
           opacity: pressed ? 0.88 : 1,
+        },
+        diffuse ? null : {
+          borderRadius: 18,
+          borderWidth: 1.5,
+          ...(styleMode === 'text' ? null : { borderColor: colors.text }),
+          shadowColor: colors.text,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 0,
         },
       ]}
     >

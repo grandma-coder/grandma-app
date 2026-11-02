@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import Svg, { Path as SvgPath, Circle as SvgCircle } from 'react-native-svg'
-import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { Character } from '../../characters/Characters'
 import { toDateStr } from '../../../lib/cycleLogic'
@@ -17,6 +17,8 @@ import { useTranslation } from '../../../lib/i18n'
 import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { PaperCard } from '../../ui/PaperCard'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { FadeUp } from '../../ui/Motion'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition, LogExercise,
 } from '../../stickers/RewardStickers'
@@ -33,6 +35,10 @@ interface Props {
 }
 
 interface Point { date: string; value: number }
+
+const MOOD_STICKER: Record<string, SiteStickerName> = {
+  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face1', nauseous: 'face1', energetic: 'face4', sad: 'face1',
+}
 
 const MOOD_LABELS: Record<string, string> = {
   excited: 'Excited', happy: 'Happy', okay: 'Okay',
@@ -131,7 +137,16 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
       onClose={onClose}
       chip={`Week ${weekNumber}`}
       chipColor={diffuse ? undefined : stickers.lilac}
+      sticker={diffuse ? undefined : 'bars'}
     >
+      {!diffuse ? (
+        <CalmBody
+          moodKey={moodKey} waterVal={waterVal} sleepVal={sleepVal} nutritionVal={nutritionVal}
+          nutritionTotalCals={nutritionTotalCals} exerciseLogged={exerciseLogged} kicksVal={kicksVal}
+          weightVal={weightVal} weekNumber={weekNumber} loading={loading}
+          weightHist={weightHist} waterHist={waterHist}
+        />
+      ) : (
       <View style={{ gap: 14 }}>
         {/* Mood — full-width hero tile */}
         <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={18} flat>
@@ -310,7 +325,133 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
           )}
         </PaperCard>
       </View>
+      )}
     </LogSheet>
+  )
+}
+
+// ─── Site-look body (light): one hero, quiet rows, hairlines ─────────────────
+
+function CalmBody(p: {
+  moodKey: string | null; waterVal: number; sleepVal: number | null; nutritionVal: number
+  nutritionTotalCals: number; exerciseLogged: boolean; kicksVal: number | null; weightVal: number | null
+  weekNumber: number; loading: boolean; weightHist: Point[]; waterHist: Point[]
+}) {
+  const { colors, font } = useTheme()
+  const { t } = useTranslation()
+  const ink = colors.text
+  const ink2 = colors.textSecondary
+  const tone = getModeColorSoft('pregnancy')
+  const eyebrow = [styles.eyebrow, { color: colors.textMuted }]
+  const Divider = () => <View style={[styles.divider, { backgroundColor: colors.border }]} />
+  const Row = ({ sticker, label, value, sub }: { sticker: SiteStickerName; label: string; value: string; sub: string }) => (
+    <View style={styles.calmRow}>
+      <SiteSticker name={sticker} size={30} cut />
+      <View style={{ flex: 1 }}>
+        <Text style={eyebrow}>{label}</Text>
+        <Text style={[styles.rowSub, { color: ink2, fontFamily: font.body }]}>{sub}</Text>
+      </View>
+      <Text style={[styles.rowValue, { color: ink, fontFamily: font.displayBold }]}>{value}</Text>
+    </View>
+  )
+  const notLogged = t('pregnancy_dashboard_notLogged')
+  const weightPts = p.weightHist.filter((h) => h.value > 0).length
+  const water = fillDays(p.waterHist)
+  let i = 0
+
+  return (
+    <View>
+      <FadeUp index={i++}>
+        <Text style={eyebrow}>{t('pregnancy_todayDash_labelMood')}</Text>
+        <View style={styles.moodRow}>
+          <SiteSticker name={p.moodKey ? (MOOD_STICKER[p.moodKey] ?? 'face2') : 'face2'} size={64} cut />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.hero, { color: ink, fontFamily: font.displayBold }]} numberOfLines={1}>
+              {p.moodKey ? (MOOD_LABELS[p.moodKey] ?? p.moodKey) : t('pregnancy_dashboard_notLoggedYet')}
+            </Text>
+            <Text style={[styles.rowSub, { color: ink2, fontFamily: font.body }]}>
+              {p.moodKey ? t('pregnancy_dashboard_howYouFelt') : t('pregnancy_dashboard_tapMoodAbove')}
+            </Text>
+          </View>
+        </View>
+      </FadeUp>
+
+      <FadeUp index={i++}>
+        <Divider />
+        <Row sticker="drop" label={t('pregnancy_todayDash_labelHydration')} value={`${p.waterVal}/8`} sub={t('pregnancy_dashboard_perEight')} />
+        <View style={styles.dropletRow}>
+          {Array.from({ length: 8 }, (_, d) => (
+            <Droplet key={d} filled={d < p.waterVal} fill={getModeColorSoft('kids')} muted={colors.borderStrong} ink={ink} />
+          ))}
+        </View>
+      </FadeUp>
+
+      <FadeUp index={i++}>
+        <Divider />
+        <Row
+          sticker="zz" label={t('pregnancy_todayDash_labelSleep')}
+          value={p.sleepVal !== null ? `${p.sleepVal.toFixed(1)}h` : '—'}
+          sub={p.sleepVal !== null ? (p.sleepVal >= 7 ? t('pregnancy_dashboard_restfulNight') : t('pregnancy_dashboard_couldUseMore')) : notLogged}
+        />
+        <Divider />
+        <Row
+          sticker="avocado" label={t('pregnancy_todayDash_labelMeals')}
+          value={`${p.nutritionVal}/3`}
+          sub={p.nutritionTotalCals > 0 ? t('pregnancy_dashboard_kcal', { count: p.nutritionTotalCals }) : notLogged}
+        />
+        <Divider />
+        <Row
+          sticker="flame" label={t('pregnancy_todayDash_labelExercise')}
+          value={p.exerciseLogged ? '✓' : '—'}
+          sub={p.exerciseLogged ? t('pregnancy_dashboard_doneToday') : notLogged}
+        />
+        <Divider />
+        {p.weekNumber >= 28 ? (
+          <Row
+            sticker="shoe" label={t('pregnancy_todayDash_labelKicks')}
+            value={p.kicksVal !== null ? String(p.kicksVal) : '—'}
+            sub={p.kicksVal !== null ? t('pregnancy_dashboard_sessionsToday') : notLogged}
+          />
+        ) : (
+          <Row
+            sticker="ruler" label={t('pregnancy_todayDash_labelWeight')}
+            value={p.weightVal !== null ? `${p.weightVal.toFixed(1)}${t('pregnancy_todayDash_unitKg')}` : '—'}
+            sub={p.weightVal !== null ? t('pregnancy_dashboard_loggedToday') : notLogged}
+          />
+        )}
+      </FadeUp>
+
+      <FadeUp index={i++}>
+        <Divider />
+        <Text style={eyebrow}>{t('pregnancy_todayDash_labelWeightLast7')}</Text>
+        {p.loading ? (
+          <View style={{ height: 100, justifyContent: 'center' }}><ActivityIndicator color={colors.textMuted} /></View>
+        ) : weightPts >= 2 ? (
+          <Sparkline points={fillDays(p.weightHist).values} color={ink} ink={ink} />
+        ) : (
+          <Text style={[styles.rowSub, { color: ink2, fontFamily: font.body, marginTop: 8 }]}>{t('pregnancy_todayDash_weightNeedMore')}</Text>
+        )}
+      </FadeUp>
+
+      <FadeUp index={i++}>
+        <Divider />
+        <Text style={eyebrow}>{t('pregnancy_todayDash_labelHydrationLast7')}</Text>
+        {p.loading ? (
+          <View style={{ height: 80, justifyContent: 'center' }}><ActivityIndicator color={colors.textMuted} /></View>
+        ) : (
+          <>
+            <BarSeries
+              values={water.values} labels={water.labels} max={8}
+              color={getModeColorSoft('kids')} ink={ink} muted={colors.textMuted}
+              emptyBar={colors.border} barBorder={ink} showValues valueFont={font.bodyBold}
+            />
+            <Text style={[styles.rowSub, { color: colors.textMuted, fontFamily: font.body, marginTop: 8 }]}>
+              {'Glasses per day (goal 8)'}
+            </Text>
+          </>
+        )}
+      </FadeUp>
+    </View>
   )
 }
 
@@ -355,12 +496,19 @@ function Sparkline({ points, color, ink, axis }: { points: number[]; color: stri
 }
 
 function BarSeries({
-  values, labels, max, color, ink, muted, emptyBar, barBorder, labelFont,
-}: { values: number[]; labels: string[]; max: number; color: string; ink: string; muted: string; emptyBar?: string; barBorder?: string; labelFont?: string }) {
+  values, labels, max, color, ink, muted, emptyBar, barBorder, labelFont, showValues, valueFont,
+}: { values: number[]; labels: string[]; max: number; color: string; ink: string; muted: string; emptyBar?: string; barBorder?: string; labelFont?: string; showValues?: boolean; valueFont?: string }) {
   const empty = emptyBar ?? 'rgba(20,19,19,0.06)'
   const border = barBorder ?? ink
   return (
     <View style={{ marginTop: 12 }}>
+      {showValues ? (
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+          {values.map((v, i) => (
+            <Text key={i} style={{ flex: 1, textAlign: 'center', fontSize: 11, color: ink, fontFamily: valueFont }}>{v > 0 ? String(v) : ''}</Text>
+          ))}
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 70 }}>
         {values.map((v, i) => {
           const pct = Math.max(0.02, Math.min(1, v / max))
@@ -371,7 +519,7 @@ function BarSeries({
                 height: `${pct * 100}%`,
                 backgroundColor: v > 0 ? color : empty,
                 borderRadius: 6,
-                borderWidth: 1,
+                borderWidth: showValues ? 1.5 : 1,
                 borderColor: v > 0 ? border : 'transparent',
               }} />
             </View>
@@ -390,6 +538,12 @@ function BarSeries({
 }
 
 const styles = StyleSheet.create({
+  eyebrow: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
+  divider: { height: StyleSheet.hairlineWidth, marginVertical: 14 },
+  hero: { fontSize: 34, lineHeight: 40 },
+  calmRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rowSub: { fontSize: 13, lineHeight: 18, marginTop: 2 },
+  rowValue: { fontSize: 22 },
   tileHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   moodRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 8 },
   dropletRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
