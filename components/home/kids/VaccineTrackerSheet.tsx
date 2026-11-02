@@ -139,6 +139,7 @@ export function VaccineTrackerSheet({
 
   return (
     <LogSheet
+      sticker="syringe"
       visible={visible}
       title={t(KIDS_VACCINES_TITLE_KEY)}
       onClose={onClose}

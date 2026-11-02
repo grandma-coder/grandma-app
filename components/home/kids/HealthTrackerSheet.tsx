@@ -13,14 +13,14 @@
  * `useIsDiffuse()`, else LogSheet (which supplies the cream paper-sheet chrome).
  */
 import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native'
-import { AlertCircle, TrendingUp, Pill } from 'lucide-react-native'
+import { AlertCircle } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useTheme, brand, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
 import { DiffuseSectionHeader, DiffuseListRow, DiffuseMetricTile, DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
 import { Character } from '../../characters/Characters'
-import { Heart as HeartSticker, Leaf as LeafSticker, Pill as PillSticker } from '../../ui/Stickers'
 import { LogSheet } from '../../calendar/LogSheet'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { GrowthPercentileChart } from '../../kids/GrowthPercentileChart'
 import { resolveSex } from '../../../lib/growthStandards'
 import type { ChildWithRole } from '../../../types'
@@ -229,6 +229,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
   const warn = isDark ? '#F5A97F' : '#C4562E'
   return (
     <LogSheet
+      sticker="heart"
       visible={visible}
       title={t(KIDS_HEALTH_TITLE_KEY)}
       onClose={onClose}
@@ -326,25 +327,21 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
       {(weight || height) && (
         <>
           <View style={styles.modalSectionRow}>
-            <View style={{ transform: [{ rotate: '-8deg' }] }}>
-              <LeafSticker size={22} fill="#BDD48C" stroke={stickerInk} />
-            </View>
+            <SiteSticker name="ruler" size={24} />
             <Text style={[styles.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>{t('kids_home_health_latest_growth')}</Text>
           </View>
           <View style={{
             flexDirection: 'row', alignItems: 'center', gap: 14,
-            backgroundColor: isDark ? '#1F2A3A' : '#EBF3FC',
-            borderColor: isDark ? colors.border : 'rgba(20,19,19,0.12)',
-            borderWidth: 1.5, borderRadius: 22, padding: 14, marginTop: 4,
-            shadowColor: '#141313', shadowOpacity: isDark ? 0 : 0.05,
-            shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+            backgroundColor: isDark ? '#1F2A3A' : colors.surface,
+            borderColor: isDark ? colors.border : stickerInk,
+            borderWidth: 1.5, borderRadius: 20, padding: 14, marginTop: 4,
           }}>
             <View style={{
               width: 44, height: 44, borderRadius: 22,
               backgroundColor: '#9DC3E8', borderWidth: 1.5, borderColor: stickerInk,
               alignItems: 'center', justifyContent: 'center',
             }}>
-              <TrendingUp size={18} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.2} />
+              <SiteSticker name="ruler" size={24} />
             </View>
             <View style={{ flex: 1, flexDirection: 'row', gap: 16 }}>
               {weight && (
@@ -372,9 +369,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
           editor lives). */}
       <>
         <View style={styles.modalSectionRow}>
-          <View style={{ transform: [{ rotate: '-10deg' }] }}>
-            <HeartSticker size={22} fill="#F2B2C7" stroke={stickerInk} />
-          </View>
+          <SiteSticker name="rasp" size={24} />
           <Text style={[styles.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>{t('kids_home_health_allergies')}</Text>
         </View>
         <View style={[styles.healthTagsRow, { marginTop: 4 }]}>
@@ -383,14 +378,14 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
               flexDirection: 'row', alignItems: 'center', gap: 6,
               paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5,
               backgroundColor: isDark ? '#36222A' : '#FDEEF2',
-              borderColor: isDark ? '#F5BBCF40' : 'rgba(20,19,19,0.18)',
+              borderColor: isDark ? '#F5BBCF40' : stickerInk,
             }}>
               <View style={{
                 width: 16, height: 16, borderRadius: 8,
                 backgroundColor: '#F2B2C7', borderWidth: 1, borderColor: stickerInk,
                 alignItems: 'center', justifyContent: 'center',
               }}>
-                <AlertCircle size={9} color={isDark ? '#FFFFFF' : '#141313'} strokeWidth={2.5} />
+                <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: '#141313' }}>!</Text>
               </View>
               <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: isDark ? '#F5BBCF' : '#141313' }}>{a}</Text>
             </View>
@@ -401,11 +396,10 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
               flexDirection: 'row', alignItems: 'center', gap: 6,
               paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5,
               backgroundColor: 'transparent',
-              borderColor: isDark ? 'rgba(245,187,207,0.4)' : 'rgba(20,19,19,0.18)',
-              borderStyle: 'dashed',
+              borderColor: isDark ? 'rgba(245,187,207,0.4)' : stickerInk,
             }}
           >
-            <Text style={{ fontSize: 13, fontFamily: font.bodySemiBold, color: isDark ? '#F5BBCF' : '#6E6763' }}>
+            <Text style={{ fontSize: 13, fontFamily: font.bodySemiBold, color: isDark ? '#F5BBCF' : stickerInk }}>
               {child.allergies.length === 0 ? '+ Add allergy' : '+ Add'}
             </Text>
           </Pressable>
@@ -416,16 +410,14 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
       {child.medications.length > 0 && (
         <>
           <View style={styles.modalSectionRow}>
-            <View style={{ transform: [{ rotate: '10deg' }] }}>
-              <PillSticker size={22} fill="#F5D652" stroke={stickerInk} />
-            </View>
+            <SiteSticker name="syringe" size={24} />
             <Text style={[styles.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>{t('kids_home_health_medications')}</Text>
           </View>
           {child.medications.map((m, i) => (
             <View key={i} style={[styles.modalTaskRow, { borderBottomColor: paperBorder }]}>
-              <Pill size={14} color={brand.secondary} strokeWidth={2} />
+              <SiteSticker name="syringe" size={16} />
               <Text style={[styles.modalTaskLabel, { color: ink }]}>{m}</Text>
-              <Text style={[styles.modalTaskStatus, { color: brand.secondary }]}>{t('kids_home_health_medication_active')}</Text>
+              <Text style={[styles.modalTaskStatus, { color: colors.text, fontFamily: font.bodyBold }]}>{t('kids_home_health_medication_active')}</Text>
             </View>
           ))}
         </>
@@ -434,9 +426,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
       {/* Exam insights — NEW */}
       <>
         <View style={styles.modalSectionRow}>
-          <View style={{ transform: [{ rotate: '-6deg' }] }}>
-            <LeafSticker size={22} fill="#9DC3E8" stroke={stickerInk} />
-          </View>
+          <SiteSticker name="doc" size={24} />
           <Text style={[styles.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>{t(KIDS_HEALTH_EXAMS_SECTION_KEY)}</Text>
         </View>
         {insights.recent.length === 0 ? (
@@ -465,7 +455,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
           onPress={() => { onClose(); router.push('/exams?behavior=kids') }}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 4, opacity: pressed ? 0.6 : 1 })}
         >
-          <Text style={{ fontSize: 13, fontFamily: font.bodySemiBold, color: brand.secondary }}>{t(KIDS_HEALTH_EXAMS_SEE_ALL_KEY)}</Text>
+          <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: colors.text, textDecorationLine: 'underline' }}>{t(KIDS_HEALTH_EXAMS_SEE_ALL_KEY)}</Text>
         </Pressable>
       </>
     </LogSheet>
