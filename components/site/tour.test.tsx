@@ -245,6 +245,23 @@ describe('Tour', () => {
     expect(coach().dataset.on).toBe('true')
   })
 
+  it('on phones, hides while a text field has focus (keyboard up)', () => {
+    mockMedia(true)
+    setup()
+    flush()
+    expect(coach().dataset.on).toBe('true')
+    const field = document.createElement('input')
+    field.type = 'email'
+    document.body.append(field)
+    field.focus()
+    flush()
+    expect(coach().dataset.on).toBe('false')
+    field.blur()
+    flush()
+    expect(coach().dataset.on).toBe('true')
+    field.remove()
+  })
+
   it('a target under the phone tab bar hides the note and is scrolled into view once', () => {
     const scrollBy = vi.fn()
     Object.defineProperty(HTMLElement.prototype, 'scrollBy', { configurable: true, value: scrollBy })

@@ -9,7 +9,7 @@ import { MODES, type Mode } from '@/lib/modes'
 import { Sticker } from '@/components/stickers/sticker'
 import { useDemo } from '@/components/demo/demo'
 import { useJoined } from './joined-context'
-import { WHATSAPP_CHANNEL } from './links'
+import { WhatsAppLink } from './whatsapp-link'
 import s from './site.module.css'
 
 export type QuickJoinVariant = 'hero' | 'section' | 'pop'
@@ -44,7 +44,7 @@ function errorKey(state: WaitlistState): (typeof ERRORS)[number] | 'rate_limited
  * (through JoinedContext) to its joined state. A failure stays on this field, with the typed email kept.
  * - hero: name field over the one-line email pill, hidden `mode` from the demo phase
  * - section / pop: phase radios (default: the demo phase, not linked back to it) + name + email
- * Once joined, each points at the WhatsApp channel.
+ * Each ends with the WhatsApp channel button, before and after joining.
  */
 export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
   const t = useTranslations('v3')
@@ -92,9 +92,7 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
       placeholder={t('waitlist.namePlaceholder')} aria-label={t('waitlist.nameAria')}
     />
   )
-  const whatsapp = (
-    <a className={s.wa} href={WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer">{t('waitlist.whatsapp')}</a>
-  )
+  const whatsapp = <WhatsAppLink label={t('waitlist.whatsapp')} />
   const hidden = (
     <>
       <input type="hidden" name="locale" value={locale} />
@@ -115,12 +113,9 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
     return (
       <div ref={box}>
         {isJoined ? (
-          <>
-            <div ref={done} tabIndex={-1} role="status" className={`${s.qj} ${s.qjHero} ${s.joined}`}>
-              <Sticker name="star" className={s.ico} /><span>{t('waitlist.joinedInline')}</span>
-            </div>
-            {whatsapp}
-          </>
+          <div ref={done} tabIndex={-1} role="status" className={`${s.qj} ${s.qjHero} ${s.joined}`}>
+            <Sticker name="star" className={s.ico} /><span>{t('waitlist.joinedInline')}</span>
+          </div>
         ) : (
           <form action={action} noValidate data-tour="join" className={s.qjForm} aria-busy={pending || undefined}>
             {hidden}
@@ -133,6 +128,7 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
         )}
         {error}
         <p className={s.qjNote}>{note('hero.note')}</p>
+        {whatsapp}
       </div>
     )
   }
@@ -149,7 +145,6 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
             <Sticker name="phone" className={s.ico} />
             <span>{t.rich('waitlist.installHint', { b: (c) => <b>{c}</b> })}</span>
           </div>
-          <div>{whatsapp}</div>
         </div>
       ) : (
         <>
@@ -178,6 +173,7 @@ export function QuickJoin({ variant }: { variant: QuickJoinVariant }) {
           </form>
         </>
       )}
+      <div className={isJoined ? s.waDone : undefined}>{whatsapp}</div>
     </div>
   )
 }

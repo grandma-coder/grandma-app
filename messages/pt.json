@@ -238,7 +238,7 @@
       "joinedTitle": "Você está na lista!",
       "joinedBody": "A gente avisa assim que os convites abrirem.",
       "installHint": "No celular, toque em <b>Compartilhar → Adicionar à Tela de Início</b> e a grandma fica aqui pertinho.",
-      "whatsapp": "Entra no nosso canal do WhatsApp →",
+      "whatsapp": "Entra no canal do WhatsApp",
       "errors": {
         "email_required": "Digite o seu email.",
         "email_invalid": "Esse email não parece certo.",

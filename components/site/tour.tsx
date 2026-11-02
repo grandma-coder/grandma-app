@@ -22,6 +22,8 @@ const TARGET: Record<TourKey, string> = {
 }
 
 const isSmall = () => !!window.matchMedia?.(SMALL_QUERY).matches
+/** A text field has focus: on a phone the keyboard is up, and iOS shifts fixed layers off the rects they were placed from. */
+const typing = () => !!document.activeElement?.matches?.('input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]), textarea')
 
 /**
  * Hand-drawn onboarding: a sticky note, a drawn arrow and a halo that follow the next thing to tap. Steps live in
@@ -90,8 +92,9 @@ export function Tour() {
       const underModes = !!modes && !!r && r.top < modes.bottom - 2
       const vis = !!r && r.width > 0 && inScreen && !underModes && r.bottom > 70 && r.top < ih - (isSmall() ? 90 : 10)
       const below = !!r && r.top >= ih - 10 && k !== 'join'
-      const show = vis && !b
-      const pill = below && !b
+      const hush = b || (isSmall() && typing())
+      const show = vis && !hush
+      const pill = below && !hush
       mark(show ? el! : null)
       const sig = `${k}|${show}|${pill}|${iw}x${ih}|${show ? `${r!.left},${r!.top},${r!.width},${r!.height}` : ''}`
       if (sig === last) return

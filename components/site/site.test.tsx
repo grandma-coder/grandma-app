@@ -88,10 +88,11 @@ describe('QuickJoin', () => {
     expect(fd.get('company')).toBe('')
   })
 
-  it('posts the optional name, keeps it on a failed submit, and points at the WhatsApp channel once joined', async () => {
+  it('posts the optional name, keeps it on a failed submit, and shows the WhatsApp channel before and after joining', async () => {
     join.mockResolvedValueOnce({ status: 'error' }).mockResolvedValueOnce({ status: 'success' })
     const user = setup(<QuickJoin variant="hero" />)
     expect(nameFields()).toHaveLength(1)
+    expect(screen.getByRole('link', { name: en.v3.waitlist.whatsapp }).getAttribute('href')).toBe(WHATSAPP_CHANNEL)
     await user.type(nameFields()[0], 'Ana')
     await user.type(emailFields()[0], 'ana@example.com')
     await user.click(submitOf(emailFields()[0]))

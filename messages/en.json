@@ -238,7 +238,7 @@
       "joinedTitle": "You're on the list!",
       "joinedBody": "We'll let you know as soon as invites open.",
       "installHint": "On your phone, tap <b>Share → Add to Home Screen</b> and grandma will be right there.",
-      "whatsapp": "Join our WhatsApp channel →",
+      "whatsapp": "Join our WhatsApp channel",
       "errors": {
         "email_required": "Please enter your email.",
         "email_invalid": "That email doesn't look right.",
