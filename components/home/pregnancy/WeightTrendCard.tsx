@@ -13,7 +13,7 @@ import { ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react-nati
 import Svg, {
   Circle, Line, Path, Rect, Text as SvgText, Defs, LinearGradient, Stop,
 } from 'react-native-svg'
-import { useTheme, font, radius as themeRadius, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
+import { useTheme, font, radius as themeRadius, useDiffuseTheme, getDiffuseAccent, diffuseFont, getModeAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { DiffuseSheet, DiffuseMetricTile } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../../lib/i18n'
@@ -698,7 +698,9 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
   const cardInk = diffuse ? dt.colors.ink : colors.text
   const cardMuted = diffuse ? dt.colors.ink3 : colors.textMuted
   const monoFont = diffuse ? diffuseFont.mono : font.bodySemiBold
-  const seriesColor = diffuse ? dAccent : stickers.lilac
+  const seriesColor = diffuse ? dAccent : getModeAccent('pregnancy')
+  // Site look: status reads as ink on a soft tone fill, never tone-coloured text.
+  const statusSoft = status === 'on_track' ? stickers.greenSoft : status === 'no_data' ? colors.surface : stickers.peachSoft
   const dispStatusColor = diffuse
     ? (status === 'on_track' ? dt.colors.success : status === 'no_data' ? dt.colors.ink3 : dt.colors.warning)
     : statusColor
@@ -706,7 +708,7 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
     ? cardInk
     : diffuse
       ? (derived.gained >= 0 ? dt.colors.success : dt.colors.warning)
-      : (derived.gained >= 0 ? stickers.green : stickers.coral)
+      : cardInk
 
   const cardInner = (
     <>
@@ -724,12 +726,12 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
             </View>
             <View style={[styles.statusPill, diffuse
               ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
-              : { backgroundColor: statusColor + '1A', borderColor: statusColor + '55' }]}>
-              {status === 'on_track' && <TrendingUp size={12} color={dispStatusColor} strokeWidth={2.5} />}
-              {status === 'above' && <TrendingUp size={12} color={dispStatusColor} strokeWidth={2.5} />}
-              {status === 'below' && <TrendingDown size={12} color={dispStatusColor} strokeWidth={2.5} />}
-              {status === 'no_data' && <Minus size={12} color={dispStatusColor} strokeWidth={2.5} />}
-              <Text style={[styles.statusText, diffuse ? { color: dispStatusColor, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase', fontSize: 10 } : { color: statusColor }]} numberOfLines={1}>
+              : { backgroundColor: statusSoft, borderColor: colors.text, borderWidth: 1.5 }]}>
+              {status === 'on_track' && <TrendingUp size={12} color={diffuse ? dispStatusColor : colors.text} strokeWidth={2.5} />}
+              {status === 'above' && <TrendingUp size={12} color={diffuse ? dispStatusColor : colors.text} strokeWidth={2.5} />}
+              {status === 'below' && <TrendingDown size={12} color={diffuse ? dispStatusColor : colors.text} strokeWidth={2.5} />}
+              {status === 'no_data' && <Minus size={12} color={diffuse ? dispStatusColor : colors.text} strokeWidth={2.5} />}
+              <Text style={[styles.statusText, diffuse ? { color: dispStatusColor, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase', fontSize: 10 } : { color: colors.text }]} numberOfLines={1}>
                 {status === 'on_track' ? 'On track' : status === 'above' ? 'Above' : status === 'below' ? 'Below' : 'No data'}
               </Text>
             </View>
@@ -775,7 +777,7 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
                 color={seriesColor}
                 mutedColor={cardMuted}
                 axisColor={diffuse ? dt.colors.line : undefined}
-                labelColor={diffuse ? dt.colors.ink3 : undefined}
+                labelColor={diffuse ? dt.colors.ink3 : colors.textSecondary}
                 dotStroke={diffuse ? dt.colors.surface : undefined}
                 bubbleTextColor={diffuse ? dt.colors.bg : undefined}
                 mono={diffuse}
@@ -799,8 +801,8 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
             <View style={styles.detailsLink}>
               {diffuse
                 ? <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: dAccent }}>{t('preg_weight_details')}</Text>
-                : <Body size={13} color={stickers.lilac} style={{ fontFamily: font.bodySemiBold }}>{t('preg_weight_details')}</Body>}
-              <ChevronRight size={14} color={diffuse ? dAccent : stickers.lilac} strokeWidth={2.5} />
+                : <Body size={13} color={colors.text} style={{ fontFamily: font.bodySemiBold }}>{t('preg_weight_details')}</Body>}
+              <ChevronRight size={14} color={diffuse ? dAccent : colors.text} strokeWidth={2.5} />
             </View>
           </View>
     </>

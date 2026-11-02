@@ -23,7 +23,7 @@ import { getWeekData } from '../../lib/pregnancyData'
 import { getWeekStat } from '../../lib/weekStats'
 import { toDateStr } from '../../lib/cycleLogic'
 import { useTranslation } from '../../lib/i18n'
-import { useTheme, useDiffuseTheme, getDiffuseAccent, getModeField, diffuseFont } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, getDiffuseAccent, getModeField, getModeColorSoft, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseTimelineRow } from '../calendar/DiffuseLogTimeline'
 
@@ -691,13 +691,13 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
           {/* Center overlay — inside ringStage so it centers on the SVG, not the full row */}
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
             <View style={styles.centerInner}>
-              <Text style={[styles.centerLabel, { color: col, fontFamily: font.bodySemiBold }]}>
+              <Text style={[styles.centerLabel, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', textTransform: 'uppercase' }]}>
                 {t('preg_ring_weekLabel')}
               </Text>
-              <Text style={[styles.centerNumber, { color: col, fontFamily: font.display }]}>
+              <Text style={[styles.centerNumber, { color: colors.text, fontFamily: font.displayBold }]}>
                 {selectedWeek}
               </Text>
-              <Text style={[styles.centerStatus, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+              <Text style={[styles.centerStatus, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
                 {isCurrWeek ? t('preg_ring_statusHere') : isPastWeek ? t('preg_ring_statusCompleted') : t('preg_ring_statusUpcoming')}
               </Text>
             </View>
@@ -705,7 +705,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         </View>
       </View>
 
-      <Text style={[styles.hint, { color: colors.textFaint, fontFamily: font.body }]}>
+      <Text style={[styles.hint, { color: colors.textMuted, fontFamily: font.body }]}>
         {t('preg_ring_gestureHint')}
       </Text>
 
@@ -719,18 +719,18 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
             (Trimester meta row removed; the wheel already shows week/trimester.) */}
         <View style={styles.sizeRow}>
           <View style={styles.sizeBlock}>
-            <Text style={[styles.sizeText, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
+            <Text style={[styles.sizeText, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]} numberOfLines={1}>
               {article}{' '}
-              <Text style={[styles.sizeNameAccent, { color: col, fontFamily: font.italic }]}>
+              <Text style={[styles.sizeNameAccent, { color: colors.text, fontFamily: font.display }]}>
                 {sizeName}
               </Text>
             </Text>
-            <Text style={[styles.dateLabel, { color: colors.textFaint, fontFamily: font.bodyMedium }]}>
+            <Text style={[styles.dateLabel, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
               {dateLabel} {t('common_dotSeparator')} {triLabel}
             </Text>
           </View>
-          <View style={[styles.statusPill, { borderColor: col + '55', backgroundColor: col + '1A' }]}>
-            <Text style={[styles.statusPillText, { color: col, fontFamily: font.bodySemiBold }]}>
+          <View style={[styles.statusPill, { borderColor: colors.text, borderWidth: 1.5, backgroundColor: getModeColorSoft('pregnancy') }]}>
+            <Text style={[styles.statusPillText, { color: colors.text, fontFamily: font.bodyBold }]}>
               {statusLabel}
             </Text>
           </View>
@@ -738,24 +738,24 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
         {/* LENGTH / WEIGHT stats — Fraunces serif numbers */}
         <View style={styles.statsRow}>
-          <View style={[styles.statCell, { borderTopColor: col + '66' }]}>
-            <Text style={[styles.statLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+          <View style={[styles.statCell, { borderTopColor: colors.text + '40' }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
               {t('preg_ring_length')}
             </Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.statValue, { color: colors.text, fontFamily: font.displayBold, letterSpacing: 0 }]}>
               {stat.cm}
-              <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.italic }]}>
+              <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.body, fontStyle: 'normal' }]}>
                 {t('preg_weekCard_unitCm')}
               </Text>
             </Text>
           </View>
-          <View style={[styles.statCell, { borderTopColor: col + '66' }]}>
-            <Text style={[styles.statLabel, { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+          <View style={[styles.statCell, { borderTopColor: colors.text + '40' }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
               {t('preg_ring_weight')}
             </Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: font.display }]}>
+            <Text style={[styles.statValue, { color: colors.text, fontFamily: font.displayBold, letterSpacing: 0 }]}>
               {formatWeightValue(stat.g)}
-              <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.italic }]}>
+              <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.body, fontStyle: 'normal' }]}>
                 {formatWeightUnit(stat.g)}
               </Text>
             </Text>

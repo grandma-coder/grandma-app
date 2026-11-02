@@ -330,8 +330,8 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
       />
       )}
 
-      {/* 2. Daily Message */}
-      {show('daily_message') && (
+      {/* 2. Daily Message (Diffuse keeps it here; site look moves it below the shortcuts — calm order) */}
+      {diffuse && show('daily_message') && (
       <View style={styles.section}>
         <DailyMessageCard />
       </View>
@@ -359,9 +359,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
           <Text style={{ marginBottom: 12, fontFamily: diffuseFont.display, fontSize: 22, letterSpacing: -0.3, color: dt.colors.ink }}>
             {t('home_wallet_label')}
           </Text>
-        ) : (
-          <Display size={18} style={{ marginBottom: 12 }}>{t('home_wallet_label')}</Display>
-        )}
+        ) : null}
         <WeekWallet
           weekNumber={weekNumber}
           todayLogs={todayLogs}
@@ -375,6 +373,13 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
           onOpenBirthGuide={() => setBirthGuideVisible(true)}
           visibleCardIds={caregiverView?.visible ?? null}
         />
+      </View>
+      )}
+
+      {/* Site look: the quiet daily-message card sits last, after the log dock + shortcut tiles. */}
+      {!diffuse && show('daily_message') && (
+      <View style={styles.section}>
+        <DailyMessageCard />
       </View>
       )}
 

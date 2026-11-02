@@ -35,6 +35,9 @@ import { WalletCard } from '../WalletCard'
 import { WalletPicker, type WalletPickerItem } from '../WalletPicker'
 import { MemoriesSheet } from '../MemoriesSheet'
 import { QuietPill } from '../../ui/QuietPill'
+import { StickerTileGrid } from '../../ui/StickerTileGrid'
+import { Display } from '../../ui/Typography'
+import type { SiteStickerName } from '../../stickers/SiteSticker'
 import { LogSheet } from '../../calendar/LogSheet'
 import { PregnancyUserReminders } from './PregnancyUserReminders'
 import {
@@ -210,36 +213,68 @@ export function WeekWallet({
 
   const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
 
+  const SITE_STICKER: Record<PregCardId, SiteStickerName> = {
+    appointment: 'cal', week_tip: 'brain', kicks: 'shoe', reminders: 'bell', memories: 'camera',
+    exams: 'doc', birth_guide: 'books', ask_grandma: 'bubble', rewards: 'star', channels: 'bubble',
+    village: 'house',
+  }
+
   return (
     <View>
+      {diffuse ? (
+        <>
       {/* Edit affordance — opens the wallet customization picker. */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
-        <QuietPill
-          leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
-          onPress={() => setPickerOpen(true)}
-          accessibilityLabel={t('kids_quickLogs_edit')}
-        />
-      </View>
-
-      {displayedIds.map((id, i) => {
-        const isLast = i === displayedIds.length - 1
-        // Reminders card shows a notification-style count badge (upcoming).
-        const reminderBadge = id === 'reminders' ? upcoming.length : undefined
-        return (
-          <WalletCard
-            key={id}
-            tone={toneFor(id)}
-            icon={iconFor(id)}
-            title={titleFor(id)}
-            badge={reminderBadge}
-            expanded={false}
-            linkOnly={linkOnlyFor(id)}
-            last={isLast}
-            hideChevron
-            onPressHeader={() => onHeader(id, linkOnlyFor(id))}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <QuietPill
+            leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
+            onPress={() => setPickerOpen(true)}
+            accessibilityLabel={t('kids_quickLogs_edit')}
           />
-        )
-      })}
+        </View>
+
+        {displayedIds.map((id, i) => {
+          const isLast = i === displayedIds.length - 1
+          // Reminders card shows a notification-style count badge (upcoming).
+          const reminderBadge = id === 'reminders' ? upcoming.length : undefined
+          return (
+            <WalletCard
+              key={id}
+              tone={toneFor(id)}
+              icon={iconFor(id)}
+              title={titleFor(id)}
+              badge={reminderBadge}
+              expanded={false}
+              linkOnly={linkOnlyFor(id)}
+              last={isLast}
+              hideChevron
+              onPressHeader={() => onHeader(id, linkOnlyFor(id))}
+            />
+          )
+        })}
+
+        </>
+      ) : (
+        <>
+          {/* Site look: heading + edit on one row, shortcuts as a sticker tile grid. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 12 }}>
+            <Display size={18} style={{ flex: 1 }}>{t('home_wallet_label')}</Display>
+            <QuietPill
+              leading={<SlidersHorizontal size={16} color={editColor} strokeWidth={2} />}
+              onPress={() => setPickerOpen(true)}
+              accessibilityLabel={t('kids_quickLogs_edit')}
+            />
+          </View>
+          <StickerTileGrid
+            tiles={displayedIds.map((id) => ({
+              key: id,
+              label: titleFor(id),
+              sticker: SITE_STICKER[id],
+              tone: softFor(id),
+              onPress: () => onHeader(id, linkOnlyFor(id)),
+            }))}
+          />
+        </>
+      )}
 
       {/* Reminders — full pop-up sheet (compact list + add) */}
       <LogSheet visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>

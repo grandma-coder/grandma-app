@@ -10,11 +10,12 @@
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
-import { useTheme, radius, diffuseFont, useDiffuseTheme, getModeColorSoft } from '../../../constants/theme'
+import { useTheme, radius, diffuseFont, useDiffuseTheme, getModeColorSoft, getModeAccent } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { QuietPill } from '../../ui/QuietPill'
 import { Character } from '../../characters/Characters'
-import { SiteSticker } from '../../stickers/SiteSticker'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { LogDock } from '../../ui/LogDock'
 import { useTranslation } from '../../../lib/i18n'
 import { Display, MonoCaps } from '../../ui/Typography'
 import {
@@ -39,6 +40,13 @@ interface Props {
   /** Render just the inner content (no PaperCard/DiffuseFieldSurface chrome).
    *  Used when embedded inside another card, e.g. the Week Wallet. */
   bare?: boolean
+}
+
+// Site-look dock sticker per quick-log key.
+const SITE_FOR: Record<string, SiteStickerName> = {
+  mood: 'face3', water: 'drop', sleep: 'zz', meals: 'lettuce', weight: 'bars', kicks: 'shoe',
+  symptom: 'thermo', exercise: 'flame', vitamins: 'leaf', kegel: 'flower', contraction: 'bell',
+  appointment: 'cal', exam_result: 'doc', nesting: 'crib', birth_prep: 'bodysuit',
 }
 
 const MOOD_LABELS: Record<string, string> = {
@@ -234,6 +242,20 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
         />
       </View>
 
+      {!diffuse ? (
+        // Site look: launchers like the tab bar — sticker + hand-lettered label, no pills.
+        <LogDock
+          accent={getModeAccent('pregnancy')}
+          items={pills.map((p) => ({
+            key: p.key,
+            label: t(PREG_QUICK_LOGS.find((q) => q.key === p.key)?.labelKey ?? 'preg_ring_log_mood'),
+            sticker: SITE_FOR[p.key] ?? 'star',
+            done: p.done,
+            onPress: onLogMetric ? () => onLogMetric(p.logType) : undefined,
+          }))}
+        />
+      ) : (
+      <>
       {/* Tappable metric pills — neutral hairline; only a completed goal tints
           soft green (no mode-accent violet). */}
       <View style={styles.chipsRow}>
@@ -281,6 +303,8 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           ]}
         />
       </View>
+      </>
+      )}
 
       {/* (See results moved to the header row; no footer band — it left dead
           space between this card and the Daily Message below.) */}

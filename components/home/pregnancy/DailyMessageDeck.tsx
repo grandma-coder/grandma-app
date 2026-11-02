@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { View, Text, StyleSheet, useWindowDimensions, Animated, PanResponder } from 'react-native'
 import { useTheme, radius, shadows } from '../../../constants/theme'
 import { Display } from '../../ui/Typography'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { CardSticker } from './CardSticker'
 import type { DailyCard } from '../../../lib/dailyMessage/types'
 
@@ -16,6 +17,7 @@ interface Props {
 // (the app's card grammar), NOT a full-tint wash. RN Animated + PanResponder.
 export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
   const { width } = useWindowDimensions()
   const [index, setIndex] = useState(0)
   const pan = useRef(new Animated.ValueXY()).current
@@ -69,9 +71,13 @@ export function DailyMessageDeck({ cards, onTopSwiped }: Props) {
         .map(({ card, i }) => {
           const isTop = i === 0
           const body = (
-            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+              !diffuse && { borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
+            ]}>
               <CardSticker color={card.color} size={48} mode={card.mode} />
-              <Display size={25} style={styles.cardText}>{card.text}</Display>
+              <Display size={25} style={[styles.cardText, !diffuse && { letterSpacing: 0.3 }]}>{card.text}</Display>
             </View>
           )
           if (!isTop) {

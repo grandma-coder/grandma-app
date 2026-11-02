@@ -15,7 +15,7 @@ import { WeekRuler } from './WeekRuler'
 import { BabyIllustration } from './babyIllustrations'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
-import { font, diffuseFont, useDiffuseTheme, getDiffuseAccent, getModeField, useTheme } from '../../../constants/theme'
+import { font, diffuseFont, useDiffuseTheme, getDiffuseAccent, getModeField, getModeColorSoft, useTheme } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
 
@@ -105,10 +105,15 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
   const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const data = getWeekData(week)
   const stat = getWeekStat(week)
-  const pal = paletteForWeek(week)
+  // Diffuse never reads `pal`; the site look uses one calm pregnancy tone + ink for every week.
+  const pal: Palette = diffuse ? paletteForWeek(week) : {
+    bg: getModeColorSoft('pregnancy'), fg: colors.text, metaFg: colors.textSecondary,
+    dotColor: stickers.yellow, dotStroke: colors.text,
+    rulerLine: colors.text + '66', rulerText: colors.text,
+  }
   const tri = getTrimester(week)
   const cm = stat.cm > 0 ? stat.cm : parseCm(data.babyLength)
   const weekStr = String(week).padStart(2, '0')
@@ -214,7 +219,10 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
           opacity: pressed ? 0.96 : 1,
           borderWidth: 1.5,
           borderColor: colors.text,
+          borderRadius: 18,
           shadowColor: colors.text,
+          shadowOpacity: 0.1,
+          shadowOffset: { width: 0, height: 2 },
         },
       ]}
     >
@@ -234,7 +242,7 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
       {/* Middle grid: left = mega + stage, right = stats */}
       <View style={styles.middleGrid}>
         <View style={styles.leftCol}>
-          <Text style={[styles.mega, { color: pal.fg }]}>{weekStr}</Text>
+          <Text style={[styles.mega, styles.megaSite, { color: pal.fg }]}>{weekStr}</Text>
           <View style={styles.stage}>
             <BabyIllustration week={week} size={illSize} />
           </View>
@@ -366,6 +374,8 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 0,
   },
+  // Site look: flat ink numeral, no emboss.
+  megaSite: { textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 0 }, letterSpacing: -1.5 },
   stage: {
     flex: 1,
     alignItems: 'center',

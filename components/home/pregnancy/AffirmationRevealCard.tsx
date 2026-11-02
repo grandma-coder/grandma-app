@@ -93,7 +93,7 @@ export function AffirmationRevealCard() {
   // Warm, muted ink for the revealed phrase — soft coral on cream, brighter
   // peach in dark mode so the italic line stays delicate but legible. Under
   // Diffuse the phrase takes the pregnancy accent (warm plum).
-  const phraseInk = diffuse ? getDiffuseAccent('preg', dt.isDark) : (isDark ? stickers.peach : stickers.coral)
+  const phraseInk = diffuse ? getDiffuseAccent('preg', dt.isDark) : colors.text
   // Resolve the neutral inks/fonts by variant so JSX below stays single-path.
   const labelColor = diffuse ? dt.colors.ink3 : colors.textMuted
   const mutedColor = diffuse ? dt.colors.ink3 : colors.textMuted
@@ -143,7 +143,7 @@ export function AffirmationRevealCard() {
 
         {!revealed ? (
           <Pressable onPress={handleReveal} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
-            <Text style={[styles.phrase, { color: mutedColor, fontFamily: phraseFont }]}>
+            <Text style={[styles.phrase, !diffuse && styles.phraseSite, { color: !diffuse ? colors.textSecondary : mutedColor, fontFamily: phraseFont }]}>
               {t('pregnancy_affirmationAwaits')}
             </Text>
             <View style={styles.revealRow}>
@@ -155,7 +155,7 @@ export function AffirmationRevealCard() {
           <Animated.View
             style={{ opacity: textOpacity, transform: [{ translateY: textTranslate }] }}
           >
-            <Text style={[styles.phrase, { color: phraseInk, fontFamily: phraseFont }]}>
+            <Text style={[styles.phrase, !diffuse && styles.phraseSite, { color: phraseInk, fontFamily: phraseFont }]}>
               {text ? text.toLowerCase() : '…'}
             </Text>
             {text ? (
@@ -192,6 +192,8 @@ const styles = StyleSheet.create({
     lineHeight: 37,
     letterSpacing: -0.2,
   },
+  // Site look: hand-lettered face is already tight — no negative tracking, a calmer size.
+  phraseSite: { fontSize: 26, lineHeight: 34, letterSpacing: 0.2 },
   revealRow: {
     flexDirection: 'row',
     alignItems: 'center',

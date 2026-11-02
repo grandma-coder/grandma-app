@@ -4,6 +4,8 @@
 // a small contained accent), used in place of a bare colored dot.
 import { View, StyleSheet } from 'react-native'
 import { Heart, Star, Drop, Moon, Flower } from '../../stickers/BrandStickers'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { cardTint, cardGlyph } from '../../../lib/dailyMessage/cardTint'
 import type { StickerColorKey } from '../../../lib/dailyMessage/types'
 import type { JourneyMode } from '../../../types'
@@ -16,8 +18,15 @@ interface Props {
 }
 
 export function CardSticker({ color, size = 44, mode = 'pregnancy' }: Props) {
+  const diffuse = useIsDiffuse()
   const tint = cardTint(color)
   const glyph = cardGlyph(color, mode)
+  // Site look: card-less sticker, no socket around it.
+  if (!diffuse) {
+    const name: SiteStickerName =
+      glyph === 'Heart' ? 'heart' : glyph === 'Star' ? 'star' : glyph === 'Drop' ? 'drop' : glyph === 'Moon' ? 'moon' : 'flower'
+    return <SiteSticker name={name} size={size} cut />
+  }
   const g = Math.round(size * 0.52)
   // Ink-colored glyph on a soft-tint socket — readable, contained accent.
   const common = { size: g, fill: tint.ink, stroke: tint.ink }

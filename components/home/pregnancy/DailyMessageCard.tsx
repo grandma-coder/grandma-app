@@ -17,17 +17,23 @@ export function DailyMessageCard() {
   const [open, setOpen] = useState(false)
   if (!todayQuestion) return null
 
+  // Site look: one quiet white card with an ink outline; Diffuse stays flat.
+  const cardStyle = diffuse ? undefined : {
+    backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, padding: 16,
+    shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0,
+  }
+
   return (
-    <View>
+    <View style={cardStyle}>
       <Pressable onPress={() => setOpen(true)}>
         {diffuse ? (
           <MonoCaps color={colors.textMuted}>
             DAILY MESSAGE{isAnswered ? `  ·  ${collection.length} CARD${collection.length === 1 ? '' : 'S'}` : ''}
           </MonoCaps>
         ) : (
-          <Display size={18} color={colors.text}>
+          <MonoCaps color={colors.textMuted}>
             DAILY MESSAGE{isAnswered ? `  ·  ${collection.length} CARD${collection.length === 1 ? '' : 'S'}` : ''}
-          </Display>
+          </MonoCaps>
         )}
 
         {isAnswered && todayCard ? (
