@@ -42,8 +42,11 @@ function DockItem({ item, index, accent }: { item: LogDockItem; index: number; a
   const celebrate = useRef(new Animated.Value(0)).current
   const tickIn = useRef(new Animated.Value(item.done ? 1 : 0)).current
   const wasDone = useRef(item.done)
+  // Celebrate only a save the user just made from this item — not ticks that appear when
+  // today's logs finish loading on app open.
+  const armedAt = useRef(0)
   useEffect(() => {
-    if (item.done && !wasDone.current) {
+    if (item.done && !wasDone.current && Date.now() - armedAt.current < 120000) {
       celebrate.setValue(0)
       tickIn.setValue(0)
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
@@ -54,15 +57,15 @@ function DockItem({ item, index, accent }: { item: LogDockItem; index: number; a
         ]),
         Animated.spring(tickIn, { toValue: 1, friction: 4, tension: 140, delay: 120, useNativeDriver: true }),
       ]).start()
-    } else if (!item.done) {
-      tickIn.setValue(0)
+    } else {
+      tickIn.setValue(item.done ? 1 : 0)
     }
     wasDone.current = item.done
   }, [item.done, celebrate, tickIn])
 
   return (
     <Pressable
-      onPress={item.onPress ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); item.onPress?.() } : undefined}
+      onPress={item.onPress ? () => { armedAt.current = Date.now(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); item.onPress?.() } : undefined}
       onPressIn={() => to(1)}
       onPressOut={() => to(0)}
       disabled={!item.onPress}

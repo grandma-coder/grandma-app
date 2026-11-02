@@ -472,46 +472,46 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
       {/* Tap-to-log sheets — one per signal, like PregnancyHome. All write to
           `logDate` (today by default, or the ring/strip-selected day), and a
           successful save triggers the confirm overlay via onLogSaved. */}
-      <LogSheet visible={sheetType === 'mood'} title={sheetTitle.mood} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['mood']} visible={sheetType === 'mood'} title={sheetTitle.mood} onClose={closeSheet}>
         <MoodForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'symptom'} title={sheetTitle.symptom} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['symptom']} visible={sheetType === 'symptom'} title={sheetTitle.symptom} onClose={closeSheet}>
         <SymptomsForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'basal_temp'} title={sheetTitle.basal_temp} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['basal_temp']} visible={sheetType === 'basal_temp'} title={sheetTitle.basal_temp} onClose={closeSheet}>
         <BbtForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'lh'} title={sheetTitle.lh} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['lh']} visible={sheetType === 'lh'} title={sheetTitle.lh} onClose={closeSheet}>
         <LhForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'cm'} title={sheetTitle.cm} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['cm']} visible={sheetType === 'cm'} title={sheetTitle.cm} onClose={closeSheet}>
         <CmForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'intercourse'} title={sheetTitle.intercourse} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['intercourse']} visible={sheetType === 'intercourse'} title={sheetTitle.intercourse} onClose={closeSheet}>
         <IntimacyForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'period_start'} title={sheetTitle.period_start} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['period_start']} visible={sheetType === 'period_start'} title={sheetTitle.period_start} onClose={closeSheet}>
         <PeriodStartForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'period_end'} title={sheetTitle.period_end} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['period_end']} visible={sheetType === 'period_end'} title={sheetTitle.period_end} onClose={closeSheet}>
         <PeriodEndForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'pregnancy_test'} title={sheetTitle.pregnancy_test} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['pregnancy_test']} visible={sheetType === 'pregnancy_test'} title={sheetTitle.pregnancy_test} onClose={closeSheet}>
         <PregnancyTestForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'sex_drive'} title={sheetTitle.sex_drive} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['sex_drive']} visible={sheetType === 'sex_drive'} title={sheetTitle.sex_drive} onClose={closeSheet}>
         <SexDriveForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'clots'} title={sheetTitle.clots} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['clots']} visible={sheetType === 'clots'} title={sheetTitle.clots} onClose={closeSheet}>
         <ClotsForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'weight'} title={sheetTitle.weight} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['weight']} visible={sheetType === 'weight'} title={sheetTitle.weight} onClose={closeSheet}>
         <WeightForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'water'} title={sheetTitle.water} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['water']} visible={sheetType === 'water'} title={sheetTitle.water} onClose={closeSheet}>
         <WaterForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'activity'} title={sheetTitle.activity} onClose={closeSheet}>
+      <LogSheet sticker={CYCLE_LOG_STICKER['activity']} visible={sheetType === 'activity'} title={sheetTitle.activity} onClose={closeSheet}>
         <ActivityForm date={logDate} phase={phase} onSaved={onLogSaved} />
       </LogSheet>
 
