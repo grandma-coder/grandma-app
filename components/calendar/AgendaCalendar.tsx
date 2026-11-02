@@ -308,6 +308,8 @@ const styles = StyleSheet.create({
   toggleSeg: {
     paddingVertical: 4,
     paddingHorizontal: 12,
+    // Room for the bold (selected) label so it never truncates to "Mon…".
+    minWidth: 68,
     borderRadius: 999,
     borderWidth: 1.5,
     borderColor: 'transparent',
