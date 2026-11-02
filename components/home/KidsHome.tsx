@@ -3949,7 +3949,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
                   shadowOpacity: 0.12,
                   shadowRadius: 6,
                   elevation: 3,
-                  transform: [{ rotate: `${rotation}deg` }],
+                  
                 }}
               >
                 {/* Icon sticker disc */}
@@ -4025,7 +4025,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
                           shadowOpacity: b.total > 0 ? 0.14 : 0,
                           shadowRadius: 4,
                           elevation: b.total > 0 ? 2 : 0,
-                          transform: [{ rotate: `${tilt}deg` }],
+                          
                         }}
                       >
                         {b.total > 0 && (
@@ -4688,7 +4688,7 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 1,
-        transform: [{ rotate: `${tilt}deg` }],
+        
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -4952,7 +4952,7 @@ function BreastfeedingInsights({
           shadowOpacity: 0.1,
           shadowRadius: 4,
           elevation: 1,
-          transform: [{ rotate: '-0.6deg' }],
+          
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
             <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: font.bodyBold, textTransform: 'uppercase', letterSpacing: 0.8 }}>
@@ -5012,7 +5012,7 @@ function BreastfeedingInsights({
           shadowOpacity: 0.1,
           shadowRadius: 4,
           elevation: 1,
-          transform: [{ rotate: '0.6deg' }],
+          
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
             <Text style={{ color: DIAPER_STICKER_INK, fontSize: 13, fontFamily: font.bodyBold, textTransform: 'uppercase', letterSpacing: 0.8 }}>
@@ -5103,7 +5103,7 @@ function BreastfeedingInsights({
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 1,
-              transform: [{ rotate: `${card.tilt}deg` }],
+              
             }}>
               <Text style={{ color: DIAPER_STICKER_INK, fontSize: 26, fontFamily: font.displayBold, letterSpacing: -0.5 }} numberOfLines={1} adjustsFontSizeToFit>
                 {card.value}
@@ -5405,8 +5405,8 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                   marginBottom: 12,
                 }}
               >
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: StickerPalette.coral, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center' }}>
-                  <Droplets size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: StickerPalette.paper, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center' }}>
+                  <SiteSticker name="bottle" size={28} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_home_feeding_modal_feedings')}</Text>
@@ -5428,9 +5428,9 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               {(feedingBreast + feedingBottle) > 0 ? (
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   {[
-                    { Icon: Baby, value: feedingBreast.toLocaleString(), label: 'Breast', fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
-                    { Icon: Milk, value: feedingBottle.toLocaleString(), label: 'Bottle', fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
-                    { Icon: Droplets, value: feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—', label: 'Total Vol', fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
+                    { Icon: Baby, sticker: 'heart' as const, value: feedingBreast.toLocaleString(), label: 'Breast', fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
+                    { Icon: Milk, sticker: 'bottle' as const, value: feedingBottle.toLocaleString(), label: 'Bottle', fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
+                    { Icon: Droplets, sticker: 'drop' as const, value: feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—', label: 'Total Vol', fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
                   ].map((card, i) => (
                     <View
                       key={i}
@@ -5448,11 +5448,11 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                         shadowOpacity: 0.12,
                         shadowRadius: 6,
                         elevation: 2,
-                        transform: [{ rotate: `${card.tilt}deg` }],
+                        
                       }}
                     >
                       <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: card.accent, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-                        <card.Icon size={16} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
+                        <SiteSticker name={card.sticker} size={22} />
                       </View>
                       <Text style={{ color: DIAPER_STICKER_INK, fontSize: 18, fontFamily: font.displayBold, letterSpacing: -0.3 }} numberOfLines={1}>{card.value}</Text>
                       <Text style={{ color: DIAPER_STICKER_INK, fontSize: 9.5, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{card.label}</Text>
@@ -5885,7 +5885,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                     shadowOpacity: 0.12,
                     shadowRadius: 6,
                     elevation: 2,
-                    transform: [{ rotate: `${card.tilt}deg` }],
+                    
                   }}
                 >
                   <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: card.accent, borderWidth: 1.5, borderColor: DIAPER_STICKER_INK, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
@@ -6296,7 +6296,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
                       shadowOpacity: 0.1,
                       shadowRadius: 6,
                       elevation: 2,
-                      transform: [{ rotate: `${tilt}deg` }],
+                      
                     },
                   ]}
                 >

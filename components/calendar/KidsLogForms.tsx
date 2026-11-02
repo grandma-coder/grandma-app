@@ -45,9 +45,10 @@ import {
   MinusCircle,
   X,
 } from 'lucide-react-native'
-import { useTheme, brand, stickers as stickerPalette, font, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, brand, stickers as stickerPalette, font, useDiffuseTheme, diffuseFont, getModeField, getDiffuseAccent, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { SiteChoice } from '../ui/SiteChoice'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
@@ -600,21 +601,21 @@ function RoutineToggle({
         style={[
           routineStyles.toggleRow,
           {
-            backgroundColor: enabled ? ACCENT_SOFT : colors.surface,
-            borderColor: enabled ? ACCENT + '66' : (isDark ? colors.border : INK),
-            borderRadius: radius.lg,
+            backgroundColor: enabled ? getModeColorSoft('kids', isDark) : colors.surface,
+            borderColor: colors.text,
+            borderRadius: 18,
           },
         ]}
       >
-        <Repeat size={16} color={enabled ? ACCENT : colors.textMuted} strokeWidth={2} />
-        <Text style={[routineStyles.toggleText, { color: enabled ? accentText : colors.textSecondary }]}>
+        <Repeat size={16} color={colors.text} strokeWidth={2} />
+        <Text style={[routineStyles.toggleText, { color: colors.text, fontFamily: font.bodyBold }]}>
           {t('kids_logForm_saveAsRoutine')}
         </Text>
         <View
           style={[
             routineStyles.toggleSwitch,
             {
-              backgroundColor: enabled ? ACCENT : (isDark ? colors.border : INK),
+              backgroundColor: enabled ? colors.text : colors.textFaint,
               borderRadius: 10,
             },
           ]}
@@ -640,13 +641,13 @@ function RoutineToggle({
                 style={[
                   routineStyles.dayChip,
                   {
-                    backgroundColor: active ? ACCENT : 'transparent',
-                    borderColor: active ? ACCENT : (isDark ? colors.border : INK),
+                    backgroundColor: active ? getModeColorSoft('kids', isDark) : colors.surface,
+                    borderColor: colors.text,
                     borderRadius: radius.full,
                   },
                 ]}
               >
-                <Text style={[routineStyles.dayText, { color: active ? INK : colors.textMuted }]}>
+                <Text style={[routineStyles.dayText, { color: colors.text }]}>
                   {label}
                 </Text>
               </Pressable>
@@ -733,6 +734,115 @@ function DiffuseRoutineToggle({
       )}
     </View>
   )
+}
+
+// ─── Site-look primitives (light branch only) ──────────────────────────────
+// Clean ink outline, hard ink shadow, journey-tone fill when selected, label always ink.
+
+const SITE_HARD_SHADOW = { shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0 } as const
+
+/** Secondary action: white pill, ink outline, ink bold label, optional sticker before it. */
+function SitePill({ label, onPress, sticker, flex, disabled, tone, icon }: {
+  label: string
+  onPress: () => void
+  sticker?: SiteStickerName
+  flex?: boolean
+  disabled?: boolean
+  tone?: string
+  icon?: ReactNode
+}) {
+  const { colors } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.sitePill,
+        SITE_HARD_SHADOW,
+        { backgroundColor: tone ?? colors.surface, borderColor: colors.text, shadowColor: colors.text },
+        flex && { flex: 1 },
+        pressed && { transform: [{ translateY: 2 }], shadowOffset: { width: 0, height: 1 } },
+      ]}
+    >
+      {sticker ? <SiteSticker name={sticker} size={24} cut /> : icon}
+      <Text style={[styles.sitePillText, { color: colors.text }]} numberOfLines={1}>{label}</Text>
+    </Pressable>
+  )
+}
+
+/** Small selectable chip (flags, switch-target minutes). Selected = tone fill, ink label. */
+function SiteChip({ label, selected, onPress, tone, icon }: {
+  label: string
+  selected: boolean
+  onPress: () => void
+  tone: string
+  icon?: ReactNode
+}) {
+  const { colors } = useTheme()
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={[styles.siteChip, { backgroundColor: selected ? tone : colors.surface, borderColor: colors.text }]}
+    >
+      {icon}
+      <Text style={[styles.siteChipText, { color: colors.text }]} numberOfLines={1}>{label}</Text>
+    </Pressable>
+  )
+}
+
+/** Stacked tile (sticker over label) for 3-up rows. */
+function SiteTile({ label, selected, onPress, tone, sticker }: {
+  label: string
+  selected: boolean
+  onPress: () => void
+  tone: string
+  sticker: SiteStickerName
+}) {
+  const { colors } = useTheme()
+  return (
+    <Pressable
+      onPress={() => { Haptics.selectionAsync().catch(() => {}); onPress() }}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={[
+        styles.siteTile,
+        SITE_HARD_SHADOW,
+        { backgroundColor: selected ? tone : colors.surface, borderColor: colors.text, shadowColor: colors.text },
+        selected && { transform: [{ rotate: '-1.5deg' }, { scale: 1.03 }] },
+      ]}
+    >
+      <SiteSticker name={sticker} size={32} cut />
+      <Text style={[styles.siteTileText, { color: colors.text }]} numberOfLines={2}>{label}</Text>
+    </Pressable>
+  )
+}
+
+/** White text field, 1.5px ink border, radius 16, Hanken 16. */
+function siteInputStyle(colors: { text: string; surface: string }) {
+  return {
+    color: colors.text,
+    backgroundColor: colors.surface,
+    borderColor: colors.text,
+    borderWidth: 1.5,
+    borderRadius: 16,
+    fontFamily: font.body,
+    fontSize: 16,
+    minHeight: 48,
+    paddingHorizontal: 16,
+    shadowOpacity: 0,
+  } as const
+}
+
+const MEAL_STICKERS: Record<string, SiteStickerName> = {
+  breakfast: 'egg',
+  morning_snack: 'banana',
+  lunch: 'lettuce',
+  afternoon_snack: 'banana',
+  dinner: 'pumpkin',
+  night_snack: 'moon',
 }
 
 // ─── Child Selector (shared) ───────────────────────────────────────────────
@@ -1039,6 +1149,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
   const sliderColor = diffuse ? diffuseLogHue('feeding') : ACCENT
   const MEAL_MOMENTS = MEAL_MOMENT_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
   const EAT_QUALITIES = EAT_QUALITY_DEFS.map((d) => ({ ...d, label: t(d.labelKey) }))
+  const siteTone = getModeColorSoft('kids', isDark)
 
   const [childId, setChildId] = useState(prefill?.childId ?? editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')
   const [logDate, setLogDate] = useState(initialDate ?? toDateStr(new Date()))
@@ -1931,25 +2042,18 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         <FormHeaderSticker kind="feeding" />
 
         {/* Feed type toggle */}
-        <View style={[styles.toggleRow, { backgroundColor: colors.surfaceRaised, borderRadius: 999 }]}>
-          {(['breast', 'bottle', 'solids'] as FeedingType[]).map((t) => (
-            <Pressable
-              key={t}
-              onPress={() => setFeedType(t)}
-              style={[
-                styles.toggleBtn,
-                {
-                  backgroundColor: feedType === t ? ACCENT : 'transparent',
-                  borderRadius: 999,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.toggleText, { color: feedType === t ? INK : colors.textSecondary }]}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </Text>
-            </Pressable>
+        <View style={styles.siteRow}>
+          {(['breast', 'bottle', 'solids'] as FeedingType[]).map((ft) => (
+            <SiteChoice
+              key={ft}
+              style={{ flex: 1 }}
+              tick={false}
+              label={ft.charAt(0).toUpperCase() + ft.slice(1)}
+              sticker={ft === 'breast' ? 'heart' : ft === 'bottle' ? 'bottle' : 'avocado'}
+              selected={feedType === ft}
+              tone={siteTone}
+              onPress={() => setFeedType(ft)}
+            />
           ))}
         </View>
 
@@ -1957,27 +2061,18 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
           <>
             {/* Meal moment */}
             <View style={styles.chipGrid}>
-              {MEAL_MOMENTS.map((m) => {
-                const active = meal === m.id
-                return (
-                  <Pressable
-                    key={m.id}
-                    onPress={() => setMeal(m.id)}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                        borderColor: active ? ACCENT : (isDark ? colors.border : INK),
-                        borderRadius: radius.full,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>
-                      {m.label}
-                    </Text>
-                  </Pressable>
-                )
-              })}
+              {MEAL_MOMENTS.map((m) => (
+                <SiteChoice
+                  key={m.id}
+                  compact
+                  tick={false}
+                  label={m.label}
+                  sticker={MEAL_STICKERS[m.id]}
+                  selected={meal === m.id}
+                  tone={siteTone}
+                  onPress={() => setMeal(m.id)}
+                />
+              ))}
             </View>
 
             {/* Captured scan photos — evidence, removable */}
@@ -1999,13 +2094,19 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             )}
 
             {/* One clear scan control */}
-            <ScanSourceButtons
-              variant="current"
-              accent={ACCENT}
-              accentText={INK}
-              scanning={scanningPlate}
-              onPick={scanPlate}
-            />
+            <View style={{ gap: 10 }}>
+              <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('kids_logForm_scanPlate')}</Text>
+              {scanningPlate ? (
+                <View style={styles.siteRow}>
+                  <SitePill label={t('kids_logForm_readingPlate')} onPress={() => {}} disabled />
+                </View>
+              ) : (
+                <View style={styles.siteRow}>
+                  <SitePill flex label={t('kids_logForm_alertTakePhoto')} sticker="camera" onPress={() => scanPlate('camera')} />
+                  <SitePill flex label={t('kids_foodDash_gallery')} sticker="pola" onPress={() => scanPlate('library')} />
+                </View>
+              )}
+            </View>
 
             {/* Food tag input + live calorie estimate */}
             <View>
@@ -2015,9 +2116,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   {foodTags.map((tag, i) => {
                     const loading = aiLoadingIdx.has(i)
                     const known = tag.match !== null || tag.manualCals !== null
-                    const borderColor = loading ? colors.primary : known ? brand.success : brand.error
                     return (
-                      <View key={`${tag.name}-${i}`} style={[styles.foodTag, { backgroundColor: colors.surfaceRaised, borderColor, borderRadius: radius.full }]}>
+                      <View key={`${tag.name}-${i}`} style={[styles.foodTag, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: radius.full }]}>
                         {loading
                           ? <ActivityIndicator size="small" color={colors.primary} />
                           : known
@@ -2028,7 +2128,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                               </Pressable>
                             )
                         }
-                        <Text style={[styles.foodTagText, { color: colors.text }]}>{tag.name}</Text>
+                        <Text style={[styles.foodTagText, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{tag.name}</Text>
                         <Pressable onPress={() => setFoodTags((prev) => prev.filter((_, idx) => idx !== i))} hitSlop={8}>
                           <Text style={[styles.foodTagRemove, { color: colors.textMuted }]}>{t('kids_logForm_removeTag')}</Text>
                         </Pressable>
@@ -2065,13 +2165,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   })
                   setFoodInput('')
                 }}
-                style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg, minHeight: 48 }]}
+                style={[styles.input, siteInputStyle(colors)]}
               />
               {calorieMatches.length > 0 && (
-                <View style={[styles.calorieBanner, { backgroundColor: stickerPalette.greenSoft, borderColor: stickerPalette.green, borderRadius: radius.lg }]}>
+                <View style={[styles.calorieBanner, { backgroundColor: stickerPalette.greenSoft, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
                   <View style={styles.calorieHeader}>
-                    <Utensils size={14} color={stickerPalette.green} strokeWidth={2} />
-                    <Text style={[styles.calorieTotalText, { color: stickerPalette.green }]}>
+                    <Utensils size={14} color={colors.text} strokeWidth={2} />
+                    <Text style={[styles.calorieTotalText, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>
                       {t('kids_logForm_kcalEstimated', { count: totalEstimatedCals })}
                     </Text>
                   </View>
@@ -2094,8 +2194,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               {/* Manual kcal popup for unrecognized foods */}
               <Modal visible={manualCalIdx !== null} transparent animationType="fade" onRequestClose={() => setManualCalIdx(null)}>
                 <Pressable style={styles.popupBackdrop} onPress={() => setManualCalIdx(null)} />
-                <View style={[styles.manualCalPopup, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: (isDark ? colors.border : INK) }]}>
-                  <Text style={[styles.manualCalTitle, { color: colors.text }]}>
+                <View style={[styles.manualCalPopup, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderRadius: 18, borderColor: colors.text, borderWidth: 1.5, shadowColor: colors.text }]}>
+                  <Text style={[styles.manualCalTitle, { color: colors.text, fontFamily: font.display, fontWeight: undefined, fontSize: 17, textTransform: 'uppercase' }]}>
                     {t('kids_logForm_unknownFood')}
                   </Text>
                   <Text style={[styles.manualCalSubtitle, { color: colors.textSecondary }]}>
@@ -2107,15 +2207,15 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     placeholder="e.g. 120"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="number-pad"
-                    style={[styles.input, { color: colors.text, backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg, minHeight: 48, marginTop: 12 }]}
+                    style={[styles.input, siteInputStyle(colors), { marginTop: 12 }]}
                     autoFocus
                   />
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
                     <Pressable
                       onPress={() => setManualCalIdx(null)}
-                      style={[styles.manualCalBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), flex: 1 }]}
+                      style={[styles.manualCalBtn, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, flex: 1 }]}
                     >
-                      <Text style={[styles.manualCalBtnText, { color: colors.textSecondary }]}>{t('kids_logForm_skip')}</Text>
+                      <Text style={[styles.manualCalBtnText, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('kids_logForm_skip')}</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => {
@@ -2126,9 +2226,9 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                         setManualCalIdx(null)
                         setManualCalInput('')
                       }}
-                      style={[styles.manualCalBtn, { backgroundColor: ACCENT, borderColor: ACCENT, flex: 1 }]}
+                      style={[styles.manualCalBtn, { backgroundColor: stickerPalette.yellowSoft, borderColor: colors.text, borderWidth: 1.5, flex: 1 }]}
                     >
-                      <Text style={[styles.manualCalBtnText, { color: INK }]}>{t('common_confirm')}</Text>
+                      <Text style={[styles.manualCalBtnText, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('common_confirm')}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -2137,74 +2237,46 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
             {/* Eat quality */}
             <View style={styles.qualityRow}>
-              {EAT_QUALITIES.map((q) => {
-                const active = quality === q.id
-                const StickerNode =
-                  q.sticker === 'smiley' ? <Smiley size={32} /> :
-                  q.sticker === 'sleepy' ? <Sleepy size={32} /> :
-                  <Sad size={32} />
-                return (
-                  <Pressable
-                    key={q.id}
-                    onPress={() => setQuality(q.id)}
-                    style={[
-                      styles.qualityBtn,
-                      {
-                        backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                        borderColor: active ? ACCENT : (isDark ? colors.border : INK),
-                        borderRadius: radius.lg,
-                      },
-                    ]}
-                  >
-                    {StickerNode}
-                    <Text style={[styles.qualityLabel, { color: active ? colors.text : colors.textMuted }]}>
-                      {q.label}
-                    </Text>
-                  </Pressable>
-                )
-              })}
+              {EAT_QUALITIES.map((q) => (
+                <SiteTile
+                  key={q.id}
+                  label={q.label}
+                  sticker={q.sticker === 'smiley' ? 'face4' : q.sticker === 'sleepy' ? 'face2' : 'face1'}
+                  selected={quality === q.id}
+                  tone={siteTone}
+                  onPress={() => setQuality(q.id)}
+                />
+              ))}
             </View>
 
             {/* Flags + expandable fields */}
             <View style={styles.flagRow}>
-              <Pressable
+              <SiteChip
+                label={t('kids_logForm_newFood')}
+                selected={isNewFood}
+                tone={siteTone}
                 onPress={() => setIsNewFood(!isNewFood)}
-                style={[styles.flagChip, {
-                  backgroundColor: isNewFood ? stickerPalette.blue + '15' : colors.surface,
-                  borderColor: isNewFood ? stickerPalette.blue : (isDark ? colors.border : INK),
-                  borderRadius: radius.full,
-                }]}
-              >
-                <Baby size={14} color={isNewFood ? stickerPalette.blue : colors.textMuted} strokeWidth={2} />
-                <Text style={[styles.flagText, { color: isNewFood ? stickerPalette.blue : colors.textMuted }]}>
-                  {t('kids_logForm_newFood')}
-                </Text>
-              </Pressable>
-              <Pressable
+                icon={<Baby size={14} color={colors.text} strokeWidth={2} />}
+              />
+              <SiteChip
+                label={t('kids_logForm_reaction')}
+                selected={hasReaction}
+                tone={stickerPalette.pinkSoft}
                 onPress={() => setHasReaction(!hasReaction)}
-                style={[styles.flagChip, {
-                  backgroundColor: hasReaction ? colors.error + '15' : colors.surface,
-                  borderColor: hasReaction ? colors.error : (isDark ? colors.border : INK),
-                  borderRadius: radius.full,
-                }]}
-              >
-                <AlertTriangle size={14} color={hasReaction ? colors.error : colors.textMuted} strokeWidth={2} />
-                <Text style={[styles.flagText, { color: hasReaction ? colors.error : colors.textMuted }]}>
-                  {t('kids_logForm_reaction')}
-                </Text>
-              </Pressable>
+                icon={<AlertTriangle size={14} color={colors.text} strokeWidth={2} />}
+              />
             </View>
 
             {/* New food expanded */}
             {isNewFood && (
               <View style={[styles.expandedFlag, { backgroundColor: brand.secondary + '08', borderColor: brand.secondary + '25', borderRadius: radius.lg }]}>
-                <Text style={[styles.expandedFlagLabel, { color: brand.secondary }]}>{t('kids_logForm_whatNewFood')}</Text>
+                <Text style={[styles.expandedFlagLabel, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('kids_logForm_whatNewFood')}</Text>
                 <TextInput
                   value={newFoodName}
                   onChangeText={setNewFoodName}
                   placeholder={t('kids_logForm_placeholderNewFood')}
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md }]}
+                  style={[styles.expandedFlagInput, siteInputStyle(colors)]}
                 />
               </View>
             )}
@@ -2212,13 +2284,13 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             {/* Reaction expanded */}
             {hasReaction && (
               <View style={[styles.expandedFlag, { backgroundColor: brand.error + '08', borderColor: brand.error + '25', borderRadius: radius.lg }]}>
-                <Text style={[styles.expandedFlagLabel, { color: brand.error }]}>{t('kids_logForm_reactionDetails')}</Text>
+                <Text style={[styles.expandedFlagLabel, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('kids_logForm_reactionDetails')}</Text>
                 <TextInput
                   value={reactionFood}
                   onChangeText={setReactionFood}
                   placeholder={t('kids_logForm_placeholderAllergyFood')}
                   placeholderTextColor={colors.textMuted}
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md }]}
+                  style={[styles.expandedFlagInput, siteInputStyle(colors)]}
                 />
                 <TextInput
                   value={reactionDesc}
@@ -2226,7 +2298,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   placeholder={t('kids_logForm_placeholderAllergyReaction')}
                   placeholderTextColor={colors.textMuted}
                   multiline
-                  style={[styles.expandedFlagInput, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.md, minHeight: 60 }]}
+                  style={[styles.expandedFlagInput, siteInputStyle(colors), { minHeight: 60, paddingTop: 10 }]}
                 />
               </View>
             )}
@@ -2239,7 +2311,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             {!timerActive && (lastSideLoading ? (
               <ActivityIndicator size="small" color={colors.primary} style={{ alignSelf: 'flex-start' }} />
             ) : lastSide ? (
-              <View style={[styles.lastSideBanner, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderRadius: radius.lg }]}>
+              <View style={[styles.lastSideBanner, { backgroundColor: stickerPalette.yellowSoft, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
                 <Text style={[styles.lastSideLabel, { color: colors.text }]}>
                   {t('kids_logForm_lastSidePre')}<Text style={{ fontWeight: '800', color: colors.text }}>
                     {lastSide === 'left' ? t('kids_logForm_left') : lastSide === 'right' ? t('kids_logForm_right') : t('kids_logForm_bothSides')}
@@ -2252,7 +2324,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
             {timerActive ? (
               /* ── LIVE TIMER MODE ── */
-              <View style={[styles.timerWrap, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+              <View style={[styles.timerWrap, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1.5, borderColor: colors.text, shadowColor: colors.text }]}>
                 {/* Current side indicator with body icon */}
                 <View style={styles.timerSideIndicator}>
                   <View style={styles.breastIcon}>
@@ -2269,7 +2341,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                       {timerSide === 'right' && <View style={[styles.breastNipple, { backgroundColor: ACCENT }]} />}
                     </View>
                   </View>
-                  <Text style={[styles.timerSideLabel, { color: ACCENT }]}>
+                  <Text style={[styles.timerSideLabel, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>
                     {timerSide === 'left' ? t('kids_logForm_leftSide') : t('kids_logForm_rightSide')}
                   </Text>
                 </View>
@@ -2284,14 +2356,14 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'left' ? ACCENT + '15' : 'transparent', borderRadius: radius.md }]}>
                     <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'left' ? ACCENT : colors.textMuted }]} />
                     <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'left' ? colors.text : colors.textMuted }]}>{t('kids_logForm_timerLabelL')}</Text>
-                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'left' ? ACCENT : colors.textMuted }]}>
+                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'left' ? colors.text : colors.textMuted }]}>
                       {formatTimer(leftSeconds)}
                     </Text>
                   </View>
                   <View style={[styles.timerBreakdownItem, { backgroundColor: timerSide === 'right' ? ACCENT + '15' : 'transparent', borderRadius: radius.md }]}>
                     <View style={[styles.timerBreakdownDot, { backgroundColor: timerSide === 'right' ? ACCENT : colors.textMuted }]} />
                     <Text style={[styles.timerBreakdownLabel, { color: timerSide === 'right' ? colors.text : colors.textMuted }]}>{t('kids_logForm_timerLabelR')}</Text>
-                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'right' ? ACCENT : colors.textMuted }]}>
+                    <Text style={[styles.timerBreakdownTime, { color: timerSide === 'right' ? colors.text : colors.textMuted }]}>
                       {formatTimer(rightSeconds)}
                     </Text>
                   </View>
@@ -2299,7 +2371,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
                 {/* Switch alert banner */}
                 {switchAlertShown && (
-                  <View style={[styles.switchAlert, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderRadius: radius.lg }]}>
+                  <View style={[styles.switchAlert, { backgroundColor: stickerPalette.yellowSoft, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
                     <Text style={[styles.switchAlertText, { color: colors.text }]}>
                       {t('kids_logForm_switchAlert', { min: switchTargetMin })}
                     </Text>
@@ -2308,105 +2380,52 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
                 {/* Timer actions */}
                 <View style={styles.timerActions}>
-                  <Pressable
-                    onPress={switchSide}
-                    style={({ pressed }) => [
-                      styles.timerSwitchBtn,
-                      { backgroundColor: ACCENT_SOFT, borderColor: ACCENT, borderRadius: radius.lg },
-                      pressed && { opacity: 0.8 },
-                    ]}
-                  >
-                    <Repeat size={18} color={ACCENT} strokeWidth={2} />
-                    <Text style={[styles.timerSwitchText, { color: ACCENT }]}>{t('kids_logForm_switchSide')}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={stopTimer}
-                    style={({ pressed }) => [
-                      styles.timerStopBtn,
-                      { backgroundColor: '#141313', borderRadius: radius.lg },
-                      pressed && { opacity: 0.8 },
-                    ]}
-                  >
-                    <Check size={18} color="#FFFEF8" strokeWidth={2.5} />
-                    <Text style={[styles.timerStopText, { color: '#FFFEF8' }]}>{t('common_done')}</Text>
-                  </Pressable>
+                  <SitePill flex label={t('kids_logForm_switchSide')} onPress={switchSide} icon={<Repeat size={18} color={colors.text} strokeWidth={2} />} />
+                  <SitePill flex label={t('common_done')} onPress={stopTimer} icon={<Check size={18} color={colors.text} strokeWidth={2.5} />} />
                 </View>
               </View>
             ) : (
               /* ── START MODE — pick side and go ── */
               <>
-                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('kids_logForm_tapToStart')}</Text>
-                <View style={styles.sideRow}>
+                <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('kids_logForm_tapToStart')}</Text>
+                <View style={styles.siteRow}>
                   {([
                     { id: 'left' as const, label: t('kids_logForm_left') },
                     { id: 'right' as const, label: t('kids_logForm_right') },
                   ]).map((s) => {
-                    const isRecommended = lastSide && (
+                    const isRecommended = !!lastSide && (
                       (lastSide === 'left' && s.id === 'right') ||
                       (lastSide === 'right' && s.id === 'left')
                     )
-                    const accentC = ACCENT
-                    const dimC = colors.textMuted + '30'
-                    const lFill = s.id === 'left' ? accentC : dimC
-                    const rFill = s.id === 'right' ? accentC : dimC
                     return (
-                      <Pressable
+                      <SiteChoice
                         key={s.id}
+                        style={{ flex: 1 }}
+                        tick={false}
+                        label={s.label}
+                        sub={isRecommended ? t('kids_logForm_labelNext') : undefined}
+                        sticker="heart"
+                        selected={isRecommended}
+                        tone={stickerPalette.yellowSoft}
                         onPress={() => startTimer(s.id)}
-                        style={({ pressed }) => [
-                          styles.sideBtn,
-                          {
-                            backgroundColor: colors.surface,
-                            borderColor: isRecommended ? stickerPalette.yellow : (isDark ? colors.border : INK),
-                            borderRadius: radius.lg,
-                          },
-                          pressed && { opacity: 0.7, transform: [{ scale: 0.97 }] },
-                        ]}
-                      >
-                        <View style={styles.breastIcon}>
-                          <View style={[styles.breastShape, styles.breastShapeL, { backgroundColor: lFill + '20', borderColor: lFill }]}>
-                            {s.id === 'left' && <View style={[styles.breastNipple, { backgroundColor: lFill }]} />}
-                          </View>
-                          <View style={[styles.breastShape, styles.breastShapeR, { backgroundColor: rFill + '20', borderColor: rFill }]}>
-                            {s.id === 'right' && <View style={[styles.breastNipple, { backgroundColor: rFill }]} />}
-                          </View>
-                        </View>
-                        <Text style={[styles.sideBtnText, { color: colors.text }]}>{s.label}</Text>
-                        {isRecommended && (
-                          <View style={[styles.recommendedTag, { backgroundColor: stickerPalette.yellowSoft, borderColor: stickerPalette.yellow, borderWidth: 1 }]}>
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: INK }}>{t('kids_logForm_labelNext')}</Text>
-                          </View>
-                        )}
-                      </Pressable>
+                      />
                     )
                   })}
                 </View>
 
                 {/* Switch target setting */}
-                <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
+                <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
                   <Clock size={14} color={colors.textMuted} strokeWidth={2} />
                   <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>{t('kids_logForm_alertToSwitch')}</Text>
-                  {[10, 15, 20].map((min) => {
-                    const active = switchTargetMin === min
-                    return (
-                      <Pressable
-                        key={min}
-                        onPress={() => setSwitchTargetMin(min)}
-                        style={[
-                          styles.switchTargetChip,
-                          {
-                            backgroundColor: active ? INK : 'transparent',
-                            borderColor: active ? INK : (isDark ? colors.border : INK),
-                            borderRadius: radius.full,
-                          },
-                        ]}
-                      >
-                        <Text style={[styles.switchTargetChipText, { color: active ? '#FFFEF8' : colors.textMuted }]}>
-                          {t('kids_logForm_minUnit', { n: min })}
-                        </Text>
-                      </Pressable>
-                    )
-                  })}
+                  {[10, 15, 20].map((min) => (
+                    <SiteChip
+                      key={min}
+                      label={t('kids_logForm_minUnit', { n: min })}
+                      selected={switchTargetMin === min}
+                      tone={siteTone}
+                      onPress={() => setSwitchTargetMin(min)}
+                    />
+                  ))}
                 </View>
 
                 {/* Or log manually */}
@@ -2417,30 +2436,23 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 </View>
 
                 {/* Manual side selection */}
-                <View style={styles.sideRow}>
+                <View style={styles.siteRow}>
                   {([
                     { id: 'left' as const, label: t('kids_logForm_left') },
                     { id: 'right' as const, label: t('kids_logForm_right') },
                     { id: 'both' as const, label: t('kids_logForm_bothSides') },
-                  ]).map((s) => {
-                    const active = breastSide === s.id
-                    return (
-                      <Pressable
-                        key={s.id}
-                        onPress={() => setBreastSide(s.id)}
-                        style={[
-                          styles.sideChipSmall,
-                          {
-                            backgroundColor: active ? ACCENT_SOFT : 'transparent',
-                            borderColor: active ? ACCENT : (isDark ? colors.border : INK),
-                            borderRadius: radius.full,
-                          },
-                        ]}
-                      >
-                        <Text style={[styles.sideChipSmallText, { color: active ? INK : colors.textMuted }]}>{s.label}</Text>
-                      </Pressable>
-                    )
-                  })}
+                  ]).map((s) => (
+                    <SiteChoice
+                      key={s.id}
+                      compact
+                      style={{ flex: 1 }}
+                      tick={false}
+                      label={s.label}
+                      selected={breastSide === s.id}
+                      tone={siteTone}
+                      onPress={() => setBreastSide(s.id)}
+                    />
+                  ))}
                 </View>
 
                 <TextInput
@@ -2449,7 +2461,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   placeholder={t('kids_logForm_placeholderDuration')}
                   placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
-                  style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+                  style={[styles.input, siteInputStyle(colors)]}
                 />
               </>
             )}
@@ -2655,10 +2667,10 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         ) : (
           <Pressable
             onPress={() => setEndTime(toTimeStr(new Date()))}
-            style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
+            style={[styles.timeChip, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 999, shadowColor: colors.text }]}
           >
-            <Plus size={12} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{t('kids_logForm_end')}</Text>
+            <Plus size={12} color={colors.text} strokeWidth={2} />
+            <Text style={[styles.timeChipLabel, { color: colors.text }]}>{t('kids_logForm_end')}</Text>
           </Pressable>
         )}
       </View>
@@ -2667,7 +2679,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         onChangeText={setNotes}
         placeholder={t('kids_logForm_placeholderNotes')}
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+        style={[styles.input, siteInputStyle(colors)]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
     </>
@@ -2692,9 +2704,9 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
     <View style={styles.form}>
       <ActiveChildChip childId={childId} onChange={setChildId} />
       <FormHeaderSticker kind="sleep" />
-      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_hoursSlept')}</Text>
+      <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('preg_form_sleep_hoursSlept')}</Text>
       <StepSlider min={0} max={16} value={hours} onChange={setHours} color={sliderColor} unit={hours === 1 ? t('preg_form_sleep_hoursLabel').replace(/s$/, '') : t('preg_form_sleep_hoursLabel')} blob="sleep" />
-      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('preg_form_sleep_qualityRange')}</Text>
+      <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('preg_form_sleep_qualityRange')}</Text>
       <StepSlider min={1} max={10} value={quality} onChange={setQuality} color={sliderColor} blob="sleep" />
       <MoreSection>{moreFields}</MoreSection>
       <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
@@ -2859,14 +2871,14 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         placeholder={eventType === 'Temperature' ? t('kids_logForm_placeholderTemp') : t('kids_logForm_placeholderDetails')}
         placeholderTextColor={colors.textMuted}
         keyboardType={eventType === 'Temperature' ? 'decimal-pad' : 'default'}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+        style={[styles.input, siteInputStyle(colors)]}
       />
       <TextInput
         value={notes}
         onChangeText={setNotes}
         placeholder={t('kids_logForm_placeholderNotes')}
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+        style={[styles.input, siteInputStyle(colors)]}
       />
     </>
   )
@@ -3007,7 +3019,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       onChangeText={setNotes}
       placeholder={t('kids_logForm_placeholderWhatHappened')}
       placeholderTextColor={colors.textMuted}
-      style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+      style={[styles.input, siteInputStyle(colors)]}
     />
   )
 
@@ -3184,11 +3196,11 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         ))}
         {photos.length < 4 && (
           <View style={styles.photoButtons}>
-            <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
-              <Camera size={24} color={INK} strokeWidth={2} />
+            <Pressable onPress={takePhoto} accessibilityRole="button" style={[styles.cameraBtn, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 18, shadowColor: colors.text }]}>
+              <SiteSticker name="camera" size={36} cut />
             </Pressable>
-            <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
-              <Plus size={20} color={colors.textMuted} strokeWidth={2} />
+            <Pressable onPress={pickPhoto} accessibilityRole="button" style={[styles.cameraBtn, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 18, shadowColor: colors.text }]}>
+              <SiteSticker name="pola" size={36} cut />
             </Pressable>
           </View>
         )}
@@ -3198,7 +3210,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
         onChangeText={setCaption}
         placeholder={t('kids_logForm_placeholderCaption')}
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+        style={[styles.input, siteInputStyle(colors)]}
       />
       <SaveButton onPress={save} saving={saving} disabled={!childId} />
     </View>
@@ -3365,18 +3377,18 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         ) : (
           <Pressable
             onPress={() => setEndTime(toTimeStr(new Date()))}
-            style={[styles.timeChip, { backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: 999 }]}
+            style={[styles.timeChip, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 999, shadowColor: colors.text }]}
           >
-            <Plus size={12} color={colors.textMuted} strokeWidth={2} />
-            <Text style={[styles.timeChipLabel, { color: colors.textMuted }]}>{t('kids_logForm_end')}</Text>
+            <Plus size={12} color={colors.text} strokeWidth={2} />
+            <Text style={[styles.timeChipLabel, { color: colors.text }]}>{t('kids_logForm_end')}</Text>
           </Pressable>
         )}
       </View>
       {autoDuration !== '' && (
-        <View style={[styles.iconBanner, { backgroundColor: ACCENT_SOFT, borderColor: ACCENT + '40', borderWidth: 1 }]}>
-          <Dumbbell size={20} color={ACCENT} strokeWidth={2} />
+        <View style={[styles.iconBanner, { backgroundColor: getModeColorSoft('kids', isDark), borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
+          <Dumbbell size={20} color={colors.text} strokeWidth={2} />
           <Text style={[styles.bannerLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('kids_logForm_duration')}</Text>
-          <Text style={[styles.autoDuration, { color: INK, fontFamily: font.displayBold }]}>{autoDuration}</Text>
+          <Text style={[styles.autoDuration, { color: colors.text, fontFamily: font.displayBold }]}>{autoDuration}</Text>
         </View>
       )}
       <TextInput
@@ -3384,14 +3396,14 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         onChangeText={setName}
         placeholder={t('kids_logForm_placeholderActivityName')}
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+        style={[styles.input, siteInputStyle(colors)]}
       />
       <TextInput
         value={notes}
         onChangeText={setNotes}
         placeholder={t('kids_logForm_placeholderNotes')}
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+        style={[styles.input, siteInputStyle(colors)]}
       />
       <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
     </>
@@ -3571,46 +3583,31 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
       </>
     ) : (
       <>
-        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('kids_logForm_color')}</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('kids_logForm_color')}</Text>
         <View style={[styles.chipGrid, { gap: 8 }]}>
-          {DIAPER_COLORS.map((c) => {
-            const active = color === c.id
-            return (
-              <Pressable
-                key={c.id}
-                onPress={() => setColor(c.id)}
-                style={[styles.chip, {
-                  backgroundColor: active ? c.hex + '25' : colors.surface,
-                  borderColor: active ? c.hex : (isDark ? colors.border : INK),
-                  borderRadius: radius.full,
-                  gap: 6,
-                }]}
-              >
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.hex }} />
-                <Text style={[styles.chipText, { color: active ? c.hex : colors.text }]}>{c.label}</Text>
-              </Pressable>
-            )
-          })}
+          {DIAPER_COLORS.map((c) => (
+            <SiteChip
+              key={c.id}
+              label={c.label}
+              selected={color === c.id}
+              tone={getModeColorSoft('kids', isDark)}
+              onPress={() => setColor(c.id)}
+              icon={<View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: c.hex, borderWidth: 1.5, borderColor: colors.text }} />}
+            />
+          ))}
         </View>
 
-        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('kids_logForm_consistency')}</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('kids_logForm_consistency')}</Text>
         <View style={styles.chipGrid}>
-          {DIAPER_CONSISTENCIES.map((c) => {
-            const active = consistency === c.id
-            return (
-              <Pressable
-                key={c.id}
-                onPress={() => setConsistency(c.id)}
-                style={[styles.chip, {
-                  backgroundColor: active ? ACCENT_SOFT : colors.surface,
-                  borderColor: active ? ACCENT : (isDark ? colors.border : INK),
-                  borderRadius: radius.full,
-                }]}
-              >
-                <Text style={[styles.chipText, { color: active ? INK : colors.text }]}>{c.label}</Text>
-              </Pressable>
-            )
-          })}
+          {DIAPER_CONSISTENCIES.map((c) => (
+            <SiteChip
+              key={c.id}
+              label={c.label}
+              selected={consistency === c.id}
+              tone={getModeColorSoft('kids', isDark)}
+              onPress={() => setConsistency(c.id)}
+            />
+          ))}
         </View>
       </>
     )
@@ -3644,11 +3641,11 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
         ))}
         {photos.length === 0 && (
           <View style={styles.photoButtons}>
-            <Pressable onPress={takePhoto} style={[styles.cameraBtn, { backgroundColor: ACCENT, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
-              <Camera size={24} color={INK} strokeWidth={2} />
+            <Pressable onPress={takePhoto} accessibilityRole="button" style={[styles.cameraBtn, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 18, shadowColor: colors.text }]}>
+              <SiteSticker name="camera" size={36} cut />
             </Pressable>
-            <Pressable onPress={pickPhoto} style={[styles.galleryBtn, { backgroundColor: colors.surfaceRaised, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}>
-              <Plus size={20} color={colors.textMuted} strokeWidth={2} />
+            <Pressable onPress={pickPhoto} accessibilityRole="button" style={[styles.cameraBtn, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 18, shadowColor: colors.text }]}>
+              <SiteSticker name="pola" size={36} cut />
             </Pressable>
           </View>
         )}
@@ -3659,7 +3656,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
         onChangeText={setNotes}
         placeholder={t('kids_logForm_placeholderNotes')}
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: (isDark ? colors.border : INK), borderRadius: radius.lg }]}
+        style={[styles.input, siteInputStyle(colors)]}
       />
     </>
   )
@@ -3731,7 +3728,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
 }) {
   const diffuse = useIsDiffuse()
   const { t } = useTranslation()
-  const { colors, radius } = useTheme()
+  const { colors, radius, isDark } = useTheme()
   const dTheme = useDiffuseTheme()
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -3902,14 +3899,14 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
       ) : openLog ? (
         <>
           {/* Bedtime summary card */}
-          <View style={{ backgroundColor: ACCENT_SOFT, borderRadius: 16, padding: 16, gap: 6, borderWidth: 1, borderColor: ACCENT }}>
+          <View style={{ backgroundColor: getModeColorSoft('kids', isDark), borderRadius: 18, padding: 16, gap: 6, borderWidth: 1.5, borderColor: colors.text }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Moon size={15} color={ACCENT} strokeWidth={2} />
-              <Text style={{ color: ACCENT, fontWeight: '700', fontSize: 14 }}>
+              <Moon size={15} color={colors.text} strokeWidth={2} />
+              <Text style={{ color: colors.text, fontFamily: font.bodyBold, fontSize: 14 }}>
                 {openLog.routineName ?? t('kids_logForm_sleepSession')}{t('kids_logForm_separator')}{formatTimeLabel(openLog.startTime)}
               </Text>
             </View>
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body }}>
               {bedtimeAgo()}
             </Text>
           </View>
@@ -3923,8 +3920,8 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
 
           {/* Duration preview */}
           {sleepDuration ? (
-            <View style={{ backgroundColor: ACCENT + '12', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: ACCENT + '25' }}>
-              <Text style={{ color: ACCENT, fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: font.display }}>{sleepDuration}</Text>
+            <View style={{ backgroundColor: colors.surface, borderRadius: 18, paddingVertical: 16, alignItems: 'center', borderWidth: 1.5, borderColor: colors.text }}>
+              <Text style={{ color: colors.text, fontSize: 36, letterSpacing: -1, lineHeight: 40, fontFamily: font.display }}>{sleepDuration}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_logForm_totalSleep')}</Text>
             </View>
           ) : null}
@@ -4029,6 +4026,22 @@ const styles = StyleSheet.create({
   },
   timeChipLabel: { fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 0.8, textTransform: 'uppercase' },
   timeChipValue: { fontSize: 13, fontFamily: font.bodyBold },
+  siteRow: { flexDirection: 'row', gap: 8 },
+  sitePill: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 11, paddingHorizontal: 16, minHeight: 48, borderWidth: 1.5, borderRadius: 999,
+  },
+  sitePillText: { fontSize: 15, fontFamily: font.bodyBold },
+  siteChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12,
+    borderWidth: 1.5, borderRadius: 999,
+  },
+  siteChipText: { fontSize: 13, fontFamily: font.bodyBold },
+  siteTile: {
+    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 6,
+    borderWidth: 1.5, borderRadius: 18,
+  },
+  siteTileText: { fontSize: 13, fontFamily: font.bodyBold, textAlign: 'center' },
   childSelectorWrap: { gap: 6 },
   childSelectorPrompt: { fontSize: 13, fontFamily: font.bodyBold },
   childRow: { gap: 8 },
