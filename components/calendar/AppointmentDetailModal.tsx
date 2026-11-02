@@ -24,6 +24,8 @@ import { useTranslation } from '../../lib/i18n'
 import { useTranslatedContent } from '../../lib/useTranslatedContent'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { AppointmentQuestions, CopySuggestedQuestion, nextStandardAppointmentId } from './AppointmentQuestions'
 
 type Status = 'done' | 'next' | 'future'
 
@@ -33,6 +35,8 @@ interface Props {
   onClose: () => void
   onMarkDone?: () => void
   onAddToLogs?: () => void
+  /** Current pregnancy week — the next-up appointment collects pending questions. */
+  currentWeek?: number
 }
 
 const STATUS_LABEL: Record<Status, string> = {
@@ -47,10 +51,13 @@ export function AppointmentDetailModal({
   onClose,
   onMarkDone,
   onAddToLogs,
+  currentWeek,
 }: Props) {
   const { colors, stickers, radius, brand: themeBrand } = useTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  // "My questions" is site-look only; the Diffuse render stays as it was.
+  const diffuse = useIsDiffuse()
 
   // Long-form appointment prose is translated at runtime + cached (Phase C).
   // Stable id-based keys so cache survives content edits (hash guards staleness).
@@ -128,6 +135,8 @@ export function AppointmentDetailModal({
           {appointment && (
             <ScrollView
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              automaticallyAdjustKeyboardInsets
               contentContainerStyle={styles.scroll}
             >
               {/* ─── Hero — status-soft wash on paper, hairline, soft shadow ── */}
@@ -178,6 +187,16 @@ export function AppointmentDetailModal({
                 </Body>
               </Section>
 
+              {!diffuse && (
+                <View style={styles.section}>
+                  <AppointmentQuestions
+                    appointmentKey={appointment.id}
+                    mode="pregnancy"
+                    claimFrom={currentWeek != null && nextStandardAppointmentId(currentWeek) === appointment.id ? 'pregnancy' : undefined}
+                  />
+                </View>
+              )}
+
               <Section title={t('pregnancy_appt_questionsToAsk')} muted={muted}>
                 <View style={{ gap: 10 }}>
                   {appointment.questions.map((q, i) => (
@@ -193,6 +212,7 @@ export function AppointmentDetailModal({
                       <Body size={14} color={inkText} style={{ flex: 1 }}>
                         {q}
                       </Body>
+                      {!diffuse && <CopySuggestedQuestion appointmentKey={appointment.id} text={q} />}
                     </View>
                   ))}
                 </View>

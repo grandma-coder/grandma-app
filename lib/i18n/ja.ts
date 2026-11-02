@@ -3659,4 +3659,13 @@ export const ja: TranslationKeys = {
   meno_trigger_most_noted: "よく記録したもの：{{list}}",
   gn_meno_trigger_title: "あなたが記録したこと",
   gn_meno_trigger_body: "今週、ほてりや寝汗の前に「{{trigger}}」が{{count}}回ありました。",
+  apptQuestions_title: "わたしの質問",
+  apptQuestions_add: "質問をメモ",
+  apptQuestions_placeholder: "何を聞きたいですか？",
+  apptQuestions_delete: "質問を削除",
+  apptQuestions_copySuggested: "わたしの質問に追加",
+  apptQuestions_countOne: "質問 1件",
+  apptQuestions_count: "質問 {{count}}件",
+  apptQuestions_nextVisitTitle: "次の受診で聞くこと",
+  apptQuestions_nextVisitHint: "思いついたときにメモしておきましょう。次の受診を開くと、そこに移ります。",
 }

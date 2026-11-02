@@ -3659,4 +3659,13 @@ export const de: TranslationKeys = {
   meno_trigger_most_noted: "Am häufigsten notiert: {{list}}",
   gn_meno_trigger_title: "Etwas, das du notiert hast",
   gn_meno_trigger_body: "{{trigger}} kam diese Woche {{count}}-mal vor einer Hitzewallung oder einem nächtlichen Schweißausbruch vor.",
+  apptQuestions_title: "Meine Fragen",
+  apptQuestions_add: "Frage notieren",
+  apptQuestions_placeholder: "Was möchtest du fragen?",
+  apptQuestions_delete: "Frage löschen",
+  apptQuestions_copySuggested: "Zu meinen Fragen hinzufügen",
+  apptQuestions_countOne: "1 Frage",
+  apptQuestions_count: "{{count}} Fragen",
+  apptQuestions_nextVisitTitle: "Fragen für den nächsten Termin",
+  apptQuestions_nextVisitHint: "Schreib sie auf, sobald sie dir einfallen. Sie wandern zu deinem nächsten Termin, wenn du ihn öffnest.",
 }

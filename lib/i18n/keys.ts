@@ -3941,4 +3941,13 @@ export interface TranslationKeys {
   meno_trigger_most_noted: string
   gn_meno_trigger_title: string
   gn_meno_trigger_body: string
+  apptQuestions_title: string
+  apptQuestions_add: string
+  apptQuestions_placeholder: string
+  apptQuestions_delete: string
+  apptQuestions_copySuggested: string
+  apptQuestions_countOne: string
+  apptQuestions_count: string
+  apptQuestions_nextVisitTitle: string
+  apptQuestions_nextVisitHint: string
 }

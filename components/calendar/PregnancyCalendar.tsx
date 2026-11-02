@@ -93,6 +93,8 @@ import { LogTile, LogTileGrid } from './LogTile'
 import { ActivityPillCard } from './ActivityPillCard'
 import { AgendaCalendar, AgendaDots } from './AgendaCalendar'
 import { AppointmentDetailModal } from './AppointmentDetailModal'
+import { QuestionCountHint, nextStandardAppointmentId } from './AppointmentQuestions'
+import { useAppointmentQuestionsStore, openQuestionCount, pendingQuestionsKey } from '../../store/useAppointmentQuestionsStore'
 import { LogSheet } from './LogSheet'
 import { LogFormSticker } from './LogFormSticker'
 import { Display, Body, MonoCaps } from '../ui/Typography'
@@ -2316,6 +2318,8 @@ export function PregnancyCalendar() {
   const [selectedLog, setSelectedLog] = useState<PregnancyCalendarLog | null>(null)
   const [selectedJourneyWeek, setSelectedJourneyWeek] = useState<number | null>(null)
   const [selectedAppt, setSelectedAppt] = useState<StandardAppointment | null>(null)
+  // "My questions" per appointment (local) — quiet count on the upcoming Appts rows.
+  const apptQuestions = useAppointmentQuestionsStore((s) => s.questions)
 
   const [dayZoomH, setDayZoomH] = useState(DAY_VIEW_DEFAULT_HOUR_H)
   const dayScrollRef = useRef<ScrollView>(null)
@@ -2938,6 +2942,12 @@ export function PregnancyCalendar() {
             {STANDARD_APPOINTMENTS.map((appt, idx) => {
               const isDone = weekNumber > appt.week
               const isNext = !isDone && weekNumber >= appt.week - 2
+              // Pending "next appointment" questions count toward the next-up row until it's opened.
+              const questionCount = isDone ? 0 : openQuestionCount(
+                apptQuestions,
+                appt.id,
+                ...(nextStandardAppointmentId(weekNumber) === appt.id ? [pendingQuestionsKey('pregnancy')] : []),
+              )
               const sub = isDone
                 ? `${t('common_done')} · ${t('pregCal_week_label', { week: appt.week })}`
                 : `${t('pregCal_week_label', { week: appt.week })} · ${appt.prepNote.length > 60 ? appt.prepNote.slice(0, 57) + '…' : appt.prepNote}`
@@ -2964,6 +2974,7 @@ export function PregnancyCalendar() {
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text numberOfLines={2} style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink }}>{appt.name}</Text>
                       <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{sub}</Text>
+                      <QuestionCountHint count={questionCount} />
                     </View>
                     {isNext ? (
                       <View style={[styles.siteRowChip, { borderColor: ink, backgroundColor: colors.surface }]}>
@@ -3472,6 +3483,7 @@ export function PregnancyCalendar() {
               : 'future'
             : 'future'
         }
+        currentWeek={weekNumber}
         onClose={() => setSelectedAppt(null)}
         onMarkDone={() => {
           if (!selectedAppt) return

@@ -3659,4 +3659,13 @@ export const es: TranslationKeys = {
   meno_trigger_most_noted: "Lo más anotado: {{list}}",
   gn_meno_trigger_title: "Algo que anotaste",
   gn_meno_trigger_body: "{{trigger}} apareció {{count}} veces antes de un sofoco o sudor nocturno esta semana.",
+  apptQuestions_title: "Mis preguntas",
+  apptQuestions_add: "Anotar una pregunta",
+  apptQuestions_placeholder: "¿Qué quieres preguntar?",
+  apptQuestions_delete: "Borrar pregunta",
+  apptQuestions_copySuggested: "Añadir a mis preguntas",
+  apptQuestions_countOne: "1 pregunta",
+  apptQuestions_count: "{{count}} preguntas",
+  apptQuestions_nextVisitTitle: "Preguntas para la próxima consulta",
+  apptQuestions_nextVisitHint: "Anótalas a medida que surjan. Pasan a tu próxima consulta cuando la abras.",
 }

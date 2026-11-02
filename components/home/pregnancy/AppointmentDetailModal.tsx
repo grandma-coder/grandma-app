@@ -20,6 +20,7 @@ import { useTranslatedContent } from '../../../lib/useTranslatedContent'
 import { LogSheet } from '../../calendar/LogSheet'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { FadeUp } from '../../ui/Motion'
+import { AppointmentQuestions, CopySuggestedQuestion, nextStandardAppointmentId } from '../../calendar/AppointmentQuestions'
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 
 const TYPE_LABEL: Record<StandardAppointment['type'], { label: string; sticker: SiteStickerName }> = {
@@ -186,6 +187,12 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
 
         <FadeUp index={3}>
           <Divider />
+          <AppointmentQuestions
+            appointmentKey={appointment.id}
+            mode="pregnancy"
+            claimFrom={nextStandardAppointmentId(currentWeek) === appointment.id ? 'pregnancy' : undefined}
+          />
+          <Divider />
           <View style={styles.sectionHead}>
             <SiteSticker name="bubble" size={24} cut />
             <Text style={eyebrow}>{t('pregnancy_appt_questionsToAsk')}</Text>
@@ -194,6 +201,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
             <View key={i} style={styles.questionRow}>
               <Text style={[styles.questionNum, { color: ink, fontFamily: font.displayBold, backgroundColor: getModeColorSoft('pregnancy'), borderColor: ink }]}>{i + 1}</Text>
               <Text style={[styles.body, { flex: 1, color: ink, fontFamily: font.body }]}>{q}</Text>
+              <CopySuggestedQuestion appointmentKey={appointment.id} text={q} />
             </View>
           ))}
         </FadeUp>

@@ -3659,4 +3659,13 @@ export const hi: TranslationKeys = {
   meno_trigger_most_noted: "सबसे ज़्यादा लिखा गया: {{list}}",
   gn_meno_trigger_title: "आपने जो लिखा",
   gn_meno_trigger_body: "इस हफ़्ते हॉट फ़्लैश या रात के पसीने से पहले «{{trigger}}» {{count}} बार आया।",
+  apptQuestions_title: "मेरे सवाल",
+  apptQuestions_add: "सवाल लिखें",
+  apptQuestions_placeholder: "आप क्या पूछना चाहती हैं?",
+  apptQuestions_delete: "सवाल हटाएं",
+  apptQuestions_copySuggested: "मेरे सवालों में जोड़ें",
+  apptQuestions_countOne: "1 सवाल",
+  apptQuestions_count: "{{count}} सवाल",
+  apptQuestions_nextVisitTitle: "अगली विज़िट के लिए सवाल",
+  apptQuestions_nextVisitHint: "जैसे-जैसे सवाल आएं, लिख लें। अगली विज़िट खोलने पर वे उसमें चले जाएंगे।",
 }

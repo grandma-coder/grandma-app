@@ -91,6 +91,8 @@ import { SegmentedTabs } from './SegmentedTabs'
 import { AgendaCalendar, AgendaDots } from './AgendaCalendar'
 import { upcomingWindow } from './agendaDates'
 import { LogMonthGrid } from './LogMonthGrid'
+import { AppointmentQuestions, QuestionCountHint, isKidsVisitLog } from './AppointmentQuestions'
+import { useAppointmentQuestionsStore, openQuestionCount, pendingQuestionsKey } from '../../store/useAppointmentQuestionsStore'
 import { logSticker } from './logStickers'
 import {
   type RoutinePrefill,
@@ -1463,6 +1465,8 @@ export function KidsCalendar() {
   const [profileNames, setProfileNames] = useState<Record<string, string>>({}) // userId → display name
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [selectedLog, setSelectedLog] = useState<ChildLog | null>(null)
+  // "My questions" per visit (local) — quiet count on upcoming Visits rows.
+  const visitQuestions = useAppointmentQuestionsStore((s) => s.questions)
   const [unlogTarget, setUnlogTarget] = useState<ChildLog | null>(null)
   const [unlogging, setUnlogging] = useState(false)
 
@@ -2847,6 +2851,21 @@ export function KidsCalendar() {
       </View>
     )
 
+    // Questions written when no visit is booked wait in the kids "next visit" bucket;
+    // they move onto the next upcoming visit when it's opened.
+    const upcomingVisits = visits.filter((l) => l.date >= todayStr && isKidsVisitLog(l.type, l.value))
+    const nextVisitId = upcomingVisits[0]?.id
+    const nextVisitQuestions = upcomingVisits.length === 0 ? (
+      <View style={{ marginTop: 18, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+        <AppointmentQuestions
+          appointmentKey={pendingQuestionsKey('kids')}
+          mode="kids"
+          title={t('apptQuestions_nextVisitTitle')}
+          hint={t('apptQuestions_nextVisitHint')}
+        />
+      </View>
+    ) : null
+
     if (visits.length === 0 && upcomingRoutines.length === 0) {
       return (
         <View>
@@ -2857,12 +2876,13 @@ export function KidsCalendar() {
               {t('kids_calendar_visitHint')}
             </Text>
           </FadeUp>
+          {nextVisitQuestions}
           {addVisit}
         </View>
       )
     }
 
-    const visitRows: { key: string; type: string; title: string; sub: string; chip?: { label: string; color: string }; onPress: () => void }[] = []
+    const visitRows: { key: string; type: string; title: string; sub: string; chip?: { label: string; color: string }; questions?: number; onPress: () => void }[] = []
     for (const r of upcomingRoutines) {
       const ci = childIndexMap.get(r.child_id) ?? 0
       const childName = children.find((c) => c.id === r.child_id)?.name ?? ''
@@ -2887,6 +2907,9 @@ export function KidsCalendar() {
         title: logTitle(log),
         sub: `${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`,
         chip: childName ? { label: childName, color: childColor(ci) } : undefined,
+        questions: log.date >= todayStr && isKidsVisitLog(log.type, log.value)
+          ? openQuestionCount(visitQuestions, log.id, ...(log.id === nextVisitId ? [pendingQuestionsKey('kids')] : []))
+          : 0,
         onPress: () => { setSelectedLog(log); setEditing(false) },
       })
     }
@@ -2911,6 +2934,7 @@ export function KidsCalendar() {
               <View style={{ flex: 1, gap: 2 }}>
                 <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{r.title}</Text>
                 <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{r.sub}</Text>
+                <QuestionCountHint count={r.questions ?? 0} />
               </View>
               {r.chip ? (
                 <View style={[styles.siteRowChip, { borderColor: colors.text, backgroundColor: colors.surface }]}>
@@ -2923,6 +2947,7 @@ export function KidsCalendar() {
           </FadeUp>
         ))}
 
+        {nextVisitQuestions}
         {addVisit}
       </View>
     )
@@ -3694,7 +3719,7 @@ export function KidsCalendar() {
                 <InkBackButton onPress={() => { setSelectedLog(null); setEditing(false) }} ink={ink} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
               </View>
 
-              <ScrollView style={styles.popupBody} showsVerticalScrollIndicator={false}>
+              <ScrollView style={styles.popupBody} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
                 {/* Date & Time */}
                 <View style={styles.siteMetaRow}>
                   <Clock size={16} color={ink} strokeWidth={2.2} />
@@ -3969,6 +3994,17 @@ export function KidsCalendar() {
                       <Text style={{ fontFamily: font.body, fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginBottom: 12 }}>
                         {t('kids_calendar_detail_nothing')}
                       </Text>
+                    )}
+
+                    {/* My questions — visits only; an upcoming visit collects the "next visit" questions */}
+                    {isKidsVisitLog(selectedLog.type, selectedLog.value) && (
+                      <View style={{ marginBottom: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+                        <AppointmentQuestions
+                          appointmentKey={selectedLog.id}
+                          mode="kids"
+                          claimFrom={selectedLog.date >= todayStr ? 'kids' : undefined}
+                        />
+                      </View>
                     )}
 
                     {/* Action buttons */}

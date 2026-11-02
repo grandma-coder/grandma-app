@@ -3659,4 +3659,13 @@ export const ko: TranslationKeys = {
   meno_trigger_most_noted: "가장 많이 기록한 것: {{list}}",
   gn_meno_trigger_title: "기록해 둔 것",
   gn_meno_trigger_body: "이번 주 열감이나 식은땀 전에 '{{trigger}}'이(가) {{count}}번 있었어요.",
+  apptQuestions_title: "내 질문",
+  apptQuestions_add: "질문 적기",
+  apptQuestions_placeholder: "무엇을 물어보고 싶나요?",
+  apptQuestions_delete: "질문 삭제",
+  apptQuestions_copySuggested: "내 질문에 추가",
+  apptQuestions_countOne: "질문 1개",
+  apptQuestions_count: "질문 {{count}}개",
+  apptQuestions_nextVisitTitle: "다음 진료 때 물어볼 질문",
+  apptQuestions_nextVisitHint: "떠오를 때마다 적어 두세요. 다음 진료를 열면 그곳으로 옮겨져요.",
 }

@@ -3946,4 +3946,13 @@ export const en: TranslationKeys = {
   meno_trigger_most_noted: "Most noted: {{list}}",
   gn_meno_trigger_title: "Something you noted",
   gn_meno_trigger_body: "{{trigger}} came up {{count}} times before a hot flash or night sweat this week.",
+  apptQuestions_title: "My questions",
+  apptQuestions_add: "Add a question",
+  apptQuestions_placeholder: "What do you want to ask?",
+  apptQuestions_delete: "Delete question",
+  apptQuestions_copySuggested: "Add to my questions",
+  apptQuestions_countOne: "1 question",
+  apptQuestions_count: "{{count}} questions",
+  apptQuestions_nextVisitTitle: "Questions for the next visit",
+  apptQuestions_nextVisitHint: "Write them down as they come up. They move onto your next visit when you open it.",
 }

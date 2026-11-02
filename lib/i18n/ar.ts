@@ -3659,4 +3659,13 @@ export const ar: TranslationKeys = {
   meno_trigger_most_noted: "الأكثر تسجيلًا: {{list}}",
   gn_meno_trigger_title: "شيء دوّنتِه",
   gn_meno_trigger_body: "ظهر «{{trigger}}» {{count}} مرات قبل هبّة ساخنة أو تعرّق ليلي هذا الأسبوع.",
+  apptQuestions_title: "أسئلتي",
+  apptQuestions_add: "أضيفي سؤالًا",
+  apptQuestions_placeholder: "ماذا تريدين أن تسألي؟",
+  apptQuestions_delete: "حذف السؤال",
+  apptQuestions_copySuggested: "أضيفي إلى أسئلتي",
+  apptQuestions_countOne: "سؤال واحد",
+  apptQuestions_count: "{{count}} أسئلة",
+  apptQuestions_nextVisitTitle: "أسئلة للزيارة القادمة",
+  apptQuestions_nextVisitHint: "دوّنيها عندما تخطر لك. تنتقل إلى زيارتك القادمة عند فتحها.",
 }

@@ -3659,4 +3659,13 @@ export const zh: TranslationKeys = {
   meno_trigger_most_noted: "记录最多：{{list}}",
   gn_meno_trigger_title: "你记下的一件事",
   gn_meno_trigger_body: "本周潮热或夜间盗汗之前，“{{trigger}}”出现了 {{count}} 次。",
+  apptQuestions_title: "我的问题",
+  apptQuestions_add: "记下一个问题",
+  apptQuestions_placeholder: "你想问什么？",
+  apptQuestions_delete: "删除问题",
+  apptQuestions_copySuggested: "加入我的问题",
+  apptQuestions_countOne: "1 个问题",
+  apptQuestions_count: "{{count}} 个问题",
+  apptQuestions_nextVisitTitle: "下次就诊要问的问题",
+  apptQuestions_nextVisitHint: "想到就记下来。打开下一次就诊时，它们会移到那里。",
 }

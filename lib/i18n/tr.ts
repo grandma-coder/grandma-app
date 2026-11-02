@@ -3659,4 +3659,13 @@ export const tr: TranslationKeys = {
   meno_trigger_most_noted: "En çok not edilen: {{list}}",
   gn_meno_trigger_title: "Not ettiğin bir şey",
   gn_meno_trigger_body: "Bu hafta sıcak basması ya da gece terlemesinden önce «{{trigger}}» {{count}} kez not edildi.",
+  apptQuestions_title: "Sorularım",
+  apptQuestions_add: "Soru ekle",
+  apptQuestions_placeholder: "Ne sormak istiyorsun?",
+  apptQuestions_delete: "Soruyu sil",
+  apptQuestions_copySuggested: "Sorularıma ekle",
+  apptQuestions_countOne: "1 soru",
+  apptQuestions_count: "{{count}} soru",
+  apptQuestions_nextVisitTitle: "Bir sonraki muayene için sorular",
+  apptQuestions_nextVisitHint: "Akla geldikçe not al. Bir sonraki muayeneni açtığında oraya taşınırlar.",
 }
