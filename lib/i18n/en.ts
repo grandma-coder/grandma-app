@@ -2093,7 +2093,8 @@ export const en: TranslationKeys = {
   // Auth — welcome screen
   auth_welcome_intro: 'welcome to',
   auth_welcome_tagline: 'sees you.',
-  auth_welcome_body: 'Your wise companion through trying, pregnancy, and the first years.',
+  auth_welcome_body: "So you don't have to remember it all on your own. From your cycle to menopause, and through every stage of your kids, we take care of every detail.",
+  auth_welcome_rebus: "Your cycle [flower], your pregnancy [heart], your kids [baby]. One app [phone].",
   auth_signInError: 'Sign-In Error',
 
   // Auth — sign-in screen

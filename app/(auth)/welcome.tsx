@@ -19,9 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
-import { Burst, Blob, Heart, Flower } from '../../components/ui/Stickers'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
-import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { SiteBrand, RebusHeadline } from '../../components/ui/SiteBrand'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseOAuthRow, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
@@ -53,10 +52,14 @@ export default function Welcome() {
   const fadeIn = useRef(new Animated.Value(0)).current
   const slideUp = useRef(new Animated.Value(24)).current
 
+  const actionsIn = useRef(new Animated.Value(0)).current
+
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeIn, { toValue: 1, duration: 700, useNativeDriver: true }),
+      Animated.timing(fadeIn, { toValue: 1, duration: 500, useNativeDriver: true }),
       Animated.spring(slideUp, { toValue: 0, tension: 60, friction: 14, useNativeDriver: true }),
+      // buttons land once the headline stickers have popped in
+      Animated.spring(actionsIn, { toValue: 1, tension: 70, friction: 12, delay: 900, useNativeDriver: true }),
     ]).start()
   }, [])
 
@@ -164,64 +167,23 @@ export default function Welcome() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: bg }]}>
-      {/* ── Decorative stickers (site-hero collage) ── */}
-      <View style={[styles.stickerTL, { transform: [{ rotate: '-14deg' }] }]}>
-        <SiteSticker name="flower" size={78} cut />
-      </View>
-      <View style={[styles.stickerTR, { transform: [{ rotate: '12deg' }] }]}>
-        <SiteSticker name="heart" size={64} cut />
-      </View>
-      <View style={[styles.stickerMidL, { transform: [{ rotate: '-8deg' }] }]}>
-        <SiteSticker name="baby" size={60} cut />
-      </View>
-      <View style={[styles.stickerMidR, { transform: [{ rotate: '10deg' }] }]}>
-        <SiteSticker name="flame" size={54} cut />
-      </View>
+    <View style={[styles.root, { backgroundColor: bg, paddingTop: insets.top + 12 }]}>
+      {/* ── Brand — the site's top bar mark ── */}
+      <Animated.View style={[styles.brandRow, { opacity: fadeIn }]}>
+        <SiteBrand color={ink} />
+      </Animated.View>
 
-      {/* ── Content ── */}
-      <Animated.View
-        style={[
-          styles.content,
-          { paddingTop: insets.top + 220, opacity: fadeIn, transform: [{ translateY: slideUp }] },
-        ]}
-      >
-        {/* Heart-eye logo — brand mark, kept as-is */}
-        <View style={{ marginBottom: 18 }}>
-          <GrandmaLogo
-            size={104}
-            palette="sunny"
-            outline={ink}
-            motion="sparkle"
-          />
-        </View>
-
-        {/* Italic welcome line */}
-        <Text style={[styles.welcomeLine, { fontFamily: 'SpaceMono_400Regular', color: ink3 }]}>
-          {t('auth_welcome_intro')}
-        </Text>
-
-        {/* Main wordmark */}
-        <Text style={[styles.wordmark, { fontFamily: font.display, color: ink }]}>
-          {t('auth_signUp_heading2')}
-        </Text>
-
-        {/* Italic tagline — mode-agnostic pre-login; ink under Diffuse, no accent */}
-        <Text style={[styles.seesYou, { fontFamily: font.display, color: ink }]}>
-          {t('auth_welcome_tagline')}
-        </Text>
-
-        {/* Body */}
-        <Text style={[styles.body, { fontFamily: diffuse ? diffuseFont.body : font.body, color: ink2 }]}>
-          {t('auth_welcome_body')}
-        </Text>
+      {/* ── Hero — the site's rebus headline + sub ── */}
+      <Animated.View style={[styles.hero, { opacity: fadeIn, transform: [{ translateY: slideUp }] }]}>
+        <RebusHeadline text={t('auth_welcome_rebus')} style={[styles.rebus, { color: ink }]} stickerSize={40} delay={350} />
+        <Text style={[styles.body, { color: ink2 }]}>{t('auth_welcome_body')}</Text>
       </Animated.View>
 
       {/* ── Auth buttons ── */}
       <Animated.View
         style={[
           styles.authSection,
-          { paddingBottom: insets.bottom + 24, opacity: fadeIn },
+          { paddingBottom: insets.bottom + 20, opacity: actionsIn, transform: [{ translateY: actionsIn.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] },
         ]}
       >
         {appleAvailable && (
@@ -323,67 +285,33 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Sticker positions
-  stickerTL: {
-    position: 'absolute',
-    top: 84,
-    left: 22,
+  brandRow: {
+    paddingHorizontal: 24,
   },
-  stickerTR: {
-    position: 'absolute',
-    top: 112,
-    right: 28,
+  hero: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 24,
   },
-  stickerMidL: {
-    position: 'absolute',
-    top: 262,
-    left: 12,
-  },
-  stickerMidR: {
-    position: 'absolute',
-    top: 236,
-    right: 20,
-  },
-
-  // Text content
-  content: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    paddingHorizontal: 28,
-    textAlign: 'left',
-  },
-  welcomeLine: {
-    fontSize: 11,
-    letterSpacing: 1.4,
+  rebus: {
+    fontFamily: font.display,
+    fontSize: 34,
+    lineHeight: 50,
+    letterSpacing: 0.3,
     textTransform: 'uppercase',
-    marginBottom: 8,
   },
-  wordmark: {
-    fontSize: 64,
-    lineHeight: 68,
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
-    fontFamily: font.display },
-  seesYou: {
-    fontSize: 28,
-    lineHeight: 32,
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
-    marginTop: 4,
-    marginBottom: 16, fontFamily: font.display },
   body: {
-    fontSize: 15,
-    lineHeight: 22,
-    maxWidth: 280,
+    fontFamily: font.body,
+    fontSize: 17,
+    lineHeight: 25,
+    marginTop: 18,
+    maxWidth: 360,
   },
 
   // Auth section
   authSection: {
-    position: 'absolute',
-    bottom: 0,
-    left: 20,
-    right: 20,
+    paddingHorizontal: 20,
     gap: 10,
     alignItems: 'center',
   },

@@ -2099,6 +2099,8 @@ export interface TranslationKeys {
   auth_welcome_intro: string
   auth_welcome_tagline: string
   auth_welcome_body: string
+  /** Site hero headline; [flower] [heart] [baby] [phone] are inline stickers. */
+  auth_welcome_rebus: string
   auth_signInError: string
 
   // Auth — sign-in screen
