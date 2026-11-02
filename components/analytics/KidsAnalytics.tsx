@@ -1069,6 +1069,21 @@ export function KidsAnalytics() {
                 </Pressable>
               )}
             />
+            {/* The note is about one child — choose the child first. */}
+            {children.length > 1 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.childRow, { paddingHorizontal: 20 }]} style={{ marginBottom: 4 }}>
+                {children.map((c, idx) => (
+                  <ChildChip
+                    key={c.id}
+                    label={c.name}
+                    age={formatChildAge(c.birthDate)}
+                    active={selectedChildId === c.id}
+                    color={CHILD_COLORS[idx % CHILD_COLORS.length]}
+                    onPress={() => { setSelectedChildId(c.id); setActiveChild(c) }}
+                  />
+                ))}
+              </ScrollView>
+            ) : null}
             <GrandmaNote
               letter={notesLetter}
               loading={isLoading && !analytics}
@@ -1159,18 +1174,7 @@ export function KidsAnalytics() {
             </ScrollView>
           ) : null
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childRow}>
-            {children.map((c, idx) => (
-              <ChildChip
-                key={c.id}
-                label={c.name}
-                age={formatChildAge(c.birthDate)}
-                active={selectedChildId === c.id}
-                color={CHILD_COLORS[idx % CHILD_COLORS.length]}
-                onPress={() => { setSelectedChildId(c.id); setActiveChild(c) }}
-              />
-            ))}
-          </ScrollView>
+          null
         )}
 
         {!diffuse && <NotesDetailsEyebrow style={{ marginHorizontal: 4, marginTop: 0, marginBottom: -8 }} />}
