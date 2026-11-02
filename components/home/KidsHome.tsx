@@ -324,6 +324,8 @@ import { ActivitiesDetailCalm } from './kids/ActivitiesDetailCalm'
 import { DiaperDetailCalm } from './kids/DiaperDetailCalm'
 import { SiteChoice } from '../ui/SiteChoice'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
+import { InkBackButton } from '../ui/InkBackButton'
+import { StickerEnter } from '../ui/Motion'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { KidsLogRouter, type KidsLogType } from '../calendar/KidsLogRouter'
 import { useKidsTodayLogs } from '../../lib/analyticsData'
@@ -2494,7 +2496,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
             <KidsWallet
               hasDiaper={rangeData.diaperCount > 0}
               hasGrowthLeap={!!growthLeap}
-              growthLeapName={growthLeap?.name}
+              growthLeapName={growthLeap && growthLeap.status !== 'done' ? growthLeap.name : undefined}
               onOpenGoals={() => setGoalsModalVisible(true)}
               onOpenHealth={() => setHealthModalVisible(true)}
               onOpenVaccines={() => setVaccinesVisible(true)}
@@ -2512,7 +2514,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
             </LogSheet>
 
             {/* Growth Leap — pop-up sheet with the leap info card. */}
-            <LogSheet visible={growthLeapSheetVisible} title={growthLeap?.name ?? t('kids_home_section_reminders')} onClose={() => setGrowthLeapSheetVisible(false)}>
+            <LogSheet sticker="brain" visible={growthLeapSheetVisible} title={growthLeap && growthLeap.status !== 'done' ? growthLeap.name : t('kids_growthLeaps')} onClose={() => setGrowthLeapSheetVisible(false)}>
               {growthLeapBody}
             </LogSheet>
           </>
@@ -6725,6 +6727,7 @@ function RemindersModal({
 // ─── Growth Leap Card ───────────────────────────────────────────────────────
 
 function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<typeof getGrowthLeap>>; childName: string }) {
+  const { t } = useTranslation()
   const { colors, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -6746,11 +6749,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
     : isActive
       ? (isDark ? leapColor + '18' : leapColor + '20')
       : (colors.surface))
-  const border = diffuse ? dt.colors.line : (isDone
-    ? (isDark ? 'rgba(189,212,140,0.35)' : 'rgba(20,19,19,0.12)')
-    : isActive
-      ? (isDark ? leapColor + '40' : 'rgba(20,19,19,0.12)')
-      : (isDark ? colors.border : 'rgba(20,19,19,0.12)'))
+  const border = diffuse ? dt.colors.line : (isDark ? colors.border : stickerInk)
 
   // Number badge — sticker fill (current) or hairline (diffuse)
   const badgeFill = diffuse ? 'transparent' : (isDone ? '#BDD48C' : isActive ? leapColor : '#F5D652')
@@ -6765,8 +6764,8 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
         } : {
           backgroundColor: bg, borderColor: border, borderWidth: 1.5,
           shadowColor: '#141313',
-          shadowOpacity: isDark ? 0 : 0.05,
-          shadowRadius: 8,
+          shadowOpacity: isDark ? 0 : 1,
+          shadowRadius: 0,
           shadowOffset: { width: 0, height: 3 },
         }]}
       >
@@ -6785,9 +6784,9 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
             }
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[s.leapTitle, { color: ink }, diffuse && { fontFamily: diffuseFont.display, letterSpacing: -0.2 }]}>{isDone ? 'All Leaps Complete' : leap.name}</Text>
+            <Text style={[s.leapTitle, { color: ink }, diffuse && { fontFamily: diffuseFont.display, letterSpacing: -0.2 }]}>{isDone ? t('kids_home_leaps_all_complete') : leap.name}</Text>
             <Text style={[s.leapDesc, { color: ink3 }, diffuse && { fontFamily: diffuseFont.body }]}>
-              {isDone ? 'Your child has completed all 10 Wonder Weeks' : isActive && currentPhaseName ? `Phase: ${currentPhaseName}` : leap.desc}
+              {isDone ? t('kids_home_leaps_all_complete_desc').replace('Your child', childName || 'Your child') : isActive && currentPhaseName ? `Phase: ${currentPhaseName}` : leap.desc}
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 6 }}>
@@ -6902,7 +6901,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   const ink = colors.text
   const ink2 = colors.textSecondary
   const ink3 = colors.textMuted
-  const line = colors.border
+  const line = colors.text // site look: ink outlines
   const yellowSoft = isDark ? 'rgba(245,214,82,0.20)' : '#FBEA9E'
   const pinkSoft = isDark ? 'rgba(242,178,199,0.20)' : '#F9D8E2'
   const blueSoft = isDark ? 'rgba(157,195,232,0.20)' : '#CFE0F0'
@@ -7014,14 +7013,12 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: paperBg }}>
         {/* Header — paper with soft divider */}
-        <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: line }}>
-          <Pressable onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: paper, borderWidth: 1, borderColor: line, alignItems: 'center', justifyContent: 'center' }}>
-            <X size={16} color={ink2} strokeWidth={2} />
-          </Pressable>
+        <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.border }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>{t('kids_home_leaps_detail_title')}</Text>
-            <Text style={{ fontSize: 11, fontFamily: font.bodyMedium, color: ink3, marginTop: 1 }}>{childName}{' · Week '}{leap.weekAge}</Text>
+            <Text style={{ fontSize: 24, fontFamily: font.display, color: ink, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('kids_home_leaps_detail_title')}</Text>
+            <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink3, marginTop: 2, letterSpacing: 1.4, textTransform: 'uppercase' }}>{childName}{' · Week '}{leap.weekAge}</Text>
           </View>
+          <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label="Close" style={{ marginBottom: 0 }} />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 56 }}>
@@ -7029,26 +7026,27 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
           <View style={{ margin: 16 }}>
             <View style={{
               backgroundColor: isDone ? greenSoft : isActive ? yellowSoft : lilacSoft,
-              borderRadius: 24, borderWidth: 1, borderColor: line,
-              padding: 18, gap: 6, position: 'relative', overflow: 'hidden',
+              borderRadius: 22, borderWidth: 1.5, borderColor: line,
+              shadowColor: line, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0,
+              padding: 18, gap: 6, position: 'relative',
             }}>
-              <View style={{ position: 'absolute', right: -6, top: -8, transform: [{ rotate: '12deg' }] }}>
-                <EmojiSticker size={64} style={{ opacity: 0.85 }}>{heroEmoji}</EmojiSticker>
+              <View style={{ position: 'absolute', right: 14, top: 14 }}>
+                <StickerEnter delay={200} tilt={8}><SiteSticker name={isDone ? 'star' : 'brain'} size={52} cut /></StickerEnter>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={{ fontSize: 11, fontFamily: font.bodySemiBold, color: ink3, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink, textTransform: 'uppercase', letterSpacing: 1.4 }}>
                   {isDone ? 'All complete' : `Leap #${leap.index + 1}`}
                 </Text>
-                <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: heroBadgeBg, borderWidth: 1, borderColor: line }}>
-                  <Text style={{ fontSize: 10, fontFamily: font.bodySemiBold, color: heroBadgeInk, letterSpacing: 0.8 }}>
+                <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: heroBadgeBg, borderWidth: 1.5, borderColor: line }}>
+                  <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: ink, letterSpacing: 0.8 }}>
                     {heroBadgeText}
                   </Text>
                 </View>
               </View>
-              <Text style={{ fontSize: 24, fontFamily: font.display, color: ink, letterSpacing: -0.5, lineHeight: 28, maxWidth: '78%' }}>
+              <Text style={{ fontSize: 28, fontFamily: font.display, color: ink, letterSpacing: 0.3, lineHeight: 34, maxWidth: '72%', textTransform: 'uppercase' }}>
                 {isDone ? `Way to go, ${childName}!` : gl.name}
               </Text>
-              <Text style={{ fontSize: 12, fontFamily: font.body, color: ink2, lineHeight: 17, maxWidth: '85%' }}>
+              <Text style={{ fontSize: 14, fontFamily: font.body, color: ink2, lineHeight: 20, maxWidth: '85%' }}>
                 {isDone
                   ? `${childName} has completed all ${GROWTH_LEAPS.length} Wonder Weeks.`
                   : `${leap.completedCount} of ${GROWTH_LEAPS.length} leaps done · Tap any node to learn more.`}
@@ -7058,8 +7056,8 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
 
           {/* Vertical leap path */}
           <View style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <EmojiSticker size={18}>{'🛤️'}</EmojiSticker>
-            <Text style={{ fontSize: 15, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>{t('kids_home_leaps_path_title')}</Text>
+            <SiteSticker name="shoe" size={24} />
+            <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('kids_home_leaps_path_title')}</Text>
             <View style={{ flex: 1 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: ink3, letterSpacing: 0.6, textTransform: 'uppercase', marginRight: 2 }}>{t('kids_home_leaps_intensity_label')}</Text>
@@ -7296,7 +7294,7 @@ function LeapTimelinePath({
               style={{
                 backgroundColor: cardBg,
                 borderRadius: 18,
-                borderWidth: 1,
+                borderWidth: 1.5,
                 borderColor: line,
                 padding: 12,
                 gap: 4,
@@ -7308,8 +7306,8 @@ function LeapTimelinePath({
                 </Text>
                 <DifficultyDots difficulty={n.g.difficulty} muted={ink3} />
                 <View style={{ flex: 1 }} />
-                <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: statusBadgeBg, borderWidth: 1, borderColor: line }}>
-                  <Text style={{ fontSize: 9, fontFamily: font.bodySemiBold, color: statusBadgeInk, letterSpacing: 0.6 }}>
+                <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: statusBadgeBg, borderWidth: 1.5, borderColor: line }}>
+                  <Text style={{ fontSize: 9, fontFamily: font.bodyBold, color: ink, letterSpacing: 0.6 }}>
                     {statusBadge}
                   </Text>
                 </View>
