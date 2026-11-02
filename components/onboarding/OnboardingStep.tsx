@@ -9,7 +9,7 @@
  */
 
 import { createContext, isValidElement, useContext, useEffect, useRef, useState } from 'react'
-import { View, Text, Pressable, StyleSheet, Animated } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Animated, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -268,8 +268,16 @@ export function OnboardingStep({
         </FadeUp>
       </View>
 
-      {/* Input area — clusters directly under the question. */}
-      <FadeUp index={1} delay={60} style={styles.content}>{children}</FadeUp>
+      {/* Input area — scrolls when a step is long (e.g. symptom lists) so the
+          continue disc below always stays on screen. */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <FadeUp index={1} delay={60} style={styles.content}>{children}</FadeUp>
+      </ScrollView>
 
       {/* Primary action — the pink eye disc, anchored to the bottom */}
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 10 }]}>
@@ -365,8 +373,9 @@ const styles = StyleSheet.create({
     paddingTop: 22,
   },
 
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 16 },
   bottom: {
-    marginTop: 'auto',
     paddingHorizontal: 24,
     paddingTop: 8,
     alignItems: 'center',
