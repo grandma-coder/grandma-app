@@ -235,10 +235,20 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   // with no user and returns {} — that's not real data, so it counts as loading.
   const [sessionReady, setSessionReady] = useState(false)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user.id)
+    // getSession() can stay pending while the client finishes its cold-start auth handshake,
+    // which left the wallet skeleton up forever. The auth listener's INITIAL_SESSION fires as
+    // soon as the stored session is known; a short timeout keeps the skeleton from sticking.
+    let gotUser = false
+    const finish = (uid: string | undefined) => {
+      if (gotUser) return
+      if (uid) { gotUser = true; setUserId(uid) }
       setSessionReady(true)
-    })
+    }
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => finish(session?.user.id))
+    supabase.auth.getSession().then(({ data: { session } }) => finish(session?.user.id)).catch(() => {})
+    // Stop waiting visually after 4 s; a session that arrives later still sets the user.
+    const timer = setTimeout(() => setSessionReady(true), 4000)
+    return () => { sub.subscription.unsubscribe(); clearTimeout(timer) }
   }, [])
 
   const { data: todayLogsData, isLoading: todayLogsLoading, refetch: refetchTodayLogs } = usePregnancyTodayLogs(userId)

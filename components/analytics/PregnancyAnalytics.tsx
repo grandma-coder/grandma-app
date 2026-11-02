@@ -503,10 +503,18 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const [showInfo, setShowInfo] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user.id)
+    // getSession() can stay pending during the cold-start auth handshake — the auth listener's
+    // INITIAL_SESSION answers first; the timeout keeps skeletons from sticking.
+    let gotUser = false
+    const finish = (uid: string | undefined) => {
+      if (gotUser) return
+      if (uid) { gotUser = true; setUserId(uid) }
       setSessionChecked(true)
-    }).catch(() => setSessionChecked(true))
+    }
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => finish(session?.user.id))
+    supabase.auth.getSession().then(({ data: { session } }) => finish(session?.user.id)).catch(() => setSessionChecked(true))
+    const timer = setTimeout(() => setSessionChecked(true), 4000)
+    return () => { sub.subscription.unsubscribe(); clearTimeout(timer) }
   }, [])
 
   const uid = userId ?? ''
