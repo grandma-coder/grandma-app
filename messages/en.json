@@ -94,13 +94,13 @@
         "paragraphs": [
           "When you join the waitlist we store your email, your name if you give it, the chapter you chose, your country, the site language, whether you want the launch notice, where you came from (campaign tags and referring site) and a one-way hash of your IP address used only to prevent abuse.",
           "We use this only to send your invite and, if you asked, one launch notice. We never sell it or share it for marketing.",
-          "To be removed, email support@grandma.app and we'll delete your entry."
+          "To be removed, email grandma@sauceroom.co and we'll delete your entry."
         ]
       },
       {
         "heading": "Contact",
         "paragraphs": [
-          "For privacy questions or data requests, contact us at privacy@grandma.app"
+          "For privacy questions or data requests, contact us at grandma@sauceroom.co"
         ]
       }
     ]
@@ -196,7 +196,7 @@
       {
         "heading": "Contact",
         "paragraphs": [
-          "For questions about these terms, contact us at terms@grandma.app"
+          "For questions about these terms, contact us at grandma@sauceroom.co"
         ]
       }
     ]

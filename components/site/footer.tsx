@@ -14,7 +14,7 @@ export function Footer() {
           <Link href="/privacy">{t('privacy')}</Link>
           <Link href="/terms">{t('terms')}</Link>
           <a href={WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer">{t('whatsapp')}</a>
-          <a href="mailto:support@grandma.app">support@grandma.app</a>
+          <a href="mailto:grandma@sauceroom.co">grandma@sauceroom.co</a>
         </nav>
       </div>
     </footer>
