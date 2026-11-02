@@ -21,7 +21,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
-import { PillButton } from '../../components/ui/PillButton'
+import { ActionDisc, EyeAction } from '../../components/ui/AuthDock'
+import { GoogleG } from '../../components/ui/GoogleG'
 import { HandDrawnBox, HandRule } from '../../components/ui/HandDrawn'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { Stagger, StickerEnter } from '../../components/ui/Motion'
@@ -252,27 +253,21 @@ export default function SignIn() {
             {t('auth_welcome_waiting')}
           </Text>
 
-          {/* Social auth */}
-          {appleAvailable && (
-            <PillButton
-              label={t('auth_continueWithApple')}
-              onPress={handleApple}
-              variant="ink"
-              loading={oauthLoading === 'apple'}
-              disabled={oauthLoading !== null}
-              leading={<Ionicons name="logo-apple" size={19} color={bg} />}
-              style={styles.socialGap}
-            />
-          )}
-          <PillButton
-            label={t('auth_continueWithGoogle')}
-            onPress={handleGoogle}
-            variant="paper"
-            loading={oauthLoading === 'google'}
-            disabled={oauthLoading !== null}
-            leading={<Ionicons name="logo-google" size={18} color={ink} />}
-            style={styles.socialGap}
-          />
+          {/* Social auth — the same discs as the welcome dock */}
+          <View style={styles.discRow}>
+            {appleAvailable && (
+              <ActionDisc index={0} delay={200} size={58} fill="#FFFFFF" ink={ink} label="Apple"
+                a11y={t('auth_continueWithApple')} onPress={handleApple}
+                disabled={oauthLoading !== null} loading={oauthLoading === 'apple'}>
+                <Ionicons name="logo-apple" size={24} color={ink} />
+              </ActionDisc>
+            )}
+            <ActionDisc index={1} delay={200} size={58} fill="#FFFFFF" ink={ink} label="Google"
+              a11y={t('auth_continueWithGoogle')} onPress={handleGoogle}
+              disabled={oauthLoading !== null} loading={oauthLoading === 'google'}>
+              <GoogleG size={22} />
+            </ActionDisc>
+          </View>
 
           {/* Divider */}
           <View style={styles.divider}>
@@ -318,14 +313,10 @@ export default function SignIn() {
             </Text>
           </Pressable>
 
-          {/* CTA */}
-          <PillButton
-            label={loading ? t('auth_signingIn') : t('auth_signInArrow')}
-            onPress={signIn}
-            variant="accent"
-            accentColor="#F7C6D9"
-            disabled={loading}
-          />
+          {/* CTA — the pink eye disc is the primary action */}
+          <View style={styles.eyeRow}>
+            <EyeAction label={loading ? t('auth_signingIn') : t('auth_signIn')} onPress={signIn} ink={ink} loading={loading} />
+          </View>
 
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-up')}>
@@ -427,8 +418,17 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
 
-  socialGap: {
-    marginBottom: 12,
+  discRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 28,
+    marginTop: 4,
+    marginBottom: 6,
+  },
+  eyeRow: {
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 8,
   },
 
   divider: {

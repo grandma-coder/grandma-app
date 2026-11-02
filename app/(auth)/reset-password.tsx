@@ -24,7 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
-import { PillButton } from '../../components/ui/PillButton'
+import { EyeAction } from '../../components/ui/AuthDock'
 import { HandDrawnBox } from '../../components/ui/HandDrawn'
 import { Stagger, StickerEnter } from '../../components/ui/Motion'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
@@ -214,12 +214,9 @@ export default function ResetPassword() {
             />
           </HandDrawnBox>
 
-          <PillButton
-            label={loading ? t('auth_updating') : t('auth_updatePassword')}
-            onPress={handleUpdate}
-            variant="ink"
-            disabled={loading}
-          />
+          <View style={{ alignItems: 'center', marginTop: 4 }}>
+            <EyeAction label={loading ? t('auth_updating') : t('auth_updatePassword')} onPress={handleUpdate} ink={ink} loading={loading} />
+          </View>
           </Stagger>
         </ScrollView>
       </KeyboardAvoidingView>

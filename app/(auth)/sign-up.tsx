@@ -20,7 +20,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
-import { PillButton } from '../../components/ui/PillButton'
+import { EyeAction } from '../../components/ui/AuthDock'
 import { HandDrawnBox, HandRule } from '../../components/ui/HandDrawn'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { Stagger, StickerEnter } from '../../components/ui/Motion'
@@ -248,12 +248,9 @@ export default function SignUp() {
           </HandDrawnBox>
 
           {/* CTA */}
-          <PillButton
-            label={loading ? t('auth_creating') : t('auth_continue')}
-            onPress={signUp}
-            variant="ink"
-            disabled={loading}
-          />
+          <View style={{ alignItems: 'center', marginTop: 4 }}>
+            <EyeAction label={loading ? t('auth_creating') : t('auth_continue')} onPress={signUp} ink={ink} loading={loading} />
+          </View>
 
           {/* Switch */}
           <Pressable onPress={() => router.push('/(auth)/sign-in')}>

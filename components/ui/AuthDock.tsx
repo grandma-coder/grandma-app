@@ -19,9 +19,9 @@ import { useIdleSway } from './Motion'
 const EYE_PINK = '#F7C6D9'
 const ACCENT = '#E0709A'
 
-function Disc({
-  index,
-  delay,
+export function ActionDisc({
+  index = 0,
+  delay = 0,
   size,
   fill,
   ink,
@@ -33,8 +33,8 @@ function Disc({
   underline,
   children,
 }: {
-  index: number
-  delay: number
+  index?: number
+  delay?: number
   size: number
   fill: string
   ink: string
@@ -131,25 +131,25 @@ export function AuthDock({
     <View style={styles.dock}>
       <View style={styles.tabs}>
         {showApple ? (
-          <Disc index={0} delay={delay} size={58} fill="#FFFFFF" ink={ink} label="Apple" a11y={appleA11y}
+          <ActionDisc index={0} delay={delay} size={58} fill="#FFFFFF" ink={ink} label="Apple" a11y={appleA11y}
             onPress={onApple} disabled={busy} loading={loading === 'apple'}>
             {appleIcon}
-          </Disc>
+          </ActionDisc>
         ) : null}
 
         <View style={styles.center}>
-          <Disc index={1} delay={delay} size={84} fill={EYE_PINK} ink={ink} label={startLabel} a11y={startA11y}
+          <ActionDisc index={1} delay={delay} size={84} fill={EYE_PINK} ink={ink} label={startLabel} a11y={startA11y}
             onPress={onStart} disabled={busy} underline>
             <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
               <SiteSticker name="eye" size={54} cut />
             </Animated.View>
-          </Disc>
+          </ActionDisc>
         </View>
 
-        <Disc index={2} delay={delay} size={58} fill="#FFFFFF" ink={ink} label="Google" a11y={googleA11y}
+        <ActionDisc index={2} delay={delay} size={58} fill="#FFFFFF" ink={ink} label="Google" a11y={googleA11y}
           onPress={onGoogle} disabled={busy} loading={loading === 'google'}>
           {googleIcon}
-        </Disc>
+        </ActionDisc>
       </View>
     </View>
   )
@@ -180,3 +180,34 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 })
+
+/** The primary action everywhere in the site look: the pink eye disc with a hand-lettered label. */
+export function EyeAction({
+  label,
+  onPress,
+  ink,
+  loading,
+  disabled,
+  index = 0,
+  delay = 0,
+  a11y,
+}: {
+  label: string
+  onPress: () => void
+  ink: string
+  loading?: boolean
+  disabled?: boolean
+  index?: number
+  delay?: number
+  a11y?: string
+}) {
+  const sway = useIdleSway(6, 4)
+  return (
+    <ActionDisc index={index} delay={delay} size={84} fill={EYE_PINK} ink={ink} label={label} a11y={a11y ?? label}
+      onPress={onPress} disabled={disabled || loading} loading={loading} underline>
+      <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
+        <SiteSticker name="eye" size={54} cut />
+      </Animated.View>
+    </ActionDisc>
+  )
+}
