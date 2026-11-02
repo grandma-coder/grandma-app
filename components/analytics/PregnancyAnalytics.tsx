@@ -90,6 +90,8 @@ import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { FadeUp } from '../ui/Motion'
 import { bucketSeries } from './shared/bucketSeries'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import { Skeleton, SkeletonLines } from '../ui/Skeleton'
+import { SkeletonChartSection, SkeletonStatRow, SkeletonStatRows } from './shared/AnalyticsSkeleton'
 import {
   buildPregnancyWeekFacts,
   weekCoveragePct,
@@ -481,13 +483,17 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | null>(null)
   const [showCustomModal, setShowCustomModal] = useState(false)
   const [userId, setUserId] = useState<string | undefined>(undefined)
+  // Queries are disabled (not "loading") until the session resolves, so the light
+  // skeletons also wait on this — otherwise the page flashes empty values first.
+  const [sessionChecked, setSessionChecked] = useState(false)
   const [openPillar, setOpenPillar] = useState<PillarKey | null>(null)
   const [showInfo, setShowInfo] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user.id)
-    })
+      setSessionChecked(true)
+    }).catch(() => setSessionChecked(true))
   }, [])
 
   const uid = userId ?? ''
@@ -527,19 +533,29 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   }
 
   // Hooks — all windowed by the selected period.
-  const { data: weightHistory = [] } = usePregnancyWeightHistory(uid, windowDays)
+  const { data: weightHistory = [], isLoading: weightLoadingQ } = usePregnancyWeightHistory(uid, windowDays)
   const { data: weightByWeek = [] } = usePregnancyWeightByWeek(uid, dueDate)
-  const { data: kickSessions = [] } = usePregnancyKickSessions(uid, windowDays)
+  const { data: kickSessions = [], isLoading: kicksLoadingQ } = usePregnancyKickSessions(uid, windowDays)
   const { data: kickHours = [] } = usePregnancyKickTimeOfDay(uid, windowDays)
-  const { data: symptomFreq = [] } = usePregnancySymptomFrequency(uid)
-  const { data: sleepHistory = [] } = usePregnancySleepHistory(uid, windowWeeks)
+  const { data: symptomFreq = [], isLoading: symptomsLoadingQ } = usePregnancySymptomFrequency(uid)
+  const { data: sleepHistory = [], isLoading: sleepLoadingQ } = usePregnancySleepHistory(uid, windowWeeks)
   const { data: wellbeing } = usePregnancyWellbeingScore(uid)
-  const { data: moodTrend = [] } = usePregnancyMoodTrend(uid, windowWeeks)
-  const { data: hydrationHistory = [] } = usePregnancyHydrationHistory(uid, windowDays)
-  const { data: nutritionMatrix } = usePregnancyNutritionMatrix(uid, windowDays)
-  const { data: exerciseHistory = [] } = usePregnancyExerciseHistory(uid, windowDays)
-  const { data: contractions = [] } = usePregnancyContractions(uid, windowDays)
-  const { data: birthReady } = usePregnancyBirthReadiness(uid)
+  const { data: moodTrend = [], isLoading: moodLoadingQ } = usePregnancyMoodTrend(uid, windowWeeks)
+  const { data: hydrationHistory = [], isLoading: hydrationLoadingQ } = usePregnancyHydrationHistory(uid, windowDays)
+  const { data: nutritionMatrix, isLoading: nutritionLoadingQ } = usePregnancyNutritionMatrix(uid, windowDays)
+  const { data: exerciseHistory = [], isLoading: exerciseLoadingQ } = usePregnancyExerciseHistory(uid, windowDays)
+  const { data: contractions = [], isLoading: contractionsLoadingQ } = usePregnancyContractions(uid, windowDays)
+  const { data: birthReady, isLoading: birthLoadingQ } = usePregnancyBirthReadiness(uid)
+
+  // First load per section (no cached data for this key yet). A period change is a
+  // new key, so its sections ghost too while the selector stays put.
+  const weightLoading = !sessionChecked || weightLoadingQ
+  // Stat rows + the chart sections below them (mood, hydration, nutrition,
+  // movement, symptoms) all read from these.
+  const statsLoading = !sessionChecked || kicksLoadingQ || symptomsLoadingQ || sleepLoadingQ
+    || moodLoadingQ || hydrationLoadingQ || nutritionLoadingQ || exerciseLoadingQ
+  const contractionsLoading = !sessionChecked || contractionsLoadingQ
+  const birthLoading = !sessionChecked || birthLoadingQ
 
   // Light UI: plain counts from the last 7 days (never a score). A window
   // shorter than a week only has that many days of data to count.
@@ -670,6 +686,15 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               </View>
             </View>
           </Pressable>
+        ) : weightLoading ? (
+          // Weight first load: ghost number + chart, not a bare "KG LATEST" + empty chart.
+          <View style={{ marginHorizontal: 20, marginTop: 8, paddingTop: 4 }}>
+            <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
+              {`WEIGHT · WEEK ${weekNumber}`}
+            </Text>
+            <Skeleton height={48} width="45%" radius={10} style={{ marginTop: 8 }} />
+            <Skeleton height={64} radius={12} style={{ marginTop: 14 }} />
+          </View>
         ) : (
           <Pressable
             onPress={() => setOpenPillar('weight')}
@@ -747,6 +772,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               />
             </View>
           </View>
+        ) : statsLoading ? (
+          <SkeletonStatRows count={4} style={{ paddingHorizontal: 20, marginTop: 14 }} />
         ) : (
           <View style={{ paddingHorizontal: 20, marginTop: 14 }}>
             <SiteRow
@@ -788,6 +815,12 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               onPress={() => setOpenPillar('wellbeing')}
             />
           </View>
+        )}
+
+        {/* Light first load: one ghost chart where the mood / hydration /
+            nutrition / movement / symptom sections will land. */}
+        {!diffuse && statsLoading && (
+          <SkeletonChartSection style={{ marginHorizontal: 20, marginTop: 28 }} />
         )}
 
         {/* Mood trend strip */}
@@ -936,7 +969,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             </View>
           </View>
 
-          {showContractions && (
+          {!diffuse && contractionsLoading ? (
+            // Only ghost the row where it will show anyway (3rd trimester).
+            trimester === 3 ? <SkeletonStatRow first /> : null
+          ) : showContractions && (
             <HeroBanner
               pillarKey="contractions"
               label="CONTRACTIONS"
@@ -950,15 +986,21 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             />
           )}
 
-          <HeroBanner
-            pillarKey="birth"
-            label="BIRTH READINESS"
-            title={tk.birth.headline}
-            subtitle={tk.birth.takeaway ?? ''}
-            badgeText=""
-            badgeCaption="READY"
-            onPress={() => setOpenPillar('birth')}
-          />
+          {!diffuse && birthLoading ? (
+            <SkeletonStatRow first={!(trimester === 3 || showContractions)} />
+          ) : (
+            <HeroBanner
+              pillarKey="birth"
+              label="BIRTH READINESS"
+              title={tk.birth.headline}
+              // Light never shows the "Loading your readiness…" placeholder copy:
+              // loading is the skeleton above; a failed load just has no subtitle.
+              subtitle={diffuse || birthReady ? (tk.birth.takeaway ?? '') : ''}
+              badgeText=""
+              badgeCaption="READY"
+              onPress={() => setOpenPillar('birth')}
+            />
+          )}
         </View>
         <InsightsDisclaimer />
       </ScrollView>
@@ -2466,9 +2508,13 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
   if (!nutritionMatrix) {
     return (
       <PaperCard>
-        <Body size={13} color={muted}>
-          {t('preg_analytics_nutritionLoading')}
-        </Body>
+        {diffuse ? (
+          <Body size={13} color={muted}>
+            {t('preg_analytics_nutritionLoading')}
+          </Body>
+        ) : (
+          <SkeletonLines lines={3} />
+        )}
       </PaperCard>
     )
   }
@@ -2662,7 +2708,11 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
   if (!birthReady) {
     return (
       <PaperCard>
-        <Body size={13} color={colors.textMuted}>{t('preg_analytics_loading_birth')}</Body>
+        {diffuse ? (
+          <Body size={13} color={colors.textMuted}>{t('preg_analytics_loading_birth')}</Body>
+        ) : (
+          <SkeletonLines lines={3} />
+        )}
       </PaperCard>
     )
   }

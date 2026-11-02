@@ -150,6 +150,8 @@ import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { FadeUp } from '../ui/Motion'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import { Skeleton, SkeletonRing } from '../ui/Skeleton'
+import { SkeletonStatRows } from './shared/AnalyticsSkeleton'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -1163,11 +1165,25 @@ export function KidsAnalytics() {
           </ScrollView>
         )}
 
-        {isLoading && (
+        {isLoading && (diffuse ? (
           <View style={styles.loadingWrap}>
             <BrandedLoader logoSize={72} motion="blinkOnly" label={t('kids_analytics_loading')} />
           </View>
-        )}
+        ) : (
+          // Light first load: ghosts shaped like ring card → Grandma card → pillar rows.
+          <View style={{ gap: 20 }}>
+            <BigChartCard label={t('kids_analytics_child_wellness_label')} blobColor={stickers.pinkSoft} labelAlign="center">
+              <SkeletonRing size={220} />
+            </BigChartCard>
+            <Skeleton height={96} radius={18} />
+            <View>
+              <Text style={[styles.pillarSectionTitle, { color: colors.text, fontFamily: font.display, fontSize: 18, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 0 }]}>
+                {t('kids_analytics_thriving_breakdown')}
+              </Text>
+              <SkeletonStatRows count={6} />
+            </View>
+          </View>
+        ))}
 
         {error && !isLoading && (
           <Pressable onPress={() => refetch()} style={[styles.errorCard, { backgroundColor: diffuse ? 'transparent' : colors.surface, borderRadius: diffuse ? radius.xl : 18, borderWidth: diffuse ? 1 : 1.5, borderColor: diffuse ? dt.colors.line : colors.text }]}>

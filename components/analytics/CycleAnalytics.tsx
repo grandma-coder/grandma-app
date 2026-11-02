@@ -54,6 +54,8 @@ import { MoodStrip } from './shared/MoodStrip'
 import { cycleMoodToStrip } from '../../lib/moodTrend'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import { Skeleton } from '../ui/Skeleton'
+import { SkeletonChartSection, SkeletonStatRows } from './shared/AnalyticsSkeleton'
 
 /** Warm phase copy keyed by cycle phase — resolved through t() so it localizes. */
 const MONO = 'SpaceMono_400Regular'
@@ -76,15 +78,20 @@ export function CycleAnalytics() {
   const bottomInset = useScrollBottomInset(insets.bottom + 100)
   const [detailType, setDetailType] = useState<CycleDetailType | null>(null)
 
-  const { data: history } = useCycleHistory()
-  const { data: regularity } = useRegularity()
-  const { data: pms } = usePMSStats()
-  const { data: fertile } = useFertileWindow()
-  const { data: mood } = useMoodStats()
-  const { data: bbt } = useBBTStats()
-  const { data: mucus } = useCervicalMucusStats()
-  const { data: intercourse } = useIntercourseStats()
-  const { data: intent } = useCycleIntent()
+  const { data: history, isLoading: historyLoading } = useCycleHistory()
+  const { data: regularity, isLoading: regularityLoading } = useRegularity()
+  const { data: pms, isLoading: pmsLoading } = usePMSStats()
+  const { data: fertile, isLoading: fertileLoading } = useFertileWindow()
+  const { data: mood, isLoading: moodLoading } = useMoodStats()
+  const { data: bbt, isLoading: bbtLoading } = useBBTStats()
+  const { data: mucus, isLoading: mucusLoading } = useCervicalMucusStats()
+  const { data: intercourse, isLoading: intercourseLoading } = useIntercourseStats()
+  const { data: intent, isLoading: intentLoading } = useCycleIntent()
+  // First load only (TanStack `isLoading` = no cached data + fetching). Until every
+  // query behind the hero + stat rows lands, the light page shows a skeleton instead
+  // of a provisional cycle day and "—" tiles that jump a moment later.
+  const firstLoad = historyLoading || regularityLoading || pmsLoading || fertileLoading
+    || moodLoading || bbtLoading || mucusLoading || intercourseLoading || intentLoading
 
   // ── Lock state — which metrics are still gated behind a logging threshold.
   const closed = (history?.cycles ?? []).filter((c) => c.lengthDays != null).length
@@ -122,7 +129,9 @@ export function CycleAnalytics() {
   const unlockedSig = unlockedKeys.join(',')
 
   useEffect(() => {
-    if (!unlockHydrated) return
+    // Wait for the first load too — otherwise the empty pre-load state seeds as
+    // "nothing unlocked" and the real data then reads as fresh unlocks.
+    if (!unlockHydrated || firstLoad) return
     if (!seededRef.current) {
       // First hydrated render: whatever is already unlocked is "known", not
       // "just happened" — seed it silently so we never spray toasts for
@@ -137,7 +146,7 @@ export function CycleAnalytics() {
       setUnlockToast(METRIC_LABEL[fresh.split(':')[1] as CycleMetricKey])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unlockHydrated, unlockedSig])
+  }, [unlockHydrated, firstLoad, unlockedSig])
 
   // Live cycle config — same derivation CycleHome uses.
   const cycleConfig: CycleConfig = useMemo(() => {
@@ -217,6 +226,32 @@ export function CycleAnalytics() {
   const intercourseSub = intercourse && intercourse.thisCycleCount > 0
     ? t('cycleAnalytics_intercourseSub_inWindow')
     : t('cycleAnalytics_intercourseSub_log')
+
+  if (!diffuse && firstLoad) {
+    return (
+      <View style={[styles.root, { backgroundColor: colors.bg }]}>
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <AnalyticsHeader hide />
+          <View style={styles.hero}>
+            <Text style={[styles.heroKicker, { color: colors.textMuted, fontFamily: MONO, fontSize: 10, letterSpacing: 1.4 }]}>
+              {t('cycleAnalytics_yourCycleToday')}
+            </Text>
+            <Skeleton height={34} width="55%" radius={8} style={{ marginTop: 6 }} />
+            <Skeleton height={14} width="80%" radius={6} style={{ marginTop: 10 }} />
+          </View>
+          <View style={[styles.flowCard, styles.siteCard, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text }]}>
+            <SkeletonChartSection bars={6} height={90} />
+          </View>
+          <View style={[styles.siteCard, styles.siteGrid, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text, paddingHorizontal: 14 }]}>
+            <SkeletonStatRows count={6} />
+          </View>
+        </ScrollView>
+      </View>
+    )
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>

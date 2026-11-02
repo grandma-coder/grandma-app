@@ -42,6 +42,7 @@ import { useTranslation } from '../../lib/i18n'
 import { monthsSinceDate, type MenopauseStage } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import { SkeletonChartSection, SkeletonHeadline, SkeletonStatRows } from './shared/AnalyticsSkeleton'
 
 const CHART_W = Dimensions.get('window').width - 80 // screen − card margins − card padding
 const MONTH_PIPS = 12
@@ -84,7 +85,7 @@ export function MenopauseAnalytics() {
   const insets = useSafeAreaInsets()
   const bottomInset = useScrollBottomInset(insets.bottom + 100)
 
-  const { data } = useMenopauseLogs()
+  const { data, isLoading: logsLoading } = useMenopauseLogs()
   const rows = useMemo<MenopauseLogRow[]>(() => data ?? [], [data])
 
   const hydrated = useMenopauseStore((s) => s.hydrated)
@@ -118,9 +119,21 @@ export function MenopauseAnalytics() {
       <View style={[styles.root, { backgroundColor: palette.bg }]}>
         <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
           <AnalyticsHeader hide />
-          <SiteHero stageWord={stageWord} heroLine={heroLine} />
+          {/* Stage + months come from the persisted store; until it rehydrates the
+              hero is a ghost, not a generic "Your patterns" that swaps a beat later. */}
+          {hydrated ? (
+            <SiteHero stageWord={stageWord} heroLine={heroLine} />
+          ) : (
+            <SkeletonHeadline big={32} style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 12 }} />
+          )}
           {stage === 'peri' && <SiteMonths months={months} palette={palette} />}
-          {!hasData ? (
+          {logsLoading ? (
+            // First load of the logs: ghost chart + symptom rows, not the empty state.
+            <View style={{ marginHorizontal: 24, marginTop: 18, gap: 28 }}>
+              <SkeletonChartSection bars={10} height={90} />
+              <SkeletonStatRows count={4} />
+            </View>
+          ) : !hasData ? (
             <SiteEmpty />
           ) : (
             <>
