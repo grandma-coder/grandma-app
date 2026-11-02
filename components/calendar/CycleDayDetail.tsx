@@ -15,6 +15,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { DiffuseTimelineRow } from './DiffuseLogTimeline'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { PillButton } from '../ui/PillButton'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
@@ -57,6 +59,18 @@ const LOG_DOT: Record<string, string> = {
   symptom:        '#F5B896',
   mood:           '#C8B6E8',
   ovulation:      '#EE7B6D',
+}
+
+const LOG_STICKER: Record<string, SiteStickerName> = {
+  period_start:   'drop',
+  period_end:     'drop',
+  basal_temp:     'thermo',
+  lh:             'otest',
+  cervical_mucus: 'drop',
+  intercourse:    'heart',
+  symptom:        'thermo',
+  mood:           'face3',
+  ovulation:      'egg',
 }
 
 function phaseAccent(phase: CyclePhase, s: ReturnType<typeof useTheme>['stickers']): string {
@@ -126,15 +140,13 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
   }, [rows])
 
   return (
-    <View style={diffuse
-      ? styles.wrapBare
-      : [styles.wrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={styles.wrapBare}>
       <View style={styles.headRow}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: diffuse ? dt.colors.ink : ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
+          <Text style={[styles.title, { color: diffuse ? dt.colors.ink : ink, fontFamily: diffuse ? diffuseFont.display : font.display }, diffuse ? null : { fontSize: 20, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
             {formatLongDate(date)}
           </Text>
-          <Text style={[styles.subline, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
+          <Text style={[styles.subline, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 10 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 4 }]}>
             {t('cycleDayDetail_phaseDay', { phase: info.phaseLabel, day: info.cycleDay })}
           </Text>
         </View>
@@ -146,8 +158,8 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
               </Text>
             </View>
           ) : (
-            <View style={[styles.fertPill, { backgroundColor: accent + '22', borderColor: accent }]}>
-              <Text style={[styles.fertPillText, { color: accent, fontFamily: font.bodySemiBold }]}>
+            <View style={[styles.fertPill, { backgroundColor: stickers.greenSoft, borderColor: colors.text, borderWidth: 1.5 }]}>
+              <Text style={[styles.fertPillText, { color: colors.text, fontFamily: font.bodyBold }]}>
                 {info.conceptionProbability.toUpperCase()}
               </Text>
             </View>
@@ -155,7 +167,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
         ) : null}
       </View>
 
-      <Text style={[styles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textFaint, fontFamily: font.bodySemiBold }]}>
+      <Text style={[styles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 2 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4 }]}>
         {t('cycleDayDetail_loggedThisDay')}
       </Text>
       {grouped.length > 0 ? (
@@ -180,15 +192,18 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
             ))}
           </View>
         ) : (
-        <View style={styles.logList}>
-          {grouped.map((g) => (
-            <View key={g.type} style={styles.logRow}>
-              <View style={[styles.logDot, { backgroundColor: g.color }]} />
-              <Text style={[styles.logLabel, { color: ink, fontFamily: font.bodySemiBold }]}>
+        <View>
+          {grouped.map((g, i) => (
+            <View
+              key={g.type}
+              style={[styles.siteRow, i > 0 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border } : null]}
+            >
+              <SiteSticker name={LOG_STICKER[g.type] ?? 'pencil'} size={28} />
+              <Text style={[styles.logLabel, { color: ink, fontFamily: font.bodyBold }]}>
                 {g.label}
               </Text>
               <Text
-                style={[styles.logValue, { color: colors.textSecondary, fontFamily: font.body }]}
+                style={[styles.logValue, { color: colors.textSecondary, fontFamily: font.body, textAlign: 'right' }]}
                 numberOfLines={1}
               >
                 {g.summary}
@@ -211,14 +226,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
           <DiffuseArrow color={diffuseAccent} size={16} />
         </Pressable>
       ) : (
-        <Pressable
-          onPress={onAddLog}
-          style={[styles.addBtn, { backgroundColor: accent, borderColor: '#141313' }]}
-        >
-          <Text style={[styles.addBtnText, { color: '#FFFEF8', fontFamily: font.bodySemiBold }]}>
-            {t('cycleDayDetail_addLog')}
-          </Text>
-        </Pressable>
+        <PillButton label={t('cycleDayDetail_addLog')} onPress={onAddLog} variant="ink" style={{ marginTop: 6 }} />
       )}
     </View>
   )
@@ -252,10 +260,11 @@ const styles = StyleSheet.create({
   logList: { gap: 8 },
   timeline: { marginTop: 2 },
   logRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  siteRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   logDot: { width: 8, height: 8, borderRadius: 999 },
-  logLabel: { fontSize: 13 },
+  logLabel: { fontSize: 14 },
   logValue: { fontSize: 13, flex: 1 },
-  empty: { fontSize: 12, fontStyle: 'italic' },
+  empty: { fontSize: 13 },
   addBtn: {
     marginTop: 4,
     paddingVertical: 13,

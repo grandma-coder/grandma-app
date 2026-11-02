@@ -10,12 +10,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
-import { useTheme, useDiffuseTheme, getDiffuseAccent, getModeAccent, diffuseFont } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
-import { DaySticker } from '../home/cycle/dayStickers'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { CyclePhaseGlyph, CYCLE_PHASE_ORDER } from './CyclePhaseGlyph'
 import { useTranslation } from '../../lib/i18n'
 
@@ -30,33 +30,12 @@ interface Props {
   onNextMonth: () => void
 }
 
-const LOG_DOT_COLOR: Record<string, string> = {
-  period_start:   '#EE7B6D',
-  period_end:     '#EE7B6D',
-  basal_temp:     '#9DC3E8',
-  lh:             '#F5D652',
-  cervical_mucus: '#BDD48C',
-  intercourse:    '#F2B2C7',
-  symptom:        '#F5B896',
-  mood:           '#C8B6E8',
-  ovulation:      '#EE7B6D',
-}
-
 function phaseAccent(phase: CyclePhase, s: ReturnType<typeof useTheme>['stickers']): string {
   switch (phase) {
     case 'menstruation': return s.coral
     case 'follicular':   return s.green
     case 'ovulation':    return s.peach
     case 'luteal':       return s.lilac
-  }
-}
-
-function phaseTint(phase: CyclePhase, s: ReturnType<typeof useTheme>['stickers']): string {
-  switch (phase) {
-    case 'menstruation': return s.pinkSoft
-    case 'follicular':   return s.greenSoft
-    case 'ovulation':    return s.peachSoft
-    case 'luteal':       return s.lilacSoft
   }
 }
 
@@ -239,77 +218,80 @@ export function CycleMonthGrid({
       <View style={styles.grid}>
         {cells.map((c) => {
           const info = getCycleInfo(cycleConfig, c.date)
-          const phase = info.phase as CyclePhase
-          const accent = phaseAccent(phase, stickers)
-          const tint = phaseTint(phase, stickers)
+          const isPeriod = (info.phase as CyclePhase) === 'menstruation'
+          const isOvulation = !isPeriod && info.cycleDay === info.ovulationDay
+          const isFertile = !isPeriod && info.isFertile
           const isToday = c.date === today
           const isSelected = c.date === selectedDate
-          const dayLogs = logsByDate.get(c.date) ?? new Set()
+          const isPredicted = c.date > today
+          const hasLogs = (logsByDate.get(c.date)?.size ?? 0) > 0
+          // Soft tone fill only for period / fertile; predicted days sit lighter.
+          const fill = !c.inMonth ? 'transparent'
+            : isPeriod ? stickers.coral + (isPredicted ? '22' : '44')
+            : isFertile || isOvulation ? stickers.green + (isPredicted ? '33' : '66')
+            : 'transparent'
 
           return (
             <Pressable
               key={c.date}
               onPress={() => onSelectDate(c.date)}
-              style={[
-                styles.cell,
-                {
-                  backgroundColor: c.inMonth ? tint : 'transparent',
-                  opacity: c.inMonth ? 1 : 0.35,
-                  borderColor: isSelected ? colors.text : 'transparent',
-                  borderWidth: isSelected ? 2 : 0,
-                },
-              ]}
+              style={[styles.cell, { opacity: c.inMonth ? 1 : 0.3 }]}
             >
-              <Text
+              <View
                 style={[
-                  styles.dayNum,
-                  {
-                    color: c.inMonth ? ink : colors.textFaint,
-                    fontFamily: font.bodySemiBold,
-                  },
+                  styles.dayRing,
+                  { borderColor: isToday ? colors.text : 'transparent' },
                 ]}
               >
-                {c.day}
-              </Text>
-
-              {c.inMonth ? (
-                <View style={styles.stickerSlot}>
-                  <DaySticker phase={phase} size={14} bg={accent} />
-                </View>
-              ) : null}
-
-              {c.inMonth && dayLogs.size > 0 ? (
-                <View style={styles.dotsRow}>
-                  {[...dayLogs].slice(0, 3).map((type) => (
-                    <View
-                      key={type}
-                      style={[
-                        styles.logDot,
-                        { backgroundColor: LOG_DOT_COLOR[type] ?? '#888' },
-                      ]}
-                    />
-                  ))}
-                </View>
-              ) : null}
-
-              {isToday ? (
                 <View
                   style={[
-                    styles.todayRing,
-                    { borderColor: getModeAccent('pre'), borderStyle: 'solid', borderWidth: 2 },
+                    styles.dayDisc,
+                    { backgroundColor: isSelected ? colors.text : fill },
                   ]}
-                  pointerEvents="none"
-                />
-              ) : null}
+                >
+                  <Text
+                    style={[
+                      styles.dayNum,
+                      {
+                        color: isSelected ? colors.surface : colors.text,
+                        fontFamily: isToday || isSelected ? font.bodyBold : font.bodyMedium,
+                      },
+                    ]}
+                  >
+                    {c.day}
+                  </Text>
+                </View>
+                {c.inMonth && isOvulation ? (
+                  <View style={styles.eggMark} pointerEvents="none">
+                    <SiteSticker name="egg" size={13} />
+                  </View>
+                ) : null}
+              </View>
+              {c.inMonth && hasLogs ? <View style={[styles.logDot, { backgroundColor: colors.text }]} /> : null}
             </Pressable>
           )
         })}
+      </View>
+
+      <View style={styles.siteLegend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, { backgroundColor: stickers.coral + '44' }]} />
+          <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.menstruation)}</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, { backgroundColor: stickers.green + '66' }]} />
+          <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t('cycleTracker_fertileWindow')}</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <SiteSticker name="egg" size={13} />
+          <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.ovulation)}</Text>
+        </View>
       </View>
     </View>
   )
 }
 
-const CELL_SIZE = 44
+const CELL_SIZE = 46
 
 const styles = StyleSheet.create({
   wrap: {
@@ -357,27 +339,26 @@ const styles = StyleSheet.create({
     width: `${100 / 7}%`,
     height: CELL_SIZE,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 4,
-    borderRadius: 10,
+    justifyContent: 'center',
     position: 'relative',
   },
-  dayNum: { fontSize: 11, lineHeight: 13 },
-  stickerSlot: { marginTop: 2 },
-  dotsRow: {
-    flexDirection: 'row',
-    gap: 2,
-    position: 'absolute',
-    bottom: 3,
+  dayRing: {
+    width: 38, height: 38, borderRadius: 19, borderWidth: 2,
+    alignItems: 'center', justifyContent: 'center',
   },
-  logDot: { width: 4, height: 4, borderRadius: 999 },
-  todayRing: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
+  dayDisc: {
+    width: 32, height: 32, borderRadius: 16,
+    alignItems: 'center', justifyContent: 'center',
   },
+  dayNum: { fontSize: 14, lineHeight: 18 },
+  eggMark: { position: 'absolute', top: -5, right: -5 },
+  logDot: { position: 'absolute', bottom: 0, width: 4, height: 4, borderRadius: 999 },
+  siteLegend: {
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',
+    columnGap: 16, rowGap: 6, marginTop: 10,
+  },
+  legendSwatch: { width: 12, height: 12, borderRadius: 6 },
+  siteLegendLabel: { fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: 'SpaceMono_400Regular' },
 
   // Diffuse phase legend
   legendRow: {

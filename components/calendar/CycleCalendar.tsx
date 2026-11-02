@@ -169,43 +169,43 @@ export function CycleCalendar() {
 
       {/* ─── Bottom sheets per log type ────────────────────────────────── */}
 
-      <LogSheet visible={sheetType === 'period_start'} title={t('cycleCalendar_logSheet_periodStart')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'period_start'} sticker="drop" title={t('cycleCalendar_logSheet_periodStart')} onClose={() => setSheetType(null)}>
         <PeriodStartForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'period_end'} title={t('cycleCalendar_logSheet_periodEnd')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'period_end'} sticker="drop" title={t('cycleCalendar_logSheet_periodEnd')} onClose={() => setSheetType(null)}>
         <PeriodEndForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'symptom'} title={t('cycleCalendar_logSheet_symptoms')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'symptom'} sticker="thermo" title={t('cycleCalendar_logSheet_symptoms')} onClose={() => setSheetType(null)}>
         <SymptomsForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'mood'} title={t('cycleCalendar_logSheet_mood')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'mood'} sticker="face3" title={t('cycleCalendar_logSheet_mood')} onClose={() => setSheetType(null)}>
         <MoodForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'basal_temp'} title={t('cycleCalendar_logSheet_temperature')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'basal_temp'} sticker="thermo" title={t('cycleCalendar_logSheet_temperature')} onClose={() => setSheetType(null)}>
         <BbtForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'intercourse'} title={t('cycleCalendar_logSheet_intimacy')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'intercourse'} sticker="heart" title={t('cycleCalendar_logSheet_intimacy')} onClose={() => setSheetType(null)}>
         <IntimacyForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'pregnancy_test'} title={t('cycleCalendar_logSheet_pregTest')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'pregnancy_test'} sticker="otest" title={t('cycleCalendar_logSheet_pregTest')} onClose={() => setSheetType(null)}>
         <PregnancyTestForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'sex_drive'} title={t('cycleCalendar_logSheet_sexDrive')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'sex_drive'} sticker="heart" title={t('cycleCalendar_logSheet_sexDrive')} onClose={() => setSheetType(null)}>
         <SexDriveForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'clots'} title={t('cycleCalendar_logSheet_clots')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'clots'} sticker="drop" title={t('cycleCalendar_logSheet_clots')} onClose={() => setSheetType(null)}>
         <ClotsForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'weight'} title={t('cycleCalendar_logSheet_weight')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'weight'} sticker="ruler" title={t('cycleCalendar_logSheet_weight')} onClose={() => setSheetType(null)}>
         <WeightForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'water'} title={t('cycleCalendar_logSheet_water')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'water'} sticker="drop" title={t('cycleCalendar_logSheet_water')} onClose={() => setSheetType(null)}>
         <WaterForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'activity'} title={t('cycleCalendar_logSheet_activity')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'activity'} sticker="shoe" title={t('cycleCalendar_logSheet_activity')} onClose={() => setSheetType(null)}>
         <ActivityForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
       </LogSheet>
-      <LogSheet visible={sheetType === 'exam'} title={t('cycleCalendar_logSheet_exam')} onClose={() => setSheetType(null)}>
+      <LogSheet visible={sheetType === 'exam'} sticker="doc" title={t('cycleCalendar_logSheet_exam')} onClose={() => setSheetType(null)}>
         <ExamForm behavior="pre-pregnancy" date={selectedDate} onSaved={() => setSheetType(null)} />
       </LogSheet>
 
