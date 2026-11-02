@@ -23,7 +23,8 @@ import { LogSheet } from './LogSheet'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { CycleMonthGrid, CycleSiteLegend, cycleSiteDay, useCycleLogDates } from './CycleMonthGrid'
-import { AgendaCalendar, AgendaDot } from './AgendaCalendar'
+import { AgendaCalendar, DayMarks } from './AgendaCalendar'
+import { cycleDayMarks } from '../../lib/logStickers'
 import { monthGridDates } from './agendaDates'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { CycleDayDetail } from './CycleDayDetail'
@@ -160,14 +161,10 @@ export function CycleCalendar() {
                 dayTint={(date) => cycleSiteDay(cycleConfig, date, todayStr, stickers).tint}
                 renderDayDecoration={(date) => {
                   const { isOvulation } = cycleSiteDay(cycleConfig, date, todayStr, stickers)
-                  const logged = (agendaLogs.get(date)?.size ?? 0) > 0
-                  if (!isOvulation && !logged) return null
-                  return (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                      {isOvulation ? <SiteSticker name="egg" size={12} /> : null}
-                      {logged ? <AgendaDot color={colors.text} /> : null}
-                    </View>
-                  )
+                  // What was logged, at a glance — heart for intimacy first, then tests, period, symptoms…
+                  const marks = cycleDayMarks(agendaLogs.get(date) ?? [])
+                  if (!isOvulation && marks.length === 0) return null
+                  return <DayMarks stickers={isOvulation ? ['egg', ...marks] : marks} max={2} />
                 }}
                 footer={<CycleSiteLegend />}
               />

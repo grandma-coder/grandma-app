@@ -91,7 +91,7 @@ import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { LogTile, LogTileGrid } from './LogTile'
 import { ActivityPillCard } from './ActivityPillCard'
-import { AgendaCalendar, AgendaDots } from './AgendaCalendar'
+import { AgendaCalendar, AgendaDots, DayMarks } from './AgendaCalendar'
 import { AppointmentDetailModal } from './AppointmentDetailModal'
 import { QuestionCountHint, nextStandardAppointmentId } from './AppointmentQuestions'
 import { useAppointmentQuestionsStore, openQuestionCount, pendingQuestionsKey } from '../../store/useAppointmentQuestionsStore'
@@ -111,6 +111,7 @@ import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { InkBackButton } from '../ui/InkBackButton'
 import { PillButton } from '../ui/PillButton'
 import { FadeUp } from '../ui/Motion'
+import { pregnancyDayMarks } from '../../lib/logStickers'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -3396,7 +3397,7 @@ export function PregnancyCalendar() {
                 tone={getModeColorSoft('preg', isDark)}
                 caption={t('profPreg_chipWeek', { n: weekNumber })}
                 loading={(!sessionChecked || calLogsLoading) && !calLogsData}
-                renderDayDecoration={(date) => <AgendaDots colors={dotsByDate[date] ?? []} />}
+                renderDayDecoration={(date) => <DayMarks stickers={pregnancyDayMarks((calLogs[date] ?? []).map((l) => l.log_type))} max={2} />}
               />
             )}
             <View style={{ height: 12 }} />

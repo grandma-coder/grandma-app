@@ -22,6 +22,7 @@ import { useTranslation } from '../../lib/i18n'
 import { useAgendaViewStore, type AgendaView } from '../../store/useAgendaViewStore'
 import { Skeleton } from '../ui/Skeleton'
 import { agendaPeriodKey, dayStr, monthGridDates, parseDay, shiftAgendaDate, weekDates } from './agendaDates'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 
 const MONO = 'SpaceMono_400Regular'
 const FALLBACK_INITIALS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
@@ -267,6 +268,22 @@ function ViewToggle({
 /** One small round mark under a day number. */
 export function AgendaDot({ color, outline }: { color: string; outline?: string }) {
   return <View style={[styles.dot, { backgroundColor: color }, outline ? { borderWidth: 0.5, borderColor: outline } : null]} />
+}
+
+/**
+ * At-a-glance day marks: up to `max` tiny stickers for what was logged that day (already in
+ * priority order — e.g. heart for intimacy first), plus a small ink dot when there's more.
+ */
+export function DayMarks({ stickers: names, max = 2, size = 12 }: { stickers: SiteStickerName[]; max?: number; size?: number }) {
+  const { colors } = useTheme()
+  const uniq = Array.from(new Set(names))
+  if (uniq.length === 0) return null
+  return (
+    <View style={[styles.dotRow, { gap: 1 }]}>
+      {uniq.slice(0, max).map((n) => <SiteSticker key={n} name={n} size={size} />)}
+      {uniq.length > max ? <AgendaDot color={colors.text} /> : null}
+    </View>
+  )
 }
 
 /** Up to `max` dots in a row — the pregnancy / kids decoration. */

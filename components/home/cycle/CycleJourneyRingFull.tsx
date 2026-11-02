@@ -27,6 +27,10 @@ import {
   type CycleConfig, type CyclePhase,
 } from '../../../lib/cycleLogic'
 import { DaySticker, DayCharacter } from './dayStickers'
+import type { SiteStickerName } from '../../stickers/SiteSticker'
+import { DayMarks } from '../../calendar/AgendaCalendar'
+import { useCycleLogDates } from '../../calendar/CycleMonthGrid'
+import { cycleDayMarks } from '../../../lib/logStickers'
 
 // ─── Diffuse phase palette ────────────────────────────────────────────────
 // Under Diffuse the phase hues come from the cycle field (coral→rose→lilac→
@@ -210,12 +214,14 @@ interface StripCellProps {
   diffuseInk?: string
   diffuseInk3?: string
   diffuseMono?: string
+  /** At-a-glance marks for what was logged that day (site look only). */
+  marks?: SiteStickerName[]
 }
 
 function StripCell({
   weekday, day, ink, tint, isSelected, isToday, textColor, accentColor,
   fontSemiBold, fontDisplay, onPress,
-  diffuse, diffuseLine, diffuseAccent, diffuseInk, diffuseInk3, diffuseMono,
+  diffuse, diffuseLine, diffuseAccent, diffuseInk, diffuseInk3, diffuseMono, marks,
 }: StripCellProps) {
   const press = useSharedValue(0)
   // Press uses the app's standard sticker-press feel (withSpring translateY).
@@ -285,6 +291,11 @@ function StripCell({
         >
           {day}
         </Text>
+        {!diffuse && marks && marks.length > 0 ? (
+          <View pointerEvents="none" style={{ position: 'absolute', bottom: 3, alignSelf: 'center' }}>
+            <DayMarks stickers={marks} max={2} size={13} />
+          </View>
+        ) : null}
       </Pressable>
     </Animated.View>
   )
@@ -568,6 +579,8 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
     }
     return out
   }, [selectedDate, cycleConfig, todayStr])
+  // What was logged on the strip days — heart for intimacy, tests, period… under each date.
+  const stripLogs = useCycleLogDates(strip[0]?.date ?? todayStr, strip[strip.length - 1]?.date ?? todayStr)
 
   const onStripPress = useCallback((cycleDay: number) => snapToDay(cycleDay), [snapToDay])
 
@@ -809,6 +822,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
             fontSemiBold={font.bodySemiBold}
             fontDisplay={font.display}
             onPress={() => { onStripPress(s.cycleDay); onDatePress?.(s.date) }}
+            marks={cycleDayMarks(stripLogs.logsByDate.get(s.date) ?? [])}
             diffuse={diffuse}
             diffuseLine={dt.colors.line}
             diffuseAccent={diffuseAccent}

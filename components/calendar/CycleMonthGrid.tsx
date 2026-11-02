@@ -94,6 +94,10 @@ export function CycleSiteLegend() {
         <SiteSticker name="egg" size={13} />
         <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.ovulation)}</Text>
       </View>
+      <View style={styles.legendItem}>
+        <SiteSticker name="love" size={13} />
+        <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t('cycleCalendar_logEntry_intimacy')}</Text>
+      </View>
     </View>
   )
 }
