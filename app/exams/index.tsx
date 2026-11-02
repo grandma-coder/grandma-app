@@ -8,6 +8,9 @@
  * to the calendar (where new exams are actually created).
  */
 
+import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteChoice } from '../../components/ui/SiteChoice'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -104,7 +107,8 @@ export default function ExamsListScreen() {
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header — sticker-style back chip (hairline circle under Diffuse) */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 12 }]}>
-        <Pressable
+        {diffuse ? (
+          <Pressable
           onPress={() => router.back()}
           hitSlop={10}
           style={({ pressed }) => [
@@ -129,10 +133,16 @@ export default function ExamsListScreen() {
         >
           <ChevronLeft size={20} color={ink} strokeWidth={diffuse ? 1.6 : 2.2} />
         </Pressable>
+        ) : (
+          <InkBackButton ink={ink} paper={paper} style={{ marginBottom: 0 }} />
+        )}
         {diffuse ? (
           <Text style={{ fontFamily: diffuseFont.display, fontSize: 28, color: dt.colors.ink, letterSpacing: -0.5 }}>{t('exams_title')}</Text>
         ) : (
-          <Display size={28} color={ink}>{t('exams_title')}</Display>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+            <SiteSticker name="doc" size={30} cut />
+            <Display size={28} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('exams_title')}</Display>
+          </View>
         )}
         {/* Add exam — opens the shared ExamForm scoped to the current behavior. */}
         <Pressable
@@ -325,50 +335,8 @@ function ChildPill({
   }
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.childPill,
-        active
-          ? {
-              backgroundColor: activeBg,
-              borderColor: activeBorder,
-              shadowColor: '#141313',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 4,
-              elevation: 2,
-            }
-          : {
-              backgroundColor: paper,
-              borderColor: paperBorder,
-            },
-        pressed && { transform: [{ scale: 0.96 }], opacity: 0.9 },
-      ]}
-    >
-      {/* Dot only on inactive pills — when active, the whole pill IS the color */}
-      {!active && (
-        <View
-          style={[
-            styles.childPillDot,
-            { backgroundColor: accent, borderColor: 'rgba(20,19,19,0.18)' },
-          ]}
-        />
-      )}
-      <Text
-        style={[
-          styles.childPillText,
-          {
-            color: active ? activeFg : inkMuted,
-            fontFamily: active ? font.bodySemiBold : font.bodyMedium,
-            letterSpacing: active ? 0.1 : 0,
-          },
-        ]}
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
-    </Pressable>
+    <SiteChoice compact wobble tick={false} label={label} selected={active} onPress={onPress}
+      tone={isAll ? '#FFF1B8' : accent} />
   )
 }
 
