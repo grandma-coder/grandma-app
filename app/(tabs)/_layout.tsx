@@ -160,7 +160,8 @@ function CenterTabButton() {
   const chatOn = useGrandmaChatEnabled()
   // Daily Rewards is behind the remote daily_rewards flag; off = not in the menu.
   const rewardsOn = useDailyRewardsEnabled()
-  const items = WHEEL_ITEMS.filter((it) => (it.id !== 'chat' || chatOn) && (it.id !== 'rewards' || rewardsOn))
+  // AI insights (generate-insights → Claude) ride the same flag as the chat — no AI cost while it's off.
+  const items = WHEEL_ITEMS.filter((it) => (it.id !== 'chat' || chatOn) && (it.id !== 'insights' || chatOn) && (it.id !== 'rewards' || rewardsOn))
   // Aurora swirl — a slow continuous rotation of the pastel bloom field behind
   // the menu, so it drifts like the reference gradient instead of sitting flat.
   const auroraSpin = useRef(new Animated.Value(0)).current
