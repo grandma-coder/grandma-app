@@ -12,7 +12,7 @@
  *   Dark  — warm ink on dark parchment, same stickers
  */
 
-import { useColorScheme } from 'react-native'
+import { Appearance, useColorScheme } from 'react-native'
 import { useThemeStore } from '../store/useThemeStore'
 
 // ─── BRAND COLORS (never change between modes) ─────────────────────────────
@@ -73,7 +73,7 @@ export const brand = {
 
 // ─── STICKER PALETTE (always available, used as accents) ────────────────────
 
-export const stickers = {
+const stickersLight = {
   yellow: '#F9C846',
   yellowSoft: '#FFF1B8',
   yellowInk: '#7C5E0F',       // dark text/icon tint on cream
@@ -128,12 +128,12 @@ export const stickersDark = {
 // sticker palette for visual coherence with the rest of the system.
 
 export const chartSeries = [
-  stickers.lilac,   // #C8B6E8  primary series — matches pregnancy brand
-  stickers.peach,   // #F5B896  secondary
-  stickers.green,   // #BDD48C  tertiary
-  stickers.blue,    // #9DC3E8  quaternary
-  stickers.yellow,  // #F5D652  quinary
-  stickers.coral,   // #EE7B6D  sixth — also the destructive accent, use last
+  stickersLight.lilac,   // #C8B6E8  primary series — matches pregnancy brand
+  stickersLight.peach,   // #F5B896  secondary
+  stickersLight.green,   // #BDD48C  tertiary
+  stickersLight.blue,    // #9DC3E8  quaternary
+  stickersLight.yellow,  // #F5D652  quinary
+  stickersLight.coral,   // #EE7B6D  sixth — also the destructive accent, use last
 ] as const
 
 // ─── LIGHT MODE TOKENS — cream paper canvas ─────────────────────────────────
@@ -279,6 +279,16 @@ export const fontWeight = {
   black: '900' as const,
 }
 
+/**
+ * `stickers` follows the active theme. Many site-look surfaces import it directly (not via
+ * useTheme) for soft fills under `colors.text`; a static light palette left pastel fills under
+ * cream dark-mode text. Values resolve at access time, so inline styles track the theme;
+ * module-level StyleSheets still snapshot the light palette as before.
+ */
+export const stickers: typeof stickersLight = new Proxy(stickersLight, {
+  get: (target, key) => ((currentIsDark() ? stickersDark : target) as Record<string | symbol, unknown>)[key],
+})
+
 // Site look (Nov 2026) — same faces as grandma.app: Architects Daughter for display / accent words
 // (one weight; it carries the hand-drawn voice), Hanken Grotesk for UI and big numbers.
 export const font = {
@@ -319,7 +329,7 @@ export function useTheme() {
 
   const isDark = hydrated ? storeTheme === 'dark' : systemScheme === 'dark'
   const colors: ColorTokens = isDark ? darkTokens : lightTokens
-  const st = isDark ? stickersDark : stickers
+  const st = isDark ? stickersDark : stickersLight
 
   return {
     colors,
@@ -358,7 +368,15 @@ export function getModeAccent(mode: 'pre' | 'preg' | 'kids' | 'care' | 'meno' | 
   return isDark ? '#C4B5EF' : '#8F5FC6'
 }
 
-export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | 'care' | 'meno' | string, isDark = false): string {
+// Callers that omit `isDark` get the current theme — many site-look surfaces call this without it,
+// and a pastel fill under cream dark-mode text was unreadable. Callers re-render on theme change
+// through their own useTheme(), so reading the store here stays in sync.
+function currentIsDark(): boolean {
+  const s = useThemeStore.getState()
+  return s.hydrated ? s.theme === 'dark' : Appearance.getColorScheme() === 'dark'
+}
+
+export function getModeColorSoft(mode: 'pre' | 'preg' | 'kids' | 'care' | 'meno' | string, isDark: boolean = currentIsDark()): string {
   if (mode === 'pre' || mode === 'pre-pregnancy') return isDark ? '#3A2730' : brand.prePregnancySoft
   if (mode === 'preg' || mode === 'pregnancy') return isDark ? '#2D2842' : brand.pregnancySoft
   if (mode === 'kids') return isDark ? '#1F2A3A' : brand.kidsSoft
@@ -392,12 +410,12 @@ export const colors = {
   info: darkTokens.secondary,
   pillar: {
     milk: brand.kids,
-    food: stickers.green,
+    food: stickersLight.green,
     nutrition: brand.accent,
     vaccines: brand.prePregnancy,
-    clothes: stickers.coral,
+    clothes: stickersLight.coral,
     recipes: darkTokens.surface,
-    habits: stickers.green,
+    habits: stickersLight.green,
     milestones: brand.pregnancy,
     medicine: brand.prePregnancy,
   },
@@ -729,7 +747,7 @@ export function useDiffuseTheme() {
     shadows: diffuseShadows,
     grain: diffuseGrain,
     spacing,            // shared — v3 defines no spacing scale of its own
-    stickers: isDark ? stickersDark : stickers, // icons stay active under Diffuse
+    stickers: isDark ? stickersDark : stickersLight, // icons stay active under Diffuse
     isDark,
   }
 }
