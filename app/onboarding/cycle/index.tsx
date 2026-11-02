@@ -21,6 +21,7 @@ import {
 import { useTranslation } from '../../../lib/i18n'
 import type { TranslationKeys } from '../../../lib/i18n/keys'
 import DatePickerField from '../../../components/ui/DatePickerField'
+import { SiteChoice, SiteStepper } from '../../../components/ui/SiteChoice'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
@@ -429,51 +430,18 @@ function StepCycleLength({
         </>
       ) : (
         <>
-          <View style={stepStyles.inputRow}>
-            {!unknown && (
-              <View style={[stepStyles.numberInputWrap, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 14 }]}>
-                <TextInput
-                  value={cycleLength?.toString() ?? ''}
-                  onChangeText={(txt) => {
-                    const n = parseInt(txt, 10)
-                    setCycleLength(isNaN(n) ? null : Math.min(60, Math.max(1, n)))
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                  style={[stepStyles.numberInput, { color: colors.text, fontFamily: font.display }]}
-                  placeholderTextColor={colors.textMuted}
-                  placeholder="28"
-                />
-                <Text style={[stepStyles.unitLabel, { color: colors.textSecondary, fontFamily: font.body }]}>{t('cycleOnboarding_days')}</Text>
-              </View>
-            )}
+          {!unknown && (
+            <SiteStepper value={cycleLength ?? 28} onChange={setCycleLength} min={18} max={60} unit={t('cycleOnboarding_days')} tone={modeSoft} />
+          )}
+          <SiteChoice label={t('cycleOnboarding_iDontKnow')} selected={unknown} onPress={() => setUnknown(!unknown)} tone={modeSoft} sticker="cloud" style={stepStyles.unknownChip} />
 
-            <Pressable
-              onPress={() => setUnknown(!unknown)}
-              style={[
-                stepStyles.chip,
-                {
-                  backgroundColor: unknown ? modeSoft : colors.surface,
-                  borderColor: colors.text,
-                  borderRadius: 18,
-                },
-              ]}
-            >
-              <Text style={[stepStyles.chipText, { color: unknown ? mode : colors.textSecondary, fontFamily: font.bodyBold }]}>
-                {t('cycleOnboarding_iDontKnow')}
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* TTC toggle */}
-          <View style={[stepStyles.ttcCard, { backgroundColor: colors.surfaceRaised, borderRadius: 18 }]}>
-            <Text style={[stepStyles.ttcLabel, { color: colors.text, fontFamily: font.bodyBold }]}>
-              {t('cycleOnboarding_q_ttc')}
-            </Text>
-            <View style={stepStyles.toggleRow}>
-              <TogglePill label={t('common_yes')} active={ttc} onPress={() => setTTC(true)} />
-              <TogglePill label={t('common_no')} active={!ttc} onPress={() => setTTC(false)} />
-            </View>
+          {/* Trying to conceive? — a hand-lettered sub-question, then two choice chips */}
+          <Text style={[stepStyles.subQ, { color: colors.text, fontFamily: font.display }]}>
+            {t('cycleOnboarding_q_ttc')}
+          </Text>
+          <View style={stepStyles.toggleRow}>
+            <SiteChoice label={t('common_yes')} selected={ttc} onPress={() => setTTC(true)} tone={modeSoft} sticker="otest" style={{ flex: 1 }} />
+            <SiteChoice label={t('common_no')} selected={!ttc} onPress={() => setTTC(false)} tone={modeSoft} sticker="cal" style={{ flex: 1 }} />
           </View>
         </>
       )}
@@ -1059,6 +1027,8 @@ function TogglePill({
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const stepStyles = StyleSheet.create({
+  unknownChip: { alignSelf: 'center', marginTop: 6 },
+  subQ: { fontSize: 20, letterSpacing: 0.3, textTransform: 'uppercase', marginTop: 34, marginBottom: 12 },
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
