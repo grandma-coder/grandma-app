@@ -45,6 +45,7 @@ import { MenopauseLogSheet, menoSticker, type MenopauseLogPick } from '../menopa
 import { LogDock, type LogDockItem } from '../ui/LogDock'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { QuietPill } from '../ui/QuietPill'
+import { QuietPill as PeachPill } from '../profile/SiteSettingsKit'
 import { WalletPicker, type WalletPickerItem } from './WalletPicker'
 import { SlidersHorizontal } from 'lucide-react-native'
 import { useMenopauseQuickLogStore, DEFAULT_MENOPAUSE_QUICK_LOG_KEYS } from '../../store/useMenopauseQuickLogStore'
@@ -383,7 +384,7 @@ const periodBlock = stage === 'peri' && (
                   </Text>
                 </View>
               </View>
-              <PillButton label="Log a period" variant="ink" onPress={() => setActiveSheet('period')} style={styles.periodCta} />
+              <PeachPill label="Log a period" sticker="pencil" onPress={() => setActiveSheet('period')} style={[styles.periodCta, { alignSelf: 'flex-start' }]} />
             </PaperCard>
           )
         )

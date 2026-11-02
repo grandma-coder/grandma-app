@@ -380,6 +380,21 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
     })
   }, [rotationDeg, cycleLength])
 
+  // The host renders first with a provisional config, then the real one arrives and
+  // "today" moves (e.g. day 11 → day 14). The rotation was seeded from the first value,
+  // so re-seat the wheel on the new today straight away — otherwise it opens on a past
+  // day until the idle auto-return kicks in.
+  const seededToday = useRef(cycleDayToday)
+  useEffect(() => {
+    if (seededToday.current === cycleDayToday) return
+    seededToday.current = cycleDayToday
+    if (interactingRef.current) return
+    cancelAnimation(rotationDeg)
+    rotationDeg.value = 180 - ((cycleDayToday - 1) / cycleLength) * 360
+    setSelectedDay(cycleDayToday)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cycleDayToday, cycleLength])
+
   // Month sheet picked a day → jump the ring to it. The ring only shows the
   // current cycle window (days 1..cycleLength anchored on today), so we convert
   // the picked date to a cycle day via its offset from today and clamp into the

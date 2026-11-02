@@ -31,7 +31,10 @@ export function PeriodSelector({ value, onChange, customLabel, showCustom = true
   const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const options = showCustom ? OPTIONS : OPTIONS.filter((o) => o.key !== 'custom')
+  // Site look: three calm choices — week, month, year. Diffuse keeps the full set.
+  const options = diffuse
+    ? (showCustom ? OPTIONS : OPTIONS.filter((o) => o.key !== 'custom'))
+    : OPTIONS.filter((o) => o.key === 'week' || o.key === 'month' || o.key === 'year')
   // The custom pill (last, and widest when it shows a date range) can sit past
   // the right edge — scroll it fully into view whenever it's the active choice.
   const scrollRef = useRef<ScrollView>(null)

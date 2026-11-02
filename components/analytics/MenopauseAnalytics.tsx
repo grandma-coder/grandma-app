@@ -619,8 +619,11 @@ function SiteBars({ values, labels, tone, capped = false, fixedMax }: { values: 
 function SiteTrend({ sticker, title, series, tone }: { sticker: SiteStickerName; title: string; series: { data: number[]; labels: string[] }; tone: string }) {
   const { t } = useTranslation()
   const { colors, font } = useTheme()
-  const data = series.data.slice(-14)
-  const labels = series.labels.slice(-14)
+  // Days without a log arrive as 0 — they aren't a severity, so drop them; with fewer than
+  // 3 real entries a chart says nothing, so show the quiet note instead.
+  const kept = series.data.map((v, i) => ({ v, l: series.labels[i] ?? '' })).filter((p) => p.v > 0).slice(-14)
+  const data = kept.length >= 3 ? kept.map((p) => p.v) : []
+  const labels = kept.map((p) => p.l)
   return (
     <View style={{ marginTop: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
