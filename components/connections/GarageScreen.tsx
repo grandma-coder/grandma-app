@@ -28,6 +28,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { useSavedToast } from '../ui/SavedToast'
 import { PillButton } from '../ui/PillButton'
 import { BrandedLoader } from '../ui/BrandedLoader'
+import { Skeleton } from '../ui/Skeleton'
 import { Character } from '../characters/Characters'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
@@ -264,9 +265,12 @@ export function GarageScreen() {
               ? <LayoutGrid size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.2} />
               : <Layers size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.2} />}
           </CircleBtn>
-          <CircleBtn onPress={() => {}} tint={stickers.blueSoft} radiusFull={radius.full} border={colors.border}>
-            <Search size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.4} />
-          </CircleBtn>
+          {/* Search isn't wired yet — Diffuse keeps its placeholder; the site look hides a button that does nothing. */}
+          {diffuse ? (
+            <CircleBtn onPress={() => {}} tint={stickers.blueSoft} radiusFull={radius.full} border={colors.border}>
+              <Search size={18} color={dt.colors.ink} strokeWidth={2.4} />
+            </CircleBtn>
+          ) : null}
           <CircleBtn
             onPress={() => router.push('/garage/profile' as any)}
             tint={stickers.pinkSoft}
@@ -296,7 +300,7 @@ export function GarageScreen() {
       {/* ── Gallery grid ────────────────────────────────────────────────── */}
       {viewMode === 'gallery' ? (
         loading && posts.length === 0 ? (
-          <View style={styles.deckArea}><BrandedLoader /></View>
+          <View style={styles.deckArea}>{diffuse ? <BrandedLoader /> : <View style={{ width: '100%', paddingHorizontal: 20, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} width="31%" height={140} radius={16} />)}</View>}</View>
         ) : loadError && posts.length === 0 ? (
           <View style={styles.deckArea}><DeckError accent={accent} onRetry={loadFeed} /></View>
         ) : (
@@ -315,7 +319,7 @@ export function GarageScreen() {
       {/* ── Deck ────────────────────────────────────────────────────────── */}
       <View style={styles.deckArea}>
         {loading && posts.length === 0 ? (
-          <BrandedLoader />
+          diffuse ? <BrandedLoader /> : <Skeleton width="88%" height="88%" radius={22} />
         ) : loadError && posts.length === 0 ? (
           <DeckError accent={accent} onRetry={loadFeed} />
         ) : deckDone ? (
@@ -469,6 +473,20 @@ export function GarageScreen() {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
+/** Listing photo that falls back to the bodysuit sticker when the URL is missing or fails to load. */
+function CoverImage({ uri, style, size = 32 }: { uri?: string; style: any; size?: number }) {
+  const { colors } = useTheme()
+  const [failed, setFailed] = useState(false)
+  if (!uri || failed) {
+    return (
+      <View style={[style, styles.gridImageEmpty, { backgroundColor: colors.surfaceRaised }]}>
+        <SiteSticker name="bodysuit" size={size} cut />
+      </View>
+    )
+  }
+  return <Image source={{ uri }} style={style} onError={() => setFailed(true)} />
+}
+
 function CircleBtn({
   children, onPress, tint, radiusFull, border, accessibilityLabel,
 }: {
@@ -579,17 +597,24 @@ function GalleryTile({
     >
       <View style={styles.gridImageWrap}>
         {cover ? (
-          <Image source={{ uri: cover }} style={styles.gridImage} />
+          diffuse ? <Image source={{ uri: cover }} style={styles.gridImage} /> : <CoverImage uri={cover} style={styles.gridImage} />
         ) : (
           <View style={[styles.gridImage, styles.gridImageEmpty, { backgroundColor: diffuse ? dt.colors.surfaceRaised : colors.surfaceRaised }]}>
             {diffuse ? <Character name="gift" size={28} bg={dt.colors.surfaceRaised} /> : <SiteSticker name="bodysuit" size={32} cut />}
           </View>
         )}
         {post.like_count > 0 && (
-          <View style={styles.gridLikes}>
-            <Heart size={10} color="#FFFFFF" fill="#FFFFFF" />
-            <Text style={[styles.gridLikesText, { fontFamily: diffuse ? diffuseFont.monoBold : font.bodySemiBold }]}>{post.like_count}</Text>
-          </View>
+          diffuse ? (
+            <View style={styles.gridLikes}>
+              <Heart size={10} color="#FFFFFF" fill="#FFFFFF" />
+              <Text style={[styles.gridLikesText, { fontFamily: diffuseFont.monoBold }]}>{post.like_count}</Text>
+            </View>
+          ) : (
+            <View style={[styles.gridLikes, { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.text }]}>
+              <SiteSticker name="heart" size={12} />
+              <Text style={[styles.gridLikesText, { fontFamily: font.bodyBold, color: colors.text }]}>{post.like_count}</Text>
+            </View>
+          )
         )}
       </View>
       {post.caption ? (
@@ -615,6 +640,40 @@ function SwipeCard({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const cover = post.media[0]?.url
+  if (!diffuse) {
+    // Site look: photo on top, a paper strip below with the item first (hand-lettered) and the
+    // neighbour small — no grey scrim over the photo.
+    const title = post.caption?.split('\n')[0]?.trim()
+    return (
+      <View style={[styles.cardInner, { borderRadius: radius.lg, backgroundColor: colors.surface }]}>
+        <View style={{ flex: 1, overflow: 'hidden' }}>
+          <CoverImage uri={cover} style={styles.cardImage} size={64} />
+          {post.category ? (
+            <View style={[styles.catChip, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]}>
+              <Text style={[styles.catChipText, { color: colors.text, fontFamily: font.bodyBold }]}>{post.category}</Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={{ borderTopWidth: 1.5, borderTopColor: colors.text, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 6 }}>
+          <Text numberOfLines={1} style={{ fontFamily: font.display, fontSize: 22, lineHeight: 26, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}>
+            {title || post.category || 'A little treasure'}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <SiteSticker name="me" size={20} />
+            <Text numberOfLines={1} style={{ flex: 1, fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>
+              {post.author_name ?? 'A neighbour'}
+            </Text>
+            {post.like_count > 0 ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <SiteSticker name="heart" size={16} />
+                <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: colors.text }}>{post.like_count}</Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </View>
+    )
+  }
   return (
     <View style={[styles.cardInner, { borderRadius: radius.lg }]}>
       {cover ? (

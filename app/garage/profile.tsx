@@ -189,7 +189,7 @@ export default function GarageProfileScreen() {
           <View style={[s.profileAvatarPlaceholder, diffuse
             ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 }
             : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}>
-            <User size={32} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={1.5} />
+            {diffuse ? <User size={32} color={dt.colors.ink3} strokeWidth={1.5} /> : <SiteSticker name="me" size={44} />}
           </View>
         )}
 
