@@ -104,7 +104,7 @@ const WELLBEING_STICKER: Record<string, SiteStickerName> = {
 const PILLAR_SITE_STICKER: Record<PillarKey, SiteStickerName> = {
   wellbeing: 'flower', weight: 'bars', kicks: 'baby2', sleep: 'moon', mood: 'face3',
   symptoms: 'thermo', hydration: 'drop', nutrition: 'avocado', exercise: 'shoe',
-  contractions: 'bell', birth: 'backpack',
+  contractions: 'stopwatch', birth: 'backpack',
 }
 
 /** Light bottom sheet: bg paper, 2.5px ink top border, 26px top radius, grabber at 25% ink. */
@@ -650,7 +650,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             style={({ pressed }) => [{ marginHorizontal: 20, marginTop: 8, paddingTop: 4, opacity: pressed ? 0.8 : 1 }]}
           >
             <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
-              {`WEIGHT GAIN · WEEK ${weekNumber}`}
+              {`WEIGHT · WEEK ${weekNumber}`}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
               <Text style={{ fontFamily: font.displayBold, fontSize: 52, lineHeight: 58, letterSpacing: -1.5, color: colors.text }}>
@@ -911,10 +911,12 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             <HeroBanner
               pillarKey="contractions"
               label="CONTRACTIONS"
-              title={tk.contractions.headline}
-              subtitle={tk.contractions.takeaway ?? ''}
-              badgeText={contractions.length > 0 ? `${contractions.length}` : '—'}
-              badgeCaption="LOGS"
+              title={contractions.length > 0 ? `${contractions.length}` : '—'}
+              subtitle={contractions.length > 0
+                ? `Last session: ${contractions[contractions.length - 1].count} contraction${contractions[contractions.length - 1].count === 1 ? '' : 's'}`
+                : (tk.contractions.takeaway ?? '')}
+              badgeText=""
+              badgeCaption="SESSIONS"
               onPress={() => setOpenPillar('contractions')}
             />
           )}
@@ -924,8 +926,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             label="BIRTH READINESS"
             title={tk.birth.headline}
             subtitle={tk.birth.takeaway ?? ''}
-            badgeText={birthReady ? `${Math.round(birthReady.pct / 20)}` : '—'}
-            badgeCaption="OF 5"
+            badgeText=""
+            badgeCaption="READY"
             onPress={() => setOpenPillar('birth')}
           />
         </View>
@@ -1226,7 +1228,7 @@ function HeroBanner({
       label={label}
       sub={subtitle || undefined}
       value={title}
-      valueSub={`${badgeText} ${badgeCaption}`}
+      valueSub={`${badgeText} ${badgeCaption}`.trim()}
       tone={palette.tint}
       onPress={onPress}
     />
