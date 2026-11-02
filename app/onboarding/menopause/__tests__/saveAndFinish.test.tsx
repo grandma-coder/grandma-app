@@ -78,11 +78,11 @@ async function renderToComplete() {
       <MenopauseOnboarding />
     </SafeAreaProvider>,
   )
-  // intro CTA, then Continue → for stage / symptoms / hrt.
+  // intro CTA, then Continue for stage / symptoms / hrt.
   await act(async () => { fireEvent.press(api.getByText('Begin')) })
-  await act(async () => { fireEvent.press(api.getByText('Continue →')) })
-  await act(async () => { fireEvent.press(api.getByText('Continue →')) })
-  await act(async () => { fireEvent.press(api.getByText('Continue →')) })
+  await act(async () => { fireEvent.press(api.getByText('Continue')) })
+  await act(async () => { fireEvent.press(api.getByText('Continue')) })
+  await act(async () => { fireEvent.press(api.getByText('Continue')) })
   return api
 }
 
