@@ -9,6 +9,7 @@
  * Rendering only — the host owns selection state, the Log Activity sheet,
  * and the per-type form sheets. We call onAddLog() when the user taps "+".
  */
+import { QuietPill } from '../profile/SiteSettingsKit'
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
@@ -16,7 +17,6 @@ import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { DiffuseTimelineRow } from './DiffuseLogTimeline'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
-import { PillButton } from '../ui/PillButton'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
@@ -226,7 +226,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
           <DiffuseArrow color={diffuseAccent} size={16} />
         </Pressable>
       ) : (
-        <PillButton label={t('cycleDayDetail_addLog')} onPress={onAddLog} variant="ink" style={{ marginTop: 6 }} />
+        <QuietPill label={t('cycleDayDetail_addLog').replace(/^\+\s*/, '')} sticker="pencil" onPress={onAddLog} style={{ marginTop: 6, alignSelf: 'center' }} />
       )}
     </View>
   )

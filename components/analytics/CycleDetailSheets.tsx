@@ -142,7 +142,7 @@ export function CycleDetailSheet({ type, accent, onClose }: Props) {
 
 const SHEET_STICKER: Record<CycleDetailType, SiteStickerName> = {
   cycleLength: 'cal', regularity: 'moon', pms: 'bubble', fertile: 'flower',
-  mood: 'face3', bbt: 'thermo', mucus: 'drop', intercourse: 'heart',
+  mood: 'face3', bbt: 'thermo', mucus: 'egg', intercourse: 'heart',
 }
 const SHEET_TONE: Record<CycleDetailType, 'pinkSoft' | 'lilacSoft' | 'peachSoft' | 'yellowSoft' | 'greenSoft' | 'blueSoft'> = {
   cycleLength: 'pinkSoft', regularity: 'lilacSoft', pms: 'peachSoft', fertile: 'yellowSoft',

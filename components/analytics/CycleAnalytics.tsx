@@ -350,7 +350,7 @@ export function CycleAnalytics() {
               tint={stickers.greenSoft}
               sticker={<Drop size={24} fill={stickers.green} />}
               diffuseIcon={<Character name="water" size={26} color={stickerPalette.green} />}
-              siteSticker="drop"
+              siteSticker="egg"
               value={mucusLabel}
               sub={mucusSub}
               label={t('cycleAnalytics_tileLabel_mucus')}
@@ -506,9 +506,12 @@ function CycleLengthTrend({
       <Svg width={W} height={H}>
         {/* average baseline */}
         <SvgLine x1={padX} y1={avgY} x2={W - padX} y2={avgY} stroke={diffuse ? line : colors.text} strokeOpacity={diffuse ? 1 : 0.35} strokeWidth={1.5} strokeDasharray="3 4" />
-        <SvgText x={W - padX} y={avgY - 6} fontSize={9} fontWeight="700" fill={diffuse ? muted : colors.textSecondary} textAnchor="end" fontFamily={diffuse ? diffuseFont.mono : font.bodySemiBold}>
-          {`AVG ${avg}`}
-        </SvgText>
+        {/* light: the header already says "Nd avg" — an in-chart label collides with the newest bead */}
+        {diffuse ? (
+          <SvgText x={W - padX} y={avgY - 6} fontSize={9} fontWeight="700" fill={muted} textAnchor="end" fontFamily={diffuseFont.mono}>
+            {`AVG ${avg}`}
+          </SvgText>
+        ) : null}
         {/* thread */}
         <SvgPath d={path} stroke={color} strokeWidth={diffuse ? 2 : 1.5} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={diffuse ? 0.5 : 0.3} />
         {/* beads + length labels */}

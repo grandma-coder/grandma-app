@@ -179,7 +179,7 @@ const MOOD_SITE_STICKER: Record<string, SiteStickerName> = {
   happy: 'face4', calm: 'face3', energetic: 'star', fussy: 'face2', cranky: 'face1',
 }
 const HEALTH_EVENT_STICKER: Record<string, SiteStickerName> = {
-  temperature: 'thermo', medicine: 'drop', vaccine: 'syringe', note: 'pencil',
+  temperature: 'thermo', medicine: 'pill', vaccine: 'syringe', note: 'pencil',
 }
 
 /** Light bottom sheet: bg paper, 2.5px ink top border, 26px top radius, grabber at 25% ink. */

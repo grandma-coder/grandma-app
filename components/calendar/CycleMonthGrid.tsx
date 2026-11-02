@@ -280,7 +280,7 @@ export function CycleMonthGrid({
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendSwatch, { backgroundColor: stickers.green + '66' }]} />
-          <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t('cycleTracker_fertileWindow')}</Text>
+          <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t('cycleOnboarding_predict_fertile')}</Text>
         </View>
         <View style={styles.legendItem}>
           <SiteSticker name="egg" size={13} />
