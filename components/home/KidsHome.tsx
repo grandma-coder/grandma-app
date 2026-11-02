@@ -318,6 +318,7 @@ function getRecommendedCalories(bd: string): number {
 import { CHILD_COLORS } from '../ui/ChildPills'
 import { LogSheet } from '../calendar/LogSheet'
 import { KidsHeroTiles } from './kids/KidsHeroTiles'
+import { FeedingDetailCalm } from './kids/FeedingDetailCalm'
 import { SiteChoice } from '../ui/SiteChoice'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
@@ -2609,6 +2610,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         feedingTimes={rangeData.feedingTimes}
         feedingDurations={rangeData.feedingDurations}
         feedingDays={rangeData.feedingDays}
+        rangeDays={rangeData.activityRangeDays}
         childName={child?.name}
         childColor={CHILD_COLORS[children.findIndex(c => c.id === child?.id) % CHILD_COLORS.length]}
       />
@@ -5183,13 +5185,14 @@ function BucketBarDiffuse({ pct, color, track, visible, delay }: { pct: number; 
 
 // ─── Activity Detail Modal ──────────────────────────────────────────────────
 
-function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, categories, stage, feedingCount, feedingBreast, feedingBottle, feedingMl, avgMl, feedingLeft, feedingRight, feedingBoth, feedingTimes, feedingDurations, feedingDays, childName, childColor }: {
+function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, categories, stage, feedingCount, feedingBreast, feedingBottle, feedingMl, avgMl, feedingLeft, feedingRight, feedingBoth, feedingTimes, feedingDurations, feedingDays, rangeDays, childName, childColor }: {
   visible: boolean; onClose: () => void
   caloriesTotal: number; caloriesTarget: number
   categories: { label: string; cals: number; color: string }[]
   stage: FeedingStage; feedingCount: number; feedingBreast: number; feedingBottle: number; feedingMl: number; avgMl: number
   feedingLeft: number; feedingRight: number; feedingBoth: number
   feedingTimes: number[]; feedingDurations: number[]; feedingDays: number
+  rangeDays?: number
   childName?: string; childColor?: string
 }) {
   const { colors, radius, font } = useTheme()
@@ -5382,6 +5385,15 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
       <View style={s.modalOverlay}>
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={stage === 'liquid' ? 'Feeding' : 'Nutrition'} sticker="bottle" tone={StickerPalette.pinkSoft} childName={childName} childColor={childColor} onClose={onClose} />
+          {isLiquid || feedingCount > 0 || caloriesTotal > 0 ? (
+            <FeedingDetailCalm
+              caloriesTotal={isLiquid && stage !== 'mixed' ? 0 : caloriesTotal} caloriesTarget={caloriesTarget} categories={categories}
+              feedingCount={feedingCount} feedingBreast={feedingBreast} feedingBottle={feedingBottle}
+              feedingMl={feedingMl} avgMl={avgMl} feedingLeft={feedingLeft} feedingRight={feedingRight}
+              feedingBoth={feedingBoth} feedingTimes={feedingTimes} feedingDurations={feedingDurations} feedingDays={feedingDays}
+              rangeDays={rangeDays}
+            />
+          ) : (<>
 
           {/* Feeding summary — always shown when there are feedings */}
           {(isLiquid || feedingCount > 0) && (
@@ -5590,7 +5602,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                 <Utensils size={18} color={DIAPER_STICKER_INK} strokeWidth={2.2} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>{stage === 'mixed' ? 'Solids Calories' : 'Calories'}</Text>
+                <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>{'Calories'}</Text>
                 <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, marginTop: 2 }}>
                   {caloriesTotal > 0 ? `${caloriesTotal.toLocaleString()} cal` : '—'}
                 </Text>
@@ -5636,6 +5648,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
             )
           })()}
 
+          </>)}
         </View>
       </View>
     </Modal>
