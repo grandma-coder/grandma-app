@@ -28,7 +28,14 @@ const SCREEN_W = Dimensions.get('window').width
 
 // ─── IOM Pregnancy Weight Gain Guidelines (kg) ────────────────────────────────
 
-interface TargetBand { low: number; high: number; label: string }
+interface TargetBand {
+  low: number
+  high: number
+  /** Diffuse copy (WHO BMI category name). */
+  label: string
+  /** Light copy: the BMI range itself — no "Normal" / category claim. */
+  range: string
+}
 
 function bmi(weightKg: number, heightCm: number): number {
   const m = heightCm / 100
@@ -36,12 +43,12 @@ function bmi(weightKg: number, heightCm: number): number {
 }
 
 function getIOMTarget(preWeight: number | null, heightCm: number | null): TargetBand {
-  if (!preWeight || !heightCm) return { low: 11.5, high: 16, label: 'Normal' }
+  if (!preWeight || !heightCm) return { low: 11.5, high: 16, label: 'Normal', range: 'BMI 18.5–24.9 (assumed)' }
   const b = bmi(preWeight, heightCm)
-  if (b < 18.5) return { low: 12.5, high: 18, label: 'Underweight BMI' }
-  if (b < 25) return { low: 11.5, high: 16, label: 'Normal BMI' }
-  if (b < 30) return { low: 7, high: 11.5, label: 'Overweight BMI' }
-  return { low: 5, high: 9, label: 'Obese BMI' }
+  if (b < 18.5) return { low: 12.5, high: 18, label: 'Underweight BMI', range: 'BMI under 18.5' }
+  if (b < 25) return { low: 11.5, high: 16, label: 'Normal BMI', range: 'BMI 18.5–24.9' }
+  if (b < 30) return { low: 7, high: 11.5, label: 'Overweight BMI', range: 'BMI 25–29.9' }
+  return { low: 5, high: 9, label: 'Obese BMI', range: 'BMI 30+' }
 }
 
 // ─── Week-proportional expected gain curve ────────────────────────────────────
@@ -540,7 +547,7 @@ function WeightDetailModal(props: DetailProps) {
 
         {/* IOM target band */}
         <View style={[styles.stickerBlock, { backgroundColor: colors.surface, borderColor: paperBorderStrong }]}>
-          <MonoCaps size={10} color={colors.textMuted}>{t('preg_weight_iomTargetFull', { label: band.label.toUpperCase() })}</MonoCaps>
+          <MonoCaps size={10} color={colors.textMuted}>{t('preg_weight_iomTargetFull', { label: band.range.toUpperCase() })}</MonoCaps>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
             <Display size={26} color={ink}>{`${band.low}–${band.high}`}</Display>
             <Body size={12} color={colors.textMuted} style={{ fontFamily: font.italic }}>{t('preg_weight_iomBandLabel')}</Body>
@@ -797,7 +804,7 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
           <View style={styles.footerRow}>
             {diffuse
               ? <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: cardMuted }}>{t('preg_weight_targetFooter', { low: band.low, high: band.high, label: band.label })}</Text>
-              : <Body size={12} color={colors.textMuted}>{t('preg_weight_targetFooter', { low: band.low, high: band.high, label: band.label })}</Body>}
+              : <Body size={12} color={colors.textMuted}>{t('preg_weight_targetFooter', { low: band.low, high: band.high, label: band.range })}</Body>}
             <View style={styles.detailsLink}>
               {diffuse
                 ? <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: dAccent }}>{t('preg_weight_details')}</Text>

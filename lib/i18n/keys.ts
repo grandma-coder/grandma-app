@@ -3767,4 +3767,25 @@ export interface TranslationKeys {
   inviteCaregiver_copyLink: string
   careCircle_editMember: string
   healthHistory_logEvent: string
+  preg_week_title: string
+  preg_week_blurb: string
+  preg_week_daysLogged: string
+  preg_week_tileDays: string
+  preg_week_tileAreas: string
+  preg_week_whatYouLogged: string
+  preg_week_notLogged: string
+  preg_week_sleepFact: string
+  preg_week_moodFact_one: string
+  preg_week_moodFact_other: string
+  preg_week_waterFact: string
+  preg_week_movementFact: string
+  preg_week_nutritionFact: string
+  preg_week_empty: string
+  preg_week_howCountedTitle: string
+  preg_week_howCountedBody: string
+  preg_week_guideSleep: string
+  preg_week_guideMood: string
+  preg_week_guideNutrition: string
+  preg_week_guideMovement: string
+  preg_week_guideWater: string
 }

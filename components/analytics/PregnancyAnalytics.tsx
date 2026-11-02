@@ -90,6 +90,13 @@ import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { FadeUp } from '../ui/Motion'
 import { bucketSeries } from './shared/bucketSeries'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import {
+  buildPregnancyWeekFacts,
+  weekCoveragePct,
+  areaDays,
+  type PregnancyWeekFacts,
+  type PregnancyWeekArea,
+} from '../../lib/pregnancyWeekFacts'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -534,13 +541,20 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const { data: contractions = [] } = usePregnancyContractions(uid, windowDays)
   const { data: birthReady } = usePregnancyBirthReadiness(uid)
 
+  // Light UI: plain counts from the last 7 days (never a score). A window
+  // shorter than a week only has that many days of data to count.
+  const weekFacts = useMemo(() => buildPregnancyWeekFacts({
+    sleep: sleepHistory, moods: moodTrend, water: hydrationHistory,
+    exercise: exerciseHistory, nutrition: nutritionMatrix, days: Math.min(7, windowDays),
+  }), [sleepHistory, moodTrend, hydrationHistory, exerciseHistory, nutritionMatrix, windowDays])
+
   // Quick takeaways
   const tk = useMemo(() => buildTakeaways({
     weightHistory, kickSessions, sleepHistory, moodTrend, symptomFreq,
-    hydrationHistory, exerciseHistory, contractions, wellbeing, nutritionMatrix,
+    hydrationHistory, exerciseHistory, contractions, weekFacts, nutritionMatrix,
     birthReady, trimester, weightUnit: prefWeightUnit,
   }), [weightHistory, kickSessions, sleepHistory, moodTrend, symptomFreq,
-       hydrationHistory, exerciseHistory, contractions, wellbeing, nutritionMatrix,
+       hydrationHistory, exerciseHistory, contractions, weekFacts, nutritionMatrix,
        birthReady, trimester, prefWeightUnit])
 
   // Derived display values for stat tiles
@@ -761,11 +775,14 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               tone={stickers.lilacSoft}
               onPress={() => setOpenPillar('sleep')}
             />
+            {/* Was a composite Wellbeing %. Now a plain count of this week's
+                logs; the bar = how many days have a log, never a grade. */}
             <SiteRow
               sticker={PILLAR_SITE_STICKER.wellbeing}
-              label="Wellbeing"
-              sub={t('pregAnalytics_scoreLast7Days')}
-              value={wellbeing ? `${wellbeing.overall}%` : '—'}
+              label={t('preg_week_title')}
+              sub={t('preg_week_daysLogged', { days: weekFacts.daysLogged, total: weekFacts.days })}
+              value={weekFacts.logCount > 0 ? String(weekFacts.logCount) : '—'}
+              valueSub={weekFacts.logCount > 0 ? t('kids_analytics_logs_week') : undefined}
               pct={tk.wellbeing.pct}
               tone={stickers.greenSoft}
               onPress={() => setOpenPillar('wellbeing')}
@@ -959,6 +976,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         symptomFreq={symptomFreq}
         sleepHistory={sleepHistory}
         wellbeing={wellbeing ?? null}
+        weekFacts={weekFacts}
         moodTrend={moodTrend}
         hydrationHistory={hydrationHistory}
         nutritionMatrix={nutritionMatrix ?? null}
@@ -972,6 +990,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         visible={showInfo}
         onClose={() => setShowInfo(false)}
         wellbeing={wellbeing ?? null}
+        weekFacts={weekFacts}
         weekNumber={weekNumber}
         trimester={trimester}
       />
@@ -1334,6 +1353,8 @@ interface DetailProps {
   symptomFreq: { symptom: string; count: number }[]
   sleepHistory: { date: string; hours: number }[]
   wellbeing: PregnancyWellbeingScore | null
+  /** Light UI: this week's counts (replaces the wellbeing score). */
+  weekFacts: PregnancyWeekFacts
   moodTrend: { log_date: string; value: string | null }[]
   hydrationHistory: { date: string; glasses: number }[]
   nutritionMatrix: {
@@ -1373,17 +1394,19 @@ function PillarDetailModal(props: DetailProps) {
     )
   }
 
+  // Light: the old "Wellbeing · Five-pillar score" sheet is now "This week".
+  const isWeek = pillarKey === 'wellbeing'
   return (
     <LightSheet visible onClose={onClose} height={sheetH}>
       <View style={{ paddingHorizontal: 20 }}>
         <DetailSheetHeader
-          title={label}
+          title={isWeek ? t('preg_week_title') : label}
           sticker={PILLAR_SITE_STICKER[pillarKey]}
           tone={palette.tint}
           onClose={onClose}
         />
         <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
-          {meta.blurb}
+          {isWeek ? t('preg_week_blurb') : meta.blurb}
         </Text>
       </View>
 
@@ -1423,14 +1446,120 @@ function DetailDispatcher(props: DetailProps & { pillarKey: PillarKey; accentCol
 
 // ─── Detail bodies ─────────────────────────────────────────────────────────
 
-function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
-  const { colors, stickers, font } = useTheme()
+function WellbeingDetail(props: DetailProps & { accentColor?: string; accentTint?: string }) {
   const diffuse = useIsDiffuse()
+  // Light: plain counts for the week. The composite score, its "Strongest /
+  // Watch" call-outs and per-pillar /10 values stay Diffuse-only.
+  if (!diffuse) return <WeekDetail {...props} />
+  return <WellbeingDetailDiffuse {...props} />
+}
+
+/** Light "This week" sheet — counts and averages from the user's own logs, never a grade. */
+function WeekDetail({ weekFacts: facts, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
+  const { colors, stickers, font } = useTheme()
+  const { t } = useTranslation()
+
+  if (facts.logCount === 0) {
+    return (
+      <>
+        <PaperCard>
+          <Body size={13} color={colors.textMuted}>{t('preg_week_empty')}</Body>
+        </PaperCard>
+        <TrimesterTip trimester={trimester} kind="wellbeing" weekNumber={weekNumber} />
+      </>
+    )
+  }
+
+  const areas: { key: PregnancyWeekArea; label: string; tint: string; sticker: SiteStickerName }[] = [
+    { key: 'sleep',     label: 'Sleep',     tint: stickers.lilacSoft, sticker: WELLBEING_STICKER.sleep },
+    { key: 'mood',      label: 'Mood',      tint: stickers.pinkSoft,  sticker: WELLBEING_STICKER.mood },
+    { key: 'nutrition', label: 'Nutrition', tint: stickers.greenSoft, sticker: WELLBEING_STICKER.nutrition },
+    { key: 'movement',  label: 'Movement',  tint: stickers.peachSoft, sticker: WELLBEING_STICKER.exercise },
+    { key: 'water',     label: 'Hydration', tint: stickers.blueSoft,  sticker: WELLBEING_STICKER.hydration },
+  ]
+  const total = facts.days
+  const fact = (key: PregnancyWeekArea): string => {
+    switch (key) {
+      case 'sleep':
+        return facts.sleep
+          ? t('preg_week_sleepFact', { hours: facts.sleep.avgHours.toFixed(1), nights: facts.sleep.nights, total })
+          : t('preg_week_notLogged')
+      case 'mood':
+        return facts.mood
+          ? t(facts.mood.count === 1 ? 'preg_week_moodFact_one' : 'preg_week_moodFact_other', { count: facts.mood.count, mood: facts.mood.topMood })
+          : t('preg_week_notLogged')
+      case 'nutrition':
+        return facts.nutrition
+          ? t('preg_week_nutritionFact', { days: facts.nutrition.days, total })
+          : t('preg_week_notLogged')
+      case 'movement':
+        return facts.movement
+          ? t('preg_week_movementFact', { days: facts.movement.days, minutes: facts.movement.minutes, total })
+          : t('preg_week_notLogged')
+      case 'water':
+        return facts.water
+          ? t('preg_week_waterFact', { days: facts.water.days, glasses: facts.water.avgGlasses.toFixed(1), total })
+          : t('preg_week_notLogged')
+    }
+  }
+
+  return (
+    <>
+      <View>
+        <Text style={{ color: colors.text, fontSize: 56, lineHeight: 62, fontFamily: font.displayBold, letterSpacing: -1.5 }}>
+          {facts.logCount}
+        </Text>
+        <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{t('kids_analytics_logs_week')}</Text>
+      </View>
+
+      <StatTilesRow
+        tint={accentTint}
+        color={accentColor}
+        items={[
+          { label: t('preg_week_tileDays'), value: `${facts.daysLogged}/${total}` },
+          { label: t('preg_week_tileAreas'), value: `${facts.areasLogged}/5` },
+          { label: 'Trimester', value: String(trimester) },
+        ]}
+      />
+
+      <PaperCard title={t('preg_week_whatYouLogged')}>
+        <View style={{ gap: 14 }}>
+          {areas.map((a) => {
+            // Bar = how many days of the week have a log for this area — never a grade.
+            const pct = Math.round((areaDays(facts, a.key) / total) * 100)
+            return (
+              <View key={a.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <SiteSticker name={a.sticker} size={30} cut />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontSize: 14, fontFamily: font.bodySemiBold }}>{a.label}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 17, fontFamily: font.body, marginTop: 1, marginBottom: 6 }}>
+                    {fact(a.key)}
+                  </Text>
+                  <SiteMeter pct={pct} tone={a.tint} />
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      </PaperCard>
+
+      <PaperCard title={t('preg_week_howCountedTitle')}>
+        <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
+          {t('preg_week_howCountedBody')}
+        </Body>
+      </PaperCard>
+
+      <TrimesterTip trimester={trimester} kind="wellbeing" weekNumber={weekNumber} />
+    </>
+  )
+}
+
+function WellbeingDetailDiffuse({ wellbeing, weekNumber, trimester }: DetailProps & { accentColor?: string; accentTint?: string }) {
+  const { stickers } = useTheme()
   const dt = useDiffuseTheme()
-  const dAccent = getDiffuseAccent('preg', dt.isDark)
-  const ink = diffuse ? dt.colors.ink : colors.text
-  const sec = diffuse ? dt.colors.ink2 : colors.textSecondary
-  const muted = diffuse ? dt.colors.ink3 : colors.textMuted
+  const ink = dt.colors.ink
+  const sec = dt.colors.ink2
+  const muted = dt.colors.ink3
   const { t } = useTranslation()
 
   if (!wellbeing) {
@@ -1457,106 +1586,48 @@ function WellbeingDetail({ wellbeing, weekNumber, trimester, accentColor, accent
 
   return (
     <>
-      {diffuse ? (
-        <ScoreHero value={`${wellbeing.overall}%`} caption={t('preg_analytics_overall_last7')} />
-      ) : (
-        <View>
-          <Text style={{ color: colors.text, fontSize: 56, lineHeight: 62, fontFamily: font.displayBold, letterSpacing: -1.5 }}>
-            {wellbeing.overall}%
-          </Text>
-          <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{t('preg_analytics_overall_last7')}</Text>
-        </View>
-      )}
+      <ScoreHero value={`${wellbeing.overall}%`} caption={t('preg_analytics_overall_last7')} />
 
-      {diffuse ? (
-        <WellbeingCallouts
-          strongest={{ label: strongest.label, color: strongest.color }}
-          watch={{ label: weakest.label, color: weakest.color }}
-          trimester={String(trimester)}
+      <WellbeingCallouts
+        strongest={{ label: strongest.label, color: strongest.color }}
+        watch={{ label: weakest.label, color: weakest.color }}
+        trimester={String(trimester)}
+      />
+
+      {/* De-carded: the chart + legend breathe on the page under a plain
+          eyebrow, so the sheet isn't a stack of nested white boxes. */}
+      <View style={{ marginTop: 4 }}>
+        <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>Five pillars</Text>
+        <ConcentricArcs
+          data={pillars.map((p) => ({ value: wellbeing[p.key] as number, color: p.color } as ArcDatum))}
         />
-      ) : (
-        <StatTilesRow
-          tint={accentTint}
-          color={accentColor}
-          items={[
-            { label: 'Strongest', value: strongest.label },
-            { label: 'Watch', value: weakest.label },
-            { label: 'Trimester', value: String(trimester) },
-          ]}
-        />
-      )}
-
-      {diffuse ? (
-        // De-carded: the chart + legend breathe on the page under a plain
-        // eyebrow, so the sheet isn't a stack of nested white boxes.
-        <View style={{ marginTop: 4 }}>
-          <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>Five pillars</Text>
-          <ConcentricArcs
-            data={pillars.map((p) => ({ value: wellbeing[p.key] as number, color: p.color } as ArcDatum))}
-          />
-          {/* Legend key — each pillar's colour, name and score on its own row. */}
-          <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, marginTop: 16, paddingTop: 16, gap: 12 }}>
-            {pillars.map((p) => (
-              <View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 9, height: 9, borderRadius: 999, backgroundColor: p.color }} />
-                <Text style={{ flex: 1, color: dt.colors.ink2, fontSize: 12, fontFamily: diffuseFont.mono }}>
-                  {p.label}
-                </Text>
-                <Text style={{ color: dt.colors.ink, fontSize: 12, fontFamily: diffuseFont.mono }}>
-                  {(wellbeing[p.key] as number).toFixed(1)}
-                </Text>
-              </View>
-            ))}
-          </View>
+        {/* Legend key — each pillar's colour, name and score on its own row. */}
+        <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, marginTop: 16, paddingTop: 16, gap: 12 }}>
+          {pillars.map((p) => (
+            <View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={{ width: 9, height: 9, borderRadius: 999, backgroundColor: p.color }} />
+              <Text style={{ flex: 1, color: dt.colors.ink2, fontSize: 12, fontFamily: diffuseFont.mono }}>
+                {p.label}
+              </Text>
+              <Text style={{ color: dt.colors.ink, fontSize: 12, fontFamily: diffuseFont.mono }}>
+                {(wellbeing[p.key] as number).toFixed(1)}
+              </Text>
+            </View>
+          ))}
         </View>
-      ) : (
-        <PaperCard title={t('pregAnalytics_fivePillarsScore')}>
-          <View style={{ gap: 14 }}>
-            {pillars.map((p) => {
-              const v = wellbeing[p.key] as number
-              const pct = Math.round((v / 10) * 100)
-              return (
-                <View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <SiteSticker name={WELLBEING_STICKER[p.key as string] ?? 'star'} size={30} cut />
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <Text style={{ color: ink, fontSize: 14, fontFamily: font.bodySemiBold }}>{p.label}</Text>
-                      <Text style={{ color: ink, fontSize: 13, fontFamily: font.bodyBold }}>
-                        {v.toFixed(1)} / 10
-                      </Text>
-                    </View>
-                    <SiteMeter pct={pct} tone={p.tint} />
-                  </View>
-                </View>
-              )
-            })}
-          </View>
-        </PaperCard>
-      )}
+      </View>
 
-      {diffuse ? (
-        // Footnote, not a card — a hairline rule + eyebrow, text on the page.
-        <View style={{ marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16 }}>
-          <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>How it's computed</Text>
-          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-            Each pillar scores 0–10 from your last 7 days of logs.{' '}
-            <Body size={13} color={ink}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
-            <Body size={13} color={ink}>{'Mood'}</Body>{' '}counts positive entries.{' '}
-            <Body size={13} color={ink}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
-            logs-per-day against healthy pregnancy targets. Overall = average × 10.
-          </Body>
-        </View>
-      ) : (
-        <PaperCard title="How it's computed">
-          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-            Each pillar scores 0–10 from your last 7 days of logs.{' '}
-            <Body size={13} color={ink}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
-            <Body size={13} color={ink}>{'Mood'}</Body>{' '}counts positive entries.{' '}
-            <Body size={13} color={ink}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
-            logs-per-day against healthy pregnancy targets. Overall = average × 10.
-          </Body>
-        </PaperCard>
-      )}
+      {/* Footnote, not a card — a hairline rule + eyebrow, text on the page. */}
+      <View style={{ marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dt.colors.line, paddingTop: 16 }}>
+        <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>How it's computed</Text>
+        <Body size={13} color={sec} style={{ lineHeight: 20 }}>
+          Each pillar scores 0–10 from your last 7 days of logs.{' '}
+          <Body size={13} color={ink}>{'Sleep'}</Body>{' '}maps hours against a 9h target.{' '}
+          <Body size={13} color={ink}>{'Mood'}</Body>{' '}counts positive entries.{' '}
+          <Body size={13} color={ink}>{'Nutrition, movement and hydration'}</Body>{' '}each weight
+          logs-per-day against healthy pregnancy targets. Overall = average × 10.
+        </Body>
+      </View>
 
       <TrimesterTip trimester={trimester} kind="wellbeing" weekNumber={weekNumber} />
     </>
@@ -1858,7 +1929,10 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
         color={accentColor}
         items={[
           { label: 'Logged', value: String(moodTrend.length) },
-          { label: 'Positive', value: `${positivePct}%` },
+          // Light: a plain day count instead of a "% positive" share.
+          diffuse
+            ? { label: 'Positive', value: `${positivePct}%` }
+            : { label: 'Days', value: String(new Set(moodTrend.map((m) => m.log_date)).size) },
           { label: 'Most common', value: sorted[0]?.[0] ?? '—' },
         ]}
       />
@@ -2004,7 +2078,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
             <Body size={13} color={sec} style={{ lineHeight: 20 }}>
               You've logged{' '}
               <Body size={13} color={ink}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
-              . These can be normal but warrant a call to your provider — especially if persistent or severe.
+              . It's worth a call to your provider — especially if any of these persist or feel severe.
             </Body>
           </PaperCard>
         )
@@ -2689,11 +2763,13 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
 // ─── Score info modal ──────────────────────────────────────────────────────
 
 function ScoreInfoModal({
-  visible, onClose, wellbeing, weekNumber, trimester,
+  visible, onClose, wellbeing, weekFacts, weekNumber, trimester,
 }: {
   visible: boolean
   onClose: () => void
   wellbeing: PregnancyWellbeingScore | null
+  /** Light UI hero: this week's log count (not a score). */
+  weekFacts: PregnancyWeekFacts
   weekNumber: number
   trimester: 1 | 2 | 3
 }) {
@@ -2719,11 +2795,20 @@ function ScoreInfoModal({
   ]
 
   if (!diffuse) {
+    // Light UI: what each area COUNTS — no score, no grade bands, no per-pillar
+    // number (see docs/compliance/2026-11-02-regras-saude.md).
+    const AREA_COUNTS: { key: PregnancyWeekArea; label: string; sticker: SiteStickerName; body: string }[] = [
+      { key: 'sleep',     label: 'Sleep',     sticker: WELLBEING_STICKER.sleep,     body: t('preg_week_guideSleep') },
+      { key: 'mood',      label: 'Mood',      sticker: WELLBEING_STICKER.mood,      body: t('preg_week_guideMood') },
+      { key: 'nutrition', label: 'Nutrition', sticker: WELLBEING_STICKER.nutrition, body: t('preg_week_guideNutrition') },
+      { key: 'movement',  label: 'Movement',  sticker: WELLBEING_STICKER.exercise,  body: t('preg_week_guideMovement') },
+      { key: 'water',     label: 'Hydration', sticker: WELLBEING_STICKER.hydration, body: t('preg_week_guideWater') },
+    ]
     return (
       <LightSheet visible={visible} onClose={onClose} height={SCREEN_H * 0.86}>
         <View style={{ paddingHorizontal: 20 }}>
           <DetailSheetHeader
-            title="Wellbeing score guide"
+            title={t('kids_analytics_guide_title')}
             sticker="flower"
             tone={stickers.greenSoft}
             onClose={onClose}
@@ -2737,45 +2822,26 @@ function ScoreInfoModal({
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: insets.bottom + 28, gap: 18 }}
         >
-          {wellbeing && (
+          {weekFacts.logCount > 0 && (
             <View>
               <Text style={{ color: colors.text, fontSize: 52, lineHeight: 58, fontFamily: font.displayBold, letterSpacing: -1.5 }}>
-                {wellbeing.overall}%
+                {weekFacts.logCount}
               </Text>
-              <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{t('preg_analytics_your_score_last7')}</Text>
+              <Text style={[styles.siteMono, { color: colors.textSecondary }]}>
+                {t('kids_analytics_logs_week')}{' · '}{t('preg_week_daysLogged', { days: weekFacts.daysLogged, total: weekFacts.days })}
+              </Text>
             </View>
           )}
 
-          <PaperCard title="Score scale">
-            <View style={{ gap: 10 }}>
-              {SCORE_BANDS.map((b) => (
-                <View key={b.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 14, height: 14, borderRadius: 4, borderWidth: 1.5, borderColor: colors.text, backgroundColor: b.color }} />
-                  <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: font.bodySemiBold }}>
-                    {b.label}
-                  </Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10, letterSpacing: 1.2, fontFamily: MONO }}>{b.range}</Text>
-                </View>
-              ))}
-            </View>
-          </PaperCard>
-
-          <PaperCard title="How each pillar is scored">
+          <PaperCard title={t('kids_analytics_guide_areas_label')}>
             <View style={{ gap: 16 }}>
-              {PILLAR_EXPLAIN.map((p) => (
+              {AREA_COUNTS.map((p) => (
                 <View key={p.key} style={{ flexDirection: 'row', gap: 12 }}>
-                  <SiteSticker name={WELLBEING_STICKER[p.key as string] ?? 'star'} size={30} cut />
+                  <SiteSticker name={p.sticker} size={30} cut />
                   <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
-                      <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: font.bodyBold }}>
-                        {p.label}
-                      </Text>
-                      {wellbeing && (
-                        <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyBold }}>
-                          {(wellbeing[p.key] as number).toFixed(1)}{' / 10'}
-                        </Text>
-                      )}
-                    </View>
+                    <Text style={{ color: colors.text, fontSize: 14, fontFamily: font.bodyBold, marginBottom: 3 }}>
+                      {p.label}
+                    </Text>
                     <Body size={13} color={colors.textSecondary}>{p.body}</Body>
                   </View>
                 </View>
@@ -2786,7 +2852,7 @@ function ScoreInfoModal({
           <PaperCard title={trimesterLabel(trimester)}>
             <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
               {trimester === 1
-                ? 'Many people log fewer entries early — it\'s ok if your score is rough now. Folic acid + sleep are the priorities.'
+                ? 'Many people log fewer entries early — that\'s fine. Folic acid + sleep are the priorities.'
                 : trimester === 2
                 ? 'The honeymoon trimester — energy up, nausea down. Movement and balanced meals matter most here.'
                 : 'Pack the bag, plan support, and protect sleep. Steady wins now beat heroic stretches.'}
@@ -3259,18 +3325,27 @@ function TrimesterTip({
     )
   }
 
+  // Light: same tip, minus "normal" claims and score talk.
+  const lightTip = trimesterCopy(kind, trimester, weekNumber, true) ?? tip
   return (
     <PaperCard title={`Trimester ${trimester} note`}>
       <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
-        {tip}
+        {lightTip}
       </Body>
     </PaperCard>
   )
 }
 
-function trimesterCopy(kind: PillarKey, t: 1 | 2 | 3, week: number): string | null {
+/**
+ * `light` = the light UI's wording: no "is normal" claims and no talk of a
+ * score (see docs/compliance/2026-11-02-regras-saude.md). Diffuse keeps the
+ * original copy.
+ */
+function trimesterCopy(kind: PillarKey, t: 1 | 2 | 3, week: number, light = false): string | null {
   if (kind === 'kicks') {
-    if (week < 18) return 'Most people first feel quickening between week 16–22. Earlier is normal in second pregnancies.'
+    if (week < 18) return light
+      ? 'Most people first feel quickening between week 16–22. Many feel it earlier in a second pregnancy.'
+      : 'Most people first feel quickening between week 16–22. Earlier is normal in second pregnancies.'
     if (week < 28) return 'Movements are getting stronger — patterns aren\'t reliable yet. Don\'t panic if a day feels quiet.'
     return 'Track at the same time daily — usually after a meal in the evening when baby is most active.'
   }
@@ -3282,7 +3357,9 @@ function trimesterCopy(kind: PillarKey, t: 1 | 2 | 3, week: number): string | nu
   if (kind === 'mood') {
     if (t === 1) return 'Hormones spike fast. Mood swings now don\'t predict postpartum mood — just ride it.'
     if (t === 2) return 'Energy returning. If anxiety persists or joy feels flat for 2+ weeks, mention it at your next visit.'
-    return 'Anticipatory anxiety is normal. A short walk + 10 min of breathwork shifts more than you\'d think.'
+    return light
+      ? 'Feeling anxious before the birth is common. A short walk + 10 min of breathwork shifts more than you\'d think.'
+      : 'Anticipatory anxiety is normal. A short walk + 10 min of breathwork shifts more than you\'d think.'
   }
   if (kind === 'symptoms') {
     if (t === 1) return 'Nausea, breast tenderness, fatigue and headaches dominate. Most ease by week 12–14.'
@@ -3290,6 +3367,10 @@ function trimesterCopy(kind: PillarKey, t: 1 | 2 | 3, week: number): string | nu
     return 'Heartburn, swelling, hip pain and Braxton Hicks pick up. Sudden severe headache or vision change → call now.'
   }
   if (kind === 'wellbeing') {
+    if (light) {
+      if (t === 1) return 'Goal: any logging at all. Early weeks are a lot — focus on folic acid, water, and sleep.'
+      if (t === 2) return 'Best window to build habits. Movement and varied meals are worth a little time right now.'
+    }
     if (t === 1) return 'Goal: any logging at all. The score is rough early — focus on folic acid, water, and sleep.'
     if (t === 2) return 'Best window to build habits. Movement and varied meals lift the score fastest right now.'
     return 'Protect sleep aggressively. Lower the movement target if needed; rest is part of the work.'
@@ -3315,7 +3396,7 @@ function buildTakeaways(args: {
   hydrationHistory: { date: string; glasses: number }[]
   exerciseHistory: PregnancyExerciseEntry[]
   contractions: PregnancyContractionSession[]
-  wellbeing: PregnancyWellbeingScore | null | undefined
+  weekFacts: PregnancyWeekFacts
   nutritionMatrix: { iron: boolean[]; folic: boolean[]; protein: boolean[]; calcium: boolean[]; dates: string[] } | null | undefined
   birthReady: BirthReadiness | null | undefined
   trimester: 1 | 2 | 3
@@ -3323,7 +3404,7 @@ function buildTakeaways(args: {
 }): Record<PillarKey, Takeaway> {
   const {
     weightHistory, kickSessions, sleepHistory, moodTrend, symptomFreq,
-    hydrationHistory, exerciseHistory, contractions, wellbeing, nutritionMatrix, birthReady,
+    hydrationHistory, exerciseHistory, contractions, weekFacts, nutritionMatrix, birthReady,
     weightUnit,
   } = args
   const wLabel = weightLabel(weightUnit)
@@ -3373,13 +3454,15 @@ function buildTakeaways(args: {
   const exDays = exerciseHistory.filter((e) => e.minutes > 0).length
 
   return {
-    wellbeing: wellbeing
+    // No composite score here (it read as a health grade): a count of this
+    // week's logs, and pct = share of days with a log ("how much", not "how well").
+    wellbeing: weekFacts.logCount > 0
       ? {
-          headline: `${wellbeing.overall}%`,
-          pct: wellbeing.overall,
-          takeaway: wellbeing.overall >= 70 ? 'You\'re doing well — keep it steady.' : wellbeing.overall >= 40 ? 'Mixed signals — protect sleep first.' : 'Reach for help. Small wins compound fast.',
+          headline: String(weekFacts.logCount),
+          pct: weekCoveragePct(weekFacts),
+          takeaway: `${weekFacts.daysLogged} of ${weekFacts.days} days with a log.`,
         }
-      : { headline: '—', takeaway: 'Log a few days to see your wellbeing.' },
+      : { headline: '—', pct: 0, takeaway: 'Log a few days to see your week.' },
     weight: {
       headline: lastW ? `${kgToDisplay(lastW, weightUnit).toFixed(1)} ${wLabel}` : '—',
       takeaway: weeklyGain !== null
