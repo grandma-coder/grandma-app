@@ -3,9 +3,19 @@ import { View, Text } from 'react-native'
 import { useTheme, useDiffuseTheme } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { Character } from '../../characters/Characters'
-import { MoodFace } from '../../stickers/RewardStickers'
-import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../../lib/moodFace'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { moodFaceVariant, moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import type { MoodStripDatum } from '../../../lib/moodTrend'
+
+// Site look: the four mood faces the log forms use (sad → grin).
+function siteFace(mood: string | null | undefined): SiteStickerName {
+  switch (moodFaceVariant(mood ?? undefined)) {
+    case 'great': case 'happy': case 'energetic': return 'face4'
+    case 'good': case 'calm': return 'face3'
+    case 'low': case 'cranky': return 'face1'
+    default: return 'face2'
+  }
+}
 
 function shortDay(isoDate: string): string {
   try {
@@ -32,7 +42,7 @@ export function MoodStrip({ data }: { data: MoodStripDatum[] }): JSX.Element {
         },
         diffuse
           ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line }
-          : { backgroundColor: colors.surface, borderColor: 'rgba(20,19,19,0.10)' },
+          : { borderWidth: 0, padding: 0, paddingVertical: 6 },
       ]}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
@@ -46,16 +56,12 @@ export function MoodStrip({ data }: { data: MoodStripDatum[] }): JSX.Element {
                 color={moodBlobFill(e.value ?? undefined)}
               />
             ) : (
-              <MoodFace
-                size={28}
-                variant={moodFaceVariant(e.value ?? undefined)}
-                fill={moodFaceFill(e.value ?? undefined)}
-              />
+              <SiteSticker name={siteFace(e.value)} size={26} />
             )}
             <Text
               style={diffuse
                 ? { fontSize: 9, color: dt.colors.ink3, fontFamily: dt.font?.mono ?? 'monospace', letterSpacing: 0.4 }
-                : { fontSize: 9, color: colors.textMuted, fontFamily: font.bodyMedium }}
+                : { fontSize: 9, color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1 }}
             >
               {shortDay(e.date)}
             </Text>

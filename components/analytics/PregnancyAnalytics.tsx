@@ -102,8 +102,8 @@ const WELLBEING_STICKER: Record<string, SiteStickerName> = {
   sleep: 'moon', mood: 'face3', nutrition: 'avocado', exercise: 'shoe', hydration: 'drop',
 }
 const PILLAR_SITE_STICKER: Record<PillarKey, SiteStickerName> = {
-  wellbeing: 'flower', weight: 'bars', kicks: 'baby2', sleep: 'moon', mood: 'face3',
-  symptoms: 'thermo', hydration: 'drop', nutrition: 'avocado', exercise: 'shoe',
+  wellbeing: 'flower', weight: 'scale', kicks: 'foot', sleep: 'moon', mood: 'face3',
+  symptoms: 'headache', hydration: 'glass', nutrition: 'avocado', exercise: 'dumbbell',
   contractions: 'stopwatch', birth: 'backpack',
 }
 
@@ -414,6 +414,16 @@ function daysToDue(due: string | null): number | null {
   const d = new Date(due + 'T00:00:00')
   const now = new Date()
   return Math.ceil((d.getTime() - now.getTime()) / 86_400_000)
+}
+
+/** Bar labels: weekday letter for a short window; once SiteBars buckets (>14 points) a weekday
+ *  letter no longer names the bar, so use the bucket's start date (M/D). */
+function barDayLabels(dates: string[]): string[] {
+  if (dates.length <= 14) return dates.map(shortDay)
+  return dates.map((iso) => {
+    const d = new Date(iso + 'T12:00:00')
+    return isNaN(d.getTime()) ? '' : `${d.getMonth() + 1}/${d.getDate()}`
+  })
 }
 
 function shortDay(isoDate: string): string {
@@ -797,7 +807,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               ) : (
                 <SiteBars
                   data={hydrationData}
-                  labels={hydrationHistory.map((h) => shortDay(h.date))}
+                  labels={barDayLabels(hydrationHistory.map((h) => h.date))}
                   tone={stickers.blueSoft}
                   target={8}
                   unit=""
@@ -841,7 +851,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               ) : (
                 <SiteBars
                   data={exerciseHistory.map((e) => e.minutes)}
-                  labels={exerciseHistory.map((e) => shortDay(e.date))}
+                  labels={barDayLabels(exerciseHistory.map((e) => e.date))}
                   tone={stickers.peachSoft}
                   target={Math.round(150 / 7)}
                   unit="m"
@@ -2159,7 +2169,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
             ) : (
               <SiteBars
                 data={data}
-                labels={labels}
+                labels={barDayLabels(hydrationHistory.map((h) => h.date))}
                 tone={tint}
                 height={140}
                 target={TARGET}
@@ -2490,7 +2500,7 @@ function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, a
           ) : (
             <SiteBars
               data={exerciseHistory.filter((e) => e.minutes > 0).map((e) => e.minutes)}
-              labels={exerciseHistory.filter((e) => e.minutes > 0).map((e) => shortDay(e.date))}
+              labels={barDayLabels(exerciseHistory.filter((e) => e.minutes > 0).map((e) => e.date))}
               tone={stickers.peachSoft}
               unit="m"
               caption="Minutes per active day"

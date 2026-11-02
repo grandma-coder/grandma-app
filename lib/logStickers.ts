@@ -12,7 +12,7 @@ export const KIDS_LOG_STICKER: Record<string, SiteStickerName> = {
 
 export const PREGNANCY_LOG_STICKER_MAP: Record<string, SiteStickerName> = {
   mood: 'face3', water: 'glass', sleep: 'moon', meals: 'avocado', nutrition: 'avocado', weight: 'scale',
-  kicks: 'foot', kick_count: 'foot', symptom: 'thermo', exercise: 'dumbbell', vitamins: 'pill',
+  kicks: 'foot', kick_count: 'foot', symptom: 'headache', exercise: 'dumbbell', vitamins: 'pill',
   kegel: 'flower', contraction: 'stopwatch', appointment: 'cal', exam_result: 'doc', exam: 'doc',
   nesting: 'crib', birth_prep: 'backpack', ultrasound: 'camera',
 }
