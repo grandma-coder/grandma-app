@@ -6,9 +6,10 @@
  * Self-gates to null in a caregiver context — switching someone else's child's
  * journey is meaningless there.
  */
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useRef, useState } from 'react'
 import { View, Text, Pressable, Modal, StyleSheet, Animated, Easing } from 'react-native'
-import { ChevronDown } from 'lucide-react-native'
+import { ChevronDown, Check } from 'lucide-react-native'
 import { router } from 'expo-router'
 import {
   useTheme, useDiffuseTheme, diffuseFont, shadows,
@@ -66,6 +67,8 @@ export function HomeJourneySwitcher() {
       : 'Raising'
 
   const ActiveIcon = ICON_BY_BEHAVIOR[currentBehavior]
+  // Site look: the same sticker each journey wears on the journey picker.
+  const JOURNEY_STICKER: Record<Behavior, SiteStickerName> = { 'pre-pregnancy': 'flower', pregnancy: 'heart', kids: 'baby', menopause: 'flame' }
 
   function openMenu() {
     // Drop the card just beneath the trigger, right-aligned. Guard measureInWindow
@@ -102,15 +105,15 @@ export function HomeJourneySwitcher() {
         accessibilityRole="button"
         accessibilityLabel={`Switch journey, currently ${labelFor(currentBehavior)}`}
         hitSlop={8}
-        style={[styles.trigger, { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: line }]}
+        style={[styles.trigger, { backgroundColor: diffuse ? 'transparent' : getModeColorSoft(currentBehavior, isDark), borderColor: diffuse ? line : colors.text, borderWidth: diffuse ? 1 : 1.5 }]}
       >
         {diffuse ? (
           <View pointerEvents="none" style={StyleSheet.absoluteFill}>
             <SoftBloom color={getDiffuseAccent(currentBehavior, dt.isDark)} opacity={dt.isDark ? 0.4 : 0.5} spread={0.5} radius="60%" />
           </View>
         ) : null}
-        <ActiveIcon size={26} />
-        <View style={[styles.chevronDot, { backgroundColor: cardBg, borderColor: line }]}>
+        {diffuse ? <ActiveIcon size={26} /> : <SiteSticker name={JOURNEY_STICKER[currentBehavior]} size={28} />}
+        <View style={[styles.chevronDot, { backgroundColor: cardBg, borderColor: diffuse ? line : colors.text }]}>
           <ChevronDown size={9} color={inkMuted} strokeWidth={2.5} />
         </View>
       </Pressable>
@@ -124,7 +127,8 @@ export function HomeJourneySwitcher() {
               cardShadow,
               {
                 top: anchor.top, right: anchor.right,
-                backgroundColor: cardBg, borderColor: line, borderRadius: cardRadius,
+                backgroundColor: cardBg, borderColor: diffuse ? line : colors.text, borderRadius: cardRadius,
+                ...(diffuse ? null : { borderWidth: 1.5, shadowColor: colors.text, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0 }),
                 opacity: anim,
                 transform: [
                   { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) },
@@ -160,8 +164,8 @@ export function HomeJourneySwitcher() {
                     { opacity: isActive ? 1 : isEnrolled ? (pressed ? 0.55 : 1) : 0.5 },
                   ]}
                 >
-                  <View style={[styles.rowIcon, { backgroundColor: isActive ? accentSoft : 'transparent' }]}>
-                    <Icon size={24} />
+                  <View style={[styles.rowIcon, { backgroundColor: isActive ? accentSoft : 'transparent' }, !diffuse && isActive ? { borderWidth: 1.5, borderColor: colors.text, borderRadius: 20 } : null]}>
+                    {diffuse ? <Icon size={24} /> : <SiteSticker name={JOURNEY_STICKER[b]} size={28} />}
                   </View>
                   <Text
                     style={[styles.rowLabel, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}
@@ -171,9 +175,11 @@ export function HomeJourneySwitcher() {
                   </Text>
                   <View style={{ flex: 1 }} />
                   {isActive ? (
-                    <Text style={[styles.tag, { color: accent, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>ACTIVE</Text>
+                    diffuse
+                      ? <Text style={[styles.tag, { color: accent, fontFamily: diffuseFont.mono }]}>ACTIVE</Text>
+                      : <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' }}><Check size={13} color={colors.surface} strokeWidth={3} /></View>
                   ) : !isEnrolled ? (
-                    <Text style={[styles.tag, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>+ ADD</Text>
+                    <Text style={[styles.tag, { color: diffuse ? inkMuted : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>+ ADD</Text>
                   ) : null}
                 </Pressable>
               )
