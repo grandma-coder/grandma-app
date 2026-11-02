@@ -7,6 +7,8 @@
  *        NestingTask, BirthPrepTask, ContractionTimer, Weight
  */
 
+import { SheetFooterAction } from './LogSheet'
+import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { useState } from 'react'
 import {
   View,
@@ -888,43 +890,22 @@ function SaveButton({
     )
   }
 
-  const ST_INK = '#141313'
-  const ST_LAVENDER = isDark ? colors.primary : getModeColor('preg', isDark)
-  const ST_CREAM = isDark ? colors.surfaceRaised : '#F7F0DF'
+  // Site look: the pencil disc, pinned in the sheet's footer (always visible).
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={saving || isDisabled}
-      style={({ pressed }) => [
-        styles.saveBtn,
-        {
-          backgroundColor: isDisabled ? ST_CREAM : (isDark ? ST_LAVENDER : colors.text),
-          borderColor: isDark && isDisabled ? colors.border : ST_INK,
-          borderWidth: 2,
-          borderRadius: 999,
-          shadowColor: ST_INK,
-          shadowOffset: { width: 0, height: pressed ? 1 : 2 },
-          shadowOpacity: isDark ? 1 : 0.1,
-          shadowRadius: 0,
-          elevation: 0,
-          transform: [{ translateY: pressed && !isDisabled ? 2 : 0 }],
-          opacity: isDisabled ? 0.55 : 1,
-        },
-      ]}
-    >
-      {saving ? (
-        <ActivityIndicator color={isDisabled ? colors.textMuted : '#FFFEF8'} />
-      ) : (
-        <Text
-          style={[
-            styles.saveBtnText,
-            { color: isDisabled ? (isDark ? colors.textMuted : '#6E6763') : '#FFFEF8' },
-          ]}
-        >
-          {label ?? 'Save'}
-        </Text>
-      )}
-    </Pressable>
+    <SheetFooterAction>
+      <View style={{ alignItems: 'center' }}>
+        <EyeAction
+          label={label ?? 'Save'}
+          onPress={onPress}
+          ink={colors.text}
+          loading={saving}
+          disabled={isDisabled}
+          sticker="pencil"
+          fill={ACTION_TONES.yellow}
+          size={64}
+        />
+      </View>
+    </SheetFooterAction>
   )
 }
 

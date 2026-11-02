@@ -63,6 +63,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { supabase } from '../../lib/supabase'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { ChoiceStep, MoreSection, ActiveChildChip, StickerChoice, type ChoiceOption } from './QuickLogKit'
+import { SheetFooterAction } from './LogSheet'
 import { StepSlider } from '../ui/StepSlider'
 import { diffuseLogHue } from './DiffuseLogTimeline'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
@@ -601,13 +602,13 @@ function RoutineToggle({
         style={[
           routineStyles.toggleRow,
           {
-            backgroundColor: enabled ? getModeColorSoft('kids', isDark) : colors.surface,
+            backgroundColor: colors.surface,
             borderColor: colors.text,
             borderRadius: 18,
           },
         ]}
       >
-        <Repeat size={16} color={colors.text} strokeWidth={2} />
+        <SiteSticker name="cal" size={22} />
         <Text style={[routineStyles.toggleText, { color: colors.text, fontFamily: font.bodyBold }]}>
           {t('kids_logForm_saveAsRoutine')}
         </Text>
@@ -641,13 +642,13 @@ function RoutineToggle({
                 style={[
                   routineStyles.dayChip,
                   {
-                    backgroundColor: active ? getModeColorSoft('kids', isDark) : colors.surface,
+                    backgroundColor: active ? colors.text : colors.surface,
                     borderColor: colors.text,
                     borderRadius: radius.full,
                   },
                 ]}
               >
-                <Text style={[routineStyles.dayText, { color: colors.text }]}>
+                <Text style={[routineStyles.dayText, { color: active ? colors.surface : colors.text }]}>
                   {label}
                 </Text>
               </Pressable>
@@ -662,8 +663,7 @@ function RoutineToggle({
 const routineStyles = StyleSheet.create({
   wrap: { gap: 8 },
   toggleRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1.5,
-    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1.5,
   },
   toggleText: { flex: 1, fontSize: 14, fontFamily: font.bodySemiBold },
   toggleSwitch: { width: 34, height: 20, padding: 3, justifyContent: 'center' },
@@ -671,9 +671,8 @@ const routineStyles = StyleSheet.create({
   daysRow: { flexDirection: 'row', gap: 6, justifyContent: 'space-between', paddingHorizontal: 4 },
   dayChip: {
     width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5,
-    shadowColor: INK, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 1,
   },
-  dayText: { fontSize: 12, fontFamily: font.bodySemiBold },
+  dayText: { fontSize: 12, fontFamily: font.bodyBold },
 })
 
 // ─── Diffuse Routine Toggle ────────────────────────────────────────────────
@@ -836,6 +835,10 @@ function siteInputStyle(colors: { text: string; surface: string }) {
   } as const
 }
 
+function siteToneFor(): string {
+  return getModeColorSoft(useModeStore.getState().mode)
+}
+
 const MEAL_STICKERS: Record<string, SiteStickerName> = {
   breakfast: 'egg',
   morning_snack: 'banana',
@@ -981,11 +984,16 @@ function DateChip({
             }}
           />
           {Platform.OS === 'ios' && (
-            <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: pickerBorder }]}>
-              <Text style={diffuse
-                ? [df.pillValue, { color: dTheme.colors.ink, letterSpacing: 2, textTransform: 'uppercase' }]
-                : [styles.datePickerDoneText, { color: colors.primary }]}>{t('common_done')}</Text>
-            </Pressable>
+            diffuse ? (
+              <Pressable onPress={confirmDate} style={[styles.datePickerDone, { borderColor: pickerBorder }]}>
+                <Text style={[df.pillValue, { color: dTheme.colors.ink, letterSpacing: 2, textTransform: 'uppercase' }]}>{t('common_done')}</Text>
+              </Pressable>
+            ) : (
+              // Site look: a small ink pill, bottom-right — "use this date".
+              <View style={styles.datePickerDoneRow}>
+                <SiteChoice compact tick={false} label={t('common_done')} selected tone={siteToneFor()} onPress={confirmDate} sticker="cal" />
+              </View>
+            )
           )}
         </View>
       )}
@@ -3981,7 +3989,8 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
   // Site look: the save action is a tone disc with a pencil (write it down) + hand label;
   // "skip this time" is a quiet text link under it.
   return (
-    <View style={{ alignItems: 'center', gap: 6, marginTop: 8 }}>
+    <SheetFooterAction>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
       <EyeAction
         label={t('common_save')}
         onPress={onPress}
@@ -3990,6 +3999,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
         disabled={disabled}
         sticker="pencil"
         fill={ACTION_TONES.yellow}
+        size={64}
       />
       {onSkip ? (
         <Pressable onPress={onSkip} disabled={saving} hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, paddingVertical: 6 })}>
@@ -3999,6 +4009,7 @@ function SaveButton({ onPress, saving, disabled, onSkip }: { onPress: () => void
         </Pressable>
       ) : null}
     </View>
+    </SheetFooterAction>
   )
 }
 
@@ -4017,6 +4028,7 @@ const styles = StyleSheet.create({
   dateChipText: { fontSize: 13, fontFamily: font.bodyBold },
   datePickerWrap: { marginTop: 4, borderWidth: 1.5, overflow: 'hidden' },
   datePickerDone: { alignItems: 'center', paddingVertical: 10, borderTopWidth: 1 },
+  datePickerDoneRow: { alignItems: 'flex-end', paddingHorizontal: 12, paddingBottom: 12 },
   datePickerDoneText: { fontSize: 15, fontWeight: '700' },
   timeChip: {
     flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5,

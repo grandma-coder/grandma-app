@@ -5,7 +5,7 @@
  * warm dark overlay.
  */
 
-import { ReactNode } from 'react'
+import { ReactNode, createContext, useContext, useEffect, useLayoutEffect, useState } from 'react'
 import { View, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, Text, ScrollView } from 'react-native'
 import { X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +15,16 @@ import { InkBackButton } from '../ui/InkBackButton'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { StickerEnter } from '../ui/Motion'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+
+// Forms rendered inside a sheet hand their primary action to the sheet so it sits in a
+// fixed footer — always visible, never scrolled away. Outside a sheet it renders inline.
+const FooterSlot = createContext<((node: ReactNode) => void) | null>(null)
+export function SheetFooterAction({ children }: { children: ReactNode }) {
+  const set = useContext(FooterSlot)
+  useLayoutEffect(() => { set?.(children) })
+  useEffect(() => () => { set?.(null) }, [set])
+  return set ? null : <>{children}</>
+}
 
 interface LogSheetProps {
   visible: boolean
@@ -40,6 +50,8 @@ export function LogSheet(props: LogSheetProps) {
 
 function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight, footer, sticker }: LogSheetProps) {
   const { colors } = useTheme()
+  const [slot, setSlot] = useState<ReactNode>(null)
+  const footerNode = footer ?? slot
   const insets = useSafeAreaInsets()
 
   const bg = colors.bg
@@ -93,12 +105,12 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {children}
+            <FooterSlot.Provider value={setSlot}>{children}</FooterSlot.Provider>
           </ScrollView>
 
-          {footer ? (
-            <View style={[styles.footer, { borderTopColor: paperBorder }]}>
-              {footer}
+          {footerNode ? (
+            <View style={[styles.footer, { borderTopColor: colors.border }]}>
+              {footerNode}
             </View>
           ) : null}
         </View>
@@ -221,6 +233,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     maxHeight: '100%',
+    flexShrink: 1,
   },
   content: {
     paddingHorizontal: 24,

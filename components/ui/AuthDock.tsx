@@ -211,6 +211,7 @@ export function EyeAction({
   a11y,
   sticker = 'eye',
   fill = EYE_PINK,
+  size = 84,
 }: {
   label: string
   onPress: () => void
@@ -222,13 +223,14 @@ export function EyeAction({
   a11y?: string
   sticker?: SiteStickerName
   fill?: string
+  size?: number
 }) {
   const sway = useIdleSway(6, 4)
   return (
-    <ActionDisc index={index} delay={delay} size={84} fill={fill} ink={ink} label={label} a11y={a11y ?? label}
+    <ActionDisc index={index} delay={delay} size={size} fill={fill} ink={ink} label={label} a11y={a11y ?? label}
       onPress={onPress} disabled={disabled || loading} loading={loading} underline>
       <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
-        <SiteSticker name={sticker} size={sticker === 'eye' ? 54 : 46} cut />
+        <SiteSticker name={sticker} size={Math.round(size * (sticker === 'eye' ? 0.64 : 0.55))} cut />
       </Animated.View>
     </ActionDisc>
   )
