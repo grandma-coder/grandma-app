@@ -17,6 +17,7 @@
  * - Routine Manager: full CRUD against pregnancy_routines table
  */
 
+import { PREGNANCY_LOG_STICKER_MAP } from '../../lib/logStickers'
 import { PREGNANCY_LOG_STICKER } from './PregnancyLogRouter'
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
@@ -331,6 +332,8 @@ const PREG_LOG_STICKER: Record<string, SiteStickerName> = {
   mood: 'face3', symptom: 'thermo', vitamins: 'leaf', water: 'drop', sleep: 'moon',
   exercise: 'shoe', kick_count: 'baby', weight: 'ruler', appointment: 'cal', exam_result: 'doc',
   nutrition: 'avocado', kegel: 'flower', nesting: 'house', birth_prep: 'backpack', contraction: 'flame',
+  // canonical journey map wins — one sticker per log type everywhere
+  ...PREGNANCY_LOG_STICKER_MAP,
 }
 const stickerForPregLog = (type: string): SiteStickerName => PREG_LOG_STICKER[type] ?? 'pencil'
 const MOOD_FACE: Record<string, SiteStickerName> = {

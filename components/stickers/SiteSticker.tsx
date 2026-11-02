@@ -64,6 +64,13 @@ const PLAIN = {
   zz: require('../../assets/stickers-site/zz.png'),
   poop: require('../../assets/stickers-site/poop.png'),
   pee: require('../../assets/stickers-site/pee.png'),
+  scale: require('../../assets/stickers-site/scale.png'),
+  pill: require('../../assets/stickers-site/pill.png'),
+  dumbbell: require('../../assets/stickers-site/dumbbell.png'),
+  glass: require('../../assets/stickers-site/glass.png'),
+  foot: require('../../assets/stickers-site/foot.png'),
+  sun: require('../../assets/stickers-site/sun.png'),
+  stopwatch: require('../../assets/stickers-site/stopwatch.png'),
 } as const
 
 const CUT = {
@@ -125,6 +132,13 @@ const CUT = {
   zz: require('../../assets/stickers-site/zz-cut.png'),
   poop: require('../../assets/stickers-site/poop-cut.png'),
   pee: require('../../assets/stickers-site/pee-cut.png'),
+  scale: require('../../assets/stickers-site/scale-cut.png'),
+  pill: require('../../assets/stickers-site/pill-cut.png'),
+  dumbbell: require('../../assets/stickers-site/dumbbell-cut.png'),
+  glass: require('../../assets/stickers-site/glass-cut.png'),
+  foot: require('../../assets/stickers-site/foot-cut.png'),
+  sun: require('../../assets/stickers-site/sun-cut.png'),
+  stopwatch: require('../../assets/stickers-site/stopwatch-cut.png'),
 } as const
 
 export type SiteStickerName = keyof typeof PLAIN

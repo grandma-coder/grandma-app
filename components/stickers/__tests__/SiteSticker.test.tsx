@@ -4,7 +4,7 @@ import { SITE_STICKER_NAMES } from '../SiteSticker'
 
 describe('SiteSticker', () => {
   it('ships a plain and a die-cut PNG for every sticker', () => {
-    expect(SITE_STICKER_NAMES.length).toBe(58) // 56 from the site + poop, pee drawn for the app
+    expect(SITE_STICKER_NAMES.length).toBe(65) // 56 from the site + 9 drawn for the app (poop, pee, scale, pill, dumbbell, glass, foot, sun, stopwatch)
     for (const n of SITE_STICKER_NAMES) {
       for (const f of [`${n}.png`, `${n}-cut.png`]) expect(existsSync(join(__dirname, '../../../assets/stickers-site', f))).toBe(true)
     }

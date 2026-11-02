@@ -3,6 +3,7 @@
  * `type` + `date`. Extracted from PregnancyCalendar so the Calendar tab and the
  * home "Log for today" card drive the exact same 15 forms.
  */
+import { PREGNANCY_LOG_STICKER_MAP } from '../../lib/logStickers'
 import React from 'react'
 import {
   PregnancyMoodForm, WeightLogForm, PregnancySymptomsForm, AppointmentForm,
@@ -23,11 +24,7 @@ export type PregnancyLogType =
  * (`<LogSheet sticker={PREGNANCY_LOG_STICKER[type]} …>`). The forms no longer draw
  * their own header chip in the light look, so the sheet title carries the sticker.
  */
-export const PREGNANCY_LOG_STICKER: Record<PregnancyLogType, SiteStickerName> = {
-  mood: 'face3', weight: 'me', symptom: 'thermo', appointment: 'doc', exam_result: 'otest',
-  kick_count: 'shoe', sleep: 'moon', exercise: 'flower', nutrition: 'avocado', kegel: 'leaf',
-  water: 'drop', vitamins: 'star', nesting: 'crib', birth_prep: 'backpack', contraction: 'flame',
-}
+export const PREGNANCY_LOG_STICKER: Record<PregnancyLogType, SiteStickerName> = PREGNANCY_LOG_STICKER_MAP as Record<PregnancyLogType, SiteStickerName>
 
 export function PregnancyLogRouter({
   type, date, onSaved,

@@ -9,6 +9,7 @@
  * Tapping an activity opens a detail popup with edit/delete.
  */
 
+import { KIDS_LOG_STICKER } from '../../lib/logStickers'
 import { useState, useMemo, useEffect, useCallback, useRef, Fragment } from 'react'
 import {
   View,
@@ -141,6 +142,8 @@ const LOG_STICKER: Record<string, SiteStickerName> = {
   health: 'thermo', temperature: 'thermo', medicine: 'syringe', vaccine: 'syringe',
   mood: 'face3', memory: 'camera', photo: 'camera', diaper: 'diaper',
   growth: 'ruler', milestone: 'star', activity: 'shoe', note: 'pencil', exam: 'doc',
+  // canonical journey map wins — one sticker per log type everywhere
+  ...KIDS_LOG_STICKER,
 }
 const stickerForLog = (type: string): SiteStickerName => LOG_STICKER[type] ?? 'pencil'
 

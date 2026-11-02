@@ -9,6 +9,7 @@
  * period date (see CycleHome + getCycleInfo), so an empty log day is a
  * valid, honest state.
  */
+import { CYCLE_LOG_STICKER } from '../../../lib/logStickers'
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
@@ -83,11 +84,7 @@ const LH_LABEL: Record<string, string> = {
 }
 
 // Site-look dock sticker per chip key (mood face is value-driven, resolved in the component).
-const DOCK_STICKER: Record<string, SiteStickerName> = {
-  mood: 'face3', symptoms: 'heart', bbt: 'thermo', lh: 'otest', cm: 'drop', intimacy: 'heart',
-  period_start: 'drop', period_end: 'drop', pregnancy_test: 'otest', sex_drive: 'heart',
-  clots: 'drop', weight: 'bars', water: 'drop', activity: 'shoe',
-}
+const DOCK_STICKER: Record<string, SiteStickerName> = CYCLE_LOG_STICKER
 const MOOD_FACE: Record<string, SiteStickerName> = {
   low: 'face1', down: 'face1', okay: 'face2', good: 'face3', great: 'face4',
 }

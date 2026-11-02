@@ -5,6 +5,7 @@
  * host opens the matching form for the active date. Reuses the shared
  * LogTile / LogTileGrid so it's visually identical to the cycle launcher.
  */
+import { MENOPAUSE_LOG_STICKER } from '../../lib/logStickers'
 import { View, Text, Pressable, Modal, ScrollView, StyleSheet } from 'react-native'
 import { X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -21,12 +22,7 @@ import { symptomBlob, symptomStickerKey } from './menopauseIcons'
 export type MenopauseLogPick = MenopauseSymptomId | 'period'
 
 // Site look: one hand-drawn sticker per symptom (shared by every menopause surface).
-const MENO_STICKER: Record<string, SiteStickerName> = {
-  hot_flash: 'flame', night_sweat: 'drop', sleep: 'zz', fatigue: 'cloud',
-  low_mood: 'face1', anxiety: 'bubble', brain_fog: 'brain', joint_pain: 'shoe',
-  headache: 'thermo', palpitations: 'heart', weight: 'ruler',
-  vaginal_dryness: 'leaf', libido: 'flower', period: 'drop', note: 'pencil',
-}
+const MENO_STICKER: Record<string, SiteStickerName> = MENOPAUSE_LOG_STICKER
 /** Sticker for any `menopause_logs.type` / symptom id. */
 export function menoSticker(type: string): SiteStickerName {
   const id = resolveMenopauseSymptomId(type)

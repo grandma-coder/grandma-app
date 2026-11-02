@@ -10,6 +10,7 @@
  * useKidsTodayLogs(childId) and a chip is "done" when any of its doneTypes has a
  * count > 0 today. Chips show label + Character icon only (no per-metric value).
  */
+import { KIDS_LOG_STICKER } from '../../../lib/logStickers'
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
@@ -50,10 +51,7 @@ const CHAR_FOR: Record<string, { name: CharacterName; hue: keyof ReturnType<type
 }
 
 // Site-look icons (non-diffuse): obvious sticker matches; anything else keeps its Character blob.
-const SITE_FOR: Record<string, SiteStickerName> = {
-  sleep: 'moon', mood: 'face3', feeding: 'bottle', activity: 'shoe', diaper: 'diaper',
-  wake_up: 'cloud', health: 'thermo', memory: 'camera', exam: 'doc',
-}
+const SITE_FOR: Record<string, SiteStickerName> = KIDS_LOG_STICKER
 
 export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Props) {
   const { colors, font, stickers } = useTheme()

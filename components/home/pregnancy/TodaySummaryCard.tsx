@@ -7,6 +7,7 @@
  * dashboard modal with charts and metrics for today's logs.
  */
 
+import { PREGNANCY_LOG_STICKER_MAP } from '../../../lib/logStickers'
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
@@ -43,11 +44,7 @@ interface Props {
 }
 
 // Site-look dock sticker per quick-log key.
-const SITE_FOR: Record<string, SiteStickerName> = {
-  mood: 'face3', water: 'drop', sleep: 'zz', meals: 'lettuce', weight: 'bars', kicks: 'shoe',
-  symptom: 'thermo', exercise: 'flame', vitamins: 'leaf', kegel: 'flower', contraction: 'bell',
-  appointment: 'cal', exam_result: 'doc', nesting: 'crib', birth_prep: 'bodysuit',
-}
+const SITE_FOR: Record<string, SiteStickerName> = PREGNANCY_LOG_STICKER_MAP
 
 const MOOD_LABELS: Record<string, string> = {
   excited: 'Excited', happy: 'Happy', okay: 'Okay',
