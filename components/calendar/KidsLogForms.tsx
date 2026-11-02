@@ -64,6 +64,7 @@ import { supabase } from '../../lib/supabase'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { ChoiceStep, MoreSection, ActiveChildChip, StickerChoice, type ChoiceOption } from './QuickLogKit'
 import { SheetFooterAction } from './LogSheet'
+import { mealForHour } from '../../lib/mealForHour'
 import { StepSlider } from '../ui/StepSlider'
 import { diffuseLogHue } from './DiffuseLogTimeline'
 import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodCalories'
@@ -1176,6 +1177,10 @@ const MEAL_MOMENT_DEFS: { id: MealMoment; labelKey: TranslationKey }[] = [
   { id: 'night_snack', labelKey: 'kids_logForm_mealNight' },
 ]
 
+export { mealForHour }
+
+const BOTTLE_QUICK_ML = [60, 90, 120, 150, 180]
+
 const EAT_QUALITY_DEFS: { id: EatQuality; labelKey: TranslationKey; sticker: 'smiley' | 'sleepy' | 'sad' }[] = [
   { id: 'ate_well', labelKey: 'kids_logForm_ateWell', sticker: 'smiley' },
   { id: 'ate_little', labelKey: 'kids_logForm_ateLittle', sticker: 'sleepy' },
@@ -1295,6 +1300,23 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       if (p.time) setStartTime(p.time)
     } catch {}
   }, [editLog?.id])
+
+  // Smart default: preselect the meal from the current hour (solids only).
+  // Never overrides an edit, a routine prefill, or a choice already made.
+  useEffect(() => {
+    if (editLog || feedType !== 'solids') return
+    setMeal((prev) => prev ?? mealForHour(new Date().getHours()))
+  }, [feedType, prefill, editLog?.id])
+
+  // Recommended next side = opposite of the last one fed ('both' → none)
+  const recommendedSide: 'left' | 'right' | null =
+    lastSide === 'left' ? 'right' : lastSide === 'right' ? 'left' : null
+
+  // Smart default: preselect the recommended side once it is known
+  useEffect(() => {
+    if (editLog || prefill?.value || feedType !== 'breast' || !recommendedSide) return
+    setBreastSide((prev) => prev ?? recommendedSide)
+  }, [recommendedSide, feedType])
 
   // Fetch last breast side for this child
   useEffect(() => {
@@ -2076,15 +2098,12 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       <View style={styles.form}>
         <ActiveChildChip childId={childId} onChange={setChildId} />
         <View style={styles.topRow}>
-          <View style={styles.dateTimeRow}>
-            <DateChip value={logDate} onChange={setLogDate} />
-            <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
-          </View>
+          <DateChip value={logDate} onChange={setLogDate} />
         </View>
 
         <FormHeaderSticker kind="feeding" />
 
-        {/* Feed type toggle */}
+        {/* The one main question: feed type */}
         <View style={styles.stickerGrid}>
           {(['breast', 'bottle', 'solids'] as FeedingType[]).map((ft) => (
             <StickerChoice
@@ -2101,7 +2120,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
         {feedType === 'solids' ? (
           <>
-            {/* Meal moment */}
+            {/* Meal moment — preselected from the time of day, still changeable */}
             <View style={styles.stickerGrid}>
               {MEAL_MOMENTS.map((m) => (
                 <StickerChoice
@@ -2134,18 +2153,20 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               </View>
             )}
 
-            {/* One clear scan control */}
-            <View style={{ gap: 10 }}>
-              <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('kids_logForm_scanPlate')}</Text>
+            {/* Plate scan — quiet text-link row */}
+            <View style={styles.scanLinkRow}>
               {scanningPlate ? (
-                <View style={styles.siteRow}>
-                  <SitePill label={t('kids_logForm_readingPlate')} onPress={() => {}} disabled />
-                </View>
+                <Text style={[styles.scanLinkText, { color: colors.textMuted }]}>{t('kids_logForm_readingPlate')}</Text>
               ) : (
-                <View style={styles.siteRow}>
-                  <SitePill flex label={t('kids_logForm_alertTakePhoto')} sticker="camera" onPress={() => scanPlate('camera')} />
-                  <SitePill flex label={t('kids_foodDash_gallery')} sticker="pola" onPress={() => scanPlate('library')} />
-                </View>
+                <>
+                  <Pressable onPress={() => scanPlate('camera')} style={styles.scanLink} hitSlop={8} accessibilityRole="button">
+                    <SiteSticker name="camera" size={18} cut />
+                    <Text style={[styles.scanLinkText, { color: colors.text }]}>{t('kids_logForm_scanPlateShort')}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => scanPlate('library')} hitSlop={8} accessibilityRole="button">
+                    <Text style={[styles.scanLinkText, { color: colors.textMuted, textDecorationLine: 'underline' }]}>{t('kids_foodDash_gallery')}</Text>
+                  </Pressable>
+                </>
               )}
             </View>
 
@@ -2158,7 +2179,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     const loading = aiLoadingIdx.has(i)
                     const known = tag.match !== null || tag.manualCals !== null
                     return (
-                      <View key={`${tag.name}-${i}`} style={[styles.foodTag, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: radius.full }]}>
+                      <View key={`${tag.name}-${i}`} style={[styles.foodTag, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full }]}>
                         {loading
                           ? <ActivityIndicator size="small" color={colors.primary} />
                           : known
@@ -2182,7 +2203,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               <TextInput
                 value={foodInput}
                 onChangeText={setFoodInput}
-                placeholder={foodTags.length === 0 ? t('kids_logForm_placeholderFood') : t('kids_logForm_placeholderAddFood')}
+                placeholder={foodTags.length === 0 ? t('kids_logForm_placeholderFoodShort') : t('kids_logForm_placeholderAddFood')}
                 placeholderTextColor={colors.textMuted}
                 returnKeyType="done"
                 blurOnSubmit={false}
@@ -2206,10 +2227,10 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   })
                   setFoodInput('')
                 }}
-                style={[styles.input, siteInputStyle(colors)]}
+                style={[styles.input, siteInputStyle(colors), { minHeight: 52, paddingVertical: 12, borderWidth: 1 }]}
               />
               {calorieMatches.length > 0 && (
-                <View style={[styles.calorieBanner, { backgroundColor: stickerPalette.greenSoft, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
+                <View style={[styles.calorieBanner, { backgroundColor: stickerPalette.greenSoft, borderWidth: 0, borderRadius: 18 }]}>
                   <View style={styles.calorieHeader}>
                     <Utensils size={14} color={colors.text} strokeWidth={2} />
                     <Text style={[styles.calorieTotalText, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>
@@ -2289,70 +2310,14 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 />
               ))}
             </View>
-
-            {/* Flags + expandable fields */}
-            <View style={styles.flagRow}>
-              <SiteChip
-                label={t('kids_logForm_newFood')}
-                selected={isNewFood}
-                tone={siteTone}
-                onPress={() => setIsNewFood(!isNewFood)}
-                icon={<Baby size={14} color={colors.text} strokeWidth={2} />}
-              />
-              <SiteChip
-                label={t('kids_logForm_reaction')}
-                selected={hasReaction}
-                tone={stickerPalette.pinkSoft}
-                onPress={() => setHasReaction(!hasReaction)}
-                icon={<AlertTriangle size={14} color={colors.text} strokeWidth={2} />}
-              />
-            </View>
-
-            {/* New food expanded */}
-            {isNewFood && (
-              <View style={[styles.expandedFlag, { backgroundColor: brand.secondary + '08', borderColor: brand.secondary + '25', borderRadius: radius.lg }]}>
-                <Text style={[styles.expandedFlagLabel, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('kids_logForm_whatNewFood')}</Text>
-                <TextInput
-                  value={newFoodName}
-                  onChangeText={setNewFoodName}
-                  placeholder={t('kids_logForm_placeholderNewFood')}
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.expandedFlagInput, siteInputStyle(colors)]}
-                />
-              </View>
-            )}
-
-            {/* Reaction expanded */}
-            {hasReaction && (
-              <View style={[styles.expandedFlag, { backgroundColor: brand.error + '08', borderColor: brand.error + '25', borderRadius: radius.lg }]}>
-                <Text style={[styles.expandedFlagLabel, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('kids_logForm_reactionDetails')}</Text>
-                <TextInput
-                  value={reactionFood}
-                  onChangeText={setReactionFood}
-                  placeholder={t('kids_logForm_placeholderAllergyFood')}
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.expandedFlagInput, siteInputStyle(colors)]}
-                />
-                <TextInput
-                  value={reactionDesc}
-                  onChangeText={setReactionDesc}
-                  placeholder={t('kids_logForm_placeholderAllergyReaction')}
-                  placeholderTextColor={colors.textMuted}
-                  multiline
-                  style={[styles.expandedFlagInput, siteInputStyle(colors), { minHeight: 60, paddingTop: 10 }]}
-                />
-              </View>
-            )}
           </>
         ) : feedType === 'breast' ? (
           <>
-            {/* ── Breast Feeding with Live Timer ── */}
-
             {/* Last side reminder */}
             {!timerActive && (lastSideLoading ? (
               <ActivityIndicator size="small" color={colors.primary} style={{ alignSelf: 'flex-start' }} />
             ) : lastSide ? (
-              <View style={[styles.lastSideBanner, { backgroundColor: stickerPalette.yellowSoft, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
+              <View style={[styles.lastSideBanner, { backgroundColor: stickerPalette.yellowSoft, borderWidth: 0, borderRadius: 18 }]}>
                 <Text style={[styles.lastSideLabel, { color: colors.text }]}>
                   {t('kids_logForm_lastSidePre')}<Text style={{ fontWeight: '800', color: colors.text }}>
                     {lastSide === 'left' ? t('kids_logForm_left') : lastSide === 'right' ? t('kids_logForm_right') : t('kids_logForm_bothSides')}
@@ -2426,57 +2391,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                 </View>
               </View>
             ) : (
-              /* ── START MODE — pick side and go ── */
               <>
-                <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('kids_logForm_tapToStart')}</Text>
-                <View style={styles.siteRow}>
-                  {([
-                    { id: 'left' as const, label: t('kids_logForm_left') },
-                    { id: 'right' as const, label: t('kids_logForm_right') },
-                  ]).map((s) => {
-                    const isRecommended = !!lastSide && (
-                      (lastSide === 'left' && s.id === 'right') ||
-                      (lastSide === 'right' && s.id === 'left')
-                    )
-                    return (
-                      <SiteChoice
-                        key={s.id}
-                        style={{ flex: 1 }}
-                        tick={false}
-                        label={s.label}
-                        sub={isRecommended ? t('kids_logForm_labelNext') : undefined}
-                        sticker="heart"
-                        selected={isRecommended}
-                        tone={stickerPalette.yellowSoft}
-                        onPress={() => startTimer(s.id)}
-                      />
-                    )
-                  })}
-                </View>
-
-                {/* Switch target setting */}
-                <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
-                  <Clock size={14} color={colors.textMuted} strokeWidth={2} />
-                  <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>{t('kids_logForm_alertToSwitch')}</Text>
-                  {[10, 15, 20].map((min) => (
-                    <SiteChip
-                      key={min}
-                      label={t('kids_logForm_minUnit', { n: min })}
-                      selected={switchTargetMin === min}
-                      tone={siteTone}
-                      onPress={() => setSwitchTargetMin(min)}
-                    />
-                  ))}
-                </View>
-
-                {/* Or log manually */}
-                <View style={styles.manualDivider}>
-                  <View style={[styles.manualDividerLine, { backgroundColor: colors.border }]} />
-                  <Text style={[styles.manualDividerText, { color: colors.textMuted }]}>{t('kids_logForm_orLogManually')}</Text>
-                  <View style={[styles.manualDividerLine, { backgroundColor: colors.border }]} />
-                </View>
-
-                {/* Manual side selection */}
+                {/* Side picker — recommended side preselected */}
                 <View style={styles.siteRow}>
                   {([
                     { id: 'left' as const, label: t('kids_logForm_left') },
@@ -2504,12 +2420,37 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   keyboardType="number-pad"
                   style={[styles.input, siteInputStyle(colors)]}
                 />
+
+                {/* Timer — secondary */}
+                <Pressable
+                  onPress={() => startTimer(breastSide === 'left' || breastSide === 'right' ? breastSide : recommendedSide ?? 'left')}
+                  style={styles.scanLink}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                >
+                  <Clock size={16} color={colors.text} strokeWidth={2} />
+                  <Text style={[styles.scanLinkText, { color: colors.text }]}>{t('kids_logForm_startTimer')}</Text>
+                </Pressable>
               </>
             )}
           </>
         ) : (
           <>
             {/* ── Bottle ── */}
+            <View style={styles.siteRow}>
+              {BOTTLE_QUICK_ML.map((n) => (
+                <SiteChoice
+                  key={n}
+                  compact
+                  style={{ flex: 1 }}
+                  tick={false}
+                  label={String(n)}
+                  selected={bottleAmountNum === n}
+                  tone={siteTone}
+                  onPress={() => setBottleAmountNum(n)}
+                />
+              ))}
+            </View>
             <StepSlider
               min={BOTTLE_AMOUNT_MIN}
               max={BOTTLE_AMOUNT_MAX}
@@ -2522,7 +2463,84 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
           </>
         )}
 
-        <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+        <MoreSection label={t('kids_logForm_more')}>
+          <TimeChip value={startTime} onChange={setStartTime} label={t('kids_logForm_time')} />
+          {feedType === 'breast' && !timerActive && (
+            <View style={[styles.switchTargetRow, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 18 }]}>
+              <Clock size={14} color={colors.textMuted} strokeWidth={2} />
+              <Text style={[styles.switchTargetLabel, { color: colors.textSecondary }]}>{t('kids_logForm_alertToSwitch')}</Text>
+              {[10, 15, 20].map((min) => (
+                <SiteChip
+                  key={min}
+                  label={t('kids_logForm_minUnit', { n: min })}
+                  selected={switchTargetMin === min}
+                  tone={siteTone}
+                  onPress={() => setSwitchTargetMin(min)}
+                />
+              ))}
+            </View>
+          )}
+
+          {feedType === 'solids' && (
+            <>
+            {/* Flags + expandable fields */}
+            <View style={styles.flagRow}>
+              <SiteChip
+                label={t('kids_logForm_newFood')}
+                selected={isNewFood}
+                tone={siteTone}
+                onPress={() => setIsNewFood(!isNewFood)}
+                icon={<Baby size={14} color={colors.text} strokeWidth={2} />}
+              />
+              <SiteChip
+                label={t('kids_logForm_reaction')}
+                selected={hasReaction}
+                tone={stickerPalette.pinkSoft}
+                onPress={() => setHasReaction(!hasReaction)}
+                icon={<AlertTriangle size={14} color={colors.text} strokeWidth={2} />}
+              />
+            </View>
+
+            {/* New food expanded */}
+            {isNewFood && (
+              <View style={[styles.expandedFlag, { backgroundColor: brand.secondary + '08', borderColor: brand.secondary + '25', borderRadius: radius.lg }]}>
+                <Text style={[styles.expandedFlagLabel, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('kids_logForm_whatNewFood')}</Text>
+                <TextInput
+                  value={newFoodName}
+                  onChangeText={setNewFoodName}
+                  placeholder={t('kids_logForm_placeholderNewFood')}
+                  placeholderTextColor={colors.textMuted}
+                  style={[styles.expandedFlagInput, siteInputStyle(colors)]}
+                />
+              </View>
+            )}
+
+            {/* Reaction expanded */}
+            {hasReaction && (
+              <View style={[styles.expandedFlag, { backgroundColor: brand.error + '08', borderColor: brand.error + '25', borderRadius: radius.lg }]}>
+                <Text style={[styles.expandedFlagLabel, { color: colors.text, fontFamily: font.bodyBold, fontWeight: undefined }]}>{t('kids_logForm_reactionDetails')}</Text>
+                <TextInput
+                  value={reactionFood}
+                  onChangeText={setReactionFood}
+                  placeholder={t('kids_logForm_placeholderAllergyFood')}
+                  placeholderTextColor={colors.textMuted}
+                  style={[styles.expandedFlagInput, siteInputStyle(colors)]}
+                />
+                <TextInput
+                  value={reactionDesc}
+                  onChangeText={setReactionDesc}
+                  placeholder={t('kids_logForm_placeholderAllergyReaction')}
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                  style={[styles.expandedFlagInput, siteInputStyle(colors), { minHeight: 60, paddingTop: 10 }]}
+                />
+              </View>
+            )}
+            </>
+          )}
+          <RoutineToggle enabled={routineEnabled} onToggle={setRoutineEnabled} days={routineDays} onDaysChange={setRoutineDays} locked={!!prefill} />
+        </MoreSection>
+
         <SaveButton onPress={save} saving={saving} disabled={!childId} onSkip={prefill?.routineId ? onSkip : undefined} />
       </View>
     </ScrollView>
@@ -4194,6 +4212,9 @@ const styles = StyleSheet.create({
   // Breast feeding
   lastSideBanner: { padding: 12, borderWidth: 1 },
   lastSideLabel: { fontSize: 13, fontWeight: '500', lineHeight: 20 },
+  scanLinkRow: { flexDirection: 'row', alignItems: 'center', gap: 18, paddingVertical: 2 },
+  scanLink: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 6 },
+  scanLinkText: { fontSize: 14, fontFamily: font.bodyBold },
   sectionLabel: { fontSize: 16, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 },
   sideRow: { flexDirection: 'row', gap: 8 },
   sideBtn: { flex: 1, alignItems: 'center', paddingVertical: 16, gap: 8, borderWidth: 1 },
