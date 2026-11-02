@@ -92,6 +92,7 @@ import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { FadeUp } from '../ui/Motion'
 import { bucketSeries } from './shared/bucketSeries'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import { ReportEntryRow } from '../../lib/reports/ReportEntryRow'
 import { Skeleton, SkeletonLines } from '../ui/Skeleton'
 import { SkeletonChartSection, SkeletonStatRow, SkeletonStatRows } from './shared/AnalyticsSkeleton'
 import {
@@ -1047,6 +1048,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             />
           )}
         </View>
+        {/* Report for the doctor — light only, last row of the details. */}
+        {!diffuse && <ReportEntryRow behavior="pregnancy" />}
         <InsightsDisclaimer />
       </ScrollView>
 

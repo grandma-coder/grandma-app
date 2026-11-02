@@ -42,3 +42,9 @@ Read `docs/design/site-look.md` first.
 ## Fonts
 - Titles: `font.display` (Architects Daughter) uppercase. Body/labels: Hanken (`font.body*`). Eyebrows: `'SpaceMono_400Regular'`. Big numbers: `font.displayBold`.
 - Never leave a text style without a fontFamily; `lib/fontDefaults.ts` backs up StyleSheet styles but inline styles must set it.
+
+## Parallel agents and i18n (when told to use a handoff file)
+- Do NOT edit `lib/i18n/*`. Use `t('your_key')` in code and write every new key to your handoff JSON file
+  (path given in your task) as `{ "your_key": { "en": "...", "pt-BR": "...", "es": "...", "fr": "...", "de": "...", "it": "...", "ja": "...", "ko": "...", "zh": "...", "ar": "...", "hi": "...", "tr": "..." } }` with real translations and identical `{{params}}`.
+- `tsc` will fail on unknown keys until the controller merges them — that's expected; report it, everything else must typecheck.
+- Wording rules from `docs/compliance/2026-11-02-regras-saude.md` apply: no diagnosis, no grades/scores, no "normal", no treatment advice, no contraception claims.

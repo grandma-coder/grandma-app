@@ -39,9 +39,11 @@ import { menoSticker } from '../menopause/MenopauseLogSheet'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { TRIGGER_LABEL_KEY, countMenopauseTriggers } from '../../lib/menopauseTriggers'
 import { monthsSinceDate, type MenopauseStage } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import { ReportEntryRow } from '../../lib/reports/ReportEntryRow'
 import { buildMenopauseNote } from '../../lib/grandmaNotes/menopause'
 import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
 import { SkeletonChartSection, SkeletonHeadline, SkeletonStatRows } from './shared/AnalyticsSkeleton'
@@ -124,6 +126,7 @@ export function MenopauseAnalytics() {
   if (!palette.diffuse) {
     const lastVaso = vaso.slice(-14)
     const vasoAvg = vaso.length ? vasoTotal / vaso.length : 0
+    const topTriggers = countMenopauseTriggers(rows).counts.slice(0, 3)
     return (
       <View style={[styles.root, { backgroundColor: palette.bg }]}>
         <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
@@ -153,6 +156,9 @@ export function MenopauseAnalytics() {
                   <>
                     <SiteNote>{t('menoAnalytics_vasoAverageNote', { avg: vasoAvg.toFixed(1), count: lastVaso.length })}</SiteNote>
                     <SiteBars values={lastVaso.map((d) => d.count)} labels={lastVaso.map((d) => shortDate(d.date))} tone={palette.accentSoft} capped />
+                    {topTriggers.length > 0 && (
+                      <SiteNote>{t('meno_trigger_most_noted', { list: topTriggers.map((x) => `${t(TRIGGER_LABEL_KEY[x.id])} (${x.count})`).join(', ') })}</SiteNote>
+                    )}
                   </>
                 ) : (
                   <SiteNote>Log a hot flash or night sweat to see your rhythm.</SiteNote>
@@ -185,6 +191,8 @@ export function MenopauseAnalytics() {
               </SiteSection>
             </>
           )}
+          {/* Report for the doctor — last row of the details. */}
+          <ReportEntryRow behavior="menopause" style={{ marginHorizontal: 24 }} />
           <InsightsDisclaimer />
         </ScrollView>
       </View>

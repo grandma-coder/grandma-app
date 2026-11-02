@@ -14,36 +14,12 @@
  * build). Model: Print.printToFileAsync({html}) → Sharing.shareAsync(uri, pdf).
  */
 
-import * as Sharing from 'expo-sharing'
-import { requireOptionalNativeModule } from 'expo-modules-core'
 import { estimatePercentile, resolveSex, type Metric } from './growthStandards'
-import type * as PrintType from 'expo-print'
+import { esc, isPdfExportAvailable, printAndSharePdf, reportDocument } from './reports/reportKit'
 
-// expo-print resolves its NATIVE module ('ExpoPrint') at IMPORT time, so a bare
-// top-level `import * as Print from 'expo-print'` crashes any client without the
-// native binary (Expo Go, or a dev client built before expo-print was added) —
-// the crash happens when this file is imported, before any try/catch can run.
-// Probe for the native module first, require the JS wrapper only when present.
-// Same pattern as lib/pushNotifications.ts and lib/appLock.ts.
-let _print: typeof PrintType | null | undefined
-
-function getPrint(): typeof PrintType | null {
-  if (_print !== undefined) return _print
-  _print = null
-  try {
-    if (requireOptionalNativeModule('ExpoPrint')) {
-      _print = require('expo-print')
-    }
-  } catch {
-    _print = null
-  }
-  return _print ?? null
-}
-
-/** True when PDF generation is available (native module present). */
-export function isPdfExportAvailable(): boolean {
-  return getPrint() !== null
-}
+// PDF plumbing (expo-print probe, print + share), the page shell and base styles
+// live in lib/reports/reportKit and are shared with the journey reports.
+export { isPdfExportAvailable }
 
 export interface ReportMeasurement {
   metric: Metric
@@ -91,14 +67,6 @@ export function measurementPercentile(
 }
 
 // ── HTML building blocks ────────────────────────────────────────────────────
-
-function esc(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
 
 function ordinal(n: number): string {
   const s = ['th', 'st', 'nd', 'rd']
@@ -155,40 +123,7 @@ export function buildReportHtml(d: PediatricReportData): string {
       </section>`
     : ''
 
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
-    color: #1a1a1a; margin: 0; padding: 32px 30px; font-size: 12px; line-height: 1.5;
-  }
-  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1a1a1a; padding-bottom: 14px; }
-  .title { font-size: 21px; font-weight: 700; margin: 0; }
-  .subtitle { color: #666; font-size: 11px; margin: 3px 0 0; }
-  .brand { text-align: right; font-size: 11px; color: #888; }
-  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #444; margin: 22px 0 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-  .row { display: flex; padding: 3px 0; }
-  .k { width: 130px; color: #666; flex-shrink: 0; }
-  .v { flex: 1; }
-  .muted { color: #999; }
-  .chip { display: inline-block; background: #f0efe9; border-radius: 10px; padding: 2px 9px; margin: 1px 0; font-size: 11px; }
-  .chip.overdue { background: #fbe3de; color: #b43e2e; }
-  .chip.due { background: #eef2e4; color: #5a6b34; }
-  table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-  th { text-align: left; color: #666; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 5px 8px; border-bottom: 1px solid #ddd; }
-  td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
-  .grid2 { display: flex; gap: 24px; }
-  .grid2 > section { flex: 1; }
-  .disclaimer { margin-top: 26px; padding: 12px 14px; background: #f7f5ef; border-radius: 8px; color: #666; font-size: 10px; line-height: 1.5; }
-  section { break-inside: avoid; }
-</style>
-</head>
-<body>
-  <div class="head">
+  return reportDocument(`  <div class="head">
     <div>
       <p class="title">${esc(d.childName)}</p>
       <p class="subtitle">Pediatric summary · ${esc(d.ageLabel)}${d.sex ? ' · ' + esc(d.sex) : ''}</p>
@@ -235,25 +170,10 @@ export function buildReportHtml(d: PediatricReportData): string {
     discussion with your child's healthcare provider. Percentiles are estimated
     from WHO/CDC growth standards for decision-support only and are not a clinical
     diagnosis. Please verify all values against your own records.
-  </div>
-</body>
-</html>`
+  </div>`)
 }
 
 /** Generate the PDF from report data and open the OS share sheet. */
 export async function generateAndShareReport(d: PediatricReportData): Promise<void> {
-  const Print = getPrint()
-  if (!Print) {
-    // Recognized by the caller's catch → shows a "please update the app" message.
-    throw new Error('ExpoPrint native module unavailable')
-  }
-  const html = buildReportHtml(d)
-  const { uri } = await Print.printToFileAsync({ html })
-  if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(uri, {
-      mimeType: 'application/pdf',
-      dialogTitle: `${d.childName} — pediatric report`,
-      UTI: 'com.adobe.pdf',
-    })
-  }
+  await printAndSharePdf(buildReportHtml(d), `${d.childName} — pediatric report`)
 }

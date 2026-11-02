@@ -54,6 +54,7 @@ import { MoodStrip } from './shared/MoodStrip'
 import { cycleMoodToStrip } from '../../lib/moodTrend'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
+import { ReportEntryRow } from '../../lib/reports/ReportEntryRow'
 import { buildCycleNote } from '../../lib/grandmaNotes/cycle'
 import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
 import { SkeletonChartSection, SkeletonStatRows } from './shared/AnalyticsSkeleton'
@@ -496,6 +497,8 @@ export function CycleAnalytics() {
             {t('cycleAnalytics_seed_hint')}
           </Text>
         )}
+        {/* Report for the doctor — light only, last row of the details. */}
+        {!diffuse && <ReportEntryRow behavior="pre-pregnancy" />}
         <InsightsDisclaimer />
       </ScrollView>
 
