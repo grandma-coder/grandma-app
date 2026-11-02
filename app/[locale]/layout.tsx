@@ -27,7 +27,7 @@ const hand = localFont({ variable: '--font-hand', display: 'swap', src: '../../a
 
 export const viewport: Viewport = { themeColor: '#F3F0E8', viewportFit: 'cover' }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://grandma.app'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.thegrandma.app'
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     metadataBase: new URL(SITE_URL),
     title: t('title'),
     description: t('description'),
-    alternates: { canonical: `/${locale}`, languages: { en: '/en', 'pt-BR': '/pt', 'x-default': '/en' } },
+    alternates: { canonical: `/${locale}`, languages: { en: '/en', 'pt-BR': '/pt', 'x-default': '/pt' } },
     openGraph: { title: t('ogTitle'), description: t('description'), type: 'website', locale: locale === 'pt' ? 'pt_BR' : 'en_US' },
     twitter: { card: 'summary_large_image' },
     other: { 'apple-mobile-web-app-capable': 'yes' },

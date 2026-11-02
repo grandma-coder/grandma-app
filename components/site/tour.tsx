@@ -27,7 +27,7 @@ const isSmall = () => !!window.matchMedia?.(SMALL_QUERY).matches
  * Hand-drawn onboarding: a sticky note, a drawn arrow and a halo that follow the next thing to tap. Steps live in
  * the demo reducer (`tourDone` advances only on the current key; `skipTour` / `joined` end it). One fixed overlay,
  * positioned from getBoundingClientRect in a rAF loop that stops with the tour and pauses with the tab. Each frame reads
- * the target's rect (plus its phone screen and tab bar, to catch a scrolled-away or covered target) once and writes only when the rect, step, viewport, visibility or busy state changed.
+ * the target's rect (plus its phone screen, tab bar and, on small screens, the sticky phase switch, to catch a scrolled-away or covered target) once and writes only when the rect, step, viewport, visibility or busy state changed.
  */
 export function Tour() {
   const { state, dispatch } = useDemo()
@@ -75,6 +75,8 @@ export function Tour() {
       const sc = el?.closest<HTMLElement>('[data-screen]')
       const clip = sc?.getBoundingClientRect()
       const bar = sc && document.querySelector('#phone nav')?.getBoundingClientRect()
+      // on small screens the phase switch sticks over the top of the phone, hiding what scrolls under it
+      const modes = sc && isSmall() ? document.getElementById(MODES_ID)?.getBoundingClientRect() : undefined
       // a target can sit inside the window yet be scrolled out of the phone screen or under its tab bar
       const floor = clip ? Math.min(clip.bottom, bar ? bar.top - 8 : clip.bottom) : 0
       const inScreen = !clip || (!!r && r.top >= clip.top - 2 && r.bottom <= floor)
@@ -85,7 +87,8 @@ export function Tour() {
         sc.scrollBy?.({ top: dy / scale, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
       }
       const iw = window.innerWidth, ih = window.innerHeight
-      const vis = !!r && r.width > 0 && inScreen && r.bottom > 70 && r.top < ih - (isSmall() ? 90 : 10)
+      const underModes = !!modes && !!r && r.top < modes.bottom - 2
+      const vis = !!r && r.width > 0 && inScreen && !underModes && r.bottom > 70 && r.top < ih - (isSmall() ? 90 : 10)
       const below = !!r && r.top >= ih - 10 && k !== 'join'
       const show = vis && !b
       const pill = below && !b

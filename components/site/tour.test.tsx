@@ -35,6 +35,7 @@ let nextId: number
 let below: boolean
 let clipped: boolean // the phone screen scrolled the target out of its visible area
 let covered: boolean // the target sits under the phone's tab bar
+let stuck: boolean // the sticky phase switch sits over the target (small screens)
 const flush = () => act(() => {
   const run = [...queue.values()]
   queue.clear()
@@ -58,13 +59,14 @@ function setup(locale: 'en' | 'pt' = 'en') {
 }
 
 beforeEach(() => {
-  queue = new Map(); nextId = 1; below = false; clipped = false; covered = false
+  queue = new Map(); nextId = 1; below = false; clipped = false; covered = false; stuck = false
   window.requestAnimationFrame = ((cb: FrameRequestCallback) => { queue.set(nextId, cb); return nextId++ }) as typeof window.requestAnimationFrame
   window.cancelAnimationFrame = ((id: number) => { queue.delete(id) }) as typeof window.cancelAnimationFrame
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 })
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     if (this.matches('#phone nav')) { const t = covered ? 220 : 760; return { left: 0, top: t, width: 390, height: 100, right: 390, bottom: t + 100, x: 0, y: t, toJSON() {} } as DOMRect }
+    if (this.id === MODES_ID) { const b = stuck ? 260 : 60; return { left: 0, top: b - 60, width: 390, height: 60, right: 390, bottom: b, x: 0, y: b - 60, toJSON() {} } as DOMRect }
     if (clipped && this.matches('[data-screen]')) return { left: 0, top: 400, width: 390, height: 300, right: 390, bottom: 700, x: 0, y: 400, toJSON() {} } as DOMRect
     const top = below && this.closest('[data-tour], #modes') ? 2000 : 200
     return { left: 100, top, width: 80, height: 40, right: 180, bottom: top + 40, x: 100, y: top, toJSON() {} } as DOMRect
@@ -225,6 +227,20 @@ describe('Tour', () => {
     expect(coach().dataset.on).toBe('false')
     expect(hit()).toEqual([])
     clipped = false
+    flush()
+    expect(coach().dataset.on).toBe('true')
+  })
+
+  it('on phones, hides while the target is scrolled under the sticky phase switch', () => {
+    mockMedia(true)
+    setup()
+    flush()
+    expect(coach().dataset.on).toBe('true')
+    stuck = true
+    flush()
+    expect(coach().dataset.on).toBe('false')
+    expect(hit()).toEqual([])
+    stuck = false
     flush()
     expect(coach().dataset.on).toBe('true')
   })
