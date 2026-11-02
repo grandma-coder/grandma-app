@@ -22,6 +22,9 @@ import { useTranslation } from '../../../lib/i18n'
 import type { TranslationKeys } from '../../../lib/i18n/keys'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { SiteChoice, SiteStepper } from '../../../components/ui/SiteChoice'
+import { CelebrateHero } from '../../../components/onboarding/Celebrate'
+import { EyeAction, ACTION_TONES } from '../../../components/ui/AuthDock'
+import { FadeUp } from '../../../components/ui/Motion'
 import type { SiteStickerName } from '../../../components/stickers/SiteSticker'
 import { HandDrawnBox } from '../../../components/ui/HandDrawn'
 import { router } from 'expo-router'
@@ -903,14 +906,7 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>
       <ScrollView contentContainerStyle={completeStyles.content} showsVerticalScrollIndicator={false}>
-        <View
-          style={[
-            completeStyles.iconCircle,
-            { backgroundColor: modeSoft, borderWidth: 1.5, borderColor: colors.text },
-          ]}
-        >
-          <SiteSticker name="flower" size={48} cut />
-        </View>
+        <CelebrateHero sticker="flower" tone={modeSoft} confetti={['heart', 'star', 'drop', 'moon', 'leaf', 'egg']} />
 
         <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
           {t('cycleOnboarding_complete_title')}
@@ -922,18 +918,20 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
 
         {/* Prediction reward card */}
         {prediction ? (
-          <View style={[completeStyles.predictCard, { backgroundColor: colors.surface, borderColor: colors.text, borderRadius: 18 }]}>
-            {ttc ? (
-              <PredictRow icon={<SiteSticker name="flower" size={22} cut />} label={t('cycleOnboarding_predict_fertile')} value={prediction.fertileWindow} accent={mode} colors={colors} font={font} />
-            ) : null}
-            <PredictRow icon={<SiteSticker name="flower" size={22} cut />} label={t('cycleOnboarding_predict_ovulation')} value={prediction.ovulation} accent={mode} colors={colors} font={font} />
-            <PredictRow icon={<SiteSticker name="flower" size={22} cut />} label={t('cycleOnboarding_predict_period')} value={prediction.nextPeriod} accent={mode} colors={colors} font={font} last />
-          </View>
+          <FadeUp index={0} delay={700} style={{ alignSelf: 'stretch' }}>
+            <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={20} seed="predict" style={completeStyles.predictCard}>
+              {ttc ? (
+                <PredictRow icon={<SiteSticker name="flower" size={26} cut />} label={t('cycleOnboarding_predict_fertile')} value={prediction.fertileWindow} accent={modeSoft} colors={colors} font={font} />
+              ) : null}
+              <PredictRow icon={<SiteSticker name="egg" size={26} cut />} label={t('cycleOnboarding_predict_ovulation')} value={prediction.ovulation} accent={modeSoft} colors={colors} font={font} />
+              <PredictRow icon={<SiteSticker name="drop" size={26} cut />} label={t('cycleOnboarding_predict_period')} value={prediction.nextPeriod} accent={modeSoft} colors={colors} font={font} last />
+            </HandDrawnBox>
+          </FadeUp>
         ) : null}
       </ScrollView>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <PillButton label={t('cycleOnboarding_complete_btn')} variant="ink" onPress={onFinish} loading={saving} disabled={saving} />
+        <EyeAction label={t('cycleOnboarding_complete_btn')} onPress={onFinish} ink={colors.text} loading={saving} sticker="star" fill={ACTION_TONES.yellow} delay={900} />
       </View>
     </View>
   )
@@ -946,10 +944,13 @@ function PredictRow({
   colors: any; font: any; last?: boolean
 }) {
   return (
-    <View style={[completeStyles.predictRow, !last && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}>
+    <View style={[completeStyles.predictRow, !last && { borderBottomWidth: 1.5, borderBottomColor: colors.text, borderStyle: 'dashed' }]}>
       <View style={completeStyles.predictIcon}>{icon}</View>
-      <Text style={[completeStyles.predictLabel, { color: colors.textSecondary, fontFamily: font.body }]}>{label}</Text>
-      <Text style={[completeStyles.predictValue, { color: accent, fontFamily: font.display }]}>{value}</Text>
+      <Text style={[completeStyles.predictLabel, { color: colors.text, fontFamily: font.body }]}>{label}</Text>
+      {/* the date sits on a tone tag — ink on pink, never pink on white */}
+      <View style={[completeStyles.predictTag, { backgroundColor: accent, borderColor: colors.text }]}>
+        <Text style={[completeStyles.predictValue, { color: colors.text, fontFamily: font.bodyBold }]}>{value}</Text>
+      </View>
     </View>
   )
 }
@@ -1127,6 +1128,7 @@ const stepStyles = StyleSheet.create({
 })
 
 const completeStyles = StyleSheet.create({
+  predictTag: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, transform: [{ rotate: '-2deg' }] },
   root: {
     flex: 1,
     justifyContent: 'center',
@@ -1141,7 +1143,6 @@ const completeStyles = StyleSheet.create({
   },
   predictCard: {
     width: '100%',
-    borderWidth: 1.5,
     paddingHorizontal: 18,
     marginTop: 4,
   },
@@ -1153,7 +1154,7 @@ const completeStyles = StyleSheet.create({
   },
   predictIcon: { width: 26, alignItems: 'center' },
   predictLabel: { flex: 1, fontSize: 14 },
-  predictValue: { fontSize: 16 },
+  predictValue: { fontSize: 14 },
   iconCircle: {
     width: 88,
     height: 88,
