@@ -203,7 +203,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
         <Tile index={1} flex={1} tone={stickers.yellowSoft} sticker={hasMood ? MOOD_STICKER[p.dominantMood] ?? 'face3' : 'face3'}
           eyebrow={t('kids_home_tile_mood')}
           onPress={!hasMood && p.onLogMood ? p.onLogMood : p.onPressMood}>
-          <Text style={hasMood ? [styles.moodWord, { color: ink, fontFamily: font.display }] : emptyStyle} numberOfLines={1}>
+          <Text style={hasMood ? [styles.moodWord, { color: ink, fontFamily: font.display }] : emptyStyle} numberOfLines={hasMood ? 1 : 2}>
             {hasMood ? MOOD_LABEL[p.dominantMood] ?? 'Content' : t('kids_home_tile_mood_empty')}
           </Text>
           {/* one little hand-drawn bar per mood, dominant one tallest + ink-outlined */}

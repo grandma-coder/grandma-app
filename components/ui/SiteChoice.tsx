@@ -16,6 +16,15 @@ import { useTheme } from '../../constants/theme'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { HandDrawnPill } from './HandDrawn'
 
+/** Ink that reads on a fill: dark ink on light fills (bright child tones in dark mode), else the theme ink. */
+function inkOn(fill: string, themeInk: string): string {
+  const m = /^#?([0-9a-f]{6})/i.exec(fill)
+  if (!m) return themeInk
+  const n = parseInt(m[1], 16)
+  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+  return lum > 0.6 ? '#141313' : themeInk
+}
+
 export function SiteChoice({
   label,
   selected,
@@ -87,12 +96,12 @@ export function SiteChoice({
         <View style={[styles.inner, align === 'start' && styles.innerStart, compact && styles.innerCompact]}>
           {sticker ? <SiteSticker name={sticker} size={24} cut /> : null}
           <View style={{ flexShrink: 1, flexGrow: align === 'start' ? 1 : 0, alignItems: sticker || align === 'start' ? 'flex-start' : 'center' }}>
-            <Text style={[styles.label, { color: ink, fontFamily: font.bodyBold }]} numberOfLines={2}>{label}</Text>
-            {sub ? <Text style={[styles.sub, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>{sub}</Text> : null}
+            <Text style={[styles.label, { color: selected ? inkOn(tone, ink) : ink, fontFamily: font.bodyBold }]} numberOfLines={2}>{label}</Text>
+            {sub ? <Text style={[styles.sub, { color: selected ? inkOn(tone, colors.textSecondary) : colors.textSecondary, opacity: selected && inkOn(tone, ink) !== ink ? 0.7 : 1, fontFamily: font.body }]} numberOfLines={2}>{sub}</Text> : null}
           </View>
           {tick ? <Animated.View style={[styles.tick, { opacity: sel, transform: [{ scale: sel }] }]}>
             <Svg width={14} height={14} viewBox="0 0 18 18">
-              <Path d="M3.5 9.5 L7.5 13 L14.5 4.5" stroke={ink} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M3.5 9.5 L7.5 13 L14.5 4.5" stroke={inkOn(tone, ink)} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
           </Animated.View> : null}
         </View>
