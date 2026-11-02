@@ -601,6 +601,7 @@ function getHealthTips(
       : 'Physical activity supports gross motor skills, better sleep, healthy weight, and improved mood. Outdoor play adds vitamin D, fresh air, and sensory stimulation. Even 3 × 20-minute sessions count toward the daily target.',
     color: PILLAR_CONFIG.activity.color,
     icon: TrendingUp,
+    pillar: 'activity',
   })
 
   // ── Growth tracking nudge
@@ -711,7 +712,7 @@ function getNeutralHealthTips(
       title: isMilk ? 'Feeds this week' : 'Meals this week',
       body: isMilk
         ? `Logged ${plural(totalMeals, noun[0], noun[1])}, about ${avgMeals} a day.`
-        : `Logged ${plural(totalMeals, noun[0], noun[1])}, about ${avgMeals} a day; ${goodPct}% marked "ate well".${suggest ? ' Try 1–2 new foods this week.' : ''}`,
+        : `Logged ${plural(totalMeals, noun[0], noun[1])}, about ${avgMeals} a day${goodPct > 0 ? `; ${goodPct}% marked "ate well"` : ''}.${suggest ? ' Try 1–2 new foods this week.' : ''}`,
       detail: isMilk
         ? `${childName} had about ${avgMeals} feeds a day on the days you logged. Logging every feed keeps the picture clear.`
         : `${childName} had about ${avgMeals} meals a day on the days you logged, with ${goodPct}% marked "ate well". New foods often take 10–15 tries before a child accepts them — offer them next to familiar ones, at steady mealtimes.`,
@@ -749,6 +750,7 @@ function getNeutralHealthTips(
       : 'Active play supports movement skills, sleep and mood. Outdoor play adds daylight, fresh air and lots to explore. Even 3 × 20-minute sessions add up.',
     color: PILLAR_CONFIG.activity.color,
     icon: TrendingUp,
+    pillar: 'activity',
   })
 
   // ── Growth logging nudge
@@ -2938,7 +2940,7 @@ function PillarRow({ pillarKey, score, stat = null, tip, onPress }: {
   const body = tip
     ? tip.body
     : score.hasData
-    ? t('kids_analytics_pillar_tap_details')
+    ? (diffuse ? t('kids_analytics_pillar_tap_details') : '')
     : t('kids_analytics_pillar_no_data')
 
   if (diffuse) {
@@ -3047,12 +3049,14 @@ function PillarRow({ pillarKey, score, stat = null, tip, onPress }: {
           {tip.title}
         </Text>
       )}
-      <Text
-        style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body, marginTop: tip ? 3 : 10 }]}
-        numberOfLines={3}
-      >
-        {body}
-      </Text>
+      {body ? (
+        <Text
+          style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body, marginTop: tip ? 3 : 10 }]}
+          numberOfLines={3}
+        >
+          {body}
+        </Text>
+      ) : null}
 
       <View style={styles.pillarPaperFooter}>
         <Text style={[styles.siteMono, { color: colors.text }]}>{t('kids_analytics_tip_tap_details')}</Text>

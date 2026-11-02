@@ -87,7 +87,10 @@ export function neutralPillarFact(key: PillarKey, analytics: AnalyticsData, ageM
         if (n.mode === 'milk') return `Logged ${plural(total, 'feed', 'feeds')}.`
         const good = (n.eatQuality?.good ?? []).reduce((x, y) => x + y, 0)
         const pct = total > 0 ? Math.round((good / total) * 100) : 0
-        return `Logged ${plural(total, 'meal', 'meals')}, ${pct}% marked "ate well".`
+        // 0% usually means the quality field was skipped, not that nothing was eaten — leave it out.
+        return pct > 0
+          ? `Logged ${plural(total, 'meal', 'meals')}, ${pct}% marked "ate well".`
+          : `Logged ${plural(total, 'meal', 'meals')}.`
       }
       break
     }

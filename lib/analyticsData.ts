@@ -797,7 +797,9 @@ export function useKidsAnalytics(
         activity,
         routineCompliance,
         scores,
-        totalLogs: allLogs.filter((l) => l.type !== 'skipped').length,
+        // Count only the selected window — the fetch reaches back ≥30 days for growth context,
+        // so the raw list overstates a week (e.g. "430 logs this week").
+        totalLogs: allLogs.filter((l) => l.type !== 'skipped' && l.date.slice(0, 10) >= window.sinceDate && l.date.slice(0, 10) <= window.toDate).length,
         dateRange: { from: window.sinceDate, to: window.toDate },
         logs: allLogs,
       }
