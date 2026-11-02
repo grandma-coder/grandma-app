@@ -30,7 +30,7 @@ import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
 const COPY = {
   loggedThisDay: 'Logged this day',
   empty: 'Nothing logged for this day yet.',
-  logActivity: 'Log activity',
+  logActivity: 'Log a symptom',
   chooserTitle: 'What would you like to log?',
   chooserSymptom: 'A symptom',
   chooserSymptomDesc: 'Hot flashes, sleep, mood, and more',

@@ -128,7 +128,7 @@ export function MenopauseAnalytics() {
                 </View>
                 {vaso.length >= 1 ? (
                   <>
-                    <SiteNote>{`Average ${vasoAvg.toFixed(1)} per day with events · bars show events per day (last ${lastVaso.length} days)`}</SiteNote>
+                    <SiteNote>{`Average ${vasoAvg.toFixed(1)} per day with events · bars show the last ${lastVaso.length} days with events`}</SiteNote>
                     <SiteBars values={lastVaso.map((d) => d.count)} labels={lastVaso.map((d) => shortDate(d.date))} tone={palette.accentSoft} capped />
                   </>
                 ) : (
