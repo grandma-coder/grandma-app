@@ -3,6 +3,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useUser, UserButton } from "@clerk/nextjs"
+import { useTranslations } from "next-intl"
+import { LocaleSwitcher } from "./LocaleSwitcher"
 import {
   LayoutGrid,
   Users,
@@ -23,10 +25,11 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+// label / title are keys into the "nav" messages
 type NavLink = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean }
 
 const PRIMARY: NavLink[] = [
-  { href: "/", label: "Command Center", icon: LayoutGrid },
+  { href: "/", label: "home", icon: LayoutGrid },
 ]
 
 // Pillars grouped by intent — how you'd navigate the business, not a flat list.
@@ -34,43 +37,43 @@ type NavSection = { title: string; items: NavLink[]; adminOnly?: boolean }
 
 const SECTIONS: NavSection[] = [
   {
-    title: "Audience",
+    title: "audience",
     items: [
-      { href: "/users", label: "Users", icon: Users },
-      { href: "/metrics", label: "Metrics", icon: BarChart3 },
-      { href: "/revenue", label: "Revenue", icon: DollarSign },
-      { href: "/waitlist", label: "Waitlist", icon: ListPlus },
-      { href: "/graph", label: "Relationships", icon: Share2, adminOnly: true },
+      { href: "/users", label: "users", icon: Users },
+      { href: "/metrics", label: "metrics", icon: BarChart3 },
+      { href: "/revenue", label: "revenue", icon: DollarSign },
+      { href: "/waitlist", label: "waitlist", icon: ListPlus },
+      { href: "/graph", label: "graph", icon: Share2, adminOnly: true },
     ],
   },
   {
-    title: "Engage",
+    title: "engage",
     items: [
-      { href: "/community", label: "Community", icon: MessagesSquare },
-      { href: "/push", label: "Push", icon: Send },
-      { href: "/support", label: "Support", icon: LifeBuoy },
+      { href: "/community", label: "community", icon: MessagesSquare },
+      { href: "/push", label: "push", icon: Send },
+      { href: "/support", label: "support", icon: LifeBuoy },
     ],
   },
   {
-    title: "Product",
+    title: "product",
     items: [
-      { href: "/content", label: "Content", icon: BookOpen },
-      { href: "/releases", label: "Releases", icon: Rocket },
-      { href: "/tokens", label: "Design tokens", icon: Palette },
+      { href: "/content", label: "content", icon: BookOpen },
+      { href: "/releases", label: "releases", icon: Rocket },
+      { href: "/tokens", label: "tokens", icon: Palette },
     ],
   },
   {
-    title: "Operations",
+    title: "operations",
     items: [
-      { href: "/ai", label: "AI cost", icon: Sparkles, adminOnly: true },
-      { href: "/sentry", label: "Sentry", icon: Bug, adminOnly: true },
+      { href: "/ai", label: "ai", icon: Sparkles, adminOnly: true },
+      { href: "/sentry", label: "sentry", icon: Bug, adminOnly: true },
     ],
   },
 ]
 
 const MANAGE: NavLink[] = [
-  { href: "/beta", label: "Beta testers", icon: FlaskConical, adminOnly: true },
-  { href: "/admin", label: "Admin", icon: Shield, adminOnly: true },
+  { href: "/beta", label: "beta", icon: FlaskConical, adminOnly: true },
+  { href: "/admin", label: "admin", icon: Shield, adminOnly: true },
 ]
 
 // Which pillars are actually built yet (routes that exist). Others render
@@ -79,8 +82,9 @@ const READY = new Set(["/", "/users", "/metrics", "/revenue", "/graph", "/commun
 
 export function CommandCenterSidebar() {
   const pathname = usePathname() ?? ""
+  const t = useTranslations("nav")
   const { user } = useUser()
-  const name = user?.firstName ?? user?.username ?? "You"
+  const name = user?.firstName ?? user?.username ?? t("you")
   const role = (user?.publicMetadata as { role?: string } | undefined)?.role ?? "viewer"
   const isAdmin = role === "admin"
 
@@ -96,13 +100,13 @@ export function CommandCenterSidebar() {
     const inner = (
       <>
         <Icon size={15} />
-        <span>{i.label}</span>
+        <span>{t(`items.${i.label}`)}</span>
       </>
     )
     return ready ? (
       <Link key={i.href} href={i.href} className={cls}>{inner}</Link>
     ) : (
-      <span key={i.href} className={cls} title="coming soon">{inner}</span>
+      <span key={i.href} className={cls} title={t("comingSoon")}>{inner}</span>
     )
   }
 
@@ -117,7 +121,7 @@ export function CommandCenterSidebar() {
           className="brand-logo"
           priority
         />
-        <span className="brand-name">Command Center</span>
+        <span className="brand-name">{t("brand")}</span>
       </div>
 
       <nav className="central-nav">
@@ -129,14 +133,14 @@ export function CommandCenterSidebar() {
           if (visible.length === 0) return null
           return (
             <div key={section.title}>
-              <div className="nav-section-header">{section.title}</div>
+              <div className="nav-section-header">{t(`sections.${section.title}`)}</div>
               <div>{visible.map(renderItem)}</div>
             </div>
           )
         })}
         {isAdmin && (
           <>
-            <div className="nav-section-header">Manage</div>
+            <div className="nav-section-header">{t("sections.manage")}</div>
             <div>{MANAGE.map(renderItem)}</div>
           </>
         )}
@@ -149,9 +153,10 @@ export function CommandCenterSidebar() {
           />
           <div className="flex flex-col leading-tight">
             <span className="uc-name">{name}</span>
-            <span className="uc-role">{role}</span>
+            <span className="uc-role">{t.has(`roles.${role}`) ? t(`roles.${role}`) : role}</span>
           </div>
         </div>
+        <LocaleSwitcher />
       </div>
     </aside>
   )

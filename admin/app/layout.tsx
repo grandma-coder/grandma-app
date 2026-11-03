@@ -1,4 +1,8 @@
 import { ClerkProvider } from "@clerk/nextjs"
+import { ptBR } from "@clerk/localizations"
+import { NextIntlClientProvider } from "next-intl"
+import { getLocale, getMessages } from "next-intl/server"
+import { htmlLang, type Locale } from "@/i18n/config"
 import { Providers } from "@/components/Providers"
 import type { Metadata } from "next"
 import { Inter, Space_Grotesk } from "next/font/google"
@@ -15,22 +19,26 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = (await getLocale()) as Locale
+  const messages = await getMessages()
   return (
     <html
-      lang="en"
+      lang={htmlLang(locale)}
       data-theme="light"
       data-skin="central"
       suppressHydrationWarning
       className={`${inter.variable} ${spaceGrotesk.variable} h-full`}
     >
       <body className="min-h-full">
-        <ClerkProvider>
-          <Providers>{children}</Providers>
+        <ClerkProvider localization={locale === "pt" ? ptBR : undefined}>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <Providers>{children}</Providers>
+          </NextIntlClientProvider>
         </ClerkProvider>
       </body>
     </html>

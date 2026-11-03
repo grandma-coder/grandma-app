@@ -1,0 +1,36 @@
+{
+  "brand": "Command Center",
+  "you": "You",
+  "comingSoon": "coming soon",
+  "language": "Language",
+  "sections": {
+    "audience": "Audience",
+    "engage": "Engage",
+    "product": "Product",
+    "operations": "Operations",
+    "manage": "Manage"
+  },
+  "items": {
+    "home": "Command Center",
+    "users": "Users",
+    "metrics": "Metrics",
+    "revenue": "Revenue",
+    "waitlist": "Waitlist",
+    "graph": "Relationships",
+    "community": "Community",
+    "push": "Push",
+    "support": "Support",
+    "content": "Content",
+    "releases": "Releases",
+    "tokens": "Design tokens",
+    "ai": "AI cost",
+    "sentry": "Sentry",
+    "beta": "Beta testers",
+    "admin": "Admin"
+  },
+  "roles": {
+    "admin": "admin",
+    "editor": "editor",
+    "viewer": "viewer"
+  }
+}
