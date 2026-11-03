@@ -1,0 +1,9 @@
+appId: co.sauceroom.grandma
+---
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://dev-panel"
+- extendedWaitUntil:
+    visible: "SEED DATA|MODE"
+    timeout: 20000

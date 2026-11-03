@@ -1,0 +1,9 @@
+appId: co.sauceroom.grandma
+---
+# Holds the current screen for MS milliseconds (Maestro has no sleep): waits for an
+# element that never exists and ignores the timeout. Usage:
+#   - runFlow: { file: _pause.yaml, env: { MS: 1500 } }
+- extendedWaitUntil:
+    visible: "__demo_pause__"
+    timeout: ${MS}
+    optional: true

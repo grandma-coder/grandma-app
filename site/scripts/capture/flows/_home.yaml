@@ -1,0 +1,14 @@
+appId: co.sauceroom.grandma
+---
+- runFlow:
+    when:
+      visible: "EXIT"
+    commands:
+      - tapOn: "EXIT"
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app:///"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertNotVisible: "DEV MODE"

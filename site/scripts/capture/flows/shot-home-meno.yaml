@@ -1,0 +1,13 @@
+appId: co.sauceroom.grandma
+---
+- waitForAnimationToEnd
+# Week strip is at the top of meno home; quick-log chips sit below (always visible,
+# hardcoded English in both languages: text "Hot flashes", accessibilityLabel "Log Hot flashes",
+# so the selector is a contains-style full-match regex).
+- scrollUntilVisible:
+    element: ".*Hot flash.*|.*[Oo]ndas? de calor.*"
+    direction: DOWN
+- tapOn: ".*Hot flash.*|.*[Oo]ndas? de calor.*"
+- waitForAnimationToEnd
+- swipe: { direction: DOWN, duration: 900 }
+- waitForAnimationToEnd

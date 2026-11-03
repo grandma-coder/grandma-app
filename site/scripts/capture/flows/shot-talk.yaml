@@ -1,0 +1,29 @@
+appId: co.sauceroom.grandma
+---
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://grandma-talk"
+- waitForAnimationToEnd
+# Placeholder is a hardcoded English literal in GrandmaTalk.tsx; chat_placeholder kept as fallback.
+- tapOn: "Tap to talk to grandma…|Ask Grandma anything...|Pergunte qualquer coisa para a Vovó..."
+- inputText: "${QUESTION}"
+# Composer is multiline: the keyboard return key only inserts a newline (verified), and the
+# inline send arrow has no accessibility label, so tap it by position: right end of the pill,
+# vertically centred on the two-line question (74%,47% with the keyboard up).
+- tapOn:
+    point: "74%,47%"
+# Positively confirm the send landed: the user's own bubble must appear (QUESTION_RE is
+# the regex-escaped question, passed by record.sh).
+- extendedWaitUntil:
+    visible: "${QUESTION_RE}"
+    timeout: 8000
+- tapOn: "grandma talk"
+# Wait out the "thinking" orb messages (THINKING_MESSAGES in GrandmaTalk.tsx).
+- extendedWaitUntil:
+    notVisible: "(flipping|asking|checking|let me|brewing|consulting|digging|warming|untangling|polishing|stirring|pulling|dusting|cross-referencing|rummaging|heating|leafing|channeling).*…"
+    timeout: 25000
+- waitForAnimationToEnd
+# The backend can answer with Grandma's apology ("something went wrong on my end") when the
+# AI edge function fails: that is not a usable clip, so fail the shot instead.
+- assertNotVisible: ".*something went wrong.*"

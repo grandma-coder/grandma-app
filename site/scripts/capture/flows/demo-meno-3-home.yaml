@@ -1,0 +1,12 @@
+appId: co.sauceroom.grandma
+---
+# Scene 3: this behavior's home with seeded data (mode switched by demo.sh, not recorded).
+- runFlow: _home.yaml
+# back to the top (the cut starts after this). Gestures start below the cycle /
+# menopause ring: a drag that starts on the ring spins it to another day.
+- swipe: { start: "50%,60%", end: "50%,95%", duration: 300 }
+- runFlow: { file: _pause.yaml, env: { MS: 1200 } }
+- swipe: { start: "50%,72%", end: "50%,38%", duration: 1300 }
+- runFlow: { file: _pause.yaml, env: { MS: 700 } }
+- swipe: { start: "50%,50%", end: "50%,95%", duration: 1100 }
+- runFlow: { file: _pause.yaml, env: { MS: 600 } }

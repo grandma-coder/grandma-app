@@ -1,0 +1,18 @@
+appId: co.sauceroom.grandma
+---
+# Scene 1 (shared): first-time journey picker (no addMode, so nothing is dimmed),
+# then pick this behavior's bloom. Selection is local state only; CONTINUE is never
+# tapped, so nothing is enrolled or saved. BLOB = regex for "<kicker>, <title>".
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://onboarding/journey"
+- extendedWaitUntil:
+    visible: ".*, (Pregnant|Gr.vida)"
+    timeout: 15000
+- runFlow: { file: _pause.yaml, env: { MS: 1800 } }
+# the blooms drift forever: don't wait for the screen to settle after the tap
+- tapOn:
+    text: "${BLOB}"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 1800 } }

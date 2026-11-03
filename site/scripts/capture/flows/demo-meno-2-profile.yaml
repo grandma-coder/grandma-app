@@ -1,0 +1,37 @@
+appId: co.sauceroom.grandma
+---
+# Onboarding backgrounds animate continuously, so every tap uses a short
+# waitToSettleTimeoutMs (else Maestro idles ~5-10 s after each tap).
+# Scene 2: menopause onboarding intro, stage, last period. Stops on step 3;
+# _demo-onb-close.yaml (not recorded) leaves without saving. Menopause onboarding
+# copy is hardcoded English in the app.
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://onboarding/menopause"
+- extendedWaitUntil:
+    visible: "1 / 5"
+    timeout: 15000
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }
+- tapOn:
+    text: "BEGIN|COME.AR"
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    visible: "2 / 5"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 500 } }
+- tapOn:
+    text: ".*Perimenopaus.*"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 700 } }
+- tapOn:
+    text: "CONTINUE.*|CONTINUAR.*"
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    visible: "3 / 5"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 400 } }
+- tapOn:
+    text: "16"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }

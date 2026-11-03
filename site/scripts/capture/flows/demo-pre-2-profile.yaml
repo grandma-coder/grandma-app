@@ -1,0 +1,41 @@
+appId: co.sauceroom.grandma
+---
+# Onboarding backgrounds animate continuously, so every tap uses a short
+# waitToSettleTimeoutMs (else Maestro idles ~5-10 s after each tap).
+# Scene 2: first 3 cycle onboarding steps (last period, cycle length, period
+# length). Stops on step 3; _demo-onb-close.yaml (not recorded) leaves without saving.
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://onboarding/cycle"
+- extendedWaitUntil:
+    visible: "1 / 5"
+    timeout: 15000
+- runFlow: { file: _pause.yaml, env: { MS: 1200 } }
+# "16" is never a filler day, so it is unique in the month grid.
+- tapOn:
+    text: "16"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 500 } }
+- tapOn:
+    text: "CONTINUE.*|CONTINUAR.*"
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    visible: "2 / 5"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 500 } }
+- tapOn:
+    text: "29"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 800 } }
+- tapOn:
+    text: "CONTINUE.*|CONTINUAR.*"
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    visible: "3 / 5"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 400 } }
+- tapOn:
+    text: "6 (days|dias)"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }

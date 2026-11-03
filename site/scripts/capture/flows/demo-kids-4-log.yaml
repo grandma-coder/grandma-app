@@ -1,0 +1,17 @@
+appId: co.sauceroom.grandma
+---
+# Scene 4: log a night's sleep for Kenji (active child) from home: Log for today →
+# SLEEP → hours + quality sliders → SAVE; the LAST SLEEP card updates.
+- swipe: { start: "50%,70%", end: "50%,40%", duration: 800 }
+- runFlow: { file: _pause.yaml, env: { MS: 700 } }
+- tapOn: "SLEEP|SONO"
+- extendedWaitUntil:
+    visible: "SAVE.*|SALVAR.*"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 600 } }
+# Sliders have no a11y handle: drag the thumbs (hours 8 → 10, quality 7 → 8).
+- swipe: { start: "220,493", end: "290,493", duration: 700 }
+- swipe: { start: "280,695", end: "320,695", duration: 500 }
+- runFlow: { file: _pause.yaml, env: { MS: 700 } }
+- tapOn: "SAVE.*|SALVAR.*"
+- runFlow: { file: _pause.yaml, env: { MS: 2200 } }

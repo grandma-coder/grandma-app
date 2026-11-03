@@ -1,0 +1,12 @@
+appId: co.sauceroom.grandma
+---
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://profile/settings"
+- waitForAnimationToEnd
+# Row is one accessible element "<label>, <CODE>, <native name>, →" (label is localized),
+# so match on the language code in the middle.
+- tapOn: ".*, (EN|PT|ES), .*"
+- tapOn: "PT, Portugu.s.*"
+- runFlow: _home.yaml

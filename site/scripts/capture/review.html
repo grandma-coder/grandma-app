@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>Capture review</title>
+<style>body{font:14px system-ui;background:#F4F1E8;margin:24px}h2{font:600 13px ui-monospace;letter-spacing:.1em;text-transform:uppercase;color:#807A6E}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}figure{margin:0}video{width:100%;border-radius:22px;background:#000}figcaption{font:12px ui-monospace;margin-top:6px}</style>
+<h1>Capture review — check: demo data only, no DEV MODE pill, right language, no notifications</h1>
+<div id="r"></div>
+<script>
+const shots=["onboarding-picker","home-pre","home-preg","home-kids","home-meno","talk","insights-pre","calendar-meno"];
+const combos=[["pt",""],["pt","-dark"],["en",""],["en","-dark"]];
+document.getElementById("r").innerHTML=combos.map(([l,t])=>`<h2>${l} ${t?"dark":"light"}</h2><div class="g">${shots.map(s=>`<figure><video src="../../public/media/app/${l}/${s}${t}.mp4" poster="../../public/media/app/${l}/${s}${t}.jpg" autoplay muted loop playsinline></video><figcaption>${l}/${s}${t}</figcaption></figure>`).join("")}</div>`).join("");
+</script>
