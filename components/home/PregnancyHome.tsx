@@ -53,14 +53,11 @@ import { WeekDetailModal } from './pregnancy/WeekDetailModal'
 import { BirthGuideModal } from '../pregnancy/BirthGuideModal'
 import { AppointmentDetailModal } from './pregnancy/AppointmentDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
+// Shared ACOG boundaries (2nd trimester to week 27) — the local copy used 26.
+import { getTrimester } from '../../lib/pregnancyWeeks'
 
 const SCREEN_W = Dimensions.get('window').width
 
-function getTrimester(week: number): 1 | 2 | 3 {
-  if (week <= 13) return 1
-  if (week <= 26) return 2
-  return 3
-}
 
 // ─── Section 1: Baby Hero Carousel ────────────────────────────────────────────
 

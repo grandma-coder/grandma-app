@@ -1,4 +1,4 @@
-import { toDateStr, dailyFertilityCurve, getDaysLate } from '../cycleLogic'
+import { toDateStr, dailyFertilityCurve, getDaysLate, getCycleInfo } from '../cycleLogic'
 
 describe('toDateStr', () => {
   it('formats a local date as YYYY-MM-DD', () => {
@@ -60,5 +60,13 @@ describe('getDaysLate', () => {
 
   it('is 0 with no logged period', () => {
     expect(getDaysLate({ ...cfg, lastPeriodStart: '' }, '2026-11-04')).toBe(0)
+  })
+})
+
+describe('getCycleInfo — ovulation stays after the period', () => {
+  it('never puts ovulation inside the bleeding days for extreme settings', () => {
+    const cfg = { lastPeriodStart: '2026-10-01', cycleLength: 21, periodLength: 7, lutealPhase: 18 }
+    const info = getCycleInfo(cfg, '2026-10-02')
+    expect(info.ovulationDay).toBeGreaterThan(cfg.periodLength)
   })
 })

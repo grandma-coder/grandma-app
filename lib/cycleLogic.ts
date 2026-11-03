@@ -118,6 +118,9 @@ export function getCycleInfo(config: Partial<CycleConfig>, forDate?: string): Cy
   // value carried over from onboarding.
   if (cfg.cycleLength < 21) cfg.cycleLength = 21
   if (cfg.cycleLength > 60) cfg.cycleLength = 60
+  // Settings allow combinations (e.g. cycle 21, luteal 18, period 7) that put ovulation inside the
+  // period and showed "Peak" fertility on bleeding days. Keep ovulation after the period ends.
+  cfg.lutealPhase = Math.min(cfg.lutealPhase, cfg.cycleLength - cfg.periodLength - 1)
   const today = forDate ?? toDateStr(new Date())
 
   if (!cfg.lastPeriodStart) {

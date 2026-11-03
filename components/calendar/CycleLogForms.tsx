@@ -44,12 +44,15 @@ async function replaceSingleLog(
 ) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
-  await supabase
+  // Check the delete: ignoring its error left the old row in place and the insert added a second
+  // same-day entry (two period starts on one date → a 0-day cycle in the history).
+  const { error: deleteError } = await supabase
     .from('cycle_logs')
     .delete()
     .eq('user_id', session.user.id)
     .eq('date', date)
     .eq('type', type)
+  if (deleteError) throw deleteError
   const { error } = await supabase.from('cycle_logs').insert({
     user_id: session.user.id, date, type, value, notes: notes ?? null,
   })
