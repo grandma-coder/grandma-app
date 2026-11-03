@@ -3820,4 +3820,7 @@ export const de: TranslationKeys = {
   notFound_title: "Diese Seite gibt es nicht",
   notFound_body: "Der Link ist vielleicht alt oder die Seite ist umgezogen. Deine Einträge sind sicher.",
   notFound_cta: "Zur Startseite",
+  preg_form_water_hintDone: "Heute schön viel getrunken.",
+  preg_form_water_hintHalf: "Halbzeit — noch {{count}}.",
+  preg_form_water_hintMore: "Noch {{count}} bis zum Tagesziel.",
 }

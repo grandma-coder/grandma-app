@@ -280,7 +280,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     },
     {
       key: 'water', sheet: 'water',
-      icon: diffuse ? diffuseBlob('water') : <SiteSticker name="drop" size={22} />,
+      icon: diffuse ? diffuseBlob('water') : <SiteSticker name="glass" size={22} />,
       label: water ? `${water}` : '+', done: !!water,
     },
     {

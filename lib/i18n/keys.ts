@@ -4102,4 +4102,7 @@ export interface TranslationKeys {
   notFound_title: string
   notFound_body: string
   notFound_cta: string
+  preg_form_water_hintDone: string
+  preg_form_water_hintHalf: string
+  preg_form_water_hintMore: string
 }

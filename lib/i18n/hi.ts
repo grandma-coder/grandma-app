@@ -3820,4 +3820,7 @@ export const hi: TranslationKeys = {
   notFound_title: "यह पेज यहाँ नहीं है",
   notFound_body: "लिंक पुराना हो सकता है या पेज कहीं और चला गया है। आपके रिकॉर्ड सुरक्षित हैं।",
   notFound_cta: "होम पर जाएँ",
+  preg_form_water_hintDone: "आज पानी अच्छी तरह पिया।",
+  preg_form_water_hintHalf: "आधा हो गया — {{count}} और।",
+  preg_form_water_hintMore: "आज के लक्ष्य तक {{count}} और।",
 }

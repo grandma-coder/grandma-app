@@ -3820,4 +3820,7 @@ export const es: TranslationKeys = {
   notFound_title: "Esta página no está aquí",
   notFound_body: "Puede que el enlace sea antiguo o que la página se haya movido. Tus registros están a salvo.",
   notFound_cta: "Ir al inicio",
+  preg_form_water_hintDone: "Muy bien hidratada hoy.",
+  preg_form_water_hintHalf: "A mitad de camino — faltan {{count}}.",
+  preg_form_water_hintMore: "Faltan {{count}} para la meta de hoy.",
 }

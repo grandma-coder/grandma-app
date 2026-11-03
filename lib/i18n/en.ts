@@ -4107,4 +4107,7 @@ export const en: TranslationKeys = {
   notFound_title: "This page isn't here",
   notFound_body: "The link may be old or the page has moved. Your logs are safe.",
   notFound_cta: "Go to home",
+  preg_form_water_hintDone: "Beautifully hydrated today.",
+  preg_form_water_hintHalf: "Halfway there — {{count}} more to go.",
+  preg_form_water_hintMore: "{{count}} more to reach today's goal.",
 }

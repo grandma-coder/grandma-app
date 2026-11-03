@@ -3820,4 +3820,7 @@ export const ko: TranslationKeys = {
   notFound_title: "이 페이지를 찾을 수 없어요",
   notFound_body: "링크가 오래되었거나 페이지가 옮겨졌을 수 있어요. 기록은 안전해요.",
   notFound_cta: "홈으로",
+  preg_form_water_hintDone: "오늘 수분 섭취 잘했어요.",
+  preg_form_water_hintHalf: "절반 왔어요 — {{count}}잔 남았어요.",
+  preg_form_water_hintMore: "오늘 목표까지 {{count}}잔 남았어요.",
 }

@@ -3820,4 +3820,7 @@ export const tr: TranslationKeys = {
   notFound_title: "Bu sayfa burada değil",
   notFound_body: "Bağlantı eski olabilir ya da sayfa taşınmış olabilir. Kayıtların güvende.",
   notFound_cta: "Ana sayfaya git",
+  preg_form_water_hintDone: "Bugün güzelce su içtin.",
+  preg_form_water_hintHalf: "Yarı yoldasın — {{count}} tane kaldı.",
+  preg_form_water_hintMore: "Bugünkü hedefe {{count}} tane kaldı.",
 }

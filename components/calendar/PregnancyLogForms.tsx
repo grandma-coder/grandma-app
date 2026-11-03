@@ -1547,9 +1547,9 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
   }
 
   const hint =
-    glasses >= GOAL ? 'Beautifully hydrated today.'
-    : glasses >= GOAL / 2 ? `Halfway there — ${remaining} more to go.`
-    : `${remaining} more to reach today's goal.`
+    glasses >= GOAL ? t('preg_form_water_hintDone')
+    : glasses >= GOAL / 2 ? t('preg_form_water_hintHalf', { count: remaining })
+    : t('preg_form_water_hintMore', { count: remaining })
 
   if (!diffuse) {
     return (
@@ -1559,7 +1559,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
         <View style={sl.drops}>
           {Array.from({ length: GOAL }, (_, i) => (
             <View key={i} style={{ opacity: i < glasses ? 1 : 0.25 }}>
-              <SiteSticker name="drop" size={26} />
+              <SiteSticker name="glass" size={26} />
             </View>
           ))}
         </View>

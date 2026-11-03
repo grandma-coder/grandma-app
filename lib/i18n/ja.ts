@@ -3820,4 +3820,7 @@ export const ja: TranslationKeys = {
   notFound_title: "このページは見つかりません",
   notFound_body: "リンクが古いか、ページが移動した可能性があります。記録はそのまま残っています。",
   notFound_cta: "ホームへ",
+  preg_form_water_hintDone: "今日はしっかり水分がとれています。",
+  preg_form_water_hintHalf: "半分まで来ました — あと{{count}}杯。",
+  preg_form_water_hintMore: "今日の目標まであと{{count}}杯。",
 }

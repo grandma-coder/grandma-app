@@ -3820,4 +3820,7 @@ export const ar: TranslationKeys = {
   notFound_title: "هذه الصفحة غير موجودة",
   notFound_body: "ربما الرابط قديم أو انتقلت الصفحة. سجلاتك محفوظة بأمان.",
   notFound_cta: "الذهاب إلى الرئيسية",
+  preg_form_water_hintDone: "ترطيب ممتاز اليوم.",
+  preg_form_water_hintHalf: "في منتصف الطريق — بقي {{count}}.",
+  preg_form_water_hintMore: "بقي {{count}} للوصول إلى هدف اليوم.",
 }

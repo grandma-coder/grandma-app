@@ -3820,4 +3820,7 @@ export const zh: TranslationKeys = {
   notFound_title: "找不到这个页面",
   notFound_body: "链接可能已过期，或页面已移动。你的记录都安全保存着。",
   notFound_cta: "返回首页",
+  preg_form_water_hintDone: "今天的水喝得很好。",
+  preg_form_water_hintHalf: "已经一半了——还差 {{count}} 杯。",
+  preg_form_water_hintMore: "距离今天的目标还差 {{count}} 杯。",
 }

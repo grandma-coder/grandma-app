@@ -103,7 +103,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
     },
     water: {
       key: 'water', logType: 'water',
-      icon: diffuse ? <Character name="water" size={24} color={stickers.blue} /> : <SiteSticker name="drop" size={22} />,
+      icon: diffuse ? <Character name="water" size={24} color={stickers.blue} /> : <SiteSticker name="glass" size={22} />,
       label: `${waterVal}/8`, done: waterVal >= 8,
     },
     sleep: {
