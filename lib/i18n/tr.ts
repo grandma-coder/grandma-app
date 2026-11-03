@@ -3817,4 +3817,7 @@ export const tr: TranslationKeys = {
   manageCaregivers_linkInvite: "Bağlantıyla davet",
   careCircle_seatsFullTitle: "Bakım çemberin dolu",
   careCircle_seatsFullBody: "Yeni birini davet etmek için birini çıkar.",
+  notFound_title: "Bu sayfa burada değil",
+  notFound_body: "Bağlantı eski olabilir ya da sayfa taşınmış olabilir. Kayıtların güvende.",
+  notFound_cta: "Ana sayfaya git",
 }

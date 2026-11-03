@@ -3817,4 +3817,7 @@ export const it: TranslationKeys = {
   manageCaregivers_linkInvite: "Invito tramite link",
   careCircle_seatsFullTitle: "La tua cerchia di cura è al completo",
   careCircle_seatsFullBody: "Rimuovi qualcuno per invitare una nuova persona.",
+  notFound_title: "Questa pagina non c'è",
+  notFound_body: "Il link potrebbe essere vecchio o la pagina è stata spostata. I tuoi dati sono al sicuro.",
+  notFound_cta: "Vai alla home",
 }

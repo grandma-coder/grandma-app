@@ -3817,4 +3817,7 @@ export const hi: TranslationKeys = {
   manageCaregivers_linkInvite: "लिंक से आमंत्रण",
   careCircle_seatsFullTitle: "आपका केयर सर्कल भर गया है",
   careCircle_seatsFullBody: "नए व्यक्ति को आमंत्रित करने के लिए किसी को हटाएं।",
+  notFound_title: "यह पेज यहाँ नहीं है",
+  notFound_body: "लिंक पुराना हो सकता है या पेज कहीं और चला गया है। आपके रिकॉर्ड सुरक्षित हैं।",
+  notFound_cta: "होम पर जाएँ",
 }

@@ -3817,4 +3817,7 @@ export const ar: TranslationKeys = {
   manageCaregivers_linkInvite: "دعوة عبر رابط",
   careCircle_seatsFullTitle: "دائرة الرعاية ممتلئة",
   careCircle_seatsFullBody: "أزل شخصًا لتتمكن من دعوة شخص جديد.",
+  notFound_title: "هذه الصفحة غير موجودة",
+  notFound_body: "ربما الرابط قديم أو انتقلت الصفحة. سجلاتك محفوظة بأمان.",
+  notFound_cta: "الذهاب إلى الرئيسية",
 }

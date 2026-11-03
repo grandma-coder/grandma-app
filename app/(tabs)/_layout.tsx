@@ -377,7 +377,6 @@ function CenterTabButton() {
           {items.map((item, i) => {
             const anim = itemAnims[i]
             const lone = items.length % 2 === 1 && i === items.length - 1
-            const tilt = i % 2 === 0 ? -1.5 : 1.5
             return (
               <Animated.View
                 key={item.id}
@@ -388,7 +387,6 @@ function CenterTabButton() {
                     transform: [
                       { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
                       { scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) },
-                      { rotate: lone ? '0deg' : `${tilt}deg` },
                     ],
                   },
                 ]}

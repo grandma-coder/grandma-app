@@ -4099,4 +4099,7 @@ export interface TranslationKeys {
   manageCaregivers_linkInvite: string
   careCircle_seatsFullTitle: string
   careCircle_seatsFullBody: string
+  notFound_title: string
+  notFound_body: string
+  notFound_cta: string
 }

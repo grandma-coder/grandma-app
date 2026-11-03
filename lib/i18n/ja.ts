@@ -3817,4 +3817,7 @@ export const ja: TranslationKeys = {
   manageCaregivers_linkInvite: "リンクで招待",
   careCircle_seatsFullTitle: "ケアサークルは満員です",
   careCircle_seatsFullBody: "新しい人を招待するには、誰かを外してください。",
+  notFound_title: "このページは見つかりません",
+  notFound_body: "リンクが古いか、ページが移動した可能性があります。記録はそのまま残っています。",
+  notFound_cta: "ホームへ",
 }

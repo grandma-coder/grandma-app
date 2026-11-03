@@ -3817,4 +3817,7 @@ export const zh: TranslationKeys = {
   manageCaregivers_linkInvite: "链接邀请",
   careCircle_seatsFullTitle: "你的照护圈已满",
   careCircle_seatsFullBody: "移除一位成员后才能邀请新成员。",
+  notFound_title: "找不到这个页面",
+  notFound_body: "链接可能已过期，或页面已移动。你的记录都安全保存着。",
+  notFound_cta: "返回首页",
 }

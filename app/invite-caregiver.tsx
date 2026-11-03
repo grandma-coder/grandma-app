@@ -358,10 +358,12 @@ export default function InviteCaregiver() {
                 style={{ marginTop: spacing.sm }}
               />
 
-              {/* Footer */}
-              <View style={styles.footer}>
-                <MonoCaps color={diffuse ? dt.colors.ink4 : colors.textFaint}>{t('careInvite_footer_secured')}</MonoCaps>
-              </View>
+              {/* Footer — Diffuse only; the light look drops the faux security badge */}
+              {diffuse && (
+                <View style={styles.footer}>
+                  <MonoCaps color={dt.colors.ink4}>{t('careInvite_footer_secured')}</MonoCaps>
+                </View>
+              )}
             </>
           ) : (
             <View style={styles.successWrap}>
