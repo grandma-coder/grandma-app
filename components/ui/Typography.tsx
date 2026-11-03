@@ -35,7 +35,7 @@ export function Display({ children, color, size = 40, align, style, ...rest }: T
       {...rest}
       style={[
         diffuse ? styles.display : styles.displaySite,
-        { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align, lineHeight: size * 1.02 },
+        { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align, lineHeight: size * (diffuse ? 1.02 : 1.24) },
         style,
       ]}
     >
@@ -55,7 +55,7 @@ export function DisplayItalic({ children, color, size = 40, align, style, ...res
       {...rest}
       style={[
         diffuse ? styles.displayItalic : styles.displayItalicSite,
-        { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align, lineHeight: size * 1.02 },
+        { fontFamily: fam, fontSize: size, color: color ?? fallback, textAlign: align, lineHeight: size * (diffuse ? 1.02 : 1.24) },
         style,
       ]}
     >

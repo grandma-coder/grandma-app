@@ -956,7 +956,7 @@ function DateChip({
     const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return toDateStr(d) })
     const inStrip = days.includes(value)
     const label = (iso: string, i: number) => i === 0 ? t('common_today') : i === 1 ? t('common_yesterday')
-      : new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })
+      : new Date(iso + 'T12:00:00').toLocaleDateString(dateLoc(), { weekday: 'short', day: 'numeric' })
     return (
       <View style={{ gap: 8 }}>
         <ScrollView horizontal style={{ flexGrow: 0 }} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>

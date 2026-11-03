@@ -409,10 +409,10 @@ const styles = StyleSheet.create({
   },
 
   heading: {
-    fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase',
+    fontSize: 32, lineHeight: 40, letterSpacing: 0.2, textTransform: 'uppercase',
     marginTop: 10, fontFamily: font.display },
   headingItalic: {
-    fontSize: 32, lineHeight: 36, letterSpacing: 0.2, textTransform: 'uppercase',
+    fontSize: 32, lineHeight: 40, letterSpacing: 0.2, textTransform: 'uppercase',
     marginBottom: 8, fontFamily: font.display },
   sub: {
     fontSize: 15,

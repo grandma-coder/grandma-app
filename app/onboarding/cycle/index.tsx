@@ -57,6 +57,7 @@ import { useConsentStore } from '../../../store/useConsentStore'
 import { useBehaviorStore, PRE_PREG_DB_TYPE } from '../../../store/useBehaviorStore'
 import { isDevModeActive } from '../../../store/useDevStore'
 import { useCycleSettingsStore, CYCLE_LENGTH_RANGE, PERIOD_LENGTH_RANGE } from '../../../store/useCycleSettingsStore'
+import { dateLoc } from '../../../lib/kpLocale'
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(v)))
 
@@ -879,13 +880,13 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
       )
       const fmt = (iso: string) => {
         const d = new Date(iso + 'T12:00:00')
-        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
       }
       // Fertile window dates ≈ ovulation − 5 … ovulation + 1.
       const ov = new Date(info.ovulationDate + 'T12:00:00')
       const fStart = new Date(ov); fStart.setDate(ov.getDate() - 5)
       const fEnd = new Date(ov); fEnd.setDate(ov.getDate() + 1)
-      const fmtD = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      const fmtD = (d: Date) => d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
       return {
         fertileWindow: `${fmtD(fStart)} – ${fmtD(fEnd)}`,
         ovulation: fmt(info.ovulationDate),

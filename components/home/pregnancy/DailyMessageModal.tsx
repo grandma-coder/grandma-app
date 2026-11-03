@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   close: { alignSelf: 'flex-end', width: 38, height: 38, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   qBody: { paddingTop: 20, paddingBottom: 40 },
   eyebrow: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
-  qPromptLight: { fontSize: 28, lineHeight: 34, letterSpacing: 0.3, textTransform: 'uppercase', marginTop: 12 },
+  qPromptLight: { fontSize: 28, lineHeight: 35, letterSpacing: 0.3, textTransform: 'uppercase', marginTop: 12 },
   qPrompt: { lineHeight: 37, letterSpacing: -0.5, marginTop: 12 },
   option: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: radius.md, paddingVertical: 18, paddingHorizontal: 20 },
   optionText: { fontFamily: font.bodySemiBold, fontSize: 16, letterSpacing: -0.2 },

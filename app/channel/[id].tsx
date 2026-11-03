@@ -92,6 +92,7 @@ import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { useConfirmDialog } from '../../components/ui/useConfirm'
 import { PaperActionSheet, type ActionSheetItem } from '../../components/ui/PaperActionSheet'
 import { useTranslation } from '../../lib/i18n'
+import { dateLoc } from '../../lib/kpLocale'
 
 // Emoji per reaction type — for the footer indicator when a non-heart reaction
 // is chosen (the picker itself owns the full set).
@@ -897,7 +898,7 @@ export default function ChannelChat() {
           <Text
             style={[styles.headerTitle, diffuse
               ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-              : { color: colors.text, fontFamily: font.display, fontSize: 16, lineHeight: 18, textTransform: 'uppercase', letterSpacing: 0.3 }]}
+              : { color: colors.text, fontFamily: font.display, fontSize: 16, lineHeight: 20, textTransform: 'uppercase', letterSpacing: 0.3 }]}
             numberOfLines={diffuse ? 1 : 2}
           >
             {channel?.name ?? t('channelScreen_nameFallback')}
@@ -1890,7 +1891,7 @@ function formatTime(dateStr: string): string {
   if (diffMin < 60) return `${diffMin}m`
   const diffHrs = Math.floor(diffMin / 60)
   if (diffHrs < 24) return `${diffHrs}h`
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
 }
 
 // ─── Styles ─────────────────────────────────────────────────────────────

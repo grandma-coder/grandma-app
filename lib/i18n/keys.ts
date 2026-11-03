@@ -4932,4 +4932,47 @@ export interface TranslationKeys {
   kp_kh_dc_red: string
   kp_kh_dc_orange: string
   kp_weightGuide_title: string
+  preg_triOrdinal_1: string
+  preg_triOrdinal_2: string
+  preg_triOrdinal_3: string
+  preg_size_w1: string
+  preg_size_w2: string
+  preg_size_w3: string
+  preg_size_w4: string
+  preg_size_w5: string
+  preg_size_w6: string
+  preg_size_w7: string
+  preg_size_w8: string
+  preg_size_w9: string
+  preg_size_w10: string
+  preg_size_w11: string
+  preg_size_w12: string
+  preg_size_w13: string
+  preg_size_w14: string
+  preg_size_w15: string
+  preg_size_w16: string
+  preg_size_w17: string
+  preg_size_w18: string
+  preg_size_w19: string
+  preg_size_w20: string
+  preg_size_w21: string
+  preg_size_w22: string
+  preg_size_w23: string
+  preg_size_w24: string
+  preg_size_w25: string
+  preg_size_w26: string
+  preg_size_w27: string
+  preg_size_w28: string
+  preg_size_w29: string
+  preg_size_w30: string
+  preg_size_w31: string
+  preg_size_w32: string
+  preg_size_w33: string
+  preg_size_w34: string
+  preg_size_w35: string
+  preg_size_w36: string
+  preg_size_w37: string
+  preg_size_w38: string
+  preg_size_w39: string
+  preg_size_w40: string
 }

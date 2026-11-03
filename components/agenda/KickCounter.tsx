@@ -6,6 +6,7 @@ import { useTheme } from '../../constants/theme'
 import { PulseBubblesLive } from '../charts/GalleryCharts'
 import { useTranslation } from '../../lib/i18n'
 import { parseLocalDate } from '../../lib/localDate'
+import { dateLoc } from '../../lib/kpLocale'
 
 type ThemeShape = ReturnType<typeof useTheme>
 
@@ -154,7 +155,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
                   </Text>
                 </View>
                 <Text style={styles.sessionDate}>
-                  {parseLocalDate(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  {parseLocalDate(session.date).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}
                 </Text>
               </View>
             </PaperCard>

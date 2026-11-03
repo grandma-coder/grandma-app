@@ -6,6 +6,7 @@ import { Character } from '../../characters/Characters'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { moodFaceVariant, moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import type { MoodStripDatum } from '../../../lib/moodTrend'
+import { dateLoc } from '../../../lib/kpLocale'
 
 // Site look: the four mood faces the log forms use (sad → grin).
 function siteFace(mood: string | null | undefined): SiteStickerName {
@@ -20,7 +21,7 @@ function siteFace(mood: string | null | undefined): SiteStickerName {
 function shortDay(isoDate: string): string {
   try {
     const d = new Date(isoDate + 'T12:00:00')
-    return d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1)
+    return d.toLocaleDateString(dateLoc(), { weekday: 'short' }).slice(0, 1)
   } catch {
     return ''
   }

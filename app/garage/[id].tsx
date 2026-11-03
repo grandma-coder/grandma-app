@@ -44,6 +44,7 @@ import {
   type GaragePost,
   type GarageComment,
 } from '../../lib/garagePosts'
+import { dateLoc } from '../../lib/kpLocale'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -377,7 +378,7 @@ export default function PostDetail() {
         <Text style={[styles.timestamp, diffuse
           ? { color: dt.colors.ink3, fontFamily: diffuseFont.italic }
           : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
-          {new Date(post.created_at).toLocaleDateString('en-US', {
+          {new Date(post.created_at).toLocaleDateString(dateLoc(), {
             month: 'long',
             day: 'numeric',
             year: 'numeric',

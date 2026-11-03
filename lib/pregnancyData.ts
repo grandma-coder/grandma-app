@@ -1,4 +1,6 @@
 import { parseLocalDate } from './localDate'
+import { useLanguageStore } from '../store/useLanguageStore'
+import { t as tNow, type TranslationKey } from './i18n'
 /**
  * Per-week pregnancy development data shown across the pregnancy home + week
  * detail surfaces. babyLength values are crown-heel population estimates
@@ -85,4 +87,23 @@ export function getCurrentWeekFromDueDate(dueDate: string): number {
   const daysLeft = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
   const week = 40 - Math.ceil(daysLeft / 7)
   return Math.max(1, Math.min(42, week))
+}
+
+
+/**
+ * The week's baby-size name in the app language (static per-week keys preg_size_w1…w40), falling
+ * back to the English data. Non-hook — reads the current language at call time.
+ */
+export function localizedBabySize(week: number): string {
+  const w = Math.min(40, Math.max(1, Math.round(week)))
+  const english = getWeekData(w).babySize
+  if (useLanguageStore.getState().language === 'en') return english
+  return tNow(`preg_size_w${w}` as TranslationKey)
+}
+
+/** Same, from the English size name stored in the week data (for callers holding only the data row). */
+export function localizeBabySizeName(english: string): string {
+  if (useLanguageStore.getState().language === 'en') return english
+  const row = pregnancyWeeks.find((w) => w.babySize === english)
+  return row ? localizedBabySize(row.week) : english
 }

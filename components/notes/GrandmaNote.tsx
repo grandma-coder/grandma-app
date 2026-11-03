@@ -18,6 +18,7 @@ import { SiteSticker } from '../stickers/SiteSticker'
 import { QuietPill } from '../profile/SiteSettingsKit'
 import { Skeleton, SkeletonLines, SkeletonRow } from '../ui/Skeleton'
 import type { GrandmaLetter, GrandmaNoteItem } from '../../lib/grandmaNotes/types'
+import { dateLoc } from '../../lib/kpLocale'
 
 const MONO = 'SpaceMono_400Regular'
 const HAIR = StyleSheet.hairlineWidth * 2
@@ -35,7 +36,7 @@ function shortDate(iso: string, language: string): string {
   try {
     return d.toLocaleDateString(language, { month: 'short', day: 'numeric' })
   } catch {
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
   }
 }
 
@@ -56,7 +57,7 @@ export function GrandmaNotesTitle({ right }: { right?: React.ReactNode }) {
   return (
     <View style={styles.titleRow}>
       <Text
-        style={{ flex: 1, fontFamily: font.display, fontSize: 30, lineHeight: 34, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}
+        style={{ flex: 1, fontFamily: font.display, fontSize: 30, lineHeight: 38, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}
         accessibilityRole="header"
       >
         {t('gn_title')}

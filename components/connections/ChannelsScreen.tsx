@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingBottom: 96 }, // clears the absolute + FAB (bottom 24 + 56 tall)
   header: { marginBottom: 18 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  siteHeading: { fontSize: 28, letterSpacing: 0.3, lineHeight: 34, textTransform: 'uppercase' },
+  siteHeading: { fontSize: 28, letterSpacing: 0.3, lineHeight: 35, textTransform: 'uppercase' },
   heading: { fontSize: 36, letterSpacing: -1, lineHeight: 40, flex: 1 },
   savedBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   subheading: { fontSize: 14, marginTop: 6, lineHeight: 18 },

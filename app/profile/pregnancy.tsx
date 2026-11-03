@@ -56,6 +56,7 @@ import { Character, type CharacterName } from '../../components/characters/Chara
 import { PaperCard } from '../../components/ui/PaperCard'
 import { PillButton } from '../../components/ui/PillButton'
 import { PaperAlert } from '../../components/ui/PaperAlert'
+import { dateLoc } from '../../lib/kpLocale'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1168,7 +1169,7 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             dotColor={ROW_DOTS[0]}
             label={t('preg_profile_dueDate')}
-            value={dueDate ? new Date(dueDate + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+            value={dueDate ? new Date(dueDate + 'T12:00:00').toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
             onEdit={openDueDatePicker}
           />
           <InfoRow dotColor={ROW_DOTS[1]} label={t('preg_profile_currentWeek')} value={weekNumber != null ? `Week ${weekNumber}` : ''} />
@@ -1177,7 +1178,7 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             dotColor={ROW_DOTS[4]}
             label="LMP date"
-            value={bp.lmpDate ? new Date(bp.lmpDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+            value={bp.lmpDate ? new Date(bp.lmpDate + 'T12:00:00').toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
             onEdit={() => {
               setDraftLmpDate(bp.lmpDate ? new Date(bp.lmpDate + 'T00:00:00') : new Date())
               setLmpPickerOpen(true)

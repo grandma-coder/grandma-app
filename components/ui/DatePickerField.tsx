@@ -32,6 +32,7 @@ import { Star as StarSticker } from './Stickers'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { HandDrawnBox } from './HandDrawn'
 import { useTranslation } from '../../lib/i18n'
+import { dateLoc } from '../../lib/kpLocale'
 
 const ST_INK = '#141313'
 const ST_PAPER = '#FFFEF8'
@@ -79,7 +80,7 @@ function formatPretty(iso: string, placeholder: string): string {
   if (!iso) return placeholder
   const d = new Date(iso + (iso.length === 10 ? 'T00:00:00' : ''))
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(dateLoc(), {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

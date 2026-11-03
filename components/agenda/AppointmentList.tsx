@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { dateLoc } from '../../lib/kpLocale'
 
 type ThemeShape = ReturnType<typeof useTheme>
 
@@ -46,7 +47,7 @@ function buildTypes(stickers: ThemeShape['stickers'], t: TFn): TypeOption[] {
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export function AppointmentList({ appointments, selectedDate, onAdd }: AppointmentListProps) {

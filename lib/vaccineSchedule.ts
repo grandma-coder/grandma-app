@@ -12,6 +12,7 @@
  * `components/home/kids/VaccineScheduleTree.tsx`.
  */
 import { getAgeMonths } from '../store/useGoalsStore'
+import { dateLoc } from './kpLocale'
 
 // ─── Health record shapes ────────────────────────────────────────────────────
 
@@ -411,7 +412,7 @@ export function buildVaccineScheduleTree(
 export function formatHealthDate(dateStr: string): string {
   if (!dateStr) return ''
   try {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' })
   } catch { return dateStr }
 }
 

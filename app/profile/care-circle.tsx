@@ -92,6 +92,7 @@ import { useFeatureFlags } from '../../store/useFeatureFlags'
 import { modeToBehavior } from '../../lib/caregiverCards'
 import { ShareCardsEditor } from '../../components/caregiver/ShareCardsEditor'
 import { healthLogText } from '../../lib/kidsHealthLogText'
+import { dateLoc } from '../../lib/kpLocale'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -632,7 +633,7 @@ export default function CareCircleScreen() {
         childName: childMatch?.name ?? 'Child',
         loggedBy: loggerId,
         loggedByName: nameMap.get(loggerId) ?? 'Caregiver',
-        date: l.created_at ? new Date(l.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : l.date,
+        date: l.created_at ? new Date(l.created_at).toLocaleString(dateLoc(), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : l.date,
         value: l.value,
         notes: l.notes,
       }

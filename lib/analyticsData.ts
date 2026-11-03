@@ -11,6 +11,7 @@ import { getNutritionModeForAge, buildScores } from './kidsScoring'
 import { resolveSex, type Sex } from './growthStandards'
 import { parseDurationMinutes } from './kidsHandoff'
 import { normalizeSleepQuality } from './sleepQuality'
+import { dateLoc } from './kpLocale'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -183,7 +184,7 @@ function getLastNDays(n: number, until?: Date): { dates: string[]; labels: strin
     if (n <= 14) {
       labels.push(dayNames[d.getDay()])
     } else if (n <= 35) {
-      const mo = d.toLocaleDateString('en-US', { month: 'short' })
+      const mo = d.toLocaleDateString(dateLoc(), { month: 'short' })
       labels.push(`${mo} ${d.getDate()}`)
     } else {
       labels.push(i % stride === 0 ? `${d.getMonth() + 1}/${d.getDate()}` : '')
@@ -473,7 +474,7 @@ export function buildHealthData(logs: ChildLog[], dates: string[], labels: strin
     const label = healthEventLabel(log, typeLabel)
     if (inWindow(log.date)) {
       // Parse as a local day — bare 'YYYY-MM-DD' is UTC midnight and showed a day early in the Americas.
-      const displayDate = new Date(log.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      const displayDate = new Date(log.date + 'T00:00:00').toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
       recentEvents.push({ date: displayDate, type: typeLabel, label })
     }
 

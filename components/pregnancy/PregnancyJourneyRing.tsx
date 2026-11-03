@@ -26,6 +26,8 @@ import { useTranslation } from '../../lib/i18n'
 import { useTheme, useDiffuseTheme, getDiffuseAccent, getModeField, getModeColorSoft, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseTimelineRow } from '../calendar/DiffuseLogTimeline'
+import { dateLoc } from '../../lib/kpLocale'
+import { localizeBabySizeName } from '../../lib/pregnancyData'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 const SVG_SIZE = 320
@@ -88,7 +90,7 @@ function formatDateRange(dueDate: string, week: number): string {
   const s = new Date(start + 'T12:00:00')
   const e = new Date(end + 'T12:00:00')
   const fmt = (d: Date) =>
-    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
   return `${fmt(s)} – ${fmt(e)}, ${e.getFullYear()}`
 }
 
@@ -129,7 +131,7 @@ function diffuseLogColor(
 
 function formatLogDay(dateISO: string): string {
   const d = new Date(dateISO + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { weekday: 'short', day: 'numeric' })
 }
 
 // ─── Pillar grouping ─────────────────────────────────────────────────────────
@@ -500,7 +502,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   const triIdx = triIndex(selectedWeek)
   const triKey = (['preg_ring_trimester1', 'preg_ring_trimester2', 'preg_ring_trimester3'] as const)[triIdx]
   const triLabel = t(triKey)
-  const sizeName = weekData.babySize.toLowerCase()
+  const sizeName = localizeBabySizeName(weekData.babySize).toLowerCase()
   const article = articleFor(sizeName)
   const statusLabel = isCurrWeek
     ? t('preg_ring_statusHere')

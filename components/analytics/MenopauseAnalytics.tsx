@@ -573,7 +573,7 @@ function SiteHero({ stageWord, heroLine }: { stageWord: string; heroLine: string
     <View style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <View style={{ flex: 1 }}>
         <SiteEyebrow>{t('meno_an_eyebrow')}</SiteEyebrow>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: font.display, fontSize: 30, lineHeight: 36, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text, marginTop: 4 }}>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: font.display, fontSize: 30, lineHeight: 38, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text, marginTop: 4 }}>
           {stageWord}
         </Text>
         <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 21, color: colors.textSecondary, marginTop: 4 }}>{heroLine}</Text>

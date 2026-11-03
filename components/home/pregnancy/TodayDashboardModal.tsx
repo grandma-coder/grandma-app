@@ -25,6 +25,7 @@ import {
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../../lib/moodFace'
 import { supabase } from '../../../lib/supabase'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
+import { dateLoc } from '../../../lib/kpLocale'
 
 interface Props {
   visible: boolean
@@ -71,7 +72,7 @@ function fillDays(history: Point[], days = 7): { values: number[]; labels: strin
     const dateStr = toDateStr(d)
     const match = history.find((h) => h.date === dateStr)
     values.push(match ? match.value : 0)
-    labels.push(d.toLocaleDateString('en-US', { weekday: 'narrow' }))
+    labels.push(d.toLocaleDateString(dateLoc(), { weekday: 'narrow' }))
   }
   return { values, labels }
 }

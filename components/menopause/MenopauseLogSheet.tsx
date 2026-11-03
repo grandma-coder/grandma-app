@@ -100,7 +100,7 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
                   style={({ pressed }) => ({ width: '25%', alignItems: 'center', paddingVertical: 10, gap: 6, opacity: pressed ? 0.6 : 1 })}
                 >
                   <SiteSticker name={l.sticker} size={44} />
-                  <Text numberOfLines={2} style={{ fontFamily: font.display, fontSize: 12, lineHeight: 14, letterSpacing: 0.3, textTransform: 'uppercase', textAlign: 'center', color: siteInk }}>
+                  <Text numberOfLines={2} style={{ fontFamily: font.display, fontSize: 12, lineHeight: 15, letterSpacing: 0.3, textTransform: 'uppercase', textAlign: 'center', color: siteInk }}>
                     {l.label}
                   </Text>
                 </Pressable>

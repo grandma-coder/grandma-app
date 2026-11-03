@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   waveFill: { position: 'absolute', left: 0, top: 0, height: 10, overflow: 'hidden' },
   stepCount: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4 },
   skipHeaderText: { fontFamily: themeFont.bodyBold, fontSize: 13 },
-  siteTitle: { fontSize: 28, lineHeight: 33, letterSpacing: 0.2, textTransform: 'uppercase' },
+  siteTitle: { fontSize: 28, lineHeight: 35, letterSpacing: 0.2, textTransform: 'uppercase' },
 
   questionRow: {
     marginTop: 4,

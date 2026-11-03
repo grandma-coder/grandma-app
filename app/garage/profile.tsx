@@ -36,6 +36,7 @@ import { deletePost, toggleSave, type GaragePost } from '../../lib/garagePosts'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 import { Character } from '../../components/characters/Characters'
+import { dateLoc } from '../../lib/kpLocale'
 
 const SCREEN_W = Dimensions.get('window').width
 const THUMB_SIZE = (SCREEN_W - 4) / 3 // 3 columns, 2px gaps
@@ -77,7 +78,7 @@ export default function GarageProfileScreen() {
 
       setUserEmail(session.user.email ?? null)
       setMemberSince(
-        new Date(session.user.created_at).toLocaleDateString('en-US', {
+        new Date(session.user.created_at).toLocaleDateString(dateLoc(), {
           month: 'long',
           year: 'numeric',
         })

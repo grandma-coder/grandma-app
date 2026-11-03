@@ -4837,7 +4837,7 @@ const styles = StyleSheet.create({
   pillarRowSite: { paddingVertical: 16, borderTopWidth: StyleSheet.hairlineWidth * 2 },
   siteEyebrow: { fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 10 },
   siteMono: { fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
-  siteSectionTitle: { fontSize: 17, lineHeight: 20, letterSpacing: 0.2, textTransform: 'uppercase' },
+  siteSectionTitle: { fontSize: 17, lineHeight: 22, letterSpacing: 0.2, textTransform: 'uppercase' },
   siteBody: { fontSize: 15, lineHeight: 22 },
   siteSmall: { fontSize: 13, lineHeight: 19 },
   siteNum: { fontSize: 24, lineHeight: 28 },

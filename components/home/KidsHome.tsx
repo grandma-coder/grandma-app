@@ -7056,7 +7056,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                   </Text>
                 </View>
               </View>
-              <Text style={{ fontSize: 28, fontFamily: font.display, color: ink, letterSpacing: 0.3, lineHeight: 34, maxWidth: '72%', textTransform: 'uppercase' }}>
+              <Text style={{ fontSize: 28, fontFamily: font.display, color: ink, letterSpacing: 0.3, lineHeight: 35, maxWidth: '72%', textTransform: 'uppercase' }}>
                 {isDone ? `Way to go, ${childName}!` : gl.name}
               </Text>
               <Text style={{ fontSize: 14, fontFamily: font.body, color: ink2, lineHeight: 20, maxWidth: '85%' }}>

@@ -47,6 +47,7 @@ import {
   useInvalidateExams,
   useExamPhotoUrls,
 } from '../../lib/examData'
+import { dateLoc } from '../../lib/kpLocale'
 
 interface Props {
   /** Which behavior context this exam belongs to (drives filtering in the list). */
@@ -427,7 +428,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
                 key={iso}
                 compact
                 tick={false}
-                label={i === 0 ? t('common_today') : i === 1 ? t('common_yesterday') : new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
+                label={i === 0 ? t('common_today') : i === 1 ? t('common_yesterday') : new Date(iso + 'T12:00:00').toLocaleDateString(dateLoc(), { weekday: 'short', day: 'numeric' })}
                 selected={examDate === iso}
                 tone={modeTone}
                 onPress={() => { setExamDate(iso); setShowCalendar(false) }}
@@ -437,7 +438,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
               compact
               tick={false}
               sticker="cal"
-              label={inStrip ? t('kids_logForm_earlier') : new Date(examDate + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+              label={inStrip ? t('kids_logForm_earlier') : new Date(examDate + 'T12:00:00').toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' })}
               selected={!inStrip}
               tone={modeTone}
               onPress={() => setShowCalendar((v) => !v)}

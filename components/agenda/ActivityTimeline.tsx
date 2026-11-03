@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { useTheme, font } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { dateLoc } from '../../lib/kpLocale'
 
 export interface TimelineEntry {
   id: string
@@ -35,7 +36,7 @@ interface ActivityTimelineProps {
 
 function formatTime(dateStr: string): string {
   const d = new Date(dateStr)
-  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleTimeString(dateLoc(), { hour: '2-digit', minute: '2-digit' })
 }
 
 export function ActivityTimeline({ entries, loading }: ActivityTimelineProps) {

@@ -12,6 +12,7 @@ import { DisplayItalic, MonoCaps } from '../ui/Typography'
 import { Heart } from '../ui/Stickers'
 import { WeeksProgressBeads } from '../charts/GalleryCharts'
 import { useTranslation } from '../../lib/i18n'
+import { localizeBabySizeName } from '../../lib/pregnancyData'
 
 interface PregnancyWeekDisplayProps {
   weekNumber: number
@@ -55,7 +56,7 @@ export function PregnancyWeekDisplay({ weekNumber }: PregnancyWeekDisplayProps) 
       <View style={[styles.sizeChip, { backgroundColor: paper, borderColor: paperBorder }]}>
         <MonoCaps>{t('pregnancy_babySizeOf')}</MonoCaps>
         <Text style={[styles.sizeValue, { fontFamily: font.display, color: ink }]}>
-          {t('pregnancy_babySizeOfPrefix')} {data.babySize}
+          {t('pregnancy_babySizeOfPrefix')} {localizeBabySizeName(data.babySize)}
         </Text>
       </View>
 

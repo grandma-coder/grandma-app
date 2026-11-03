@@ -60,6 +60,7 @@ import { weekForDate } from '../../lib/pregnancyWeeks'
 import { toDateStr } from '../../lib/cycleLogic'
 import { ChildPills, formatChildAge } from '../ui/ChildPills'
 import { useTranslation } from '../../lib/i18n'
+import { dateLoc } from '../../lib/kpLocale'
 
 // ─── Lightweight Markdown Renderer ────────────────────────────────────────
 
@@ -210,7 +211,7 @@ function formatDate(iso: string): string {
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
   if (diffDays < 7) return `${diffDays} days ago`
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
 }
 
 // ─── Orb state-driven messages ────────────────────────────────────────────

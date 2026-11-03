@@ -47,6 +47,8 @@ import { getFeaturedReadForWeek, getReadsByCategory } from '../../lib/pregnancyR
 import type { PregnancyRead } from '../../lib/pregnancyReads'
 import { Character, type CharacterName } from '../characters/Characters'
 import { useTranslation } from '../../lib/i18n'
+import { dateLoc } from '../../lib/kpLocale'
+import { localizeBabySizeName } from '../../lib/pregnancyData'
 
 // ─── AI Insight Type Config ───────────────────────────────────────────────
 
@@ -420,7 +422,7 @@ function groupByDate(insights: Insight[]): { label: string; items: Insight[] }[]
   const groups: Record<string, Insight[]> = {}
   for (const ins of insights) {
     const d = new Date(ins.created_at)
-    const key = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    const key = d.toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' })
     if (!groups[key]) groups[key] = []
     groups[key].push(ins)
   }
@@ -675,7 +677,7 @@ function PregnancyInsightsContent() {
     ...getReadsByCategory('mental_health'),
   ]
 
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  const today = new Date().toLocaleDateString(dateLoc(), { weekday: 'long', month: 'long', day: 'numeric' })
 
   const renderToday = () => (
     <>
@@ -684,7 +686,7 @@ function PregnancyInsightsContent() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={[ci.greetingName, diffuse ? null : SITE_TITLE, { color: ink }]}>{t('insights_greetingMorning', { name: parentName })}</Text>
         </View>
-        <Text style={[ci.greetingWeek, { color: colors.accent }]}>{t('insights_greetingWeek', { n: weekNumber, size: weekData.babySize })}</Text>
+        <Text style={[ci.greetingWeek, { color: colors.accent }]}>{t('insights_greetingWeek', { n: weekNumber, size: localizeBabySizeName(weekData.babySize) })}</Text>
       </View>
 
       <CollapsibleCard
@@ -1097,7 +1099,7 @@ export function InsightsScreen() {
   const dailyTip = getDailyTip(ageMonths)
   const quote = getMotivationQuote()
 
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  const today = new Date().toLocaleDateString(dateLoc(), { weekday: 'long', month: 'long', day: 'numeric' })
   const greeting = parentName ? `Hello, ${parentName}` : 'Hello, Parent'
 
   if (mode === 'pregnancy') return <PregnancyInsightsContent />
@@ -1794,7 +1796,7 @@ function InsightDetailModal({
                 <Text style={[s.modalMetaPillText, { color: ink }]}>{t('insights_modeLabel', { mode: insight.behavior })}</Text>
               </View>
               <Text style={[s.modalDateText, { color: ink + 'A0' }]}>
-                {new Date(insight.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {new Date(insight.created_at).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}
               </Text>
             </View>
             <View style={s.modalActions}>

@@ -10,6 +10,7 @@ import { useTheme } from '../../constants/theme'
 import { getWeekData } from '../../lib/pregnancyData'
 import { MonoCaps } from '../ui/Typography'
 import { useTranslation } from '../../lib/i18n'
+import { localizeBabySizeName } from '../../lib/pregnancyData'
 
 interface BabySizeCardProps {
   weekNumber: number
@@ -30,7 +31,7 @@ export function BabySizeCard({ weekNumber }: BabySizeCardProps) {
       <View style={[styles.chip, { backgroundColor: paper, borderColor: paperBorder }]}>
         <MonoCaps>{t('pregnancy_babyIsSizeOf')}</MonoCaps>
         <Text style={[styles.value, { fontFamily: font.display, color: ink }]}>
-          {data.babySize}
+          {localizeBabySizeName(data.babySize)}
         </Text>
       </View>
     </View>

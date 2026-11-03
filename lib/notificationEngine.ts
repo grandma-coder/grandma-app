@@ -16,6 +16,7 @@ import { useFeatureFlags } from '../store/useFeatureFlags'
 import { getCycleInfo, toDateStr } from './cycleLogic'
 import { getWeekData } from './pregnancyData'
 import { parseLocalDate } from './localDate'
+import { dateLoc } from './kpLocale'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -314,7 +315,7 @@ export async function generateHealthAlertNotifications(
               user_id: userId,
               type: 'health_alert',
               title: `${child?.name || 'Child'}: High temperature recorded`,
-              body: `${temp}°C on ${parseLocalDate(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}. Monitor closely and consult a doctor if it persists.`,
+              body: `${temp}°C on ${parseLocalDate(log.date).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}. Monitor closely and consult a doctor if it persists.`,
               data: { childId: log.child_id, temperature: temp, dedupeKey },
             })
           }
@@ -691,8 +692,8 @@ export async function generateAppointmentReminders(
     const apptDate = new Date(appt.appointment_date)
     const hoursUntil = (apptDate.getTime() - now.getTime()) / (1000 * 60 * 60)
     const timeLabel = hoursUntil < 24
-      ? `today at ${apptDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-      : `tomorrow at ${apptDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+      ? `today at ${apptDate.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })}`
+      : `tomorrow at ${apptDate.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })}`
 
     const type = appt.appointment_type || 'Appointment'
     const doctor = appt.doctor_name ? ` with ${appt.doctor_name}` : ''

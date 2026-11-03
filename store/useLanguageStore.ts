@@ -33,20 +33,21 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
   { code: 'pt-BR', name: 'Portuguese (Brazil)', nativeName: 'Português (Brasil)', flag: '🇧🇷' },
   { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
-]
-
-// Wired in the engine but not yet fully translated — hidden from the picker.
-// Promote an entry into SUPPORTED_LANGUAGES when its locale file is complete.
-export const UPCOMING_LANGUAGES: LanguageOption[] = [
   { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
   { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹' },
   { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' },
   { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷' },
   { code: 'zh', name: 'Chinese (Simplified)', nativeName: '中文 (简体)', flag: '🇨🇳' },
-  { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦', rtl: true },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
   { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', flag: '🇹🇷' },
+]
+
+// Wired in the engine but not yet fully translated — hidden from the picker.
+// Promote an entry into SUPPORTED_LANGUAGES when its locale file is complete.
+export const UPCOMING_LANGUAGES: LanguageOption[] = [
+  // Translated, but the layout hasn't been checked right-to-left yet.
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦', rtl: true },
 ]
 
 function getDeviceLanguage(): AppLanguage {

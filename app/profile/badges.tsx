@@ -28,6 +28,7 @@ import { SiteHeader } from '../../components/profile/SiteSettingsKit'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 import { Redirect } from 'expo-router'
+import { dateLoc } from '../../lib/kpLocale'
 
 // Badges belong to Daily Rewards: while that flag is off a stale entry point lands back home.
 export default function BadgeWalletRoute() {
@@ -215,7 +216,7 @@ function BadgeWalletScreen() {
                               : { color: colors.textMuted, fontFamily: font.body },
                           ]}
                         >
-                          {new Date(earned.earnedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          {new Date(earned.earnedAt).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}
                         </Text>
                       )}
                     </View>

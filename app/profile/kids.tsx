@@ -815,7 +815,7 @@ function EditChildSheet({
           >
             <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}>
               {birthDate
-                ? `${parseLocalDate(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
+                ? `${parseLocalDate(birthDate).toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
                 : t('kp_pk_selectDate')}
             </Text>
           </Pressable>
@@ -1137,7 +1137,7 @@ function AddChildSheet({
           >
             <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}>
               {birthDate
-                ? `${parseLocalDate(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
+                ? `${parseLocalDate(birthDate).toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
                 : t('kp_pk_selectDate')}
             </Text>
           </Pressable>

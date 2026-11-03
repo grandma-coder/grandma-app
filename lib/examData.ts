@@ -14,6 +14,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { supabase } from './supabase'
 import { toDateStr } from './cycleLogic'
+import { dateLoc } from './kpLocale'
 
 const EXAM_BUCKET = 'scan-images'
 // 10 min — short exposure window for exam-result photos (PHI) if a signed URL
@@ -384,7 +385,7 @@ export function useKidsExamInsights(childId: string | null | undefined) {
 /** Format helpers used by list / detail screens. */
 export function formatExamDate(isoDate: string): string {
   const d = new Date(isoDate + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export function examBehaviorLabel(b: ExamBehavior): string {

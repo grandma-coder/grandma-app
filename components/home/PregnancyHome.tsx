@@ -55,6 +55,7 @@ import { AppointmentDetailModal } from './pregnancy/AppointmentDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 // Shared ACOG boundaries (2nd trimester to week 27) — the local copy used 26.
 import { getTrimester } from '../../lib/pregnancyWeeks'
+import { dateLoc } from '../../lib/kpLocale'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -295,7 +296,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   // Uses the device locale instead of forcing en-US so the weekday name
   // matches the user's language.
   const weekdayLabel = new Date()
-    .toLocaleDateString(undefined, { weekday: 'long' })
+    .toLocaleDateString(dateLoc(), { weekday: 'long' })
     .toUpperCase()
 
   // Don't render the home until the persisted pregnancy store has

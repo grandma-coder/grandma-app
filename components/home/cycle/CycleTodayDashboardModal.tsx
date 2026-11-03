@@ -26,6 +26,7 @@ import { symptomLabel } from '../../../lib/cycleSymptoms'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
 import { supabase } from '../../../lib/supabase'
 import { useTranslation } from '../../../lib/i18n'
+import { dateLoc } from '../../../lib/kpLocale'
 
 interface Props {
   visible: boolean
@@ -105,7 +106,7 @@ function fillDays(history: Point[], days = 7): { values: number[]; labels: strin
     const dateStr = toDateStr(d)
     const match = history.find((h) => h.date === dateStr)
     values.push(match ? match.value : 0)
-    labels.push(d.toLocaleDateString('en-US', { weekday: 'narrow' }))
+    labels.push(d.toLocaleDateString(dateLoc(), { weekday: 'narrow' }))
   }
   return { values, labels }
 }
@@ -175,7 +176,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
   return (
     <LogSheet
       visible={visible}
-      title={isToday ? t('cycleDash_today') : new Date(today + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+      title={isToday ? t('cycleDash_today') : new Date(today + 'T00:00:00').toLocaleDateString(dateLoc(), { weekday: 'short', month: 'short', day: 'numeric' })}
       onClose={onClose}
       chip={phaseLabel(phase)}
       chipColor={accent}

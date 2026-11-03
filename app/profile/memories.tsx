@@ -60,6 +60,7 @@ import { ChildPill, childColor } from '../../components/ui/ChildPills'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 import { parseLocalDate } from '../../lib/localDate'
+import { dateLoc } from '../../lib/kpLocale'
 
 const SCREEN_W = Dimensions.get('window').width
 const GRID_GAP = 3
@@ -190,7 +191,7 @@ export default function MemoriesScreen() {
   function formatMonth(ym: string) {
     const [y, m] = ym.split('-')
     const d = new Date(Number(y), Number(m) - 1)
-    return d.toLocaleString('en-US', { month: 'short', year: 'numeric' })
+    return d.toLocaleString(dateLoc(), { month: 'short', year: 'numeric' })
   }
 
   // Filtered posts
@@ -222,7 +223,7 @@ export default function MemoriesScreen() {
     const grouped = new Map<string, MemoryPost[]>()
     for (const p of filtered) {
       const d = new Date(p.date)
-      const key = `${d.toLocaleString('en-US', { month: 'long' })} ${d.getFullYear()}`
+      const key = `${d.toLocaleString(dateLoc(), { month: 'long' })} ${d.getFullYear()}`
       const arr = grouped.get(key) ?? []
       arr.push(p)
       grouped.set(key, arr)
@@ -600,7 +601,7 @@ export default function MemoriesScreen() {
                       <Text style={styles.viewerChildText}>{viewPost.childName}</Text>
                     </View>
                     <Text style={styles.viewerDate}>
-                      {parseLocalDate(viewPost.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      {parseLocalDate(viewPost.date).toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' })}
                     </Text>
                   </View>
                 </>
@@ -672,7 +673,7 @@ export default function MemoriesScreen() {
             >
               {diffuse ? <Calendar size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <SiteSticker name="cal" size={24} />}
               <Text style={[styles.dateBtnText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }, !diffuse && { fontSize: 16 }]}>
-                {memoryDate.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+                {memoryDate.toLocaleDateString(dateLoc(), { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
               </Text>
             </Pressable>
             {showDatePicker && (

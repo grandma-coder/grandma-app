@@ -18,6 +18,7 @@ import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useModeStore } from '../../../store/useModeStore'
 import { PillButton } from '../../ui/PillButton'
 import { useTranslation } from '../../../lib/i18n'
+import { dateLoc } from '../../../lib/kpLocale'
 
 interface Props {
   visible: boolean
@@ -36,7 +37,7 @@ function toISO(d: Date): string {
 }
 
 function formatPretty(d: Date): string {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onApply }: Props) {

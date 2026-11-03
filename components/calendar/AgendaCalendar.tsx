@@ -24,6 +24,7 @@ import { useAgendaViewStore, type AgendaView } from '../../store/useAgendaViewSt
 import { Skeleton } from '../ui/Skeleton'
 import { agendaPeriodKey, dayStr, monthGridDates, parseDay, shiftAgendaDate, weekDates } from './agendaDates'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { dateLoc } from '../../lib/kpLocale'
 
 const MONO = 'SpaceMono_400Regular'
 const FALLBACK_INITIALS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
@@ -49,7 +50,7 @@ function safeDate(d: Date, lang: string, opts: Intl.DateTimeFormatOptions): stri
   try {
     return d.toLocaleDateString(lang, opts)
   } catch {
-    return d.toLocaleDateString('en-US', opts)
+    return d.toLocaleDateString(dateLoc(), opts)
   }
 }
 

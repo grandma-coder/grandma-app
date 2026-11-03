@@ -18,6 +18,8 @@ import { getWeekStat, formatWeight } from '../../../lib/weekStats'
 import { font, diffuseFont, useDiffuseTheme, getDiffuseAccent, getModeField, getModeColorSoft, useTheme } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
+import { useLanguageStore } from '../../../store/useLanguageStore'
+import type { TranslationKey } from '../../../lib/i18n'
 
 function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 13) return 1
@@ -25,7 +27,8 @@ function getTrimester(week: number): 1 | 2 | 3 {
   return 3
 }
 
-const TRI_NAMES = ['FIRST', 'SECOND', 'THIRD'] as const
+// Per-language trimester word/number that fits that language's heroLabel template.
+const TRI_KEYS = ['preg_triOrdinal_1', 'preg_triOrdinal_2', 'preg_triOrdinal_3'] as const
 
 function parseCm(len: string): number {
   if (!len) return 0
@@ -117,8 +120,11 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
   const tri = getTrimester(week)
   const cm = stat.cm > 0 ? stat.cm : parseCm(data.babyLength)
   const weekStr = String(week).padStart(2, '0')
-  const fruitName = data.babySize.toLowerCase()
-  const article = articleFor(fruitName)
+  // Size name in the app language (static per-week keys), and the English article only in English.
+  const language = useLanguageStore((st) => st.language)
+  const sizeKey = `preg_size_w${Math.min(40, Math.max(1, week))}` as TranslationKey
+  const fruitName = (language === 'en' ? data.babySize : t(sizeKey)).toLowerCase()
+  const article = language === 'en' ? articleFor(fruitName) : ''
   const weightStr = formatWeight(stat.g)
   const lengthStr = `${cm}cm`
 
@@ -149,10 +155,10 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
           {/* Top row: mono meta (left) + serif-italic fruit name (right) */}
           <View style={styles.topRow}>
             <Text style={[dstyles.meta, { color: ink3 }]}>
-              {t('preg_weekDetail_heroLabel', { week: weekStr, trimester: TRI_NAMES[tri - 1] })}
+              {t('preg_weekDetail_heroLabel', { week: weekStr, trimester: t(TRI_KEYS[tri - 1]) })}
             </Text>
             <Text style={[dstyles.sizeName, { color: ink2 }]} numberOfLines={1}>
-              {article}{' '}
+              {article ? `${article} ` : ''}
               <Text style={[dstyles.sizeNameItalic, { color: ink }]}>{fruitName}</Text>
             </Text>
           </View>
@@ -229,10 +235,10 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
       {/* Top row: meta (left) + sizename (right) */}
       <View style={styles.topRow}>
         <Text style={[styles.meta, { color: pal.metaFg }]}>
-          {t('preg_weekDetail_heroLabel', { week: weekStr, trimester: TRI_NAMES[tri - 1] })}
+          {t('preg_weekDetail_heroLabel', { week: weekStr, trimester: t(TRI_KEYS[tri - 1]) })}
         </Text>
         <Text style={[styles.sizeName, { color: pal.fg }]} numberOfLines={1}>
-          {article}{' '}
+          {article ? `${article} ` : ''}
           <Text style={[styles.sizeNameBold, { color: pal.fg }]}>
             {fruitName}
           </Text>

@@ -38,6 +38,7 @@ import { Display, Body, MonoCaps } from '../ui/Typography'
 import { logSticker } from '../calendar/logStickers'
 import { childColor } from '../ui/ChildPills'
 import { useTranslation } from '../../lib/i18n'
+import { dateLoc } from '../../lib/kpLocale'
 
 const BEHAVIOR_MODE: Record<ExamBehavior, 'pre' | 'preg' | 'kids'> = {
   'pre-pregnancy': 'pre',
@@ -416,7 +417,7 @@ function ExamCard({
 function monthLabel(yyyymm: string): string {
   const [y, m] = yyyymm.split('-').map(Number)
   const d = new Date(y, m - 1, 1)
-  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()
+  return d.toLocaleDateString(dateLoc(), { month: 'long', year: 'numeric' }).toUpperCase()
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────

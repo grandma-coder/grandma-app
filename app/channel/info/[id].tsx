@@ -65,6 +65,7 @@ import { BrandedLoader } from '../../../components/ui/BrandedLoader'
 import { useConfirmDialog } from '../../../components/ui/useConfirm'
 import { PaperActionSheet, type ActionSheetItem } from '../../../components/ui/PaperActionSheet'
 import { useTranslation } from '../../../lib/i18n'
+import { dateLoc } from '../../../lib/kpLocale'
 
 const SCREEN_W = Dimensions.get('window').width
 const MEDIA_THUMB = (SCREEN_W - 48 - 8) / 4 // 4 columns
@@ -582,7 +583,7 @@ export default function ChannelInfoScreen() {
                 {ownerName ?? t('channelInfo_ownerFallback')}
               </Text>
               <Text style={[s.ownerMeta, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-                {t('channelInfo_createdDate', { date: new Date(channel.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) })}
+                {t('channelInfo_createdDate', { date: new Date(channel.createdAt).toLocaleDateString(dateLoc(), { month: 'long', year: 'numeric' }) })}
               </Text>
             </View>
             {isOwner && (

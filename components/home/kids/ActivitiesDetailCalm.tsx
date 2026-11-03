@@ -12,6 +12,7 @@ import { useTheme, stickers } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { FadeUp } from '../../ui/Motion'
+import { dateLoc } from '../../../lib/kpLocale'
 
 type PillarId = 'movement' | 'creative' | 'learning' | 'social' | 'care' | 'therapy'
 
@@ -50,7 +51,7 @@ const MAX_DOTS = 14
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   if (isNaN(d.getTime())) return dateStr
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { weekday: 'short', month: 'short', day: 'numeric' })
 }
 function formatTime(start?: string, end?: string): string {
   if (!start) return ''

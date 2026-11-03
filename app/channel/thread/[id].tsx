@@ -42,6 +42,7 @@ import {
 import { supabase } from '../../../lib/supabase'
 import { BrandedLoader } from '../../../components/ui/BrandedLoader'
 import { useTranslation } from '../../../lib/i18n'
+import { dateLoc } from '../../../lib/kpLocale'
 
 export default function ThreadView() {
   const { colors, radius } = useTheme()
@@ -335,7 +336,7 @@ function formatTime(dateStr: string): string {
   if (diffMin < 60) return `${diffMin}m`
   const diffHrs = Math.floor(diffMin / 60)
   if (diffHrs < 24) return `${diffHrs}h`
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
 }
 
 const s = StyleSheet.create({

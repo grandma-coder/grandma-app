@@ -38,6 +38,7 @@ import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
 import { getPrepGuide } from '../../../lib/prepGuide'
 import { StickerIcon } from './stickerIcons'
 import { BabyIllustration } from './babyIllustrations'
+import { localizeBabySizeName } from '../../../lib/pregnancyData'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -313,7 +314,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
   const weekStr = String(week).padStart(2, '0')
   const lengthStr = `${stat.cm}cm`
   const weightStr = formatWeight(stat.g)
-  const fruitName = weekData.babySize.toLowerCase()
+  const fruitName = localizeBabySizeName(weekData.babySize).toLowerCase()
   const article = /^[aeiou]/i.test(fruitName) ? 'an' : 'a'
 
   // Same proportional scaling as WeekCard.illustrationSize, capped at 130 for the smaller hero.

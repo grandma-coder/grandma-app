@@ -10,6 +10,7 @@ import { useChildStore } from '../store/useChildStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from './pregnancyData'
 import type { Behavior } from '../store/useBehaviorStore'
+import { dateLoc } from './kpLocale'
 
 function formatAge(birthDate: string | undefined | null): string {
   if (!birthDate) return ''
@@ -43,7 +44,7 @@ export function getPregnancySubtitle(): string {
   if (!dueDate) return `Week ${storedWeek ?? 1}`
   const week = getCurrentWeekFromDueDate(dueDate)
   const due = new Date(dueDate + 'T00:00:00')
-  const dueFmt = due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const dueFmt = due.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
   return `Week ${week} · due ${dueFmt}`
 }
 

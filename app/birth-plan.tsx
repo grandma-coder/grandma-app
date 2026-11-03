@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   lHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6 },
-  lTitle: { flex: 1, fontSize: 30, lineHeight: 34, letterSpacing: 0.3, textTransform: 'uppercase' },
+  lTitle: { flex: 1, fontSize: 30, lineHeight: 38, letterSpacing: 0.3, textTransform: 'uppercase' },
   lSubtitle: { fontSize: 15, lineHeight: 22, marginBottom: 24 },
   lBagSection: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: spacing.md, marginBottom: spacing.md },
   title: {

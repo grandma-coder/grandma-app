@@ -30,6 +30,7 @@ import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import type { JourneyMode } from '../../types'
 import { type Reminder, storageKey as buildStorageKey, loadReminders, saveReminders, allTags } from '../../lib/reminders'
+import { dateLoc } from '../../lib/kpLocale'
 
 interface Props {
   userId: string | null
@@ -285,7 +286,7 @@ export function UserReminders({ userId, context = 'pregnancy' }: Props) {
                 color: newDate ? ACCENT : colors.textSecondary,
                 fontFamily: font.bodySemiBold,
               }}>
-                {newDate ? newDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : t('preg_reminders_setDate')}
+                {newDate ? newDate.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' }) : t('preg_reminders_setDate')}
               </Text>
               {newDate && (
                 <Pressable
@@ -585,7 +586,7 @@ function ReminderRow({
       : isDueToday
         ? t('preg_reminders_dueToday', { timeSuffix })
         : t('preg_reminders_dueOn', {
-            date: due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+            date: due.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' }),
             timeSuffix,
           })
     : null

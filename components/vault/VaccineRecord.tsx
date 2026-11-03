@@ -8,6 +8,7 @@ import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { parseLocalDate } from '../../lib/localDate'
+import { dateLoc } from '../../lib/kpLocale'
 
 export interface VaccineEntry {
   id: string
@@ -23,7 +24,7 @@ interface VaccineRecordProps {
 }
 
 function formatDate(dateStr: string): string {
-  return parseLocalDate(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return parseLocalDate(dateStr).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export function VaccineRecord({ vaccines }: VaccineRecordProps) {

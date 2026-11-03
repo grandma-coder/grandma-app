@@ -655,7 +655,7 @@ function SwipeCard({
           ) : null}
         </View>
         <View style={{ borderTopWidth: 1.5, borderTopColor: colors.text, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 6 }}>
-          <Text numberOfLines={1} style={{ fontFamily: font.display, fontSize: 22, lineHeight: 26, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}>
+          <Text numberOfLines={1} style={{ fontFamily: font.display, fontSize: 22, lineHeight: 28, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}>
             {title || post.category || 'A little treasure'}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

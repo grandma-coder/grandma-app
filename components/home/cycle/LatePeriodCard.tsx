@@ -51,7 +51,7 @@ export function LatePeriodCard({
 const styles = StyleSheet.create({
   card: { borderWidth: 1.5, borderRadius: 24, padding: 18, marginHorizontal: 20, marginTop: 8, gap: 10 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  title: { flex: 1, fontSize: 22, lineHeight: 26, textTransform: 'uppercase' },
+  title: { flex: 1, fontSize: 22, lineHeight: 28, textTransform: 'uppercase' },
   body: { fontSize: 15, lineHeight: 21 },
   link: { alignSelf: 'center', paddingVertical: 6 },
   linkText: { fontSize: 14, textDecorationLine: 'underline' },

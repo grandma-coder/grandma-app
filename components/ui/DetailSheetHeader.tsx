@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
   disc: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 4 },
-  title: { fontSize: 24, lineHeight: 28, letterSpacing: 0.3, textTransform: 'uppercase' },
+  title: { fontSize: 24, lineHeight: 30, letterSpacing: 0.3, textTransform: 'uppercase' },
   tag: { alignSelf: 'flex-start', borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, transform: [{ rotate: '-2deg' }] },
   tagText: { fontSize: 12 },
 })
