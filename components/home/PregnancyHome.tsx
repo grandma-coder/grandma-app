@@ -79,7 +79,9 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
   const [visibleWeek, setVisibleWeek] = useState(currentWeek)
 
   useEffect(() => {
-    const idx = Math.max(0, currentWeek - 1)
+    // Weeks run to 42 (past the due date) but the hero list stops at 40; an out-of-range
+    // scrollToIndex throws inside the timer and crashes the release app.
+    const idx = Math.min(Math.max(0, currentWeek - 1), HERO_ITEMS.length - 1)
     const timer = setTimeout(() => {
       flatListRef.current?.scrollToIndex({ index: idx, animated: false })
     }, 150)

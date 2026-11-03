@@ -1487,6 +1487,12 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     setRangeLoadedFor(c.id)
   }
 
+  // Derive the selected date-range bounds once per render (was recomputed
+  // inline several times, creating fresh object refs that defeated React.memo
+  // on DiaperCard and the detail modals). Must stay above the no-child early return: a hook
+  // after it throws "Rendered more hooks" when the child count goes 0 → 1.
+  const dateBounds = useMemo(() => getDateRange(dateRange, customRange), [dateRange, customRange])
+
   // No child available yet — could be a freshly-signed-in user with no
   // kids in the DB, or a logged-out user who somehow slipped past the
   // route guard. Either way, show an actionable empty state instead of
@@ -1500,7 +1506,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           title={t('kids_home_empty_state_title')}
           message={t('kids_home_empty_state_msg')}
           ctaLabel={t('kids_home_empty_state_cta')}
-          onCtaPress={() => router.push('/onboarding/child-profile' as any)}
+          onCtaPress={() => router.push('/onboarding/kids' as any)}
         />
       </View>
     )
@@ -1508,11 +1514,6 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
   const growthLeap = getGrowthLeap(child.birthDate)
   const firstName = (profileName || parentName)?.split(' ')[0] || ''
-
-  // Derive the selected date-range bounds once per render (was recomputed
-  // inline several times, creating fresh object refs that defeated React.memo
-  // on DiaperCard and the detail modals).
-  const dateBounds = useMemo(() => getDateRange(dateRange, customRange), [dateRange, customRange])
 
   // Ring progress values
   const sleepProgress = rangeData.sleepTarget > 0 ? Math.min(rangeData.sleepTotal / rangeData.sleepTarget, 1) : 0
