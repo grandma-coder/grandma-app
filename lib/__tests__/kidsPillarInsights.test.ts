@@ -86,13 +86,14 @@ const mkLog = (over: Partial<ChildLog> & Pick<ChildLog, 'date' | 'type'>): Child
 // ─── buildHealthInsight ─────────────────────────────────────────────────────
 
 describe('buildHealthInsight — well case', () => {
-  it('leads with "well" and no concern when concernTimeline is entirely empty', () => {
+  it('states nothing was logged — never that the child "has been well" — when concernTimeline is empty', () => {
     const analytics = makeAnalytics({
       dateRange: { from: '2026-07-01', to: '2026-07-07' },
       health: health({ concernTimeline: [] }),
     })
     const insight = buildHealthInsight(analytics, 26, 'Rio')
-    expect(insight.lead).toMatch(/well/i)
+    expect(insight.lead).toMatch(/logged/i)
+    expect(insight.lead).not.toMatch(/well/i)
     expect(insight.lead).toMatch(/Rio/)
     expect(insight.lead).not.toMatch(/\d+ (fever|injury|health concern)/i)
   })
@@ -107,7 +108,8 @@ describe('buildHealthInsight — well case', () => {
       }),
     })
     const insight = buildHealthInsight(analytics, 26, 'Rio')
-    expect(insight.lead).toMatch(/well/i)
+    expect(insight.lead).toMatch(/logged/i)
+    expect(insight.lead).not.toMatch(/well/i)
     expect(insight.lead).toMatch(/6 weeks/)
   })
 
@@ -152,7 +154,7 @@ describe('buildHealthInsight — concern case', () => {
     expect(insight.lead).not.toMatch(/well/i)
   })
 
-  it('adds a best-effort recovery line once a fever episode has actually concluded', () => {
+  it('adds a factual line about the last fever episode once it has concluded (no "settled" verdict)', () => {
     const analytics = makeAnalytics({
       dateRange: { from: '2026-07-01', to: '2026-07-10' },
       health: health({
@@ -163,7 +165,8 @@ describe('buildHealthInsight — concern case', () => {
       }),
     })
     const insight = buildHealthInsight(analytics, 26, 'Rio')
-    expect(insight.supporting.some((s) => /last fever \(Jul 2\) settled within ~2 days/.test(s))).toBe(true)
+    expect(insight.supporting.some((s) => /last fever \(Jul 2\) was logged over ~2 days/.test(s))).toBe(true)
+    expect(insight.supporting.some((s) => /settled/.test(s))).toBe(false)
   })
 
   it('omits the recovery line when the most recent fever hasn\'t actually concluded yet', () => {
@@ -174,7 +177,7 @@ describe('buildHealthInsight — concern case', () => {
       }),
     })
     const insight = buildHealthInsight(analytics, 26, 'Rio')
-    expect(insight.supporting.some((s) => /settled within/.test(s))).toBe(false)
+    expect(insight.supporting.some((s) => /was logged over/.test(s))).toBe(false)
   })
 
   it('surfaces a recent medicine note only when it is within the last week, else omits it', () => {
@@ -184,6 +187,7 @@ describe('buildHealthInsight — concern case', () => {
       logs: [mkLog({ date: '2026-07-06', type: 'medicine', value: 'Amoxicillin' })],
     })
     expect(buildHealthInsight(recent, 26, 'Rio').supporting.some((s) => /Amoxicillin/.test(s))).toBe(true)
+    expect(buildHealthInsight(recent, 26, 'Rio').supporting.some((s) => /worth watching/.test(s))).toBe(false)
 
     const stale = makeAnalytics({
       dateRange: { from: '2026-07-01', to: '2026-07-07' },

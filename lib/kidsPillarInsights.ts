@@ -115,7 +115,7 @@ function recentMedicineNote(logs: ChildLog[], windowTo: string): string | null {
 
   const name = (latest.value ?? '').trim()
   const when = daysAgo <= 1 ? 'today' : `${daysAgo} days ago`
-  return `${name} noted ${when} — worth watching if it continues.`
+  return `${name} logged ${when}.`
 }
 
 /**
@@ -151,7 +151,8 @@ export function buildHealthInsight(analytics: AnalyticsData, ageMonths: number, 
       ? timeline.reduce((latest, c) => (c.date > latest.date ? c : latest))
       : null
     const spanDays = mostRecent ? daysBetween(mostRecent.date, dateRange.to) : windowDays
-    lead = `${childName}'s been well — no fever, injury, or doctor visit in the last ${weeksPhrase(spanDays)}.`
+    // Factual, not a health verdict: 'nothing logged' is true even when nothing was ever logged.
+    lead = `No fever, injury or doctor visit logged for ${childName} in the last ${weeksPhrase(spanDays)}.`
   } else {
     const counts: Record<ConcernKind, number> = { fever: 0, injury: 0, doctor: 0 }
     for (const c of inWindow) counts[c.kind]++
@@ -175,7 +176,7 @@ export function buildHealthInsight(analytics: AnalyticsData, ageMonths: number, 
     const episode = lastFeverEpisode(timeline, dateRange.to)
     if (episode) {
       supporting.push(
-        `${childName}'s last fever (${formatMonthDay(episode.start)}) settled within ~${episode.days} day${episode.days === 1 ? '' : 's'}.`,
+        `${childName}'s last fever (${formatMonthDay(episode.start)}) was logged over ~${episode.days} day${episode.days === 1 ? '' : 's'}.`,
       )
     }
   }

@@ -416,10 +416,14 @@ function healthEventLabel(log: ChildLog, typeLabel: string): string {
 // fever) is routine and must NOT count as a concern event.
 const FEVER_THRESHOLD_C = 38.0
 
-function isFeverTemperature(value: string | null): boolean {
+export function isFeverTemperature(value: string | null): boolean {
   if (!value) return false
-  const t = parseFloat(String(value).replace(',', '.'))
-  return !isNaN(t) && t >= FEVER_THRESHOLD_C
+  const raw = parseFloat(String(value).replace(',', '.'))
+  if (isNaN(raw)) return false
+  // Temperatures can be typed in °F (health history's placeholder invites it); anything above any
+  // plausible °C reading is read as °F — so 99.1°F is not counted as a fever.
+  const celsius = raw > 45 ? ((raw - 32) * 5) / 9 : raw
+  return celsius >= FEVER_THRESHOLD_C
 }
 
 // Free-form health notes (Doctor visit / Injury / Other) pack their subtype
