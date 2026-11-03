@@ -56,6 +56,9 @@ import { useJourneyStore } from '../../../store/useJourneyStore'
 import { useConsentStore } from '../../../store/useConsentStore'
 import { useBehaviorStore, PRE_PREG_DB_TYPE } from '../../../store/useBehaviorStore'
 import { isDevModeActive } from '../../../store/useDevStore'
+import { useCycleSettingsStore, CYCLE_LENGTH_RANGE, PERIOD_LENGTH_RANGE } from '../../../store/useCycleSettingsStore'
+
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(v)))
 
 // ─── Step IDs ──────────────────────────────────────────────────────────────
 
@@ -227,6 +230,17 @@ export default function CycleOnboarding() {
     }
 
     useModeStore.getState().setCycleIntent(store.tryingToConceive ? 'ttc' : 'tracking')
+
+    // The home reads cycle/period length from the settings store; onboarding used to write them
+    // only into the first log's notes, so a declared 35-day cycle showed as 28 until two periods
+    // were logged. 'I don't know' leaves cycle length on the measured average.
+    const settings = useCycleSettingsStore.getState()
+    if (!store.cycleLengthUnknown && store.cycleLength) {
+      settings.setCycleLength(clamp(store.cycleLength, CYCLE_LENGTH_RANGE.min, CYCLE_LENGTH_RANGE.max))
+    }
+    if (store.periodDuration) {
+      settings.setPeriodLength(clamp(store.periodDuration, PERIOD_LENGTH_RANGE.min, PERIOD_LENGTH_RANGE.max))
+    }
 
     store.clearAll()
     onboardingComplete('pre-pregnancy')
