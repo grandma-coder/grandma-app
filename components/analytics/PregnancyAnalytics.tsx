@@ -1812,7 +1812,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
         </PaperCard>
       ) : null}
 
-      <PaperCard title={`Healthy range · Week ${weekNumber}`}>
+      <PaperCard title={diffuse ? `Healthy range · Week ${weekNumber}` : t('kp_weightGuide_title', { week: weekNumber })}>
         <Body size={13} color={sec} style={{ lineHeight: 20 }}>
           {trimester === 1
             ? 'In the first trimester, gaining 0.5–2 kg total is typical — many people lose a little from nausea.'
@@ -1820,7 +1820,8 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
             ? 'Trimester 2 averages 0.3–0.5 kg per week. Steady gain reflects the placenta and baby growing.'
             : 'Trimester 3 often slows to 0.2–0.4 kg per week. Sudden jumps can signal swelling — flag it to your OB.'}
         </Body>
-        {onTrack ? (
+        {/* Light: guidance only — no on-track / below-target verdict on the pregnancy's weight gain. */}
+        {!diffuse ? null : onTrack ? (
           <Pill color={stickers.green} tint={stickers.greenSoft} label={t('preg_analytics_pill_onTrack')} />
         ) : avgWeekly !== null ? (
           <Pill

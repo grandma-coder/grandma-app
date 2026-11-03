@@ -4931,4 +4931,5 @@ export interface TranslationKeys {
   kp_kh_dc_black: string
   kp_kh_dc_red: string
   kp_kh_dc_orange: string
+  kp_weightGuide_title: string
 }
