@@ -1039,6 +1039,24 @@ function AddChildSheet({
 
       if (error) throw error
 
+      // The parent's own child_caregivers link is what loads this child on the next launch (the
+      // parent_id fallback only runs when the user has no links at all). Onboarding writes it;
+      // this sheet didn't, so a second child vanished after a restart. No link → roll back.
+      const { error: linkError } = await supabase.from('child_caregivers').insert({
+        child_id: data.id,
+        user_id: session.user.id,
+        email: session.user.email,
+        role: 'parent',
+        status: 'accepted',
+        permissions: { view: true, log_activity: true, chat: true, edit_child: true, emergency: true },
+        invited_by: session.user.id,
+        accepted_at: new Date().toISOString(),
+      })
+      if (linkError) {
+        await supabase.from('children').delete().eq('id', data.id)
+        throw linkError
+      }
+
       let newChild = mapDbChild(data)
       // A freshly-picked local photo uploads now that we have the child id,
       // then we persist the returned storage path.
