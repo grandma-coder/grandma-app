@@ -53,6 +53,7 @@ import {
   Flower as FlowerSticker,
 } from '../../components/ui/Stickers'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
+import { parseLocalDate } from '../../lib/localDate'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -234,7 +235,7 @@ export default function HealthHistoryScreen() {
                 <View key={v.id} style={styles.vaccineItem}>
                   <Check size={14} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={diffuse ? 1.6 : 2.5} />
                   <Text style={[styles.vaccineText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{v.value}</Text>
-                  <Text style={[styles.vaccineDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{new Date(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
+                  <Text style={[styles.vaccineDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{parseLocalDate(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
                 </View>
               ))}
               {vaccines.length > 3 && (
@@ -282,7 +283,7 @@ export default function HealthHistoryScreen() {
                   <Text style={[styles.medName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{m.value}</Text>
                   {m.notes ? <Text style={[styles.medNotes, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={1}>{m.notes}</Text> : null}
                 </View>
-                <Text style={[styles.medDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
+                <Text style={[styles.medDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{parseLocalDate(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
               </View>
             ))
           ) : diffuse ? (
@@ -341,7 +342,7 @@ export default function HealthHistoryScreen() {
                               <View key={g.id} style={styles.barCol}>
                                 <Text style={[styles.barValue, { color: wColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{diffuse ? num : Math.round(num * 10) / 10}</Text>
                                 <View style={[styles.bar, { height: h, backgroundColor: diffuse ? dt.colors.line2 : stickers.blueSoft, borderColor: diffuse ? 'transparent' : ink, borderWidth: diffuse ? 1 : 1.5, borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
-                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
+                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{parseLocalDate(g.date).toLocaleDateString('en-US', diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
                               </View>
                             )
                           })}
@@ -360,7 +361,7 @@ export default function HealthHistoryScreen() {
                               <View key={g.id} style={styles.barCol}>
                                 <Text style={[styles.barValue, { color: hColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{diffuse ? num : Math.round(num * 10) / 10}</Text>
                                 <View style={[styles.bar, { height: h, backgroundColor: diffuse ? dt.colors.line2 : stickers.peachSoft, borderColor: diffuse ? 'transparent' : ink, borderWidth: diffuse ? 1 : 1.5, borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
-                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{new Date(g.date).toLocaleDateString('en-US', diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
+                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{parseLocalDate(g.date).toLocaleDateString('en-US', diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
                               </View>
                             )
                           })}
@@ -404,7 +405,7 @@ export default function HealthHistoryScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.milestoneText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>{m.value}</Text>
                     <Text style={[styles.milestoneDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>
-                      {`${m.childName} · ${new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                      {`${m.childName} · ${parseLocalDate(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
                     </Text>
                   </View>
                 </View>
@@ -671,7 +672,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
               </View>
               {e.notes ? <Text style={[styles.detailItemNotes, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{e.notes}</Text> : null}
               <Text style={[styles.detailItemDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>
-                {new Date(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+                {parseLocalDate(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
               </Text>
             </View>
           ))}

@@ -250,7 +250,7 @@ const GROWTH_LEAPS = [
 
 function getGrowthLeap(birthDate: string) {
   if (!birthDate) return null
-  const birth = new Date(birthDate)
+  const birth = parseLocalDate(birthDate)
   const now = new Date()
   const weekAge = Math.floor((now.getTime() - birth.getTime()) / (7 * 24 * 60 * 60 * 1000))
 
@@ -288,7 +288,7 @@ function getGrowthLeap(birthDate: string) {
 
 function formatAge(bd: string): string {
   if (!bd) return ''
-  const b = new Date(bd), n = new Date()
+  const b = parseLocalDate(bd), n = new Date()
   const m = (n.getFullYear() - b.getFullYear()) * 12 + (n.getMonth() - b.getMonth())
   if (m < 1) return 'Newborn'
   if (m < 12) return `${m}mo`
@@ -337,6 +337,7 @@ import { MonoCaps, Display } from '../ui/Typography'
 import { parseDurationMinutes } from '../../lib/kidsHandoff'
 import { normalizeSleepQuality } from '../../lib/sleepQuality'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
+import { parseLocalDate } from '../../lib/localDate'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
@@ -6465,7 +6466,7 @@ function RemindersModal({
       const date = r.archivedAt ? r.archivedAt.split('T')[0] : 'unknown'
       let label = date === today ? 'Today' : date === yesterday ? 'Yesterday'
         : date === 'unknown' ? 'Earlier'
-        : new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+        : parseLocalDate(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
       if (!groups[date]) groups[date] = { label, items: [] }
       groups[date].items.push(r)
     }

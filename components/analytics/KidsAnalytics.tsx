@@ -154,6 +154,7 @@ import { FadeUp } from '../ui/Motion'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 import { Skeleton, SkeletonRing } from '../ui/Skeleton'
 import { SkeletonStatRows } from './shared/AnalyticsSkeleton'
+import { parseLocalDate } from '../../lib/localDate'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -353,7 +354,7 @@ const MOOD_EMOJI: Record<string, string> = {
 // ─── Age Helpers ───────────────────────────────────────────────────────────
 
 function getAgeMonths(birthDate: string): number {
-  const bd = new Date(birthDate)
+  const bd = parseLocalDate(birthDate)
   const now = new Date()
   return Math.max(0, (now.getFullYear() - bd.getFullYear()) * 12 + (now.getMonth() - bd.getMonth()))
 }
@@ -1419,12 +1420,12 @@ export function KidsAnalytics() {
           </FullScreenChart>
           {analytics.growth.weights.length >= 2 && (
             <FullScreenChart visible={fullScreen === 'weight'} title={t('kids_analytics_chart_weight')} onClose={() => setFullScreen(null)}>
-              <LineChart data={analytics.growth.weights.map((w) => w.value)} labels={analytics.growth.weights.map((w) => { const d = new Date(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={PILLAR_CONFIG.health.color} width={SCREEN_W - 48} height={220} unit="kg" showAverage />
+              <LineChart data={analytics.growth.weights.map((w) => w.value)} labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={PILLAR_CONFIG.health.color} width={SCREEN_W - 48} height={220} unit="kg" showAverage />
             </FullScreenChart>
           )}
           {analytics.growth.heights.length >= 2 && (
             <FullScreenChart visible={fullScreen === 'height'} title={t('kids_analytics_chart_height')} onClose={() => setFullScreen(null)}>
-              <LineChart data={analytics.growth.heights.map((h) => h.value)} labels={analytics.growth.heights.map((h) => { const d = new Date(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={PILLAR_CONFIG.growth.color} width={SCREEN_W - 48} height={220} unit="cm" showAverage />
+              <LineChart data={analytics.growth.heights.map((h) => h.value)} labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={PILLAR_CONFIG.growth.color} width={SCREEN_W - 48} height={220} unit="cm" showAverage />
             </FullScreenChart>
           )}
         </>
@@ -3783,14 +3784,14 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               <StatRow>
                 {lastWeight && (
                   <StatPill
-                    label={`Weight (${new Date(lastWeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
+                    label={`Weight (${parseLocalDate(lastWeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
                     value={`${lastWeight.value}kg`}
                     color={PILLAR_CONFIG.health.color}
                   />
                 )}
                 {lastHeight && (
                   <StatPill
-                    label={`Height (${new Date(lastHeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
+                    label={`Height (${parseLocalDate(lastHeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
                     value={`${lastHeight.value}cm`}
                     color={PILLAR_CONFIG.growth.color}
                   />
@@ -3805,14 +3806,14 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               {diffuse ? (
                 <MilestoneTrail
                   data={analytics.growth.weights.map((w) => w.value)}
-                  labels={analytics.growth.weights.map((w) => { const d = new Date(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
                   color={stickers.yellow}
                   accent={getDiffuseAccent('kids', dt.isDark)}
                 />
               ) : (
                 <LineChart
                   data={analytics.growth.weights.map((w) => w.value)}
-                  labels={analytics.growth.weights.map((w) => { const d = new Date(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
                   color={PILLAR_CONFIG.health.color}
                   width={chartW}
                   unit="kg"
@@ -3826,14 +3827,14 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               {diffuse ? (
                 <MilestoneTrail
                   data={analytics.growth.heights.map((h) => h.value)}
-                  labels={analytics.growth.heights.map((h) => { const d = new Date(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
                   color={stickers.green}
                   accent={getDiffuseAccent('kids', dt.isDark)}
                 />
               ) : (
                 <LineChart
                   data={analytics.growth.heights.map((h) => h.value)}
-                  labels={analytics.growth.heights.map((h) => { const d = new Date(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
                   color={PILLAR_CONFIG.growth.color}
                   width={chartW}
                   unit="cm"

@@ -1,3 +1,4 @@
+import { parseLocalDate } from './localDate'
 /**
  * Per-week pregnancy development data shown across the pregnancy home + week
  * detail surfaces. babyLength values are crown-heel population estimates
@@ -65,10 +66,12 @@ export function getWeekData(week: number): PregnancyWeekData {
 }
 
 export function getDaysToGo(dueDate: string): number {
-  const due = new Date(dueDate)
+  // Whole calendar days between local today and the due date (not a ceil of a UTC-midnight
+  // difference, which jumped by a day in the evening and disagreed with the week math).
+  const due = parseLocalDate(dueDate)
   const now = new Date()
-  const diff = due.getTime() - now.getTime()
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.max(0, Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)))
 }
 
 /**

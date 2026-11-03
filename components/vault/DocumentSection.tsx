@@ -8,6 +8,7 @@ import { SiteSticker } from '../stickers/SiteSticker'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
+import { parseLocalDate } from '../../lib/localDate'
 
 export interface DocumentItem {
   id: string
@@ -33,7 +34,7 @@ function formatSize(bytes: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return parseLocalDate(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export function DocumentSection({

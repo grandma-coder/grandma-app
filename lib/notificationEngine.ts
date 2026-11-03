@@ -15,6 +15,7 @@ import { supabase } from './supabase'
 import { useFeatureFlags } from '../store/useFeatureFlags'
 import { getCycleInfo, toDateStr } from './cycleLogic'
 import { getWeekData } from './pregnancyData'
+import { parseLocalDate } from './localDate'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -313,7 +314,7 @@ export async function generateHealthAlertNotifications(
               user_id: userId,
               type: 'health_alert',
               title: `${child?.name || 'Child'}: High temperature recorded`,
-              body: `${temp}°C on ${new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}. Monitor closely and consult a doctor if it persists.`,
+              body: `${temp}°C on ${parseLocalDate(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}. Monitor closely and consult a doctor if it persists.`,
               data: { childId: log.child_id, temperature: temp, dedupeKey },
             })
           }
@@ -813,7 +814,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
 
   // ── Due date approaching ──────────────────────────────────────────────────
   if (dueDate) {
-    const daysToDue = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86400000)
+    const daysToDue = Math.ceil((parseLocalDate(dueDate).getTime() - Date.now()) / 86400000)
     if (daysToDue >= 0 && daysToDue <= 14) {
       const dedupeKey = `pregnancy_due_${daysToDue}`
       const already = await alreadyNotifiedToday(userId, 'reminder', dedupeKey)
@@ -841,7 +842,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
     .maybeSingle()
 
   if (lastLog) {
-    const daysSince = Math.floor((Date.now() - new Date(lastLog.log_date).getTime()) / 86400000)
+    const daysSince = Math.floor((Date.now() - parseLocalDate(lastLog.log_date).getTime()) / 86400000)
     if (daysSince >= 3) {
       const dedupeKey = `pregnancy_missing_${daysSince}`
       const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey)
@@ -1034,7 +1035,7 @@ export async function generateCycleNotifications(userId: string): Promise<number
     .maybeSingle()
 
   if (lastLog) {
-    const daysSince = Math.floor((Date.now() - new Date(lastLog.date).getTime()) / 86400000)
+    const daysSince = Math.floor((Date.now() - parseLocalDate(lastLog.date).getTime()) / 86400000)
     if (daysSince >= 5) {
       const dedupeKey = `cycle_missing_${daysSince}`
       const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey)

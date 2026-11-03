@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { brand, stickers, borderRadius, shadows, useTheme, font } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { parseLocalDate } from '../../lib/localDate'
 
 export interface NoteEntry {
   id: string
@@ -31,7 +32,7 @@ const TOPIC_DEFS = [
 ]
 
 function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime()
+  const diff = Date.now() - parseLocalDate(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 60) return `${mins}m ago`
   const hrs = Math.floor(mins / 60)

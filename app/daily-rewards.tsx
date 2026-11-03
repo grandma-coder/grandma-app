@@ -93,6 +93,7 @@ import { useLeaderboard } from '../lib/leaderboard'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from '../lib/i18n'
+import { parseLocalDate } from '../lib/localDate'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1232,7 +1233,7 @@ function BadgeRow({
         </Text>
         {earnedDate && (
           <Text style={[styles.catBadgeDate, { color: ink3, fontFamily: fontMed }]}>
-            {new Date(earnedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {parseLocalDate(earnedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </Text>
         )}
       </View>

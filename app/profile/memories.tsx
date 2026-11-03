@@ -59,6 +59,7 @@ import { Character } from '../../components/characters/Characters'
 import { ChildPill, childColor } from '../../components/ui/ChildPills'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
+import { parseLocalDate } from '../../lib/localDate'
 
 const SCREEN_W = Dimensions.get('window').width
 const GRID_GAP = 3
@@ -599,7 +600,7 @@ export default function MemoriesScreen() {
                       <Text style={styles.viewerChildText}>{viewPost.childName}</Text>
                     </View>
                     <Text style={styles.viewerDate}>
-                      {new Date(viewPost.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      {parseLocalDate(viewPost.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                     </Text>
                   </View>
                 </>

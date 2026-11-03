@@ -23,6 +23,7 @@ import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { LogSheet } from '../../calendar/LogSheet'
 import { smoothPath } from '../../charts/SvgCharts'
 import { supabase } from '../../../lib/supabase'
+import { parseLocalDate } from '../../../lib/localDate'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -279,7 +280,7 @@ function WeightChart({
       {/* X labels */}
       {labelIndices.map((idx, i) => {
         const p = plotted[idx]
-        const txt = new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        const txt = parseLocalDate(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         return (
           <SvgText
             key={i}
@@ -442,7 +443,7 @@ function WeightDetailModal(props: DetailProps) {
                 return (
                   <View key={i} style={[styles.recentRow, { borderBottomColor: dt.colors.line }]}>
                     <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase', color: dt.colors.ink3 }}>
-                      {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {parseLocalDate(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dt.colors.ink }}>
@@ -573,7 +574,7 @@ function WeightDetailModal(props: DetailProps) {
               return (
                 <View key={i} style={[styles.recentRow, { borderBottomColor: colors.borderLight }]}>
                   <Body size={13} color={colors.textMuted}>
-                    {new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {parseLocalDate(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </Body>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Body size={13} color={ink} style={{ fontFamily: font.bodySemiBold }}>
@@ -640,14 +641,14 @@ export function WeightTrendCard({ userId, weekNumber }: Props) {
     // Pace: avg weekly delta across last 14 days
     const now = new Date()
     const recent = entries.filter((e) => {
-      const diff = (now.getTime() - new Date(e.date).getTime()) / (1000 * 60 * 60 * 24)
+      const diff = (now.getTime() - parseLocalDate(e.date).getTime()) / (1000 * 60 * 60 * 24)
       return diff <= 14
     })
     let pace: number | null = null
     if (recent.length >= 2) {
       const first = recent[0]
       const last = recent[recent.length - 1]
-      const days = (new Date(last.date).getTime() - new Date(first.date).getTime()) / (1000 * 60 * 60 * 24)
+      const days = (parseLocalDate(last.date).getTime() - parseLocalDate(first.date).getTime()) / (1000 * 60 * 60 * 24)
       if (days > 0) pace = ((last.weight - first.weight) / days) * 7
     }
 

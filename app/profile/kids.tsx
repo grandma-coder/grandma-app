@@ -53,6 +53,7 @@ import { Character } from '../../components/characters/Characters'
 import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../components/ui/AvatarPicker'
 import { PHOTO_BUCKETS } from '../../lib/photoSigning'
 import type { ChildWithRole } from '../../types'
+import { parseLocalDate } from '../../lib/localDate'
 
 // ─── Theme (Diffuse-aware) ──────────────────────────────────────────────────
 // Under the Diffuse variant (now the default), source the surface palette + serif
@@ -489,7 +490,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
             ]}
             numberOfLines={1}
           >
-            {child.birthDate ? `${formatAge(child.birthDate)} — Born ${new Date(child.birthDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'No birth date set'}
+            {child.birthDate ? `${formatAge(child.birthDate)} — Born ${parseLocalDate(child.birthDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'No birth date set'}
           </Text>
         </View>
         <View style={styles.cardActions}>
@@ -813,7 +814,7 @@ function EditChildSheet({
           >
             <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}>
               {birthDate
-                ? `${new Date(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
+                ? `${parseLocalDate(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
                 : 'Select date'}
             </Text>
           </Pressable>
@@ -1135,7 +1136,7 @@ function AddChildSheet({
           >
             <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}>
               {birthDate
-                ? `${new Date(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
+                ? `${parseLocalDate(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
                 : 'Select date'}
             </Text>
           </Pressable>

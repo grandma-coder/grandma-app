@@ -43,6 +43,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { MissingStickers } from '../components/stickers/MissingStickers'
 import { useTranslation } from '../lib/i18n'
 import { displayNotificationText } from '../lib/notificationCopy'
+import { parseLocalDate } from '../lib/localDate'
 
 // ─── Type → Visual Config ───────────────────────────────────────────────────
 
@@ -227,7 +228,7 @@ function navigateForNotification(item: AppNotification) {
 
 function timeAgo(dateStr: string): string {
   const now = Date.now()
-  const then = new Date(dateStr).getTime()
+  const then = parseLocalDate(dateStr).getTime()
   const diffMs = now - then
   const mins = Math.floor(diffMs / 60000)
   if (mins < 1) return 'just now'
@@ -236,7 +237,7 @@ function timeAgo(dateStr: string): string {
   if (hrs < 24) return `${hrs}h ago`
   const days = Math.floor(hrs / 24)
   if (days < 7) return `${days}d ago`
-  return new Date(dateStr).toLocaleDateString()
+  return parseLocalDate(dateStr).toLocaleDateString()
 }
 
 interface DateSection {
@@ -256,7 +257,7 @@ function groupByDate(notifications: AppNotification[]): DateSection[] {
     let label: string
     if (date === today) label = 'Today'
     else if (date === yesterday) label = 'Yesterday'
-    else label = new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+    else label = parseLocalDate(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
 
     if (!groups[date]) groups[date] = { label, date, items: [] }
     groups[date].items.push(n)
