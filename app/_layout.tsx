@@ -78,6 +78,7 @@ import { ThemeProvider } from '../components/ui/ThemeProvider'
 import { DevPanelProvider } from '../context/DevPanelContext'
 import { SavedToastProvider } from '../components/ui/SavedToast'
 import { DevModeBanner } from '../components/ui/DevModeBanner'
+import { ConnectionBanner } from '../components/ui/ConnectionBanner'
 import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
@@ -724,6 +725,7 @@ export default function RootLayout() {
             <LockScreen />
           </View>
         )}
+        <ConnectionBanner />
         <DevModeBanner />
         </SavedToastProvider>
         </DevPanelProvider>

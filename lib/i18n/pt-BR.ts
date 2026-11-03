@@ -3830,4 +3830,5 @@ export const ptBR: TranslationKeys = {
   cycle_fertility_peak: "Pico",
   preg_onboard_dueDateHint: "Role até a sua data prevista para continuar.",
   onboard_dateHint: "Role a roda para escolher a data e depois continue.",
+  connection_troubleTitle: "Não consegui falar com a Grandma agora. Confira sua conexão.",
 }

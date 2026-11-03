@@ -3830,4 +3830,5 @@ export const es: TranslationKeys = {
   cycle_fertility_peak: "Pico",
   preg_onboard_dueDateHint: "Desliza hasta tu fecha prevista para continuar.",
   onboard_dateHint: "Gira la rueda para elegir la fecha y luego continúa.",
+  connection_troubleTitle: "No puedo conectar con Grandma ahora. Revisa tu conexión.",
 }

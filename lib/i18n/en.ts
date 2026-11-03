@@ -4117,4 +4117,5 @@ export const en: TranslationKeys = {
   cycle_fertility_peak: "Peak",
   preg_onboard_dueDateHint: "Scroll to your due date to continue.",
   onboard_dateHint: "Scroll the wheel to pick a date, then continue.",
+  connection_troubleTitle: "Can't reach Grandma right now. Check your connection.",
 }

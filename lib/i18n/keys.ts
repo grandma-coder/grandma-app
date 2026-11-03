@@ -4112,4 +4112,5 @@ export interface TranslationKeys {
   cycle_fertility_peak: string
   preg_onboard_dueDateHint: string
   onboard_dateHint: string
+  connection_troubleTitle: string
 }

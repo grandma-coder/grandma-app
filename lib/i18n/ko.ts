@@ -3830,4 +3830,5 @@ export const ko: TranslationKeys = {
   cycle_fertility_peak: "최고",
   preg_onboard_dueDateHint: "출산 예정일로 스크롤하면 계속할 수 있어요.",
   onboard_dateHint: "휠을 돌려 날짜를 고른 뒤 계속하세요.",
+  connection_troubleTitle: "지금은 Grandma에 연결할 수 없어요. 연결 상태를 확인해 주세요.",
 }

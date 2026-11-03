@@ -1,8 +1,13 @@
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient, QueryCache } from '@tanstack/react-query'
+import { connectionQueryCacheHandlers } from './connectionStatus'
 
 // One retry (not the default three) so a failing read turns into an empty / error state in
 // seconds instead of leaving a skeleton up for a minute.
-export const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } })
+// The cache also feeds the connection banner: network failures flag trouble, successes clear it.
+export const queryClient = new QueryClient({
+  queryCache: new QueryCache(connectionQueryCacheHandlers),
+  defaultOptions: { queries: { retry: 1 } },
+})
 
 /**
  * Invalidate every query that reads from `pregnancy_logs`. Call this after

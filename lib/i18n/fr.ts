@@ -3830,4 +3830,5 @@ export const fr: TranslationKeys = {
   cycle_fertility_peak: "Pic",
   preg_onboard_dueDateHint: "Faites défiler jusqu'à votre date prévue pour continuer.",
   onboard_dateHint: "Faites défiler la roue pour choisir la date, puis continuez.",
+  connection_troubleTitle: "Impossible de joindre Grandma pour l'instant. Vérifiez votre connexion.",
 }

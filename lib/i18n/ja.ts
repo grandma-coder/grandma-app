@@ -3830,4 +3830,5 @@ export const ja: TranslationKeys = {
   cycle_fertility_peak: "ピーク",
   preg_onboard_dueDateHint: "出産予定日までスクロールして続けてください。",
   onboard_dateHint: "ホイールを回して日付を選んでから、続けてください。",
+  connection_troubleTitle: "今はGrandmaにつながりません。接続を確認してください。",
 }
