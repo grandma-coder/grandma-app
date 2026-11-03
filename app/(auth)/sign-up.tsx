@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Linking,
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -30,6 +31,10 @@ import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/Di
 import { DiffuseField, DiffuseFieldLabel } from '../../components/ui/diffuse/DiffuseField'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { useTranslation } from '../../lib/i18n'
+import { getLegalDocument } from '../../lib/legalContent'
+
+const PRIVACY_URL = getLegalDocument('privacy').hostedUrl
+const TERMS_URL = getLegalDocument('terms').hostedUrl
 
 export default function SignUp() {
   const insets = useSafeAreaInsets()
@@ -263,9 +268,9 @@ export default function SignUp() {
           {/* Terms */}
           <Text style={[styles.terms, { fontFamily: font.body, color: ink4 }]}>
             {t('auth_termsPrefix')}{' '}
-            <Text style={{ textDecorationLine: 'underline' }}>{t('auth_termsOfSerenity')}</Text>
+            <Text style={{ textDecorationLine: 'underline' }} onPress={() => Linking.openURL(TERMS_URL)}>{t('privacy_termsOfService')}</Text>
             {' '}{t('auth_termsAnd')}{' '}
-            <Text style={{ textDecorationLine: 'underline' }}>{t('privacy_privacyPolicy')}</Text>.
+            <Text style={{ textDecorationLine: 'underline' }} onPress={() => Linking.openURL(PRIVACY_URL)}>{t('privacy_privacyPolicy')}</Text>.
           </Text>
           </Stagger>
         </ScrollView>

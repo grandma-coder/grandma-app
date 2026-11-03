@@ -26,8 +26,8 @@ import { useConsentStore } from '../../store/useConsentStore'
 import { SiteCheckRow } from '../../components/ui/SiteCheck'
 import { useTranslation } from '../../lib/i18n'
 
-const PRIVACY_URL = 'https://grandma.app/privacy'
-const TERMS_URL = 'https://grandma.app/terms'
+const PRIVACY_URL = 'https://thegrandma.app/privacy'
+const TERMS_URL = 'https://thegrandma.app/terms'
 
 export default function ConsentScreen() {
   const { colors, font, stickers, radius, isDark } = useTheme()

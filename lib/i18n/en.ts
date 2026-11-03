@@ -2217,9 +2217,9 @@ export const en: TranslationKeys = {
   auth_signInFailed: 'Sign-in failed',
 
   // Auth — sign-up screen
-  auth_signUp_heading1: 'What should',
-  auth_signUp_heading2: 'grandma',
-  auth_signUp_heading3: 'call you?',
+  auth_signUp_heading1: "Create your",
+  auth_signUp_heading2: "grandma",
+  auth_signUp_heading3: "account.",
   auth_signUp_subtitle: 'Create an account to start your journey.',
   auth_emailPlaceholder: 'your@email.com',
   auth_passwordPlaceholder: 'min 6 characters',

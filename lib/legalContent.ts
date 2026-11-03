@@ -6,7 +6,7 @@
  * so the reader can render a table-of-contents and anchor-scroll.
  *
  * This is plain-English, product-accurate summary content — the canonical legal
- * text still lives at grandma.app/privacy and grandma.app/terms (linked from the
+ * text still lives at thegrandma.app/privacy and thegrandma.app/terms (linked from the
  * reader). Keep in sync with the hosted versions on material changes; bump
  * `effectiveDate` when the substance changes.
  *
@@ -36,7 +36,7 @@ const PRIVACY: LegalDocument = {
   doc: 'privacy',
   title: 'Privacy Policy',
   effectiveDate: 'Effective July 16, 2026',
-  hostedUrl: 'https://grandma.app/privacy',
+  hostedUrl: 'https://thegrandma.app/privacy',
   intro:
     'This policy explains what personal data grandma.app collects, how we use it, and the rights you have over it. We handle health, pregnancy, cycle, and children’s data — we treat it with the care that deserves.',
   sections: [
@@ -89,7 +89,7 @@ const TERMS: LegalDocument = {
   doc: 'terms',
   title: 'Terms of Use',
   effectiveDate: 'Effective July 16, 2026',
-  hostedUrl: 'https://grandma.app/terms',
+  hostedUrl: 'https://thegrandma.app/terms',
   intro:
     'These terms govern your use of grandma.app. By creating an account you agree to them. Please read the medical disclaimer carefully.',
   sections: [
