@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Animated, StyleSheet, Text, View } from 'react-native'
+import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from 'react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { GrandmaLogo, type GrandmaLogoMotion } from './GrandmaLogo'
@@ -23,8 +23,11 @@ interface Props {
   compact?: boolean
 }
 
+// Same eye sticker as the native splash + site nav, at a resolution that stays sharp at 120pt.
+const EYE = require('../../assets/stickers-site/eye-cut-lg.png')
+
 export function BrandedLoader({
-  label = 'Loading',
+  label,
   sublabel,
   logoSize = 120,
   fullscreen = false,
@@ -34,30 +37,67 @@ export function BrandedLoader({
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { t } = useTranslation()
   const isCompact = compact ?? logoSize < 96
+  const text = label ?? t('common_loading').replace(/[.…]+$/, '')
 
   const container = fullscreen
     ? [styles.fullscreen, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]
     : styles.inline
 
+  const mark = diffuse
+    ? <GrandmaLogo size={logoSize} mode={isCompact ? 'auto' : undefined} motion={motion} />
+    : <BreathingEye size={logoSize} />
+
   if (isCompact) {
     return (
-      <View style={container}>
-        <GrandmaLogo size={logoSize} mode="auto" motion={motion} />
+      <View style={container} accessibilityRole="progressbar" accessibilityLabel={text}>
+        {mark}
       </View>
     )
   }
 
   return (
-    <View style={container}>
-      <GrandmaLogo size={logoSize} motion={motion} />
-      <TypewriterLabel label={label} />
+    <View style={container} accessibilityRole="progressbar" accessibilityLabel={text}>
+      {mark}
+      <TypewriterLabel label={text} />
       {sublabel && (
         <Text style={[styles.sublabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
           {sublabel}
         </Text>
       )}
     </View>
+  )
+}
+
+// ─── Breathing eye (light) — slow swell so the wait reads as alive, not stuck ─
+
+function BreathingEye({ size }: { size: number }) {
+  const v = useRef(new Animated.Value(0)).current
+  useEffect(() => {
+    let loop: Animated.CompositeAnimation | null = null
+    let cancelled = false
+    AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
+      if (cancelled || reduce) return
+      loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(v, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(v, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        ]),
+      )
+      loop.start()
+    })
+    return () => { cancelled = true; loop?.stop() }
+  }, [v])
+  const scale = v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] })
+  const translateY = v.interpolate({ inputRange: [0, 1], outputRange: [0, -3] })
+  return (
+    <Animated.Image
+      source={EYE}
+      style={{ width: size, height: size, transform: [{ translateY }, { scale }] }}
+      resizeMode="contain"
+      accessibilityIgnoresInvertColors
+    />
   )
 }
 
