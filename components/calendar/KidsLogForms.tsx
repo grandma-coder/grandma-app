@@ -1004,6 +1004,11 @@ function calcDuration(start: string, end: string, allowOvernight = true): string
 // ─── 1. FEEDING / FOOD LOG FORM ────────────────────────────────────────────
 
 type FeedingType = 'breast' | 'bottle' | 'solids'
+const FEED_TYPE_LABEL: Record<FeedingType, TranslationKey> = {
+  breast: 'kids_logForm_feedBreast',
+  bottle: 'kids_logForm_feedBottle',
+  solids: 'kids_logForm_feedSolids',
+}
 type MealMoment = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'night_snack'
 type EatQuality = 'ate_well' | 'ate_little' | 'did_not_eat'
 
@@ -1478,8 +1483,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       // Save as routine if toggled (only for new logs, not from existing routines)
       if (routineEnabled && !prefill) {
         const routineName = feedType === 'solids'
-          ? (meal ? MEAL_MOMENTS.find((m) => m.id === meal)?.label ?? 'Meal' : 'Meal')
-          : (feedType === 'breast' ? 'Breastfeed' : 'Bottle')
+          ? (meal ? MEAL_MOMENTS.find((m) => m.id === meal)?.label : undefined) ?? t(FEED_TYPE_LABEL.solids)
+          : t(FEED_TYPE_LABEL[feedType])
         const routineValue = feedType === 'solids'
           ? JSON.stringify({ feedType: 'solids', meal })
           : JSON.stringify({ feedType, amount: amount || undefined, duration: duration || undefined })
@@ -1519,7 +1524,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   style={[df.segPill, { borderColor: on ? dc.hairline : dc.line, backgroundColor: on ? dc.surface : 'transparent' }]}
                 >
                   <Text style={[on ? df.chipTextOn : df.chipText, { color: on ? dc.ink : dc.ink3 }]}>
-                    {ft.charAt(0).toUpperCase() + ft.slice(1)}
+                    {t(FEED_TYPE_LABEL[ft])}
                   </Text>
                 </Pressable>
               )
@@ -1925,22 +1930,22 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
         {/* Feed type toggle */}
         <View style={[styles.toggleRow, { backgroundColor: colors.surfaceRaised, borderRadius: 999 }]}>
-          {(['breast', 'bottle', 'solids'] as FeedingType[]).map((t) => (
+          {(['breast', 'bottle', 'solids'] as FeedingType[]).map((ft) => (
             <Pressable
-              key={t}
-              onPress={() => setFeedType(t)}
+              key={ft}
+              onPress={() => setFeedType(ft)}
               style={[
                 styles.toggleBtn,
                 {
-                  backgroundColor: feedType === t ? ACCENT : 'transparent',
+                  backgroundColor: feedType === ft ? ACCENT : 'transparent',
                   borderRadius: 999,
                 },
               ]}
             >
               <Text
-                style={[styles.toggleText, { color: feedType === t ? INK : colors.textSecondary }]}
+                style={[styles.toggleText, { color: feedType === ft ? INK : colors.textSecondary }]}
               >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+                {t(FEED_TYPE_LABEL[ft])}
               </Text>
             </Pressable>
           ))}
