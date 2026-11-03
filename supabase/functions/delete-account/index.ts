@@ -80,6 +80,11 @@ serve(async (req) => {
     await purgeBucketPrefixes(admin, 'vault-documents', [userId, ...childPrefixes])
     await purgeBucketPrefixes(admin, 'garage-photos', [userId])
     await purgeBucketPrefixes(admin, 'garage-media', [userId])
+    // Memory photos (lib/memories) and exam photos (lib/examData) live in their own buckets and were
+    // left behind after a "deleted" account.
+    await purgeBucketPrefixes(admin, 'cycle-photos', [userId])
+    await purgeBucketPrefixes(admin, 'pregnancy-nutrition', [userId])
+    await purgeBucketPrefixes(admin, 'scan-images', [`exams/${userId}`])
 
     // ── The purge: cascade-delete the auth user ──────────────────────────
     const { error: delError } = await admin.auth.admin.deleteUser(userId)
