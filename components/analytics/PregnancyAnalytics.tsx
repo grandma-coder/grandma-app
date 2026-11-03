@@ -1045,13 +1045,15 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
           ) : (
             <HeroBanner
               pillarKey="birth"
-              label="BIRTH READINESS"
-              title={tk.birth.headline}
+              label={diffuse ? 'BIRTH READINESS' : 'BIRTH PREP'}
+              // Light: a count of tasks marked done and the next concrete step — no readiness %
+              // (a composite score that read as "how ready you are for birth").
+              title={diffuse ? tk.birth.headline : birthReady ? `${birthReady.birthPlanCount + birthReady.nestingCount} done` : '—'}
               // Light never shows the "Loading your readiness…" placeholder copy:
               // loading is the skeleton above; a failed load just has no subtitle.
-              subtitle={diffuse || birthReady ? (tk.birth.takeaway ?? '') : ''}
+              subtitle={diffuse ? (tk.birth.takeaway ?? '') : birthReady ? birthNextStep(birthReady, trimester) : ''}
               badgeText=""
-              badgeCaption="READY"
+              badgeCaption={diffuse ? 'READY' : 'TASKS'}
               onPress={() => setOpenPillar('birth')}
             />
           )}
@@ -1894,7 +1896,19 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
         )}
       </PaperCard>
 
-      {weekNumber >= 24 ? (
+      {/* Light: guidance only. The old card scored sessions against "10 in 2 hours" (it never checked
+          the 2 hours) and showed a % plus "less than that warrants a call" — a verdict on the baby.
+          Shown from week 28, which is what the copy says. */}
+      {!diffuse && weekNumber >= 28 ? (
+        <PaperCard title="Counting kicks">
+          <Body size={13} color={sec} style={{ lineHeight: 20 }}>
+            Many care teams suggest counting movements from about week 28 and getting in touch if you
+            notice fewer than usual for your baby. Follow what your midwife or OB has told you.
+          </Body>
+        </PaperCard>
+      ) : null}
+
+      {diffuse && weekNumber >= 24 ? (
         <PaperCard title="10-in-2-hours rule">
           <Body size={13} color={sec} style={{ lineHeight: 20 }}>
             From week 28, aim for 10 distinct movements in under 2 hours. Less than that warrants a
@@ -2757,6 +2771,14 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
   )
 }
 
+/** Light look: the next concrete prep step, from the first thing not started. */
+function birthNextStep(b: BirthReadiness, trimester: 1 | 2 | 3): string {
+  if (!b.emergencyCardComplete) return 'Next: add a primary emergency contact — it takes 2 minutes.'
+  if (b.birthPlanCount === 0) return 'Next: note what matters to you for the birth in the birth plan.'
+  if (b.nestingCount === 0) return trimester === 3 ? 'Next: start the hospital bag list.' : 'Next: start a nesting list when you feel ready.'
+  return 'Bring your birth plan to your next appointment to talk it through.'
+}
+
 function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
@@ -2812,14 +2834,7 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
           </Text>
           <Body size={13} color={colors.textSecondary}>{t('preg_analytics_birth_readiness_5buckets')}</Body>
         </View>
-      ) : (
-        <View>
-          <Text style={{ color: colors.text, fontSize: 56, lineHeight: 62, fontFamily: font.displayBold, letterSpacing: -1.5 }}>
-            {birthReady.pct}%
-          </Text>
-          <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{t('preg_analytics_birth_readiness_5buckets')}</Text>
-        </View>
-      )}
+      ) : null /* light: no readiness % — the list below says what's done */}
 
       <PaperCard title="What's ready">
         {diffuse ? (
@@ -2831,29 +2846,23 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
           />
         ) : (
           <View style={{ gap: 12 }}>
-            {buckets.map((b) => {
-              const pct = Math.min(100, Math.round((b.value / b.target) * 100))
-              return (
-                <View key={b.label}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>
-                      {b.label}
-                    </Text>
-                    <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodyBold }}>
-                      {b.value} / {b.target}
-                    </Text>
-                  </View>
-                  <SiteMeter pct={pct} tone={b.tint} />
-                </View>
-              )
-            })}
+            {buckets.map((b) => (
+              <View key={b.label} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: colors.text, fontSize: 14, fontFamily: font.bodySemiBold }}>
+                  {b.label}
+                </Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body }}>
+                  {b.label === 'Emergency card' ? (b.value ? 'Set' : 'Not set yet') : b.label === 'Exam records' ? `${b.value} on file` : `${b.value} done`}
+                </Text>
+              </View>
+            ))}
           </View>
         )}
       </PaperCard>
 
       <PaperCard title="Suggested next step">
         <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
-          {birthReady.pct >= 80
+          {!diffuse ? birthNextStep(birthReady, trimester) : birthReady.pct >= 80
             ? 'You\'re in great shape. Confirm car-seat installation and put a printed birth plan in the bag.'
             : birthReady.pct >= 50
             ? trimester === 3

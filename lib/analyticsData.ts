@@ -1344,7 +1344,7 @@ export function usePregnancyBirthReadiness(userId: string) {
       const [logsRes, examsRes, emergencyRes] = await Promise.all([
         supabase
           .from('pregnancy_logs')
-          .select('log_type')
+          .select('log_type, value')
           .eq('user_id', userId)
           .in('log_type', ['birth_prep', 'nesting']),
         supabase
@@ -1365,8 +1365,9 @@ export function usePregnancyBirthReadiness(userId: string) {
       if (examsRes.error) throw examsRes.error
       const logs = logsRes.data ?? []
       const examCount = examsRes.data?.length ?? 0
-      const birthPlanCount = logs.filter((l) => l.log_type === 'birth_prep').length
-      const nestingCount = logs.filter((l) => l.log_type === 'nesting').length
+      // Only tasks marked done count — the forms save not-done tasks too (value '0').
+      const birthPlanCount = logs.filter((l) => l.log_type === 'birth_prep' && l.value === '1').length
+      const nestingCount = logs.filter((l) => l.log_type === 'nesting' && l.value === '1').length
       const ec = emergencyRes.data
       const emergencyCardComplete = !!(ec && ec.name && ec.phone)
       // Score: 4 buckets, each up to 25%
