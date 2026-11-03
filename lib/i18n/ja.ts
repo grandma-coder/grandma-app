@@ -3831,4 +3831,9 @@ export const ja: TranslationKeys = {
   preg_onboard_dueDateHint: "出産予定日までスクロールして続けてください。",
   onboard_dateHint: "ホイールを回して日付を選んでから、続けてください。",
   connection_troubleTitle: "今はGrandmaにつながりません。接続を確認してください。",
+  cycleHome_firstPeriod_title: "前回の生理はいつ始まりましたか？",
+  cycleHome_firstPeriod_body: "記録すると、Grandmaがそこからあなたの周期を描きます。それまでは推測しません。",
+  cycleHome_firstPeriod_dateLabel: "初日",
+  cycleHome_firstPeriod_datePlaceholder: "日付を選ぶ",
+  cycleHome_firstPeriod_cta: "この生理を記録",
 }

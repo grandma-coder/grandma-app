@@ -3831,4 +3831,9 @@ export const tr: TranslationKeys = {
   preg_onboard_dueDateHint: "Devam etmek için tahmini doğum tarihine kaydır.",
   onboard_dateHint: "Tarihi seçmek için çarkı kaydır, sonra devam et.",
   connection_troubleTitle: "Şu an Grandma'ya ulaşılamıyor. Bağlantını kontrol et.",
+  cycleHome_firstPeriod_title: "Son adetin ne zaman başladı?",
+  cycleHome_firstPeriod_body: "Kaydet, Grandma döngünü oradan çizsin. O zamana kadar tahmin yürütmez.",
+  cycleHome_firstPeriod_dateLabel: "İlk gün",
+  cycleHome_firstPeriod_datePlaceholder: "Bir tarih seç",
+  cycleHome_firstPeriod_cta: "Bu adeti kaydet",
 }

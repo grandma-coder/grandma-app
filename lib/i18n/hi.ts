@@ -3831,4 +3831,9 @@ export const hi: TranslationKeys = {
   preg_onboard_dueDateHint: "आगे बढ़ने के लिए अपनी ड्यू डेट तक स्क्रॉल करें।",
   onboard_dateHint: "तारीख चुनने के लिए व्हील घुमाएँ, फिर आगे बढ़ें।",
   connection_troubleTitle: "अभी Grandma से जुड़ नहीं पा रहे। अपना कनेक्शन जाँचें।",
+  cycleHome_firstPeriod_title: "आपका पिछला पीरियड कब शुरू हुआ था?",
+  cycleHome_firstPeriod_body: "इसे दर्ज करें, Grandma वहीं से आपका चक्र बनाएगी। तब तक वह अनुमान नहीं लगाएगी।",
+  cycleHome_firstPeriod_dateLabel: "पहला दिन",
+  cycleHome_firstPeriod_datePlaceholder: "तारीख चुनें",
+  cycleHome_firstPeriod_cta: "यह पीरियड दर्ज करें",
 }

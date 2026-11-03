@@ -3831,4 +3831,9 @@ export const it: TranslationKeys = {
   preg_onboard_dueDateHint: "Scorri fino alla data presunta per continuare.",
   onboard_dateHint: "Scorri la rotella per scegliere la data, poi continua.",
   connection_troubleTitle: "Non riesco a raggiungere Grandma ora. Controlla la connessione.",
+  cycleHome_firstPeriod_title: "Quando è iniziato il tuo ultimo ciclo?",
+  cycleHome_firstPeriod_body: "Registralo e Grandma disegnerà il tuo ciclo da lì. Fino ad allora non tira a indovinare.",
+  cycleHome_firstPeriod_dateLabel: "Primo giorno",
+  cycleHome_firstPeriod_datePlaceholder: "Scegli una data",
+  cycleHome_firstPeriod_cta: "Registra questo ciclo",
 }

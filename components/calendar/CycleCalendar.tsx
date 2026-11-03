@@ -88,10 +88,15 @@ export function CycleCalendar() {
     if (latest) {
       return { lastPeriodStart: latest.startDate, cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
     }
+    // Light look with no period logged: no invented anchor, so the month shows no predicted
+    // period/fertile tints. Diffuse keeps its old 10-days-ago placeholder.
+    if (!diffuse && history && history.cycles.length === 0) {
+      return { lastPeriodStart: '', cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
+    }
     const d = new Date()
     d.setDate(d.getDate() - 10)
     return { lastPeriodStart: toDateStr(d), cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
-  }, [history, cs.cycleLength, cs.periodLength, cs.lutealPhase])
+  }, [history, cs.cycleLength, cs.periodLength, cs.lutealPhase, diffuse])
 
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
 

@@ -3831,4 +3831,9 @@ export const es: TranslationKeys = {
   preg_onboard_dueDateHint: "Desliza hasta tu fecha prevista para continuar.",
   onboard_dateHint: "Gira la rueda para elegir la fecha y luego continúa.",
   connection_troubleTitle: "No puedo conectar con Grandma ahora. Revisa tu conexión.",
+  cycleHome_firstPeriod_title: "¿Cuándo empezó tu última regla?",
+  cycleHome_firstPeriod_body: "Regístrala y Grandma dibujará tu ciclo a partir de ahí. Hasta entonces, no adivina.",
+  cycleHome_firstPeriod_dateLabel: "Primer día",
+  cycleHome_firstPeriod_datePlaceholder: "Elige una fecha",
+  cycleHome_firstPeriod_cta: "Registrar esta regla",
 }

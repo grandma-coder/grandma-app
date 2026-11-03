@@ -3831,4 +3831,9 @@ export const ar: TranslationKeys = {
   preg_onboard_dueDateHint: "مرّري إلى موعد الولادة المتوقع للمتابعة.",
   onboard_dateHint: "حرّكي العجلة لاختيار التاريخ، ثم تابعي.",
   connection_troubleTitle: "تعذّر الوصول إلى Grandma الآن. تحقّقي من الاتصال.",
+  cycleHome_firstPeriod_title: "متى بدأت آخر دورة شهرية لديك؟",
+  cycleHome_firstPeriod_body: "سجّليها وستبدأ Grandma برسم دورتك من هناك. حتى ذلك الحين، لن تخمّن.",
+  cycleHome_firstPeriod_dateLabel: "اليوم الأول",
+  cycleHome_firstPeriod_datePlaceholder: "اختاري تاريخًا",
+  cycleHome_firstPeriod_cta: "سجّلي هذه الدورة",
 }

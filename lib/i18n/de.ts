@@ -3831,4 +3831,9 @@ export const de: TranslationKeys = {
   preg_onboard_dueDateHint: "Scrolle zu deinem Geburtstermin, um fortzufahren.",
   onboard_dateHint: "Dreh am Rad, um ein Datum zu wählen, dann geht es weiter.",
   connection_troubleTitle: "Grandma ist gerade nicht erreichbar. Prüfe deine Verbindung.",
+  cycleHome_firstPeriod_title: "Wann hat deine letzte Periode begonnen?",
+  cycleHome_firstPeriod_body: "Trag sie ein, dann zeichnet Grandma deinen Zyklus davon ausgehend. Bis dahin rät sie nicht.",
+  cycleHome_firstPeriod_dateLabel: "Erster Tag",
+  cycleHome_firstPeriod_datePlaceholder: "Datum wählen",
+  cycleHome_firstPeriod_cta: "Diese Periode eintragen",
 }

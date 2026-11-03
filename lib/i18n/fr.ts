@@ -3831,4 +3831,9 @@ export const fr: TranslationKeys = {
   preg_onboard_dueDateHint: "Faites défiler jusqu'à votre date prévue pour continuer.",
   onboard_dateHint: "Faites défiler la roue pour choisir la date, puis continuez.",
   connection_troubleTitle: "Impossible de joindre Grandma pour l'instant. Vérifiez votre connexion.",
+  cycleHome_firstPeriod_title: "Quand vos dernières règles ont-elles commencé ?",
+  cycleHome_firstPeriod_body: "Notez-la et Grandma dessinera votre cycle à partir de là. D'ici là, elle ne devine pas.",
+  cycleHome_firstPeriod_dateLabel: "Premier jour",
+  cycleHome_firstPeriod_datePlaceholder: "Choisir une date",
+  cycleHome_firstPeriod_cta: "Noter ces règles",
 }

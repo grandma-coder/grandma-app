@@ -4113,4 +4113,9 @@ export interface TranslationKeys {
   preg_onboard_dueDateHint: string
   onboard_dateHint: string
   connection_troubleTitle: string
+  cycleHome_firstPeriod_title: string
+  cycleHome_firstPeriod_body: string
+  cycleHome_firstPeriod_dateLabel: string
+  cycleHome_firstPeriod_datePlaceholder: string
+  cycleHome_firstPeriod_cta: string
 }

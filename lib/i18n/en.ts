@@ -4118,4 +4118,9 @@ export const en: TranslationKeys = {
   preg_onboard_dueDateHint: "Scroll to your due date to continue.",
   onboard_dateHint: "Scroll the wheel to pick a date, then continue.",
   connection_troubleTitle: "Can't reach Grandma right now. Check your connection.",
+  cycleHome_firstPeriod_title: "When did your last period start?",
+  cycleHome_firstPeriod_body: "Log it and Grandma will draw your cycle from there. Until then she won't guess.",
+  cycleHome_firstPeriod_dateLabel: "First day",
+  cycleHome_firstPeriod_datePlaceholder: "Pick a date",
+  cycleHome_firstPeriod_cta: "Log this period",
 }

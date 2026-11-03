@@ -3831,4 +3831,9 @@ export const ptBR: TranslationKeys = {
   preg_onboard_dueDateHint: "Role até a sua data prevista para continuar.",
   onboard_dateHint: "Role a roda para escolher a data e depois continue.",
   connection_troubleTitle: "Não consegui falar com a Grandma agora. Confira sua conexão.",
+  cycleHome_firstPeriod_title: "Quando começou sua última menstruação?",
+  cycleHome_firstPeriod_body: "Registre e a Grandma desenha seu ciclo a partir daí. Até lá, ela não chuta.",
+  cycleHome_firstPeriod_dateLabel: "Primeiro dia",
+  cycleHome_firstPeriod_datePlaceholder: "Escolha uma data",
+  cycleHome_firstPeriod_cta: "Registrar esta menstruação",
 }

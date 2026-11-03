@@ -32,6 +32,7 @@ import { CycleLogConfirm } from './cycle/CycleLogConfirm'
 import { LogSheet } from '../calendar/LogSheet'
 import { CycleMonthGrid } from '../calendar/CycleMonthGrid'
 import { LogActivitySheet, type LogType } from '../calendar/LogActivitySheet'
+import { FirstPeriodCard } from './cycle/FirstPeriodCard'
 import { CycleLogRouter } from '../calendar/CycleLogRouter'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from '../../lib/i18n'
@@ -79,6 +80,8 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   // built from a provisional "today − 10 days" config and then jump to the real
   // day. Light look shows their skeleton instead; refetches keep the content.
   const ringSkeleton = !diffuse && historyLoading && !history
+  // No period logged yet: ask for the real date instead of drawing an invented cycle.
+  const noPeriodYet = !diffuse && !!history && history.cycles.length === 0
   // Date-based label only changes day-to-day; memo it so it isn't rebuilt on
   // every render (string formatting via toLocaleDateString twice per call).
   const microLabel = useMemo(() => getMicroLabel(), [])
@@ -94,6 +97,9 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
     if (latest) {
       return { lastPeriodStart: latest.startDate, cycleLength, periodLength, lutealPhase }
     }
+    // Light look with no period logged: no anchor, so phases/predictions stay empty (the ring is
+    // replaced by FirstPeriodCard). Diffuse keeps its old 10-days-ago placeholder untouched.
+    if (noPeriodYet) return { lastPeriodStart: '', cycleLength, periodLength, lutealPhase }
     const d = new Date()
     d.setDate(d.getDate() - 10)
     return { lastPeriodStart: toDateStr(d), cycleLength, periodLength, lutealPhase }
@@ -233,7 +239,10 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
             view-only caregiver the ring stays scrub-only — tap-a-date-to-log is
             disabled (onDatePress omitted). */}
         {show('journey_ring') && ringSkeleton && <CycleRingSkeleton />}
-        {show('journey_ring') && !ringSkeleton && (
+        {show('journey_ring') && noPeriodYet && !readOnly && (
+          <FirstPeriodCard onLog={(date) => { setSelectedDate(date); setLogSheetType('period_start') }} />
+        )}
+        {show('journey_ring') && !ringSkeleton && !noPeriodYet && (
         <CycleJourneyRingFull
           cycleConfig={cycleConfig}
           onSelectedDateChange={handleRingDate}

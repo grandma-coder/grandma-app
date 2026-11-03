@@ -3831,4 +3831,9 @@ export const zh: TranslationKeys = {
   preg_onboard_dueDateHint: "滚动到你的预产期即可继续。",
   onboard_dateHint: "滚动滚轮选择日期，然后继续。",
   connection_troubleTitle: "暂时连不上 Grandma，请检查网络连接。",
+  cycleHome_firstPeriod_title: "你上次月经是哪天开始的？",
+  cycleHome_firstPeriod_body: "记录下来，Grandma 会从那天开始画出你的周期。在此之前她不会乱猜。",
+  cycleHome_firstPeriod_dateLabel: "第一天",
+  cycleHome_firstPeriod_datePlaceholder: "选择日期",
+  cycleHome_firstPeriod_cta: "记录这次月经",
 }

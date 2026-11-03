@@ -3831,4 +3831,9 @@ export const ko: TranslationKeys = {
   preg_onboard_dueDateHint: "출산 예정일로 스크롤하면 계속할 수 있어요.",
   onboard_dateHint: "휠을 돌려 날짜를 고른 뒤 계속하세요.",
   connection_troubleTitle: "지금은 Grandma에 연결할 수 없어요. 연결 상태를 확인해 주세요.",
+  cycleHome_firstPeriod_title: "마지막 생리는 언제 시작됐나요?",
+  cycleHome_firstPeriod_body: "기록하면 Grandma가 그날부터 주기를 그려 줘요. 그전에는 추측하지 않아요.",
+  cycleHome_firstPeriod_dateLabel: "첫날",
+  cycleHome_firstPeriod_datePlaceholder: "날짜 선택",
+  cycleHome_firstPeriod_cta: "이 생리 기록하기",
 }
