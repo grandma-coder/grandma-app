@@ -195,6 +195,8 @@ export default function KidsOnboarding() {
 
   // ─── Save to Supabase ──────────────────────────────────────────────────
 
+  const insertedChildrenRef = useRef<any[] | null>(null)
+
   async function saveAndFinish(): Promise<void> {
     // Guard against double-submit (P2-78). The ref blocks synchronous re-entry
     // before `saving` state propagates; setSaving drives the button's disabled
@@ -317,10 +319,14 @@ export default function KidsOnboarding() {
         photo_url: resolvedPhotos[i],
       }))
 
-      const { data: insertedChildren, error: insertError } = await supabase
-        .from('children')
-        .insert(childrenToInsert)
-        .select('id, name, birth_date, parent_id, allergies, conditions, country_code, photo_url, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
+      // A retry after a failed caregiver-link step must not insert the same children again (they'd
+      // be duplicated and the links would then hit the unique (child_id, email) constraint).
+      const { data: insertedChildren, error: insertError } = insertedChildrenRef.current
+        ? { data: insertedChildrenRef.current, error: null }
+        : await supabase
+          .from('children')
+          .insert(childrenToInsert)
+          .select('id, name, birth_date, parent_id, allergies, conditions, country_code, photo_url, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
 
       if (insertError) {
         Alert.alert(
@@ -337,12 +343,14 @@ export default function KidsOnboarding() {
       // join (chicken-and-egg: we haven't inserted those rows yet).
       // Refetch by parent_id as a backup if the initial select is empty.
       let resolvedChildren = insertedChildren as any[] | null
+      if (resolvedChildren && resolvedChildren.length > 0) insertedChildrenRef.current = resolvedChildren
       if (!resolvedChildren || resolvedChildren.length === 0) {
         const { data: refetched } = await supabase
           .from('children')
           .select('id, name, birth_date, parent_id, allergies, conditions, country_code, photo_url, sex, blood_type, medications, dietary_restrictions, preferred_foods, disliked_foods, pediatrician, notes')
           .eq('parent_id', userId)
         resolvedChildren = refetched ?? []
+        if (resolvedChildren.length > 0) insertedChildrenRef.current = resolvedChildren
       }
 
       // Upload any local child photos now that we have child ids, then write the
