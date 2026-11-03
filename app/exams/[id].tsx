@@ -23,19 +23,18 @@ import {
   ChevronLeft,
   Share2,
   Trash2,
-  Sparkles,
   X,
 } from 'lucide-react-native'
 
 import { Character } from '../../components/characters/Characters'
-import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent, font } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, font } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { InkBackButton } from '../../components/ui/InkBackButton'
+import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useChildStore } from '../../store/useChildStore'
 import {
   type Exam,
-  type ExamBehavior,
   useExam,
   useExamPhotoUrls,
   deleteExam,
@@ -47,12 +46,6 @@ import { Display, Body, MonoCaps } from '../../components/ui/Typography'
 import { childColor } from '../../components/ui/ChildPills'
 import { PaperAlert } from '../../components/ui/PaperAlert'
 import { useTranslation } from '../../lib/i18n'
-
-const BEHAVIOR_COLORS: Record<ExamBehavior, string> = {
-  'pre-pregnancy': brand.prePregnancy,
-  pregnancy: brand.pregnancy,
-  kids: brand.kids,
-}
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -80,7 +73,6 @@ export default function ExamDetailScreen() {
     )
   }
 
-  const accent = diffuse ? getDiffuseAccent(exam.behavior, dt.isDark) : BEHAVIOR_COLORS[exam.behavior]
   const child = exam.childId ? children.find((c) => c.id === exam.childId) : undefined
   const childIdx = child ? children.findIndex((c) => c.id === child.id) : -1
 
@@ -150,9 +142,7 @@ export default function ExamDetailScreen() {
         <View style={styles.headerTitle}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{examBehaviorLabel(exam.behavior)}</Text>
-          ) : (
-            <MonoCaps size={10} color={accent}>{examBehaviorLabel(exam.behavior)}</MonoCaps>
-          )}
+          ) : null}
         </View>
         <Pressable onPress={() => handleShare(exam)} hitSlop={10} style={styles.iconBtn}>
           <Share2 size={20} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
@@ -164,6 +154,7 @@ export default function ExamDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Hero */}
+        {diffuse ? (
         <View style={styles.hero}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 28, color: dt.colors.ink, letterSpacing: -0.5 }}>{exam.title}</Text>
@@ -193,10 +184,40 @@ export default function ExamDetailScreen() {
           </View>
         </View>
 
+        ) : (
+          // Site look: mono eyebrow on the left, sticker beside the title, provider as a mono line
+          // (the same anatomy as the appointment and week sheets) — no icon chips.
+          <View style={styles.hero}>
+            <MonoCaps size={10} color={colors.textMuted}>
+              {`${examBehaviorLabel(exam.behavior)} · ${formatExamDate(exam.examDate)}`}
+            </MonoCaps>
+            <View style={styles.siteTitleRow}>
+              <SiteSticker name="doc" size={36} cut />
+              <Display size={26} color={colors.text} style={{ flex: 1 }}>{exam.title}</Display>
+            </View>
+            {exam.result && (
+              <Text style={[styles.siteResult, { color: colors.textSecondary, fontFamily: font.body }]}>{exam.result}</Text>
+            )}
+            {exam.provider && <MonoCaps size={10} color={colors.textMuted}>{exam.provider}</MonoCaps>}
+            {child && childIdx >= 0 && (
+              <View style={[styles.chip, { alignSelf: 'flex-start', marginTop: 6, backgroundColor: childColor(childIdx) + '22', borderColor: colors.text, borderWidth: 1.5 }]}>
+                <Text style={[styles.chipText, { color: colors.text }]}>{child.name}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Flagged */}
         {flagged.length > 0 && (
           <View style={[styles.flaggedBox, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.error, borderRadius: 20 } : { backgroundColor: stickers.peachSoft, borderColor: colors.text, borderWidth: 1.5 }]}>
-            <Text style={[styles.flaggedTitle, { color: diffuse ? dt.colors.error : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{t('examDetail_flaggedTitle')}</Text>
+            {diffuse ? (
+              <Text style={[styles.flaggedTitle, { color: dt.colors.error, fontFamily: diffuseFont.mono }]}>{t('examDetail_flaggedTitle')}</Text>
+            ) : (
+              <View style={[styles.sectionHead, { marginBottom: 6 }]}>
+                <SiteSticker name="bell" size={22} />
+                <MonoCaps size={10} color={colors.textMuted}>{t('examDetail_flaggedTitle')}</MonoCaps>
+              </View>
+            )}
             {flagged.map((f, i) => (
               <Text key={i} style={[styles.flaggedItem, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]}>{t('examDetail_flaggedBullet', { item: f })}</Text>
             ))}
@@ -231,21 +252,21 @@ export default function ExamDetailScreen() {
               {diffuse ? (
                 <DiffuseBloomIcon color={getDiffuseAccent(exam.behavior, dt.isDark)} size={24} intensity={0.4}><Character name="sparkle" size={13} color={dt.colors.ink3} /></DiffuseBloomIcon>
               ) : (
-                <Sparkles size={14} color={colors.primary} strokeWidth={2} />
+                <SiteSticker name="brain" size={22} />
               )}
               {diffuse ? (
                 <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('examDetail_aiExtracted')}</Text>
               ) : (
-                <MonoCaps size={10} color={colors.primary}>{t('examDetail_aiExtracted')}</MonoCaps>
+                <MonoCaps size={10} color={colors.textMuted}>{t('examDetail_aiExtracted')}</MonoCaps>
               )}
             </View>
             {exam.extracted.referenceRange && (
               <ExtractRow label={t('examDetail_referenceRange')} value={exam.extracted.referenceRange} colors={colors} diffuse={diffuse} />
             )}
-            {exam.extracted.examDate && (
+            {exam.extracted.examDate && (diffuse || exam.extracted.examDate !== exam.examDate) && (
               <ExtractRow label={t('examDetail_examDateParsed')} value={exam.extracted.examDate} colors={colors} diffuse={diffuse} />
             )}
-            {exam.extracted.provider && (
+            {exam.extracted.provider && (diffuse || exam.extracted.provider !== exam.provider) && (
               <ExtractRow label={t('examDetail_providerLabel')} value={exam.extracted.provider} colors={colors} diffuse={diffuse} />
             )}
           </View>
@@ -432,6 +453,8 @@ const styles = StyleSheet.create({
   headerTitle: { flex: 1, alignItems: 'center' },
   scroll: { paddingHorizontal: 16, paddingTop: 16 },
   hero: { marginBottom: 16, gap: 6 },
+  siteTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
+  siteResult: { fontSize: 17, lineHeight: 24, marginTop: 4 },
   heroResult: { fontSize: 20, fontWeight: '700', marginTop: 2 },
   metaChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   chip: {
