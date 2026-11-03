@@ -5588,4 +5588,7 @@ export const zh: TranslationKeys = {
   cc_perm_emergency: "医疗信息",
   cc_status_pending: "待接受",
   cc_status_accepted: "已加入",
+  feedType_breast: "母乳",
+  feedType_bottle: "奶瓶",
+  feedType_solids: "辅食",
 }

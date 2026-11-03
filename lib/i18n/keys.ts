@@ -5888,4 +5888,7 @@ export interface TranslationKeys {
   cc_perm_emergency: string
   cc_status_pending: string
   cc_status_accepted: string
+  feedType_breast: string
+  feedType_bottle: string
+  feedType_solids: string
 }

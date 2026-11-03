@@ -172,7 +172,6 @@ function getLast7Days(): { dates: string[]; labels: string[] } {
  * - N > 35: date labels every ~N/7 days, others blank
  */
 function getLastNDays(n: number, until?: Date): { dates: string[]; labels: string[] } {
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const dates: string[] = []
   const labels: string[] = []
   const stride = n > 35 ? Math.ceil(n / 7) : 1
@@ -182,7 +181,7 @@ function getLastNDays(n: number, until?: Date): { dates: string[]; labels: strin
     d.setDate(d.getDate() - i)
     dates.push(localDateStr(d))
     if (n <= 14) {
-      labels.push(dayNames[d.getDay()])
+      labels.push(d.toLocaleDateString(dateLoc(), { weekday: 'short' }))
     } else if (n <= 35) {
       const mo = d.toLocaleDateString(dateLoc(), { month: 'short' })
       labels.push(`${mo} ${d.getDate()}`)

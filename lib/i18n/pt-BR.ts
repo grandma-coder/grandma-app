@@ -5591,4 +5591,7 @@ export const ptBR: TranslationKeys = {
   cc_perm_emergency: "Info médica",
   cc_status_pending: "Pendente",
   cc_status_accepted: "Ativo",
+  feedType_breast: "Peito",
+  feedType_bottle: "Mamadeira",
+  feedType_solids: "Sólidos",
 }

@@ -5588,4 +5588,7 @@ export const ar: TranslationKeys = {
   cc_perm_emergency: "معلومات طبية",
   cc_status_pending: "قيد الانتظار",
   cc_status_accepted: "نشط",
+  feedType_breast: "رضاعة طبيعية",
+  feedType_bottle: "رضّاعة",
+  feedType_solids: "طعام صلب",
 }

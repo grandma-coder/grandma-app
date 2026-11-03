@@ -5588,4 +5588,7 @@ export const tr: TranslationKeys = {
   cc_perm_emergency: "Tıbbi bilgi",
   cc_status_pending: "Beklemede",
   cc_status_accepted: "Aktif",
+  feedType_breast: "Emzirme",
+  feedType_bottle: "Biberon",
+  feedType_solids: "Katı gıda",
 }

@@ -5588,4 +5588,7 @@ export const ko: TranslationKeys = {
   cc_perm_emergency: "의료 정보",
   cc_status_pending: "대기 중",
   cc_status_accepted: "활성",
+  feedType_breast: "모유",
+  feedType_bottle: "젖병",
+  feedType_solids: "이유식",
 }

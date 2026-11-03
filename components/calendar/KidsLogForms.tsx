@@ -1704,7 +1704,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                   style={[df.segPill, { borderColor: on ? dc.hairline : dc.line, backgroundColor: on ? dc.surface : 'transparent' }]}
                 >
                   <Text style={[on ? df.chipTextOn : df.chipText, { color: on ? dc.ink : dc.ink3 }]}>
-                    {ft.charAt(0).toUpperCase() + ft.slice(1)}
+                    {t(`feedType_${ft}` as TranslationKey)}
                   </Text>
                 </Pressable>
               )
@@ -2111,7 +2111,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
             <StickerChoice
               key={ft}
               width="33.33%"
-              label={ft.charAt(0).toUpperCase() + ft.slice(1)}
+              label={t(`feedType_${ft}` as TranslationKey)}
               sticker={ft === 'breast' ? 'heart' : ft === 'bottle' ? 'bottle' : 'avocado'}
               on={feedType === ft}
               tone={siteTone}

@@ -5588,4 +5588,7 @@ export const hi: TranslationKeys = {
   cc_perm_emergency: "चिकित्सा जानकारी",
   cc_status_pending: "लंबित",
   cc_status_accepted: "सक्रिय",
+  feedType_breast: "स्तनपान",
+  feedType_bottle: "बोतल",
+  feedType_solids: "ठोस आहार",
 }

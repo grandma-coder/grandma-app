@@ -5588,4 +5588,7 @@ export const ja: TranslationKeys = {
   cc_perm_emergency: "医療情報",
   cc_status_pending: "保留中",
   cc_status_accepted: "有効",
+  feedType_breast: "母乳",
+  feedType_bottle: "ミルク",
+  feedType_solids: "離乳食",
 }

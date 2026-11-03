@@ -5588,4 +5588,7 @@ export const it: TranslationKeys = {
   cc_perm_emergency: "Info mediche",
   cc_status_pending: "In attesa",
   cc_status_accepted: "Attivo",
+  feedType_breast: "Seno",
+  feedType_bottle: "Biberon",
+  feedType_solids: "Solidi",
 }
