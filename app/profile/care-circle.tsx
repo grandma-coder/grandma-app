@@ -90,6 +90,7 @@ import { buildPermissionsObject } from '../../lib/caregiverPermissions'
 import { useFeatureFlags } from '../../store/useFeatureFlags'
 import { modeToBehavior } from '../../lib/caregiverCards'
 import { ShareCardsEditor } from '../../components/caregiver/ShareCardsEditor'
+import { healthLogText } from '../../lib/kidsHealthLogText'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -270,6 +271,7 @@ function formatActivitySummary(type: string, value: string | null, notes: string
   if (!value) return notes ?? ''
   try {
     const v = JSON.parse(value)
+    if (typeof v === 'number') return type === 'temperature' ? `${v}°` : String(v)
     if (typeof v !== 'object' || v === null) return typeof v === 'string' ? v : (notes ?? '')
 
     switch (type) {
@@ -326,9 +328,11 @@ function formatActivitySummary(type: string, value: string | null, notes: string
       case 'mood':
         return ''  // mood value is a raw string, handled by the title
       default: {
-        // For unknown types, try to extract meaningful fields
+        // For unknown types, try to extract meaningful fields (health notes carry {eventType, description|text})
         if (v.name) return v.name
         if (v.value) return String(v.value)
+        const { kind, text } = healthLogText(value, notes)
+        if (text) return kind ? `${kind}: ${text}` : text
         return notes ?? ''
       }
     }

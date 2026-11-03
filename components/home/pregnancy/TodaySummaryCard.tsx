@@ -64,7 +64,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
   const waterVal = todayLogs['water']?.value ? parseInt(todayLogs['water'].value, 10) : 0
   const sleepVal = todayLogs['sleep']?.value ? parseFloat(todayLogs['sleep'].value) : null
   const kicksVal = todayLogs['kick_count']?.value ? parseInt(todayLogs['kick_count'].value, 10) : null
-  const moodKey = (todayLogs['mood']?.notes ?? todayLogs['mood']?.value ?? null) as string | null
+  const moodKey = (todayLogs['mood']?.value ?? null) as string | null
   const nutritionVal = todayLogs['nutrition']?.value ? parseInt(todayLogs['nutrition'].value, 10) : 0
   const symptomDone = todayLogs['symptom'] !== undefined
   const exerciseVal = todayLogs['exercise']?.value ? parseInt(todayLogs['exercise'].value, 10) : null

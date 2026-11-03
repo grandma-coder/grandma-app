@@ -300,7 +300,7 @@ export function buildKidsHandoff(
       }
       case 'note': {
         const evt = str(val?.eventType)
-        const desc = str(val?.description) || (val ? '' : str(parsed))
+        const desc = str(val?.description) || str(val?.text) || (val ? '' : str(parsed))
         const label = /doctor/i.test(evt) ? t('handoff_doctor') : /injur/i.test(evt) ? t('handoff_injury') : ''
         const what = [label, desc && desc !== evt ? desc : ''].filter(Boolean).join(': ') || desc || label
         if (what) groups.health.push({ kind: 'health', sticker: KIDS_LOG_STICKER.health, emoji: '🩺', text: t('handoff_at', { what, time: fmtTime(at) }) })

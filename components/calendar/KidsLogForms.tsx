@@ -2840,7 +2840,9 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
         }
         if (typeof v?.description === 'string') {
           setValue(v.description === v.eventType ? '' : v.description)
-        } else if (typeof editLog.value === 'string') {
+        } else if (typeof v?.text === 'string') {
+          setValue(v.text)
+        } else if (typeof editLog.value === 'string' && !editLog.value.trim().startsWith('{')) {
           // Pre-W40 row: value was a bare string.
           setValue(editLog.value)
         }

@@ -1634,8 +1634,8 @@ function LogDetailPopup({
       case 'symptom':     return { metric: rawValue, unit: '', sublabel: 'SYMPTOM', isText: true }
       case 'appointment': return { metric: rawValue, unit: '', sublabel: 'APPOINTMENT', isText: true }
       case 'nutrition':   return { metric: rawValue, unit: 'kcal', sublabel: 'MEAL', isText: false }
-      case 'nesting':     return { metric: rawValue, unit: '', sublabel: 'NESTING TASK', isText: true }
-      case 'birth_prep':  return { metric: rawValue, unit: '', sublabel: 'BIRTH PREP', isText: true }
+      case 'nesting':     return { metric: typeof notesObj.title === 'string' ? notesObj.title : rawValue, unit: '', sublabel: 'NESTING TASK', isText: true }
+      case 'birth_prep':  return { metric: typeof notesObj.title === 'string' ? notesObj.title : rawValue, unit: '', sublabel: 'BIRTH PREP', isText: true }
       case 'exam_result': return { metric: rawValue, unit: '', sublabel: 'EXAM RESULT', isText: true }
       default:            return { metric: rawValue, unit: '', sublabel: meta.label.toUpperCase(), isText: rawValue.length > 6 }
     }
@@ -1656,7 +1656,10 @@ function LogDetailPopup({
 
   const { metric, unit, sublabel, isText } = getBigDisplay()
   const pills = getPills()
-  const plainNotes = rawNotes && !rawNotes.startsWith('{') ? rawNotes : null
+  // JSON notes are metadata, but appointment/contraction keep the user's own words under `notes`.
+  const plainNotes = rawNotes && !rawNotes.startsWith('{')
+    ? rawNotes
+    : typeof notesObj.notes === 'string' && notesObj.notes.trim() ? notesObj.notes : null
 
   function handleDelete() {
     setConfirmingDelete(true)

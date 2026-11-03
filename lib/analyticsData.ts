@@ -356,7 +356,7 @@ function buildSleepData(logs: ChildLog[], dates: string[], labels: string[]): Sl
   }
 }
 
-function buildMoodData(logs: ChildLog[], dates: string[], labels: string[]): MoodData {
+export function buildMoodData(logs: ChildLog[], dates: string[], labels: string[]): MoodData {
   const moodLogs = logs.filter((l) => l.type === 'mood')
   if (moodLogs.length === 0) {
     return { dailyCounts: {}, dominantMoods: [], weekLabels: labels, hasData: false }
@@ -368,7 +368,9 @@ function buildMoodData(logs: ChildLog[], dates: string[], labels: string[]): Moo
   const moodTotals: Record<string, number> = {}
 
   for (const log of moodLogs) {
-    const mood = typeof log.value === 'string' ? log.value : parseValue(log.value)
+    // Routine-tagged moods are stored as {"mood","routineId","routineName"} — read .mood, never the JSON string.
+    const parsed = parseValue(log.value)
+    const mood = typeof parsed === 'string' ? parsed : asRecord(parsed)?.mood
     if (!mood || typeof mood !== 'string') continue
 
     const moodKey = mood.toLowerCase().trim().replace(/['"]/g, '')
@@ -1197,6 +1199,9 @@ export function usePregnancyCalendarLogs(
       if (error) throw error
       const grouped: Record<string, PregnancyCalendarLog[]> = {}
       for (const row of data ?? []) {
+        // The onboarding/profile meta row (type note, value 'onboarding', due-date JSON in notes) is
+        // settings, not something the user logged — keep it off the calendar.
+        if (row.log_type === 'note' && row.value === 'onboarding') continue
         const key = row.log_date
         if (!grouped[key]) grouped[key] = []
         grouped[key].push(row as PregnancyCalendarLog)
