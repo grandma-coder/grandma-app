@@ -21,6 +21,9 @@ import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { isFutureDate } from '../../lib/futureDate'
+import { useUnitsStore } from '../../store/useUnitsStore'
+import { formatTemp, formatWeight } from '../../lib/units'
+import { translations, type TranslationKey } from '../../lib/i18n'
 
 /** Cycle log types that have an editable form sheet (so a logged row of that
  *  type can be tapped to re-open its form). lh / cervical_mucus / ovulation
@@ -48,6 +51,35 @@ const LOG_LABEL: Record<string, string> = {
   symptom:        'Symptom',
   mood:           'Mood',
   ovulation:      'Ovulation',
+}
+
+const LOG_LABEL_KEY: Record<string, TranslationKey | undefined> = {
+  period_start: 'cycleCalendar_logEntry_periodStart',
+  period_end: 'cycleCalendar_logEntry_periodEnd',
+  basal_temp: 'cycleCalendar_logEntry_temperature',
+  lh: 'cycleCalendar_logEntry_lh',
+  cervical_mucus: 'cycleCalendar_logEntry_cm',
+  cm: 'cycleCalendar_logEntry_cm',
+  intercourse: 'cycleCalendar_logEntry_intimacy',
+  symptom: 'cycleCalendar_logEntry_symptoms',
+  mood: 'cycleCalendar_logEntry_mood',
+  pregnancy_test: 'cycleCalendar_logEntry_pregTest',
+  sex_drive: 'cycleCalendar_logEntry_sexDrive',
+  clots: 'cycleCalendar_logEntry_clots',
+  weight: 'cycleCalendar_logEntry_weight',
+  water: 'cycleCalendar_logEntry_water',
+  activity: 'cycleCalendar_logEntry_activity',
+  exam: 'cycleCalendar_logEntry_exam',
+}
+
+/** Stored values that have a translated label under `${prefix}${value}`. */
+const VALUE_KEY_PREFIX: Record<string, string | undefined> = {
+  period_start: 'cycleLogForm_flow_',
+  lh: 'cycleLogForm_lh_',
+  cervical_mucus: 'cycleLogForm_cm_',
+  cm: 'cycleLogForm_cm_',
+  mood: 'cycleLogForm_mood_',
+  pregnancy_test: 'cycleLogForm_pregTest_',
 }
 
 const LOG_DOT: Record<string, string> = {
@@ -123,6 +155,8 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
     enabled: !!userId,
   })
 
+  const tempUnit = useUnitsStore((u) => u.tempUnit)
+  const weightUnit = useUnitsStore((u) => u.weightUnit)
   const info = getCycleInfo(cycleConfig, date)
   const phase = info.phase as CyclePhase
   const accent = phaseAccent(phase, stickers)
@@ -138,11 +172,27 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
     }
     return Array.from(byType.entries()).map(([type, values]) => ({
       type,
-      label: LOG_LABEL[type] ?? type,
-      summary: values.length > 0 ? values.join(', ') : '✓',
+      // Translated label (raw keys like 'sex_drive' / 'pregnancy_test' used to show), translated
+      // values ('eggwhite' → 'Eggwhite') and the user's units for BBT/weight (stored °C/kg).
+      label: LOG_LABEL_KEY[type] ? t(LOG_LABEL_KEY[type]!) : (LOG_LABEL[type] ?? type),
+      summary: values.map((v) => displayValue(type, v)).filter(Boolean).join(', ') || '✓',
       color: LOG_DOT[type] ?? '#888',
     }))
-  }, [rows])
+  }, [rows, t, tempUnit, weightUnit]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function displayValue(type: string, raw: string): string {
+    const n = parseFloat(raw.replace(',', '.'))
+    // Onboarding stored the period duration ('5') in the first period start's value — not a flow.
+    if (type === 'period_start' && /^\d+$/.test(raw)) return ''
+    if (type === 'basal_temp' && Number.isFinite(n)) return formatTemp(n, tempUnit)
+    if (type === 'weight' && Number.isFinite(n)) return formatWeight(n, weightUnit)
+    const prefix = VALUE_KEY_PREFIX[type]
+    if (prefix) {
+      const key = `${prefix}${raw}` as TranslationKey
+      if (key in translations.en) return t(key)
+    }
+    return raw
+  }
 
   return (
     <View style={styles.wrapBare}>

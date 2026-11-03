@@ -32,6 +32,8 @@ interface Props {
   onClose: () => void
   phase: CyclePhase
   userId: string
+  /** Day to show (the card's selected day). Defaults to today. */
+  date?: string
 }
 
 interface Point { date: string; value: number }
@@ -108,7 +110,7 @@ function fillDays(history: Point[], days = 7): { values: number[]; labels: strin
   return { values, labels }
 }
 
-export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Props) {
+export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -133,7 +135,9 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
     good: t('cycleDash_mood_good'), great: t('cycleDash_mood_great'),
   }
 
-  const today = toDateStr(new Date())
+  // The card can be on another day ('Log for Thu, Jul 24'); show that day's rows, not today's.
+  const today = date ?? toDateStr(new Date())
+  const isToday = today === toDateStr(new Date())
 
   useEffect(() => {
     if (!visible) return
@@ -171,7 +175,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId }: Pr
   return (
     <LogSheet
       visible={visible}
-      title={t('cycleDash_today')}
+      title={isToday ? t('cycleDash_today') : new Date(today + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
       onClose={onClose}
       chip={phaseLabel(phase)}
       chipColor={accent}

@@ -39,6 +39,8 @@ import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
 import { DEFAULT_CYCLE_QUICK_LOG_KEYS } from '../../../lib/cycleQuickLogs'
 import { CycleQuickLogPicker } from './CycleQuickLogPicker'
 import { CycleLogConfirm } from './CycleLogConfirm'
+import { useUnitsStore } from '../../../store/useUnitsStore'
+import { cToDisplay, kgToDisplay } from '../../../lib/units'
 
 /** Chip key → the cycle_logs sheet it opens. */
 type CycleSheetType =
@@ -164,6 +166,8 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
 
   const moodValue = rows.find((r) => r.type === 'mood')?.value ?? null
   const bbtValue = rows.find((r) => r.type === 'basal_temp')?.value ?? null
+  const tempUnit = useUnitsStore((u) => u.tempUnit)
+  const weightUnit = useUnitsStore((u) => u.weightUnit)
   const lhValue = rows.find((r) => r.type === 'lh')?.value ?? null
   const cmValue = rows.find((r) => r.type === 'cervical_mucus')?.value ?? null
   const intimacy = rows.find((r) => r.type === 'intercourse')?.value ?? null
@@ -222,7 +226,8 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
       key: 'bbt',
       sheet: 'basal_temp',
       icon: diffuse ? diffuseBlob('basal_temp') : <SiteSticker name="thermo" size={22} />,
-      label: bbtValue ? `${bbtValue}°` : '+',
+      // Stored in °C / kg; show the user's units.
+      label: bbtValue && Number.isFinite(parseFloat(bbtValue)) ? `${cToDisplay(parseFloat(bbtValue), tempUnit).toFixed(1)}°` : bbtValue ? `${bbtValue}°` : '+',
       done: !!bbtValue,
     },
     {
@@ -276,7 +281,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     {
       key: 'weight', sheet: 'weight',
       icon: diffuse ? diffuseBlob('weight') : <Drop size={22} fill={stickers.peach} />,
-      label: weight ? `${weight}` : '+', done: !!weight,
+      label: weight && Number.isFinite(parseFloat(weight)) ? `${kgToDisplay(parseFloat(weight), weightUnit).toFixed(1)}` : weight ? `${weight}` : '+', done: !!weight,
     },
     {
       key: 'water', sheet: 'water',
@@ -466,6 +471,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
           onClose={() => setOpen(false)}
           phase={phase}
           userId={userId}
+          date={logDate}
         />
       )}
 
