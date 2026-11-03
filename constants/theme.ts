@@ -283,10 +283,15 @@ export const fontWeight = {
  * `stickers` follows the active theme. Many site-look surfaces import it directly (not via
  * useTheme) for soft fills under `colors.text`; a static light palette left pastel fills under
  * cream dark-mode text. Values resolve at access time, so inline styles track the theme;
- * module-level StyleSheets still snapshot the light palette as before.
+ * module-level constants and StyleSheets snapshot the light palette. They are read at import,
+ * before the store hydrates, so the system scheme must not leak in: the app's theme is its own
+ * setting (default light), and a dark-mode iPhone otherwise baked dark tones into light screens.
  */
 export const stickers: typeof stickersLight = new Proxy(stickersLight, {
-  get: (target, key) => ((currentIsDark() ? stickersDark : target) as Record<string | symbol, unknown>)[key],
+  get: (target, key) => {
+    const s = useThemeStore.getState()
+    return ((s.hydrated && s.theme === 'dark' ? stickersDark : target) as Record<string | symbol, unknown>)[key]
+  },
 })
 
 // Site look (Nov 2026) — same faces as grandma.app: Architects Daughter for display / accent words
