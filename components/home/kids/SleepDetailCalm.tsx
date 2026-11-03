@@ -24,19 +24,15 @@ export interface SleepDetailCalmProps {
   dailySleepTarget: number
   /** 'Great' | 'Solid' | 'Restless' | 'Poor' | 'No data' */
   sleepQuality: string
+  /** Sleeps rated great/good, and sleeps with any rating. Optional for older callers. */
+  sleepRestful?: number
+  sleepRated?: number
   /** Hours per day for the last 7 days. */
   dailySleep: number[]
   dayLabels: string[]
   /** Days (= nights) in the selected range. */
   rangeDays?: number
 }
-
-const QUALITY_KEYS = {
-  Great: 'sleepCalm_q_Great',
-  Solid: 'sleepCalm_q_Solid',
-  Restless: 'sleepCalm_q_Restless',
-  Poor: 'sleepCalm_q_Poor',
-} as const
 
 const BAR_H = 72
 const LABEL_H = 14
@@ -67,7 +63,6 @@ export function SleepDetailCalm(p: SleepDetailCalmProps) {
   }
 
   const hero = oneNight ? p.sleepTotal : p.sleepTotal / nights
-  const qualityKey = (QUALITY_KEYS as Record<string, string>)[p.sleepQuality]
 
   const series = p.dailySleep
   const hasBars = series.some((h) => h > 0)
@@ -95,13 +90,15 @@ export function SleepDetailCalm(p: SleepDetailCalmProps) {
         ) : null}
       </FadeUp>
 
-      {qualityKey ? (
+      {/* What was logged, not a grade: the old line rated the child's sleep (Great…Poor) with advice
+          and a pediatrician nudge. */}
+      {(p.sleepRated ?? 0) > 0 ? (
         <FadeUp index={i++}>
           <Divider />
           <View style={styles.qualityRow}>
             <SiteSticker name="moon" size={26} />
             <Text style={[styles.line, { color: ink, fontFamily: font.body, flex: 1 }]} testID="sleep-quality">
-              {t(qualityKey as 'sleepCalm_q_Great')}
+              {t('sleepCalm_ratedRestful', { good: p.sleepRestful ?? 0, total: p.sleepRated ?? 0 })}
             </Text>
           </View>
         </FadeUp>

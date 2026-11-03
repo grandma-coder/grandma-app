@@ -3841,4 +3841,5 @@ export const de: TranslationKeys = {
   cycleHome_late_body: "Grandma pausiert die Vorhersagen, bis du einträgst, was passiert. Zyklen schwanken – trag deine Periode ein, wenn sie beginnt.",
   cycleHome_late_logPeriod: "Periodenbeginn eintragen",
   cycleHome_late_logTest: "Schwangerschaftstest eintragen",
+  sleepCalm_ratedRestful: "Bei {{good}} von {{total}} eingetragenen Schlafphasen als super oder gut bewertet.",
 }

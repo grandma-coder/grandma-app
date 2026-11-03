@@ -3841,4 +3841,5 @@ export const ptBR: TranslationKeys = {
   cycleHome_late_body: "A Grandma pausa as previsões até você registrar o que acontecer. Ciclos variam — registre a menstruação quando ela vier.",
   cycleHome_late_logPeriod: "Registrar início da menstruação",
   cycleHome_late_logTest: "Registrar um teste de gravidez",
+  sleepCalm_ratedRestful: "Avaliado como ótimo ou bom em {{good}} de {{total}} sonos registrados.",
 }

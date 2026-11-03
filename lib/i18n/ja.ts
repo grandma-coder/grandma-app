@@ -3841,4 +3841,5 @@ export const ja: TranslationKeys = {
   cycleHome_late_body: "次の記録があるまで、Grandmaは予測を止めます。周期は変わるもの。始まったら生理を記録してください。",
   cycleHome_late_logPeriod: "生理の開始を記録",
   cycleHome_late_logTest: "妊娠検査を記録",
+  sleepCalm_ratedRestful: "記録した睡眠{{total}}回のうち{{good}}回が「とても良い」か「良い」。",
 }

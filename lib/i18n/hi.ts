@@ -3841,4 +3841,5 @@ export const hi: TranslationKeys = {
   cycleHome_late_body: "जब तक आप आगे का कुछ दर्ज नहीं करतीं, Grandma अनुमान रोक देती है। चक्र बदलते रहते हैं — पीरियड शुरू हो तो दर्ज करें।",
   cycleHome_late_logPeriod: "पीरियड शुरू होना दर्ज करें",
   cycleHome_late_logTest: "प्रेग्नेंसी टेस्ट दर्ज करें",
+  sleepCalm_ratedRestful: "दर्ज की गई {{total}} नींद में से {{good}} को बढ़िया या अच्छा आँका गया।",
 }

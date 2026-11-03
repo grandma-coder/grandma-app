@@ -4123,4 +4123,5 @@ export interface TranslationKeys {
   cycleHome_late_body: string
   cycleHome_late_logPeriod: string
   cycleHome_late_logTest: string
+  sleepCalm_ratedRestful: string
 }

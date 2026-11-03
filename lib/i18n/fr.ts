@@ -3841,4 +3841,5 @@ export const fr: TranslationKeys = {
   cycleHome_late_body: "Grandma met les prévisions en pause jusqu'à votre prochaine saisie. Les cycles varient : notez vos règles quand elles arrivent.",
   cycleHome_late_logPeriod: "Noter le début des règles",
   cycleHome_late_logTest: "Noter un test de grossesse",
+  sleepCalm_ratedRestful: "Noté très bien ou bien sur {{good}} des {{total}} sommeils enregistrés.",
 }

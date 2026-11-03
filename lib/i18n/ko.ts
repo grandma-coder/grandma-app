@@ -3841,4 +3841,5 @@ export const ko: TranslationKeys = {
   cycleHome_late_body: "다음 기록이 있을 때까지 Grandma는 예측을 멈춰요. 주기는 달라질 수 있어요. 생리가 시작되면 기록하세요.",
   cycleHome_late_logPeriod: "생리 시작 기록",
   cycleHome_late_logTest: "임신 테스트 기록",
+  sleepCalm_ratedRestful: "기록한 수면 {{total}}번 중 {{good}}번을 '아주 좋음' 또는 '좋음'으로 기록했어요.",
 }

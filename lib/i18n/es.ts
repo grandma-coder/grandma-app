@@ -3841,4 +3841,5 @@ export const es: TranslationKeys = {
   cycleHome_late_body: "Grandma pausa las predicciones hasta que registres lo que pase. Los ciclos varían: registra tu regla cuando llegue.",
   cycleHome_late_logPeriod: "Registrar inicio de la regla",
   cycleHome_late_logTest: "Registrar una prueba de embarazo",
+  sleepCalm_ratedRestful: "Valorado como genial o bueno en {{good}} de {{total}} sueños registrados.",
 }

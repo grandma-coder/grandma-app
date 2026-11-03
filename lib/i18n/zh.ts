@@ -3841,4 +3841,5 @@ export const zh: TranslationKeys = {
   cycleHome_late_body: "在你记录接下来的情况之前，Grandma 会暂停预测。周期本来就会变化——月经来了就记录一下。",
   cycleHome_late_logPeriod: "记录月经开始",
   cycleHome_late_logTest: "记录验孕结果",
+  sleepCalm_ratedRestful: "在记录的 {{total}} 次睡眠中，有 {{good}} 次被评为很好或好。",
 }

@@ -4128,4 +4128,5 @@ export const en: TranslationKeys = {
   cycleHome_late_body: "Grandma pauses predictions until you log what happens next. Cycles vary — log your period when it starts.",
   cycleHome_late_logPeriod: "Log period start",
   cycleHome_late_logTest: "Log a pregnancy test",
+  sleepCalm_ratedRestful: "Rated great or good on {{good}} of {{total}} logged sleeps.",
 }

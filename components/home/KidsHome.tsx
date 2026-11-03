@@ -521,6 +521,9 @@ interface RangeData {
   // Detail data for modals
   moodByDay: Record<string, Record<string, number>>
   sleepQuality: string
+  /** Sleeps rated great/good, and sleeps with any rating — for a factual line, not a grade. */
+  sleepRestful: number
+  sleepRated: number
   mealsToday: number
   calorieCategories: { label: string; cals: number; color: string }[]
   // Feeding detail (for liquid/mixed stage modal)
@@ -1145,6 +1148,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     dayLabels: [],
     moodByDay: {},
     sleepQuality: 'No data',
+    sleepRestful: 0,
+    sleepRated: 0,
     mealsToday: 0,
     calorieCategories: [],
     feedingBreast: 0,
@@ -1219,7 +1224,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
     // ── Sleep ──
     let sleepTotal = 0
-    let goodSleep = 0, poorSleep = 0, totalSleepLogs = 0
+    let goodSleep = 0, poorSleep = 0, totalSleepLogs = 0, ratedSleep = 0
     for (const log of rangeLogs.filter((l) => l.type === 'sleep')) {
       let val: any = log.value
       try { val = typeof val === 'string' ? JSON.parse(val) : val } catch {}
@@ -1228,6 +1233,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       sleepTotal += hours
       totalSleepLogs++
       const q = typeof val === 'object' && val ? normalizeSleepQuality(val.quality) : null
+      if (q) ratedSleep++
       if (q === 'great' || q === 'good') goodSleep++
       else if (q === 'poor') poorSleep++
     }
@@ -1478,7 +1484,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       dailyNutrition, dailyNutritionTarget,
       dailyActivity, dailyActivityTarget: g.activity,
       dayLabels: miniLabels,
-      moodByDay, sleepQuality,
+      moodByDay, sleepQuality, sleepRestful: goodSleep, sleepRated: ratedSleep,
       mealsToday: foodLogs.filter((l) => l.date === today).length,
       calorieCategories,
       feedingBreast, feedingBottle, avgFeedingMl, activityBreakdown, activityEntries,
@@ -2605,6 +2611,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         sleepTotal={rangeData.sleepTotal}
         sleepTarget={rangeData.sleepTarget}
         sleepQuality={rangeData.sleepQuality}
+        sleepRestful={rangeData.sleepRestful}
+        sleepRated={rangeData.sleepRated}
         dailySleep={rangeData.dailySleep}
         dailySleepTarget={rangeData.dailySleepTarget}
         dayLabels={rangeData.dayLabels}
@@ -4311,11 +4319,12 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
   )
 }
 
-function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQuality, dailySleep, dailySleepTarget, dayLabels, rangeDays, dateRange, childName, childColor }: {
+function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQuality, sleepRestful, sleepRated, dailySleep, dailySleepTarget, dayLabels, rangeDays, dateRange, childName, childColor }: {
   visible: boolean; onClose: () => void
   rangeDays: number
   sleepTotal: number; sleepTarget: number
   sleepQuality: string
+  sleepRestful: number; sleepRated: number
   dailySleep: number[]
   dailySleepTarget: number
   dayLabels: string[]
@@ -4419,7 +4428,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
             <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
           <DetailSheetHeader title={t('kids_home_sleep_modal_title')} sticker="moon" tone={StickerPalette.blueSoft} childName={childName} childColor={childColor} onClose={onClose} />
-          <SleepDetailCalm sleepTotal={sleepTotal} sleepTarget={sleepTarget} dailySleepTarget={dailySleepTarget} sleepQuality={sleepQuality} dailySleep={dailySleep} dayLabels={dayLabels} rangeDays={rangeDays} />
+          <SleepDetailCalm sleepTotal={sleepTotal} sleepTarget={sleepTarget} dailySleepTarget={dailySleepTarget} sleepQuality={sleepQuality} sleepRestful={sleepRestful} sleepRated={sleepRated} dailySleep={dailySleep} dayLabels={dayLabels} rangeDays={rangeDays} />
         </Pressable>
       </Pressable>
     </Modal>

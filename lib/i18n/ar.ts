@@ -3841,4 +3841,5 @@ export const ar: TranslationKeys = {
   cycleHome_late_body: "توقف Grandma التوقعات حتى تسجّلي ما يحدث بعد ذلك. الدورات تختلف — سجّلي دورتك عندما تبدأ.",
   cycleHome_late_logPeriod: "سجّلي بداية الدورة",
   cycleHome_late_logTest: "سجّلي اختبار حمل",
+  sleepCalm_ratedRestful: "قُيِّم بممتاز أو جيد في {{good}} من {{total}} نومات مسجلة.",
 }

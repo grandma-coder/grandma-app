@@ -16,12 +16,13 @@ describe('sleep detail — every case says something true and clear', () => {
     expect(v.queryByTestId('sleep-hero')).toBeNull()
   })
 
-  it('typical week → average per night, quality blurb, chart with target label', () => {
-    const v = r({ sleepTotal: 70, sleepTarget: 70, sleepQuality: 'Solid', dailySleep: [10, 9, 11, 10, 8, 10, 12] })
+  it('typical week → average per night, factual rating line (no grade), chart with target label', () => {
+    const v = r({ sleepTotal: 70, sleepTarget: 70, sleepQuality: 'Solid', sleepRestful: 5, sleepRated: 7, dailySleep: [10, 9, 11, 10, 8, 10, 12] })
     expect(v.getByTestId('sleep-hero').props.children).toBe('10.0h')
     expect(v.getByText('of 10h a night')).toBeTruthy()
     expect(v.getByText('70h in total · 7 nights')).toBeTruthy()
-    expect(v.getByText(/consistent enough to support growth/)).toBeTruthy()
+    expect(v.getByText('Rated great or good on 5 of 7 logged sleeps.')).toBeTruthy()
+    expect(v.queryByText(/support growth|pediatrician/)).toBeNull()
     expect(v.getByText('Past 7 days')).toBeTruthy()
     expect(v.getByText(/target 10h/)).toBeTruthy()
     expect(v.getByText('Mon')).toBeTruthy()
