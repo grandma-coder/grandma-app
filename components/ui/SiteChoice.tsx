@@ -150,7 +150,7 @@ export function SiteStepper({
     <View style={styles.stepper} accessibilityRole="adjustable" accessibilityValue={{ min, max, now: value, text: unit ? `${value} ${unit}` : String(value) }}>
       <Btn d={-1} icon="remove" />
       <View style={styles.valueWrap}>
-        <Animated.Text style={[styles.value, { color: ink, fontFamily: font.display, transform: [{ scale: bump.interpolate({ inputRange: [0, 1], outputRange: [1, 1.18] }) }] }]}>
+        <Animated.Text style={[styles.value, { color: ink, fontFamily: font.bodySemiBold, letterSpacing: -2, transform: [{ scale: bump.interpolate({ inputRange: [0, 1], outputRange: [1, 1.18] }) }] }]}>
           {value}
         </Animated.Text>
         {unit ? <Text style={[styles.unit, { color: colors.textSecondary, fontFamily: font.body }]}>{unit}</Text> : null}

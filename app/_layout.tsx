@@ -712,7 +712,6 @@ export default function RootLayout() {
           <Stack.Screen name="grandma-talk" options={{ presentation: 'modal' }} />
           <Stack.Screen name="profile" />
           <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="connections" />
           <Stack.Screen name="lock" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
           <Stack.Screen name="child-report" options={{ presentation: 'modal' }} />
           <Stack.Screen name="report" options={{ presentation: 'modal' }} />
