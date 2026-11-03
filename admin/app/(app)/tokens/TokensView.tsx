@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import {
   COLOR_GROUPS,
   diffuseFields,
@@ -35,6 +36,7 @@ function isDark(hex: string): boolean {
 }
 
 function SwatchTile({ s, onCopy, copiedKey }: { s: Swatch; onCopy: (v: string, k: string) => void; copiedKey: string | null }) {
+  const t = useTranslations("tokens")
   const key = `${s.name}:${s.value}`
   const dark = isDark(s.value)
   return (
@@ -44,7 +46,7 @@ function SwatchTile({ s, onCopy, copiedKey }: { s: Swatch; onCopy: (v: string, k
     >
       <div className="flex h-16 items-end p-2" style={{ background: s.value }}>
         <span className={`font-mono text-[10px] ${dark ? "text-white/80" : "text-black/60"}`}>
-          {copiedKey === key ? "copied ✓" : "copy"}
+          {copiedKey === key ? t("copied") : t("copy")}
         </span>
       </div>
       <div className="bg-card px-2.5 py-1.5">
@@ -72,6 +74,7 @@ function BlobIcon({ blob, size = 52 }: { blob: Blob; size?: number }) {
 const SECTIONS = ["Fields", "Colors", "Type", "Shape", "Stickers", "Brand", "Emails", "Export"] as const
 
 export function TokensView() {
+  const t = useTranslations("tokens")
   const { copied, copy } = useCopy()
   const [tab, setTab] = useState<(typeof SECTIONS)[number]>("Fields")
   const [email, setEmail] = useState("confirm-signup")
@@ -87,7 +90,7 @@ export function TokensView() {
               tab === s ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
             }`}
           >
-            {s}
+            {t(`tabs.${s}`)}
           </button>
         ))}
       </div>
@@ -95,10 +98,7 @@ export function TokensView() {
       {/* FIELDS — the per-behavior generative gradients */}
       {tab === "Fields" && (
         <div className="space-y-4">
-          <p className="text-sm text-fg-tertiary">
-            The only thing that changes per behavior under Diffuse: a 4-stop generative gradient field (g1→g4) plus one
-            accent for CTA/ink moments. Type + icons stay identical across behaviors.
-          </p>
+          <p className="text-sm text-fg-tertiary">{t("fields.intro")}</p>
           <div className="grid gap-4 sm:grid-cols-2">
             {diffuseFields.map((f) => (
               <div key={f.key} className="overflow-hidden rounded-2xl border border-border-default shadow-[var(--shadow-sm)]">
@@ -112,7 +112,7 @@ export function TokensView() {
                     className="absolute bottom-3 left-3 rounded-full px-3 py-1 text-xs font-semibold text-white shadow"
                     style={{ background: f.accent }}
                   >
-                    accent {f.accent}
+                    {t("fields.accent", { value: f.accent })}
                   </span>
                 </div>
                 <div className="bg-card px-4 py-3">
@@ -122,7 +122,7 @@ export function TokensView() {
                       onClick={() => copy(JSON.stringify({ g1: f.g1, g2: f.g2, g3: f.g3, g4: f.g4, accent: f.accent }), f.key)}
                       className="font-mono text-[10px] text-fg-muted hover:text-fg-primary"
                     >
-                      {copied === f.key ? "copied ✓" : "copy field"}
+                      {copied === f.key ? t("copied") : t("copyField")}
                     </button>
                   </div>
                   <p className="mt-0.5 text-xs text-fg-muted">{f.note}</p>
@@ -159,31 +159,31 @@ export function TokensView() {
       {tab === "Type" && (
         <div className="space-y-6">
           <section className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-            <h2 className="display mb-1 text-base font-semibold text-fg-primary">Type roles</h2>
-            <p className="mb-4 text-sm text-fg-tertiary">Assign by meaning, never by size — the one clear Diffuse rule.</p>
+            <h2 className="display mb-1 text-base font-semibold text-fg-primary">{t("type.rolesTitle")}</h2>
+            <p className="mb-4 text-sm text-fg-tertiary">{t("type.rolesIntro")}</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {typeRoles.map((t) => (
-                <div key={t.role} className="rounded-lg border border-border-subtle bg-deep p-3">
-                  <p className="font-mono text-xs text-accent-500">{t.role}</p>
-                  <p className="text-xs text-fg-secondary">{t.font}</p>
-                  <p className="mt-1 text-xs text-fg-muted">{t.use}</p>
+              {typeRoles.map((r) => (
+                <div key={r.role} className="rounded-lg border border-border-subtle bg-deep p-3">
+                  <p className="font-mono text-xs text-accent-500">{r.role}</p>
+                  <p className="text-xs text-fg-secondary">{r.font}</p>
+                  <p className="mt-1 text-xs text-fg-muted">{r.use}</p>
                 </div>
               ))}
             </div>
           </section>
           <section className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-            <h2 className="display mb-4 text-base font-semibold text-fg-primary">Font families</h2>
+            <h2 className="display mb-4 text-base font-semibold text-fg-primary">{t("type.familiesTitle")}</h2>
             <div className="space-y-4">
               {fonts.map((f) => (
                 <div key={f.token} className="border-b border-border-subtle pb-4 last:border-0 last:pb-0">
                   <div className="flex items-baseline justify-between">
                     <span className="font-mono text-xs text-accent-500">{f.token}</span>
                     <button onClick={() => copy(f.token, f.token)} className="font-mono text-[10px] text-fg-muted hover:text-fg-primary">
-                      {copied === f.token ? "copied ✓" : "copy"}
+                      {copied === f.token ? t("copied") : t("copy")}
                     </button>
                   </div>
                   <p className="mt-1 text-2xl text-fg-primary" style={{ fontFamily: f.cssStack }}>
-                    Grandma is here for you
+                    {t("type.specimen")}
                   </p>
                   <p className="mt-0.5 text-xs text-fg-tertiary">{f.family} · {f.role}</p>
                 </div>
@@ -197,7 +197,7 @@ export function TokensView() {
       {tab === "Shape" && (
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-            <h2 className="display mb-4 text-base font-semibold text-fg-primary">Radius</h2>
+            <h2 className="display mb-4 text-base font-semibold text-fg-primary">{t("shape.radius")}</h2>
             <div className="space-y-3">
               {radii.map((r) => (
                 <div key={r.token} className="flex items-center gap-4">
@@ -212,7 +212,7 @@ export function TokensView() {
           </section>
           <section className="space-y-6">
             <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-              <h2 className="display mb-4 text-base font-semibold text-fg-primary">Blur</h2>
+              <h2 className="display mb-4 text-base font-semibold text-fg-primary">{t("shape.blur")}</h2>
               <div className="space-y-2">
                 {blurs.map((b) => (
                   <div key={b.token} className="flex items-baseline justify-between">
@@ -223,11 +223,11 @@ export function TokensView() {
               </div>
             </div>
             <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-              <h2 className="display mb-2 text-base font-semibold text-fg-primary">Grain</h2>
+              <h2 className="display mb-2 text-base font-semibold text-fg-primary">{t("shape.grain")}</h2>
               <p className="font-mono text-xs text-fg-secondary">
-                fractalNoise · baseFrequency {grain.baseFrequency} · {grain.numOctaves} octaves · opacity {grain.opacityLight} (light) / {grain.opacityDark} (dark)
+                {t("shape.grainSpec", { frequency: grain.baseFrequency, octaves: grain.numOctaves, light: grain.opacityLight, dark: grain.opacityDark })}
               </p>
-              <p className="mt-2 text-xs text-fg-muted">Laid over gradient fields for the soft grainy look.</p>
+              <p className="mt-2 text-xs text-fg-muted">{t("shape.grainNote")}</p>
             </div>
           </section>
         </div>
@@ -239,7 +239,7 @@ export function TokensView() {
       {/* BRAND — logo */}
       {tab === "Brand" && (
         <div className="space-y-4">
-          <p className="text-sm text-fg-tertiary">The app icon / logo mark.</p>
+          <p className="text-sm text-fg-tertiary">{t("brand.intro")}</p>
           <div className="flex flex-wrap items-center gap-6">
             {[128, 64, 40].map((sz) => (
               <div key={sz} className="flex flex-col items-center gap-2">
@@ -258,9 +258,9 @@ export function TokensView() {
         <div className="space-y-4">
           <div className="flex gap-1.5">
             {[
-              { id: "confirm-signup", label: "Confirm signup" },
-              { id: "magic-link", label: "Magic link" },
-              { id: "invite", label: "Invite" },
+              { id: "confirm-signup", label: t("emails.confirmSignup") },
+              { id: "magic-link", label: t("emails.magicLink") },
+              { id: "invite", label: t("emails.invite") },
             ].map((e) => (
               <button
                 key={e.id}
@@ -274,9 +274,7 @@ export function TokensView() {
             ))}
           </div>
           <p className="text-sm text-fg-tertiary">
-            Branded Supabase auth emails, Diffuse-styled. Paste from{" "}
-            <span className="font-mono text-xs">grandma-app/supabase/email-templates/</span> into Supabase → Auth →
-            Email Templates.
+            {t.rich("emails.intro", { code: (c) => <span className="font-mono text-xs">{c}</span> })}
           </p>
           <div className="overflow-hidden rounded-xl border border-border-default shadow-[var(--shadow-sm)]">
             <iframe key={email} src={`/email-previews/${email}.html`} title={email} className="h-[560px] w-full bg-white" />
@@ -288,14 +286,14 @@ export function TokensView() {
       {tab === "Export" && (
         <div className="space-y-6">
           {[
-            { label: "CSS variables", code: cssVarsExport(), key: "css" },
-            { label: "JSON", code: jsonExport(), key: "json" },
+            { label: t("export.css"), code: cssVarsExport(), key: "css" },
+            { label: t("export.json"), code: jsonExport(), key: "json" },
           ].map((x) => (
             <section key={x.key} className="rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
               <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
                 <h2 className="display text-base font-semibold text-fg-primary">{x.label}</h2>
                 <button onClick={() => copy(x.code, x.key)} className="rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-600">
-                  {copied === x.key ? "Copied ✓" : "Copy all"}
+                  {copied === x.key ? t("copiedAll") : t("copyAll")}
                 </button>
               </div>
               <pre className="max-h-[360px] overflow-auto px-5 py-4 font-mono text-xs leading-relaxed text-fg-secondary">{x.code}</pre>
@@ -309,21 +307,23 @@ export function TokensView() {
 
 // ── Blob catalog — the current Character-blob system, grouped by behavior ──────
 
-const BLOB_SECTIONS: { key: string; label: string; dot: string; gaps: string }[] = [
-  { key: "pre_pregnancy", label: "Pre-Pregnancy / Cycle", dot: "#E58BB4", gaps: "Missing dedicated blobs: cycle phases (follicular/luteal), hormones (E/P/LH), cervical fluid, a real BBT/thermometer (temperature reuses a droplet), fertile-window." },
-  { key: "pregnancy", label: "Pregnancy", dot: "#B7A6E8", gaps: "Missing: trimester / gestational-week, baby-size-by-week, birth plan & birth-type, labor phases (early/active/transition/golden-hour/postpartum), kegel / nesting / hospital-bag." },
-  { key: "kids", label: "Kids", dot: "#8BB8E8", gaps: "Missing: teeth / tooth, diaper sub-types (pee/poop/mixed), nursery gear (crib/rattle/stroller/pacifier/teddy), specific food types (fruit/veg)." },
-  { key: "general", label: "General", dot: "#BDD48C", gaps: "One bell covers 13 notification types; no per-mode blobs; no scan-type blobs; medicine ≈ health hue/shape; no dedicated vitamin/supplement blob." },
+const BLOB_SECTIONS: { key: string; dot: string }[] = [
+  { key: "pre_pregnancy", dot: "#E58BB4" },
+  { key: "pregnancy", dot: "#B7A6E8" },
+  { key: "kids", dot: "#8BB8E8" },
+  { key: "general", dot: "#BDD48C" },
 ]
 
 function BlobCatalog() {
+  const t = useTranslations("tokens.stickers")
   return (
     <div className="space-y-6">
       <p className="text-sm text-fg-tertiary">
-        The current <span className="font-medium text-fg-secondary">Character-blob</span> icon system (active under
-        Diffuse) — <span className="font-mono text-xs">{BLOBS.length}</span> concepts rendered live from{" "}
-        <span className="font-mono text-xs">grandma-app/components/characters/Characters.tsx</span>, grouped by
-        behavior. Each is a 48×48 blob with a per-concept hue. Gaps per behavior are noted below each group.
+        {t.rich("intro", {
+          count: BLOBS.length,
+          b: (c) => <span className="font-medium text-fg-secondary">{c}</span>,
+          code: (c) => <span className="font-mono text-xs">{c}</span>,
+        })}
       </p>
 
       {BLOB_SECTIONS.map((section) => {
@@ -333,8 +333,8 @@ function BlobCatalog() {
           <section key={section.key}>
             <div className="mb-2 flex items-center gap-2">
               <span className="inline-block size-2.5 rounded-full" style={{ background: section.dot }} />
-              <h2 className="display text-base font-semibold text-fg-primary">{section.label}</h2>
-              <span className="text-xs text-fg-muted">{rows.length} concepts</span>
+              <h2 className="display text-base font-semibold text-fg-primary">{t(`sections.${section.key}.label`)}</h2>
+              <span className="text-xs text-fg-muted">{t("concepts", { n: rows.length })}</span>
             </div>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
               {rows.map((b) => (
@@ -351,7 +351,7 @@ function BlobCatalog() {
               ))}
             </div>
             <div className="mt-2 rounded-lg border border-border-subtle bg-deep px-3 py-2 text-xs text-fg-tertiary">
-              <span className="font-medium text-fg-secondary">Gaps:</span> {section.gaps}
+              <span className="font-medium text-fg-secondary">{t("gaps")}</span> {t(`sections.${section.key}.gaps`)}
             </div>
           </section>
         )

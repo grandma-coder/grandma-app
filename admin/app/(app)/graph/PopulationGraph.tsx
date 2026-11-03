@@ -1,6 +1,7 @@
 "use client"
-import { useMemo, useRef, useState, type ComponentType, type Ref } from "react"
+import { useMemo, useRef, useState, type ComponentType, type ReactNode, type Ref } from "react"
 import dynamic from "next/dynamic"
+import { useTranslations } from "next-intl"
 import type { ForceGraphProps, NodeObject, ForceGraphMethods } from "react-force-graph-2d"
 import { useContainerSize } from "./useContainerSize"
 import { GraphSearch } from "./GraphSearch"
@@ -22,12 +23,6 @@ const BEHAVIOR_COLOR: Record<string, string> = {
   pregnancy: "#B7A6E8",
   kids: "#8BB8E8",
   none: "#B3AC9C",
-}
-const BEHAVIOR_LABEL: Record<string, string> = {
-  pre_pregnancy: "Pre-pregnancy",
-  pregnancy: "Pregnancy",
-  kids: "Kids",
-  none: "No behavior",
 }
 
 // Graph node shape we hand to the lib (carries the paint fields).
@@ -51,6 +46,10 @@ export function PopulationGraph({
   onPickUser: (id: string, label: string) => void
   onExploreOne?: () => void
 }) {
+  const t = useTranslations("graph")
+  const behaviorLabel = (b: string) => (t.has(`behavior.${b}`) ? t(`behavior.${b}`) : b)
+  const bold = (c: ReactNode) => <span className="font-semibold text-fg-primary">{c}</span>
+  const em = (c: ReactNode) => <span className="font-medium text-fg-tertiary">{c}</span>
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined)
   const { ref: containerRef, w, h } = useContainerSize<HTMLDivElement>()
   const [focusId, setFocusId] = useState<string | null>(null)
@@ -117,14 +116,11 @@ export function PopulationGraph({
   if (data.nodes.length === 0) {
     return (
       <div className="rounded-xl border border-border-default bg-card p-6 text-sm text-fg-secondary shadow-[var(--shadow-sm)]">
-        <p className="mb-1 font-medium text-fg-primary">No connections yet</p>
-        <p className="text-fg-tertiary">
-          The population graph links users who share a care-circle or a channel. With{" "}
-          <span className="font-semibold text-fg-primary">{data.totalUsers}</span> user{data.totalUsers === 1 ? "" : "s"} and no cross-links yet, there&apos;s no network to draw — it fills in as your user base grows and connects.
-        </p>
+        <p className="mb-1 font-medium text-fg-primary">{t("population.emptyTitle")}</p>
+        <p className="text-fg-tertiary">{t.rich("population.emptyBody", { count: data.totalUsers, b: bold })}</p>
         {onExploreOne && (
           <button onClick={onExploreOne} className="mt-3 rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-600">
-            Explore one user&apos;s graph instead →
+            {t("population.exploreOne")}
           </button>
         )}
       </div>
@@ -138,21 +134,20 @@ export function PopulationGraph({
       <div className="flex flex-wrap items-center gap-3">
         <GraphSearch nodes={data.nodes} onSelect={selectNode} />
         <span className="text-xs text-fg-tertiary">
-          Showing <span className="font-semibold text-fg-primary">{data.shown}</span> of{" "}
-          <span className="font-semibold text-fg-primary">{data.totalUsers}</span>
+          {t.rich("population.showing", { shown: data.shown, total: data.totalUsers, b: bold })}
         </span>
-        {data.capped && <span className="pill pill-warning">capped</span>}
+        {data.capped && <span className="pill pill-warning">{t("population.capped")}</span>}
         <button
           onClick={() => fgRef.current?.zoomToFit(400, 40)}
           className="rounded-full border border-border-default px-2.5 py-0.5 text-xs text-fg-tertiary hover:text-fg-primary"
         >
-          fit view
+          {t("population.fitView")}
         </button>
         <span className="ml-auto flex flex-wrap gap-x-3 gap-y-1 text-xs text-fg-tertiary">
           {behaviorsPresent.map((b) => (
             <span key={b} className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: BEHAVIOR_COLOR[b] }} />
-              {BEHAVIOR_LABEL[b] ?? b}
+              {behaviorLabel(b)}
             </span>
           ))}
         </span>
@@ -250,18 +245,13 @@ export function PopulationGraph({
           <div className="pointer-events-none absolute left-3 top-3 rounded-lg border border-border-default bg-card/95 px-3 py-2 text-xs shadow-[var(--shadow-sm)]">
             <p className="font-semibold text-fg-primary">{activeNode.label}</p>
             <p className="text-fg-tertiary">
-              {activeNode.degree} connection{activeNode.degree === 1 ? "" : "s"} · {activeNode.tier} · {BEHAVIOR_LABEL[activeNode.behavior] ?? activeNode.behavior}
+              {t("population.tooltip", { degree: activeNode.degree, tier: activeNode.tier, behavior: behaviorLabel(activeNode.behavior) })}
             </p>
           </div>
         )}
       </div>
 
-      <p className="text-xs text-fg-muted">
-        <span className="font-medium text-fg-tertiary">Search</span> or <span className="font-medium text-fg-tertiary">click</span> a node to open its details ·{" "}
-        <span className="font-medium text-fg-tertiary">hover</span> to spotlight connections ·{" "}
-        <span className="font-medium text-fg-tertiary">scroll</span> to zoom · <span className="font-medium text-fg-tertiary">drag</span> to pan or move a node.
-        Node size = connections; purple edges = care-circle, grey = shared channels.
-      </p>
+      <p className="text-xs text-fg-muted">{t.rich("population.help2d", { b: em })}</p>
     </div>
   )
 }

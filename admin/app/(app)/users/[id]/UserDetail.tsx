@@ -1,16 +1,13 @@
 "use client"
 import { useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { trpc } from "@/lib/trpc"
+import { htmlLang, type Locale } from "@/i18n/config"
 
 type Profile = Record<string, unknown>
 
-const TIER_LABELS: Record<string, string> = {
-  free: "Free",
-  premium_solo: "Premium (Solo)",
-  premium_family: "Premium (Family)",
-}
-
+// Tier display labels live in users.tierLabel.<tier>.
 const MODE_DOT: Record<string, string> = {
   "pre-pregnancy": "#E58BB4",
   pre_pregnancy: "#E58BB4",
@@ -35,18 +32,18 @@ function daysSince(iso: unknown): number | null {
 }
 
 /** active < 7d · dormant 7–29d · at-risk 30–59d · churned 60d+ */
-function lifecycle(days: number | null): { label: string; cls: string } {
-  if (days == null) return { label: "no activity", cls: "" }
-  if (days < 7) return { label: "active", cls: "pill-success" }
-  if (days < 30) return { label: "dormant", cls: "pill-info" }
-  if (days < 60) return { label: "at risk", cls: "pill-warning" }
-  return { label: "churned", cls: "pill-danger" }
+function lifecycle(days: number | null): { key: "none" | "active" | "dormant" | "atRisk" | "churned"; cls: string } {
+  if (days == null) return { key: "none", cls: "" }
+  if (days < 7) return { key: "active", cls: "pill-success" }
+  if (days < 30) return { key: "dormant", cls: "pill-info" }
+  if (days < 60) return { key: "atRisk", cls: "pill-warning" }
+  return { key: "churned", cls: "pill-danger" }
 }
 
-function fmtDate(iso: unknown): string {
+function fmtDate(iso: unknown, lang: string): string {
   if (!iso) return "—"
   const d = new Date(String(iso))
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString()
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString(lang)
 }
 
 function Kpi({ label, value, sub, tone }: { label: string; value: string | number; sub?: string; tone?: string }) {
@@ -66,6 +63,8 @@ function Kpi({ label, value, sub, tone }: { label: string; value: string | numbe
  * The query is admin-gated + audit-logged at the router.
  */
 function RevenueCatPanel({ userId }: { userId: string }) {
+  const t = useTranslations("users.detail.revenueCat")
+  const lang = htmlLang(useLocale() as Locale)
   const { data, isLoading } = trpc.revenue.customer.useQuery({ appUserId: userId }, { staleTime: 60_000, retry: false })
 
   if (isLoading || !data || !data.configured) return null
@@ -73,16 +72,16 @@ function RevenueCatPanel({ userId }: { userId: string }) {
   if (!data.found) {
     return (
       <div className="mb-4 rounded-lg border border-border-subtle bg-deep p-3 text-xs text-fg-tertiary">
-        <span className="font-medium text-fg-secondary">RevenueCat:</span> no billing record — never subscribed.
+        <span className="font-medium text-fg-secondary">{t("label")}</span> {t("noRecord")}
       </div>
     )
   }
 
   return (
     <div className="mb-4 rounded-lg border border-border-subtle bg-deep p-3">
-      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.1em] text-fg-muted">RevenueCat — real billing</p>
+      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.1em] text-fg-muted">{t("heading")}</p>
       {data.entitlements.length === 0 ? (
-        <p className="text-xs text-fg-tertiary">Known customer, no active subscription.</p>
+        <p className="text-xs text-fg-tertiary">{t("noActive")}</p>
       ) : (
         <div className="space-y-1.5">
           {data.entitlements.map((e) => (
@@ -92,9 +91,9 @@ function RevenueCatPanel({ userId }: { userId: string }) {
                 {e.store && <span className="ml-1.5 text-fg-muted">{e.store}</span>}
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                {e.isTrial && <span className="pill pill-info">trial</span>}
-                <span className={`pill ${e.isActive ? "pill-success" : "pill-danger"}`}>{e.isActive ? "active" : "expired"}</span>
-                <span className="text-fg-tertiary">{e.willRenew ? "renews" : "ends"} {fmtDate(e.expiresAt)}</span>
+                {e.isTrial && <span className="pill pill-info">{t("trial")}</span>}
+                <span className={`pill ${e.isActive ? "pill-success" : "pill-danger"}`}>{e.isActive ? t("active") : t("expired")}</span>
+                <span className="text-fg-tertiary">{t(e.willRenew ? "renews" : "ends", { date: fmtDate(e.expiresAt, lang) })}</span>
               </div>
             </div>
           ))}
@@ -105,11 +104,15 @@ function RevenueCatPanel({ userId }: { userId: string }) {
 }
 
 export function UserDetail({ userId, profile }: { userId: string; profile: Profile }) {
+  const t = useTranslations("users")
+  const lang = htmlLang(useLocale() as Locale)
+  /** Translated label for a DB value under `ns`; unknown values show raw. */
+  const label = (ns: string, v: string) => (t.has(`${ns}.${v}`) ? t(`${ns}.${v}`) : v)
   const utils = trpc.useUtils()
   const metrics = trpc.users.detailMetrics.useQuery({ userId, days: 90 })
   const setTier = trpc.users.setTier.useMutation({
     onSuccess: () => {
-      setNotice("Subscription updated.")
+      setNotice(t("detail.account.updated"))
       utils.users.detail.invalidate()
     },
     onError: (e) => setNotice(e.message),
@@ -132,9 +135,9 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
   const accountAgeDays = daysSince(profile.created_at)
 
   const behaviorRows = [
-    { key: "cycle", label: "Pre-Pregnancy (cycle)", count: num(profile, "cycle_logs_count") },
-    { key: "pregnancy", label: "Pregnancy", count: num(profile, "pregnancy_logs_count") },
-    { key: "kids", label: "Kids (child logs)", count: num(profile, "child_logs_count") },
+    { key: "cycle", label: t("detail.behavior.cycle"), count: num(profile, "cycle_logs_count") },
+    { key: "pregnancy", label: t("detail.behavior.pregnancy"), count: num(profile, "pregnancy_logs_count") },
+    { key: "kids", label: t("detail.behavior.kids"), count: num(profile, "child_logs_count") },
   ]
   const maxBehavior = Math.max(1, ...behaviorRows.map((b) => b.count))
 
@@ -156,39 +159,39 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
             <h1 className="display text-2xl font-bold text-fg-primary">{name}</h1>
           </div>
           <p className="mt-0.5 text-sm text-fg-tertiary">{str(profile, "email")}</p>
-          <p className="mt-1 text-xs text-fg-muted">id: {userId} · this view was audit-logged</p>
+          <p className="mt-1 text-xs text-fg-muted">{t("detail.auditNote", { id: userId })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`pill ${life.cls}`}>{life.label}</span>
-          <span className="pill pill-info">{TIER_LABELS[tier] ?? tier}</span>
-          {mode !== "—" && <span className="pill">{mode}</span>}
-          {deletionRequested && <span className="pill pill-danger">deletion requested</span>}
+          <span className={`pill ${life.cls}`}>{t(`detail.lifecycle.${life.key}`)}</span>
+          <span className="pill pill-info">{label("tierLabel", tier)}</span>
+          {mode !== "—" && <span className="pill">{label("journeyMode", mode)}</span>}
+          {deletionRequested && <span className="pill pill-danger">{t("detail.deletionRequested")}</span>}
         </div>
       </div>
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Kpi
-          label="Last active"
-          value={lastActiveDays == null ? "—" : lastActiveDays === 0 ? "today" : `${lastActiveDays}d`}
-          sub={lastActiveDays == null ? "no activity" : "ago"}
+          label={t("detail.kpi.lastActive")}
+          value={lastActiveDays == null ? "—" : lastActiveDays === 0 ? t("detail.kpi.today") : t("detail.kpi.days", { n: lastActiveDays })}
+          sub={lastActiveDays == null ? t("detail.kpi.noActivity") : t("detail.kpi.ago")}
           tone={life.cls === "pill-danger" ? "text-[var(--pill-danger-fg)]" : life.cls === "pill-warning" ? "text-[var(--pill-warning-fg)]" : "text-fg-primary"}
         />
-        <Kpi label="Current streak" value={metrics.data ? `${metrics.data.streak}d` : "…"} sub="consecutive days" />
-        <Kpi label="Total logs" value={totalLogs} sub={`${num(profile, "logs_30d")} in 30d`} />
-        <Kpi label="Account age" value={accountAgeDays == null ? "—" : `${accountAgeDays}d`} sub={fmtDate(profile.created_at)} />
-        <Kpi label="Children" value={num(profile, "children_count")} />
-        <Kpi label="Devices" value={num(profile, "active_device_count")} sub={`${num(profile, "device_count")} total`} />
+        <Kpi label={t("detail.kpi.currentStreak")} value={metrics.data ? t("detail.kpi.days", { n: metrics.data.streak }) : "…"} sub={t("detail.kpi.consecutiveDays")} />
+        <Kpi label={t("detail.kpi.totalLogs")} value={totalLogs} sub={t("detail.kpi.in30d", { n: num(profile, "logs_30d") })} />
+        <Kpi label={t("detail.kpi.accountAge")} value={accountAgeDays == null ? "—" : t("detail.kpi.days", { n: accountAgeDays })} sub={fmtDate(profile.created_at, lang)} />
+        <Kpi label={t("detail.kpi.children")} value={num(profile, "children_count")} />
+        <Kpi label={t("detail.kpi.devices")} value={num(profile, "active_device_count")} sub={t("detail.kpi.devicesTotal", { n: num(profile, "device_count") })} />
       </div>
 
       {/* Activity chart */}
       <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="display text-base font-semibold text-fg-primary">Activity — last 90 days</h2>
-          <span className="text-xs text-fg-muted">{num(profile, "logs_7d")} logs this week</span>
+          <h2 className="display text-base font-semibold text-fg-primary">{t("detail.activity.heading")}</h2>
+          <span className="text-xs text-fg-muted">{t("detail.activity.logsThisWeek", { n: num(profile, "logs_7d") })}</span>
         </div>
         {metrics.isLoading ? (
-          <p className="text-sm text-fg-tertiary">Loading…</p>
+          <p className="text-sm text-fg-tertiary">{t("loading")}</p>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={metrics.data?.series ?? []} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -202,7 +205,7 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
               <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} tickFormatter={(d: string) => d.slice(5)} minTickGap={28} />
               <YAxis tick={{ fontSize: 10, fill: "var(--chart-axis)" }} allowDecimals={false} width={32} />
               <Tooltip contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border-default)", borderRadius: 10, fontSize: 12 }} labelStyle={{ color: "var(--fg-tertiary)" }} />
-              <Area type="monotone" dataKey="count" name="Logs" stroke="var(--chart-2)" strokeWidth={2} fill="url(#gAct)" />
+              <Area type="monotone" dataKey="count" name={t("detail.activity.series")} stroke="var(--chart-2)" strokeWidth={2} fill="url(#gAct)" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -211,9 +214,11 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Behavior breakdown */}
         <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-          <h2 className="display mb-1 text-base font-semibold text-fg-primary">Behavior</h2>
+          <h2 className="display mb-1 text-base font-semibold text-fg-primary">{t("detail.behavior.heading")}</h2>
           <p className="mb-4 text-xs text-fg-muted">
-            {behaviors.length ? `Enrolled: ${behaviors.join(", ")}` : "Inferred from what they log"}
+            {behaviors.length
+              ? t("detail.behavior.enrolled", { list: behaviors.map((b) => label("journeyMode", b)).join(", ") })
+              : t("detail.behavior.inferred")}
           </p>
           <div className="space-y-3">
             {behaviorRows.map((b) => (
@@ -223,7 +228,7 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
                     <span className="inline-block size-2 rounded-full" style={{ background: MODE_DOT[b.key] }} />
                     {b.label}
                   </span>
-                  <span className="tabular-nums text-fg-tertiary">{b.count} logs</span>
+                  <span className="tabular-nums text-fg-tertiary">{t("detail.behavior.logs", { n: b.count })}</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-deep">
                   <div className="h-full rounded-full transition-all" style={{ width: `${Math.max((b.count / maxBehavior) * 100, b.count ? 3 : 0)}%`, background: MODE_DOT[b.key] }} />
@@ -234,15 +239,15 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
           <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border-subtle pt-3 text-center">
             <div>
               <p className="display text-lg font-bold tabular-nums text-fg-primary">{num(profile, "posts_count")}</p>
-              <p className="text-[10px] uppercase tracking-wide text-fg-muted">posts</p>
+              <p className="text-[10px] uppercase tracking-wide text-fg-muted">{t("detail.behavior.posts")}</p>
             </div>
             <div>
               <p className="display text-lg font-bold tabular-nums text-fg-primary">{num(profile, "comments_count")}</p>
-              <p className="text-[10px] uppercase tracking-wide text-fg-muted">comments</p>
+              <p className="text-[10px] uppercase tracking-wide text-fg-muted">{t("detail.behavior.comments")}</p>
             </div>
             <div>
               <p className="display text-lg font-bold tabular-nums text-fg-primary">{num(profile, "total_points")}</p>
-              <p className="text-[10px] uppercase tracking-wide text-fg-muted">points</p>
+              <p className="text-[10px] uppercase tracking-wide text-fg-muted">{t("detail.behavior.points")}</p>
             </div>
           </div>
         </div>
@@ -250,31 +255,31 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
         {/* Account & lifecycle + actions */}
         <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="display text-base font-semibold text-fg-primary">Account</h2>
+            <h2 className="display text-base font-semibold text-fg-primary">{t("detail.account.heading")}</h2>
             <button
               onClick={() => setPromoteOpen((v) => !v)}
               className="rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-600"
             >
-              Change subscription
+              {t("detail.account.changeSubscription")}
             </button>
           </div>
 
           {promoteOpen && (
             <div className="mb-4 rounded-lg border border-border-subtle bg-deep p-3">
-              <label className="mb-1 block text-xs font-medium text-fg-tertiary">New tier</label>
+              <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("detail.account.newTier")}</label>
               <select
                 value={nextTier}
                 onChange={(e) => setNextTier(e.target.value)}
                 className="w-full rounded-lg border border-border-default bg-card px-2.5 py-1.5 text-sm text-fg-primary focus:border-accent-400 focus:outline-none"
               >
-                <option value="free">Free</option>
-                <option value="premium_solo">Premium (Solo)</option>
-                <option value="premium_family">Premium (Family)</option>
+                <option value="free">{t("tierLabel.free")}</option>
+                <option value="premium_solo">{t("tierLabel.premium_solo")}</option>
+                <option value="premium_family">{t("tierLabel.premium_family")}</option>
               </select>
               <input
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Reason (optional — logged)"
+                placeholder={t("detail.account.reasonPlaceholder")}
                 className="mt-2 w-full rounded-lg border border-border-default bg-card px-2.5 py-1.5 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
               />
               <div className="mt-2 flex items-center gap-2">
@@ -283,14 +288,14 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
                   disabled={setTier.isPending || nextTier === tier}
                   className="rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
                 >
-                  {setTier.isPending ? "Saving…" : "Apply"}
+                  {setTier.isPending ? t("detail.account.saving") : t("detail.account.apply")}
                 </button>
                 <button onClick={() => setPromoteOpen(false)} className="text-xs font-medium text-fg-tertiary hover:text-fg-primary">
-                  Cancel
+                  {t("cancel")}
                 </button>
               </div>
               <p className="mt-2 text-[11px] text-fg-muted">
-                Direct grant — unlocks premium in-app immediately. Does not create a paid RevenueCat subscription.
+                {t("detail.account.grantNote")}
               </p>
             </div>
           )}
@@ -299,19 +304,19 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
 
           <dl className="divide-y divide-border-subtle text-sm">
             {[
-              ["Subscription", `${TIER_LABELS[tier] ?? tier} · ${str(profile, "subscription_status")}`],
-              ["Joined", fmtDate(profile.created_at)],
-              ["Consent", profile.consented_at ? fmtDate(profile.consented_at) : "not given"],
-              ["Language", str(profile, "language")],
-              ["Country", str(profile, "country_code")],
-              ["Due date", fmtDate(profile.due_date)],
-              ["Caregivers", `${num(profile, "caregivers_count")} in their circle`],
-              ["Caregiver for", `${num(profile, "caregiver_for_count")} other user(s)`],
-              ["Notifications", `${num(profile, "notifications_count")} (${num(profile, "notifications_unread")} unread)`],
-              ["Verified expert", profile.is_verified_expert ? str(profile, "expert_title") || "yes" : "no"],
+              ["subscription", `${label("tierLabel", tier)} · ${str(profile, "subscription_status")}`],
+              ["joined", fmtDate(profile.created_at, lang)],
+              ["consent", profile.consented_at ? fmtDate(profile.consented_at, lang) : t("detail.account.notGiven")],
+              ["language", str(profile, "language")],
+              ["country", str(profile, "country_code")],
+              ["dueDate", fmtDate(profile.due_date, lang)],
+              ["caregivers", t("detail.account.caregiversValue", { n: num(profile, "caregivers_count") })],
+              ["caregiverFor", t("detail.account.caregiverForValue", { n: num(profile, "caregiver_for_count") })],
+              ["notifications", t("detail.account.notificationsValue", { n: num(profile, "notifications_count"), unread: num(profile, "notifications_unread") })],
+              ["verifiedExpert", profile.is_verified_expert ? str(profile, "expert_title") || t("detail.account.yes") : t("detail.account.no")],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between py-2">
-                <dt className="text-fg-tertiary">{k}</dt>
+                <dt className="text-fg-tertiary">{t(`detail.account.${k}`)}</dt>
                 <dd className="text-fg-primary">{v}</dd>
               </div>
             ))}
@@ -321,7 +326,7 @@ export function UserDetail({ userId, profile }: { userId: string; profile: Profi
 
       {/* Raw prefs */}
       <details className="rounded-xl border border-border-default bg-card p-4 text-sm">
-        <summary className="cursor-pointer font-medium text-fg-secondary">Notification & privacy settings (JSON)</summary>
+        <summary className="cursor-pointer font-medium text-fg-secondary">{t("detail.prefs")}</summary>
         <pre className="mt-2 overflow-x-auto text-xs text-fg-tertiary">
 {JSON.stringify({ notification_prefs: profile.notification_prefs, privacy_settings: profile.privacy_settings }, null, 2)}
         </pre>

@@ -1,1 +1,158 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Push",
+  "title": "Notifications",
+  "loading": "Loading…",
+  "cancel": "Cancel",
+  "edit": "Edit",
+  "save": "Save",
+  "tabs": {
+    "notifications": "Notifications",
+    "analytics": "Analytics",
+    "templates": "App Templates",
+    "ai": "AI Settings"
+  },
+  "status": {
+    "draft": "draft",
+    "scheduled": "scheduled",
+    "sending": "sending",
+    "sendingNow": "sending…",
+    "sent": "sent",
+    "cancelled": "cancelled",
+    "failed": "failed"
+  },
+  "categories": {
+    "broadcast": "Broadcast (marketing)",
+    "insights": "Insights",
+    "appointments": "Appointments",
+    "cycle": "Cycle",
+    "milestones": "Milestones",
+    "care_circle": "Care circle",
+    "reminder": "Reminder"
+  },
+  "deepLinks": {
+    "none": "None",
+    "home": "Home",
+    "agenda": "Agenda / Planner",
+    "library": "Library",
+    "channels": "Community / Channels",
+    "grandmaTalk": "Grandma chat",
+    "insights": "Insights",
+    "paywall": "Paywall (upgrade)"
+  },
+  "list": {
+    "searchPlaceholder": "Search title or body…",
+    "allStatuses": "All statuses",
+    "new": "+ New notification",
+    "colTitle": "Title",
+    "colStatus": "Status",
+    "colTarget": "Target",
+    "colScheduled": "Scheduled",
+    "colSent": "Sent",
+    "colSentCount": "Sent #",
+    "colCreated": "Created",
+    "empty": "No notifications yet.",
+    "targetUsers": "{n} user(s)",
+    "allUsers": "All users",
+    "delete": "Delete",
+    "confirmCancel": "Cancel this scheduled notification?",
+    "confirmDelete": "Delete this notification?"
+  },
+  "composer": {
+    "headingEdit": "Edit notification",
+    "headingNew": "New push notification",
+    "close": "Close",
+    "intro": "Create a push notification to send to app users.",
+    "titleLabel": "Title ({count}/120)",
+    "suggest": "✨ Suggest with AI",
+    "titlePlaceholder": "e.g. New this week ✨",
+    "briefLabel": "What's this about?",
+    "briefPlaceholder": "e.g. Remind pregnant users to log this week's weight",
+    "drafting": "Drafting…",
+    "tryAnother": "Try another",
+    "draftCopy": "Draft copy",
+    "bodyLabel": "Body ({count}/400)",
+    "bodyPlaceholder": "The notification message users will see…",
+    "categoryLabel": "Category (consent gate)",
+    "deepLinkLabel": "Deep link",
+    "deepLinkHint": "(optional — where to navigate on tap)",
+    "scheduleLater": "Schedule for later",
+    "sending": "Sending…",
+    "saveAndSend": "Save & send now",
+    "schedule": "Schedule",
+    "saveDraft": "Save draft",
+    "aiNotConfigured": "AI copy isn't configured — set ANTHROPIC_API_KEY to enable Suggest.",
+    "suggestFailed": "Suggest failed",
+    "invalidSchedule": "Pick a valid date & time to schedule.",
+    "saveFailed": "Save failed",
+    "sendFailed": "Send failed"
+  },
+  "templates": {
+    "intro": "Push copy sent automatically for each event, grouped by behavior. Use <code>{placeholder}</code> placeholders — filled in when the notification is sent. <live>live</live> = the app fires this today; <planned>planned</planned> = ready to edit, not wired in the app yet.",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "liveCount": "{live}/{total} live",
+    "templatesCount": "{n} templates",
+    "colType": "Type",
+    "colTitle": "Title",
+    "colBody": "Body",
+    "colVariables": "Variables",
+    "colStatus": "Status",
+    "live": "live",
+    "planned": "planned",
+    "plannedHint": "A sensible event the app doesn't fire yet — editable now, ready when it ships",
+    "saving": "…",
+    "sections": {
+      "pre_pregnancy": {
+        "label": "Pre-Pregnancy",
+        "blurb": "Trying to conceive — cycle & fertility"
+      },
+      "pregnancy": {
+        "label": "Pregnancy",
+        "blurb": "Expecting — weekly progress, appointments, kicks"
+      },
+      "kids": {
+        "label": "Kids",
+        "blurb": "Parents 0–5y — logs, milestones, health"
+      },
+      "general": {
+        "label": "General",
+        "blurb": "Across all behaviors — community, care circle, account"
+      }
+    }
+  },
+  "ai": {
+    "heading": "Notification copy system prompt",
+    "intro": "What Claude is told before drafting push copy when you click <b>Suggest</b> in the composer. One prompt, one source of truth.",
+    "currentlyUsing": "Currently using:",
+    "usingDefault": "the built-in default",
+    "usingCustom": "a custom prompt",
+    "suggestDisabled": "Suggest disabled — set ANTHROPIC_API_KEY",
+    "saving": "Saving…",
+    "saveRevert": "Save (revert to default)",
+    "discard": "Discard changes",
+    "reset": "Reset to built-in default",
+    "viewDefault": "View built-in default",
+    "hideDefault": "Hide built-in default",
+    "viewOnly": "View-only. Editing the system prompt requires an admin role.",
+    "builtInHeading": "Built-in default ({n} chars)",
+    "saved": "Saved."
+  },
+  "analytics": {
+    "campaignsSent": "Campaigns sent",
+    "sent": "Sent",
+    "delivered": "Delivered",
+    "opened": "Opened",
+    "ofDelivered": "{pct} of delivered",
+    "emptyTitle": "No sent campaigns yet",
+    "emptyBody": "Once a notification is sent, its funnel appears here. Delivery comes from Expo receipts (use <b>Check receipts</b> a few minutes after sending); opens are reported by the app when a push is tapped.",
+    "colCampaign": "Campaign",
+    "colWhen": "When",
+    "failed": "· {n} failed",
+    "checkReceipts": "Check receipts",
+    "checking": "Checking…",
+    "checkHint": "Poll Expo delivery receipts for this campaign",
+    "checkResult": "Checked {checked} · {delivered} delivered · {errored} errored",
+    "pruned": " · {n} dead token(s) pruned"
+  }
+}

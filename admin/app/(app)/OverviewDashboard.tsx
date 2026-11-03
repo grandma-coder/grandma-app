@@ -1,7 +1,9 @@
 "use client"
 import Link from "next/link"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { useLocale, useTranslations } from "next-intl"
 import { trpc } from "@/lib/trpc"
+import { htmlLang, type Locale } from "@/i18n/config"
 
 type Nums = Record<string, number>
 
@@ -40,6 +42,8 @@ function Bar({ label, value, total, color }: { label: string; value: number; tot
 }
 
 export function OverviewDashboard({ pillars }: { pillars: { name: string; href: string; blurb: string }[] }) {
+  const t = useTranslations("home")
+  const lang = htmlLang(useLocale() as Locale)
   const q = trpc.metrics.overview.useQuery()
   const o = q.data as (Record<string, unknown> & { estMrr?: number; activity?: { day: string; count: number }[] }) | undefined
 
@@ -62,23 +66,23 @@ export function OverviewDashboard({ pillars }: { pillars: { name: string; href: 
     churned: num(o, "lifecycle", "churned"),
   }
 
-  if (q.isLoading) return <p className="mt-8 text-sm text-fg-tertiary">Loading overview…</p>
+  if (q.isLoading) return <p className="mt-8 text-sm text-fg-tertiary">{t("loading")}</p>
 
   return (
     <div className="mt-8 space-y-6">
       {/* Hero KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Kpi label="Total users" value={totalUsers} sub={`+${num(o, "users", "new30d")} in 30d`} />
-        <Kpi label="MAU" value={mau} sub={`${dau} today`} />
-        <Kpi label="Stickiness" value={`${stickiness}%`} sub="DAU / MAU" />
-        <Kpi label="Total logs" value={num(o, "engagement", "totalLogs").toLocaleString()} sub={`${num(o, "engagement", "logs7d").toLocaleString()} this week`} />
-        <Kpi label="Paid" value={`${pctPaid}%`} sub={`${paid} of ${totalUsers}`} tone={paid > 0 ? "text-[var(--pill-success-fg)]" : "text-fg-primary"} />
-        <Kpi label="Est. MRR" value={`$${Number(o?.estMrr ?? 0).toFixed(0)}`} sub="from tier prices" />
+        <Kpi label={t("kpi.totalUsers")} value={totalUsers} sub={t("kpi.new30d", { n: num(o, "users", "new30d") })} />
+        <Kpi label={t("kpi.mau")} value={mau} sub={t("kpi.today", { n: dau })} />
+        <Kpi label={t("kpi.stickiness")} value={`${stickiness}%`} sub={t("kpi.stickinessSub")} />
+        <Kpi label={t("kpi.totalLogs")} value={num(o, "engagement", "totalLogs").toLocaleString(lang)} sub={t("kpi.thisWeek", { n: num(o, "engagement", "logs7d").toLocaleString(lang) })} />
+        <Kpi label={t("kpi.paid")} value={`${pctPaid}%`} sub={t("kpi.paidOf", { paid, total: totalUsers })} tone={paid > 0 ? "text-[var(--pill-success-fg)]" : "text-fg-primary"} />
+        <Kpi label={t("kpi.estMrr")} value={`$${Number(o?.estMrr ?? 0).toFixed(0)}`} sub={t("kpi.fromTierPrices")} />
       </div>
 
       {/* Activity chart */}
       <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-        <h2 className="display mb-3 text-base font-semibold text-fg-primary">Activity — last 30 days</h2>
+        <h2 className="display mb-3 text-base font-semibold text-fg-primary">{t("activity.title")}</h2>
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={o?.activity ?? []} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
             <defs>
@@ -91,7 +95,7 @@ export function OverviewDashboard({ pillars }: { pillars: { name: string; href: 
             <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} tickFormatter={(d: string) => d.slice(5)} minTickGap={28} />
             <YAxis tick={{ fontSize: 10, fill: "var(--chart-axis)" }} allowDecimals={false} width={40} />
             <Tooltip contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border-default)", borderRadius: 10, fontSize: 12 }} labelStyle={{ color: "var(--fg-tertiary)" }} />
-            <Area type="monotone" dataKey="count" name="Logs" stroke="var(--chart-2)" strokeWidth={2} fill="url(#gOv)" />
+            <Area type="monotone" dataKey="count" name={t("activity.logs")} stroke="var(--chart-2)" strokeWidth={2} fill="url(#gOv)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -100,51 +104,51 @@ export function OverviewDashboard({ pillars }: { pillars: { name: string; href: 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Subscription mix */}
         <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-          <h2 className="display mb-1 text-base font-semibold text-fg-primary">Subscriptions</h2>
-          <p className="mb-4 text-xs text-fg-muted">Est. MRR ${Number(o?.estMrr ?? 0).toFixed(2)} · real $ needs RevenueCat</p>
+          <h2 className="display mb-1 text-base font-semibold text-fg-primary">{t("subscriptions.title")}</h2>
+          <p className="mb-4 text-xs text-fg-muted">{t("subscriptions.note", { mrr: Number(o?.estMrr ?? 0).toFixed(2) })}</p>
           <div className="space-y-3">
-            <Bar label="Free" value={sub.free} total={totalUsers} color="#B3AC9C" />
-            <Bar label="Premium (Solo)" value={sub.premium_solo} total={totalUsers} color="#B7A6E8" />
-            <Bar label="Premium (Family)" value={sub.premium_family} total={totalUsers} color="#7048B8" />
+            <Bar label={t("subscriptions.free")} value={sub.free} total={totalUsers} color="#B3AC9C" />
+            <Bar label={t("subscriptions.premiumSolo")} value={sub.premium_solo} total={totalUsers} color="#B7A6E8" />
+            <Bar label={t("subscriptions.premiumFamily")} value={sub.premium_family} total={totalUsers} color="#7048B8" />
           </div>
         </div>
 
         {/* Behaviors */}
         <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-          <h2 className="display mb-4 text-base font-semibold text-fg-primary">Users by behavior</h2>
+          <h2 className="display mb-4 text-base font-semibold text-fg-primary">{t("behaviors.title")}</h2>
           <div className="space-y-3">
-            <Bar label="Pre-Pregnancy" value={num(o, "behaviors", "pre_pregnancy")} total={totalUsers} color="#E58BB4" />
-            <Bar label="Pregnancy" value={num(o, "behaviors", "pregnancy")} total={totalUsers} color="#B7A6E8" />
-            <Bar label="Kids" value={num(o, "behaviors", "kids")} total={totalUsers} color="#8BB8E8" />
+            <Bar label={t("behaviors.prePregnancy")} value={num(o, "behaviors", "pre_pregnancy")} total={totalUsers} color="#E58BB4" />
+            <Bar label={t("behaviors.pregnancy")} value={num(o, "behaviors", "pregnancy")} total={totalUsers} color="#B7A6E8" />
+            <Bar label={t("behaviors.kids")} value={num(o, "behaviors", "kids")} total={totalUsers} color="#8BB8E8" />
           </div>
-          <p className="mt-3 border-t border-border-subtle pt-2 text-[11px] text-fg-muted">A user in multiple journeys counts in each.</p>
+          <p className="mt-3 border-t border-border-subtle pt-2 text-[11px] text-fg-muted">{t("behaviors.note")}</p>
         </div>
 
         {/* Lifecycle */}
         <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-          <h2 className="display mb-4 text-base font-semibold text-fg-primary">Lifecycle</h2>
+          <h2 className="display mb-4 text-base font-semibold text-fg-primary">{t("lifecycle.title")}</h2>
           <div className="space-y-3">
-            <Bar label="Active (7d)" value={life.active} total={totalUsers} color="#BDD48C" />
-            <Bar label="Dormant (7–30d)" value={life.dormant} total={totalUsers} color="#F5D652" />
-            <Bar label="At risk (30–60d)" value={life.atRisk} total={totalUsers} color="#F5B896" />
-            <Bar label="Churned (60d+)" value={life.churned} total={totalUsers} color="#EE7B6D" />
+            <Bar label={t("lifecycle.active")} value={life.active} total={totalUsers} color="#BDD48C" />
+            <Bar label={t("lifecycle.dormant")} value={life.dormant} total={totalUsers} color="#F5D652" />
+            <Bar label={t("lifecycle.atRisk")} value={life.atRisk} total={totalUsers} color="#F5B896" />
+            <Bar label={t("lifecycle.churned")} value={life.churned} total={totalUsers} color="#EE7B6D" />
           </div>
         </div>
       </div>
 
       {/* Community + content strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Kpi label="Channels" value={num(o, "community", "channels")} />
-        <Kpi label="Posts" value={num(o, "community", "posts")} sub={`${num(o, "community", "posts7d")} this week`} />
-        <Kpi label="Questions" value={num(o, "content", "questions")} />
-        <Kpi label="Affirmations" value={num(o, "content", "affirmations")} />
-        <Kpi label="Sources" value={num(o, "content", "sources")} />
-        <Kpi label="News live" value={num(o, "content", "newsPublished")} sub={`${num(o, "content", "newsDrafts")} drafts`} />
+        <Kpi label={t("strip.channels")} value={num(o, "community", "channels")} />
+        <Kpi label={t("strip.posts")} value={num(o, "community", "posts")} sub={t("kpi.thisWeek", { n: num(o, "community", "posts7d") })} />
+        <Kpi label={t("strip.questions")} value={num(o, "content", "questions")} />
+        <Kpi label={t("strip.affirmations")} value={num(o, "content", "affirmations")} />
+        <Kpi label={t("strip.sources")} value={num(o, "content", "sources")} />
+        <Kpi label={t("strip.newsLive")} value={num(o, "content", "newsPublished")} sub={t("strip.drafts", { n: num(o, "content", "newsDrafts") })} />
       </div>
 
       {/* Pillars */}
       <div>
-        <h2 className="display mb-3 text-base font-semibold text-fg-primary">Explore</h2>
+        <h2 className="display mb-3 text-base font-semibold text-fg-primary">{t("explore")}</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {pillars.map((p) => (
             <Link key={p.name} href={p.href} className="rounded-xl border border-border-default bg-card p-4 shadow-[var(--shadow-sm)] transition-all hover:border-accent-400 hover:shadow-[var(--shadow-md)]">

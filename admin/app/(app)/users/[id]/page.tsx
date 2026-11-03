@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 import { createContext } from "@/server/context"
 import { appRouter } from "@/server/routers"
 import { UserDetail } from "./UserDetail"
@@ -13,13 +14,14 @@ import { UserDetail } from "./UserDetail"
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const ctx = await createContext()
+  const t = await getTranslations("users.detail")
 
   if (!ctx.allowed || ctx.role !== "admin") {
     return (
       <main className="mx-auto max-w-3xl p-8">
-        <h1 className="display text-xl font-semibold text-fg-primary">Admin only</h1>
-        <p className="mt-2 text-fg-secondary">User detail contains personal data and requires the admin role.</p>
-        <Link href="/users" className="mt-4 inline-block text-sm text-accent-500 hover:text-accent-600">← back to users</Link>
+        <h1 className="display text-xl font-semibold text-fg-primary">{t("adminOnly")}</h1>
+        <p className="mt-2 text-fg-secondary">{t("adminOnlyBody")}</p>
+        <Link href="/users" className="mt-4 inline-block text-sm text-accent-500 hover:text-accent-600">{t("back")}</Link>
       </main>
     )
   }
@@ -30,7 +32,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <main className="mx-auto max-w-5xl px-8 py-8">
-      <Link href="/users" className="text-sm text-fg-tertiary hover:text-fg-secondary">← back to users</Link>
+      <Link href="/users" className="text-sm text-fg-tertiary hover:text-fg-secondary">{t("back")}</Link>
       <UserDetail userId={id} profile={profile} />
     </main>
   )

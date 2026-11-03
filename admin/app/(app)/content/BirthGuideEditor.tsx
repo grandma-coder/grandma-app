@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { trpc, type RouterOutputs } from "@/lib/trpc"
 import { CollapsibleSection } from "./CollapsibleSection"
 
@@ -22,12 +23,13 @@ function sectionCount(v: unknown): number {
 }
 
 function TopicEditor({ topic, isAdmin }: { topic: Topic; isAdmin: boolean }) {
+  const t = useTranslations("content")
   const utils = trpc.useUtils()
   const invalidate = () => utils.content.birthTopics.invalidate()
 
-  const meta = trpc.content.updateBirthTopicMeta.useMutation({ onSuccess: () => { setNotice("Saved."); invalidate() }, onError: (e) => setNotice(e.message) })
-  const saveSources = trpc.content.updateBirthTopicSources.useMutation({ onSuccess: () => { setNotice("Sources saved."); invalidate() }, onError: (e) => setNotice(e.message) })
-  const saveSections = trpc.content.updateBirthTopicSections.useMutation({ onSuccess: () => { setNotice("Sections saved."); invalidate() }, onError: (e) => setNotice(e.message) })
+  const meta = trpc.content.updateBirthTopicMeta.useMutation({ onSuccess: () => { setNotice(t("birth.saved")); invalidate() }, onError: (e) => setNotice(e.message) })
+  const saveSources = trpc.content.updateBirthTopicSources.useMutation({ onSuccess: () => { setNotice(t("birth.sourcesSaved")); invalidate() }, onError: (e) => setNotice(e.message) })
+  const saveSections = trpc.content.updateBirthTopicSections.useMutation({ onSuccess: () => { setNotice(t("birth.sectionsSaved")); invalidate() }, onError: (e) => setNotice(e.message) })
 
   const [emoji, setEmoji] = useState(topic.emoji)
   const [title, setTitle] = useState(topic.title)
@@ -44,37 +46,37 @@ function TopicEditor({ topic, isAdmin }: { topic: Topic; isAdmin: boolean }) {
       {/* Meta */}
       <div className="grid grid-cols-[64px_1fr] gap-3">
         <div>
-          <label className="mb-1 block text-xs font-medium text-fg-tertiary">Emoji</label>
+          <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("birth.emoji")}</label>
           <input value={emoji} onChange={(e) => setEmoji(e.target.value)} disabled={!isAdmin} maxLength={8}
             className="w-full rounded-lg border border-border-default bg-deep px-2 py-2 text-center text-lg focus:border-accent-400 focus:outline-none disabled:opacity-70" />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-fg-tertiary">Title</label>
+          <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("birth.title")}</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} disabled={!isAdmin} maxLength={120}
             className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary focus:border-accent-400 focus:outline-none disabled:opacity-70" />
         </div>
       </div>
       <div className="mt-3">
-        <label className="mb-1 block text-xs font-medium text-fg-tertiary">Subtitle</label>
+        <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("birth.subtitle")}</label>
         <input value={subtitle} onChange={(e) => setSubtitle(e.target.value)} disabled={!isAdmin} maxLength={200}
           className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary focus:border-accent-400 focus:outline-none disabled:opacity-70" />
       </div>
       <div className="mt-3">
-        <label className="mb-1 block text-xs font-medium text-fg-tertiary">Disclaimer (health notice)</label>
+        <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("birth.disclaimer")}</label>
         <textarea value={disclaimer} onChange={(e) => setDisclaimer(e.target.value)} disabled={!isAdmin} rows={2} maxLength={600}
           className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary focus:border-accent-400 focus:outline-none disabled:opacity-70" />
       </div>
       {isAdmin && (
         <div className="mt-3 flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-fg-secondary">
-            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Active
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> {t("ui.activeCheckbox")}
           </label>
           <button
             onClick={() => meta.mutate({ key: topic.key, emoji, title, subtitle, disclaimer: disclaimer || null, active })}
             disabled={meta.isPending}
             className="ml-auto rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-600 disabled:opacity-50"
           >
-            {meta.isPending ? "Saving…" : "Save details"}
+            {meta.isPending ? t("ui.saving") : t("birth.saveDetails")}
           </button>
         </div>
       )}
@@ -82,17 +84,17 @@ function TopicEditor({ topic, isAdmin }: { topic: Topic; isAdmin: boolean }) {
       {/* Sources */}
       <div className="mt-5 border-t border-border-subtle pt-4">
         <div className="mb-2 flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-fg-primary">Sources ({sources.length})</h4>
+          <h4 className="text-sm font-semibold text-fg-primary">{t("birth.sources", { n: sources.length })}</h4>
           {isAdmin && (
-            <button onClick={() => setSources((s) => [...s, { label: "", org: "", url: "" }])} className="text-xs font-medium text-accent-500 hover:underline">+ add source</button>
+            <button onClick={() => setSources((s) => [...s, { label: "", org: "", url: "" }])} className="text-xs font-medium text-accent-500 hover:underline">{t("birth.addSource")}</button>
           )}
         </div>
         <div className="space-y-2">
           {sources.map((s, i) => (
             <div key={i} className="flex gap-2">
-              <input value={s.org} onChange={(e) => setSources((p) => p.map((x, j) => j === i ? { ...x, org: e.target.value } : x))} disabled={!isAdmin} placeholder="Org (ACOG, 2021)"
+              <input value={s.org} onChange={(e) => setSources((p) => p.map((x, j) => j === i ? { ...x, org: e.target.value } : x))} disabled={!isAdmin} placeholder={t("birth.orgPlaceholder")}
                 className="w-1/4 rounded-lg border border-border-default bg-deep px-2 py-1.5 text-xs text-fg-primary focus:border-accent-400 focus:outline-none disabled:opacity-70" />
-              <input value={s.label} onChange={(e) => setSources((p) => p.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} disabled={!isAdmin} placeholder="Title / label"
+              <input value={s.label} onChange={(e) => setSources((p) => p.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} disabled={!isAdmin} placeholder={t("birth.labelPlaceholder")}
                 className="flex-1 rounded-lg border border-border-default bg-deep px-2 py-1.5 text-xs text-fg-primary focus:border-accent-400 focus:outline-none disabled:opacity-70" />
               <input value={s.url} onChange={(e) => setSources((p) => p.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} disabled={!isAdmin} placeholder="https://…"
                 className="w-1/3 rounded-lg border border-border-default bg-deep px-2 py-1.5 font-mono text-[11px] text-fg-secondary focus:border-accent-400 focus:outline-none disabled:opacity-70" />
@@ -103,7 +105,7 @@ function TopicEditor({ topic, isAdmin }: { topic: Topic; isAdmin: boolean }) {
         {isAdmin && (
           <button onClick={() => saveSources.mutate({ key: topic.key, sources: sources.filter((s) => s.label && s.org && s.url) })} disabled={saveSources.isPending}
             className="mt-2 rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-600 disabled:opacity-50">
-            {saveSources.isPending ? "Saving…" : "Save sources"}
+            {saveSources.isPending ? t("ui.saving") : t("birth.saveSources")}
           </button>
         )}
       </div>
@@ -112,7 +114,7 @@ function TopicEditor({ topic, isAdmin }: { topic: Topic; isAdmin: boolean }) {
       <div className="mt-5 border-t border-border-subtle pt-4">
         <button onClick={() => setShowSections((v) => !v)} className="flex items-center gap-2 text-sm font-semibold text-fg-primary hover:text-accent-500">
           <span className={`transition-transform ${showSections ? "rotate-90" : ""}`}>▸</span>
-          Sections ({sectionCount(topic.sections)}) — advanced JSON edit
+          {t("birth.sectionsToggle", { n: sectionCount(topic.sections) })}
         </button>
         {showSections && (
           <div className="mt-2">
@@ -121,10 +123,10 @@ function TopicEditor({ topic, isAdmin }: { topic: Topic; isAdmin: boolean }) {
             {isAdmin && (
               <button onClick={() => saveSections.mutate({ key: topic.key, sections: sectionsJson })} disabled={saveSections.isPending}
                 className="mt-2 rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-600 disabled:opacity-50">
-                {saveSections.isPending ? "Saving…" : "Save sections"}
+                {saveSections.isPending ? t("ui.saving") : t("birth.saveSections")}
               </button>
             )}
-            <p className="mt-1 text-[11px] text-fg-muted">Each section needs a title + content string. Validated before save; a bad paste is rejected, not persisted.</p>
+            <p className="mt-1 text-[11px] text-fg-muted">{t("birth.sectionsHint")}</p>
           </div>
         )}
       </div>
@@ -135,30 +137,27 @@ function TopicEditor({ topic, isAdmin }: { topic: Topic; isAdmin: boolean }) {
 }
 
 export function BirthGuideEditor({ isAdmin }: { isAdmin: boolean }) {
+  const t = useTranslations("content")
   const list = trpc.content.birthTopics.useQuery()
   const topics = list.data ?? []
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-fg-tertiary">
-        The birth-guide topics (labor, C-section, pain relief, recovery…) with their medical sources. Read DB-first
-        by the app with the bundled copy as fallback. Edit details + sources inline; deep section content via the
-        advanced JSON editor.
-      </p>
+      <p className="text-sm text-fg-tertiary">{t("birth.intro")}</p>
 
       {list.isLoading ? (
-        <p className="text-sm text-fg-tertiary">Loading…</p>
+        <p className="text-sm text-fg-tertiary">{t("ui.loading")}</p>
       ) : (
-        topics.map((t) => (
+        topics.map((tp) => (
           <CollapsibleSection
-            key={t.key}
+            key={tp.key}
             dot="#B7A6E8"
-            title={`${t.emoji} ${t.title}`}
-            meta={`${sectionCount(t.sections)} sections · ${asSources(t.sources).length} sources`}
+            title={`${tp.emoji} ${tp.title}`}
+            meta={t("birth.meta", { sections: sectionCount(tp.sections), sources: asSources(tp.sources).length })}
             defaultOpen={false}
-            collapsedSummary={t.active ? "active" : "off"}
+            collapsedSummary={tp.active ? t("birth.active") : t("birth.off")}
           >
-            <TopicEditor topic={t} isAdmin={isAdmin} />
+            <TopicEditor topic={tp} isAdmin={isAdmin} />
           </CollapsibleSection>
         ))
       )}

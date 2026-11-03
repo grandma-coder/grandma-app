@@ -1,1 +1,63 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Releases",
+  "title": "Builds & changelog",
+  "intro": "Every build from App Store Connect, with the changelog of what shipped in each version — so you always know what's new in which build.",
+  "loading": "Loading…",
+  "connect": {
+    "title": "Connect App Store Connect",
+    "body": "Set these env vars to pull live builds:",
+    "easCommits": "(EAS commits)",
+    "publishNotes": "(to publish notes)"
+  },
+  "lead": "Every App Store build with its git commit (from EAS), state, and changelog — one row per build. Add a changelog, then push it to TestFlight or the App Store.",
+  "enablePush": "(Set APPSTORE_WRITE=1 to enable pushing.)",
+  "table": {
+    "build": "Build",
+    "shipped": "What shipped (git)",
+    "state": "State",
+    "uploaded": "Uploaded",
+    "changelog": "Changelog"
+  },
+  "loadingBuilds": "Loading builds…",
+  "noBuilds": "No builds.",
+  "buildLabel": "build {number}",
+  "state": {
+    "valid": "valid",
+    "processing": "processing",
+    "failed": "failed",
+    "invalid": "invalid"
+  },
+  "expired": "expired",
+  "documented": "documented",
+  "shipped": "shipped",
+  "edit": "Edit",
+  "add": "Add",
+  "toTestFlight": "→ TestFlight",
+  "noChangelog": "No changelog yet.",
+  "gitLine": "git: {message}",
+  "note": {
+    "title": "Changelog — build {number}",
+    "aiNotConfigured": "AI changelog isn't configured (set ANTHROPIC_API_KEY).",
+    "drafting": "Drafting…",
+    "draftWithAi": "✨ Draft with AI",
+    "close": "Close",
+    "headline": "Headline",
+    "highlights": "User-facing highlights (one per line)",
+    "changelog": "Changelog / notes",
+    "markShipped": "Mark shipped",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "save": "Save changelog"
+  },
+  "push": {
+    "title": "Push to TestFlight — build {number}",
+    "warning": "Sets the “What to Test” note testers see for build {number}. Writes to App Store Connect.",
+    "confirm": "I understand this updates what testers see.",
+    "success": "Pushed to TestFlight “What to Test”.",
+    "failed": "Failed: {error}",
+    "close": "Close",
+    "pushing": "Pushing…",
+    "submit": "Push to TestFlight"
+  }
+}

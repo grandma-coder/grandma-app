@@ -1,6 +1,8 @@
 "use client"
 import { useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
 import { trpc } from "@/lib/trpc"
+import { htmlLang, type Locale } from "@/i18n/config"
 
 type Role = "admin" | "viewer"
 
@@ -10,22 +12,25 @@ function initials(name: string | null, email: string | null): string {
   return (parts[0]?.[0] ?? "?").toUpperCase() + (parts[1]?.[0]?.toUpperCase() ?? "")
 }
 
-function fmtWhen(iso: string | null): string {
+function fmtWhen(iso: string | null, lang: string): string {
   if (!iso) return "—"
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return "—"
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+  return d.toLocaleDateString(lang, { month: "short", day: "numeric", year: "numeric" })
 }
 
 function RoleBadge({ role }: { role: Role }) {
+  const t = useTranslations("admin")
   return (
     <span className={`pill ${role === "admin" ? "pill-info" : ""}`}>
-      {role === "admin" ? "admin" : "viewer"}
+      {role === "admin" ? t("badge.admin") : t("badge.viewer")}
     </span>
   )
 }
 
 export function AdminPanel() {
+  const t = useTranslations("admin")
+  const lang = htmlLang(useLocale() as Locale)
   const utils = trpc.useUtils()
   const roster = trpc.team.roster.useQuery()
 
@@ -38,7 +43,7 @@ export function AdminPanel() {
 
   const invite = trpc.team.invite.useMutation({
     onSuccess: (r) => {
-      setMsg({ kind: "ok", text: `Invite sent to ${r.email}.` })
+      setMsg({ kind: "ok", text: t("notice.inviteSent", { email: r.email }) })
       setEmail("")
       setInviteRole("viewer")
       refresh()
@@ -55,14 +60,14 @@ export function AdminPanel() {
 
   const remove = trpc.team.remove.useMutation({
     onMutate: (v) => setBusyId(v.userId),
-    onSuccess: () => { setMsg({ kind: "ok", text: "Member removed." }); refresh() },
+    onSuccess: () => { setMsg({ kind: "ok", text: t("notice.memberRemoved") }); refresh() },
     onError: (e) => setMsg({ kind: "err", text: e.message }),
     onSettled: () => setBusyId(null),
   })
 
   const revokeInvite = trpc.team.revokeInvite.useMutation({
     onMutate: (v) => setBusyId(v.invitationId),
-    onSuccess: () => { setMsg({ kind: "ok", text: "Invite revoked." }); refresh() },
+    onSuccess: () => { setMsg({ kind: "ok", text: t("notice.inviteRevoked") }); refresh() },
     onError: (e) => setMsg({ kind: "err", text: e.message }),
     onSettled: () => setBusyId(null),
   })
@@ -82,15 +87,14 @@ export function AdminPanel() {
     <div className="space-y-6">
       {/* Invite form */}
       <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-        <h2 className="display text-base font-semibold text-fg-primary">Invite a teammate</h2>
-        <p className="mt-1 text-sm text-fg-tertiary">
-          They&apos;ll get an email to sign in. New members land with the role you pick here.
-        </p>
+        <h2 className="display text-base font-semibold text-fg-primary">{t("invite.title")}</h2>
+        <p className="mt-1 text-sm text-fg-tertiary">{t("invite.body")}</p>
         <form onSubmit={onInvite} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <input
             type="email"
             required
             placeholder="teammate@mothergames.com"
+            aria-label={t("invite.emailLabel")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="min-w-0 flex-1 rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
@@ -100,15 +104,15 @@ export function AdminPanel() {
             onChange={(e) => setInviteRole(e.target.value as Role)}
             className="rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary focus:border-accent-400 focus:outline-none"
           >
-            <option value="viewer">Viewer</option>
-            <option value="admin">Admin</option>
+            <option value="viewer">{t("roles.viewer")}</option>
+            <option value="admin">{t("roles.admin")}</option>
           </select>
           <button
             type="submit"
             disabled={invite.isPending}
             className="rounded-lg bg-accent-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-600 disabled:opacity-60"
           >
-            {invite.isPending ? "Sending…" : "Send invite"}
+            {invite.isPending ? t("invite.sending") : t("invite.send")}
           </button>
         </form>
         {msg && (
@@ -117,8 +121,7 @@ export function AdminPanel() {
           </p>
         )}
         <p className="mt-3 text-xs text-fg-muted">
-          <span className="font-medium text-fg-tertiary">Viewer</span> — read metrics, users, community.{" "}
-          <span className="font-medium text-fg-tertiary">Admin</span> — everything, plus PII, push, Sentry &amp; this panel.
+          {t.rich("invite.legend", { b: (c) => <span className="font-medium text-fg-tertiary">{c}</span> })}
         </p>
       </div>
 
@@ -126,14 +129,14 @@ export function AdminPanel() {
       {invites.length > 0 && (
         <div className="rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
           <h2 className="display border-b border-border-subtle px-5 py-3 text-base font-semibold text-fg-primary">
-            Pending invites <span className="text-fg-muted">({invites.length})</span>
+            {t("pending.title")} <span className="text-fg-muted">({invites.length})</span>
           </h2>
           <ul className="divide-y divide-border-subtle">
             {invites.map((i) => (
               <li key={i.id} className="flex items-center justify-between px-5 py-3 text-sm">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-fg-primary">{i.email}</p>
-                  <p className="text-xs text-fg-tertiary">Invited {fmtWhen(i.createdAt)}</p>
+                  <p className="text-xs text-fg-tertiary">{t("pending.invited", { date: fmtWhen(i.createdAt, lang) })}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <RoleBadge role={i.role} />
@@ -142,7 +145,7 @@ export function AdminPanel() {
                     disabled={busyId === i.id}
                     className="text-xs font-medium text-[var(--pill-danger-fg)] hover:underline disabled:opacity-50"
                   >
-                    {busyId === i.id ? "…" : "Revoke"}
+                    {busyId === i.id ? "…" : t("pending.revoke")}
                   </button>
                 </div>
               </li>
@@ -154,10 +157,10 @@ export function AdminPanel() {
       {/* Members */}
       <div className="rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
         <h2 className="display border-b border-border-subtle px-5 py-3 text-base font-semibold text-fg-primary">
-          Team {roster.data && <span className="text-fg-muted">({members.length})</span>}
+          {t("members.title")} {roster.data && <span className="text-fg-muted">({members.length})</span>}
         </h2>
         {roster.isLoading ? (
-          <p className="px-5 py-6 text-sm text-fg-tertiary">Loading…</p>
+          <p className="px-5 py-6 text-sm text-fg-tertiary">{t("loading")}</p>
         ) : (
           <ul className="divide-y divide-border-subtle">
             {members.map((m) => {
@@ -170,11 +173,11 @@ export function AdminPanel() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-fg-primary">
-                      {m.name ?? m.email ?? "Unknown"}
-                      {m.isSelf && <span className="ml-2 text-xs font-normal text-fg-muted">(you)</span>}
+                      {m.name ?? m.email ?? t("members.unknown")}
+                      {m.isSelf && <span className="ml-2 text-xs font-normal text-fg-muted">{t("members.you")}</span>}
                     </p>
                     <p className="truncate text-xs text-fg-tertiary">
-                      {m.email} · last active {fmtWhen(m.lastActiveAt)}
+                      {m.email} · {t("members.lastActive", { date: fmtWhen(m.lastActiveAt, lang) })}
                     </p>
                   </div>
 
@@ -184,24 +187,24 @@ export function AdminPanel() {
                     onChange={(e) => setRole.mutate({ userId: m.id, role: e.target.value as Role })}
                     title={
                       m.isSelf
-                        ? "You can't change your own role"
+                        ? t("members.cantChangeOwnRole")
                         : isLastAdmin
-                          ? "Last admin — promote someone else first"
+                          ? t("members.lastAdmin")
                           : undefined
                     }
                     className="rounded-lg border border-border-default bg-deep px-2.5 py-1.5 text-xs text-fg-primary focus:border-accent-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <option value="viewer">Viewer</option>
-                    <option value="admin">Admin</option>
+                    <option value="viewer">{t("roles.viewer")}</option>
+                    <option value="admin">{t("roles.admin")}</option>
                   </select>
 
                   <button
                     onClick={() => remove.mutate({ userId: m.id })}
                     disabled={busy || m.isSelf}
-                    title={m.isSelf ? "You can't remove yourself" : "Remove from team"}
+                    title={m.isSelf ? t("members.cantRemoveSelf") : t("members.removeTitle")}
                     className="text-xs font-medium text-fg-tertiary hover:text-[var(--pill-danger-fg)] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    Remove
+                    {t("members.remove")}
                   </button>
                 </li>
               )

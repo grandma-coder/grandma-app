@@ -1,5 +1,6 @@
 "use client"
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 
 interface SearchNode { id: string; label: string; behavior: string; degree: number }
 
@@ -16,6 +17,7 @@ const BEHAVIOR_COLOR: Record<string, string> = {
  * node's id so the graph can center + open its panel. Shared by 2D and 3D.
  */
 export function GraphSearch({ nodes, onSelect }: { nodes: SearchNode[]; onSelect: (id: string) => void }) {
+  const t = useTranslations("graph")
   const [q, setQ] = useState("")
   const results = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -31,7 +33,7 @@ export function GraphSearch({ nodes, onSelect }: { nodes: SearchNode[]; onSelect
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Find a person in the graph…"
+        placeholder={t("search.placeholder")}
         className="w-full rounded-lg border border-border-default bg-card px-3 py-1.5 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
       />
       {results.length > 0 && (

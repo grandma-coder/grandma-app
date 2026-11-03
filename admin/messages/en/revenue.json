@@ -1,1 +1,14 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Revenue",
+  "title": "Subscriptions & revenue",
+  "intro": "Real billing from RevenueCat — what Apple & Google actually charged. This is the source of truth beside the estimated MRR on the home dashboard.",
+  "loading": "Loading…",
+  "setup": {
+    "title": "RevenueCat not configured",
+    "body": "Set <code>REVENUECAT_API_KEY</code> (a V2 secret key, <mono>sk_…</mono>) and <code>REVENUECAT_PROJECT_ID</code> in the environment to pull live billing.",
+    "where": "RevenueCat dashboard → Project settings → API keys (V2 secret) & Project settings → General (Project ID)."
+  },
+  "error": "RevenueCat error: {error}",
+  "empty": "No metrics returned for this project yet."
+}

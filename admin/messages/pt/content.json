@@ -1,1 +1,175 @@
-{}
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Conteúdo",
+  "title": "Banco de conteúdo",
+  "intro": "O conteúdo editável do app. As mudanças aqui vão direto para o app, que lê primeiro do banco e usa a cópia embutida se o banco estiver fora do ar — então uma edição errada nunca deixa o app em branco.",
+  "tabs": {
+    "questions": "Perguntas diárias",
+    "affirmations": "Afirmações",
+    "birth": "Guia do parto",
+    "sources": "Fontes",
+    "news": "Notícias",
+    "soon": "em breve"
+  },
+  "ui": {
+    "loading": "Carregando…",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "close": "Fechar",
+    "add": "+ Adicionar",
+    "active": "ativa",
+    "off": "inativa",
+    "activeCheckbox": "Ativo"
+  },
+  "questions": {
+    "intro": "As perguntas do check-in diário que as usuárias respondem, agrupadas por fase da jornada. As tags definem qual card de apoio o app mostra em seguida. Desative para esconder uma pergunta sem excluí-la.",
+    "modes": {
+      "pre-pregnancy": "Pré-gravidez",
+      "pregnancy": "Gravidez",
+      "kids": "Filhos"
+    },
+    "activeCount": "{active}/{total} ativas",
+    "count": "{n, plural, one {# pergunta} other {# perguntas}}",
+    "empty": "Nenhuma pergunta nesta fase ainda.",
+    "columns": {
+      "id": "ID",
+      "prompt": "Pergunta",
+      "options": "Opções",
+      "status": "Status"
+    },
+    "activate": "Ativar",
+    "deactivate": "Desativar",
+    "modal": {
+      "newTitle": "Nova pergunta",
+      "editTitle": "Editar pergunta",
+      "id": "ID",
+      "mode": "Fase",
+      "prompt": "Pergunta",
+      "options": "Opções ({n})",
+      "addOption": "+ adicionar opção",
+      "labelPlaceholder": "Rótulo",
+      "tagsPlaceholder": "tags, separadas por vírgula",
+      "errors": {
+        "idRequired": "O ID é obrigatório (ex.: q_099 / pq_099).",
+        "promptRequired": "A pergunta é obrigatória.",
+        "minOptions": "São necessárias pelo menos 2 opções com rótulo."
+      }
+    }
+  },
+  "affirmations": {
+    "intro": "As afirmações diárias exibidas no app, agrupadas por categoria. O app lê esta tabela ao vivo, então as edições aparecem na hora — sem precisar atualizar o app.",
+    "searchPlaceholder": "Buscar afirmações…",
+    "count": "{n, plural, one {# afirmação} other {# afirmações}}",
+    "empty": "Nenhuma afirmação nesta categoria ainda.",
+    "weeks": "semanas {min}–{max}",
+    "deleteConfirm": "Excluir esta afirmação?",
+    "categories": {
+      "pre-pregnancy": "Pré-gravidez",
+      "cycle": "Ciclo",
+      "pregnancy": "Gravidez",
+      "kids": "Filhos"
+    },
+    "modal": {
+      "newTitle": "Nova afirmação",
+      "editTitle": "Editar afirmação",
+      "text": "Afirmação ({length}/400)",
+      "textPlaceholder": "Seu corpo sabe exatamente o que fazer…",
+      "category": "Categoria",
+      "weekMin": "Semana mín.",
+      "weekMax": "Semana máx.",
+      "weekHint": "Semana mín./máx. limitam a afirmação a um intervalo de semanas da gravidez (opcional). Deixe em branco para todas as semanas.",
+      "textRequired": "O texto é obrigatório."
+    }
+  },
+  "birth": {
+    "intro": "Os temas do guia do parto (trabalho de parto, cesárea, alívio da dor, recuperação…) com suas fontes médicas. O app lê primeiro do banco, com a cópia embutida como reserva. Edite detalhes e fontes aqui mesmo; o conteúdo das seções fica no editor JSON avançado.",
+    "meta": "{sections, plural, one {# seção} other {# seções}} · {sources, plural, one {# fonte} other {# fontes}}",
+    "saved": "Salvo.",
+    "sourcesSaved": "Fontes salvas.",
+    "sectionsSaved": "Seções salvas.",
+    "emoji": "Emoji",
+    "title": "Título",
+    "subtitle": "Subtítulo",
+    "disclaimer": "Aviso (nota de saúde)",
+    "saveDetails": "Salvar detalhes",
+    "sources": "Fontes ({n})",
+    "addSource": "+ adicionar fonte",
+    "orgPlaceholder": "Org. (ACOG, 2021)",
+    "labelPlaceholder": "Título / rótulo",
+    "saveSources": "Salvar fontes",
+    "sectionsToggle": "Seções ({n}) — edição avançada em JSON",
+    "saveSections": "Salvar seções",
+    "sectionsHint": "Cada seção precisa de um title e de um texto em content. Validado antes de salvar; um conteúdo colado inválido é rejeitado, não gravado.",
+    "active": "ativo",
+    "off": "inativo"
+  },
+  "sources": {
+    "intro": "A base de evidências médicas do app — as citações de referência (ACOG, CDC, OMS, NICE, Cochrane…) por trás do conteúdo de saúde. Migrada de <code>lib/medicalSources.ts</code>. O conteúdo vai referenciá-las pela chave à medida que cada área for conectada.",
+    "newSource": "+ Nova fonte",
+    "count": "{n, plural, one {# fonte} other {# fontes}}",
+    "deleteConfirm": "Excluir a fonte \"{key}\"?",
+    "modal": {
+      "newTitle": "Nova fonte",
+      "editTitle": "Editar fonte",
+      "org": "Org.",
+      "topic": "Tema",
+      "topicPlaceholder": "pregnancy / kids / …",
+      "title": "Título",
+      "titlePlaceholder": "Diabetes gestacional",
+      "url": "URL",
+      "key": "Chave",
+      "keyHint": "(gerada a partir de org. + título se ficar em branco)",
+      "errors": {
+        "required": "Org., título e URL são obrigatórios.",
+        "keyRequired": "A chave é obrigatória."
+      }
+    }
+  },
+  "news": {
+    "researchTitle": "Pesquisar um tema",
+    "researchIntro": "O Claude pesquisa o tema na web em tempo real e redige notícias com links de fontes reais. Os rascunhos caem na fila de revisão abaixo — nada chega ao app até você publicar.",
+    "researchOff": "A pesquisa com IA está desligada — defina <code>ANTHROPIC_API_KEY</code> no env do command center para ativá-la.",
+    "topic": "Tema",
+    "topicPlaceholder": "ex.: novas recomendações de sono seguro para bebês 2026",
+    "audience": "Público",
+    "audiences": {
+      "pregnancy": "Gravidez",
+      "pre-pregnancy": "Pré-gravidez",
+      "kids": "Filhos",
+      "general": "Geral"
+    },
+    "count": "Quantidade",
+    "research": "✨ Pesquisar",
+    "researching": "Pesquisando…",
+    "researchWait": "Buscando na web e redigindo… pode levar uns 20–40s.",
+    "researched": "{n, plural, one {Pesquisa concluída — # rascunho criado. Revise abaixo.} other {Pesquisa concluída — # rascunhos criados. Revise abaixo.}}",
+    "notConfigured": "A pesquisa com IA não está configurada — defina ANTHROPIC_API_KEY.",
+    "groups": {
+      "draft": "Rascunhos — revise antes de publicar",
+      "published": "Publicados (no ar no app)",
+      "archived": "Arquivados"
+    },
+    "status": {
+      "draft": "rascunho",
+      "published": "publicado",
+      "archived": "arquivado"
+    },
+    "empty": "Nada por aqui ainda.",
+    "publish": "Publicar",
+    "unpublish": "Despublicar",
+    "archive": "Arquivar",
+    "deleteConfirm": "Excluir este artigo?",
+    "modal": {
+      "title": "Editar artigo",
+      "titleLabel": "Título",
+      "summary": "Resumo",
+      "body": "Corpo",
+      "sources": "Fontes ({n})",
+      "add": "+ adicionar",
+      "sourceTitlePlaceholder": "Título da fonte"
+    }
+  }
+}

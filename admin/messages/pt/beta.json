@@ -1,1 +1,51 @@
-{}
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Beta",
+  "adminsOnly": {
+    "title": "Só para admins",
+    "body": "Gerenciar beta testers exige o papel de admin."
+  },
+  "title": "Beta testers",
+  "intro": "Acompanhe quem você convidou para testar o app, veja quando a pessoa se cadastra e libere o premium para ela testar os recursos pagos.",
+  "loading": "Carregando…",
+  "tiers": {
+    "free": "Grátis",
+    "premium_solo": "Premium (Solo)",
+    "premium_family": "Premium (Família)"
+  },
+  "add": {
+    "title": "Adicionar tester",
+    "body": "Registra quem você convidou. O convite de verdade sai pelo TestFlight / Play Console — esta lista acompanha se a pessoa já se cadastrou e permite liberar o premium.",
+    "emailLabel": "E-mail do tester",
+    "name": "Nome (opcional)",
+    "note": "Nota (opcional)",
+    "submit": "Adicionar tester",
+    "adding": "Adicionando…"
+  },
+  "roster": {
+    "title": "Testers",
+    "signedUpCount": "({signedUp}/{total} cadastrados)",
+    "empty": "Nenhum tester ainda. Adicione um acima.",
+    "grantPremium": "Liberar premium",
+    "today": "hoje",
+    "daysAgo": "há {n} d",
+    "view": "ver →",
+    "confirmRemove": "Remover {email} da lista do beta?",
+    "remove": "remover"
+  },
+  "columns": {
+    "email": "E-mail",
+    "platform": "Plataforma",
+    "status": "Status",
+    "tier": "Plano",
+    "lastActive": "Última atividade"
+  },
+  "status": {
+    "signedUp": "cadastrado",
+    "invited": "convidado"
+  },
+  "howTo": {
+    "title": "Como os convites do beta funcionam de verdade",
+    "body": "Esta lista é só um controle. Para dar o app a alguém: adicione a pessoa no <b>TestFlight</b> (iOS) ou no <b>Play Console</b> (Android) — a loja manda a build por e-mail. Quando ela abrir o app e se cadastrar, aparece como <pill>cadastrado</pill> aqui e você pode liberar o premium para ela testar os recursos pagos."
+  }
+}

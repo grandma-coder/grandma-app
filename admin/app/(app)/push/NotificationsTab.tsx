@@ -1,11 +1,21 @@
 "use client"
 import { useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
+import { htmlLang, type Locale } from "@/i18n/config"
 import { trpc } from "@/lib/trpc"
 import { ComposerModal } from "./ComposerModal"
 
 const STATUS_FILTERS = ["", "draft", "scheduled", "sending", "sent", "cancelled", "failed"] as const
 
+/** Display label for a campaign status; unknown values fall back to the raw value. */
+function useStatusLabel() {
+  const t = useTranslations("push")
+  return (s: string) => (t.has(`status.${s}`) ? t(`status.${s}`) : s)
+}
+
 function StatusPill({ status }: { status: string }) {
+  const t = useTranslations("push")
+  const label = useStatusLabel()
   const map: Record<string, string> = {
     sent: "pill-success",
     sending: "pill-warning",
@@ -14,24 +24,27 @@ function StatusPill({ status }: { status: string }) {
     cancelled: "",
     failed: "pill-danger",
   }
-  return <span className={`pill ${map[status] ?? ""}`}>{status === "sending" ? "sending…" : status}</span>
+  return <span className={`pill ${map[status] ?? ""}`}>{status === "sending" ? t("status.sendingNow") : label(status)}</span>
 }
 
-function fmt(iso: string | Date | null): string {
+function fmt(iso: string | Date | null, lang: string): string {
   if (!iso) return "—"
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return "—"
-  return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+  return d.toLocaleString(lang, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
-function fmtDate(iso: string | Date | null): string {
+function fmtDate(iso: string | Date | null, lang: string): string {
   if (!iso) return "—"
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return "—"
-  return d.toLocaleDateString()
+  return d.toLocaleDateString(lang)
 }
 
 export function NotificationsTab({ isAdmin }: { isAdmin: boolean }) {
+  const t = useTranslations("push")
+  const lang = htmlLang(useLocale() as Locale)
+  const statusLabel = useStatusLabel()
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<(typeof STATUS_FILTERS)[number]>("")
   const [composerOpen, setComposerOpen] = useState(false)
@@ -65,7 +78,7 @@ export function NotificationsTab({ isAdmin }: { isAdmin: boolean }) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search title or body…"
+          placeholder={t("list.searchPlaceholder")}
           className="min-w-[200px] flex-1 rounded-lg border border-border-default bg-card px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
         />
         <select
@@ -75,7 +88,7 @@ export function NotificationsTab({ isAdmin }: { isAdmin: boolean }) {
         >
           {STATUS_FILTERS.map((s) => (
             <option key={s} value={s}>
-              {s === "" ? "All statuses" : s}
+              {s === "" ? t("list.allStatuses") : statusLabel(s)}
             </option>
           ))}
         </select>
@@ -84,7 +97,7 @@ export function NotificationsTab({ isAdmin }: { isAdmin: boolean }) {
             onClick={openNew}
             className="rounded-lg bg-accent-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-600"
           >
-            + New notification
+            {t("list.new")}
           </button>
         )}
       </div>
@@ -94,13 +107,13 @@ export function NotificationsTab({ isAdmin }: { isAdmin: boolean }) {
         <table className="w-full text-sm">
           <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Title</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 font-medium">Target</th>
-              <th className="px-4 py-2.5 font-medium">Scheduled</th>
-              <th className="px-4 py-2.5 font-medium">Sent</th>
-              <th className="px-4 py-2.5 font-medium tabular-nums">Sent #</th>
-              <th className="px-4 py-2.5 font-medium">Created</th>
+              <th className="px-4 py-2.5 font-medium">{t("list.colTitle")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("list.colStatus")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("list.colTarget")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("list.colScheduled")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("list.colSent")}</th>
+              <th className="px-4 py-2.5 font-medium tabular-nums">{t("list.colSentCount")}</th>
+              <th className="px-4 py-2.5 font-medium">{t("list.colCreated")}</th>
               {isAdmin && <th className="px-4 py-2.5 font-medium"></th>}
             </tr>
           </thead>
@@ -108,13 +121,13 @@ export function NotificationsTab({ isAdmin }: { isAdmin: boolean }) {
             {list.isLoading ? (
               <tr>
                 <td colSpan={isAdmin ? 8 : 7} className="px-4 py-6 text-center text-fg-tertiary">
-                  Loading…
+                  {t("loading")}
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={isAdmin ? 8 : 7} className="px-4 py-6 text-center text-fg-muted">
-                  No notifications yet.
+                  {t("list.empty")}
                 </td>
               </tr>
             ) : (
@@ -130,12 +143,12 @@ export function NotificationsTab({ isAdmin }: { isAdmin: boolean }) {
                       <StatusPill status={c.status} />
                     </td>
                     <td className="px-4 py-2.5">
-                      {c.targetType === "users" ? `${c.targetUserIds.length} user(s)` : "All users"}
+                      {c.targetType === "users" ? t("list.targetUsers", { n: c.targetUserIds.length }) : t("list.allUsers")}
                     </td>
-                    <td className="px-4 py-2.5">{fmt(c.scheduledAt)}</td>
-                    <td className="px-4 py-2.5">{fmt(c.sentAt)}</td>
+                    <td className="px-4 py-2.5">{fmt(c.scheduledAt, lang)}</td>
+                    <td className="px-4 py-2.5">{fmt(c.sentAt, lang)}</td>
                     <td className="px-4 py-2.5 tabular-nums">{c.status === "sent" ? c.sentCount : "—"}</td>
-                    <td className="px-4 py-2.5">{fmtDate(c.createdAt)}</td>
+                    <td className="px-4 py-2.5">{fmtDate(c.createdAt, lang)}</td>
                     {isAdmin && (
                       <td className="px-4 py-2.5 text-right whitespace-nowrap">
                         {editable && (
@@ -143,18 +156,18 @@ export function NotificationsTab({ isAdmin }: { isAdmin: boolean }) {
                             onClick={() => openEdit(c.id)}
                             className="text-xs font-medium text-accent-500 hover:underline"
                           >
-                            Edit
+                            {t("edit")}
                           </button>
                         )}
                         {c.status !== "sent" && c.status !== "sending" && (
                           <button
                             onClick={() => {
-                              if (window.confirm(c.status === "scheduled" ? "Cancel this scheduled notification?" : "Delete this notification?"))
+                              if (window.confirm(c.status === "scheduled" ? t("list.confirmCancel") : t("list.confirmDelete")))
                                 cancel.mutate({ campaignId: c.id })
                             }}
                             className="ml-3 text-xs font-medium text-fg-tertiary hover:text-[var(--pill-danger-fg)]"
                           >
-                            {c.status === "scheduled" ? "Cancel" : "Delete"}
+                            {c.status === "scheduled" ? t("cancel") : t("list.delete")}
                           </button>
                         )}
                       </td>

@@ -1,1 +1,142 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Users",
+  "title": "All users",
+  "loading": "Loading…",
+  "cancel": "Cancel",
+  "segments": {
+    "pregnancy": "pregnancy",
+    "pre_pregnancy": "pre_pregnancy",
+    "kids": "kids",
+    "premium": "premium",
+    "total": "total"
+  },
+  "modeOption": {
+    "pre_pregnancy": "pre_pregnancy",
+    "pregnancy": "pregnancy",
+    "kids": "kids"
+  },
+  "modeShort": {
+    "pre_pregnancy": "pre-preg",
+    "pregnancy": "pregnancy",
+    "kids": "kids"
+  },
+  "journeyMode": {
+    "pre_pregnancy": "pre_pregnancy",
+    "pre-pregnancy": "pre-pregnancy",
+    "cycle": "cycle",
+    "pregnancy": "pregnancy",
+    "kids": "kids"
+  },
+  "tierOption": {
+    "free": "free",
+    "premium_solo": "premium_solo",
+    "premium_family": "premium_family"
+  },
+  "tierLabel": {
+    "free": "Free",
+    "premium_solo": "Premium (Solo)",
+    "premium_family": "Premium (Family)"
+  },
+  "list": {
+    "searchPlaceholder": "Search name / email…",
+    "allModes": "all modes",
+    "allTiers": "all tiers",
+    "error": "Error: {message}",
+    "colName": "Name",
+    "colEmail": "Email",
+    "colMode": "Mode",
+    "colTier": "Tier",
+    "colLang": "Lang",
+    "colLogs": "Logs",
+    "colLastActive": "Last active",
+    "colJoined": "Joined",
+    "currentlyActive": "currently active",
+    "detail": "detail →",
+    "empty": "No users match."
+  },
+  "detail": {
+    "adminOnly": "Admin only",
+    "adminOnlyBody": "User detail contains personal data and requires the admin role.",
+    "back": "← back to users",
+    "auditNote": "id: {id} · this view was audit-logged",
+    "deletionRequested": "deletion requested",
+    "lifecycle": {
+      "none": "no activity",
+      "active": "active",
+      "dormant": "dormant",
+      "atRisk": "at risk",
+      "churned": "churned"
+    },
+    "kpi": {
+      "lastActive": "Last active",
+      "today": "today",
+      "days": "{n}d",
+      "noActivity": "no activity",
+      "ago": "ago",
+      "currentStreak": "Current streak",
+      "consecutiveDays": "consecutive days",
+      "totalLogs": "Total logs",
+      "in30d": "{n} in 30d",
+      "accountAge": "Account age",
+      "children": "Children",
+      "devices": "Devices",
+      "devicesTotal": "{n} total"
+    },
+    "activity": {
+      "heading": "Activity — last 90 days",
+      "logsThisWeek": "{n} logs this week",
+      "series": "Logs"
+    },
+    "behavior": {
+      "heading": "Behavior",
+      "enrolled": "Enrolled: {list}",
+      "inferred": "Inferred from what they log",
+      "cycle": "Pre-Pregnancy (cycle)",
+      "pregnancy": "Pregnancy",
+      "kids": "Kids (child logs)",
+      "logs": "{n} logs",
+      "posts": "posts",
+      "comments": "comments",
+      "points": "points"
+    },
+    "account": {
+      "heading": "Account",
+      "changeSubscription": "Change subscription",
+      "newTier": "New tier",
+      "reasonPlaceholder": "Reason (optional — logged)",
+      "saving": "Saving…",
+      "apply": "Apply",
+      "grantNote": "Direct grant — unlocks premium in-app immediately. Does not create a paid RevenueCat subscription.",
+      "updated": "Subscription updated.",
+      "subscription": "Subscription",
+      "joined": "Joined",
+      "consent": "Consent",
+      "notGiven": "not given",
+      "language": "Language",
+      "country": "Country",
+      "dueDate": "Due date",
+      "caregivers": "Caregivers",
+      "caregiversValue": "{n} in their circle",
+      "caregiverFor": "Caregiver for",
+      "caregiverForValue": "{n} other user(s)",
+      "notifications": "Notifications",
+      "notificationsValue": "{n} ({unread} unread)",
+      "verifiedExpert": "Verified expert",
+      "yes": "yes",
+      "no": "no"
+    },
+    "revenueCat": {
+      "label": "RevenueCat:",
+      "noRecord": "no billing record — never subscribed.",
+      "heading": "RevenueCat — real billing",
+      "noActive": "Known customer, no active subscription.",
+      "trial": "trial",
+      "active": "active",
+      "expired": "expired",
+      "renews": "renews {date}",
+      "ends": "ends {date}"
+    },
+    "prefs": "Notification & privacy settings (JSON)"
+  }
+}

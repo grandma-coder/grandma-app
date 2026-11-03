@@ -3,13 +3,15 @@ import { useState } from "react"
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts"
+import { useTranslations } from "next-intl"
 import { trpc } from "@/lib/trpc"
 
+// label = message key under metrics.presets
 const PRESETS = [
-  { label: "30d", days: 30 },
-  { label: "90d", days: 90 },
-  { label: "6m", days: 182 },
-  { label: "1y", days: 365 },
+  { label: "d30", days: 30 },
+  { label: "d90", days: 90 },
+  { label: "m6", days: 182 },
+  { label: "y1", days: 365 },
 ]
 
 function rangeForDays(days: number) {
@@ -30,6 +32,7 @@ function KpiCard({ label, value, sub }: { label: string; value: string | number;
 }
 
 export function MetricsDashboard({ defaultSince, defaultUntil }: { defaultSince: string; defaultUntil: string }) {
+  const tr = useTranslations("metrics")
   const [range, setRange] = useState({ since: defaultSince, until: defaultUntil })
 
   const kpis = trpc.metrics.kpis.useQuery(range)
@@ -53,7 +56,7 @@ export function MetricsDashboard({ defaultSince, defaultUntil }: { defaultSince:
                 active ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
               }`}
             >
-              {p.label}
+              {tr(`presets.${p.label}`)}
             </button>
           )
         })}
@@ -61,23 +64,23 @@ export function MetricsDashboard({ defaultSince, defaultUntil }: { defaultSince:
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiCard label="Total users" value={t?.totalUsers ?? "—"} />
-        <KpiCard label="Premium" value={t?.premiumUsers ?? "—"} />
-        <KpiCard label="DAU" value={t?.dau ?? "—"} sub="last 24h" />
-        <KpiCard label="WAU" value={t?.wau ?? "—"} sub="7d" />
-        <KpiCard label="MAU" value={t?.mau ?? "—"} sub="30d" />
+        <KpiCard label={tr("kpi.totalUsers")} value={t?.totalUsers ?? "—"} />
+        <KpiCard label={tr("kpi.premium")} value={t?.premiumUsers ?? "—"} />
+        <KpiCard label={tr("kpi.dau")} value={t?.dau ?? "—"} sub={tr("kpi.last24h")} />
+        <KpiCard label={tr("kpi.wau")} value={t?.wau ?? "—"} sub={tr("kpi.d7")} />
+        <KpiCard label={tr("kpi.mau")} value={t?.mau ?? "—"} sub={tr("kpi.d30")} />
         <KpiCard
-          label="Signups"
+          label={tr("kpi.signups")}
           value={kpis.data?.curSignups ?? "—"}
-          sub={wow == null ? "in range" : `${wow >= 0 ? "▲" : "▼"} ${Math.abs(wow)}% vs prior`}
+          sub={wow == null ? tr("kpi.inRange") : tr("kpi.vsPrior", { arrow: wow >= 0 ? "▲" : "▼", pct: Math.abs(wow) })}
         />
       </div>
 
       {/* Signups + DAU timeseries */}
       <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-        <h2 className="display mb-4 text-base font-semibold text-fg-primary">Signups & active users</h2>
+        <h2 className="display mb-4 text-base font-semibold text-fg-primary">{tr("timeseries.title")}</h2>
         {kpis.isLoading ? (
-          <p className="text-sm text-fg-tertiary">Loading…</p>
+          <p className="text-sm text-fg-tertiary">{tr("loading")}</p>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={kpis.data?.daily ?? []} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -99,8 +102,8 @@ export function MetricsDashboard({ defaultSince, defaultUntil }: { defaultSince:
                 labelStyle={{ color: "var(--fg-tertiary)" }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Area type="monotone" dataKey="newSignups" name="Signups" stroke="var(--chart-1)" strokeWidth={2} fill="url(#gSignups)" />
-              <Area type="monotone" dataKey="dau" name="DAU" stroke="var(--chart-3)" strokeWidth={2} fill="url(#gDau)" />
+              <Area type="monotone" dataKey="newSignups" name={tr("timeseries.signups")} stroke="var(--chart-1)" strokeWidth={2} fill="url(#gSignups)" />
+              <Area type="monotone" dataKey="dau" name={tr("kpi.dau")} stroke="var(--chart-3)" strokeWidth={2} fill="url(#gDau)" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -109,9 +112,9 @@ export function MetricsDashboard({ defaultSince, defaultUntil }: { defaultSince:
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Activation funnel */}
         <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-          <h2 className="display mb-4 text-base font-semibold text-fg-primary">Activation funnel</h2>
+          <h2 className="display mb-4 text-base font-semibold text-fg-primary">{tr("funnel.title")}</h2>
           {funnel.isLoading ? (
-            <p className="text-sm text-fg-tertiary">Loading…</p>
+            <p className="text-sm text-fg-tertiary">{tr("loading")}</p>
           ) : (
             <div className="space-y-2.5">
               {funnel.data?.stages.map((s) => {
@@ -136,12 +139,12 @@ export function MetricsDashboard({ defaultSince, defaultUntil }: { defaultSince:
 
         {/* Mode split */}
         <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-          <h2 className="display mb-4 text-base font-semibold text-fg-primary">Journey mode</h2>
+          <h2 className="display mb-4 text-base font-semibold text-fg-primary">{tr("modes.title")}</h2>
           <div className="space-y-2.5">
             {[
-              { label: "Pregnancy", val: t?.modeSplit.pregnancy ?? 0, color: "var(--chart-2)" },
-              { label: "Kids", val: t?.modeSplit.kids ?? 0, color: "var(--chart-4)" },
-              { label: "Pre-pregnancy", val: t?.modeSplit.pre ?? 0, color: "var(--chart-5)" },
+              { label: tr("modes.pregnancy"), val: t?.modeSplit.pregnancy ?? 0, color: "var(--chart-2)" },
+              { label: tr("modes.kids"), val: t?.modeSplit.kids ?? 0, color: "var(--chart-4)" },
+              { label: tr("modes.pre"), val: t?.modeSplit.pre ?? 0, color: "var(--chart-5)" },
             ].map((m) => {
               const total = (t?.totalUsers ?? 0) || 1
               const pct = Math.round((m.val / total) * 100)

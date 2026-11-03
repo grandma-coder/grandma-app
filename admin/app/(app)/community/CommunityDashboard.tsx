@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useFormatter, useTranslations } from "next-intl"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { trpc } from "@/lib/trpc"
 
@@ -7,7 +8,7 @@ const PRESETS = [
   { label: "30d", days: 30 },
   { label: "90d", days: 90 },
   { label: "1y", days: 365 },
-]
+] as const
 
 function rangeForDays(days: number) {
   const until = new Date()
@@ -26,22 +27,26 @@ function Kpi({ label, value, sub }: { label: string; value: string | number; sub
   )
 }
 
-function fmtWhen(iso: string | null): string {
+type Formatter = ReturnType<typeof useFormatter>
+
+function fmtWhen(format: Formatter, iso: string | null): string {
   if (!iso) return "—"
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return "—"
-  return d.toLocaleDateString()
+  return format.dateTime(d)
 }
 
 export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { defaultSince: string; defaultUntil: string; isAdmin: boolean }) {
+  const t = useTranslations("community")
+  const format = useFormatter()
   const [range, setRange] = useState({ since: defaultSince, until: defaultUntil })
   const [tab, setTab] = useState<"overview" | "moderation">("overview")
   const overview = trpc.community.overview.useQuery()
   const postsDaily = trpc.community.postsDaily.useQuery(range)
 
-  const t = overview.data?.totals
+  const totals = overview.data?.totals
   const maxCatPosts = Math.max(1, ...(overview.data?.categories.map((c) => c.posts) ?? [0]))
-  const pending = t?.pendingModeration ?? 0
+  const pending = totals?.pendingModeration ?? 0
 
   return (
     <div className="space-y-6">
@@ -51,11 +56,11 @@ export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { de
           <button
             key={v}
             onClick={() => setTab(v)}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-medium capitalize transition-colors ${
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
               tab === v ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
             }`}
           >
-            {v}
+            {t(`tabs.${v}`)}
             {v === "moderation" && pending > 0 && (
               <span className={`ml-1.5 tabular-nums ${tab === v ? "opacity-80" : "text-warning"}`}>{pending}</span>
             )}
@@ -69,12 +74,12 @@ export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { de
       <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Kpi label="Channels" value={t?.totalChannels ?? "—"} />
-        <Kpi label="Members" value={t?.totalMembers ?? "—"} />
-        <Kpi label="Posts" value={t?.totalPosts ?? "—"} />
-        <Kpi label="Active 7d" value={t?.activeChannels7d ?? "—"} sub="channels" />
-        <Kpi label="Posts today" value={t?.postsToday ?? "—"} />
-        <Kpi label="Reactions" value={t?.totalReactions ?? "—"} />
+        <Kpi label={t("kpi.channels")} value={totals?.totalChannels ?? "—"} />
+        <Kpi label={t("kpi.members")} value={totals?.totalMembers ?? "—"} />
+        <Kpi label={t("kpi.posts")} value={totals?.totalPosts ?? "—"} />
+        <Kpi label={t("kpi.active7d")} value={totals?.activeChannels7d ?? "—"} sub={t("kpi.active7dSub")} />
+        <Kpi label={t("kpi.postsToday")} value={totals?.postsToday ?? "—"} />
+        <Kpi label={t("kpi.reactions")} value={totals?.totalReactions ?? "—"} />
       </div>
 
       {/* Moderation callout — jumps to the queue when there's something to review */}
@@ -84,15 +89,15 @@ export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { de
           className="flex w-full items-center gap-2 rounded-xl border border-border-default bg-card p-4 text-left text-sm shadow-[var(--shadow-sm)] hover:bg-card-hover"
         >
           <span className="pill pill-warning">{pending}</span>
-          <span className="text-fg-secondary">open report{pending === 1 ? "" : "s"} awaiting review.</span>
-          <span className="ml-auto text-xs font-medium text-accent-500">Review →</span>
+          <span className="text-fg-secondary">{t("openReports", { count: pending })}</span>
+          <span className="ml-auto text-xs font-medium text-accent-500">{t("review")}</span>
         </button>
       )}
 
       {/* Posts over time */}
       <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="display text-base font-semibold text-fg-primary">Posts over time</h2>
+          <h2 className="display text-base font-semibold text-fg-primary">{t("postsOverTime")}</h2>
           <div className="flex gap-2">
             {PRESETS.map((p) => {
               const r = rangeForDays(p.days)
@@ -105,14 +110,14 @@ export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { de
                     active ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
                   }`}
                 >
-                  {p.label}
+                  {t(`presets.${p.label}`)}
                 </button>
               )
             })}
           </div>
         </div>
         {postsDaily.isLoading ? (
-          <p className="text-sm text-fg-tertiary">Loading…</p>
+          <p className="text-sm text-fg-tertiary">{t("loading")}</p>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={postsDaily.data ?? []} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -126,7 +131,7 @@ export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { de
               <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} tickFormatter={(d: string) => d.slice(5)} minTickGap={28} />
               <YAxis tick={{ fontSize: 10, fill: "var(--chart-axis)" }} allowDecimals={false} width={36} />
               <Tooltip contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border-default)", borderRadius: 10, fontSize: 12 }} labelStyle={{ color: "var(--fg-tertiary)" }} />
-              <Area type="monotone" dataKey="posts" name="Posts" stroke="var(--chart-2)" strokeWidth={2} fill="url(#gPosts)" />
+              <Area type="monotone" dataKey="posts" name={t("chartPosts")} stroke="var(--chart-2)" strokeWidth={2} fill="url(#gPosts)" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -135,17 +140,17 @@ export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { de
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Channels table */}
         <div className="rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)] lg:col-span-2">
-          <h2 className="display border-b border-border-subtle px-5 py-3 text-base font-semibold text-fg-primary">All channels</h2>
+          <h2 className="display border-b border-border-subtle px-5 py-3 text-base font-semibold text-fg-primary">{t("allChannels")}</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-deep text-left text-fg-tertiary">
                 <tr>
-                  <th className="px-4 py-2 font-medium">Channel</th>
-                  <th className="px-4 py-2 font-medium">Category</th>
-                  <th className="px-4 py-2 font-medium">Members</th>
-                  <th className="px-4 py-2 font-medium">Posts</th>
-                  <th className="px-4 py-2 font-medium">Rating</th>
-                  <th className="px-4 py-2 font-medium">Last post</th>
+                  <th className="px-4 py-2 font-medium">{t("table.channel")}</th>
+                  <th className="px-4 py-2 font-medium">{t("table.category")}</th>
+                  <th className="px-4 py-2 font-medium">{t("table.members")}</th>
+                  <th className="px-4 py-2 font-medium">{t("table.posts")}</th>
+                  <th className="px-4 py-2 font-medium">{t("table.rating")}</th>
+                  <th className="px-4 py-2 font-medium">{t("table.lastPost")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,12 +160,12 @@ export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { de
                     <td className="px-4 py-2">{c.category ?? "—"}</td>
                     <td className="px-4 py-2 tabular-nums">{c.memberCount}</td>
                     <td className="px-4 py-2 tabular-nums">{c.postCount}</td>
-                    <td className="px-4 py-2 tabular-nums">{c.ratingCount > 0 ? `${c.avgRating?.toFixed(1)} (${c.ratingCount})` : "—"}</td>
-                    <td className="px-4 py-2">{fmtWhen(c.lastPostAt)}</td>
+                    <td className="px-4 py-2 tabular-nums">{c.ratingCount > 0 ? `${c.avgRating != null ? format.number(c.avgRating, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : ""} (${c.ratingCount})` : "—"}</td>
+                    <td className="px-4 py-2">{fmtWhen(format, c.lastPostAt)}</td>
                   </tr>
                 ))}
                 {overview.isLoading && (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-fg-tertiary">Loading…</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-fg-tertiary">{t("loading")}</td></tr>
                 )}
               </tbody>
             </table>
@@ -169,13 +174,13 @@ export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { de
 
         {/* Category breakdown */}
         <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-          <h2 className="display mb-4 text-base font-semibold text-fg-primary">By category</h2>
+          <h2 className="display mb-4 text-base font-semibold text-fg-primary">{t("byCategory")}</h2>
           <div className="space-y-2.5">
             {overview.data?.categories.map((c) => (
               <div key={c.category}>
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="capitalize text-fg-secondary">{c.category}</span>
-                  <span className="tabular-nums text-fg-tertiary">{c.channels} ch · {c.posts} posts</span>
+                  <span className="tabular-nums text-fg-tertiary">{t("categoryStats", { channels: c.channels, posts: c.posts })}</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-deep">
                   <div className="h-full rounded-full bg-accent-500 transition-all" style={{ width: `${Math.max((c.posts / maxCatPosts) * 100, 3)}%` }} />
@@ -200,6 +205,9 @@ const REASON_PILL: Record<string, string> = {
 }
 
 function ModerationQueue({ isAdmin, onChange }: { isAdmin: boolean; onChange: () => void }) {
+  const t = useTranslations("community")
+  const format = useFormatter()
+  const label = (group: string, v: string) => (t.has(`${group}.${v}`) ? t(`${group}.${v}`) : v)
   const [scope, setScope] = useState<"open" | "resolved" | "all">("open")
   const queue = trpc.moderation.queue.useQuery({ scope })
 
@@ -217,21 +225,21 @@ function ModerationQueue({ isAdmin, onChange }: { isAdmin: boolean; onChange: ()
           <button
             key={s}
             onClick={() => setScope(s)}
-            className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors ${
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               scope === s ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
             }`}
           >
-            {s}
+            {t(`scope.${s}`)}
           </button>
         ))}
       </div>
 
-      {queue.isLoading && <p className="text-sm text-fg-tertiary">Loading…</p>}
+      {queue.isLoading && <p className="text-sm text-fg-tertiary">{t("loading")}</p>}
 
       {queue.data && queue.data.length === 0 && (
         <div className="rounded-xl border border-border-default bg-card p-6 text-sm text-fg-secondary shadow-[var(--shadow-sm)]">
-          <p className="mb-1 font-medium text-fg-primary">{scope === "open" ? "Nothing to review 🎉" : "No reports"}</p>
-          <p className="text-fg-tertiary">User reports from the app land here for triage.</p>
+          <p className="mb-1 font-medium text-fg-primary">{scope === "open" ? t("empty.nothingToReview") : t("empty.noReports")}</p>
+          <p className="text-fg-tertiary">{t("empty.body")}</p>
         </div>
       )}
 
@@ -241,28 +249,28 @@ function ModerationQueue({ isAdmin, onChange }: { isAdmin: boolean; onChange: ()
           return (
             <div key={r.id} className="rounded-xl border border-border-default bg-card p-4 shadow-[var(--shadow-sm)]">
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className={`pill ${REASON_PILL[r.reason ?? ""] ?? "pill-info"}`}>{r.reason ?? "reported"}</span>
-                <span className="text-xs text-fg-muted">{r.contentType}</span>
-                {r.reportCount > 1 && <span className="pill pill-warning">×{r.reportCount} reports</span>}
-                {r.channelName && <span className="text-xs text-fg-tertiary">in {r.channelName}</span>}
+                <span className={`pill ${REASON_PILL[r.reason ?? ""] ?? "pill-info"}`}>{label("reason", r.reason ?? "reported")}</span>
+                <span className="text-xs text-fg-muted">{label("contentType", r.contentType)}</span>
+                {r.reportCount > 1 && <span className="pill pill-warning">{t("reportCount", { count: r.reportCount })}</span>}
+                {r.channelName && <span className="text-xs text-fg-tertiary">{t("inChannel", { channel: r.channelName })}</span>}
                 {r.moderationStatus && r.moderationStatus !== "visible" && (
-                  <span className="pill pill-danger">{r.moderationStatus}</span>
+                  <span className="pill pill-danger">{label("moderationStatus", r.moderationStatus)}</span>
                 )}
-                <span className="ml-auto text-xs text-fg-muted">{fmtWhen(r.createdAt)}</span>
+                <span className="ml-auto text-xs text-fg-muted">{fmtWhen(format, r.createdAt)}</span>
               </div>
 
               {r.content != null ? (
                 <p className="mb-2 whitespace-pre-wrap rounded-lg border border-border-subtle bg-deep p-3 text-sm text-fg-secondary">{r.content}</p>
               ) : (
-                <p className="mb-2 text-sm text-fg-muted italic">Content unavailable (deleted or not a post).</p>
+                <p className="mb-2 text-sm text-fg-muted italic">{t("contentUnavailable")}</p>
               )}
 
-              {r.details && <p className="mb-2 text-xs text-fg-tertiary">Reporter note: {r.details}</p>}
+              {r.details && <p className="mb-2 text-xs text-fg-tertiary">{t("reporterNote", { details: r.details })}</p>}
 
               <div className="flex flex-wrap items-center gap-2">
                 {r.authorId && (
                   <a href={`/users/${r.authorId}`} className="text-xs font-medium text-accent-500 hover:text-accent-600">
-                    author {r.authorName ? `· ${r.authorName}` : ""} →
+                    {r.authorName ? t("authorNamed", { name: r.authorName }) : t("author")}
                   </a>
                 )}
                 {isAdmin && (
@@ -273,7 +281,7 @@ function ModerationQueue({ isAdmin, onChange }: { isAdmin: boolean; onChange: ()
                         onClick={() => setStatus.mutate({ postId: r.contentId, status: "hidden" })}
                         className="rounded-lg border border-border-default px-2.5 py-1 text-xs font-medium text-fg-secondary hover:bg-card-hover disabled:opacity-40"
                       >
-                        Hide
+                        {t("actions.hide")}
                       </button>
                     )}
                     {r.contentType === "post" && r.moderationStatus !== "removed" && (
@@ -282,7 +290,7 @@ function ModerationQueue({ isAdmin, onChange }: { isAdmin: boolean; onChange: ()
                         onClick={() => setStatus.mutate({ postId: r.contentId, status: "removed" })}
                         className="rounded-lg bg-danger px-2.5 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-40"
                       >
-                        Remove
+                        {t("actions.remove")}
                       </button>
                     )}
                     {r.contentType === "post" && r.moderationStatus && r.moderationStatus !== "visible" && (
@@ -291,7 +299,7 @@ function ModerationQueue({ isAdmin, onChange }: { isAdmin: boolean; onChange: ()
                         onClick={() => setStatus.mutate({ postId: r.contentId, status: "visible" })}
                         className="rounded-lg border border-border-default px-2.5 py-1 text-xs font-medium text-fg-secondary hover:bg-card-hover disabled:opacity-40"
                       >
-                        Restore
+                        {t("actions.restore")}
                       </button>
                     )}
                     <button
@@ -299,7 +307,7 @@ function ModerationQueue({ isAdmin, onChange }: { isAdmin: boolean; onChange: ()
                       onClick={() => resolve.mutate({ id: r.id, outcome: "dismissed" })}
                       className="rounded-lg border border-border-default px-2.5 py-1 text-xs font-medium text-fg-secondary hover:bg-card-hover disabled:opacity-40"
                     >
-                      Dismiss
+                      {t("actions.dismiss")}
                     </button>
                   </div>
                 )}

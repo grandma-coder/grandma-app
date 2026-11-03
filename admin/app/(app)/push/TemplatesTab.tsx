@@ -1,16 +1,18 @@
 "use client"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { trpc, type RouterOutputs } from "@/lib/trpc"
 
 type Template = RouterOutputs["notificationTemplates"]["list"][number]
 
 // Behavior sections, in journey order + General last. Each carries the mode
-// accent color used elsewhere in the app for that behavior.
-const SECTIONS: { key: string; label: string; blurb: string; dot: string }[] = [
-  { key: "pre_pregnancy", label: "Pre-Pregnancy", blurb: "Trying to conceive — cycle & fertility", dot: "#E58BB4" },
-  { key: "pregnancy", label: "Pregnancy", blurb: "Expecting — weekly progress, appointments, kicks", dot: "#B7A6E8" },
-  { key: "kids", label: "Kids", blurb: "Parents 0–5y — logs, milestones, health", dot: "#8BB8E8" },
-  { key: "general", label: "General", blurb: "Across all behaviors — community, care circle, account", dot: "#BDD48C" },
+// accent color used elsewhere in the app for that behavior. Label + blurb live
+// in push.templates.sections.<key>.
+const SECTIONS: { key: string; dot: string }[] = [
+  { key: "pre_pregnancy", dot: "#E58BB4" },
+  { key: "pregnancy", dot: "#B7A6E8" },
+  { key: "kids", dot: "#8BB8E8" },
+  { key: "general", dot: "#BDD48C" },
 ]
 
 function VarBadge({ name }: { name: string }) {
@@ -20,17 +22,19 @@ function VarBadge({ name }: { name: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const t = useTranslations("push.templates")
   if (status === "live") {
-    return <span className="pill pill-success">live</span>
+    return <span className="pill pill-success">{t("live")}</span>
   }
   return (
-    <span className="pill" title="A sensible event the app doesn't fire yet — editable now, ready when it ships">
-      planned
+    <span className="pill" title={t("plannedHint")}>
+      {t("planned")}
     </span>
   )
 }
 
 export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
+  const t = useTranslations("push")
   const utils = trpc.useUtils()
   const list = trpc.notificationTemplates.list.useQuery()
   const update = trpc.notificationTemplates.update.useMutation({
@@ -57,31 +61,33 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
 
   const rows = list.data ?? []
 
-  function startEdit(t: Template) {
-    setEditing(t.type)
-    setDraftTitle(t.titleTemplate)
-    setDraftBody(t.bodyTemplate)
+  function startEdit(tpl: Template) {
+    setEditing(tpl.type)
+    setDraftTitle(tpl.titleTemplate)
+    setDraftBody(tpl.bodyTemplate)
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <p className="text-sm text-fg-tertiary">
-          Push copy sent automatically for each event, grouped by behavior. Use{" "}
-          <span className="font-mono text-xs">{"{{variable}}"}</span> placeholders — filled in when the notification is
-          sent. <span className="pill pill-success align-middle">live</span> = the app fires this today;{" "}
-          <span className="pill align-middle">planned</span> = ready to edit, not wired in the app yet.
+          {t.rich("templates.intro", {
+            placeholder: "{{variable}}",
+            code: (c) => <span className="font-mono text-xs">{c}</span>,
+            live: (c) => <span className="pill pill-success align-middle">{c}</span>,
+            planned: (c) => <span className="pill align-middle">{c}</span>,
+          })}
         </p>
         <button
           onClick={() => setCollapsed((prev) => (prev.size ? new Set() : new Set(SECTIONS.map((s) => s.key))))}
           className="shrink-0 rounded-lg border border-border-default px-3 py-1.5 text-xs font-medium text-fg-tertiary hover:text-fg-primary"
         >
-          {collapsed.size ? "Expand all" : "Collapse all"}
+          {collapsed.size ? t("templates.expandAll") : t("templates.collapseAll")}
         </button>
       </div>
 
       {list.isLoading ? (
-        <p className="text-sm text-fg-tertiary">Loading…</p>
+        <p className="text-sm text-fg-tertiary">{t("loading")}</p>
       ) : (
         SECTIONS.map((section) => {
           const sectionRows = rows.filter((r) => r.behavior === section.key)
@@ -109,13 +115,13 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
                 </svg>
                 <span className="inline-block size-2.5 rounded-full" style={{ background: section.dot }} />
                 <h2 className="display text-base font-semibold text-fg-primary group-hover:text-accent-500">
-                  {section.label}
+                  {t(`templates.sections.${section.key}.label`)}
                 </h2>
                 <span className="text-xs text-fg-muted">
-                  {section.blurb} · {liveCount}/{sectionRows.length} live
+                  {t(`templates.sections.${section.key}.blurb`)} · {t("templates.liveCount", { live: liveCount, total: sectionRows.length })}
                 </span>
                 {isCollapsed && (
-                  <span className="ml-auto text-xs text-fg-muted">{sectionRows.length} templates</span>
+                  <span className="ml-auto text-xs text-fg-muted">{t("templates.templatesCount", { n: sectionRows.length })}</span>
                 )}
               </button>
 
@@ -124,25 +130,25 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
                 <table className="w-full text-sm">
                   <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
                     <tr>
-                      <th className="px-4 py-2.5 font-medium">Type</th>
-                      <th className="px-4 py-2.5 font-medium">Title</th>
-                      <th className="px-4 py-2.5 font-medium">Body</th>
-                      <th className="px-4 py-2.5 font-medium">Variables</th>
-                      <th className="px-4 py-2.5 font-medium">Status</th>
+                      <th className="px-4 py-2.5 font-medium">{t("templates.colType")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("templates.colTitle")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("templates.colBody")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("templates.colVariables")}</th>
+                      <th className="px-4 py-2.5 font-medium">{t("templates.colStatus")}</th>
                       {isAdmin && <th className="px-4 py-2.5"></th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {sectionRows.map((t) => {
-                      const isEditing = editing === t.type
+                    {sectionRows.map((tpl) => {
+                      const isEditing = editing === tpl.type
                       return (
-                        <tr key={t.type} className="border-t border-border-subtle align-top text-fg-secondary">
+                        <tr key={tpl.type} className="border-t border-border-subtle align-top text-fg-secondary">
                           <td className="px-4 py-3">
                             <span className="rounded-full bg-deep px-2 py-0.5 font-mono text-[11px] text-fg-secondary">
-                              {t.type}
+                              {tpl.type}
                             </span>
-                            {t.description && (
-                              <div className="mt-1 max-w-[190px] text-xs text-fg-muted">{t.description}</div>
+                            {tpl.description && (
+                              <div className="mt-1 max-w-[190px] text-xs text-fg-muted">{tpl.description}</div>
                             )}
                           </td>
                           {isEditing ? (
@@ -167,21 +173,21 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
                             </>
                           ) : (
                             <>
-                              <td className="px-4 py-3 text-fg-primary">{t.titleTemplate}</td>
-                              <td className="px-4 py-3">{t.bodyTemplate}</td>
+                              <td className="px-4 py-3 text-fg-primary">{tpl.titleTemplate}</td>
+                              <td className="px-4 py-3">{tpl.bodyTemplate}</td>
                             </>
                           )}
                           <td className="px-4 py-3">
                             <div className="flex flex-wrap gap-1">
-                              {t.variables.length === 0 ? (
+                              {tpl.variables.length === 0 ? (
                                 <span className="text-xs text-fg-muted">—</span>
                               ) : (
-                                t.variables.map((v) => <VarBadge key={v} name={v} />)
+                                tpl.variables.map((v) => <VarBadge key={v} name={v} />)
                               )}
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <StatusBadge status={t.status} />
+                            <StatusBadge status={tpl.status} />
                           </td>
                           {isAdmin && (
                             <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -189,26 +195,26 @@ export function TemplatesTab({ isAdmin }: { isAdmin: boolean }) {
                                 <div className="flex justify-end gap-2">
                                   <button
                                     onClick={() =>
-                                      update.mutate({ type: t.type, titleTemplate: draftTitle, bodyTemplate: draftBody })
+                                      update.mutate({ type: tpl.type, titleTemplate: draftTitle, bodyTemplate: draftBody })
                                     }
                                     disabled={update.isPending || !draftTitle.trim() || !draftBody.trim()}
                                     className="rounded-lg bg-accent-500 px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
                                   >
-                                    {update.isPending ? "…" : "Save"}
+                                    {update.isPending ? t("templates.saving") : t("save")}
                                   </button>
                                   <button
                                     onClick={() => setEditing(null)}
                                     className="text-xs font-medium text-fg-tertiary hover:text-fg-primary"
                                   >
-                                    Cancel
+                                    {t("cancel")}
                                   </button>
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => startEdit(t)}
+                                  onClick={() => startEdit(tpl)}
                                   className="text-xs font-medium text-accent-500 hover:underline"
                                 >
-                                  Edit
+                                  {t("edit")}
                                 </button>
                               )}
                             </td>

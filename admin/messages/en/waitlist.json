@@ -1,1 +1,73 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Audience",
+  "title": "Waitlist",
+  "intro": "People who joined from grandma.app. Launch is worldwide. Within a country it's first come, first served — promote people to the beta roster when it's their turn.",
+  "adminsOnly": "The list of emails is visible to admins only.",
+  "loading": "Loading…",
+  "labels": {
+    "OTHER": "Other",
+    "pre": "Cycle",
+    "preg": "Pregnancy",
+    "kids": "Kids",
+    "meno": "Menopause",
+    "en": "English",
+    "pt": "Português"
+  },
+  "stats": {
+    "loadError": "Couldn't load stats: {error}",
+    "total": "Total",
+    "last7": "Last 7 days",
+    "byCountry": "By country",
+    "byMode": "By mode",
+    "more": "+{n} more",
+    "perDay": "Signups per day · 90 days",
+    "signups": "count"
+  },
+  "filters": {
+    "search": "Search email or name",
+    "country": "Country",
+    "mode": "Mode",
+    "language": "Language",
+    "invited": "Invited",
+    "from": "From",
+    "to": "To",
+    "allCountries": "All countries",
+    "allModes": "All modes",
+    "allLanguages": "All languages",
+    "everyone": "Everyone",
+    "notInvited": "Not invited"
+  },
+  "actions": {
+    "export": "Export CSV",
+    "exporting": "Exporting…",
+    "promote": "Promote to beta ({n})",
+    "promoting": "Promoting…"
+  },
+  "notice": {
+    "exported": "Exported {count} rows.",
+    "promoted": "Promoted {promoted} to beta.",
+    "promotedWithExisting": "Promoted {promoted} to beta · {alreadyBeta} were already on the beta list."
+  },
+  "table": {
+    "loadError": "Couldn't load the list: {error}",
+    "selectPage": "Select page",
+    "selectRow": "Select {email}",
+    "columns": {
+      "number": "#",
+      "email": "Email",
+      "name": "Name",
+      "country": "Country",
+      "mode": "Mode",
+      "lang": "Lang",
+      "joined": "Joined",
+      "invited": "Invited",
+      "inApp": "In app"
+    },
+    "empty": "No one matches these filters.",
+    "yes": "Yes",
+    "people": "{n} people",
+    "previous": "Previous",
+    "next": "Next"
+  }
+}

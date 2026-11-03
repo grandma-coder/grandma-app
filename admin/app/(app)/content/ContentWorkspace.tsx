@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { DailyQuestionsEditor } from "./DailyQuestionsEditor"
 import { AffirmationsEditor } from "./AffirmationsEditor"
 import { BirthGuideEditor } from "./BirthGuideEditor"
@@ -8,35 +9,36 @@ import { NewsEditor } from "./NewsEditor"
 
 type Tab = "questions" | "affirmations" | "birth" | "sources" | "news"
 
-const TABS: { id: Tab; label: string; ready: boolean }[] = [
-  { id: "questions", label: "Daily questions", ready: true },
-  { id: "affirmations", label: "Affirmations", ready: true },
-  { id: "birth", label: "Birth guide", ready: true },
-  { id: "sources", label: "Sources", ready: true },
-  { id: "news", label: "News", ready: true },
+const TABS: { id: Tab; ready: boolean }[] = [
+  { id: "questions", ready: true },
+  { id: "affirmations", ready: true },
+  { id: "birth", ready: true },
+  { id: "sources", ready: true },
+  { id: "news", ready: true },
 ]
 
 export function ContentWorkspace({ isAdmin }: { isAdmin: boolean }) {
+  const t = useTranslations("content.tabs")
   const [tab, setTab] = useState<Tab>("questions")
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap gap-1.5">
-        {TABS.map((t) => (
+        {TABS.map((tb) => (
           <button
-            key={t.id}
-            onClick={() => t.ready && setTab(t.id)}
-            disabled={!t.ready}
+            key={tb.id}
+            onClick={() => tb.ready && setTab(tb.id)}
+            disabled={!tb.ready}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              tab === t.id
+              tab === tb.id
                 ? "bg-accent-500 text-white"
-                : t.ready
+                : tb.ready
                   ? "border border-border-default text-fg-tertiary hover:text-fg-primary"
                   : "border border-border-subtle text-fg-muted cursor-not-allowed"
             }`}
           >
-            {t.label}
-            {!t.ready && <span className="ml-1.5 text-[10px]">soon</span>}
+            {t(tb.id)}
+            {!tb.ready && <span className="ml-1.5 text-[10px]">{t("soon")}</span>}
           </button>
         ))}
       </div>

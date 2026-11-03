@@ -1,1 +1,48 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Admin",
+  "adminsOnly": {
+    "title": "Admins only",
+    "body": "Managing the team is restricted to admins. You're signed in as <b>{email}</b> · <r>{role}</r>. Ask an admin to grant you access."
+  },
+  "title": "Team",
+  "intro": "Invite people to the command center and manage their access. Members sign in with Clerk; the role you assign controls what they can see and do.",
+  "loading": "Loading…",
+  "roles": {
+    "viewer": "Viewer",
+    "admin": "Admin"
+  },
+  "badge": {
+    "viewer": "viewer",
+    "admin": "admin"
+  },
+  "notice": {
+    "inviteSent": "Invite sent to {email}.",
+    "memberRemoved": "Member removed.",
+    "inviteRevoked": "Invite revoked."
+  },
+  "invite": {
+    "title": "Invite a teammate",
+    "body": "They'll get an email to sign in. New members land with the role you pick here.",
+    "emailLabel": "Teammate email",
+    "send": "Send invite",
+    "sending": "Sending…",
+    "legend": "<b>Viewer</b> — read metrics, users, community. <b>Admin</b> — everything, plus PII, push, Sentry & this panel."
+  },
+  "pending": {
+    "title": "Pending invites",
+    "invited": "Invited {date}",
+    "revoke": "Revoke"
+  },
+  "members": {
+    "title": "Team",
+    "unknown": "Unknown",
+    "you": "(you)",
+    "lastActive": "last active {date}",
+    "cantChangeOwnRole": "You can't change your own role",
+    "lastAdmin": "Last admin — promote someone else first",
+    "cantRemoveSelf": "You can't remove yourself",
+    "removeTitle": "Remove from team",
+    "remove": "Remove"
+  }
+}

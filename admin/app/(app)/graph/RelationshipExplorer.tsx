@@ -1,6 +1,7 @@
 "use client"
 import { useMemo, useState } from "react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { trpc } from "@/lib/trpc"
 import { PopulationGraph } from "./PopulationGraph"
 import { PopulationGraph3D } from "./PopulationGraph3D"
@@ -28,19 +29,10 @@ const KIND_COLOR: Record<NodeKind, string> = {
   community: "var(--chart-5)",
 }
 
-const KIND_LABEL: Record<NodeKind, string> = {
-  user: "User",
-  child: "Child",
-  caregiver: "Caregiver",
-  owner: "Circle owner",
-  behavior: "Behavior",
-  subscription: "Subscription",
-  community: "Community",
-}
-
 // ── User picker ──────────────────────────────────────────────────────────────
 
 function UserPicker({ onPick }: { onPick: (id: string, label: string) => void }) {
+  const t = useTranslations("graph")
   const [q, setQ] = useState("")
   const list = trpc.users.list.useQuery({ search: q || undefined, limit: 8, offset: 0 }, { staleTime: 30_000 })
 
@@ -49,7 +41,7 @@ function UserPicker({ onPick }: { onPick: (id: string, label: string) => void })
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search a user by email or name…"
+        placeholder={t("ego.searchPlaceholder")}
         className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
       />
       {list.data && list.data.rows.length > 0 && (
@@ -180,11 +172,12 @@ function GraphSvg({
 // ── Detail panel ─────────────────────────────────────────────────────────────
 
 function NodeDetail({ node }: { node: GNode }) {
+  const t = useTranslations("graph")
   return (
     <div className="rounded-xl border border-border-default bg-card p-4 shadow-[var(--shadow-sm)]">
       <div className="mb-2 flex items-center gap-2">
         <span className="inline-block h-3 w-3 rounded-full" style={{ background: KIND_COLOR[node.kind] }} />
-        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-muted">{KIND_LABEL[node.kind]}</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-muted">{t(`kind.${node.kind}`)}</span>
       </div>
       <p className="display text-lg font-semibold text-fg-primary">{node.label}</p>
       {node.sublabel && <p className="text-sm text-fg-tertiary">{node.sublabel}</p>}
@@ -200,7 +193,7 @@ function NodeDetail({ node }: { node: GNode }) {
       )}
       {node.href && (
         <Link href={node.href} className="mt-3 inline-block text-xs font-medium text-accent-500 hover:text-accent-600">
-          open in console →
+          {t("ego.openInConsole")}
         </Link>
       )}
     </div>
@@ -210,6 +203,7 @@ function NodeDetail({ node }: { node: GNode }) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export function RelationshipExplorer() {
+  const t = useTranslations("graph")
   const [mode, setMode] = useState<"ego" | "population">("population")
   const [viz, setViz] = useState<"2d" | "3d">("2d")
   const [picked, setPicked] = useState<{ id: string; label: string } | null>(null)
@@ -241,11 +235,11 @@ export function RelationshipExplorer() {
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-medium capitalize transition-colors ${
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
               mode === m ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
             }`}
           >
-            {m === "ego" ? "One user" : "All users"}
+            {t(`mode.${m}`)}
           </button>
         ))}
       </div>
@@ -264,9 +258,9 @@ export function RelationshipExplorer() {
                 {v}
               </button>
             ))}
-            {viz === "3d" && <span className="self-center text-xs text-fg-muted">drag to orbit · scroll to zoom · click a node to open it</span>}
+            {viz === "3d" && <span className="self-center text-xs text-fg-muted">{t("hint3d")}</span>}
           </div>
-          {population.isLoading && <p className="text-sm text-fg-tertiary">Building the population graph…</p>}
+          {population.isLoading && <p className="text-sm text-fg-tertiary">{t("buildingPopulation")}</p>}
           {population.data &&
             (viz === "3d" ? (
               <PopulationGraph3D key={"3d-" + population.data.shown} data={population.data} onPickUser={goToUser} />
@@ -280,15 +274,15 @@ export function RelationshipExplorer() {
       <>
       <UserPicker onPick={goToUser} />
 
-      {!picked && <p className="text-sm text-fg-muted">Search and pick a user above to render their relationship graph.</p>}
+      {!picked && <p className="text-sm text-fg-muted">{t("ego.pickPrompt")}</p>}
 
-      {picked && graph.isLoading && <p className="text-sm text-fg-tertiary">Building graph for {picked.label}…</p>}
+      {picked && graph.isLoading && <p className="text-sm text-fg-tertiary">{t("ego.building", { label: picked.label })}</p>}
 
       {picked && graph.data && (
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-xl border border-border-default bg-card p-2 shadow-[var(--shadow-sm)] lg:col-span-2">
             {graph.data.nodes.length <= 1 ? (
-              <p className="p-6 text-sm text-fg-tertiary">This user has no children, care-circle, behaviors, or community activity yet.</p>
+              <p className="p-6 text-sm text-fg-tertiary">{t("ego.empty")}</p>
             ) : (
               <GraphSvg
                 nodes={graph.data.nodes}
@@ -303,12 +297,12 @@ export function RelationshipExplorer() {
           <div className="space-y-3">
             {/* Legend */}
             <div className="rounded-xl border border-border-default bg-card p-4 shadow-[var(--shadow-sm)]">
-              <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.1em] text-fg-muted">Legend</p>
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.1em] text-fg-muted">{t("ego.legend")}</p>
               <div className="flex flex-wrap gap-x-3 gap-y-1.5">
                 {kinds.map((k) => (
                   <span key={k} className="flex items-center gap-1.5 text-xs text-fg-secondary">
                     <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: KIND_COLOR[k] }} />
-                    {KIND_LABEL[k]}
+                    {t(`kind.${k}`)}
                   </span>
                 ))}
               </div>
@@ -317,7 +311,7 @@ export function RelationshipExplorer() {
             {selected ? (
               <NodeDetail node={selected} />
             ) : (
-              <p className="px-1 text-sm text-fg-muted">Click a node to inspect it.</p>
+              <p className="px-1 text-sm text-fg-muted">{t("ego.clickToInspect")}</p>
             )}
           </div>
         </div>

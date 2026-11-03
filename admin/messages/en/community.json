@@ -1,1 +1,78 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Community",
+  "title": "Channels",
+  "tabs": {
+    "overview": "Overview",
+    "moderation": "Moderation"
+  },
+  "kpi": {
+    "channels": "Channels",
+    "members": "Members",
+    "posts": "Posts",
+    "active7d": "Active 7d",
+    "active7dSub": "channels",
+    "postsToday": "Posts today",
+    "reactions": "Reactions"
+  },
+  "openReports": "{count, plural, one {open report} other {open reports}} awaiting review.",
+  "review": "Review →",
+  "postsOverTime": "Posts over time",
+  "presets": {
+    "30d": "30d",
+    "90d": "90d",
+    "1y": "1y"
+  },
+  "loading": "Loading…",
+  "chartPosts": "Posts",
+  "allChannels": "All channels",
+  "table": {
+    "channel": "Channel",
+    "category": "Category",
+    "members": "Members",
+    "posts": "Posts",
+    "rating": "Rating",
+    "lastPost": "Last post"
+  },
+  "byCategory": "By category",
+  "categoryStats": "{channels} ch · {posts} posts",
+  "scope": {
+    "open": "Open",
+    "resolved": "Resolved",
+    "all": "All"
+  },
+  "empty": {
+    "nothingToReview": "Nothing to review 🎉",
+    "noReports": "No reports",
+    "body": "User reports from the app land here for triage."
+  },
+  "reason": {
+    "spam": "spam",
+    "harassment": "harassment",
+    "hate": "hate",
+    "inappropriate": "inappropriate",
+    "misinformation": "misinformation",
+    "reported": "reported"
+  },
+  "contentType": {
+    "post": "post",
+    "comment": "comment"
+  },
+  "moderationStatus": {
+    "visible": "visible",
+    "hidden": "hidden",
+    "removed": "removed"
+  },
+  "reportCount": "×{count} reports",
+  "inChannel": "in {channel}",
+  "contentUnavailable": "Content unavailable (deleted or not a post).",
+  "reporterNote": "Reporter note: {details}",
+  "author": "author →",
+  "authorNamed": "author · {name} →",
+  "actions": {
+    "hide": "Hide",
+    "remove": "Remove",
+    "restore": "Restore",
+    "dismiss": "Dismiss"
+  }
+}

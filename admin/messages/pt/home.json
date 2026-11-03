@@ -1,1 +1,72 @@
-{}
+{
+  "noAccess": {
+    "title": "Sem acesso",
+    "body": "Você entrou como <b>{email}</b>, mas esse endereço não está na lista de acesso do time do Command Center.",
+    "unknown": "desconhecido"
+  },
+  "eyebrow": "Visão geral",
+  "intro": "Saúde do app inteiro em tempo real — usuários, engajamento, assinaturas, comunidade e conteúdo.",
+  "signedInAs": "Conectado como {email} · <r>{role}</r>.",
+  "pillars": {
+    "users": { "name": "Usuários", "blurb": "Navegue e busque todos os usuários do app" },
+    "metrics": { "name": "Métricas", "blurb": "KPIs, funis, retenção" },
+    "community": { "name": "Comunidade", "blurb": "Canais e atividade do fórum" },
+    "push": { "name": "Push", "blurb": "Escreva e envie notificações" },
+    "content": { "name": "Conteúdo", "blurb": "Perguntas, afirmações, guia do parto, notícias" },
+    "releases": { "name": "Versões", "blurb": "Builds e changelogs da App Store" },
+    "tokens": { "name": "Design tokens", "blurb": "Cores da marca, tipografia e visuais de e-mail" },
+    "sentry": { "name": "Sentry", "blurb": "Triagem de crashes" },
+    "beta": { "name": "Beta testers", "blurb": "Convide e acompanhe os beta testers do app" },
+    "admin": { "name": "Admin", "blurb": "Convide colegas e gerencie papéis" }
+  },
+  "loading": "Carregando visão geral…",
+  "kpi": {
+    "totalUsers": "Total de usuários",
+    "new30d": "+{n} em 30d",
+    "mau": "MAU",
+    "today": "{n} hoje",
+    "stickiness": "Stickiness",
+    "stickinessSub": "DAU / MAU",
+    "totalLogs": "Total de registros",
+    "thisWeek": "{n} esta semana",
+    "paid": "Pagantes",
+    "paidOf": "{paid} de {total}",
+    "estMrr": "MRR est.",
+    "fromTierPrices": "pelos preços dos planos"
+  },
+  "activity": {
+    "title": "Atividade — últimos 30 dias",
+    "logs": "Registros"
+  },
+  "subscriptions": {
+    "title": "Assinaturas",
+    "note": "MRR est. ${mrr} · valor real depende do RevenueCat",
+    "free": "Grátis",
+    "premiumSolo": "Premium (Solo)",
+    "premiumFamily": "Premium (Família)"
+  },
+  "behaviors": {
+    "title": "Usuários por jornada",
+    "prePregnancy": "Pré-gravidez",
+    "pregnancy": "Gravidez",
+    "kids": "Filhos",
+    "note": "Quem está em várias jornadas conta em cada uma."
+  },
+  "lifecycle": {
+    "title": "Ciclo de vida",
+    "active": "Ativos (7d)",
+    "dormant": "Inativos (7–30d)",
+    "atRisk": "Em risco (30–60d)",
+    "churned": "Perdidos (60d+)"
+  },
+  "strip": {
+    "channels": "Canais",
+    "posts": "Posts",
+    "questions": "Perguntas",
+    "affirmations": "Afirmações",
+    "sources": "Fontes",
+    "newsLive": "Notícias no ar",
+    "drafts": "{n} rascunhos"
+  },
+  "explore": "Explorar"
+}

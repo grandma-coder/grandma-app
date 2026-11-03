@@ -1,1 +1,142 @@
-{}
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Usuários",
+  "title": "Todos os usuários",
+  "loading": "Carregando…",
+  "cancel": "Cancelar",
+  "segments": {
+    "pregnancy": "gestação",
+    "pre_pregnancy": "pré-gestação",
+    "kids": "filhos",
+    "premium": "premium",
+    "total": "total"
+  },
+  "modeOption": {
+    "pre_pregnancy": "pré-gestação",
+    "pregnancy": "gestação",
+    "kids": "filhos"
+  },
+  "modeShort": {
+    "pre_pregnancy": "pré-gest.",
+    "pregnancy": "gestação",
+    "kids": "filhos"
+  },
+  "journeyMode": {
+    "pre_pregnancy": "pré-gestação",
+    "pre-pregnancy": "pré-gestação",
+    "cycle": "ciclo",
+    "pregnancy": "gestação",
+    "kids": "filhos"
+  },
+  "tierOption": {
+    "free": "gratuito",
+    "premium_solo": "premium individual",
+    "premium_family": "premium família"
+  },
+  "tierLabel": {
+    "free": "Gratuito",
+    "premium_solo": "Premium (Individual)",
+    "premium_family": "Premium (Família)"
+  },
+  "list": {
+    "searchPlaceholder": "Buscar nome / e-mail…",
+    "allModes": "todos os modos",
+    "allTiers": "todos os planos",
+    "error": "Erro: {message}",
+    "colName": "Nome",
+    "colEmail": "E-mail",
+    "colMode": "Modo",
+    "colTier": "Plano",
+    "colLang": "Idioma",
+    "colLogs": "Registros",
+    "colLastActive": "Visto por último",
+    "colJoined": "Cadastro",
+    "currentlyActive": "ativo no momento",
+    "detail": "detalhes →",
+    "empty": "Nenhum usuário encontrado."
+  },
+  "detail": {
+    "adminOnly": "Somente admin",
+    "adminOnlyBody": "Os detalhes do usuário contêm dados pessoais e exigem o papel de admin.",
+    "back": "← voltar para usuários",
+    "auditNote": "id: {id} · esta visualização foi registrada na auditoria",
+    "deletionRequested": "exclusão solicitada",
+    "lifecycle": {
+      "none": "sem atividade",
+      "active": "ativo",
+      "dormant": "inativo",
+      "atRisk": "em risco",
+      "churned": "perdido"
+    },
+    "kpi": {
+      "lastActive": "Visto por último",
+      "today": "hoje",
+      "days": "{n}d",
+      "noActivity": "sem atividade",
+      "ago": "atrás",
+      "currentStreak": "Sequência atual",
+      "consecutiveDays": "dias seguidos",
+      "totalLogs": "Total de registros",
+      "in30d": "{n} em 30d",
+      "accountAge": "Tempo de conta",
+      "children": "Filhos",
+      "devices": "Dispositivos",
+      "devicesTotal": "{n} no total"
+    },
+    "activity": {
+      "heading": "Atividade — últimos 90 dias",
+      "logsThisWeek": "{n, plural, one {# registro esta semana} other {# registros esta semana}}",
+      "series": "Registros"
+    },
+    "behavior": {
+      "heading": "Comportamento",
+      "enrolled": "Inscrito em: {list}",
+      "inferred": "Inferido pelo que a pessoa registra",
+      "cycle": "Pré-gestação (ciclo)",
+      "pregnancy": "Gestação",
+      "kids": "Filhos (registros de crianças)",
+      "logs": "{n, plural, one {# registro} other {# registros}}",
+      "posts": "posts",
+      "comments": "comentários",
+      "points": "pontos"
+    },
+    "account": {
+      "heading": "Conta",
+      "changeSubscription": "Alterar assinatura",
+      "newTier": "Novo plano",
+      "reasonPlaceholder": "Motivo (opcional — fica registrado)",
+      "saving": "Salvando…",
+      "apply": "Aplicar",
+      "grantNote": "Concessão direta — libera o premium no app na hora. Não cria uma assinatura paga no RevenueCat.",
+      "updated": "Assinatura atualizada.",
+      "subscription": "Assinatura",
+      "joined": "Cadastro",
+      "consent": "Consentimento",
+      "notGiven": "não dado",
+      "language": "Idioma",
+      "country": "País",
+      "dueDate": "Data prevista do parto",
+      "caregivers": "Cuidadores",
+      "caregiversValue": "{n} na rede de cuidado",
+      "caregiverFor": "Cuidador de",
+      "caregiverForValue": "{n, plural, one {# outro usuário} other {# outros usuários}}",
+      "notifications": "Notificações",
+      "notificationsValue": "{n} ({unread} não lidas)",
+      "verifiedExpert": "Especialista verificado",
+      "yes": "sim",
+      "no": "não"
+    },
+    "revenueCat": {
+      "label": "RevenueCat:",
+      "noRecord": "sem registro de cobrança — nunca assinou.",
+      "heading": "RevenueCat — cobrança real",
+      "noActive": "Cliente conhecido, sem assinatura ativa.",
+      "trial": "teste",
+      "active": "ativa",
+      "expired": "expirada",
+      "renews": "renova em {date}",
+      "ends": "termina em {date}"
+    },
+    "prefs": "Configurações de notificação e privacidade (JSON)"
+  }
+}

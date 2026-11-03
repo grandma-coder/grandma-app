@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { trpc, type RouterOutputs } from "@/lib/trpc"
 import { CollapsibleSection } from "./CollapsibleSection"
 
@@ -29,6 +30,7 @@ function EditModal({
   onClose: () => void
   onSaved: () => void
 }) {
+  const t = useTranslations("content")
   const isNew = "new" in a
   const utils = trpc.useUtils()
   const upsert = trpc.content.upsertAffirmation.useMutation({
@@ -47,7 +49,7 @@ function EditModal({
 
   function save() {
     setError(null)
-    if (!text.trim()) return setError("Text is required.")
+    if (!text.trim()) return setError(t("affirmations.modal.textRequired"))
     upsert.mutate({
       id: isNew ? undefined : (a as Affirmation).id,
       text: text.trim(),
@@ -61,40 +63,40 @@ function EditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl border border-border-default bg-card p-6 shadow-[var(--shadow-xl)]" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-start justify-between">
-          <h2 className="display text-lg font-semibold text-fg-primary">{isNew ? "New affirmation" : "Edit affirmation"}</h2>
-          <button onClick={onClose} className="text-fg-muted hover:text-fg-primary" aria-label="Close">✕</button>
+          <h2 className="display text-lg font-semibold text-fg-primary">{isNew ? t("affirmations.modal.newTitle") : t("affirmations.modal.editTitle")}</h2>
+          <button onClick={onClose} className="text-fg-muted hover:text-fg-primary" aria-label={t("ui.close")}>✕</button>
         </div>
 
-        <label className="mb-1 block text-xs font-medium text-fg-tertiary">Affirmation ({text.length}/400)</label>
+        <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("affirmations.modal.text", { length: text.length })}</label>
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={400}
-          placeholder="Your body knows exactly what to do…"
+          placeholder={t("affirmations.modal.textPlaceholder")}
           className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary focus:border-accent-400 focus:outline-none" />
 
         <div className="mt-3 grid grid-cols-3 gap-2">
           <div className="col-span-1">
-            <label className="mb-1 block text-xs font-medium text-fg-tertiary">Category</label>
+            <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("affirmations.modal.category")}</label>
             <input value={category} onChange={(e) => setCategory(e.target.value)}
               className="w-full rounded-lg border border-border-default bg-deep px-2.5 py-1.5 text-sm text-fg-primary focus:border-accent-400 focus:outline-none" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-fg-tertiary">Week min</label>
+            <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("affirmations.modal.weekMin")}</label>
             <input value={weekMin} onChange={(e) => setWeekMin(e.target.value.replace(/\D/g, ""))} placeholder="—"
               className="w-full rounded-lg border border-border-default bg-deep px-2.5 py-1.5 text-sm text-fg-primary focus:border-accent-400 focus:outline-none" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-fg-tertiary">Week max</label>
+            <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("affirmations.modal.weekMax")}</label>
             <input value={weekMax} onChange={(e) => setWeekMax(e.target.value.replace(/\D/g, ""))} placeholder="—"
               className="w-full rounded-lg border border-border-default bg-deep px-2.5 py-1.5 text-sm text-fg-primary focus:border-accent-400 focus:outline-none" />
           </div>
         </div>
-        <p className="mt-1 text-[11px] text-fg-muted">Week min/max optionally gate an affirmation to a pregnancy-week range. Leave blank for all weeks.</p>
+        <p className="mt-1 text-[11px] text-fg-muted">{t("affirmations.modal.weekHint")}</p>
 
         {error && <p className="mt-3 text-sm text-[var(--pill-danger-fg)]">{error}</p>}
 
         <div className="mt-5 flex items-center justify-end gap-2">
-          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-fg-tertiary hover:text-fg-primary">Cancel</button>
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-fg-tertiary hover:text-fg-primary">{t("ui.cancel")}</button>
           <button onClick={save} disabled={upsert.isPending} className="rounded-lg bg-accent-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-600 disabled:opacity-50">
-            {upsert.isPending ? "Saving…" : "Save"}
+            {upsert.isPending ? t("ui.saving") : t("ui.save")}
           </button>
         </div>
       </div>
@@ -103,6 +105,8 @@ function EditModal({
 }
 
 export function AffirmationsEditor({ isAdmin }: { isAdmin: boolean }) {
+  const t = useTranslations("content")
+  const categoryLabel = (c: string) => (t.has(`affirmations.categories.${c}`) ? t(`affirmations.categories.${c}`) : labelFor(c))
   const utils = trpc.useUtils()
   const [search, setSearch] = useState("")
   const list = trpc.content.affirmations.useQuery({ search: search.trim() || undefined })
@@ -120,16 +124,13 @@ export function AffirmationsEditor({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-fg-tertiary">
-        The daily affirmations shown in the app, grouped by category. This table is read live by the app, so edits
-        appear instantly — no app update needed.
-      </p>
+      <p className="text-sm text-fg-tertiary">{t("affirmations.intro")}</p>
 
-      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search affirmations…"
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("affirmations.searchPlaceholder")}
         className="w-full rounded-lg border border-border-default bg-card px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none" />
 
       {list.isLoading ? (
-        <p className="text-sm text-fg-tertiary">Loading…</p>
+        <p className="text-sm text-fg-tertiary">{t("ui.loading")}</p>
       ) : (
         ordered.map((cat) => {
           const items = rows.filter((r) => r.category === cat)
@@ -141,19 +142,19 @@ export function AffirmationsEditor({ isAdmin }: { isAdmin: boolean }) {
             <CollapsibleSection
               key={cat}
               dot={dotFor(cat)}
-              title={labelFor(cat)}
-              meta={`${items.length} affirmation${items.length === 1 ? "" : "s"}`}
+              title={categoryLabel(cat)}
+              meta={t("affirmations.count", { n: items.length })}
               collapsedSummary={`${items.length}`}
               action={
                 isAdmin ? (
                   <button onClick={() => setEditing({ new: true, category: cat })} className="rounded-lg bg-accent-500 px-3 py-1 text-xs font-medium text-white hover:bg-accent-600">
-                    + Add
+                    {t("ui.add")}
                   </button>
                 ) : undefined
               }
             >
               {items.length === 0 ? (
-                <p className="rounded-xl border border-border-subtle bg-deep px-4 py-3 text-sm text-fg-muted">No affirmations in this category yet.</p>
+                <p className="rounded-xl border border-border-subtle bg-deep px-4 py-3 text-sm text-fg-muted">{t("affirmations.empty")}</p>
               ) : (
                 <div className="space-y-2">
                   {items.map((a) => (
@@ -161,14 +162,14 @@ export function AffirmationsEditor({ isAdmin }: { isAdmin: boolean }) {
                       <div className="min-w-0">
                         <p className="text-sm text-fg-primary">{a.text}</p>
                         {(a.weekMin || a.weekMax) && (
-                          <p className="mt-0.5 text-xs text-fg-muted">weeks {a.weekMin ?? "?"}–{a.weekMax ?? "?"}</p>
+                          <p className="mt-0.5 text-xs text-fg-muted">{t("affirmations.weeks", { min: a.weekMin ?? "?", max: a.weekMax ?? "?" })}</p>
                         )}
                       </div>
                       {isAdmin && (
                         <div className="flex shrink-0 items-center gap-3">
-                          <button onClick={() => setEditing(a)} className="text-xs font-medium text-accent-500 hover:underline">Edit</button>
-                          <button onClick={() => { if (window.confirm("Delete this affirmation?")) del.mutate({ id: a.id }) }}
-                            className="text-xs font-medium text-fg-tertiary hover:text-[var(--pill-danger-fg)]">Delete</button>
+                          <button onClick={() => setEditing(a)} className="text-xs font-medium text-accent-500 hover:underline">{t("ui.edit")}</button>
+                          <button onClick={() => { if (window.confirm(t("affirmations.deleteConfirm"))) del.mutate({ id: a.id }) }}
+                            className="text-xs font-medium text-fg-tertiary hover:text-[var(--pill-danger-fg)]">{t("ui.delete")}</button>
                         </div>
                       )}
                     </div>

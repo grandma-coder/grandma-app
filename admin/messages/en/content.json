@@ -1,1 +1,175 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Content",
+  "title": "Content database",
+  "intro": "The app's editable content. Changes here flow live to the app, which reads DB-first and falls back to its bundled copy if the DB is unreachable — so a bad edit never blanks the app.",
+  "tabs": {
+    "questions": "Daily questions",
+    "affirmations": "Affirmations",
+    "birth": "Birth guide",
+    "sources": "Sources",
+    "news": "News",
+    "soon": "soon"
+  },
+  "ui": {
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "add": "+ Add",
+    "active": "active",
+    "off": "off",
+    "activeCheckbox": "Active"
+  },
+  "questions": {
+    "intro": "The daily check-in questions users answer. Grouped by journey mode. Tags drive which supportive card the app shows back. Deactivate to hide a question without deleting it.",
+    "modes": {
+      "pre-pregnancy": "Pre-Pregnancy",
+      "pregnancy": "Pregnancy",
+      "kids": "Kids"
+    },
+    "activeCount": "{active}/{total} active",
+    "count": "{n} questions",
+    "empty": "No questions for this mode yet.",
+    "columns": {
+      "id": "ID",
+      "prompt": "Prompt",
+      "options": "Options",
+      "status": "Status"
+    },
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "modal": {
+      "newTitle": "New question",
+      "editTitle": "Edit question",
+      "id": "ID",
+      "mode": "Mode",
+      "prompt": "Prompt",
+      "options": "Options ({n})",
+      "addOption": "+ add option",
+      "labelPlaceholder": "Label",
+      "tagsPlaceholder": "tags, comma-separated",
+      "errors": {
+        "idRequired": "An id is required (e.g. q_099 / pq_099).",
+        "promptRequired": "A prompt is required.",
+        "minOptions": "At least 2 options with a label are required."
+      }
+    }
+  },
+  "affirmations": {
+    "intro": "The daily affirmations shown in the app, grouped by category. This table is read live by the app, so edits appear instantly — no app update needed.",
+    "searchPlaceholder": "Search affirmations…",
+    "count": "{n, plural, one {# affirmation} other {# affirmations}}",
+    "empty": "No affirmations in this category yet.",
+    "weeks": "weeks {min}–{max}",
+    "deleteConfirm": "Delete this affirmation?",
+    "categories": {
+      "pre-pregnancy": "Pre pregnancy",
+      "cycle": "Cycle",
+      "pregnancy": "Pregnancy",
+      "kids": "Kids"
+    },
+    "modal": {
+      "newTitle": "New affirmation",
+      "editTitle": "Edit affirmation",
+      "text": "Affirmation ({length}/400)",
+      "textPlaceholder": "Your body knows exactly what to do…",
+      "category": "Category",
+      "weekMin": "Week min",
+      "weekMax": "Week max",
+      "weekHint": "Week min/max optionally gate an affirmation to a pregnancy-week range. Leave blank for all weeks.",
+      "textRequired": "Text is required."
+    }
+  },
+  "birth": {
+    "intro": "The birth-guide topics (labor, C-section, pain relief, recovery…) with their medical sources. Read DB-first by the app with the bundled copy as fallback. Edit details + sources inline; deep section content via the advanced JSON editor.",
+    "meta": "{sections} sections · {sources} sources",
+    "saved": "Saved.",
+    "sourcesSaved": "Sources saved.",
+    "sectionsSaved": "Sections saved.",
+    "emoji": "Emoji",
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "disclaimer": "Disclaimer (health notice)",
+    "saveDetails": "Save details",
+    "sources": "Sources ({n})",
+    "addSource": "+ add source",
+    "orgPlaceholder": "Org (ACOG, 2021)",
+    "labelPlaceholder": "Title / label",
+    "saveSources": "Save sources",
+    "sectionsToggle": "Sections ({n}) — advanced JSON edit",
+    "saveSections": "Save sections",
+    "sectionsHint": "Each section needs a title + content string. Validated before save; a bad paste is rejected, not persisted.",
+    "active": "active",
+    "off": "off"
+  },
+  "sources": {
+    "intro": "The app's managed medical evidence base — the authority citations (ACOG, CDC, WHO, NICE, Cochrane…) behind its health content. Migrated from <code>lib/medicalSources.ts</code>. Content will reference these by key as areas are wired up.",
+    "newSource": "+ New source",
+    "count": "{n, plural, one {# source} other {# sources}}",
+    "deleteConfirm": "Delete source \"{key}\"?",
+    "modal": {
+      "newTitle": "New source",
+      "editTitle": "Edit source",
+      "org": "Org",
+      "topic": "Topic",
+      "topicPlaceholder": "pregnancy / kids / …",
+      "title": "Title",
+      "titlePlaceholder": "Gestational diabetes",
+      "url": "URL",
+      "key": "Key",
+      "keyHint": "(auto from org+title if blank)",
+      "errors": {
+        "required": "Org, title and URL are required.",
+        "keyRequired": "A key is required."
+      }
+    }
+  },
+  "news": {
+    "researchTitle": "Research a topic",
+    "researchIntro": "Claude searches the live web on your topic and drafts news items with real source links. Drafts land in the review queue below — nothing reaches the app until you publish.",
+    "researchOff": "AI research is off — set <code>ANTHROPIC_API_KEY</code> in the command center env to enable it.",
+    "topic": "Topic",
+    "topicPlaceholder": "e.g. new infant sleep safety guidance 2026",
+    "audience": "Audience",
+    "audiences": {
+      "pregnancy": "Pregnancy",
+      "pre-pregnancy": "Pre-pregnancy",
+      "kids": "Kids",
+      "general": "General"
+    },
+    "count": "Count",
+    "research": "✨ Research",
+    "researching": "Researching…",
+    "researchWait": "Searching the web + drafting… this can take ~20–40s.",
+    "researched": "{n, plural, one {Researched — # draft created. Review below.} other {Researched — # drafts created. Review below.}}",
+    "notConfigured": "AI research isn't configured — set ANTHROPIC_API_KEY.",
+    "groups": {
+      "draft": "Drafts — review before publishing",
+      "published": "Published (live in the app)",
+      "archived": "Archived"
+    },
+    "status": {
+      "draft": "draft",
+      "published": "published",
+      "archived": "archived"
+    },
+    "empty": "Nothing here yet.",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "archive": "Archive",
+    "deleteConfirm": "Delete this article?",
+    "modal": {
+      "title": "Edit article",
+      "titleLabel": "Title",
+      "summary": "Summary",
+      "body": "Body",
+      "sources": "Sources ({n})",
+      "add": "+ add",
+      "sourceTitlePlaceholder": "Source title"
+    }
+  }
+}

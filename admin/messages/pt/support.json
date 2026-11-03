@@ -1,1 +1,66 @@
-{}
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Suporte",
+  "title": "Caixa de entrada",
+  "intro": "Feedback de usuários, bugs, dúvidas e avaliações — faça a triagem, atribua e registre as respostas.",
+  "loading": "Carregando…",
+  "tabs": {
+    "open": "Aberto",
+    "in_progress": "Em andamento",
+    "resolved": "Resolvido",
+    "closed": "Fechado",
+    "all": "Todos"
+  },
+  "statuses": {
+    "open": "aberto",
+    "in_progress": "em andamento",
+    "resolved": "resolvido",
+    "closed": "fechado"
+  },
+  "kinds": {
+    "bug": "bug",
+    "question": "dúvida",
+    "review": "avaliação",
+    "feedback": "feedback"
+  },
+  "priorities": {
+    "low": "Baixa",
+    "normal": "Normal",
+    "high": "Alta"
+  },
+  "highPill": "alta",
+  "ago": {
+    "minutes": "há {n} min",
+    "hours": "há {n} h",
+    "days": "há {n} d"
+  },
+  "empty": {
+    "title": "Nada por aqui",
+    "body": "Nenhum ticket nesta visão. Novos relatos chegam do app pela tabela <code>support_tickets</code>."
+  },
+  "columns": {
+    "ticket": "Ticket",
+    "kind": "Tipo",
+    "status": "Status",
+    "assignee": "Responsável",
+    "received": "Recebido"
+  },
+  "anonymous": "anônimo",
+  "drawer": {
+    "close": "Fechar",
+    "untitled": "Feedback",
+    "viewUser": "ver usuário →",
+    "adminOnly": "As ações de triagem são só para admins. Você pode ler e encaminhar por atribuição fora daqui.",
+    "status": "Status",
+    "priority": "Prioridade",
+    "assignee": "Responsável (e-mail)",
+    "unassigned": "sem responsável",
+    "notes": "Notas internas",
+    "reply": "Resposta enviada (registrada)",
+    "replyPlaceholder": "O que você respondeu — fica registrado na trilha de auditoria",
+    "replyHint": "Só registra — isso não envia a mensagem para o usuário.",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "cancel": "Cancelar"
+  }
+}

@@ -1,1 +1,78 @@
-{}
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Comunidade",
+  "title": "Canais",
+  "tabs": {
+    "overview": "Visão geral",
+    "moderation": "Moderação"
+  },
+  "kpi": {
+    "channels": "Canais",
+    "members": "Membros",
+    "posts": "Posts",
+    "active7d": "Ativos 7d",
+    "active7dSub": "canais",
+    "postsToday": "Posts hoje",
+    "reactions": "Reações"
+  },
+  "openReports": "{count, plural, one {denúncia aberta aguardando} other {denúncias abertas aguardando}} revisão.",
+  "review": "Revisar →",
+  "postsOverTime": "Posts ao longo do tempo",
+  "presets": {
+    "30d": "30d",
+    "90d": "90d",
+    "1y": "1a"
+  },
+  "loading": "Carregando…",
+  "chartPosts": "Posts",
+  "allChannels": "Todos os canais",
+  "table": {
+    "channel": "Canal",
+    "category": "Categoria",
+    "members": "Membros",
+    "posts": "Posts",
+    "rating": "Avaliação",
+    "lastPost": "Último post"
+  },
+  "byCategory": "Por categoria",
+  "categoryStats": "{channels} can. · {posts} posts",
+  "scope": {
+    "open": "Abertas",
+    "resolved": "Resolvidas",
+    "all": "Todas"
+  },
+  "empty": {
+    "nothingToReview": "Nada para revisar 🎉",
+    "noReports": "Nenhuma denúncia",
+    "body": "As denúncias de usuários no app chegam aqui para triagem."
+  },
+  "reason": {
+    "spam": "spam",
+    "harassment": "assédio",
+    "hate": "discurso de ódio",
+    "inappropriate": "impróprio",
+    "misinformation": "desinformação",
+    "reported": "denunciado"
+  },
+  "contentType": {
+    "post": "post",
+    "comment": "comentário"
+  },
+  "moderationStatus": {
+    "visible": "visível",
+    "hidden": "oculto",
+    "removed": "removido"
+  },
+  "reportCount": "×{count} denúncias",
+  "inChannel": "em {channel}",
+  "contentUnavailable": "Conteúdo indisponível (apagado ou não é um post).",
+  "reporterNote": "Nota de quem denunciou: {details}",
+  "author": "autor →",
+  "authorNamed": "autor · {name} →",
+  "actions": {
+    "hide": "Ocultar",
+    "remove": "Remover",
+    "restore": "Restaurar",
+    "dismiss": "Descartar"
+  }
+}

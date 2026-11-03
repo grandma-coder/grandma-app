@@ -1,7 +1,9 @@
 "use client"
 import { useState } from "react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { useLocale, useTranslations } from "next-intl"
 import { trpc } from "@/lib/trpc"
+import { htmlLang, type Locale } from "@/i18n/config"
 
 const RANGES = [
   { value: 7, label: "7d" },
@@ -9,14 +11,16 @@ const RANGES = [
   { value: 90, label: "90d" },
 ] as const
 
-function usd(v: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: v >= 100 ? 0 : 2 }).format(v)
+function usd(v: number, lang: string): string {
+  return new Intl.NumberFormat(lang, { style: "currency", currency: "USD", maximumFractionDigits: v >= 100 ? 0 : 2 }).format(v)
 }
-function compactNum(v: number): string {
-  return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(v)
+function compactNum(v: number, lang: string): string {
+  return new Intl.NumberFormat(lang, { notation: "compact", maximumFractionDigits: 1 }).format(v)
 }
 
 export function AiCostView() {
+  const t = useTranslations("ai")
+  const lang = htmlLang(useLocale() as Locale)
   const [days, setDays] = useState<number>(30)
   const { data, isLoading } = trpc.ai.overview.useQuery({ days }, { staleTime: 60_000 })
 
@@ -31,20 +35,21 @@ export function AiCostView() {
               days === r.value ? "bg-accent-500 text-white" : "border border-border-default text-fg-tertiary hover:text-fg-primary"
             }`}
           >
-            {r.label}
+            {t(`ranges.${r.label}`)}
           </button>
         ))}
       </div>
 
-      {isLoading && <p className="text-sm text-fg-tertiary">Loading…</p>}
+      {isLoading && <p className="text-sm text-fg-tertiary">{t("loading")}</p>}
 
       {data && !data.hasData && (
         <div className="rounded-xl border border-border-default bg-card p-6 text-sm text-fg-secondary shadow-[var(--shadow-sm)]">
-          <p className="mb-1 font-medium text-fg-primary">No AI usage logged yet</p>
+          <p className="mb-1 font-medium text-fg-primary">{t("empty.title")}</p>
           <p className="text-fg-tertiary">
-            The edge functions log one <code className="font-mono text-xs">ai_usage</code> row per Claude call. Once{" "}
-            <span className="font-mono">nana-chat</span> / <span className="font-mono">food-ai</span> / <span className="font-mono">scan-image</span> deploy with the
-            <code className="font-mono text-xs"> logAiUsage()</code> helper, spend appears here.
+            {t.rich("empty.body", {
+              code: (c) => <code className="font-mono text-xs">{c}</code>,
+              mono: (c) => <span className="font-mono">{c}</span>,
+            })}
           </p>
         </div>
       )}
@@ -53,11 +58,11 @@ export function AiCostView() {
         <>
           {/* Headline totals */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Kpi label="Total spend" value={usd(data.totals.cost)} />
-            <Kpi label="Calls" value={compactNum(data.totals.calls)} />
-            <Kpi label="Tokens" value={compactNum(data.totals.tokens)} />
+            <Kpi label={t("kpi.totalSpend")} value={usd(data.totals.cost, lang)} />
+            <Kpi label={t("kpi.calls")} value={compactNum(data.totals.calls, lang)} />
+            <Kpi label={t("kpi.tokens")} value={compactNum(data.totals.tokens, lang)} />
             <Kpi
-              label="Error rate"
+              label={t("kpi.errorRate")}
               value={`${(data.totals.errorRate * 100).toFixed(1)}%`}
               tone={data.totals.errorRate > 0.05 ? "text-danger" : "text-fg-primary"}
             />
@@ -66,7 +71,7 @@ export function AiCostView() {
           {/* Daily cost trend */}
           {data.daily.length > 1 && (
             <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.1em] text-fg-muted">Daily spend</p>
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.1em] text-fg-muted">{t("daily.title")}</p>
               <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={data.daily} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                   <defs>
@@ -81,7 +86,7 @@ export function AiCostView() {
                   <Tooltip
                     contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border-default)", borderRadius: 10, fontSize: 12 }}
                     labelStyle={{ color: "var(--fg-tertiary)" }}
-                    formatter={(v) => [usd(Number(v)), "spend"]}
+                    formatter={(v) => [usd(Number(v), lang), t("daily.spend")]}
                   />
                   <Area type="monotone" dataKey="cost" stroke="var(--accent-500)" strokeWidth={2} fill="url(#gAi)" />
                 </AreaChart>
@@ -92,15 +97,15 @@ export function AiCostView() {
           <div className="grid gap-4 lg:grid-cols-2">
             {/* Per function */}
             <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.1em] text-fg-muted">By function</p>
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.1em] text-fg-muted">{t("byFunction.title")}</p>
               <div className="space-y-2">
                 {data.byFunction.map((f) => (
                   <div key={f.fn} className="flex items-center justify-between gap-2 text-sm">
                     <span className="font-mono text-xs text-fg-secondary">{f.fn}</span>
                     <div className="flex items-center gap-3 text-xs text-fg-tertiary">
-                      <span>{compactNum(f.calls)} calls</span>
-                      {f.errors > 0 && <span className="text-danger">{f.errors} err</span>}
-                      <span className="display font-semibold tabular-nums text-fg-primary">{usd(f.cost)}</span>
+                      <span>{t("byFunction.calls", { n: compactNum(f.calls, lang) })}</span>
+                      {f.errors > 0 && <span className="text-danger">{t("byFunction.errors", { n: f.errors })}</span>}
+                      <span className="display font-semibold tabular-nums text-fg-primary">{usd(f.cost, lang)}</span>
                     </div>
                   </div>
                 ))}
@@ -109,14 +114,14 @@ export function AiCostView() {
 
             {/* Per model */}
             <div className="rounded-xl border border-border-default bg-card p-5 shadow-[var(--shadow-sm)]">
-              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.1em] text-fg-muted">By model</p>
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.1em] text-fg-muted">{t("byModel.title")}</p>
               <div className="space-y-2">
                 {data.byModel.map((m) => (
                   <div key={m.model} className="flex items-center justify-between gap-2 text-sm">
                     <span className="font-mono text-xs text-fg-secondary">{m.model}</span>
                     <div className="flex items-center gap-3 text-xs text-fg-tertiary">
-                      <span>{compactNum(m.tokens)} tok</span>
-                      <span className="display font-semibold tabular-nums text-fg-primary">{usd(m.cost)}</span>
+                      <span>{t("byModel.tokens", { n: compactNum(m.tokens, lang) })}</span>
+                      <span className="display font-semibold tabular-nums text-fg-primary">{usd(m.cost, lang)}</span>
                     </div>
                   </div>
                 ))}
@@ -130,9 +135,9 @@ export function AiCostView() {
               <table className="w-full text-sm">
                 <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
                   <tr>
-                    <th className="px-4 py-2.5 font-medium">Top users by spend</th>
-                    <th className="px-4 py-2.5 font-medium">Calls</th>
-                    <th className="px-4 py-2.5 font-medium">Cost</th>
+                    <th className="px-4 py-2.5 font-medium">{t("topUsers.title")}</th>
+                    <th className="px-4 py-2.5 font-medium">{t("topUsers.calls")}</th>
+                    <th className="px-4 py-2.5 font-medium">{t("topUsers.cost")}</th>
                     <th className="px-4 py-2.5" />
                   </tr>
                 </thead>
@@ -140,10 +145,10 @@ export function AiCostView() {
                   {data.topUsers.map((u) => (
                     <tr key={u.userId} className="border-t border-border-subtle text-fg-secondary hover:bg-card-hover">
                       <td className="px-4 py-2.5 text-fg-primary">{u.email ?? <span className="font-mono text-xs text-fg-muted">{u.userId.slice(0, 8)}…</span>}</td>
-                      <td className="px-4 py-2.5 tabular-nums">{compactNum(u.calls)}</td>
-                      <td className="px-4 py-2.5 display font-semibold tabular-nums text-fg-primary">{usd(u.cost)}</td>
+                      <td className="px-4 py-2.5 tabular-nums">{compactNum(u.calls, lang)}</td>
+                      <td className="px-4 py-2.5 display font-semibold tabular-nums text-fg-primary">{usd(u.cost, lang)}</td>
                       <td className="px-4 py-2.5">
-                        <a href={`/users/${u.userId}`} className="text-xs font-medium text-accent-500 hover:text-accent-600">view →</a>
+                        <a href={`/users/${u.userId}`} className="text-xs font-medium text-accent-500 hover:text-accent-600">{t("topUsers.view")}</a>
                       </td>
                     </tr>
                   ))}

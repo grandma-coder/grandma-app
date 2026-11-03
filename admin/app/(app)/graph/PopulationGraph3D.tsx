@@ -1,6 +1,7 @@
 "use client"
 import { useMemo, useRef, useState, type ComponentType, type Ref } from "react"
 import dynamic from "next/dynamic"
+import { useTranslations } from "next-intl"
 import type { ForceGraphProps, ForceGraphMethods } from "react-force-graph-3d"
 import { useContainerSize } from "./useContainerSize"
 import { GraphSearch } from "./GraphSearch"
@@ -30,6 +31,7 @@ export function PopulationGraph3D({
   data: { nodes: PopNode[]; edges: PopEdge[]; totalUsers: number; shown: number; capped: boolean }
   onPickUser: (id: string, label: string) => void
 }) {
+  const t = useTranslations("graph")
   const { ref: containerRef, w, h } = useContainerSize<HTMLDivElement>()
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined)
   const [panelId, setPanelId] = useState<string | null>(null)
@@ -41,7 +43,7 @@ export function PopulationGraph3D({
     () => ({
       nodes: data.nodes.map((n) => ({
         id: n.id,
-        name: `${n.label} · ${n.degree} connections · ${n.tier}`,
+        name: t("population.nodeName3d", { label: n.label, degree: n.degree, tier: n.tier }),
         label: n.label,
         color: BEHAVIOR_COLOR[n.behavior] ?? BEHAVIOR_COLOR.none,
         val: 1 + (n.degree / maxDeg) * 8,
@@ -53,7 +55,7 @@ export function PopulationGraph3D({
         color: e.kind === "care_circle" ? "rgba(112,72,184,0.45)" : "rgba(80,80,80,0.22)",
       })),
     }),
-    [data, maxDeg],
+    [data, maxDeg, t],
   )
 
   // Open a node's panel + fly the camera to it (used by click AND search).
@@ -72,7 +74,7 @@ export function PopulationGraph3D({
   if (data.nodes.length === 0) {
     return (
       <div className="rounded-xl border border-border-default bg-card p-6 text-sm text-fg-secondary shadow-[var(--shadow-sm)]">
-        <p className="mb-1 font-medium text-fg-primary">No connections yet</p>
+        <p className="mb-1 font-medium text-fg-primary">{t("population.emptyTitle")}</p>
       </div>
     )
   }
@@ -82,8 +84,11 @@ export function PopulationGraph3D({
       <div className="flex flex-wrap items-center gap-3">
         <GraphSearch nodes={data.nodes} onSelect={selectNode} />
         <span className="text-xs text-fg-tertiary">
-          Showing <span className="font-semibold text-fg-primary">{data.shown}</span> of{" "}
-          <span className="font-semibold text-fg-primary">{data.totalUsers}</span>
+          {t.rich("population.showing", {
+            shown: data.shown,
+            total: data.totalUsers,
+            b: (c) => <span className="font-semibold text-fg-primary">{c}</span>,
+          })}
         </span>
       </div>
 
@@ -121,9 +126,7 @@ export function PopulationGraph3D({
       </div>
 
       <p className="text-xs text-fg-muted">
-        <span className="font-medium text-fg-tertiary">Search</span> or <span className="font-medium text-fg-tertiary">click</span> a node to open its details ·{" "}
-        <span className="font-medium text-fg-tertiary">drag</span> to orbit · <span className="font-medium text-fg-tertiary">scroll</span> to zoom.
-        Node size = connections; purple links = care-circle, grey = shared channels.
+        {t.rich("population.help3d", { b: (c) => <span className="font-medium text-fg-tertiary">{c}</span> })}
       </p>
     </div>
   )

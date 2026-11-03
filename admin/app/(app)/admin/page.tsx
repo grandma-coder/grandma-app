@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { createContext } from "@/server/context"
 import { AdminPanel } from "./AdminPanel"
 
@@ -7,18 +8,22 @@ import { AdminPanel } from "./AdminPanel"
  */
 export default async function AdminPage() {
   const ctx = await createContext()
+  const t = await getTranslations("admin")
 
-  if (!ctx.allowed) return <main className="p-8 text-fg-secondary">No access.</main>
+  if (!ctx.allowed) return <main className="p-8 text-fg-secondary">{t("noAccess")}</main>
 
   if (ctx.role !== "admin") {
     return (
       <main className="mx-auto max-w-2xl px-8 py-16 text-center">
-        <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Admin</p>
-        <h1 className="display text-2xl font-bold text-fg-primary">Admins only</h1>
+        <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">{t("eyebrow")}</p>
+        <h1 className="display text-2xl font-bold text-fg-primary">{t("adminsOnly.title")}</h1>
         <p className="mt-2 text-sm text-fg-tertiary">
-          Managing the team is restricted to admins. You&apos;re signed in as{" "}
-          <span className="font-medium text-fg-primary">{ctx.userEmail}</span> ·{" "}
-          <span className="text-accent-500">{ctx.role}</span>. Ask an admin to grant you access.
+          {t.rich("adminsOnly.body", {
+            email: ctx.userEmail ?? "",
+            role: ctx.role ?? "",
+            b: (c) => <span className="font-medium text-fg-primary">{c}</span>,
+            r: (c) => <span className="text-accent-500">{c}</span>,
+          })}
         </p>
       </main>
     )
@@ -26,12 +31,9 @@ export default async function AdminPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-8 py-10">
-      <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Admin</p>
-      <h1 className="display text-3xl font-bold tracking-tight text-fg-primary">Team</h1>
-      <p className="mt-2 max-w-2xl text-sm text-fg-tertiary">
-        Invite people to the command center and manage their access. Members sign in with Clerk;
-        the role you assign controls what they can see and do.
-      </p>
+      <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">{t("eyebrow")}</p>
+      <h1 className="display text-3xl font-bold tracking-tight text-fg-primary">{t("title")}</h1>
+      <p className="mt-2 max-w-2xl text-sm text-fg-tertiary">{t("intro")}</p>
       <div className="mt-8">
         <AdminPanel />
       </div>

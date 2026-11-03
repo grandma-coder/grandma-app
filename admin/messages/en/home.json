@@ -1,1 +1,72 @@
-{}
+{
+  "noAccess": {
+    "title": "No access",
+    "body": "You're signed in as <b>{email}</b>, but this address isn't on the command-center team allowlist.",
+    "unknown": "unknown"
+  },
+  "eyebrow": "Overview",
+  "intro": "Live health of the whole app — users, engagement, subscriptions, community & content.",
+  "signedInAs": "Signed in as {email} · <r>{role}</r>.",
+  "pillars": {
+    "users": { "name": "Users", "blurb": "Browse & search all app users" },
+    "metrics": { "name": "Metrics", "blurb": "KPIs, funnels, retention" },
+    "community": { "name": "Community", "blurb": "Channels & forum activity" },
+    "push": { "name": "Push", "blurb": "Compose & send notifications" },
+    "content": { "name": "Content", "blurb": "Questions, affirmations, birth guide, news" },
+    "releases": { "name": "Releases", "blurb": "App Store builds & changelogs" },
+    "tokens": { "name": "Design tokens", "blurb": "Brand colors, type & email visuals" },
+    "sentry": { "name": "Sentry", "blurb": "Crash triage" },
+    "beta": { "name": "Beta testers", "blurb": "Invite & track app beta testers" },
+    "admin": { "name": "Admin", "blurb": "Invite teammates & manage roles" }
+  },
+  "loading": "Loading overview…",
+  "kpi": {
+    "totalUsers": "Total users",
+    "new30d": "+{n} in 30d",
+    "mau": "MAU",
+    "today": "{n} today",
+    "stickiness": "Stickiness",
+    "stickinessSub": "DAU / MAU",
+    "totalLogs": "Total logs",
+    "thisWeek": "{n} this week",
+    "paid": "Paid",
+    "paidOf": "{paid} of {total}",
+    "estMrr": "Est. MRR",
+    "fromTierPrices": "from tier prices"
+  },
+  "activity": {
+    "title": "Activity — last 30 days",
+    "logs": "Logs"
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "note": "Est. MRR ${mrr} · real $ needs RevenueCat",
+    "free": "Free",
+    "premiumSolo": "Premium (Solo)",
+    "premiumFamily": "Premium (Family)"
+  },
+  "behaviors": {
+    "title": "Users by behavior",
+    "prePregnancy": "Pre-Pregnancy",
+    "pregnancy": "Pregnancy",
+    "kids": "Kids",
+    "note": "A user in multiple journeys counts in each."
+  },
+  "lifecycle": {
+    "title": "Lifecycle",
+    "active": "Active (7d)",
+    "dormant": "Dormant (7–30d)",
+    "atRisk": "At risk (30–60d)",
+    "churned": "Churned (60d+)"
+  },
+  "strip": {
+    "channels": "Channels",
+    "posts": "Posts",
+    "questions": "Questions",
+    "affirmations": "Affirmations",
+    "sources": "Sources",
+    "newsLive": "News live",
+    "drafts": "{n} drafts"
+  },
+  "explore": "Explore"
+}

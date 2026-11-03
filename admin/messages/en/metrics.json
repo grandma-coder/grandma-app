@@ -1,1 +1,38 @@
-{}
+{
+  "noAccess": "No access.",
+  "eyebrow": "Metrics",
+  "title": "Analytics",
+  "loading": "Loading…",
+  "presets": {
+    "d30": "30d",
+    "d90": "90d",
+    "m6": "6m",
+    "y1": "1y"
+  },
+  "kpi": {
+    "totalUsers": "Total users",
+    "premium": "Premium",
+    "dau": "DAU",
+    "last24h": "last 24h",
+    "wau": "WAU",
+    "d7": "7d",
+    "mau": "MAU",
+    "d30": "30d",
+    "signups": "Signups",
+    "inRange": "in range",
+    "vsPrior": "{arrow} {pct}% vs prior"
+  },
+  "timeseries": {
+    "title": "Signups & active users",
+    "signups": "Signups"
+  },
+  "funnel": {
+    "title": "Activation funnel"
+  },
+  "modes": {
+    "title": "Journey mode",
+    "pregnancy": "Pregnancy",
+    "kids": "Kids",
+    "pre": "Pre-pregnancy"
+  }
+}

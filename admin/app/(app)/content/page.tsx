@@ -1,4 +1,5 @@
 import { createContext } from "@/server/context"
+import { getTranslations } from "next-intl/server"
 import { ContentWorkspace } from "./ContentWorkspace"
 
 /**
@@ -8,16 +9,16 @@ import { ContentWorkspace } from "./ContentWorkspace"
  */
 export default async function ContentPage() {
   const ctx = await createContext()
-  if (!ctx.allowed) return <main className="p-8 text-fg-secondary">No access.</main>
+  const t = await getTranslations("content")
+  if (!ctx.allowed) return <main className="p-8 text-fg-secondary">{t("noAccess")}</main>
   const isAdmin = ctx.role === "admin"
 
   return (
     <main className="mx-auto max-w-5xl px-8 py-10">
-      <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Content</p>
-      <h1 className="display text-3xl font-bold tracking-tight text-fg-primary">Content database</h1>
+      <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">{t("eyebrow")}</p>
+      <h1 className="display text-3xl font-bold tracking-tight text-fg-primary">{t("title")}</h1>
       <p className="mt-2 max-w-2xl text-sm text-fg-tertiary">
-        The app&apos;s editable content. Changes here flow live to the app, which reads DB-first and falls back to
-        its bundled copy if the DB is unreachable — so a bad edit never blanks the app.
+        {t("intro")}
       </p>
       <div className="mt-8">
         <ContentWorkspace isAdmin={isAdmin} />

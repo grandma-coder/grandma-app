@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { trpc } from "@/lib/trpc"
 
 const PERIODS = [
@@ -9,6 +10,7 @@ const PERIODS = [
 ] as const
 
 function LevelPill({ level }: { level: string }) {
+  const t = useTranslations("sentry")
   const map: Record<string, string> = {
     fatal: "pill-danger",
     error: "pill-danger",
@@ -16,19 +18,21 @@ function LevelPill({ level }: { level: string }) {
     info: "pill-info",
     debug: "pill-info",
   }
-  return <span className={`pill ${map[level] ?? "pill-info"}`}>{level}</span>
+  return <span className={`pill ${map[level] ?? "pill-info"}`}>{t.has(`levels.${level}`) ? t(`levels.${level}`) : level}</span>
 }
 
-function fmtWhen(iso: string): string {
+function fmtWhen(iso: string, ago: (unit: "minutes" | "hours" | "days", n: number) => string): string {
   if (!iso) return "—"
   const d = new Date(iso)
   const mins = Math.round((Date.now() - d.getTime()) / 60000)
-  if (mins < 60) return `${mins}m ago`
-  if (mins < 1440) return `${Math.round(mins / 60)}h ago`
-  return `${Math.round(mins / 1440)}d ago`
+  if (mins < 60) return ago("minutes", mins)
+  if (mins < 1440) return ago("hours", Math.round(mins / 60))
+  return ago("days", Math.round(mins / 1440))
 }
 
 export function SentryConsole() {
+  const t = useTranslations("sentry")
+  const ago = (unit: "minutes" | "hours" | "days", n: number) => t(`ago.${unit}`, { n })
   const [period, setPeriod] = useState<(typeof PERIODS)[number]["value"]>("24h")
   const { data, isLoading } = trpc.sentry.issues.useQuery({ statsPeriod: period })
 
@@ -48,35 +52,37 @@ export function SentryConsole() {
         ))}
       </div>
 
-      {isLoading && <p className="text-sm text-fg-tertiary">Loading…</p>}
+      {isLoading && <p className="text-sm text-fg-tertiary">{t("loading")}</p>}
 
       {data && !data.configured && (
         <div className="rounded-xl border border-border-default bg-card p-6 text-sm text-fg-secondary shadow-[var(--shadow-sm)]">
-          <p className="mb-1 font-medium text-fg-primary">Sentry not configured</p>
+          <p className="mb-1 font-medium text-fg-primary">{t("notConfigured.title")}</p>
           <p className="text-fg-tertiary">
-            Set <code className="font-mono text-xs">SENTRY_AUTH_TOKEN</code> (read scope, org{" "}
-            <span className="font-mono">grandmaapp</span>) in the environment to pull live issues.
+            {t.rich("notConfigured.body", {
+              code: (c) => <code className="font-mono text-xs">{c}</code>,
+              mono: (c) => <span className="font-mono">{c}</span>,
+            })}
           </p>
         </div>
       )}
 
       {data?.error && (
-        <p className="text-sm text-danger">Sentry error: {data.error}</p>
+        <p className="text-sm text-danger">{t("error", { error: data.error })}</p>
       )}
 
       {data?.configured && !data.error && (
         data.issues.length === 0 ? (
-          <p className="text-sm text-fg-muted">No unresolved issues in this window. 🎉</p>
+          <p className="text-sm text-fg-muted">{t("empty")}</p>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border-default bg-card shadow-[var(--shadow-sm)]">
             <table className="w-full text-sm">
               <thead className="border-b border-border-subtle bg-deep text-left text-fg-tertiary">
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Issue</th>
-                  <th className="px-4 py-2.5 font-medium">Level</th>
-                  <th className="px-4 py-2.5 font-medium">Events</th>
-                  <th className="px-4 py-2.5 font-medium">Users</th>
-                  <th className="px-4 py-2.5 font-medium">Last seen</th>
+                  <th className="px-4 py-2.5 font-medium">{t("columns.issue")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("columns.level")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("columns.events")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("columns.users")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("columns.lastSeen")}</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
@@ -90,10 +96,10 @@ export function SentryConsole() {
                     <td className="px-4 py-2.5"><LevelPill level={i.level} /></td>
                     <td className="px-4 py-2.5 tabular-nums">{i.count}</td>
                     <td className="px-4 py-2.5 tabular-nums">{i.userCount}</td>
-                    <td className="px-4 py-2.5">{fmtWhen(i.lastSeen)}</td>
+                    <td className="px-4 py-2.5">{fmtWhen(i.lastSeen, ago)}</td>
                     <td className="px-4 py-2.5">
                       <a href={i.permalink} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-accent-500 hover:text-accent-600">
-                        open ↗
+                        {t("open")}
                       </a>
                     </td>
                   </tr>

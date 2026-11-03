@@ -1,20 +1,27 @@
 "use client"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { trpc, type RouterOutputs } from "@/lib/trpc"
 
 type CampaignRow = RouterOutputs["push"]["list"][number]
 
-const CATEGORIES = [
-  { value: "broadcast", label: "Broadcast (marketing)" },
-  { value: "insights", label: "Insights" },
-  { value: "appointments", label: "Appointments" },
-  { value: "cycle", label: "Cycle" },
-  { value: "milestones", label: "Milestones" },
-  { value: "care_circle", label: "Care circle" },
-  { value: "reminder", label: "Reminder" },
-] as const
+// Values are sent to the server as-is; labels come from push.categories.<value>.
+const CATEGORIES = ["broadcast", "insights", "appointments", "cycle", "milestones", "care_circle", "reminder"] as const
 
-type Category = (typeof CATEGORIES)[number]["value"]
+type Category = (typeof CATEGORIES)[number]
+
+// Deep-link value (from push.deepLinks query) → push.deepLinks.<key> label.
+// Unknown values fall back to the server-provided label.
+const DEEP_LINK_KEYS: Record<string, string> = {
+  "": "none",
+  "/(tabs)": "home",
+  "/(tabs)/agenda": "agenda",
+  "/(tabs)/library": "library",
+  "/channels": "channels",
+  "/grandma-talk": "grandmaTalk",
+  "/insights": "insights",
+  "/paywall": "paywall",
+}
 
 /** Local datetime <input> value → ISO string (or null). */
 function toIso(local: string): string | null {
@@ -40,6 +47,7 @@ export function ComposerModal({
   onClose: () => void
   onSaved: () => void
 }) {
+  const t = useTranslations("push")
   const [title, setTitle] = useState(editRow?.title ?? "")
   const [body, setBody] = useState(editRow?.body ?? "")
   const [category, setCategory] = useState<Category>((editRow?.category as Category) ?? "broadcast")
@@ -75,14 +83,14 @@ export function ComposerModal({
         excludeTitles: lastTitles.slice(-5),
       })
       if (!res.available) {
-        setError("AI copy isn't configured — set ANTHROPIC_API_KEY to enable Suggest.")
+        setError(t("composer.aiNotConfigured"))
         return
       }
       setTitle(res.title)
       setBody(res.body)
       setLastTitles((prev) => [...prev, res.title])
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Suggest failed")
+      setError(e instanceof Error ? e.message : t("composer.suggestFailed"))
     }
   }
 
@@ -90,7 +98,7 @@ export function ComposerModal({
     setError(null)
     const scheduledAt = scheduleOn ? toIso(scheduledLocal) : null
     if (scheduleOn && !scheduledAt) {
-      setError("Pick a valid date & time to schedule.")
+      setError(t("composer.invalidSchedule"))
       return
     }
     const payload = {
@@ -110,7 +118,7 @@ export function ComposerModal({
       }
       onSaved()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed")
+      setError(e instanceof Error ? e.message : t("composer.saveFailed"))
     }
   }
 
@@ -134,7 +142,7 @@ export function ComposerModal({
       }
       onSaved()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Send failed")
+      setError(e instanceof Error ? e.message : t("composer.sendFailed"))
     }
   }
 
@@ -146,24 +154,24 @@ export function ComposerModal({
       >
         <div className="mb-1 flex items-start justify-between">
           <h2 className="display text-lg font-semibold text-fg-primary">
-            {isEdit ? "Edit notification" : "New push notification"}
+            {isEdit ? t("composer.headingEdit") : t("composer.headingNew")}
           </h2>
-          <button onClick={onClose} className="text-fg-muted hover:text-fg-primary" aria-label="Close">
+          <button onClick={onClose} className="text-fg-muted hover:text-fg-primary" aria-label={t("composer.close")}>
             ✕
           </button>
         </div>
-        <p className="mb-4 text-sm text-fg-tertiary">Create a push notification to send to app users.</p>
+        <p className="mb-4 text-sm text-fg-tertiary">{t("composer.intro")}</p>
 
         {/* Title */}
         <div className="mb-3">
           <div className="mb-1 flex items-center justify-between">
-            <label className="text-xs font-medium text-fg-tertiary">Title ({title.length}/120)</label>
+            <label className="text-xs font-medium text-fg-tertiary">{t("composer.titleLabel", { count: title.length })}</label>
             {suggestAvailable && (
               <button
                 onClick={() => setShowSuggest((v) => !v)}
                 className="text-xs font-medium text-accent-500 hover:underline"
               >
-                ✨ Suggest with AI
+                {t("composer.suggest")}
               </button>
             )}
           </div>
@@ -171,7 +179,7 @@ export function ComposerModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={120}
-            placeholder="e.g. New this week ✨"
+            placeholder={t("composer.titlePlaceholder")}
             className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
           />
         </div>
@@ -179,12 +187,12 @@ export function ComposerModal({
         {/* AI suggest panel */}
         {showSuggest && suggestAvailable && (
           <div className="mb-3 rounded-lg border border-border-subtle bg-deep p-3">
-            <label className="mb-1 block text-xs font-medium text-fg-tertiary">What&apos;s this about?</label>
+            <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("composer.briefLabel")}</label>
             <textarea
               value={brief}
               onChange={(e) => setBrief(e.target.value)}
               rows={2}
-              placeholder="e.g. Remind pregnant users to log this week's weight"
+              placeholder={t("composer.briefPlaceholder")}
               className="w-full rounded-lg border border-border-default bg-card px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
             />
             <button
@@ -192,35 +200,35 @@ export function ComposerModal({
               disabled={suggest.isPending}
               className="mt-2 rounded-full bg-accent-500 px-4 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             >
-              {suggest.isPending ? "Drafting…" : lastTitles.length ? "Try another" : "Draft copy"}
+              {suggest.isPending ? t("composer.drafting") : lastTitles.length ? t("composer.tryAnother") : t("composer.draftCopy")}
             </button>
           </div>
         )}
 
         {/* Body */}
         <div className="mb-3">
-          <label className="mb-1 block text-xs font-medium text-fg-tertiary">Body ({body.length}/400)</label>
+          <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("composer.bodyLabel", { count: body.length })}</label>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             maxLength={400}
             rows={3}
-            placeholder="The notification message users will see…"
+            placeholder={t("composer.bodyPlaceholder")}
             className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-primary placeholder:text-fg-muted focus:border-accent-400 focus:outline-none"
           />
         </div>
 
         {/* Category (consent gate) */}
         <div className="mb-3">
-          <label className="mb-1 block text-xs font-medium text-fg-tertiary">Category (consent gate)</label>
+          <label className="mb-1 block text-xs font-medium text-fg-tertiary">{t("composer.categoryLabel")}</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as Category)}
             className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-secondary focus:border-accent-400 focus:outline-none"
           >
             {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
+              <option key={c} value={c}>
+                {t(`categories.${c}`)}
               </option>
             ))}
           </select>
@@ -229,16 +237,16 @@ export function ComposerModal({
         {/* Deep link */}
         <div className="mb-3">
           <label className="mb-1 block text-xs font-medium text-fg-tertiary">
-            Deep link <span className="font-normal text-fg-muted">(optional — where to navigate on tap)</span>
+            {t("composer.deepLinkLabel")} <span className="font-normal text-fg-muted">{t("composer.deepLinkHint")}</span>
           </label>
           <select
             value={deepLink}
             onChange={(e) => setDeepLink(e.target.value)}
             className="w-full rounded-lg border border-border-default bg-deep px-3 py-2 text-sm text-fg-secondary focus:border-accent-400 focus:outline-none"
           >
-            {(deepLinks.data ?? [{ value: "", label: "None" }]).map((d) => (
+            {(deepLinks.data ?? [{ value: "", label: t("deepLinks.none") }]).map((d) => (
               <option key={d.value} value={d.value}>
-                {d.label}
+                {d.value in DEEP_LINK_KEYS ? t(`deepLinks.${DEEP_LINK_KEYS[d.value]}`) : d.label}
               </option>
             ))}
           </select>
@@ -248,7 +256,7 @@ export function ComposerModal({
         <div className="mb-4">
           <label className="flex items-center gap-2 text-sm text-fg-secondary">
             <input type="checkbox" checked={scheduleOn} onChange={(e) => setScheduleOn(e.target.checked)} />
-            Schedule for later
+            {t("composer.scheduleLater")}
           </label>
           {scheduleOn && (
             <input
@@ -265,7 +273,7 @@ export function ComposerModal({
         {/* Footer */}
         <div className="flex items-center justify-end gap-2">
           <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-fg-tertiary hover:text-fg-primary">
-            Cancel
+            {t("cancel")}
           </button>
           {!scheduleOn && (
             <button
@@ -273,7 +281,7 @@ export function ComposerModal({
               disabled={!canSubmit}
               className="rounded-lg border border-border-default px-4 py-2 text-sm font-medium text-fg-primary hover:border-accent-400 disabled:opacity-40"
             >
-              {busy ? "Sending…" : "Save & send now"}
+              {busy ? t("composer.sending") : t("composer.saveAndSend")}
             </button>
           )}
           <button
@@ -281,7 +289,7 @@ export function ComposerModal({
             disabled={!canSubmit}
             className="rounded-lg bg-accent-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-600 disabled:opacity-40"
           >
-            {scheduleOn ? "Schedule" : "Save draft"}
+            {scheduleOn ? t("composer.schedule") : t("composer.saveDraft")}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 export interface PanelNode {
   id: string
@@ -14,12 +15,6 @@ const BEHAVIOR_COLOR: Record<string, string> = {
   pregnancy: "#B7A6E8",
   kids: "#8BB8E8",
   none: "#B3AC9C",
-}
-const BEHAVIOR_LABEL: Record<string, string> = {
-  pre_pregnancy: "Pre-pregnancy",
-  pregnancy: "Pregnancy",
-  kids: "Kids",
-  none: "No behavior",
 }
 
 /**
@@ -36,6 +31,8 @@ export function NodeSidePanel({
   onClose: () => void
   onOpenGraph: (id: string, label: string) => void
 }) {
+  const t = useTranslations("graph")
+  const behaviorLabel = t.has(`behavior.${node.behavior}`) ? t(`behavior.${node.behavior}`) : node.behavior
   return (
     <div className="absolute right-0 top-0 z-20 flex h-full w-72 flex-col border-l border-border-default bg-card/97 backdrop-blur-sm shadow-[var(--shadow-md)]">
       <div className="flex items-start justify-between gap-2 border-b border-border-subtle p-4">
@@ -48,10 +45,10 @@ export function NodeSidePanel({
           </span>
           <div className="min-w-0">
             <p className="truncate font-semibold text-fg-primary">{node.label}</p>
-            <p className="text-xs text-fg-tertiary">{BEHAVIOR_LABEL[node.behavior] ?? node.behavior}</p>
+            <p className="text-xs text-fg-tertiary">{behaviorLabel}</p>
           </div>
         </div>
-        <button onClick={onClose} className="text-fg-muted hover:text-fg-primary" aria-label="Close">
+        <button onClick={onClose} className="text-fg-muted hover:text-fg-primary" aria-label={t("panel.close")}>
           ✕
         </button>
       </div>
@@ -59,16 +56,16 @@ export function NodeSidePanel({
       <div className="flex-1 space-y-3 overflow-y-auto p-4 text-sm">
         <dl className="space-y-2">
           <div className="flex justify-between gap-3">
-            <dt className="text-fg-muted">Connections</dt>
+            <dt className="text-fg-muted">{t("panel.connections")}</dt>
             <dd className="font-semibold tabular-nums text-fg-primary">{node.degree}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-fg-muted">Subscription</dt>
+            <dt className="text-fg-muted">{t("panel.subscription")}</dt>
             <dd className="text-fg-secondary">{node.tier}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-fg-muted">Behavior</dt>
-            <dd className="text-fg-secondary">{BEHAVIOR_LABEL[node.behavior] ?? node.behavior}</dd>
+            <dt className="text-fg-muted">{t("panel.behavior")}</dt>
+            <dd className="text-fg-secondary">{behaviorLabel}</dd>
           </div>
         </dl>
       </div>
@@ -78,13 +75,13 @@ export function NodeSidePanel({
           onClick={() => onOpenGraph(node.id, node.label)}
           className="w-full rounded-lg bg-accent-500 px-3 py-2 text-sm font-medium text-white hover:bg-accent-600"
         >
-          Open full graph →
+          {t("panel.openGraph")}
         </button>
         <Link
           href={`/users/${node.id}`}
           className="block w-full rounded-lg border border-border-default px-3 py-2 text-center text-sm font-medium text-fg-secondary hover:bg-card-hover"
         >
-          View user profile
+          {t("panel.viewProfile")}
         </Link>
       </div>
     </div>

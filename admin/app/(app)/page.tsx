@@ -1,4 +1,5 @@
 import { createContext } from "@/server/context"
+import { getTranslations } from "next-intl/server"
 import { OverviewDashboard } from "./OverviewDashboard"
 
 /**
@@ -8,44 +9,46 @@ import { OverviewDashboard } from "./OverviewDashboard"
  */
 export default async function Home() {
   const ctx = await createContext()
+  const t = await getTranslations("home")
 
   if (!ctx.allowed) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <h1 className="display text-2xl font-semibold text-fg-primary">No access</h1>
+        <h1 className="display text-2xl font-semibold text-fg-primary">{t("noAccess.title")}</h1>
         <p className="max-w-md text-fg-secondary">
-          You&apos;re signed in as{" "}
-          <span className="font-medium text-fg-primary">{ctx.userEmail ?? "unknown"}</span>, but
-          this address isn&apos;t on the command-center team allowlist.
+          {t.rich("noAccess.body", {
+            email: ctx.userEmail ?? t("noAccess.unknown"),
+            b: (c) => <span className="font-medium text-fg-primary">{c}</span>,
+          })}
         </p>
       </main>
     )
   }
 
+  const pillar = (key: string, href: string) => ({ name: t(`pillars.${key}.name`), href, blurb: t(`pillars.${key}.blurb`) })
   const pillars = [
-    { name: "Users", href: "/users", blurb: "Browse & search all app users" },
-    { name: "Metrics", href: "/metrics", blurb: "KPIs, funnels, retention" },
-    { name: "Community", href: "/community", blurb: "Channels & forum activity" },
-    { name: "Push", href: "/push", blurb: "Compose & send notifications" },
-    { name: "Content", href: "/content", blurb: "Questions, affirmations, birth guide, news" },
-    { name: "Releases", href: "/releases", blurb: "App Store builds & changelogs" },
-    { name: "Design tokens", href: "/tokens", blurb: "Brand colors, type & email visuals" },
-    { name: "Sentry", href: "/sentry", blurb: "Crash triage" },
-    ...(ctx.role === "admin"
-      ? [
-          { name: "Beta testers", href: "/beta", blurb: "Invite & track app beta testers" },
-          { name: "Admin", href: "/admin", blurb: "Invite teammates & manage roles" },
-        ]
-      : []),
+    pillar("users", "/users"),
+    pillar("metrics", "/metrics"),
+    pillar("community", "/community"),
+    pillar("push", "/push"),
+    pillar("content", "/content"),
+    pillar("releases", "/releases"),
+    pillar("tokens", "/tokens"),
+    pillar("sentry", "/sentry"),
+    ...(ctx.role === "admin" ? [pillar("beta", "/beta"), pillar("admin", "/admin")] : []),
   ]
 
   return (
     <main className="mx-auto max-w-6xl px-8 py-10">
-      <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">Overview</p>
+      <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-muted">{t("eyebrow")}</p>
       <h1 className="display text-3xl font-bold tracking-tight text-fg-primary">Grandma</h1>
       <p className="mt-2 max-w-2xl text-sm text-fg-tertiary">
-        Live health of the whole app — users, engagement, subscriptions, community &amp; content.
-        Signed in as {ctx.userEmail} · <span className="text-accent-500">{ctx.role}</span>.
+        {t("intro")}{" "}
+        {t.rich("signedInAs", {
+          email: ctx.userEmail ?? "",
+          role: ctx.role ?? "",
+          r: (c) => <span className="text-accent-500">{c}</span>,
+        })}
       </p>
 
       <OverviewDashboard pillars={pillars} />

@@ -1,1 +1,36 @@
-{}
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Sentry",
+  "adminOnly": {
+    "title": "Só para admins",
+    "body": "A triagem de crashes é restrita ao papel de admin."
+  },
+  "title": "Triagem de crashes",
+  "loading": "Carregando…",
+  "notConfigured": {
+    "title": "Sentry não configurado",
+    "body": "Defina <code>SENTRY_AUTH_TOKEN</code> (escopo de leitura, org <mono>grandmaapp</mono>) no ambiente para puxar os issues ao vivo."
+  },
+  "error": "Erro do Sentry: {error}",
+  "empty": "Nenhum issue não resolvido neste período. 🎉",
+  "columns": {
+    "issue": "Issue",
+    "level": "Nível",
+    "events": "Eventos",
+    "users": "Usuários",
+    "lastSeen": "Visto por último"
+  },
+  "open": "abrir ↗",
+  "ago": {
+    "minutes": "há {n} min",
+    "hours": "há {n} h",
+    "days": "{n, plural, one {há # dia} other {há # dias}}"
+  },
+  "levels": {
+    "fatal": "fatal",
+    "error": "erro",
+    "warning": "aviso",
+    "info": "info",
+    "debug": "debug"
+  }
+}
