@@ -3812,4 +3812,7 @@ export const ptBR: TranslationKeys = {
   meno_calendar_heavierDay: "Dia mais pesado",
   preg_calendar_weekShort: "S{{n}}",
   preg_calendar_trimesterShort: "T{{n}}",
+  acceptInvite_permEditChild: "Editar o perfil da criança",
+  acceptInvite_permEmergency: "Ver informações médicas",
+  manageCaregivers_linkInvite: "Convite por link",
 }

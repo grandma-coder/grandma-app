@@ -3812,4 +3812,7 @@ export const ko: TranslationKeys = {
   meno_calendar_heavierDay: "더 힘든 날",
   preg_calendar_weekShort: "{{n}}주",
   preg_calendar_trimesterShort: "{{n}}분기",
+  acceptInvite_permEditChild: "아이 프로필 편집",
+  acceptInvite_permEmergency: "의료 정보 보기",
+  manageCaregivers_linkInvite: "링크 초대",
 }

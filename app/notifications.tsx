@@ -42,6 +42,7 @@ import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSt
 import { EmptyState } from '../components/ui/EmptyState'
 import { MissingStickers } from '../components/stickers/MissingStickers'
 import { useTranslation } from '../lib/i18n'
+import { displayNotificationText } from '../lib/notificationCopy'
 
 // ─── Type → Visual Config ───────────────────────────────────────────────────
 
@@ -633,7 +634,9 @@ export default function NotificationsScreen() {
                 }]}>{section.title}</Text>
           </View>
         )}
-        renderItem={({ item }) => {
+        renderItem={({ item: raw }) => {
+          // Old wellness rows still carry graded copy — show the neutral wording instead.
+          const item = { ...raw, ...displayNotificationText(raw) }
           const cfg = getTypeConfig(item.type)
           if (diffuse) {
             // Per-concept sticker hue — the Character family's own colors, not a

@@ -4094,4 +4094,7 @@ export interface TranslationKeys {
   meno_calendar_heavierDay: string
   preg_calendar_weekShort: string
   preg_calendar_trimesterShort: string
+  acceptInvite_permEditChild: string
+  acceptInvite_permEmergency: string
+  manageCaregivers_linkInvite: string
 }

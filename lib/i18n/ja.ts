@@ -3812,4 +3812,7 @@ export const ja: TranslationKeys = {
   meno_calendar_heavierDay: "重めの日",
   preg_calendar_weekShort: "{{n}}週",
   preg_calendar_trimesterShort: "T{{n}}",
+  acceptInvite_permEditChild: "お子さまのプロフィールを編集",
+  acceptInvite_permEmergency: "医療情報を見る",
+  manageCaregivers_linkInvite: "リンクで招待",
 }

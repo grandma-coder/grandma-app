@@ -3812,4 +3812,7 @@ export const fr: TranslationKeys = {
   meno_calendar_heavierDay: "Journée plus chargée",
   preg_calendar_weekShort: "S{{n}}",
   preg_calendar_trimesterShort: "T{{n}}",
+  acceptInvite_permEditChild: "Modifier le profil de l'enfant",
+  acceptInvite_permEmergency: "Voir les informations médicales",
+  manageCaregivers_linkInvite: "Invitation par lien",
 }

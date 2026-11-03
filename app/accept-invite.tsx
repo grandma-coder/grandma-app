@@ -12,6 +12,7 @@ import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 import { InkBackButton } from '../components/ui/InkBackButton'
 import { PillButton } from '../components/ui/PillButton'
 import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
+import { useGrandmaChatEnabled } from '../store/useFeatureFlags'
 
 type PermGlyph = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
 
@@ -21,6 +22,7 @@ export default function AcceptInvite() {
   const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
   const accent = getDiffuseAccent(mode, dt.isDark)
+  const chatEnabled = useGrandmaChatEnabled()
   const { t } = useTranslation()
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -104,11 +106,11 @@ export default function AcceptInvite() {
 
   // Map a capability key to a display row. Order is stable for rendering.
   const PERM_LABELS: { key: string; icon: keyof typeof Ionicons.glyphMap; Glyph: PermGlyph; sticker: SiteStickerName; label: string }[] = [
-    { key: 'view', icon: 'eye-outline', Glyph: Eye, sticker: 'eye', label: 'View the child’s logs' },
-    { key: 'log_activity', icon: 'create-outline', Glyph: PencilLine, sticker: 'pencil', label: 'Log daily activities' },
-    { key: 'chat', icon: 'chatbubble-outline', Glyph: MessageCircle, sticker: 'bubble', label: 'Use Grandma chat' },
-    { key: 'edit_child', icon: 'person-outline', Glyph: User, sticker: 'baby', label: 'Edit the child profile' },
-    { key: 'emergency', icon: 'medkit-outline', Glyph: HeartPulse, sticker: 'thermo', label: 'View medical information' },
+    { key: 'view', icon: 'eye-outline', Glyph: Eye, sticker: 'eye', label: t('acceptInvite_permView') },
+    { key: 'log_activity', icon: 'create-outline', Glyph: PencilLine, sticker: 'pencil', label: t('acceptInvite_permLog') },
+    { key: 'chat', icon: 'chatbubble-outline', Glyph: MessageCircle, sticker: 'bubble', label: t('acceptInvite_permChat') },
+    { key: 'edit_child', icon: 'person-outline', Glyph: User, sticker: 'baby', label: t('acceptInvite_permEditChild') },
+    { key: 'emergency', icon: 'medkit-outline', Glyph: HeartPulse, sticker: 'thermo', label: t('acceptInvite_permEmergency') },
   ]
 
   async function handleAccept() {
@@ -218,6 +220,8 @@ export default function AcceptInvite() {
         {/* Render the rows the owner actually granted. Falls back to the
             view/log/chat baseline when the preview fetch didn't resolve. */}
         {PERM_LABELS
+          // Chat is listed only while the server has it switched on.
+          .filter((p) => p.key !== 'chat' || chatEnabled)
           .filter((p) => (grantedPerms ? grantedPerms.includes(p.key) : ['view', 'log_activity', 'chat'].includes(p.key)))
           .map((p) => (
             <View key={p.key} style={diffuse ? styles.permRow : styles.siteRow}>

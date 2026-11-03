@@ -3812,4 +3812,7 @@ export const zh: TranslationKeys = {
   meno_calendar_heavierDay: "较重的一天",
   preg_calendar_weekShort: "{{n}}周",
   preg_calendar_trimesterShort: "T{{n}}",
+  acceptInvite_permEditChild: "编辑孩子的资料",
+  acceptInvite_permEmergency: "查看医疗信息",
+  manageCaregivers_linkInvite: "链接邀请",
 }

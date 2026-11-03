@@ -3812,4 +3812,7 @@ export const hi: TranslationKeys = {
   meno_calendar_heavierDay: "भारी दिन",
   preg_calendar_weekShort: "स{{n}}",
   preg_calendar_trimesterShort: "ति{{n}}",
+  acceptInvite_permEditChild: "बच्चे की प्रोफ़ाइल संपादित करें",
+  acceptInvite_permEmergency: "चिकित्सा जानकारी देखें",
+  manageCaregivers_linkInvite: "लिंक से आमंत्रण",
 }

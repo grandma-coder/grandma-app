@@ -4099,4 +4099,7 @@ export const en: TranslationKeys = {
   meno_calendar_heavierDay: "Heavier day",
   preg_calendar_weekShort: "W{{n}}",
   preg_calendar_trimesterShort: "T{{n}}",
+  acceptInvite_permEditChild: "Edit the child's profile",
+  acceptInvite_permEmergency: "See medical information",
+  manageCaregivers_linkInvite: "Invite link",
 }

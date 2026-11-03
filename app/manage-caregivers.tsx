@@ -26,6 +26,15 @@ interface CaregiverRow {
   status: string
   created_at: string
   is_locked: boolean
+  permissions?: { _display_name?: string } | null
+}
+
+/** Link invites are stored with a generated '@invite.local' / '@pending' address — never show that. */
+function caregiverLabel(row: CaregiverRow, linkInvite: string): string {
+  const name = row.permissions?._display_name?.trim()
+  if (name) return name
+  const placeholder = row.email?.includes('@invite.local') || row.email?.includes('@pending')
+  return placeholder ? linkInvite : row.email
 }
 
 export default function ManageCaregivers() {
@@ -123,7 +132,7 @@ export default function ManageCaregivers() {
       const [{ data: rows }, { data: profile }] = await Promise.all([
         supabase
           .from('child_caregivers')
-          .select('id, email, role, status, created_at, is_locked')
+          .select('id, email, role, status, created_at, is_locked, permissions')
           .eq('child_id', child.id)
           .neq('role', 'parent')
           .order('created_at', { ascending: false }),
@@ -303,7 +312,7 @@ export default function ManageCaregivers() {
                   <View style={styles.cardLeft}>
                     <SiteSticker name={avatar} size={38} cut />
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.email, { fontFamily: font.bodyBold }]} numberOfLines={1}>{item.email}</Text>
+                      <Text style={[styles.email, { fontFamily: font.bodyBold }]} numberOfLines={1}>{caregiverLabel(item, t('manageCaregivers_linkInvite'))}</Text>
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
                         <View style={[styles.tag, { backgroundColor: stickers.yellowSoft }]}>
                           <Text style={styles.tagText}>{item.role}</Text>
@@ -347,7 +356,7 @@ export default function ManageCaregivers() {
                     <Text style={[
                       styles.email,
                       diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.body, fontWeight: '400' },
-                    ]}>{item.email}</Text>
+                    ]}>{caregiverLabel(item, t('manageCaregivers_linkInvite'))}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                       <Text style={[
                         styles.role,
