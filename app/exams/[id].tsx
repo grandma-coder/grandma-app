@@ -28,7 +28,7 @@ import {
 } from 'lucide-react-native'
 
 import { Character } from '../../components/characters/Characters'
-import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent, font } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
@@ -58,7 +58,7 @@ const { width: SCREEN_W } = Dimensions.get('window')
 
 export default function ExamDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { colors } = useTheme()
+  const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
@@ -171,7 +171,7 @@ export default function ExamDetailScreen() {
             <Display size={28} color={colors.text}>{exam.title}</Display>
           )}
           {exam.result && (
-            <Text style={[styles.heroResult, { color: diffuse ? dt.colors.ink : accent, fontFamily: diffuse ? diffuseFont.italic : undefined, fontWeight: diffuse ? '400' : '700' }]}>{exam.result}</Text>
+            <Text style={[styles.heroResult, { color: diffuse ? dt.colors.ink : colors.textSecondary, fontFamily: diffuse ? diffuseFont.italic : font.body, fontWeight: '400' }]}>{exam.result}</Text>
           )}
           <View style={styles.metaChipRow}>
             <MetaChip icon={<Character name="calendar" size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} />} label={formatExamDate(exam.examDate)} colors={colors} diffuse={diffuse} />
@@ -185,8 +185,8 @@ export default function ExamDetailScreen() {
                   <Text style={[styles.chipText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>{child.name}</Text>
                 </View>
               ) : (
-                <View style={[styles.chip, { backgroundColor: childColor(childIdx) + '18', borderColor: childColor(childIdx) + '40' }]}>
-                  <Text style={[styles.chipText, { color: childColor(childIdx) }]}>{child.name}</Text>
+                <View style={[styles.chip, { backgroundColor: childColor(childIdx) + '22', borderColor: colors.text, borderWidth: 1.5 }]}>
+                  <Text style={[styles.chipText, { color: colors.text }]}>{child.name}</Text>
                 </View>
               )
             )}
@@ -195,8 +195,8 @@ export default function ExamDetailScreen() {
 
         {/* Flagged */}
         {flagged.length > 0 && (
-          <View style={[styles.flaggedBox, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.error, borderRadius: 20 } : { backgroundColor: brand.error + '12', borderColor: brand.error + '30' }]}>
-            <Text style={[styles.flaggedTitle, { color: diffuse ? dt.colors.error : brand.error, fontFamily: diffuse ? diffuseFont.mono : undefined }]}>{t('examDetail_flaggedTitle')}</Text>
+          <View style={[styles.flaggedBox, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.error, borderRadius: 20 } : { backgroundColor: stickers.peachSoft, borderColor: colors.text, borderWidth: 1.5 }]}>
+            <Text style={[styles.flaggedTitle, { color: diffuse ? dt.colors.error : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{t('examDetail_flaggedTitle')}</Text>
             {flagged.map((f, i) => (
               <Text key={i} style={[styles.flaggedItem, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : undefined }]}>{t('examDetail_flaggedBullet', { item: f })}</Text>
             ))}
@@ -208,7 +208,7 @@ export default function ExamDetailScreen() {
 
         {/* Notes */}
         {exam.notes && (
-          <View style={[styles.section, diffuse ? { backgroundColor: 'transparent', borderColor: 'transparent', borderTopWidth: 1, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[styles.section, diffuse ? { backgroundColor: 'transparent', borderColor: 'transparent', borderTopWidth: 1, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 } : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}>
             {diffuse ? (
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{t('examDetail_notesLabel')}</Text>
             ) : (
@@ -226,7 +226,7 @@ export default function ExamDetailScreen() {
 
         {/* AI Extracted metadata */}
         {exam.extracted && (
-          <View style={[styles.section, diffuse ? { backgroundColor: 'transparent', borderColor: 'transparent', borderTopWidth: 1, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[styles.section, diffuse ? { backgroundColor: 'transparent', borderColor: 'transparent', borderTopWidth: 1, borderTopColor: dt.colors.line, borderRadius: 0, paddingHorizontal: 0 } : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}>
             <View style={styles.sectionHead}>
               {diffuse ? (
                 <DiffuseBloomIcon color={getDiffuseAccent(exam.behavior, dt.isDark)} size={24} intensity={0.4}><Character name="sparkle" size={13} color={dt.colors.ink3} /></DiffuseBloomIcon>
@@ -299,16 +299,14 @@ export default function ExamDetailScreen() {
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.error }}>{t('examDetail_deleteBtn')}</Text>
           </Pressable>
         ) : (
+          // Site look: delete is a quiet underlined link (as in the calendar sheets), not a red slab.
           <Pressable
             onPress={() => handleDelete(exam)}
             disabled={deleting}
-            style={({ pressed }) => [
-              styles.deleteBtn,
-              { borderColor: brand.error + '40', opacity: pressed ? 0.7 : 1 },
-            ]}
+            hitSlop={8}
+            style={({ pressed }) => [styles.deleteLink, { opacity: pressed ? 0.6 : 1 }]}
           >
-            <Trash2 size={16} color={brand.error} strokeWidth={2} />
-            <Text style={[styles.deleteText, { color: brand.error }]}>{t('examDetail_deleteBtn')}</Text>
+            <Text style={[styles.deleteLinkText, { color: colors.textSecondary, fontFamily: font.body }]}>{t('examDetail_deleteBtn')}</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -383,7 +381,7 @@ function MetaChip({
     )
   }
   return (
-    <View style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}>
       {icon}
       <Text style={[styles.chipText, { color: colors.textSecondary, marginLeft: 4 }]}>{label}</Text>
     </View>
@@ -457,6 +455,8 @@ const styles = StyleSheet.create({
   photosSection: { marginBottom: 14 },
   photoStrip: { gap: 10, paddingVertical: 4 },
   photo: { width: 120, height: 120, borderRadius: 14 },
+  deleteLink: { alignSelf: 'center', paddingVertical: 14, marginTop: 12 },
+  deleteLinkText: { fontSize: 14, textDecorationLine: 'underline' },
   deleteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
