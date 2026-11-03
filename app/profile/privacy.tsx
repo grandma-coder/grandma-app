@@ -26,6 +26,9 @@ import { Character, type CharacterName } from '../../components/characters/Chara
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle } from '../../components/profile/SiteSettingsKit'
+import { useGrandmaHistoryStore } from '../../store/useGrandmaHistoryStore'
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
+import { queryClient } from '../../lib/queryClient'
 
 type StickerKind =
   | 'heart' | 'crossPink' | 'crossCoral' | 'sparkle' | 'star' | 'leaf' | 'eye'
@@ -49,6 +52,7 @@ const DEFAULT_SETTINGS: PrivacySettings = {
 }
 
 export default function PrivacyScreen() {
+  const chatOn = useGrandmaChatEnabled()
   const { colors, font, stickers, radius, spacing, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -206,6 +210,9 @@ export default function PrivacyScreen() {
                 const { error } = await supabase.from('chat_messages').delete().in('child_id', childIds)
                 if (error) throw error
               }
+              // The chat history users actually see lives on the device; the server table above is
+              // legacy. Without this, 'Cleared' showed while every conversation was still there.
+              useGrandmaHistoryStore.getState().clearAll()
               toast.show({ title: 'Cleared', message: 'Chat history has been cleared.' })
             } catch (e: any) { Alert.alert('Error', e.message) }
             finally { setClearingChat(false) }
@@ -217,7 +224,6 @@ export default function PrivacyScreen() {
 
   async function handleClearMemories() {
     const childIds = children.map((c) => c.id)
-    if (childIds.length === 0) return Alert.alert(t('privacy_noData'), 'No children to clear memories for.')
 
     Alert.alert(
       t('privacy_clearMemoriesTitle'),
@@ -230,13 +236,22 @@ export default function PrivacyScreen() {
           onPress: async () => {
             setClearingMemories(true)
             try {
-              const { error } = await supabase
-                .from('child_logs')
-                .delete()
-                .in('child_id', childIds)
-                .eq('type', 'photo')
-
-              if (error) throw error
+              // Memories live in three tables (see lib/memories): kids photos per child, and cycle /
+              // pregnancy memories per user. Only the kids rows were cleared before, and users with no
+              // kids couldn't clear anything.
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session) throw new Error('Not signed in')
+              const uid = session.user.id
+              const results = await Promise.all([
+                childIds.length > 0
+                  ? supabase.from('child_logs').delete().in('child_id', childIds).eq('type', 'photo')
+                  : Promise.resolve({ error: null }),
+                supabase.from('cycle_logs').delete().eq('user_id', uid).eq('type', 'memory'),
+                supabase.from('pregnancy_logs').delete().eq('user_id', uid).eq('log_type', 'memory'),
+              ])
+              const failed = results.find((r) => r.error)
+              if (failed?.error) throw failed.error
+              void queryClient.invalidateQueries({ queryKey: ['memories'] })
               toast.show({ title: 'Cleared', message: 'All memories have been deleted.' })
             } catch (e: any) { Alert.alert('Error', e.message) }
             finally { setClearingMemories(false) }
@@ -317,7 +332,7 @@ export default function PrivacyScreen() {
             <SiteEyebrow>{t('privacy_sectionYourData')}</SiteEyebrow>
             <SiteRow sticker="doc" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} loading={exporting} />
             <SiteRow sticker="doc" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} />
-            <SiteRow sticker="bubble" label={t('privacy_clearChat')} desc={t('privacy_clearChatDesc')} onPress={handleClearChat} loading={clearingChat} />
+            {chatOn && <SiteRow sticker="bubble" label={t('privacy_clearChat')} desc={t('privacy_clearChatDesc')} onPress={handleClearChat} loading={clearingChat} />}
             <SiteRow sticker="camera" label={t('privacy_clearMemories')} desc={t('privacy_clearMemoriesDesc')} onPress={handleClearMemories} loading={clearingMemories} />
             <SiteRow sticker="syringe" label={t('privacy_clearHealth')} desc={t('privacy_clearHealthDesc')} onPress={handleClearHealthRecords} last />
 

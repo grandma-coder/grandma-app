@@ -348,8 +348,10 @@ export default function KidsProfileScreen() {
             key={child.id}
             child={child}
             index={i}
-            onEdit={() => setEditingChild(child)}
-            onDelete={() => handleDelete(child)}
+            // Only the parent can edit or remove a child (RLS is parent-only); a caregiver who also has
+            // their own kids journey saw these controls, and the write silently matched no rows.
+            onEdit={child.caregiverRole === 'parent' ? () => setEditingChild(child) : undefined}
+            onDelete={child.caregiverRole === 'parent' ? () => handleDelete(child) : undefined}
           />
         ))}
 
@@ -389,7 +391,7 @@ export default function KidsProfileScreen() {
 
 const KID_COLORS = ['#9DC3E8', '#F2B2C7', '#BDD48C', '#C8B6E8', '#F5D652', '#F5B896']
 
-function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; index: number; onEdit: () => void; onDelete: () => void }) {
+function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; index: number; onEdit?: () => void; onDelete?: () => void }) {
   const { colors, font, stickers, isDark, paper, hairline, chipInk, diffuse, bw } = useKidsTheme()
   const accent = KID_COLORS[index % KID_COLORS.length]
   const kidSoft = [stickers.blueSoft, stickers.pinkSoft, stickers.greenSoft, stickers.lilacSoft, stickers.yellowSoft, stickers.peachSoft][index % 6]
@@ -491,12 +493,16 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
           </Text>
         </View>
         <View style={styles.cardActions}>
-          <Pressable onPress={onEdit} hitSlop={8}>
-            {site ? <SiteSticker name="pencil" size={24} /> : <Pencil size={16} color={colors.text} strokeWidth={2} />}
-          </Pressable>
-          <Pressable onPress={onDelete} hitSlop={8}>
-            <Trash2 size={15} color={site ? colors.text : colors.textMuted} strokeWidth={2} />
-          </Pressable>
+          {onEdit && (
+            <Pressable onPress={onEdit} hitSlop={8}>
+              {site ? <SiteSticker name="pencil" size={24} /> : <Pencil size={16} color={colors.text} strokeWidth={2} />}
+            </Pressable>
+          )}
+          {onDelete && (
+            <Pressable onPress={onDelete} hitSlop={8}>
+              <Trash2 size={15} color={site ? colors.text : colors.textMuted} strokeWidth={2} />
+            </Pressable>
+          )}
         </View>
       </View>
 
