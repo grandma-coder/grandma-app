@@ -93,6 +93,7 @@ import { modeToBehavior } from '../../lib/caregiverCards'
 import { ShareCardsEditor } from '../../components/caregiver/ShareCardsEditor'
 import { healthLogText } from '../../lib/kidsHealthLogText'
 import { dateLoc } from '../../lib/kpLocale'
+import { AfterTransition } from '../../components/ui/AfterTransition'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -901,6 +902,7 @@ export default function CareCircleScreen() {
       )}
 
       {tab === 'members' ? (
+        <AfterTransition>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Empty state */}
           {members.length === 0 && !loading && (
@@ -1251,8 +1253,10 @@ export default function CareCircleScreen() {
             style={{ marginTop: 10 }}
           />
         </ScrollView>
+        </AfterTransition>
       ) : (
         /* Activity Feed */
+        <AfterTransition>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Filter: By child */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
@@ -1429,6 +1433,7 @@ export default function CareCircleScreen() {
             ))
           })()}
         </ScrollView>
+        </AfterTransition>
       )}
 
       {/* ─── Add Member Bottom Sheet ────────────────────────────────── */}

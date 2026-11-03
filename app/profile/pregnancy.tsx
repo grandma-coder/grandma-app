@@ -57,6 +57,7 @@ import { PaperCard } from '../../components/ui/PaperCard'
 import { PillButton } from '../../components/ui/PillButton'
 import { PaperAlert } from '../../components/ui/PaperAlert'
 import { dateLoc } from '../../lib/kpLocale'
+import { AfterTransition } from '../../components/ui/AfterTransition'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1093,6 +1094,7 @@ export default function PregnancyProfileScreen() {
         )}
       </View>
 
+      <AfterTransition>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
@@ -1661,6 +1663,7 @@ export default function PregnancyProfileScreen() {
           style={{ marginTop: 8, marginBottom: 16 }}
         />
       </ScrollView>
+      </AfterTransition>
 
       {editField && (
         <EditFieldModal

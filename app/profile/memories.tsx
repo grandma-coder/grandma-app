@@ -61,6 +61,7 @@ import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon, DiffuseEmptyState } from '../../components/ui/diffuse/DiffusePrimitives'
 import { parseLocalDate } from '../../lib/localDate'
 import { dateLoc } from '../../lib/kpLocale'
+import { AfterTransition } from '../../components/ui/AfterTransition'
 
 const SCREEN_W = Dimensions.get('window').width
 const GRID_GAP = 3
@@ -480,6 +481,7 @@ export default function MemoriesScreen() {
       </View>
 
       {/* Gallery */}
+      <AfterTransition>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {!loading && filtered.length === 0 && diffuse && (
           <DiffuseEmptyState
@@ -539,6 +541,7 @@ export default function MemoriesScreen() {
           </View>
         ))}
       </ScrollView>
+      </AfterTransition>
 
       {/* ─── Full-screen viewer with carousel ──────────────────────── */}
       {viewPost && (

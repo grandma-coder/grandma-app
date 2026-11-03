@@ -55,6 +55,7 @@ import {
 } from '../../components/ui/Stickers'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { parseLocalDate } from '../../lib/localDate'
+import { AfterTransition } from '../../components/ui/AfterTransition'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -228,6 +229,7 @@ export default function HealthHistoryScreen() {
         </View>
       )}
 
+      <AfterTransition>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* ─── Quick Stats ──────────────────────────────────────────── */}
         <View style={styles.statsRow}>
@@ -482,6 +484,7 @@ export default function HealthHistoryScreen() {
           )
         })()}
       </ScrollView>
+      </AfterTransition>
 
       {/* ─── Detail Popup ──────────────────────────────────────────── */}
       {detailSection && (

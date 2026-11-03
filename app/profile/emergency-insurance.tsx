@@ -80,6 +80,7 @@ import {
   pickAndScanInsuranceCard,
   type ScannedCardData,
 } from '../../lib/emergencyInsurance'
+import { AfterTransition } from '../../components/ui/AfterTransition'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -264,6 +265,7 @@ export default function EmergencyInsuranceScreen() {
           <BrandedLoader />
         </View>
       ) : (
+        <AfterTransition>
         <ScrollView
           contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
           showsVerticalScrollIndicator={false}
@@ -482,6 +484,7 @@ export default function EmergencyInsuranceScreen() {
             </View>
           )}
         </ScrollView>
+        </AfterTransition>
       )}
 
       {/* ── Modals ──────────────────────────────────────────────────── */}

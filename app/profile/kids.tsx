@@ -55,6 +55,7 @@ import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../components/ui
 import { PHOTO_BUCKETS } from '../../lib/photoSigning'
 import type { ChildWithRole } from '../../types'
 import { parseLocalDate } from '../../lib/localDate'
+import { AfterTransition } from '../../components/ui/AfterTransition'
 
 // ─── Theme (Diffuse-aware) ──────────────────────────────────────────────────
 // Under the Diffuse variant (now the default), source the surface palette + serif
@@ -332,6 +333,7 @@ export default function KidsProfileScreen() {
         )}
       </View>
 
+      <AfterTransition>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {children.length === 0 && (
           <View style={[styles.emptyCard, !diffuse && styles.emptyCardSite, { backgroundColor: diffuse ? colors.surface : 'transparent' }]}>
@@ -365,6 +367,7 @@ export default function KidsProfileScreen() {
           style={{ marginTop: 8 }}
         />
       </ScrollView>
+      </AfterTransition>
 
       {editingChild && (
         <EditChildSheet

@@ -45,6 +45,7 @@ import {
   type GarageComment,
 } from '../../lib/garagePosts'
 import { dateLoc } from '../../lib/kpLocale'
+import { AfterTransition } from '../../components/ui/AfterTransition'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -237,6 +238,7 @@ export default function PostDetail() {
         )}
       </View>
 
+      <AfterTransition>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Post Author */}
         <View style={styles.postHeader}>
@@ -424,6 +426,7 @@ export default function PostDetail() {
           ))
         )}
       </ScrollView>
+      </AfterTransition>
 
       {/* @mention suggestions */}
       {showMentions && mentionResults.length > 0 && (
