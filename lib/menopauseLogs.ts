@@ -7,6 +7,7 @@
  */
 
 import { supabase } from './supabase'
+import { assertNotFuture } from './futureDate'
 import { queryClient } from './queryClient'
 
 export function invalidateMenopauseLogQueries() {
@@ -20,6 +21,7 @@ export async function saveMenopauseLog(input: {
   severity?: number | null
   notes?: string | null
 }): Promise<void> {
+  assertNotFuture(input.date)
   const { data: s } = await supabase.auth.getSession()
   const userId = s.session?.user.id
   if (!userId) throw new Error('Not authenticated')

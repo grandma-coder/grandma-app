@@ -3842,4 +3842,5 @@ export const tr: TranslationKeys = {
   cycleHome_late_logPeriod: "Adet başlangıcını kaydet",
   cycleHome_late_logTest: "Gebelik testi kaydet",
   sleepCalm_ratedRestful: "Kaydedilen {{total}} uykudan {{good}} tanesi harika ya da iyi olarak işaretlendi.",
+  log_futureDateError: "Yalnızca bugünü ya da geçmiş günleri kaydedebilirsin.",
 }

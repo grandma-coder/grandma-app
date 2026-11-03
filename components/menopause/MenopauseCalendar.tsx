@@ -30,6 +30,7 @@ import { MenopauseLogSheet, menoSticker, type MenopauseLogPick } from './Menopau
 import { SiteSticker } from '../stickers/SiteSticker'
 import { useMenoPalette, STICKER_SHADOW } from './menoPalette'
 import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
+import { isFutureDate } from '../../lib/futureDate'
 
 const COPY = {
   loggedThisDay: 'Logged this day',
@@ -208,6 +209,8 @@ export function MenopauseCalendar() {
               </View>
             )}
 
+            {/* No logging on future days — they'd enter the history as fact. */}
+            {!isFutureDate(selectedDate) && (
             <Pressable
               onPress={openAdd}
               accessibilityRole="button"
@@ -216,6 +219,7 @@ export function MenopauseCalendar() {
               <SiteSticker name="pencil" size={24} cut />
               <Text style={{ fontFamily: font.bodyBold, fontSize: 14, color: colors.text }}>{COPY.logActivity}</Text>
             </Pressable>
+            )}
           </View>
         ) : (
         <View style={styles.detail}>

@@ -3842,4 +3842,5 @@ export const it: TranslationKeys = {
   cycleHome_late_logPeriod: "Registra l'inizio del ciclo",
   cycleHome_late_logTest: "Registra un test di gravidanza",
   sleepCalm_ratedRestful: "Valutato ottimo o buono in {{good}} su {{total}} sonni registrati.",
+  log_futureDateError: "Puoi registrare solo oggi o i giorni passati.",
 }

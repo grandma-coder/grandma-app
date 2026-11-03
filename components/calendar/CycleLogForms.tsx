@@ -34,6 +34,7 @@ import { SiteSticker } from '../stickers/SiteSticker'
 import { StickerChoice, MoreSection } from './QuickLogKit'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
+import { assertNotFuture } from '../../lib/futureDate'
 
 // ─── Save helpers ──────────────────────────────────────────────────────────
 async function replaceSingleLog(
@@ -42,6 +43,7 @@ async function replaceSingleLog(
   value: string,
   notes?: string,
 ) {
+  assertNotFuture(date)
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
   // Check the delete: ignoring its error left the old row in place and the insert added a second
@@ -65,6 +67,7 @@ async function insertSingleLog(
   value: string | null = null,
   notes?: string,
 ) {
+  assertNotFuture(date)
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
   const { error } = await supabase.from('cycle_logs').insert({
@@ -138,6 +141,7 @@ function useDayLogToggle(date: string, type: string) {
         if (error) throw error
       }
       if (added.length > 0) {
+        assertNotFuture(date)
         const rows = added.map((value) => ({ user_id: userId, date, type, value }))
         const { error } = await supabase.from('cycle_logs').insert(rows)
         if (error) throw error

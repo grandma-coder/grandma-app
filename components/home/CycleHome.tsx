@@ -33,6 +33,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { CycleMonthGrid } from '../calendar/CycleMonthGrid'
 import { LogActivitySheet, type LogType } from '../calendar/LogActivitySheet'
 import { FirstPeriodCard } from './cycle/FirstPeriodCard'
+import { isFutureDate } from '../../lib/futureDate'
 import { LatePeriodCard } from './cycle/LatePeriodCard'
 import { CycleLogRouter } from '../calendar/CycleLogRouter'
 import { useQueryClient } from '@tanstack/react-query'
@@ -136,7 +137,8 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
 
   const handleDatePress = useCallback((date: string) => {
     setSelectedDate(date)
-    setLauncherOpen(true)
+    // Future days can be viewed but not logged (a future period start would enter the history).
+    if (!isFutureDate(date)) setLauncherOpen(true)
   }, [])
 
   const handleLogSaved = useCallback(() => {

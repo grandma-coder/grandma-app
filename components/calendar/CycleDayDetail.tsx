@@ -20,6 +20,7 @@ import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
+import { isFutureDate } from '../../lib/futureDate'
 
 /** Cycle log types that have an editable form sheet (so a logged row of that
  *  type can be tapped to re-open its form). lh / cervical_mucus / ovulation
@@ -239,7 +240,7 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
           <DiffuseArrow color={diffuseAccent} size={16} />
         </Pressable>
       ) : (
-        <QuietPill label={t('cycleDayDetail_addLog').replace(/^\+\s*/, '')} sticker="pencil" onPress={onAddLog} style={{ marginTop: 6, alignSelf: 'center' }} />
+        !isFutureDate(date) && <QuietPill label={t('cycleDayDetail_addLog').replace(/^\+\s*/, '')} sticker="pencil" onPress={onAddLog} style={{ marginTop: 6, alignSelf: 'center' }} />
       )}
     </View>
   )

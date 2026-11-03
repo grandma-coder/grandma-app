@@ -4129,4 +4129,5 @@ export const en: TranslationKeys = {
   cycleHome_late_logPeriod: "Log period start",
   cycleHome_late_logTest: "Log a pregnancy test",
   sleepCalm_ratedRestful: "Rated great or good on {{good}} of {{total}} logged sleeps.",
+  log_futureDateError: "You can only log today or past days.",
 }

@@ -3842,4 +3842,5 @@ export const zh: TranslationKeys = {
   cycleHome_late_logPeriod: "记录月经开始",
   cycleHome_late_logTest: "记录验孕结果",
   sleepCalm_ratedRestful: "在记录的 {{total}} 次睡眠中，有 {{good}} 次被评为很好或好。",
+  log_futureDateError: "只能记录今天或过去的日期。",
 }
