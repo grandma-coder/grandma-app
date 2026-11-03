@@ -30,6 +30,7 @@ import {
 import { Character } from '../../components/characters/Characters'
 import { useTheme, brand, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
+import { InkBackButton } from '../../components/ui/InkBackButton'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useChildStore } from '../../store/useChildStore'
 import {
@@ -139,9 +140,13 @@ export default function ExamDetailScreen() {
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top + 12 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.iconBtn}>
-          <ChevronLeft size={24} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-        </Pressable>
+        {diffuse ? (
+          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.iconBtn}>
+            <ChevronLeft size={24} color={dt.colors.ink} strokeWidth={1.6} />
+          </Pressable>
+        ) : (
+          <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+        )}
         <View style={styles.headerTitle}>
           {diffuse ? (
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: dt.colors.ink3 }}>{examBehaviorLabel(exam.behavior)}</Text>
