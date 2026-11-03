@@ -255,7 +255,7 @@ export default function Paywall() {
           icon="close"
           ink={colors.text}
           paper={colors.surface}
-          label="Close"
+          label={t('common_close')}
           style={{ position: 'absolute', right: 20, top: insets.top + 8, marginBottom: 0, zIndex: 10 }}
         />
       )}

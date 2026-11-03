@@ -100,7 +100,7 @@ export default function DatePickerField({
   label,
   value,
   onChange,
-  placeholder = 'Select a date',
+  placeholder,
   maximumDate,
   minimumDate,
   modalTitle,
@@ -111,6 +111,7 @@ export default function DatePickerField({
 }: DatePickerFieldProps) {
   const { colors, isDark } = useTheme()
   const { t } = useTranslation()
+  placeholder = placeholder ?? t('sw4_selectDate')
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)

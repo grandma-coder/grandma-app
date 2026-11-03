@@ -241,9 +241,9 @@ export function MenopauseAnalytics() {
             <MenoCard
               palette={palette}
               blob="temperature"
-              label="HOT FLASHES & NIGHT SWEATS"
+              label={t('gn_meno_vaso_title')}
               value={String(vasoTotal)}
-              unit={vasoTotal === 1 ? 'event logged' : 'events logged'}
+              unit={vasoTotal === 1 ? t('sw4_menoEventLogged') : t('sw4_menoEventsLogged')}
             >
               {vaso.length >= 1 ? (
                 <BarChart
@@ -254,7 +254,7 @@ export function MenopauseAnalytics() {
                   height={180}
                 />
               ) : (
-                <FallbackLine palette={palette} text="Log a hot flash or night sweat to see your rhythm." />
+                <FallbackLine palette={palette} text={t('sw4_menoLogVasoHint')} />
               )}
             </MenoCard>
 
@@ -264,7 +264,7 @@ export function MenopauseAnalytics() {
                 <Text
                   style={[styles.sectionTitle, { color: palette.text, fontFamily: palette.fontDisplay }]}
                 >
-                  Top symptoms
+                  {t('sw4_menoTopSymptoms')}
                 </Text>
                 <View style={styles.grid}>
                   {symptomStats.slice(0, 6).map((s) => (
@@ -274,7 +274,7 @@ export function MenopauseAnalytics() {
                       blob={symptomBlob(s.id)}
                       label={menopauseSymptomLabel(s.id as MenopauseSymptomId)}
                       value={String(s.count)}
-                      sub={s.avgSeverity > 0 ? `avg ${s.avgSeverity.toFixed(1)}/5` : `${s.count === 1 ? 'time' : 'times'}`}
+                      sub={s.avgSeverity > 0 ? t('sw4_menoAvgSeverity', { n: s.avgSeverity.toFixed(1) }) : (s.count === 1 ? t('sw4_menoTime') : t('sw4_menoTimes'))}
                     />
                   ))}
                 </View>
@@ -282,17 +282,17 @@ export function MenopauseAnalytics() {
             )}
 
             {/* ── Sleep & mood trend ─────────────────────────────────── */}
-            <MenoCard palette={palette} blob="sleep" label="SLEEP & MOOD SEVERITY">
+            <MenoCard palette={palette} blob="sleep" label={t('sw4_menoSleepMoodSeverity')}>
               <TrendRow
                 palette={palette}
-                title="Sleep trouble"
+                title={t('gn_meno_sym_sleep')}
                 series={sleepSeries}
                 color={palette.accent}
               />
               <View style={{ height: 18 }} />
               <TrendRow
                 palette={palette}
-                title="Low mood"
+                title={t('gn_meno_sym_low_mood')}
                 series={moodSeries}
                 color={palette.accent}
               />
@@ -417,6 +417,7 @@ function TrendRow({
   series: { data: number[]; labels: string[] }
   color: string
 }) {
+  const { t } = useTranslation()
   return (
     <View>
       <Text style={[styles.trendTitle, { color: palette.textSecondary, fontFamily: palette.fontBodySemiBold }]}>
@@ -432,7 +433,7 @@ function TrendRow({
           unit="/5"
         />
       ) : (
-        <FallbackLine palette={palette} text="Not enough logged yet to chart a trend." />
+        <FallbackLine palette={palette} text={t('sw4_menoNotEnoughTrend')} />
       )}
     </View>
   )

@@ -5,7 +5,7 @@ import { useIsDiffuse, SoftBloom } from '../ui/diffuse/DiffuseKit'
 import { useBehaviorStore, type Behavior } from '../../store/useBehaviorStore'
 import { useModeStore } from '../../store/useModeStore'
 import { ModeTrying, ModePregnant, ModeParent, ModeMenopause } from '../stickers/RewardStickers'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 
 const ICON_BY_BEHAVIOR = {
@@ -24,10 +24,10 @@ const SITE_STICKER: Record<Behavior, SiteStickerName> = {
 }
 
 const PILL_ORDER: Array<{ behavior: Behavior; label: string }> = [
-  { behavior: 'pre-pregnancy', label: 'Cycle' },
-  { behavior: 'pregnancy', label: 'Expecting' },
-  { behavior: 'kids', label: 'Raising' },
-  { behavior: 'menopause', label: 'Menopause' },
+  { behavior: 'pre-pregnancy', get label() { return tNow('onboardingJourney_trying') } },
+  { behavior: 'pregnancy', get label() { return tNow('app_journey_expecting') } },
+  { behavior: 'kids', get label() { return tNow('app_journey_raising') } },
+  { behavior: 'menopause', get label() { return tNow('app_journey_menopause') } },
 ]
 
 /**
@@ -47,11 +47,10 @@ export function MyJourneyPillGrid() {
   const setMode = useModeStore((s) => s.setMode)
   const cycleIntent = useModeStore((s) => s.cycleIntent)
 
-  const pills = PILL_ORDER.map((p) =>
-    p.behavior === 'pre-pregnancy'
-      ? { ...p, label: cycleIntent === 'ttc' ? 'Dreaming' : 'Cycle' }
-      : p
-  )
+  const pills = PILL_ORDER.map((p) => ({
+    behavior: p.behavior,
+    label: p.behavior === 'pre-pregnancy' && cycleIntent === 'ttc' ? t('app_journey_dreaming') : p.label,
+  }))
 
   function handlePress(b: Behavior) {
     if (b === currentBehavior) return

@@ -46,7 +46,7 @@ import { useTheme, brand, useDiffuseTheme, diffuseFont, getModeColorSoft } from 
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { SiteChoice } from '../../components/ui/SiteChoice'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { PillButton } from '../../components/ui/PillButton'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
@@ -84,19 +84,19 @@ import {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const RELATIONSHIPS: { id: ContactRelationship; label: string }[] = [
-  { id: 'spouse', label: 'Spouse / Partner' },
-  { id: 'parent', label: 'Parent' },
-  { id: 'sibling', label: 'Sibling' },
-  { id: 'friend', label: 'Friend' },
-  { id: 'doctor', label: 'Doctor' },
-  { id: 'neighbor', label: 'Neighbor' },
-  { id: 'other', label: 'Other' },
+  { id: 'spouse', get label() { return tNow('sw3_ei_relSpouse') } },
+  { id: 'parent', get label() { return tNow('careCircle_parent') } },
+  { id: 'sibling', get label() { return tNow('sw3_ei_relSibling') } },
+  { id: 'friend', get label() { return tNow('sw3_ei_relFriend') } },
+  { id: 'doctor', get label() { return tNow('careCircle_doctor') } },
+  { id: 'neighbor', get label() { return tNow('sw3_ei_relNeighbor') } },
+  { id: 'other', get label() { return tNow('sw3_ei_relOther') } },
 ]
 
 const PLAN_TYPES: { id: InsurancePlanType; label: string; icon: typeof Shield }[] = [
-  { id: 'health', label: 'Health', icon: Shield },
-  { id: 'dental', label: 'Dental', icon: Shield },
-  { id: 'vision', label: 'Vision', icon: Shield },
+  { id: 'health', get label() { return tNow('sw3_ei_planHealth') }, icon: Shield },
+  { id: 'dental', get label() { return tNow('sw3_ei_planDental') }, icon: Shield },
+  { id: 'vision', get label() { return tNow('sw3_ei_planVision') }, icon: Shield },
 ]
 
 function relationshipLabel(r: ContactRelationship): string {
@@ -171,19 +171,19 @@ export default function EmergencyInsuranceScreen() {
 
   function confirmDeleteContact(contact: EmergencyContact) {
     Alert.alert(
-      'Remove Contact',
-      `Remove ${contact.name} from your emergency contacts?`,
+      t('emergencyInsurance_removeContactTitle'),
+      t('sw3_ei_removeContactMsg', { name: contact.name }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common_remove'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteEmergencyContact(contact.id)
               store.removeContact(contact.id)
             } catch (e: any) {
-              Alert.alert('Error', e.message)
+              Alert.alert(t('common_error'), e.message)
             }
           },
         },
@@ -205,19 +205,19 @@ export default function EmergencyInsuranceScreen() {
 
   function confirmDeletePlan(plan: InsurancePlan) {
     Alert.alert(
-      'Remove Plan',
-      `Remove ${plan.providerName} ${planTypeLabel(plan.planType)} plan?`,
+      t('emergencyInsurance_removePlanTitle'),
+      t('sw3_ei_removePlanMsg', { provider: plan.providerName, type: planTypeLabel(plan.planType) }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common_remove'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteInsurancePlan(plan.id)
               store.removePlan(plan.id)
             } catch (e: any) {
-              Alert.alert('Error', e.message)
+              Alert.alert(t('common_error'), e.message)
             }
           },
         },
@@ -462,19 +462,19 @@ export default function EmergencyInsuranceScreen() {
                   {/* Plan details */}
                   <View style={styles.planDetails}>
                     {plan.planName && (
-                      <PlanField label="Plan" value={plan.planName} />
+                      <PlanField label={t('sw3_ei_fieldPlan')} value={plan.planName} />
                     )}
                     {plan.policyNumber && (
-                      <PlanField label="Policy #" value={plan.policyNumber} />
+                      <PlanField label={t('sw3_ei_fieldPolicyHash')} value={plan.policyNumber} />
                     )}
                     {plan.groupNumber && (
-                      <PlanField label="Group #" value={plan.groupNumber} />
+                      <PlanField label={t('emergencyInsurance_fieldGroupNumber')} value={plan.groupNumber} />
                     )}
                     {plan.memberId && (
-                      <PlanField label="Member ID" value={plan.memberId} />
+                      <PlanField label={t('emergencyInsurance_fieldMemberId')} value={plan.memberId} />
                     )}
                     {plan.phone && (
-                      <PlanField label="Phone" value={plan.phone} />
+                      <PlanField label={t('emergencyInsurance_fieldPhone')} value={plan.phone} />
                     )}
                   </View>
                 </Pressable>
@@ -614,7 +614,7 @@ function ContactFormModal({
         notes: notes.trim() || null,
       })
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     }
     setSaving(false)
   }
@@ -640,7 +640,7 @@ function ContactFormModal({
               </View>
             </Pressable>
           ) : (
-            <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label="Close" onPress={onClose} style={{ marginBottom: 0 }} />
+            <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label={t('common_close')} onPress={onClose} style={{ marginBottom: 0 }} />
           )}
           <View style={styles.modalTitleCenter}>
             <Text style={[styles.modalBigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 22 }]}>
@@ -872,10 +872,10 @@ function PlanFormModal({
       const data = await pickAndScanInsuranceCard(useCamera)
       if (data) {
         applyScannedData(data)
-        toast.show({ title: t('emergencyInsurance_cardScanned'), message: 'Fields have been filled in. Please review and adjust if needed.' })
+        toast.show({ title: t('emergencyInsurance_cardScanned'), message: t('sw3_ei_scanFilled') })
       }
     } catch (e: any) {
-      Alert.alert('Scan failed', e.message)
+      Alert.alert(t('sw3_ei_scanFailed'), e.message)
     }
     setScanning(false)
   }
@@ -896,7 +896,7 @@ function PlanFormModal({
         notes: notes.trim() || null,
       })
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     }
     setSaving(false)
   }
@@ -922,7 +922,7 @@ function PlanFormModal({
               </View>
             </Pressable>
           ) : (
-            <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label="Close" onPress={onClose} style={{ marginBottom: 0 }} />
+            <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label={t('common_close')} onPress={onClose} style={{ marginBottom: 0 }} />
           )}
           <View style={styles.modalTitleCenter}>
             <Text style={[styles.modalBigTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 22 }]}>

@@ -132,6 +132,21 @@ const ALLERGY_OPTIONS = [
   'Wheat', 'Fish', 'Shellfish', 'Sesame', 'Other',
 ]
 
+// Display labels (the English ids above are what gets stored).
+const ALLERGY_LABEL_KEY: Record<string, Parameters<typeof tNow>[0]> = {
+  Milk: 'sw2_ob_allergyMilk',
+  Eggs: 'sw2_ob_allergyEggs',
+  Peanuts: 'sw2_ob_allergyPeanuts',
+  'Tree nuts': 'sw2_ob_allergyTreeNuts',
+  Soy: 'sw2_ob_allergySoy',
+  Wheat: 'sw2_ob_allergyWheat',
+  Fish: 'sw2_ob_allergyFish',
+  Shellfish: 'sw2_ob_allergyShellfish',
+  Sesame: 'sw2_ob_allergySesame',
+  Other: 'kids_logForm_healthOther',
+}
+const allergyLabel = (a: string): string => (ALLERGY_LABEL_KEY[a] ? tNow(ALLERGY_LABEL_KEY[a]) : a)
+
 // Only stickers that actually read as the allergen — no sticker beats a misleading one.
 const ALLERGY_STICKER: Partial<Record<string, SiteStickerName>> = {
   Milk: 'bottle',
@@ -147,11 +162,11 @@ const ROLE_STICKER: Record<CaregiverRole, SiteStickerName> = {
   doctor: 'syringe',
 }
 
-const CAREGIVER_ROLES: { id: CaregiverRole; label: string }[] = [
-  { id: 'partner', label: 'Partner' },
-  { id: 'nanny', label: 'Nanny' },
-  { id: 'family', label: 'Family member' },
-  { id: 'doctor', label: 'Doctor' },
+const CAREGIVER_ROLES: { id: CaregiverRole; labelKey: 'sw2_ob_rolePartner' | 'careCircle_nanny' | 'sw2_ob_roleFamily' | 'careCircle_doctor' }[] = [
+  { id: 'partner', labelKey: 'sw2_ob_rolePartner' },
+  { id: 'nanny', labelKey: 'careCircle_nanny' },
+  { id: 'family', labelKey: 'sw2_ob_roleFamily' },
+  { id: 'doctor', labelKey: 'careCircle_doctor' },
 ]
 
 // ─── Main Component ────────────────────────────────────────────────────────
@@ -608,7 +623,7 @@ function StepChildCount({
       step={step}
       total={total}
       auraMode="kids"
-      question="How many children are you tracking?"
+      question={tNow('sw2_ob_howMany')}
       sticker={<SiteSticker name="baby" size={48} cut />}
       onContinue={onContinue}
     >
@@ -648,14 +663,14 @@ function StepChildName({
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
 
-  const label = childCount > 1 ? `Child ${childIdx + 1} — ` : ''
+  const label = childCount > 1 ? tNow('sw2_ob_childPrefix', { n: childIdx + 1 }) : ''
 
   return (
     <OnboardingStep
       step={step}
       total={total}
       auraMode="kids"
-      question={`${label}What is their name?`}
+      question={`${label}${tNow('sw2_ob_qName')}`}
       sticker={<SiteSticker name="pencil" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!child?.name.trim()}
@@ -664,7 +679,7 @@ function StepChildName({
         <DiffuseField
           value={child?.name ?? ''}
           onChangeText={(name) => updateChild(childIdx, { name })}
-          placeholder="First name"
+          placeholder={tNow('sw2_ob_firstName')}
           autoCapitalize="words"
         />
       ) : (
@@ -672,7 +687,7 @@ function StepChildName({
         <TextInput
           value={child?.name ?? ''}
           onChangeText={(name) => updateChild(childIdx, { name })}
-          placeholder="First name"
+          placeholder={tNow('sw2_ob_firstName')}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="words"
           autoFocus
@@ -704,7 +719,7 @@ function StepChildDob({
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
-  const childName = child?.name || `Child ${childIdx + 1}`
+  const childName = child?.name || tNow('sw2_ob_childN', { n: childIdx + 1 })
 
   // App targets ages 0–5; warn if older. Bound the picker minimum at 18y
   // to avoid the previous arbitrary 2005 cutoff that silently rejected
@@ -721,7 +736,7 @@ function StepChildDob({
       step={step}
       total={total}
       auraMode="kids"
-      question={`When was ${childName} born?`}
+      question={tNow('sw2_ob_qBorn', { name: childName })}
       sticker={<SiteSticker name="cal" size={48} cut />}
       onContinue={onContinue}
       continueDisabled={!child?.birthDate}
@@ -742,8 +757,8 @@ function StepChildDob({
           label=""
           value={child?.birthDate || ''}
           onChange={(iso) => updateChild(childIdx, { birthDate: iso })}
-          placeholder="Tap to select a date"
-          modalTitle={`${childName}'s birth date`}
+          placeholder={t('cycleOnboarding_datePlaceholder')}
+          modalTitle={t('sw2_ob_birthDateOf', { name: childName })}
           maximumDate={new Date()}
           minimumDate={minDate}
           emptyHint={t('onboard_dateHint')}
@@ -777,12 +792,12 @@ function formatAge(birthDate: string): string {
   const born = new Date(birthDate.length === 10 ? birthDate + 'T00:00:00' : birthDate)
   const now = new Date()
   const months = (now.getFullYear() - born.getFullYear()) * 12 + (now.getMonth() - born.getMonth())
-  if (months < 1) return 'Newborn'
-  if (months < 12) return `${months} month${months === 1 ? '' : 's'} old`
+  if (months < 1) return tNow('kids_home_age_newborn')
+  if (months < 12) return months === 1 ? tNow('sw2_ob_ageMonth1') : tNow('sw2_ob_ageMonths', { n: months })
   const years = Math.floor(months / 12)
   const rem = months % 12
-  if (rem === 0) return `${years} year${years === 1 ? '' : 's'} old`
-  return `${years}y ${rem}m old`
+  if (rem === 0) return years === 1 ? tNow('sw2_ob_ageYear1') : tNow('sw2_ob_ageYears', { n: years })
+  return tNow('sw2_ob_ageYearsMonths', { y: years, m: rem })
 }
 
 // ─── STEP: Child Country ──────────────────────────────────────────────────
@@ -805,7 +820,7 @@ function StepChildCountry({
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
-  const childName = child?.name || `Child ${childIdx + 1}`
+  const childName = child?.name || tNow('sw2_ob_childN', { n: childIdx + 1 })
   const selected = child?.countryCode || 'US'
 
   const [query, setQuery] = useState('')
@@ -826,7 +841,7 @@ function StepChildCountry({
       step={step}
       total={total}
       auraMode="kids"
-      question={`Where does ${childName} live?`}
+      question={tNow('sw2_ob_qLive', { name: childName })}
       sticker={<SiteSticker name="house" size={48} cut />}
       onContinue={onContinue}
     >
@@ -838,7 +853,7 @@ function StepChildCountry({
           <DiffuseField
             value={query}
             onChangeText={setQuery}
-            placeholder="Search country…"
+            placeholder={t('kp_pk_searchCountry')}
             autoCapitalize="none"
           />
           <ScrollView
@@ -869,7 +884,7 @@ function StepChildCountry({
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search country..."
+            placeholder={t('kp_pk_searchCountry')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             style={[stepStyles.countrySearchInput, { color: colors.text, fontFamily: font.body }]}
@@ -932,7 +947,7 @@ function StepChildPhoto({
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
-  const childName = child?.name || `Child ${childIdx + 1}`
+  const childName = child?.name || tNow('sw2_ob_childN', { n: childIdx + 1 })
   const [pickerOpen, setPickerOpen] = useState(false)
   const childInitial = (childName[0] ?? 'K').toUpperCase()
   const childAccent = mode
@@ -954,7 +969,7 @@ function StepChildPhoto({
       step={step}
       total={total}
       auraMode="kids"
-      question={`Pick a photo or icon for ${childName}`}
+      question={tNow('sw2_ob_qPhoto', { name: childName })}
       sticker={<SiteSticker name="camera" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -1042,7 +1057,7 @@ function StepChildAllergies({
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const toggleAllergy = useKidsOnboardingStore((s) => s.toggleAllergy)
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
-  const childName = child?.name || `Child ${childIdx + 1}`
+  const childName = child?.name || tNow('sw2_ob_childN', { n: childIdx + 1 })
   const otherSelected = child?.allergies.includes('Other') ?? false
 
   return (
@@ -1050,7 +1065,7 @@ function StepChildAllergies({
       step={step}
       total={total}
       auraMode="kids"
-      question={`Any allergies for ${childName}?`}
+      question={tNow('sw2_ob_qAllergies', { name: childName })}
       sticker={<SiteSticker name="rasp" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -1063,7 +1078,7 @@ function StepChildAllergies({
         <>
           <BloomChips
             multi
-            options={ALLERGY_OPTIONS.map((a) => ({ key: a, label: a }))}
+            options={ALLERGY_OPTIONS.map((a) => ({ key: a, label: allergyLabel(a) }))}
             value={child?.allergies ?? []}
             onChange={(next) => {
               const current = child?.allergies ?? []
@@ -1078,7 +1093,7 @@ function StepChildAllergies({
               <DiffuseField
                 value={child?.allergiesOther ?? ''}
                 onChangeText={(txt) => updateChild(childIdx, { allergiesOther: txt })}
-                placeholder="Tell us what other allergies…"
+                placeholder={tNow('sw2_ob_allergiesOtherPh')}
                 autoCapitalize="sentences"
               />
             </View>
@@ -1092,7 +1107,7 @@ function StepChildAllergies({
           return (
             <SiteChoice
               key={allergy}
-              label={allergy}
+              label={allergyLabel(allergy)}
               selected={selected}
               onPress={() => toggleAllergy(childIdx, allergy)}
               tone={modeSoft}
@@ -1108,7 +1123,7 @@ function StepChildAllergies({
           <TextInput
             value={child?.allergiesOther ?? ''}
             onChangeText={(t) => updateChild(childIdx, { allergiesOther: t })}
-            placeholder="Tell us what other allergies..."
+            placeholder={tNow('sw2_ob_allergiesOtherPh')}
             placeholderTextColor={colors.textMuted}
             style={[stepStyles.otherInputText, { color: colors.text, fontFamily: font.body }]}
             autoCapitalize="sentences"
@@ -1142,14 +1157,14 @@ function StepChildConditions({
   const modeSoft = getModeColorSoft('kids', isDark)
   const child = useKidsOnboardingStore((s) => s.children[childIdx])
   const updateChild = useKidsOnboardingStore((s) => s.updateChild)
-  const childName = child?.name || `Child ${childIdx + 1}`
+  const childName = child?.name || tNow('sw2_ob_childN', { n: childIdx + 1 })
 
   return (
     <OnboardingStep
       step={step}
       total={total}
       auraMode="kids"
-      question={`Any conditions or medications for ${childName}?`}
+      question={tNow('sw2_ob_qConditions', { name: childName })}
       sticker={<SiteSticker name="thermo" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -1161,7 +1176,7 @@ function StepChildConditions({
         <DiffuseField
           value={child?.conditionsText ?? ''}
           onChangeText={(text) => updateChild(childIdx, { conditionsText: text })}
-          placeholder="e.g. Asthma, daily inhaler…"
+          placeholder={tNow('sw2_ob_conditionsPh')}
           autoCapitalize="sentences"
         />
       ) : (
@@ -1169,7 +1184,7 @@ function StepChildConditions({
         <TextInput
           value={child?.conditionsText ?? ''}
           onChangeText={(text) => updateChild(childIdx, { conditionsText: text })}
-          placeholder="e.g. Asthma, daily inhaler..."
+          placeholder={tNow('sw2_ob_conditionsPh')}
           placeholderTextColor={colors.textMuted}
           multiline
           style={[stepStyles.textArea, { color: colors.text, fontFamily: font.body }]}
@@ -1207,7 +1222,7 @@ function StepPartner({
       step={step}
       total={total}
       auraMode="kids"
-      question="Want to add your partner?"
+      question={tNow('preg_onboard_step_partner')}
       sticker={<SiteSticker name="heart" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -1219,7 +1234,7 @@ function StepPartner({
           <DiffuseField
             value={partner ?? ''}
             onChangeText={setPartner}
-            placeholder="Partner's name"
+            placeholder={t('preg_onboard_partnerNamePlaceholder')}
             autoCapitalize="words"
           />
           <Text style={[stepStyles.diffuseHint, { color: dt.colors.ink3, fontFamily: font.body }]}>
@@ -1232,7 +1247,7 @@ function StepPartner({
         <TextInput
           value={partner ?? ''}
           onChangeText={setPartner}
-          placeholder="Partner's name"
+          placeholder={t('preg_onboard_partnerNamePlaceholder')}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="words"
           style={[stepStyles.textInput, { color: colors.text, fontFamily: font.body }]}
@@ -1277,7 +1292,7 @@ function StepCaregiver({
       step={step}
       total={total}
       auraMode="kids"
-      question="Want to add a caregiver?"
+      question={tNow('sw2_ob_qCaregiver')}
       sticker={<SiteSticker name="bubble" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
@@ -1289,7 +1304,7 @@ function StepCaregiver({
           <ChoiceTimeline
             options={CAREGIVER_ROLES.map((opt, i) => ({
               key: opt.id,
-              label: opt.label,
+              label: tNow(opt.labelKey),
               bloomColor: timelineBlooms[i % timelineBlooms.length],
             }))}
             value={role}
@@ -1300,7 +1315,7 @@ function StepCaregiver({
               <DiffuseField
                 value={name ?? ''}
                 onChangeText={setName}
-                placeholder={`${CAREGIVER_ROLES.find((r) => r.id === role)?.label}'s name`}
+                placeholder={tNow('sw2_ob_personName', { role: tNow(CAREGIVER_ROLES.find((r) => r.id === role)?.labelKey ?? 'careCircle_nanny') })}
                 autoCapitalize="words"
               />
             </View>
@@ -1315,7 +1330,7 @@ function StepCaregiver({
           return (
             <SiteChoice
               key={opt.id}
-              label={opt.label}
+              label={tNow(opt.labelKey)}
               selected={selected}
               onPress={() => setRole(opt.id)}
               tone={modeSoft}
@@ -1331,7 +1346,7 @@ function StepCaregiver({
           <TextInput
             value={name ?? ''}
             onChangeText={setName}
-            placeholder={`${CAREGIVER_ROLES.find((r) => r.id === role)?.label}'s name`}
+            placeholder={tNow('sw2_ob_personName', { role: tNow(CAREGIVER_ROLES.find((r) => r.id === role)?.labelKey ?? 'careCircle_nanny') })}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="words"
             style={[stepStyles.textInput, { color: colors.text, fontFamily: font.body }]}
@@ -1423,7 +1438,7 @@ function CompletionScreen({
       </ScrollView>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16, backgroundColor: colors.bg }]}>
-        <EyeAction label="Let's Go" onPress={onFinish} ink={colors.text} loading={saving} disabled={saving} sticker="star" fill={ACTION_TONES.yellow} delay={900} />
+        <EyeAction label={t('preg_onboard_completionCta')} onPress={onFinish} ink={colors.text} loading={saving} disabled={saving} sticker="star" fill={ACTION_TONES.yellow} delay={900} />
       </View>
     </View>
   )

@@ -76,7 +76,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       if (source === 'camera') {
         const perm = await ImagePicker.requestCameraPermissionsAsync()
         if (!perm.granted) {
-          toast.show({ title: 'Permission needed', message: 'Camera access is required to scan your plate.', autoDismiss: 0, accent: '#EE7B6D' })
+          toast.show({ title: t('scan_permissionNeeded'), message: t('sw1_meal_cameraNeeded'), autoDismiss: 0, accent: '#EE7B6D' })
           return
         }
       }
@@ -90,7 +90,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       setFoods([])
       await scan(uri)
     } catch (e: any) {
-      toast.show({ title: 'Something went wrong', message: e?.message ?? 'Could not open camera or gallery.', autoDismiss: 0, accent: '#EE7B6D' })
+      toast.show({ title: t('sw1_common_somethingWrong'), message: e?.message ?? t('sw1_meal_openFail'), autoDismiss: 0, accent: '#EE7B6D' })
     }
   }
 
@@ -102,7 +102,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
         [{ resize: { width: 1024 } }],
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true },
       )
-      if (!manipulated.base64) throw new Error('Could not encode photo')
+      if (!manipulated.base64) throw new Error(t('kp_klf_encodeFail'))
       const res = await estimateFromImage({
         imageBase64: manipulated.base64,
         mediaType: 'image/jpeg',
@@ -110,8 +110,8 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       })
       if (res.foods.length === 0) {
         toast.show({
-          title: 'No food detected',
-          message: res.notes ?? 'Try another angle or a closer shot.',
+          title: t('kids_logForm_alertNoFoodDetected'),
+          message: res.notes ?? t('kp_klf_tryAngle'),
           autoDismiss: 0,
           accent: '#F5B896',
         })
@@ -120,7 +120,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       setFoods(res.foods)
       if (res.notes) {
         toast.show({
-          title: 'Grandma noticed',
+          title: t('kids_logForm_alertGrandmaNoticed'),
           message: res.notes,
           autoDismiss: 0,
           accent: '#BDD48C',
@@ -128,8 +128,8 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       }
     } catch (e: any) {
       toast.show({
-        title: 'Scan failed',
-        message: e?.message ?? 'Please try again in a moment.',
+        title: t('scan_failed'),
+        message: e?.message ?? t('sw1_common_tryAgainMoment'),
         autoDismiss: 0,
         accent: '#EE7B6D',
       })
@@ -147,7 +147,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
         const { data: { session } } = await supabase.auth.getSession()
         uid = session?.user.id
       }
-      if (!uid) throw new Error('Not signed in')
+      if (!uid) throw new Error(t('app_privacy_notSignedIn'))
       const uploaded = photoUri ? await uploadPlatePhoto(photoUri, uid) : null
       const logDate = date ?? toDateStr(new Date())
       const payload = {
@@ -206,7 +206,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       }
       void invalidatePregnancyLogQueries()
     } catch (e: any) {
-      toast.show({ title: 'Could not save', message: e?.message ?? 'Please try again in a moment.', autoDismiss: 0, accent: '#EE7B6D' })
+      toast.show({ title: t('sw1_common_couldntSave'), message: e?.message ?? t('sw1_common_tryAgainMoment'), autoDismiss: 0, accent: '#EE7B6D' })
     } finally {
       setSaving(false)
     }
@@ -220,7 +220,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
             <View style={[dstyles.headerChip, { borderColor: dt.colors.line }]}>
               {logSticker('nutrition', 26, dt.isDark)}
             </View>
-            <Text style={[dstyles.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]} numberOfLines={2}>Log Meal</Text>
+            <Text style={[dstyles.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]} numberOfLines={2}>{t('sw1_meal_title')}</Text>
           </View>
         ) : null}
 

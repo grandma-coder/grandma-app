@@ -8,12 +8,13 @@ import { Animated, Pressable, type StyleProp, type ViewStyle } from 'react-nativ
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { HandDrawnPill } from './HandDrawn'
+import { useTranslation } from '../../lib/i18n'
 
 export function InkBackButton({
   onPress,
   ink,
   paper,
-  label = 'Go back',
+  label,
   icon = 'chevron-back',
   style,
 }: {
@@ -25,6 +26,7 @@ export function InkBackButton({
   icon?: 'chevron-back' | 'close'
   style?: StyleProp<ViewStyle>
 }) {
+  const { t } = useTranslation()
   const press = useRef(new Animated.Value(0)).current
   const to = (v: number) => Animated.spring(press, { toValue: v, friction: 6, tension: 260, useNativeDriver: true }).start()
   return (
@@ -34,7 +36,7 @@ export function InkBackButton({
       onPressOut={() => to(0)}
       hitSlop={12}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={label ?? t('sw4_goBack')}
       style={[{ width: 44, height: 44, marginBottom: 20 }, style]}
     >
       <Animated.View

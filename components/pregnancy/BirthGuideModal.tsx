@@ -18,7 +18,7 @@ import {
 import { useIsDiffuse, DiffuseFieldSurface } from '../ui/diffuse/DiffuseKit'
 import { DiffuseSheet, DiffuseSectionHeader, DiffuseListRow } from '../ui/diffuse/DiffusePrimitives'
 import { Character, type CharacterName } from '../characters/Characters'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { BirthDetailModal } from './BirthDetailModal'
@@ -35,35 +35,35 @@ interface BirthGuideModalProps {
 
 interface BirthTypeTile {
   key: BirthTopicKey
-  title: string
-  subtitle: string
+  titleKey: TranslationKey
+  subtitleKey: TranslationKey
   bg: string
   sticker: (size: number) => React.ReactNode
 }
 
 interface ExtraTopicTile {
   key: BirthTopicKey
-  title: string
-  subtitle: string
+  titleKey: TranslationKey
+  subtitleKey: TranslationKey
   tileBg: string
   sticker: (size: number) => React.ReactNode
 }
 
 const BIRTH_TYPES: BirthTypeTile[] = [
-  { key: 'natural',  title: 'Natural Birth', subtitle: 'Breathing, positions, stages', bg: '#DDE7BB', sticker: (s) => <Leaf size={s} fill="#BDD48C" /> },
-  { key: 'csection', title: 'C-Section',     subtitle: 'Surgery, recovery, VBAC',      bg: '#E0D5F0', sticker: (s) => <Cross size={s} fill="#C8B6E8" /> },
-  { key: 'home',     title: 'Home Birth',    subtitle: 'Midwife, safety, planning',    bg: '#CFE0F0', sticker: (s) => <Cloud size={s} fill="#9DC3E8" /> },
-  { key: 'water',    title: 'Water Birth',   subtitle: 'Pool, pain relief, logistics', bg: '#F9D8E2', sticker: (s) => <Drop size={s} fill="#9DC3E8" /> },
+  { key: 'natural',  titleKey: 'sw1_bg_natural', subtitleKey: 'sw1_bg_natural_sub', bg: '#DDE7BB', sticker: (s) => <Leaf size={s} fill="#BDD48C" /> },
+  { key: 'csection', titleKey: 'sw1_bg_csection',     subtitleKey: 'sw1_bg_csection_sub',      bg: '#E0D5F0', sticker: (s) => <Cross size={s} fill="#C8B6E8" /> },
+  { key: 'home',     titleKey: 'sw1_bg_home',    subtitleKey: 'sw1_bg_home_sub',    bg: '#CFE0F0', sticker: (s) => <Cloud size={s} fill="#9DC3E8" /> },
+  { key: 'water',    titleKey: 'sw1_bg_water',   subtitleKey: 'sw1_bg_water_sub', bg: '#F9D8E2', sticker: (s) => <Drop size={s} fill="#9DC3E8" /> },
 ]
 
 const EXTRA_TOPICS: ExtraTopicTile[] = [
-  { key: 'labor-stages',   title: 'Labor Stages',          subtitle: 'Early → Active → Transition → Pushing', tileBg: '#FAEFB5', sticker: (s) => <ClockFace size={s} fill="#F5D652" /> },
-  { key: 'warning-signs',  title: 'Warning Signs',         subtitle: 'When to call your provider',            tileBg: '#F9D8E2', sticker: (s) => <Bolt size={s} fill="#EE7B6D" /> },
-  { key: 'hospital-bag',   title: 'Hospital Bag Checklist',subtitle: 'For mom, baby & partner',               tileBg: '#CFE0F0', sticker: (s) => <Key size={s} fill="#F5D652" /> },
-  { key: 'pain-relief',    title: 'Pain Relief Options',   subtitle: 'Epidural, TENS, breathing & more',      tileBg: '#E0D5F0', sticker: (s) => <Pill size={s} fill="#F5D652" /> },
-  { key: 'positions',      title: 'Birth Positions',       subtitle: 'Upright, squatting, hands & knees',     tileBg: '#DDE7BB', sticker: (s) => <Lungs size={s} fill="#F2B2C7" /> },
-  { key: 'partner-guide',  title: 'Birth Partner Guide',   subtitle: 'What your support person needs to know', tileBg: '#F2B2C7', sticker: (s) => <Heart size={s} fill="#EE7B6D" /> },
-  { key: 'recovery',       title: 'Recovery & Postpartum', subtitle: 'First 24h, healing, emotional changes', tileBg: '#E0D5F0', sticker: (s) => <Moon size={s} fill="#C8B6E8" /> },
+  { key: 'labor-stages',   titleKey: 'sw1_bg_labor',          subtitleKey: 'sw1_bg_labor_sub', tileBg: '#FAEFB5', sticker: (s) => <ClockFace size={s} fill="#F5D652" /> },
+  { key: 'warning-signs',  titleKey: 'sw1_bg_warning',         subtitleKey: 'sw1_bg_warning_sub',            tileBg: '#F9D8E2', sticker: (s) => <Bolt size={s} fill="#EE7B6D" /> },
+  { key: 'hospital-bag',   titleKey: 'sw1_bg_bag',subtitleKey: 'sw1_bg_bag_sub',               tileBg: '#CFE0F0', sticker: (s) => <Key size={s} fill="#F5D652" /> },
+  { key: 'pain-relief',    titleKey: 'sw1_bg_pain',   subtitleKey: 'sw1_bg_pain_sub',      tileBg: '#E0D5F0', sticker: (s) => <Pill size={s} fill="#F5D652" /> },
+  { key: 'positions',      titleKey: 'sw1_bg_positions',       subtitleKey: 'sw1_bg_positions_sub',     tileBg: '#DDE7BB', sticker: (s) => <Lungs size={s} fill="#F2B2C7" /> },
+  { key: 'partner-guide',  titleKey: 'sw1_bg_partner',   subtitleKey: 'sw1_bg_partner_sub', tileBg: '#F2B2C7', sticker: (s) => <Heart size={s} fill="#EE7B6D" /> },
+  { key: 'recovery',       titleKey: 'sw1_bg_recovery', subtitleKey: 'sw1_bg_recovery_sub', tileBg: '#E0D5F0', sticker: (s) => <Moon size={s} fill="#C8B6E8" /> },
 ]
 
 // Birth topic → Character-blob concept (Diffuse). Cream-paper keeps the branded
@@ -87,6 +87,8 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const birthTypes = BIRTH_TYPES.map((b) => ({ ...b, title: t(b.titleKey), subtitle: t(b.subtitleKey) }))
+  const extraTopics = EXTRA_TOPICS.map((b) => ({ ...b, title: t(b.titleKey), subtitle: t(b.subtitleKey) }))
   const insets = useSafeAreaInsets()
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
 
@@ -119,7 +121,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
 
           {/* Birth type grid — soft field tiles, sticker hero */}
           <View style={styles.grid}>
-            {BIRTH_TYPES.map((item) => (
+            {birthTypes.map((item) => (
               <Pressable
                 key={item.key}
                 onPress={() => setDetailTopic(item.key)}
@@ -155,7 +157,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
           />
 
           <View>
-            {EXTRA_TOPICS.map((item, i) => (
+            {extraTopics.map((item, i) => (
               <DiffuseListRow
                 key={item.key}
                 title={item.title}
@@ -163,7 +165,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
                 icon={<Character name={BIRTH_TOPIC_CHARACTER[item.key]} size={26} color={dAccent} />}
                 onPress={() => setDetailTopic(item.key)}
                 showArrow
-                last={i === EXTRA_TOPICS.length - 1}
+                last={i === extraTopics.length - 1}
               />
             ))}
           </View>
@@ -249,7 +251,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
               showsVerticalScrollIndicator={false}
             >
               <View>
-                {BIRTH_TYPES.map((item, i) => renderRow(item, i === BIRTH_TYPES.length - 1))}
+                {birthTypes.map((item, i) => renderRow(item, i === birthTypes.length - 1))}
               </View>
 
               {/* Also in this guide */}
@@ -258,7 +260,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
               </Text>
 
               <View>
-                {EXTRA_TOPICS.map((item, i) => renderRow(item, i === EXTRA_TOPICS.length - 1))}
+                {extraTopics.map((item, i) => renderRow(item, i === extraTopics.length - 1))}
               </View>
             </ScrollView>
           </View>

@@ -39,6 +39,9 @@ import { StickerChoice } from '../calendar/QuickLogKit'
 import type { SiteStickerName } from '../stickers/SiteSticker'
 import type { ChildWithRole } from '../../types'
 import { useTranslation } from '../../lib/i18n'
+import type { TranslationKeys } from '../../lib/i18n/keys'
+
+type TranslationKey = keyof TranslationKeys
 
 type LogType =
   | 'feeding'
@@ -51,20 +54,20 @@ type LogType =
 
 interface LogTypeDef {
   key: LogType
-  label: string
+  labelKey: TranslationKey
   emoji: string
   sticker: SiteStickerName
   capability: typeof CAPABILITY[keyof typeof CAPABILITY]
 }
 
 const LOG_TYPES: LogTypeDef[] = [
-  { key: 'feeding', label: 'Feeding', emoji: '🍼', sticker: 'bottle', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'sleep', label: 'Sleep', emoji: '😴', sticker: 'zz', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'diaper', label: 'Diaper', emoji: '🧷', sticker: 'diaper', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'mood', label: 'Mood', emoji: '🙂', sticker: 'face3', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'memory', label: 'Memory', emoji: '📸', sticker: 'camera', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'activity', label: 'Activity', emoji: '🧩', sticker: 'star', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'health', label: 'Health', emoji: '🩺', sticker: 'thermo', capability: CAPABILITY.EMERGENCY },
+  { key: 'feeding', labelKey: 'kids_logForm_labelFeeding', emoji: '🍼', sticker: 'bottle', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'sleep', labelKey: 'kids_logForm_labelSleep', emoji: '😴', sticker: 'zz', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'diaper', labelKey: 'kids_logForm_labelDiaper', emoji: '🧷', sticker: 'diaper', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'mood', labelKey: 'kids_logForm_labelMood', emoji: '🙂', sticker: 'face3', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'memory', labelKey: 'kids_logForm_labelMemory', emoji: '📸', sticker: 'camera', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'activity', labelKey: 'kids_logForm_labelActivity', emoji: '🧩', sticker: 'star', capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'health', labelKey: 'kids_logForm_labelHealth', emoji: '🩺', sticker: 'thermo', capability: CAPABILITY.EMERGENCY },
 ]
 
 interface Props {
@@ -89,9 +92,9 @@ export function CaregiverLogSheet({ child, onClose }: Props) {
     return (
       <PaperAlert
         visible
-        title="No logging access"
-        message="The parent hasn't granted you logging for this child. Ask them to update your access."
-        buttons={[{ label: 'OK', variant: 'primary' }]}
+        title={t('sw2_cg_noLogTitle')}
+        message={t('sw2_cg_noLogMsg')}
+        buttons={[{ label: t('common_ok'), variant: 'primary' }]}
         onRequestClose={onClose}
       />
     )
@@ -126,7 +129,7 @@ export function CaregiverLogSheet({ child, onClose }: Props) {
         title={
           selected === null
             ? t('caregiverLogSheet_title', { name: child.name })
-            : (allowed.find((lt) => lt.key === selected)?.label ?? t('common_back'))
+            : ((() => { const d = allowed.find((lt) => lt.key === selected); return d ? t(d.labelKey) : t('common_back') })())
         }
         onClose={onClose}
       >
@@ -137,7 +140,7 @@ export function CaregiverLogSheet({ child, onClose }: Props) {
                 key={lt.key}
                 onPress={() => setSelected(lt.key)}
                 accessibilityRole="button"
-                accessibilityLabel={`Log ${lt.label}`}
+                accessibilityLabel={t('sw2_cg_logType', { type: t(lt.labelKey) })}
                 style={({ pressed }) => [
                   styles.tile,
                   {
@@ -155,7 +158,7 @@ export function CaregiverLogSheet({ child, onClose }: Props) {
                     { fontFamily: diffuseFont.mono, color: dt.colors.ink3, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 11 },
                   ]}
                 >
-                  {lt.label}
+                  {t(lt.labelKey)}
                 </Text>
               </Pressable>
             ))}
@@ -187,14 +190,14 @@ export function CaregiverLogSheet({ child, onClose }: Props) {
       visible
       onClose={onClose}
       sticker={selectedDef?.sticker ?? 'heart'}
-      title={selectedDef ? selectedDef.label : t('caregiverLogSheet_title', { name: child.name })}
+      title={selectedDef ? t(selectedDef.labelKey) : t('caregiverLogSheet_title', { name: child.name })}
     >
       {selected === null ? (
         <View style={styles.siteGrid}>
           {allowed.map((lt) => (
             <StickerChoice
               key={lt.key}
-              label={lt.label}
+              label={t(lt.labelKey)}
               sticker={lt.sticker}
               on={false}
               onPress={() => setSelected(lt.key)}

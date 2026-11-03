@@ -20,7 +20,7 @@ import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import {
   LogWeight, LogWater, LogSleep, LogExercise,
 } from '../stickers/RewardStickers'
@@ -42,16 +42,16 @@ interface Props {
 type StickerFn = (props: { size?: number; fill?: string; stroke?: string }) => React.ReactElement
 
 const CONFIGS: Record<SimpleLogType, {
-  label: string
-  placeholder: string
+  label: TranslationKey
+  placeholder: TranslationKey
   unit: string
   keyboard: 'decimal-pad' | 'number-pad'
   Sticker: StickerFn
 }> = {
-  weight:    { label: 'Log Weight',   placeholder: 'e.g. 68.5',              unit: 'kg',      keyboard: 'decimal-pad', Sticker: LogWeight },
-  water:     { label: 'Log Water',    placeholder: 'Glasses today (0–8)',    unit: 'glasses', keyboard: 'number-pad',  Sticker: LogWater },
-  sleep:     { label: 'Log Sleep',    placeholder: 'Hours slept e.g. 7.5',   unit: 'hours',   keyboard: 'decimal-pad', Sticker: LogSleep },
-  exercise:  { label: 'Log Exercise', placeholder: 'Minutes e.g. 30',        unit: 'min',     keyboard: 'number-pad',  Sticker: LogExercise },
+  weight:    { label: 'sw1_slog_weight',   placeholder: 'sw1_slog_phWeight',              unit: 'kg',      keyboard: 'decimal-pad', Sticker: LogWeight },
+  water:     { label: 'sw1_slog_water',    placeholder: 'sw1_slog_phWater',    unit: 'sw1_slog_unitGlasses', keyboard: 'number-pad',  Sticker: LogWater },
+  sleep:     { label: 'sw1_slog_sleep',    placeholder: 'sw1_slog_phSleep',   unit: 'sw1_slog_unitHours',   keyboard: 'decimal-pad', Sticker: LogSleep },
+  exercise:  { label: 'sw1_slog_exercise', placeholder: 'sw1_slog_phExercise',        unit: 'sw1_slog_unitMin',     keyboard: 'number-pad',  Sticker: LogExercise },
 }
 
 export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
@@ -94,8 +94,8 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
       // Roll back the optimistic chip AND tell the user — otherwise the ✓
       // silently un-flips and the log appears lost with no explanation.
       queryClient.setQueryData(todayKey, previousToday)
-      const msg = e instanceof Error ? e.message : 'Please try again.'
-      Alert.alert("Couldn't save", msg)
+      const msg = e instanceof Error ? e.message : t('common_tryAgain')
+      Alert.alert(t('sw1_common_couldntSave'), msg)
       return
     }
     void invalidatePregnancyLogQueries()
@@ -109,7 +109,7 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
       <View style={styles.form}>
         <View style={styles.header}>
           <SiteSticker name={SITE_STICKER[type]} size={34} cut />
-          <Text style={[styles.title, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{cfg.label}</Text>
+          <Text style={[styles.title, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t(cfg.label)}</Text>
         </View>
 
         <View style={[styles.siteInput, { backgroundColor: colors.surface, borderColor: colors.text }]}>
@@ -117,9 +117,9 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
             style={{ flex: 1, fontSize: value ? 30 : 16, fontFamily: value ? font.displayBold : font.body, color: value ? colors.text : colors.textMuted }}
             numberOfLines={1}
           >
-            {value || cfg.placeholder}
+            {value || t(cfg.placeholder)}
           </Text>
-          <Text style={{ fontSize: 13, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>{cfg.unit}</Text>
+          <Text style={{ fontSize: 13, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>{cfg.unit.startsWith('sw1_') ? t(cfg.unit as TranslationKey) : cfg.unit}</Text>
         </View>
 
         <View style={styles.numpad}>
@@ -151,7 +151,7 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
     <View style={styles.form}>
       <View style={styles.header}>
         <cfg.Sticker size={32} />
-        <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{cfg.label}</Text>
+        <Text style={[styles.title, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{t(cfg.label)}</Text>
       </View>
 
       <View style={[styles.input, diffuse
@@ -161,9 +161,9 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
           style={[styles.inputText, { color: value ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink4 : colors.textMuted), fontFamily: diffuse ? diffuseFont.display : font.display }]}
           numberOfLines={1}
         >
-          {value || cfg.placeholder}
+          {value || t(cfg.placeholder)}
         </Text>
-        <Text style={[styles.unit, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>{cfg.unit}</Text>
+        <Text style={[styles.unit, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>{cfg.unit.startsWith('sw1_') ? t(cfg.unit as TranslationKey) : cfg.unit}</Text>
       </View>
 
       <View style={styles.numpad}>

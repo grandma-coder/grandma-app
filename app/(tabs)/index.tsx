@@ -63,7 +63,7 @@ export default function Home() {
   if (isCaregiverContext && !caregiverHydrated) {
     return (
       <View style={[styles.root, styles.loaderRoot, { backgroundColor: bg }]}>
-        <BrandedLoader label="Loading" />
+        <BrandedLoader label={t('common_loading')} />
       </View>
     )
   }

@@ -4,20 +4,20 @@ import type { ComponentType } from 'react'
 import { PaperCard } from '../ui/PaperCard'
 import { LogExercise, LogSleep } from '../stickers/RewardStickers'
 import { useTheme } from '../../constants/theme'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 
 type StickerFn = ComponentType<{ size?: number; fill?: string; stroke?: string }>
 
-const MOMENTS: Array<{ Sticker: StickerFn; title: string; description: string }> = [
+const MOMENTS: Array<{ Sticker: StickerFn; titleKey: TranslationKey; descriptionKey: TranslationKey }> = [
   {
     Sticker: LogExercise,
-    title: 'Stardust Stretching',
-    description: 'Gentle movements to ease lower back tension as your center of gravity shifts with the moon.',
+    titleKey: 'sw3_moc_stretchTitle',
+    descriptionKey: 'sw3_moc_stretchDesc',
   },
   {
     Sticker: LogSleep,
-    title: 'Deep Sleep Ritual',
-    description: 'Listen to the "Arctic Calm" soundscape to lower cortisol levels before your midnight rest.',
+    titleKey: 'sw3_moc_sleepTitle',
+    descriptionKey: 'sw3_moc_sleepDesc',
   },
 ]
 
@@ -48,8 +48,8 @@ export function MomentsOfCare() {
                 <moment.Sticker size={28} />
               </View>
               <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>{moment.title}</Text>
-                <Text style={styles.cardDescription}>{moment.description}</Text>
+                <Text style={styles.cardTitle}>{t(moment.titleKey)}</Text>
+                <Text style={styles.cardDescription}>{t(moment.descriptionKey)}</Text>
               </View>
             </View>
           </PaperCard>

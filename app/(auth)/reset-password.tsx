@@ -69,7 +69,7 @@ export default function ResetPassword() {
         { text: 'OK', onPress: () => router.replace('/(auth)/sign-in') },
       ])
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Network error'
+      const msg = e instanceof Error ? e.message : t('error_network')
       Alert.alert(t('auth_couldntUpdatePassword'), msg)
     } finally {
       setLoading(false)

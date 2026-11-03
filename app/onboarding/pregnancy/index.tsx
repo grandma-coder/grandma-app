@@ -36,7 +36,7 @@ import { PoleField } from '../../../components/ui/diffuse/pickers/PoleField'
 import { OrbitPicker } from '../../../components/ui/diffuse/pickers/OrbitPicker'
 import { MetaballBloom } from '../../../components/ui/diffuse/pickers/MetaballBloom'
 import { User } from 'lucide-react-native'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import {
   usePregnancyOnboardingStore,
   type BirthPlace,
@@ -80,21 +80,21 @@ const STEPS: StepId[] = [
 const MOOD_OPTIONS: {
   id: PregnancyMood
   sticker: SiteStickerName
-  label: string
+  labelKey: TranslationKey
 }[] = [
-  { id: 'excited', label: 'Excited', sticker: 'star' },
-  { id: 'happy', label: 'Happy', sticker: 'face3' },
-  { id: 'calm', label: 'Calm', sticker: 'leaf' },
-  { id: 'anxious', label: 'Anxious', sticker: 'cloud' },
-  { id: 'tired', label: 'Tired', sticker: 'zz' },
-  { id: 'nauseous', label: 'Nauseous', sticker: 'face2' },
+  { id: 'excited', labelKey: 'preg_onboard_mood_excited', sticker: 'star' },
+  { id: 'happy', labelKey: 'preg_onboard_mood_happy', sticker: 'face3' },
+  { id: 'calm', labelKey: 'preg_onboard_mood_calm', sticker: 'leaf' },
+  { id: 'anxious', labelKey: 'preg_onboard_mood_anxious', sticker: 'cloud' },
+  { id: 'tired', labelKey: 'preg_onboard_mood_tired', sticker: 'zz' },
+  { id: 'nauseous', labelKey: 'preg_onboard_mood_nauseous', sticker: 'face2' },
 ]
 
-const BIRTH_PLACE_OPTIONS: { id: BirthPlace; label: string; sticker: SiteStickerName }[] = [
-  { id: 'hospital', label: 'Hospital', sticker: 'doc' },
-  { id: 'birth_center', label: 'Birth center', sticker: 'heart' },
-  { id: 'home_birth', label: 'Home birth', sticker: 'house' },
-  { id: 'undecided', label: 'Undecided', sticker: 'cloud' },
+const BIRTH_PLACE_OPTIONS: { id: BirthPlace; labelKey: TranslationKey; sticker: SiteStickerName }[] = [
+  { id: 'hospital', labelKey: 'preg_onboard_birth_hospital', sticker: 'doc' },
+  { id: 'birth_center', labelKey: 'preg_onboard_birth_center', sticker: 'heart' },
+  { id: 'home_birth', labelKey: 'preg_onboard_birth_home', sticker: 'house' },
+  { id: 'undecided', labelKey: 'preg_onboard_birth_undecided', sticker: 'cloud' },
 ]
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -424,8 +424,8 @@ function StepDueDate({
             label=""
             value={dueDate || ''}
             onChange={setDueDate}
-            placeholder="Tap to select your due date"
-            modalTitle="Due date"
+            placeholder={t('sw1_onb_dueTap')}
+            modalTitle={t('sw1_onb_dueTitle')}
             minimumDate={new Date()}
             maximumDate={maxDue}
             emptyHint={t('preg_onboard_dueDateHint')}
@@ -524,7 +524,7 @@ function StepMood({
         <View style={stepStyles.metaballStage}>
           <MetaballBloom
             fieldColor={getDiffuseAccent('pregnancy', isDark)}
-            options={MOOD_OPTIONS.map((opt) => ({ key: opt.id, label: opt.label }))}
+            options={MOOD_OPTIONS.map((opt) => ({ key: opt.id, label: t(opt.labelKey) }))}
             value={mood ? [mood] : []}
             onChange={(next) => {
               const added = next.find((k) => k !== mood)
@@ -537,7 +537,7 @@ function StepMood({
           {MOOD_OPTIONS.map((opt) => (
             <SiteChoice
               key={opt.id}
-              label={opt.label}
+              label={t(opt.labelKey)}
               selected={mood === opt.id}
               onPress={() => setMood(opt.id)}
               tone={modeSoft}
@@ -592,7 +592,7 @@ function StepBirthPlace({
         <OrbitPicker
           options={BIRTH_PLACE_OPTIONS.map((opt, i) => ({
             key: opt.id,
-            label: opt.label,
+            label: t(opt.labelKey),
             accent: orbitAccents[i % orbitAccents.length],
           }))}
           value={place}
@@ -603,7 +603,7 @@ function StepBirthPlace({
           {BIRTH_PLACE_OPTIONS.map((opt) => (
             <SiteChoice
               key={opt.id}
-              label={opt.label}
+              label={t(opt.labelKey)}
               selected={place === opt.id}
               onPress={() => setPlace(opt.id)}
               tone={modeSoft}
@@ -867,7 +867,7 @@ function CompletionScreen({
       </View>
 
       <View style={[completeStyles.bottom, { paddingBottom: insets.bottom + 16 }]}>
-        <EyeAction label="Let's Go" onPress={onFinish} ink={colors.text} loading={saving} disabled={saving} sticker="star" fill={ACTION_TONES.pink} delay={900} />
+        <EyeAction label={t('preg_onboard_completionCta')} onPress={onFinish} ink={colors.text} loading={saving} disabled={saving} sticker="star" fill={ACTION_TONES.pink} delay={900} />
       </View>
     </View>
   )

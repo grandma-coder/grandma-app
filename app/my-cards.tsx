@@ -10,6 +10,8 @@ import { InkBackButton } from '../components/ui/InkBackButton'
 import { SiteSticker } from '../components/stickers/SiteSticker'
 import { CardSticker } from '../components/home/pregnancy/CardSticker'
 import { useDailyMessage, type DailyMessageRow } from '../lib/dailyMessage/useDailyMessage'
+import { useTranslation } from '../lib/i18n'
+import { dateLoc } from '../lib/kpLocale'
 import { getCardById } from '../lib/dailyMessage'
 import type { DailyCard } from '../lib/dailyMessage'
 
@@ -20,15 +22,15 @@ interface CollectionItem {
 
 // "2026-07-11" → "JUL 11". Warm, short mono-caps date.
 function fmtDate(iso: string): string {
-  const [, m, d] = iso.split('-')
-  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+  const [y, m, d] = iso.split('-')
   const mi = Number(m) - 1
   if (mi < 0 || mi > 11) return iso
-  return `${months[mi]} ${Number(d)}`
+  return new Date(Number(y), mi, Number(d)).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' }).toUpperCase()
 }
 
 export default function MyCardsScreen() {
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const theme = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -77,17 +79,17 @@ export default function MyCardsScreen() {
             <Pressable onPress={() => router.back()} style={styles.back} hitSlop={10}>
               <ChevronLeft size={22} color={colors.text} strokeWidth={2} />
             </Pressable>
-            <MonoCaps color={colors.textMuted}>DAILY MESSAGE</MonoCaps>
-            <Display size={28} style={styles.title}>My Cards</Display>
+            <MonoCaps color={colors.textMuted}>{t('sw1_daily_eyebrow')}</MonoCaps>
+            <Display size={28} style={styles.title}>{t('sw3_cards_title')}</Display>
           </>
         ) : (
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
               <SiteSticker name="star" size={30} cut />
-              <Display size={26} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>My Cards</Display>
+              <Display size={26} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('sw3_cards_title')}</Display>
             </View>
-            <MonoCaps color={colors.textMuted} style={{ marginTop: 14 }}>DAILY MESSAGE</MonoCaps>
+            <MonoCaps color={colors.textMuted} style={{ marginTop: 14 }}>{t('sw1_daily_eyebrow')}</MonoCaps>
           </>
         )}
       </View>
@@ -110,7 +112,7 @@ export default function MyCardsScreen() {
             </View>
           </Pressable>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>Your drawn cards will collect here.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>{t('sw3_cards_empty')}</Text>}
       />
 
       <Modal visible={!!open} transparent animationType="fade" onRequestClose={() => setOpenId(null)}>

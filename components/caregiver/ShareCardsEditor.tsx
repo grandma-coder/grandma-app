@@ -10,6 +10,10 @@
  */
 
 import { Pressable, Text, View, StyleSheet } from 'react-native'
+import { useTranslation } from '../../lib/i18n'
+import type { TranslationKeys } from '../../lib/i18n/keys'
+
+type TranslationKey = keyof TranslationKeys
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../constants/theme'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
@@ -25,7 +29,7 @@ interface ShareCardsEditorProps {
 
 interface CapabilityRow {
   key: 'log_activity' | 'emergency' | 'chat' | 'edit_child'
-  label: string
+  labelKey: TranslationKey
   sticker: SiteStickerName
 }
 
@@ -54,14 +58,15 @@ const CARD_STICKERS: Record<string, SiteStickerName> = {
 }
 
 const CAPABILITY_ROWS: CapabilityRow[] = [
-  { key: 'log_activity', label: 'Can log activity', sticker: 'pencil' },
-  { key: 'emergency', label: 'Can view emergency info', sticker: 'thermo' },
-  { key: 'chat', label: 'Can chat', sticker: 'bubble' },
-  { key: 'edit_child', label: 'Can edit child profile & health info', sticker: 'baby' },
+  { key: 'log_activity', labelKey: 'sw2_cg_canLogActivity', sticker: 'pencil' },
+  { key: 'emergency', labelKey: 'sw2_cg_canViewEmergency', sticker: 'thermo' },
+  { key: 'chat', labelKey: 'sw2_cg_canChat', sticker: 'bubble' },
+  { key: 'edit_child', labelKey: 'sw2_cg_canEditChild', sticker: 'baby' },
 ]
 
 export function ShareCardsEditor({ behavior, role, value, onChange }: ShareCardsEditorProps) {
   const { colors, stickers, spacing, font } = useTheme()
+  const { t } = useTranslation()
 
   const cards = CAREGIVER_CARDS[behavior]
   const sharedIds = value._shared_cards?.[behavior] ?? roleDefaultCards(behavior, role)
@@ -108,7 +113,7 @@ export function ShareCardsEditor({ behavior, role, value, onChange }: ShareCards
   return (
     <View style={{ gap: spacing.lg }}>
       <View>
-        <Text style={[styles.eyebrow, { color: colors.textMuted }]}>What can they see?</Text>
+        <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('sw2_cg_whatSee')}</Text>
         {cards.map((card) => (
           <Row
             key={card.id}
@@ -116,15 +121,15 @@ export function ShareCardsEditor({ behavior, role, value, onChange }: ShareCards
             label={card.label}
             on={sharedIds.includes(card.id)}
             onPress={() => toggleCard(card.id)}
-            tag={card.tier === 'intimate' ? 'sensitive' : undefined}
+            tag={card.tier === 'intimate' ? t('sw2_cg_sensitive') : undefined}
           />
         ))}
       </View>
 
       <View>
-        <Text style={[styles.eyebrow, { color: colors.textMuted }]}>What can they do?</Text>
+        <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('sw2_cg_whatDo')}</Text>
         {CAPABILITY_ROWS.map((cap) => (
-          <Row key={cap.key} sticker={cap.sticker} label={cap.label} on={!!value[cap.key]} onPress={() => toggleCapability(cap.key)} />
+          <Row key={cap.key} sticker={cap.sticker} label={t(cap.labelKey)} on={!!value[cap.key]} onPress={() => toggleCapability(cap.key)} />
         ))}
       </View>
     </View>

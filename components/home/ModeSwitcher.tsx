@@ -4,12 +4,14 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useTheme, useDiffuseTheme, diffuseFont, borderRadius } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { useTranslation } from '../../lib/i18n'
 import { useModeStore } from '../../store/useModeStore'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
 import type { JourneyMode } from '../../types'
 
 export function ModeSwitcher() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
@@ -17,10 +19,10 @@ export function ModeSwitcher() {
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
 
   const MODES: { id: JourneyMode; label: string }[] = [
-    { id: 'pre-pregnancy', label: cycleIntent === 'ttc' ? 'Dreaming' : 'Cycle' },
-    { id: 'pregnancy', label: 'Expecting' },
-    { id: 'kids', label: 'Raising' },
-    { id: 'menopause', label: 'Menopause' },
+    { id: 'pre-pregnancy', label: cycleIntent === 'ttc' ? t('app_journey_dreaming') : t('onboardingJourney_trying') },
+    { id: 'pregnancy', label: t('app_journey_expecting') },
+    { id: 'kids', label: t('app_journey_raising') },
+    { id: 'menopause', label: t('app_journey_menopause') },
   ]
 
   function handlePress(m: JourneyMode) {

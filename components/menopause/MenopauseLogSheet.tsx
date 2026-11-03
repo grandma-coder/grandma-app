@@ -146,7 +146,7 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
             {isPeri ? (
               <LogTile
                 key="period"
-                label="Period"
+                label={t('prepreg_period')}
                 tint="coral"
                 icon={<Character name="period" size={34} color={st.coralInk} />}
                 onPress={() => pick('period')}

@@ -423,7 +423,7 @@ export function GarageScreen() {
       {!deckDone && !loading && (
         <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]} key="deck-actionbar">
           <ActionButton
-            label="Pass"
+            label={t('sw4_pass')}
             tint={diffuse ? 'transparent' : colors.surface}
             border={diffuse ? dt.colors.line2 : colors.text}
             onPress={() => forceSwipe('left')}
@@ -434,7 +434,7 @@ export function GarageScreen() {
 
           <ActionButton
             small
-            label="Undo"
+            label={t('sw4_undo')}
             tint={diffuse ? 'transparent' : colors.surface}
             border={diffuse ? dt.colors.line2 : colors.text}
             onPress={undo}
@@ -445,7 +445,7 @@ export function GarageScreen() {
 
           <ActionButton
             small
-            label="Details"
+            label={t('preg_weight_details')}
             tint={diffuse ? 'transparent' : colors.surface}
             border={diffuse ? dt.colors.line2 : colors.text}
             onPress={() => current && router.push(`/garage/${current.id}` as any)}
@@ -455,7 +455,7 @@ export function GarageScreen() {
           </ActionButton>
 
           <ActionButton
-            label="Keep"
+            label={t('sw4_keep')}
             tint={diffuse ? 'transparent' : getModeColorSoft(mode, isDark)}
             border={diffuse ? accent : colors.text}
             onPress={() => forceSwipe('right')}
@@ -898,7 +898,7 @@ function DeckError({ accent, onRetry }: { accent: string; onRetry: () => void })
         {t('garage_screen_error_body')}
       </Text>
       <View style={styles.doneBtn}>
-        <PillButton variant="ink" label="Try again" onPress={onRetry} />
+        <PillButton variant="ink" label={t('channelScreen_tryAgain')} onPress={onRetry} />
       </View>
     </View>
   )

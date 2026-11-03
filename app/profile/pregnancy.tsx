@@ -39,7 +39,7 @@ import { SiteSticker, type SiteStickerName } from '../../components/stickers/Sit
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { SiteChoice } from '../../components/ui/SiteChoice'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, translations, t as tNow, type TranslationKey } from '../../lib/i18n'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
@@ -107,10 +107,10 @@ function usePregTheme() {
   return { ...theme, diffuse, colors, font }
 }
 
-const TRIMESTER_LABEL = (week: number): string => {
-  if (week <= 13) return 'First'
-  if (week <= 27) return 'Second'
-  return 'Third'
+const TRIMESTER_LABEL = (week: number): TranslationKey => {
+  if (week <= 13) return 'sw1_pp_tri1'
+  if (week <= 27) return 'sw1_pp_tri2'
+  return 'sw1_pp_tri3'
 }
 
 /** Naegele's rule: EDD = LMP + 280 days. Returns ISO YYYY-MM-DD. */
@@ -154,6 +154,45 @@ const NESTING_ITEMS = [
   'Outlet covers',
   'Washing baby clothes',
 ]
+
+// Display keys for stored English ids (state keys / DB values stay English).
+const ITEM_KEYS: Record<string, TranslationKey> = {
+  'Meal prep frozen meals': 'sw1_pp_ppItem1',
+  'Postpartum support person confirmed': 'sw1_pp_ppItem2',
+  'Breastfeeding supplies ready': 'sw1_pp_ppItem3',
+  'Read about baby blues vs PPD': 'sw1_pp_ppItem4',
+  '6-week checkup scheduled': 'sw1_pp_ppItem5',
+  'Postpartum vitamin plan': 'sw1_pp_ppItem6',
+  'Nursery ready': 'sw1_pp_nestItem1',
+  'Crib assembled': 'sw1_pp_nestItem2',
+  'Car seat installed': 'sw1_pp_nestItem3',
+  'Baby monitor set up': 'sw1_pp_nestItem4',
+  'Outlet covers': 'sw1_pp_nestItem5',
+  'Washing baby clothes': 'sw1_pp_nestItem6',
+}
+
+const OPT_KEYS: Record<string, TranslationKey> = {
+  Unknown: 'sw1_pp_oUnknown', unknown: 'sw1_pp_oUnknown', Other: 'sw1_pp_oOther', Undecided: 'sw1_pp_oUndecided',
+  Positive: 'sw1_pp_oPositive', Negative: 'sw1_pp_oNegative',
+  Spontaneous: 'sw1_pp_oSpontaneous', IVF: 'sw1_pp_oIvf', IUI: 'sw1_pp_oIui',
+  Boy: 'sw1_pp_oBoy', Girl: 'sw1_pp_oGirl', 'Not revealed': 'sw1_pp_oNotRevealed',
+  Hospital: 'sw1_pp_oHospital', 'Birth center': 'sw1_pp_oBirthCenter', Home: 'sw1_pp_oHome',
+  Epidural: 'sw1_pp_oEpidural', 'Natural / unmedicated': 'sw1_pp_oNatural', 'Nitrous oxide': 'sw1_pp_oNitrous', 'IV medication': 'sw1_pp_oIv',
+  'Calm & quiet': 'sw1_pp_oCalm', 'Music & playlist': 'sw1_pp_oMusic', 'Dim lights': 'sw1_pp_oDim', 'Family present': 'sw1_pp_oFamily', Photographer: 'sw1_pp_oPhotographer',
+  Immediate: 'sw1_pp_oImmediate', Delayed: 'sw1_pp_oDelayed', 'Partner cuts': 'sw1_pp_oPartnerCuts', 'Cord blood banking': 'sw1_pp_oCordBlood', 'Lotus birth': 'sw1_pp_oLotus',
+  Breastfeed: 'sw1_pp_oBreastfeed', Formula: 'sw1_pp_oFormula', Mixed: 'sw1_pp_oMixed', Pumping: 'sw1_pp_oPumping',
+  'Less than 3 months': 'sw1_pp_oLess3',
+  cephalic: 'sw1_pp_oCephalic', breech: 'sw1_pp_oBreech', transverse: 'sw1_pp_oTransverse',
+}
+
+/** Display text for a stored option value. Unknown / free-typed values pass through. */
+function optText(t: (key: TranslationKey, params?: Record<string, string | number>) => string, v: string): string {
+  const k = OPT_KEYS[v]
+  if (k) return t(k)
+  const m = /^(\d+) months$/.exec(v)
+  if (m) return t('sw1_pp_nMonths', { n: m[1] })
+  return v
+}
 
 // ─── Animated hero heart — gentle pulse + sway ────────────────────────────────
 
@@ -204,6 +243,7 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
   const { colors, font, isDark, stickers: st, diffuse } = usePregTheme()
   const paper = diffuse ? colors.surface : colors.bg
   const paperBorder = colors.border
+  const { t } = useTranslation()
   const [text, setText] = useState(value)
   useEffect(() => { setText(value) }, [value])
 
@@ -231,9 +271,9 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
             placeholderTextColor={colors.textMuted}
           />
           <View style={styles.editButtons}>
-            <PillButton label="Cancel" variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
+            <PillButton label={t('common_cancel')} variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
             <PillButton
-              label="Save"
+              label={t('common_save')}
               variant={diffuse ? 'accent' : 'ink'}
               accentColor={st.lilac}
               onPress={() => { onSave(text); onClose() }}
@@ -287,9 +327,23 @@ interface OptionsSheetProps {
 // Map a label → sticker + tint pair so each modal feels like its own object.
 // Edit-field modal header icon → the unified Character-blob family, keyed off the
 // field label. `tint` keeps the soft badge background per field.
+// Modal labels arrive translated; the icon pickers below match English words. Map a translated
+// field label back to its English text so non-English users get the right icon.
+const ICON_LABEL_KEYS = [
+  'preg_profile_conceptionType', 'preg_profile_bloodType', 'preg_profile_rhFactor', 'preg_profile_height',
+  'sw1_pp_prePregWeight', 'preg_profile_currentWeight', 'preg_profile_birthLocation', 'preg_profile_painManagement',
+  'preg_profile_atmosphere', 'preg_profile_cordCutting', 'preg_profile_feedingPlan', 'sw1_pp_healthNotes',
+] as const
+function englishLabel(label: string): string {
+  for (const key of ICON_LABEL_KEYS) {
+    if (tNow(key) === label) return translations.en[key]
+  }
+  return label
+}
+
 function modalAccent(label: string, stickers: ReturnType<typeof useTheme>['stickers']):
   { node: React.ReactNode; tint: string } {
-  const k = label.toLowerCase()
+  const k = englishLabel(label).toLowerCase()
   const blob = (name: CharacterName, color: string) => <Character name={name} size={24} color={color} />
   if (k.includes('blood')) return { node: blob('water', stickers.pink), tint: stickers.pinkSoft }
   if (k.includes('rh')) return { node: blob('water', stickers.lilac), tint: stickers.lilacSoft }
@@ -311,7 +365,7 @@ function modalAccent(label: string, stickers: ReturnType<typeof useTheme>['stick
 }
 
 function siteStickerForLabel(label: string): SiteStickerName {
-  const k = label.toLowerCase()
+  const k = englishLabel(label).toLowerCase()
   if (k.includes('blood') || k.includes('rh')) return 'drop'
   if (k.includes('conception') || k.includes('cord')) return 'heart'
   if (k.includes('location')) return 'house'
@@ -342,7 +396,7 @@ function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose:
             {t('profPreg_pickOneThatFits')}
           </Text>
         </View>
-        <InkBackButton icon="close" ink={ink} paper={colors.surface} label="Close" onPress={onClose} style={{ marginBottom: 0 }} />
+        <InkBackButton icon="close" ink={ink} paper={colors.surface} label={t('common_close')} onPress={onClose} style={{ marginBottom: 0 }} />
       </View>
     )
   }
@@ -378,6 +432,7 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
   const paper = diffuse ? colors.surface : colors.bg
   const paperBorder = colors.border
   const ink = colors.text
+  const { t } = useTranslation()
 
   const isInList = (v: string) => options.includes(v)
   const initialSelected = !value ? '' : isInList(value) ? value : 'Other'
@@ -415,7 +470,7 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
               const active = opt === selected
               if (!diffuse) {
                 return (
-                  <SiteChoice key={opt} align="start" label={opt} selected={active} tone={getModeColorSoft('pregnancy')}
+                  <SiteChoice key={opt} align="start" label={optText(t, opt)} selected={active} tone={getModeColorSoft('pregnancy')}
                     onPress={() => setSelected(opt)} style={{ marginBottom: 10 }} />
                 )
               }
@@ -439,7 +494,7 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
                   ]}
                 >
                   <Text style={[styles.optionText, { color: colors.text, fontFamily: active ? font.bodySemiBold : font.body }]}>
-                    {opt}
+                    {optText(t, opt)}
                   </Text>
                   {active && <Check size={16} color={ink} strokeWidth={2.5} />}
                 </Pressable>
@@ -451,7 +506,7 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
             <TextInput
               value={otherText}
               onChangeText={setOtherText}
-              placeholder="Type your answer"
+              placeholder={t('sw1_pp_typeAnswer')}
               placeholderTextColor={colors.textMuted}
               autoFocus
               style={[
@@ -471,14 +526,14 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
 
           <View style={styles.editButtons}>
             <PillButton
-              label="Cancel"
+              label={t('common_cancel')}
               variant="paper"
               onPress={onClose}
               height={52}
               style={{ flex: 1 }}
             />
             <PillButton
-              label="Save"
+              label={t('common_save')}
               variant={diffuse ? 'accent' : 'ink'}
               accentColor={st.lilac}
               onPress={handleSave}
@@ -513,6 +568,7 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
   const { colors, font, isDark, stickers: st, diffuse } = usePregTheme()
   const paper = diffuse ? colors.surface : colors.bg
   const paperBorder = colors.border
+  const { t } = useTranslation()
   const initialIndex = Math.max(0, options.indexOf(value))
   const [selected, setSelected] = useState(initialIndex >= 0 ? initialIndex : 0)
   const scrollRef = useRef<ScrollView>(null)
@@ -579,9 +635,9 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
             </ScrollView>
           </View>
           <View style={styles.editButtons}>
-            <PillButton label="Cancel" variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
+            <PillButton label={t('common_cancel')} variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
             <PillButton
-              label="Save"
+              label={t('common_save')}
               variant={diffuse ? 'accent' : 'ink'}
               accentColor={st.lilac}
               onPress={() => { onSave(options[selected]); onClose() }}
@@ -828,7 +884,7 @@ export default function PregnancyProfileScreen() {
     try {
       await persistDueDateToDb(iso)
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -930,7 +986,7 @@ export default function PregnancyProfileScreen() {
       if (error) throw error
       setProfile((prev) => ({ ...prev, birthPreferences: merged }))
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -949,7 +1005,7 @@ export default function PregnancyProfileScreen() {
       if (error) throw error
       setCurrentWeight(value)
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -968,7 +1024,7 @@ export default function PregnancyProfileScreen() {
       try {
         await persistDueDateToDb(newDue)
       } catch (e: unknown) {
-        Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+        Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
       }
     }
   }
@@ -984,7 +1040,7 @@ export default function PregnancyProfileScreen() {
         .eq('id', session.user.id)
       if (error) throw error
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1002,7 +1058,7 @@ export default function PregnancyProfileScreen() {
         .eq('id', childId)
       if (error) throw error
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1024,14 +1080,14 @@ export default function PregnancyProfileScreen() {
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         {diffuse ? (
           <ScreenHeader
-            title="Pregnancy Profile"
+            title={t('sw1_pp_title')}
             right={saving ? <ActivityIndicator color={colors.text} size="small" /> : undefined}
           />
         ) : (
           <View style={styles.siteHeader}>
             <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="heart" size={30} cut />
-            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>Pregnancy Profile</Text>
+            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>{t('sw1_pp_title')}</Text>
             {saving ? <ActivityIndicator color={ink} size="small" /> : null}
           </View>
         )}
@@ -1047,7 +1103,7 @@ export default function PregnancyProfileScreen() {
             <Text style={[styles.heroEyebrow, { color: colors.textMuted }]}>{t('profPreg_taglineExpecting')}</Text>
             <AnimatedHeartHero size={92} fill={stickers.pink} site />
             <Display size={32} color={ink} style={{ marginTop: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>
-              {profile.name || 'You'}
+              {profile.name || t('sw1_pp_you')}
             </Display>
             {weekNumber != null && trimester != null && (
               <View style={styles.heroChips}>
@@ -1067,7 +1123,7 @@ export default function PregnancyProfileScreen() {
             {bp.birthLocation ? (
               <View style={[styles.heroPill, { backgroundColor: colors.surface, borderColor: ink, borderWidth: 1.5, marginTop: 12 }]}>
                 <Ionicons name="location-outline" size={12} color={ink} />
-                <Text style={[styles.heroPillText, { color: ink, fontFamily: font.bodyMedium }]}>{bp.birthLocation}</Text>
+                <Text style={[styles.heroPillText, { color: ink, fontFamily: font.bodyMedium }]}>{optText(t, bp.birthLocation)}</Text>
               </View>
             ) : null}
           </View>
@@ -1114,7 +1170,7 @@ export default function PregnancyProfileScreen() {
 
           {/* Name + squiggle underline */}
           <Display size={36} color={colors.text} style={{ marginTop: 10 }}>
-            {profile.name || 'You'}
+            {profile.name || t('sw1_pp_you')}
           </Display>
           <View style={{ marginTop: 2 }} pointerEvents="none">
             <Squiggle w={90} h={14} stroke={stickers.coral ?? '#EE7B6D'} />
@@ -1150,7 +1206,7 @@ export default function PregnancyProfileScreen() {
               <View style={[styles.heroPill, { backgroundColor: colors.surfaceRaised }]}>
                 <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
                 <Text style={[styles.heroPillText, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
-                  {bp.birthLocation}
+                  {optText(t, bp.birthLocation)}
                 </Text>
               </View>
             </View>
@@ -1160,9 +1216,9 @@ export default function PregnancyProfileScreen() {
 
         {/* 2. Pregnancy Info */}
         <SectionCard
-          title="Pregnancy Info"
+          title={t('sw1_pp_info')}
           sticker="cal"
-          subtitle="your pregnancy at a glance"
+          subtitle={t('sw1_pp_info_sub')}
           badge={<Character name="clock" size={26} />}
           badgeTint={stickers.lilacSoft}
         >
@@ -1172,12 +1228,12 @@ export default function PregnancyProfileScreen() {
             value={dueDate ? new Date(dueDate + 'T12:00:00').toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
             onEdit={openDueDatePicker}
           />
-          <InfoRow dotColor={ROW_DOTS[1]} label={t('preg_profile_currentWeek')} value={weekNumber != null ? `Week ${weekNumber}` : ''} />
-          <InfoRow dotColor={ROW_DOTS[2]} label={t('preg_profile_trimester')} value={weekNumber != null ? TRIMESTER_LABEL(weekNumber) : ''} />
-          <InfoRow dotColor={ROW_DOTS[3]} label={t('preg_profile_daysToGo')} value={daysToGo != null ? `${daysToGo} days` : ''} />
+          <InfoRow dotColor={ROW_DOTS[1]} label={t('preg_profile_currentWeek')} value={weekNumber != null ? t('profPreg_chipWeek', { n: weekNumber }) : ''} />
+          <InfoRow dotColor={ROW_DOTS[2]} label={t('preg_profile_trimester')} value={weekNumber != null ? t(TRIMESTER_LABEL(weekNumber)) : ''} />
+          <InfoRow dotColor={ROW_DOTS[3]} label={t('preg_profile_daysToGo')} value={daysToGo != null ? t('sw1_pp_nDays', { n: daysToGo }) : ''} />
           <InfoRow
             dotColor={ROW_DOTS[4]}
-            label="LMP date"
+            label={t('sw1_pp_lmp')}
             value={bp.lmpDate ? new Date(bp.lmpDate + 'T12:00:00').toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
             onEdit={() => {
               setDraftLmpDate(bp.lmpDate ? new Date(bp.lmpDate + 'T00:00:00') : new Date())
@@ -1187,7 +1243,7 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             dotColor={ROW_DOTS[5]}
             label={t('preg_profile_conceptionType')}
-            value={bp.conceptionType ?? ''}
+            value={optText(t, bp.conceptionType ?? '')}
             onEdit={() => setOptionsSheet({
               label: t('preg_profile_conceptionType'),
               value: bp.conceptionType ?? '',
@@ -1198,7 +1254,7 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             dotColor={ROW_DOTS[0]}
             label={t('preg_profile_bloodType')}
-            value={profile.bloodType}
+            value={optText(t, profile.bloodType)}
             onEdit={() => setOptionsSheet({
               label: t('preg_profile_bloodType'),
               value: profile.bloodType,
@@ -1212,7 +1268,7 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             dotColor={ROW_DOTS[1]}
             label={t('preg_profile_rhFactor')}
-            value={bp.rhFactor ?? ''}
+            value={optText(t, bp.rhFactor ?? '')}
             onEdit={() => setOptionsSheet({
               label: t('preg_profile_rhFactor'),
               value: bp.rhFactor ?? '',
@@ -1234,10 +1290,10 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             dotColor={ROW_DOTS[3]}
-            label="Pre-pregnancy weight"
+            label={t('sw1_pp_prePregWeight')}
             value={bp.prePregnancyWeight ? `${bp.prePregnancyWeight} kg` : ''}
             onEdit={() => setWheelSheet({
-              label: 'Pre-pregnancy weight',
+              label: t('sw1_pp_prePregWeight'),
               value: bp.prePregnancyWeight ?? '60.0',
               options: WEIGHT_OPTIONS,
               unit: 'kg',
@@ -1272,9 +1328,9 @@ export default function PregnancyProfileScreen() {
 
         {/* Birth Planning — link to the full birth-plan screen */}
         <SectionCard
-          title="Birth Planning"
+          title={t('sw1_pp_birthPlanning')}
           sticker="pencil"
-          subtitle="plan how you want to welcome baby"
+          subtitle={t('sw1_pp_birthPlanning_sub')}
           badge={<Character name="calendar" size={26} />}
           badgeTint={stickers.greenSoft}
         >
@@ -1292,15 +1348,15 @@ export default function PregnancyProfileScreen() {
 
         {/* 3. Birth Preferences */}
         <SectionCard
-          title="Birth Preferences"
+          title={t('sw1_pp_birthPrefs')}
           sticker="heart"
-          subtitle="the way you'd love it to feel"
+          subtitle={t('sw1_pp_birthPrefs_sub')}
           badge={<Character name="heart" size={26} />}
           badgeTint={stickers.pinkSoft}
         >
           <InfoRow
             label={t('preg_profile_birthLocation')}
-            value={bp.birthLocation ?? ''}
+            value={optText(t, bp.birthLocation ?? '')}
             onEdit={() => setOptionsSheet({
               label: t('preg_profile_birthLocation'),
               value: bp.birthLocation ?? '',
@@ -1310,7 +1366,7 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             label={t('preg_profile_painManagement')}
-            value={bp.painManagement ?? ''}
+            value={optText(t, bp.painManagement ?? '')}
             onEdit={() => setOptionsSheet({
               label: t('preg_profile_painManagement'),
               value: bp.painManagement ?? '',
@@ -1320,7 +1376,7 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             label={t('preg_profile_atmosphere')}
-            value={bp.atmosphere ?? ''}
+            value={optText(t, bp.atmosphere ?? '')}
             onEdit={() => setOptionsSheet({
               label: t('preg_profile_atmosphere'),
               value: bp.atmosphere ?? '',
@@ -1330,7 +1386,7 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             label={t('preg_profile_cordCutting')}
-            value={bp.cordCutting ?? ''}
+            value={optText(t, bp.cordCutting ?? '')}
             onEdit={() => setOptionsSheet({
               label: t('preg_profile_cordCutting'),
               value: bp.cordCutting ?? '',
@@ -1340,7 +1396,7 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow
             label={t('preg_profile_feedingPlan')}
-            value={bp.feedingPlan ?? ''}
+            value={optText(t, bp.feedingPlan ?? '')}
             onEdit={() => setOptionsSheet({
               label: t('preg_profile_feedingPlan'),
               value: bp.feedingPlan ?? '',
@@ -1352,9 +1408,9 @@ export default function PregnancyProfileScreen() {
 
         {/* 4. Birth Team */}
         <SectionCard
-          title="Birth Team"
+          title={t('sw1_pp_birthTeam')}
           sticker="bubble"
-          subtitle="people in your corner"
+          subtitle={t('sw1_pp_birthTeam_sub')}
           badge={<Character name="community" size={26} />}
           badgeTint={stickers.blueSoft}
         >
@@ -1372,17 +1428,17 @@ export default function PregnancyProfileScreen() {
 
         {/* 5. Health Flags */}
         <SectionCard
-          title="Health Flags"
+          title={t('sw1_pp_health')}
           sticker="thermo"
-          subtitle="anything your team should know"
+          subtitle={t('sw1_pp_health_sub')}
           badge={<Character name="health" size={26} />}
           badgeTint={stickers.peachSoft}
         >
           <InfoRow
-            label="Conditions / notes"
+            label={t('sw1_pp_conditions')}
             value={profile.healthNotes}
             onEdit={() => setEditField({
-              label: 'Health notes', value: profile.healthNotes,
+              label: t('sw1_pp_healthNotes'), value: profile.healthNotes,
               multiline: true,
               onSave: (v) => {
                 setProfile((p) => ({ ...p, healthNotes: v }))
@@ -1394,17 +1450,17 @@ export default function PregnancyProfileScreen() {
 
         {/* 6. Baby Info */}
         <SectionCard
-          title="Baby Info"
+          title={t('sw1_pp_baby')}
           sticker="baby"
-          subtitle="the little one we're waiting for"
+          subtitle={t('sw1_pp_baby_sub')}
           badge={<Character name="baby" size={28} />}
           badgeTint={stickers.yellowSoft}
         >
           <InfoRow
-            label="Baby name"
+            label={t('sw1_pp_babyName')}
             value={baby.name}
             onEdit={() => setEditField({
-              label: 'Baby name', value: baby.name,
+              label: t('sw1_pp_babyName'), value: baby.name,
               onSave: (v) => {
                 setBaby((b) => ({ ...b, name: v }))
                 void saveBabyField('name', v)
@@ -1412,20 +1468,20 @@ export default function PregnancyProfileScreen() {
             })}
           />
           <InfoRow
-            label="Sex"
-            value={baby.sex}
+            label={t('sw1_pp_sex')}
+            value={optText(t, baby.sex)}
             onEdit={() => setOptionsSheet({
-              label: 'Baby sex',
+              label: t('sw1_pp_babySex'),
               value: baby.sex,
               options: SEX_OPTIONS,
               onSave: (v) => setBaby((b) => ({ ...b, sex: v })),
             })}
           />
           <InfoRow
-            label="Position"
-            value={baby.position}
+            label={t('sw1_pp_position')}
+            value={optText(t, baby.position)}
             onEdit={() => setOptionsSheet({
-              label: 'Baby position',
+              label: t('sw1_pp_babyPosition'),
               value: baby.position,
               options: POSITION_OPTIONS,
               onSave: (v) => {
@@ -1438,10 +1494,10 @@ export default function PregnancyProfileScreen() {
             })}
           />
           <InfoRow
-            label="Last scan week"
-            value={baby.lastScanWeek ? `Week ${baby.lastScanWeek}` : ''}
+            label={t('sw1_pp_lastScan')}
+            value={baby.lastScanWeek ? t('profPreg_chipWeek', { n: baby.lastScanWeek }) : ''}
             onEdit={() => setWheelSheet({
-              label: 'Last scan week',
+              label: t('sw1_pp_lastScan'),
               value: baby.lastScanWeek || '20',
               options: SCAN_WEEK_OPTIONS,
               unit: '',
@@ -1452,9 +1508,9 @@ export default function PregnancyProfileScreen() {
 
         {/* 7. Emergency Contacts */}
         <SectionCard
-          title="Emergency Contacts"
+          title={t('sw1_pp_emergency')}
           sticker="phone"
-          subtitle="who to reach if it's urgent"
+          subtitle={t('sw1_pp_emergency_sub')}
           badge={<Character name="key" size={26} />}
           badgeTint={stickers.peachSoft}
         >
@@ -1472,9 +1528,9 @@ export default function PregnancyProfileScreen() {
 
         {/* 8. Postpartum Prep */}
         <SectionCard
-          title="Postpartum Prep"
+          title={t('sw1_pp_postpartum')}
           sticker="flower"
-          subtitle="things future-you will thank you for"
+          subtitle={t('sw1_pp_postpartum_sub')}
           badge={<Character name="selfcare" size={24} />}
           badgeTint={stickers.lilacSoft}
         >
@@ -1504,7 +1560,7 @@ export default function PregnancyProfileScreen() {
                   },
                 ]}
               >
-                {item}
+                {ITEM_KEYS[item] ? t(ITEM_KEYS[item]) : item}
               </Text>
             </Pressable>
           ))}
@@ -1512,49 +1568,49 @@ export default function PregnancyProfileScreen() {
 
         {/* 9. Breastfeeding Plan */}
         <SectionCard
-          title="Breastfeeding Plan"
+          title={t('sw1_pp_bf')}
           sticker="bottle"
-          subtitle="how you'd like to feed baby"
+          subtitle={t('sw1_pp_bf_sub')}
           badge={<Character name="milk" size={26} />}
           badgeTint={stickers.pinkSoft}
         >
           <InfoRow
-            label="Feeding intention"
-            value={bp.breastfeedingGoal ?? ''}
+            label={t('sw1_pp_feedIntent')}
+            value={optText(t, bp.breastfeedingGoal ?? '')}
             onEdit={() => setOptionsSheet({
-              label: 'Feeding intention',
+              label: t('sw1_pp_feedIntent'),
               value: bp.breastfeedingGoal ?? '',
               options: FEEDING_PLAN_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ breastfeedingGoal: v }),
             })}
           />
           <InfoRow
-            label="Duration goal"
-            value={bp.durationGoal ?? ''}
+            label={t('sw1_pp_durationGoal')}
+            value={optText(t, bp.durationGoal ?? '')}
             onEdit={() => setOptionsSheet({
-              label: 'Duration goal',
+              label: t('sw1_pp_durationGoal'),
               value: bp.durationGoal ?? '',
               options: DURATION_GOAL_OPTIONS,
               onSave: (v) => void saveBirthPreferences({ durationGoal: v }),
             })}
           />
           <InfoRow
-            label="Lactation consultant"
-            value={bp.lactationBooked ? 'Booked ✓' : 'Not booked'}
+            label={t('sw1_pp_lactation')}
+            value={bp.lactationBooked ? t('sw1_pp_booked') : t('sw1_pp_notBooked')}
             onEdit={() => void saveBirthPreferences({ lactationBooked: !bp.lactationBooked })}
           />
           <InfoRow
-            label="Pump ordered"
-            value={bp.pumpOrdered ? 'Yes ✓' : 'Not yet'}
+            label={t('sw1_pp_pump')}
+            value={bp.pumpOrdered ? t('sw1_pp_yes') : t('sw1_pp_notYet')}
             onEdit={() => void saveBirthPreferences({ pumpOrdered: !bp.pumpOrdered })}
           />
         </SectionCard>
 
         {/* 10. Nesting Checklist */}
         <SectionCard
-          title="Nesting Checklist"
+          title={t('sw1_pp_nesting')}
           sticker="crib"
-          subtitle="getting your nest baby-ready"
+          subtitle={t('sw1_pp_nesting_sub')}
           badge={<Character name="night" size={26} />}
           badgeTint={stickers.blueSoft}
         >
@@ -1584,14 +1640,14 @@ export default function PregnancyProfileScreen() {
                   },
                 ]}
               >
-                {item}
+                {ITEM_KEYS[item] ? t(ITEM_KEYS[item]) : item}
               </Text>
             </Pressable>
           ))}
         </SectionCard>
 
         <PillButton
-          label={saving ? 'Saving…' : 'Save Changes'}
+          label={saving ? t('sw1_pp_saving') : t('sw1_pp_saveChanges')}
           variant="ink"
           onPress={() => setSavedAlertVisible(true)}
           disabled={saving}
@@ -1642,7 +1698,7 @@ export default function PregnancyProfileScreen() {
 
       <StickerDateModal
         visible={lmpPickerOpen}
-        title="LMP date"
+        title={t('sw1_pp_lmp')}
         value={draftLmpDate}
         onChange={setDraftLmpDate}
         onClose={() => setLmpPickerOpen(false)}
@@ -1658,7 +1714,7 @@ export default function PregnancyProfileScreen() {
 
       <StickerDateModal
         visible={dueDatePickerOpen}
-        title="Due date"
+        title={t('preg_profile_dueDate')}
         value={draftDueDate}
         onChange={setDraftDueDate}
         onClose={() => setDueDatePickerOpen(false)}
@@ -1669,12 +1725,12 @@ export default function PregnancyProfileScreen() {
 
       <PaperAlert
         visible={savedAlertVisible}
-        title="Saved"
-        italic="all set"
-        message="Your pregnancy profile has been saved."
+        title={t('sw1_pp_savedTitle')}
+        italic={t('sw1_pp_savedItalic')}
+        message={t('sw1_pp_savedMsg')}
         buttons={[
           {
-            label: 'OK',
+            label: t('common_ok'),
             variant: 'primary',
             onPress: () => router.back(),
           },

@@ -6,6 +6,7 @@
 
 import { Text, View, StyleSheet } from 'react-native'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { HandDrawnPill } from './HandDrawn'
 import { InkBackButton } from './InkBackButton'
@@ -27,6 +28,7 @@ export function DetailSheetHeader({
   onClose: () => void
 }) {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
   const ink = colors.text
   return (
     <View style={styles.row}>
@@ -44,7 +46,7 @@ export function DetailSheetHeader({
           </View>
         ) : null}
       </View>
-      <InkBackButton onPress={onClose} ink={ink} paper={colors.surface} icon="close" label="Close" style={{ marginBottom: 0 }} />
+      <InkBackButton onPress={onClose} ink={ink} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
     </View>
   )
 }

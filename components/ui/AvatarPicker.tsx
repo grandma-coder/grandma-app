@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { X, Camera, ImagePlus } from 'lucide-react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { Display, Body, MonoCaps } from './Typography'
 import { usePhotoUrl, PHOTO_BUCKETS, type PhotoBucket } from '../../lib/photoSigning'
 import {
@@ -57,30 +57,30 @@ type IconKey =
   | 'mushroom' | 'pacifier' | 'bottle' | 'stroller' | 'drop' | 'bolt'
 
 const ICON_REGISTRY: { key: IconKey; render: (size: number) => React.ReactElement; label: string }[] = [
-  { key: 'bear',      label: 'Bear',      render: (s) => <Bear size={s} /> },
-  { key: 'heart',     label: 'Heart',     render: (s) => <Heart size={s} /> },
-  { key: 'flower',    label: 'Flower',    render: (s) => <Flower size={s} /> },
-  { key: 'star',      label: 'Star',      render: (s) => <Star size={s} /> },
-  { key: 'moon',      label: 'Moon',      render: (s) => <Moon size={s} /> },
-  { key: 'sun',       label: 'Sun',       render: (s) => <Sun size={s} /> },
-  { key: 'rainbow',   label: 'Rainbow',   render: (s) => <Rainbow size={s} /> },
-  { key: 'butterfly', label: 'Butterfly', render: (s) => <Butterfly size={s} /> },
-  { key: 'bee',       label: 'Bee',       render: (s) => <Bee size={s} /> },
-  { key: 'smiley',    label: 'Smiley',    render: (s) => <Smiley size={s} /> },
-  { key: 'cake',      label: 'Cake',      render: (s) => <Cake size={s} /> },
-  { key: 'gift',      label: 'Gift',      render: (s) => <Gift size={s} /> },
-  { key: 'balloon',   label: 'Balloon',   render: (s) => <Balloon size={s} /> },
-  { key: 'crown',     label: 'Crown',     render: (s) => <Crown size={s} /> },
-  { key: 'cloud',     label: 'Cloud',     render: (s) => <Cloud size={s} /> },
-  { key: 'sparkle',   label: 'Sparkle',   render: (s) => <Sparkle size={s} /> },
-  { key: 'leaf',      label: 'Leaf',      render: (s) => <Leaf size={s} /> },
-  { key: 'cherry',    label: 'Cherry',    render: (s) => <Cherry size={s} /> },
-  { key: 'mushroom',  label: 'Mushroom',  render: (s) => <Mushroom size={s} /> },
-  { key: 'pacifier',  label: 'Pacifier',  render: (s) => <Pacifier size={s} /> },
-  { key: 'bottle',    label: 'Bottle',    render: (s) => <Bottle size={s} /> },
-  { key: 'stroller',  label: 'Stroller',  render: (s) => <Stroller size={s} /> },
-  { key: 'drop',      label: 'Drop',      render: (s) => <Drop size={s} /> },
-  { key: 'bolt',      label: 'Bolt',      render: (s) => <Bolt size={s} /> },
+  { key: 'bear',      get label() { return tNow('sw3_avatar_bear') },      render: (s) => <Bear size={s} /> },
+  { key: 'heart',     get label() { return tNow('sw3_avatar_heart') },     render: (s) => <Heart size={s} /> },
+  { key: 'flower',    get label() { return tNow('sw3_avatar_flower') },    render: (s) => <Flower size={s} /> },
+  { key: 'star',      get label() { return tNow('sw3_avatar_star') },      render: (s) => <Star size={s} /> },
+  { key: 'moon',      get label() { return tNow('sw3_avatar_moon') },      render: (s) => <Moon size={s} /> },
+  { key: 'sun',       get label() { return tNow('sw3_avatar_sun') },       render: (s) => <Sun size={s} /> },
+  { key: 'rainbow',   get label() { return tNow('sw3_avatar_rainbow') },   render: (s) => <Rainbow size={s} /> },
+  { key: 'butterfly', get label() { return tNow('sw3_avatar_butterfly') }, render: (s) => <Butterfly size={s} /> },
+  { key: 'bee',       get label() { return tNow('sw3_avatar_bee') },       render: (s) => <Bee size={s} /> },
+  { key: 'smiley',    get label() { return tNow('sw3_avatar_smiley') },    render: (s) => <Smiley size={s} /> },
+  { key: 'cake',      get label() { return tNow('sw3_avatar_cake') },      render: (s) => <Cake size={s} /> },
+  { key: 'gift',      get label() { return tNow('sw3_avatar_gift') },      render: (s) => <Gift size={s} /> },
+  { key: 'balloon',   get label() { return tNow('sw3_avatar_balloon') },   render: (s) => <Balloon size={s} /> },
+  { key: 'crown',     get label() { return tNow('sw3_avatar_crown') },     render: (s) => <Crown size={s} /> },
+  { key: 'cloud',     get label() { return tNow('sw3_avatar_cloud') },     render: (s) => <Cloud size={s} /> },
+  { key: 'sparkle',   get label() { return tNow('sw3_avatar_sparkle') },   render: (s) => <Sparkle size={s} /> },
+  { key: 'leaf',      get label() { return tNow('sw3_avatar_leaf') },      render: (s) => <Leaf size={s} /> },
+  { key: 'cherry',    get label() { return tNow('sw3_avatar_cherry') },    render: (s) => <Cherry size={s} /> },
+  { key: 'mushroom',  get label() { return tNow('sw3_avatar_mushroom') },  render: (s) => <Mushroom size={s} /> },
+  { key: 'pacifier',  get label() { return tNow('sw3_avatar_pacifier') },  render: (s) => <Pacifier size={s} /> },
+  { key: 'bottle',    get label() { return tNow('sw3_avatar_bottle') },    render: (s) => <Bottle size={s} /> },
+  { key: 'stroller',  get label() { return tNow('sw3_avatar_stroller') },  render: (s) => <Stroller size={s} /> },
+  { key: 'drop',      get label() { return tNow('sw3_avatar_drop') },      render: (s) => <Drop size={s} /> },
+  { key: 'bolt',      get label() { return tNow('sw3_avatar_bolt') },      render: (s) => <Bolt size={s} /> },
 ]
 
 // ─── Value parsing ────────────────────────────────────────────────────────
@@ -301,6 +301,7 @@ export function AvatarPickerModal({
             {ICON_REGISTRY.map((icon) => (
               <Pressable
                 key={icon.key}
+                accessibilityLabel={icon.label}
                 onPress={() => {
                   onClose()
                   onPickIcon(buildIconAvatarValue(icon.key))

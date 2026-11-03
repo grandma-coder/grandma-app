@@ -46,7 +46,7 @@ import { getUpcomingAppointment } from '../../lib/pregnancyAppointments'
 import { getFeaturedReadForWeek, getReadsByCategory } from '../../lib/pregnancyReads'
 import type { PregnancyRead } from '../../lib/pregnancyReads'
 import { Character, type CharacterName } from '../characters/Characters'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
 import { localizeBabySizeName } from '../../lib/pregnancyData'
 
@@ -65,26 +65,26 @@ const TYPE_CONFIG: Record<InsightType, {
   pattern: {
     icon: Lightbulb, color: stickerPalette.yellowInk,
     gradient: [stickerPalette.yellowSoft, stickerPalette.yellowSoft + '00'],
-    label: 'Pattern', detailIcon: Brain, char: 'tip', detailChar: 'brain',
-    tip: 'Patterns become clearer with consistent logging over time.',
+    get label() { return tNow('sw3_ins_typePattern') }, detailIcon: Brain, char: 'tip', detailChar: 'brain',
+    get tip() { return tNow('sw3_ins_tipPattern') },
   },
   trend: {
     icon: TrendingUp, color: stickerPalette.greenInk,
     gradient: [stickerPalette.greenSoft, stickerPalette.greenSoft + '00'],
-    label: 'Trend', detailIcon: Zap, char: 'growth', detailChar: 'activity',
-    tip: 'Trends are calculated from your recent 30-day activity window.',
+    get label() { return tNow('sw3_ins_typeTrend') }, detailIcon: Zap, char: 'growth', detailChar: 'activity',
+    get tip() { return tNow('sw3_ins_tipTrend') },
   },
   upcoming: {
     icon: CalendarClock, color: stickerPalette.blueInk,
     gradient: [stickerPalette.blueSoft, stickerPalette.blueSoft + '00'],
-    label: 'Upcoming', detailIcon: CalendarClock, char: 'calendar', detailChar: 'calendar',
-    tip: 'Predictions improve as we learn more about your unique rhythms.',
+    get label() { return tNow('kids_journeyRing_statusUpcoming') }, detailIcon: CalendarClock, char: 'calendar', detailChar: 'calendar',
+    get tip() { return tNow('sw3_ins_tipUpcoming') },
   },
   nudge: {
     icon: Sparkles, color: stickerPalette.pinkInk,
     gradient: [stickerPalette.pinkSoft, stickerPalette.pinkSoft + '00'],
-    label: 'Nudge', detailIcon: Heart, char: 'sparkle', detailChar: 'heart',
-    tip: 'Small daily habits make the biggest difference over time.',
+    get label() { return tNow('sw3_ins_typeNudge') }, detailIcon: Heart, char: 'sparkle', detailChar: 'heart',
+    get tip() { return tNow('sw3_ins_tipNudge') },
   },
 }
 
@@ -104,12 +104,12 @@ interface Article {
 }
 
 const CATEGORY_META: Record<ArticleCategory, { label: string; icon: typeof Moon; color: string; char: CharacterName }> = {
-  sleep:       { label: 'Sleep',       icon: Moon,    color: stickerPalette.lilacInk,  char: 'sleep' },
-  feeding:     { label: 'Feeding',     icon: Apple,   color: stickerPalette.greenInk,  char: 'nutrition' },
-  development: { label: 'Development', icon: Brain,   color: stickerPalette.blueInk,   char: 'brain' },
-  behavior:    { label: 'Behavior',    icon: Heart,   color: stickerPalette.pinkInk,   char: 'heart' },
-  health:      { label: 'Health',      icon: Shield,  color: stickerPalette.yellowInk, char: 'health' },
-  you:         { label: 'For You',     icon: Coffee,  color: stickerPalette.coralInk,  char: 'selfcare' },
+  sleep:       { get label() { return tNow('agenda_sleep') }, icon: Moon,    color: stickerPalette.lilacInk,  char: 'sleep' },
+  feeding:     { get label() { return tNow('agenda_feeding') }, icon: Apple,   color: stickerPalette.greenInk,  char: 'nutrition' },
+  development: { get label() { return tNow('sw3_ins_catDevelopment') }, icon: Brain,   color: stickerPalette.blueInk,   char: 'brain' },
+  behavior:    { get label() { return tNow('sw3_ins_catBehavior') }, icon: Heart,   color: stickerPalette.pinkInk,   char: 'heart' },
+  health:      { get label() { return tNow('kids_health_title') }, icon: Shield,  color: stickerPalette.yellowInk, char: 'health' },
+  you:         { get label() { return tNow('sw3_ins_catForYou') }, icon: Coffee,  color: stickerPalette.coralInk,  char: 'selfcare' },
 }
 
 const ARTICLES: Article[] = [
@@ -433,19 +433,19 @@ function buildWeekNarrative(metrics: BehaviorMetrics, childName: string): string
   const parts: string[] = []
   const topType = metrics.topTypes[0]
   if (topType) {
-    parts.push(`${childName}'s top logged activity is ${formatLogType(topType.type)} with ${topType.count} entries this month.`)
+    parts.push(tNow('sw3_ins_narrTop', { name: childName, type: formatLogType(topType.type), n: topType.count }))
   }
   if (metrics.logStreak >= 3) {
-    parts.push(`You're on a ${metrics.logStreak}-day logging streak — keep it going!`)
+    parts.push(tNow('sw3_ins_narrStreak', { n: metrics.logStreak }))
   } else if (metrics.logStreak > 0) {
-    parts.push(`You've logged ${metrics.logStreak} day${metrics.logStreak > 1 ? 's' : ''} in a row.`)
+    parts.push(metrics.logStreak > 1 ? tNow('sw3_ins_narrRowMany', { n: metrics.logStreak }) : tNow('sw3_ins_narrRowOne'))
   }
   const recentTotal = metrics.recentActivity.reduce((s, d) => s + d.count, 0)
   if (recentTotal > 0) {
-    parts.push(`${recentTotal} total entries in the last 7 days.`)
+    parts.push(tNow('sw3_ins_narrTotal', { n: recentTotal }))
   }
   if (parts.length === 0) {
-    return `Start logging ${childName}'s daily activities and you'll see personalized weekly progress here.`
+    return tNow('sw3_ins_narrEmpty', { name: childName })
   }
   return parts.join(' ')
 }
@@ -593,7 +593,7 @@ function CollapsibleCard({
 // Static data hoisted outside component to avoid re-creation on every render
 const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: string; content: string[] }> = [
   {
-    id: 'early_labor', emoji: '🌅', color: brand.laborPhases.early, title: 'Early signs & latent labor',
+    id: 'early_labor', emoji: '🌅', color: brand.laborPhases.early, get title() { return tNow('sw3_ins_stageEarly') },
     content: [
       'Cervix dilates from 0–6cm. Contractions are irregular and mild (5–30 min apart).',
       'Stay home: rest, eat lightly, time contractions, keep busy.',
@@ -602,7 +602,7 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
     ],
   },
   {
-    id: 'active_labor', emoji: '🌊', color: brand.laborPhases.active, title: 'Active labor',
+    id: 'active_labor', emoji: '🌊', color: brand.laborPhases.active, get title() { return tNow('sw3_ins_stageActive') },
     content: [
       'Cervix 6–10cm. Contractions every 3–5 min, lasting 60–90 sec, very intense.',
       '5-1-1 rule: contractions every 5 min, lasting 1 min, for 1 hour → go to hospital.',
@@ -611,7 +611,7 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
     ],
   },
   {
-    id: 'transition', emoji: '💫', color: brand.laborPhases.transition, title: 'Transition & pushing',
+    id: 'transition', emoji: '💫', color: brand.laborPhases.transition, get title() { return tNow('sw3_ins_stageTransition') },
     content: [
       'Fully dilated (10cm). The hardest but shortest phase — usually 15–60 min.',
       'Contractions are 2–3 min apart. Intense pressure, shaking, nausea are normal.',
@@ -620,7 +620,7 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
     ],
   },
   {
-    id: 'birth', emoji: '👶', color: brand.laborPhases.birth, title: 'Birth & golden hour',
+    id: 'birth', emoji: '👶', color: brand.laborPhases.birth, get title() { return tNow('sw3_ins_stageBirth') },
     content: [
       "Skin-to-skin immediately: regulates baby's temperature, heart rate, and breathing.",
       'Delayed cord clamping (1–3 min): transfers 80–100mL of blood = important for iron.',
@@ -629,7 +629,7 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
     ],
   },
   {
-    id: 'postpartum', emoji: '🌸', color: brand.laborPhases.postpartum, title: 'Recovery & postpartum',
+    id: 'postpartum', emoji: '🌸', color: brand.laborPhases.postpartum, get title() { return tNow('sw3_ins_stagePostpartum') },
     content: [
       'Lochia (postpartum bleeding): red 3–4 days, pink/brown 2 weeks, creamy to week 6.',
       'Baby blues: days 3–5 as hormones crash. Normal. Postpartum depression: more than 2 weeks → seek help.',
@@ -640,11 +640,11 @@ const BIRTH_STAGES: Array<{ id: string; emoji: string; color: string; title: str
 ]
 
 const WARNING_SIGNS = [
-  'Water breaks before week 37',
-  'Heavy or unusual bleeding',
-  'Baby not moving for 2+ hours (week 28+)',
-  'Severe headache + vision changes',
-  'Fever above 38°C (100.4°F)',
+  { get text() { return tNow('sw3_ins_warn1') } },
+  { get text() { return tNow('sw3_ins_warn2') } },
+  { get text() { return tNow('sw3_ins_warn3') } },
+  { get text() { return tNow('sw3_ins_warn4') } },
+  { get text() { return tNow('sw3_ins_warn5') } },
 ]
 
 function PregnancyInsightsContent() {
@@ -655,7 +655,7 @@ function PregnancyInsightsContent() {
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
   const dueDate = usePregnancyStore((s) => s.dueDate)
   const weekNumber = dueDate ? getCurrentWeekFromDueDate(dueDate) : (storedWeek ?? 1)
-  const parentName = useJourneyStore((s) => s.parentName) ?? 'Mama'
+  const parentName = useJourneyStore((s) => s.parentName) ?? tNow('sw3_ins_defaultParent')
 
   const [pTab, setPTab] = useState<PregnancyTab>('today')
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({
@@ -690,7 +690,7 @@ function PregnancyInsightsContent() {
       </View>
 
       <CollapsibleCard
-        id="weekTip" emoji="💡" color={stickerPalette.yellow} title={`Week ${weekNumber} tip`}
+        id="weekTip" emoji="💡" color={stickerPalette.yellow} title={t('sw3_ins_weekTip', { n: weekNumber })}
         expandedMap={expandedCards} onToggle={toggleCard}
       >
         <Text style={[ci.bodyText, { color: colors.textSecondary }]}>{weekData.momTip}</Text>
@@ -713,7 +713,7 @@ function PregnancyInsightsContent() {
       </CollapsibleCard>
 
       <CollapsibleCard
-        id="affirmation" emoji="✨" color={brand.prePregnancy} title="Today's affirmation"
+        id="affirmation" emoji="✨" color={brand.prePregnancy} title={t('sw3_ins_affirmationTitle')}
         expandedMap={expandedCards} onToggle={toggleCard}
       >
         <Text style={[ci.affirmationText, { color: colors.text }]}>{t('insights_quotedText', { text: affirmation })}</Text>
@@ -721,7 +721,7 @@ function PregnancyInsightsContent() {
 
       {upcomingAppt && (
         <CollapsibleCard
-          id="appointment" emoji="📅" color={stickerPalette.yellow} title={`Next: ${upcomingAppt.name}`}
+          id="appointment" emoji="📅" color={stickerPalette.yellow} title={t('sw3_ins_nextAppt', { name: upcomingAppt.name })}
           expandedMap={expandedCards} onToggle={toggleCard}
         >
           <Text style={[ci.bodyText, { color: colors.textSecondary }]}>
@@ -740,7 +740,7 @@ function PregnancyInsightsContent() {
           <Text style={[ci.warningTitle, { color: ink }]}>{t('insights_callProviderIf')}</Text>
         </View>
         {WARNING_SIGNS.map((sign, i) => (
-          <Text key={i} style={[ci.warningItem, { color: ink + 'C8' }]}>{'• '}{sign}</Text>
+          <Text key={i} style={[ci.warningItem, { color: ink + 'C8' }]}>{'• '}{sign.text}</Text>
         ))}
       </View>
 
@@ -811,7 +811,7 @@ function PregnancyInsightsContent() {
       <View style={ci.tabBar}>
         {(['today', 'birth_guide', 'reads'] as PregnancyTab[]).map((pTabKey) => {
           const active = pTab === pTabKey
-          const label = pTabKey === 'today' ? t('insights_tabToday') : pTabKey === 'birth_guide' ? 'Birth Guide' : t('insights_tabReads')
+          const label = pTabKey === 'today' ? t('insights_tabToday') : pTabKey === 'birth_guide' ? t('pregnancy_birthGuideTitle') : t('insights_tabReads')
           return (
             <Pressable
               key={pTabKey}
@@ -992,7 +992,7 @@ export function InsightsScreen() {
       await queryClient.refetchQueries({ queryKey: ['insights', userId, mode] })
       queryClient.invalidateQueries({ queryKey: ['behavior-metrics', userId, mode] })
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Something went wrong')
+      setError(e instanceof Error ? e.message : tNow('sw1_common_somethingWrong'))
     } finally {
       setRefreshing(false)
       setGenerating(false)
@@ -1006,7 +1006,7 @@ export function InsightsScreen() {
       await generateInsights(mode)
       await queryClient.refetchQueries({ queryKey: ['insights', userId, mode] })
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Something went wrong'
+      const msg = e instanceof Error ? e.message : tNow('sw1_common_somethingWrong')
       setError(msg)
       console.warn('[insights] generate failed:', msg)
       // Allow retry on next mount/effect cycle
@@ -1100,7 +1100,7 @@ export function InsightsScreen() {
   const quote = getMotivationQuote()
 
   const today = new Date().toLocaleDateString(dateLoc(), { weekday: 'long', month: 'long', day: 'numeric' })
-  const greeting = parentName ? `Hello, ${parentName}` : 'Hello, Parent'
+  const greeting = parentName ? t('sw3_ins_hello', { name: parentName }) : t('sw3_ins_helloParent')
 
   if (mode === 'pregnancy') return <PregnancyInsightsContent />
 
@@ -1199,7 +1199,7 @@ export function InsightsScreen() {
                   {child?.birthDate && (
                     <View style={[s.agePill, { backgroundColor: stickerPalette.yellowSoft }]}>
                       <Text style={[s.agePillText, { color: ink }]}>
-                        {ageMonths < 12 ? `${ageMonths}mo` : `${Math.floor(ageMonths / 12)}y`}
+                        {ageMonths < 12 ? t('sw3_ins_ageMo', { n: ageMonths }) : t('sw3_ins_ageYr', { n: Math.floor(ageMonths / 12) })}
                       </Text>
                     </View>
                   )}

@@ -106,7 +106,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
 
             <View style={styles.rowGroup}>
               <DateRow
-                label="From"
+                label={t('sw3_range_from')}
                 value={from}
                 active={picking === 'from'}
                 onPress={() => handlePick('from')}
@@ -125,7 +125,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
                 />
               )}
               <DateRow
-                label="To"
+                label={t('sw3_range_to')}
                 value={to}
                 active={picking === 'to'}
                 onPress={() => handlePick('to')}
@@ -149,14 +149,14 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
             {/* Footer — containerless mono actions */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 16 }}>
               <Pressable onPress={onClose} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
-                <Text style={{ fontSize: 11, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>Cancel</Text>
+                <Text style={{ fontSize: 11, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1.2, textTransform: 'uppercase' }}>{t('common_cancel')}</Text>
               </Pressable>
               <View style={{ flex: 1 }} />
               <Pressable
                 onPress={() => onApply(toISO(from), toISO(to))}
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.6 : 1 })}
               >
-                <Text style={{ fontSize: 12, fontFamily: diffuseFont.monoBold, color: dCol.ink, letterSpacing: 2, textTransform: 'uppercase' }}>Apply Range</Text>
+                <Text style={{ fontSize: 12, fontFamily: diffuseFont.monoBold, color: dCol.ink, letterSpacing: 2, textTransform: 'uppercase' }}>{t('kids_home_range_apply')}</Text>
                 <Text style={{ fontFamily: diffuseFont.body, fontSize: 16, color: acc }}>→</Text>
               </Pressable>
             </View>
@@ -188,7 +188,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
 
           <View style={styles.rowGroup}>
             <DateRow
-              label="From"
+              label={t('sw3_range_from')}
               value={from}
               active={picking === 'from'}
               onPress={() => handlePick('from')}
@@ -205,7 +205,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
               />
             )}
             <DateRow
-              label="To"
+              label={t('sw3_range_to')}
               value={to}
               active={picking === 'to'}
               onPress={() => handlePick('to')}
@@ -226,14 +226,14 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
 
           <View style={styles.footer}>
             <PillButton
-              label="Cancel"
+              label={t('common_cancel')}
               variant="paper"
               onPress={onClose}
               height={52}
               style={{ flex: 1 }}
             />
             <PillButton
-              label="Apply"
+              label={t('sw3_range_apply')}
               variant="ink"
               onPress={() => onApply(toISO(from), toISO(to))}
               height={52}

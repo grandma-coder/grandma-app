@@ -7,6 +7,7 @@ import { SiteChoice } from '../ui/SiteChoice'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { CHILD_COLORS } from '../ui/ChildPills'
 import { useTheme, useDiffuseTheme, diffuseFont, radius, getModeColorSoft } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { Character, type CharacterName, type MoodExpression } from '../characters/Characters'
 import { useChildStore } from '../../store/useChildStore'
@@ -89,8 +90,9 @@ export function ChoiceStep({ options, value, onChange, multi = false, testID }: 
 }
 
 export interface MoreSectionProps { children: React.ReactNode; label?: string; testID?: string }
-export function MoreSection({ children, label = 'More', testID }: MoreSectionProps) {
+export function MoreSection({ children, label, testID }: MoreSectionProps) {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
@@ -100,7 +102,7 @@ export function MoreSection({ children, label = 'More', testID }: MoreSectionPro
       <Pressable onPress={() => setOpen((o) => !o)} style={kitStyles.moreRow} accessibilityRole="button">
         <Text style={[kitStyles.moreLabel, diffuse
           ? { color: ink3, fontFamily: diffuseFont.mono }
-          : { color: colors.text, fontFamily: font.display, fontSize: 16, letterSpacing: 0.3 }]}>{label}</Text>
+          : { color: colors.text, fontFamily: font.display, fontSize: 16, letterSpacing: 0.3 }]}>{label ?? t('sw4_more')}</Text>
         <ChevronDown size={16} color={ink3} strokeWidth={1.8} style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }} />
       </Pressable>
       {open ? <View style={kitStyles.moreBody}>{children}</View> : null}

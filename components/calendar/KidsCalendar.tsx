@@ -3832,9 +3832,9 @@ export function KidsCalendar() {
                       const mealTime = fp.time ? fmtTime(fp.time) : ''
                       const cals = fp.estimatedCals ? Number(fp.estimatedCals) : null
                       const qualityMap: Record<string, { label: string; face: SiteStickerName }> = {
-                        ate_well: { label: 'Ate well', face: 'face4' },
-                        ate_little: { label: 'Ate a little', face: 'face2' },
-                        did_not_eat: { label: 'Did not eat', face: 'face1' },
+                        ate_well: { label: t('kids_logForm_ateWell'), face: 'face4' },
+                        ate_little: { label: t('kids_logForm_ateLittle'), face: 'face2' },
+                        did_not_eat: { label: t('kids_logForm_didNotEat'), face: 'face1' },
                       }
                       const quality = fp.quality ? qualityMap[fp.quality] : null
                       return (

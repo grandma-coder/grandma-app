@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { stickers, borderRadius, shadows, useTheme, font } from '../../constants/theme'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
+import { dateLoc, weekdayShort } from '../../lib/kpLocale'
 
 export type CalendarViewMode = 'month' | 'week' | 'day'
 
@@ -20,11 +21,11 @@ interface CalendarViewProps {
   onViewModeChange?: (mode: CalendarViewMode) => void
 }
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAYS = [0, 1, 2, 3, 4, 5, 6]
 const VIEW_MODES: { id: CalendarViewMode; label: string }[] = [
-  { id: 'day', label: 'Day' },
-  { id: 'week', label: 'Week' },
-  { id: 'month', label: 'Month' },
+  { id: 'day', get label() { return tNow('sw3_period_day') } },
+  { id: 'week', get label() { return tNow('sw3_period_week') } },
+  { id: 'month', get label() { return tNow('sw3_period_month') } },
 ]
 
 function toDateStr(d: Date): string {
@@ -98,15 +99,15 @@ export function CalendarView({
   function getHeaderLabel(): string {
     if (viewMode === 'day') {
       const d = new Date(selectedDate)
-      return d.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })
+      return d.toLocaleDateString(dateLoc(), { weekday: 'long', month: 'long', day: 'numeric' })
     }
     if (viewMode === 'week') {
       const dates = getWeekDates(selectedDate)
       const start = dates[0]
       const end = dates[6]
-      return `${start.toLocaleDateString('default', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('default', { month: 'short', day: 'numeric' })}`
+      return `${start.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}`
     }
-    return new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' })
+    return new Date(year, month).toLocaleString(dateLoc(), { month: 'long', year: 'numeric' })
   }
 
   // ─── Render day cell ──────
@@ -163,7 +164,7 @@ export function CalendarView({
       <>
         <View style={styles.dayHeaderRow}>
           {DAYS.map((d) => (
-            <Text key={d} style={styles.dayHeader}>{d}</Text>
+            <Text key={d} style={styles.dayHeader}>{weekdayShort(d)}</Text>
           ))}
         </View>
         <View style={styles.grid}>
@@ -192,7 +193,7 @@ export function CalendarView({
               style={[styles.weekCell, isSelected && styles.weekCellSelected]}
             >
               <Text style={[styles.weekDayLabel, isSelected && { color: colors.textInverse }]}>
-                {DAYS[i].substring(0, 3)}
+                {weekdayShort(i)}
               </Text>
               <Text
                 style={[
@@ -226,7 +227,7 @@ export function CalendarView({
       <View style={styles.dayViewCard}>
         <Text style={styles.dayViewDate}>{d.getDate()}</Text>
         <Text style={styles.dayViewWeekday}>
-          {d.toLocaleDateString('default', { weekday: 'long' })}
+          {d.toLocaleDateString(dateLoc(), { weekday: 'long' })}
         </Text>
         {dots.length > 0 ? (
           <View style={styles.dayViewDots}>

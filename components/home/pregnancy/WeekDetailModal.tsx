@@ -389,7 +389,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                   </Pressable>
                 ) : (
                   <View style={styles.closeCalm}>
-                    <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label="Close week details" style={{ marginBottom: 0 }} />
+                    <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={t('sw4_closeWeekDetails')} style={{ marginBottom: 0 }} />
                   </View>
                 )}
 

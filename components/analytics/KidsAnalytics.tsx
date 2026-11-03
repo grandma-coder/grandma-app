@@ -360,11 +360,25 @@ function getAgeMonths(birthDate: string): number {
   return Math.max(0, (now.getFullYear() - bd.getFullYear()) * 12 + (now.getMonth() - bd.getMonth()))
 }
 
+function activityGuide(ageMonths: number): { emoji: string; label: string; pct: number; tip: string }[] {
+  const g = ageMonths < 12
+    ? [['👶', 'Baby1', 35], ['🧸', 'Baby2', 30], ['🚶', 'Baby3', 20], ['😴', 'Baby4', 15]]
+    : ageMonths < 36
+    ? [['🏃', 'Tod1', 40], ['🌳', 'Tod2', 30], ['🧩', 'Tod3', 20], ['📖', 'Tod4', 10]]
+    : [['⚽', 'Kid1', 40], ['🌳', 'Kid2', 25], ['🎨', 'Kid3', 20], ['📚', 'Kid4', 15]]
+  return g.map(([emoji, k, pct]) => ({
+    emoji: emoji as string,
+    pct: pct as number,
+    label: tNow(`sw2_an_ag${k}l` as 'sw2_an_agBaby1l'),
+    tip: tNow(`sw2_an_ag${k}t` as 'sw2_an_agBaby1t'),
+  }))
+}
+
 function getAgeLabel(ageMonths: number): string {
-  if (ageMonths < 12) return `${ageMonths}mo`
+  if (ageMonths < 12) return tNow('kp_kh_ageMo', { n: ageMonths })
   const y = Math.floor(ageMonths / 12)
   const m = ageMonths % 12
-  return m > 0 ? `${y}y ${m}mo` : `${y}y`
+  return m > 0 ? tNow('kp_kh_ageYMo', { y, r: m }) : tNow('kp_kh_ageY', { y })
 }
 
 // Module-level helpers can't access useTheme(); use the light sticker-palette
@@ -674,7 +688,6 @@ function getNeutralHealthTips(
   childName: string,
 ): TipData[] {
   const tips: TipData[] = []
-  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
   // ── Sleep
   if (scores.sleep.hasData) {
@@ -686,18 +699,18 @@ function getNeutralHealthTips(
     if (avg > 0) {
       const below = avg < target * 0.85
       tips.push({
-        title: 'Sleep this week',
-        body: `${avg.toFixed(1)} h a day on average — about ${target} h is the usual guide at this age.`,
-        detail: `${childName} averaged ${avg.toFixed(1)} h of sleep a day on the days you logged. At ${ageMonths} months the usual guide is about ${target} h a day, naps included.${totalQ > 0 ? ` ${goodCount} of ${totalQ} sessions were logged as good or great.` : ''}${below ? ' An earlier bedtime, dim lights 30 min before sleep and a steady wind-down routine can help.' : ''}`,
+        title: tNow('sw2_an_sleepTitle'),
+        body: tNow('sw2_an_sleepBody', { avg: avg.toFixed(1), target }),
+        detail: `${tNow('sw2_an_sleepDetail', { name: childName, avg: avg.toFixed(1), months: ageMonths, target })}${totalQ > 0 ? ` ${tNow('sw2_an_sleepGood', { good: goodCount, total: totalQ })}` : ''}${below ? ` ${tNow('sw2_an_sleepHint')}` : ''}`,
         color: PILLAR_CONFIG.sleep.color,
         icon: Moon,
       })
     }
   } else {
     tips.push({
-      title: 'Start logging sleep',
-      body: `Log sleep to see ${childName}'s daily hours next to the usual ${getAgeSleepTarget(ageMonths)} h guide.`,
-      detail: `At ${ageMonths} months the usual guide is about ${getAgeSleepTarget(ageMonths)} h of sleep a day, naps included. Log each sleep session in Calendar → Sleep.`,
+      title: tNow('sw2_an_sleepStartTitle'),
+      body: tNow('sw2_an_sleepStartBody', { name: childName, target: getAgeSleepTarget(ageMonths) }),
+      detail: tNow('sw2_an_sleepStartDetail', { months: ageMonths, target: getAgeSleepTarget(ageMonths) }),
       color: PILLAR_CONFIG.sleep.color,
       icon: Moon,
     })
@@ -712,16 +725,15 @@ function getNeutralHealthTips(
     const goodTotal = n.eatQuality.good.reduce((a, b) => a + b, 0)
     const goodPct = totalMeals > 0 ? Math.round((goodTotal / totalMeals) * 100) : 0
     const isMilk = n.mode === 'milk'
-    const noun = isMilk ? ['feed', 'feeds'] : ['meal', 'meals']
     const suggest = scores.nutrition.value < 7
     tips.push({
-      title: isMilk ? 'Feeds this week' : 'Meals this week',
+      title: isMilk ? tNow('sw2_an_feedsTitle') : tNow('sw2_an_mealsTitle'),
       body: isMilk
-        ? `Logged ${plural(totalMeals, noun[0], noun[1])}, about ${avgMeals} a day.`
-        : `Logged ${plural(totalMeals, noun[0], noun[1])}, about ${avgMeals} a day${goodPct > 0 ? `; ${goodPct}% marked "ate well"` : ''}.${suggest ? ' Try 1–2 new foods this week.' : ''}`,
+        ? tNow('sw2_an_feedsBody', { n: totalMeals, avg: avgMeals })
+        : `${goodPct > 0 ? tNow('sw2_an_mealsBodyAte', { n: totalMeals, avg: avgMeals, pct: goodPct }) : tNow('sw2_an_mealsBody', { n: totalMeals, avg: avgMeals })}${suggest ? ` ${tNow('sw2_an_tryNew')}` : ''}`,
       detail: isMilk
-        ? `${childName} had about ${avgMeals} feeds a day on the days you logged. Logging every feed keeps the picture clear.`
-        : `${childName} had about ${avgMeals} meals a day on the days you logged, with ${goodPct}% marked "ate well". New foods often take 10–15 tries before a child accepts them — offer them next to familiar ones, at steady mealtimes.`,
+        ? tNow('sw2_an_feedsDetail', { name: childName, avg: avgMeals })
+        : tNow('sw2_an_mealsDetail', { name: childName, avg: avgMeals, pct: goodPct }),
       color: PILLAR_CONFIG.nutrition.color,
       icon: Utensils,
     })
@@ -735,25 +747,26 @@ function getNeutralHealthTips(
     const totalMoods = moods.reduce((a, m) => a + m.count, 0)
     const fussyCount = cranky + fussy
     const topMood = moods[0]?.mood ?? 'calm'
+    const topMoodLabel = ({ happy: tNow('kids_logForm_moodHappy'), calm: tNow('kids_logForm_moodCalm'), energetic: tNow('kids_logForm_moodEnergetic'), fussy: tNow('kids_logForm_moodFussy'), cranky: tNow('kids_logForm_moodCranky') } as Record<string, string>)[topMood] ?? topMood
     tips.push({
-      title: 'Moods this week',
-      body: `Logged ${plural(totalMoods, 'mood', 'moods')} — ${topMood} came up most; ${fussyCount} cranky or fussy.`,
+      title: tNow('sw2_an_moodsTitle'),
+      body: tNow('sw2_an_moodsBody', { n: totalMoods, top: topMoodLabel, fussy: fussyCount }),
       detail: fussyCount > 0
-        ? `${childName}'s most logged mood was "${topMood}", with ${fussyCount} of ${totalMoods} moods logged as cranky or fussy. Fussy spells often come with teething (common from 6 to 24 months), growth spurts, short sleep or a change in routine. Extra comfort and a steady routine can help — if you're worried, talk to your pediatrician.`
-        : `${childName}'s most logged mood was "${topMood}", with no cranky or fussy moods logged. Steady routines and enough sleep tend to go hand in hand with calm days.`,
+        ? tNow('sw2_an_moodsDetailFussy', { name: childName, top: topMoodLabel, fussy: fussyCount, total: totalMoods })
+        : tNow('sw2_an_moodsDetailCalm', { name: childName, top: topMoodLabel }),
       color: PILLAR_CONFIG.mood.color,
       icon: Smile,
     })
   }
 
   // ── Activity (age guide — not a score)
-  const activityTarget = ageMonths < 12 ? '20–30 min tummy time' : '60 min active play'
+  const activityTarget = ageMonths < 12 ? tNow('sw2_an_actTargetTummy') : tNow('sw2_an_actTargetPlay')
   tips.push({
-    title: 'Daily activity guide',
-    body: `Usual guide: ${activityTarget} a day for ${getAgeLabel(ageMonths)}.`,
+    title: tNow('sw2_an_actTitle'),
+    body: tNow('sw2_an_actBody', { target: activityTarget, age: getAgeLabel(ageMonths) }),
     detail: ageMonths < 12
-      ? 'Tummy time builds neck, shoulder and core strength for rolling, sitting and crawling. Start with 2–3 min sessions and build up to 20–30 min spread across the day. Get on the floor together to make it fun.'
-      : 'Active play supports movement skills, sleep and mood. Outdoor play adds daylight, fresh air and lots to explore. Even 3 × 20-minute sessions add up.',
+      ? tNow('sw2_an_actDetailBaby')
+      : tNow('sw2_an_actDetailToddler'),
     color: PILLAR_CONFIG.activity.color,
     icon: TrendingUp,
     pillar: 'activity',
@@ -762,9 +775,9 @@ function getNeutralHealthTips(
   // ── Growth logging nudge
   if (!scores.growth.hasData) {
     tips.push({
-      title: 'Log growth',
-      body: `Record ${childName}'s weight and height to see them over time.`,
-      detail: 'A growth chart gets more useful with each measurement. Log weight, height and head size after each pediatrician visit in Calendar → Growth.',
+      title: tNow('sw2_an_growthTitle'),
+      body: tNow('sw2_an_growthBody', { name: childName }),
+      detail: tNow('sw2_an_growthDetail'),
       color: PILLAR_CONFIG.growth.color,
       icon: TrendingUp,
     })
@@ -778,26 +791,26 @@ function getNeutralHealthTips(
     const green = analytics.diaper.colorCounts['green'] ?? 0
     if (ageMonths < 6 && totalCount / windowDays < 6) {
       tips.push({
-        title: 'Diapers this week',
-        body: `${avgPerDay} diapers a day on average — a common guide for young babies is 6+ wet a day.`,
-        detail: `${childName} averaged ${avgPerDay} diapers a day over the last ${windowDays} days. A common guide for babies under 6 months is 6 or more wet diapers a day. If you're unsure about feeding, call your pediatrician.`,
+        title: tNow('sw2_an_diaperTitle'),
+        body: tNow('sw2_an_diaperLowBody', { avg: avgPerDay }),
+        detail: tNow('sw2_an_diaperLowDetail', { name: childName, avg: avgPerDay, days: windowDays }),
         color: brand.secondary,
         icon: Heart,
       })
     } else if (green > 3) {
       tips.push({
-        title: 'Diapers this week',
-        body: `${green} green diapers logged this week.`,
-        detail: 'Green stools are common with diet changes or iron supplements. If they come along with fussiness or anything else that worries you, talk to your pediatrician.',
+        title: tNow('sw2_an_diaperTitle'),
+        body: tNow('sw2_an_diaperGreenBody', { n: green }),
+        detail: tNow('sw2_an_diaperGreenDetail'),
         color: brand.secondary,
         icon: Heart,
       })
     }
   } else if (ageMonths < 24) {
     tips.push({
-      title: 'Track diapers',
-      body: `Log ${childName}'s diaper changes to see daily patterns.`,
-      detail: 'Diaper logs show daily patterns at a glance — counts, wet vs dirty and colors. Log each change in Calendar → Diaper.',
+      title: tNow('sw2_an_diaperTrackTitle'),
+      body: tNow('sw2_an_diaperTrackBody', { name: childName }),
+      detail: tNow('sw2_an_diaperTrackDetail'),
       color: brand.secondary,
       icon: Heart,
     })
@@ -1581,19 +1594,19 @@ function ScoreInfoModal({
   // Light UI: what each area COUNTS — no score scale, no weights, no
   // per-pillar number (see docs/compliance/2026-11-02-regras-saude.md).
   const PILLAR_COUNTS: Record<PillarKey, string> = {
-    nutrition: `Counts ${ageMonths < 6 ? 'breast and bottle feeds' : 'meals and feeds'} and how each went (ate well / a little / didn't eat). ${ageMonths < 6 ? 'Under 6 months, breast and bottle feeds count.' : ageMonths < 12 ? 'Mixed stage — milk and first solids are both counted.' : 'Variety and how often are counted too.'}`,
-    sleep: `Adds up sleep hours a day, naps included, and the quality you log (great / good / restless / poor). Usual guide for ${getAgeLabel(ageMonths)}: about ${getAgeSleepTarget(ageMonths)} h a day.`,
-    mood: `Counts the moods you log — which come up most, and how often.`,
-    health: `A reference: vaccines on record and any fever, injury or doctor notes from your logs.`,
-    growth: `Weight and height measurements you've logged, shown over time.`,
-    activity: `Counts active days (any logged session) and the kinds of play you log.`,
+    nutrition: `${t(ageMonths < 6 ? 'sw2_an_cntNutBreast' : 'sw2_an_cntNutMeals')} ${ageMonths < 6 ? t('sw2_an_cntNutU6') : ageMonths < 12 ? t('sw2_an_cntNut612') : t('sw2_an_cntNut12')}`,
+    sleep: t('sw2_an_cntSleep', { age: getAgeLabel(ageMonths), target: getAgeSleepTarget(ageMonths) }),
+    mood: t('sw2_an_cntMood'),
+    health: t('sw2_an_cntHealth'),
+    growth: t('sw2_an_cntGrowth'),
+    activity: t('sw2_an_cntActivity'),
   }
   const ageLine =
-    'Sleep target: ' + getAgeSleepTarget(ageMonths) + 'h/day\n' +
-    (ageMonths < 6 ? 'Nutrition: breast/formula only (8–12 feeds/day)' :
-      ageMonths < 12 ? 'Nutrition: introducing solids alongside milk' :
-        ageMonths < 24 ? 'Nutrition: 3 meals + snacks, ~1000 cal/day' :
-          'Nutrition: 3 meals + 2 snacks/day')
+    t('sw2_an_ageSleep', { target: getAgeSleepTarget(ageMonths) }) + '\n' +
+    (ageMonths < 6 ? t('sw2_an_ageNutU6') :
+      ageMonths < 12 ? t('sw2_an_ageNut12') :
+        ageMonths < 24 ? t('sw2_an_ageNut24') :
+          t('sw2_an_ageNut24p'))
 
   return (
     <LightSheet visible={visible} onClose={onClose} height={SCREEN_H * 0.86}>
@@ -1633,7 +1646,7 @@ function ScoreInfoModal({
                   <SiteSticker name={PILLAR_SITE_STICKER[key]} size={28} cut />
                   <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display, flex: 1 }]}>{config.label}</Text>
                   {key === 'health' && (
-                    <Text style={[styles.siteMono, { color: colors.textSecondary }]}>Reference</Text>
+                    <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{t('kp_ka_reference')}</Text>
                   )}
                 </View>
                 <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body }]}>{PILLAR_COUNTS[key]}</Text>
@@ -1645,7 +1658,7 @@ function ScoreInfoModal({
         <FadeUp index={2}>
           <View style={[styles.siteDivider, { backgroundColor: colors.border }]} />
           <Text style={[styles.siteSectionTitle, { color: colors.text, fontFamily: font.display, marginBottom: 6 }]}>
-            {childName}{' at '}{getAgeLabel(ageMonths)}
+            {t('sw2_an_nameAtAge', { name: childName, age: getAgeLabel(ageMonths) })}
           </Text>
           <Text style={[styles.siteSmall, { color: colors.textSecondary, fontFamily: font.body, lineHeight: 21 }]}>{ageLine}</Text>
         </FadeUp>
@@ -2449,8 +2462,8 @@ function GrandmaInsightDetailSheet({
             <HighlightRow
               icon={<SiteSticker name="bars" size={30} cut />}
               label={t('kids_analytics_insight_trend_label')}
-              title={`${PILLAR_CONFIG[highlights.trend.pillar].label} ${highlights.trend.direction === 'improving' ? '↑ steadier' : '↓ less steady'}`}
-              body="Compared with last week."
+              title={t(highlights.trend.direction === 'improving' ? 'sw2_an_trendUp' : 'sw2_an_trendDown', { pillar: PILLAR_CONFIG[highlights.trend.pillar].label })}
+              body={t('sw2_an_vsLastWeek')}
             />
           )}
         </View>
@@ -2907,7 +2920,7 @@ function RoutineComplianceModal({
             <Text style={[styles.siteBody, { color: colors.textSecondary, fontFamily: font.body }]}>
               {data.hasData
                 ? `${data.totalSkips} ${t('kids_analytics_routine_total_skips').toLowerCase()}`
-                : 'No routines tracked yet'}
+                : t('sw2_an_noRoutines')}
             </Text>
           </View>
         </FadeUp>
@@ -3073,7 +3086,7 @@ function PillarRow({ pillarKey, score, stat = null, tip, onPress }: {
         <View style={styles.pillarPaperScore}>
           {pillarKey === 'health' ? (
             // Health is reference-only — no `/10` grade, ever.
-            <Text style={[styles.siteMono, { color: colors.textSecondary }]}>Reference</Text>
+            <Text style={[styles.siteMono, { color: colors.textSecondary }]}>{tNow('kp_ka_reference')}</Text>
           ) : stat ? (
             <>
               <Text style={[styles.siteNum, { color: colors.text, fontFamily: font.displayBold }]}>{stat.value}</Text>
@@ -3273,26 +3286,7 @@ function ActivityModal({
 
   interface ActivityItem { rank: number; label: string; pct: number; emoji: string; tip: string }
 
-  const activities: ActivityItem[] = ageMonths < 12
-    ? [
-        { rank: 1, label: 'Tummy time', pct: 35, emoji: '👶', tip: 'Builds neck, shoulder, and core strength for crawling' },
-        { rank: 2, label: 'Floor play', pct: 30, emoji: '🧸', tip: 'Reaching, grasping, rolling — motor development' },
-        { rank: 3, label: 'Movement & carrying', pct: 20, emoji: '🚶', tip: 'Supported sitting, bouncing, gentle movement' },
-        { rank: 4, label: 'Rest & sleep', pct: 15, emoji: '😴', tip: 'Essential for brain development at this age' },
-      ]
-    : ageMonths < 36
-    ? [
-        { rank: 1, label: 'Active free play', pct: 40, emoji: '🏃', tip: 'Climbing, running, dancing — unstructured is best' },
-        { rank: 2, label: 'Outdoor time', pct: 30, emoji: '🌳', tip: 'Fresh air, nature exploration, sensory play' },
-        { rank: 3, label: 'Structured play', pct: 20, emoji: '🧩', tip: 'Puzzles, building, role-play — cognitive growth' },
-        { rank: 4, label: 'Quiet rest', pct: 10, emoji: '📖', tip: 'Story time, calm activities between active sessions' },
-      ]
-    : [
-        { rank: 1, label: 'Physical activity', pct: 40, emoji: '⚽', tip: 'Running, jumping, sports — at least 60 min/day' },
-        { rank: 2, label: 'Outdoor play', pct: 25, emoji: '🌳', tip: 'Parks, nature, free exploration' },
-        { rank: 3, label: 'Creative play', pct: 20, emoji: '🎨', tip: 'Art, building, imaginative games' },
-        { rank: 4, label: 'Structured learning', pct: 15, emoji: '📚', tip: 'Reading, puzzles, educational activities' },
-      ]
+  const activities: ActivityItem[] = activityGuide(ageMonths).map((x, i) => ({ rank: i + 1, ...x }))
 
   const sheetH = SCREEN_H * 0.75
 
@@ -3868,26 +3862,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       // stat once a 30/90-day range was selected).
       const windowDays = Math.max(1, act.dailySessions.length)
 
-      const guideItems = ageMonths < 12
-        ? [
-            { emoji: '👶', label: 'Tummy time', pct: 35, tip: 'Builds neck, shoulder, and core strength for crawling' },
-            { emoji: '🧸', label: 'Floor play',  pct: 30, tip: 'Reaching, grasping, rolling — motor development' },
-            { emoji: '🚶', label: 'Movement & carrying', pct: 20, tip: 'Supported sitting, bouncing, gentle movement' },
-            { emoji: '😴', label: 'Rest & sleep', pct: 15, tip: 'Essential for brain development at this age' },
-          ]
-        : ageMonths < 36
-        ? [
-            { emoji: '🏃', label: 'Active free play', pct: 40, tip: 'Climbing, running, dancing — unstructured is best' },
-            { emoji: '🌳', label: 'Outdoor time',     pct: 30, tip: 'Fresh air, nature exploration, sensory play' },
-            { emoji: '🧩', label: 'Structured play',  pct: 20, tip: 'Puzzles, building, role-play — cognitive growth' },
-            { emoji: '📖', label: 'Quiet rest',        pct: 10, tip: 'Story time, calm activities between active sessions' },
-          ]
-        : [
-            { emoji: '⚽', label: 'Physical activity',    pct: 40, tip: 'Running, jumping, sports — at least 60 min/day' },
-            { emoji: '🌳', label: 'Outdoor play',         pct: 25, tip: 'Parks, nature, free exploration' },
-            { emoji: '🎨', label: 'Creative play',        pct: 20, tip: 'Art, building, imaginative games' },
-            { emoji: '📚', label: 'Structured learning',  pct: 15, tip: 'Reading, puzzles, educational activities' },
-          ]
+      const guideItems = activityGuide(ageMonths)
 
       const insight = buildActivityInsight(analytics, ageMonths, childName)
 

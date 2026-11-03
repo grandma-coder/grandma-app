@@ -15,7 +15,7 @@ import { Character } from '../../characters/Characters'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
 import { DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import { useTranslatedContent } from '../../../lib/useTranslatedContent'
 import { LogSheet } from '../../calendar/LogSheet'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
@@ -23,12 +23,12 @@ import { FadeUp } from '../../ui/Motion'
 import { AppointmentQuestions, CopySuggestedQuestion, nextStandardAppointmentId } from '../../calendar/AppointmentQuestions'
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 
-const TYPE_LABEL: Record<StandardAppointment['type'], { label: string; sticker: SiteStickerName }> = {
-  ultrasound: { label: 'Ultrasound',  sticker: 'baby' },
-  blood_test: { label: 'Blood test',  sticker: 'drop' },
-  checkup:    { label: 'Checkup',     sticker: 'doc' },
-  test:       { label: 'Test',        sticker: 'cal' },
-  vaccine:    { label: 'Vaccine',     sticker: 'syringe' },
+const TYPE_LABEL: Record<StandardAppointment['type'], { labelKey: TranslationKey; sticker: SiteStickerName }> = {
+  ultrasound: { labelKey: 'preg_appts_type_ultrasound',  sticker: 'baby' },
+  blood_test: { labelKey: 'sw1_appt_bloodTest',  sticker: 'drop' },
+  checkup:    { labelKey: 'preg_appts_type_checkup',    sticker: 'doc' },
+  test:       { labelKey: 'sw1_appt_test',       sticker: 'cal' },
+  vaccine:    { labelKey: 'agenda_vaccine',     sticker: 'syringe' },
 }
 
 interface Props {
@@ -76,7 +76,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
     const ink3 = dt.colors.ink3
 
     return (
-      <DiffuseSheet visible={visible} title={appointment.name} onClose={onClose} chip={typeInfo.label}>
+      <DiffuseSheet visible={visible} title={appointment.name} onClose={onClose} chip={t(typeInfo.labelKey)}>
         {/* Timing eyebrow */}
         <Text style={[dstyles.timing, { color: ink3 }]}>
           {t('pregnancy_appt_weekTiming', { week: appointment.week, timing: timingLabel })}
@@ -158,7 +158,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
       visible={visible}
       title={appointment.name}
       sticker={typeInfo.sticker}
-      chip={typeInfo.label}
+      chip={t(typeInfo.labelKey)}
       onClose={onClose}
     >
       <View style={{ paddingBottom: 12 }}>

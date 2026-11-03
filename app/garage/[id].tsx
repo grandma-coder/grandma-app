@@ -141,7 +141,7 @@ export default function PostDetail() {
         onPress: () => {
           import('expo-clipboard').then(({ setStringAsync }) => {
             setStringAsync(postUrl)
-            toast.show({ title: 'Copied!', message: 'Link copied to clipboard.' })
+            toast.show({ title: t('channelScreen_copiedTitle'), message: t('sw4_linkCopied') })
           })
         },
       },
@@ -151,7 +151,7 @@ export default function PostDetail() {
           Share.share({ message: `${shareCaption}\n\n${postUrl}` })
         },
       },
-      { text: 'Cancel', style: 'cancel' },
+      { text: t('common_cancel'), style: 'cancel' },
     ])
   }
 
@@ -227,12 +227,12 @@ export default function PostDetail() {
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
         {diffuse ? (
-          <ScreenHeader title="Post" onBack={() => router.back()} />
+          <ScreenHeader title={t('garage_share_postFallback')} onBack={() => router.back()} />
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <InkBackButton onPress={() => router.back()} ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="bodysuit" size={30} cut />
-            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase' }}>Post</Text>
+            <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('garage_share_postFallback')}</Text>
           </View>
         )}
       </View>

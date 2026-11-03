@@ -85,7 +85,7 @@ import {
   Smiley as SmileySticker,
   Bear as BearSticker,
 } from '../../components/ui/Stickers'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import type { CaregiverPermissions, CaregiverCapability, CaregiverRole } from '../../types'
 import { buildPermissionsObject } from '../../lib/caregiverPermissions'
 import { useFeatureFlags } from '../../store/useFeatureFlags'
@@ -123,12 +123,12 @@ interface ActivityEntry {
 // ─── Role config ───────────────────────────────────────────────────────────
 
 const ROLES = [
-  { id: 'partner', label: 'Partner' },
-  { id: 'family', label: 'Grandparent', dbRole: 'family' },
-  { id: 'nanny', label: 'Nanny / Au Pair', dbRole: 'nanny' },
-  { id: 'family_member', label: 'Family Member', dbRole: 'family' },
-  { id: 'babysitter', label: 'Babysitter', dbRole: 'nanny' },
-  { id: 'doctor', label: 'Doctor' },
+  { id: 'partner', get label() { return tNow('sw3_cc_rolePartner') } },
+  { id: 'family', get label() { return tNow('sw3_cc_roleGrandparent') }, dbRole: 'family' },
+  { id: 'nanny', get label() { return tNow('sw3_cc_roleNanny') }, dbRole: 'nanny' },
+  { id: 'family_member', get label() { return tNow('leaderboard_roleFamilyMember') }, dbRole: 'family' },
+  { id: 'babysitter', get label() { return tNow('sw3_cc_roleBabysitter') }, dbRole: 'nanny' },
+  { id: 'doctor', get label() { return tNow('careCircle_doctor') } },
 ]
 
 const COUNTRY_CODES = [
@@ -172,9 +172,9 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 const PERMISSION_LEVELS = [
-  { id: 'view', label: 'View Only', perms: ['view'], desc: 'Can see logs but not add' },
-  { id: 'contributor', label: 'Contributor', perms: ['view', 'log_activity', 'chat'], desc: 'Can view and log activities' },
-  { id: 'full', label: 'Full Contributor', perms: ['view', 'log_activity', 'chat', 'edit_child', 'emergency'], desc: 'Full access including emergency' },
+  { id: 'view', get label() { return tNow('sw3_cc_permViewOnly') }, perms: ['view'], get desc() { return tNow('sw3_cc_permViewOnlyDesc') } },
+  { id: 'contributor', get label() { return tNow('sw3_cc_permContributor') }, perms: ['view', 'log_activity', 'chat'], get desc() { return tNow('sw3_cc_permContributorDesc') } },
+  { id: 'full', get label() { return tNow('sw3_cc_permFull') }, perms: ['view', 'log_activity', 'chat', 'edit_child', 'emergency'], get desc() { return tNow('sw3_cc_permFullDesc') } },
 ]
 
 /**
@@ -404,7 +404,7 @@ function PhotoPickerAvatar({ uri, onPick, size = 96 }: { uri: string; onPick: (n
   async function pickPhoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      return Alert.alert('Permission needed', 'Please allow access to your photo library.')
+      return Alert.alert(tNow('kids_logForm_alertPermNeeded'), tNow('sw3_cc_photoPermBody'))
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -542,7 +542,7 @@ export default function CareCircleScreen() {
 
     if (error) {
       console.warn('[care-circle] failed to load members:', error.message)
-      Alert.alert('Couldn’t load care circle', 'Please check your connection and try again.')
+      Alert.alert(t('sw3_cc_loadFailed'), t('common_checkConnection'))
       return
     }
 
@@ -630,7 +630,7 @@ export default function CareCircleScreen() {
         id: l.id,
         type: l.type,
         childId: l.child_id,
-        childName: childMatch?.name ?? 'Child',
+        childName: childMatch?.name ?? tNow('healthHistory_fieldChild'),
         loggedBy: loggerId,
         loggedByName: nameMap.get(loggerId) ?? 'Caregiver',
         date: l.created_at ? new Date(l.created_at).toLocaleString(dateLoc(), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : l.date,
@@ -781,7 +781,7 @@ export default function CareCircleScreen() {
   }
 
   function getChildNames(ids: string[]): string[] {
-    return ids.map((id) => children.find((c) => c.id === id)?.name ?? 'Child').filter(Boolean)
+    return ids.map((id) => children.find((c) => c.id === id)?.name ?? tNow('healthHistory_fieldChild')).filter(Boolean)
   }
 
   return (
@@ -941,7 +941,7 @@ export default function CareCircleScreen() {
             const dStatusColor = isPaused ? dt.colors.error : isPending ? dt.colors.warning : dt.colors.success
 
             if (!diffuse) {
-              const roleLabel = m.role.charAt(0).toUpperCase() + m.role.slice(1)
+              const roleLabel = m.role === 'parent' ? t('careCircle_parent') : m.role === 'nanny' ? t('careCircle_nanny') : m.role === 'family' ? t('careCircle_family') : m.role === 'doctor' ? t('careCircle_doctor') : m.role === 'partner' ? t('sw3_cc_rolePartner') : m.role.charAt(0).toUpperCase() + m.role.slice(1)
               const statusTone = isPaused ? stickers.peachSoft : isPending ? stickers.yellowSoft : stickers.greenSoft
               return (
                 <View key={m.email || m.rowIds[0]} style={[styles.siteMember, { borderBottomColor: colors.border, opacity: isPaused ? 0.7 : 1 }]}>
@@ -977,7 +977,7 @@ export default function CareCircleScreen() {
 
                   {m.childIds.length > 0 && (
                     <Text style={[styles.siteMeta, { color: colors.textSecondary, fontFamily: font.body }]}>
-                      {m.childIds.map((cid) => children.find((c) => c.id === cid)?.name ?? 'Child').join(' · ')}
+                      {m.childIds.map((cid) => children.find((c) => c.id === cid)?.name ?? tNow('healthHistory_fieldChild')).join(' · ')}
                     </Text>
                   )}
                   {permKeys.length > 0 && (
@@ -1116,7 +1116,7 @@ export default function CareCircleScreen() {
                   <View style={styles.childChipRow}>
                     {m.childIds.map((cid) => {
                       const idx = children.findIndex((c) => c.id === cid)
-                      const name = idx >= 0 ? children[idx].name : 'Child'
+                      const name = idx >= 0 ? children[idx].name : t('healthHistory_fieldChild')
                       const dotColor = idx >= 0 ? childColor(idx) : stickers.blue
                       return (
                         <View
@@ -1568,10 +1568,10 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
 
   async function handleSendInvite() {
     if (sendMethod === 'email' && !inviteEmail.trim()) {
-      return Alert.alert('Email required', 'Enter an email address or switch to SMS / Share Link.')
+      return Alert.alert(t('sw3_cc_emailRequired'), t('sw3_cc_emailRequiredBody'))
     }
     if (sendMethod === 'sms' && !invitePhone.trim()) {
-      return Alert.alert('Phone required', 'Enter a phone number or switch to Email / Share Link.')
+      return Alert.alert(t('emergencyInsurance_phoneRequired'), t('sw3_cc_phoneRequiredBody'))
     }
 
     setSaving(true)
@@ -1851,7 +1851,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 4 && (
             <>
               <Text style={[sheetStyles.stepDesc, { color: secondaryColor, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
-                {t('careCircle_step4_how_invite', { name: name || 'them' })}
+                {t('careCircle_step4_how_invite', { name: name || t('app_cc_them') })}
               </Text>
 
               {/* Method selector */}

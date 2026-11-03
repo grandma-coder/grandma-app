@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { stickers, borderRadius, typography, useTheme } from '../../constants/theme'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 
 interface SymptomEntry {
   id: string
@@ -18,23 +18,23 @@ interface SymptomLoggerProps {
   onLog?: (symptom: string, severity: 'mild' | 'moderate' | 'strong') => void
 }
 
-const SYMPTOMS = [
-  { id: 'nausea', label: 'Nausea', icon: 'water-outline', color: '#86EFAC' },
-  { id: 'fatigue', label: 'Fatigue', icon: 'bed-outline', color: '#93C5FD' },
-  { id: 'back_pain', label: 'Back Pain', icon: 'body-outline', color: '#FCA5A5' },
-  { id: 'cravings', label: 'Cravings', icon: 'restaurant-outline', color: '#FDBA74' },
-  { id: 'mood_swings', label: 'Mood Swings', icon: 'happy-outline', color: '#C4B5FD' },
-  { id: 'swelling', label: 'Swelling', icon: 'resize-outline', color: '#F9A8D4' },
-  { id: 'headache', label: 'Headache', icon: 'flash-outline', color: '#FDE68A' },
-  { id: 'heartburn', label: 'Heartburn', icon: 'flame-outline', color: '#FDBA74' },
-  { id: 'insomnia', label: 'Insomnia', icon: 'moon-outline', color: '#67E8F9' },
-  { id: 'braxton_hicks', label: 'Braxton Hicks', icon: 'pulse-outline', color: '#FCA5A5' },
+const SYMPTOMS: { id: string; labelKey: TranslationKey; icon: any; color: string }[] = [
+  { id: 'nausea', labelKey: 'preg_symptom_nausea', icon: 'water-outline', color: '#86EFAC' },
+  { id: 'fatigue', labelKey: 'preg_symptom_fatigue', icon: 'bed-outline', color: '#93C5FD' },
+  { id: 'back_pain', labelKey: 'preg_symptom_backPain', icon: 'body-outline', color: '#FCA5A5' },
+  { id: 'cravings', labelKey: 'preg_symptom_cravings', icon: 'restaurant-outline', color: '#FDBA74' },
+  { id: 'mood_swings', labelKey: 'preg_symptom_moodSwings', icon: 'happy-outline', color: '#C4B5FD' },
+  { id: 'swelling', labelKey: 'preg_symptom_swelling', icon: 'resize-outline', color: '#F9A8D4' },
+  { id: 'headache', labelKey: 'preg_symptom_headache', icon: 'flash-outline', color: '#FDE68A' },
+  { id: 'heartburn', labelKey: 'preg_symptom_heartburn', icon: 'flame-outline', color: '#FDBA74' },
+  { id: 'insomnia', labelKey: 'preg_symptom_insomnia', icon: 'moon-outline', color: '#67E8F9' },
+  { id: 'braxton_hicks', labelKey: 'preg_symptom_braxtonHicks', icon: 'pulse-outline', color: '#FCA5A5' },
 ]
 
-const SEVERITY_OPTIONS: { id: 'mild' | 'moderate' | 'strong'; label: string; color: string }[] = [
-  { id: 'mild', label: 'Mild', color: stickers.green },
-  { id: 'moderate', label: 'Moderate', color: stickers.yellow },
-  { id: 'strong', label: 'Strong', color: stickers.coral },
+const SEVERITY_OPTIONS: { id: 'mild' | 'moderate' | 'strong'; labelKey: TranslationKey; color: string }[] = [
+  { id: 'mild', labelKey: 'sw1_sev_mild', color: stickers.green },
+  { id: 'moderate', labelKey: 'sw1_sev_moderate', color: stickers.yellow },
+  { id: 'strong', labelKey: 'sw1_sev_strong', color: stickers.coral },
 ]
 
 export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLoggerProps) {
@@ -72,7 +72,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
               <View style={[styles.symptomIconBox, { backgroundColor: s.color + '15' }]}>
                 <Ionicons name={s.icon as any} size={20} color={s.color} />
               </View>
-              <Text style={styles.symptomLabel}>{s.label}</Text>
+              <Text style={styles.symptomLabel}>{t(s.labelKey)}</Text>
               {isLogged && (
                 <Ionicons name="checkmark-circle" size={14} color={stickers.green} style={{ position: 'absolute', top: 6, right: 6 }} />
               )}
@@ -85,7 +85,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
       {selectedSymptom && (
         <PaperCard radius={28} padding={20} style={styles.severityCard}>
           <Text style={styles.severityTitle}>
-            {t('agendaSymptom_howSevere', { symptom: SYMPTOMS.find((s) => s.id === selectedSymptom)?.label?.toLowerCase() ?? '' })}
+            {t('agendaSymptom_howSevere', { symptom: (() => { const k = SYMPTOMS.find((s) => s.id === selectedSymptom)?.labelKey; return k ? t(k).toLowerCase() : '' })() })}
           </Text>
           <View style={styles.severityRow}>
             {SEVERITY_OPTIONS.map((sev) => (
@@ -94,7 +94,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
                 onPress={() => handleSeveritySelect(sev.id)}
                 style={[styles.severityBtn, { borderColor: sev.color }]}
               >
-                <Text style={[styles.severityBtnText, { color: sev.color }]}>{sev.label}</Text>
+                <Text style={[styles.severityBtnText, { color: sev.color }]}>{t(sev.labelKey)}</Text>
               </Pressable>
             ))}
           </View>
@@ -116,7 +116,7 @@ export function SymptomLogger({ selectedDate, entries = [], onLog }: SymptomLogg
                     size={14}
                     color={symptomInfo?.color ?? colors.text}
                   />
-                  <Text style={styles.loggedText}>{symptomInfo?.label}</Text>
+                  <Text style={styles.loggedText}>{symptomInfo ? t(symptomInfo.labelKey) : ''}</Text>
                   <View style={[styles.sevDot, { backgroundColor: sevInfo?.color }]} />
                 </View>
               )

@@ -91,17 +91,17 @@ function ageLabel(raw: string): string {
 }
 
 // Common vaccine schedule for reference
-const VACCINE_SCHEDULE = [
-  { name: 'Hepatitis B', ages: ['Birth', '1 month', '6 months'] },
-  { name: 'DTaP', ages: ['2 months', '4 months', '6 months', '15-18 months', '4-6 years'] },
-  { name: 'IPV (Polio)', ages: ['2 months', '4 months', '6-18 months', '4-6 years'] },
-  { name: 'MMR', ages: ['12-15 months', '4-6 years'] },
-  { name: 'Varicella', ages: ['12-15 months', '4-6 years'] },
-  { name: 'Hib', ages: ['2 months', '4 months', '6 months', '12-15 months'] },
-  { name: 'PCV13', ages: ['2 months', '4 months', '6 months', '12-15 months'] },
-  { name: 'Rotavirus', ages: ['2 months', '4 months', '6 months'] },
-  { name: 'Influenza', ages: ['6 months (yearly)'] },
-  { name: 'Hepatitis A', ages: ['12-23 months'] },
+const VACCINE_SCHEDULE: { name: string; labelKey: Parameters<typeof tNow>[0]; ages: string[] }[] = [
+  { name: 'Hepatitis B', labelKey: 'sw2_hh_vacHepB', ages: ['Birth', '1 month', '6 months'] },
+  { name: 'DTaP', labelKey: 'sw2_hh_vacDTaP', ages: ['2 months', '4 months', '6 months', '15-18 months', '4-6 years'] },
+  { name: 'IPV (Polio)', labelKey: 'sw2_hh_vacIPV', ages: ['2 months', '4 months', '6-18 months', '4-6 years'] },
+  { name: 'MMR', labelKey: 'sw2_hh_vacMMR', ages: ['12-15 months', '4-6 years'] },
+  { name: 'Varicella', labelKey: 'sw2_hh_vacVaricella', ages: ['12-15 months', '4-6 years'] },
+  { name: 'Hib', labelKey: 'sw2_hh_vacHib', ages: ['2 months', '4 months', '6 months', '12-15 months'] },
+  { name: 'PCV13', labelKey: 'sw2_hh_vacPCV13', ages: ['2 months', '4 months', '6 months', '12-15 months'] },
+  { name: 'Rotavirus', labelKey: 'sw2_hh_vacRotavirus', ages: ['2 months', '4 months', '6 months'] },
+  { name: 'Influenza', labelKey: 'sw2_hh_vacInfluenza', ages: ['6 months (yearly)'] },
+  { name: 'Hepatitis A', labelKey: 'sw2_hh_vacHepA', ages: ['12-23 months'] },
 ]
 
 // ─── Main Screen ──────────────────────────────────────────────────────────
@@ -239,7 +239,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Vaccine Tracker ──────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('vaccine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse ? styles.diffuseCard : styles.siteSection]}>
-          <SectionHeader icon={Syringe} charName="vaccine" color={stickers.greenInk} title="Vaccines" />
+          <SectionHeader icon={Syringe} charName="vaccine" color={stickers.greenInk} title={t('vault_vaccines')} />
           {vaccines.length > 0 ? (
             <View style={styles.vaccineList}>
               {vaccines.slice(0, 3).map((v) => (
@@ -276,7 +276,7 @@ export default function HealthHistoryScreen() {
             : { backgroundColor: 'transparent', borderTopWidth: 1, borderTopColor: paperBorder, borderRadius: 0, paddingHorizontal: 0 }]}>
             <Text style={[styles.nextLabel, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular', letterSpacing: diffuse ? 1.4 : 1.4, textTransform: 'uppercase', fontSize: diffuse ? undefined : 10 }]}>{t('healthHistory_recommendedSchedule')}</Text>
             <Text style={[styles.nextText, { color: diffuse ? dt.colors.ink2 : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-              {VACCINE_SCHEDULE.filter((v) => !givenVaccineNames.has(v.name)).slice(0, 2).map((v) => `${v.name} (${ageLabel(v.ages[0])})`).join(', ') || t('kp_hh_upToDate')}
+              {VACCINE_SCHEDULE.filter((v) => !givenVaccineNames.has(v.name)).slice(0, 2).map((v) => `${t(v.labelKey)} (${ageLabel(v.ages[0])})`).join(', ') || t('kp_hh_upToDate')}
             </Text>
           </View>
         </Pressable>

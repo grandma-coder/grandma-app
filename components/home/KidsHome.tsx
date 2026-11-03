@@ -96,157 +96,42 @@ const AnimatedSvgCircle = Reanimated.createAnimatedComponent(SvgCircle)
 // change in `lib/growthLeaps.ts` to avoid silent divergence. Tracked as a
 // follow-up dedupe in docs/onboarding-kids-audit-2026-05-15.md (P1-LEAP-DUP).
 
+type LeapKey = Parameters<typeof tNow>[0]
+const LEAP_PHASE_LABEL_KEYS: LeapKey[] = ['sw2_leap_phStormy', 'sw2_leap_phPeak', 'sw2_leap_phEmerging']
+
+// Leap copy lives in i18n (sw2_leap<week>_*). Getters resolve the current
+// language at read time, so the module-level table never freezes English.
+function makeLeap(week: number, ageRange: [number, number], duration: [number, number], difficulty: number, color: string) {
+  const k = (part: string) => `sw2_leap${week}_${part}` as LeapKey
+  const list = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => tNow(k(`${prefix}${i}`)))
+  return {
+    week,
+    difficulty,
+    color,
+    get name() { return tNow(k('name')) },
+    get desc() { return tNow(k('desc')) },
+    get ageRange() { return tNow('sw2_leap_weeksRange', { a: ageRange[0], b: ageRange[1] }) },
+    get duration() { return tNow('sw2_leap_weeksRange', { a: duration[0], b: duration[1] }) },
+    get brainNote() { return tNow(k('brain')) },
+    get phases() { return LEAP_PHASE_LABEL_KEYS.map((lk, i) => ({ label: tNow(lk), desc: tNow(k(`ph${i}`)) })) },
+    get signs() { return list('sg', 6) },
+    get skills() { return list('sk', 6) },
+    get activities() { return list('ac', 4) },
+    get tip() { return tNow(k('tip')) },
+  }
+}
+
 const GROWTH_LEAPS = [
-  {
-    week: 5, name: 'Changing Sensations', desc: 'Baby discovers a richer world of senses',
-    ageRange: '4–5 weeks', duration: '1–2 weeks', difficulty: 2,
-    brainNote: 'The nervous system undergoes a first major reorganization. Your baby\'s brain is suddenly receiving far more detailed signals from the senses — sharper sights, richer sounds, new body feelings. It\'s overwhelming and wonderful at the same time.',
-    color: stickers.lilac,
-    phases: [
-      { label: 'Stormy', desc: 'More crying, clinginess, disrupted sleep. Baby is overwhelmed by the new flood of sensory information.' },
-      { label: 'Peak Leap', desc: 'The brain is intensely processing new sensory input. Fussiness may peak before calming.' },
-      { label: 'Emerging', desc: 'New sensory awareness blossoms — you\'ll notice longer alert periods and more deliberate looking.' },
-    ],
-    signs: ['More crying than usual', 'Wants to feed constantly', 'Harder to settle', 'Prefers closeness', 'Startles more easily', 'Dislikes being undressed'],
-    skills: ['Reacts to light & sound', 'Smoother gaze tracking', 'Early social smile', 'More alert periods', 'Turns toward your voice', 'Notices high-contrast patterns'],
-    activities: ['Hold baby facing outward to explore the room', 'Show high-contrast black & white cards', 'Narrate everything you do out loud', 'Gentle baby massage during calm moments'],
-    tip: 'Skin-to-skin contact is powerful right now. Babywearing and gentle rocking ease the stormy phase.',
-  },
-  {
-    week: 8, name: 'Patterns', desc: 'Recognizing simple repeating patterns in the world',
-    ageRange: '7–8 weeks', duration: '1–2 weeks', difficulty: 2,
-    brainNote: 'Your baby\'s brain starts detecting repeating patterns in sound, movement, and visual input. This is the foundation for all future learning — understanding that the world is predictable and has structure.',
-    color: brand.kids,
-    phases: [
-      { label: 'Stormy', desc: 'Night waking, cluster feeding, and fussiness spike as the brain works overtime to catalog patterns.' },
-      { label: 'Peak Leap', desc: 'Baby is actively building neural pathways for pattern recognition. Intense brain work.' },
-      { label: 'Emerging', desc: 'Baby recognizes familiar faces, voices, and daily routines with obvious pleasure.' },
-    ],
-    signs: ['Night waking increases', 'Cluster feeding', 'Wants to be held more', 'Quieter during feeds', 'Stares at complex shapes', 'Calms to familiar sounds'],
-    skills: ['Recognizes your face & voice', 'Tracks moving objects', 'Coos & vocalizes', 'Reacts to routines', 'Distinguishes happy vs. sad tones', 'Brief social smiling'],
-    activities: ['Sing the same lullaby at bedtime every night', 'Repeat simple rhymes with rhythm', 'Show a mobile with slowly moving parts', 'Create a consistent feeding ritual'],
-    tip: 'Consistent routines help — baby is learning to predict sequences. Sing the same songs, do the same bedtime steps.',
-  },
-  {
-    week: 12, name: 'Smooth Transitions', desc: 'Movements and muscle control become more fluid',
-    ageRange: '11–12 weeks', duration: '1–2 weeks', difficulty: 2,
-    brainNote: 'Motor neurons are rapidly myelinating, enabling smoother, more coordinated movements. Your baby transitions from jerky reflexes to intentional, fluid motion — a massive upgrade in physical self-awareness.',
-    color: stickers.green,
-    phases: [
-      { label: 'Stormy', desc: 'Sleep disruption, demanding behavior, and increased feeding as energy is redirected to motor development.' },
-      { label: 'Peak Leap', desc: 'Motor pathways are rapidly reorganizing. Baby may seem restless or frustrated by new physical sensations.' },
-      { label: 'Emerging', desc: 'Smoother movements, social smiling, and first real laughs appear as new motor control clicks into place.' },
-    ],
-    signs: ['Sleep regression', 'Increased fussiness', 'More feeding', 'Wants visual stimulation', 'Dislikes being still', 'Practices movements repetitively'],
-    skills: ['Steady head control', 'Hands to midline', 'First real laughs', 'Grasps objects briefly', 'Kicks legs rhythmically', 'Brings hands to mouth intentionally'],
-    activities: ['Daily tummy time in 3–5 min sessions', 'Let baby bat at hanging toys', 'Supported sitting with back support', 'Move baby\'s arms & legs in bicycle motion'],
-    tip: 'Daily tummy time (3–5 min sessions) supports the motor milestones emerging in this leap.',
-  },
-  {
-    week: 19, name: 'Events', desc: 'Understanding that actions happen in sequences',
-    ageRange: '14–19 weeks', duration: '3–6 weeks', difficulty: 4,
-    brainNote: 'Baby\'s brain starts to perceive the world as a series of events rather than a static blur. Actions have beginnings, middles, and ends. This is the birth of cause-and-effect thinking — and why everything suddenly seems so fascinating.',
-    color: stickers.yellow,
-    phases: [
-      { label: 'Stormy', desc: 'Clingy, cries when put down, sleep disrupted. Baby is mentally exhausted from processing complex event chains.' },
-      { label: 'Peak Leap', desc: 'Brain is actively linking actions into cause-and-effect chains. Intense cognitive work happening.' },
-      { label: 'Emerging', desc: 'Intentional reaching appears, along with early object permanence — baby looks for dropped items.' },
-    ],
-    signs: ['Separation anxiety spike', 'Very clingy', 'Crying when toy falls', 'Resists naps', 'Demands interaction', 'Frustrated when routine breaks'],
-    skills: ['Reaches & grabs intentionally', 'Shakes & bangs toys', 'Recognizes games', 'Understands "up" & "down"', 'Follows moving objects with eyes', 'Laughs at surprises'],
-    activities: ['Peek-a-boo and hide-and-seek games', 'Rolling a ball back and forth', 'Simple cause-effect toys (press = sound)', 'Narrate daily routines step-by-step'],
-    tip: 'Play simple cause-and-effect games like peek-a-boo — baby is learning that events have predictable outcomes.',
-  },
-  {
-    week: 26, name: 'Relationships', desc: 'Grasping how things and people relate to each other',
-    ageRange: '22–26 weeks', duration: '4–5 weeks', difficulty: 5,
-    brainNote: 'Baby\'s brain builds its first relational maps — understanding that objects and people exist in relation to one another. Distance, closeness, inside/outside, near/far all become meaningful. This triggers object permanence and separation anxiety simultaneously.',
-    color: brand.prePregnancy,
-    phases: [
-      { label: 'Stormy', desc: 'Stranger anxiety and clinginess peak. Baby now understands "you can leave" — which is terrifying.' },
-      { label: 'Peak Leap', desc: 'Brain is building relational frameworks at full speed. This is one of the most intense leaps emotionally.' },
-      { label: 'Emerging', desc: 'Object permanence solidifies, imitation begins, and spatial awareness (in/out, up/down) appears.' },
-    ],
-    signs: ['Stranger anxiety peaks', 'Cries when you leave room', 'Wakes at night more', 'Clingy during day', 'Reaches for familiar people', 'Rejects unfamiliar faces'],
-    skills: ['Object permanence (looks for hidden toys)', 'Imitates gestures', 'Understands "no"', 'Pivots when sitting', 'Drops items intentionally to watch fall', 'Explores spatial relationships'],
-    activities: ['Hide toys under a cloth and let baby find them', 'Stack/nest cups together', 'Consistent goodbye ritual — never sneak out', 'Let baby explore containers (in & out)'],
-    tip: 'Play hide-and-seek with toys to reinforce object permanence. Consistent goodbyes (don\'t sneak out) reduce separation anxiety.',
-  },
-  {
-    week: 37, name: 'Categories', desc: 'Grouping the world into mental categories',
-    ageRange: '33–37 weeks', duration: '4–5 weeks', difficulty: 3,
-    brainNote: 'The brain begins organizing the world into abstract groups — animals, foods, people, colors. This mental filing system is the foundation for language and logic. First words often appear during or just after this leap.',
-    color: stickers.coral,
-    phases: [
-      { label: 'Stormy', desc: 'Demanding behavior, picky eating, night waking as the brain reorganizes around categorical thinking.' },
-      { label: 'Peak Leap', desc: 'Brain is actively sorting experiences into groups. Baby may seem more selective and opinionated.' },
-      { label: 'Emerging', desc: 'Baby sorts objects by type, points to body parts, and may say first recognizable words.' },
-    ],
-    signs: ['Picky eating resumes', 'More demanding', 'Clingy with primary caregiver', 'Short naps', 'Points at things of interest', 'Examines objects closely'],
-    skills: ['Groups similar objects', 'Points to body parts', 'Says first words', 'Waves bye-bye', 'Distinguishes people from objects', 'Claps hands together'],
-    activities: ['Sort toys by color or shape together', 'Read picture books and name each image', 'Point to body parts ("where\'s your nose?")', 'Group foods by type at meal time'],
-    tip: 'Name everything — "big ball, small ball". Sorting games and books with clear categories accelerate this leap.',
-  },
-  {
-    week: 46, name: 'Sequences', desc: 'Following multi-step actions toward a goal',
-    ageRange: '41–46 weeks', duration: '4–6 weeks', difficulty: 4,
-    brainNote: 'Baby\'s brain learns to chain actions together into purposeful sequences — a monumental shift. Planning, goal-directed behavior, and early problem-solving emerge. This is why everything suddenly needs to be done in order.',
-    color: stickers.blue,
-    phases: [
-      { label: 'Stormy', desc: 'Frustration tantrums and whining increase as baby knows what they want to accomplish but can\'t always do it.' },
-      { label: 'Peak Leap', desc: 'Brain is chaining multi-step sequences together. Baby is mentally exhausted from planning.' },
-      { label: 'Emerging', desc: 'Stacking blocks, putting things in containers, and early pretend play all emerge.' },
-    ],
-    signs: ['Frustration & tantrums', 'Whines more', 'Very clingy', 'Resists bedtime', 'Insists on doing things themselves', 'Upset when sequence interrupted'],
-    skills: ['Stacks 2–3 blocks', 'Puts things in containers', 'Pretend play begins', 'Follows 1-step commands', 'Pulls to stand', 'Cruises along furniture'],
-    activities: ['Stack and knock down blocks together', 'Shape sorter toys', 'Simple 2-step instructions ("get the ball, bring it here")', 'Pretend feeding stuffed animals'],
-    tip: 'Model sequences out loud: "First we put on shoes, then we go outside." Step-by-step narration builds understanding.',
-  },
-  {
-    week: 55, name: 'Programs', desc: 'Understanding flexible programs — different ways to reach a goal',
-    ageRange: '49–55 weeks', duration: '4–6 weeks', difficulty: 5,
-    brainNote: 'Baby discovers that goals can be achieved in multiple ways — there isn\'t just one path. This "flexible programming" unlocks creative problem-solving and imagination. It also triggers strong opinions, because baby now knows what they want and can envision alternatives.',
-    color: stickers.green,
-    phases: [
-      { label: 'Stormy', desc: 'Strong opinions, meltdowns, and sleep regression as toddler grapples with the concept of alternatives.' },
-      { label: 'Peak Leap', desc: 'Brain is discovering flexible problem-solving pathways. Toddler is mentally overwhelmed but driven.' },
-      { label: 'Emerging', desc: 'Problem-solving, rich pretend play scenarios, and a vocabulary surge all emerge.' },
-    ],
-    signs: ['Big emotions & meltdowns', 'Testing limits constantly', 'Picky sleep routine', 'Clingy at drop-off', 'Experiments with different approaches', 'Refuses help with tasks'],
-    skills: ['Stacks 4–6 blocks', 'Pretend scenarios (feeding dolls)', 'Vocabulary surge', 'Completes simple puzzles', 'Uses spoon with some success', 'Understands "mine"'],
-    activities: ['Simple puzzles (3–4 pieces)', 'Offer 2 ways to do same task and let them choose', 'Water play — pour, fill, dump', 'Pretend kitchen with pots and spoons'],
-    tip: 'Give limited choices ("red cup or blue cup?") — baby needs to feel agency while brain builds flexible thinking.',
-  },
-  {
-    week: 64, name: 'Principles', desc: 'Grasping invisible rules that govern the world',
-    ageRange: '59–64 weeks', duration: '5–6 weeks', difficulty: 5,
-    brainNote: 'Toddler\'s brain starts internalizing abstract principles — rules that can\'t be seen but govern behavior. Fairness, sharing, and cause-and-consequence become real. This is why "no" becomes a favorite word — toddler is actively testing which principles apply.',
-    color: stickers.yellow,
-    phases: [
-      { label: 'Stormy', desc: 'Rule-testing and boundary-pushing intensify. Toddler must test every principle to map how the world works.' },
-      { label: 'Peak Leap', desc: 'Brain is internalizing principles and social rules at full speed. Emotional regulation is strained.' },
-      { label: 'Emerging', desc: 'Fairness concept emerges, empathy appears, and toddler starts negotiating.' },
-    ],
-    signs: ['Rule-testing behavior', 'Says "no" frequently', 'Emotional intensity', 'Sleep resistance', 'Insists on "my turn"', 'Cries when things are unfair'],
-    skills: ['Understands fairness', 'Shows empathy', 'Sentences of 2–3 words', 'Sorts by color/shape', 'Follows 2-step instructions', 'Helps with simple tasks'],
-    activities: ['Simple board games with turn-taking', 'Explain rules calmly and consistently', 'Read books about emotions and fairness', 'Involve in household chores (sweeping, wiping)'],
-    tip: 'Be consistent with rules — toddler is actively mapping which principles apply in which contexts.',
-  },
-  {
-    week: 75, name: 'Systems', desc: 'Understanding complex systems with interacting parts',
-    ageRange: '70–75 weeks', duration: '4–6 weeks', difficulty: 4,
-    brainNote: 'The final Wonder Week leap — toddler\'s brain now models complex systems: family dynamics, nature, society, cause-and-effect chains with many links. This is the foundation of adult thinking. The questions become deep, the roleplay becomes rich, and independence flourishes.',
-    color: brand.kids,
-    phases: [
-      { label: 'Stormy', desc: 'Defiance and strong-willed behavior peak. Toddler is asserting their new understanding of how systems work.' },
-      { label: 'Peak Leap', desc: 'Brain is modeling complex systems — family, seasons, routines, social hierarchies.' },
-      { label: 'Emerging', desc: 'Rich roleplay, deep questions, extended independent play, and growing self-regulation appear.' },
-    ],
-    signs: ['Defiance spikes', 'Tests every boundary', 'Very emotional', 'Sleep disruption', 'Prefers specific people', 'Narrates own actions'],
-    skills: ['Complex roleplay', 'Asks "why" constantly', 'Understands your system/routine', 'Extended independent play', 'Shows concern for others', '3+ word sentences'],
-    activities: ['Elaborate pretend play (house, shop, hospital)', 'Answer "why" questions with real explanations', 'Explore nature — plants, animals, weather', 'Age-appropriate board games with strategy'],
-    tip: 'Engage the curiosity — answer "why" questions with real explanations. Big questions deserve real answers at this stage.',
-  },
+  makeLeap(5, [4, 5], [1, 2], 2, stickers.lilac),
+  makeLeap(8, [7, 8], [1, 2], 2, brand.kids),
+  makeLeap(12, [11, 12], [1, 2], 2, stickers.green),
+  makeLeap(19, [14, 19], [3, 6], 4, stickers.yellow),
+  makeLeap(26, [22, 26], [4, 5], 5, brand.prePregnancy),
+  makeLeap(37, [33, 37], [4, 5], 3, stickers.coral),
+  makeLeap(46, [41, 46], [4, 6], 4, stickers.blue),
+  makeLeap(55, [49, 55], [4, 6], 5, stickers.green),
+  makeLeap(64, [59, 64], [5, 6], 5, stickers.yellow),
+  makeLeap(75, [70, 75], [4, 6], 4, brand.kids),
 ]
 
 function getGrowthLeap(birthDate: string) {
@@ -4149,9 +4034,9 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
 // and `care` is the last-resort default for generic daily entries.
 type ActivityPillarId = 'movement' | 'creative' | 'learning' | 'social' | 'care' | 'therapy'
 
-const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string; types: string[]; patterns: RegExp[] }> = {
+const ACTIVITY_PILLARS: Record<ActivityPillarId, { readonly label: string; color: string; types: string[]; patterns: RegExp[] }> = {
   movement: {
-    label: 'Movement',
+    get label() { return tNow('actCalm_p_movement') },
     color: stickers.green,
     types: ['sport', 'swim', 'walk', 'playground', 'dance'],
     patterns: [
@@ -4164,7 +4049,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
     ],
   },
   creative: {
-    label: 'Creative',
+    get label() { return tNow('actCalm_p_creative') },
     color: stickers.yellow,
     types: ['art', 'music'],
     patterns: [
@@ -4173,7 +4058,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
     ],
   },
   learning: {
-    label: 'Learning',
+    get label() { return tNow('actCalm_p_learning') },
     color: stickers.blue,
     types: ['class', 'school', 'study', 'reading'],
     patterns: [
@@ -4183,7 +4068,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
     ],
   },
   social: {
-    label: 'Social',
+    get label() { return tNow('actCalm_p_social') },
     color: brand.prePregnancy,
     types: ['playdate'],
     patterns: [
@@ -4192,7 +4077,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
     ],
   },
   care: {
-    label: 'Care',
+    get label() { return tNow('actCalm_p_care') },
     color: stickers.peach,
     types: [],
     patterns: [
@@ -4205,7 +4090,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
     ],
   },
   therapy: {
-    label: 'Therapy',
+    get label() { return tNow('actCalm_p_therapy') },
     color: brand.pregnancy,
     types: ['therapy'],
     patterns: [
@@ -4219,7 +4104,7 @@ const ACTIVITY_PILLARS: Record<ActivityPillarId, { label: string; color: string;
 // Backwards-compat meta lookup: modal code still does `ACTIVITY_TYPE_META[key]`.
 // Bucket keys are now pillar ids.
 const ACTIVITY_TYPE_META: Record<string, { label: string; color: string }> = Object.fromEntries(
-  Object.entries(ACTIVITY_PILLARS).map(([id, p]) => [id, { label: p.label, color: p.color }])
+  Object.entries(ACTIVITY_PILLARS).map(([id, p]) => [id, { get label() { return p.label }, color: p.color }])
 )
 
 function getActivityPillar(explicitType: string | undefined, name?: string): ActivityPillarId {
@@ -4362,11 +4247,11 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
   // Nights in the range (total target ÷ per-night target) — so the hero can show a per-night average.
   const nights = dailySleepTarget > 0 && sleepTarget > 0 ? Math.max(1, Math.round(sleepTarget / dailySleepTarget)) : 1
   const qualityCopy: Record<string, { tag: string; tagBg: string; blurb: string }> = {
-    Great:    { tag: 'On a roll', tagBg: '#BDD48C', blurb: 'Most days are landing close to or above target. Sleep regulation is doing its quiet magic — keep the rhythm.' },
-    Solid:    { tag: 'Solid base', tagBg: '#F5D652', blurb: 'Sleep is consistent enough to support growth and mood. A few short nights are normal at this age.' },
-    Restless: { tag: 'A bit choppy', tagBg: '#F5B896', blurb: 'Several nights are running short. Watch for over-tiredness signs and try moving bedtime 15 minutes earlier for a few days.' },
-    Poor:     { tag: 'Tough stretch', tagBg: '#F2C9C2', blurb: 'Most nights are running short or fragmented. If this has continued for a week, consider checking in with your pediatrician about sleep routines or possible disruptions (illness, teething, schedule shifts).' },
-    'No data':{ tag: 'Add a log', tagBg: '#E8E4DC', blurb: 'No sleep entries yet for this range. Logging even one sleep helps the rings fill in.' },
+    Great:    { tag: t('sw2_kh_sqGreatTag'), tagBg: '#BDD48C', blurb: t('sw2_kh_sqGreatBlurb') },
+    Solid:    { tag: t('sw2_kh_sqSolidTag'), tagBg: '#F5D652', blurb: t('sw2_kh_sqSolidBlurb') },
+    Restless: { tag: t('sw2_kh_sqRestlessTag'), tagBg: '#F5B896', blurb: t('sw2_kh_sqRestlessBlurb') },
+    Poor:     { tag: t('sw2_kh_sqPoorTag'), tagBg: '#F2C9C2', blurb: t('sw2_kh_sqPoorBlurb') },
+    'No data':{ tag: t('sw2_kh_sqNoneTag'), tagBg: '#E8E4DC', blurb: t('sw2_kh_sqNoneBlurb') },
   }
   const q = qualityCopy[sleepQuality] ?? qualityCopy['No data']
 
@@ -4452,12 +4337,12 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
 // ─── Category Rank Card (animated) ──────────────────────────────────────────
 
 function categoryNote(rank: number, pctOfTotal: number): string {
-  if (rank === 0) return 'Leading the menu, dear.'
-  if (pctOfTotal >= 25) return 'A heavy hitter on the plate.'
-  if (pctOfTotal >= 15) return 'Pulling its weight nicely.'
-  if (pctOfTotal >= 8) return 'Holding steady in the mix.'
-  if (pctOfTotal >= 3) return 'A small but welcome touch.'
-  return 'Just a sprinkle, love.'
+  if (rank === 0) return tNow('sw2_kh_catNote0')
+  if (pctOfTotal >= 25) return tNow('sw2_kh_catNote1')
+  if (pctOfTotal >= 15) return tNow('sw2_kh_catNote2')
+  if (pctOfTotal >= 8) return tNow('sw2_kh_catNote3')
+  if (pctOfTotal >= 3) return tNow('sw2_kh_catNote4')
+  return tNow('sw2_kh_catNote5')
 }
 
 function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
@@ -4598,12 +4483,12 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
 
 // ─── Breastfeeding Insights ─────────────────────────────────────────────────
 
-const TIME_BUCKETS: { key: string; label: string; range: string; from: number; to: number }[] = [
-  { key: 'dawn',      label: 'Dawn',      range: '5–9 AM',   from: 5,  to: 9  },
-  { key: 'morning',   label: 'Morning',   range: '9 AM–12 PM', from: 9,  to: 12 },
-  { key: 'afternoon', label: 'Afternoon', range: '12–5 PM',  from: 12, to: 17 },
-  { key: 'evening',   label: 'Evening',   range: '5–10 PM',  from: 17, to: 22 },
-  { key: 'night',     label: 'Night',     range: '10 PM–5 AM', from: 22, to: 5  }, // wraps midnight
+const TIME_BUCKETS: { key: string; readonly label: string; readonly range: string; from: number; to: number }[] = [
+  { key: 'dawn', get label() { return tNow('feedCalm_dawn') }, get range() { return tNow('sw2_kh_rngDawn') },   from: 5,  to: 9  },
+  { key: 'morning', get label() { return tNow('feedCalm_morning') }, get range() { return tNow('sw2_kh_rngMorning') }, from: 9,  to: 12 },
+  { key: 'afternoon', get label() { return tNow('feedCalm_afternoon') }, get range() { return tNow('sw2_kh_rngAfternoon') },  from: 12, to: 17 },
+  { key: 'evening', get label() { return tNow('feedCalm_evening') }, get range() { return tNow('sw2_kh_rngEvening') },  from: 17, to: 22 },
+  { key: 'night', get label() { return tNow('feedCalm_night') }, get range() { return tNow('sw2_kh_rngNight') }, from: 22, to: 5  }, // wraps midnight
 ]
 
 function bucketForHour(h: number): string {
@@ -4648,23 +4533,21 @@ function BreastfeedingInsights({
   if (sideKnown > 0) {
     const diff = Math.abs(leftPct - rightPct)
     if (diff >= 20) {
-      const lead = leftPct > rightPct ? 'left' : 'right'
-      const start = lead === 'left' ? 'right' : 'left'
-      notes.push(`Your ${lead} side is taking the lead — try starting on the ${start} next time to keep things balanced.`)
+      notes.push(tNow(leftPct > rightPct ? 'sw2_kh_fnLeadLeft' : 'sw2_kh_fnLeadRight'))
     } else if (diff <= 8) {
-      notes.push('Beautifully balanced between both sides — well done.')
+      notes.push(tNow('sw2_kh_fnBalanced'))
     }
   }
   if (avgMin > 0) {
-    if (avgMin < 8) notes.push('Sessions are on the shorter side — baby may want to keep going if still hungry.')
-    else if (avgMin > 25) notes.push('Long, deep feeds — baby is drinking their fill.')
+    if (avgMin < 8) notes.push(tNow('sw2_kh_fnShort'))
+    else if (avgMin > 25) notes.push(tNow('sw2_kh_fnLong'))
   }
   if (feedingDays > 0) {
-    if (perDay < 6) notes.push('A lighter day for feeds — keep an eye on cues.')
-    else if (perDay >= 10) notes.push('Frequent feeds — sounds like a growth spurt, dear.')
+    if (perDay < 6) notes.push(tNow('sw2_kh_fnLight'))
+    else if (perDay >= 10) notes.push(tNow('sw2_kh_fnFrequent'))
   }
   if (peakCount >= Math.ceil(feedingBreast * 0.35)) {
-    notes.push(`Most feeds land in the ${peakBucket.label.toLowerCase()} — ${peakBucket.range}.`)
+    notes.push(tNow('sw2_kh_fnPeak', { bucket: peakBucket.label, range: peakBucket.range }))
   }
 
   if (diffuse) {
@@ -4714,7 +4597,7 @@ function BreastfeedingInsights({
                 {t('kids_home_breastfeeding_time_of_day')}
               </Text>
               <Text style={{ fontFamily: diffuseFont.italic, fontSize: 12, color: dCol.ink3 }}>
-                {'peak '}{peakBucket.range.toLowerCase()}
+                {tNow('sw2_kh_peakRange', { range: peakBucket.range })}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
@@ -4754,9 +4637,9 @@ function BreastfeedingInsights({
         {(avgMin > 0 || perDay > 0) && (
           <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginBottom: notes.length > 0 ? 20 : 0 }}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <DiffuseMetricTile value={avgMin > 0 ? `${avgMin} min` : '—'} label={'Avg Session'} />
-              <DiffuseMetricTile value={perDay > 0 ? perDay.toString() : '—'} label={'Feeds / Day'} />
-              <DiffuseMetricTile value={minPerDay > 0 ? `${minPerDay} min` : '—'} label={'Min / Day'} />
+              <DiffuseMetricTile value={avgMin > 0 ? `${avgMin} min` : '—'} label={tNow('kids_home_breastfeeding_avg_session')} />
+              <DiffuseMetricTile value={perDay > 0 ? perDay.toString() : '—'} label={tNow('kids_home_breastfeeding_feeds_per_day')} />
+              <DiffuseMetricTile value={minPerDay > 0 ? `${minPerDay} min` : '—'} label={tNow('kids_home_breastfeeding_min_per_day')} />
             </View>
           </View>
         )}
@@ -4864,7 +4747,7 @@ function BreastfeedingInsights({
               {t('kids_home_breastfeeding_time_of_day')}
             </Text>
             <Text style={{ color: '#6E6763', fontSize: 11, fontFamily: font.italic, fontStyle: 'italic' }}>
-              {'peak '}{peakBucket.range.toLowerCase()}
+              {tNow('sw2_kh_peakRange', { range: peakBucket.range })}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-end' }}>
@@ -5052,11 +4935,11 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
       ? Math.round((feedingBreast / (feedingBreast + feedingBottle)) * 100)
       : 0
     const feedingInsight =
-      breastPct === 100 ? 'Exclusively breastfed — keep going, dear.' :
-      breastPct >= 75 ? 'Mostly breast, with some bottle support.' :
-      breastPct >= 25 ? 'Mixed feeding — best of both worlds.' :
-      breastPct > 0 ? 'Mostly bottle, with some breast.' :
-      feedingBottle > 0 ? 'Exclusively bottle-fed.' :
+      breastPct === 100 ? tNow('sw2_kh_mixAll') :
+      breastPct >= 75 ? tNow('sw2_kh_mixMostBreast') :
+      breastPct >= 25 ? tNow('sw2_kh_mixMixed') :
+      breastPct > 0 ? tNow('sw2_kh_mixMostBottle') :
+      feedingBottle > 0 ? tNow('sw2_kh_mixBottle') :
       ''
     return (
       <DiffuseSheet
@@ -5090,17 +4973,17 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
                 <DiffuseMetricTile
                   value={feedingBreast.toLocaleString()}
-                  label={'Breast'}
+                  label={tNow('kids_home_feeding_modal_breast')}
                   icon={<Character name="baby" size={20} color={stickers.pink} />}
                 />
                 <DiffuseMetricTile
                   value={feedingBottle.toLocaleString()}
-                  label={'Bottle'}
+                  label={tNow('kids_home_feeding_modal_bottle')}
                   icon={<Character name="milk" size={20} color={stickers.blue} />}
                 />
                 <DiffuseMetricTile
                   value={feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—'}
-                  label={'Total Vol'}
+                  label={tNow('kids_home_feeding_modal_total_vol')}
                   icon={<Character name="water" size={20} color={stickers.peach} />}
                 />
               </View>
@@ -5283,9 +5166,9 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               {(feedingBreast + feedingBottle) > 0 ? (
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   {[
-                    { Icon: Baby, sticker: 'heart' as const, value: feedingBreast.toLocaleString(), label: 'Breast', fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
-                    { Icon: Milk, sticker: 'bottle' as const, value: feedingBottle.toLocaleString(), label: 'Bottle', fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
-                    { Icon: Droplets, sticker: 'drop' as const, value: feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—', label: 'Total Vol', fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
+                    { Icon: Baby, sticker: 'heart' as const, value: feedingBreast.toLocaleString(), label: tNow('kids_home_feeding_modal_breast'), fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
+                    { Icon: Milk, sticker: 'bottle' as const, value: feedingBottle.toLocaleString(), label: tNow('kids_home_feeding_modal_bottle'), fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
+                    { Icon: Droplets, sticker: 'drop' as const, value: feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—', label: tNow('kids_home_feeding_modal_total_vol'), fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
                   ].map((card, i) => (
                     <View
                       key={i}
@@ -5377,11 +5260,11 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                   ? Math.round((feedingBreast / (feedingBreast + feedingBottle)) * 100)
                   : 0
                 const insight =
-                  breastPct === 100 ? 'Exclusively breastfed — keep going, dear.' :
-                  breastPct >= 75 ? 'Mostly breast, with some bottle support.' :
-                  breastPct >= 25 ? 'Mixed feeding — best of both worlds.' :
-                  breastPct > 0 ? 'Mostly bottle, with some breast.' :
-                  feedingBottle > 0 ? 'Exclusively bottle-fed.' :
+                  breastPct === 100 ? tNow('sw2_kh_mixAll') :
+                  breastPct >= 75 ? tNow('sw2_kh_mixMostBreast') :
+                  breastPct >= 25 ? tNow('sw2_kh_mixMixed') :
+                  breastPct > 0 ? tNow('sw2_kh_mixMostBottle') :
+                  feedingBottle > 0 ? tNow('sw2_kh_mixBottle') :
                   ''
                 return insight ? (
                   <View style={{
@@ -5748,7 +5631,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
       // the user sees a "saved" UX while local + remote state diverge.
       Alert.alert(
         t('kids_home_goals_not_saved_title'),
-        err?.message ?? 'Could not save goals to the server. They are saved on this device and will retry next sync.',
+        err?.message ?? t('sw2_kh_goalsSaveErr'),
       )
       return
     }
@@ -5765,76 +5648,82 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   }
 
   // ── Age-specific reasoning for each goal ──
+  const yrs = Math.floor(months / 12)
   function sleepReason(): string {
-    if (months < 4)  return `Newborns (0-3mo) need 14-17 hours of sleep per day including naps. ${suggested.sleep}h is the midpoint recommended by the CDC. Sleep is critical for brain development at this age.`
-    if (months < 6)  return `At ${months} months, babies need 12-16 hours per day including 2-3 naps. ${suggested.sleep}h is the CDC midpoint. Regular nap schedules are forming now.`
-    if (months < 12) return `Babies ${months} months old need 12-15 hours per day (CDC). This includes overnight sleep plus 2 naps. Most babies this age sleep 10-12h at night + 2-3h of naps.`
-    if (months < 24) return `Toddlers 12-23 months need 11-14 hours per day (CDC). Most transition to 1 nap around 15-18 months. ${suggested.sleep}h accounts for ~11h overnight + 1-2h nap.`
-    if (months < 36) return `At age 2, children need 11-14 hours per day (CDC). Most take one midday nap of 1-2 hours. Some children start dropping the nap near age 3.`
-    return `Children ${Math.floor(months / 12)}y need 10-13 hours per day (CDC). Most have stopped napping by this age, so this is primarily nighttime sleep.`
+    const h = suggested.sleep
+    if (months < 4)  return t('sw2_kh_gsleep0', { h })
+    if (months < 6)  return t('sw2_kh_gsleep1', { m: months, h })
+    if (months < 12) return t('sw2_kh_gsleep2', { m: months })
+    if (months < 24) return t('sw2_kh_gsleep3', { h })
+    if (months < 36) return t('sw2_kh_gsleep4')
+    return t('sw2_kh_gsleep5')
   }
 
   function caloriesReason(): string {
-    if (months < 6)  return `Under 6 months, all nutrition comes from breast milk or formula. Calorie tracking isn't needed — feeding count and volume are better indicators.`
-    if (months < 12) return `At ${months} months, solids are being introduced but most calories (60-70%) still come from milk. ${suggested.calories} kcal from solids is typical for this stage.`
-    if (months < 18) return `12-17 month olds need ~900-1000 kcal/day total (WHO). About 70% now comes from solid food. ${suggested.calories} kcal reflects the solid food portion.`
-    if (months < 24) return `18-23 month olds need ~1000-1100 kcal/day (WHO). At this age solids are the primary nutrition source. Includes 3 meals + 1-2 snacks daily.`
-    if (months < 36) return `2 year olds need ~1000-1400 kcal/day (AAP). ${suggested.calories} kcal is the midpoint. Balanced across 3 meals and 2 snacks with all food groups.`
-    return `Children age ${Math.floor(months / 12)} need approximately ${suggested.calories} kcal/day (AAP/WHO), distributed across 3 meals and 1-2 snacks.`
+    const k = suggested.calories
+    if (months < 6)  return t('sw2_kh_gcal0')
+    if (months < 12) return t('sw2_kh_gcal1', { m: months, k })
+    if (months < 18) return t('sw2_kh_gcal2', { k })
+    if (months < 24) return t('sw2_kh_gcal3', { k })
+    if (months < 36) return t('sw2_kh_gcal4', { k })
+    return t('sw2_kh_gcal5', { y: yrs, k })
   }
 
   function feedingsReason(): string {
-    if (months < 1)  return `Newborns need to feed 8-12 times per day, roughly every 2-3 hours (AAP). Frequent feeding stimulates milk production and supports rapid growth in the first weeks.`
-    if (months < 3)  return `At ${months} months, babies typically feed 7-9 times per day. Feeding frequency starts to decrease slightly as stomach capacity grows.`
-    if (months < 6)  return `${months}-month-old babies usually feed 6-8 times per day. Some babies start to develop a more predictable feeding schedule by now.`
-    if (months < 12) return `6-11 month babies typically have ${suggested.feedings}-${suggested.feedings + 1} milk feeds per day as solid meals are introduced. Milk remains the primary nutrition source but feeds gradually decrease.`
-    if (months < 24) return `Toddlers 12-23mo benefit from ${suggested.feedings} milk feeds per day (~350-400ml total), typically morning and bedtime. Whole cow's milk can replace formula after 12 months.`
-    if (months < 36) return `At age 2, ${suggested.feedings} milk servings per day (about 350ml) provides calcium and vitamin D. Can be cow's milk, plant-based alternatives, or continued breastfeeding.`
-    return `Children age ${Math.floor(months / 12)} may still have ${suggested.feedings} cup(s) of milk daily for calcium. This is optional and can be replaced with other dairy sources.`
+    const n = suggested.feedings
+    if (months < 1)  return t('sw2_kh_gfeed0')
+    if (months < 3)  return t('sw2_kh_gfeed1', { m: months })
+    if (months < 6)  return t('sw2_kh_gfeed2', { m: months })
+    if (months < 12) return t('sw2_kh_gfeed3', { lo: n, hi: n + 1 })
+    if (months < 24) return t('sw2_kh_gfeed4', { n })
+    if (months < 36) return t('sw2_kh_gfeed5', { n })
+    return t('sw2_kh_gfeed6', { y: yrs, n })
   }
 
   function feedingMlReason(): string {
-    if (months < 1)  return `Newborns typically consume 60-90ml per feed, totaling ~500-700ml/day. Volume increases weekly as the stomach grows. Breast-fed amounts are estimated.`
-    if (months < 3)  return `At ${months} months, babies consume about 120-150ml per feed, totaling ~700-800ml/day. Volume per feed increases as feeding frequency decreases.`
-    if (months < 6)  return `${months}-month-old babies typically consume 150-180ml per feed, totaling 800-950ml/day. This is the peak milk intake period before solids begin.`
-    if (months < 12) return `As solids increase, milk volume decreases to ~${suggested.feedingMl}ml/day. This ensures baby still gets essential nutrients from milk while exploring solid foods.`
-    if (months < 36) return `~${suggested.feedingMl}ml of milk per day provides adequate calcium (500-700mg/day needed at this age) and vitamin D for bone development.`
-    return `${suggested.feedingMl}ml of milk per day is a reasonable target for calcium intake. Equivalent to about ${Math.round(suggested.feedingMl / 250)} cup(s).`
+    const ml = suggested.feedingMl
+    if (months < 1)  return t('sw2_kh_gml0')
+    if (months < 3)  return t('sw2_kh_gml1', { m: months })
+    if (months < 6)  return t('sw2_kh_gml2', { m: months })
+    if (months < 12) return t('sw2_kh_gml3', { ml })
+    if (months < 36) return t('sw2_kh_gml4', { ml })
+    return t('sw2_kh_gml5', { ml, c: Math.round(ml / 250) })
   }
 
   function activityReason(): string {
-    if (months < 6)  return `${suggested.activity} logged activities/day helps track your baby's routine. At this age, this means feeds, diaper changes, tummy time, and mood check-ins.`
-    if (months < 12) return `${suggested.activity} activities/day covers feeds, meals, naps, playtime, and mood. Tracking helps identify patterns in your baby's routine and development.`
-    if (months < 24) return `${suggested.activity} activities/day tracks meals, snacks, naps, outdoor play, and developmental activities. Regular logging helps spot patterns and share with caregivers.`
-    return `${suggested.activity} activities/day helps maintain a complete picture of your child's day — meals, activities, milestones, and health. Consistency helps pediatrician visits too.`
+    const n = suggested.activity
+    if (months < 6)  return t('sw2_kh_gact0', { n })
+    if (months < 12) return t('sw2_kh_gact1', { n })
+    if (months < 24) return t('sw2_kh_gact2', { n })
+    return t('sw2_kh_gact3', { n })
   }
 
   type MetricRow = { key: string; label: string; unit: string; color: string; icon: typeof Moon; char: CharacterName; value: string; setValue: (v: string) => void; suggested: number; desc: string; step: number; reason: string }
 
   // Build metrics list based on feeding stage
   const metrics: MetricRow[] = [
-    { key: 'sleep', label: 'Sleep', unit: 'hours/day', color: PILLAR_COLORS.sleep, icon: Moon, char: 'sleep', value: sleep, setValue: setSleep, suggested: suggested.sleep, desc: 'CDC recommended for age', step: 1, reason: sleepReason() },
+    { key: 'sleep', label: t('kids_logForm_labelSleep'), unit: t('sw2_kh_unitHoursDay'), color: PILLAR_COLORS.sleep, icon: Moon, char: 'sleep', value: sleep, setValue: setSleep, suggested: suggested.sleep, desc: t('sw2_kh_descSleep'), step: 1, reason: sleepReason() },
   ]
 
   if (stage === 'liquid') {
     metrics.push(
-      { key: 'feedings', label: 'Feedings', unit: 'feeds/day', color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'feeding', value: feedings, setValue: setFeedings, suggested: suggested.feedings, desc: 'Breast & bottle feeds', step: 1, reason: feedingsReason() },
-      { key: 'feedingMl', label: 'Volume', unit: 'ml/day', color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'milk', value: feedingMl, setValue: setFeedingMl, suggested: suggested.feedingMl, desc: 'Total milk/formula volume', step: 50, reason: feedingMlReason() },
+      { key: 'feedings', label: t('kids_home_feeding_modal_feedings'), unit: t('sw2_kh_unitFeedsDay'), color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'feeding', value: feedings, setValue: setFeedings, suggested: suggested.feedings, desc: t('sw2_kh_descFeedings'), step: 1, reason: feedingsReason() },
+      { key: 'feedingMl', label: t('sw2_kh_lblVolume'), unit: t('sw2_kh_unitMlDay'), color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'milk', value: feedingMl, setValue: setFeedingMl, suggested: suggested.feedingMl, desc: t('sw2_kh_descVolume'), step: 50, reason: feedingMlReason() },
     )
   } else {
     metrics.push(
-      { key: 'calories', label: stage === 'mixed' ? 'Solids Cal' : 'Calories', unit: 'kcal/day', color: PILLAR_COLORS.nutrition, icon: Utensils, char: 'calories', value: calories, setValue: setCalories, suggested: suggested.calories, desc: stage === 'mixed' ? 'From solid food (intro stage)' : 'Based on age & growth', step: 50, reason: caloriesReason() },
+      { key: 'calories', label: stage === 'mixed' ? t('sw2_kh_lblSolidsCal') : t('kids_calories'), unit: t('sw2_kh_unitKcalDay'), color: PILLAR_COLORS.nutrition, icon: Utensils, char: 'calories', value: calories, setValue: setCalories, suggested: suggested.calories, desc: stage === 'mixed' ? t('sw2_kh_descSolids') : t('sw2_kh_descAge'), step: 50, reason: caloriesReason() },
     )
     if (suggested.feedings > 0) {
       metrics.push(
-        { key: 'feedings', label: 'Milk Feeds', unit: 'feeds/day', color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'feeding', value: feedings, setValue: setFeedings, suggested: suggested.feedings, desc: 'Bottles & breastfeeds per day', step: 1, reason: feedingsReason() },
-        { key: 'feedingMl', label: 'Milk Volume', unit: 'ml/day', color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'milk', value: feedingMl, setValue: setFeedingMl, suggested: suggested.feedingMl, desc: 'Daily milk/formula intake', step: 50, reason: feedingMlReason() },
+        { key: 'feedings', label: t('sw2_kh_lblMilkFeeds'), unit: t('sw2_kh_unitFeedsDay'), color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'feeding', value: feedings, setValue: setFeedings, suggested: suggested.feedings, desc: t('sw2_kh_descMilkFeeds'), step: 1, reason: feedingsReason() },
+        { key: 'feedingMl', label: t('sw2_kh_lblMilkVol'), unit: t('sw2_kh_unitMlDay'), color: PILLAR_COLORS.nutrition, icon: Droplets, char: 'milk', value: feedingMl, setValue: setFeedingMl, suggested: suggested.feedingMl, desc: t('sw2_kh_descMilkVol'), step: 50, reason: feedingMlReason() },
       )
     }
   }
 
   metrics.push(
-    { key: 'activity', label: 'Activities', unit: 'logs/day', color: PILLAR_COLORS.activity, icon: Zap, char: 'activity', value: activity, setValue: setActivity, suggested: suggested.activity, desc: 'Total daily activities', step: 1, reason: activityReason() },
+    { key: 'activity', label: t('kids_home_health_activities_label'), unit: t('sw2_kh_unitLogsDay'), color: PILLAR_COLORS.activity, icon: Zap, char: 'activity', value: activity, setValue: setActivity, suggested: suggested.activity, desc: t('sw2_kh_descActs'), step: 1, reason: activityReason() },
   )
 
   if (diffuse) {
@@ -6799,7 +6688,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
           <View style={{ flex: 1 }}>
             <Text style={[s.leapTitle, { color: ink }, diffuse && { fontFamily: diffuseFont.display, letterSpacing: -0.2 }]}>{isDone ? t('kids_home_leaps_all_complete') : leap.name}</Text>
             <Text style={[s.leapDesc, { color: ink3 }, diffuse && { fontFamily: diffuseFont.body }]}>
-              {isDone ? t('kids_home_leaps_all_complete_desc').replace('Your child', childName || 'Your child') : isActive && currentPhaseName ? `Phase: ${currentPhaseName}` : leap.desc}
+              {isDone ? t('kids_home_leaps_all_complete_desc').replace('Your child', childName || 'Your child') : isActive && currentPhaseName ? t('sw2_kh_phaseLabel', { name: currentPhaseName }) : leap.desc}
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 6 }}>
@@ -6818,7 +6707,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
                 textTransform: 'uppercase', letterSpacing: 0.8,
                 color: isActive ? (isDark ? leapColor : '#141313') : isDone ? (isDark ? brand.success : '#141313') : (isDark ? colors.textMuted : '#141313'),
               }}>
-                {isActive ? 'NOW' : isDone ? 'ALL DONE' : `In ${(leap as any).weeksUntil ?? '?'}w`}
+                {isActive ? t('kids_home_leaps_status_now') : isDone ? t('kids_home_leaps_status_all_done') : t('sw2_kh_inWeeksShort', { n: (leap as any).weeksUntil ?? '?' })}
               </Text>
             </View>
             <ChevronRight size={14} color={ink3} strokeWidth={2} />
@@ -6865,7 +6754,7 @@ function GrowthLeapCard({ leap, childName }: { leap: NonNullable<ReturnType<type
           color: ink3, marginTop: diffuse ? 8 : 4,
           letterSpacing: diffuse ? 1 : 0, textTransform: diffuse ? 'uppercase' : 'none', fontSize: diffuse ? 9.5 : 11,
         }}>
-          {isDone ? `All ${GROWTH_LEAPS.length} leaps completed · Wk ${leap.weekAge}` : `${leap.completedCount}/${GROWTH_LEAPS.length} leaps completed · Wk ${leap.week}`}
+          {isDone ? t('sw2_kh_leapsAllDoneWk', { n: GROWTH_LEAPS.length, w: leap.weekAge }) : t('sw2_kh_leapsProgressWk', { c: leap.completedCount, n: GROWTH_LEAPS.length, w: leap.week })}
         </Text>
       </Pressable>
 
@@ -6922,7 +6811,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   const lilacSoft = isDark ? 'rgba(200,182,232,0.20)' : '#E3D8F2'
 
   // Hero badge
-  const heroBadgeText = isActive ? 'IN PROGRESS' : isDone ? 'ALL DONE' : `IN ${(leap as any).weeksUntil ?? '?'}W`
+  const heroBadgeText = isActive ? t('sw2_kh_inProgress').toUpperCase() : isDone ? t('kids_home_leaps_status_all_done') : t('sw2_kh_inWeeksShort', { n: (leap as any).weeksUntil ?? '?' }).toUpperCase()
   const heroBadgeBg = isActive ? yellowSoft : isDone ? greenSoft : blueSoft
   const heroBadgeInk = isDone ? '#4A6F1D' : isActive ? '#6B5500' : '#1F4C7A'
 
@@ -6944,7 +6833,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             </Pressable>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 20, fontFamily: diffuseFont.display, color: dCol.ink, letterSpacing: -0.3 }}>{t('kids_home_leaps_detail_title')}</Text>
-              <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', color: dCol.ink3, marginTop: 3 }}>{childName}{' · Week '}{leap.weekAge}</Text>
+              <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 1.2, textTransform: 'uppercase', color: dCol.ink3, marginTop: 3 }}>{childName}{' · '}{t('sw2_kh_weekN', { n: leap.weekAge })}</Text>
             </View>
           </View>
 
@@ -6961,7 +6850,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Text style={{ fontSize: 10, fontFamily: diffuseFont.mono, color: dCol.ink3, textTransform: 'uppercase', letterSpacing: 1.6 }}>
-                    {isDone ? 'All complete' : `Leap #${leap.index + 1}`}
+                    {isDone ? t('kids_home_leaps_all_complete_short') : t('kids_home_leaps_path_number', { n: leap.index + 1 })}
                   </Text>
                   <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2 }}>
                     <Text style={{ fontSize: 9.5, fontFamily: diffuseFont.mono, color: dCol.ink3, letterSpacing: 1, textTransform: 'uppercase' }}>
@@ -6974,8 +6863,8 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
                 </Text>
                 <Text style={{ fontSize: 13, fontFamily: diffuseFont.body, color: dCol.ink2, lineHeight: 18, maxWidth: '88%' }}>
                   {isDone
-                    ? `${childName} has completed all ${GROWTH_LEAPS.length} Wonder Weeks.`
-                    : `${leap.completedCount} of ${GROWTH_LEAPS.length} leaps done · Tap any node to learn more.`}
+                    ? t('sw2_kh_leapsAllDoneMsg', { name: childName, n: GROWTH_LEAPS.length })
+                    : t('sw2_kh_leapsDoneTap', { c: leap.completedCount, n: GROWTH_LEAPS.length })}
                 </Text>
               </View>
             </View>
@@ -7029,7 +6918,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
         <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.border }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 24, fontFamily: font.display, color: ink, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('kids_home_leaps_detail_title')}</Text>
-            <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink3, marginTop: 2, letterSpacing: 1.4, textTransform: 'uppercase' }}>{childName}{' · Week '}{leap.weekAge}</Text>
+            <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink3, marginTop: 2, letterSpacing: 1.4, textTransform: 'uppercase' }}>{childName}{' · '}{t('sw2_kh_weekN', { n: leap.weekAge })}</Text>
           </View>
           <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label={tNow('common_close')} style={{ marginBottom: 0 }} />
         </View>
@@ -7048,7 +6937,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink, textTransform: 'uppercase', letterSpacing: 1.4 }}>
-                  {isDone ? 'All complete' : `Leap #${leap.index + 1}`}
+                  {isDone ? t('kids_home_leaps_all_complete_short') : t('kids_home_leaps_path_number', { n: leap.index + 1 })}
                 </Text>
                 <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: heroBadgeBg, borderWidth: 1.5, borderColor: line }}>
                   <Text style={{ fontSize: 10, fontFamily: font.bodyBold, color: ink, letterSpacing: 0.8 }}>
@@ -7061,8 +6950,8 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
               </Text>
               <Text style={{ fontSize: 14, fontFamily: font.body, color: ink2, lineHeight: 20, maxWidth: '85%' }}>
                 {isDone
-                  ? `${childName} has completed all ${GROWTH_LEAPS.length} Wonder Weeks.`
-                  : `${leap.completedCount} of ${GROWTH_LEAPS.length} leaps done · Tap any node to learn more.`}
+                  ? t('sw2_kh_leapsAllDoneMsg', { name: childName, n: GROWTH_LEAPS.length })
+                  : t('sw2_kh_leapsDoneTap', { c: leap.completedCount, n: GROWTH_LEAPS.length })}
               </Text>
             </View>
           </View>
@@ -7214,7 +7103,7 @@ function LeapTimelinePath({
           // node ring: done = filled ink, current = accent ring, upcoming = faint hollow
           const ringBorder = n.done ? dCol.ink : n.active ? acc : dCol.line2
           const ringFill = n.done ? dCol.ink : 'transparent'
-          const statusChip = n.done ? 'DONE' : n.active ? 'NOW' : `WK ${n.g.week}`
+          const statusChip = n.done ? t('sw2_kh_done').toUpperCase() : n.active ? t('kids_home_leaps_status_now') : t('sw2_kh_wkN', { n: n.g.week }).toUpperCase()
           return (
             <View key={n.i} style={{ flexDirection: 'row', gap: 14 }}>
               {/* rail: hairline connector + node ring */}
@@ -7287,7 +7176,7 @@ function LeapTimelinePath({
 
       {nodes.map((n) => {
         const cardBg = n.active ? yellowSoft : n.done ? greenSoft : paper
-        const statusBadge = n.done ? 'DONE' : n.active ? 'NOW' : `WK ${n.g.week}`
+        const statusBadge = n.done ? t('sw2_kh_done').toUpperCase() : n.active ? t('kids_home_leaps_status_now') : t('sw2_kh_wkN', { n: n.g.week }).toUpperCase()
         const statusBadgeBg = n.done ? greenSoft : n.active ? yellowSoft : blueSoft
         const statusBadgeInk = n.done ? '#4A6F1D' : n.active ? '#6B5500' : '#1F4C7A'
         const cardOpacity = !n.done && !n.active ? 0.88 : 1
@@ -7373,7 +7262,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
   const greenSoft = isDark ? 'rgba(189,212,140,0.20)' : '#DDE7BB'
   const lilacSoft = isDark ? 'rgba(200,182,232,0.20)' : '#E3D8F2'
 
-  const badgeText = isThisActive ? 'IN PROGRESS' : isThisDone ? 'DONE' : `WEEK ${g.week}`
+  const badgeText = isThisActive ? t('sw2_kh_inProgress').toUpperCase() : isThisDone ? t('sw2_kh_done').toUpperCase() : t('sw2_kh_weekN', { n: g.week }).toUpperCase()
   const badgeBg = isThisActive ? yellowSoft : isThisDone ? greenSoft : blueSoft
   const badgeInk = isThisDone ? '#4A6F1D' : isThisActive ? '#6B5500' : '#1F4C7A'
 
@@ -7432,7 +7321,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             return (
               <DiffuseListRow
                 key={pi}
-                title={`${phase.label}${current ? '  · happening now' : ''}`}
+                title={`${phase.label}${current ? '  ' + t('kids_home_leaps_phase_happening_now') : ''}`}
                 sub={phase.desc}
                 dotColor={dotColor}
                 last={pi === g.phases.length - 1}
@@ -7444,7 +7333,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
         {/* Signs — hairline chips */}
         <View style={{ marginTop: 24 }}>
           <DiffuseSectionHeader
-            title={isThisActive ? `Signs ${childName} may show` : 'Signs to watch for'}
+            title={isThisActive ? t('kids_home_leaps_signs_active', { childName }) : t('kids_home_leaps_signs_watch')}
             icon={<DiffuseBloomIcon color={acc}><Character name="observe" size={22} color={acc} /></DiffuseBloomIcon>}
           />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
@@ -7459,7 +7348,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
         {/* Skills — hairline bullet list */}
         <View style={{ marginTop: 24 }}>
           <DiffuseSectionHeader
-            title={isThisDone ? 'Skills gained' : isThisActive ? 'Skills emerging now' : 'Skills that will emerge'}
+            title={isThisDone ? t('kids_home_leaps_skills_gained') : isThisActive ? t('kids_home_leaps_skills_emerging') : t('kids_home_leaps_skills_upcoming')}
             icon={<DiffuseBloomIcon color={acc}><Character name="activity" size={22} color={acc} /></DiffuseBloomIcon>}
           />
           <View style={{ gap: 12 }}>
@@ -7587,7 +7476,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
                   <EmojiSticker size={28}>{done ? '✅' : PHASE_EMOJI[pi]}</EmojiSticker>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text style={{ fontSize: 14, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>
-                      {phase.label}{current ? '  · happening now' : ''}
+                      {phase.label}{current ? '  ' + t('kids_home_leaps_phase_happening_now') : ''}
                     </Text>
                     <Text style={{ fontSize: 12, fontFamily: font.body, color: ink3, lineHeight: 17 }}>
                       {phase.desc}
@@ -7603,7 +7492,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <EmojiSticker size={20}>{'👀'}</EmojiSticker>
               <Text style={{ fontSize: 13, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>
-                {isThisActive ? `Signs ${childName} may show` : 'Signs to watch for'}
+                {isThisActive ? t('kids_home_leaps_signs_active', { childName }) : t('kids_home_leaps_signs_watch')}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -7625,7 +7514,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <EmojiSticker size={20}>{'💪'}</EmojiSticker>
               <Text style={{ fontSize: 13, fontFamily: font.display, color: ink, letterSpacing: -0.2 }}>
-                {isThisDone ? 'Skills gained' : isThisActive ? 'Skills emerging now' : 'Skills that will emerge'}
+                {isThisDone ? t('kids_home_leaps_skills_gained') : isThisActive ? t('kids_home_leaps_skills_emerging') : t('kids_home_leaps_skills_upcoming')}
               </Text>
             </View>
             <View style={{ backgroundColor: paper, borderRadius: 22, borderWidth: 1, borderColor: line, padding: 16, gap: 10 }}>

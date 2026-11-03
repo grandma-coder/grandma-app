@@ -92,7 +92,7 @@ import {
 import { useLeaderboard } from '../lib/leaderboard'
 import { syncBadgesFromSupabase } from '../lib/badgeSync'
 import { supabase } from '../lib/supabase'
-import { useTranslation } from '../lib/i18n'
+import { useTranslation, type TranslationKey } from '../lib/i18n'
 import { parseLocalDate } from '../lib/localDate'
 import { dateLoc } from '../lib/kpLocale'
 
@@ -105,22 +105,22 @@ const WEEK_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const
 // a soft accent bloom (the sticker stays the cream-branch icon system).
 const CATEGORY_CONFIG: {
   key: BadgeCategory
-  label: string
+  labelKey: TranslationKey
   color: keyof typeof stickerPalette       // sticker palette key (light)
   soft: keyof typeof stickerPalette        // its soft companion
   Sticker: (p: { size?: number; fill?: string }) => React.ReactElement
   Line: LucideIcon
   char: CharacterName                       // Diffuse: the Character-blob concept
 }[] = [
-  { key: 'streak',    label: 'Streaks',    color: 'coral',  soft: 'pinkSoft',   Sticker: Flame,       Line: FlameLine, char: 'streak' },
-  { key: 'nutrition', label: 'Nutrition',  color: 'green',  soft: 'greenSoft',  Sticker: LogNutrition, Line: UtensilsLine, char: 'nutrition' },
-  { key: 'sleep',     label: 'Sleep',      color: 'lilac',  soft: 'lilacSoft',  Sticker: LogSleep,     Line: MoonLine, char: 'sleep' },
-  { key: 'mood',      label: 'Mood',       color: 'pink',   soft: 'pinkSoft',   Sticker: (p) => <MoodFace {...p} variant="happy" />, Line: SmileLine, char: 'mood' },
-  { key: 'health',    label: 'Health',     color: 'blue',   soft: 'blueSoft',   Sticker: LogAppointment, Line: HeartPulseLine, char: 'heartbeat' },
-  { key: 'growth',    label: 'Growth',     color: 'yellow', soft: 'yellowSoft', Sticker: (p) => <StarSticker {...p} />, Line: TrendingUpLine, char: 'growth' },
-  { key: 'community', label: 'Community',  color: 'lilac',  soft: 'lilacSoft',  Sticker: CircleDots,   Line: UsersLine, char: 'community' },
-  { key: 'milestone', label: 'Milestones', color: 'peach',  soft: 'peachSoft',  Sticker: DayBadge,     Line: AwardLine, char: 'badge' },
-  { key: 'daily',     label: 'Daily',      color: 'yellow', soft: 'yellowSoft', Sticker: QuestRibbon,  Line: GiftLine, char: 'reward' },
+  { key: 'streak',    labelKey: 'dailyRewards_catStreaks',    color: 'coral',  soft: 'pinkSoft',   Sticker: Flame,       Line: FlameLine, char: 'streak' },
+  { key: 'nutrition', labelKey: 'dailyRewards_catNutrition',  color: 'green',  soft: 'greenSoft',  Sticker: LogNutrition, Line: UtensilsLine, char: 'nutrition' },
+  { key: 'sleep',     labelKey: 'dailyRewards_catSleep',      color: 'lilac',  soft: 'lilacSoft',  Sticker: LogSleep,     Line: MoonLine, char: 'sleep' },
+  { key: 'mood',      labelKey: 'dailyRewards_catMood',       color: 'pink',   soft: 'pinkSoft',   Sticker: (p) => <MoodFace {...p} variant="happy" />, Line: SmileLine, char: 'mood' },
+  { key: 'health',    labelKey: 'dailyRewards_catHealth',     color: 'blue',   soft: 'blueSoft',   Sticker: LogAppointment, Line: HeartPulseLine, char: 'heartbeat' },
+  { key: 'growth',    labelKey: 'dailyRewards_catGrowth',     color: 'yellow', soft: 'yellowSoft', Sticker: (p) => <StarSticker {...p} />, Line: TrendingUpLine, char: 'growth' },
+  { key: 'community', labelKey: 'dailyRewards_catCommunity',  color: 'lilac',  soft: 'lilacSoft',  Sticker: CircleDots,   Line: UsersLine, char: 'community' },
+  { key: 'milestone', labelKey: 'dailyRewards_catMilestones', color: 'peach',  soft: 'peachSoft',  Sticker: DayBadge,     Line: AwardLine, char: 'badge' },
+  { key: 'daily',     labelKey: 'dailyRewards_catDaily',      color: 'yellow', soft: 'yellowSoft', Sticker: QuestRibbon,  Line: GiftLine, char: 'reward' },
 ]
 
 // Map category key → i18n translation key for category labels.
@@ -259,7 +259,7 @@ function DailyRewardsScreen() {
       >
         {/* ─── Header ─── */}
         <ScreenHeader
-          title="Daily rewards"
+          title={t('sw4_dailyRewardsTitle')}
           right={
             <View
               style={[
@@ -1061,7 +1061,7 @@ function DailyRewardsScreen() {
                               : { color: ink, fontFamily: font.display },
                           ]}
                         >
-                          {cat.label}
+                          {t(cat.labelKey)}
                         </Text>
                         <Text
                           style={[

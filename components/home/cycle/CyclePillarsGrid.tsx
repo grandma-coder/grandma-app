@@ -13,12 +13,12 @@ import { Leaf, Flower, Moon, Heart } from '../../ui/Stickers'
 import { ChevronRight } from 'lucide-react-native'
 import { SiteSticker } from '../../stickers/SiteSticker'
 import { prePregPillars } from '../../../lib/prePregPillars'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 
 interface PillarTile {
   id: string              // routes to /pillar/[id]
-  title: string
-  subtitle: string
+  titleKey: TranslationKey
+  subtitleKey: TranslationKey
   sticker: 'leaf' | 'flower' | 'moon' | 'heart'
   tint: 'green' | 'lilac' | 'blue' | 'peach'
 }
@@ -27,10 +27,10 @@ interface PillarTile {
 // titles). Each id must be a real pre-pregnancy pillar so the /pillar/[id] route
 // resolves — asserted below against prePregPillars so a typo/drift can't 404.
 const TILES: PillarTile[] = [
-  { id: 'nutrition-prep',      title: 'Nutrition',  subtitle: '6 articles',      sticker: 'leaf',   tint: 'green'  },
-  { id: 'fertility',           title: 'Hormones',   subtitle: 'Fresh',           sticker: 'flower', tint: 'lilac'  },
-  { id: 'health-checkups',     title: 'Sleep',      subtitle: '7.5h avg',        sticker: 'moon',   tint: 'blue'   },
-  { id: 'emotional-readiness', title: 'Mental',     subtitle: 'Check-in',        sticker: 'heart',  tint: 'peach'  },
+  { id: 'nutrition-prep',      titleKey: 'preg_ring_log_nutrition',  subtitleKey: 'sw4_cpArticles',      sticker: 'leaf',   tint: 'green'  },
+  { id: 'fertility',           titleKey: 'sw4_cpHormones',   subtitleKey: 'sw4_cpFresh',           sticker: 'flower', tint: 'lilac'  },
+  { id: 'health-checkups',     titleKey: 'agenda_sleep',      subtitleKey: 'sw4_cpSleepAvg',        sticker: 'moon',   tint: 'blue'   },
+  { id: 'emotional-readiness', titleKey: 'sw4_cpMental',     subtitleKey: 'sw4_cpCheckin',        sticker: 'heart',  tint: 'peach'  },
 ]
 
 if (__DEV__) {
@@ -134,7 +134,7 @@ export function CyclePillarsGrid({ bare = false, onNavigate }: CyclePillarsGridP
               key={tile.id}
               onPress={() => openPillar(tile.id)}
               accessibilityRole="button"
-              accessibilityLabel={tile.title}
+              accessibilityLabel={t(tile.titleKey)}
               style={({ pressed }) => [
                 styles.siteRow,
                 { borderTopColor: colors.border, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.7 : 1 },
@@ -142,8 +142,8 @@ export function CyclePillarsGrid({ bare = false, onNavigate }: CyclePillarsGridP
             >
               <SiteSticker name={tile.sticker} size={44} />
               <View style={[styles.textCol, { flex: 1 }]}>
-                <Display size={18} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{tile.title}</Display>
-                <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>{tile.subtitle}</Text>
+                <Display size={18} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t(tile.titleKey)}</Display>
+                <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>{t(tile.subtitleKey)}</Text>
               </View>
               <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
             </Pressable>
@@ -175,13 +175,13 @@ export function CyclePillarsGrid({ bare = false, onNavigate }: CyclePillarsGridP
             <View style={styles.textCol}>
               {diffuse ? (
                 <>
-                  <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dt.colors.ink, letterSpacing: -0.2 }}>{tile.title}</Text>
-                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 3 }}>{tile.subtitle}</Text>
+                  <Text style={{ fontFamily: diffuseFont.display, fontSize: 18, color: dt.colors.ink, letterSpacing: -0.2 }}>{t(tile.titleKey)}</Text>
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 3 }}>{t(tile.subtitleKey)}</Text>
                 </>
               ) : (
                 <>
-                  <Display size={18} color={ink}>{tile.title}</Display>
-                  <Body size={12} color={colors.textMuted}>{tile.subtitle}</Body>
+                  <Display size={18} color={ink}>{t(tile.titleKey)}</Display>
+                  <Body size={12} color={colors.textMuted}>{t(tile.subtitleKey)}</Body>
                 </>
               )}
             </View>

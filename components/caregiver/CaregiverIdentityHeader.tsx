@@ -15,6 +15,7 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { Display, DisplayItalic, MonoCaps } from '../ui/Typography'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useChildStore } from '../../store/useChildStore'
 import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
@@ -28,6 +29,7 @@ interface CaregiverIdentityHeaderProps {
 
 export function CaregiverIdentityHeader({ size = 26 }: CaregiverIdentityHeaderProps) {
   const { colors, isDark } = useTheme()
+  const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const activeChild = useChildStore((s) => s.activeChild)
@@ -64,7 +66,7 @@ export function CaregiverIdentityHeader({ size = 26 }: CaregiverIdentityHeaderPr
               </>
             ) : (
               <>
-                <Display size={size} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>Caring for</Display>
+                <Display size={size} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('sw4_caringFor')}</Display>
                 <DisplayItalic size={size} color={ink} style={{ marginLeft: 8, textTransform: 'uppercase', letterSpacing: 0.3 }} numberOfLines={1}>
                   {activeChild.name}
                 </DisplayItalic>

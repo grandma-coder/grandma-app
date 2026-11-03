@@ -15,6 +15,7 @@ import { InkBackButton } from '../ui/InkBackButton'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { StickerEnter } from '../ui/Motion'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { useTranslation } from '../../lib/i18n'
 
 // Forms rendered inside a sheet hand their primary action to the sheet so it sits in a
 // fixed footer — always visible, never scrolled away. Outside a sheet it renders inline.
@@ -50,6 +51,7 @@ export function LogSheet(props: LogSheetProps) {
 
 function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight, footer, sticker }: LogSheetProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const [slot, setSlot] = useState<ReactNode>(null)
   const footerNode = footer ?? slot
   const insets = useSafeAreaInsets()
@@ -96,7 +98,7 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
               ) : null}
               {titleRight}
             </View>
-            <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label="Close" style={{ marginBottom: 0 }} />
+            <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
           </View>
 
           <ScrollView

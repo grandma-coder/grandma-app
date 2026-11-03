@@ -475,7 +475,7 @@ function LeaderboardScreen() {
       {/* Header */}
       <View style={[styles.headerWrap, { paddingTop: insets.top }]}>
         <ScreenHeader
-          title="Leaderboard"
+          title={t('leaderboard_title')}
           right={
             myEntry ? (
               diffuse ? (

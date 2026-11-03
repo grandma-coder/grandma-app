@@ -24,7 +24,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import { useTheme, getModeColor, useDiffuseTheme, diffuseFont } from '../../constants/theme'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -80,8 +80,8 @@ function PhotoAvatar({
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
       return Alert.alert(
-        'Permission needed',
-        'Please allow access to your photo library.'
+        tNow('kids_logForm_alertPermNeeded'),
+        tNow('sw3_cc_photoPermBody')
       )
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -250,7 +250,7 @@ export default function PersonalProfile() {
       const url = await uploadPhoto(value)
       setPhotoUrl(url)
     } catch (e: any) {
-      Alert.alert('Upload failed', e.message)
+      Alert.alert(t('examForm_uploadFailed'), e.message)
     }
   }
 
@@ -274,14 +274,14 @@ export default function PersonalProfile() {
       // showing stale values until the 5-minute staleTime elapses.
       queryClient.invalidateQueries({ queryKey: ['profile'] })
       toast.show({
-        title: 'Saved',
-        message: 'Your profile has been updated.',
+        title: t('sw3_pers_saved'),
+        message: t('sw3_pers_savedMsg'),
         autoDismiss: 1600,
       })
       // Let the toast breathe before the screen pops
       setTimeout(() => router.back(), 900)
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setSaving(false)
     }
@@ -366,10 +366,10 @@ export default function PersonalProfile() {
 
           {/* Health Notes */}
           <PaperField
-            label="Health Notes"
+            label={t('personal_fieldHealthNotes')}
             value={healthNotes}
             onChangeText={setHealthNotes}
-            placeholder="e.g. Gestational diabetes, hypothyroidism, asthma..."
+            placeholder={t('sw3_pers_healthNotesPh')}
             multiline
           />
 

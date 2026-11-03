@@ -59,7 +59,7 @@ import { sendGrandmaMessage, type ChatMessage } from '../../lib/grandmaChat'
 import { weekForDate } from '../../lib/pregnancyWeeks'
 import { toDateStr } from '../../lib/cycleLogic'
 import { ChildPills, formatChildAge } from '../ui/ChildPills'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
 
 // ─── Lightweight Markdown Renderer ────────────────────────────────────────
@@ -543,37 +543,37 @@ function getSuggestions(
   const age = childAge ?? 'their age'
 
   const kidsSuggestions: Suggestion[] = [
-    { emoji: '🍼', label: 'Feeding tips', prompt: `What are the best feeding practices for a ${age}?`, followups: [
+    { emoji: '🍼', label: tNow('sw4_gtFeeding'), prompt: `What are the best feeding practices for a ${age}?`, followups: [
       `How much should a ${age} eat per day?`,
       `Is ${name} eating enough?`,
       `What foods should I avoid for a ${age}?`,
       `How do I handle a picky eater?`,
     ] },
-    { emoji: '😴', label: 'Sleep routine', prompt: `How do I build a healthy sleep routine for ${name}?`, followups: [
+    { emoji: '😴', label: tNow('sw4_gtSleepRoutine'), prompt: `How do I build a healthy sleep routine for ${name}?`, followups: [
       `How much sleep does a ${age} need?`,
       `Why does ${name} keep waking at night?`,
       `Is it time to drop a nap?`,
       `How do I handle sleep regressions?`,
     ] },
-    { emoji: '💉', label: 'Vaccine schedule', prompt: `What vaccines should a ${age} get?`, followups: [
+    { emoji: '💉', label: tNow('sw4_gtVaccines'), prompt: `What vaccines should a ${age} get?`, followups: [
       `Which vaccines are due right now?`,
       `Are side effects normal after shots?`,
       `Can I delay or space out vaccines?`,
       `What if we missed a vaccine?`,
     ] },
-    { emoji: '🌱', label: 'Growth & milestones', prompt: `What milestones should I expect from a ${age}?`, followups: [
+    { emoji: '🌱', label: tNow('sw4_gtGrowth'), prompt: `What milestones should I expect from a ${age}?`, followups: [
       `Is ${name} on track developmentally?`,
       `What should I do to encourage development?`,
       `When should I worry about a delay?`,
       `What's a growth leap and when do they happen?`,
     ] },
-    { emoji: '🤒', label: 'Fever guidance', prompt: `When should I worry about a fever in a ${age}?`, followups: [
+    { emoji: '🤒', label: tNow('sw4_gtFever'), prompt: `When should I worry about a fever in a ${age}?`, followups: [
       `What temperature is a real fever?`,
       `When should I call the doctor?`,
       `How do I bring a fever down safely?`,
       `What comfort measures help a sick ${age}?`,
     ] },
-    { emoji: '🥣', label: 'Introducing solids', prompt: `How do I safely introduce solid foods to ${name}?`, followups: [
+    { emoji: '🥣', label: tNow('sw4_gtSolids'), prompt: `How do I safely introduce solid foods to ${name}?`, followups: [
       `Is ${name} ready for solids?`,
       `What are good first foods?`,
       `How do I spot an allergic reaction?`,
@@ -581,37 +581,37 @@ function getSuggestions(
     ] },
   ]
   const pregnancySuggestions: Suggestion[] = [
-    { emoji: '🥗', label: 'What to eat', prompt: 'What foods are best to eat during pregnancy?', followups: [
+    { emoji: '🥗', label: tNow('sw4_gtEat'), prompt: 'What foods are best to eat during pregnancy?', followups: [
       'Which foods should I avoid while pregnant?',
       'How much weight should I gain?',
       'Do I need to eat for two?',
       'What helps with cravings and nausea?',
     ] },
-    { emoji: '😖', label: 'Symptom check', prompt: 'What pregnancy symptoms should I watch out for?', followups: [
+    { emoji: '😖', label: tNow('sw4_gtSymptoms'), prompt: 'What pregnancy symptoms should I watch out for?', followups: [
       'Which symptoms mean I should call my doctor?',
       'Is this cramping normal?',
       'How do I ease back and hip pain?',
       'When does morning sickness end?',
     ] },
-    { emoji: '🛌', label: 'Better sleep', prompt: 'How can I sleep better during pregnancy?', followups: [
+    { emoji: '🛌', label: tNow('sw4_gtBetterSleep'), prompt: 'How can I sleep better during pregnancy?', followups: [
       'What sleep position is safest?',
       'How do I stop waking to pee all night?',
       'Are pregnancy pillows worth it?',
       'How do I quiet a racing mind at night?',
     ] },
-    { emoji: '🏥', label: 'Birth prep', prompt: 'How do I prepare for labor and birth?', followups: [
+    { emoji: '🏥', label: tNow('sw4_gtBirthPrep'), prompt: 'How do I prepare for labor and birth?', followups: [
       'What should go in my hospital bag?',
       'How do I write a birth plan?',
       'How will I know labor has started?',
       'What are my pain-relief options?',
     ] },
-    { emoji: '🤱', label: 'Breastfeeding', prompt: 'What should I know about breastfeeding before the baby arrives?', followups: [
+    { emoji: '🤱', label: tNow('sw4_gtBreastfeeding'), prompt: 'What should I know about breastfeeding before the baby arrives?', followups: [
       'How do I get a good latch?',
       'How do I build up my milk supply?',
       'What breastfeeding gear do I actually need?',
       'Breast or bottle — how do I decide?',
     ] },
-    { emoji: '💆', label: 'Managing stress', prompt: 'How do I manage stress and anxiety during pregnancy?', followups: [
+    { emoji: '💆', label: tNow('sw4_gtStress'), prompt: 'How do I manage stress and anxiety during pregnancy?', followups: [
       'Is anxiety normal during pregnancy?',
       'What relaxation techniques are safe?',
       'How do I prepare emotionally for the baby?',
@@ -619,37 +619,37 @@ function getSuggestions(
     ] },
   ]
   const prePregSuggestions: Suggestion[] = [
-    { emoji: '🥦', label: 'Fertility foods', prompt: 'What foods boost fertility?', followups: [
+    { emoji: '🥦', label: tNow('sw4_gtFertilityFoods'), prompt: 'What foods boost fertility?', followups: [
       'Which foods should I cut back on?',
       'Does caffeine affect fertility?',
       'What should my partner eat too?',
       'Are fertility supplements worth it?',
     ] },
-    { emoji: '📅', label: 'Cycle tracking', prompt: 'How do I track my cycle to find my fertile window?', followups: [
+    { emoji: '📅', label: tNow('sw4_gtCycleTracking'), prompt: 'How do I track my cycle to find my fertile window?', followups: [
       'When am I most fertile?',
       'How do ovulation tests work?',
       'What does basal body temperature tell me?',
       'Is my cycle length normal?',
     ] },
-    { emoji: '💊', label: 'Pre-natal vitamins', prompt: 'Which vitamins should I start before getting pregnant?', followups: [
+    { emoji: '💊', label: tNow('sw4_gtPrenatal'), prompt: 'Which vitamins should I start before getting pregnant?', followups: [
       'When should I start prenatals?',
       'How much folic acid do I need?',
       'Do I need iron or vitamin D?',
       'Which brands are worth it?',
     ] },
-    { emoji: '🧘', label: 'Stress & fertility', prompt: 'How does stress affect my ability to conceive?', followups: [
+    { emoji: '🧘', label: tNow('sw4_gtStressFertility'), prompt: 'How does stress affect my ability to conceive?', followups: [
       'Can stress delay ovulation?',
       'What relaxation habits help conception?',
       'How do I cope with TTC anxiety?',
       'Does exercise help or hurt fertility?',
     ] },
-    { emoji: '🩺', label: 'Health checks', prompt: 'What health checks should I do before trying to conceive?', followups: [
+    { emoji: '🩺', label: tNow('sw4_gtHealthChecks'), prompt: 'What health checks should I do before trying to conceive?', followups: [
       'What preconception tests are recommended?',
       'Should I see a doctor before trying?',
       'How do existing conditions affect pregnancy?',
       'When should I get a fertility work-up?',
     ] },
-    { emoji: '👫', label: 'Partner prep', prompt: 'How can my partner also prepare for pregnancy?', followups: [
+    { emoji: '👫', label: tNow('sw4_gtPartnerPrep'), prompt: 'How can my partner also prepare for pregnancy?', followups: [
       'How does male fertility factor in?',
       'What lifestyle changes should we both make?',
       'How do we stay connected while TTC?',
@@ -1784,7 +1784,7 @@ export function GrandmaTalk() {
               ref={inputRef}
               value={input}
               onChangeText={setInput}
-              placeholder="Tap to talk to grandma…"
+              placeholder={t('sw4_gtTalkPh')}
               placeholderTextColor={diffuse ? dt.colors.ink3 : colors.textMuted}
               multiline
               maxLength={2000}

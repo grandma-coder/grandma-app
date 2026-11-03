@@ -5,6 +5,7 @@ import { router } from 'expo-router'
 import { Display, MonoCaps } from '../../ui/Typography'
 import { CardSticker } from './CardSticker'
 import { useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
 import { DailyMessageModal } from './DailyMessageModal'
@@ -12,6 +13,7 @@ import { QuietPill } from '../../ui/QuietPill'
 
 export function DailyMessageCard() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const diffuse = useIsDiffuse()
   const { todayQuestion, todayCard, isAnswered, collection } = useDailyMessage()
   const [open, setOpen] = useState(false)
@@ -48,9 +50,9 @@ export function DailyMessageCard() {
                 next to the "?") rather than on its own line below — removes the
                 empty gap under the prompt. */}
             <QuietPill
-              label="Answer"
+              label={t('sw4_answer')}
               onPress={() => setOpen(true)}
-              accessibilityLabel="Answer"
+              accessibilityLabel={t('sw4_answer')}
             />
           </View>
         )}
@@ -58,9 +60,9 @@ export function DailyMessageCard() {
 
       {isAnswered ? (
         <QuietPill
-          label="View all cards"
+          label={t('sw4_viewAllCards')}
           onPress={() => router.push('/my-cards')}
-          accessibilityLabel="View all cards"
+          accessibilityLabel={t('sw4_viewAllCards')}
           style={{ alignSelf: 'flex-start', marginTop: 16 }}
         />
       ) : null}

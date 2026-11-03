@@ -154,7 +154,7 @@ export function CaregiverHome() {
         {canLog && (
           <View style={styles.ctaWrap}>
             <PillButton
-              label="Log the day"
+              label={t('sw4_logTheDay')}
               variant="ink"
               onPress={() => setLogOpen(true)}
             />

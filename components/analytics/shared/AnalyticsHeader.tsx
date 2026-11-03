@@ -8,6 +8,7 @@ import { ChevronLeft, Share as ShareIcon } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../../constants/theme'
+import { useTranslation } from '../../../lib/i18n'
 
 interface Props {
   title?: string
@@ -17,8 +18,9 @@ interface Props {
   hide?: boolean
 }
 
-export function AnalyticsHeader({ title = 'Analytics', onBack, onShare, hide }: Props) {
+export function AnalyticsHeader({ title, onBack, onShare, hide }: Props) {
   const { colors, font } = useTheme()
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
   if (hide) {
@@ -41,7 +43,7 @@ export function AnalyticsHeader({ title = 'Analytics', onBack, onShare, hide }: 
           { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.2 },
         ]}
       >
-        {title}
+        {title ?? t('tab_analytics')}
       </Text>
       <Pressable
         onPress={onShare}

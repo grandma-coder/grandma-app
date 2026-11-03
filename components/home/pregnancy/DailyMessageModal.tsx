@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Modal, View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, ArrowRight } from 'lucide-react-native'
+import { useTranslation } from '../../../lib/i18n'
 import { useTheme, useDiffuseTheme, font, diffuseFont, radius, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { Display, MonoCaps } from '../../ui/Typography'
@@ -19,6 +20,7 @@ import type { DailyCard } from '../../../lib/dailyMessage/types'
 interface Props { visible: boolean; onClose: () => void }
 
 export function DailyMessageModal({ visible, onClose }: Props) {
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const theme = useTheme()
   const diffuse = useIsDiffuse()
@@ -52,7 +54,7 @@ export function DailyMessageModal({ visible, onClose }: Props) {
       buildDeck(card)
       setPhase('reveal')
     } catch {
-      Alert.alert('Something went wrong', 'We couldn\'t save your message. Please try again.')
+      Alert.alert(t('sw1_common_somethingWrong'), t('sw1_daily_saveFail'))
     }
   }
 
@@ -66,15 +68,15 @@ export function DailyMessageModal({ visible, onClose }: Props) {
             <X size={20} color={colors.text} strokeWidth={2} />
           </Pressable>
         ) : (
-          <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label="Close" style={{ alignSelf: 'flex-end', marginBottom: 0 }} />
+          <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={t('common_close')} style={{ alignSelf: 'flex-end', marginBottom: 0 }} />
         )}
 
         {phase === 'question' ? (
           <ScrollView contentContainerStyle={styles.qBody} showsVerticalScrollIndicator={false}>
             {diffuse ? (
-              <MonoCaps color={colors.textMuted}>DAILY MESSAGE</MonoCaps>
+              <MonoCaps color={colors.textMuted}>{t('sw1_daily_eyebrow')}</MonoCaps>
             ) : (
-              <Text style={[styles.eyebrow, { color: colors.textMuted }]}>DAILY MESSAGE</Text>
+              <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('sw1_daily_eyebrow')}</Text>
             )}
             {diffuse ? (
               <Display size={30} style={styles.qPrompt}>{todayQuestion.prompt}</Display>
@@ -114,18 +116,18 @@ export function DailyMessageModal({ visible, onClose }: Props) {
           <View style={{ flex: 1, paddingTop: 20 }}>
             <View style={{ alignItems: 'center', marginBottom: 4 }}>
               {diffuse ? (
-                <MonoCaps color={colors.textMuted}>TODAY'S MESSAGE</MonoCaps>
+                <MonoCaps color={colors.textMuted}>{t('sw1_daily_todayEyebrow')}</MonoCaps>
               ) : (
-                <Text style={[styles.eyebrow, { color: colors.textMuted }]}>TODAY'S MESSAGE</Text>
+                <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('sw1_daily_todayEyebrow')}</Text>
               )}
             </View>
             <DailyMessageDeck cards={deck} />
             <View style={styles.actions}>
               <View style={{ flex: 1 }}>
-                <PillButton label="Share" variant="paper" onPress={() => setShareCard(deck[0])} />
+                <PillButton label={t('sw1_common_share')} variant="paper" onPress={() => setShareCard(deck[0])} />
               </View>
               <View style={{ flex: 1 }}>
-                <PillButton label="Done" variant="ink" onPress={onClose} />
+                <PillButton label={t('common_done')} variant="ink" onPress={onClose} />
               </View>
             </View>
           </View>

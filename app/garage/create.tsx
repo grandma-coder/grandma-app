@@ -43,7 +43,7 @@ import { SiteChoice } from '../../components/ui/SiteChoice'
 import { SiteSticker, type SiteStickerName } from '../../components/stickers/SiteSticker'
 import { useTheme, getModeColor, getModeColorSoft, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t } from '../../lib/i18n'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { PaperAlert, type PaperAlertButton } from '../../components/ui/PaperAlert'
 import { createGaragePost } from '../../lib/garagePosts'
@@ -75,6 +75,13 @@ const AGE_GROUPS = [
   { label: '12+ years', sizes: ['XL (14–16)', 'XXL (18)'] },
   { label: 'All ages', sizes: ['One Size', 'Adjustable'] },
 ]
+
+// Display label for a stored age-group value ('0–3 months', '12+ years', 'All ages').
+function ageLabel(label: string): string {
+  const m = /^(\S+) (months|years)$/.exec(label)
+  if (m) return t(m[2] === 'months' ? 'sw4_ageMonths' : 'sw4_ageYears', { range: m[1] })
+  return label === 'All ages' ? t('sw4_ageAll') : label
+}
 
 interface AlertState {
   title: string
@@ -200,7 +207,7 @@ export default function CreatePostScreen() {
     try {
       const perm = await ImagePicker.requestCameraPermissionsAsync()
       if (!perm.granted) {
-        setAlert({ title: t('garage_create_errorCamera'), message: 'Enable camera access in Settings to take a photo.' })
+        setAlert({ title: t('garage_create_errorCamera'), message: t('sw4_cameraSettings') })
         return
       }
       const result = await ImagePicker.launchCameraAsync({})
@@ -316,7 +323,7 @@ export default function CreatePostScreen() {
             <X size={22} color={dt.colors.ink3} />
           </Pressable>
         ) : (
-          <InkBackButton icon="close" label="Close" onPress={() => router.back()} ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          <InkBackButton icon="close" label={t('common_close')} onPress={() => router.back()} ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
         )}
       </View>
 
@@ -617,7 +624,7 @@ function Step2TitleCaption({
       <TextInput
         value={caption}
         onChangeText={onCaptionChange}
-        placeholder="Tell others about this item — why you love it, how it's been used…"
+        placeholder={t('sw4_captionPh')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline
         style={[s.textArea, diffuse
@@ -793,10 +800,10 @@ function Step4Details({
                 style={[s.ageChip, pillStyle(isActive)]}
               >
                 {isActive && <Check size={14} color={accent} strokeWidth={3} />}
-                <Text style={[s.ageChipText, pillTextStyle(isActive)]}>{group.label}</Text>
+                <Text style={[s.ageChipText, pillTextStyle(isActive)]}>{ageLabel(group.label)}</Text>
               </Pressable>
             ) : (
-              <SiteChoice key={group.label} compact tick={false} label={group.label} tone={tone} selected={isActive} onPress={() => onAgeChange(isActive ? null : group.label)} />
+              <SiteChoice key={group.label} compact tick={false} label={ageLabel(group.label)} tone={tone} selected={isActive} onPress={() => onAgeChange(isActive ? null : group.label)} />
             )
           )
         })}

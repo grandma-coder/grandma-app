@@ -118,9 +118,9 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
           const chartWidth = SW - 64
           return (
             <View style={{ gap: 12, marginTop: 4 }}>
-              {weightPts.length > 0 ? <GrowthPercentileChart title="Weight-for-age" metric="weight" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={weightPts} width={chartWidth} /> : null}
-              {heightPts.length > 0 ? <GrowthPercentileChart title="Height-for-age" metric="height" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={heightPts} width={chartWidth} /> : null}
-              {headPts.length > 0 ? <GrowthPercentileChart title="Head-for-age" metric="head" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={headPts} width={chartWidth} /> : null}
+              {weightPts.length > 0 ? <GrowthPercentileChart title={t('kids_home_health_weight_for_age')} metric="weight" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={weightPts} width={chartWidth} /> : null}
+              {heightPts.length > 0 ? <GrowthPercentileChart title={t('kids_home_health_height_for_age')} metric="height" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={heightPts} width={chartWidth} /> : null}
+              {headPts.length > 0 ? <GrowthPercentileChart title={t('sw2_hh_headForAge')} metric="head" sex={sex} childAgeMonths={ageMonths} childName={child.name} points={headPts} width={chartWidth} /> : null}
             </View>
           )
         })() : null}
@@ -288,7 +288,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
             <View style={{ gap: 12, marginTop: 4 }}>
               {weightPts.length > 0 && (
                 <GrowthPercentileChart
-                  title="Weight-for-age"
+                  title={t('kids_home_health_weight_for_age')}
                   metric="weight"
                   sex={sex}
                   childAgeMonths={ageMonths}
@@ -299,7 +299,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
               )}
               {heightPts.length > 0 && (
                 <GrowthPercentileChart
-                  title="Height-for-age"
+                  title={t('kids_home_health_height_for_age')}
                   metric="height"
                   sex={sex}
                   childAgeMonths={ageMonths}
@@ -310,7 +310,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
               )}
               {headPts.length > 0 && (
                 <GrowthPercentileChart
-                  title="Head-for-age"
+                  title={t('sw2_hh_headForAge')}
                   metric="head"
                   sex={sex}
                   childAgeMonths={ageMonths}

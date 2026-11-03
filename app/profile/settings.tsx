@@ -70,7 +70,7 @@ export default function SettingsScreen() {
       setSignOutModalVisible(false)
       await signOut(global ? 'global' : 'local')
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setSigningOut(false)
     }
@@ -491,7 +491,7 @@ export default function SettingsScreen() {
             <View style={{ width: 38 }} />
             <Display size={20} color={ink}>{t('settings_selectLanguage')}</Display>
             {!diffuse ? (
-              <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label="Close" onPress={() => setLangModalVisible(false)} style={{ marginBottom: 0 }} />
+              <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label={t("common_close")} onPress={() => setLangModalVisible(false)} style={{ marginBottom: 0 }} />
             ) : (
             <Pressable onPress={() => setLangModalVisible(false)} hitSlop={10}>
               <View

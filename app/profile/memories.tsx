@@ -235,7 +235,7 @@ export default function MemoriesScreen() {
   async function pickPhotos() {
     if (children.length === 0) return Alert.alert(t('memories_noChildren'), t('memories_noChildrenMsg'))
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== 'granted') return Alert.alert('Permission needed')
+    if (status !== 'granted') return Alert.alert(t('kids_logForm_alertPermNeeded'))
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.8, selectionLimit: 10,
@@ -285,7 +285,7 @@ export default function MemoriesScreen() {
 
       setShowAddSheet(false); setPendingPhotos([])
       await loadMemories()
-    } catch (e: any) { Alert.alert('Error', e.message) }
+    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
     finally { setUploading(false) }
   }
 
@@ -294,11 +294,11 @@ export default function MemoriesScreen() {
     const isOnlyPhoto = post.photos.length <= 1
     Alert.alert(
       isOnlyPhoto ? t('memories_deleteMemory') : t('memories_deletePhoto'),
-      isOnlyPhoto ? 'This memory and its photo will be permanently removed.' : 'This photo will be removed from the memory.',
+      isOnlyPhoto ? t('sw3_mem_deleteMemoryMsg') : t('sw3_mem_deletePhotoMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
-          text: 'Delete', style: 'destructive',
+          text: t('common_delete'), style: 'destructive',
           onPress: async () => {
             try {
               if (isOnlyPhoto) {
@@ -309,7 +309,7 @@ export default function MemoriesScreen() {
               }
               setViewPost(null)
               await loadMemories()
-            } catch (e: any) { Alert.alert('Error', e.message) }
+            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
           },
         },
       ]
@@ -329,7 +329,7 @@ export default function MemoriesScreen() {
       await supabase.from('child_logs').delete().eq('id', post.logId)
       setViewPost(null)
       await loadMemories()
-    } catch (e: any) { Alert.alert('Error', e.message) }
+    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
   }
 
   // ─── Edit caption ───────────────────────────────────────────────
@@ -343,7 +343,7 @@ export default function MemoriesScreen() {
       await loadMemories()
       // Update the viewPost in-place
       setViewPost({ ...post, notes: editCaptionText.trim() })
-    } catch (e: any) { Alert.alert('Error', e.message) }
+    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
   }
 
   return (
@@ -450,9 +450,9 @@ export default function MemoriesScreen() {
                   text: formatMonth(ym),
                   onPress: () => setFilterMonth(ym),
                 })),
-                { text: 'Cancel', style: 'cancel' as const },
+                { text: t('common_cancel'), style: 'cancel' as const },
               ]
-              Alert.alert('Filter by Month', undefined, options)
+              Alert.alert(t('sw3_mem_filterByMonth'), undefined, options)
             }}
             style={[styles.monthDropdown, diffuse
               ? {
@@ -634,7 +634,7 @@ export default function MemoriesScreen() {
                 </View>
               </Pressable>
             ) : (
-              <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label="Close" onPress={() => { setShowAddSheet(false); setPendingPhotos([]) }} style={{ marginBottom: 0 }} />
+              <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label={t('common_close')} onPress={() => { setShowAddSheet(false); setPendingPhotos([]) }} style={{ marginBottom: 0 }} />
             )}
             <Display size={20} color={colors.text} style={!diffuse ? { textTransform: 'uppercase', letterSpacing: 0.3 } : undefined}>{t('memories_sheetTitle')}</Display>
             <View style={{ width: 38 }} />
@@ -730,10 +730,10 @@ export default function MemoriesScreen() {
       <PaperAlert
         visible={pendingDelete !== null}
         title={t('memories_deleteTitle')}
-        message={pendingDelete ? `This removes the entry and all ${pendingDelete.photos.length} photo${pendingDelete.photos.length > 1 ? 's' : ''}.` : ''}
+        message={pendingDelete ? (pendingDelete.photos.length > 1 ? t('sw3_mem_removeEntryMany', { n: pendingDelete.photos.length }) : t('sw3_mem_removeEntryOne')) : ''}
         buttons={[
-          { label: 'Cancel', variant: 'secondary' },
-          { label: 'Delete', variant: 'danger', onPress: confirmDeletePost },
+          { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('common_delete'), variant: 'danger', onPress: confirmDeletePost },
         ]}
         onRequestClose={() => setPendingDelete(null)}
       />

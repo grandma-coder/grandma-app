@@ -317,7 +317,7 @@ export default function GarageProfileScreen() {
         title={t('garage_profile_deleteTitle')}
         message={t('garage_profile_deleteMsg')}
         buttons={[
-          { label: 'Cancel', variant: 'secondary' },
+          { label: t('common_cancel'), variant: 'secondary' },
           { label: t('garage_profile_deletePost'), variant: 'danger', onPress: confirmDelete },
         ]}
         onRequestClose={() => setPendingDelete(null)}
@@ -363,7 +363,7 @@ function PostThumbnail({
           post.caption?.slice(0, 80) ?? '',
           [
             { text: isOwner ? t('garage_profile_deletePost') : t('garage_profile_unsave'), style: 'destructive', onPress: onDelete },
-            { text: 'Cancel', style: 'cancel' },
+            { text: t('common_cancel'), style: 'cancel' },
           ]
         )
       }}

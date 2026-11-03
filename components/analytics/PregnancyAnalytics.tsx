@@ -32,7 +32,7 @@ import { DiffuseSheet, DiffuseStatCard, DiffuseMetricTile, DiffuseSectionHeader 
 import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
-import { useTranslation, t as tNow } from '../../lib/i18n'
+import { useTranslation, t as tNow, type TranslationKey } from '../../lib/i18n'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { kgToDisplay, weightLabel } from '../../lib/units'
@@ -347,6 +347,40 @@ const PILLAR_LABEL_KEY: Record<PillarKey, string> = {
   birth:        'preg_analytics_pillar_birthReadiness',
 }
 
+const PILLAR_BLURB_KEY: Record<PillarKey, TranslationKey> = {
+  wellbeing:    'sw1_pa_blurb_wellbeing',
+  weight:       'sw1_pa_blurb_weight',
+  kicks:        'sw1_pa_blurb_kicks',
+  sleep:        'sw1_pa_blurb_sleep',
+  mood:         'sw1_pa_blurb_mood',
+  symptoms:     'sw1_pa_blurb_symptoms',
+  hydration:    'sw1_pa_blurb_hydration',
+  nutrition:    'sw1_pa_blurb_nutrition',
+  exercise:     'sw1_pa_blurb_exercise',
+  contractions: 'sw1_pa_blurb_contractions',
+  birth:        'sw1_pa_blurb_birth',
+}
+
+// Stored symptom / mood values stay English; only the shown label is translated.
+const SYMPTOM_LABEL_KEYS: Record<string, TranslationKey> = {
+  'nausea': 'preg_symptom_nausea', 'fatigue': 'preg_symptom_fatigue', 'back pain': 'preg_symptom_backPain',
+  'headache': 'preg_symptom_headache', 'swelling': 'preg_symptom_swelling', 'heartburn': 'preg_symptom_heartburn',
+  'insomnia': 'preg_symptom_insomnia', 'cramps': 'preg_symptom_cramps', 'mood swings': 'preg_symptom_moodSwings',
+  'cravings': 'preg_symptom_cravings', 'braxton hicks': 'preg_symptom_braxtonHicks', 'shortness of breath': 'preg_symptom_shortBreath',
+}
+function symptomLabel(name: string): string {
+  const k = SYMPTOM_LABEL_KEYS[name.toLowerCase()]
+  return k ? tNow(k) : name
+}
+const MOOD_LABEL_KEYS: Record<string, TranslationKey> = {
+  excited: 'preg_mood_excited', happy: 'preg_mood_happy', okay: 'preg_mood_okay', anxious: 'preg_mood_anxious',
+  energetic: 'preg_mood_energetic', radiant: 'sw1_pa_moodRadiant', unknown: 'sw1_pp_oUnknown',
+}
+function moodLabel(name: string): string {
+  const k = MOOD_LABEL_KEYS[name.toLowerCase()]
+  return k ? tNow(k) : name
+}
+
 interface Palette { tint: string; chip: string; bar: string }
 
 function pillarPalette(
@@ -421,7 +455,7 @@ function trimesterFor(week: number): 1 | 2 | 3 {
 }
 
 function trimesterLabel(t: 1 | 2 | 3): string {
-  return t === 1 ? 'First trimester' : t === 2 ? 'Second trimester' : 'Third trimester'
+  return tNow(t === 1 ? 'preg_ring_trimester1' : t === 2 ? 'preg_ring_trimester2' : 'preg_ring_trimester3')
 }
 
 function daysToDue(due: string | null): number | null {
@@ -657,7 +691,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                       onPress={onExamsPress}
                       hitSlop={10}
                       style={[styles.infoBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}
-                      accessibilityLabel="Exams"
+                      accessibilityLabel={t('sw1_pa_a11yExams')}
                     >
                       <Character name="exam" size={16} color={dt.colors.ink3} />
                     </Pressable>
@@ -666,7 +700,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                     onPress={() => setShowInfo(true)}
                     hitSlop={10}
                     style={[styles.infoBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}
-                    accessibilityLabel="How analytics work"
+                    accessibilityLabel={t('sw1_pa_a11yHow')}
                   >
                     <Info size={16} color={dt.colors.ink3} strokeWidth={1.6} />
                   </Pressable>
@@ -682,11 +716,11 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               right={(
                 <>
                   {onExamsPress ? (
-                    <SiteIconButton onPress={onExamsPress} label="Exams">
+                    <SiteIconButton onPress={onExamsPress} label={t('sw1_pa_a11yExams')}>
                       <FlaskConical size={16} color={colors.text} strokeWidth={2.2} />
                     </SiteIconButton>
                   ) : null}
-                  <SiteIconButton onPress={() => setShowInfo(true)} label="How analytics work">
+                  <SiteIconButton onPress={() => setShowInfo(true)} label={t('sw1_pa_a11yHow')}>
                     <Info size={16} color={colors.text} strokeWidth={2.2} />
                   </SiteIconButton>
                 </>
@@ -745,7 +779,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
           // Weight first load: ghost number + chart, not a bare "KG LATEST" + empty chart.
           <View style={{ marginHorizontal: 20, marginTop: 8, paddingTop: 4 }}>
             <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
-              {`WEIGHT · WEEK ${weekNumber}`}
+              {t('sw1_pa_weightWeek', { n: weekNumber })}
             </Text>
             <Skeleton height={48} width="45%" radius={10} style={{ marginTop: 8 }} />
             <Skeleton height={64} radius={12} style={{ marginTop: 14 }} />
@@ -756,7 +790,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             style={({ pressed }) => [{ marginHorizontal: 20, marginTop: 8, paddingTop: 4, opacity: pressed ? 0.8 : 1 }]}
           >
             <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
-              {`WEIGHT · WEEK ${weekNumber}`}
+              {t('sw1_pa_weightWeek', { n: weekNumber })}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
               <Text style={{ fontFamily: font.displayBold, fontSize: 52, lineHeight: 58, letterSpacing: -1.5, color: colors.text }}>
@@ -764,8 +798,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               </Text>
               <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
                 {weeklyGain !== null
-                  ? `${prefWeightLabel} latest · ${weeklyGain >= 0 ? '+' : ''}${kgToDisplay(weeklyGain, prefWeightUnit).toFixed(1)} ${prefWeightLabel} avg per week`
-                  : `${prefWeightLabel} latest`}
+                  ? t('sw1_pa_wLatestAvg', { unit: prefWeightLabel, delta: `${weeklyGain >= 0 ? '+' : ''}${kgToDisplay(weeklyGain, prefWeightUnit).toFixed(1)}` })
+                  : t('sw1_pa_wLatest', { unit: prefWeightLabel })}
               </Text>
             </View>
             <View style={{ marginTop: 10 }}>
@@ -998,7 +1032,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                   ]}
                 >
                   <Text style={{ width: 22, fontSize: 11, letterSpacing: 1.2, fontFamily: MONO, color: colors.textSecondary }}>{i + 1}</Text>
-                  <Text style={[styles.listLabel, { color: colors.text }]}>{s.symptom}</Text>
+                  <Text style={[styles.listLabel, { color: colors.text }]}>{symptomLabel(s.symptom)}</Text>
                   <Text style={{ fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: MONO, color: colors.text }}>{t('preg_analytics_times_prefix', { count: s.count })}</Text>
                 </View>
               ))}
@@ -1030,13 +1064,13 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
           ) : showContractions && (
             <HeroBanner
               pillarKey="contractions"
-              label="CONTRACTIONS"
+              label={t('sw1_pa_contractionsCap')}
               title={contractions.length > 0 ? `${contractions.length}` : '—'}
               subtitle={contractions.length > 0
                 ? t(contractions[contractions.length - 1].count === 1 ? 'pregAnalytics_lastSessionContractions_one' : 'pregAnalytics_lastSessionContractions_other', { count: contractions[contractions.length - 1].count })
                 : (tk.contractions.takeaway ?? '')}
               badgeText=""
-              badgeCaption="SESSIONS"
+              badgeCaption={t('sw1_pa_sessionsCap')}
               onPress={() => setOpenPillar('contractions')}
             />
           )}
@@ -1054,7 +1088,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               // loading is the skeleton above; a failed load just has no subtitle.
               subtitle={diffuse ? (tk.birth.takeaway ?? '') : birthReady ? birthNextStep(birthReady, trimester) : ''}
               badgeText=""
-              badgeCaption={diffuse ? 'READY' : 'TASKS'}
+              badgeCaption={diffuse ? 'READY' : t('sw1_pa_tasksCap')}
               onPress={() => setOpenPillar('birth')}
             />
           )}
@@ -1148,11 +1182,12 @@ function NutritionMini({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const accent = getDiffuseAccent('preg', dt.isDark)
+  const { t } = useTranslation()
   const rows = [
-    { label: 'Iron',    arr: matrix.iron,    color: stickers.coral, soft: stickers.peachSoft },
-    { label: 'Folic',   arr: matrix.folic,   color: stickers.green, soft: stickers.greenSoft },
-    { label: 'Protein', arr: matrix.protein, color: stickers.peach, soft: stickers.peachSoft },
-    { label: 'Calcium', arr: matrix.calcium, color: stickers.blue,  soft: stickers.blueSoft },
+    { label: t('sw1_pa_iron'),    arr: matrix.iron,    color: stickers.coral, soft: stickers.peachSoft },
+    { label: t('sw1_pa_folic'),   arr: matrix.folic,   color: stickers.green, soft: stickers.greenSoft },
+    { label: t('sw1_pa_protein'), arr: matrix.protein, color: stickers.peach, soft: stickers.peachSoft },
+    { label: t('sw1_pa_calcium'), arr: matrix.calcium, color: stickers.blue,  soft: stickers.blueSoft },
   ]
   if (diffuse) {
     // Dot matrix — one hue per nutrient row, filled dot = hit that day.
@@ -1182,7 +1217,7 @@ function NutritionMini({
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
             <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>{r.label}</Text>
             <Text style={{ color: colors.textSecondary, fontSize: 10, fontFamily: MONO, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-              {r.arr.filter(Boolean).length}/{r.arr.length}{' days'}
+              {t('sw1_pa_hitOfDays', { hit: r.arr.filter(Boolean).length, total: r.arr.length })}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -1410,7 +1445,7 @@ function PillarRow({
             ) : null}
           </View>
           <Text style={[styles.pillarBlurb, { color: colors.textMuted, fontFamily: font.bodyMedium }]}>
-            {meta.blurb}
+            {t(PILLAR_BLURB_KEY[pillarKey])}
           </Text>
         </View>
         <View style={styles.pillarValueWrap}>
@@ -1483,7 +1518,7 @@ function PillarDetailModal(props: DetailProps) {
 
   if (diffuse) {
     return (
-      <DiffuseSheet visible title={label} onClose={onClose} chip={meta.blurb.toUpperCase()}>
+      <DiffuseSheet visible title={label} onClose={onClose} chip={t(PILLAR_BLURB_KEY[pillarKey]).toUpperCase()}>
         <View style={{ gap: 16, paddingTop: 4 }}>
           <Animated.View entering={FadeInDown.duration(220)}>
             {/* Use the pillar's OWN hue (not the violet mode accent) so each
@@ -1507,7 +1542,7 @@ function PillarDetailModal(props: DetailProps) {
           onClose={onClose}
         />
         <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
-          {isWeek ? t('preg_week_blurb') : meta.blurb}
+          {isWeek ? t('preg_week_blurb') : t(PILLAR_BLURB_KEY[pillarKey])}
         </Text>
       </View>
 
@@ -1572,11 +1607,11 @@ function WeekDetail({ weekFacts: facts, weekNumber, trimester, accentColor, acce
   }
 
   const areas: { key: PregnancyWeekArea; label: string; tint: string; sticker: SiteStickerName }[] = [
-    { key: 'sleep',     label: 'Sleep',     tint: stickers.lilacSoft, sticker: WELLBEING_STICKER.sleep },
-    { key: 'mood',      label: 'Mood',      tint: stickers.pinkSoft,  sticker: WELLBEING_STICKER.mood },
-    { key: 'nutrition', label: 'Nutrition', tint: stickers.greenSoft, sticker: WELLBEING_STICKER.nutrition },
-    { key: 'movement',  label: 'Movement',  tint: stickers.peachSoft, sticker: WELLBEING_STICKER.exercise },
-    { key: 'water',     label: 'Hydration', tint: stickers.blueSoft,  sticker: WELLBEING_STICKER.hydration },
+    { key: 'sleep',     label: t('preg_analytics_pillar_sleep'),     tint: stickers.lilacSoft, sticker: WELLBEING_STICKER.sleep },
+    { key: 'mood',      label: t('preg_analytics_pillar_mood'),      tint: stickers.pinkSoft,  sticker: WELLBEING_STICKER.mood },
+    { key: 'nutrition', label: t('preg_analytics_pillar_nutrition'), tint: stickers.greenSoft, sticker: WELLBEING_STICKER.nutrition },
+    { key: 'movement',  label: t('sw1_pa_movement'),                 tint: stickers.peachSoft, sticker: WELLBEING_STICKER.exercise },
+    { key: 'water',     label: t('preg_analytics_pillar_hydration'), tint: stickers.blueSoft,  sticker: WELLBEING_STICKER.hydration },
   ]
   const total = facts.days
   const fact = (key: PregnancyWeekArea): string => {
@@ -1587,7 +1622,7 @@ function WeekDetail({ weekFacts: facts, weekNumber, trimester, accentColor, acce
           : t('preg_week_notLogged')
       case 'mood':
         return facts.mood
-          ? t(facts.mood.count === 1 ? 'preg_week_moodFact_one' : 'preg_week_moodFact_other', { count: facts.mood.count, mood: facts.mood.topMood })
+          ? t(facts.mood.count === 1 ? 'preg_week_moodFact_one' : 'preg_week_moodFact_other', { count: facts.mood.count, mood: moodLabel(facts.mood.topMood) })
           : t('preg_week_notLogged')
       case 'nutrition':
         return facts.nutrition
@@ -1619,7 +1654,7 @@ function WeekDetail({ weekFacts: facts, weekNumber, trimester, accentColor, acce
         items={[
           { label: t('preg_week_tileDays'), value: `${facts.daysLogged}/${total}` },
           { label: t('preg_week_tileAreas'), value: `${facts.areasLogged}/5` },
-          { label: 'Trimester', value: String(trimester) },
+          { label: t('preg_profile_trimester'), value: String(trimester) },
         ]}
       />
 
@@ -1768,13 +1803,13 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: 'Latest', value: lastW ? `${lastW.toFixed(1)} ${uLabel}` : '—' },
-          { label: 'Total gain', value: totalGain !== null ? `${totalGain >= 0 ? '+' : ''}${totalGain.toFixed(1)} ${uLabel}` : '—' },
-          { label: diffuse ? 'Per week' : 'Avg / week', value: avgWeekly !== null ? `${avgWeekly >= 0 ? '+' : ''}${avgWeekly.toFixed(2)}` : '—' },
+          { label: t('sw1_pa_latest'), value: lastW ? `${lastW.toFixed(1)} ${uLabel}` : '—' },
+          { label: t('sw1_pa_totalGain'), value: totalGain !== null ? `${totalGain >= 0 ? '+' : ''}${totalGain.toFixed(1)} ${uLabel}` : '—' },
+          { label: diffuse ? 'Per week' : t('sw1_pa_avgWeek'), value: avgWeekly !== null ? `${avgWeekly >= 0 ? '+' : ''}${avgWeekly.toFixed(2)}` : '—' },
         ]}
       />
 
-      <PaperCard title="Weight over time" accent={accentColor} withBlob>
+      <PaperCard title={t('sw1_pa_weightOverTime')} accent={accentColor} withBlob>
         {weights.length >= 2 ? (
           <MiniLineChart
             data={weights}
@@ -1791,7 +1826,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
       </PaperCard>
 
       {weightByWeek.length >= 2 ? (
-        <PaperCard title="By pregnancy week">
+        <PaperCard title={t('sw1_pa_byWeek')}>
           {diffuse ? (
             (() => {
               const rows = weightByWeek.slice(-8)
@@ -1814,7 +1849,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
 
       <PaperCard title={diffuse ? `Healthy range · Week ${weekNumber}` : t('kp_weightGuide_title', { week: weekNumber })}>
         <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-          {trimester === 1
+          {!diffuse ? t(trimester === 1 ? 'sw1_pa_wgT1' : trimester === 2 ? 'sw1_pa_wgT2' : 'sw1_pa_wgT3') : trimester === 1
             ? 'In the first trimester, gaining 0.5–2 kg total is typical — many people lose a little from nausea.'
             : trimester === 2
             ? 'Trimester 2 averages 0.3–0.5 kg per week. Steady gain reflects the placenta and baby growing.'
@@ -1864,10 +1899,10 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
   const evening = kickHours.slice(18, 24).reduce((a, b) => a + b.count, 0)
   const night = (kickHours.slice(0, 6).reduce((a, b) => a + b.count, 0))
   const todBuckets = [
-    { label: 'Morning', value: morning },
-    { label: 'Afternoon', value: afternoon },
-    { label: 'Evening', value: evening },
-    { label: 'Night', value: night },
+    { label: t('sw1_pa_morning'), value: morning },
+    { label: t('sw1_pa_afternoon'), value: afternoon },
+    { label: t('sw1_pa_evening'), value: evening },
+    { label: t('sw1_pa_night'), value: night },
   ]
   const totalTod = todBuckets.reduce((a, b) => a + b.value, 0)
   const peak = totalTod > 0 ? todBuckets.sort((a, b) => b.value - a.value)[0] : null
@@ -1878,13 +1913,13 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: 'Avg / session', value: avg ? String(avg) : '—' },
-          { label: 'Peak', value: max ? String(max) : '—' },
-          { label: 'Sessions', value: String(kickSessions.length) },
+          { label: t('sw1_pa_avgSession'), value: avg ? String(avg) : '—' },
+          { label: t('sw1_pa_peak'), value: max ? String(max) : '—' },
+          { label: t('sw1_pa_sessions'), value: String(kickSessions.length) },
         ]}
       />
 
-      <PaperCard title="Recent kick counts">
+      <PaperCard title={t('sw1_pa_recentKicks')}>
         {kickSessions.length > 0 ? (
           diffuse ? (
             <BeadedThread data={kickValues} labels={kickLabels} color={stickers.pink} accent={accentColor ?? stickers.pink} />
@@ -1932,7 +1967,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
       ) : null}
 
       {totalTod > 0 ? (
-        <PaperCard title="When baby's most active">
+        <PaperCard title={t('sw1_pa_whenActive')}>
           <View style={{ gap: 8 }}>
             {todBuckets.map((b) => {
               const pct = totalTod ? Math.round((b.value / totalTod) * 100) : 0
@@ -1950,7 +1985,7 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
             })}
           </View>
           {peak ? (
-            <Pill color={stickers.pink} tint={stickers.pinkSoft} label={`Most active: ${peak.label}`} />
+            <Pill color={stickers.pink} tint={stickers.pinkSoft} label={t('sw1_pa_mostActive', { part: peak.label })} />
           ) : null}
         </PaperCard>
       ) : null}
@@ -1982,18 +2017,18 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: diffuse ? 'Average' : 'Avg / night', value: avg ? `${avg.toFixed(1)}h` : '—' },
-          { label: 'Best', value: best ? `${best.toFixed(1)}h` : '—' },
-          { label: 'Worst', value: worst ? `${worst.toFixed(1)}h` : '—' },
+          { label: diffuse ? 'Average' : t('sw1_pa_avgNight'), value: avg ? `${avg.toFixed(1)}h` : '—' },
+          { label: diffuse ? 'Best' : t('sw1_pa_longest'), value: best ? `${best.toFixed(1)}h` : '—' },
+          { label: diffuse ? 'Worst' : t('sw1_pa_shortest'), value: worst ? `${worst.toFixed(1)}h` : '—' },
         ]}
       />
 
-      <PaperCard title="Sleep hours per night">
+      <PaperCard title={t('sw1_pa_sleepHours')}>
         {hours.length > 0 ? (
           diffuse ? (
             <CrescentBars data={hours} labels={labels} color={accentColor ?? stickers.lilac} max={9} />
           ) : (
-            <SiteBars data={hours} labels={labels} tone={stickers.lilacSoft} unit="h" caption="Hours per night" />
+            <SiteBars data={hours} labels={labels} tone={stickers.lilacSoft} unit="h" caption={t('sw1_pa_hoursPerNight')} />
           )
         ) : (
           <Body size={13} color={muted}>
@@ -2008,7 +2043,7 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
             {debt.toFixed(1)}{'h'}
           </Text>
           <Body size={13} color={sec}>
-            vs an 8-hour target across the last {hours.length} nights you logged.
+            {diffuse ? `vs an 8-hour target across the last ${hours.length} nights you logged.` : t('sw1_pa_sleepVs', { n: hours.length })}
           </Body>
         </PaperCard>
       ) : null}
@@ -2041,16 +2076,16 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: 'Logged', value: String(moodTrend.length) },
+          { label: t('sw1_pa_logged'), value: String(moodTrend.length) },
           // Light: a plain day count instead of a "% positive" share.
           diffuse
             ? { label: 'Positive', value: `${positivePct}%` }
-            : { label: 'Days', value: String(new Set(moodTrend.map((m) => m.log_date)).size) },
-          { label: 'Most common', value: sorted[0]?.[0] ?? '—' },
+            : { label: t('sw1_pa_days'), value: String(new Set(moodTrend.map((m) => m.log_date)).size) },
+          { label: t('sw1_pa_mostCommon'), value: sorted[0]?.[0] ? moodLabel(sorted[0][0]) : '—' },
         ]}
       />
 
-      <PaperCard title="Mood mix">
+      <PaperCard title={t('sw1_pa_moodMix')}>
         {moodTrend.length > 0 ? (
           <MoodBubbleCluster
             items={(Object.entries(totals) as [string, number][])
@@ -2063,7 +2098,7 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
       </PaperCard>
 
       {sorted.length > 0 ? (
-        <PaperCard title="Distribution">
+        <PaperCard title={t('sw1_pa_distribution')}>
           <View style={{ gap: 8 }}>
             {sorted.map(([mood, n]) => {
               const pct = Math.round((n / moodTrend.length) * 100)
@@ -2075,7 +2110,7 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
                 <View key={mood}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium, textTransform: 'capitalize' }}>
-                      {mood}
+                      {moodLabel(mood)}
                     </Text>
                     <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : font.body }}>{t('preg_analytics_stat_value_pct', { value: n, pct })}</Text>
                   </View>
@@ -2114,9 +2149,9 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: 'Total logged', value: String(total) },
-          { label: 'Unique', value: String(symptomFreq.length) },
-          { label: 'Most common', value: symptomFreq[0]?.symptom ?? '—' },
+          { label: t('sw1_pa_totalLogged'), value: String(total) },
+          { label: t('sw1_pa_unique'), value: String(symptomFreq.length) },
+          { label: t('sw1_pa_mostCommon'), value: symptomFreq[0]?.symptom ? symptomLabel(symptomFreq[0].symptom) : '—' },
         ]}
       />
 
@@ -2136,7 +2171,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
                   <View key={s.symptom}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                       <Text style={{ color: ink, fontSize: 13, fontFamily: diffuseFont.body, textTransform: 'capitalize' }}>
-                        {s.symptom}
+                        {symptomLabel(s.symptom)}
                       </Text>
                       <Text style={{ color: muted, fontSize: 12, fontFamily: diffuseFont.mono }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
                     </View>
@@ -2152,7 +2187,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
           )}
         </View>
       ) : (
-        <PaperCard title="Breakdown">
+        <PaperCard title={t('sw1_pa_breakdown')}>
           {symptomFreq.length > 0 ? (
             <View style={{ gap: 8 }}>
               {symptomFreq.map((s, i) => {
@@ -2161,7 +2196,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
                   <View key={s.symptom}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                       <Text style={{ color: ink, fontSize: 13, fontFamily: font.bodySemiBold, textTransform: 'capitalize' }}>
-                        {s.symptom}
+                        {symptomLabel(s.symptom)}
                       </Text>
                       <Text style={{ color: sec, fontSize: 12, fontFamily: font.body }}>{t('preg_analytics_stat_value_pct', { value: s.count, pct })}</Text>
                     </View>
@@ -2182,7 +2217,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
             <Text style={[styles.diffuseEyebrow, { color: dt.colors.ink3 }]}>Worth a call</Text>
             <Body size={13} color={sec} style={{ lineHeight: 20 }}>
               You've logged{' '}
-              <Body size={13} color={ink}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
+              <Body size={13} color={ink}>{severeHits.map((s) => symptomLabel(s.symptom)).join(', ')}</Body>
               . These can be normal but warrant a call to your provider — especially if persistent or severe.
             </Body>
           </View>
@@ -2190,7 +2225,7 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
           <PaperCard title={tNow('kp_pa_worthCall')}>
             <Body size={13} color={sec} style={{ lineHeight: 20 }}>
               {tNow('kp_pa_loggedPrefix')}{' '}
-              <Body size={13} color={ink}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
+              <Body size={13} color={ink}>{severeHits.map((s) => symptomLabel(s.symptom)).join(', ')}</Body>
               {tNow('kp_pa_worthCallSuffix')}
             </Body>
           </PaperCard>
@@ -2257,14 +2292,14 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         tint={tint}
         color={accent}
         items={[
-          { label: 'Avg / day', value: avg ? avg.toFixed(1) : '—' },
-          { label: 'Target', value: `${TARGET} gl` },
-          { label: 'On target', value: data.length ? `${daysHittingTarget}/${data.length}` : '—' },
+          { label: t('sw1_pa_avgDay'), value: avg ? avg.toFixed(1) : '—' },
+          { label: t('sw1_pa_target'), value: `${TARGET} ${t('sw1_pa_glAbbr')}` },
+          { label: t('sw1_pa_onTarget'), value: data.length ? `${daysHittingTarget}/${data.length}` : '—' },
         ]}
       />
 
       {/* Today's progress hero */}
-      <PaperCard title="Today" accent={accent} withBlob>
+      <PaperCard title={t('sw1_pa_today')} accent={accent} withBlob>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <View
             style={{
@@ -2282,15 +2317,15 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
               {todayGlasses}
             </Text>
             <Text style={{ fontFamily: df?.mono ?? MONO, fontSize: 10, color: sec, marginTop: -2 }}>
-              {'of '}{TARGET}
+              {t('sw1_pa_ofN', { n: TARGET })}
             </Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: df?.display ?? font.displayBold, fontSize: 22, color: ink, letterSpacing: -0.4 }}>
-              {todayPct}{'% of goal'}
+              {t('sw1_pa_pctGoal', { pct: todayPct })}
             </Text>
             <Text style={{ fontFamily: df?.body ?? font.bodyMedium, fontSize: 13, color: sec, marginTop: 2 }}>
-              {todayRemaining > 0 ? `${todayRemaining} more glass${todayRemaining === 1 ? '' : 'es'} to go.` : 'Goal reached. Keep sipping.'}
+              {todayRemaining > 0 ? t(todayRemaining === 1 ? 'sw1_pa_moreGlass_one' : 'sw1_pa_moreGlass_other', { n: todayRemaining }) : t('sw1_pa_goalReached')}
             </Text>
             {diffuse ? (
               <View style={{ marginTop: 10, height: 3, borderRadius: 999, backgroundColor: dt.colors.line, overflow: 'hidden' }}>
@@ -2307,7 +2342,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
 
       {/* Glass tracker — soft water-drop blobs that fill as you sip. Filled =
           a bloomed drop sticker in the hue; empty = a hairline ghost drop. */}
-      <PaperCard title="Glass-by-glass · today">
+      <PaperCard title={t('sw1_pa_glassByGlass')}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 6 }}>
           {Array.from({ length: TARGET }, (_, i) => {
             const filled = i < todayGlasses
@@ -2336,13 +2371,13 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         </View>
         {todayGlasses > TARGET ? (
           <Text style={{ marginTop: 10, fontSize: 11, color: sec, fontFamily: df?.body ?? font.bodyMedium }}>
-            {'+'}{todayGlasses - TARGET}{' extra · keep going'}
+            {t('sw1_pa_extraKeep', { n: todayGlasses - TARGET })}
           </Text>
         ) : null}
       </PaperCard>
 
       {/* Last 7 days — diverging pills (met above / shortfall hatched below) */}
-      <PaperCard title={diffuse ? 'Last 7 days' : 'Glasses per day'}>
+      <PaperCard title={diffuse ? 'Last 7 days' : t('kp_pa_glassesDay')}>
         {data.length > 0 ? (
           <>
             {diffuse ? (
@@ -2368,10 +2403,10 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <Text style={{ fontSize: 11, color: sec, fontFamily: df?.body ?? font.bodyMedium }}>
-                {'Goal line at '}{TARGET}{' glasses'}
+                {t('sw1_pa_goalLine', { n: TARGET })}
               </Text>
               <Text style={{ fontSize: 11, color: diffuse ? dt.colors.ink : colors.text, fontFamily: df?.monoBold ?? font.bodyBold }}>
-                {hitRate}{'% hit rate'}
+                {diffuse ? `${hitRate}% hit rate` : t('sw1_pa_daysAtGoal', { pct: hitRate })}
               </Text>
             </View>
           </>
@@ -2385,31 +2420,32 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
       {/* Streak + Best day + Volume — 3 mini stats */}
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <MiniInfoTile
-          label="Streak"
-          value={streak > 0 ? `${streak}d` : '—'}
-          caption={streak > 0 ? 'hitting goal' : 'hit 8 to start'}
+          label={t('sw1_pa_streak')}
+          value={streak > 0 ? t('common_nDays', { n: streak }) : '—'}
+          caption={streak > 0 ? t('sw1_pa_hittingGoal') : t('sw1_pa_hitToStart', { n: TARGET })}
           tint={tint}
           accent={accent}
         />
         <MiniInfoTile
-          label="Best day"
+          label={diffuse ? 'Best day' : t('sw1_pa_topDay')}
           value={bestDay ? `${bestDay.glasses}` : '—'}
-          caption={bestDay ? formatLogDate(bestDay.date) : 'no logs yet'}
+          caption={bestDay ? formatLogDate(bestDay.date) : t('sw1_pa_noLogsYet')}
           tint={tint}
           accent={accent}
         />
         <MiniInfoTile
-          label={diffuse ? 'Volume' : 'Total volume'}
+          label={diffuse ? 'Volume' : t('sw1_pa_totalVolume')}
           value={totalLitres ? `${totalLitres.toFixed(1)}L` : '—'}
-          caption={diffuse ? `${totalGlasses} glasses · 7d` : `${totalGlasses} glasses in total`}
+          caption={diffuse ? `${totalGlasses} glasses · 7d` : t('sw1_pa_glassesTotal', { n: totalGlasses })}
           tint={tint}
           accent={accent}
         />
       </View>
 
-      {/* Time-of-day estimate */}
-      {data.length > 0 ? (
-        <PaperCard title="When you sip · estimate">
+      {/* Time-of-day estimate — Diffuse only. The split is a fixed 35/40/25% of the daily average,
+          not anything the user logged, so the light look doesn't show it. */}
+      {diffuse && data.length > 0 ? (
+        <PaperCard title={t('sw1_pa_whenSip')}>
           {diffuse ? (
             // Soft split meters — three time-of-day meters in blue/mint/lilac,
             // not the violet progress bars.
@@ -2423,9 +2459,9 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
           ) : (
             <View style={{ gap: 10 }}>
               {[
-                { label: 'Morning', value: morning, hint: '6am – noon' },
-                { label: 'Afternoon', value: afternoon, hint: 'noon – 6pm' },
-                { label: 'Evening', value: evening, hint: '6pm – bed' },
+                { label: t('sw1_pa_morning'), value: morning, hint: t('sw1_pa_hintMorning') },
+                { label: t('sw1_pa_afternoon'), value: afternoon, hint: t('sw1_pa_hintAfternoon') },
+                { label: t('sw1_pa_evening'), value: evening, hint: t('sw1_pa_hintEvening') },
               ].map((row) => {
                 const pct = Math.min(100, (row.value / TARGET) * 100)
                 return (
@@ -2437,7 +2473,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                       <SiteMeter pct={pct} tone={tint} height={8} />
                     </View>
                     <Text style={{ width: 60, textAlign: 'right', fontSize: 13, color: ink, fontFamily: font.bodySemiBold }}>
-                      {row.value.toFixed(1)}{' gl'}
+                      {row.value.toFixed(1)}{' '}{t('sw1_pa_glAbbr')}
                     </Text>
                   </View>
                 )
@@ -2445,22 +2481,22 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
             </View>
           )}
           <Text style={{ marginTop: 12, fontSize: 11, color: muted, fontFamily: df?.body ?? font.bodyMedium, lineHeight: 16 }}>
-            Approximate split based on average daily intake. Log timestamps when sipping to refine.
+            {t('sw1_pa_approxSplit')}
           </Text>
         </PaperCard>
       ) : null}
 
       {/* Status pill */}
       {data.length > 0 ? (
-        <PaperCard title={`Week ${weekNumber} status`}>
+        <PaperCard title={t('sw1_pa_weekStatus', { n: weekNumber })}>
           <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-            {avg >= TARGET
+            {!diffuse ? t('sw1_pa_hydStatus', { avg: avg.toFixed(1), target: TARGET }) : avg >= TARGET
               ? `You're averaging ${avg.toFixed(1)} glasses — great rhythm. Keep sipping consistently across the day.`
               : avg >= TARGET * 0.75
               ? `Close to target at ${avg.toFixed(1)} glasses. Try one extra glass with each meal to close the gap.`
               : `Averaging only ${avg.toFixed(1)} glasses — well below the ${TARGET}-glass target. Keep a bottle within reach.`}
           </Body>
-          {avg >= TARGET ? (
+          {!diffuse ? null : avg >= TARGET ? (
             <Pill color={stickers.green} tint={stickers.greenSoft} label={t('preg_analytics_pill_onTrack')} />
           ) : avg >= TARGET * 0.75 ? (
             <Pill color={accent} tint={tint} label={t('preg_analytics_pill_almostThere')} />
@@ -2470,9 +2506,9 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         </PaperCard>
       ) : null}
 
-      <PaperCard title="Why hydration matters">
+      <PaperCard title={t('sw1_pa_whyHyd')}>
         <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-          {trimester === 1
+          {!diffuse ? t(trimester === 1 ? 'sw1_pa_hydT1' : trimester === 2 ? 'sw1_pa_hydT2' : 'sw1_pa_hydT3') : trimester === 1
             ? 'Water helps with morning sickness — sip slowly and keep a bottle by the bed.'
             : trimester === 2
             ? 'Blood volume rises ~50%. 2.3L (about 8 glasses) supports that and keeps swelling down.'
@@ -2480,14 +2516,14 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         </Body>
       </PaperCard>
 
-      <PaperCard title="Smart sip habits">
+      <PaperCard title={t('sw1_pa_smartSip')}>
         <View style={{ gap: 8 }}>
           {[
-            'Start the day with one glass before coffee.',
-            'Pair every bathroom trip with a sip.',
-            'Add lemon, cucumber or mint if plain water bores you.',
-            'Herbal tea, milk and broth count toward the total.',
-            'Cut back 1h before bed to limit night wakings.',
+            t('sw1_pa_tip1'),
+            t('sw1_pa_tip2'),
+            t('sw1_pa_tip3'),
+            t('sw1_pa_tip4'),
+            t('sw1_pa_tip5'),
           ].map((tip, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
               <View
@@ -2591,10 +2627,10 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
   }
   const { iron, folic, protein, calcium, dates } = nutritionMatrix
   const nutrients = [
-    { key: 'iron',    label: 'Iron',    arr: iron,    color: stickers.coral, soft: stickers.peachSoft },
-    { key: 'folic',   label: 'Folic',   arr: folic,   color: stickers.green, soft: stickers.greenSoft },
-    { key: 'protein', label: 'Protein', arr: protein, color: stickers.peach, soft: stickers.peachSoft },
-    { key: 'calcium', label: 'Calcium', arr: calcium, color: stickers.blue,  soft: stickers.blueSoft },
+    { key: 'iron',    label: t('sw1_pa_iron'),    arr: iron,    color: stickers.coral, soft: stickers.peachSoft },
+    { key: 'folic',   label: t('sw1_pa_folic'),   arr: folic,   color: stickers.green, soft: stickers.greenSoft },
+    { key: 'protein', label: t('sw1_pa_protein'), arr: protein, color: stickers.peach, soft: stickers.peachSoft },
+    { key: 'calcium', label: t('sw1_pa_calcium'), arr: calcium, color: stickers.blue,  soft: stickers.blueSoft },
   ]
 
   return (
@@ -2606,14 +2642,14 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
         })}
       />
 
-      <PaperCard title="Daily nutrient checklist">
+      <PaperCard title={t('sw1_pa_dailyChecklist')}>
         <View style={{ gap: 12 }}>
           {nutrients.map((n) => (
             <View key={n.key}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                 <Text style={{ color: ink, fontSize: 13, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }}>{n.label}</Text>
                 <Text style={{ color: muted, fontSize: 12, fontFamily: diffuse ? diffuseFont.mono : font.body }}>
-                  {n.arr.filter(Boolean).length}/{n.arr.length}{' days'}
+                  {t('sw1_pa_hitOfDays', { hit: n.arr.filter(Boolean).length, total: n.arr.length })}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -2652,9 +2688,9 @@ function NutritionDetail({ nutritionMatrix, trimester, weekNumber, accentColor, 
         </View>
       </PaperCard>
 
-      <PaperCard title="Trimester focus">
+      <PaperCard title={t('preg_analytics_card_trimesterFocus')}>
         <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-          {trimester === 1
+          {!diffuse ? t(trimester === 1 ? 'sw1_pa_nutT1' : trimester === 2 ? 'sw1_pa_nutT2' : 'sw1_pa_nutT3') : trimester === 1
             ? 'Folic acid is the headline — 400–600 mcg/day reduces neural tube risk. If nausea blocks meals, small bland snacks count.'
             : trimester === 2
             ? 'Iron rises in importance as blood volume grows. Pair iron-rich foods with vitamin C for absorption.'
@@ -2681,9 +2717,9 @@ function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, a
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: 'Active days', value: String(activeDays) },
-          { label: 'Total min', value: String(total) },
-          { label: diffuse ? 'Avg / session' : 'Avg / active day', value: avg ? `${avg}m` : '—' },
+          { label: t('sw1_pa_activeDays'), value: String(activeDays) },
+          { label: t('sw1_pa_totalMin'), value: String(total) },
+          { label: diffuse ? 'Avg / session' : t('sw1_pa_avgActiveDay'), value: avg ? `${avg}m` : '—' },
         ]}
       />
 
@@ -2707,14 +2743,18 @@ function ExerciseDetail({ exerciseHistory, trimester, weekNumber, accentColor, a
         )}
       </PaperCard>
 
-      <PaperCard title="Safe movement target">
+      <PaperCard title={diffuse ? 'Safe movement target' : t('sw1_pa_movementGuide')}>
         <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
-          ACOG recommends 150 minutes of moderate movement per week (≈30 min × 5 days).{' '}
-          {trimester === 1
-            ? 'Energy can dip — short walks count.'
-            : trimester === 2
-            ? 'You may feel best now — swimming, prenatal yoga and walking are gold.'
-            : 'Listen to your body. Pelvic-floor work and breath-led movement help prepare for labor.'}
+          {!diffuse ? t(trimester === 1 ? 'sw1_pa_exT1' : trimester === 2 ? 'sw1_pa_exT2' : 'sw1_pa_exT3') : (
+            <>
+              {'ACOG recommends 150 minutes of moderate movement per week (≈30 min × 5 days). '}
+              {trimester === 1
+                ? 'Energy can dip — short walks count.'
+                : trimester === 2
+                ? 'You may feel best now — swimming, prenatal yoga and walking are gold.'
+                : 'Listen to your body. Pelvic-floor work and breath-led movement help prepare for labor.'}
+            </>
+          )}
         </Body>
       </PaperCard>
     </>
@@ -2734,13 +2774,13 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: 'Sessions', value: String(sessions) },
-          { label: 'Last count', value: totalToday ? String(totalToday) : '—' },
-          { label: 'Avg interval', value: interval ? `${Math.round(interval)} min` : '—' },
+          { label: t('sw1_pa_sessions'), value: String(sessions) },
+          { label: t('sw1_pa_lastCount'), value: totalToday ? String(totalToday) : '—' },
+          { label: t('sw1_pa_avgInterval'), value: interval ? t('sw1_pa_nMin', { n: Math.round(interval) }) : '—' },
         ]}
       />
 
-      <PaperCard title="Recent contractions">
+      <PaperCard title={t('sw1_pa_recentContractions')}>
         {sessions > 0 ? (
           <View style={{ gap: 8 }}>
             {contractions.slice(-7).reverse().map((c) => (
@@ -2749,7 +2789,7 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
                   {c.date}
                 </Text>
                 <Text style={{ color: colors.text, fontSize: 13, fontFamily: font.bodySemiBold }}>
-                  {c.count}{'× · '}{c.avgIntervalMin ? `${Math.round(c.avgIntervalMin)} min apart` : 'no interval'}
+                  {c.avgIntervalMin ? t('sw1_pa_contrRow', { count: c.count, min: Math.round(c.avgIntervalMin) }) : t('sw1_pa_contrRowNone', { count: c.count })}
                 </Text>
               </View>
             ))}
@@ -2761,11 +2801,9 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
         )}
       </PaperCard>
 
-      <PaperCard title="When to call your provider">
+      <PaperCard title={t('sw1_bg_warning_sub')}>
         <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
-          The classic <Body size={13} color={colors.text}>{t('preg_analytics_511_rule')}</Body>: contractions 5 minutes apart,
-          lasting 1 minute, for 1 hour. Earlier than 37 weeks, call sooner — even mild but regular
-          contractions may signal preterm labor.
+          {t('sw1_pa_c511Pre')}<Body size={13} color={colors.text}>{t('preg_analytics_511_rule')}</Body>{t('sw1_pa_c511Post')}
         </Body>
       </PaperCard>
     </>
@@ -2918,11 +2956,11 @@ function ScoreInfoModal({
     // Light UI: what each area COUNTS — no score, no grade bands, no per-pillar
     // number (see docs/compliance/2026-11-02-regras-saude.md).
     const AREA_COUNTS: { key: PregnancyWeekArea; label: string; sticker: SiteStickerName; body: string }[] = [
-      { key: 'sleep',     label: 'Sleep',     sticker: WELLBEING_STICKER.sleep,     body: t('preg_week_guideSleep') },
-      { key: 'mood',      label: 'Mood',      sticker: WELLBEING_STICKER.mood,      body: t('preg_week_guideMood') },
-      { key: 'nutrition', label: 'Nutrition', sticker: WELLBEING_STICKER.nutrition, body: t('preg_week_guideNutrition') },
-      { key: 'movement',  label: 'Movement',  sticker: WELLBEING_STICKER.exercise,  body: t('preg_week_guideMovement') },
-      { key: 'water',     label: 'Hydration', sticker: WELLBEING_STICKER.hydration, body: t('preg_week_guideWater') },
+      { key: 'sleep',     label: t('preg_analytics_pillar_sleep'),     sticker: WELLBEING_STICKER.sleep,     body: t('preg_week_guideSleep') },
+      { key: 'mood',      label: t('preg_analytics_pillar_mood'),      sticker: WELLBEING_STICKER.mood,      body: t('preg_week_guideMood') },
+      { key: 'nutrition', label: t('preg_analytics_pillar_nutrition'), sticker: WELLBEING_STICKER.nutrition, body: t('preg_week_guideNutrition') },
+      { key: 'movement',  label: t('sw1_pa_movement'),                 sticker: WELLBEING_STICKER.exercise,  body: t('preg_week_guideMovement') },
+      { key: 'water',     label: t('preg_analytics_pillar_hydration'), sticker: WELLBEING_STICKER.hydration, body: t('preg_week_guideWater') },
     ]
     return (
       <LightSheet visible={visible} onClose={onClose} height={SCREEN_H * 0.86}>
@@ -2971,11 +3009,7 @@ function ScoreInfoModal({
 
           <PaperCard title={trimesterLabel(trimester)}>
             <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
-              {trimester === 1
-                ? 'Many people log fewer entries early — that\'s fine. Folic acid + sleep are the priorities.'
-                : trimester === 2
-                ? 'The honeymoon trimester — energy up, nausea down. Movement and balanced meals matter most here.'
-                : 'Pack the bag, plan support, and protect sleep. Steady wins now beat heroic stretches.'}
+              {t(trimester === 1 ? 'sw1_pa_guideT1' : trimester === 2 ? 'sw1_pa_guideT2' : 'sw1_pa_guideT3')}
             </Body>
           </PaperCard>
         </ScrollView>
@@ -3314,6 +3348,7 @@ function WeightByWeekList({
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { t } = useTranslation()
   if (rows.length === 0) return null
   const min = Math.min(...rows.map((r) => r.weight))
   const max = Math.max(...rows.map((r) => r.weight))
@@ -3348,7 +3383,7 @@ function WeightByWeekList({
                   letterSpacing: diffuse ? 0.4 : 1.2,
                 }}
               >
-                {'W'}{w.week}
+                {t('sw1_pa_weekShort', { n: w.week })}
               </Text>
             </View>
             <View style={{ flex: 1, height: 6, borderRadius: 999, backgroundColor: track, overflow: 'hidden' }}>
@@ -3428,6 +3463,7 @@ function TrimesterTip({
   const { colors } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { t } = useTranslation()
   const tip = trimesterCopy(kind, trimester, weekNumber)
   if (!tip) return null
 
@@ -3448,7 +3484,7 @@ function TrimesterTip({
   // Light: same tip, minus "normal" claims and score talk.
   const lightTip = trimesterCopy(kind, trimester, weekNumber, true) ?? tip
   return (
-    <PaperCard title={`Trimester ${trimester} note`}>
+    <PaperCard title={t('sw1_pa_triNote', { n: trimester })}>
       <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
         {lightTip}
       </Body>
@@ -3461,7 +3497,20 @@ function TrimesterTip({
  * score (see docs/compliance/2026-11-02-regras-saude.md). Diffuse keeps the
  * original copy.
  */
+function lightTipKey(kind: PillarKey, t: 1 | 2 | 3, week: number): TranslationKey | null {
+  if (kind === 'kicks') return week < 18 ? 'sw1_pa_kickT1' : week < 28 ? 'sw1_pa_kickT2' : 'sw1_pa_kickT3'
+  if (kind === 'sleep') return t === 1 ? 'sw1_pa_slT1' : t === 2 ? 'sw1_pa_slT2' : 'sw1_pa_slT3'
+  if (kind === 'mood') return t === 1 ? 'sw1_pa_moT1' : t === 2 ? 'sw1_pa_moT2' : 'sw1_pa_moT3'
+  if (kind === 'symptoms') return t === 1 ? 'sw1_pa_syT1' : t === 2 ? 'sw1_pa_syT2' : 'sw1_pa_syT3'
+  if (kind === 'wellbeing') return t === 1 ? 'sw1_pa_wbT1' : t === 2 ? 'sw1_pa_wbT2' : 'sw1_pa_wbT3'
+  return null
+}
+
 function trimesterCopy(kind: PillarKey, t: 1 | 2 | 3, week: number, light = false): string | null {
+  if (light) {
+    const lk = lightTipKey(kind, t, week)
+    if (lk) return tNow(lk)
+  }
   if (kind === 'kicks') {
     if (week < 18) return light
       ? 'Most people first feel quickening between week 16–22. Many feel it earlier in a second pregnancy.'
@@ -3630,7 +3679,7 @@ function buildTakeaways(args: {
     },
     contractions: {
       headline: contractions.length ? `${contractions[contractions.length - 1].count}` : '—',
-      takeaway: contractions.length > 0 ? `${contractions.length} session${contractions.length === 1 ? '' : 's'} logged` : 'Time them with the calendar contraction tool.',
+      takeaway: contractions.length > 0 ? `${contractions.length} session${contractions.length === 1 ? '' : 's'} logged` : tNow('sw1_pa_timeThem'),
       pct: contractions.length > 0 ? Math.min(100, contractions.length * 20) : 0,
     },
     birth: birthReady

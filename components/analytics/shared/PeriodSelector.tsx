@@ -6,16 +6,17 @@
 import { useEffect, useRef } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { useTheme, useDiffuseTheme, diffuseFont, stickers } from '../../../constants/theme'
+import { useTranslation, t as tNow } from '../../../lib/i18n'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 
 export type Period = 'week' | 'month' | '3mo' | 'year' | 'custom'
 
 const OPTIONS: { key: Period; label: string }[] = [
-  { key: 'week', label: 'Week' },
-  { key: 'month', label: 'Month' },
-  { key: '3mo', label: '3 mo' },
-  { key: 'year', label: 'Year' },
-  { key: 'custom', label: 'Custom' },
+  { key: 'week', get label() { return tNow('sw3_period_week') } },
+  { key: 'month', get label() { return tNow('sw3_period_month') } },
+  { key: '3mo', get label() { return tNow('sw3_period_3mo') } },
+  { key: 'year', get label() { return tNow('sw3_period_year') } },
+  { key: 'custom', get label() { return tNow('kids_home_range_custom') } },
 ]
 
 interface Props {
@@ -29,6 +30,7 @@ interface Props {
 
 export function PeriodSelector({ value, onChange, customLabel, showCustom = true }: Props) {
   const { colors, font, isDark } = useTheme()
+  useTranslation() // re-render on language change (labels resolve at render)
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   // Site look: three calm choices — week, month, year. Diffuse keeps the full set.
