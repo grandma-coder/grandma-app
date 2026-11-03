@@ -137,6 +137,126 @@
       "renews": "renews {date}",
       "ends": "ends {date}"
     },
-    "prefs": "Notification & privacy settings (JSON)"
+    "prefs": "Notification & privacy settings (JSON)",
+    "tabs": {
+      "label": "User sections",
+      "overview": "Overview",
+      "activity": "Activity",
+      "family": "Family",
+      "community": "Community",
+      "devices": "Devices & push",
+      "account": "Account"
+    },
+    "header": {
+      "copyId": "Copy ID",
+      "copied": "Copied",
+      "memberSince": "member since",
+      "lastActive": "last active",
+      "country": "country",
+      "plan": "plan",
+      "phases": "phases",
+      "noCountry": "no country",
+      "noPhases": "no phase",
+      "today": "today",
+      "daysAgo": "{n}d ago",
+      "never": "never",
+      "photoAlt": "Photo of {name}"
+    },
+    "state": {
+      "retry": "Try again",
+      "error": "Couldn't load {what}.",
+      "crashed": "This tab crashed while rendering. The others still work.",
+      "what": {
+        "metrics": "activity",
+        "timeline": "the timeline",
+        "family": "family",
+        "community": "community",
+        "devices": "devices",
+        "pushes": "push history",
+        "revenueCat": "RevenueCat",
+        "more": "more events"
+      }
+    },
+    "overview": {
+      "engagement": "Engagement",
+      "notifications": "notifications",
+      "caregivers": "caregivers",
+      "logs30d": "logs in 30d"
+    },
+    "timeline": {
+      "heading": "Timeline",
+      "sub": "Everything this person did in the app, newest first.",
+      "empty": "No events yet.",
+      "loadMore": "Load more",
+      "loadingMore": "Loading…",
+      "end": "Start of history",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "count": "{n, plural, one {# event} other {# events}}",
+      "kind": {
+        "child_log": "Child log",
+        "cycle_log": "Cycle log",
+        "pregnancy_log": "Pregnancy log",
+        "post": "Community post",
+        "child_added": "Child added",
+        "phase_started": "Started a phase",
+        "device_registered": "Device registered",
+        "joined": "Created the account"
+      }
+    },
+    "family": {
+      "children": "Children",
+      "noChildren": "No children added.",
+      "unnamed": "Unnamed",
+      "ageYears": "{n, plural, one {# year} other {# years}}",
+      "ageMonths": "{n, plural, one {# month} other {# months}}",
+      "newborn": "newborn",
+      "noBirthDate": "no birth date",
+      "born": "born {date}",
+      "logs": "{n, plural, one {# log} other {# logs}}",
+      "lastLog": "last log {date}",
+      "noLogs": "no logs",
+      "pregnancy": "Pregnancy",
+      "noPregnancy": "No due date.",
+      "dueDate": "Due date",
+      "week": "Week {n}",
+      "daysLeft": "{n, plural, one {# day left} other {# days left}}",
+      "overdue": "{n, plural, one {# day past due} other {# days past due}}",
+      "pastDue": "The due date has passed."
+    },
+    "community": {
+      "posts": "Posts",
+      "last30": "Last 30 days",
+      "comments": "Comments",
+      "points": "Points",
+      "firstPost": "First post",
+      "lastPost": "Last post",
+      "weekly": "Posts per week — last 12 weeks",
+      "recent": "Recent posts",
+      "empty": "No community posts yet.",
+      "contentNote": "Dates only — post content lives in moderation."
+    },
+    "devices": {
+      "heading": "Devices",
+      "empty": "No devices registered.",
+      "unknownDevice": "Unnamed device",
+      "active": "active",
+      "inactive": "inactive",
+      "lastSeen": "seen {date}",
+      "registered": "registered {date}",
+      "pushes": "Recent pushes received",
+      "noPushes": "No push sent to this person yet.",
+      "status": {
+        "opened": "opened",
+        "delivered": "delivered",
+        "failed": "failed",
+        "sent": "sent"
+      },
+      "inbox": "In-app notifications",
+      "prefs": "Notification preferences",
+      "noPrefs": "No saved preferences.",
+      "on": "on",
+      "off": "off"
+    }
   }
 }

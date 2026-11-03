@@ -31,6 +31,35 @@ function normalizeBehavior(b: string): string {
   return b
 }
 
+/** timestamptz → ISO-8601 UTC with microseconds, so a timeline cursor round-trips exactly. */
+const iso = (col: ReturnType<typeof sql.raw>) => sql`to_char(${col} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`
+
+export const TIMELINE_KINDS = [
+  "child_log",
+  "cycle_log",
+  "pregnancy_log",
+  "post",
+  "child_added",
+  "phase_started",
+  "device_registered",
+  "joined",
+] as const
+export type TimelineKind = (typeof TIMELINE_KINDS)[number]
+
+export interface TimelineEvent {
+  at: string
+  kind: TimelineKind
+  /** child name · behavior type · device name — whatever identifies the event. */
+  detail: string | null
+}
+
+const timelineInput = z.object({
+  userId: z.string().uuid(),
+  limit: z.number().int().min(1).max(200).default(50),
+  /** Exclusive cursor: only events strictly older than this instant. */
+  before: z.string().datetime({ offset: true }).optional(),
+})
+
 const listInput = z.object({
   mode: z.enum(["pre_pregnancy", "pregnancy", "kids"]).optional(),
   tier: z.enum(["free", "premium_solo", "premium_family"]).optional(),
@@ -141,7 +170,7 @@ export const usersRouter = router({
       select
         p.id, p.name, p.journey_mode, p.subscription_tier::text as subscription_tier,
         p.subscription_status, p.language, p.country_code, p.dob, p.due_date,
-        p.consented_at, p.is_verified_expert, p.expert_title, p.created_at,
+        p.consented_at, p.is_verified_expert, p.expert_title, p.created_at, p.photo_url,
         p.privacy_settings, p.notification_prefs,
         au.email as email,
         (select count(*) from children c where c.parent_id = p.id)::int as children_count,
@@ -237,6 +266,180 @@ export const usersRouter = router({
       const streak = Number(Array.from(streakRes)[0]?.streak ?? 0)
       return { series: rows, streak }
     }),
+
+  /**
+   * Merged activity timeline (time-desc) across every per-user table we know
+   * the columns of (db/schema/grandma.ts). PII — admin only, audit-logged.
+   * Keyset-paginated on `at`: fetch limit+1 to know if there's a next page;
+   * `nextBefore` is the oldest returned event's instant. Events sharing that
+   * exact microsecond (same transaction) could straddle a page boundary — rare
+   * enough to accept for an admin view.
+   */
+  timeline: piiProcedure.input(timelineInput).query(async ({ ctx, input }) => {
+    const id = input.userId
+    const before = input.before ? sql`and ev.at < ${input.before}::timestamptz` : sql``
+    // ::text casts keep the UNION type-compatible even where a column is an enum.
+    const res = await db.execute<{ at: string; kind: TimelineKind; detail: string | null }>(sql`
+      with ev as (
+        select x.created_at as at, 'child_log'::text as kind, c.name::text as detail
+          from child_logs x left join children c on c.id = x.child_id where x.user_id = ${id}
+        union all select created_at, 'cycle_log', null from cycle_logs where user_id = ${id}
+        union all select created_at, 'pregnancy_log', null from pregnancy_logs where user_id = ${id}
+        union all select created_at, 'post', null from channel_posts where author_id = ${id}
+        union all select created_at, 'child_added', name::text from children where parent_id = ${id}
+        union all select created_at, 'phase_started', type::text from behaviors where user_id = ${id}
+        union all select created_at, 'device_registered', coalesce(nullif(device_name::text, ''), platform::text) from push_tokens where user_id = ${id}
+        union all select created_at, 'joined', null from profiles where id = ${id}
+      )
+      select ${iso(sql.raw("ev.at"))} as at, ev.kind, ev.detail
+      from ev
+      where ev.at is not null ${before}
+      order by ev.at desc, ev.kind
+      limit ${input.limit + 1}
+    `)
+
+    const rows = Array.from(res)
+    const page = rows.slice(0, input.limit)
+    const events: TimelineEvent[] = page.map((r) => ({
+      at: r.at,
+      kind: r.kind,
+      detail: r.kind === "phase_started" && r.detail ? normalizeBehavior(r.detail) : r.detail,
+    }))
+
+    await writeAudit({
+      actorEmail: ctx.userEmail ?? "unknown",
+      action: "user.timeline",
+      target: id,
+      meta: { limit: input.limit, before: input.before ?? null },
+    })
+
+    return { events, nextBefore: rows.length > input.limit ? (events[events.length - 1]?.at ?? null) : null }
+  }),
+
+  /** Children (+ per-child log counts) and the pregnancy due date. PII — admin, audit-logged. */
+  family: piiProcedure.input(z.object({ userId: z.string().uuid() })).query(async ({ ctx, input }) => {
+    const id = input.userId
+    const [kids, prof] = await Promise.all([
+      db.execute<{ id: string; name: string | null; birth_date: string | null; created_at: string | null; logs_count: number; last_log_at: string | null }>(sql`
+        select c.id, c.name::text as name, to_char(c.birth_date, 'YYYY-MM-DD') as birth_date, ${iso(sql.raw("c.created_at"))} as created_at,
+               (select count(*) from child_logs l where l.child_id = c.id)::int as logs_count,
+               (select ${iso(sql.raw("max(l.created_at)"))} from child_logs l where l.child_id = c.id) as last_log_at
+        from children c
+        where c.parent_id = ${id}
+        order by c.birth_date desc nulls last, c.created_at desc
+      `),
+      db.execute<{ due_date: string | null }>(sql`select to_char(due_date, 'YYYY-MM-DD') as due_date from profiles where id = ${id}`),
+    ])
+
+    await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "user.family.view", target: id })
+
+    return {
+      children: Array.from(kids).map((k) => ({
+        id: k.id,
+        name: k.name,
+        birthDate: k.birth_date,
+        createdAt: k.created_at,
+        logsCount: Number(k.logs_count ?? 0),
+        lastLogAt: k.last_log_at,
+      })),
+      dueDate: Array.from(prof)[0]?.due_date ?? null,
+    }
+  }),
+
+  /**
+   * The user's community footprint: channel_posts count, 12-week cadence and
+   * the most recent posts. Only id/created_at are known columns, so posts are
+   * listed by date (no content). Admin, audit-logged.
+   */
+  community: piiProcedure.input(z.object({ userId: z.string().uuid() })).query(async ({ ctx, input }) => {
+    const id = input.userId
+    const [summary, weekly, recent] = await Promise.all([
+      db.execute<{ total: number; last30: number; first_at: string | null; last_at: string | null }>(sql`
+        select count(*)::int as total,
+               (count(*) filter (where created_at >= now() - interval '30 days'))::int as last30,
+               ${iso(sql.raw("min(created_at)"))} as first_at,
+               ${iso(sql.raw("max(created_at)"))} as last_at
+        from channel_posts where author_id = ${id}
+      `),
+      db.execute<{ week: string; count: number }>(sql`
+        with weeks as (
+          select generate_series(date_trunc('week', now()) - interval '11 weeks', date_trunc('week', now()), interval '1 week') as w
+        )
+        select to_char(weeks.w, 'YYYY-MM-DD') as week,
+               (select count(*) from channel_posts p where p.author_id = ${id}
+                  and p.created_at >= weeks.w and p.created_at < weeks.w + interval '1 week')::int as count
+        from weeks order by weeks.w
+      `),
+      db.execute<{ id: string; at: string }>(sql`
+        select id, ${iso(sql.raw("created_at"))} as at from channel_posts
+        where author_id = ${id} order by created_at desc limit 10
+      `),
+    ])
+
+    await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "user.community.view", target: id })
+
+    const s = Array.from(summary)[0]
+    return {
+      total: Number(s?.total ?? 0),
+      last30: Number(s?.last30 ?? 0),
+      firstAt: s?.first_at ?? null,
+      lastAt: s?.last_at ?? null,
+      weekly: Array.from(weekly).map((w) => ({ week: w.week, count: Number(w.count) })),
+      recent: Array.from(recent).map((r) => ({ id: r.id, at: r.at })),
+    }
+  }),
+
+  /**
+   * Registered devices (push_tokens — never the token itself) plus the last
+   * pushes this user was a recipient of. Pushes are a center table; if that
+   * read fails the devices still render (pushes: null). Admin, audit-logged.
+   */
+  devices: piiProcedure.input(z.object({ userId: z.string().uuid() })).query(async ({ ctx, input }) => {
+    const id = input.userId
+    const tokens = await db.execute<{ id: string; platform: string | null; device_name: string | null; is_active: boolean | null; last_seen_at: string | null; created_at: string | null }>(sql`
+      select id, platform::text as platform, device_name::text as device_name, is_active,
+             ${iso(sql.raw("last_seen_at"))} as last_seen_at, ${iso(sql.raw("created_at"))} as created_at
+      from push_tokens where user_id = ${id}
+      order by is_active desc nulls last, last_seen_at desc nulls last
+    `)
+
+    let pushes: { id: string; title: string; category: string; status: string; receiptStatus: string | null; sentAt: string | null; deliveredAt: string | null; openedAt: string | null }[] | null = null
+    try {
+      const res = await db.execute<{ id: string; title: string; category: string; status: string; receipt_status: string | null; sent_at: string | null; delivered_at: string | null; opened_at: string | null }>(sql`
+        select r.id, c.title, c.category, r.status, r.receipt_status,
+               ${iso(sql.raw("r.created_at"))} as sent_at, ${iso(sql.raw("r.delivered_at"))} as delivered_at, ${iso(sql.raw("r.opened_at"))} as opened_at
+        from push_recipients r join push_campaigns c on c.id = r.campaign_id
+        where r.user_id = ${id}
+        order by r.created_at desc limit 10
+      `)
+      pushes = Array.from(res).map((p) => ({
+        id: p.id,
+        title: p.title,
+        category: p.category,
+        status: p.status,
+        receiptStatus: p.receipt_status,
+        sentAt: p.sent_at,
+        deliveredAt: p.delivered_at,
+        openedAt: p.opened_at,
+      }))
+    } catch (err) {
+      console.error("[users.devices] push history read failed", err)
+    }
+
+    await writeAudit({ actorEmail: ctx.userEmail ?? "unknown", action: "user.devices.view", target: id })
+
+    return {
+      devices: Array.from(tokens).map((d) => ({
+        id: d.id,
+        platform: d.platform,
+        deviceName: d.device_name,
+        isActive: Boolean(d.is_active),
+        lastSeenAt: d.last_seen_at,
+        createdAt: d.created_at,
+      })),
+      pushes,
+    }
+  }),
 
   /**
    * Change a user's subscription tier — a direct DB grant (comp/support tool),

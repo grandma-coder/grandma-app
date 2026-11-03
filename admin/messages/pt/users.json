@@ -137,6 +137,126 @@
       "renews": "renova em {date}",
       "ends": "termina em {date}"
     },
-    "prefs": "Configurações de notificação e privacidade (JSON)"
+    "prefs": "Configurações de notificação e privacidade (JSON)",
+    "tabs": {
+      "label": "Seções do usuário",
+      "overview": "Visão geral",
+      "activity": "Atividade",
+      "family": "Família",
+      "community": "Comunidade",
+      "devices": "Dispositivos & push",
+      "account": "Conta"
+    },
+    "header": {
+      "copyId": "Copiar ID",
+      "copied": "Copiado",
+      "memberSince": "membro desde",
+      "lastActive": "visto por último",
+      "country": "país",
+      "plan": "plano",
+      "phases": "fases",
+      "noCountry": "sem país",
+      "noPhases": "sem fase",
+      "today": "hoje",
+      "daysAgo": "há {n}d",
+      "never": "nunca",
+      "photoAlt": "Foto de {name}"
+    },
+    "state": {
+      "retry": "Tentar de novo",
+      "error": "Não deu para carregar {what}.",
+      "crashed": "Esta aba quebrou ao renderizar. As outras continuam funcionando.",
+      "what": {
+        "metrics": "a atividade",
+        "timeline": "a linha do tempo",
+        "family": "a família",
+        "community": "a comunidade",
+        "devices": "os dispositivos",
+        "pushes": "os envios de push",
+        "revenueCat": "o RevenueCat",
+        "more": "mais eventos"
+      }
+    },
+    "overview": {
+      "engagement": "Engajamento",
+      "notifications": "notificações",
+      "caregivers": "cuidadores",
+      "logs30d": "registros em 30d"
+    },
+    "timeline": {
+      "heading": "Linha do tempo",
+      "sub": "Tudo o que a pessoa fez no app, do mais recente ao mais antigo.",
+      "empty": "Nenhum evento ainda.",
+      "loadMore": "Carregar mais",
+      "loadingMore": "Carregando…",
+      "end": "Início da história",
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "count": "{n, plural, one {# evento} other {# eventos}}",
+      "kind": {
+        "child_log": "Registro de filho",
+        "cycle_log": "Registro de ciclo",
+        "pregnancy_log": "Registro de gestação",
+        "post": "Post na comunidade",
+        "child_added": "Filho adicionado",
+        "phase_started": "Começou uma fase",
+        "device_registered": "Dispositivo registrado",
+        "joined": "Criou a conta"
+      }
+    },
+    "family": {
+      "children": "Filhos",
+      "noChildren": "Nenhum filho cadastrado.",
+      "unnamed": "Sem nome",
+      "ageYears": "{n, plural, one {# ano} other {# anos}}",
+      "ageMonths": "{n, plural, one {# mês} other {# meses}}",
+      "newborn": "recém-nascido",
+      "noBirthDate": "sem data de nascimento",
+      "born": "nasceu em {date}",
+      "logs": "{n, plural, one {# registro} other {# registros}}",
+      "lastLog": "último registro em {date}",
+      "noLogs": "sem registros",
+      "pregnancy": "Gestação",
+      "noPregnancy": "Sem data prevista do parto.",
+      "dueDate": "Data prevista do parto",
+      "week": "Semana {n}",
+      "daysLeft": "{n, plural, one {falta # dia} other {faltam # dias}}",
+      "overdue": "{n, plural, one {# dia após a data} other {# dias após a data}}",
+      "pastDue": "A data prevista já passou."
+    },
+    "community": {
+      "posts": "Posts",
+      "last30": "Últimos 30 dias",
+      "comments": "Comentários",
+      "points": "Pontos",
+      "firstPost": "Primeiro post",
+      "lastPost": "Último post",
+      "weekly": "Posts por semana — últimas 12 semanas",
+      "recent": "Posts recentes",
+      "empty": "Nenhum post na comunidade ainda.",
+      "contentNote": "Só datas — o conteúdo dos posts fica na moderação."
+    },
+    "devices": {
+      "heading": "Dispositivos",
+      "empty": "Nenhum dispositivo registrado.",
+      "unknownDevice": "Dispositivo sem nome",
+      "active": "ativo",
+      "inactive": "inativo",
+      "lastSeen": "visto em {date}",
+      "registered": "registrado em {date}",
+      "pushes": "Últimos push recebidos",
+      "noPushes": "Nenhum push enviado para esta pessoa ainda.",
+      "status": {
+        "opened": "aberto",
+        "delivered": "entregue",
+        "failed": "falhou",
+        "sent": "enviado"
+      },
+      "inbox": "Notificações no app",
+      "prefs": "Preferências de notificação",
+      "noPrefs": "Sem preferências salvas.",
+      "on": "ligado",
+      "off": "desligado"
+    }
   }
 }
