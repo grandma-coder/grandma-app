@@ -122,14 +122,15 @@ export function Stagger({ delay = 0, children }: { delay?: number; children: Rea
 }
 
 /**
- * FadeIn — content that replaces a skeleton fades in (opacity only, 220ms) instead of popping.
- * No translate: the skeleton already held the space, so nothing should jump.
+ * FadeIn — content that replaces a skeleton rises a little (12pt) while it fades in, 260ms
+ * ease-out, instead of popping. Reduce Motion: fade only.
  */
-export function FadeIn({ children, style, duration = 220 }: { children: ReactNode; style?: StyleProp<ViewStyle>; duration?: number }) {
+export function FadeIn({ children, style, duration = 260 }: { children: ReactNode; style?: StyleProp<ViewStyle>; duration?: number }) {
   const reduce = useReduceMotion()
-  const opacity = useRef(new Animated.Value(0)).current
+  const progress = useRef(new Animated.Value(0)).current
   useEffect(() => {
-    Animated.timing(opacity, { toValue: 1, duration: reduce ? 0 : duration, easing: Easing.out(Easing.quad), useNativeDriver: true }).start()
-  }, [opacity, reduce, duration])
-  return <Animated.View style={[{ opacity }, style]}>{children}</Animated.View>
+    Animated.timing(progress, { toValue: 1, duration: reduce ? 0 : duration, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start()
+  }, [progress, reduce, duration])
+  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [reduce ? 0 : 12, 0] })
+  return <Animated.View style={[{ opacity: progress, transform: [{ translateY }] }, style]}>{children}</Animated.View>
 }

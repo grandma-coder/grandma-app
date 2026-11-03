@@ -35,7 +35,7 @@ export function AfterTransition({ children, placeholder }: { children: ReactNode
   const opacity = useRef(new Animated.Value(0)).current
   useEffect(() => {
     if (!ready) return
-    Animated.timing(opacity, { toValue: 1, duration: reduce ? 0 : 200, easing: Easing.out(Easing.quad), useNativeDriver: true }).start()
+    Animated.timing(opacity, { toValue: 1, duration: reduce ? 0 : 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start()
   }, [ready, reduce, opacity])
 
   if (!ready) {
@@ -49,7 +49,8 @@ export function AfterTransition({ children, placeholder }: { children: ReactNode
       )
     )
   }
-  return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>
+  const translateY = opacity.interpolate({ inputRange: [0, 1], outputRange: [reduce ? 0 : 14, 0] })
+  return <Animated.View style={{ flex: 1, opacity, transform: [{ translateY }] }}>{children}</Animated.View>
 }
 
 const styles = StyleSheet.create({

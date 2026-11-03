@@ -824,11 +824,12 @@ export default function TabLayout() {
   return (
     <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
       <Tabs
-        // Light look: a short crossfade between tabs instead of a hard cut. Diffuse keeps the cut.
+        // Light look: tabs shift sideways while they cross-fade (more motion than a plain fade, no
+        // hard cut). Diffuse keeps the cut.
         screenOptions={{
           headerShown: false,
-          animation: tabsDiffuse ? 'none' : 'fade',
-          transitionSpec: { animation: 'timing', config: { duration: 180, easing: Easing.out(Easing.quad) } },
+          animation: tabsDiffuse ? 'none' : 'shift',
+          transitionSpec: { animation: 'timing', config: { duration: 240, easing: Easing.out(Easing.cubic) } },
         }}
         tabBar={(props) => <CollageStripTabBar {...props} />}
       >
