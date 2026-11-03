@@ -21,6 +21,7 @@ import TipCard from '../../components/pillar/TipCard'
 import PillarMetrics from '../../components/pillar/PillarMetrics'
 import { PillButton } from '../../components/ui/PillButton'
 import { ScribbleUnderline } from '../../components/ui/ScribbleUnderline'
+import { InkBackButton } from '../../components/ui/InkBackButton'
 import { getPillarSticker } from '../../lib/pillarStickerMap'
 import { usePillarTipBuckets } from '../../lib/pillarAdaptive'
 import { useTranslation } from '../../lib/i18n'
@@ -89,20 +90,24 @@ export default function PillarDetail() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
-          onPress={() => router.back()}
-          style={[styles.back, { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.hairline : colors.border }]}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-        >
-          <Ionicons name="arrow-back" size={22} color={ink} />
-        </Pressable>
+        {diffuse ? (
+          <Pressable
+            onPress={() => router.back()}
+            style={[styles.back, { backgroundColor: 'transparent', borderColor: dt.colors.hairline }]}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <Ionicons name="arrow-back" size={22} color={ink} />
+          </Pressable>
+        ) : (
+          <InkBackButton ink={colors.text} paper={colors.surface} />
+        )}
 
         <View style={styles.heroWrap}>
           <View
             style={[
               styles.stickerHero,
-              { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.line2 : colors.border, borderRadius: radius.full, borderWidth: diffuse ? 1 : 1.5 },
+              { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.line2 : colors.text, borderRadius: radius.full, borderWidth: diffuse ? 1 : 1.5 },
             ]}
           >
             {Sticker ? <Sticker size={88} /> : <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 56 }}>{pillar.icon}</Text>}
@@ -110,7 +115,7 @@ export default function PillarDetail() {
         </View>
 
         <Text style={[styles.name, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }]}>{pillar.name}</Text>
-        <Text style={[styles.subtitle, { color: diffuse ? dt.colors.ink3 : stickers.coral, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
+        <Text style={[styles.subtitle, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.italic : font.italic }]}>
           {pillar.description}
         </Text>
 
@@ -140,7 +145,7 @@ export default function PillarDetail() {
               <Text
                 style={[
                   styles.contextLabel,
-                  { color: stickers.coral, fontFamily: font.italic },
+                  { color: colors.textMuted, fontFamily: font.italic },
                 ]}
               >
                 {contextLabel}
@@ -153,7 +158,7 @@ export default function PillarDetail() {
                 text={tip.text}
                 index={index + 1}
                 isLast={index === forYou.length - 1}
-                accent={stickers.coral}
+                accent={colors.textMuted}
                 translationKey={`pillar_${pillar.id}_tip_${slugifyLabel(tip.label)}`}
               />
             ))}
@@ -174,7 +179,7 @@ export default function PillarDetail() {
             text={tip.text}
             index={index + 1}
             isLast={index === general.length - 1}
-            accent={stickers.coral}
+            accent={colors.textMuted}
             translationKey={`pillar_${pillar.id}_tip_${slugifyLabel(tip.label)}`}
           />
         ))}
