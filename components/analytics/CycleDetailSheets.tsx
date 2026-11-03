@@ -905,7 +905,7 @@ const fertStyles = StyleSheet.create({
 })
 
 const MOOD_STICKER: Record<MoodId, SiteStickerName> = {
-  great: 'face4', energetic: 'star', good: 'face3', okay: 'face2', low: 'face1',
+  great: 'face4', energetic: 'star', good: 'face3', okay: 'face2', down: 'face1', low: 'face1',
 }
 
 const MOOD_LABELS: Record<MoodId, string> = {
@@ -913,6 +913,7 @@ const MOOD_LABELS: Record<MoodId, string> = {
   energetic: 'Energetic',
   good: 'Good',
   okay: 'Okay',
+  down: 'Down',
   low: 'Low',
 }
 

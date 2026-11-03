@@ -383,7 +383,9 @@ export function useFertileWindow() {
 
 // ─── Mood Stats ───────────────────────────────────────────────────────────
 
-export type MoodId = 'great' | 'energetic' | 'good' | 'okay' | 'low'
+// 'down' is written by the cycle MoodForm; it was missing here, so those entries were dropped
+// from the average, the distribution and the recent list.
+export type MoodId = 'great' | 'energetic' | 'good' | 'okay' | 'down' | 'low'
 
 export interface MoodStats {
   /** 0–5 scale. Display as `*2` for "out of 10" if UI needs it. */
@@ -397,9 +399,10 @@ const MOOD_SCORES: Record<MoodId, number> = {
   energetic: 5,
   good: 4,
   okay: 3,
+  down: 2,
   low: 2,
 }
-const MOOD_ORDER: MoodId[] = ['great', 'energetic', 'good', 'okay', 'low']
+const MOOD_ORDER: MoodId[] = ['great', 'energetic', 'good', 'okay', 'down', 'low']
 
 export function useMoodStats() {
   const { data: logs, ...rest } = useCycleLogs()

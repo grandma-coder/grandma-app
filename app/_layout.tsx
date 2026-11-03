@@ -320,7 +320,7 @@ export default function RootLayout() {
           // instead of falling back to week 1 indefinitely.
           supabase
             .from('profiles')
-            .select('user_role, due_date, menopause_stage')
+            .select('user_role, due_date, menopause_stage, last_period_date')
             .eq('id', uid)
             .single(),
         ),
@@ -384,6 +384,10 @@ export default function RootLayout() {
       // marker (lib/modeReadiness), so a fresh install must not lose it.
       if (profile?.menopause_stage && !useMenopauseStore.getState().stage) {
         useMenopauseStore.getState().setStage(profile.menopause_stage)
+      }
+      // …and the last period date, which drives the months-since counter and the 12-month offer.
+      if (profile?.last_period_date && !useMenopauseStore.getState().lastPeriodDate) {
+        useMenopauseStore.getState().setLastPeriodDate(profile.last_period_date)
       }
 
       // ─── Behaviors (restore enrolled list from server if local is empty) ─
