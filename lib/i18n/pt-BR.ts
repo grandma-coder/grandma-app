@@ -5584,4 +5584,11 @@ export const ptBR: TranslationKeys = {
   sw2_kh_done: "Concluído",
   sw2_kh_wkN: "Sem {{n}}",
   kidsTile_logsUnit: "registros",
+  cc_perm_view: "Ver",
+  cc_perm_log_activity: "Registrar",
+  cc_perm_chat: "Chat",
+  cc_perm_edit_child: "Editar perfil",
+  cc_perm_emergency: "Info médica",
+  cc_status_pending: "Pendente",
+  cc_status_accepted: "Ativo",
 }

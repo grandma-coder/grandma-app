@@ -5581,4 +5581,11 @@ export const ko: TranslationKeys = {
   sw2_kh_done: "완료",
   sw2_kh_wkN: "{{n}}주",
   kidsTile_logsUnit: "건",
+  cc_perm_view: "보기",
+  cc_perm_log_activity: "기록",
+  cc_perm_chat: "채팅",
+  cc_perm_edit_child: "프로필 편집",
+  cc_perm_emergency: "의료 정보",
+  cc_status_pending: "대기 중",
+  cc_status_accepted: "활성",
 }

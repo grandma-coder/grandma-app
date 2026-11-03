@@ -40,6 +40,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation, t as translate } from '../../lib/i18n'
 import { appIntlLocale } from '../../lib/cycleLogForms'
 import { Skeleton, SkeletonRing } from '../ui/Skeleton'
+import { FadeIn } from '../ui/Motion'
 
 function getMicroLabel(): string {
   const d = new Date()
@@ -258,6 +259,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
           />
         )}
         {show('journey_ring') && !ringSkeleton && !noPeriodYet && !(daysLate > 0) && (
+        <FadeIn>
         <CycleJourneyRingFull
           cycleConfig={cycleConfig}
           onSelectedDateChange={handleRingDate}
@@ -266,6 +268,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
           onDatePress={readOnly ? undefined : handleDatePress}
           freezeAutoReturn={monthOpen || cardLogging || launcherOpen || logSheetType !== null || logConfirmVisible}
         />
+        </FadeIn>
         )}
 
         {/* Quick-log card — sits DIRECTLY under the strip so tap-a-date → log is

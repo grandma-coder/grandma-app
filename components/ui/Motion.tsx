@@ -120,3 +120,16 @@ export function Stagger({ delay = 0, children }: { delay?: number; children: Rea
   let i = 0
   return <>{Children.map(children, (child) => (child == null || child === false ? child : <FadeUp index={i++} delay={delay}>{child}</FadeUp>))}</>
 }
+
+/**
+ * FadeIn — content that replaces a skeleton fades in (opacity only, 220ms) instead of popping.
+ * No translate: the skeleton already held the space, so nothing should jump.
+ */
+export function FadeIn({ children, style, duration = 220 }: { children: ReactNode; style?: StyleProp<ViewStyle>; duration?: number }) {
+  const reduce = useReduceMotion()
+  const opacity = useRef(new Animated.Value(0)).current
+  useEffect(() => {
+    Animated.timing(opacity, { toValue: 1, duration: reduce ? 0 : duration, easing: Easing.out(Easing.quad), useNativeDriver: true }).start()
+  }, [opacity, reduce, duration])
+  return <Animated.View style={[{ opacity }, style]}>{children}</Animated.View>
+}

@@ -17,7 +17,7 @@ import { useTheme, stickers } from '../../../constants/theme'
 import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { HandDrawnPill } from '../../ui/HandDrawn'
-import { FadeUp, useIdleSway } from '../../ui/Motion'
+import { FadeUp, useIdleSway, FadeIn } from '../../ui/Motion'
 import { Skeleton } from '../../ui/Skeleton'
 
 export interface KidsHeroTilesProps {
@@ -204,7 +204,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
         <Tile index={0} flex={1.15} tone={stickers.blueSoft} sticker="moon"
           eyebrow={multi ? t('kidsTile_sleepAvg') : t('kidsTile_sleepNight')}
           onPress={loading ? undefined : !hasSleep && p.onLogSleep ? p.onLogSleep : p.onPressSleep}>
-          {loading ? <TileValueSkeleton /> : <>
+          {loading ? <TileValueSkeleton /> : <FadeIn>
           {hasSleep ? (
             <Text style={styles.numRow}>
               <CountUp value={sleepVal} decimals={1} style={numStyle} />
@@ -215,13 +215,13 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
             {sleepGoal > 0 ? t('kidsTile_ofNight', { h: Math.round(sleepGoal * 10) / 10 }) : t('kids_home_tile_no_goal')}
           </Text>
           <WaveMeter pct={sleepGoal > 0 ? sleepVal / sleepGoal : 0} color={stickers.blue} ink={ink} />
-          </>}
+          </FadeIn>}
         </Tile>
 
         <Tile index={1} flex={1} tone={stickers.yellowSoft} sticker={hasMood ? MOOD_STICKER[p.dominantMood] ?? 'face3' : 'face3'}
           eyebrow={t('kids_home_tile_mood')}
           onPress={loading ? undefined : !hasMood && p.onLogMood ? p.onLogMood : p.onPressMood}>
-          {loading ? <TileValueSkeleton /> : <>
+          {loading ? <TileValueSkeleton /> : <FadeIn>
           <Text style={hasMood ? [styles.moodWord, { color: ink, fontFamily: font.display }] : emptyStyle} numberOfLines={hasMood ? 1 : 2}>
             {hasMood ? (MOOD_LABEL_KEY[p.dominantMood] ? t(MOOD_LABEL_KEY[p.dominantMood]) : t('kp_kh_moodContent')) : t('kids_home_tile_mood_empty')}
           </Text>
@@ -236,7 +236,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
             })}
           </View>
           <Text style={subStyle}>{hasMood ? t('kidsTile_moodLogs', { n: moodTotal }) : t('kids_home_tile_tap_to_log')}</Text>
-          </>}
+          </FadeIn>}
         </Tile>
       </View>
 
@@ -244,7 +244,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
         <Tile index={2} flex={1} tone={stickers.pinkSoft} sticker={liquid ? 'bottle' : 'avocado'}
           eyebrow={multi ? (liquid ? t('kidsTile_feedAvg') : t('kidsTile_calAvg')) : (liquid ? t('kids_home_tile_feedings') : t('kids_home_tile_calories'))}
           onPress={loading ? undefined : !hasFood && p.onLogFeeding ? p.onLogFeeding : p.onPressCalories}>
-          {loading ? <TileValueSkeleton /> : <>
+          {loading ? <TileValueSkeleton /> : <FadeIn>
           {hasFood ? (
             <Text style={styles.numRow}>
               <CountUp value={foodVal} decimals={liquid && multi ? 1 : 0} style={numStyle} />
@@ -255,13 +255,13 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
             {foodGoal > 0 ? t('kidsTile_ofDay', { n: Math.round(foodGoal).toLocaleString() }) : t('kids_home_tile_no_goal')}
           </Text>
           <WaveMeter pct={foodGoal > 0 ? foodVal / foodGoal : 0} color="#EE7B6D" ink={ink} />
-          </>}
+          </FadeIn>}
         </Tile>
 
         <Tile index={3} flex={1.15} tone={stickers.greenSoft} sticker="shoe"
           eyebrow={t('kids_home_tile_activities')}
           onPress={loading ? undefined : !hasAct && p.onLogActivity ? p.onLogActivity : p.onPressActivity}>
-          {loading ? <TileValueSkeleton /> : <>
+          {loading ? <TileValueSkeleton /> : <FadeIn>
           {hasAct ? (
             <Text style={styles.numRow}>
               <CountUp value={p.activityCount} style={numStyle} />
@@ -281,7 +281,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           ) : (
             <WaveMeter pct={p.activityActiveDays / days} color="#8BB356" ink={ink} />
           )}
-          </>}
+          </FadeIn>}
         </Tile>
       </View>
     </View>

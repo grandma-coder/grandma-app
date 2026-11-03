@@ -5581,4 +5581,11 @@ export const hi: TranslationKeys = {
   sw2_kh_done: "पूरा",
   sw2_kh_wkN: "सप्ताह {{n}}",
   kidsTile_logsUnit: "रिकॉर्ड",
+  cc_perm_view: "देखना",
+  cc_perm_log_activity: "दर्ज करना",
+  cc_perm_chat: "चैट",
+  cc_perm_edit_child: "प्रोफ़ाइल बदलना",
+  cc_perm_emergency: "चिकित्सा जानकारी",
+  cc_status_pending: "लंबित",
+  cc_status_accepted: "सक्रिय",
 }

@@ -141,6 +141,7 @@ import { healthLogText } from '../../lib/kidsHealthLogText'
 import { QuietPill } from '../profile/SiteSettingsKit'
 import { sleepQualityLabel } from '../../lib/sleepQuality'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
+import { Skeleton } from '../ui/Skeleton'
 
 // ─── Site look (light) helpers ─────────────────────────────────────────────
 // Calm ink outlines, card-less sticker rows, ink text. Used only by the light
@@ -2694,10 +2695,16 @@ export function KidsCalendar() {
       <>
         <View style={styles.timelineHeader}>
           <SiteTitle size={28}>{dayLabel}</SiteTitle>
-          <SiteEyebrow style={{ marginTop: 6 }}>{summary}</SiteEyebrow>
+          {/* While the day's logs load, say nothing rather than 'Nothing planned'. */}
+          <SiteEyebrow style={{ marginTop: 6 }}>{logsReady ? summary : ' '}</SiteEyebrow>
         </View>
 
-        {rows.length === 0 ? (
+        {!logsReady && rows.length === 0 ? (
+          <View style={{ gap: 12, paddingTop: 4 }}>
+            <Skeleton height={56} radius={18} />
+            <Skeleton height={56} radius={18} />
+          </View>
+        ) : rows.length === 0 ? (
           <FadeUp style={styles.siteEmpty}>
             <SiteSticker name="cal" size={64} />
             <Text style={{ fontFamily: font.bodyBold, fontSize: 16, color: colors.text, textAlign: 'center', marginTop: 12 }}>

@@ -5881,4 +5881,11 @@ export interface TranslationKeys {
   sw2_kh_done: string
   sw2_kh_wkN: string
   kidsTile_logsUnit: string
+  cc_perm_view: string
+  cc_perm_log_activity: string
+  cc_perm_chat: string
+  cc_perm_edit_child: string
+  cc_perm_emergency: string
+  cc_status_pending: string
+  cc_status_accepted: string
 }

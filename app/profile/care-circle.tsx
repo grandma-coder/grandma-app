@@ -58,7 +58,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { SubscriptionTier, effectiveSeatLimit } from '../../lib/revenue'
-import { usePaywallEnabled } from '../../store/useFeatureFlags'
+import { usePaywallEnabled, useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import { SignedImage, PHOTO_BUCKETS } from '../../lib/photoSigning'
 import { toDateStr } from '../../lib/cycleLogic'
 import { LogSheet, SheetFooterAction } from '../../components/calendar/LogSheet'
@@ -85,7 +85,7 @@ import {
   Smiley as SmileySticker,
   Bear as BearSticker,
 } from '../../components/ui/Stickers'
-import { useTranslation, t as tNow } from '../../lib/i18n'
+import { useTranslation, t as tNow, type TranslationKey } from '../../lib/i18n'
 import type { CaregiverPermissions, CaregiverCapability, CaregiverRole } from '../../types'
 import { buildPermissionsObject } from '../../lib/caregiverPermissions'
 import { useFeatureFlags } from '../../store/useFeatureFlags'
@@ -494,8 +494,14 @@ const photoStyles = StyleSheet.create({
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
+const CC_PERM_KEY: Record<string, TranslationKey | undefined> = {
+  view: 'cc_perm_view', log_activity: 'cc_perm_log_activity', chat: 'cc_perm_chat',
+  edit_child: 'cc_perm_edit_child', emergency: 'cc_perm_emergency',
+}
+
 export default function CareCircleScreen() {
   const { colors, font, stickers, isDark, radius } = useTheme()
+  const chatEnabled = useGrandmaChatEnabled()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
@@ -970,7 +976,7 @@ export default function CareCircleScreen() {
                           <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{roleLabel}</Text>
                         </View>
                         <View style={[styles.siteTag, { borderColor: colors.text, backgroundColor: statusTone }]}>
-                          <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{isPaused ? t('app_cc_paused') : m.status}</Text>
+                          <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{isPaused ? t('app_cc_paused') : m.status === 'pending' ? t('cc_status_pending') : m.status === 'accepted' ? t('cc_status_accepted') : m.status}</Text>
                         </View>
                       </View>
                     </View>
@@ -984,7 +990,11 @@ export default function CareCircleScreen() {
                   )}
                   {permKeys.length > 0 && (
                     <Text style={[styles.siteEyebrow, { color: colors.textMuted }]}>
-                      {permKeys.map((p) => p.replace('_', ' ')).join(' · ')}
+                      {permKeys
+                        // Chat is hidden while grandma_chat is off; raw keys read like code ('edit child').
+                        .filter((p) => p !== 'chat' || chatEnabled)
+                        .map((p) => (CC_PERM_KEY[p] ? t(CC_PERM_KEY[p]!) : p.replace('_', ' ')))
+                        .join(' · ')}
                     </Text>
                   )}
 
@@ -1105,7 +1115,7 @@ export default function CareCircleScreen() {
                               : stickers.greenInk,
                             fontFamily: font.bodySemiBold,
                           }]}>
-                            {isPaused ? t('app_cc_paused') : m.status}
+                            {isPaused ? t('app_cc_paused') : m.status === 'pending' ? t('cc_status_pending') : m.status === 'accepted' ? t('cc_status_accepted') : m.status}
                           </Text>
                         </View>
                       )}

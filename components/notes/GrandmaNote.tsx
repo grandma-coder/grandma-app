@@ -19,6 +19,7 @@ import { QuietPill } from '../profile/SiteSettingsKit'
 import { Skeleton, SkeletonLines, SkeletonRow } from '../ui/Skeleton'
 import type { GrandmaLetter, GrandmaNoteItem } from '../../lib/grandmaNotes/types'
 import { dateLoc } from '../../lib/kpLocale'
+import { FadeIn } from '../ui/Motion'
 
 const MONO = 'SpaceMono_400Regular'
 const HAIR = StyleSheet.hairlineWidth * 2
@@ -121,7 +122,7 @@ export function GrandmaNote({ letter, loading, range, name, onNotePress, onActio
   const suggestion = letter.suggestion
 
   return (
-    <View style={[styles.wrap, style]}>
+    <FadeIn style={[styles.wrap, style]}>
       <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{eyebrow}</Text>
       <Text style={{ marginTop: 8, fontFamily: font.display, fontSize: 26, lineHeight: 32, color: colors.text }}>
         {who ? t('gn_dear', { name: who }) : t('gn_dear_you')}
@@ -152,7 +153,7 @@ export function GrandmaNote({ letter, loading, range, name, onNotePress, onActio
           ) : null}
         </View>
       ) : null}
-    </View>
+    </FadeIn>
   )
 }
 

@@ -5886,4 +5886,11 @@ export const en: TranslationKeys = {
   sw2_kh_done: "Done",
   sw2_kh_wkN: "Wk {{n}}",
   kidsTile_logsUnit: "logs",
+  cc_perm_view: "View",
+  cc_perm_log_activity: "Log",
+  cc_perm_chat: "Chat",
+  cc_perm_edit_child: "Edit profile",
+  cc_perm_emergency: "Medical info",
+  cc_status_pending: "Pending",
+  cc_status_accepted: "Active",
 }

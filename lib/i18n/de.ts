@@ -5581,4 +5581,11 @@ export const de: TranslationKeys = {
   sw2_kh_done: "Fertig",
   sw2_kh_wkN: "Wo. {{n}}",
   kidsTile_logsUnit: "Einträge",
+  cc_perm_view: "Ansehen",
+  cc_perm_log_activity: "Eintragen",
+  cc_perm_chat: "Chat",
+  cc_perm_edit_child: "Profil bearbeiten",
+  cc_perm_emergency: "Medizinische Infos",
+  cc_status_pending: "Ausstehend",
+  cc_status_accepted: "Aktiv",
 }

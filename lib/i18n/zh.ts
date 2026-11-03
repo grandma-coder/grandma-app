@@ -5581,4 +5581,11 @@ export const zh: TranslationKeys = {
   sw2_kh_done: "完成",
   sw2_kh_wkN: "第{{n}}周",
   kidsTile_logsUnit: "条记录",
+  cc_perm_view: "查看",
+  cc_perm_log_activity: "记录",
+  cc_perm_chat: "聊天",
+  cc_perm_edit_child: "编辑资料",
+  cc_perm_emergency: "医疗信息",
+  cc_status_pending: "待接受",
+  cc_status_accepted: "已加入",
 }

@@ -5581,4 +5581,11 @@ export const ja: TranslationKeys = {
   sw2_kh_done: "完了",
   sw2_kh_wkN: "{{n}}週",
   kidsTile_logsUnit: "件",
+  cc_perm_view: "閲覧",
+  cc_perm_log_activity: "記録",
+  cc_perm_chat: "チャット",
+  cc_perm_edit_child: "プロフィール編集",
+  cc_perm_emergency: "医療情報",
+  cc_status_pending: "保留中",
+  cc_status_accepted: "有効",
 }
