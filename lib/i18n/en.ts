@@ -4132,4 +4132,12 @@ export const en: TranslationKeys = {
   log_futureDateError: "You can only log today or past days.",
   scan_limitReachedTitle: "Free scans used",
   scan_limitReachedBody: "You've used the free scans on this account. You can still log everything by hand.",
+  childReport_ageNewborn: "Newborn",
+  childReport_ageMonths: "{{m}} months",
+  childReport_ageYears: "{{y}} years",
+  childReport_ageYearsMonths: "{{y}} years, {{m}} months",
+  childReport_feedingMilk: "About {{n}} milk feeds per day on the days logged (age-typical target ≈ {{target}}).",
+  childReport_feedingMeals: "About {{n}} meals per day on the days logged (age-typical target ≈ {{target}}).",
+  childReport_feedingBoth: "About {{n}} milk feeds and meals per day on the days logged (age-typical target ≈ {{target}}).",
+  childReport_sleepSummary: "Averaging {{h}} hours of sleep per day over the last two weeks.",
 }

@@ -3845,4 +3845,12 @@ export const tr: TranslationKeys = {
   log_futureDateError: "Yalnızca bugünü ya da geçmiş günleri kaydedebilirsin.",
   scan_limitReachedTitle: "Ücretsiz taramalar bitti",
   scan_limitReachedBody: "Bu hesabın ücretsiz taramalarını kullandın. Her şeyi yine elle kaydedebilirsin.",
+  childReport_ageNewborn: "Yenidoğan",
+  childReport_ageMonths: "{{m}} ay",
+  childReport_ageYears: "{{y}} yaş",
+  childReport_ageYearsMonths: "{{y}} yaş {{m}} ay",
+  childReport_feedingMilk: "Kaydedilen günlerde günde yaklaşık {{n}} süt öğünü (yaşa göre hedef ≈ {{target}}).",
+  childReport_feedingMeals: "Kaydedilen günlerde günde yaklaşık {{n}} öğün (yaşa göre hedef ≈ {{target}}).",
+  childReport_feedingBoth: "Kaydedilen günlerde günde yaklaşık {{n}} süt ve yemek öğünü (yaşa göre hedef ≈ {{target}}).",
+  childReport_sleepSummary: "Son iki haftada günde ortalama {{h}} saat uyku.",
 }

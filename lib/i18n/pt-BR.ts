@@ -3845,4 +3845,12 @@ export const ptBR: TranslationKeys = {
   log_futureDateError: "Só dá para registrar hoje ou dias passados.",
   scan_limitReachedTitle: "Scans gratuitos usados",
   scan_limitReachedBody: "Você usou os scans gratuitos desta conta. Ainda dá para registrar tudo à mão.",
+  childReport_ageNewborn: "Recém-nascido",
+  childReport_ageMonths: "{{m}} meses",
+  childReport_ageYears: "{{y}} anos",
+  childReport_ageYearsMonths: "{{y}} anos e {{m}} meses",
+  childReport_feedingMilk: "Cerca de {{n}} mamadas por dia nos dias registrados (referência para a idade ≈ {{target}}).",
+  childReport_feedingMeals: "Cerca de {{n}} refeições por dia nos dias registrados (referência para a idade ≈ {{target}}).",
+  childReport_feedingBoth: "Cerca de {{n}} mamadas e refeições por dia nos dias registrados (referência para a idade ≈ {{target}}).",
+  childReport_sleepSummary: "Média de {{h}} horas de sono por dia nas últimas duas semanas.",
 }

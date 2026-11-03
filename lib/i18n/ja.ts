@@ -3845,4 +3845,12 @@ export const ja: TranslationKeys = {
   log_futureDateError: "記録できるのは今日か過去の日だけです。",
   scan_limitReachedTitle: "無料スキャンを使い切りました",
   scan_limitReachedBody: "このアカウントの無料スキャンを使い切りました。手入力ならすべて記録できます。",
+  childReport_ageNewborn: "新生児",
+  childReport_ageMonths: "{{m}}か月",
+  childReport_ageYears: "{{y}}歳",
+  childReport_ageYearsMonths: "{{y}}歳{{m}}か月",
+  childReport_feedingMilk: "記録した日は1日約{{n}}回の授乳(年齢の目安 ≈ {{target}})。",
+  childReport_feedingMeals: "記録した日は1日約{{n}}回の食事(年齢の目安 ≈ {{target}})。",
+  childReport_feedingBoth: "記録した日は1日約{{n}}回の授乳と食事(年齢の目安 ≈ {{target}})。",
+  childReport_sleepSummary: "直近2週間の睡眠は1日平均{{h}}時間。",
 }

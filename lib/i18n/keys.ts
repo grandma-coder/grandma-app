@@ -4127,4 +4127,12 @@ export interface TranslationKeys {
   log_futureDateError: string
   scan_limitReachedTitle: string
   scan_limitReachedBody: string
+  childReport_ageNewborn: string
+  childReport_ageMonths: string
+  childReport_ageYears: string
+  childReport_ageYearsMonths: string
+  childReport_feedingMilk: string
+  childReport_feedingMeals: string
+  childReport_feedingBoth: string
+  childReport_sleepSummary: string
 }

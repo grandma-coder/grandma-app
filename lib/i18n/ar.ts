@@ -3845,4 +3845,12 @@ export const ar: TranslationKeys = {
   log_futureDateError: "يمكنك التسجيل لليوم أو للأيام الماضية فقط.",
   scan_limitReachedTitle: "استُخدمت عمليات المسح المجانية",
   scan_limitReachedBody: "استخدمتِ عمليات المسح المجانية لهذا الحساب. لا يزال بإمكانك تسجيل كل شيء يدويًا.",
+  childReport_ageNewborn: "حديث الولادة",
+  childReport_ageMonths: "{{m}} شهرًا",
+  childReport_ageYears: "{{y}} سنوات",
+  childReport_ageYearsMonths: "{{y}} سنوات و{{m}} شهرًا",
+  childReport_feedingMilk: "نحو {{n}} رضعات يوميًا في الأيام المسجلة (المرجع للعمر ≈ {{target}}).",
+  childReport_feedingMeals: "نحو {{n}} وجبات يوميًا في الأيام المسجلة (المرجع للعمر ≈ {{target}}).",
+  childReport_feedingBoth: "نحو {{n}} رضعات ووجبات يوميًا في الأيام المسجلة (المرجع للعمر ≈ {{target}}).",
+  childReport_sleepSummary: "متوسط {{h}} ساعات نوم يوميًا خلال الأسبوعين الماضيين.",
 }

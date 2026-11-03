@@ -3845,4 +3845,12 @@ export const fr: TranslationKeys = {
   log_futureDateError: "Vous ne pouvez noter qu'aujourd'hui ou des jours passés.",
   scan_limitReachedTitle: "Scans gratuits utilisés",
   scan_limitReachedBody: "Vous avez utilisé les scans gratuits de ce compte. Vous pouvez toujours tout noter à la main.",
+  childReport_ageNewborn: "Nouveau-né",
+  childReport_ageMonths: "{{m}} mois",
+  childReport_ageYears: "{{y}} ans",
+  childReport_ageYearsMonths: "{{y}} ans et {{m}} mois",
+  childReport_feedingMilk: "Environ {{n}} tétées ou biberons par jour les jours notés (repère pour l'âge ≈ {{target}}).",
+  childReport_feedingMeals: "Environ {{n}} repas par jour les jours notés (repère pour l'âge ≈ {{target}}).",
+  childReport_feedingBoth: "Environ {{n}} tétées et repas par jour les jours notés (repère pour l'âge ≈ {{target}}).",
+  childReport_sleepSummary: "En moyenne {{h}} heures de sommeil par jour sur les deux dernières semaines.",
 }

@@ -3845,4 +3845,12 @@ export const ko: TranslationKeys = {
   log_futureDateError: "오늘이나 지난 날짜만 기록할 수 있어요.",
   scan_limitReachedTitle: "무료 스캔을 모두 사용했어요",
   scan_limitReachedBody: "이 계정의 무료 스캔을 모두 사용했어요. 직접 입력으로는 계속 기록할 수 있어요.",
+  childReport_ageNewborn: "신생아",
+  childReport_ageMonths: "{{m}}개월",
+  childReport_ageYears: "{{y}}세",
+  childReport_ageYearsMonths: "{{y}}세 {{m}}개월",
+  childReport_feedingMilk: "기록한 날 기준 하루 약 {{n}}회 수유 (연령 기준 ≈ {{target}}).",
+  childReport_feedingMeals: "기록한 날 기준 하루 약 {{n}}끼 (연령 기준 ≈ {{target}}).",
+  childReport_feedingBoth: "기록한 날 기준 하루 약 {{n}}회 수유와 식사 (연령 기준 ≈ {{target}}).",
+  childReport_sleepSummary: "최근 2주간 하루 평균 {{h}}시간 수면.",
 }

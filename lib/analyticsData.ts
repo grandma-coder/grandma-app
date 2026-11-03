@@ -1358,10 +1358,12 @@ export function usePregnancyBirthReadiness(userId: string) {
           .select('log_type, value')
           .eq('user_id', userId)
           .in('log_type', ['birth_prep', 'nesting']),
+        // Pregnancy exams only — counting every exam ever (pre-pregnancy, kids) inflated this.
         supabase
           .from('exams')
           .select('id')
-          .eq('user_id', userId),
+          .eq('user_id', userId)
+          .eq('behavior', 'pregnancy'),
         supabase
           .from('emergency_contacts')
           .select('name, phone, is_primary')

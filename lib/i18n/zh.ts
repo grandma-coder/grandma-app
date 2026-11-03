@@ -3845,4 +3845,12 @@ export const zh: TranslationKeys = {
   log_futureDateError: "只能记录今天或过去的日期。",
   scan_limitReachedTitle: "免费扫描次数已用完",
   scan_limitReachedBody: "此账户的免费扫描已用完。你仍可以手动记录所有内容。",
+  childReport_ageNewborn: "新生儿",
+  childReport_ageMonths: "{{m}} 个月",
+  childReport_ageYears: "{{y}} 岁",
+  childReport_ageYearsMonths: "{{y}} 岁 {{m}} 个月",
+  childReport_feedingMilk: "记录的日子里每天约 {{n}} 次喂奶（该年龄参考 ≈ {{target}}）。",
+  childReport_feedingMeals: "记录的日子里每天约 {{n}} 餐（该年龄参考 ≈ {{target}}）。",
+  childReport_feedingBoth: "记录的日子里每天约 {{n}} 次喂奶和进餐（该年龄参考 ≈ {{target}}）。",
+  childReport_sleepSummary: "过去两周平均每天睡眠 {{h}} 小时。",
 }

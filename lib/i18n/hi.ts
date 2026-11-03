@@ -3845,4 +3845,12 @@ export const hi: TranslationKeys = {
   log_futureDateError: "आप सिर्फ़ आज या बीते दिनों का ही रिकॉर्ड दर्ज कर सकती हैं।",
   scan_limitReachedTitle: "मुफ़्त स्कैन पूरे हो गए",
   scan_limitReachedBody: "आपने इस खाते के मुफ़्त स्कैन इस्तेमाल कर लिए हैं। आप अब भी सब कुछ हाथ से दर्ज कर सकती हैं।",
+  childReport_ageNewborn: "नवजात",
+  childReport_ageMonths: "{{m}} महीने",
+  childReport_ageYears: "{{y}} साल",
+  childReport_ageYearsMonths: "{{y}} साल, {{m}} महीने",
+  childReport_feedingMilk: "दर्ज किए गए दिनों में रोज़ लगभग {{n}} बार दूध (उम्र के हिसाब से लक्ष्य ≈ {{target}})।",
+  childReport_feedingMeals: "दर्ज किए गए दिनों में रोज़ लगभग {{n}} भोजन (उम्र के हिसाब से लक्ष्य ≈ {{target}})।",
+  childReport_feedingBoth: "दर्ज किए गए दिनों में रोज़ लगभग {{n}} बार दूध और भोजन (उम्र के हिसाब से लक्ष्य ≈ {{target}})।",
+  childReport_sleepSummary: "पिछले दो हफ़्तों में रोज़ औसतन {{h}} घंटे की नींद।",
 }

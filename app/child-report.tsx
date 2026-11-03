@@ -18,7 +18,7 @@ import { FileText, Download } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../constants/theme'
-import { useTranslation } from '../lib/i18n'
+import { useTranslation, type TranslationKey } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { useKidsAnalytics } from '../lib/analyticsData'
@@ -40,13 +40,15 @@ function ageMonthsAt(birthISO: string, atISO: string): number {
   return (a.getFullYear() - b.getFullYear()) * 12 + (a.getMonth() - b.getMonth()) + (a.getDate() - b.getDate()) / 30
 }
 
-function ageLabel(birthISO: string): string {
-  const months = Math.floor(ageMonthsAt(birthISO, new Date().toISOString().slice(0, 10)))
-  if (months < 1) return 'Newborn'
-  if (months < 24) return `${months} months`
+function ageLabel(birthISO: string, t: (k: TranslationKey, p?: Record<string, string | number>) => string): string {
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const months = Math.floor(ageMonthsAt(birthISO, today))
+  if (months < 1) return t('childReport_ageNewborn')
+  if (months < 24) return t('childReport_ageMonths', { m: months })
   const y = Math.floor(months / 12)
   const m = months % 12
-  return m ? `${y} years, ${m} months` : `${y} years`
+  return m ? t('childReport_ageYearsMonths', { y, m }) : t('childReport_ageYears', { y })
 }
 
 // Parse a "Weight: 8.5 kg" / "Height: 78 cm" / "Head: 44 cm" growth log value.
@@ -133,16 +135,19 @@ export default function ChildReportScreen() {
   const feedingSummary = useMemo(() => {
     const n = analytics.data?.nutrition
     if (!n?.hasData) return undefined
-    const avgFeeds = n.mealFrequency.length ? Math.round(n.mealFrequency.reduce((a, b) => a + b, 0) / n.mealFrequency.length) : 0
-    const modeWord = n.mode === 'milk' ? 'milk feeds' : n.mode === 'solids' ? 'meals' : 'milk feeds and meals'
-    return `About ${avgFeeds} ${modeWord} per day (age-typical target ≈ ${n.feedTarget}).`
-  }, [analytics.data])
+    // Average over the days that have logs — days with nothing logged dragged it down and the
+    // doctor read "about 2 feeds a day" for a baby fed 8 times on the days that were logged.
+    const loggedDays = n.mealFrequency.filter((x) => x > 0)
+    const avgFeeds = loggedDays.length ? Math.round(loggedDays.reduce((a, b) => a + b, 0) / loggedDays.length) : 0
+    const key = n.mode === 'milk' ? 'childReport_feedingMilk' : n.mode === 'solids' ? 'childReport_feedingMeals' : 'childReport_feedingBoth'
+    return t(key, { n: avgFeeds, target: n.feedTarget })
+  }, [analytics.data, t])
 
   const sleepSummary = useMemo(() => {
     const s = analytics.data?.sleep
     if (!s?.hasData) return undefined
-    return `Averaging ${s.avgHours.toFixed(1)} hours of sleep per day over the last two weeks.`
-  }, [analytics.data])
+    return t('childReport_sleepSummary', { h: s.avgHours.toFixed(1) })
+  }, [analytics.data, t])
 
   async function handleGenerate() {
     if (!child) return
@@ -151,7 +156,7 @@ export default function ChildReportScreen() {
       const data: PediatricReportData = {
         childName: child.name,
         birthDate: child.birthDate ?? '—',
-        ageLabel: child.birthDate ? ageLabel(child.birthDate) : '',
+        ageLabel: child.birthDate ? ageLabel(child.birthDate, t) : '',
         sex: child.sex ?? '',
         bloodType: child.bloodType,
         allergies: child.allergies ?? [],
@@ -230,7 +235,7 @@ export default function ChildReportScreen() {
         <View style={styles.titleBlock}>
           {diffuse && <Display size={32} color={ink}>{t('report_title')}</Display>}
           <DisplayItalic size={17} color={diffuse ? dt.colors.ink : ink} style={{ marginTop: diffuse ? 6 : 0 }}>
-            {child.name}{child.birthDate ? ` · ${ageLabel(child.birthDate)}` : ''}
+            {child.name}{child.birthDate ? ` · ${ageLabel(child.birthDate, t)}` : ''}
           </DisplayItalic>
         </View>
 
