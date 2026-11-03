@@ -131,8 +131,9 @@ function eventTime(log: HandoffLog, val: Record<string, unknown> | null): Date {
 }
 
 /** "1h 10m" / "8h" / "45m" / "1.5h" / "8" (hours) → minutes. */
-function parseDurationMinutes(raw: unknown): number | null {
-  const s = str(raw)
+/** Minutes from a stored duration ("45m", "1h 30m", "8h"). A bare number is `bareUnit` (legacy rows). */
+export function parseDurationMinutes(raw: unknown, bareUnit: 'h' | 'm' = 'h'): number | null {
+  const s = typeof raw === 'number' ? String(raw) : str(raw)
   if (!s) return null
   const hm = /^(?:(\d+(?:[.,]\d+)?)\s*h)?\s*(?:(\d+)\s*m(?:in)?)?$/i.exec(s)
   if (hm && (hm[1] || hm[2])) {
@@ -140,7 +141,7 @@ function parseDurationMinutes(raw: unknown): number | null {
     return mins > 0 ? mins : null
   }
   const bare = parseFloat(s.replace(',', '.'))
-  return Number.isFinite(bare) && bare > 0 ? Math.round(bare * 60) : null
+  return Number.isFinite(bare) && bare > 0 ? Math.round(bareUnit === 'h' ? bare * 60 : bare) : null
 }
 
 // ─── Formatting ──────────────────────────────────────────────────────────────

@@ -71,6 +71,7 @@ import { estimateCalories, matchSingleTag, categoryColor } from '../../lib/foodC
 import type { CalorieMatch } from '../../lib/foodCalories'
 import { estimateFromText, estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import type { ChildWithRole } from '../../types'
+import { normalizeSleepQuality, type SleepQuality } from '../../lib/sleepQuality'
 
 // ─── Kids-mode accent palette (cream-paper redesign) ─────────────────────
 // Log sheets are always "kids mode" — powder blue accent, ink text on cream.
@@ -2549,28 +2550,26 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
 
 // ─── 2. SLEEP FORM ─────────────────────────────────────────────────────────
 
-// Quality is stored as the SAME translated string label the old chip UI wrote
-// (t('kids_logForm_sleepQualityGreat') etc.) so `formatLogDisplay('sleep', …)`
-// and the Kids sleep analytics reader (`buildSleepData` in lib/analyticsData.ts,
-// which lowercases `value.quality` and matches 'great'|'good'|'restless'|'poor')
-// keep working with zero reader changes. The numeric 1–10 slider is mapped to
-// one of those 4 labels on save, and reverse-mapped to a representative number
-// on prefill/editLog.
+// Quality is stored as a stable id ('great'|'good'|'restless'|'poor'). Older builds stored the
+// translated chip label; lib/sleepQuality normalises both for readers and display. The numeric
+// 1–10 slider maps to one of the 4 ids on save and back to a representative number on edit.
 const SLEEP_QUALITY_DEFAULT = 7
 
-function sleepQualityNumToLabel(n: number, t: (key: TranslationKey) => string): string {
-  if (n <= 2) return t('kids_logForm_sleepQualityPoor')
-  if (n <= 5) return t('kids_logForm_sleepQualityRestless')
-  if (n <= 8) return t('kids_logForm_sleepQualityGood')
-  return t('kids_logForm_sleepQualityGreat')
+function sleepQualityNumToId(n: number): SleepQuality {
+  if (n <= 2) return 'poor'
+  if (n <= 5) return 'restless'
+  if (n <= 8) return 'good'
+  return 'great'
 }
 
-function sleepQualityLabelToNum(label: string, t: (key: TranslationKey) => string): number {
-  if (label === t('kids_logForm_sleepQualityPoor')) return 2
-  if (label === t('kids_logForm_sleepQualityRestless')) return 4
-  if (label === t('kids_logForm_sleepQualityGood')) return 7
-  if (label === t('kids_logForm_sleepQualityGreat')) return 10
-  return SLEEP_QUALITY_DEFAULT
+function sleepQualityLabelToNum(label: string): number {
+  switch (normalizeSleepQuality(label)) {
+    case 'poor': return 2
+    case 'restless': return 4
+    case 'good': return 7
+    case 'great': return 10
+    default: return SLEEP_QUALITY_DEFAULT
+  }
 }
 
 export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { onSaved: () => void; initialDate?: string; prefill?: RoutinePrefill; onSkip?: () => void; editLog?: EditLog }) {
@@ -2613,7 +2612,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
     if (prefill.value) {
       try {
         const p = JSON.parse(prefill.value)
-        if (p.quality) setQuality(sleepQualityLabelToNum(p.quality, t))
+        if (p.quality) setQuality(sleepQualityLabelToNum(p.quality))
         if (p.startTime) setStartTime(p.startTime)
         if (p.endTime) setEndTime(p.endTime)
         if (p.duration) {
@@ -2637,7 +2636,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       const p = JSON.parse(editLog.value ?? '{}')
       if (p.startTime) setStartTime(p.startTime)
       if (p.endTime) setEndTime(p.endTime)
-      if (p.quality) setQuality(sleepQualityLabelToNum(p.quality, t))
+      if (p.quality) setQuality(sleepQualityLabelToNum(p.quality))
       if (p.duration) {
         const m = String(p.duration).match(/(?:(\d+(?:\.\d+)?)h)?\s*(?:(\d+)m)?/)
         if (m) {
@@ -2667,7 +2666,8 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
           if (orig.routineId) routineMeta = { routineId: orig.routineId, routineName: orig.routineName }
         } catch {}
       }
-      const qualityLabel = sleepQualityNumToLabel(quality, t)
+      // Stable id, not the translated label — readers match ids (see lib/sleepQuality).
+      const qualityLabel = sleepQualityNumToId(quality)
       const valueObj: Record<string, unknown> = { duration: durationLabel || undefined, quality: qualityLabel, startTime, endTime: endTime || undefined, ...routineMeta }
       const value = JSON.stringify(valueObj)
       const taggedValue = tagWithRoutine(value, prefill) ?? value

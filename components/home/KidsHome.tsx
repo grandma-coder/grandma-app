@@ -334,6 +334,8 @@ import { KidsTodaySummaryCard } from './kids/KidsTodaySummaryCard'
 import { HandoffSheet } from './kids/HandoffSheet'
 import { QuietPill } from '../ui/QuietPill'
 import { MonoCaps, Display } from '../ui/Typography'
+import { parseDurationMinutes } from '../../lib/kidsHandoff'
+import { normalizeSleepQuality } from '../../lib/sleepQuality'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
@@ -1221,10 +1223,11 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     for (const log of rangeLogs.filter((l) => l.type === 'sleep')) {
       let val: any = log.value
       try { val = typeof val === 'string' ? JSON.parse(val) : val } catch {}
-      const hours = typeof val === 'object' && val ? (parseFloat(val.duration) || 0) : 0
+      // Durations are stored as "45m" / "1h 30m"; parseFloat read "45m" as 45 hours.
+      const hours = typeof val === 'object' && val ? (parseDurationMinutes(val.duration) ?? 0) / 60 : 0
       sleepTotal += hours
       totalSleepLogs++
-      const q = typeof val === 'object' && val ? (val.quality || '').toLowerCase() : ''
+      const q = typeof val === 'object' && val ? normalizeSleepQuality(val.quality) : null
       if (q === 'great' || q === 'good') goodSleep++
       else if (q === 'poor') poorSleep++
     }

@@ -1,3 +1,4 @@
+import { normalizeSleepQuality } from './sleepQuality'
 // lib/kidsCrossInsights.ts — pure cross-log pattern engine (no supabase/react-query/store deps)
 //
 // Takes already-fetched `child_logs` rows and returns zero or more ranked,
@@ -86,7 +87,7 @@ function isShortSleepNight(log: ChildLog): boolean {
   if (!v) return false
   const duration = parseFloat(String(v.duration ?? ''))
   const isShort = !isNaN(duration) && duration < SHORT_SLEEP_HOURS
-  const isPoor = String(v.quality ?? '').toLowerCase() === 'poor'
+  const isPoor = normalizeSleepQuality(v.quality) === 'poor'
   return isShort || isPoor
 }
 

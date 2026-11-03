@@ -138,6 +138,7 @@ interface ChildRoutine {
 import { CHILD_COLORS, childColor } from '../ui/ChildPills'
 import { healthLogText } from '../../lib/kidsHealthLogText'
 import { QuietPill } from '../profile/SiteSettingsKit'
+import { sleepQualityLabel } from '../../lib/sleepQuality'
 
 // ─── Site look (light) helpers ─────────────────────────────────────────────
 // Calm ink outlines, card-less sticker rows, ink text. Used only by the light
@@ -556,7 +557,7 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
           if (parsed.duration) {
             parts.push(String(parsed.duration))
           }
-          if (parsed.quality) parts.push(parsed.quality)
+          if (parsed.quality) parts.push(sleepQualityLabel(parsed.quality))
           return parts.join(' · ') || notes || ''
         }
         case 'feeding': {

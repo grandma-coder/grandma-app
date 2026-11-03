@@ -9,6 +9,8 @@ import { useChildStore } from '../store/useChildStore'
 import { toDateStr } from './cycleLogic'
 import { getNutritionModeForAge, buildScores } from './kidsScoring'
 import { resolveSex, type Sex } from './growthStandards'
+import { parseDurationMinutes } from './kidsHandoff'
+import { normalizeSleepQuality } from './sleepQuality'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -332,14 +334,14 @@ function buildSleepData(logs: ChildLog[], dates: string[], labels: string[]): Sl
     const dayIdx = dates.indexOf(log.date)
 
     if (val) {
-      const hours = parseFloat(String(val.duration)) || 0
+      const hours = (parseDurationMinutes(val.duration) ?? 0) / 60
       if (dayIdx !== -1) {
         dailyHours[dayIdx] += hours
       }
       totalHours += hours
       sleepDays++
 
-      const q = String(val.quality || '').toLowerCase()
+      const q = normalizeSleepQuality(val.quality)
       if (q === 'great') qualityCounts.great++
       else if (q === 'good') qualityCounts.good++
       else if (q === 'restless') qualityCounts.restless++
@@ -653,8 +655,8 @@ function buildActivityData(logs: ChildLog[], dates: string[], labels: string[]):
       const parsed = asRecord(parseValue(log.value))
       if (typeof parsed?.activityType === 'string') typeSet.add(parsed.activityType)
       if (parsed?.duration) {
-        const mins = parseFloat(String(parsed.duration))
-        if (!isNaN(mins)) totalMinutes += mins
+        const mins = parseDurationMinutes(parsed.duration, 'm')
+        if (mins != null) totalMinutes += mins
       }
     } catch {}
   }
