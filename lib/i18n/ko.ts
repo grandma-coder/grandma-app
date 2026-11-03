@@ -3815,4 +3815,6 @@ export const ko: TranslationKeys = {
   acceptInvite_permEditChild: "아이 프로필 편집",
   acceptInvite_permEmergency: "의료 정보 보기",
   manageCaregivers_linkInvite: "링크 초대",
+  careCircle_seatsFullTitle: "돌봄 서클이 가득 찼어요",
+  careCircle_seatsFullBody: "새로운 사람을 초대하려면 한 명을 내보내 주세요.",
 }

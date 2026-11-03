@@ -5,7 +5,7 @@ import { loadRemoteFlags } from '../remoteFlags'
 import { useFeatureFlags } from '../../store/useFeatureFlags'
 
 describe('loadRemoteFlags — grandma chat kill switch', () => {
-  beforeEach(() => { useFeatureFlags.setState({ grandmaChat: false, dailyRewards: false }); mockSelect.mockReset() })
+  beforeEach(() => { useFeatureFlags.setState({ grandmaChat: false, dailyRewards: false, paywall: false }); mockSelect.mockReset() })
 
   it('starts off and is never persisted', () => {
     expect(useFeatureFlags.getState().grandmaChat).toBe(false)
@@ -44,5 +44,31 @@ describe('loadRemoteFlags — grandma chat kill switch', () => {
     await loadRemoteFlags()
     expect(useFeatureFlags.getState().dailyRewards).toBe(true)
     expect(useFeatureFlags.getState().grandmaChat).toBe(false)
+  })
+
+  it('paywall is its own flag: off by default, never persisted, on only with its own row', async () => {
+    expect(useFeatureFlags.getState().paywall).toBe(false)
+    const opts = (useFeatureFlags as unknown as { persist: { getOptions: () => { partialize: (s: object) => object } } }).persist.getOptions()
+    expect(opts.partialize(useFeatureFlags.getState())).not.toHaveProperty('paywall')
+    mockSelect.mockResolvedValue({ data: [{ key: 'grandma_chat', enabled: true }], error: null })
+    await loadRemoteFlags()
+    expect(useFeatureFlags.getState().paywall).toBe(false)
+    mockSelect.mockResolvedValue({ data: [{ key: 'paywall', enabled: true }], error: null })
+    await loadRemoteFlags()
+    expect(useFeatureFlags.getState().paywall).toBe(true)
+  })
+})
+
+import { effectiveSeatLimit } from '../revenue'
+jest.mock('react-native-purchases', () => ({}))
+
+describe('effectiveSeatLimit', () => {
+  it('lifts the free cap to Family while subscriptions are off', () => {
+    expect(effectiveSeatLimit('free', false)).toBe(4)
+    expect(effectiveSeatLimit('premium_solo', false)).toBe(4)
+  })
+  it('uses the tier cap once the paywall is on', () => {
+    expect(effectiveSeatLimit('free', true)).toBe(0)
+    expect(effectiveSeatLimit('premium_solo', true)).toBe(1)
   })
 })

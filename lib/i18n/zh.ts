@@ -3815,4 +3815,6 @@ export const zh: TranslationKeys = {
   acceptInvite_permEditChild: "编辑孩子的资料",
   acceptInvite_permEmergency: "查看医疗信息",
   manageCaregivers_linkInvite: "链接邀请",
+  careCircle_seatsFullTitle: "你的照护圈已满",
+  careCircle_seatsFullBody: "移除一位成员后才能邀请新成员。",
 }

@@ -3815,4 +3815,6 @@ export const fr: TranslationKeys = {
   acceptInvite_permEditChild: "Modifier le profil de l'enfant",
   acceptInvite_permEmergency: "Voir les informations médicales",
   manageCaregivers_linkInvite: "Invitation par lien",
+  careCircle_seatsFullTitle: "Votre cercle de soins est complet",
+  careCircle_seatsFullBody: "Retirez quelqu'un pour inviter une nouvelle personne.",
 }

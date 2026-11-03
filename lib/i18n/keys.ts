@@ -4097,4 +4097,6 @@ export interface TranslationKeys {
   acceptInvite_permEditChild: string
   acceptInvite_permEmergency: string
   manageCaregivers_linkInvite: string
+  careCircle_seatsFullTitle: string
+  careCircle_seatsFullBody: string
 }

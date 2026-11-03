@@ -17,7 +17,8 @@ import { Heart } from '../components/ui/Stickers'
 import { InkBackButton } from '../components/ui/InkBackButton'
 import { PillButton } from '../components/ui/PillButton'
 import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
-import { SubscriptionTier, TIER_SEAT_LIMIT } from '../lib/revenue'
+import { SubscriptionTier, effectiveSeatLimit } from '../lib/revenue'
+import { usePaywallEnabled } from '../store/useFeatureFlags'
 
 interface CaregiverRow {
   id: string
@@ -44,6 +45,7 @@ export default function ManageCaregivers() {
   const mode = useModeStore((s) => s.mode)
   const accent = getDiffuseAccent(mode, dt.isDark)
   const { t } = useTranslation()
+  const paywallOn = usePaywallEnabled()
 
   const STATUS_COLORS: Record<string, string> = {
     pending: stickers.peachSoft,
@@ -146,11 +148,12 @@ export default function ManageCaregivers() {
     })()
   }, [child?.id])
 
-  const seatLimit = TIER_SEAT_LIMIT[tier]
+  const seatLimit = effectiveSeatLimit(tier, paywallOn)
   const activeSeats = caregivers.filter((c) => c.status === 'accepted' && !c.is_locked).length
   const atLimit = activeSeats >= seatLimit
   const nextTierLabel = tier === 'free' ? 'Premium Solo' : tier === 'premium_solo' ? 'Family' : null
-  const nextTierRoute = tier === 'premium_family' ? null : (tier === 'premium_solo' ? 'premium_family' : 'premium_solo')
+  // No upgrade path while subscriptions are switched off (paywall flag).
+  const nextTierRoute = !paywallOn || tier === 'premium_family' ? null : (tier === 'premium_solo' ? 'premium_family' : 'premium_solo')
 
   function revoke(id: string) {
     setPendingRevoke(id)

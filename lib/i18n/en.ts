@@ -4102,4 +4102,6 @@ export const en: TranslationKeys = {
   acceptInvite_permEditChild: "Edit the child's profile",
   acceptInvite_permEmergency: "See medical information",
   manageCaregivers_linkInvite: "Invite link",
+  careCircle_seatsFullTitle: "Your care circle is full",
+  careCircle_seatsFullBody: "Remove someone to invite a new person.",
 }

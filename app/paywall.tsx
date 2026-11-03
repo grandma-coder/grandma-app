@@ -33,6 +33,7 @@ import { PaperAlert, PaperAlertButton } from '../components/ui/PaperAlert'
 import { Heart, Star, Sparkle, Cross, Sun, Flower } from '../components/ui/Stickers'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from '../lib/i18n'
+import { usePaywallEnabled, useGrandmaChatEnabled } from '../store/useFeatureFlags'
 
 // Fallback prices if RevenueCat hasn't loaded yet
 const FALLBACK_PRICE: Record<PaywallTier, Record<BillingPeriod, string>> = {
@@ -45,7 +46,7 @@ type FeatureSticker = 'heart' | 'cross' | 'sparkle' | 'star' | 'sun'
 interface TierCopyEntry {
   title: string
   seats: string
-  features: Array<{ sticker: FeatureSticker; text: string }>
+  features: Array<{ sticker: FeatureSticker; text: string; needs?: 'chat' | 'scan' }>
   highlight: string
 }
 
@@ -78,6 +79,10 @@ export default function Paywall() {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ tier?: string }>()
+  const paywallOn = usePaywallEnabled()
+  const chatOn = useGrandmaChatEnabled()
+  // Subscriptions are server-switched (feature_flags 'paywall'); a stale deep link closes itself.
+  useEffect(() => { if (!paywallOn) router.back() }, [paywallOn])
   const dAccent = getDiffuseAccent(mode, dt.isDark)
   const paper = diffuse ? dt.colors.surface : colors.surface
   const paperBorder = diffuse ? dt.colors.line : colors.border
@@ -109,10 +114,10 @@ export default function Paywall() {
       seats: t('paywall_tierSoloSeats'),
       features: [
         { sticker: 'heart', text: t('paywall_featureSoloCaregiver') },
-        { sticker: 'cross', text: t('paywall_featureUnlimitedScansDetail') },
-        { sticker: 'sparkle', text: t('paywall_featureUnlimitedChat') },
+        { sticker: 'cross', text: t('paywall_featureUnlimitedScansDetail'), needs: 'scan' },
+        { sticker: 'sparkle', text: t('paywall_featureUnlimitedChat'), needs: 'chat' },
         { sticker: 'star', text: t('paywall_featureVaccineReminders') },
-        { sticker: 'sun', text: t('paywall_featurePriorityResponses') },
+        { sticker: 'sun', text: t('paywall_featurePriorityResponses'), needs: 'chat' },
       ],
       highlight: t('paywall_soloHighlight'),
     },
@@ -121,10 +126,10 @@ export default function Paywall() {
       seats: t('paywall_tierFamilySeats'),
       features: [
         { sticker: 'heart', text: t('paywall_featureFamilyAccounts') },
-        { sticker: 'cross', text: t('paywall_featureFamilyScans') },
-        { sticker: 'sparkle', text: t('paywall_featureSharedChat') },
+        { sticker: 'cross', text: t('paywall_featureFamilyScans'), needs: 'scan' },
+        { sticker: 'sparkle', text: t('paywall_featureSharedChat'), needs: 'chat' },
         { sticker: 'star', text: t('paywall_featureSyncedVaccines') },
-        { sticker: 'sun', text: t('paywall_featurePriorityEarly') },
+        { sticker: 'sun', text: t('paywall_featurePriorityEarly'), needs: 'chat' },
       ],
       highlight: t('paywall_familyHighlight'),
     },
@@ -142,7 +147,10 @@ export default function Paywall() {
     return match?.package.product.priceString ?? FALLBACK_PRICE[tier][period]
   }
 
-  const tierCopy = TIER_COPY[selectedTier]
+  // Only sell what users can reach: chat lines follow the chat flag; scans aren't shipped yet
+  // (the scan screen has no user entry point), so their lines stay hidden.
+  const available = (f: { needs?: 'chat' | 'scan' }) => (f.needs === 'chat' ? chatOn : f.needs !== 'scan')
+  const tierCopy = { ...TIER_COPY[selectedTier], features: TIER_COPY[selectedTier].features.filter(available) }
 
   const trialLine = useMemo(() => {
     if (selectedPeriod === null) return `Choose a plan — ${tierCopy.seats.toLowerCase()}`
@@ -232,6 +240,8 @@ export default function Paywall() {
       setPurchasing(false)
     }
   }
+
+  if (!paywallOn) return null
 
   return (
     <View

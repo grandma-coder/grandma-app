@@ -20,6 +20,12 @@ export const TIER_SEAT_LIMIT: Record<SubscriptionTier, number> = {
   premium_family: 4,
 }
 
+/** Caregiver seats the user actually gets. While subscriptions are off (paywall flag) everyone gets
+ *  the Family cap — same rule as the effective_seat_limit() DB function behind the invite trigger. */
+export function effectiveSeatLimit(tier: SubscriptionTier, paywallOn: boolean): number {
+  return paywallOn ? TIER_SEAT_LIMIT[tier] : TIER_SEAT_LIMIT.premium_family
+}
+
 export const ENTITLEMENT_IDS: Record<PaywallTier, string> = {
   premium_solo: 'premium_solo',
   premium_family: 'premium_family',

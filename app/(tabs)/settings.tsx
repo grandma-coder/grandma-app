@@ -45,6 +45,7 @@ import { childColor } from '../../components/ui/ChildPills'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { Character } from '../../components/characters/Characters'
 import { MemoriesSheet } from '../../components/home/MemoriesSheet'
+import { usePaywallEnabled, useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 
 export default function ProfileScreen() {
   const { colors, radius, isDark, font } = useTheme()
@@ -72,6 +73,8 @@ export default function ProfileScreen() {
   const [joinedYear, setJoinedYear] = useState<number | null>(null)
   const [careCircleCount, setCareCircleCount] = useState<number>(0)
   const [isPremium, setIsPremium] = useState(false)
+  const paywallOn = usePaywallEnabled()
+  const rewardsOn = useDailyRewardsEnabled()
   const [showMemories, setShowMemories] = useState(false)
 
   // Dev-panel 5-tap trigger on the version text (bottom of screen)
@@ -247,12 +250,14 @@ export default function ProfileScreen() {
           onKidPillPress={handleKidPillPress}
         />
 
-        {/* Badges */}
-        <BadgesStrip
-          badges={recentBadges}
-          total={earnedBadges.length}
-          onSeeAll={() => router.push('/profile/badges')}
-        />
+        {/* Badges — part of Daily Rewards, hidden while that flag is off */}
+        {rewardsOn && (
+          <BadgesStrip
+            badges={recentBadges}
+            total={earnedBadges.length}
+            onSeeAll={() => router.push('/profile/badges')}
+          />
+        )}
 
         {/* Journey switcher */}
         <MyJourneyPillGrid />
@@ -354,12 +359,14 @@ export default function ProfileScreen() {
                 showArrow
                 onPress={() => router.push('/profile/privacy')}
               />
-              <DiffuseListRow
-                icon={<Character name="gem" size={18} />}
-                title={t('profile_subscription')}
-                value={isPremium ? 'Premium' : 'Upgrade'}
-                onPress={() => router.push('/paywall')}
-              />
+              {paywallOn && (
+                <DiffuseListRow
+                  icon={<Character name="gem" size={18} />}
+                  title={t('profile_subscription')}
+                  value={isPremium ? 'Premium' : 'Upgrade'}
+                  onPress={() => router.push('/paywall')}
+                />
+              )}
               <DiffuseListRow
                 icon={<Character name="tip" size={18} />}
                 title={t('profile_help')}
@@ -456,12 +463,14 @@ export default function ProfileScreen() {
                 label={t('profile_dataPrivacy')}
                 onPress={() => router.push('/profile/privacy')}
               />
-              <SiteRow
-                sticker="star"
-                label={t('profile_subscription')}
-                value={isPremium ? 'Premium' : 'Upgrade'}
-                onPress={() => router.push('/paywall')}
-              />
+              {paywallOn && (
+                <SiteRow
+                  sticker="star"
+                  label={t('profile_subscription')}
+                  value={isPremium ? 'Premium' : 'Upgrade'}
+                  onPress={() => router.push('/paywall')}
+                />
+              )}
               <SiteRow
                 sticker="books"
                 label={t('profile_help')}

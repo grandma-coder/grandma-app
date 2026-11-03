@@ -3815,4 +3815,6 @@ export const tr: TranslationKeys = {
   acceptInvite_permEditChild: "Çocuğun profilini düzenleme",
   acceptInvite_permEmergency: "Tıbbi bilgileri görme",
   manageCaregivers_linkInvite: "Bağlantıyla davet",
+  careCircle_seatsFullTitle: "Bakım çemberin dolu",
+  careCircle_seatsFullBody: "Yeni birini davet etmek için birini çıkar.",
 }

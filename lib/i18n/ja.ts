@@ -3815,4 +3815,6 @@ export const ja: TranslationKeys = {
   acceptInvite_permEditChild: "お子さまのプロフィールを編集",
   acceptInvite_permEmergency: "医療情報を見る",
   manageCaregivers_linkInvite: "リンクで招待",
+  careCircle_seatsFullTitle: "ケアサークルは満員です",
+  careCircle_seatsFullBody: "新しい人を招待するには、誰かを外してください。",
 }

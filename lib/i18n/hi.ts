@@ -3815,4 +3815,6 @@ export const hi: TranslationKeys = {
   acceptInvite_permEditChild: "बच्चे की प्रोफ़ाइल संपादित करें",
   acceptInvite_permEmergency: "चिकित्सा जानकारी देखें",
   manageCaregivers_linkInvite: "लिंक से आमंत्रण",
+  careCircle_seatsFullTitle: "आपका केयर सर्कल भर गया है",
+  careCircle_seatsFullBody: "नए व्यक्ति को आमंत्रित करने के लिए किसी को हटाएं।",
 }

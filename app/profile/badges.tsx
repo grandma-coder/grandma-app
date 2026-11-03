@@ -26,8 +26,17 @@ import { BadgeIcon } from '../../components/stickers/BadgeIcon'
 import { useTranslation } from '../../lib/i18n'
 import { SiteHeader } from '../../components/profile/SiteSettingsKit'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { useDailyRewardsEnabled } from '../../store/useFeatureFlags'
+import { Redirect } from 'expo-router'
 
-export default function BadgeWalletScreen() {
+// Badges belong to Daily Rewards: while that flag is off a stale entry point lands back home.
+export default function BadgeWalletRoute() {
+  const enabled = useDailyRewardsEnabled()
+  if (!enabled) return <Redirect href="/(tabs)" />
+  return <BadgeWalletScreen />
+}
+
+function BadgeWalletScreen() {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()

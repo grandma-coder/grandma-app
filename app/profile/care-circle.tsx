@@ -57,7 +57,8 @@ import {
 import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
-import { SubscriptionTier, TIER_SEAT_LIMIT } from '../../lib/revenue'
+import { SubscriptionTier, effectiveSeatLimit } from '../../lib/revenue'
+import { usePaywallEnabled } from '../../store/useFeatureFlags'
 import { SignedImage, PHOTO_BUCKETS } from '../../lib/photoSigning'
 import { toDateStr } from '../../lib/cycleLogic'
 import { LogSheet, SheetFooterAction } from '../../components/calendar/LogSheet'
@@ -505,6 +506,7 @@ export default function CareCircleScreen() {
   const [members, setMembers] = useState<CareCircleMember[]>([])
   const [activities, setActivities] = useState<ActivityEntry[]>([])
   const [tier, setTier] = useState<SubscriptionTier>('free')
+  const paywallOn = usePaywallEnabled()
   const [loading, setLoading] = useState(true)
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [editingMember, setEditingMember] = useState<CareCircleMember | null>(null)
@@ -1234,11 +1236,11 @@ export default function CareCircleScreen() {
               Free tier has 0 seats: send them to the paywall up front rather
               than letting them fill out 4 steps only to be blocked by the DB. */}
           <PillButton
-            label={TIER_SEAT_LIMIT[tier] === 0 ? 'Upgrade to add caregivers' : 'Add to Care Circle'}
+            label={effectiveSeatLimit(tier, paywallOn) === 0 ? 'Upgrade to add caregivers' : 'Add to Care Circle'}
             variant="ink"
             height={64}
             onPress={() =>
-              TIER_SEAT_LIMIT[tier] === 0
+              effectiveSeatLimit(tier, paywallOn) === 0
                 ? router.push('/paywall?tier=premium_solo')
                 : setShowAddSheet(true)
             }
@@ -1513,6 +1515,7 @@ function FilterChip({ label, active, onPress, kind = 'kid' }: { label: string; a
 // ─── Add Member Sheet (4-step) ─────────────────────────────────────────────
 
 function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
+  const paywallOn = usePaywallEnabled()
   const { colors, font, stickers, isDark, radius } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -1674,7 +1677,10 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
       // 0 seats, so every invite hits this — route to the paywall instead of a
       // dead-end error. (Other errors get a plain alert.)
       const msg = e?.message ?? ''
-      if (msg.includes('seat_limit_exceeded')) {
+      if (msg.includes('seat_limit_exceeded') && !paywallOn) {
+        // Subscriptions are off: everyone already has the Family cap, nothing to upgrade to.
+        Alert.alert(t('careCircle_seatsFullTitle'), t('careCircle_seatsFullBody'))
+      } else if (msg.includes('seat_limit_exceeded')) {
         handleClose()
         Alert.alert(
           'Caregivers are a premium feature',
