@@ -806,6 +806,7 @@ export default function TabLayout() {
   // than blinking through a blank frame. Fires whenever currentBehavior changes.
   const fadeAnim = useRef(new Animated.Value(1)).current
   const prevBehavior = useRef(currentBehavior)
+  const tabsDiffuse = useIsDiffuse()
 
   useEffect(() => {
     if (prevBehavior.current !== currentBehavior && prevBehavior.current !== null) {
@@ -823,7 +824,12 @@ export default function TabLayout() {
   return (
     <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
       <Tabs
-        screenOptions={{ headerShown: false }}
+        // Light look: a short crossfade between tabs instead of a hard cut. Diffuse keeps the cut.
+        screenOptions={{
+          headerShown: false,
+          animation: tabsDiffuse ? 'none' : 'fade',
+          transitionSpec: { animation: 'timing', config: { duration: 180, easing: Easing.out(Easing.quad) } },
+        }}
         tabBar={(props) => <CollageStripTabBar {...props} />}
       >
         <Tabs.Screen
