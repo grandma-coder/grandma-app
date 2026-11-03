@@ -1,0 +1,83 @@
+{
+  "noAccess": "No access.",
+  "eyebrow": "Audience",
+  "title": "Map",
+  "intro": "Where the waitlist and the app's accounts are. Click a country to see its regions, cities and who is there.",
+  "loading": "Loading…",
+  "loadError": "Couldn't load the map: {error}",
+  "retry": "Try again",
+  "unknownCountry": "Unknown country",
+  "source": {
+    "label": "Show",
+    "all": "Everyone",
+    "waitlist": "Waitlist",
+    "app": "App"
+  },
+  "tiles": {
+    "waitlist": "Waitlist",
+    "app": "App accounts",
+    "countries": "Countries",
+    "unknown": "No country",
+    "last7": "+{n} in 7 days",
+    "unknownSub": "{waitlist} waitlist · {app} app"
+  },
+  "legend": {
+    "none": "nobody",
+    "few": "a few",
+    "many": "many people"
+  },
+  "ranking": {
+    "title": "Countries",
+    "empty": "Nobody yet.",
+    "waitlist": "waitlist",
+    "app": "app"
+  },
+  "tooltip": "{name}: {waitlist} on the waitlist · {app} in the app",
+  "country": {
+    "close": "Close",
+    "people": "{n, plural, one {# person} other {# people}}",
+    "phases": "Waitlist phases",
+    "appPhases": "App phases",
+    "regions": "States / regions",
+    "cities": "Cities",
+    "unknownRegion": "No region",
+    "others": "{places, plural, one {# other city} other {# other cities}}",
+    "othersHint": "Cities with fewer than 3 people are grouped for non-admins.",
+    "noCities": "No cities in this country yet.",
+    "placeLater": "Region and city show for people who join after migration 0019. For now, country only.",
+    "showPeople": "Show people",
+    "hidePeople": "Hide people",
+    "filterRegion": "Only {region}",
+    "filterCity": "Only {city}",
+    "clearFilter": "Whole country"
+  },
+  "people": {
+    "adminsOnly": "Names and emails are visible to admins only.",
+    "loadError": "Couldn't load the people: {error}",
+    "waitlist": "Waitlist",
+    "app": "App accounts",
+    "appNarrowed": "App accounts only have a country; pick the whole country to see them.",
+    "empty": "Nobody here.",
+    "limit": "Showing the {n} most recent.",
+    "name": "Name",
+    "email": "Email",
+    "phase": "Phase",
+    "place": "Place",
+    "joined": "Joined",
+    "inApp": "In app",
+    "yes": "yes",
+    "no": "—"
+  },
+  "modes": {
+    "pre": "Cycle",
+    "preg": "Pregnant",
+    "kids": "Kids",
+    "meno": "Menopause",
+    "pre-pregnancy": "Cycle",
+    "pre_pregnancy": "Cycle",
+    "cycle": "Cycle",
+    "pregnancy": "Pregnant",
+    "menopause": "Menopause",
+    "?": "No phase"
+  }
+}

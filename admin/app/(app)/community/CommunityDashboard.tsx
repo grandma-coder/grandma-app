@@ -36,11 +36,11 @@ function fmtWhen(format: Formatter, iso: string | null): string {
   return format.dateTime(d)
 }
 
-export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin }: { defaultSince: string; defaultUntil: string; isAdmin: boolean }) {
+export function CommunityDashboard({ defaultSince, defaultUntil, isAdmin, initialTab = "overview" }: { defaultSince: string; defaultUntil: string; isAdmin: boolean; initialTab?: "overview" | "moderation" }) {
   const t = useTranslations("community")
   const format = useFormatter()
   const [range, setRange] = useState({ since: defaultSince, until: defaultUntil })
-  const [tab, setTab] = useState<"overview" | "moderation">("overview")
+  const [tab, setTab] = useState<"overview" | "moderation">(initialTab)
   const overview = trpc.community.overview.useQuery()
   const postsDaily = trpc.community.postsDaily.useQuery(range)
 

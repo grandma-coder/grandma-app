@@ -13,6 +13,7 @@
   "items": {
     "home": "Command Center",
     "users": "Usuários",
+    "map": "Mapa",
     "metrics": "Métricas",
     "revenue": "Receita",
     "waitlist": "Lista de espera",
@@ -32,5 +33,19 @@
     "admin": "admin",
     "editor": "editor",
     "viewer": "leitura"
+  },
+  "search": "Buscar",
+  "openMenu": "Abrir menu",
+  "closeMenu": "Fechar menu",
+  "badges": {
+    "support": "{n} chamados abertos",
+    "reports": "{n} denúncias esperando",
+    "waitlistToday": "{n} novos na lista hoje"
+  },
+  "palette": {
+    "placeholder": "Ir para uma página ou buscar pessoa…",
+    "searching": "Buscando…",
+    "empty": "Nada encontrado.",
+    "peopleError": "Não deu para buscar pessoas agora."
   }
 }

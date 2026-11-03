@@ -220,6 +220,9 @@ body {
 }
 [data-skin="central"] body { font-family: var(--c-font-body); }
 
+/* Map (Pessoas › Mapa): empty land, the faintest tint, the strongest tint, borders. */
+[data-skin="central"] { --map-empty: #EFEFEC; --map-low: #DCE0EA; --map-ink: var(--c-accent); --map-line: #FFFFFF; }
+
 /* App shell — sidebar + content grid */
 [data-skin="central"] .central-app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; background: var(--c-bg); }
 
@@ -263,4 +266,38 @@ body {
 [data-skin="central"] .user-card .uc-role { font-size: 10px; color: var(--c-fg-4); font-family: var(--c-font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
 
 [data-skin="central"] .central-content { min-width: 0; }
+/* Sidebar badges (ops.attention), the ⌘K search button and the mobile drawer. */
+[data-skin="central"] .nav-badge {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums;
+  background: rgba(0,0,0,0.06); color: var(--c-fg-3);
+}
+[data-skin="central"] .nav-badge.alert { background: #D6004F; color: #fff; }
+[data-skin="central"] .nav-item.on .nav-badge:not(.alert) { background: rgba(255,255,255,0.2); color: #fff; }
+[data-skin="central"] .nav-search {
+  margin: 0 12px 4px; display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+  border: 1px solid var(--c-line); background: var(--c-surface); color: var(--c-fg-4); font-size: 12px; text-align: left;
+}
+[data-skin="central"] .nav-search span { flex: 1; }
+[data-skin="central"] .nav-search kbd { font-family: var(--c-font-mono); font-size: 10px; color: var(--c-fg-5); }
+[data-skin="central"] .nav-search:hover { border-color: var(--c-line-2); color: var(--c-fg-3); }
+[data-skin="central"] .mobile-bar, [data-skin="central"] .drawer-close, [data-skin="central"] .sidebar-scrim { display: none; }
+
+@media (max-width: 860px) {
+  [data-skin="central"] .central-app { grid-template-columns: 1fr; }
+  [data-skin="central"] .mobile-bar {
+    display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 30; height: 52px; padding: 0 14px;
+    background: var(--c-bg-2); border-bottom: 1px solid var(--c-line);
+  }
+  [data-skin="central"] .mobile-bar .brand-name { font-family: var(--c-font-display); font-weight: 700; font-size: 14px; color: var(--c-fg); }
+  [data-skin="central"] .mobile-bar .brand-logo { border-radius: 6px; }
+  [data-skin="central"] .central-sidebar {
+    position: fixed; left: 0; top: 0; z-index: 50; width: 264px; transform: translateX(-100%);
+    transition: transform 0.2s var(--ease-standard); box-shadow: var(--shadow-xl);
+  }
+  [data-skin="central"] .central-sidebar.open { transform: none; }
+  [data-skin="central"] .drawer-close { display: inline-flex; margin-left: auto; padding: 6px; border-radius: 999px; color: var(--c-fg-4); }
+  [data-skin="central"] .sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,0.3); }
+  [data-skin="central"] .central-content main { padding-left: 16px; padding-right: 16px; padding-top: 24px; }
+}
 [data-skin="central"] .display { font-family: var(--c-font-display); }

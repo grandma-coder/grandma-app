@@ -8,16 +8,50 @@
   "intro": "Saúde do app inteiro em tempo real — usuários, engajamento, assinaturas, comunidade e conteúdo.",
   "signedInAs": "Conectado como {email} · <r>{role}</r>.",
   "pillars": {
-    "users": { "name": "Usuários", "blurb": "Navegue e busque todos os usuários do app" },
-    "metrics": { "name": "Métricas", "blurb": "KPIs, funis, retenção" },
-    "community": { "name": "Comunidade", "blurb": "Canais e atividade do fórum" },
-    "push": { "name": "Push", "blurb": "Escreva e envie notificações" },
-    "content": { "name": "Conteúdo", "blurb": "Perguntas, afirmações, guia do parto, notícias" },
-    "releases": { "name": "Versões", "blurb": "Builds e changelogs da App Store" },
-    "tokens": { "name": "Design tokens", "blurb": "Cores da marca, tipografia e visuais de e-mail" },
-    "sentry": { "name": "Sentry", "blurb": "Triagem de crashes" },
-    "beta": { "name": "Beta testers", "blurb": "Convide e acompanhe os beta testers do app" },
-    "admin": { "name": "Admin", "blurb": "Convide colegas e gerencie papéis" }
+    "users": {
+      "name": "Usuários",
+      "blurb": "Navegue e busque todos os usuários do app"
+    },
+    "map": {
+      "name": "Mapa",
+      "blurb": "Onde estão as pessoas: países, estados, cidades"
+    },
+    "metrics": {
+      "name": "Métricas",
+      "blurb": "KPIs, funis, retenção"
+    },
+    "community": {
+      "name": "Comunidade",
+      "blurb": "Canais e atividade do fórum"
+    },
+    "push": {
+      "name": "Push",
+      "blurb": "Escreva e envie notificações"
+    },
+    "content": {
+      "name": "Conteúdo",
+      "blurb": "Perguntas, afirmações, guia do parto, notícias"
+    },
+    "releases": {
+      "name": "Versões",
+      "blurb": "Builds e changelogs da App Store"
+    },
+    "tokens": {
+      "name": "Design tokens",
+      "blurb": "Cores da marca, tipografia e visuais de e-mail"
+    },
+    "sentry": {
+      "name": "Sentry",
+      "blurb": "Triagem de crashes"
+    },
+    "beta": {
+      "name": "Beta testers",
+      "blurb": "Convide e acompanhe os beta testers do app"
+    },
+    "admin": {
+      "name": "Admin",
+      "blurb": "Convide colegas e gerencie papéis"
+    }
   },
   "loading": "Carregando visão geral…",
   "kpi": {
@@ -68,5 +102,24 @@
     "newsLive": "Notícias no ar",
     "drafts": "{n} rascunhos"
   },
-  "explore": "Explorar"
+  "explore": "Explorar",
+  "attention": {
+    "title": "Precisa de você",
+    "allClear": "Tudo em dia.",
+    "waiting": "{n, plural, one {# coisa esperando} other {# coisas esperando}}",
+    "loadError": "Não deu para carregar as pendências.",
+    "retry": "Tentar de novo",
+    "support": "Suporte",
+    "supportSub": "chamados abertos ou em andamento",
+    "reports": "Denúncias",
+    "reportsSub": "posts denunciados para revisar",
+    "waitlistToday": "Lista de espera hoje",
+    "waitlistSub": "{week} em 7 dias · {pending} sem convite",
+    "newUsers": "Contas novas",
+    "newUsersSub": "no app, últimos 7 dias",
+    "where": "Onde estão",
+    "whereError": "Não deu para carregar o mapa."
+  },
+  "loadError": "Não deu para carregar os números do app: {error}",
+  "retry": "Tentar de novo"
 }

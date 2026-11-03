@@ -18,6 +18,8 @@ import { moderationRouter } from "./moderation"
 import { pushAnalyticsRouter } from "./pushAnalytics"
 import { graphRouter } from "./graph"
 import { waitlistRouter } from "./waitlist"
+import { geoRouter } from "./geo"
+import { opsRouter } from "./ops"
 
 /**
  * Root app router. Feature routers are added per phase.
@@ -44,6 +46,8 @@ export const appRouter = router({
   pushAnalytics: pushAnalyticsRouter,
   graph: graphRouter,
   waitlist: waitlistRouter,
+  geo: geoRouter,
+  ops: opsRouter,
 })
 
 export type AppRouter = typeof appRouter

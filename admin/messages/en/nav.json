@@ -13,6 +13,7 @@
   "items": {
     "home": "Command Center",
     "users": "Users",
+    "map": "Map",
     "metrics": "Metrics",
     "revenue": "Revenue",
     "waitlist": "Waitlist",
@@ -32,5 +33,19 @@
     "admin": "admin",
     "editor": "editor",
     "viewer": "viewer"
+  },
+  "search": "Search",
+  "openMenu": "Open menu",
+  "closeMenu": "Close menu",
+  "badges": {
+    "support": "{n} open tickets",
+    "reports": "{n} reports waiting",
+    "waitlistToday": "{n} new on the waitlist today"
+  },
+  "palette": {
+    "placeholder": "Go to a page or find a person…",
+    "searching": "Searching…",
+    "empty": "Nothing found.",
+    "peopleError": "Couldn't search people right now."
   }
 }

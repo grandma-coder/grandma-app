@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useLocale, useTranslations } from "next-intl"
 import { trpc } from "@/lib/trpc"
 import { htmlLang, type Locale } from "@/i18n/config"
+import { Attention } from "./Attention"
 
 type Nums = Record<string, number>
 
@@ -66,9 +67,21 @@ export function OverviewDashboard({ pillars }: { pillars: { name: string; href: 
     churned: num(o, "lifecycle", "churned"),
   }
 
-  if (q.isLoading) return <p className="mt-8 text-sm text-fg-tertiary">{t("loading")}</p>
+  if (q.isLoading) return <><Attention /><p className="mt-8 text-sm text-fg-tertiary">{t("loading")}</p></>
+  if (q.error) {
+    return (
+      <>
+        <Attention />
+        <p className="mt-8 rounded-xl border border-border-default bg-card p-5 text-sm text-fg-secondary">
+          {t("loadError", { error: q.error.message })} <button className="underline" onClick={() => q.refetch()}>{t("retry")}</button>
+        </p>
+      </>
+    )
+  }
 
   return (
+    <>
+    <Attention />
     <div className="mt-8 space-y-6">
       {/* Hero KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -159,5 +172,6 @@ export function OverviewDashboard({ pillars }: { pillars: { name: string; href: 
         </div>
       </div>
     </div>
+    </>
   )
 }

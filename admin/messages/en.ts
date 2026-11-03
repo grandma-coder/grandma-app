@@ -17,4 +17,5 @@ import support from "./en/support.json"
 import tokens from "./en/tokens.json"
 import users from "./en/users.json"
 import waitlist from "./en/waitlist.json"
-export const en = { common, nav, home, admin, ai, beta, community, content, graph, metrics, push, releases, revenue, sentry, support, tokens, users, waitlist }
+import map from "./en/map.json"
+export const en = { common, nav, home, admin, ai, beta, community, content, graph, metrics, push, releases, revenue, sentry, support, tokens, users, waitlist, map }

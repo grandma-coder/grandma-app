@@ -28,6 +28,7 @@ export default async function Home() {
   const pillar = (key: string, href: string) => ({ name: t(`pillars.${key}.name`), href, blurb: t(`pillars.${key}.blurb`) })
   const pillars = [
     pillar("users", "/users"),
+    pillar("map", "/map"),
     pillar("metrics", "/metrics"),
     pillar("community", "/community"),
     pillar("push", "/push"),

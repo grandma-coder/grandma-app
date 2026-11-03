@@ -8,16 +8,50 @@
   "intro": "Live health of the whole app — users, engagement, subscriptions, community & content.",
   "signedInAs": "Signed in as {email} · <r>{role}</r>.",
   "pillars": {
-    "users": { "name": "Users", "blurb": "Browse & search all app users" },
-    "metrics": { "name": "Metrics", "blurb": "KPIs, funnels, retention" },
-    "community": { "name": "Community", "blurb": "Channels & forum activity" },
-    "push": { "name": "Push", "blurb": "Compose & send notifications" },
-    "content": { "name": "Content", "blurb": "Questions, affirmations, birth guide, news" },
-    "releases": { "name": "Releases", "blurb": "App Store builds & changelogs" },
-    "tokens": { "name": "Design tokens", "blurb": "Brand colors, type & email visuals" },
-    "sentry": { "name": "Sentry", "blurb": "Crash triage" },
-    "beta": { "name": "Beta testers", "blurb": "Invite & track app beta testers" },
-    "admin": { "name": "Admin", "blurb": "Invite teammates & manage roles" }
+    "users": {
+      "name": "Users",
+      "blurb": "Browse & search all app users"
+    },
+    "map": {
+      "name": "Map",
+      "blurb": "Where people are: countries, regions, cities"
+    },
+    "metrics": {
+      "name": "Metrics",
+      "blurb": "KPIs, funnels, retention"
+    },
+    "community": {
+      "name": "Community",
+      "blurb": "Channels & forum activity"
+    },
+    "push": {
+      "name": "Push",
+      "blurb": "Compose & send notifications"
+    },
+    "content": {
+      "name": "Content",
+      "blurb": "Questions, affirmations, birth guide, news"
+    },
+    "releases": {
+      "name": "Releases",
+      "blurb": "App Store builds & changelogs"
+    },
+    "tokens": {
+      "name": "Design tokens",
+      "blurb": "Brand colors, type & email visuals"
+    },
+    "sentry": {
+      "name": "Sentry",
+      "blurb": "Crash triage"
+    },
+    "beta": {
+      "name": "Beta testers",
+      "blurb": "Invite & track app beta testers"
+    },
+    "admin": {
+      "name": "Admin",
+      "blurb": "Invite teammates & manage roles"
+    }
   },
   "loading": "Loading overview…",
   "kpi": {
@@ -68,5 +102,24 @@
     "newsLive": "News live",
     "drafts": "{n} drafts"
   },
-  "explore": "Explore"
+  "explore": "Explore",
+  "attention": {
+    "title": "Needs you",
+    "allClear": "All clear.",
+    "waiting": "{n, plural, one {# thing waiting} other {# things waiting}}",
+    "loadError": "Couldn't load what's pending.",
+    "retry": "Try again",
+    "support": "Support",
+    "supportSub": "open or in-progress tickets",
+    "reports": "Reports",
+    "reportsSub": "reported posts to review",
+    "waitlistToday": "Waitlist today",
+    "waitlistSub": "{week} in 7 days · {pending} not invited",
+    "newUsers": "New accounts",
+    "newUsersSub": "in the app, last 7 days",
+    "where": "Where they are",
+    "whereError": "Couldn't load the map."
+  },
+  "loadError": "Couldn't load the app's numbers: {error}",
+  "retry": "Try again"
 }

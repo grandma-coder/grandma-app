@@ -1,0 +1,83 @@
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Público",
+  "title": "Mapa",
+  "intro": "Onde estão as pessoas da lista de espera e as contas do app. Clique num país para ver estados, cidades e quem está lá.",
+  "loading": "Carregando…",
+  "loadError": "Não deu para carregar o mapa: {error}",
+  "retry": "Tentar de novo",
+  "unknownCountry": "País desconhecido",
+  "source": {
+    "label": "Mostrar",
+    "all": "Todos",
+    "waitlist": "Lista de espera",
+    "app": "App"
+  },
+  "tiles": {
+    "waitlist": "Lista de espera",
+    "app": "Contas no app",
+    "countries": "Países",
+    "unknown": "Sem país",
+    "last7": "+{n} em 7 dias",
+    "unknownSub": "{waitlist} da lista · {app} do app"
+  },
+  "legend": {
+    "none": "ninguém",
+    "few": "poucas",
+    "many": "muitas pessoas"
+  },
+  "ranking": {
+    "title": "Países",
+    "empty": "Ninguém ainda.",
+    "waitlist": "lista",
+    "app": "app"
+  },
+  "tooltip": "{name}: {waitlist} na lista · {app} no app",
+  "country": {
+    "close": "Fechar",
+    "people": "{n, plural, one {# pessoa} other {# pessoas}}",
+    "phases": "Fases da lista",
+    "appPhases": "Fases no app",
+    "regions": "Estados / regiões",
+    "cities": "Cidades",
+    "unknownRegion": "Sem estado",
+    "others": "{places, plural, one {# outra cidade} other {# outras cidades}}",
+    "othersHint": "Cidades com menos de 3 pessoas ficam juntas para quem não é admin.",
+    "noCities": "Ainda sem cidades neste país.",
+    "placeLater": "Estado e cidade aparecem para quem entrar na lista depois da migração 0019. Por enquanto, só o país.",
+    "showPeople": "Ver pessoas",
+    "hidePeople": "Esconder pessoas",
+    "filterRegion": "Só {region}",
+    "filterCity": "Só {city}",
+    "clearFilter": "Todo o país"
+  },
+  "people": {
+    "adminsOnly": "Nomes e e-mails só aparecem para admins.",
+    "loadError": "Não deu para carregar as pessoas: {error}",
+    "waitlist": "Lista de espera",
+    "app": "Contas no app",
+    "appNarrowed": "Contas do app só têm país; escolha o país inteiro para vê-las.",
+    "empty": "Ninguém aqui.",
+    "limit": "Mostrando as {n} mais recentes.",
+    "name": "Nome",
+    "email": "E-mail",
+    "phase": "Fase",
+    "place": "Lugar",
+    "joined": "Entrou",
+    "inApp": "No app",
+    "yes": "sim",
+    "no": "—"
+  },
+  "modes": {
+    "pre": "Ciclo",
+    "preg": "Grávida",
+    "kids": "Filhos",
+    "meno": "Menopausa",
+    "pre-pregnancy": "Ciclo",
+    "pre_pregnancy": "Ciclo",
+    "cycle": "Ciclo",
+    "pregnancy": "Grávida",
+    "menopause": "Menopausa",
+    "?": "Sem fase"
+  }
+}

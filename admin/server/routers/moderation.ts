@@ -15,7 +15,7 @@ import { writeAudit } from "@/lib/audit"
  * context; an admin-level user ban is a separate concept not built here.
  */
 
-const OPEN = sql`(status IS NULL OR status IN ('pending','open','new','reported'))`
+export const OPEN_REPORT = sql`(status IS NULL OR status IN ('pending','open','new','reported'))`
 
 export interface ReportRow {
   id: string
@@ -49,7 +49,7 @@ export const moderationRouter = router({
     )
     .query(async ({ input }) => {
       const scopeCond =
-        input.scope === "open" ? OPEN : input.scope === "resolved" ? sql`(status IN ('resolved','dismissed','actioned'))` : sql`true`
+        input.scope === "open" ? OPEN_REPORT : input.scope === "resolved" ? sql`(status IN ('resolved','dismissed','actioned'))` : sql`true`
       const rows = await db.execute<{
         id: string
         content_type: string
@@ -67,7 +67,7 @@ export const moderationRouter = router({
       }>(sql`
         select r.id, r.content_type, r.content_id, r.author_id, r.reason, r.details, r.status,
                to_char(r.created_at,'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
-               (select count(*) from content_reports r2 where r2.content_id = r.content_id and ${OPEN})::int as report_count,
+               (select count(*) from content_reports r2 where r2.content_id = r.content_id and ${OPEN_REPORT})::int as report_count,
                p.content, p.author_name, c.name as channel_name, p.moderation_status
         from content_reports r
         left join channel_posts p on p.id = r.content_id and r.content_type = 'post'
@@ -127,7 +127,7 @@ export const moderationRouter = router({
       if (input.status !== "visible") {
         await db.execute(sql`
           update content_reports set status = 'actioned', reviewed_at = now()
-          where content_id = ${input.postId} and content_type = 'post' and ${OPEN}
+          where content_id = ${input.postId} and content_type = 'post' and ${OPEN_REPORT}
         `)
       }
       await writeAudit({
