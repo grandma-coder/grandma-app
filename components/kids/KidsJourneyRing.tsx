@@ -11,7 +11,7 @@
  */
 
 import React, { useRef, useState, useMemo, useCallback } from 'react'
-import { View, Text, ScrollView, PanResponder, StyleSheet, Pressable, Modal } from 'react-native'
+import { View, Text, ScrollView, PanResponder, StyleSheet, Pressable } from 'react-native'
 import Svg, { Circle, Polygon } from 'react-native-svg'
 import Animated, {
   useSharedValue,
@@ -32,6 +32,7 @@ import { DiffuseSheet, DiffuseListRow, DiffuseSectionHeader, DiffuseBloomIcon } 
 import { Character } from '../characters/Characters'
 import { GROWTH_LEAPS, leapStatusForWeek, type GrowthLeap } from '../../lib/growthLeaps'
 import { useTranslation } from '../../lib/i18n'
+import { SheetModal } from '../ui/SheetModal'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 const SVG_SIZE = 320
@@ -712,8 +713,8 @@ function LeapDetailModal({
   }
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
-      <View style={modalStyles.overlay}>
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <View style={[
           modalStyles.sheet,
           {
@@ -723,12 +724,12 @@ function LeapDetailModal({
           },
         ]}>
           {/* Drag handle */}
-          <View style={{ alignItems: 'center', paddingTop: 10 }}>
+          <View {...dragZone} style={{ alignItems: 'center', paddingTop: 10 }}>
             <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
 
           {/* Header */}
-          <View style={modalStyles.header}>
+          <View {...dragZone} style={modalStyles.header}>
             <View style={{ flex: 1, paddingRight: 12 }}>
               <Text style={[modalStyles.eyebrow, { color: leap.color, fontFamily: font.bodySemiBold }]}>
                 {t('kids_journeyRing_leapOfWithAge', { n: leapNumber, total: totalLeaps, age: leap.ageRange })}
@@ -860,8 +861,8 @@ function LeapDetailModal({
             </View>
           </ScrollView>
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

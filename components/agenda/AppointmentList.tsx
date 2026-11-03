@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
-import { View, Text, Pressable, TextInput, Modal, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, Pressable, TextInput, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
+import { SheetModal } from '../ui/SheetModal'
 
 type ThemeShape = ReturnType<typeof useTheme>
 
@@ -149,19 +150,10 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
         </View>
       )}
 
-      <Modal
-        visible={showAdd}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setShowAdd(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowAdd(false)}
-          accessibilityLabel={t('appointmentList_a11yDismiss')}
-        >
+      <SheetModal visible={showAdd} onClose={() => setShowAdd(false)} style={{ maxHeight: '85%' }}>
+        {(dragZone) => (
           <Pressable style={styles.modalSheet} onPress={() => { /* swallow */ }}>
-            <View style={styles.modalHandle} />
+            <View {...dragZone} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{t('preg_appts_modalTitle')}</Text>
 
             <Text style={styles.modalLabel}>{t('preg_appts_label_type')}</Text>
@@ -239,8 +231,8 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
               </Pressable>
             </View>
           </Pressable>
-        </Pressable>
-      </Modal>
+        )}
+      </SheetModal>
     </View>
   )
 }

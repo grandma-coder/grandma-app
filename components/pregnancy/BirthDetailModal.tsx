@@ -1,8 +1,7 @@
 // components/pregnancy/BirthDetailModal.tsx
 import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
-  Modal,
   View,
   Text,
   Pressable,
@@ -33,6 +32,7 @@ import { Character } from '../characters/Characters'
 import { BIRTH_TOPIC_CHARACTER, BIRTH_TOPIC_SITE_STICKER } from './BirthGuideModal'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
+import { SheetModal } from '../ui/SheetModal'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -64,7 +64,7 @@ interface BirthDetailModalProps {
 export function BirthDetailModal({
   visible,
   onClose,
-  topicKey,
+  topicKey: topicKeyProp,
   onAskGrandma,
 }: BirthDetailModalProps) {
   const { colors, isDark } = useTheme()
@@ -73,6 +73,10 @@ export function BirthDetailModal({
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  // Light: keep the last topic while the sheet plays its close animation after the parent clears it.
+  const lastTopicKey = useRef(topicKeyProp)
+  if (topicKeyProp) lastTopicKey.current = topicKeyProp
+  const topicKey = diffuse ? topicKeyProp : (topicKeyProp ?? lastTopicKey.current)
 
   useEffect(() => {
     setOpenIndex(null)
@@ -196,14 +200,8 @@ export function BirthDetailModal({
   const soft = getModeColorSoft('preg', isDark)
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType={diffuse ? 'slide' : 'fade'}
-      onRequestClose={handleClose}
-    >
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+    <SheetModal visible={visible} onClose={handleClose}>
+      {(dragZone) => (
         <View
           style={[
             styles.sheet,
@@ -215,11 +213,11 @@ export function BirthDetailModal({
           ]}
         >
           {/* Handle */}
-          <View style={styles.handleWrap}>
+          <View {...dragZone} style={styles.handleWrap}>
             <View style={[styles.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(22,21,19,0.25)' }]} />
           </View>
 
-          <View style={styles.heroPad}>
+          <View {...dragZone} style={styles.heroPad}>
             <DetailSheetHeader
               title={topic.title}
               sticker={BIRTH_TOPIC_SITE_STICKER[topicKey]}
@@ -298,8 +296,8 @@ export function BirthDetailModal({
           </View>
           </>)}
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

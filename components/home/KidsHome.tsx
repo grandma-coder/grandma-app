@@ -224,6 +224,8 @@ import { parseDurationMinutes } from '../../lib/kidsHandoff'
 import { normalizeSleepQuality } from '../../lib/sleepQuality'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { parseLocalDate } from '../../lib/localDate'
+import { SheetModal } from '../ui/SheetModal'
+import { CenterModal } from '../ui/CenterModal'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
@@ -1563,8 +1565,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           </View>
         </DiffuseSheet>
       ) : (
-      <Modal visible={overflowKidsVisible} transparent animationType={diffuse ? 'slide' : 'fade'}>
-        <Pressable style={s.modalOverlay} onPress={() => setOverflowKidsVisible(false)}>
+      <SheetModal visible={overflowKidsVisible} onClose={() => setOverflowKidsVisible(false)}>
+        {(dragZone) => (
           <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
             <View style={s.modalHeader}>
               <Text style={[s.modalTitle, { color: colors.text }]}>{t('kids_home_all_kids_title')}</Text>
@@ -1602,8 +1604,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
               })}
             </View>
           </View>
-        </Pressable>
-      </Modal>
+        )}
+      </SheetModal>
       )}
 
       {/* ─── Date Range Picker ────────────────────────────────── */}
@@ -1679,12 +1681,12 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       </ScrollView>
 
       {/* ─── Custom Range Picker Modal ────────────────────────── */}
-      <Modal visible={customPickerVisible} transparent animationType={diffuse ? 'slide' : 'fade'}>
+      {diffuse ? (
+      <Modal visible={customPickerVisible} transparent animationType="slide">
         <Pressable
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
           onPress={() => setCustomPickerVisible(false)}
         >
-          {diffuse ? (
             <Pressable
               onPress={(e) => e.stopPropagation()}
               style={{
@@ -1796,7 +1798,11 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                 </Pressable>
               </View>
             </Pressable>
-          ) : (
+        </Pressable>
+      </Modal>
+      ) : (
+      <SheetModal visible={customPickerVisible} onClose={() => setCustomPickerVisible(false)}>
+        {(dragZone) => (
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
@@ -1820,7 +1826,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
             </View>
 
             {/* Drag handle */}
-            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#14131340', alignSelf: 'center', marginBottom: 4 }} />
+            <View {...dragZone} hitSlop={{ top: 14, bottom: 14, left: 60, right: 60 }} style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#14131340', alignSelf: 'center', marginBottom: 4 }} />
 
             {/* Header */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1950,9 +1956,9 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
               <Text style={{ color: '#141313', fontFamily: font.bodyBold, fontSize: 16, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_home_range_apply')}</Text>
             </Pressable>
           </Pressable>
-          )}
-        </Pressable>
-      </Modal>
+        )}
+      </SheetModal>
+      )}
 
       {/* Past 7 Days mini-rings + the big concentric Multi-Ring hero were
           removed — the data they showed is already covered by the Hero tiles
@@ -3866,15 +3872,15 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
   }
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
-      <View style={s.modalOverlay}>
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           {/* Header */}
           <DetailSheetHeader title={t('kids_home_diaper_tracker_title')} sticker="diaper" tone={StickerPalette.blueSoft} childName={childName} childColor={childColor} onClose={onClose} />
           <DiaperDetailCalm count={count} pee={pee} poop={poop} mixed={mixed} diaperByDay={diaperByDay} diaperColors={diaperColors} rangeDays={rangeDays} />
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -3956,8 +3962,8 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
   }
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
-      <View style={s.modalOverlay}>
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={t('kids_home_mood_trends_title')} sticker="face3" tone={StickerPalette.yellowSoft} childName={childName} childColor={childColor} onClose={onClose} />
           <Text style={[s.modalSubtitle, { color: colors.textMuted }]}>
@@ -4022,8 +4028,8 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
             </View>
           )}
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -4181,40 +4187,38 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
   }
 
   return (
-    <Modal visible={visible} animationType="fade" transparent>
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', paddingHorizontal: 20 }} onPress={onClose}>
-        <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20, gap: 12 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.text, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 }}>{t('kids_home_activity_breakdown_title')}</Text>
-            <Pressable onPress={onClose} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' }}>
-              <X size={14} color={colors.textMuted} strokeWidth={2.5} />
-            </Pressable>
-          </View>
-          {entries.length === 0 ? (
-            <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 14 }}>{t('kids_home_activity_empty')}</Text>
-          ) : entries.map(([type, count]) => {
-            const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: colors.primary }
-            const pct = total > 0 ? Math.round((count / total) * 100) : 0
-            return (
-              <View key={type}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
-                  <Text style={{ fontFamily: 'HankenGrotesk_600SemiBold', flex: 1, color: colors.textSecondary, fontSize: 14, fontWeight: '600' }}>{meta.label}</Text>
-                  <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.text, fontSize: 14, fontWeight: '700' }}>{count.toLocaleString()}</Text>
-                  <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: meta.color, fontSize: 12, fontWeight: '700', minWidth: 38, textAlign: 'right' }}>{pct}%</Text>
-                </View>
-                <View style={{ height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <View style={{ width: `${pct}%`, height: 4, borderRadius: 2, backgroundColor: meta.color }} />
-                </View>
+    <CenterModal visible={visible} onClose={onClose} containerStyle={{ paddingHorizontal: 20 }}>
+      <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20, gap: 12, alignSelf: 'stretch' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.text, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 }}>{t('kids_home_activity_breakdown_title')}</Text>
+          <Pressable onPress={onClose} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={14} color={colors.textMuted} strokeWidth={2.5} />
+          </Pressable>
+        </View>
+        {entries.length === 0 ? (
+          <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 14 }}>{t('kids_home_activity_empty')}</Text>
+        ) : entries.map(([type, count]) => {
+          const meta = ACTIVITY_TYPE_META[type] ?? { label: type, color: colors.primary }
+          const pct = total > 0 ? Math.round((count / total) * 100) : 0
+          return (
+            <View key={type}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
+                <Text style={{ fontFamily: 'HankenGrotesk_600SemiBold', flex: 1, color: colors.textSecondary, fontSize: 14, fontWeight: '600' }}>{meta.label}</Text>
+                <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.text, fontSize: 14, fontWeight: '700' }}>{count.toLocaleString()}</Text>
+                <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: meta.color, fontSize: 12, fontWeight: '700', minWidth: 38, textAlign: 'right' }}>{pct}%</Text>
               </View>
-            )
-          })}
-          <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
-            {total.toLocaleString()} {t('kids_home_activity_total_suffix')}
-          </Text>
-        </Pressable>
+              <View style={{ height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <View style={{ width: `${pct}%`, height: 4, borderRadius: 2, backgroundColor: meta.color }} />
+              </View>
+            </View>
+          )
+        })}
+        <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
+          {total.toLocaleString()} {t('kids_home_activity_total_suffix')}
+        </Text>
       </Pressable>
-    </Modal>
+    </CenterModal>
   )
 }
 
@@ -4320,17 +4324,17 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
   }
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
-      <Pressable style={s.modalOverlay} onPress={onClose}>
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <Pressable onPress={(e) => e.stopPropagation()} style={[s.modalContent, { backgroundColor: colors.bg, maxHeight: '78%' }]}>
-          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
+          <View {...dragZone} style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
             <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
           <DetailSheetHeader title={t('kids_home_sleep_modal_title')} sticker="moon" tone={StickerPalette.blueSoft} childName={childName} childColor={childColor} onClose={onClose} />
           <SleepDetailCalm sleepTotal={sleepTotal} sleepTarget={sleepTarget} dailySleepTarget={dailySleepTarget} sleepQuality={sleepQuality} sleepRestful={sleepRestful} sleepRated={sleepRated} dailySleep={dailySleep} dayLabels={dayLabels} rangeDays={rangeDays} />
         </Pressable>
-      </Pressable>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -5107,8 +5111,8 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
   }
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
-      <View style={s.modalOverlay}>
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={stage === 'liquid' ? 'Feeding' : 'Nutrition'} sticker="bottle" tone={StickerPalette.pinkSoft} childName={childName} childColor={childColor} onClose={onClose} />
           {true ? (
@@ -5376,8 +5380,8 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
 
           </>)}
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -5560,14 +5564,14 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
   }
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
-      <View style={s.modalOverlay}>
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={t('kids_home_activities_modal_title')} sticker="shoe" tone={StickerPalette.greenSoft} childName={childName} childColor={childColor} onClose={onClose} />
           <ActivitiesDetailCalm activityCount={activityCount} activeDays={activeDays} rangeDays={rangeDays} breakdown={breakdown} entries={entries} />
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -5832,12 +5836,12 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   }
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
-      <View style={s.modalOverlay}>
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <View style={[s.gsSheet, { backgroundColor: colors.bg }]}>
 
           {/* Drag handle */}
-          <View style={[s.gsDragHandle, { backgroundColor: colors.borderStrong }]} />
+          <View {...dragZone} hitSlop={{ top: 14, bottom: 14, left: 60, right: 60 }} style={[s.gsDragHandle, { backgroundColor: colors.borderStrong }]} />
 
           {/* Header */}
           <DetailSheetHeader title={t('kids_home_goals_set_title')} sticker="star" tone={StickerPalette.yellowSoft} childName={childName} onClose={onClose} />
@@ -5928,8 +5932,8 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
             <EyeAction label={t('kids_home_goals_save')} onPress={handleSave} ink={DIAPER_STICKER_INK} sticker="star" fill={ACTION_TONES.yellow} size={64} />
           </View>
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -6369,260 +6373,270 @@ function RemindersModal({
       .map(([, { label, items }]) => ({ label, items }))
   }, [archived])
 
-  return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
-      <View style={[s.reminderModalOverlay]}>
-      <View style={[s.reminderModal, { backgroundColor: diffuse ? dt.colors.bg : (isDark ? colors.bg : '#FFFEF8') }]}>
-        {/* Drag handle */}
-        <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
-          <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: diffuse ? dt.colors.line2 : colors.border }} />
-        </View>
+  const renderReminders = (dragZone: object = {}) => (
+    <View style={[s.reminderModal, { backgroundColor: diffuse ? dt.colors.bg : (isDark ? colors.bg : '#FFFEF8') }]}>
+      {/* Drag handle */}
+      <View {...dragZone} style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
+        <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: diffuse ? dt.colors.line2 : colors.border }} />
+      </View>
 
-        {/* Header */}
-        <View style={[s.reminderModalHeader, { borderBottomColor: 'transparent' }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {/* Bell */}
-            {diffuse ? (
-              <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center' }}>
-                <Character name="bell" size={16} color={dt.colors.ink3} />
-              </View>
-            ) : (
-              <SiteSticker name="bell" size={32} cut />
-            )}
-            <Text style={[s.reminderModalTitle, { color: diffuse ? dt.colors.ink : colors.text }, diffuse ? { fontFamily: diffuseFont.display } : { fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 24 }]}>{t('kids_home_section_reminders')}</Text>
-          </View>
+      {/* Header */}
+      <View style={[s.reminderModalHeader, { borderBottomColor: 'transparent' }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {/* Bell */}
           {diffuse ? (
-            <Pressable onPress={onClose} hitSlop={12}>
-              <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }}>
-                <X size={15} color={dt.colors.ink} strokeWidth={2.5} />
-              </View>
-            </Pressable>
-          ) : (
-            <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={tNow('common_close')} style={{ marginBottom: 0 }} />
-          )}
-        </View>
-
-        {/* Metric tiles */}
-        {diffuse ? (
-          <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 4, marginBottom: 4 }}>
-            <DiffuseMetricTile value={active.length} label={t('kids_home_reminders_modal_tab_active')} />
-            <DiffuseMetricTile value={thisWeek} label={t('kids_home_reminders_modal_done_week')} />
-            <DiffuseMetricTile value={`${completionRate}%`} label={t('kids_home_reminders_modal_completion')} />
-          </View>
-        ) : (
-        <View style={{ flexDirection: 'row', marginHorizontal: 20, marginTop: 6, marginBottom: 6 }}>
-          {[
-            { v: String(active.length), l: t('kids_home_reminders_modal_tab_active') },
-            { v: String(thisWeek), l: t('kids_home_reminders_modal_done_week') },
-            { v: `${completionRate}%`, l: t('kids_home_reminders_modal_completion') },
-          ].map((m, i) => (
-            <View key={i} style={{ flex: 1, paddingVertical: 6, borderLeftWidth: i ? 1 : 0, borderLeftColor: colors.border, paddingLeft: i ? 14 : 0 }}>
-              <Text style={{ fontSize: 28, fontFamily: font.displayBold, color: colors.text, letterSpacing: -0.5 }}>{m.v}</Text>
-              <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2 }}>{m.l}</Text>
+            <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center' }}>
+              <Character name="bell" size={16} color={dt.colors.ink3} />
             </View>
-          ))}
+          ) : (
+            <SiteSticker name="bell" size={32} cut />
+          )}
+          <Text style={[s.reminderModalTitle, { color: diffuse ? dt.colors.ink : colors.text }, diffuse ? { fontFamily: diffuseFont.display } : { fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 24 }]}>{t('kids_home_section_reminders')}</Text>
         </View>
+        {diffuse ? (
+          <Pressable onPress={onClose} hitSlop={12}>
+            <View style={{ width: 34, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }}>
+              <X size={15} color={dt.colors.ink} strokeWidth={2.5} />
+            </View>
+          </Pressable>
+        ) : (
+          <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={tNow('common_close')} style={{ marginBottom: 0 }} />
         )}
+      </View>
 
-        {/* Kid filter pills — sticker-on-paper style */}
-        {childrenWithReminders.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ flexGrow: 0 }}
-            contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 6 }}
-          >
-            {/* All pill */}
-            {(() => {
-              const isAll = selectedChildId === null
-              return (
-                <Pressable
-                  key="all"
-                  onPress={() => setSelectedChildId(null)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingVertical: 8,
-                    paddingHorizontal: 16,
-                    borderRadius: 999,
-                    borderWidth: diffuse ? 1 : 1.5,
-                    backgroundColor: diffuse ? (isAll ? dt.colors.surface : 'transparent') : (isAll ? StickerPalette.yellowSoft : (colors.surface)),
-                    borderColor: diffuse ? (isAll ? dt.colors.hairline : dt.colors.line) : (isDark ? (isAll ? '#F5D652' : colors.border) : '#141313'),
-                  }}
-                >
-                  {/* Mini stack of kid dots — visual cue that "All" includes every kid */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {childrenWithReminders.slice(0, 3).map((c, i) => {
-                      const idx = (allChildren ?? []).findIndex(ch => ch.id === c.id)
-                      const dotColor = CHILD_COLORS[idx % CHILD_COLORS.length]
-                      return (
-                        <View
-                          key={c.id}
-                          style={{
-                            width: 10, height: 10, borderRadius: 5,
-                            backgroundColor: dotColor,
-                            borderWidth: diffuse ? 0 : 1, borderColor: '#141313',
-                            marginLeft: i === 0 ? 0 : -4,
-                          }}
-                        />
-                      )
-                    })}
-                  </View>
-                  <Text style={{ fontSize: 13, fontFamily: diffuse ? (isAll ? diffuseFont.bodySemiBold : diffuseFont.body) : font.bodyBold, letterSpacing: 0.2, color: diffuse ? (isAll ? dt.colors.ink : dt.colors.ink2) : (isDark ? (isAll ? '#141313' : colors.text) : '#141313') }}>{t('kids_home_reminders_modal_filter_all')}</Text>
-                </Pressable>
-              )
-            })()}
-            {/* Per-child pills */}
-            {childrenWithReminders.map((c) => {
-              const idx = (allChildren ?? []).findIndex(ch => ch.id === c.id)
-              const kidColor = CHILD_COLORS[idx % CHILD_COLORS.length]
-              const isActive = selectedChildId === c.id
-              return (
-                <Pressable
-                  key={c.id}
-                  onPress={() => setSelectedChildId(c.id)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingVertical: 8,
-                    paddingHorizontal: 14,
-                    borderRadius: 999,
-                    borderWidth: diffuse ? 1 : 1.5,
-                    backgroundColor: diffuse ? (isActive ? dt.colors.surface : 'transparent') : (isActive ? kidColor : (colors.surface)),
-                    borderColor: diffuse ? (isActive ? dt.colors.hairline : dt.colors.line) : (isDark ? (isActive ? kidColor : colors.border) : '#141313'),
-                  }}
-                >
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: kidColor, borderWidth: diffuse ? 0 : 1, borderColor: '#141313' }} />
-                  <Text style={{ fontSize: 13, fontFamily: diffuse ? (isActive ? diffuseFont.bodySemiBold : diffuseFont.body) : font.bodyBold, letterSpacing: 0.2, color: diffuse ? (isActive ? dt.colors.ink : dt.colors.ink2) : (isDark ? (isActive ? '#141313' : colors.text) : '#141313') }}>{c.name}</Text>
-                </Pressable>
-              )
-            })}
-          </ScrollView>
-        )}
-
-        {/* Tabs — segmented pill */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
-          <View style={{
-            flexDirection: 'row',
-            backgroundColor: diffuse ? 'transparent' : colors.surface,
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
-            padding: 4,
-            gap: 4,
-          }}>
-            {(['active', 'archived'] as const).map(tabKey => {
-              const isOn = tab === tabKey
-              return (
-                <Pressable
-                  key={tabKey}
-                  onPress={() => setTab(tabKey)}
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingVertical: 10,
-                    borderRadius: 999,
-                    backgroundColor: diffuse ? (isOn ? dt.colors.surface : 'transparent') : (isOn ? '#141313' : 'transparent'),
-                    borderWidth: diffuse && isOn ? 1 : 0,
-                    borderColor: diffuse ? dt.colors.hairline : 'transparent',
-                  }}
-                >
-                  <Text style={{
-                    fontSize: diffuse ? 11 : 14,
-                    fontFamily: diffuse ? (isOn ? diffuseFont.monoBold : diffuseFont.mono) : (isOn ? 'ArchitectsDaughter_400Regular' : 'HankenGrotesk_600SemiBold'),
-                    color: diffuse ? (isOn ? dt.colors.ink : dt.colors.ink3) : (isOn ? '#FFFEF8' : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)')),
-                    letterSpacing: diffuse ? 1.2 : -0.1,
-                    textTransform: diffuse ? 'uppercase' : 'none',
-                  }}>
-                    {tabKey === 'active' ? t('kids_home_reminders_modal_tab_active_count', { count: active.length }) : t('kids_home_reminders_modal_tab_archived_count', { count: archived.length })}
-                  </Text>
-                </Pressable>
-              )
-            })}
+      {/* Metric tiles */}
+      {diffuse ? (
+        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 4, marginBottom: 4 }}>
+          <DiffuseMetricTile value={active.length} label={t('kids_home_reminders_modal_tab_active')} />
+          <DiffuseMetricTile value={thisWeek} label={t('kids_home_reminders_modal_done_week')} />
+          <DiffuseMetricTile value={`${completionRate}%`} label={t('kids_home_reminders_modal_completion')} />
+        </View>
+      ) : (
+      <View style={{ flexDirection: 'row', marginHorizontal: 20, marginTop: 6, marginBottom: 6 }}>
+        {[
+          { v: String(active.length), l: t('kids_home_reminders_modal_tab_active') },
+          { v: String(thisWeek), l: t('kids_home_reminders_modal_done_week') },
+          { v: `${completionRate}%`, l: t('kids_home_reminders_modal_completion') },
+        ].map((m, i) => (
+          <View key={i} style={{ flex: 1, paddingVertical: 6, borderLeftWidth: i ? 1 : 0, borderLeftColor: colors.border, paddingLeft: i ? 14 : 0 }}>
+            <Text style={{ fontSize: 28, fontFamily: font.displayBold, color: colors.text, letterSpacing: -0.5 }}>{m.v}</Text>
+            <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2 }}>{m.l}</Text>
           </View>
-        </View>
+        ))}
+      </View>
+      )}
 
-        {/* List */}
-        <ScrollView contentContainerStyle={{ paddingBottom: 40 }} scrollEnabled={!isDraggingReminder}>
-          {tab === 'active' ? (
-            active.length === 0 ? (
-              diffuse ? (
-                <DiffuseEmptyState
-                  style={{ paddingVertical: 48 }}
-                  icon={<Character name="bell" size={40} color={stickers.green} />}
-                  title={t('kids_home_reminders_modal_no_active')}
-                />
-              ) : (
-              <View style={s.reminderModalEmpty}>
-                <FlowerSticker size={48} petal="#BDD48C" center="#F5D652" stroke="#141313" />
-                <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>{t('kids_home_reminders_modal_no_active')}</Text>
-              </View>
-              )
-            ) : (
-              <View style={{ marginHorizontal: 16, marginTop: 16 }}>
-                <DraggableReminderList
-                  items={active}
-                  onReorder={(reordered) => {
-                    const archived = reminders.filter(r => r.done)
-                    if (!selectedChildId) {
-                      onReorder([...reordered, ...archived])
-                    } else {
-                      const otherActive = reminders.filter(r => !r.done && r.childId !== selectedChildId)
-                      onReorder([...reordered, ...otherActive, ...archived])
-                    }
-                  }}
-                  onToggle={onToggle}
-                  onDelete={onDelete}
-                  onEdit={onEdit}
-                  onFlag={onFlag}
-                  colors={colors}
-                  allChildren={allChildren}
-                  radius={radius}
-                  onDragStateChange={setIsDraggingReminder}
-                />
-              </View>
+      {/* Kid filter pills — sticker-on-paper style */}
+      {childrenWithReminders.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0 }}
+          contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 6 }}
+        >
+          {/* All pill */}
+          {(() => {
+            const isAll = selectedChildId === null
+            return (
+              <Pressable
+                key="all"
+                onPress={() => setSelectedChildId(null)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 999,
+                  borderWidth: diffuse ? 1 : 1.5,
+                  backgroundColor: diffuse ? (isAll ? dt.colors.surface : 'transparent') : (isAll ? StickerPalette.yellowSoft : (colors.surface)),
+                  borderColor: diffuse ? (isAll ? dt.colors.hairline : dt.colors.line) : (isDark ? (isAll ? '#F5D652' : colors.border) : '#141313'),
+                }}
+              >
+                {/* Mini stack of kid dots — visual cue that "All" includes every kid */}
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {childrenWithReminders.slice(0, 3).map((c, i) => {
+                    const idx = (allChildren ?? []).findIndex(ch => ch.id === c.id)
+                    const dotColor = CHILD_COLORS[idx % CHILD_COLORS.length]
+                    return (
+                      <View
+                        key={c.id}
+                        style={{
+                          width: 10, height: 10, borderRadius: 5,
+                          backgroundColor: dotColor,
+                          borderWidth: diffuse ? 0 : 1, borderColor: '#141313',
+                          marginLeft: i === 0 ? 0 : -4,
+                        }}
+                      />
+                    )
+                  })}
+                </View>
+                <Text style={{ fontSize: 13, fontFamily: diffuse ? (isAll ? diffuseFont.bodySemiBold : diffuseFont.body) : font.bodyBold, letterSpacing: 0.2, color: diffuse ? (isAll ? dt.colors.ink : dt.colors.ink2) : (isDark ? (isAll ? '#141313' : colors.text) : '#141313') }}>{t('kids_home_reminders_modal_filter_all')}</Text>
+              </Pressable>
             )
-          ) : archivedByDate.length === 0 ? (
+          })()}
+          {/* Per-child pills */}
+          {childrenWithReminders.map((c) => {
+            const idx = (allChildren ?? []).findIndex(ch => ch.id === c.id)
+            const kidColor = CHILD_COLORS[idx % CHILD_COLORS.length]
+            const isActive = selectedChildId === c.id
+            return (
+              <Pressable
+                key={c.id}
+                onPress={() => setSelectedChildId(c.id)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingVertical: 8,
+                  paddingHorizontal: 14,
+                  borderRadius: 999,
+                  borderWidth: diffuse ? 1 : 1.5,
+                  backgroundColor: diffuse ? (isActive ? dt.colors.surface : 'transparent') : (isActive ? kidColor : (colors.surface)),
+                  borderColor: diffuse ? (isActive ? dt.colors.hairline : dt.colors.line) : (isDark ? (isActive ? kidColor : colors.border) : '#141313'),
+                }}
+              >
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: kidColor, borderWidth: diffuse ? 0 : 1, borderColor: '#141313' }} />
+                <Text style={{ fontSize: 13, fontFamily: diffuse ? (isActive ? diffuseFont.bodySemiBold : diffuseFont.body) : font.bodyBold, letterSpacing: 0.2, color: diffuse ? (isActive ? dt.colors.ink : dt.colors.ink2) : (isDark ? (isActive ? '#141313' : colors.text) : '#141313') }}>{c.name}</Text>
+              </Pressable>
+            )
+          })}
+        </ScrollView>
+      )}
+
+      {/* Tabs — segmented pill */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
+        <View style={{
+          flexDirection: 'row',
+          backgroundColor: diffuse ? 'transparent' : colors.surface,
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: diffuse ? dt.colors.line : (isDark ? colors.border : 'rgba(20,19,19,0.12)'),
+          padding: 4,
+          gap: 4,
+        }}>
+          {(['active', 'archived'] as const).map(tabKey => {
+            const isOn = tab === tabKey
+            return (
+              <Pressable
+                key={tabKey}
+                onPress={() => setTab(tabKey)}
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 10,
+                  borderRadius: 999,
+                  backgroundColor: diffuse ? (isOn ? dt.colors.surface : 'transparent') : (isOn ? '#141313' : 'transparent'),
+                  borderWidth: diffuse && isOn ? 1 : 0,
+                  borderColor: diffuse ? dt.colors.hairline : 'transparent',
+                }}
+              >
+                <Text style={{
+                  fontSize: diffuse ? 11 : 14,
+                  fontFamily: diffuse ? (isOn ? diffuseFont.monoBold : diffuseFont.mono) : (isOn ? 'ArchitectsDaughter_400Regular' : 'HankenGrotesk_600SemiBold'),
+                  color: diffuse ? (isOn ? dt.colors.ink : dt.colors.ink3) : (isOn ? '#FFFEF8' : (isDark ? colors.textMuted : 'rgba(20,19,19,0.55)')),
+                  letterSpacing: diffuse ? 1.2 : -0.1,
+                  textTransform: diffuse ? 'uppercase' : 'none',
+                }}>
+                  {tabKey === 'active' ? t('kids_home_reminders_modal_tab_active_count', { count: active.length }) : t('kids_home_reminders_modal_tab_archived_count', { count: archived.length })}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      </View>
+
+      {/* List */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} scrollEnabled={!isDraggingReminder}>
+        {tab === 'active' ? (
+          active.length === 0 ? (
             diffuse ? (
               <DiffuseEmptyState
                 style={{ paddingVertical: 48 }}
-                icon={<Character name="crown" size={40} color={stickers.yellow} />}
-                title={t('kids_home_reminders_modal_no_archived')}
+                icon={<Character name="bell" size={40} color={stickers.green} />}
+                title={t('kids_home_reminders_modal_no_active')}
               />
             ) : (
             <View style={s.reminderModalEmpty}>
-              <StarSticker size={48} fill="#F5D652" stroke="#141313" />
-              <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>{t('kids_home_reminders_modal_no_archived')}</Text>
+              <FlowerSticker size={48} petal="#BDD48C" center="#F5D652" stroke="#141313" />
+              <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>{t('kids_home_reminders_modal_no_active')}</Text>
             </View>
             )
           ) : (
-            archivedByDate.map(({ label, items }) => (
-              <View key={label} style={{ marginHorizontal: 16, marginTop: 16 }}>
-                <Text style={{ fontSize: 10, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, color: diffuse ? dt.colors.ink3 : colors.textMuted, textTransform: 'uppercase', letterSpacing: diffuse ? 1.6 : 1.2, marginBottom: 8 }}>{label}</Text>
-                <View style={{ gap: 8 }}>
-                  {items.map((r, i) => (
-                    <ReminderRow
-                      key={r.id}
-                      r={r}
-                      isLast={i === items.length - 1}
-                      onToggle={() => onToggle(r.id)}
-                      onDelete={() => onDelete(r.id)}
-                      onEdit={onEdit}
-                      colors={colors}
-                      allChildren={allChildren}
-                    />
-                  ))}
-                </View>
+            <View style={{ marginHorizontal: 16, marginTop: 16 }}>
+              <DraggableReminderList
+                items={active}
+                onReorder={(reordered) => {
+                  const archived = reminders.filter(r => r.done)
+                  if (!selectedChildId) {
+                    onReorder([...reordered, ...archived])
+                  } else {
+                    const otherActive = reminders.filter(r => !r.done && r.childId !== selectedChildId)
+                    onReorder([...reordered, ...otherActive, ...archived])
+                  }
+                }}
+                onToggle={onToggle}
+                onDelete={onDelete}
+                onEdit={onEdit}
+                onFlag={onFlag}
+                colors={colors}
+                allChildren={allChildren}
+                radius={radius}
+                onDragStateChange={setIsDraggingReminder}
+              />
+            </View>
+          )
+        ) : archivedByDate.length === 0 ? (
+          diffuse ? (
+            <DiffuseEmptyState
+              style={{ paddingVertical: 48 }}
+              icon={<Character name="crown" size={40} color={stickers.yellow} />}
+              title={t('kids_home_reminders_modal_no_archived')}
+            />
+          ) : (
+          <View style={s.reminderModalEmpty}>
+            <StarSticker size={48} fill="#F5D652" stroke="#141313" />
+            <Text style={[s.remindersEmptyText, { color: colors.textSecondary }]}>{t('kids_home_reminders_modal_no_archived')}</Text>
+          </View>
+          )
+        ) : (
+          archivedByDate.map(({ label, items }) => (
+            <View key={label} style={{ marginHorizontal: 16, marginTop: 16 }}>
+              <Text style={{ fontSize: 10, fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, color: diffuse ? dt.colors.ink3 : colors.textMuted, textTransform: 'uppercase', letterSpacing: diffuse ? 1.6 : 1.2, marginBottom: 8 }}>{label}</Text>
+              <View style={{ gap: 8 }}>
+                {items.map((r, i) => (
+                  <ReminderRow
+                    key={r.id}
+                    r={r}
+                    isLast={i === items.length - 1}
+                    onToggle={() => onToggle(r.id)}
+                    onDelete={() => onDelete(r.id)}
+                    onEdit={onEdit}
+                    colors={colors}
+                    allChildren={allChildren}
+                  />
+                ))}
               </View>
-            ))
-          )}
-        </ScrollView>
-      </View>
-      </View>
-    </Modal>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </View>
+  )
+
+  return (
+    diffuse ? (
+      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+        <View style={[s.reminderModalOverlay]}>
+        {renderReminders()}
+        </View>
+      </Modal>
+    ) : (
+      <SheetModal visible={visible} onClose={onClose}>
+        {(dragZone) => renderReminders(dragZone)}
+      </SheetModal>
+    )
   )
 }
 

@@ -1,7 +1,6 @@
 // components/pregnancy/BirthGuideModal.tsx
 import React, { useState } from 'react'
 import {
-  Modal,
   View,
   Text,
   Pressable,
@@ -26,6 +25,7 @@ import {
   Leaf, Cross, Cloud, Drop, ClockFace, Bolt, Key, Pill, Lungs, Heart, Moon,
 } from '../ui/Stickers'
 import type { BirthTopicKey } from '../../lib/birthGuideData'
+import { SheetModal } from '../ui/SheetModal'
 
 
 interface BirthGuideModalProps {
@@ -208,14 +208,8 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
 
   return (
     <>
-      <Modal
-        visible={visible && detailTopic === null}
-        transparent
-        animationType={diffuse ? 'slide' : 'fade'}
-        onRequestClose={handleClose}
-      >
-        <View style={styles.overlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+      <SheetModal visible={visible} onClose={handleClose}>
+        {(dragZone) => (
           <View
             style={[
               styles.sheet,
@@ -227,11 +221,11 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
             ]}
           >
             {/* Handle */}
-            <View style={styles.handleWrap}>
+            <View {...dragZone} style={styles.handleWrap}>
               <View style={[styles.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(22,21,19,0.25)' }]} />
             </View>
 
-            <View style={styles.headerRow}>
+            <View {...dragZone} style={styles.headerRow}>
               <View style={{ flex: 1 }}>
                 <DetailSheetHeader
                   title={t('preg_birthGuide_title')}
@@ -264,8 +258,8 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
               </View>
             </ScrollView>
           </View>
-        </View>
-      </Modal>
+        )}
+      </SheetModal>
 
       <BirthDetailModal
         visible={detailTopic !== null}

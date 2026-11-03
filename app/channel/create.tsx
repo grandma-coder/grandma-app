@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   View, Text, TextInput, Pressable, ScrollView, StyleSheet,
-  KeyboardAvoidingView, Platform, Image, Modal, Animated, Easing,
+  KeyboardAvoidingView, Platform, Image, Animated, Easing,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
@@ -22,6 +22,7 @@ import {
 import { ChannelGlyph } from '../../components/community/ChannelGlyph'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
+import { CenterModal } from '../../components/ui/CenterModal'
 
 
 const CATEGORIES = [
@@ -426,8 +427,7 @@ function ChannelCreatedModal({
   ]
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onGo}>
-      <View style={modalStyles.overlay}>
+    <CenterModal visible={visible} onClose={onGo} backdropColor="rgba(0,0,0,0.65)" avoidKeyboard={false}>
         <View style={[modalStyles.card, diffuse
           ? { backgroundColor: dt.colors.bg, borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
           : { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1.5, borderColor: colors.text }]}>
@@ -489,8 +489,7 @@ function ChannelCreatedModal({
             {diffuse && <DiffuseArrow color={dt.colors.ink} size={16} />}
           </Pressable>
         </View>
-      </View>
-    </Modal>
+    </CenterModal>
   )
 }
 

@@ -100,8 +100,13 @@ export function SheetModal({ visible, onClose, children, backdropColor = BACKDRO
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: backdropColor, opacity: backdrop }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common_close')} />
       </Animated.View>
-      <Animated.View style={[{ transform: [{ translateY: Animated.add(offset, drag) }] }, style]}>
-        {children(pan.panHandlers)}
+      {/* Full-screen, bottom-aligned mover: the sheet's own percentage maxHeight ('95%') resolves
+          against the screen. box-none lets taps above the sheet reach the backdrop. */}
+      <Animated.View
+        pointerEvents="box-none"
+        style={[StyleSheet.absoluteFill, styles.mover, { transform: [{ translateY: Animated.add(offset, drag) }] }]}
+      >
+        {style ? <View style={[styles.capped, style]}>{children(pan.panHandlers)}</View> : children(pan.panHandlers)}
       </Animated.View>
     </>
   )
@@ -121,4 +126,7 @@ export function SheetModal({ visible, onClose, children, backdropColor = BACKDRO
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
+  mover: { justifyContent: 'flex-end' },
+  // A caller-provided cap (e.g. maxHeight '85%') — its children shrink to fit it.
+  capped: { flexShrink: 1 },
 })

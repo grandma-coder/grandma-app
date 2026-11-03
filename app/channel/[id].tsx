@@ -93,6 +93,7 @@ import { useConfirmDialog } from '../../components/ui/useConfirm'
 import { PaperActionSheet, type ActionSheetItem } from '../../components/ui/PaperActionSheet'
 import { useTranslation } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
+import { SheetModal } from '../../components/ui/SheetModal'
 
 // Emoji per reaction type — for the footer indicator when a non-heart reaction
 // is chosen (the picker itself owns the full set).
@@ -1464,48 +1465,64 @@ function ShareChannelSheet({
   const mode = useModeStore((s) => s.mode)
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
 
-  return (
-    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
-      <Pressable style={styles.shareOverlay} onPress={onClose}>
-        <Pressable
-          style={[styles.shareSheet, diffuse
+  const sheetStyle = [styles.shareSheet, diffuse
             ? { backgroundColor: dt.colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
-            : { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2.5, borderColor: colors.text }]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.text + '40' }]} />
-          <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelScreen_shareTitle')}</Text>
+            : { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2.5, borderColor: colors.text }]
+  const renderBody = (dz: object = {}) => (
+    <>
+    <View {...dz} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.text + '40' }]} />
+    <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelScreen_shareTitle')}</Text>
 
-          <Pressable
-            onPress={onCopy}
-            style={({ pressed }) => [
-              styles.shareAction,
-              diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full },
-              pressed && { opacity: 0.75 },
-            ]}
-          >
-            <Copy size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-            <Text style={[styles.shareActionText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 13 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_copyLink')}</Text>
-          </Pressable>
+    <Pressable
+      onPress={onCopy}
+      style={({ pressed }) => [
+        styles.shareAction,
+        diffuse ? { borderColor: dt.colors.line2, borderRadius: 999 } : { borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full },
+        pressed && { opacity: 0.75 },
+      ]}
+    >
+      <Copy size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+      <Text style={[styles.shareActionText, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1, textTransform: 'uppercase', fontSize: 13 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_copyLink')}</Text>
+    </Pressable>
 
-          <Pressable
-            onPress={onShare}
-            style={({ pressed }) => [
-              styles.shareActionFilled,
-              diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: getModeColorSoft(mode, isDark), borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
-              pressed && { opacity: 0.85 },
-            ]}
-          >
-            <Share2 size={18} color={colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-            <Text style={[styles.shareActionTextFilled, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_shareAction')}</Text>
-          </Pressable>
+    <Pressable
+      onPress={onShare}
+      style={({ pressed }) => [
+        styles.shareActionFilled,
+        diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.line2 } : { backgroundColor: getModeColorSoft(mode, isDark), borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
+        pressed && { opacity: 0.85 },
+      ]}
+    >
+      <Share2 size={18} color={colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+      <Text style={[styles.shareActionTextFilled, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 13 } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_shareAction')}</Text>
+    </Pressable>
 
-          <Pressable onPress={onClose} style={styles.shareCancel}>
-            <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingCancel')}</Text>
+    <Pressable onPress={onClose} style={styles.shareCancel}>
+      <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_ratingCancel')}</Text>
+    </Pressable>
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
+        <Pressable style={styles.shareOverlay} onPress={onClose}>
+          <Pressable style={sheetStyle} onPress={(e) => e.stopPropagation()}>
+            {renderBody()}
           </Pressable>
         </Pressable>
-      </Pressable>
-    </Modal>
+      </Modal>
+    )
+  }
+
+  return (
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dz) => (
+        <Pressable style={sheetStyle} onPress={(e) => e.stopPropagation()}>
+          {renderBody(dz)}
+        </Pressable>
+      )}
+    </SheetModal>
   )
 }
 
@@ -1529,46 +1546,62 @@ function LeaveChannelSheet({
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
-  return (
-    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onCancel}>
-      <Pressable style={styles.shareOverlay} onPress={onCancel}>
-        <Pressable
-          style={[styles.shareSheet, diffuse
+  const sheetStyle = [styles.shareSheet, diffuse
             ? { backgroundColor: dt.colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
-            : { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2.5, borderColor: colors.text }]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.text + '40' }]} />
-          <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelScreen_leaveTitle')}</Text>
-          <Text style={[styles.leaveBody, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
-            {t('channelScreen_leaveBodyPrefix')}
-            <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
-            {t('channelScreen_leaveBodySuffix')}
-          </Text>
+            : { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2.5, borderColor: colors.text }]
+  const renderBody = (dz: object = {}) => (
+    <>
+    <View {...dz} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={[styles.shareHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.text + '40' }]} />
+    <Text style={[styles.shareTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelScreen_leaveTitle')}</Text>
+    <Text style={[styles.leaveBody, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
+      {t('channelScreen_leaveBodyPrefix')}
+      <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
+      {t('channelScreen_leaveBodySuffix')}
+    </Text>
 
-          <Pressable
-            onPress={onConfirm}
-            disabled={leaving}
-            style={({ pressed }) => [
-              styles.leaveConfirmBtn,
-              diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error } : { backgroundColor: brand.error, borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
-              pressed && { opacity: 0.85 },
-              leaving && { opacity: 0.6 },
-            ]}
-          >
-            {leaving ? (
-              <ActivityIndicator color={diffuse ? dt.colors.error : '#FFFFFF'} size="small" />
-            ) : (
-              <Text style={[styles.leaveConfirmText, diffuse && { color: dt.colors.error, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('channelScreen_leaveBtn')}</Text>
-            )}
-          </Pressable>
+    <Pressable
+      onPress={onConfirm}
+      disabled={leaving}
+      style={({ pressed }) => [
+        styles.leaveConfirmBtn,
+        diffuse ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error } : { backgroundColor: brand.error, borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
+        pressed && { opacity: 0.85 },
+        leaving && { opacity: 0.6 },
+      ]}
+    >
+      {leaving ? (
+        <ActivityIndicator color={diffuse ? dt.colors.error : '#FFFFFF'} size="small" />
+      ) : (
+        <Text style={[styles.leaveConfirmText, diffuse && { color: dt.colors.error, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' }]}>{t('channelScreen_leaveBtn')}</Text>
+      )}
+    </Pressable>
 
-          <Pressable onPress={onCancel} style={styles.shareCancel}>
-            <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_stayBtn')}</Text>
+    <Pressable onPress={onCancel} style={styles.shareCancel}>
+      <Text style={[styles.shareCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelScreen_stayBtn')}</Text>
+    </Pressable>
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onCancel}>
+        <Pressable style={styles.shareOverlay} onPress={onCancel}>
+          <Pressable style={sheetStyle} onPress={(e) => e.stopPropagation()}>
+            {renderBody()}
           </Pressable>
         </Pressable>
-      </Pressable>
-    </Modal>
+      </Modal>
+    )
+  }
+
+  return (
+    <SheetModal visible={visible} onClose={onCancel}>
+      {(dz) => (
+        <Pressable style={sheetStyle} onPress={(e) => e.stopPropagation()}>
+          {renderBody(dz)}
+        </Pressable>
+      )}
+    </SheetModal>
   )
 }
 

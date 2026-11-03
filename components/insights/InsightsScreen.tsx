@@ -49,6 +49,7 @@ import { Character, type CharacterName } from '../characters/Characters'
 import { useTranslation, t as tNow } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
 import { localizeBabySizeName } from '../../lib/pregnancyData'
+import { SheetModal } from '../ui/SheetModal'
 
 // ─── AI Insight Type Config ───────────────────────────────────────────────
 
@@ -1537,6 +1538,22 @@ function ArticleCard({ article, onTap }: { article: Article; onTap: () => void }
   )
 }
 
+// These detail modals are mounted/unmounted by their parent, so SheetModal never sees `visible`
+// go false. Close locally first (the sheet plays its exit), then tell the parent once it's done.
+function useSheetClose(onClose: () => void) {
+  const [open, setOpen] = useState(true)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
+  const close = useCallback(() => {
+    if (timer.current) return
+    setOpen(false)
+    timer.current = setTimeout(() => onCloseRef.current(), 240)
+  }, [])
+  return [open, close] as const
+}
+
 // ─── Article Detail Modal ─────────────────────────────────────────────────
 
 function ArticleDetailModal({
@@ -1553,63 +1570,74 @@ function ArticleDetailModal({
   const { t } = useTranslation()
   const chatEnabled = useGrandmaChatEnabled()
   const insets = useSafeAreaInsets()
+  const [open, closeSheet] = useSheetClose(onClose)
   const meta = CATEGORY_META[article.category]
   const Icon = meta.icon
 
-  return (
-    <Modal visible transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
-      <View style={s.modalOverlay}>
-        <Pressable style={s.modalBackdrop} onPress={onClose} />
-        <View style={s.modalSheet}>
-          <View
-            style={[s.modalContent, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}
-          >
-            <View style={s.modalHandle}>
-              <View style={[s.handleBar, { backgroundColor: ink + '40' }]} />
-            </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={12}
-              style={({ pressed }) => [
-                s.modalClose,
-                {
-                  backgroundColor: colors.surfaceRaised,
-                  borderColor: ink + '24',
-                  transform: [{ translateY: pressed ? 1 : 0 }],
-                  ...stickerShadowSm,
-                },
-              ]}
-            >
-              <X size={16} color={colors.textMuted} strokeWidth={2.5} />
-            </Pressable>
-            <View style={s.modalHeader}>
-              <View style={[s.modalIconWrap, { backgroundColor: meta.color + '30', borderColor: ink }]}>
-                {diffuse ? <Character name={meta.char} size={28} color={meta.color} /> : <Icon size={22} color={ink} strokeWidth={2.5} />}
-              </View>
-              <View style={[s.articleCatBadge, { backgroundColor: meta.color + '28' }]}>
-                <Text style={[s.articleCatText, { color: ink }]}>{meta.label}</Text>
-              </View>
-              <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{t('insights_reads_minRead', { n: article.readMinutes })}</Text>
-            </View>
-            <Text style={[s.modalTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{article.title}</Text>
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 320 }}>
-              {article.content.map((para, i) => (
-                <Text key={i} style={[s.articleParagraph, { color: colors.textSecondary }]}>{para}</Text>
-              ))}
-            </ScrollView>
-            <View style={[s.modalDivider, { backgroundColor: ink + '15', marginVertical: 20 }]} />
-            {chatEnabled && (
-            <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
-              <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
-                <Character name="chat" size={18} color={ink} />
-                <Text style={[s.askBtnText, { color: ink }]}>{t('insights_askGrandma')}</Text>
-              </View>
-            </Pressable>
-            )}
-          </View>
+  const renderSheet = (dragZone: object = {}) => (
+    <View style={s.modalSheet}>
+      <View
+        style={[s.modalContent, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}
+      >
+        <View {...dragZone} style={s.modalHandle}>
+          <View style={[s.handleBar, { backgroundColor: ink + '40' }]} />
         </View>
+        <Pressable
+          onPress={diffuse ? onClose : closeSheet}
+          hitSlop={12}
+          style={({ pressed }) => [
+            s.modalClose,
+            {
+              backgroundColor: colors.surfaceRaised,
+              borderColor: ink + '24',
+              transform: [{ translateY: pressed ? 1 : 0 }],
+              ...stickerShadowSm,
+            },
+          ]}
+        >
+          <X size={16} color={colors.textMuted} strokeWidth={2.5} />
+        </Pressable>
+        <View style={s.modalHeader}>
+          <View style={[s.modalIconWrap, { backgroundColor: meta.color + '30', borderColor: ink }]}>
+            {diffuse ? <Character name={meta.char} size={28} color={meta.color} /> : <Icon size={22} color={ink} strokeWidth={2.5} />}
+          </View>
+          <View style={[s.articleCatBadge, { backgroundColor: meta.color + '28' }]}>
+            <Text style={[s.articleCatText, { color: ink }]}>{meta.label}</Text>
+          </View>
+          <Text style={[s.articleReadTime, { color: colors.textMuted }]}>{t('insights_reads_minRead', { n: article.readMinutes })}</Text>
+        </View>
+        <Text style={[s.modalTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{article.title}</Text>
+        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 320 }}>
+          {article.content.map((para, i) => (
+            <Text key={i} style={[s.articleParagraph, { color: colors.textSecondary }]}>{para}</Text>
+          ))}
+        </ScrollView>
+        <View style={[s.modalDivider, { backgroundColor: ink + '15', marginVertical: 20 }]} />
+        {chatEnabled && (
+        <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ transform: [{ translateY: pressed ? 2 : 0 }] }]}>
+          <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
+            <Character name="chat" size={18} color={ink} />
+            <Text style={[s.askBtnText, { color: ink }]}>{t('insights_askGrandma')}</Text>
+          </View>
+        </Pressable>
+        )}
       </View>
-    </Modal>
+    </View>
+  )
+
+  return (
+    diffuse ? (
+      <Modal visible transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+        <View style={s.modalOverlay}>
+          <Pressable style={s.modalBackdrop} onPress={onClose} />
+          {renderSheet()}
+        </View>
+      </Modal>
+    ) : (
+      <SheetModal visible={open} onClose={closeSheet}>
+        {(dragZone) => renderSheet(dragZone)}
+      </SheetModal>
+    )
   )
 }
 
@@ -1734,104 +1762,115 @@ function InsightDetailModal({
   const { t } = useTranslation()
   const chatEnabled = useGrandmaChatEnabled()
   const insets = useSafeAreaInsets()
+  const [open, closeSheet] = useSheetClose(onClose)
   const config = TYPE_CONFIG[insight.type as InsightType] ?? TYPE_CONFIG.nudge
   const Icon = config.icon
   const DetailIcon = config.detailIcon
 
-  return (
-    <Modal visible transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
-      <View style={s.modalOverlay}>
-        <Pressable style={s.modalBackdrop} onPress={onClose} />
-        <View style={s.modalSheet}>
+  const renderSheet = (dragZone: object = {}) => (
+    <View style={s.modalSheet}>
+      <View
+        style={[s.modalContent, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}
+      >
+        <View {...dragZone} style={s.modalHandle}>
+          <View style={[s.handleBar, { backgroundColor: ink + '40' }]} />
+        </View>
+        <Pressable
+          onPress={diffuse ? onClose : closeSheet}
+          hitSlop={12}
+          style={({ pressed }) => [
+            s.modalClose,
+            {
+              backgroundColor: colors.surfaceRaised,
+              borderColor: ink + '24',
+              transform: [{ translateY: pressed ? 1 : 0 }],
+              ...stickerShadowSm,
+            },
+          ]}
+        >
+          <X size={16} color={colors.textMuted} strokeWidth={2.5} />
+        </Pressable>
+        <View style={s.modalHeader}>
           <View
-            style={[s.modalContent, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 24 }]}
+            style={[s.modalIconWrap, { backgroundColor: config.gradient[0], borderColor: ink }]}
           >
-            <View style={s.modalHandle}>
-              <View style={[s.handleBar, { backgroundColor: ink + '40' }]} />
+            {diffuse ? <Character name={config.char} size={28} color={config.color} /> : <Icon size={22} color={ink} strokeWidth={2.75} />}
+          </View>
+          <View style={[s.modalTypeBadge, { backgroundColor: config.gradient[0], borderColor: ink }]}>
+            <Text style={[s.modalTypeText, { color: ink }]}>{config.label}</Text>
+          </View>
+          {isArchived && (
+            <View style={s.modalMetaPill}>
+              <Text style={[s.modalMetaPillText, { color: colors.textMuted }]}>{t('insights_archived')}</Text>
             </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={12}
-              style={({ pressed }) => [
-                s.modalClose,
-                {
-                  backgroundColor: colors.surfaceRaised,
-                  borderColor: ink + '24',
-                  transform: [{ translateY: pressed ? 1 : 0 }],
-                  ...stickerShadowSm,
-                },
-              ]}
-            >
-              <X size={16} color={colors.textMuted} strokeWidth={2.5} />
-            </Pressable>
-            <View style={s.modalHeader}>
-              <View
-                style={[s.modalIconWrap, { backgroundColor: config.gradient[0], borderColor: ink }]}
-              >
-                {diffuse ? <Character name={config.char} size={28} color={config.color} /> : <Icon size={22} color={ink} strokeWidth={2.75} />}
-              </View>
-              <View style={[s.modalTypeBadge, { backgroundColor: config.gradient[0], borderColor: ink }]}>
-                <Text style={[s.modalTypeText, { color: ink }]}>{config.label}</Text>
-              </View>
-              {isArchived && (
-                <View style={s.modalMetaPill}>
-                  <Text style={[s.modalMetaPillText, { color: colors.textMuted }]}>{t('insights_archived')}</Text>
-                </View>
-              )}
-            </View>
-            <Text style={[s.modalTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{insight.title}</Text>
-            <Text style={[s.modalBody, { color: colors.textSecondary }]}>{insight.body}</Text>
-            <View style={[s.modalDivider, { backgroundColor: ink + '15' }]} />
-            <View style={[s.tipCard, { backgroundColor: config.gradient[0], borderColor: ink }]}>
-              <View style={[s.tipIconDisc, { backgroundColor: colors.surface, borderColor: ink }]}>
-                {diffuse ? <Character name={config.detailChar} size={20} color={config.color} /> : <DetailIcon size={16} color={config.color} strokeWidth={2.75} />}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.tipLabel, { color: ink }]}>{t('insights_grandmasTip')}</Text>
-                <Text style={[s.tipText, { color: ink + 'CC' }]}>{config.tip}</Text>
-              </View>
-            </View>
-            <View style={s.modalMeta}>
-              <View style={[s.modalMetaPill, { borderColor: ink + '24' }]}>
-                <Text style={[s.modalMetaPillText, { color: ink }]}>{t('insights_modeLabel', { mode: insight.behavior })}</Text>
-              </View>
-              <Text style={[s.modalDateText, { color: ink + 'A0' }]}>
-                {new Date(insight.created_at).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}
-              </Text>
-            </View>
-            <View style={s.modalActions}>
-              {chatEnabled && (
-              <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ flex: 1, transform: [{ translateY: pressed ? 2 : 0 }] }]}>
-                <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
-                  <Character name="chat" size={18} color={ink} />
-                  <Text style={[s.askBtnText, { color: ink }]}>{t('insights_askGrandma')}</Text>
-                </View>
-              </Pressable>
-              )}
-              {isArchived ? (
-                <Pressable onPress={onRestore}
-                  style={({ pressed }) => [
-                    s.secondaryBtn,
-                    { backgroundColor: colors.surfaceRaised, transform: [{ translateY: pressed ? 1 : 0 }] },
-                  ]}
-                >
-                  <RotateCcw size={18} color={colors.accent} strokeWidth={2.5} />
-                </Pressable>
-              ) : (
-                <Pressable onPress={onArchive}
-                  style={({ pressed }) => [
-                    s.secondaryBtn,
-                    { backgroundColor: colors.surfaceRaised, transform: [{ translateY: pressed ? 1 : 0 }] },
-                  ]}
-                >
-                  <X size={18} color={colors.textMuted} strokeWidth={2.5} />
-                </Pressable>
-              )}
-            </View>
+          )}
+        </View>
+        <Text style={[s.modalTitle, diffuse ? null : SITE_TITLE, { color: colors.text }]}>{insight.title}</Text>
+        <Text style={[s.modalBody, { color: colors.textSecondary }]}>{insight.body}</Text>
+        <View style={[s.modalDivider, { backgroundColor: ink + '15' }]} />
+        <View style={[s.tipCard, { backgroundColor: config.gradient[0], borderColor: ink }]}>
+          <View style={[s.tipIconDisc, { backgroundColor: colors.surface, borderColor: ink }]}>
+            {diffuse ? <Character name={config.detailChar} size={20} color={config.color} /> : <DetailIcon size={16} color={config.color} strokeWidth={2.75} />}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[s.tipLabel, { color: ink }]}>{t('insights_grandmasTip')}</Text>
+            <Text style={[s.tipText, { color: ink + 'CC' }]}>{config.tip}</Text>
           </View>
         </View>
+        <View style={s.modalMeta}>
+          <View style={[s.modalMetaPill, { borderColor: ink + '24' }]}>
+            <Text style={[s.modalMetaPillText, { color: ink }]}>{t('insights_modeLabel', { mode: insight.behavior })}</Text>
+          </View>
+          <Text style={[s.modalDateText, { color: ink + 'A0' }]}>
+            {new Date(insight.created_at).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}
+          </Text>
+        </View>
+        <View style={s.modalActions}>
+          {chatEnabled && (
+          <Pressable onPress={onAskGrandma} style={({ pressed }) => [{ flex: 1, transform: [{ translateY: pressed ? 2 : 0 }] }]}>
+            <View style={[s.askBtn, { backgroundColor: colors.accent }]}>
+              <Character name="chat" size={18} color={ink} />
+              <Text style={[s.askBtnText, { color: ink }]}>{t('insights_askGrandma')}</Text>
+            </View>
+          </Pressable>
+          )}
+          {isArchived ? (
+            <Pressable onPress={onRestore}
+              style={({ pressed }) => [
+                s.secondaryBtn,
+                { backgroundColor: colors.surfaceRaised, transform: [{ translateY: pressed ? 1 : 0 }] },
+              ]}
+            >
+              <RotateCcw size={18} color={colors.accent} strokeWidth={2.5} />
+            </Pressable>
+          ) : (
+            <Pressable onPress={onArchive}
+              style={({ pressed }) => [
+                s.secondaryBtn,
+                { backgroundColor: colors.surfaceRaised, transform: [{ translateY: pressed ? 1 : 0 }] },
+              ]}
+            >
+              <X size={18} color={colors.textMuted} strokeWidth={2.5} />
+            </Pressable>
+          )}
+        </View>
       </View>
-    </Modal>
+    </View>
+  )
+
+  return (
+    diffuse ? (
+      <Modal visible transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+        <View style={s.modalOverlay}>
+          <Pressable style={s.modalBackdrop} onPress={onClose} />
+          {renderSheet()}
+        </View>
+      </Modal>
+    ) : (
+      <SheetModal visible={open} onClose={closeSheet}>
+        {(dragZone) => renderSheet(dragZone)}
+      </SheetModal>
+    )
   )
 }
 

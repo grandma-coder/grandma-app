@@ -66,6 +66,7 @@ import { useConfirmDialog } from '../../../components/ui/useConfirm'
 import { PaperActionSheet, type ActionSheetItem } from '../../../components/ui/PaperActionSheet'
 import { useTranslation } from '../../../lib/i18n'
 import { dateLoc } from '../../../lib/kpLocale'
+import { SheetModal } from '../../../components/ui/SheetModal'
 
 const SCREEN_W = Dimensions.get('window').width
 const MEDIA_THUMB = (SCREEN_W - 48 - 8) / 4 // 4 columns
@@ -856,58 +857,74 @@ function DeleteChannelSheet({
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
-  return (
-    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onCancel}>
-      <Pressable style={s.deleteOverlay} onPress={onCancel}>
-        <Pressable
-          style={[s.deleteSheet, diffuse
+  const sheetStyle = [s.deleteSheet, diffuse
             ? { backgroundColor: dt.colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
-            : { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2.5, borderColor: colors.text }]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View style={[s.deleteHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.text + '40' }]} />
+            : { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 2.5, borderColor: colors.text }]
+  const renderBody = (dz: object = {}) => (
+    <>
+    <View {...dz} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={[s.deleteHandle, { backgroundColor: diffuse ? dt.colors.line2 : colors.text + '40' }]} />
 
-          {diffuse ? (
-            <DiffuseBloomIcon color={dt.colors.error} size={64} intensity={0.5}>
-              <Trash2 size={26} color={dt.colors.error} strokeWidth={1.6} />
-            </DiffuseBloomIcon>
-          ) : (
-            <View style={[s.deleteIcon, { backgroundColor: getModeColorSoft('meno'), borderWidth: 1.5, borderColor: colors.text }]}>
-              <Trash2 size={26} color={colors.text} strokeWidth={2} />
-            </View>
-          )}
-          <Text style={[s.deleteTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelInfo_deleteTitle')}</Text>
-          <Text style={[s.deleteBody, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
-            {t('channelInfo_deleteBodyBefore')}
-            <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
-            {t('channelInfo_deleteBodyAfter')}
-          </Text>
+    {diffuse ? (
+      <DiffuseBloomIcon color={dt.colors.error} size={64} intensity={0.5}>
+        <Trash2 size={26} color={dt.colors.error} strokeWidth={1.6} />
+      </DiffuseBloomIcon>
+    ) : (
+      <View style={[s.deleteIcon, { backgroundColor: getModeColorSoft('meno'), borderWidth: 1.5, borderColor: colors.text }]}>
+        <Trash2 size={26} color={colors.text} strokeWidth={2} />
+      </View>
+    )}
+    <Text style={[s.deleteTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('channelInfo_deleteTitle')}</Text>
+    <Text style={[s.deleteBody, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>
+      {t('channelInfo_deleteBodyBefore')}
+      <Text style={diffuse ? { fontFamily: diffuseFont.bodySemiBold, color: dt.colors.ink } : { fontFamily: font.bodyBold, color: colors.text }}>#{channelName}</Text>
+      {t('channelInfo_deleteBodyAfter')}
+    </Text>
 
-          <Pressable
-            onPress={onConfirm}
-            disabled={deleting}
-            style={({ pressed }) => [
-              s.deleteConfirmBtn,
-              diffuse
-                ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error }
-                : { backgroundColor: brand.error, borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
-              pressed && { opacity: 0.85 },
-              deleting && { opacity: 0.6 },
-            ]}
-          >
-            {deleting ? (
-              <ActivityIndicator color={diffuse ? dt.colors.error : '#FFFFFF'} size="small" />
-            ) : (
-              <Text style={[s.deleteConfirmText, diffuse ? { color: dt.colors.error, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' } : { fontFamily: font.bodyBold }]}>{t('channelInfo_deleteForever')}</Text>
-            )}
-          </Pressable>
+    <Pressable
+      onPress={onConfirm}
+      disabled={deleting}
+      style={({ pressed }) => [
+        s.deleteConfirmBtn,
+        diffuse
+          ? { backgroundColor: 'transparent', borderRadius: 999, borderWidth: 1, borderColor: dt.colors.error }
+          : { backgroundColor: brand.error, borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.text },
+        pressed && { opacity: 0.85 },
+        deleting && { opacity: 0.6 },
+      ]}
+    >
+      {deleting ? (
+        <ActivityIndicator color={diffuse ? dt.colors.error : '#FFFFFF'} size="small" />
+      ) : (
+        <Text style={[s.deleteConfirmText, diffuse ? { color: dt.colors.error, fontFamily: diffuseFont.monoBold, letterSpacing: 1.4, textTransform: 'uppercase' } : { fontFamily: font.bodyBold }]}>{t('channelInfo_deleteForever')}</Text>
+      )}
+    </Pressable>
 
-          <Pressable onPress={onCancel} style={s.deleteCancel}>
-            <Text style={[s.deleteCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_keepChannel')}</Text>
+    <Pressable onPress={onCancel} style={s.deleteCancel}>
+      <Text style={[s.deleteCancelText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.text, fontFamily: font.bodyBold }]}>{t('channelInfo_keepChannel')}</Text>
+    </Pressable>
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onCancel}>
+        <Pressable style={s.deleteOverlay} onPress={onCancel}>
+          <Pressable style={sheetStyle} onPress={(e) => e.stopPropagation()}>
+            {renderBody()}
           </Pressable>
         </Pressable>
-      </Pressable>
-    </Modal>
+      </Modal>
+    )
+  }
+
+  return (
+    <SheetModal visible={visible} onClose={onCancel}>
+      {(dz) => (
+        <Pressable style={sheetStyle} onPress={(e) => e.stopPropagation()}>
+          {renderBody(dz)}
+        </Pressable>
+      )}
+    </SheetModal>
   )
 }
 

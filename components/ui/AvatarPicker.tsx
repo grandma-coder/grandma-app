@@ -21,6 +21,7 @@ import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { useTranslation, t as tNow } from '../../lib/i18n'
 import { Display, Body, MonoCaps } from './Typography'
 import { usePhotoUrl, PHOTO_BUCKETS, type PhotoBucket } from '../../lib/photoSigning'
+import { SheetModal } from './SheetModal'
 import {
   Bear,
   Heart,
@@ -192,134 +193,146 @@ export function AvatarPickerModal({
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
-  return (
-    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
-      <Pressable onPress={onClose} style={styles.backdrop}>
+  const renderSheet = (dz?: object) => (
+    <Pressable
+      onPress={(e) => e.stopPropagation()}
+      style={[
+        styles.sheet,
+        diffuse
+          ? { backgroundColor: dt.colors.bg, borderColor: dt.colors.line }
+          : { backgroundColor: colors.bg, borderColor: colors.border },
+      ]}
+    >
+      <View {...dz} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={[styles.handle, diffuse ? { backgroundColor: dt.colors.line2 } : { backgroundColor: colors.text, opacity: 0.25 }]} />
+
+      <View {...dz} style={styles.header}>
+        <Display size={22} color={diffuse ? dt.colors.ink : colors.text} style={!diffuse ? { fontFamily: font.display } : undefined}>
+          {t('avatarPicker_title')}
+        </Display>
         <Pressable
-          onPress={(e) => e.stopPropagation()}
+          onPress={onClose}
+          hitSlop={8}
           style={[
-            styles.sheet,
-            diffuse
-              ? { backgroundColor: dt.colors.bg, borderColor: dt.colors.line }
-              : { backgroundColor: colors.bg, borderColor: colors.border },
+            styles.closeBtn,
+            diffuse ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.hairline } : { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.text, width: 34, height: 34 },
           ]}
         >
-          <View style={[styles.handle, diffuse ? { backgroundColor: dt.colors.line2 } : { backgroundColor: colors.text, opacity: 0.25 }]} />
+          <X size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2} />
+        </Pressable>
+      </View>
 
-          <View style={styles.header}>
-            <Display size={22} color={diffuse ? dt.colors.ink : colors.text} style={!diffuse ? { fontFamily: font.display } : undefined}>
-              {t('avatarPicker_title')}
-            </Display>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              style={[
-                styles.closeBtn,
-                diffuse ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.hairline } : { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.text, width: 34, height: 34 },
-              ]}
-            >
-              <X size={18} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2} />
-            </Pressable>
-          </View>
+      <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginBottom: 18 }}>
+        {t('avatarPicker_subtitle')}
+      </Body>
 
-          <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginBottom: 18 }}>
-            {t('avatarPicker_subtitle')}
+      {/* Photo upload row */}
+      <Pressable
+        onPress={() => {
+          onClose()
+          onPickPhoto()
+        }}
+        style={({ pressed }) => [
+          styles.photoRow,
+          diffuse
+            ? { borderColor: dt.colors.line, backgroundColor: dt.colors.surface, opacity: pressed ? 0.7 : 1 }
+            : { borderColor: colors.border, backgroundColor: colors.surfaceGlass, opacity: pressed ? 0.7 : 1 },
+        ]}
+      >
+        <View
+          style={[
+            styles.photoBadge,
+            diffuse
+              ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+              : { backgroundColor: stickers.pink },
+          ]}
+        >
+          <Camera size={18} color={diffuse ? dt.colors.ink : '#141313'} strokeWidth={diffuse ? 1.6 : 2} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Body size={15} color={diffuse ? dt.colors.ink : colors.text} style={!diffuse ? { fontFamily: font.bodySemiBold } : { fontFamily: diffuseFont.bodySemiBold }}>
+            {t('avatarPicker_upload_title')}
           </Body>
+          <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
+            {t('avatarPicker_upload_subtitle')}
+          </Body>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
+      </Pressable>
 
-          {/* Photo upload row */}
-          <Pressable
-            onPress={() => {
-              onClose()
-              onPickPhoto()
-            }}
-            style={({ pressed }) => [
-              styles.photoRow,
+      {onRemove && (
+        <Pressable
+          onPress={() => {
+            onClose()
+            onRemove()
+          }}
+          style={({ pressed }) => [
+            styles.photoRow,
+            diffuse
+              ? { borderColor: dt.colors.line, backgroundColor: 'transparent', opacity: pressed ? 0.7 : 1, marginTop: 8 }
+              : { borderColor: colors.border, backgroundColor: 'transparent', opacity: pressed ? 0.7 : 1, marginTop: 8 },
+          ]}
+        >
+          <View
+            style={[
+              styles.photoBadge,
               diffuse
-                ? { borderColor: dt.colors.line, backgroundColor: dt.colors.surface, opacity: pressed ? 0.7 : 1 }
-                : { borderColor: colors.border, backgroundColor: colors.surfaceGlass, opacity: pressed ? 0.7 : 1 },
+                ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
+                : { backgroundColor: 'rgba(255,255,255,0.06)' },
             ]}
           >
-            <View
-              style={[
-                styles.photoBadge,
-                diffuse
-                  ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-                  : { backgroundColor: stickers.pink },
-              ]}
-            >
-              <Camera size={18} color={diffuse ? dt.colors.ink : '#141313'} strokeWidth={diffuse ? 1.6 : 2} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Body size={15} color={diffuse ? dt.colors.ink : colors.text} style={!diffuse ? { fontFamily: font.bodySemiBold } : { fontFamily: diffuseFont.bodySemiBold }}>
-                {t('avatarPicker_upload_title')}
-              </Body>
-              <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
-                {t('avatarPicker_upload_subtitle')}
-              </Body>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} />
-          </Pressable>
-
-          {onRemove && (
-            <Pressable
-              onPress={() => {
-                onClose()
-                onRemove()
-              }}
-              style={({ pressed }) => [
-                styles.photoRow,
-                diffuse
-                  ? { borderColor: dt.colors.line, backgroundColor: 'transparent', opacity: pressed ? 0.7 : 1, marginTop: 8 }
-                  : { borderColor: colors.border, backgroundColor: 'transparent', opacity: pressed ? 0.7 : 1, marginTop: 8 },
-              ]}
-            >
-              <View
-                style={[
-                  styles.photoBadge,
-                  diffuse
-                    ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
-                    : { backgroundColor: 'rgba(255,255,255,0.06)' },
-                ]}
-              >
-                <ImagePlus size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
-              </View>
-              <Body size={15} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
-                {t('avatarPicker_remove')}
-              </Body>
-            </Pressable>
-          )}
-
-          {/* Icon grid */}
-          <MonoCaps size={11} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginTop: 20, marginBottom: 10 }}>
-            {t('avatarPicker_or_icon')}
-          </MonoCaps>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ maxHeight: 340 }}
-            contentContainerStyle={styles.grid}
-          >
-            {ICON_REGISTRY.map((icon) => (
-              <Pressable
-                key={icon.key}
-                accessibilityLabel={icon.label}
-                onPress={() => {
-                  onClose()
-                  onPickIcon(buildIconAvatarValue(icon.key))
-                }}
-                style={({ pressed }) => [
-                  styles.iconTile,
-                  diffuse
-                    ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, opacity: pressed ? 0.7 : 1 }
-                    : { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
-                ]}
-              >
-                {icon.render(46)}
-              </Pressable>
-            ))}
-          </ScrollView>
+            <ImagePlus size={18} color={diffuse ? dt.colors.ink3 : colors.textMuted} strokeWidth={diffuse ? 1.6 : 2} />
+          </View>
+          <Body size={15} color={diffuse ? dt.colors.ink3 : colors.textMuted}>
+            {t('avatarPicker_remove')}
+          </Body>
         </Pressable>
-      </Pressable>
-    </Modal>
+      )}
+
+      {/* Icon grid */}
+      <MonoCaps size={11} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ marginTop: 20, marginBottom: 10 }}>
+        {t('avatarPicker_or_icon')}
+      </MonoCaps>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ maxHeight: 340 }}
+        contentContainerStyle={styles.grid}
+      >
+        {ICON_REGISTRY.map((icon) => (
+          <Pressable
+            key={icon.key}
+            accessibilityLabel={icon.label}
+            onPress={() => {
+              onClose()
+              onPickIcon(buildIconAvatarValue(icon.key))
+            }}
+            style={({ pressed }) => [
+              styles.iconTile,
+              diffuse
+                ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line, opacity: pressed ? 0.7 : 1 }
+                : { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            {icon.render(46)}
+          </Pressable>
+        ))}
+      </ScrollView>
+    </Pressable>
+  )
+
+  if (diffuse) {
+    return (
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <Pressable onPress={onClose} style={styles.backdrop}>
+          {renderSheet()}
+        </Pressable>
+      </Modal>
+    )
+  }
+
+  return (
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dz) => renderSheet(dz)}
+    </SheetModal>
   )
 }
 

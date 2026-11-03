@@ -28,6 +28,7 @@ import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle, QuietPill } from '../../c
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { useModeStore } from '../../store/useModeStore'
 import { getModeColorSoft } from '../../constants/theme'
+import { CenterModal } from '../../components/ui/CenterModal'
 
 const INK = '#141313'
 const CREAM = '#F5EDDC'
@@ -397,16 +398,14 @@ export default function SettingsScreen() {
       </ScrollView>
 
       {/* ── Sign Out Confirmation Modal ── */}
-      <Modal
+      <CenterModal
         visible={signOutModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSignOutModalVisible(false)}
+        onClose={() => setSignOutModalVisible(false)}
+        dismissOnBackdrop={!signingOut}
+        backdropColor="rgba(20,19,19,0.45)"
+        avoidKeyboard={false}
+        containerStyle={{ alignItems: 'stretch' }}
       >
-        <Pressable
-          style={styles.signOutBackdrop}
-          onPress={() => !signingOut && setSignOutModalVisible(false)}
-        >
           <Pressable
             style={[
               styles.signOutSheet,
@@ -476,8 +475,7 @@ export default function SettingsScreen() {
               </Text>
             </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
+      </CenterModal>
 
       {/* ── Language Picker Modal ── */}
       <Modal

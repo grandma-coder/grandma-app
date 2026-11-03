@@ -12,7 +12,7 @@
 import { ChevronRight } from 'lucide-react-native'
 import { SiteSticker } from '../../stickers/SiteSticker'
 import { useMemo, useRef, useState } from 'react'
-import { View, Text, Pressable, ScrollView, StyleSheet, Modal, Platform } from 'react-native'
+import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from 'react-native'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Check, X } from 'lucide-react-native'
 import { useTheme, brand, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../../constants/theme'
@@ -32,6 +32,7 @@ import {
   vaccineMilestoneBadge,
   type HealthHistoryData,
 } from '../../../lib/vaccineSchedule'
+import { SheetModal } from '../../ui/SheetModal'
 
 // ─── VaccineInfoModal (private — only VaccineScheduleTree renders it) ─────────
 
@@ -90,19 +91,19 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
   }
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
-      <Pressable style={s.modalOverlay} onPress={onClose}>
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <Pressable
           onPress={(e) => e.stopPropagation()}
           style={[s.modalContent, { backgroundColor: colors.bg, maxHeight: '70%' }]}
         >
           {/* Drag handle */}
-          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
+          <View {...dragZone} style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
             <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: paperBorder }} />
           </View>
 
           {/* Header */}
-          <View style={[s.modalHeader, { gap: 10, alignItems: 'flex-start' }]}>
+          <View {...dragZone} style={[s.modalHeader, { gap: 10, alignItems: 'flex-start' }]}>
             <View style={{
               width: 56, height: 56, borderRadius: 18,
               backgroundColor: accent, borderWidth: 2, borderColor: '#141313',
@@ -176,8 +177,8 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
             )}
           </ScrollView>
         </Pressable>
-      </Pressable>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

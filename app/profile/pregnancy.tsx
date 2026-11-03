@@ -58,6 +58,7 @@ import { PillButton } from '../../components/ui/PillButton'
 import { PaperAlert } from '../../components/ui/PaperAlert'
 import { dateLoc } from '../../lib/kpLocale'
 import { AfterTransition } from '../../components/ui/AfterTransition'
+import { SheetModal } from '../../components/ui/SheetModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -248,43 +249,62 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
   const [text, setText] = useState(value)
   useEffect(() => { setText(value) }, [value])
 
-  return (
-    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
-      <View style={styles.editOverlay}>
-        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
-          <ModalHeader label={label} onClose={onClose} stickers={st} />
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            multiline={multiline}
-            style={[
-              styles.editInput,
-              {
-                color: colors.text,
-                backgroundColor: colors.surfaceRaised,
-                borderColor: paperBorder,
-                height: multiline ? 110 : 56,
-                fontFamily: font.body,
-              },
-              !diffuse && { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 16, ...(multiline ? {} : { height: 52 }) },
-            ]}
-            autoFocus
-            placeholderTextColor={colors.textMuted}
-          />
-          <View style={styles.editButtons}>
-            <PillButton label={t('common_cancel')} variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
-            <PillButton
-              label={t('common_save')}
-              variant={diffuse ? 'accent' : 'ink'}
-              accentColor={st.lilac}
-              onPress={() => { onSave(text); onClose() }}
-              height={52}
-              style={{ flex: 1 }}
-            />
+  const sheetStyle = [styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]
+  const renderBody = (dz?: object) => (
+    <>
+    <ModalHeader label={label} onClose={onClose} stickers={st} dragZone={dz} />
+    <TextInput
+      value={text}
+      onChangeText={setText}
+      multiline={multiline}
+      style={[
+        styles.editInput,
+        {
+          color: colors.text,
+          backgroundColor: colors.surfaceRaised,
+          borderColor: paperBorder,
+          height: multiline ? 110 : 56,
+          fontFamily: font.body,
+        },
+        !diffuse && { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 16, ...(multiline ? {} : { height: 52 }) },
+      ]}
+      autoFocus
+      placeholderTextColor={colors.textMuted}
+    />
+    <View style={styles.editButtons}>
+      <PillButton label={t('common_cancel')} variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
+      <PillButton
+        label={t('common_save')}
+        variant={diffuse ? 'accent' : 'ink'}
+        accentColor={st.lilac}
+        onPress={() => { onSave(text); onClose() }}
+        height={52}
+        style={{ flex: 1 }}
+      />
+    </View>
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <View style={styles.editOverlay}>
+          <View style={sheetStyle}>
+            {renderBody()}
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    )
+  }
+
+  return (
+    <SheetModal visible={visible} onClose={onClose} backdropColor="rgba(20,19,19,0.6)">
+      {(dz) => (
+        <View style={sheetStyle}>
+          {renderBody(dz)}
+        </View>
+      )}
+    </SheetModal>
   )
 }
 
@@ -382,14 +402,14 @@ function siteStickerForLabel(label: string): SiteStickerName {
   return 'pencil'
 }
 
-function ModalHeader({ label, onClose, stickers: st }: { label: string; onClose: () => void; stickers: ReturnType<typeof useTheme>['stickers'] }) {
+function ModalHeader({ label, onClose, stickers: st, dragZone }: { label: string; onClose: () => void; stickers: ReturnType<typeof useTheme>['stickers']; dragZone?: object }) {
   const { colors, font, isDark, diffuse } = usePregTheme()
   const { t } = useTranslation()
   const ink = colors.text
   const accent = modalAccent(label, st)
   if (!diffuse) {
     return (
-      <View style={styles.modalHeader}>
+      <View {...dragZone} style={styles.modalHeader}>
         <SiteSticker name={siteStickerForLabel(label)} size={40} cut />
         <View style={{ flex: 1 }}>
           <Text style={[styles.siteModalTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>{label}</Text>
@@ -461,91 +481,110 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
     onClose()
   }
 
-  return (
-    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
-      <View style={styles.editOverlay}>
-        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
-          <ModalHeader label={label} onClose={onClose} stickers={st} />
-          <ScrollView style={{ maxHeight: 380, marginTop: 4 }} showsVerticalScrollIndicator={false}>
-            {options.map((opt) => {
-              const active = opt === selected
-              if (!diffuse) {
-                return (
-                  <SiteChoice key={opt} align="start" label={optText(t, opt)} selected={active} tone={getModeColorSoft('pregnancy')}
-                    onPress={() => setSelected(opt)} style={{ marginBottom: 10 }} />
-                )
-              }
-              return (
-                <Pressable
-                  key={opt}
-                  onPress={() => setSelected(opt)}
-                  style={({ pressed }) => [
-                    styles.optionPill,
-                    {
-                      borderColor: ink,
-                      borderWidth: 1.5,
-                      backgroundColor: active ? st.lilacSoft : (colors.surface),
-                      shadowColor: ink,
-                      shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
-                      shadowOpacity: active ? 1 : 0,
-                      shadowRadius: 0,
-                      elevation: active ? 3 : 0,
-                      transform: [{ translateY: active && pressed ? 2 : 0 }],
-                    },
-                  ]}
-                >
-                  <Text style={[styles.optionText, { color: colors.text, fontFamily: active ? font.bodySemiBold : font.body }]}>
-                    {optText(t, opt)}
-                  </Text>
-                  {active && <Check size={16} color={ink} strokeWidth={2.5} />}
-                </Pressable>
-              )
-            })}
-          </ScrollView>
+  const sheetStyle = [styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]
+  const renderBody = (dz?: object) => (
+    <>
+    <ModalHeader label={label} onClose={onClose} stickers={st} dragZone={dz} />
+    <ScrollView style={{ maxHeight: 380, marginTop: 4 }} showsVerticalScrollIndicator={false}>
+      {options.map((opt) => {
+        const active = opt === selected
+        if (!diffuse) {
+          return (
+            <SiteChoice key={opt} align="start" label={optText(t, opt)} selected={active} tone={getModeColorSoft('pregnancy')}
+              onPress={() => setSelected(opt)} style={{ marginBottom: 10 }} />
+          )
+        }
+        return (
+          <Pressable
+            key={opt}
+            onPress={() => setSelected(opt)}
+            style={({ pressed }) => [
+              styles.optionPill,
+              {
+                borderColor: ink,
+                borderWidth: 1.5,
+                backgroundColor: active ? st.lilacSoft : (colors.surface),
+                shadowColor: ink,
+                shadowOffset: { width: 0, height: active ? (pressed ? 1 : 3) : 0 },
+                shadowOpacity: active ? 1 : 0,
+                shadowRadius: 0,
+                elevation: active ? 3 : 0,
+                transform: [{ translateY: active && pressed ? 2 : 0 }],
+              },
+            ]}
+          >
+            <Text style={[styles.optionText, { color: colors.text, fontFamily: active ? font.bodySemiBold : font.body }]}>
+              {optText(t, opt)}
+            </Text>
+            {active && <Check size={16} color={ink} strokeWidth={2.5} />}
+          </Pressable>
+        )
+      })}
+    </ScrollView>
 
-          {showOtherInput && (
-            <TextInput
-              value={otherText}
-              onChangeText={setOtherText}
-              placeholder={t('sw1_pp_typeAnswer')}
-              placeholderTextColor={colors.textMuted}
-              autoFocus
-              style={[
-                styles.editInput,
-                {
-                  color: colors.text,
-                  backgroundColor: colors.surfaceRaised,
-                  borderColor: paperBorder,
-                  height: 56,
-                  fontFamily: font.body,
-                  marginTop: 8,
-                },
-                !diffuse && { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 16, height: 52 },
-              ]}
-            />
-          )}
+    {showOtherInput && (
+      <TextInput
+        value={otherText}
+        onChangeText={setOtherText}
+        placeholder={t('sw1_pp_typeAnswer')}
+        placeholderTextColor={colors.textMuted}
+        autoFocus
+        style={[
+          styles.editInput,
+          {
+            color: colors.text,
+            backgroundColor: colors.surfaceRaised,
+            borderColor: paperBorder,
+            height: 56,
+            fontFamily: font.body,
+            marginTop: 8,
+          },
+          !diffuse && { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 16, height: 52 },
+        ]}
+      />
+    )}
 
-          <View style={styles.editButtons}>
-            <PillButton
-              label={t('common_cancel')}
-              variant="paper"
-              onPress={onClose}
-              height={52}
-              style={{ flex: 1 }}
-            />
-            <PillButton
-              label={t('common_save')}
-              variant={diffuse ? 'accent' : 'ink'}
-              accentColor={st.lilac}
-              onPress={handleSave}
-              disabled={showOtherInput && !otherText.trim()}
-              height={52}
-              style={{ flex: 1 }}
-            />
+    <View style={styles.editButtons}>
+      <PillButton
+        label={t('common_cancel')}
+        variant="paper"
+        onPress={onClose}
+        height={52}
+        style={{ flex: 1 }}
+      />
+      <PillButton
+        label={t('common_save')}
+        variant={diffuse ? 'accent' : 'ink'}
+        accentColor={st.lilac}
+        onPress={handleSave}
+        disabled={showOtherInput && !otherText.trim()}
+        height={52}
+        style={{ flex: 1 }}
+      />
+    </View>
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <View style={styles.editOverlay}>
+          <View style={sheetStyle}>
+            {renderBody()}
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    )
+  }
+
+  return (
+    <SheetModal visible={visible} onClose={onClose} backdropColor="rgba(20,19,19,0.6)">
+      {(dz) => (
+        <View style={sheetStyle}>
+          {renderBody(dz)}
+        </View>
+      )}
+    </SheetModal>
   )
 }
 
@@ -583,72 +622,91 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
     })
   }, [visible, value, options])
 
-  return (
-    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
-      <View style={styles.editOverlay}>
-        <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
-          <ModalHeader label={label} onClose={onClose} stickers={st} />
-          <View style={{ height: WHEEL_VISIBLE * WHEEL_ITEM_HEIGHT, marginTop: 4 }}>
+  const sheetStyle = [styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]
+  const renderBody = (dz?: object) => (
+    <>
+    <ModalHeader label={label} onClose={onClose} stickers={st} dragZone={dz} />
+    <View style={{ height: WHEEL_VISIBLE * WHEEL_ITEM_HEIGHT, marginTop: 4 }}>
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: WHEEL_PAD,
+          left: 0,
+          right: 0,
+          height: WHEEL_ITEM_HEIGHT,
+          borderTopWidth: diffuse ? 1 : 1.5,
+          borderBottomWidth: diffuse ? 1 : 1.5,
+          borderColor: diffuse ? paperBorder : colors.text,
+        }}
+      />
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={WHEEL_ITEM_HEIGHT}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingVertical: WHEEL_PAD }}
+        onMomentumScrollEnd={(e) => {
+          const i = Math.round(e.nativeEvent.contentOffset.y / WHEEL_ITEM_HEIGHT)
+          setSelected(Math.max(0, Math.min(options.length - 1, i)))
+        }}
+      >
+        {options.map((opt, i) => {
+          const active = i === selected
+          return (
             <View
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                top: WHEEL_PAD,
-                left: 0,
-                right: 0,
-                height: WHEEL_ITEM_HEIGHT,
-                borderTopWidth: diffuse ? 1 : 1.5,
-                borderBottomWidth: diffuse ? 1 : 1.5,
-                borderColor: diffuse ? paperBorder : colors.text,
-              }}
-            />
-            <ScrollView
-              ref={scrollRef}
-              showsVerticalScrollIndicator={false}
-              snapToInterval={WHEEL_ITEM_HEIGHT}
-              decelerationRate="fast"
-              contentContainerStyle={{ paddingVertical: WHEEL_PAD }}
-              onMomentumScrollEnd={(e) => {
-                const i = Math.round(e.nativeEvent.contentOffset.y / WHEEL_ITEM_HEIGHT)
-                setSelected(Math.max(0, Math.min(options.length - 1, i)))
-              }}
+              key={opt}
+              style={{ height: WHEEL_ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' }}
             >
-              {options.map((opt, i) => {
-                const active = i === selected
-                return (
-                  <View
-                    key={opt}
-                    style={{ height: WHEEL_ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: active ? 22 : 16,
-                        opacity: active ? 1 : 0.35,
-                        color: colors.text,
-                        fontFamily: active ? (diffuse ? font.bodySemiBold : font.bodyBold) : font.body,
-                      }}
-                    >
-                      {opt}{unit ? ` ${unit}` : ''}
-                    </Text>
-                  </View>
-                )
-              })}
-            </ScrollView>
-          </View>
-          <View style={styles.editButtons}>
-            <PillButton label={t('common_cancel')} variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
-            <PillButton
-              label={t('common_save')}
-              variant={diffuse ? 'accent' : 'ink'}
-              accentColor={st.lilac}
-              onPress={() => { onSave(options[selected]); onClose() }}
-              height={52}
-              style={{ flex: 1 }}
-            />
+              <Text
+                style={{
+                  fontSize: active ? 22 : 16,
+                  opacity: active ? 1 : 0.35,
+                  color: colors.text,
+                  fontFamily: active ? (diffuse ? font.bodySemiBold : font.bodyBold) : font.body,
+                }}
+              >
+                {opt}{unit ? ` ${unit}` : ''}
+              </Text>
+            </View>
+          )
+        })}
+      </ScrollView>
+    </View>
+    <View style={styles.editButtons}>
+      <PillButton label={t('common_cancel')} variant="paper" onPress={onClose} height={52} style={{ flex: 1 }} />
+      <PillButton
+        label={t('common_save')}
+        variant={diffuse ? 'accent' : 'ink'}
+        accentColor={st.lilac}
+        onPress={() => { onSave(options[selected]); onClose() }}
+        height={52}
+        style={{ flex: 1 }}
+      />
+    </View>
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <View style={styles.editOverlay}>
+          <View style={sheetStyle}>
+            {renderBody()}
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    )
+  }
+
+  return (
+    <SheetModal visible={visible} onClose={onClose} backdropColor="rgba(20,19,19,0.6)">
+      {(dz) => (
+        <View style={sheetStyle}>
+          {renderBody(dz)}
+        </View>
+      )}
+    </SheetModal>
   )
 }
 

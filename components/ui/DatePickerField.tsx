@@ -33,6 +33,7 @@ import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { HandDrawnBox } from './HandDrawn'
 import { useTranslation } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
+import { SheetModal } from './SheetModal'
 
 const ST_INK = '#141313'
 const ST_PAPER = '#FFFEF8'
@@ -257,6 +258,103 @@ export default function DatePickerField({
     </Pressable>
   )
 
+  const renderSheet = (dz?: object) => (
+  <Pressable
+    onPress={(e) => e.stopPropagation()}
+    style={[
+      styles.sheet,
+      {
+        backgroundColor: isDark ? colors.surface : ST_PAPER,
+        borderColor: isDark ? colors.text : ST_INK,
+        ...(diffuse
+          ? null
+          : {
+              backgroundColor: isDark ? colors.surface : colors.bg,
+              borderColor: colors.text,
+              borderTopWidth: 2.5,
+              borderTopLeftRadius: 26,
+              borderTopRightRadius: 26,
+            }),
+      },
+    ]}
+  >
+    {/* Star sticker accent — top-right */}
+    <View style={styles.starAccent} pointerEvents="none">
+      <StarSticker size={64} fill={accent.fill} stroke={ST_INK} />
+    </View>
+
+    {/* Drag handle */}
+    <View {...dz} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={[styles.handleBar, { backgroundColor: colors.border }, !diffuse && { backgroundColor: colors.text, opacity: 0.25 }]} />
+
+    {/* Header */}
+    <View {...dz} style={styles.headerRow}>
+      <Text
+        style={[
+          styles.title,
+          { color: isDark ? colors.text : ST_INK },
+          !diffuse && { color: colors.text, textTransform: 'uppercase', letterSpacing: 0.2 },
+        ]}
+      >
+        {modalTitle || label || 'Select date'}
+      </Text>
+      <Pressable
+        onPress={() => setOpen(false)}
+        style={({ pressed }) => [
+          styles.closeBtn,
+          {
+            backgroundColor: isDark ? colors.surfaceRaised : ST_CREAM,
+            borderColor: isDark ? colors.text : ST_INK,
+            shadowOffset: { width: 0, height: pressed ? 1 : 2 },
+            transform: [{ translateY: pressed ? 1 : 0 }],
+            ...(diffuse
+              ? null
+              : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 2, width: 34, height: 34, borderRadius: 17, shadowColor: colors.text, shadowOpacity: 0.1 }),
+          },
+        ]}
+      >
+        <X size={15} color={isDark ? colors.text : ST_INK} strokeWidth={2.5} />
+      </Pressable>
+    </View>
+
+    {/* Spinner */}
+    <View style={styles.pickerWrap}>
+      <DateTimePicker
+        value={draft}
+        mode="date"
+        display={Platform.OS === 'ios' ? (diffuse ? 'spinner' : 'inline') : 'default'}
+        onChange={handleChange}
+        maximumDate={maximumDate}
+        minimumDate={minimumDate}
+        textColor={isDark ? colors.text : ST_INK}
+        accentColor={ST_INK}
+        themeVariant={isDark ? 'dark' : 'light'}
+        style={{ width: '100%' }}
+      />
+    </View>
+
+    {/* Done sticker button (iOS only — Android dismisses on pick) */}
+    {Platform.OS === 'ios' && (
+      <Pressable
+        onPress={handleApply}
+        style={({ pressed }) => [
+          styles.doneBtn,
+          {
+            backgroundColor: accent.fill,
+            borderColor: ST_INK,
+            shadowOffset: { width: 0, height: pressed ? 2 : 5 },
+            transform: [{ translateY: pressed ? 3 : 0 }],
+            ...(diffuse
+              ? null
+              : { backgroundColor: colors.text, borderColor: colors.text, borderWidth: 1.5, shadowColor: colors.text, shadowOpacity: 0.1, shadowOffset: { width: 0, height: pressed ? 1 : 2 }, transform: [{ translateY: pressed ? 1 : 0 }] }),
+          },
+        ]}
+      >
+        <Text style={[styles.doneText, !diffuse && { color: colors.bg }]}>{t('common_done')}</Text>
+      </Pressable>
+    )}
+  </Pressable>
+  )
+
   return (
     <View>
       {label ? (
@@ -266,104 +364,17 @@ export default function DatePickerField({
       ) : null}
       {trigger}
 
-      <Modal visible={open} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <Pressable
-            onPress={(e) => e.stopPropagation()}
-            style={[
-              styles.sheet,
-              {
-                backgroundColor: isDark ? colors.surface : ST_PAPER,
-                borderColor: isDark ? colors.text : ST_INK,
-                ...(diffuse
-                  ? null
-                  : {
-                      backgroundColor: isDark ? colors.surface : colors.bg,
-                      borderColor: colors.text,
-                      borderTopWidth: 2.5,
-                      borderTopLeftRadius: 26,
-                      borderTopRightRadius: 26,
-                    }),
-              },
-            ]}
-          >
-            {/* Star sticker accent — top-right */}
-            <View style={styles.starAccent} pointerEvents="none">
-              <StarSticker size={64} fill={accent.fill} stroke={ST_INK} />
-            </View>
-
-            {/* Drag handle */}
-            <View style={[styles.handleBar, { backgroundColor: colors.border }, !diffuse && { backgroundColor: colors.text, opacity: 0.25 }]} />
-
-            {/* Header */}
-            <View style={styles.headerRow}>
-              <Text
-                style={[
-                  styles.title,
-                  { color: isDark ? colors.text : ST_INK },
-                  !diffuse && { color: colors.text, textTransform: 'uppercase', letterSpacing: 0.2 },
-                ]}
-              >
-                {modalTitle || label || 'Select date'}
-              </Text>
-              <Pressable
-                onPress={() => setOpen(false)}
-                style={({ pressed }) => [
-                  styles.closeBtn,
-                  {
-                    backgroundColor: isDark ? colors.surfaceRaised : ST_CREAM,
-                    borderColor: isDark ? colors.text : ST_INK,
-                    shadowOffset: { width: 0, height: pressed ? 1 : 2 },
-                    transform: [{ translateY: pressed ? 1 : 0 }],
-                    ...(diffuse
-                      ? null
-                      : { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 2, width: 34, height: 34, borderRadius: 17, shadowColor: colors.text, shadowOpacity: 0.1 }),
-                  },
-                ]}
-              >
-                <X size={15} color={isDark ? colors.text : ST_INK} strokeWidth={2.5} />
-              </Pressable>
-            </View>
-
-            {/* Spinner */}
-            <View style={styles.pickerWrap}>
-              <DateTimePicker
-                value={draft}
-                mode="date"
-                display={Platform.OS === 'ios' ? (diffuse ? 'spinner' : 'inline') : 'default'}
-                onChange={handleChange}
-                maximumDate={maximumDate}
-                minimumDate={minimumDate}
-                textColor={isDark ? colors.text : ST_INK}
-                accentColor={ST_INK}
-                themeVariant={isDark ? 'dark' : 'light'}
-                style={{ width: '100%' }}
-              />
-            </View>
-
-            {/* Done sticker button (iOS only — Android dismisses on pick) */}
-            {Platform.OS === 'ios' && (
-              <Pressable
-                onPress={handleApply}
-                style={({ pressed }) => [
-                  styles.doneBtn,
-                  {
-                    backgroundColor: accent.fill,
-                    borderColor: ST_INK,
-                    shadowOffset: { width: 0, height: pressed ? 2 : 5 },
-                    transform: [{ translateY: pressed ? 3 : 0 }],
-                    ...(diffuse
-                      ? null
-                      : { backgroundColor: colors.text, borderColor: colors.text, borderWidth: 1.5, shadowColor: colors.text, shadowOpacity: 0.1, shadowOffset: { width: 0, height: pressed ? 1 : 2 }, transform: [{ translateY: pressed ? 1 : 0 }] }),
-                  },
-                ]}
-              >
-                <Text style={[styles.doneText, !diffuse && { color: colors.bg }]}>{t('common_done')}</Text>
-              </Pressable>
-            )}
+      {diffuse ? (
+        <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+          <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
+            {renderSheet()}
           </Pressable>
-        </Pressable>
-      </Modal>
+        </Modal>
+      ) : (
+        <SheetModal visible={open} onClose={() => setOpen(false)} backdropColor="rgba(0,0,0,0.5)">
+          {(dz) => renderSheet(dz)}
+        </SheetModal>
+      )}
     </View>
   )
 }

@@ -115,6 +115,7 @@ import { InkBackButton } from '../ui/InkBackButton'
 import { PillButton } from '../ui/PillButton'
 import { FadeUp } from '../ui/Motion'
 import { pregnancyDayMarks } from '../../lib/logStickers'
+import { SheetModal } from '../ui/SheetModal'
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -407,10 +408,10 @@ function siteSheetFrame(colors: { bg: string; text: string }, bottomInset: numbe
   } as const
 }
 
-function SiteGrabber() {
+function SiteGrabber(dragProps: object = {}) {
   const { colors } = useTheme()
   return (
-    <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+    <View {...dragProps} style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
       <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
     </View>
   )
@@ -514,38 +515,39 @@ function QuickLogSheet({
 
   if (!diffuse) {
     return (
-      <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
-        <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
-        <View style={[styles.fabSheet, siteSheetFrame(colors, insets.bottom + 16), { paddingHorizontal: 0, paddingTop: 0 }]}>
-          <SiteGrabber />
-          <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 12 }}>
-            <SiteTitle size={24}>{t('pregCal_log_something')}</SiteTitle>
-          </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>
-              {ALL_LOG_TYPES.map((type) => (
-                <SiteLauncher
-                  key={type}
-                  label={LOG_META[type].label}
-                  sticker={stickerForPregLog(type)}
-                  onPress={() => { onClose(); onSelect(type) }}
-                />
-              ))}
+      <SheetModal visible={visible} onClose={onClose}>
+        {(dragZone) => (
+          <View style={[styles.fabSheet, siteSheetFrame(colors, insets.bottom + 16), { paddingHorizontal: 0, paddingTop: 0 }]}>
+            <SiteGrabber {...dragZone} />
+            <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 12 }}>
+              <SiteTitle size={24}>{t('pregCal_log_something')}</SiteTitle>
             </View>
-            <Pressable
-              onPress={() => { onClose(); onManageRoutines() }}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 16, marginTop: 8, borderTopWidth: 1.5, borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 })}
-            >
-              <SiteSticker name="cal" size={30} />
-              <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink, flex: 1 }}>
-                {t('pregCal_manage_routines')}
-              </Text>
-              <ChevronRight size={18} color={ink} strokeWidth={2.4} />
-            </Pressable>
-          </ScrollView>
-        </View>
-      </Modal>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>
+                {ALL_LOG_TYPES.map((type) => (
+                  <SiteLauncher
+                    key={type}
+                    label={LOG_META[type].label}
+                    sticker={stickerForPregLog(type)}
+                    onPress={() => { onClose(); onSelect(type) }}
+                  />
+                ))}
+              </View>
+              <Pressable
+                onPress={() => { onClose(); onManageRoutines() }}
+                accessibilityRole="button"
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 16, marginTop: 8, borderTopWidth: 1.5, borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 })}
+              >
+                <SiteSticker name="cal" size={30} />
+                <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink, flex: 1 }}>
+                  {t('pregCal_manage_routines')}
+                </Text>
+                <ChevronRight size={18} color={ink} strokeWidth={2.4} />
+              </Pressable>
+            </ScrollView>
+          </View>
+        )}
+      </SheetModal>
     )
   }
 
@@ -938,10 +940,10 @@ function RoutineManager({
     return (
       <>
         {/* ─── Manager sheet ─── */}
-        <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
-          <View style={styles.modalOverlay}>
-            <View style={[siteSheetFrame(colors, insets.bottom + 20), { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '90%' }]}>
-              <SiteGrabber />
+        <SheetModal visible={visible} onClose={onClose}>
+          {(dragZone) => (
+            <View style={[siteSheetFrame(colors, insets.bottom + 20), { maxHeight: '90%' }]}>
+              <SiteGrabber {...dragZone} />
               <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 14, gap: 12 }}>
                 <SiteSticker name="cal" size={44} />
                 <View style={{ flex: 1, gap: 4 }}>
@@ -992,14 +994,14 @@ function RoutineManager({
                 )}
               </ScrollView>
             </View>
-          </View>
-        </Modal>
+          )}
+        </SheetModal>
 
         {/* ─── Edit routine sheet ─── */}
-        <Modal visible={!!editingRoutine} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={cancelEdit}>
-          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={cancelEdit}>
+        <SheetModal visible={!!editingRoutine} onClose={cancelEdit}>
+          {(dragZone) => (
             <Pressable onPress={(e) => e.stopPropagation()} style={siteSheetFrame(colors, insets.bottom + 16)}>
-              <SiteGrabber />
+              <SiteGrabber {...dragZone} />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 14 }}>
                 <SiteSticker name="pencil" size={36} />
                 <View style={{ flex: 1 }}>
@@ -1015,14 +1017,14 @@ function RoutineManager({
                 </View>
               </View>
             </Pressable>
-          </Pressable>
-        </Modal>
+          )}
+        </SheetModal>
 
         {/* ─── Delete confirm sheet ─── */}
-        <Modal visible={!!confirmDeleteId} animationType="fade" transparent onRequestClose={() => !deleting && setConfirmDeleteId(null)}>
-          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => !deleting && setConfirmDeleteId(null)}>
+        <SheetModal visible={!!confirmDeleteId} onClose={() => !deleting && setConfirmDeleteId(null)}>
+          {(dragZone) => (
             <Pressable onPress={(e) => e.stopPropagation()} style={[siteSheetFrame(colors, insets.bottom + 16), { paddingHorizontal: 24 }]}>
-              <SiteGrabber />
+              <SiteGrabber {...dragZone} />
               <View style={{ alignItems: 'center', gap: 10, paddingBottom: 18 }}>
                 <SiteSticker name="bell" size={56} />
                 <SiteTitle size={22} style={{ textAlign: 'center' }}>{t('pregCal_delete_routine_title')}</SiteTitle>
@@ -1035,8 +1037,8 @@ function RoutineManager({
                 <PillButton label={t('common_delete')} variant="ink" onPress={performDelete} disabled={deleting} loading={deleting} height={52} style={{ flex: 1 }} />
               </View>
             </Pressable>
-          </Pressable>
-        </Modal>
+          )}
+        </SheetModal>
       </>
     )
   }

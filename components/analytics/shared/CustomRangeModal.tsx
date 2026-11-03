@@ -19,6 +19,7 @@ import { useModeStore } from '../../../store/useModeStore'
 import { PillButton } from '../../ui/PillButton'
 import { useTranslation } from '../../../lib/i18n'
 import { dateLoc } from '../../../lib/kpLocale'
+import { SheetModal } from '../../ui/SheetModal'
 
 interface Props {
   visible: boolean
@@ -167,8 +168,8 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
   }
 
   return (
-    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
+    <SheetModal visible={visible} onClose={onClose} backdropColor="rgba(0,0,0,0.45)">
+      {(dragZone) => (
         <Pressable
           style={[
             styles.sheet,
@@ -176,7 +177,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
           ]}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={styles.handle}>
+          <View {...dragZone} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={styles.handle}>
             <View style={[styles.handleBar, { backgroundColor: colors.text, opacity: 0.25 }]} />
           </View>
 
@@ -241,8 +242,8 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
             />
           </View>
         </Pressable>
-      </Pressable>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

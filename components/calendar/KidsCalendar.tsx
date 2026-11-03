@@ -142,6 +142,8 @@ import { QuietPill } from '../profile/SiteSettingsKit'
 import { sleepQualityLabel } from '../../lib/sleepQuality'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { Skeleton } from '../ui/Skeleton'
+import { SheetModal } from '../ui/SheetModal'
+import { CenterModal } from '../ui/CenterModal'
 
 // ─── Site look (light) helpers ─────────────────────────────────────────────
 // Calm ink outlines, card-less sticker rows, ink text. Used only by the light
@@ -213,10 +215,10 @@ function siteSheetFrame(colors: { bg: string; text: string }, bottomInset: numbe
   } as const
 }
 
-function SiteGrabber() {
+function SiteGrabber(dragProps: object = {}) {
   const { colors } = useTheme()
   return (
-    <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+    <View {...dragProps} style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
       <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
     </View>
   )
@@ -785,34 +787,35 @@ function LogActivitySheet({
   const ink = colors.text
 
   return (
-    <Modal visible={open} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
-      <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
-      <View style={[styles.fabSheet, siteSheetFrame(colors, insets.bottom + 16)]}>
-        <SiteGrabber />
-        <View style={styles.fabSheetTitleWrap}>
-          <SiteTitle size={24}>{t('kids_calendar_logActivity')}</SiteTitle>
-        </View>
-        <View style={styles.fabSheetBody}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>
-            {QUICK_LOGS.map((log) => (
-              <SiteLauncher key={log.id} label={log.label} sticker={stickerForLog(log.id)} onPress={() => handleSelect(log.id)} />
-            ))}
+    <SheetModal visible={open} onClose={onClose}>
+      {(dragZone) => (
+        <View style={[styles.fabSheet, siteSheetFrame(colors, insets.bottom + 16), { position: 'relative' }]}>
+          <SiteGrabber {...dragZone} />
+          <View {...dragZone} style={styles.fabSheetTitleWrap}>
+            <SiteTitle size={24}>{t('kids_calendar_logActivity')}</SiteTitle>
           </View>
+          <View style={styles.fabSheetBody}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>
+              {QUICK_LOGS.map((log) => (
+                <SiteLauncher key={log.id} label={log.label} sticker={stickerForLog(log.id)} onPress={() => handleSelect(log.id)} />
+              ))}
+            </View>
 
-          <Pressable
-            onPress={() => { onClose(); onManageRoutines() }}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.manageRoutinesBtn, { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 }]}
-          >
-            <SiteSticker name="cal" size={30} />
-            <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink, flex: 1 }}>
-              {t('kids_calendar_manageRoutines')}
-            </Text>
-            <ChevronRightSmall size={18} color={ink} />
-          </Pressable>
+            <Pressable
+              onPress={() => { onClose(); onManageRoutines() }}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.manageRoutinesBtn, { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 }]}
+            >
+              <SiteSticker name="cal" size={30} />
+              <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink, flex: 1 }}>
+                {t('kids_calendar_manageRoutines')}
+              </Text>
+              <ChevronRightSmall size={18} color={ink} />
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -1473,6 +1476,13 @@ export function KidsCalendar() {
   // "My questions" per visit (local) — quiet count on upcoming Visits rows.
   const visitQuestions = useAppointmentQuestionsStore((s) => s.questions)
   const [unlogTarget, setUnlogTarget] = useState<ChildLog | null>(null)
+  // Keep the last targets while their sheets play the exit animation (the state clears on close).
+  const lastUnlogTarget = useRef(unlogTarget)
+  if (unlogTarget) lastUnlogTarget.current = unlogTarget
+  const shownUnlogTarget = unlogTarget ?? lastUnlogTarget.current
+  const lastSelectedLog = useRef(selectedLog)
+  if (selectedLog) lastSelectedLog.current = selectedLog
+  const shownLog = selectedLog ?? lastSelectedLog.current
   const [unlogging, setUnlogging] = useState(false)
 
   // Routines
@@ -3322,14 +3332,14 @@ export function KidsCalendar() {
         </DiffuseSheet>
       )}
       {!diffuse && (
-      <Modal visible={kidPickerOpen} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={() => setKidPickerOpen(false)}>
-        <Pressable style={styles.kidPickerOverlay} onPress={() => setKidPickerOpen(false)}>
+      <SheetModal visible={kidPickerOpen} onClose={() => setKidPickerOpen(false)}>
+        {(dragZone) => (
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={[styles.kidPickerSheet, siteSheetFrame(colors, insets.bottom + 20)]}
           >
-            <SiteGrabber />
-            <View style={styles.kidPickerHeader}>
+            <SiteGrabber {...dragZone} />
+            <View {...dragZone} style={styles.kidPickerHeader}>
               <SiteTitle size={24}>{t('kids_calendar_pickAKid')}</SiteTitle>
               <InkBackButton onPress={() => setKidPickerOpen(false)} ink={colors.text} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
             </View>
@@ -3398,8 +3408,8 @@ export function KidsCalendar() {
               })}
             </ScrollView>
           </Pressable>
-        </Pressable>
-      </Modal>
+        )}
+      </SheetModal>
       )}
 
       {/* ─── Bottom Sheets ────────────────────────────────────────────── */}
@@ -3450,11 +3460,9 @@ export function KidsCalendar() {
 
       {/* ─── Routine Manager (site look) ─────────────────────────────── */}
       {!diffuse && (
-      <Modal
+      <SheetModal
         visible={showRoutineManager}
-        animationType={diffuse ? 'slide' : 'fade'}
-        transparent
-        onRequestClose={() => {
+        onClose={() => {
           setShowRoutineManager(false)
           setRoutineEditing(null)
           setRoutineFilterKid(null)
@@ -3463,7 +3471,7 @@ export function KidsCalendar() {
           setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })
         }}
       >
-        {(() => {
+        {(dragZone) => (() => {
           const ink = colors.text
           const tone = getModeColorSoft('kids', isDark)
           const closeManager = () => {
@@ -3474,13 +3482,11 @@ export function KidsCalendar() {
           }
           const visibleRoutines = routineFilterKid ? routines.filter((r) => r.child_id === routineFilterKid) : routines
           return (
-            <>
-              <Pressable style={styles.popupBackdrop} onPress={closeManager} />
-              <View style={[styles.popupSheet, siteSheetFrame(colors, insets.bottom + 20)]}>
-                <SiteGrabber />
+              <View style={[styles.popupSheet, siteSheetFrame(colors, insets.bottom + 20), { position: 'relative' }]}>
+                <SiteGrabber {...dragZone} />
 
                 {/* Header */}
-                <View style={[styles.popupHeader, { paddingBottom: 12 }]}>
+                <View {...dragZone} style={[styles.popupHeader, { paddingBottom: 12 }]}>
                   <SiteSticker name="cal" size={44} />
                   <View style={styles.popupHeaderText}>
                     <SiteTitle size={24}>{t('kids_calendar_routines')}</SiteTitle>
@@ -3585,30 +3591,19 @@ export function KidsCalendar() {
                   )}
                 </ScrollView>
               </View>
-            </>
           )
         })()}
-      </Modal>
+      </SheetModal>
       )}
 
       {/* ─── Edit Routine Modal (site look) ──────────────────────────── */}
       {!diffuse && (
-      <Modal
-        visible={!!routineEditing}
-        animationType="fade"
-        transparent
-        onRequestClose={cancelRoutineEdit}
-      >
+      <CenterModal visible={!!routineEditing} onClose={cancelRoutineEdit} containerStyle={{ paddingHorizontal: 20 }}>
         {(() => {
           const ink = colors.text
           const tone = getModeColorSoft('kids', isDark)
           return (
-            <Pressable
-              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', paddingHorizontal: 20 }}
-              onPress={cancelRoutineEdit}
-            >
-              <Pressable onPress={(e) => e.stopPropagation()}>
-                <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: ink, shadowColor: ink, gap: 16 }]}>
+                <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: ink, shadowColor: ink, gap: 16 }, { alignSelf: 'stretch' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <SiteSticker name="pencil" size={36} />
                     <SiteTitle size={22} style={{ flex: 1 }}>{t('kids_calendar_editRoutine')}</SiteTitle>
@@ -3636,11 +3631,9 @@ export function KidsCalendar() {
                     />
                   </View>
                 </View>
-              </Pressable>
-            </Pressable>
           )
         })()}
-      </Modal>
+      </CenterModal>
       )}
 
       {/* ─── Delete Routine Confirm (Diffuse) ─────────────────────── */}
@@ -3677,21 +3670,11 @@ export function KidsCalendar() {
 
       {/* ─── Delete Routine Confirm (site look) ──────────────────────── */}
       {!diffuse && (
-      <Modal
-        visible={!!confirmDeleteRoutineId}
-        animationType="fade"
-        transparent
-        onRequestClose={() => !routineDeleting && setConfirmDeleteRoutineId(null)}
-      >
+      <CenterModal visible={!!confirmDeleteRoutineId} onClose={() => !routineDeleting && setConfirmDeleteRoutineId(null)} containerStyle={{ paddingHorizontal: 28 }}>
         {(() => {
           const ink = colors.text
           return (
-            <Pressable
-              style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', paddingHorizontal: 28 }}
-              onPress={() => !routineDeleting && setConfirmDeleteRoutineId(null)}
-            >
-              <Pressable onPress={(e) => e.stopPropagation()}>
-                <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: ink, shadowColor: ink, gap: 12, alignItems: 'center' }]}>
+                <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: ink, shadowColor: ink, gap: 12, alignItems: 'center' }, { alignSelf: 'stretch' }]}>
                   <Trash2 size={34} color={ink} strokeWidth={2} />
                   <SiteTitle size={22} style={{ textAlign: 'center' }}>{t('kids_calendar_deleteRoutineConfirm')}</SiteTitle>
                   <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body, textAlign: 'center', lineHeight: 20 }}>
@@ -3710,11 +3693,9 @@ export function KidsCalendar() {
                     />
                   </View>
                 </View>
-              </Pressable>
-            </Pressable>
           )
         })()}
-      </Modal>
+      </CenterModal>
       )}
 
       {/* ─── Log Detail Sheet (Diffuse) ───────────────────────────────── */}
@@ -3741,29 +3722,23 @@ export function KidsCalendar() {
 
       {/* ─── Log Detail Popup with Edit (site look) ───────────────────── */}
       {!diffuse && (
-      <Modal
-        visible={!!selectedLog}
-        animationType={diffuse ? 'slide' : 'fade'}
-        transparent
-        onRequestClose={() => { setSelectedLog(null); setEditing(false) }}
-      >
-        <Pressable style={styles.popupBackdrop} onPress={() => { setSelectedLog(null); setEditing(false) }} />
-        {selectedLog && (() => {
+      <SheetModal visible={!!selectedLog} onClose={() => { setSelectedLog(null); setEditing(false) }}>
+        {(dragZone) => shownLog && (() => {
           const ink = colors.text
           const tone = getModeColorSoft('kids', isDark)
-          const logChild = children.find((c) => c.id === selectedLog.child_id)
-          const ci = childIndexMap.get(selectedLog.child_id) ?? 0
-          const hasPhotos = selectedLog.photos && selectedLog.photos.length > 0
+          const logChild = children.find((c) => c.id === shownLog.child_id)
+          const ci = childIndexMap.get(shownLog.child_id) ?? 0
+          const hasPhotos = shownLog.photos && shownLog.photos.length > 0
           const faceFor: Record<string, SiteStickerName> = { great: 'face4', good: 'face3', restless: 'face2', poor: 'face1' }
           return (
-            <View style={[styles.popupSheet, siteSheetFrame(colors, insets.bottom + 20)]}>
-              <SiteGrabber />
+            <View style={[styles.popupSheet, siteSheetFrame(colors, insets.bottom + 20), { position: 'relative' }]}>
+              <SiteGrabber {...dragZone} />
 
               {/* Header */}
-              <View style={styles.popupHeader}>
-                <SiteSticker name={stickerForLog(selectedLog.type)} size={44} />
+              <View {...dragZone} style={styles.popupHeader}>
+                <SiteSticker name={stickerForLog(shownLog.type)} size={44} />
                 <View style={styles.popupHeaderText}>
-                  <SiteTitle size={22} numberOfLines={2}>{logTitle(selectedLog)}</SiteTitle>
+                  <SiteTitle size={22} numberOfLines={2}>{logTitle(shownLog)}</SiteTitle>
                   {logChild && (
                     <View style={[styles.siteRowChip, { alignSelf: 'flex-start', borderColor: ink, backgroundColor: colors.surface }]}>
                       <View style={[styles.childDot, { backgroundColor: childColor(ci) }]} />
@@ -3779,16 +3754,16 @@ export function KidsCalendar() {
                 <View style={styles.siteMetaRow}>
                   <Clock size={16} color={ink} strokeWidth={2.2} />
                   <Text style={{ fontFamily: font.bodySemiBold, fontSize: 14, color: ink }}>
-                    {`${formatDayLabel(selectedLog.date, todayStr, t)} ${t('common_at')} ${activityTimeDisplay(selectedLog)}`}
+                    {`${formatDayLabel(shownLog.date, todayStr, t)} ${t('common_at')} ${activityTimeDisplay(shownLog)}`}
                   </Text>
                 </View>
 
                 {/* Logged by */}
-                {selectedLog.logged_by && profileNames[selectedLog.logged_by] && (
+                {shownLog.logged_by && profileNames[shownLog.logged_by] && (
                   <View style={styles.siteMetaRow}>
                     <Check size={16} color={ink} strokeWidth={2.6} />
                     <Text style={{ fontFamily: font.body, fontSize: 14, color: colors.textSecondary }}>
-                      {t('kids_calendar_detail_loggedBy')} <Text style={{ fontFamily: font.bodyBold, color: ink }}>{profileNames[selectedLog.logged_by]}</Text>
+                      {t('kids_calendar_detail_loggedBy')} <Text style={{ fontFamily: font.bodyBold, color: ink }}>{profileNames[shownLog.logged_by]}</Text>
                     </Text>
                   </View>
                 )}
@@ -3828,9 +3803,9 @@ export function KidsCalendar() {
                   /* ── View Mode ── */
                   <>
                     {/* ── Food ── */}
-                    {(selectedLog.type === 'food') && (() => {
+                    {(shownLog.type === 'food') && (() => {
                       let fp: Record<string, any> = {}
-                      try { fp = JSON.parse(selectedLog.value ?? '{}') } catch {}
+                      try { fp = JSON.parse(shownLog.value ?? '{}') } catch {}
                       const mealLabels: Record<string, string> = {
                         breakfast: tNow('kids_logForm_mealBreakfast'), morning_snack: tNow('kids_logForm_mealAmSnack'), lunch: tNow('kids_logForm_mealLunch'),
                         afternoon_snack: tNow('kids_logForm_mealPmSnack'), dinner: tNow('kids_logForm_mealDinner'), night_snack: tNow('kids_logForm_mealNight'),
@@ -3856,7 +3831,7 @@ export function KidsCalendar() {
                             </View>
                           )}
 
-                          {selectedLog.notes ? <DetailNote label={t('kids_calendar_detail_whatTheyAte')} text={selectedLog.notes} /> : null}
+                          {shownLog.notes ? <DetailNote label={t('kids_calendar_detail_whatTheyAte')} text={shownLog.notes} /> : null}
 
                           {fp.isNewFood && (
                             <View style={[styles.siteCallout, { borderColor: ink, backgroundColor: tone }]}>
@@ -3882,9 +3857,9 @@ export function KidsCalendar() {
                     })()}
 
                     {/* ── Feeding ── */}
-                    {(selectedLog.type === 'feeding') && (() => {
+                    {(shownLog.type === 'feeding') && (() => {
                       let fp: Record<string, any> = {}
-                      try { fp = JSON.parse(selectedLog.value ?? '{}') } catch {}
+                      try { fp = JSON.parse(shownLog.value ?? '{}') } catch {}
                       const isBreast = fp.feedType === 'breast'
                       return (
                         <>
@@ -3899,15 +3874,15 @@ export function KidsCalendar() {
                               <InfoPill tone={tone} label={fp.side === 'left' ? tNow('kp_kc_sideLeft') : fp.side === 'right' ? tNow('kp_kc_sideRight') : tNow('kp_kc_sideBoth')} />
                             </View>
                           )}
-                          {selectedLog.notes ? <DetailNote label={t('kids_calendar_detail_notes2')} text={selectedLog.notes} /> : null}
+                          {shownLog.notes ? <DetailNote label={t('kids_calendar_detail_notes2')} text={shownLog.notes} /> : null}
                         </>
                       )
                     })()}
 
                     {/* ── Sleep ── */}
-                    {selectedLog.type === 'sleep' && (() => {
+                    {shownLog.type === 'sleep' && (() => {
                       let sp: Record<string, any> = {}
-                      try { sp = JSON.parse(selectedLog.value ?? '{}') } catch {}
+                      try { sp = JSON.parse(shownLog.value ?? '{}') } catch {}
                       // Duration is stored as "10h 10m", "45m", "2h" — display it directly
                       const durStr = sp.duration ? String(sp.duration) : null
                       const qFace = sp.quality ? faceFor[String(sp.quality).toLowerCase()] ?? null : null
@@ -3932,9 +3907,9 @@ export function KidsCalendar() {
                     })()}
 
                     {/* ── Activity ── */}
-                    {selectedLog.type === 'activity' && (() => {
+                    {shownLog.type === 'activity' && (() => {
                       let ap: Record<string, any> = {}
-                      try { ap = JSON.parse(selectedLog.value ?? '{}') } catch {}
+                      try { ap = JSON.parse(shownLog.value ?? '{}') } catch {}
                       const durRaw = ap.duration ? String(ap.duration).replace(/[^\d.]/g, '') : null
                       const durUnit = durRaw ? (Number(durRaw) >= 60 ? tNow('kp_kc_hm', { h: Math.floor(Number(durRaw) / 60), m: Number(durRaw) % 60 }) : tNow('kp_pc_nMin', { n: durRaw })) : null
                       return (
@@ -3957,9 +3932,9 @@ export function KidsCalendar() {
                     })()}
 
                     {/* ── Diaper ── */}
-                    {selectedLog.type === 'diaper' && (() => {
+                    {shownLog.type === 'diaper' && (() => {
                       let dp: Record<string, any> = {}
-                      try { dp = JSON.parse(selectedLog.value ?? '{}') } catch {}
+                      try { dp = JSON.parse(shownLog.value ?? '{}') } catch {}
                       const typeMap: Record<string, { sticker: SiteStickerName; label: string }> = {
                         pee:   { sticker: 'pee', label: tNow('kids_logForm_diaperPee') },
                         poop:  { sticker: 'poop', label: tNow('kids_logForm_diaperPoop') },
@@ -3980,12 +3955,12 @@ export function KidsCalendar() {
                     })()}
 
                     {/* ── Mood ── */}
-                    {selectedLog.type === 'mood' && (() => {
+                    {shownLog.type === 'mood' && (() => {
                       // A mood logged from a routine stores JSON
                       // ({ mood, routineId, routineName, … }); a direct mood
                       // log stores the bare mood string. Extract the mood
                       // either way so we never surface the raw JSON / UUID.
-                      const rawMood = selectedLog.value ?? ''
+                      const rawMood = shownLog.value ?? ''
                       let moodVal = rawMood
                       try {
                         const p = JSON.parse(rawMood)
@@ -4003,31 +3978,31 @@ export function KidsCalendar() {
                     })()}
 
                     {/* ── Health / Temperature / Vaccine / Medicine / Note ── */}
-                    {['health', 'temperature', 'vaccine', 'medicine', 'note'].includes(selectedLog.type) && (() => {
+                    {['health', 'temperature', 'vaccine', 'medicine', 'note'].includes(shownLog.type) && (() => {
                       // Health values come in several stored shapes — never render raw JSON.
-                      const { kind, text } = healthLogText(selectedLog.value, null)
-                      const shown = text && text !== selectedLog.type ? text : null
+                      const { kind, text } = healthLogText(shownLog.value, null)
+                      const shown = text && text !== shownLog.type ? text : null
                       return (
                         <DetailHero
-                          sticker={stickerForLog(selectedLog.type)}
+                          sticker={stickerForLog(shownLog.type)}
                           value={shown}
                           // Short readings ("37.2", "MMR") stay big; sentences read at body-heading size.
                           valueSize={shown && shown.length > 14 ? 22 : 32}
-                          eyebrow={kind ?? (selectedLog.type.charAt(0).toUpperCase() + selectedLog.type.slice(1))}
+                          eyebrow={kind ?? (shownLog.type.charAt(0).toUpperCase() + shownLog.type.slice(1))}
                         />
                       )
                     })()}
 
                     {/* Notes for non-food/feeding types */}
-                    {!['food', 'feeding'].includes(selectedLog.type) && selectedLog.notes ? (
-                      <DetailNote label={t('kids_calendar_detail_notes')} text={selectedLog.notes} />
+                    {!['food', 'feeding'].includes(shownLog.type) && shownLog.notes ? (
+                      <DetailNote label={t('kids_calendar_detail_notes')} text={shownLog.notes} />
                     ) : null}
 
                     {/* Fallback for unknown types */}
-                    {!['food', 'feeding', 'sleep', 'activity', 'diaper', 'mood', 'health', 'temperature', 'vaccine', 'medicine', 'note'].includes(selectedLog.type) && (
+                    {!['food', 'feeding', 'sleep', 'activity', 'diaper', 'mood', 'health', 'temperature', 'vaccine', 'medicine', 'note'].includes(shownLog.type) && (
                       <>
-                        {formatLogDisplay(selectedLog.type, selectedLog.value, null) !== '' && (
-                          <DetailNote label={t('kids_calendar_detail_details')} text={formatLogDisplay(selectedLog.type, selectedLog.value, null)} />
+                        {formatLogDisplay(shownLog.type, shownLog.value, null) !== '' && (
+                          <DetailNote label={t('kids_calendar_detail_details')} text={formatLogDisplay(shownLog.type, shownLog.value, null)} />
                         )}
                       </>
                     )}
@@ -4036,26 +4011,26 @@ export function KidsCalendar() {
                       <View style={{ marginBottom: 16, gap: 8 }}>
                         <SiteEyebrow>{t('kids_calendar_detail_photos')}</SiteEyebrow>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-                          {selectedLog.photos.map((uri, i) => (
+                          {shownLog.photos.map((uri, i) => (
                             <Image key={i} source={{ uri }} style={[styles.popupPhoto, { borderRadius: 16, borderWidth: 1.5, borderColor: ink }]} />
                           ))}
                         </ScrollView>
                       </View>
                     )}
 
-                    {!formatLogDisplay(selectedLog.type, selectedLog.value, null) && !selectedLog.notes && !hasPhotos && (
+                    {!formatLogDisplay(shownLog.type, shownLog.value, null) && !shownLog.notes && !hasPhotos && (
                       <Text style={{ fontFamily: font.body, fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginBottom: 12 }}>
                         {t('kids_calendar_detail_nothing')}
                       </Text>
                     )}
 
                     {/* My questions — visits only; an upcoming visit collects the "next visit" questions */}
-                    {isKidsVisitLog(selectedLog.type, selectedLog.value) && (
+                    {isKidsVisitLog(shownLog.type, shownLog.value) && (
                       <View style={{ marginBottom: 16, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
                         <AppointmentQuestions
-                          appointmentKey={selectedLog.id}
+                          appointmentKey={shownLog.id}
                           mode="kids"
-                          claimFrom={selectedLog.date >= todayStr ? 'kids' : undefined}
+                          claimFrom={shownLog.date >= todayStr ? 'kids' : undefined}
                         />
                       </View>
                     )}
@@ -4063,8 +4038,8 @@ export function KidsCalendar() {
                     {/* Actions: edit is the main one (peach pill); delete stays a quiet link —
                         it still routes through the unlogTarget confirmation. */}
                     <View style={{ alignItems: 'center', gap: 14, marginTop: 8 }}>
-                      <QuietPill label={t('kids_calendar_detail_edit')} sticker="pencil" onPress={() => openEdit(selectedLog)} />
-                      <Pressable onPress={() => setUnlogTarget(selectedLog)} accessibilityRole="button" hitSlop={8}>
+                      <QuietPill label={t('kids_calendar_detail_edit')} sticker="pencil" onPress={() => openEdit(shownLog)} />
+                      <Pressable onPress={() => setUnlogTarget(shownLog)} accessibilityRole="button" hitSlop={8}>
                         <Text style={{ fontFamily: font.bodyMedium, fontSize: 14, color: colors.textMuted, textDecorationLine: 'underline' }}>{t('kids_calendar_detail_delete')}</Text>
                       </Pressable>
                     </View>
@@ -4074,7 +4049,7 @@ export function KidsCalendar() {
             </View>
           )
         })()}
-      </Modal>
+      </SheetModal>
       )}
 
       {/* ── Unlog Confirmation (Diffuse) ── */}
@@ -4114,23 +4089,20 @@ export function KidsCalendar() {
 
       {/* ── Unlog Confirmation Modal (site look) ── */}
       {!diffuse && (
-      <Modal visible={!!unlogTarget} animationType="fade" transparent onRequestClose={() => setUnlogTarget(null)}>
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
-          onPress={() => setUnlogTarget(null)}
-        >
+      <SheetModal visible={!!unlogTarget} onClose={() => setUnlogTarget(null)}>
+        {(dragZone) => (
           <Pressable onPress={(e) => e.stopPropagation()} style={[siteSheetFrame(colors, insets.bottom + 16), { paddingHorizontal: 24 }]}>
             <SiteGrabber />
-            {unlogTarget && (() => {
-              const detail = formatLogDisplay(unlogTarget.type, unlogTarget.value, unlogTarget.notes)
+            {shownUnlogTarget && (() => {
+              const detail = formatLogDisplay(shownUnlogTarget.type, shownUnlogTarget.value, shownUnlogTarget.notes)
               return (
                 <View style={{ gap: 16 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <SiteSticker name={stickerForLog(unlogTarget.type)} size={44} />
+                    <SiteSticker name={stickerForLog(shownUnlogTarget.type)} size={44} />
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={{ color: colors.text, fontSize: 16, fontFamily: font.bodyBold }}>{logTitle(unlogTarget)}</Text>
+                      <Text style={{ color: colors.text, fontSize: 16, fontFamily: font.bodyBold }}>{logTitle(shownUnlogTarget)}</Text>
                       {detail ? <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body }} numberOfLines={1}>{detail}</Text> : null}
-                      <SiteEyebrow>{activityTimeDisplay(unlogTarget)}</SiteEyebrow>
+                      <SiteEyebrow>{activityTimeDisplay(shownUnlogTarget)}</SiteEyebrow>
                     </View>
                   </View>
                   <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body, textAlign: 'center' }}>
@@ -4153,8 +4125,8 @@ export function KidsCalendar() {
               )
             })()}
           </Pressable>
-        </Pressable>
-      </Modal>
+        )}
+      </SheetModal>
       )}
 
       {/* ── Day Complete Congrats (Diffuse) ── */}
@@ -4202,61 +4174,49 @@ export function KidsCalendar() {
 
       {/* ── Day Complete Congrats Modal (site look) ── */}
       {!diffuse && (
-      <Modal
-        visible={showDayCongrats}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setShowDayCongrats(false)}
-      >
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}
-          onPress={() => setShowDayCongrats(false)}
-        >
-          <Pressable onPress={(e) => e.stopPropagation()} style={{ width: '100%' }}>
-            <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text, alignItems: 'center', padding: 28 }]}>
-              <SiteSticker name="star" size={72} />
+      <CenterModal visible={showDayCongrats} onClose={() => setShowDayCongrats(false)}>
+        <View style={[styles.siteDialog, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text, alignItems: 'center', padding: 28 }, { alignSelf: 'stretch' }]}>
+          <SiteSticker name="star" size={72} />
 
-              <SiteTitle size={28} style={{ textAlign: 'center', marginTop: 12, marginBottom: 8 }}>
-                {t('kids_calendar_congrats_title')}
-              </SiteTitle>
-              <Text style={{ color: colors.text, fontSize: 16, fontFamily: font.bodyBold, textAlign: 'center', marginBottom: 6 }}>
-                {t('kids_calendar_congrats_allLogged', { day: formatDayLabel(selectedDate, todayStr, t) })}
-              </Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body, textAlign: 'center', lineHeight: 20, marginBottom: 24 }}>
-                {selectedChildId === 'all'
-                  ? t('kp_kc_allTrackedAll')
-                  : (children.find(c => c.id === selectedChildId)?.name ? t('kp_kc_allTrackedOne', { name: children.find(c => c.id === selectedChildId)!.name }) : t('kp_kc_allTrackedGeneric'))}
-              </Text>
+          <SiteTitle size={28} style={{ textAlign: 'center', marginTop: 12, marginBottom: 8 }}>
+            {t('kids_calendar_congrats_title')}
+          </SiteTitle>
+          <Text style={{ color: colors.text, fontSize: 16, fontFamily: font.bodyBold, textAlign: 'center', marginBottom: 6 }}>
+            {t('kids_calendar_congrats_allLogged', { day: formatDayLabel(selectedDate, todayStr, t) })}
+          </Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body, textAlign: 'center', lineHeight: 20, marginBottom: 24 }}>
+            {selectedChildId === 'all'
+              ? t('kp_kc_allTrackedAll')
+              : (children.find(c => c.id === selectedChildId)?.name ? t('kp_kc_allTrackedOne', { name: children.find(c => c.id === selectedChildId)!.name }) : t('kp_kc_allTrackedGeneric'))}
+          </Text>
 
-              {/* Stats row */}
-              {(() => {
-                const loggedToday = selectedDayLogs.filter((l) => l.type !== 'skipped')
-                const foodLogs = loggedToday.filter(l => l.type === 'food')
-                const totalCals = foodLogs.reduce((sum, l) => {
-                  try { const v = JSON.parse(l.value ?? '{}'); return sum + (Number(v.estimatedCals) || 0) } catch { return sum }
-                }, 0)
-                const stats: { n: number; label: string }[] = [
-                  { n: loggedToday.length, label: t('kids_calendar_congrats_activities') },
-                  ...(totalCals > 0 ? [{ n: totalCals, label: t('kids_calendar_congrats_kcal') }] : []),
-                  { n: selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length, label: t('kids_calendar_congrats_routines') },
-                ]
-                return (
-                  <View style={{ flexDirection: 'row', marginBottom: 24, width: '100%', borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: colors.text, paddingVertical: 14 }}>
-                    {stats.map((st, i) => (
-                      <View key={i} style={{ flex: 1, alignItems: 'center', gap: 2, borderLeftWidth: i === 0 ? 0 : 1, borderLeftColor: colors.border }}>
-                        <Text style={{ color: colors.text, fontSize: 30, fontFamily: font.displayBold }}>{st.n}</Text>
-                        <SiteEyebrow style={{ textAlign: 'center' }}>{st.label}</SiteEyebrow>
-                      </View>
-                    ))}
+          {/* Stats row */}
+          {(() => {
+            const loggedToday = selectedDayLogs.filter((l) => l.type !== 'skipped')
+            const foodLogs = loggedToday.filter(l => l.type === 'food')
+            const totalCals = foodLogs.reduce((sum, l) => {
+              try { const v = JSON.parse(l.value ?? '{}'); return sum + (Number(v.estimatedCals) || 0) } catch { return sum }
+            }, 0)
+            const stats: { n: number; label: string }[] = [
+              { n: loggedToday.length, label: t('kids_calendar_congrats_activities') },
+              ...(totalCals > 0 ? [{ n: totalCals, label: t('kids_calendar_congrats_kcal') }] : []),
+              { n: selectedDayRoutines.length > 0 ? selectedDayRoutines.length : loggedToday.length, label: t('kids_calendar_congrats_routines') },
+            ]
+            return (
+              <View style={{ flexDirection: 'row', marginBottom: 24, width: '100%', borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: colors.text, paddingVertical: 14 }}>
+                {stats.map((st, i) => (
+                  <View key={i} style={{ flex: 1, alignItems: 'center', gap: 2, borderLeftWidth: i === 0 ? 0 : 1, borderLeftColor: colors.border }}>
+                    <Text style={{ color: colors.text, fontSize: 30, fontFamily: font.displayBold }}>{st.n}</Text>
+                    <SiteEyebrow style={{ textAlign: 'center' }}>{st.label}</SiteEyebrow>
                   </View>
-                )
-              })()}
+                ))}
+              </View>
+            )
+          })()}
 
-              <PillButton label={t('kids_calendar_congrats_btn')} variant="ink" onPress={() => setShowDayCongrats(false)} style={{ alignSelf: 'stretch' }} />
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+          <PillButton label={t('kids_calendar_congrats_btn')} variant="ink" onPress={() => setShowDayCongrats(false)} style={{ alignSelf: 'stretch' }} />
+        </View>
+      </CenterModal>
       )}
     </View>
   )

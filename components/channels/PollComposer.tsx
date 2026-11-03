@@ -14,6 +14,7 @@ import { InkBackButton } from '../ui/InkBackButton'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { createPoll, POLL_MIN_OPTIONS, POLL_MAX_OPTIONS } from '../../lib/polls'
+import { SheetModal } from '../ui/SheetModal'
 
 interface Props {
   visible: boolean
@@ -70,70 +71,89 @@ export function PollComposer({ visible, channelId, onClose, onCreated }: Props) 
     }
   }
 
-  return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={[styles.sheet, { backgroundColor: diffuse ? dt.colors.bg : colors.bg, paddingBottom: insets.bottom + 16, borderTopColor: diffuse ? line : colors.text }, !diffuse && { borderTopWidth: 2.5, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
-          <View style={styles.header}>
-            {!diffuse && <SiteSticker name="bars" size={32} cut />}
-            <Text style={[styles.title, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { flex: 1, marginLeft: 10, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('poll_composerTitle')}</Text>
-            {diffuse ? (
-              <Pressable onPress={() => { reset(); onClose() }} hitSlop={8}>
-                <X size={22} color={inkMuted} />
-              </Pressable>
-            ) : (
-              <InkBackButton icon="close" ink={colors.text} paper={colors.surface} onPress={() => { reset(); onClose() }} style={{ marginBottom: 0, width: 38, height: 38 }} />
-            )}
-          </View>
+  const sheetStyle = [styles.sheet, { backgroundColor: diffuse ? dt.colors.bg : colors.bg, paddingBottom: insets.bottom + 16, borderTopColor: diffuse ? line : colors.text }, !diffuse && { borderTopWidth: 2.5, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]
+  const renderBody = (dz: object = {}) => (
+    <>
+    <View {...dz} style={styles.header}>
+      {!diffuse && <SiteSticker name="bars" size={32} cut />}
+      <Text style={[styles.title, { color: ink, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { flex: 1, marginLeft: 10, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('poll_composerTitle')}</Text>
+      {diffuse ? (
+        <Pressable onPress={() => { reset(); onClose() }} hitSlop={8}>
+          <X size={22} color={inkMuted} />
+        </Pressable>
+      ) : (
+        <InkBackButton icon="close" ink={colors.text} paper={colors.surface} onPress={() => { reset(); onClose() }} style={{ marginBottom: 0, width: 38, height: 38 }} />
+      )}
+    </View>
 
-          <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <TextInput
-              value={question}
-              onChangeText={setQuestion}
-              placeholder={t('poll_questionPlaceholder')}
-              placeholderTextColor={inkMuted}
-              multiline
-              style={[styles.questionInput, { color: ink, backgroundColor: fieldBg, borderColor: diffuse ? line : colors.text, borderWidth: diffuse ? 1 : 1.5, borderRadius: diffuse ? radius.md : 14, fontFamily: diffuse ? diffuseFont.body : font.body }]}
-            />
+    <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <TextInput
+        value={question}
+        onChangeText={setQuestion}
+        placeholder={t('poll_questionPlaceholder')}
+        placeholderTextColor={inkMuted}
+        multiline
+        style={[styles.questionInput, { color: ink, backgroundColor: fieldBg, borderColor: diffuse ? line : colors.text, borderWidth: diffuse ? 1 : 1.5, borderRadius: diffuse ? radius.md : 14, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+      />
 
-            <Text style={[styles.label, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular', letterSpacing: diffuse ? 1 : 1.4, fontSize: diffuse ? 11 : 10 }]}>{t('poll_optionsLabel')}</Text>
-            {options.map((opt, i) => (
-              <View key={i} style={styles.optionRow}>
-                <TextInput
-                  value={opt}
-                  onChangeText={(v) => setOption(i, v)}
-                  placeholder={t('poll_optionPlaceholder', { n: i + 1 })}
-                  placeholderTextColor={inkMuted}
-                  style={[styles.optionInput, { color: ink, backgroundColor: fieldBg, borderColor: diffuse ? line : colors.text, borderWidth: diffuse ? 1 : 1.5, borderRadius: diffuse ? radius.md : 14, fontFamily: diffuse ? diffuseFont.body : font.body }]}
-                />
-                {options.length > POLL_MIN_OPTIONS && (
-                  <Pressable onPress={() => removeOption(i)} hitSlop={8} style={styles.removeBtn}>
-                    <Trash2 size={16} color={inkMuted} strokeWidth={1.8} />
-                  </Pressable>
-                )}
-              </View>
-            ))}
-
-            {options.length < POLL_MAX_OPTIONS && (
-              <Pressable onPress={addOption} style={styles.addRow}>
-                <Plus size={16} color={diffuse ? accent : colors.text} strokeWidth={2} />
-                <Text style={[styles.addText, { color: diffuse ? accent : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]}>{t('poll_addOption')}</Text>
-              </Pressable>
-            )}
-          </ScrollView>
-
-          <Pressable
-            onPress={create}
-            disabled={!canCreate || creating}
-            style={[styles.cta, { backgroundColor: diffuse ? accent : colors.text, borderRadius: radius.full, opacity: (!canCreate || creating) ? 0.5 : 1 }]}
-          >
-            {creating
-              ? <ActivityIndicator size="small" color={diffuse ? dt.colors.bg : colors.textInverse} />
-              : <Text style={[styles.ctaText, { color: diffuse ? dt.colors.bg : colors.textInverse, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{t('poll_create')}</Text>}
-          </Pressable>
+      <Text style={[styles.label, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular', letterSpacing: diffuse ? 1 : 1.4, fontSize: diffuse ? 11 : 10 }]}>{t('poll_optionsLabel')}</Text>
+      {options.map((opt, i) => (
+        <View key={i} style={styles.optionRow}>
+          <TextInput
+            value={opt}
+            onChangeText={(v) => setOption(i, v)}
+            placeholder={t('poll_optionPlaceholder', { n: i + 1 })}
+            placeholderTextColor={inkMuted}
+            style={[styles.optionInput, { color: ink, backgroundColor: fieldBg, borderColor: diffuse ? line : colors.text, borderWidth: diffuse ? 1 : 1.5, borderRadius: diffuse ? radius.md : 14, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+          />
+          {options.length > POLL_MIN_OPTIONS && (
+            <Pressable onPress={() => removeOption(i)} hitSlop={8} style={styles.removeBtn}>
+              <Trash2 size={16} color={inkMuted} strokeWidth={1.8} />
+            </Pressable>
+          )}
         </View>
-      </View>
-    </Modal>
+      ))}
+
+      {options.length < POLL_MAX_OPTIONS && (
+        <Pressable onPress={addOption} style={styles.addRow}>
+          <Plus size={16} color={diffuse ? accent : colors.text} strokeWidth={2} />
+          <Text style={[styles.addText, { color: diffuse ? accent : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]}>{t('poll_addOption')}</Text>
+        </Pressable>
+      )}
+    </ScrollView>
+
+    <Pressable
+      onPress={create}
+      disabled={!canCreate || creating}
+      style={[styles.cta, { backgroundColor: diffuse ? accent : colors.text, borderRadius: radius.full, opacity: (!canCreate || creating) ? 0.5 : 1 }]}
+    >
+      {creating
+        ? <ActivityIndicator size="small" color={diffuse ? dt.colors.bg : colors.textInverse} />
+        : <Text style={[styles.ctaText, { color: diffuse ? dt.colors.bg : colors.textInverse, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>{t('poll_create')}</Text>}
+    </Pressable>
+    </>
+  )
+
+  if (diffuse) {
+    return (
+      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+        <View style={styles.backdrop}>
+          <View style={sheetStyle}>
+            {renderBody()}
+          </View>
+        </View>
+      </Modal>
+    )
+  }
+
+  return (
+    <SheetModal visible={visible} onClose={onClose} backdropColor="rgba(20,19,19,0.3)" style={{ maxHeight: '86%' }}>
+      {(dz) => (
+        <View style={sheetStyle}>
+          {renderBody(dz)}
+        </View>
+      )}
+    </SheetModal>
   )
 }
 

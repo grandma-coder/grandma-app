@@ -26,6 +26,7 @@ import { Display, Body, MonoCaps } from '../ui/Typography'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { AppointmentQuestions, CopySuggestedQuestion, nextStandardAppointmentId } from './AppointmentQuestions'
+import { SheetModal } from '../ui/SheetModal'
 
 type Status = 'done' | 'next' | 'future'
 
@@ -101,161 +102,171 @@ export function AppointmentDetailModal({
   // the "specific detail" the brand is meant for.
   const dotAccent = themeBrand.pregnancy
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType={diffuse ? 'slide' : 'fade'}
-      onRequestClose={onClose}
+  const renderSheet = (dragZone: object = {}) => (
+    <Pressable
+      onPress={(e) => e.stopPropagation()}
+      style={[
+        styles.sheet,
+        {
+          backgroundColor: sheetBg,
+          borderColor: hairline,
+          paddingBottom: insets.bottom + 16,
+        },
+        shadows.pop,
+      ]}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: sheetBg,
-              borderColor: hairline,
-              paddingBottom: insets.bottom + 16,
-            },
-            shadows.pop,
-          ]}
-        >
-          {/* Drag handle */}
-          <View style={[styles.handle, { backgroundColor: hairline }]} />
+      {/* Drag handle */}
+      <View {...dragZone} style={[styles.handle, { backgroundColor: hairline }]} />
 
-          {/* Close — soft paper chip, hairline border */}
-          <Pressable
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.closeBtn,
-              { backgroundColor: paper, borderColor: line, borderWidth: lineW, opacity: pressed ? 0.7 : 1 },
+      {/* Close — soft paper chip, hairline border */}
+      <Pressable
+        onPress={onClose}
+        style={({ pressed }) => [
+          styles.closeBtn,
+          { backgroundColor: paper, borderColor: line, borderWidth: lineW, opacity: pressed ? 0.7 : 1 },
+        ]}
+      >
+        <X size={16} color={diffuse ? muted : inkText} strokeWidth={2.5} />
+      </Pressable>
+
+      {appointment && (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          contentContainerStyle={styles.scroll}
+        >
+          {/* ─── Hero — status-soft wash on paper, hairline, soft shadow ── */}
+          <View
+            style={[
+              styles.hero,
+              { backgroundColor: accent.soft, borderColor: line, borderWidth: lineW, borderRadius: radius.lg },
+              shadows.card,
             ]}
           >
-            <X size={16} color={diffuse ? muted : inkText} strokeWidth={2.5} />
-          </Pressable>
+            <View style={[styles.heroIcon, { backgroundColor: paper, borderColor: line, borderWidth: lineW }]}>
+              {status === 'done'
+                ? <Check size={24} color={accent.ink} strokeWidth={2.6} />
+                : <Character name="checkup" size={24} color={accent.ink} />
+              }
+            </View>
+            <View style={styles.heroText}>
+              <MonoCaps size={11} color={muted}>
+                {t('pregnancy_appt_weekTiming', { week: appointment.week, timing: appointment.type.replace('_', ' ') })}
+              </MonoCaps>
+              <Display size={24} color={inkText} style={{ marginTop: 4 }}>
+                {appointment.name}
+              </Display>
+              <View style={[styles.statusChip, { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.full }]}>
+                <MonoCaps size={11} color={accent.ink}>
+                  {STATUS_LABEL[status]}
+                </MonoCaps>
+              </View>
+            </View>
+          </View>
 
-          {appointment && (
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              automaticallyAdjustKeyboardInsets
-              contentContainerStyle={styles.scroll}
-            >
-              {/* ─── Hero — status-soft wash on paper, hairline, soft shadow ── */}
-              <View
-                style={[
-                  styles.hero,
-                  { backgroundColor: accent.soft, borderColor: line, borderWidth: lineW, borderRadius: radius.lg },
-                  shadows.card,
+          {/* ─── Body sections ───────────────────────────────────── */}
+          <Section title={t('pregnancy_appt_about')} muted={muted}>
+            <Body size={14} color={inkText}>
+              {description}
+            </Body>
+          </Section>
+
+          <Section title={t('pregnancy_appt_prep')} muted={muted}>
+            <Body size={14} color={inkText}>
+              {prepNote}
+            </Body>
+          </Section>
+
+          <Section title={t('pregnancy_appt_whatToExpect')} muted={muted}>
+            <Body size={14} color={inkText}>
+              {whatToExpect}
+            </Body>
+          </Section>
+
+          {!diffuse && (
+            <View style={styles.section}>
+              <AppointmentQuestions
+                appointmentKey={appointment.id}
+                mode="pregnancy"
+                claimFrom={currentWeek != null && nextStandardAppointmentId(currentWeek) === appointment.id ? 'pregnancy' : undefined}
+              />
+            </View>
+          )}
+
+          <Section title={t('pregnancy_appt_questionsToAsk')} muted={muted}>
+            <View style={{ gap: 10 }}>
+              {appointment.questions.map((q, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.questionRow,
+                    { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.md },
+                  ]}
+                >
+                  {/* Small violet dot — the "specific detail" accent. */}
+                  <View style={[styles.questionDot, { backgroundColor: dotAccent }]} />
+                  <Body size={14} color={inkText} style={{ flex: 1 }}>
+                    {q}
+                  </Body>
+                  {!diffuse && <CopySuggestedQuestion appointmentKey={appointment.id} text={q} />}
+                </View>
+              ))}
+            </View>
+          </Section>
+
+          {/* ─── Actions — filled ink primary + paper secondary pill ── */}
+          <View style={styles.actionsRow}>
+            {status !== 'done' && onMarkDone && (
+              <Pressable
+                onPress={onMarkDone}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  { backgroundColor: inkText, borderRadius: radius.full, opacity: pressed ? 0.85 : 1 },
+                  shadows.subtle,
                 ]}
               >
-                <View style={[styles.heroIcon, { backgroundColor: paper, borderColor: line, borderWidth: lineW }]}>
-                  {status === 'done'
-                    ? <Check size={24} color={accent.ink} strokeWidth={2.6} />
-                    : <Character name="checkup" size={24} color={accent.ink} />
-                  }
-                </View>
-                <View style={styles.heroText}>
-                  <MonoCaps size={11} color={muted}>
-                    {t('pregnancy_appt_weekTiming', { week: appointment.week, timing: appointment.type.replace('_', ' ') })}
-                  </MonoCaps>
-                  <Display size={24} color={inkText} style={{ marginTop: 4 }}>
-                    {appointment.name}
-                  </Display>
-                  <View style={[styles.statusChip, { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.full }]}>
-                    <MonoCaps size={11} color={accent.ink}>
-                      {STATUS_LABEL[status]}
-                    </MonoCaps>
-                  </View>
-                </View>
-              </View>
+                <Check size={16} color={colors.textInverse} strokeWidth={3} />
+                <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>{t('kids_home_reminder_mark_done')}</Text>
+              </Pressable>
+            )}
+            {onAddToLogs && (
+              <Pressable
+                onPress={onAddToLogs}
+                style={({ pressed }) => [
+                  styles.secondaryBtn,
+                  { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.full, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Plus size={16} color={inkText} strokeWidth={2.5} />
+                <Text style={[styles.secondaryBtnText, { color: inkText }]}>
+                  {t('calAppt_addDetails')}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        </ScrollView>
+      )}
+    </Pressable>
+  )
 
-              {/* ─── Body sections ───────────────────────────────────── */}
-              <Section title={t('pregnancy_appt_about')} muted={muted}>
-                <Body size={14} color={inkText}>
-                  {description}
-                </Body>
-              </Section>
-
-              <Section title={t('pregnancy_appt_prep')} muted={muted}>
-                <Body size={14} color={inkText}>
-                  {prepNote}
-                </Body>
-              </Section>
-
-              <Section title={t('pregnancy_appt_whatToExpect')} muted={muted}>
-                <Body size={14} color={inkText}>
-                  {whatToExpect}
-                </Body>
-              </Section>
-
-              {!diffuse && (
-                <View style={styles.section}>
-                  <AppointmentQuestions
-                    appointmentKey={appointment.id}
-                    mode="pregnancy"
-                    claimFrom={currentWeek != null && nextStandardAppointmentId(currentWeek) === appointment.id ? 'pregnancy' : undefined}
-                  />
-                </View>
-              )}
-
-              <Section title={t('pregnancy_appt_questionsToAsk')} muted={muted}>
-                <View style={{ gap: 10 }}>
-                  {appointment.questions.map((q, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.questionRow,
-                        { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.md },
-                      ]}
-                    >
-                      {/* Small violet dot — the "specific detail" accent. */}
-                      <View style={[styles.questionDot, { backgroundColor: dotAccent }]} />
-                      <Body size={14} color={inkText} style={{ flex: 1 }}>
-                        {q}
-                      </Body>
-                      {!diffuse && <CopySuggestedQuestion appointmentKey={appointment.id} text={q} />}
-                    </View>
-                  ))}
-                </View>
-              </Section>
-
-              {/* ─── Actions — filled ink primary + paper secondary pill ── */}
-              <View style={styles.actionsRow}>
-                {status !== 'done' && onMarkDone && (
-                  <Pressable
-                    onPress={onMarkDone}
-                    style={({ pressed }) => [
-                      styles.primaryBtn,
-                      { backgroundColor: inkText, borderRadius: radius.full, opacity: pressed ? 0.85 : 1 },
-                      shadows.subtle,
-                    ]}
-                  >
-                    <Check size={16} color={colors.textInverse} strokeWidth={3} />
-                    <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>{t('kids_home_reminder_mark_done')}</Text>
-                  </Pressable>
-                )}
-                {onAddToLogs && (
-                  <Pressable
-                    onPress={onAddToLogs}
-                    style={({ pressed }) => [
-                      styles.secondaryBtn,
-                      { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.full, opacity: pressed ? 0.7 : 1 },
-                    ]}
-                  >
-                    <Plus size={16} color={inkText} strokeWidth={2.5} />
-                    <Text style={[styles.secondaryBtnText, { color: inkText }]}>
-                      {t('calAppt_addDetails')}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            </ScrollView>
-          )}
+  return (
+    diffuse ? (
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={onClose}
+      >
+        <Pressable style={styles.overlay} onPress={onClose}>
+          {renderSheet()}
         </Pressable>
-      </Pressable>
-    </Modal>
+      </Modal>
+    ) : (
+      <SheetModal visible={visible} onClose={onClose}>
+        {(dragZone) => renderSheet(dragZone)}
+      </SheetModal>
+    )
   )
 }
 

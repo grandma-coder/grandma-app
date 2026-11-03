@@ -8,11 +8,12 @@
  * across the message list without per-row positioning math).
  */
 
-import { Modal, Pressable, View, Text, StyleSheet } from 'react-native'
+import { Pressable, View, Text, StyleSheet } from 'react-native'
 import { MoreHorizontal } from 'lucide-react-native'
 import { useTheme, useDiffuseTheme } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { REACTION_TYPES, type ReactionType } from '../../lib/channelPosts'
+import { CenterModal } from '../ui/CenterModal'
 
 const EMOJI: Record<ReactionType, string> = {
   heart: '❤️',
@@ -40,8 +41,7 @@ export function ReactionPicker({ visible, current, onPick, onMore, onClose }: Pr
   const ink = diffuse ? dt.colors.ink3 : colors.text
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
+    <CenterModal visible={visible} onClose={onClose} backdropColor="rgba(20,19,19,0.28)" avoidKeyboard={false}>
         <Pressable
           style={[styles.bar, { backgroundColor: barBg, borderColor: diffuse ? barBorder : colors.text, borderRadius: radius.full }, !diffuse && { borderWidth: 1.5 }]}
           onPress={(e) => e.stopPropagation()}
@@ -70,8 +70,7 @@ export function ReactionPicker({ visible, current, onPick, onMore, onClose }: Pr
             <MoreHorizontal size={24} color={ink} strokeWidth={2} />
           </Pressable>
         </Pressable>
-      </Pressable>
-    </Modal>
+    </CenterModal>
   )
 }
 

@@ -15,6 +15,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { Star as StarSticker } from './Stickers'
 import { useIsDiffuse, DiffuseArrow } from './diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
+import { SheetModal } from './SheetModal'
 
 const ST_INK = '#141313'
 const ST_PAPER = '#FFFEF8'
@@ -76,8 +77,8 @@ function CurrentDateModal({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
+    <SheetModal visible={visible} onClose={onClose} backdropColor="rgba(0,0,0,0.5)">
+      {(dragZone) => (
         <Pressable
           onPress={(e) => e.stopPropagation()}
           style={[
@@ -95,9 +96,9 @@ function CurrentDateModal({
             <StarSticker size={64} fill={accent.fill} stroke={ST_INK} />
           </View>
 
-          <View style={[styles.handleBar, { backgroundColor: colors.text, opacity: 0.25 }]} />
+          <View {...dragZone} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={[styles.handleBar, { backgroundColor: colors.text, opacity: 0.25 }]} />
 
-          <View style={styles.headerRow}>
+          <View {...dragZone} style={styles.headerRow}>
             <Text style={[styles.title, { color: colors.text, textTransform: 'uppercase', letterSpacing: 0.2 }]}>{title}</Text>
             <Pressable
               onPress={onClose}
@@ -156,8 +157,8 @@ function CurrentDateModal({
             </Pressable>
           )}
         </Pressable>
-      </Pressable>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

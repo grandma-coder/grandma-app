@@ -19,6 +19,7 @@ import { InkBackButton } from '../ui/InkBackButton'
 import { ALL_MENOPAUSE_SYMPTOMS, menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../../lib/menopauseSymptoms'
 import { symptomBlob, symptomStickerKey } from './menopauseIcons'
 import { useTranslation } from '../../lib/i18n'
+import { SheetModal } from '../ui/SheetModal'
 
 export type MenopauseLogPick = MenopauseSymptomId | 'period'
 
@@ -67,48 +68,50 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
       ...(isPeri ? [{ key: 'period', label: t('meno_s_period'), sticker: menoSticker('period'), type: 'period' as MenopauseLogPick }] : []),
     ]
     return (
-      <Modal visible={open} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: colors.bg,
-              paddingBottom: insets.bottom + 16,
-              borderTopWidth: 2.5,
-              borderColor: siteInk,
-              borderTopLeftRadius: 26,
-              borderTopRightRadius: 26,
-            },
-          ]}
-        >
-          <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: siteInk, opacity: 0.25 }]} />
-          </View>
-          <View style={styles.header}>
-            <Text style={{ flex: 1, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase', color: siteInk }}>{heading}</Text>
-            <InkBackButton onPress={onClose} ink={siteInk} paper={colors.surface} icon="close" label={t('meno_s_close')} style={{ marginBottom: 0 }} />
-          </View>
-          <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>
-              {launchers.map((l) => (
-                <Pressable
-                  key={l.key}
-                  onPress={() => pick(l.type)}
-                  accessibilityRole="button"
-                  accessibilityLabel={l.label}
-                  style={({ pressed }) => ({ width: '25%', alignItems: 'center', paddingVertical: 10, gap: 6, opacity: pressed ? 0.6 : 1 })}
-                >
-                  <SiteSticker name={l.sticker} size={44} />
-                  <Text numberOfLines={2} style={{ fontFamily: font.display, fontSize: 12, lineHeight: 15, letterSpacing: 0.3, textTransform: 'uppercase', textAlign: 'center', color: siteInk }}>
-                    {l.label}
-                  </Text>
-                </Pressable>
-              ))}
+      <SheetModal visible={open} onClose={onClose}>
+        {(dragZone) => (
+          <View
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: colors.bg,
+                paddingBottom: insets.bottom + 16,
+                borderTopWidth: 2.5,
+                borderColor: siteInk,
+                borderTopLeftRadius: 26,
+                borderTopRightRadius: 26,
+                position: 'relative',
+              },
+            ]}
+          >
+            <View {...dragZone} style={styles.handleWrap}>
+              <View style={[styles.handle, { backgroundColor: siteInk, opacity: 0.25 }]} />
             </View>
-          </ScrollView>
-        </View>
-      </Modal>
+            <View {...dragZone} style={styles.header}>
+              <Text style={{ flex: 1, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase', color: siteInk }}>{heading}</Text>
+              <InkBackButton onPress={onClose} ink={siteInk} paper={colors.surface} icon="close" label={t('meno_s_close')} style={{ marginBottom: 0 }} />
+            </View>
+            <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>
+                {launchers.map((l) => (
+                  <Pressable
+                    key={l.key}
+                    onPress={() => pick(l.type)}
+                    accessibilityRole="button"
+                    accessibilityLabel={l.label}
+                    style={({ pressed }) => ({ width: '25%', alignItems: 'center', paddingVertical: 10, gap: 6, opacity: pressed ? 0.6 : 1 })}
+                  >
+                    <SiteSticker name={l.sticker} size={44} />
+                    <Text numberOfLines={2} style={{ fontFamily: font.display, fontSize: 12, lineHeight: 15, letterSpacing: 0.3, textTransform: 'uppercase', textAlign: 'center', color: siteInk }}>
+                      {l.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        )}
+      </SheetModal>
     )
   }
 

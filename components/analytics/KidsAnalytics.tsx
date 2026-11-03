@@ -37,7 +37,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   AppState,
-  Modal,
 } from 'react-native'
 import { router } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -157,6 +156,7 @@ import { Skeleton, SkeletonRing } from '../ui/Skeleton'
 import { SkeletonStatRows } from './shared/AnalyticsSkeleton'
 import { parseLocalDate } from '../../lib/localDate'
 import { SheetModal } from '../ui/SheetModal'
+import { CenterModal } from '../ui/CenterModal'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -1726,8 +1726,8 @@ function TipDetailModal({
   }
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
+    <SheetModal visible onClose={onClose}>
+      {(dragZone) => (
         <Pressable
           style={[styles.tipModalContent, { backgroundColor: colors.surface, borderRadius: radius.xl, paddingBottom: insets.bottom + 20 }]}
           onPress={(e) => e.stopPropagation()}
@@ -1761,8 +1761,8 @@ function TipDetailModal({
           </Pressable>
           )}
         </Pressable>
-      </Pressable>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -2536,6 +2536,22 @@ function HighlightRow({
   )
 }
 
+// DiscussConfirmSheet is mounted/unmounted by its parent, so CenterModal never sees `visible` go false.
+// Close locally first (the card plays its exit), then tell the parent once it's done.
+function useModalClose(onClose: () => void) {
+  const [open, setOpen] = useState(true)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
+  const close = useCallback(() => {
+    if (timer.current) return
+    setOpen(false)
+    timer.current = setTimeout(() => onCloseRef.current(), 220)
+  }, [])
+  return [open, close] as const
+}
+
 // ─── Discuss Confirm Sheet ─────────────────────────────────────────────────
 
 function DiscussConfirmSheet({
@@ -2550,6 +2566,7 @@ function DiscussConfirmSheet({
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
+  const [open, closeSheet] = useModalClose(onClose)
 
   if (diffuse) {
     const accent = getDiffuseAccent('kids', dt.isDark)
@@ -2576,56 +2593,54 @@ function DiscussConfirmSheet({
   }
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={[styles.modalOverlay, styles.confirmOverlay]} onPress={onClose}>
+    <CenterModal visible={open} onClose={closeSheet}>
+      <Pressable
+        style={[
+          styles.confirmSheet,
+          { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, paddingBottom: insets.bottom > 0 ? 26 : 26 },
+          { shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
+        ]}
+        onPress={(e) => e.stopPropagation()}
+      >
+        <View style={styles.confirmIconWrap} pointerEvents="none">
+          <SiteSticker name="heart" size={64} cut />
+        </View>
+
+        <Text style={[styles.confirmTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
+          {t('kids_analytics_confirm_share_title')}
+        </Text>
+        <Text style={[styles.confirmBody, { color: colors.textSecondary, fontFamily: font.body }]}>
+          {t('kids_analytics_confirm_share_body', { childName })}
+        </Text>
+
         <Pressable
-          style={[
-            styles.confirmSheet,
-            { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: 18, paddingBottom: insets.bottom > 0 ? 26 : 26 },
-            { shadowColor: colors.text, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 },
+          onPress={onConfirm}
+          style={({ pressed }) => [
+            styles.confirmPrimary,
+            { backgroundColor: colors.text, borderRadius: radius.full },
+            pressed && { opacity: 0.85 },
           ]}
-          onPress={(e) => e.stopPropagation()}
         >
-          <View style={styles.confirmIconWrap} pointerEvents="none">
-            <SiteSticker name="heart" size={64} cut />
-          </View>
-
-          <Text style={[styles.confirmTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
-            {t('kids_analytics_confirm_share_title')}
+          <Sparkles size={16} color={colors.surface} strokeWidth={2} />
+          <Text style={[styles.confirmPrimaryText, { color: colors.surface, fontFamily: font.bodyBold }]}>
+            {t('kids_analytics_confirm_share_yes')}
           </Text>
-          <Text style={[styles.confirmBody, { color: colors.textSecondary, fontFamily: font.body }]}>
-            {t('kids_analytics_confirm_share_body', { childName })}
+        </Pressable>
+
+        <Pressable
+          onPress={closeSheet}
+          style={({ pressed }) => [
+            styles.confirmSecondary,
+            { borderRadius: radius.full, borderColor: colors.text, borderWidth: 1.5, backgroundColor: colors.surface },
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Text style={[styles.confirmSecondaryText, { color: colors.text, fontFamily: font.bodyBold }]}>
+            {t('kids_analytics_confirm_share_no')}
           </Text>
-
-          <Pressable
-            onPress={onConfirm}
-            style={({ pressed }) => [
-              styles.confirmPrimary,
-              { backgroundColor: colors.text, borderRadius: radius.full },
-              pressed && { opacity: 0.85 },
-            ]}
-          >
-            <Sparkles size={16} color={colors.surface} strokeWidth={2} />
-            <Text style={[styles.confirmPrimaryText, { color: colors.surface, fontFamily: font.bodyBold }]}>
-              {t('kids_analytics_confirm_share_yes')}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.confirmSecondary,
-              { borderRadius: radius.full, borderColor: colors.text, borderWidth: 1.5, backgroundColor: colors.surface },
-              pressed && { opacity: 0.7 },
-            ]}
-          >
-            <Text style={[styles.confirmSecondaryText, { color: colors.text, fontFamily: font.bodyBold }]}>
-              {t('kids_analytics_confirm_share_no')}
-            </Text>
-          </Pressable>
         </Pressable>
       </Pressable>
-    </Modal>
+    </CenterModal>
   )
 }
 
@@ -3292,16 +3307,14 @@ function ActivityModal({
   const sheetH = SCREEN_H * 0.75
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <View style={[styles.modalSheet, { height: sheetH, backgroundColor: colors.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32 }]}>
-          <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
+          <View {...dragZone} style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
 
-          <View style={[styles.modalHeader, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingBottom: 16 }]}>
+          <View {...dragZone} style={[styles.modalHeader, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingBottom: 16 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: ACTIVITY_COLOR + '20', alignItems: 'center', justifyContent: 'center' }}>
                 <Zap size={20} color={ACTIVITY_COLOR} strokeWidth={2} />
@@ -3354,8 +3367,8 @@ function ActivityModal({
             </View>
           </ScrollView>
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

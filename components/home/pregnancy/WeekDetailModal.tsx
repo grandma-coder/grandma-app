@@ -39,6 +39,7 @@ import { getPrepGuide } from '../../../lib/prepGuide'
 import { StickerIcon } from './stickerIcons'
 import { BabyIllustration } from './babyIllustrations'
 import { localizeBabySizeName } from '../../../lib/pregnancyData'
+import { SheetModal } from '../../ui/SheetModal'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -349,145 +350,155 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
   const heroFg = diffuse ? dt.colors.ink : colors.text
   const heroCloseIcon = diffuse ? dt.colors.ink : '#141313'
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType={diffuse ? 'slide' : 'fade'}
-      onRequestClose={() => {
-        if (selectedPrep) setSelectedPrep(null)
-        else onClose()
-      }}
-    >
-      <View style={styles.overlay}>
-        <Pressable
-          style={styles.overlayBg}
-          onPress={() => (selectedPrep ? setSelectedPrep(null) : onClose())}
-        />
-
-        <View style={[styles.sheet, { backgroundColor: paperBg }, diffuse ? null : { borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
-          <Animated.View style={[styles.layer, mainAnimStyle]} pointerEvents={selectedPrep ? 'none' : 'auto'}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
-              {/* Hero — inherits card's palette (current) / soft accent field (Diffuse) */}
-              <View style={[styles.hero, { backgroundColor: heroBg }, diffuse ? { borderBottomWidth: 1, borderBottomColor: dt.colors.line } : { borderBottomWidth: 1.5, borderBottomColor: colors.text, borderTopLeftRadius: 24, borderTopRightRadius: 24 }]}>
-                {diffuse ? (
-                  <>
-                    <SoftBloom color={dField1} cx="88%" cy="18%" opacity={dt.isDark ? 0.32 : 0.46} spread={0.5} />
-                    <SoftBloom color={dField2} cx="62%" cy="46%" opacity={dt.isDark ? 0.2 : 0.28} spread={0.5} />
-                    <DiffuseGrain opacity={0.04} />
-                  </>
-                ) : null}
-                {diffuse ? (
-                  <Pressable
-                    onPress={onClose}
-                    style={[styles.closeBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }]}
-                    hitSlop={10}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close week details"
-                  >
-                    <X size={18} color={heroCloseIcon} strokeWidth={2.5} />
-                  </Pressable>
-                ) : (
-                  <View style={styles.closeCalm}>
-                    <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={t('sw4_closeWeekDetails')} style={{ marginBottom: 0 }} />
-                  </View>
-                )}
-
-                {/* Static baby-size illustration — proportional to actual size, like the WeekCard */}
-                <View style={styles.heroFruit} pointerEvents="none">
-                  <BabyIllustration week={week} size={fruitSize} />
-                </View>
-
-                <Text style={[styles.heroLabel, { color: heroMetaFg }, diffuse ? { fontFamily: diffuseFont.mono, letterSpacing: 1.6 } : styles.monoEyebrow]}>
-                  {t('preg_weekDetail_heroLabel', { week, trimester: TRI_NAMES[tri - 1].toUpperCase() })}
-                </Text>
-
-                <Text style={[styles.heroMega, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.displayLight, fontWeight: '300' } : null]}>{weekStr}</Text>
-
-                <View style={styles.heroSizeRow}>
-                  <Text style={[styles.heroSize, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.display } : null]}>
-                    {article}{' '}
-                    <Text style={[styles.heroSizeBold, diffuse ? { fontFamily: diffuseFont.italic } : null]}>{fruitName}</Text>
-                  </Text>
-                  <Text style={[styles.heroSizeDot, { color: heroFg }]}>{t('common_dotSeparator')}</Text>
-                  <View style={styles.heroStatBox}>
-                    <View style={[styles.heroStatTick, { backgroundColor: diffuse ? dAccent : heroFg }]} />
-                    <Text style={[styles.heroStat, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 13 } : null]}>{lengthStr}</Text>
-                  </View>
-                  <Text style={[styles.heroSizeDot, { color: heroFg }]}>{t('common_dotSeparator')}</Text>
-                  <View style={styles.heroStatBox}>
-                    <View style={[styles.heroStatTick, { backgroundColor: diffuse ? dAccent : heroFg }]} />
-                    <Text style={[styles.heroStat, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 13 } : null]}>{weightStr}</Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.body}>
-                {/* Baby's Development */}
-                <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : styles.monoEyebrow]}>{t('preg_weekDetail_babyDevelopment')}</Text>
-                  {content.dev.map((point, i) => (
-                    <DevPointRow key={i} week={week} index={i} point={point} dotColor={devDotColor} textColor={bodyInk2} />
-                  ))}
-                </View>
-
-                {/* Common Symptoms */}
-                <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : styles.monoEyebrow]}>{t('preg_weekDetail_commonSymptoms')}</Text>
-                  <View style={styles.pillsRow}>
-                    {content.sym.map((sym) => (
-                      <View
-                        key={sym}
-                        style={[styles.pill, { backgroundColor: pillBg, borderColor: pillBorder }, diffuse ? null : { borderWidth: 1.5 }]}
-                      >
-                        <Text style={[styles.pillText, { color: bodyInk2 }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase' } : null]}>{sym}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-
-                {/* What to Prepare */}
-                {content.prep.length > 0 && (
-                  <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : styles.monoEyebrow]}>{t('preg_weekDetail_whatToPrepare')}</Text>
-                    {content.prep.map((item, i) => (
-                      <PrepListRow
-                        key={`${item.i}-${i}`}
-                        week={week}
-                        item={item}
-                        cardBg={prepCardBg}
-                        cardBorder={prepCardBorder}
-                        iconBg={prepIconBg}
-                        titleColor={bodyInk}
-                        descColor={bodyInk3}
-                        chevronColor={bodyInk3}
-                        accent={dAccent}
-                        onPress={() => setSelectedPrep(item)}
-                      />
-                    ))}
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-          </Animated.View>
-
-          <Animated.View
-            style={[styles.layer, prepAnimStyle]}
-            pointerEvents={selectedPrep ? 'auto' : 'none'}
-          >
-            {pendingPrep ? (
-              <PrepDetailSheet
-                item={pendingPrep}
-                week={week}
-                onBack={() => setSelectedPrep(null)}
-                accent={diffuse ? dAccent : colors.text}
-                accentSoft={diffuse ? paletteForWeek(week).accentSoft : getModeColorSoft('preg', isDark)}
-              />
+  const renderSheet = (dragZone: object = {}) => (
+    <View style={[styles.sheet, { backgroundColor: paperBg }, diffuse ? null : { borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
+      <Animated.View style={[styles.layer, mainAnimStyle]} pointerEvents={selectedPrep ? 'none' : 'auto'}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
+          {/* Hero — inherits card's palette (current) / soft accent field (Diffuse) */}
+          <View style={[styles.hero, { backgroundColor: heroBg }, diffuse ? { borderBottomWidth: 1, borderBottomColor: dt.colors.line } : { borderBottomWidth: 1.5, borderBottomColor: colors.text, borderTopLeftRadius: 24, borderTopRightRadius: 24 }]}>
+            {diffuse ? (
+              <>
+                <SoftBloom color={dField1} cx="88%" cy="18%" opacity={dt.isDark ? 0.32 : 0.46} spread={0.5} />
+                <SoftBloom color={dField2} cx="62%" cy="46%" opacity={dt.isDark ? 0.2 : 0.28} spread={0.5} />
+                <DiffuseGrain opacity={0.04} />
+              </>
             ) : null}
-          </Animated.View>
+            {diffuse ? (
+              <Pressable
+                onPress={onClose}
+                style={[styles.closeBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }]}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Close week details"
+              >
+                <X size={18} color={heroCloseIcon} strokeWidth={2.5} />
+              </Pressable>
+            ) : (
+              <View style={styles.closeCalm}>
+                <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={t('sw4_closeWeekDetails')} style={{ marginBottom: 0 }} />
+              </View>
+            )}
+
+            {/* Static baby-size illustration — proportional to actual size, like the WeekCard */}
+            <View style={styles.heroFruit} pointerEvents="none">
+              <BabyIllustration week={week} size={fruitSize} />
+            </View>
+
+            <Text style={[styles.heroLabel, { color: heroMetaFg }, diffuse ? { fontFamily: diffuseFont.mono, letterSpacing: 1.6 } : styles.monoEyebrow]}>
+              {t('preg_weekDetail_heroLabel', { week, trimester: TRI_NAMES[tri - 1].toUpperCase() })}
+            </Text>
+
+            <Text style={[styles.heroMega, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.displayLight, fontWeight: '300' } : null]}>{weekStr}</Text>
+
+            <View style={styles.heroSizeRow}>
+              <Text style={[styles.heroSize, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.display } : null]}>
+                {article}{' '}
+                <Text style={[styles.heroSizeBold, diffuse ? { fontFamily: diffuseFont.italic } : null]}>{fruitName}</Text>
+              </Text>
+              <Text style={[styles.heroSizeDot, { color: heroFg }]}>{t('common_dotSeparator')}</Text>
+              <View style={styles.heroStatBox}>
+                <View style={[styles.heroStatTick, { backgroundColor: diffuse ? dAccent : heroFg }]} />
+                <Text style={[styles.heroStat, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 13 } : null]}>{lengthStr}</Text>
+              </View>
+              <Text style={[styles.heroSizeDot, { color: heroFg }]}>{t('common_dotSeparator')}</Text>
+              <View style={styles.heroStatBox}>
+                <View style={[styles.heroStatTick, { backgroundColor: diffuse ? dAccent : heroFg }]} />
+                <Text style={[styles.heroStat, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 13 } : null]}>{weightStr}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.body}>
+            {/* Baby's Development */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : styles.monoEyebrow]}>{t('preg_weekDetail_babyDevelopment')}</Text>
+              {content.dev.map((point, i) => (
+                <DevPointRow key={i} week={week} index={i} point={point} dotColor={devDotColor} textColor={bodyInk2} />
+              ))}
+            </View>
+
+            {/* Common Symptoms */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : styles.monoEyebrow]}>{t('preg_weekDetail_commonSymptoms')}</Text>
+              <View style={styles.pillsRow}>
+                {content.sym.map((sym) => (
+                  <View
+                    key={sym}
+                    style={[styles.pill, { backgroundColor: pillBg, borderColor: pillBorder }, diffuse ? null : { borderWidth: 1.5 }]}
+                  >
+                    <Text style={[styles.pillText, { color: bodyInk2 }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase' } : null]}>{sym}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* What to Prepare */}
+            {content.prep.length > 0 && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : styles.monoEyebrow]}>{t('preg_weekDetail_whatToPrepare')}</Text>
+                {content.prep.map((item, i) => (
+                  <PrepListRow
+                    key={`${item.i}-${i}`}
+                    week={week}
+                    item={item}
+                    cardBg={prepCardBg}
+                    cardBorder={prepCardBorder}
+                    iconBg={prepIconBg}
+                    titleColor={bodyInk}
+                    descColor={bodyInk3}
+                    chevronColor={bodyInk3}
+                    accent={dAccent}
+                    onPress={() => setSelectedPrep(item)}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </Animated.View>
+
+      <Animated.View
+        style={[styles.layer, prepAnimStyle]}
+        pointerEvents={selectedPrep ? 'auto' : 'none'}
+      >
+        {pendingPrep ? (
+          <PrepDetailSheet
+            item={pendingPrep}
+            week={week}
+            onBack={() => setSelectedPrep(null)}
+            accent={diffuse ? dAccent : colors.text}
+            accentSoft={diffuse ? paletteForWeek(week).accentSoft : getModeColorSoft('preg', isDark)}
+          />
+        ) : null}
+      </Animated.View>
+    </View>
+  )
+
+  return (
+    diffuse ? (
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          if (selectedPrep) setSelectedPrep(null)
+          else onClose()
+        }}
+      >
+        <View style={styles.overlay}>
+          <Pressable
+            style={styles.overlayBg}
+            onPress={() => (selectedPrep ? setSelectedPrep(null) : onClose())}
+          />
+
+          {renderSheet()}
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    ) : (
+      <SheetModal visible={visible} onClose={() => (selectedPrep ? setSelectedPrep(null) : onClose())}>
+        {(dragZone) => renderSheet(dragZone)}
+      </SheetModal>
+    )
   )
 }
 

@@ -73,6 +73,7 @@ import type { CalorieMatch } from '../../lib/foodCalories'
 import { estimateFromText, estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
 import type { ChildWithRole } from '../../types'
 import { normalizeSleepQuality, type SleepQuality } from '../../lib/sleepQuality'
+import { CenterModal } from '../ui/CenterModal'
 
 // ─── Kids-mode accent palette (cream-paper redesign) ─────────────────────
 // Log sheets are always "kids mode" — powder blue accent, ink text on cream.
@@ -2256,9 +2257,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               )}
 
               {/* Manual kcal popup for unrecognized foods */}
-              <Modal visible={manualCalIdx !== null} transparent animationType="fade" onRequestClose={() => setManualCalIdx(null)}>
-                <Pressable style={styles.popupBackdrop} onPress={() => setManualCalIdx(null)} />
-                <View style={[styles.manualCalPopup, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderRadius: 18, borderColor: colors.text, borderWidth: 1.5, shadowColor: colors.text }]}>
+              <CenterModal visible={manualCalIdx !== null} onClose={() => setManualCalIdx(null)}>
+                <View style={[styles.manualCalPopup, SITE_HARD_SHADOW, { backgroundColor: colors.surface, borderRadius: 18, borderColor: colors.text, borderWidth: 1.5, shadowColor: colors.text }, { position: 'relative', top: 0, left: 0, right: 0, alignSelf: 'stretch' }]}>
                   <Text style={[styles.manualCalTitle, { color: colors.text, fontFamily: font.display, fontWeight: undefined, fontSize: 17, textTransform: 'uppercase' }]}>
                     {t('kids_logForm_unknownFood')}
                   </Text>
@@ -2296,7 +2296,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
                     </Pressable>
                   </View>
                 </View>
-              </Modal>
+              </CenterModal>
             </View>
 
             {/* Eat quality */}

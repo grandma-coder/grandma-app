@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react'
 import {
-  View, Text, TextInput, Pressable, Modal, ScrollView, StyleSheet,
+  View, Text, TextInput, Pressable, ScrollView, StyleSheet,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
 import { brand, stickers, borderRadius, shadows, useTheme, font } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { parseLocalDate } from '../../lib/localDate'
+import { SheetModal } from '../ui/SheetModal'
 
 export interface NoteEntry {
   id: string
@@ -104,11 +105,11 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
       )}
 
       {/* ─── Compose Modal ─── */}
-      <Modal visible={showCompose} animationType="fade" transparent>
-        <View style={styles.modalOverlay}>
+      <SheetModal visible={showCompose} onClose={() => setShowCompose(false)} backdropColor="rgba(0,0,0,0.8)" style={{ maxHeight: '85%' }}>
+        {(dragZone) => (
           <View style={styles.modalSheet}>
             {/* Handle bar */}
-            <View style={styles.modalHandle} />
+            <View {...dragZone} hitSlop={{ top: 14, bottom: 14, left: 48, right: 48 }} style={styles.modalHandle} />
 
             <Text style={styles.modalTitle}>{t('kids_nannyNotes_newNote')}</Text>
             <Text style={styles.modalSubtitle}>
@@ -177,8 +178,8 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
               </Pressable>
             </View>
           </View>
-        </View>
-      </Modal>
+        )}
+      </SheetModal>
     </View>
   )
 }

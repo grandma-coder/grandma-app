@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { View, Text, Pressable, StyleSheet, FlatList, Modal } from 'react-native'
+import { useRef, useState } from 'react'
+import { View, Text, Pressable, StyleSheet, FlatList } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { X, ChevronLeft } from 'lucide-react-native'
@@ -14,6 +14,7 @@ import { useTranslation } from '../lib/i18n'
 import { dateLoc } from '../lib/kpLocale'
 import { getCardById } from '../lib/dailyMessage'
 import type { DailyCard } from '../lib/dailyMessage'
+import { CenterModal } from '../components/ui/CenterModal'
 
 interface CollectionItem {
   row: DailyMessageRow
@@ -54,6 +55,10 @@ export default function MyCardsScreen() {
 
   const open = openId ? getCardById(openId) ?? null : null
   const openDate = open ? collection.find((r) => r.card_id === open.id)?.date ?? '' : ''
+  // Keep the last opened card so its content survives the exit animation.
+  const lastShown = useRef<{ card: NonNullable<typeof open>; date: string } | null>(null)
+  if (open) lastShown.current = { card: open, date: openDate }
+  const shown = lastShown.current
 
   const styles = StyleSheet.create({
     fill: { flex: 1, backgroundColor: colors.bg },
@@ -115,18 +120,16 @@ export default function MyCardsScreen() {
         ListEmptyComponent={<Text style={styles.empty}>{t('sw3_cards_empty')}</Text>}
       />
 
-      <Modal visible={!!open} transparent animationType="fade" onRequestClose={() => setOpenId(null)}>
-        <View style={styles.overlay}>
+      <CenterModal visible={!!open} onClose={() => setOpenId(null)} backdropColor={colors.bg + 'F2'} dismissOnBackdrop={false} avoidKeyboard={false} containerStyle={{ alignItems: 'stretch' }}>
           <View style={styles.big}>
             <Pressable onPress={() => setOpenId(null)} style={styles.close} hitSlop={12}>
               <X size={18} color={colors.text} strokeWidth={2} />
             </Pressable>
-            {open ? <CardSticker color={open.color} size={48} mode={open.mode} /> : null}
-            <Display size={25} style={styles.bigText}>{open?.text}</Display>
-            {open ? <MonoCaps color={colors.textFaint} size={9}>{fmtDate(openDate)}</MonoCaps> : null}
+            {shown ? <CardSticker color={shown.card.color} size={48} mode={shown.card.mode} /> : null}
+            <Display size={25} style={styles.bigText}>{shown?.card.text}</Display>
+            {shown ? <MonoCaps color={colors.textFaint} size={9}>{fmtDate(shown.date)}</MonoCaps> : null}
           </View>
-        </View>
-      </Modal>
+      </CenterModal>
     </View>
   )
 }

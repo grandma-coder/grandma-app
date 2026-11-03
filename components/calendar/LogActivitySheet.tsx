@@ -21,6 +21,7 @@ import { LogTile, LogTileGrid } from './LogTile'
 import { logSticker } from './logStickers'
 import { Character } from '../characters/Characters'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
+import { SheetModal } from '../ui/SheetModal'
 
 export type LogType =
   | 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp'
@@ -80,40 +81,50 @@ export function LogActivitySheet({ open, onClose, onSelect, title }: Props) {
 
   const heading = title ?? t('cycleCalendar_logActivity')
 
-  return (
-    <Modal visible={open} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
-      <Pressable style={styles.sheetBackdrop} onPress={onClose} />
-      <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : { borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
-        <View style={styles.handleWrap}>
-          <View style={[styles.handle, diffuse ? { backgroundColor: dt.colors.line2 } : { backgroundColor: colors.text, opacity: 0.25 }]} />
-        </View>
-        <View style={styles.sheetHeader}>
-          {diffuse ? (
-            <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, color: dt.colors.ink, letterSpacing: -0.3 }}>{heading}</Text>
-          ) : (
-            <Display size={24} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2 }}>{heading}</Display>
-          )}
-          <Pressable onPress={onClose} style={[styles.closeBtn, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline } : { backgroundColor: paper, borderColor: paperBorder, borderWidth: 2 }]}>
-            <X size={18} color={ink} />
-          </Pressable>
-        </View>
-        <View style={styles.sheetBody}>
-          <LogTileGrid>
-            {LOG_ENTRIES.map((e) => (
-              <LogTile
-                key={e.id}
-                label={t(e.labelKey)}
-                tint={e.tint}
-                icon={diffuse && DIFFUSE_LOG_CHARACTER[e.id]
-                  ? <Character name={DIFFUSE_LOG_CHARACTER[e.id]} size={34} color={diffuseLogHue(e.id)} />
-                  : logSticker(e.id, 36, isDark)}
-                onPress={() => handleSelect(e.id)}
-              />
-            ))}
-          </LogTileGrid>
-        </View>
+  const renderSheet = (dragZone: object = {}, light = false) => (
+    <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : { borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }, light && { position: 'relative' }]}>
+      <View {...dragZone} style={styles.handleWrap}>
+        <View style={[styles.handle, diffuse ? { backgroundColor: dt.colors.line2 } : { backgroundColor: colors.text, opacity: 0.25 }]} />
       </View>
-    </Modal>
+      <View {...dragZone} style={styles.sheetHeader}>
+        {diffuse ? (
+          <Text style={{ fontFamily: diffuseFont.display, fontSize: 22, color: dt.colors.ink, letterSpacing: -0.3 }}>{heading}</Text>
+        ) : (
+          <Display size={24} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2 }}>{heading}</Display>
+        )}
+        <Pressable onPress={onClose} style={[styles.closeBtn, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.hairline } : { backgroundColor: paper, borderColor: paperBorder, borderWidth: 2 }]}>
+          <X size={18} color={ink} />
+        </Pressable>
+      </View>
+      <View style={styles.sheetBody}>
+        <LogTileGrid>
+          {LOG_ENTRIES.map((e) => (
+            <LogTile
+              key={e.id}
+              label={t(e.labelKey)}
+              tint={e.tint}
+              icon={diffuse && DIFFUSE_LOG_CHARACTER[e.id]
+                ? <Character name={DIFFUSE_LOG_CHARACTER[e.id]} size={34} color={diffuseLogHue(e.id)} />
+                : logSticker(e.id, 36, isDark)}
+              onPress={() => handleSelect(e.id)}
+            />
+          ))}
+        </LogTileGrid>
+      </View>
+    </View>
+  )
+
+  return (
+    diffuse ? (
+      <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+        <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+        {renderSheet()}
+      </Modal>
+    ) : (
+      <SheetModal visible={open} onClose={onClose}>
+        {(dragZone) => renderSheet(dragZone, true)}
+      </SheetModal>
+    )
   )
 }
 
