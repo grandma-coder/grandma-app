@@ -21,12 +21,14 @@ export type FormId =
   | 'water'
   | 'activity'
 
+// Phase pills are context, never a verdict: no "unusual", "normal", "early/late" or fertility
+// claims (the phase is a prediction, and before a logged period it was an invented one).
 const PHASE_PILL: Record<FormId, Record<CyclePhase, string>> = {
   period_start: {
     menstruation: 'Menstruation begins',
     follicular:   'Marking period start',
-    ovulation:    'Unusual — period start mid-cycle',
-    luteal:       'Period started early',
+    ovulation:    'Marking period start',
+    luteal:       'Marking period start',
   },
   period_end: {
     menstruation: 'Last day of period',
@@ -56,30 +58,30 @@ const PHASE_PILL: Record<FormId, Record<CyclePhase, string>> = {
     menstruation: 'Predicts ovulation 24–36h ahead',
     follicular:   'Predicts ovulation 24–36h ahead',
     ovulation:    'Surge today?',
-    luteal:       'Outside fertile window',
+    luteal:       'Logged for your records',
   },
   cm: {
     menstruation: 'Fertility signal',
     follicular:   'Fertility signal',
-    ovulation:    'Egg-white = peak fertile',
+    ovulation:    'Fertility signal',
     luteal:       'Fertility signal',
   },
   intimacy: {
     menstruation: 'Logged for cycle insights',
     follicular:   'Logged for cycle insights',
-    ovulation:    'Peak fertile window',
+    ovulation:    'Logged for cycle insights',
     luteal:       'Logged for cycle insights',
   },
   ovulation: {
-    menstruation: 'Unusual — confirm carefully',
-    follicular:   'Early but possible',
-    ovulation:    'Fertile window peak',
-    luteal:       'Late confirmation',
+    menstruation: 'Logged for your records',
+    follicular:   'Logged for your records',
+    ovulation:    'Logged for your records',
+    luteal:       'Logged for your records',
   },
   pregnancy_test: {
     menstruation: 'Most reliable after a missed period',
     follicular:   'Most reliable after a missed period',
-    ovulation:    'Too early — wait until your period is due',
+    ovulation:    'Most reliable after a missed period',
     luteal:       'Most accurate once your period is late',
   },
   sex_drive: {
@@ -91,14 +93,14 @@ const PHASE_PILL: Record<FormId, Record<CyclePhase, string>> = {
   clots: {
     menstruation: 'Common on heavier days',
     follicular:   'Logged for your records',
-    ovulation:    'Unusual outside a period',
+    ovulation:    'Logged for your records',
     luteal:       'Logged for your records',
   },
   weight: {
-    menstruation: 'Weight often dips after your period',
+    menstruation: 'Track for your trend',
     follicular:   'Track for your trend',
     ovulation:    'Track for your trend',
-    luteal:       'Slight water retention is normal',
+    luteal:       'Track for your trend',
   },
   water: {
     menstruation: 'Hydration helps with cramps',
