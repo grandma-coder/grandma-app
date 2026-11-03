@@ -11,6 +11,8 @@
   ],
   "exclude": [
     "docs/**",
+    "site/**",
+    "admin/**",
     "node_modules/**",
     ".expo/**"
   ]

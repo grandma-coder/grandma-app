@@ -51,12 +51,16 @@
       "/node_modules/",
       "/.expo/",
       "/dist/",
-      "/.claude/worktrees/"
+      "/.claude/worktrees/",
+      "<rootDir>/site/",
+      "<rootDir>/admin/"
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/.claude/worktrees/",
       "<rootDir>/.expo/",
-      "<rootDir>/dist/"
+      "<rootDir>/dist/",
+      "<rootDir>/site/",
+      "<rootDir>/admin/"
     ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
