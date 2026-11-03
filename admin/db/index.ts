@@ -26,7 +26,10 @@ let _db: ReturnType<typeof drizzle<typeof schema>> | undefined
 function getDb() {
   if (!_db) {
     if (!DATABASE_URL) throw new Error("DATABASE_URL is not set")
-    const client = postgres(DATABASE_URL, { prepare: false })
+    // connect_timeout: give up on an unreachable pooler instead of waiting forever.
+    // idle_timeout: drop idle sockets before the pooler silently does, so a warm
+    // function never reuses a dead connection.
+    const client = postgres(DATABASE_URL, { prepare: false, connect_timeout: 10, idle_timeout: 20 })
     _db = drizzle(client, { schema })
   }
   return _db
