@@ -103,6 +103,7 @@ import { StickerButton } from '../ui/StickerButton'
 import { PaperAlert } from '../ui/PaperAlert'
 import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
+import { QuietPill } from '../profile/SiteSettingsKit'
 import { WeekDetailModal } from '../home/pregnancy/WeekDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
@@ -1701,18 +1702,21 @@ function LogDetailPopup({
 
         {plainNotes ? <DetailNote label={t('kids_calendar_detail_notes')} text={plainNotes} /> : null}
 
-        <View style={styles.detailActions}>
-          <PillButton label={t('common_edit')} variant="ink" onPress={onEdit} height={54} style={{ flex: 1 }} />
-          <PillButton label={t('common_delete')} variant="paper" onPress={handleDelete} height={54} style={{ flex: 1 }} />
+        {/* Edit is the main action (peach pill); delete stays a quiet link and still confirms. */}
+        <View style={{ alignItems: 'center', gap: 14, marginTop: 8 }}>
+          <QuietPill label={t('common_edit')} sticker="pencil" onPress={onEdit} />
+          <Pressable onPress={handleDelete} accessibilityRole="button" hitSlop={8}>
+            <Text style={{ fontFamily: font.bodyMedium, fontSize: 14, color: colors.textMuted, textDecorationLine: 'underline' }}>{t('common_delete')}</Text>
+          </Pressable>
         </View>
 
         <PaperAlert
           visible={confirmingDelete}
-          title="Delete this log?"
-          message="This cannot be undone."
+          title={t('common_delete')}
+          message={t('kids_calendar_unlogConfirm')}
           buttons={[
-            { label: 'Cancel', variant: 'secondary' },
-            { label: 'Delete', variant: 'danger', onPress: confirmDelete },
+            { label: t('common_cancel'), variant: 'secondary' },
+            { label: t('common_delete'), variant: 'danger', onPress: confirmDelete },
           ]}
           onRequestClose={() => setConfirmingDelete(false)}
         />
