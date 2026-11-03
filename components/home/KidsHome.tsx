@@ -336,6 +336,7 @@ import { QuietPill } from '../ui/QuietPill'
 import { MonoCaps, Display } from '../ui/Typography'
 import { parseDurationMinutes } from '../../lib/kidsHandoff'
 import { normalizeSleepQuality } from '../../lib/sleepQuality'
+import { invalidateKidsLogQueries } from '../../lib/queryClient'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
@@ -915,7 +916,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
-      await supabase.from('child_logs').insert({
+      const { error } = await supabase.from('child_logs').insert({
         child_id: childId,
         user_id: session.user.id,
         date,
@@ -924,9 +925,16 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         notes: 'Logged from home dashboard',
         logged_by: session.user.id,
       })
+      // The insert result was ignored: on an error the scheduled date was still cleared, so the
+      // appointment vanished and no record was made.
+      if (error) {
+        Alert.alert(t('common_error'), t('common_tryAgain'))
+        return
+      }
       // Remove from scheduled and reload history
       setVaccineDate(childId, vaccineKey, null)
       loadHealthHistory(childId)
+      void invalidateKidsLogQueries()
     } finally {
       markingVaccineRef.current.delete(guardKey)
     }

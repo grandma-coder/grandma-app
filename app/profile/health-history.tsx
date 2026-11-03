@@ -52,6 +52,7 @@ import {
   Drop as DropSticker,
   Flower as FlowerSticker,
 } from '../../components/ui/Stickers'
+import { invalidateKidsLogQueries } from '../../lib/queryClient'
 
 const SCREEN_W = Dimensions.get('window').width
 
@@ -769,6 +770,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
       }
 
       reset(); onSaved()
+      void invalidateKidsLogQueries()
     } catch (e: any) { Alert.alert('Error', e.message) }
     finally { setSaving(false) }
   }

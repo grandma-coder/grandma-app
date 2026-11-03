@@ -457,22 +457,33 @@ export function buildHealthData(logs: ChildLog[], dates: string[], labels: strin
   const vaccineNames = new Set<string>()
   let concernEvents = 0
 
-  for (const log of healthLogs) {
+  // The fetch spans ≥30 days (concernTimeline reaches back on purpose), but the "recent care log"
+  // and the concern count describe the selected window — newest first. Logs arrive oldest first,
+  // so slicing took the 5 OLDEST events and counted concerns from weeks outside the window.
+  const windowFrom = dates[0] ?? ''
+  const windowTo = dates[dates.length - 1] ?? ''
+  const inWindow = (d: string) => (!windowFrom || d >= windowFrom) && (!windowTo || d <= windowTo)
+  const newestFirst = [...healthLogs].sort((a, b) => b.date.localeCompare(a.date))
+
+  for (const log of newestFirst) {
     const dayIdx = dates.indexOf(log.date)
     if (dayIdx !== -1) weeklyFreq[dayIdx]++
 
-    const displayDate = new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     const typeLabel = log.type.charAt(0).toUpperCase() + log.type.slice(1)
     const label = healthEventLabel(log, typeLabel)
-    recentEvents.push({ date: displayDate, type: typeLabel, label })
+    if (inWindow(log.date)) {
+      // Parse as a local day — bare 'YYYY-MM-DD' is UTC midnight and showed a day early in the Americas.
+      const displayDate = new Date(log.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      recentEvents.push({ date: displayDate, type: typeLabel, label })
+    }
 
     if (log.type === 'vaccine' && log.value) {
       vaccineNames.add(typeof log.value === 'string' ? log.value : '')
     } else if (log.type === 'temperature' && isFeverTemperature(log.value)) {
-      concernEvents++
+      if (inWindow(log.date)) concernEvents++
       concernTimeline.push({ date: log.date, kind: 'fever', label })
     } else if (log.type === 'note' && isConcernNote(log.value)) {
-      concernEvents++
+      if (inWindow(log.date)) concernEvents++
       concernTimeline.push({ date: log.date, kind: concernNoteKind(log.value), label })
     }
   }

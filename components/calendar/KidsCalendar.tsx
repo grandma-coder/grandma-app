@@ -139,6 +139,7 @@ import { CHILD_COLORS, childColor } from '../ui/ChildPills'
 import { healthLogText } from '../../lib/kidsHealthLogText'
 import { QuietPill } from '../profile/SiteSettingsKit'
 import { sleepQualityLabel } from '../../lib/sleepQuality'
+import { invalidateKidsLogQueries } from '../../lib/queryClient'
 
 // ─── Site look (light) helpers ─────────────────────────────────────────────
 // Calm ink outlines, card-less sticker rows, ink text. Used only by the light
@@ -1553,6 +1554,12 @@ export function KidsCalendar() {
   }, [year, month, selectedChildId, children])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
+  // After a write, refresh this calendar AND every kids query elsewhere (home 'today' chips,
+  // analytics) — they don't refetch on focus, so a deleted diaper log stayed 'done' on Home.
+  const refreshAfterWrite = useCallback(() => {
+    fetchLogs()
+    void invalidateKidsLogQueries()
+  }, [fetchLogs])
 
   // Cache current user id once so log cards can decide whether to show
   // a "by <name>" line (only for entries logged by other caregivers, not
@@ -1630,7 +1637,7 @@ export function KidsCalendar() {
     }
     setSheetType(null)
     setRoutinePrefill(null)
-    fetchLogs()
+    refreshAfterWrite()
   }
 
   function closeSheet() {
@@ -1688,7 +1695,7 @@ export function KidsCalendar() {
     }
     setSelectedLog(null)
     setEditing(false)
-    fetchLogs()
+    refreshAfterWrite()
   }
 
   async function handleUnlog() {
@@ -1726,7 +1733,7 @@ export function KidsCalendar() {
     AsyncStorage.setItem('congrats_shown', JSON.stringify([...congratsShownRef.current])).catch(() => {})
     setUnlogTarget(null)
     setUnlogging(false)
-    fetchLogs()
+    refreshAfterWrite()
   }
 
   function openEdit(log: ChildLog) {
@@ -1770,7 +1777,7 @@ export function KidsCalendar() {
       if (error) throw error
       setEditing(false)
       setSelectedLog(null)
-      fetchLogs()
+      refreshAfterWrite()
     } catch (e: any) {
       Alert.alert(t('common_error'), e.message)
     } finally {
@@ -2237,7 +2244,7 @@ export function KidsCalendar() {
       })
     } finally {
       // Always refresh logs so DB state drives the UI going forward
-      fetchLogs()
+      refreshAfterWrite()
     }
   }
 
@@ -2276,7 +2283,7 @@ export function KidsCalendar() {
         return next
       })
     }
-    fetchLogs()
+    refreshAfterWrite()
   }
 
   function handleRoutineOptions(routine: ChildRoutine) {
