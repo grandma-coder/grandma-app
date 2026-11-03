@@ -173,7 +173,7 @@ export default function HelpScreen() {
               </Text>
               <Text style={[styles.contactBody, { color: colors.textSecondary, fontFamily: font.body }]}>{t('help_stillStuckBody')}</Text>
               <Pressable
-                onPress={() => Linking.openURL('mailto:support@grandma.app')}
+                onPress={() => Linking.openURL('mailto:grandma@sauceroom.co')}
                 style={({ pressed }) => [styles.contactBtn, { backgroundColor: colors.text, borderRadius: 999, opacity: pressed ? 0.8 : 1 }]}
               >
                 <Mail size={16} color={colors.bg} strokeWidth={2} />
@@ -252,7 +252,7 @@ export default function HelpScreen() {
             {t('help_stillStuckBody')}
           </Text>
           <Pressable
-            onPress={() => Linking.openURL('mailto:support@grandma.app')}
+            onPress={() => Linking.openURL('mailto:grandma@sauceroom.co')}
             style={[styles.contactBtn, { backgroundColor: accent, borderRadius: radius.full }]}
           >
             <Mail size={16} color={diffuse ? dt.colors.bg : colors.textInverse} strokeWidth={2} />

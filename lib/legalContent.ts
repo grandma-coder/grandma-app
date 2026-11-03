@@ -2,7 +2,7 @@
  * In-app legal content — Privacy Policy + Terms of Use (Phase 1 / trust).
  *
  * Bundled so the docs are readable IN the app (Flo-parity), not an alert that
- * says "available at grandma.app/…". Structured as sections with a title + body
+ * says "available at thegrandma.app/…". Structured as sections with a title + body
  * so the reader can render a table-of-contents and anchor-scroll.
  *
  * This is plain-English, product-accurate summary content — the canonical legal
@@ -80,7 +80,7 @@ const PRIVACY: LegalDocument = {
       id: 'contact',
       title: 'Contact us',
       body:
-        'Questions about your data or this policy? Write to support@grandma.app. Include your user ID (in Data & Privacy → Data We Hold) so we can find your account without asking for personal details.',
+        'Questions about your data or this policy? Write to privacy@sauceroom.co. Include your user ID (in Data & Privacy → Data We Hold) so we can find your account without asking for personal details.',
     },
   ],
 }
@@ -138,7 +138,7 @@ const TERMS: LegalDocument = {
     {
       id: 'contact',
       title: 'Contact us',
-      body: 'Questions about these terms? Write to support@grandma.app.',
+      body: 'Questions about these terms? Write to terms@sauceroom.co.',
     },
   ],
 }

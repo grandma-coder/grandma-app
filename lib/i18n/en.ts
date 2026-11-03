@@ -164,8 +164,8 @@ export const en: TranslationKeys = {
   settings_account: 'ACCOUNT',
   settings_deleteAccount: 'Delete Account',
   settings_deleteConfirm: 'This will permanently delete your account and all data. This cannot be undone.',
-  settings_deleteContact: 'Please contact support@grandma.app to delete your account.',
-  settings_deleteFailedMsg: 'We couldn\'t delete your account. Please try again or contact support@grandma.app.',
+  settings_deleteContact: 'Please contact grandma@sauceroom.co to delete your account.',
+  settings_deleteFailedMsg: 'We couldn\'t delete your account. Please try again or contact grandma@sauceroom.co.',
   settings_signOutTitle: 'Sign Out?',
   settings_signOutEverywhereHint: 'this signs you out everywhere',
 
@@ -2413,8 +2413,8 @@ export const en: TranslationKeys = {
   account_deleteMsg: 'This will permanently delete your account, all children data, care circle, memories, and health records. This cannot be undone.',
   account_deleteConfirmBtn: 'I understand, delete',
   account_contactSupport: 'Contact Support',
-  account_contactSupportMsg: 'For security, please email support@grandma.app with your account email to request deletion.',
-  account_deleteFailedMsg: 'We couldn\'t delete your account. Please try again or contact support@grandma.app.',
+  account_contactSupportMsg: 'For security, please email grandma@sauceroom.co with your account email to request deletion.',
+  account_deleteFailedMsg: 'We couldn\'t delete your account. Please try again or contact grandma@sauceroom.co.',
 
   // ─── B6: Profile — Personal ───────────────────────────────────────────────
   personal_headerTitle: 'My Profile',

@@ -105,7 +105,7 @@ export default function AboutScreen() {
             <SiteRow label={t('about_terms')} onPress={() => router.push('/legal/terms')} />
             <SiteRow label={t('guidelines_title')} onPress={() => router.push('/profile/community-guidelines')} />
             <SiteRow label={t('about_help')} onPress={() => router.push('/profile/help')} />
-            <SiteRow label={t('about_contact')} onPress={() => Linking.openURL('mailto:support@grandma.app')} last />
+            <SiteRow label={t('about_contact')} onPress={() => Linking.openURL('mailto:grandma@sauceroom.co')} last />
 
             <Text style={{ marginTop: 24, fontFamily: font.body, fontSize: 14, lineHeight: 21, color: colors.textSecondary }}>
               {t('disclaimer_medical')}
@@ -174,7 +174,7 @@ export default function AboutScreen() {
           <View style={[styles.divider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <LinkRow label={t('about_help')} onPress={() => router.push('/profile/help')} />
           <View style={[styles.divider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
-          <LinkRow label={t('about_contact')} onPress={() => Linking.openURL('mailto:support@grandma.app')} />
+          <LinkRow label={t('about_contact')} onPress={() => Linking.openURL('mailto:grandma@sauceroom.co')} />
         </View>
 
         <Text style={[styles.version, { color: inkMuted, fontFamily: diffuse ? diffuseFont.mono : font.body }]}>
