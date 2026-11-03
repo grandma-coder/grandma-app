@@ -109,16 +109,16 @@ export const dataPt: DemoData = {
       hero: null,
       kidHero: {
         kenji: { n: '10h', em: 'de sono ontem', row: [{ label: 'Última refeição', value: '12:30' }, { label: 'Próxima vacina', value: 'dom 8 nov' }] },
-        lua: { n: '5', em: 'mamadas hoje', row: [{ label: 'Última mamada', value: '13:10 · esq.' }, { label: 'Próxima vacina', value: 'qui 12 nov' }] },
+        lua: { n: '5', em: 'amamentações hoje', row: [{ label: 'Última amamentação', value: '13:10 · esq.' }, { label: 'Próxima vacina', value: 'qui 12 nov' }] },
       },
       chips: [
         { id: 'sleep', label: 'Sono', icon: 'zz', cfg: { t: 'range', min: 0.5, max: 14, step: 0.5, v: 10, unit: 'h' } },
-        { id: 'food', label: 'Comida', icon: 'bottle', cfg: { t: 'pick', memory: false, options: [{ id: 'nursing', label: 'Mamada' }, { id: 'puree', label: 'Papinha' }, { id: 'fruit', label: 'Fruta' }, { id: 'snack', label: 'Lanche' }] } },
-        { id: 'diaper', label: 'Fralda', icon: 'diaper', cfg: { t: 'pick', memory: false, options: [{ id: 'pee', label: 'Xixi' }, { id: 'poop', label: 'Cocô' }, { id: 'both', label: 'Os dois' }] } },
+        { id: 'food', label: 'Alimentação', icon: 'bottle', cfg: { t: 'pick', memory: false, options: [{ id: 'nursing', label: 'Amamentação' }, { id: 'puree', label: 'Papinha' }, { id: 'fruit', label: 'Fruta' }, { id: 'snack', label: 'Lanche' }] } },
+        { id: 'diaper', label: 'Fralda', icon: 'diaper', cfg: { t: 'pick', memory: false, options: [{ id: 'pee', label: 'Xixi' }, { id: 'poop', label: 'Cocô' }, { id: 'both', label: 'Ambos' }] } },
         { id: 'milestone', label: 'Marco', icon: 'star', cfg: { t: 'pick', memory: true, options: [{ id: 'firstStep', label: 'Primeiro passo' }, { id: 'firstWord', label: 'Primeira palavra' }, { id: 'firstTooth', label: 'Primeiro dente' }, { id: 'other', label: 'Outro' }] } },
       ],
       today: [
-        { icon: 'bottle', label: 'Mamada', value: '12 min · esquerdo', time: '13:10', kid: 'lua' },
+        { icon: 'bottle', label: 'Amamentação', value: '12 min · esquerdo', time: '13:10', kid: 'lua' },
         { icon: 'bottle', label: 'Comida', value: 'papinha de abóbora · pela babá', time: '12:30', kid: 'kenji' },
         { icon: 'zz', label: 'Soneca', value: '1h20', time: '10:40', kid: 'lua' },
         { icon: 'diaper', label: 'Fralda', value: 'xixi · pela babá', time: '11:05', kid: 'kenji' },
@@ -308,7 +308,7 @@ export const dataPt: DemoData = {
     'ovtest:negative': ['otest'], 'ovtest:positive': ['otest', 'heart'],
     'visit:prenatal': ['bell'], 'visit:ultrasound': ['pola'], 'visit:blood': ['syringe'], 'visit:other': ['doc'],
     'food:nursing': ['bottle'], 'food:puree': ['pumpkin'], 'food:fruit': ['banana'], 'food:snack': ['avocado'],
-    'diaper:pee': ['diaper', 'drop'], 'diaper:poop': ['diaper'], 'diaper:both': ['diaper', 'star'],
+    'diaper:pee': ['diaper', 'dropBlue'], 'diaper:poop': ['diaper'], 'diaper:both': ['diaper', 'star'],
     'milestone:firstStep': ['shoe'], 'milestone:firstWord': ['bubble'], 'milestone:firstTooth': ['star'], 'milestone:other': ['pola'],
     'fog:mild': ['brain'], 'fog:medium': ['brain', 'brain'], 'fog:strong': ['brain', 'brain', 'brain'],
   },
@@ -419,7 +419,7 @@ export const dataPt: DemoData = {
       plateTitle: 'Prato do Kenji', plateSub: 'esta semana',
       plate: [{ label: 'Proteína', pct: 28, tone: '#F4A6C9' }, { label: 'Vegetais', pct: 24, tone: '#9ED8B0' }, { label: 'Frutas', pct: 22, tone: '#F9C846' }, { label: 'Carboidratos', pct: 26, tone: '#CFE1FA' }],
       proteinTitle: 'Proteína da semana', proteinPct: 86, proteinSub: '86% da meta', proteinNote: 'Somando o que a babá e você registraram.',
-      feedsTitle: 'Mamadas da Lua', feedsSub: 'por dia', seeGrowth: 'Ver crescimento completo',
+      feedsTitle: 'Amamentação da Lua', feedsSub: 'sessões por dia', seeGrowth: 'Ver crescimento completo',
       heatTitle: 'Quando elas aparecem', heatSub: 'esta semana', heatSlots: ['manhã', 'tarde', 'noite', 'madrug.'], heatNote: 'Mais à tarde e de madrugada. Vale levar pra consulta.',
       trendTitle: 'Ondas de calor por semana', trendSub: '6 semanas', trendWeek: 'S{n}',
       menoTiles: { sleepValue: '4 de 7', sleepLabel: 'noites bem dormidas', fogValue: '2 dias', fogLabel: 'com névoa mental', dropValue: '−66%', dropLabel: 'ondas desde S1' },
@@ -468,7 +468,7 @@ export const dataPt: DemoData = {
         title: 'Pro pediatra', icon: 'doc', note: 'Uma página pronta pra levar na consulta.',
         items: {
           kenji: [{ label: 'Peso', value: '12,4 kg · p55' }, { label: 'Altura', value: '86 cm · p40' }, { label: 'Vacinas', value: 'em dia' }, { label: 'Alergias', value: 'nenhuma' }, { label: 'Sono médio', value: '10h' }],
-          lua: [{ label: 'Peso', value: '7,0 kg · p55' }, { label: 'Altura', value: '64 cm · p50' }, { label: 'Vacinas', value: 'em dia' }, { label: 'Mamadas', value: '7 por dia' }, { label: 'Sono', value: '14h por dia' }],
+          lua: [{ label: 'Peso', value: '7,0 kg · p55' }, { label: 'Altura', value: '64 cm · p50' }, { label: 'Vacinas', value: 'em dia' }, { label: 'Amamentação', value: '7 por dia' }, { label: 'Sono', value: '14h por dia' }],
         },
       },
       growth: {

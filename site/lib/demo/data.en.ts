@@ -114,7 +114,7 @@ export const dataEn: DemoData = {
       chips: [
         { id: 'sleep', label: 'Sleep', icon: 'zz', cfg: { t: 'range', min: 0.5, max: 14, step: 0.5, v: 10, unit: 'h' } },
         { id: 'food', label: 'Food', icon: 'bottle', cfg: { t: 'pick', memory: false, options: [{ id: 'nursing', label: 'Nursing' }, { id: 'puree', label: 'Puree' }, { id: 'fruit', label: 'Fruit' }, { id: 'snack', label: 'Snack' }] } },
-        { id: 'diaper', label: 'Diaper', icon: 'diaper', cfg: { t: 'pick', memory: false, options: [{ id: 'pee', label: 'Wet' }, { id: 'poop', label: 'Dirty' }, { id: 'both', label: 'Both' }] } },
+        { id: 'diaper', label: 'Diaper', icon: 'diaper', cfg: { t: 'pick', memory: false, options: [{ id: 'pee', label: 'Pee' }, { id: 'poop', label: 'Poop' }, { id: 'both', label: 'Both' }] } },
         { id: 'milestone', label: 'Milestone', icon: 'star', cfg: { t: 'pick', memory: true, options: [{ id: 'firstStep', label: 'First step' }, { id: 'firstWord', label: 'First word' }, { id: 'firstTooth', label: 'First tooth' }, { id: 'other', label: 'Other' }] } },
       ],
       today: [
@@ -308,7 +308,7 @@ export const dataEn: DemoData = {
     'ovtest:negative': ['otest'], 'ovtest:positive': ['otest', 'heart'],
     'visit:prenatal': ['bell'], 'visit:ultrasound': ['pola'], 'visit:blood': ['syringe'], 'visit:other': ['doc'],
     'food:nursing': ['bottle'], 'food:puree': ['pumpkin'], 'food:fruit': ['banana'], 'food:snack': ['avocado'],
-    'diaper:pee': ['diaper', 'drop'], 'diaper:poop': ['diaper'], 'diaper:both': ['diaper', 'star'],
+    'diaper:pee': ['diaper', 'dropBlue'], 'diaper:poop': ['diaper'], 'diaper:both': ['diaper', 'star'],
     'milestone:firstStep': ['shoe'], 'milestone:firstWord': ['bubble'], 'milestone:firstTooth': ['star'], 'milestone:other': ['pola'],
     'fog:mild': ['brain'], 'fog:medium': ['brain', 'brain'], 'fog:strong': ['brain', 'brain', 'brain'],
   },
