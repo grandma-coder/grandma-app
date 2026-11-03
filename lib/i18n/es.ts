@@ -5583,4 +5583,5 @@ export const es: TranslationKeys = {
   sw2_kh_peakRange: "pico {{range}}",
   sw2_kh_done: "Hecho",
   sw2_kh_wkN: "Sem {{n}}",
+  kidsTile_logsUnit: "registros",
 }

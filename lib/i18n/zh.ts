@@ -5580,4 +5580,5 @@ export const zh: TranslationKeys = {
   sw2_kh_peakRange: "高峰 {{range}}",
   sw2_kh_done: "完成",
   sw2_kh_wkN: "第{{n}}周",
+  kidsTile_logsUnit: "条记录",
 }

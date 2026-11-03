@@ -5580,4 +5580,5 @@ export const ar: TranslationKeys = {
   sw2_kh_peakRange: "الذروة {{range}}",
   sw2_kh_done: "تم",
   sw2_kh_wkN: "أسبوع {{n}}",
+  kidsTile_logsUnit: "تسجيلات",
 }

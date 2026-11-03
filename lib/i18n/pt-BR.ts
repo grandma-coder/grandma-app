@@ -5583,4 +5583,5 @@ export const ptBR: TranslationKeys = {
   sw2_kh_peakRange: "pico {{range}}",
   sw2_kh_done: "Concluído",
   sw2_kh_wkN: "Sem {{n}}",
+  kidsTile_logsUnit: "registros",
 }

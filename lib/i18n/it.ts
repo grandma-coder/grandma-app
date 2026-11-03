@@ -5580,4 +5580,5 @@ export const it: TranslationKeys = {
   sw2_kh_peakRange: "picco {{range}}",
   sw2_kh_done: "Fatto",
   sw2_kh_wkN: "Sett. {{n}}",
+  kidsTile_logsUnit: "registrazioni",
 }

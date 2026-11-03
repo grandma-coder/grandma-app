@@ -5880,4 +5880,5 @@ export interface TranslationKeys {
   sw2_kh_peakRange: string
   sw2_kh_done: string
   sw2_kh_wkN: string
+  kidsTile_logsUnit: string
 }

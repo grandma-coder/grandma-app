@@ -5580,4 +5580,5 @@ export const ko: TranslationKeys = {
   sw2_kh_peakRange: "피크 {{range}}",
   sw2_kh_done: "완료",
   sw2_kh_wkN: "{{n}}주",
+  kidsTile_logsUnit: "건",
 }

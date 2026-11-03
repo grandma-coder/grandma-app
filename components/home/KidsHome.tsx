@@ -2938,7 +2938,7 @@ function CurrentHeroTiles({
               {hasActivity ? (
                 <Text style={[tileStyles.heroNumber, { color: ink }]}>
                   {activityValueLabel}
-                  <Text style={[tileStyles.heroUnit, { color: ink }]}>{'logs'}</Text>
+                  <Text style={[tileStyles.heroUnit, { color: ink }]}>{t('kidsTile_logsUnit')}</Text>
                 </Text>
               ) : (
                 <Text style={[tileStyles.emptyHero, { color: ink }]}>{t('kids_home_tile_tap_to_log')}</Text>

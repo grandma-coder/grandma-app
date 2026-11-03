@@ -5580,4 +5580,5 @@ export const de: TranslationKeys = {
   sw2_kh_peakRange: "Spitze {{range}}",
   sw2_kh_done: "Fertig",
   sw2_kh_wkN: "Wo. {{n}}",
+  kidsTile_logsUnit: "Einträge",
 }

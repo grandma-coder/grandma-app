@@ -5580,4 +5580,5 @@ export const tr: TranslationKeys = {
   sw2_kh_peakRange: "zirve {{range}}",
   sw2_kh_done: "Tamam",
   sw2_kh_wkN: "Hf {{n}}",
+  kidsTile_logsUnit: "kayıt",
 }

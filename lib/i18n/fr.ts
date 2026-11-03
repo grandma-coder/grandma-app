@@ -5580,4 +5580,5 @@ export const fr: TranslationKeys = {
   sw2_kh_peakRange: "pic {{range}}",
   sw2_kh_done: "Terminé",
   sw2_kh_wkN: "Sem. {{n}}",
+  kidsTile_logsUnit: "entrées",
 }

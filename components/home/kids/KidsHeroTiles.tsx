@@ -14,7 +14,7 @@ import { Animated, Easing, Pressable, Text, View, StyleSheet } from 'react-nativ
 import Svg, { Path } from 'react-native-svg'
 import * as Haptics from 'expo-haptics'
 import { useTheme, stickers } from '../../../constants/theme'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { HandDrawnPill } from '../../ui/HandDrawn'
 import { FadeUp, useIdleSway } from '../../ui/Motion'
@@ -51,8 +51,9 @@ const MOOD_KEYS = ['happy', 'calm', 'energetic', 'fussy', 'cranky'] as const
 const MOOD_STICKER: Record<string, SiteStickerName> = {
   happy: 'face4', calm: 'face3', energetic: 'star', fussy: 'face2', cranky: 'face1',
 }
-const MOOD_LABEL: Record<string, string> = {
-  happy: 'Happy', calm: 'Calm', energetic: 'Active', fussy: 'Fussy', cranky: 'Cranky',
+const MOOD_LABEL_KEY: Record<string, TranslationKey> = {
+  happy: 'kids_logForm_moodHappy', calm: 'kids_logForm_moodCalm', energetic: 'kids_logForm_moodEnergetic',
+  fussy: 'kids_logForm_moodFussy', cranky: 'kids_logForm_moodCranky',
 }
 const MOOD_TONE: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: stickers.blue, fussy: stickers.peach, cranky: stickers.coral,
@@ -222,7 +223,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           onPress={loading ? undefined : !hasMood && p.onLogMood ? p.onLogMood : p.onPressMood}>
           {loading ? <TileValueSkeleton /> : <>
           <Text style={hasMood ? [styles.moodWord, { color: ink, fontFamily: font.display }] : emptyStyle} numberOfLines={hasMood ? 1 : 2}>
-            {hasMood ? MOOD_LABEL[p.dominantMood] ?? 'Content' : t('kids_home_tile_mood_empty')}
+            {hasMood ? (MOOD_LABEL_KEY[p.dominantMood] ? t(MOOD_LABEL_KEY[p.dominantMood]) : t('kp_kh_moodContent')) : t('kids_home_tile_mood_empty')}
           </Text>
           {/* one little hand-drawn bar per mood, dominant one tallest + ink-outlined */}
           <View style={styles.moodBars}>
@@ -264,7 +265,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           {hasAct ? (
             <Text style={styles.numRow}>
               <CountUp value={p.activityCount} style={numStyle} />
-              <Text style={unitStyle}> logs</Text>
+              <Text style={unitStyle}> {t('kidsTile_logsUnit')}</Text>
             </Text>
           ) : <Text style={emptyStyle}>{t('kids_home_tile_tap_to_log')}</Text>}
           <Text style={subStyle} numberOfLines={1}>

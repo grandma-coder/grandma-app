@@ -5580,4 +5580,5 @@ export const hi: TranslationKeys = {
   sw2_kh_peakRange: "चरम {{range}}",
   sw2_kh_done: "पूरा",
   sw2_kh_wkN: "सप्ताह {{n}}",
+  kidsTile_logsUnit: "रिकॉर्ड",
 }

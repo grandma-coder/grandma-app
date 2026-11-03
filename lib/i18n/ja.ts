@@ -5580,4 +5580,5 @@ export const ja: TranslationKeys = {
   sw2_kh_peakRange: "ピーク {{range}}",
   sw2_kh_done: "完了",
   sw2_kh_wkN: "{{n}}週",
+  kidsTile_logsUnit: "件",
 }

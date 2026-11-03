@@ -5885,4 +5885,5 @@ export const en: TranslationKeys = {
   sw2_kh_peakRange: "peak {{range}}",
   sw2_kh_done: "Done",
   sw2_kh_wkN: "Wk {{n}}",
+  kidsTile_logsUnit: "logs",
 }
