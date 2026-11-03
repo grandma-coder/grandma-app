@@ -83,6 +83,7 @@ import type { Session } from '@supabase/supabase-js'
 import type { ChildWithRole, CaregiverPermissions } from '../types'
 
 import { queryClient } from '../lib/queryClient'
+import { registerUserDataReloader } from '../lib/userDataReload'
 import { consumePendingInvite } from '../lib/pendingInvite'
 import { font, useTheme, useDiffuseTheme } from '../constants/theme'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
@@ -499,6 +500,12 @@ export default function RootLayout() {
       syncBadgesFromSupabase().catch(() => {})
     }
 
+    registerUserDataReloader(async () => {
+      const { data: { session: current } } = await supabase.auth.getSession()
+      if (!current || cancelled) return
+      await loadUserData(current.user.id)
+    })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         authLog(`[auth] event=${event} hasSession=${!!newSession} uid=${newSession?.user?.id?.slice(0, 8) ?? 'null'}`)
@@ -577,6 +584,7 @@ export default function RootLayout() {
 
     return () => {
       cancelled = true
+      registerUserDataReloader(null)
       clearTimeout(safety)
       subscription.unsubscribe()
     }
@@ -646,7 +654,9 @@ export default function RootLayout() {
 
     if (!session && !inAuth) {
       router.replace('/(auth)/welcome')
-    } else if (session && !hasCompletedOnboarding && segments[0] !== 'onboarding') {
+    } else if (session && !hasCompletedOnboarding && segments[0] !== 'onboarding' && segments[0] !== 'accept-invite') {
+      // (accept-invite is exempt: a new caregiver lands there straight from sign-up with no journey
+      // yet; redirecting would drop the already-consumed invite token.)
       // When every data query timed out we don't know whether the user
       // genuinely has no data or whether the DB is unreachable. Stay on
       // the current screen rather than routing into onboarding — pushing

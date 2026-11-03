@@ -13,6 +13,7 @@ import { InkBackButton } from '../components/ui/InkBackButton'
 import { PillButton } from '../components/ui/PillButton'
 import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
 import { useGrandmaChatEnabled } from '../store/useFeatureFlags'
+import { reloadUserData } from '../lib/userDataReload'
 
 type PermGlyph = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
 
@@ -129,6 +130,9 @@ export default function AcceptInvite() {
       if (data?.error) throw new Error(data.error)
 
       setChildName(data.childName)
+      // Load the newly shared child now; otherwise it (and the caregiver's journey) only appears
+      // after a restart, and the route guard still sees "no onboarding" on the way home.
+      await reloadUserData().catch(() => {})
       setAccepted(true)
     } catch (e: any) {
       Alert.alert(t('acceptInvite_errorTitle'), e.message)
