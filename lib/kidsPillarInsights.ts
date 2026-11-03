@@ -9,6 +9,9 @@ import type { AnalyticsData, ChildLog, HealthData } from './analyticsData'
 import { getAgeSleepTarget } from './kidsScoring'
 import { computeCrossInsights } from './kidsCrossInsights'
 import { estimatePercentile, type Sex, type Metric } from './growthStandards'
+import { t, translations } from './i18n'
+import { useLanguageStore } from '../store/useLanguageStore'
+import { dateLoc } from './kpLocale'
 
 /**
  * Shared return shape every `build<Pillar>Insight` produces (spec §6): one
@@ -39,11 +42,9 @@ function daysBetween(fromStr: string, toStr: string): number {
   return Math.round((to.getTime() - from.getTime()) / 86_400_000)
 }
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 function formatMonthDay(dateStr: string): string {
   const d = parseLocalDate(dateStr)
-  return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`
+  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
 }
 
 /** "1 week" / "6 weeks" — the honest window/gap phrasing cross-cutting rule
@@ -51,23 +52,21 @@ function formatMonthDay(dateStr: string): string {
  * weeks and clamped so a same-day cluster never reads as "0 weeks". */
 function weeksPhrase(days: number): string {
   const weeks = Math.max(1, Math.round(days / 7))
-  return weeks === 1 ? 'week' : `${weeks} weeks`
+  return weeks === 1 ? t('kp_pi_gapWeek') : t('kp_pi_gapWeeks', { n: weeks })
 }
 
-/** Names a selected date span in the lead sentence — "week" for the default
- * 7-day window, "month" for a ~30-day one, else the literal week count. */
-function describeWindowSpan(days: number): string {
-  if (days <= 8) return 'week'
-  if (days <= 31) return 'month'
-  return weeksPhrase(days)
+/** "the last week" / "the last 6 weeks" / "the last month" — a ready-to-use span phrase. */
+function lastSpanPhrase(days: number): string {
+  if (days <= 8) return t('kp_pi_spanWeek')
+  if (days <= 31) return t('kp_pi_spanMonth')
+  const weeks = Math.max(1, Math.round(days / 7))
+  return weeks === 1 ? t('kp_pi_spanWeek') : t('kp_pi_spanWeeks', { n: weeks })
 }
-
-// ─── Health ─────────────────────────────────────────────────────────────────
 
 const CONCERN_KIND_NOUN: Record<ConcernKind, (n: number) => string> = {
-  fever: (n) => (n === 1 ? 'fever day' : 'fever days'),
-  injury: (n) => (n === 1 ? 'injury' : 'injuries'),
-  doctor: (n) => (n === 1 ? 'doctor visit' : 'doctor visits'),
+  fever: (n) => t(n === 1 ? 'kp_pi_feverDay1' : 'kp_pi_feverDayN', { n }),
+  injury: (n) => t(n === 1 ? 'kp_pi_injury1' : 'kp_pi_injuryN', { n }),
+  doctor: (n) => t(n === 1 ? 'kp_pi_doctor1' : 'kp_pi_doctorN', { n }),
 }
 
 /**
@@ -114,8 +113,7 @@ function recentMedicineNote(logs: ChildLog[], windowTo: string): string | null {
   if (daysAgo < 0 || daysAgo > 7) return null
 
   const name = (latest.value ?? '').trim()
-  const when = daysAgo <= 1 ? 'today' : `${daysAgo} days ago`
-  return `${name} logged ${when}.`
+  return daysAgo <= 1 ? t('kp_pi_medToday', { name }) : t('kp_pi_medDaysAgo', { name, n: daysAgo })
 }
 
 /**
@@ -152,31 +150,31 @@ export function buildHealthInsight(analytics: AnalyticsData, ageMonths: number, 
       : null
     const spanDays = mostRecent ? daysBetween(mostRecent.date, dateRange.to) : windowDays
     // Factual, not a health verdict: 'nothing logged' is true even when nothing was ever logged.
-    lead = `No fever, injury or doctor visit logged for ${childName} in the last ${weeksPhrase(spanDays)}.`
+    lead = t('kp_pi_noConcerns', { name: childName, span: lastSpanPhrase(spanDays) })
   } else {
     const counts: Record<ConcernKind, number> = { fever: 0, injury: 0, doctor: 0 }
     for (const c of inWindow) counts[c.kind]++
     const kindsPresent = (Object.keys(counts) as ConcernKind[]).filter((k) => counts[k] > 0)
 
     const subject = kindsPresent.length === 1
-      ? `${counts[kindsPresent[0]]} ${CONCERN_KIND_NOUN[kindsPresent[0]](counts[kindsPresent[0]])}`
-      : `${inWindow.length} health concern${inWindow.length === 1 ? '' : 's'}`
+      ? CONCERN_KIND_NOUN[kindsPresent[0]](counts[kindsPresent[0]])
+      : t(inWindow.length === 1 ? 'kp_pi_concern1' : 'kp_pi_concernN', { n: inWindow.length })
 
-    const windowPhrase = describeWindowSpan(windowDays)
+    const windowPhrase = lastSpanPhrase(windowDays)
 
     if (inWindow.length >= 2) {
       const sorted = [...inWindow].sort((a, b) => a.date.localeCompare(b.date))
       const spreadDays = daysBetween(sorted[0].date, sorted[sorted.length - 1].date)
       const avgGapDays = spreadDays / (sorted.length - 1)
-      lead = `${subject} in the last ${windowPhrase} — about one every ${weeksPhrase(avgGapDays)}.`
+      lead = t('kp_pi_leadCluster', { subject, span: windowPhrase, gap: weeksPhrase(avgGapDays) })
     } else {
-      lead = `${subject} in the last ${windowPhrase}.`
+      lead = t('kp_pi_leadSingle', { subject, span: windowPhrase })
     }
 
     const episode = lastFeverEpisode(timeline, dateRange.to)
     if (episode) {
       supporting.push(
-        `${childName}'s last fever (${formatMonthDay(episode.start)}) was logged over ~${episode.days} day${episode.days === 1 ? '' : 's'}.`,
+        t(episode.days === 1 ? 'kp_pi_feverEp1' : 'kp_pi_feverEpN', { name: childName, date: formatMonthDay(episode.start), n: episode.days }),
       )
     }
   }
@@ -184,7 +182,7 @@ export function buildHealthInsight(analytics: AnalyticsData, ageMonths: number, 
   // Always-on reassurance reference — a count, never a completion % or
   // schedule-compliance verdict (spec §4 explicitly forbids that framing).
   const vaccineCount = health.vaccines.filter((v) => v.done).length
-  supporting.push(`${vaccineCount} vaccine${vaccineCount === 1 ? '' : 's'} on record.`)
+  supporting.push(t(vaccineCount === 1 ? 'kp_pi_vaccine1' : 'kp_pi_vaccineN', { n: vaccineCount }))
 
   const medNote = recentMedicineNote(logs, dateRange.to)
   if (medNote) supporting.push(medNote)
@@ -214,10 +212,15 @@ const LOW_CONFIDENCE = 0.4
  * helper and keeps its own richer `describeWindowSpan`/`weeksPhrase` pair.
  */
 export function windowLabel(windowDays: number): string {
-  return windowDays === 7 ? 'this week' : `the last ${windowDays} days`
+  return windowDays === 7 ? t('kp_pi_winWeek') : t('kp_pi_winDays', { n: windowDays })
 }
 
 /** "1st" / "2nd" / "3rd" / "4th" — for percentile copy ("55th percentile"). */
+function ordinalNum(n: number): string {
+  // English reads "55th percentile"; other languages use the bare number.
+  return useLanguageStore.getState().language === 'en' ? `${n}${ordinalSuffix(n)}` : String(n)
+}
+
 function ordinalSuffix(n: number): string {
   const rem100 = n % 100
   if (rem100 >= 11 && rem100 <= 13) return 'th'
@@ -273,7 +276,7 @@ export function buildSleepInsight(analytics: AnalyticsData, ageMonths: number, c
 
   if (!sleep.hasData || scores.sleep.confidence < LOW_CONFIDENCE) {
     return {
-      lead: `${childName}'s sleep read is still early — a few more logs sharpen this.`,
+      lead: t('kp_pi_early', { name: childName, pillar: t('kp_pi_pSleep') }),
       supporting,
       demotedAvailable: sleep.hasData,
     }
@@ -284,16 +287,16 @@ export function buildSleepInsight(analytics: AnalyticsData, ageMonths: number, c
   const trend = scores.sleep.trend
   const TREND_FLAT = 10 // percentage points — below this reads as "held steady"
   const trendPhrase = Math.abs(trend) < TREND_FLAT
-    ? `, and it's held steady over ${window}`
-    : `, and it's ${trend > 0 ? 'improving' : 'declining'} over ${window}`
+    ? t('kp_pi_slTrendSteady', { window })
+    : t(trend > 0 ? 'kp_pi_slTrendUp' : 'kp_pi_slTrendDown', { window })
 
   let lead: string
   if (deficit > 0.25) {
-    lead = `${childName}'s averaging ${sleep.avgHours.toFixed(1)}h — about ${deficit.toFixed(1)}h under the ${target}h target for their age${trendPhrase}.`
+    lead = t('kp_pi_slUnder', { name: childName, avg: sleep.avgHours.toFixed(1), gap: deficit.toFixed(1), target, trend: trendPhrase })
   } else if (deficit < -0.25) {
-    lead = `${childName}'s averaging ${sleep.avgHours.toFixed(1)}h — comfortably above the ${target}h target for their age${trendPhrase}.`
+    lead = t('kp_pi_slAbove', { name: childName, avg: sleep.avgHours.toFixed(1), target, trend: trendPhrase })
   } else {
-    lead = `${childName}'s averaging ${sleep.avgHours.toFixed(1)}h — right at the ${target}h target for their age${trendPhrase}.`
+    lead = t('kp_pi_slAt', { name: childName, avg: sleep.avgHours.toFixed(1), target, trend: trendPhrase })
   }
 
   const sleepMood = computeCrossInsights(logs, ageMonths).find((c) => c.kind === 'sleep_mood')
@@ -307,7 +310,7 @@ export function buildSleepInsight(analytics: AnalyticsData, ageMonths: number, c
   const loggedNights = sleep.dailyHours.filter((h) => h > 0)
   if (loggedNights.length > 0) {
     const onTarget = loggedNights.filter((h) => h >= target - 1).length
-    supporting.push(`${onTarget} of ${loggedNights.length} logged nights hit the target ${window}.`)
+    supporting.push(t('kp_pi_slNights', { n: onTarget, total: loggedNights.length, window }))
   }
 
   return { lead, supporting, demotedAvailable: sleep.hasData }
@@ -330,7 +333,7 @@ export function buildNutritionInsight(analytics: AnalyticsData, ageMonths: numbe
 
   if (!nutrition.hasData || scores.nutrition.confidence < LOW_CONFIDENCE) {
     return {
-      lead: `${childName}'s nutrition read is still early — a few more logs sharpen this.`,
+      lead: t('kp_pi_early', { name: childName, pillar: t('kp_pi_pNutrition') }),
       supporting,
       demotedAvailable: nutrition.hasData,
     }
@@ -341,14 +344,14 @@ export function buildNutritionInsight(analytics: AnalyticsData, ageMonths: numbe
     const totalFeeds = nutrition.mealFrequency.reduce((a, b) => a + b, 0)
     const loggedDays = nutrition.mealFrequency.filter((m) => m > 0).length
     const avgPerDay = loggedDays > 0 ? totalFeeds / loggedDays : 0
-    lead = `Feeding ${avgPerDay.toFixed(1)}×/day on average ${window} — steady.`
+    lead = t('kp_pi_nuMilk', { avg: avgPerDay.toFixed(1), window })
   } else {
     const newFoodsCount = countNewFoods(logs, dateRange)
-    const newFoodsPhrase = `${newFoodsCount} new food${newFoodsCount === 1 ? '' : 's'} tried ${window}.`
+    const newFoodsPhrase = t(newFoodsCount === 1 ? 'kp_pi_nuNew1' : 'kp_pi_nuNewN', { n: newFoodsCount, window })
     const topNames = nutrition.topFoods.slice(0, 3).map((f) => f.label)
     lead = topNames.length > 0
-      ? `${childName} mostly eats the same few foods — ${topNames.join(', ')}. ${newFoodsPhrase}`
-      : `${newFoodsPhrase} Log more specific foods to see variety patterns.`
+      ? t('kp_pi_nuSame', { name: childName, foods: topNames.join(', '), newFoods: newFoodsPhrase })
+      : t('kp_pi_nuLogMore', { newFoods: newFoodsPhrase })
   }
 
   const reaction = computeCrossInsights(logs, ageMonths).find((c) => c.kind === 'food_reaction')
@@ -364,8 +367,8 @@ export function buildNutritionInsight(analytics: AnalyticsData, ageMonths: numbe
   if (ratedTotal > 0) {
     const pct = Math.round((totalGood / ratedTotal) * 100)
     const trend = scores.nutrition.trend
-    const trendPhrase = trend > 10 ? `, improving through ${window}` : trend < -10 ? `, dipping through ${window}` : ''
-    supporting.push(`Eating well at ${pct}% of rated meals${trendPhrase}.`)
+    const trendPhrase = trend > 10 ? t('kp_pi_nuTrendUp', { window }) : trend < -10 ? t('kp_pi_nuTrendDown', { window }) : ''
+    supporting.push(t('kp_pi_nuGood', { pct, trend: trendPhrase }))
   }
 
   return { lead, supporting, demotedAvailable: nutrition.hasData }
@@ -374,6 +377,26 @@ export function buildNutritionInsight(analytics: AnalyticsData, ageMonths: numbe
 // ─── Mood ───────────────────────────────────────────────────────────────────
 
 const POSITIVE_MOODS = new Set(['happy', 'calm', 'energetic'])
+
+const MOOD_NAME_KEYS = {
+  happy: 'kids_logForm_moodHappy',
+  calm: 'kids_logForm_moodCalm',
+  energetic: 'kids_logForm_moodEnergetic',
+  fussy: 'kids_logForm_moodFussy',
+  cranky: 'kids_logForm_moodCranky',
+} as const
+
+/** Lowercase display name for a stored mood value (falls back to the raw value). */
+function moodName(raw: string): string {
+  const key = (MOOD_NAME_KEYS as Record<string, (typeof MOOD_NAME_KEYS)[keyof typeof MOOD_NAME_KEYS]>)[raw]
+  return key ? t(key).toLocaleLowerCase(dateLoc()) : raw
+}
+
+/** Display name for a stored activity type (falls back to the raw value). */
+function activityName(raw: string): string {
+  const key = `kids_logForm_activity${raw.charAt(0).toUpperCase()}${raw.slice(1).toLowerCase()}`
+  return key in translations.en ? t(key as Parameters<typeof t>[0]).toLocaleLowerCase(dateLoc()) : raw
+}
 
 /**
  * Mood pop-up lead + supporting copy (spec §4 MOOD). The lead folds the
@@ -389,7 +412,7 @@ export function buildMoodInsight(analytics: AnalyticsData, ageMonths: number, ch
 
   if (!mood.hasData || scores.mood.confidence < LOW_CONFIDENCE) {
     return {
-      lead: `${childName}'s mood read is still early — a few more logs sharpen this.`,
+      lead: t('kp_pi_early', { name: childName, pillar: t('kp_pi_pMood') }),
       supporting,
       demotedAvailable: mood.hasData,
     }
@@ -398,18 +421,21 @@ export function buildMoodInsight(analytics: AnalyticsData, ageMonths: number, ch
   const total = mood.dominantMoods.reduce((a, m) => a + m.count, 0)
   const positiveCount = mood.dominantMoods.filter((m) => POSITIVE_MOODS.has(m.mood)).reduce((a, m) => a + m.count, 0)
   const pct = total > 0 ? Math.round((positiveCount / total) * 100) : 0
-  const topPositive = mood.dominantMoods.filter((m) => POSITIVE_MOODS.has(m.mood)).slice(0, 2).map((m) => m.mood)
-  const moodDesc = topPositive.length > 0 ? topPositive.join(' and ') : (mood.dominantMoods[0]?.mood ?? 'mixed')
+  const topPositive = mood.dominantMoods.filter((m) => POSITIVE_MOODS.has(m.mood)).slice(0, 2).map((m) => moodName(m.mood))
+  const moodDesc = topPositive.length > 1
+    ? t('kp_pi_moAnd', { a: topPositive[0], b: topPositive[1] })
+    : topPositive.length === 1
+      ? topPositive[0]
+      : (mood.dominantMoods[0] ? moodName(mood.dominantMoods[0].mood) : t('kp_pi_moMixed'))
 
   const sleepMood = computeCrossInsights(logs, ageMonths).find((c) => c.kind === 'sleep_mood')
-  const clusterClause = sleepMood ? ', with fussy spells clustering on short-sleep days' : ''
+  const clusterClause = sleepMood ? t('kp_pi_moCluster') : ''
 
-  const lead = `${childName}'s mostly ${moodDesc} (${pct}%) ${window}${clusterClause}.`
+  const lead = t('kp_pi_moLead', { name: childName, mood: moodDesc, pct, window, cluster: clusterClause })
 
   const trend = scores.mood.trend
   if (Math.abs(trend) >= 10) {
-    const direction = trend > 0 ? 'happier' : 'fussier'
-    supporting.push(`A bit ${direction} in the second half of ${window} than the first.`)
+    supporting.push(t(trend > 0 ? 'kp_pi_moHappier' : 'kp_pi_moFussier', { window }))
   }
 
   return { lead, supporting, demotedAvailable: mood.hasData }
@@ -443,21 +469,21 @@ export function buildGrowthInsight(
 
   if (!growth.hasData || series.length === 0) {
     return {
-      lead: `No measurements logged yet — add one to start tracking ${childName}'s growth curve.`,
+      lead: t('kp_pi_grNone', { name: childName }),
       supporting,
       demotedAvailable: growth.hasData,
     }
   }
   if (series.length < 2) {
     return {
-      lead: `Only 1 measurement — log another to see a growth curve.`,
+      lead: t('kp_pi_grOne'),
       supporting,
       demotedAvailable: true,
     }
   }
   if (!sex) {
     return {
-      lead: `${childName} has ${series.length} measurements logged, but we need a sex on file to place them on a growth curve.`,
+      lead: t('kp_pi_grNoSex', { name: childName, n: series.length }),
       supporting,
       demotedAvailable: true,
     }
@@ -485,15 +511,15 @@ export function buildGrowthInsight(
 
   let lead: string
   if (lastPct == null) {
-    lead = `${childName} has ${series.length} measurements logged — not enough reference data at this age to place a percentile yet.`
+    lead = t('kp_pi_grNoRef', { name: childName, n: series.length })
   } else {
-    const curveRead = isCrossing ? 'crossing percentile bands' : 'a steady curve'
-    lead = `${childName}'s tracking around the ${lastPct}${ordinalSuffix(lastPct)} percentile for ${metric}, on ${curveRead}.`
+    const curveRead = isCrossing ? t('kp_pi_grCrossing') : t('kp_pi_grSteady')
+    lead = t('kp_pi_grLead', { name: childName, p: ordinalNum(lastPct), metric: t(metric === 'weight' ? 'kp_pi_grWeight' : 'kp_pi_grHeight'), curve: curveRead })
   }
 
   if (isCrossing && firstPct != null && lastPct != null) {
     supporting.push(
-      `${metric === 'weight' ? 'Weight' : 'Height'} moved from the ${firstPct}${ordinalSuffix(firstPct)} to the ${lastPct}${ordinalSuffix(lastPct)} percentile — worth mentioning at the next visit.`,
+      t('kp_pi_grMoved', { metric: t(metric === 'weight' ? 'kp_pi_grWeightCap' : 'kp_pi_grHeightCap'), a: ordinalNum(firstPct), b: ordinalNum(lastPct) }),
     )
   }
 
@@ -503,7 +529,7 @@ export function buildGrowthInsight(
     const otherLast = otherSeries[otherSeries.length - 1]
     const otherPct = estimatePercentile(otherMetric, sex, ageAt(otherLast.date), otherLast.value)
     if (otherPct != null) {
-      supporting.push(`${otherMetric === 'weight' ? 'Weight' : 'Height'} is around the ${otherPct}${ordinalSuffix(otherPct)} percentile.`)
+      supporting.push(t('kp_pi_grAround', { metric: t(otherMetric === 'weight' ? 'kp_pi_grWeightCap' : 'kp_pi_grHeightCap'), p: ordinalNum(otherPct) }))
     }
   }
 
@@ -528,18 +554,20 @@ export function buildActivityInsight(analytics: AnalyticsData, ageMonths: number
 
   if (!activity.hasData || scores.activity.confidence < LOW_CONFIDENCE) {
     return {
-      lead: 'Not enough activity logs yet to see a pattern.',
+      lead: t('kp_pi_acEarly'),
       supporting,
       demotedAvailable: activity.hasData,
     }
   }
 
-  const topTypes = activity.uniqueTypes.slice(0, 2)
-  const typesPhrase = topTypes.length > 0 ? `, mostly ${topTypes.join(' and ')}` : ''
-  const lead = `${childName}'s active ${activity.activeDays} of ${windowDays} days ${window}${typesPhrase}.`
+  const topTypes = activity.uniqueTypes.slice(0, 2).map(activityName)
+  const typesPhrase = topTypes.length > 0
+    ? t('kp_pi_acTypes', { types: topTypes.length > 1 ? t('kp_pi_moAnd', { a: topTypes[0], b: topTypes[1] }) : topTypes[0] })
+    : ''
+  const lead = t('kp_pi_acLead', { name: childName, days: activity.activeDays, total: windowDays, window, types: typesPhrase })
 
   if (activity.uniqueTypes.length > 1) {
-    supporting.push(`${activity.uniqueTypes.length} different activity types logged ${window}.`)
+    supporting.push(t('kp_pi_acKinds', { n: activity.uniqueTypes.length, window }))
   }
 
   return { lead, supporting, demotedAvailable: activity.hasData }

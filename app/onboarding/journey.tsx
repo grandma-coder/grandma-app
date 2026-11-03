@@ -100,12 +100,11 @@ export default function JourneyScreen() {
       blobCy: '62%',
     },
     {
-      // Menopause (E1). English literals — no menopause i18n keys exist yet;
-      // a later i18n wave extracts them. blobColor follows this array's vivid
+      // Menopause (E1). blobColor follows this array's vivid
       // aura-field hex convention (ember, to match the `meno` field).
       id: 'menopause',
-      title: 'Menopause',
-      subtitle: 'Change & wellbeing',
+      title: t('app_journey_menopause'),
+      subtitle: t('app_onbJourney_menopauseSubtitle'),
       sticker: (color) => <Sun size={44} fill={color} />,
       modeKey: 'meno',
       blobColor: '#E8975A',

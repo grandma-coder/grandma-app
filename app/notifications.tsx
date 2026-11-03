@@ -41,7 +41,7 @@ import { InkBackButton } from '../components/ui/InkBackButton'
 import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
 import { EmptyState } from '../components/ui/EmptyState'
 import { MissingStickers } from '../components/stickers/MissingStickers'
-import { useTranslation } from '../lib/i18n'
+import { useTranslation, t as translate, type TranslationKey } from '../lib/i18n'
 import { displayNotificationText } from '../lib/notificationCopy'
 import { parseLocalDate } from '../lib/localDate'
 
@@ -226,18 +226,40 @@ function navigateForNotification(item: AppNotification) {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, language: string): string {
   const now = Date.now()
   const then = parseLocalDate(dateStr).getTime()
   const diffMs = now - then
   const mins = Math.floor(diffMs / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 1) return translate('app_nlist_justNow')
+  if (mins < 60) return translate('app_nlist_minAgo', { n: mins })
   const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
+  if (hrs < 24) return translate('app_nlist_hrAgo', { n: hrs })
   const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  return parseLocalDate(dateStr).toLocaleDateString()
+  if (days < 7) return translate('app_nlist_dayAgo', { n: days })
+  return parseLocalDate(dateStr).toLocaleDateString(intlLocale(language))
+}
+
+function intlLocale(language: string): string {
+  return language === 'en' ? 'en-US' : language
+}
+
+const CATEGORY_KEYS: Record<string, TranslationKey> = {
+  Wellness: 'channelCreate_category_wellness',
+  Routines: 'kids_logForm_routines',
+  Health: 'app_notif_groupHealth',
+  Goals: 'app_nlist_goals',
+  Insights: 'insights_title',
+  Community: 'community_title',
+  'Care Circle': 'profile_careCircle',
+  Pregnancy: 'mode_pregnancy',
+  Other: 'preg_appts_type_other',
+  All: 'reminders_filterAll',
+}
+
+function categoryLabel(category: string): string {
+  const key = CATEGORY_KEYS[category]
+  return key ? translate(key) : category
 }
 
 interface DateSection {
@@ -245,7 +267,7 @@ interface DateSection {
   data: AppNotification[]
 }
 
-function groupByDate(notifications: AppNotification[]): DateSection[] {
+function groupByDate(notifications: AppNotification[], language: string): DateSection[] {
   const today = toDateStr(new Date())
   const yesterday = toDateStr(new Date(Date.now() - 86400000))
 
@@ -255,9 +277,9 @@ function groupByDate(notifications: AppNotification[]): DateSection[] {
     // UTC date and mis-group evening notifications against the local today/yesterday.
     const date = toDateStr(new Date(n.created_at))
     let label: string
-    if (date === today) label = 'Today'
-    else if (date === yesterday) label = 'Yesterday'
-    else label = parseLocalDate(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+    if (date === today) label = translate('common_today')
+    else if (date === yesterday) label = translate('common_yesterday')
+    else label = parseLocalDate(date).toLocaleDateString(intlLocale(language), { weekday: 'long', month: 'short', day: 'numeric' })
 
     if (!groups[date]) groups[date] = { label, date, items: [] }
     groups[date].items.push(n)
@@ -307,11 +329,11 @@ function matchesBehaviorFilter(n: AppNotification, filter: BehaviorFilter): bool
   return b === filter
 }
 
-const BEHAVIOR_LABELS: Record<Behavior, string> = {
-  'pre-pregnancy': 'Pre-Preg',
-  pregnancy: 'Pregnancy',
-  kids: 'Kids',
-  menopause: 'Menopause',
+const BEHAVIOR_LABEL_KEYS: Record<Behavior, TranslationKey> = {
+  'pre-pregnancy': 'app_nlist_prePreg',
+  pregnancy: 'mode_pregnancy',
+  kids: 'mode_kids',
+  menopause: 'app_journey_menopause',
 }
 
 // Map Behavior → mode key used by getModeColor()
@@ -328,7 +350,7 @@ export default function NotificationsScreen() {
   const { colors, stickers, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const insets = useSafeAreaInsets()
   const mode = useModeStore((s) => s.mode)
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
@@ -383,7 +405,7 @@ export default function NotificationsScreen() {
       ),
     [notifications, activeFilter, activeBehavior],
   )
-  const sections = useMemo(() => groupByDate(filtered), [filtered])
+  const sections = useMemo(() => groupByDate(filtered, language), [filtered, language])
   const hasUnread = notifications.some((n) => !n.is_read)
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
@@ -475,7 +497,7 @@ export default function NotificationsScreen() {
         >
           {(['all', ...enrolledBehaviors] as BehaviorFilter[]).map((b) => {
             const isActive = activeBehavior === b
-            const label = b === 'all' ? 'All' : BEHAVIOR_LABELS[b]
+            const label = b === 'all' ? t('reminders_filterAll') : t(BEHAVIOR_LABEL_KEYS[b])
             const chipColor = b === 'all' ? accent : getModeColor(behaviorToMode(b), isDark)
             const count =
               b === 'all'
@@ -604,7 +626,7 @@ export default function NotificationsScreen() {
                       },
                 ]}
               >
-                {tab}
+                {categoryLabel(tab)}
               </Text>
               {count > 0 && tab !== 'All' && (
                 <Text style={[styles.filterCountText, diffuse
@@ -690,7 +712,7 @@ export default function NotificationsScreen() {
                       </Text>
                     ) : null}
                     <Text style={[styles.rowMeta, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
-                      {timeAgo(item.created_at)} · {cfg.category}
+                      {timeAgo(item.created_at, language)} · {cfg.category}
                     </Text>
                   </View>
                 </Pressable>
@@ -721,7 +743,7 @@ export default function NotificationsScreen() {
                     </Text>
                   ) : null}
                   <Text style={{ color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 6 }}>
-                    {timeAgo(item.created_at)} · {cfg.category}
+                    {timeAgo(item.created_at, language)} · {categoryLabel(cfg.category)}
                   </Text>
                 </View>
                 {!item.is_read && (
@@ -750,11 +772,11 @@ export default function NotificationsScreen() {
             <EmptyState
               icon={<MissingStickers.NotificationsEmpty size={88} />}
               iconBg={colors.surface}
-              title={activeFilter === 'All' ? 'No notifications yet' : `No ${activeFilter.toLowerCase()} notifications`}
+              title={activeFilter === 'All' ? t('app_nlist_emptyTitle') : t('app_nlist_emptyCategoryTitle')}
               message={
                 activeFilter === 'All'
-                  ? 'Grandma will notify you about wellness changes, routine reminders, health alerts, and more.'
-                  : 'Notifications in this category will appear here.'
+                  ? t('app_nlist_emptyBody')
+                  : t('app_nlist_emptyCategoryBody')
               }
             />
           )

@@ -37,7 +37,7 @@ import {
   encodeMenopauseTriggers,
   type MenopauseTrigger,
 } from '../../lib/menopauseTriggers'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import {
   ALL_MENOPAUSE_SYMPTOMS,
   menopauseSymptomLabel,
@@ -46,25 +46,27 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from './menoPalette'
-import { GROUP_META, GROUP_ORDER, GROUP_STICKER, symptomBlob, symptomStickerKey } from './menopauseIcons'
+import { GROUP_META, GROUP_ORDER, GROUP_STICKER, menopauseGroupLabel, symptomBlob, symptomStickerKey } from './menopauseIcons'
 import { useTheme } from '../../constants/theme'
 
-// ─── Copy (English literals — no menopause i18n keys exist yet) ──────────────
+// ─── Copy (getters: resolved at render so a language change applies live) ────
 
 const COPY = {
-  symptomPick: 'What are you noticing?',
-  severityQ: 'How intense is it?',
-  severityHint: ['Barely there', 'Mild', 'Moderate', 'Strong', 'Intense'],
-  noteLabel: 'Add a note (optional)',
-  notePlaceholder: 'Anything you want to remember…',
-  save: 'Save',
-  periodQ: 'How is the flow?',
-  periodNote: 'Logging a period also updates your “months since last period”.',
-  flowLight: 'Light',
-  flowMedium: 'Medium',
-  flowHeavy: 'Heavy',
-  savedError: 'Could not save',
-  savedErrorBody: 'Something went wrong saving your log. Please try again.',
+  get symptomPick() { return tNow('meno_f_symptom_pick') },
+  get severityQ() { return tNow('meno_f_severity_q') },
+  get severityHint() {
+    return [tNow('meno_f_sev_1'), tNow('meno_f_sev_2'), tNow('meno_f_sev_3'), tNow('meno_f_sev_4'), tNow('meno_f_sev_5')]
+  },
+  get noteLabel() { return tNow('meno_f_note_label') },
+  get notePlaceholder() { return tNow('meno_f_note_placeholder') },
+  get save() { return tNow('meno_f_save') },
+  get periodQ() { return tNow('meno_f_period_q') },
+  get periodNote() { return tNow('meno_f_period_note') },
+  get flowLight() { return tNow('meno_f_flow_light') },
+  get flowMedium() { return tNow('meno_f_flow_medium') },
+  get flowHeavy() { return tNow('meno_f_flow_heavy') },
+  get savedError() { return tNow('meno_f_save_error') },
+  get savedErrorBody() { return tNow('meno_f_save_error_body') },
 }
 
 // Site look (light) bits: Space Mono eyebrow + the white ink-outlined field.
@@ -147,12 +149,12 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
       <SiteEyebrow>{COPY.symptomPick}</SiteEyebrow>
       {GROUP_ORDER.map((group) => (
         <View key={group} style={{ gap: 4 }}>
-          <SiteEyebrow>{GROUP_META[group].label}</SiteEyebrow>
+          <SiteEyebrow>{menopauseGroupLabel(group)}</SiteEyebrow>
           <View style={styles.stickerWrap}>
             {ALL_MENOPAUSE_SYMPTOMS.filter((s) => s.group === group).map((s) => (
               <StickerChoice
                 key={s.id}
-                label={s.label}
+                label={menopauseSymptomLabel(s.id)}
                 sticker={menoSticker(s.id)}
                 on={symptomId === s.id}
                 onPress={() => setSymptomId(s.id)}
@@ -177,7 +179,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
             <View style={styles.groupHead}>
               <Character name={meta.icon} size={20} color={st[`${GROUP_STICKER[group]}Ink`]} bg={pal.bg} />
               <Text style={[styles.groupLabel, { color: pal.textMuted, fontFamily: pal.fontBodySemiBold }]}>
-                {meta.label}
+                {menopauseGroupLabel(group)}
               </Text>
             </View>
             <View style={styles.chipWrap}>
@@ -185,7 +187,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
                 <SelectableChip
                   key={s.id}
                   id={s.id}
-                  label={s.label}
+                  label={menopauseSymptomLabel(s.id)}
                   selected={symptomId === s.id}
                   onPress={() => setSymptomId(s.id)}
                   pal={pal}
@@ -290,7 +292,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
 
 type Flow = 'light' | 'medium' | 'heavy'
 
-const FLOW_OPTIONS: { id: Flow; label: string }[] = [
+const flowOptions = (): { id: Flow; label: string }[] => [
   { id: 'light', label: COPY.flowLight },
   { id: 'medium', label: COPY.flowMedium },
   { id: 'heavy', label: COPY.flowHeavy },
@@ -302,6 +304,7 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
   const site = !pal.diffuse
   const [flow, setFlow] = useState<Flow | null>(null)
   const [saving, setSaving] = useState(false)
+  useTranslation() // re-render on language change (COPY reads the current language)
 
   async function handleSave() {
     if (!flow || saving) return
@@ -342,7 +345,7 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
             <SiteEyebrow>{COPY.periodQ}</SiteEyebrow>
           </View>
           <View style={styles.severityRow}>
-            {FLOW_OPTIONS.map((o) => (
+            {flowOptions().map((o) => (
               <SiteChoice
                 key={o.id}
                 label={o.label}
@@ -368,7 +371,7 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
       </View>
 
       <View style={styles.chipWrap}>
-        {FLOW_OPTIONS.map((o) => (
+        {flowOptions().map((o) => (
           <SelectableChip
             key={o.id}
             label={o.label}

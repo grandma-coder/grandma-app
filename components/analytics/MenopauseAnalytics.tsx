@@ -40,7 +40,7 @@ import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { TRIGGER_LABEL_KEY, countMenopauseTriggers } from '../../lib/menopauseTriggers'
-import { monthsSinceDate, type MenopauseStage } from '../../lib/menopauseStage'
+import { monthsSinceDate } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 import { ReportEntryRow } from '../../lib/reports/ReportEntryRow'
@@ -51,11 +51,6 @@ import { SkeletonChartSection, SkeletonHeadline, SkeletonStatRows } from './shar
 const CHART_W = Dimensions.get('window').width - 80 // screen − card margins − card padding
 const MONTH_PIPS = 12
 
-const STAGE_WORD: Record<MenopauseStage, string> = {
-  peri: 'Perimenopause',
-  meno: 'Menopause',
-  post: 'Postmenopause',
-}
 
 /** 'YYYY-MM-DD' → 'M/D' short axis label. */
 function shortDate(iso: string): string {
@@ -109,11 +104,11 @@ export function MenopauseAnalytics() {
   const vasoTotal = vaso.reduce((a, d) => a + d.count, 0)
   const months = monthsSinceDate(lastPeriodDate, new Date())
 
-  const stageWord = stage ? STAGE_WORD[stage] : 'Your patterns'
+  const stageWord = stage ? t(`report_meno_stage_${stage}` as const) : t('meno_an_your_patterns')
   const heroLine =
     months == null
-      ? 'Tracking your symptoms over time'
-      : `${months} ${months === 1 ? 'month' : 'months'} since your last period`
+      ? t('meno_an_hero_none')
+      : t(months === 1 ? 'meno_an_hero_one' : 'meno_an_hero_other', { n: months })
 
   // Light: Grandma's weekly note — pure rules over the logs already loaded here.
   const notesLetter = useMemo(() => (palette.diffuse ? null : buildMenopauseNote({
@@ -147,10 +142,10 @@ export function MenopauseAnalytics() {
             <SiteEmpty />
           ) : (
             <>
-              <SiteSection eyebrow="HOT FLASHES & NIGHT SWEATS">
+              <SiteSection eyebrow={t('meno_an_vaso_title')}>
                 <View style={siteStyles.bigRow}>
                   <SiteSticker name="flame" size={40} />
-                  <SiteBigNumber value={String(vasoTotal)} unit={vasoTotal === 1 ? 'event in total' : 'events in total'} />
+                  <SiteBigNumber value={String(vasoTotal)} unit={t(vasoTotal === 1 ? 'meno_an_events_one' : 'meno_an_events_other')} />
                 </View>
                 {vaso.length >= 1 ? (
                   <>
@@ -161,12 +156,12 @@ export function MenopauseAnalytics() {
                     )}
                   </>
                 ) : (
-                  <SiteNote>Log a hot flash or night sweat to see your rhythm.</SiteNote>
+                  <SiteNote>{t('meno_an_vaso_empty')}</SiteNote>
                 )}
               </SiteSection>
 
               {symptomStats.length > 0 && (
-                <SiteSection eyebrow="TOP SYMPTOMS">
+                <SiteSection eyebrow={t('meno_an_top_title')}>
                   <SiteNote>{t('menoAnalytics_symptomsBarNote')}</SiteNote>
                   {symptomStats.slice(0, 6).map((s, i) => (
                     <SiteSymptomRow
@@ -176,18 +171,18 @@ export function MenopauseAnalytics() {
                       label={menopauseSymptomLabel(s.id as MenopauseSymptomId)}
                       count={s.count}
                       max={symptomStats[0].count}
-                      sub={s.avgSeverity > 0 ? `avg ${s.avgSeverity.toFixed(1)}/5` : `${s.count === 1 ? 'time' : 'times'}`}
+                      sub={s.avgSeverity > 0 ? t('meno_an_avg', { avg: s.avgSeverity.toFixed(1) }) : t(s.count === 1 ? 'meno_an_time_one' : 'meno_an_time_other')}
                       tone={palette.accentSoft}
                     />
                   ))}
                 </SiteSection>
               )}
 
-              <SiteSection eyebrow="SLEEP & MOOD SEVERITY">
+              <SiteSection eyebrow={t('meno_an_sleepmood_title')}>
                 <SiteNote>{t('menoAnalytics_severityNote')}</SiteNote>
-                <SiteTrend sticker="zz" title="Sleep trouble" series={sleepSeries} tone={palette.accentSoft} />
+                <SiteTrend sticker="zz" title={t('gn_meno_sym_sleep')} series={sleepSeries} tone={palette.accentSoft} />
                 <View style={{ height: 14 }} />
-                <SiteTrend sticker="face1" title="Low mood" series={moodSeries} tone={palette.accentSoft} />
+                <SiteTrend sticker="face1" title={t('gn_meno_sym_low_mood')} series={moodSeries} tone={palette.accentSoft} />
               </SiteSection>
             </>
           )}
@@ -572,11 +567,12 @@ function SiteBigNumber({ value, unit }: { value: string; unit?: string }) {
 }
 
 function SiteHero({ stageWord, heroLine }: { stageWord: string; heroLine: string }) {
+  const { t } = useTranslation()
   const { colors, font } = useTheme()
   return (
     <View style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <View style={{ flex: 1 }}>
-        <SiteEyebrow>YOUR MENOPAUSE</SiteEyebrow>
+        <SiteEyebrow>{t('meno_an_eyebrow')}</SiteEyebrow>
         <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: font.display, fontSize: 30, lineHeight: 36, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text, marginTop: 4 }}>
           {stageWord}
         </Text>
@@ -589,13 +585,14 @@ function SiteHero({ stageWord, heroLine }: { stageWord: string; heroLine: string
 
 /** Months since last period: one big number + 12 thin ink-outlined segments. */
 function SiteMonths({ months, palette }: { months: number | null; palette: MenoPalette }) {
+  const { t } = useTranslation()
   const { colors, font } = useTheme()
   const filled = months == null ? 0 : Math.min(months, MONTH_PIPS)
   return (
-    <SiteSection eyebrow="SINCE YOUR LAST PERIOD">
+    <SiteSection eyebrow={t('meno_an_since_title')}>
       <View style={siteStyles.bigRow}>
         <SiteSticker name="cal" size={40} />
-        <SiteBigNumber value={months == null ? '—' : String(months)} unit={months == null ? 'log your last period' : months === 1 ? 'month' : 'months'} />
+        <SiteBigNumber value={months == null ? '—' : String(months)} unit={months == null ? t('meno_an_log_last') : t(months === 1 ? 'meno_an_month_one' : 'meno_an_month_other')} />
       </View>
       <View style={siteStyles.pipRow}>
         {Array.from({ length: MONTH_PIPS }, (_, i) => (
@@ -604,7 +601,7 @@ function SiteMonths({ months, palette }: { months: number | null; palette: MenoP
       </View>
       {months != null && months >= MONTH_PIPS ? (
         <Text style={{ fontFamily: font.body, fontSize: 12, lineHeight: 18, color: colors.textSecondary, marginTop: 10 }}>
-          Many people consider 12 months a natural milestone — it&apos;s a conversation to have with your clinician, not a diagnosis here.
+          {t('meno_an_milestone')}
         </Text>
       ) : null}
     </SiteSection>
@@ -690,13 +687,14 @@ function SiteSymptomRow({ first, sticker, label, count, max, sub, tone }: { firs
 }
 
 function SiteEmpty() {
+  const { t } = useTranslation()
   const { colors, font } = useTheme()
   return (
     <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingVertical: 36, gap: 8 }}>
       <SiteSticker name="bars" size={64} />
-      <Text style={{ fontFamily: font.display, fontSize: 22, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text, marginTop: 6 }}>No patterns yet</Text>
+      <Text style={{ fontFamily: font.display, fontSize: 22, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text, marginTop: 6 }}>{t('meno_an_empty_title')}</Text>
       <Text style={{ fontFamily: font.body, fontSize: 14, lineHeight: 20, textAlign: 'center', color: colors.textSecondary }}>
-        Log a few symptoms and your hot-flash rhythm, top symptoms, and sleep &amp; mood trends will show up here.
+        {t('meno_an_empty_body')}
       </Text>
     </View>
   )

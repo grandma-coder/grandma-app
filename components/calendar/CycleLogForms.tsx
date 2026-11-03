@@ -22,7 +22,7 @@ import { supabase } from '../../lib/supabase'
 import {
   ALL_SYMPTOMS, suggestedForPhase, symptomLabel, type SymptomId,
 } from '../../lib/cycleSymptoms'
-import { phaseHint, saveLabel } from '../../lib/cycleLogForms'
+import { phaseHint, saveLabel, appIntlLocale } from '../../lib/cycleLogForms'
 import { askGrandmaAboutSymptoms, canAskGrandma } from '../../lib/symptomAssist'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
@@ -32,7 +32,7 @@ import { Smiley, Sad, Sleepy } from '../ui/Stickers'
 import { Character, type MoodExpression } from '../characters/Characters'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { StickerChoice, MoreSection } from './QuickLogKit'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as translate } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 import { assertNotFuture } from '../../lib/futureDate'
 
@@ -366,11 +366,11 @@ function phaseColors(phase: CyclePhase, stickers: ReturnType<typeof useTheme>['s
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function formatDate(d: string): string {
   const dt = new Date(d + 'T12:00:00')
-  return dt.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  return dt.toLocaleDateString(appIntlLocale(), { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
 function phaseTitle(phase: CyclePhase): string {
-  return phase[0].toUpperCase() + phase.slice(1)
+  return translate(`cyc_phase_${phase}` as const)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -407,7 +407,7 @@ export function PeriodStartForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -488,7 +488,7 @@ export function PeriodEndForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -572,7 +572,7 @@ export function SymptomsForm({
       await toggle.commit()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     }
   }
 
@@ -786,7 +786,7 @@ export function MoodForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -883,7 +883,7 @@ export function BbtForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -969,7 +969,7 @@ export function LhForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1048,7 +1048,7 @@ export function CmForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1121,7 +1121,7 @@ export function IntimacyForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1204,7 +1204,7 @@ export function OvulationForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1278,7 +1278,7 @@ export function PregnancyTestForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1348,7 +1348,7 @@ export function SexDriveForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1418,7 +1418,7 @@ export function ClotsForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1520,7 +1520,7 @@ export function WeightForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1560,7 +1560,7 @@ export function WaterForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1610,7 +1610,7 @@ export function ActivityForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Save failed')
+      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
     } finally {
       setSaving(false)
     }

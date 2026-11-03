@@ -72,6 +72,7 @@ interface BabyHeroCarouselProps {
 
 function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarouselProps) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const flatListRef = useRef<FlatList<HeroItem>>(null)
   const [visibleWeek, setVisibleWeek] = useState(currentWeek)
 
@@ -99,10 +100,10 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
       const isCurrent = item.week === currentWeek
       const daysLabel =
         isCurrent && daysToGo !== null
-          ? `${daysToGo} days to go`
+          ? t('kp_ph_daysToGo', { n: daysToGo })
           : item.week < currentWeek
-          ? 'past week'
-          : `${item.week - currentWeek} weeks ahead`
+          ? t('kp_ph_pastWeek')
+          : t('kp_ph_weeksAhead', { n: item.week - currentWeek })
 
       return (
         <View style={{ width: SCREEN_W, paddingHorizontal: 20 }}>
@@ -115,7 +116,7 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
         </View>
       )
     },
-    [currentWeek, daysToGo, onPressWeek],
+    [currentWeek, daysToGo, onPressWeek, t],
   )
 
   return (

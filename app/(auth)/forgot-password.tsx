@@ -62,7 +62,7 @@ export default function ForgotPassword() {
       }
       setSent(true)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Network error'
+      const msg = e instanceof Error ? e.message : t('error_network')
       Alert.alert(t('auth_couldntSendReset'), msg)
     } finally {
       setLoading(false)
@@ -203,9 +203,9 @@ export default function ForgotPassword() {
                   autoCorrect={false}
                   style={[styles.inputText, { fontFamily: font.body, color: ink }]}
                   selectionColor={ink}
-                  placeholder="your@email.com"
+                  placeholder={t('auth_emailPlaceholder')}
                   placeholderTextColor={ink4}
-                  accessibilityLabel="Email address"
+                  accessibilityLabel={t('careCircle_field_email_address')}
                 />
               </HandDrawnBox>
 

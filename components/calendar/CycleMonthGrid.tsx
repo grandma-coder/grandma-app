@@ -18,6 +18,7 @@ import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../.
 import { SiteSticker } from '../stickers/SiteSticker'
 import { CyclePhaseGlyph, CYCLE_PHASE_ORDER } from './CyclePhaseGlyph'
 import { useTranslation } from '../../lib/i18n'
+import { appIntlLocale } from '../../lib/cycleLogForms'
 
 interface Props {
   cycleConfig: CycleConfig
@@ -176,7 +177,7 @@ export function CycleMonthGrid({
   const { logsByDate } = useCycleLogDates(monthStart, monthEnd)
 
   const monthLabel = new Date(visibleMonth.year, visibleMonth.month, 1)
-    .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    .toLocaleDateString(appIntlLocale(), { month: 'long', year: 'numeric' })
 
   // Days-of-month in menstruation phase → accent period dots on the dot grid.
   const periodDays = useMemo(() => {
@@ -261,7 +262,7 @@ export function CycleMonthGrid({
       </View>
 
       <View style={styles.dowRow}>
-        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => new Date(2024, 0, 1 + i).toLocaleDateString(appIntlLocale(), { weekday: 'narrow' })).map((d, i) => (
           <Text
             key={i}
             style={[styles.dow, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}

@@ -21,6 +21,7 @@ import { useModeStore } from '../../store/useModeStore'
 import { useChildStore } from '../../store/useChildStore'
 import { ModeTrying, ModePregnant, ModeParent, ModeMenopause } from '../stickers/RewardStickers'
 import { MonoCaps } from '../ui/Typography'
+import { useTranslation } from '../../lib/i18n'
 
 const ICON_BY_BEHAVIOR = {
   'pre-pregnancy': ModeTrying,
@@ -35,6 +36,7 @@ export function HomeJourneySwitcher() {
   const { colors, radius, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { t } = useTranslation()
 
   const currentBehavior = useBehaviorStore((s) => s.currentBehavior)
   const enrolled = useBehaviorStore((s) => s.enrolledBehaviors)
@@ -61,10 +63,10 @@ export function HomeJourneySwitcher() {
 
   const labelFor = (b: Behavior) =>
     b === 'pre-pregnancy'
-      ? (cycleIntent === 'ttc' ? 'Dreaming' : 'Cycle')
-      : b === 'pregnancy' ? 'Expecting'
-      : b === 'menopause' ? 'Menopause'
-      : 'Raising'
+      ? (cycleIntent === 'ttc' ? t('app_journey_dreaming') : t('onboardingJourney_trying'))
+      : b === 'pregnancy' ? t('app_journey_expecting')
+      : b === 'menopause' ? t('app_journey_menopause')
+      : t('app_journey_raising')
 
   const ActiveIcon = ICON_BY_BEHAVIOR[currentBehavior]
   // Site look: the same sticker each journey wears on the journey picker.
@@ -140,7 +142,7 @@ export function HomeJourneySwitcher() {
             {diffuse ? (
               <Text style={[styles.header, { fontFamily: diffuseFont.mono, color: inkMuted, letterSpacing: 1.6 }]}>SWITCH JOURNEY</Text>
             ) : (
-              <MonoCaps color={inkMuted} style={styles.header}>SWITCH JOURNEY</MonoCaps>
+              <MonoCaps color={inkMuted} style={styles.header}>{t('app_journey_switchTitle')}</MonoCaps>
             )}
             {ORDER.map((b) => {
               const Icon = ICON_BY_BEHAVIOR[b]

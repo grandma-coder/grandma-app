@@ -18,7 +18,7 @@ import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../lib/cycleLogic'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import { supabase } from '../../lib/supabase'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tr } from '../../lib/i18n'
 import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 
 interface Stat {
@@ -116,19 +116,19 @@ function useCycleStats(pillarId: PillarId): Stat[] | null {
 
   if (pillarId === 'fertility') {
     return [
-      { value: String(info.cycleDay), label: 'cycle day' },
+      { value: String(info.cycleDay), label: tr('cyc_metric_cycleDay') },
       {
         value: String(Math.abs(info.daysUntilOvulation)),
-        label: info.daysUntilOvulation > 0 ? 'days to ovulation' : 'days since ovulation',
+        label: info.daysUntilOvulation > 0 ? tr('cyc_metric_daysToOvulation') : tr('cyc_metric_daysSinceOvulation'),
       },
-      { value: `${info.fertileStart}–${info.fertileEnd}`, label: 'fertile window' },
+      { value: `${info.fertileStart}–${info.fertileEnd}`, label: tr('cyc_metric_fertileWindow') },
     ]
   }
 
   return [
-    { value: String(info.cycleDay), label: 'cycle day' },
-    { value: info.phaseLabel, label: 'phase' },
-    { value: String(info.daysUntilPeriod), label: 'days to period' },
+    { value: String(info.cycleDay), label: tr('cyc_metric_cycleDay') },
+    { value: info.phaseLabel, label: tr('cyc_metric_phase') },
+    { value: String(info.daysUntilPeriod), label: tr('cyc_metric_daysToPeriod') },
   ]
 }
 
@@ -170,9 +170,9 @@ function usePregnancyStats(pillarId: PillarId): Stat[] | null {
   if (pillarId === 'pregnancy-nutrition') {
     const water = (todayLogs as any)?.water?.value ?? 0
     return [
-      { value: String(week ?? '—'), label: 'week' },
-      { value: `${water}`, label: 'water today' },
-      ...(daysToGo !== null ? [{ value: String(daysToGo), label: 'days to go' }] : []),
+      { value: String(week ?? '—'), label: tr('cyc_metric_week') },
+      { value: `${water}`, label: tr('cyc_metric_waterToday') },
+      ...(daysToGo !== null ? [{ value: String(daysToGo), label: tr('cyc_metric_daysToGo') }] : []),
     ]
   }
 
@@ -180,15 +180,15 @@ function usePregnancyStats(pillarId: PillarId): Stat[] | null {
     const mood = (todayLogs as any)?.mood?.value
     const moodValue = typeof mood === 'string' ? mood : null
     return [
-      { value: String(week ?? '—'), label: 'week' },
-      ...(moodValue ? [{ value: moodValue, label: 'mood today' }] : []),
-      ...(daysToGo !== null ? [{ value: String(daysToGo), label: 'days to go' }] : []),
+      { value: String(week ?? '—'), label: tr('cyc_metric_week') },
+      ...(moodValue ? [{ value: moodValue, label: tr('cyc_metric_moodToday') }] : []),
+      ...(daysToGo !== null ? [{ value: String(daysToGo), label: tr('cyc_metric_daysToGo') }] : []),
     ]
   }
 
   return [
-    { value: String(week ?? '—'), label: 'week' },
-    ...(daysToGo !== null ? [{ value: String(daysToGo), label: 'days to go' }] : []),
+    { value: String(week ?? '—'), label: tr('cyc_metric_week') },
+    ...(daysToGo !== null ? [{ value: String(daysToGo), label: tr('cyc_metric_daysToGo') }] : []),
   ]
 }
 
@@ -223,14 +223,14 @@ function useKidsStats(pillarId: PillarId): Stat[] | null {
 
   const ageLabel = (() => {
     if (ageMonths === null) return '—'
-    if (ageMonths < 24) return `${ageMonths} mo`
-    return `${Math.floor(ageMonths / 12)} yr`
+    if (ageMonths < 24) return tr('cyc_metric_ageMonths', { n: ageMonths })
+    return tr('cyc_metric_ageYears', { n: Math.floor(ageMonths / 12) })
   })()
 
   return [
-    { value: activeChild.name, label: 'child' },
-    { value: ageLabel, label: 'age' },
-    ...(children.length > 1 ? [{ value: String(children.length), label: 'children' }] : []),
+    { value: activeChild.name, label: tr('cyc_metric_child') },
+    { value: ageLabel, label: tr('cyc_metric_age') },
+    ...(children.length > 1 ? [{ value: String(children.length), label: tr('cyc_metric_children') }] : []),
   ]
 }
 

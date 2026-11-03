@@ -42,7 +42,7 @@ import { ArcDial } from '../../../components/ui/diffuse/pickers/ArcDial'
 import { BloomChips } from '../../../components/ui/diffuse/pickers/BloomChips'
 import { AvatarBloomGrid } from '../../../components/ui/diffuse/pickers/AvatarBloomGrid'
 import { ChoiceTimeline } from '../../../components/ui/diffuse/pickers/ChoiceTimeline'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, t as tNow } from '../../../lib/i18n'
 import { searchCountries, countryByCode } from '../../../lib/countries'
 import { AvatarView, AvatarPickerModal, isIconAvatar, buildIconAvatarValue } from '../../../components/ui/AvatarPicker'
 import { PHOTO_BUCKETS } from '../../../lib/photoSigning'
@@ -330,8 +330,8 @@ export default function KidsOnboarding() {
 
       if (insertError) {
         Alert.alert(
-          'Could not save your kids',
-          insertError.message || 'Please check your connection and try again.',
+          tNow('kp_ob_saveFailedTitle'),
+          insertError.message || tNow('kp_ob_checkConnection'),
         )
         // eslint-disable-next-line no-console
         console.error('children insert failed:', insertError.message)
@@ -405,7 +405,7 @@ export default function KidsOnboarding() {
           // retry rather than navigating home into a broken state.
           // eslint-disable-next-line no-console
           console.error('child_caregivers insert failed after retry:', ccError.message)
-          throw new Error('We couldn\'t finish setting up access to your child profile.')
+          throw new Error(tNow('kp_ob_accessFailed'))
         }
 
         // Skeleton appspace integration (best-effort — never blocks onboarding).
@@ -495,8 +495,8 @@ export default function KidsOnboarding() {
       const msg = e instanceof Error ? e.message : String(e)
       console.warn('Failed to save kids onboarding:', msg)
       Alert.alert(
-        "Couldn't finish setup",
-        `${msg}\n\nPlease check your connection and try again. Your answers are still here.`
+        tNow('kp_ob_finishFailedTitle'),
+        tNow('kp_ob_finishFailedBody', { msg })
       )
       // Do NOT clear the draft or navigate — let the user retry. Release the
       // submit guard so the retry tap is accepted.

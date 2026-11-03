@@ -37,14 +37,16 @@ import { isFutureDate } from '../../lib/futureDate'
 import { LatePeriodCard } from './cycle/LatePeriodCard'
 import { CycleLogRouter } from '../calendar/CycleLogRouter'
 import { useQueryClient } from '@tanstack/react-query'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as translate } from '../../lib/i18n'
+import { appIntlLocale } from '../../lib/cycleLogForms'
 import { Skeleton, SkeletonRing } from '../ui/Skeleton'
 
 function getMicroLabel(): string {
   const d = new Date()
-  const day = d.toLocaleDateString('en-US', { weekday: 'long' })
-  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return `${day.toUpperCase()} · ${date.toUpperCase()} · CYCLE`
+  const loc = appIntlLocale()
+  const day = d.toLocaleDateString(loc, { weekday: 'long' })
+  const date = d.toLocaleDateString(loc, { month: 'short', day: 'numeric' })
+  return translate('cyc_home_micro', { day: day.toUpperCase(), date: date.toUpperCase() })
 }
 
 interface CycleHomeProps {
@@ -61,7 +63,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   const bg = diffuse ? dt.colors.bg : colors.bg
   const insets = useSafeAreaInsets()
   const bottomInset = useScrollBottomInset(insets.bottom + 120)
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   // Only read for the pinned essentials card's childId (caregiver path).
   const activeChild = useChildStore((s) => s.activeChild)
   // Owner (caregiverView null) sees every card; a caregiver sees only the shared
@@ -86,7 +88,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   const noPeriodYet = !diffuse && !!history && history.cycles.length === 0
   // Date-based label only changes day-to-day; memo it so it isn't rebuilt on
   // every render (string formatting via toLocaleDateString twice per call).
-  const microLabel = useMemo(() => getMicroLabel(), [])
+  const microLabel = useMemo(() => getMicroLabel(), [language])
 
   // User cycle settings override the measured average + hardcoded defaults.
   const cycleSettings = useCycleSettingsStore()
@@ -309,7 +311,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
         title={selectedDate === todayStr
           ? t('cycleLog_todayTitle')
           : t('cycleLog_dateTitle', {
-              date: new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+              date: new Date(selectedDate + 'T12:00:00').toLocaleDateString(appIntlLocale(), { weekday: 'short', month: 'short', day: 'numeric' }),
             })}
       />
       <CycleLogRouter

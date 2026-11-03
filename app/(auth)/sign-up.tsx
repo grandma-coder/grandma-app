@@ -77,7 +77,7 @@ export default function SignUp() {
       // unmount the toast provider host and dismiss the message early).
       setTimeout(() => router.replace('/(auth)/sign-in'), 3200)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Network error'
+      const msg = e instanceof Error ? e.message : t('error_network')
       Alert.alert(t('auth_signUpFailed'), msg)
     } finally {
       setLoading(false)

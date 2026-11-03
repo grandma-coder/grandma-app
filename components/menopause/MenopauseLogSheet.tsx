@@ -18,6 +18,7 @@ import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { InkBackButton } from '../ui/InkBackButton'
 import { ALL_MENOPAUSE_SYMPTOMS, menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../../lib/menopauseSymptoms'
 import { symptomBlob, symptomStickerKey } from './menopauseIcons'
+import { useTranslation } from '../../lib/i18n'
 
 export type MenopauseLogPick = MenopauseSymptomId | 'period'
 
@@ -44,6 +45,7 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
 
   const paper = isDark ? colors.surface : '#FFFEF8'
   const paperBorder = isDark ? colors.border : 'rgba(20,19,19,0.08)'
@@ -55,14 +57,14 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
     onPick(type)
   }
 
-  const heading = title ?? 'Log a symptom'
+  const heading = title ?? t('meno_h_log_symptom')
 
   // ── Site look (light): ink-topped sheet, card-less sticker launchers ──────
   if (!diffuse) {
     const siteInk = colors.text
     const launchers: { key: string; label: string; sticker: SiteStickerName; type: MenopauseLogPick }[] = [
       ...ALL_MENOPAUSE_SYMPTOMS.map((s) => ({ key: s.id, label: menopauseSymptomLabel(s.id), sticker: menoSticker(s.id), type: s.id as MenopauseLogPick })),
-      ...(isPeri ? [{ key: 'period', label: 'Period', sticker: menoSticker('period'), type: 'period' as MenopauseLogPick }] : []),
+      ...(isPeri ? [{ key: 'period', label: t('meno_s_period'), sticker: menoSticker('period'), type: 'period' as MenopauseLogPick }] : []),
     ]
     return (
       <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
@@ -85,7 +87,7 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
           </View>
           <View style={styles.header}>
             <Text style={{ flex: 1, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase', color: siteInk }}>{heading}</Text>
-            <InkBackButton onPress={onClose} ink={siteInk} paper={colors.surface} icon="close" label="Close" style={{ marginBottom: 0 }} />
+            <InkBackButton onPress={onClose} ink={siteInk} paper={colors.surface} icon="close" label={t('meno_s_close')} style={{ marginBottom: 0 }} />
           </View>
           <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 4 }}>

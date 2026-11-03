@@ -17,6 +17,7 @@
  * - Routine Manager: full CRUD against pregnancy_routines table
  */
 
+import { dateLoc, weekdayShort } from '../../lib/kpLocale'
 import { PREGNANCY_LOG_STICKER_MAP } from '../../lib/logStickers'
 import { healthLogText } from '../../lib/kidsHealthLogText'
 import { PREGNANCY_LOG_STICKER } from './PregnancyLogRouter'
@@ -108,7 +109,7 @@ import { WeekDetailModal } from '../home/pregnancy/WeekDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import { PregnancyLogRouter, type PregnancyLogType } from './PregnancyLogRouter'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { InkBackButton } from '../ui/InkBackButton'
 import { PillButton } from '../ui/PillButton'
@@ -122,7 +123,6 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // Legacy accent constants — kept as locals so existing inline refs still work.
 // Sourced from the new sticker / brand palette (no neons).
 const COLOR_GREEN = stickersLight.green     // #BDD48C
@@ -147,21 +147,21 @@ const TRIMESTER_COLOR: Record<1 | 2 | 3, string> = {
 type ViewTab = 'timeline' | 'appointments'
 
 const LOG_FORM_TITLE: Record<PregnancyLogType, string> = {
-  mood: 'Log Mood',
-  weight: 'Log Weight',
-  symptom: 'Log Symptoms',
-  appointment: 'Log Appointment',
-  exam_result: 'Log Exam Result',
-  kick_count: 'Count Kicks',
-  sleep: 'Log Sleep',
-  exercise: 'Log Movement',
-  nutrition: 'Log Nutrition',
-  kegel: 'Log Kegel',
-  water: 'Log Water',
-  vitamins: 'Log Vitamins',
-  nesting: 'Nesting Task',
-  birth_prep: 'Birth Prep',
-  contraction: 'Log Contraction',
+  get mood() { return tNow('pregnancy_logTitle_mood') },
+  get weight() { return tNow('pregnancy_logTitle_weight') },
+  get symptom() { return tNow('pregnancy_logTitle_symptom') },
+  get appointment() { return tNow('pregnancy_logTitle_appointment') },
+  get exam_result() { return tNow('pregnancy_logTitle_examResult') },
+  get kick_count() { return tNow('pregnancy_logTitle_kicks') },
+  get sleep() { return tNow('pregnancy_logTitle_sleep') },
+  get exercise() { return tNow('pregnancy_logTitle_exercise') },
+  get nutrition() { return tNow('pregnancy_logTitle_nutrition') },
+  get kegel() { return tNow('pregnancy_logTitle_kegel') },
+  get water() { return tNow('pregnancy_logTitle_water') },
+  get vitamins() { return tNow('pregnancy_logTitle_vitamins') },
+  get nesting() { return tNow('pregnancy_logTitle_nesting') },
+  get birth_prep() { return tNow('pregnancy_logTitle_birthPrep') },
+  get contraction() { return tNow('pregnancy_logTitle_contraction') },
 }
 
 interface PregnancyRoutine {
@@ -178,21 +178,21 @@ interface PregnancyRoutine {
 // ─── LOG_META ─────────────────────────────────────────────────────────────────
 
 const LOG_META: Record<string, { label: string; icon: typeof Smile; color: string }> = {
-  mood:        { label: 'Mood',        icon: Smile,        color: brand.pregnancy },
-  symptom:     { label: 'Symptom',     icon: AlertCircle,  color: COLOR_ORANGE },
-  vitamins:    { label: 'Vitamins',    icon: Pill,         color: COLOR_GREEN },
-  water:       { label: 'Water',       icon: Droplets,     color: COLOR_BLUE },
-  sleep:       { label: 'Sleep',       icon: Moon,         color: brand.pregnancy },
-  exercise:    { label: 'Exercise',    icon: Dumbbell,     color: COLOR_GREEN },
-  kick_count:  { label: 'Kicks',       icon: Baby,         color: brand.pregnancy },
-  weight:      { label: 'Weight',      icon: Scale,        color: COLOR_AMBER },
-  appointment: { label: 'Appointment', icon: Calendar,     color: COLOR_AMBER },
-  exam_result: { label: 'Exam Result', icon: FlaskConical, color: brand.phase.ovulation },
-  nutrition:   { label: 'Nutrition',   icon: Leaf,         color: COLOR_GREEN },
-  kegel:       { label: 'Kegel',       icon: Zap,          color: brand.pregnancy },
-  nesting:     { label: 'Nesting',     icon: Home,         color: COLOR_ORANGE },
-  birth_prep:  { label: 'Birth Prep',  icon: Package,      color: COLOR_ORANGE },
-  contraction: { label: 'Contraction', icon: Timer,        color: brand.error },
+  mood:        { get label() { return tNow('kp_pc_m_mood') },        icon: Smile,        color: brand.pregnancy },
+  symptom:     { get label() { return tNow('kp_pc_m_symptom') },     icon: AlertCircle,  color: COLOR_ORANGE },
+  vitamins:    { get label() { return tNow('kp_pc_m_vitamins') },    icon: Pill,         color: COLOR_GREEN },
+  water:       { get label() { return tNow('kp_pc_m_water') },       icon: Droplets,     color: COLOR_BLUE },
+  sleep:       { get label() { return tNow('kp_pc_m_sleep') },       icon: Moon,         color: brand.pregnancy },
+  exercise:    { get label() { return tNow('kp_pc_m_exercise') },    icon: Dumbbell,     color: COLOR_GREEN },
+  kick_count:  { get label() { return tNow('kp_pc_m_kick_count') },       icon: Baby,         color: brand.pregnancy },
+  weight:      { get label() { return tNow('kp_pc_m_weight') },      icon: Scale,        color: COLOR_AMBER },
+  appointment: { get label() { return tNow('kp_pc_m_appointment') }, icon: Calendar,     color: COLOR_AMBER },
+  exam_result: { get label() { return tNow('kp_pc_m_exam_result') }, icon: FlaskConical, color: brand.phase.ovulation },
+  nutrition:   { get label() { return tNow('kp_pc_m_nutrition') },   icon: Leaf,         color: COLOR_GREEN },
+  kegel:       { get label() { return tNow('kp_pc_m_kegel') },       icon: Zap,          color: brand.pregnancy },
+  nesting:     { get label() { return tNow('kp_pc_m_nesting') },     icon: Home,         color: COLOR_ORANGE },
+  birth_prep:  { get label() { return tNow('kp_pc_m_birth_prep') },  icon: Package,      color: COLOR_ORANGE },
+  contraction: { get label() { return tNow('kp_pc_m_contraction') }, icon: Timer,        color: brand.error },
 }
 
 const MOOD_EMOJI: Record<string, string> = {
@@ -200,7 +200,12 @@ const MOOD_EMOJI: Record<string, string> = {
 }
 
 const MOOD_LABEL: Record<string, string> = {
-  excited: 'Excited', happy: 'Happy', okay: 'Okay', anxious: 'Anxious', energetic: 'Energetic', sad: 'Sad',
+  get excited() { return tNow('preg_mood_excited') },
+  get happy() { return tNow('preg_mood_happy') },
+  get okay() { return tNow('preg_mood_okay') },
+  get anxious() { return tNow('preg_mood_anxious') },
+  get energetic() { return tNow('preg_mood_energetic') },
+  get sad() { return tNow('kp_pc_m_sad') },
 }
 
 /** Maps a saturated meta color to a fixed pastel hex usable as a sticker fill. */
@@ -265,13 +270,13 @@ function fmtTime(t: string): string {
 
 function formatTime(isoStr: string): string {
   const d = new Date(isoStr)
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return d.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
 function formatDayLabel(dateStr: string, todayStr: string): string {
-  if (dateStr === todayStr) return 'Today'
+  if (dateStr === todayStr) return tNow('common_today')
   const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
 function timeStrToHours(t: string): number {
@@ -314,12 +319,12 @@ function formatLogValue(log: PregnancyCalendarLog): string {
       if (v.mood)      parts.push(v.mood)
       if (v.level)     parts.push(v.level)
       if (v.value)     parts.push(String(v.value))
-      if (v.duration)  parts.push(`${v.duration} min`)
+      if (v.duration)  parts.push(tNow('kp_pc_nMin', { n: v.duration }))
       if (v.amount)    parts.push(`${v.amount}`)
-      if (v.count)     parts.push(`${v.count} kicks`)
+      if (v.count)     parts.push(tNow('kp_pc_nKicks', { n: v.count }))
       if (v.quality)   parts.push(v.quality)
-      if (v.sets)      parts.push(`${v.sets} sets`)
-      if (v.reps)      parts.push(`${v.reps} reps`)
+      if (v.sets)      parts.push(tNow('kp_pc_nSets', { n: v.sets }))
+      if (v.reps)      parts.push(tNow('kp_pc_nReps', { n: v.reps }))
       if (v.name)      parts.push(v.name)
       // Unknown shape: readable leftovers only — never the raw JSON.
       return parts.join(' · ') || healthLogText(log.value, null).text || ''
@@ -670,7 +675,7 @@ function RoutineManager({
     setSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Not authenticated')
+      if (!session) throw new Error(tNow('kp_pk_notAuth'))
       if (editingRoutine) {
         const { error } = await supabase.from('pregnancy_routines').update({
           type: form.type,
@@ -694,7 +699,7 @@ function RoutineManager({
       setEditingRoutine(null)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('pregCal_alertSaveError'), e instanceof Error ? e.message : 'Failed to save')
+      Alert.alert(t('pregCal_alertSaveError'), e instanceof Error ? e.message : t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -719,7 +724,7 @@ function RoutineManager({
       if (error) throw error
       onDeleted()
     } catch (e: unknown) {
-      Alert.alert(t('pregCal_alertDeleteError'), e instanceof Error ? e.message : 'Please check your connection and try again.')
+      Alert.alert(t('pregCal_alertDeleteError'), e instanceof Error ? e.message : t('kp_ob_checkConnection'))
     } finally {
       setDeleting(false)
       setConfirmDeleteId(null)
@@ -750,7 +755,7 @@ function RoutineManager({
         <TextInput
           value={form.name}
           onChangeText={(t) => setForm((p) => ({ ...p, name: t }))}
-          placeholder="Routine name"
+          placeholder={tNow('kp_pc_routineName')}
           placeholderTextColor={diffuse ? dt.colors.ink3 : colors.textMuted}
           underlineColorAndroid="transparent"
           style={{
@@ -875,7 +880,7 @@ function RoutineManager({
         <TextInput
           value={form.name}
           onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
-          placeholder="Routine name"
+          placeholder={tNow('kp_pc_routineName')}
           placeholderTextColor={colors.textMuted}
           underlineColorAndroid="transparent"
           style={[siteField(colors, font.bodySemiBold), { height: 52 }]}
@@ -960,8 +965,8 @@ function RoutineManager({
                     <SiteEyebrow style={{ marginBottom: 6 }}>{t('pregCal_active_routines', { count: routines.length })}</SiteEyebrow>
                     {routines.map((r, idx) => {
                       const daysLabel = r.days_of_week.length === 7
-                        ? 'Every day'
-                        : r.days_of_week.map((d) => WEEKDAYS[d]).join(', ')
+                        ? tNow('kp_pc_everyDay')
+                        : r.days_of_week.map((d) => weekdayShort(d)).join(', ')
                       return (
                         <View
                           key={r.id}
@@ -1179,8 +1184,8 @@ function RoutineManager({
                     const meta = LOG_META[r.type] ?? { label: r.type, icon: Calendar, color: colors.textMuted }
                     const Icon = meta.icon
                     const daysLabel = r.days_of_week.length === 7
-                      ? 'Every day'
-                      : r.days_of_week.map((d) => WEEKDAYS[d]).join(', ')
+                      ? tNow('kp_pc_everyDay')
+                      : r.days_of_week.map((d) => weekdayShort(d)).join(', ')
                     if (diffuse) {
                       return (
                         <View
@@ -1564,21 +1569,21 @@ function RoutineManager({
 
 /** Map pregnancy log types → sticker tint key + header label (matches add-log forms) */
 const DETAIL_STICKER: Record<string, { tintKey: keyof typeof stickersLight; label: string }> = {
-  mood:        { tintKey: 'yellowSoft', label: 'Mood check-in' },
-  symptom:     { tintKey: 'peachSoft',  label: 'Symptom logged' },
-  appointment: { tintKey: 'yellowSoft', label: 'Appointment' },
-  exam_result: { tintKey: 'yellowSoft', label: 'Exam result' },
+  mood:        { tintKey: 'yellowSoft', get label() { return tNow('kp_pc_d_mood') } },
+  symptom:     { tintKey: 'peachSoft',  get label() { return tNow('kp_pc_d_symptom') } },
+  appointment: { tintKey: 'yellowSoft', get label() { return tNow('kp_pc_m_appointment') } },
+  exam_result: { tintKey: 'yellowSoft', get label() { return tNow('kp_pc_d_exam_result') } },
   kick_count:  { tintKey: 'pinkSoft',   label: "Baby's kicks" },
-  sleep:       { tintKey: 'lilacSoft',  label: 'Sleep session' },
-  exercise:    { tintKey: 'greenSoft',  label: 'Movement' },
-  nutrition:   { tintKey: 'greenSoft',  label: 'Meal logged' },
-  kegel:       { tintKey: 'lilacSoft',  label: 'Pelvic floor practice' },
-  water:       { tintKey: 'blueSoft',   label: 'Hydration check-in' },
-  vitamins:    { tintKey: 'greenSoft',  label: 'Prenatal vitamins' },
-  nesting:     { tintKey: 'peachSoft',  label: 'Nesting task' },
-  birth_prep:  { tintKey: 'lilacSoft',  label: 'Birth prep' },
-  contraction: { tintKey: 'pinkSoft',   label: 'Contraction' },
-  weight:      { tintKey: 'peachSoft',  label: 'Weight check' },
+  sleep:       { tintKey: 'lilacSoft',  get label() { return tNow('kp_pc_d_sleep') } },
+  exercise:    { tintKey: 'greenSoft',  get label() { return tNow('kp_pc_d_exercise') } },
+  nutrition:   { tintKey: 'greenSoft',  get label() { return tNow('kp_pc_d_nutrition') } },
+  kegel:       { tintKey: 'lilacSoft',  get label() { return tNow('kp_pc_d_kegel') } },
+  water:       { tintKey: 'blueSoft',   get label() { return tNow('kp_plf_hydration') } },
+  vitamins:    { tintKey: 'greenSoft',  get label() { return tNow('kp_plf_prenatalVit') } },
+  nesting:     { tintKey: 'peachSoft',  get label() { return tNow('kp_pc_d_nesting') } },
+  birth_prep:  { tintKey: 'lilacSoft',  get label() { return tNow('kp_pc_d_birth_prep') } },
+  contraction: { tintKey: 'pinkSoft',   get label() { return tNow('kp_pc_m_contraction') } },
+  weight:      { tintKey: 'peachSoft',  get label() { return tNow('kp_pc_d_weight') } },
 }
 
 function LogDetailPopup({
@@ -1614,14 +1619,14 @@ function LogDetailPopup({
 
   // Format log date
   const logDate = new Date(log.log_date + 'T12:00:00')
-  const dateLabel = logDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  const dateLabel = logDate.toLocaleDateString(dateLoc(), { weekday: 'long', month: 'long', day: 'numeric' })
 
   // Build big metric (metric value, unit, sublabel)
   function getBigDisplay(): { metric: string; unit: string; sublabel: string; isText: boolean } {
     const isMood = log.log_type === 'mood'
     if (isMood) {
       const key = rawValue.toLowerCase()
-      return { metric: MOOD_LABEL[key] ?? rawValue, unit: '', sublabel: (rawValue || 'mood').toUpperCase() + ' MOOD', isText: true }
+      return { metric: MOOD_LABEL[key] ?? rawValue, unit: '', sublabel: tNow('kp_pc_moodSub', { mood: MOOD_LABEL[key] ?? (rawValue || tNow('kp_pc_moodWord')) }).toLocaleUpperCase(dateLoc()), isText: true }
     }
     switch (log.log_type) {
       case 'sleep':       return { metric: rawValue, unit: 'h', sublabel: 'SLEEP', isText: false }
@@ -1647,11 +1652,11 @@ function LogDetailPopup({
   function getPills(): Pill[] {
     const pills: Pill[] = [{ label: formatTime(log.created_at), color: colors.textSecondary }]
     if (typeof notesObj.type === 'string')            pills.push({ label: notesObj.type as string, color: COLOR_GREEN })
-    if (typeof notesObj.quality === 'number')         pills.push({ label: `Quality ${notesObj.quality}`, color: meta.color })
-    if (typeof notesObj.durationMinutes === 'number') pills.push({ label: `${notesObj.durationMinutes} min`, color: COLOR_BLUE })
+    if (typeof notesObj.quality === 'number')         pills.push({ label: tNow('kp_pc_quality', { n: notesObj.quality }), color: meta.color })
+    if (typeof notesObj.durationMinutes === 'number') pills.push({ label: tNow('kp_pc_nMin', { n: notesObj.durationMinutes }), color: COLOR_BLUE })
     if (typeof notesObj.doctor === 'string')          pills.push({ label: notesObj.doctor as string, color: COLOR_AMBER })
-    if (typeof notesObj.sets === 'number')            pills.push({ label: `${notesObj.sets} sets`, color: meta.color })
-    if (typeof notesObj.duration === 'number')        pills.push({ label: `${notesObj.duration} min`, color: meta.color })
+    if (typeof notesObj.sets === 'number')            pills.push({ label: tNow('kp_pc_nSets', { n: notesObj.sets }), color: meta.color })
+    if (typeof notesObj.duration === 'number')        pills.push({ label: tNow('kp_pc_nMin', { n: notesObj.duration }), color: meta.color })
     return pills
   }
 
@@ -1823,7 +1828,7 @@ function LogDetailPopup({
       ) : (
         <View style={styles.detailActions}>
           <StickerButton
-            label="Edit"
+            label={tNow('common_edit')}
             color={brand.pregnancy}
             colorDark={'#141313'}
             icon={<Edit3 size={16} color="#fff" strokeWidth={2.2} />}
@@ -1834,7 +1839,7 @@ function LogDetailPopup({
             style={{ flex: 1 }}
           />
           <StickerButton
-            label="Delete"
+            label={tNow('common_delete')}
             color={isDark ? brand.error + '33' : '#FCE3DD'}
             colorDark={brand.error}
             icon={<Trash2 size={16} color={brand.error} strokeWidth={2.2} />}
@@ -1849,11 +1854,11 @@ function LogDetailPopup({
 
       <PaperAlert
         visible={confirmingDelete}
-        title="Delete this log?"
-        message="This cannot be undone."
+        title={tNow('kp_pc_deleteThis')}
+        message={tNow('kp_pc_cannotUndo')}
         buttons={[
-          { label: 'Cancel', variant: 'secondary' },
-          { label: 'Delete', variant: 'danger', onPress: confirmDelete },
+          { label: tNow('common_cancel'), variant: 'secondary' },
+          { label: tNow('common_delete'), variant: 'danger', onPress: confirmDelete },
         ]}
         onRequestClose={() => setConfirmingDelete(false)}
       />
@@ -2129,8 +2134,8 @@ function DayDetailPanel({
                           t('pregCal_alertDeleteLogTitle'),
                           t('pregCal_alertDeleteLog', { label: meta.label }),
                           [
-                            { text: 'Cancel', style: 'cancel' },
-                            { text: 'Delete', style: 'destructive', onPress: () => onDeleteLog(log) },
+                            { text: tNow('common_cancel'), style: 'cancel' },
+                            { text: tNow('common_delete'), style: 'destructive', onPress: () => onDeleteLog(log) },
                           ]
                         )
                       }}
@@ -2199,7 +2204,7 @@ function DiffuseWeekStrip({
     d.setDate(center.getDate() + offsetToMon + i)
     days.push({ date: d, dateStr: toDateStr(d) })
   }
-  const monthLabel = days[0].date.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
+  const monthLabel = days[0].date.toLocaleDateString(dateLoc(), { month: 'long' }).toUpperCase()
 
   const stepWeek = (delta: number) => {
     const next = new Date(selectedDate + 'T00:00:00')
@@ -2446,7 +2451,7 @@ export function PregnancyCalendar() {
     try {
       ;({ error } = await supabase.from('pregnancy_logs').delete().eq('id', log.id))
     } catch (e: any) {
-      error = { message: e?.message ?? 'Network error. Please try again.' }
+      error = { message: e?.message ?? tNow('kp_pc_network') }
     }
     if (error) {
       Alert.alert(t('pregCal_alertDeleteError'), error.message)
@@ -2494,7 +2499,7 @@ export function PregnancyCalendar() {
       d.setDate(d.getDate() + offset)
       const dow = d.getDay()
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      const dayLabel = offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      const dayLabel = offset === 1 ? tNow('kids_calendar_tomorrow') : d.toLocaleDateString(dateLoc(), { weekday: 'short', month: 'short', day: 'numeric' })
 
       for (const r of pregnancyRoutines) {
         if (!r.days_of_week.includes(dow)) continue
@@ -2571,7 +2576,7 @@ export function PregnancyCalendar() {
       const dateStr = toDateStr(d)
       return {
         dateStr,
-        dayLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],
+        dayLabel: weekdayShort(i),
         dayNum: d.getDate(),
         isToday: dateStr === todayStr,
         logs: calLogs[dateStr] ?? [],
@@ -2616,9 +2621,9 @@ export function PregnancyCalendar() {
     const selDow = new Date(selectedDate + 'T12:00:00').getDay()
     const dayLabel = formatDayLabel(selectedDate, todayStr)
     const summary = [
-      selPending.length > 0 && `${selPending.length} pending`,
-      selLogs.length > 0 && `${selLogs.length} logged`,
-    ].filter(Boolean).join(' · ') || 'Nothing planned'
+      selPending.length > 0 && tNow('pregCal_pending_count', { count: selPending.length }),
+      selLogs.length > 0 && tNow('pregCal_logged_count', { count: selLogs.length }),
+    ].filter(Boolean).join(' · ') || tNow('kp_pc_nothingPlanned')
 
     interface Row {
       key: string
@@ -2707,7 +2712,7 @@ export function PregnancyCalendar() {
     const isToday = selectedDate === todayStr
     const nowHours = new Date().getHours() + new Date().getMinutes() / 60
     const nowInsertIdx = isToday ? rows.findIndex((r) => !r.logged && r.sortHours >= nowHours) : -1
-    const nowTimeLabel = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    const nowTimeLabel = new Date().toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit', hour12: true })
 
     return (
       <>
@@ -3249,8 +3254,8 @@ export function PregnancyCalendar() {
 
           const subtitle =
             isDone
-              ? `Done · Week ${appt.week}`
-              : `Week ${appt.week} · ${appt.prepNote.length > 60 ? appt.prepNote.slice(0, 57) + '…' : appt.prepNote}`
+              ? tNow('kp_pc_doneWeek', { n: appt.week })
+              : tNow('kp_pc_weekNote', { n: appt.week, note: appt.prepNote.length > 60 ? appt.prepNote.slice(0, 57) + '…' : appt.prepNote })
 
           return (
             <View key={appt.id} style={{ opacity: status === 'future' ? 0.75 : 1 }}>
@@ -3259,7 +3264,7 @@ export function PregnancyCalendar() {
                 title={appt.name}
                 subtitle={subtitle}
                 tint={isNext ? 'appointment' : 'activity'}
-                chip={isNext ? { label: 'Soon', color: ST_CORAL } : undefined}
+                chip={isNext ? { label: tNow('pregCal_status_soon'), color: ST_CORAL } : undefined}
                 onPress={() => setSelectedAppt(appt)}
               />
             </View>
@@ -3353,8 +3358,8 @@ export function PregnancyCalendar() {
       <View style={[styles.segRow, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
         <SegmentedTabs
           options={[
-            { key: 'timeline', label: 'Timeline' },
-            { key: 'appointments', label: 'Appts' },
+            { key: 'timeline', label: tNow('kp_pc_tabTimeline') },
+            { key: 'appointments', label: tNow('kp_pc_tabAppts') },
           ]}
           value={view}
           onChange={(k) => setView(k as ViewTab)}

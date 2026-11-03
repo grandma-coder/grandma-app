@@ -9,6 +9,7 @@
  * Tapping an activity opens a detail popup with edit/delete.
  */
 
+import { dateLoc, weekdayShort } from '../../lib/kpLocale'
 import { KIDS_LOG_STICKER, kidsDayMarks } from '../../lib/logStickers'
 import { useState, useMemo, useEffect, useCallback, useRef, Fragment } from 'react'
 import {
@@ -81,7 +82,7 @@ import {
   diffuseLogHue,
 } from './DiffuseLogTimeline'
 import { Character, type CharacterName } from '../characters/Characters'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
 import { useChildStore } from '../../store/useChildStore'
@@ -302,7 +303,7 @@ function SiteRoutineForm({
       </View>
 
       <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
-        {DAY_NAMES.map((name, i) => {
+        {Array.from({ length: 7 }, (_, i) => weekdayShort(i)).map((name, i) => {
           const active = form.days.includes(i)
           return (
             <Pressable
@@ -424,7 +425,6 @@ const QUICK_LOG_DEFS: { id: LogType; labelKey: TranslationKey; icon: typeof Uten
   { id: 'exam', labelKey: 'kids_calendar_labelExam', icon: FlaskConical, color: brand.phase.ovulation },
 ]
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // Growth leap schedule lives in lib/growthLeaps.ts and is consumed by
 // KidsJourneyRing directly — no per-screen duplication needed.
@@ -439,13 +439,13 @@ const ROUTINE_SHEET_MAP: Record<string, string> = {
 
 function formatTime(isoStr: string): string {
   const d = new Date(isoStr)
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return d.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
 function formatDayLabel(dateStr: string, todayStr: string, t: (key: TranslationKey) => string): string {
   if (dateStr === todayStr) return t('common_today')
   const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
 /** Strip units the user may have typed so we don't double-suffix */
@@ -564,17 +564,17 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
         case 'feeding': {
           const parts: string[] = []
           if (parsed.feedType === 'breast') {
-            parts.push('Breastfed')
+            parts.push(tNow('kp_kc_breastfed'))
             if (parsed.side) {
-              const sideLabel = parsed.side === 'left' ? 'Left' : parsed.side === 'right' ? 'Right' : 'Both'
+              const sideLabel = parsed.side === 'left' ? tNow('kp_kc_left') : parsed.side === 'right' ? tNow('kp_kc_right') : tNow('kids_logForm_diaperBoth')
               parts.push(sideLabel)
             }
             if (parsed.duration) {
               const d = stripUnit(String(parsed.duration), ['min', 'mins', 'minutes', 'm'])
-              parts.push(`${d} min`)
+              parts.push(tNow('kp_pc_nMin', { n: d }))
             }
           } else {
-            parts.push('Bottle')
+            parts.push(tNow('kids_home_feeding_modal_bottle'))
             if (parsed.amount) {
               const a = stripUnit(String(parsed.amount), ['ml', 'oz'])
               parts.push(`${a} ml`)
@@ -587,22 +587,22 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
           if (parsed.time) parts.push(fmtTime(parsed.time))
           if (parsed.meal) {
             const mealLabels: Record<string, string> = {
-              breakfast: 'Breakfast', morning_snack: 'AM Snack', lunch: 'Lunch',
-              afternoon_snack: 'PM Snack', dinner: 'Dinner', night_snack: 'Night',
+              breakfast: tNow('kids_logForm_mealBreakfast'), morning_snack: tNow('kids_logForm_mealAmSnack'), lunch: tNow('kids_logForm_mealLunch'),
+              afternoon_snack: tNow('kids_logForm_mealPmSnack'), dinner: tNow('kids_logForm_mealDinner'), night_snack: tNow('kids_logForm_mealNight'),
             }
             parts.push(mealLabels[parsed.meal] ?? parsed.meal)
           }
           if (parsed.quality) {
             const qualityLabels: Record<string, string> = {
-              ate_well: 'Ate well', ate_little: 'Ate a little', did_not_eat: 'Did not eat',
+              ate_well: tNow('kids_logForm_ateWell'), ate_little: tNow('kids_logForm_ateLittle'), did_not_eat: tNow('kids_logForm_didNotEat'),
             }
             parts.push(qualityLabels[parsed.quality] ?? parsed.quality)
           }
-          if (parsed.estimatedCals) parts.push(`~${parsed.estimatedCals} kcal`)
-          if (parsed.isNewFood && parsed.newFoodName) parts.push(`New: ${parsed.newFoodName}`)
-          else if (parsed.isNewFood) parts.push('New food')
-          if (parsed.hasReaction && parsed.reactionFood) parts.push(`Reaction to ${parsed.reactionFood}`)
-          else if (parsed.hasReaction) parts.push('Reaction!')
+          if (parsed.estimatedCals) parts.push(`~${parsed.estimatedCals} ${tNow('common_kcal')}`)
+          if (parsed.isNewFood && parsed.newFoodName) parts.push(tNow('kp_kc_new', { name: parsed.newFoodName }))
+          else if (parsed.isNewFood) parts.push(tNow('kids_logForm_newFood'))
+          if (parsed.hasReaction && parsed.reactionFood) parts.push(tNow('kp_kc_reactionTo', { food: parsed.reactionFood }))
+          else if (parsed.hasReaction) parts.push(tNow('kp_kc_reaction'))
           const base = parts.join(' · ')
           return notes ? `${base} — ${notes}` : base
         }
@@ -617,13 +617,13 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
           else if (parsed.startTime) parts.push(fmtTime(parsed.startTime))
           if (parsed.duration) {
             const d = stripUnit(String(parsed.duration), ['min', 'mins', 'minutes', 'm'])
-            parts.push(`${d} min`)
+            parts.push(tNow('kp_pc_nMin', { n: d }))
           }
           return parts.join(' · ') || notes || ''
         }
         case 'diaper': {
           const parts: string[] = []
-          const typeLabels: Record<string, string> = { pee: 'Pee', poop: 'Poop', mixed: 'Both' }
+          const typeLabels: Record<string, string> = { pee: tNow('kids_logForm_diaperPee'), poop: tNow('kids_logForm_diaperPoop'), mixed: tNow('kids_logForm_diaperBoth') }
           if (parsed.diaperType) parts.push(typeLabels[parsed.diaperType] ?? parsed.diaperType)
           if (parsed.color) parts.push(parsed.color.charAt(0).toUpperCase() + parsed.color.slice(1))
           if (parsed.consistency) parts.push(parsed.consistency.charAt(0).toUpperCase() + parsed.consistency.slice(1))
@@ -848,7 +848,7 @@ function DiffuseWeekStrip({
     d.setDate(center.getDate() + offsetToMon + i)
     days.push({ date: d, dateStr: toDateStr(d) })
   }
-  const monthLabel = days[0].date.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
+  const monthLabel = days[0].date.toLocaleDateString(dateLoc(), { month: 'long' }).toUpperCase()
 
   const stepWeek = (delta: number) => {
     const next = new Date(selectedDate + 'T00:00:00')
@@ -1038,7 +1038,7 @@ function DiffuseRoutineManager({
 
   const formBody = (
     <View style={{ gap: 12 }}>
-      {input(routineForm.name, (v) => setRoutineForm((f) => ({ ...f, name: v })), 'Routine name (e.g. Morning bottle)')}
+      {input(routineForm.name, (v) => setRoutineForm((f) => ({ ...f, name: v })), tNow('kp_kc_routineNameEg'))}
       {/* Type chips — mono hairline */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
         {ROUTINE_TYPES.map((rtype) => {
@@ -1071,7 +1071,7 @@ function DiffuseRoutineManager({
       </View>
       {/* Days — hairline circles */}
       <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
-        {DAY_NAMES.map((name, i) => {
+        {Array.from({ length: 7 }, (_, i) => weekdayShort(i)).map((name, i) => {
           const active = routineForm.days.includes(i)
           return (
             <Pressable
@@ -1171,7 +1171,7 @@ function DiffuseRoutineManager({
           )}
           {listed.map((r, idx) => {
             const childName = children.find((c) => c.id === r.child_id)?.name
-            const sub = `${r.time ? fmtTime(r.time) : t('kids_logForm_anytime')} · ${r.days_of_week.length === 7 ? t('kids_logForm_daily') : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}${childName ? ` · ${childName}` : ''}`
+            const sub = `${r.time ? fmtTime(r.time) : t('kids_logForm_anytime')} · ${r.days_of_week.length === 7 ? t('kids_logForm_daily') : r.days_of_week.map((d) => weekdayShort(d).charAt(0)).join(' ')}${childName ? ` · ${childName}` : ''}`
             const checked = selectedIds.has(r.id)
             return (
               <DiffuseListRow
@@ -1654,7 +1654,7 @@ export function KidsCalendar() {
     } catch (e: any) {
       // Transport-level failure (e.g. "Network request failed") rejects rather
       // than returning { error } — surface it instead of crashing to the dev toast.
-      error = { message: e?.message ?? 'Network error. Please try again.' }
+      error = { message: e?.message ?? tNow('kp_pc_network') }
     }
     if (error) {
       // Don't run the optimistic cleanup below — that would hide an entry the
@@ -1706,7 +1706,7 @@ export function KidsCalendar() {
     try {
       ;({ error } = await supabase.from('child_logs').delete().eq('id', target.id))
     } catch (e: any) {
-      error = { message: e?.message ?? 'Network error. Please try again.' }
+      error = { message: e?.message ?? tNow('kp_pc_network') }
     }
     if (error) {
       Alert.alert(t('kids_calendar_alertCouldNotRemove'), error.message)
@@ -1753,8 +1753,8 @@ export function KidsCalendar() {
       // Unknown type → don't risk a destructive edit in the wrong form.
       // Surfacing a no-op alert beats silently reshaping the row.
       Alert.alert(
-        'Can\'t edit this log',
-        `This log type (${log.type}) doesn't have an editor yet. Delete and re-create if you need to change it.`,
+        tNow('kp_kc_cantEdit'),
+        tNow('kp_kc_cantEditBody', { type: log.type }),
       )
       return
     }
@@ -1811,7 +1811,7 @@ export function KidsCalendar() {
       d.setDate(d.getDate() + offset)
       const dow = d.getDay()
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      const dayLabel = offset === 1 ? t('kids_calendar_tomorrow') : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      const dayLabel = offset === 1 ? t('kids_calendar_tomorrow') : d.toLocaleDateString(dateLoc(), { weekday: 'short', month: 'short', day: 'numeric' })
 
       // Routines for that day — only show notable ones (activities, not daily meals)
       for (const r of routines) {
@@ -2090,11 +2090,11 @@ export function KidsCalendar() {
     setRoutineSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Not authenticated')
+      if (!session) throw new Error(tNow('kp_pk_notAuth'))
       // Multi-kid case is blocked above; in single-kid accounts "all" still
       // resolves to that one child (the only safe inference).
       const childId = selectedChildId !== 'all' ? selectedChildId : children[0]?.id
-      if (!childId) throw new Error('Select a child first')
+      if (!childId) throw new Error(tNow('kp_kc_selectChild'))
 
       if (routineEditing) {
         await supabase.from('child_routines').update({
@@ -2301,7 +2301,7 @@ export function KidsCalendar() {
           onPress: () =>
             Alert.alert(
               t('kids_calendar_routineDeleteConfirmTitle'),
-              `Remove "${routine.name}" from all future days?`,
+              t('kp_kc_removeRoutine', { name: routine.name }),
               [
                 { text: t('common_cancel'), style: 'cancel' },
                 {
@@ -2356,7 +2356,7 @@ export function KidsCalendar() {
 
     if (futureLogs.length > 0) {
       const log = futureLogs[0]
-      const childName = children.find((c) => c.id === log.child_id)?.name ?? 'Child'
+      const childName = children.find((c) => c.id === log.child_id)?.name ?? tNow('kp_kc_child')
       const meta = LOG_META[log.type]
       return {
         label: meta?.label ?? log.type,
@@ -2428,7 +2428,7 @@ export function KidsCalendar() {
     setSelectedDate(dateStr)
   }
 
-  const monthLabel = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const monthLabel = new Date(year, month).toLocaleDateString(dateLoc(), { month: 'long', year: 'numeric' })
 
   const allLogsForList = useMemo(() => {
     return [...monthLogs]
@@ -2484,8 +2484,8 @@ export function KidsCalendar() {
     const selPending = pendingRoutines
     const dayLabel = formatDayLabel(selectedDate, todayStr, t)
     const summary = [
-      selPending.length > 0 && `${selPending.length} pending`,
-      selLogs.length > 0 && `${selLogs.length} logged`,
+      selPending.length > 0 && tNow('pregCal_pending_count', { count: selPending.length }),
+      selLogs.length > 0 && tNow('pregCal_logged_count', { count: selLogs.length }),
     ].filter(Boolean).join(' · ') || t('kids_calendar_nothingSummary')
 
     interface Row {
@@ -2552,7 +2552,7 @@ export function KidsCalendar() {
         time: activityTimeDisplay(log),
         sortHours,
         title: logTitle(log),
-        subtitle: summaryStr || 'Logged',
+        subtitle: summaryStr || tNow('pregCal_logged'),
         // Diffuse: value summary → italic title accent; free-text note → sub line.
         accentValue: formatLogDisplay(log.type, log.value, null) || undefined,
         note: log.notes || undefined,
@@ -2574,7 +2574,7 @@ export function KidsCalendar() {
     const isToday = selectedDate === todayStr
     const nowHours = new Date().getHours() + new Date().getMinutes() / 60
     const nowInsertIdx = isToday ? rows.findIndex((r) => !r.logged && r.sortHours >= nowHours) : -1
-    const nowTimeLabel = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    const nowTimeLabel = new Date().toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit', hour12: true })
 
     // ── Diffuse variant: serif day header + connector-spine timeline (v4 §06) ──
     // A vertical spine threads every entry; each entry is a bloom-node on the
@@ -2844,7 +2844,7 @@ export function KidsCalendar() {
         allRows.push({
           key: `l-${log.id}`,
           title: logTitle(log),
-          sub: `${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`,
+          sub: `${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || tNow('pregCal_logged')}`,
           type: log.type,
           chip: childName || undefined,
           onPress: () => { setSelectedLog(log); setEditing(false) },
@@ -2947,7 +2947,7 @@ export function KidsCalendar() {
         key: `l-${log.id}`,
         type: log.type,
         title: logTitle(log),
-        sub: `${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || 'Logged'}`,
+        sub: `${formatDayLabel(log.date, todayStr, t)} · ${formatLogDisplay(log.type, log.value, log.notes) || tNow('pregCal_logged')}`,
         chip: childName ? { label: childName, color: childColor(ci) } : undefined,
         questions: log.date >= todayStr && isKidsVisitLog(log.type, log.value)
           ? openQuestionCount(visitQuestions, log.id, ...(log.id === nextVisitId ? [pendingQuestionsKey('kids')] : []))
@@ -3492,7 +3492,7 @@ export function KidsCalendar() {
                       <SiteRoutineForm
                         form={routineForm}
                         setForm={setRoutineForm}
-                        namePlaceholder="Routine name (e.g. Morning bottle)"
+                        namePlaceholder={tNow('kp_kc_routineNameEg')}
                         tone={tone}
                         t={t}
                       />
@@ -3548,7 +3548,7 @@ export function KidsCalendar() {
                               <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: font.body }}>
                                 {r.time ? fmtTime(r.time) : t('kids_logForm_anytime')}
                                 {' · '}
-                                {r.days_of_week.length === 7 ? t('kids_logForm_daily') : r.days_of_week.map((d) => DAY_NAMES[d].charAt(0)).join(' ')}
+                                {r.days_of_week.length === 7 ? t('kids_logForm_daily') : r.days_of_week.map((d) => weekdayShort(d).charAt(0)).join(' ')}
                                 {childName ? ` · ${childName}` : ''}
                               </Text>
                             </View>
@@ -3611,7 +3611,7 @@ export function KidsCalendar() {
                   <SiteRoutineForm
                     form={routineForm}
                     setForm={setRoutineForm}
-                    namePlaceholder="Routine name"
+                    namePlaceholder={tNow('kp_pc_routineName')}
                     tone={tone}
                     t={t}
                   />
@@ -3825,8 +3825,8 @@ export function KidsCalendar() {
                       let fp: Record<string, any> = {}
                       try { fp = JSON.parse(selectedLog.value ?? '{}') } catch {}
                       const mealLabels: Record<string, string> = {
-                        breakfast: 'Breakfast', morning_snack: 'AM Snack', lunch: 'Lunch',
-                        afternoon_snack: 'PM Snack', dinner: 'Dinner', night_snack: 'Night',
+                        breakfast: tNow('kids_logForm_mealBreakfast'), morning_snack: tNow('kids_logForm_mealAmSnack'), lunch: tNow('kids_logForm_mealLunch'),
+                        afternoon_snack: tNow('kids_logForm_mealPmSnack'), dinner: tNow('kids_logForm_mealDinner'), night_snack: tNow('kids_logForm_mealNight'),
                       }
                       const mealName = fp.meal ? (mealLabels[fp.meal] ?? fp.meal) : ''
                       const mealTime = fp.time ? fmtTime(fp.time) : ''
@@ -3889,7 +3889,7 @@ export function KidsCalendar() {
                           />
                           {isBreast && fp.side && (
                             <View style={styles.siteInfoRow}>
-                              <InfoPill tone={tone} label={fp.side === 'left' ? '← Left' : fp.side === 'right' ? 'Right →' : '↔ Both sides'} />
+                              <InfoPill tone={tone} label={fp.side === 'left' ? tNow('kp_kc_sideLeft') : fp.side === 'right' ? tNow('kp_kc_sideRight') : tNow('kp_kc_sideBoth')} />
                             </View>
                           )}
                           {selectedLog.notes ? <DetailNote label={t('kids_calendar_detail_notes2')} text={selectedLog.notes} /> : null}
@@ -3929,7 +3929,7 @@ export function KidsCalendar() {
                       let ap: Record<string, any> = {}
                       try { ap = JSON.parse(selectedLog.value ?? '{}') } catch {}
                       const durRaw = ap.duration ? String(ap.duration).replace(/[^\d.]/g, '') : null
-                      const durUnit = durRaw ? (Number(durRaw) >= 60 ? `${Math.floor(Number(durRaw) / 60)}h ${Number(durRaw) % 60}m` : `${durRaw} min`) : null
+                      const durUnit = durRaw ? (Number(durRaw) >= 60 ? tNow('kp_kc_hm', { h: Math.floor(Number(durRaw) / 60), m: Number(durRaw) % 60 }) : tNow('kp_pc_nMin', { n: durRaw })) : null
                       return (
                         <>
                           <DetailHero
@@ -3954,14 +3954,14 @@ export function KidsCalendar() {
                       let dp: Record<string, any> = {}
                       try { dp = JSON.parse(selectedLog.value ?? '{}') } catch {}
                       const typeMap: Record<string, { sticker: SiteStickerName; label: string }> = {
-                        pee:   { sticker: 'pee', label: 'Pee' },
-                        poop:  { sticker: 'poop', label: 'Poop' },
-                        mixed: { sticker: 'diaper', label: 'Both' },
+                        pee:   { sticker: 'pee', label: tNow('kids_logForm_diaperPee') },
+                        poop:  { sticker: 'poop', label: tNow('kids_logForm_diaperPoop') },
+                        mixed: { sticker: 'diaper', label: tNow('kids_logForm_diaperBoth') },
                       }
                       const dtype = dp.diaperType ? (typeMap[dp.diaperType] ?? { sticker: 'diaper' as SiteStickerName, label: String(dp.diaperType) }) : null
                       return (
                         <>
-                          <DetailHero sticker={dtype?.sticker ?? 'diaper'} value={dtype?.label ?? 'Diaper'} valueSize={34} eyebrow={t('kids_calendar_detail_diaperChange')} />
+                          <DetailHero sticker={dtype?.sticker ?? 'diaper'} value={dtype?.label ?? tNow('kids_calendar_labelDiaper')} valueSize={34} eyebrow={t('kids_calendar_detail_diaperChange')} />
                           {(dp.color || dp.consistency) && (
                             <View style={styles.siteInfoRow}>
                               {dp.color && <InfoPill label={t('kids_calendar_detail_colorLabel', { value: dp.color.charAt(0).toUpperCase() + dp.color.slice(1) })} />}
@@ -3985,13 +3985,13 @@ export function KidsCalendar() {
                         if (p && typeof p === 'object') moodVal = p.mood ?? p.value ?? p.label ?? ''
                       } catch {}
                       const moodMeta: Record<string, { label: string; face: SiteStickerName }> = {
-                        happy:     { label: 'Happy',     face: 'face4' },
-                        calm:      { label: 'Calm',      face: 'face3' },
-                        fussy:     { label: 'Fussy',     face: 'face2' },
-                        cranky:    { label: 'Cranky',    face: 'face1' },
-                        energetic: { label: 'Energetic', face: 'face4' },
+                        happy:     { label: tNow('kids_logForm_moodHappy'),     face: 'face4' },
+                        calm:      { label: tNow('kids_logForm_moodCalm'),      face: 'face3' },
+                        fussy:     { label: tNow('kids_logForm_moodFussy'),     face: 'face2' },
+                        cranky:    { label: tNow('kids_logForm_moodCranky'),    face: 'face1' },
+                        energetic: { label: tNow('kids_logForm_moodEnergetic'), face: 'face4' },
                       }
-                      const m = moodMeta[moodVal] ?? { label: moodVal || 'Mood', face: 'face3' as SiteStickerName }
+                      const m = moodMeta[moodVal] ?? { label: moodVal || tNow('kids_calendar_labelMood'), face: 'face3' as SiteStickerName }
                       return <DetailHero sticker={m.face} value={m.label} valueSize={34} eyebrow={t('kids_calendar_detail_todaysMood')} />
                     })()}
 
@@ -4217,8 +4217,8 @@ export function KidsCalendar() {
               </Text>
               <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body, textAlign: 'center', lineHeight: 20, marginBottom: 24 }}>
                 {selectedChildId === 'all'
-                  ? "Every child’s day is fully tracked. Keep up the incredible work!"
-                  : `${children.find(c => c.id === selectedChildId)?.name ?? 'Their'}’s day is fully tracked. You’re doing great!`}
+                  ? t('kp_kc_allTrackedAll')
+                  : (children.find(c => c.id === selectedChildId)?.name ? t('kp_kc_allTrackedOne', { name: children.find(c => c.id === selectedChildId)!.name }) : t('kp_kc_allTrackedGeneric'))}
               </Text>
 
               {/* Stats row */}

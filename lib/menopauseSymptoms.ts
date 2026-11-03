@@ -4,6 +4,8 @@
  * symptoms, and live in the log sheet — not here.
  */
 
+import { t, type TranslationKey } from './i18n'
+
 export type MenopauseGroup = 'vasomotor' | 'sleep' | 'mood' | 'physical' | 'genitourinary'
 
 export type MenopauseSymptomId =
@@ -31,8 +33,10 @@ export const ALL_MENOPAUSE_SYMPTOMS: MenopauseSymptom[] = [
   { id: 'libido',          label: 'Low libido',      group: 'genitourinary' },
 ]
 
+/** Display label in the current language. `label` above stays English — it is only
+ *  a matching key for resolveMenopauseSymptomId, never shown to the user. */
 export function menopauseSymptomLabel(id: MenopauseSymptomId): string {
-  return ALL_MENOPAUSE_SYMPTOMS.find((s) => s.id === id)?.label ?? id
+  return ALL_MENOPAUSE_SYMPTOMS.some((s) => s.id === id) ? t(`gn_meno_sym_${id}` as TranslationKey) : id
 }
 
 const NORMALIZE = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, '')

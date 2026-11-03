@@ -16,6 +16,15 @@ import { menopauseDayLevel, menopauseDayTint } from '../../lib/menopauseDayLoad'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
 import { Skeleton } from '../ui/Skeleton'
+import { useTranslation } from '../../lib/i18n'
+import type { AppLanguage } from '../../store/useLanguageStore'
+
+/** Short weekday label in the language: 2 letters for Latin scripts, the native short/narrow form otherwise. */
+function weekdayShort(d: Date, language: AppLanguage): string {
+  if (language === 'ar' || language === 'hi') return d.toLocaleDateString(language, { weekday: 'narrow' })
+  const short = d.toLocaleDateString(language, { weekday: 'short' })
+  return language === 'ja' || language === 'ko' || language === 'zh' ? short : short.slice(0, 2)
+}
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -35,6 +44,7 @@ export function MenopauseWeekStrip({
 }) {
   const { stickers, colors, font, isDark } = useTheme()
   const s = stickers as Record<string, string>
+  const { t, language } = useTranslation()
 
   const days = useMemo(() => {
     const byDate = new Map<string, MenopauseLogRow[]>()
@@ -52,14 +62,14 @@ export function MenopauseWeekStrip({
       const key = localDateStr(d)
       out.push({
         key,
-        weekday: d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2),
+        weekday: weekdayShort(d, language),
         dayNum: d.getDate(),
         isToday: key === todayStr,
         logs: byDate.get(key) ?? [],
       })
     }
     return out
-  }, [rows])
+  }, [rows, language])
 
   return (
     <View style={styles.strip}>
@@ -76,7 +86,7 @@ export function MenopauseWeekStrip({
               key={day.key}
               onPress={() => onDatePress(day.key)}
               accessibilityRole="button"
-              accessibilityLabel={`Log for ${day.weekday} ${day.dayNum}`}
+              accessibilityLabel={t('meno_h_log_for_a11y', { day: `${day.weekday} ${day.dayNum}` })}
               style={({ pressed }) => [
                 styles.cell,
                 {
@@ -103,7 +113,7 @@ export function MenopauseWeekStrip({
             key={day.key}
             onPress={() => onDatePress(day.key)}
             accessibilityRole="button"
-            accessibilityLabel={`Log for ${day.weekday} ${day.dayNum}`}
+            accessibilityLabel={t('meno_h_log_for_a11y', { day: `${day.weekday} ${day.dayNum}` })}
             style={({ pressed }) => [
               styles.cell,
               {

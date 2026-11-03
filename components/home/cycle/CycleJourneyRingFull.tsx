@@ -21,6 +21,7 @@ import Animated, {
 import { useTheme, motion, useDiffuseTheme, getModeField, getDiffuseAccent, diffuseFont } from '../../../constants/theme'
 import { useIsDiffuse, SoftBloom } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
+import { appIntlLocale } from '../../../lib/cycleLogForms'
 import type { TranslationKey } from '../../../lib/i18n'
 import {
   getCycleInfo, toDateStr,
@@ -109,7 +110,7 @@ function phaseTitleItalic(phase: CyclePhase, t: TFn): string {
 }
 
 function phaseLabel(phase: CyclePhase, t: TFn): string {
-  return t(`cycleRing_label_${phase}` as TranslationKey)
+  return t(`cyc_phase_${phase}` as TranslationKey)
 }
 
 // ─── Dot geometry ───────────────────────────────────────────────────────────
@@ -158,7 +159,7 @@ function addDays(dateStr: string, n: number): string {
 
 function formatLongDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(appIntlLocale(), { month: 'short', day: 'numeric' })
 }
 
 // ─── Phase legend ───────────────────────────────────────────────────────────
@@ -277,7 +278,7 @@ function StripCell({
             opacity: isSelected ? 1 : isToday ? 0.9 : 0.7,
           }}
         >
-          {weekday.slice(0, 2)}
+          {weekday}
         </Text>
         <Text
           numberOfLines={1}
@@ -308,7 +309,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
   const dt = useDiffuseTheme()
   const field = getModeField('pre-pregnancy', dt.isDark)
   const diffuseAccent = getDiffuseAccent('pre-pregnancy', dt.isDark)
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   const todayStr = toDateStr(new Date())
   const todayInfo = getCycleInfo(cycleConfig, todayStr)
@@ -552,7 +553,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
   const isToday = selectedDay === cycleDayToday
   const isPast = selectedDay < cycleDayToday
 
-  const statusLabel = isToday ? 'TODAY' : isPast ? 'PAST' : 'UPCOMING'
+  const statusLabel = isToday ? t('cyc_ring_today') : isPast ? t('cyc_ring_past') : t('cyc_ring_upcoming')
   const titleItalic = phaseTitleItalic(selPhase, t)
   // A word, not a percentage: the phase estimate isn't precise enough to quote odds, and a
   // number reads like a score or a contraception figure.
@@ -569,7 +570,11 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
       const date = addDays(selectedDate, offset)
       const info = getCycleInfo(cycleConfig, date)
       const jsDate = new Date(date + 'T12:00:00')
-      const wd = jsDate.toLocaleDateString('en-US', { weekday: 'short' })
+      const loc = appIntlLocale()
+      // Two letters for Latin scripts (Mo, Tu); Arabic uses the narrow form (the short form is long and
+      // shares a prefix); other scripts are already short.
+      const short = jsDate.toLocaleDateString(loc, { weekday: language === 'ar' ? 'narrow' : 'short' })
+      const wd = /^[A-Za-zÀ-ÿ]/.test(short) ? short.slice(0, 2) : short
       out.push({
         date,
         dayOfMonth: jsDate.getDate(),
@@ -581,7 +586,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
       })
     }
     return out
-  }, [selectedDate, cycleConfig, todayStr])
+  }, [selectedDate, cycleConfig, todayStr, language])
   // What was logged on the strip days — heart for intimacy, tests, period… under each date.
   const stripLogs = useCycleLogDates(strip[0]?.date ?? todayStr, strip[strip.length - 1]?.date ?? todayStr)
 

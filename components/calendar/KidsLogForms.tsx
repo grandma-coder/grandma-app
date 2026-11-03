@@ -5,6 +5,7 @@
  * Persist to Supabase child_logs table.
  */
 
+import { dateLoc } from '../../lib/kpLocale'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactElement, type ReactNode, type ComponentProps } from 'react'
 import {
   View,
@@ -50,7 +51,7 @@ import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { SiteChoice } from '../ui/SiteChoice'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 type TranslationKey = keyof TranslationKeys
 import { Character } from '../characters/Characters'
@@ -497,7 +498,7 @@ export async function saveChildLog(
   date?: string
 ) {
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Not authenticated')
+  if (!session) throw new Error(tNow('kp_pk_notAuth'))
 
   const { data: child } = await supabase
     .from('children')
@@ -922,7 +923,7 @@ function formatDateLabel(dateStr: string, t: (key: TranslationKey) => string): s
   yesterday.setDate(yesterday.getDate() - 1)
   if (dateStr === toDateStr(yesterday)) return t('common_yesterday')
   const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
 function DateChip({
@@ -1488,7 +1489,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         [{ resize: { width: 1024 } }],
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true },
       )
-      if (!manipulated.base64) throw new Error('Could not encode photo')
+      if (!manipulated.base64) throw new Error(t('kp_klf_encodeFail'))
 
       const res = await estimateFromImage({
         imageBase64: manipulated.base64,
@@ -1498,7 +1499,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       })
 
       if (res.foods.length === 0) {
-        Alert.alert(t('kids_logForm_alertNoFoodDetected'), res.notes ?? 'Try another angle or closer shot.')
+        Alert.alert(t('kids_logForm_alertNoFoodDetected'), res.notes ?? t('kp_klf_tryAngle'))
         return
       }
 
@@ -1519,7 +1520,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       console.warn('[food-scan] failed:', (e as Error)?.message ?? e)
       Alert.alert(
         t('kids_logForm_alertCouldNotReadPhoto'),
-        "Grandma couldn't make out the food this time. Try a closer, brighter shot — or tap a food tag to add the calories yourself.",
+        t('kp_klf_scanFail'),
       )
     } finally {
       setScanningPlate(false)
@@ -1563,7 +1564,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       const confirmed = await new Promise<boolean>((resolve) => {
         Alert.alert(
           allergens.length === 1 ? t('kids_logForm_alertAllergyWarning') : t('kids_logForm_alertAllergyWarnings'),
-          `This food appears to contain ${allergens.join(', ')}, which is listed as an allergy. Are you sure you want to log it?`,
+          t('kp_klf_allergyBody', { allergens: allergens.join(', ') }),
           [
             { text: t('kids_logForm_cancel'), style: 'cancel', onPress: () => resolve(false) },
             { text: t('kids_logForm_alertLogAnyway'), style: 'destructive', onPress: () => resolve(true) },
@@ -1579,7 +1580,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       if (upload.failed > 0) {
         Alert.alert(
           t('kids_logForm_alertPhotosPartialUpload'),
-          `${upload.failed} of ${toUpload.length} photos failed to upload. Saving the rest — you can edit and re-add the missing ones later.`,
+          t('kp_klf_photosPartialFood', { failed: upload.failed, total: toUpload.length }),
         )
       }
       const finalPhotos = [...photos.filter((p) => p.startsWith('http')), ...upload.urls]
@@ -2777,6 +2778,20 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
 
 const HEALTH_EVENTS = ['Temperature', 'Vaccine', 'Medicine', 'Doctor visit', 'Injury', 'Other']
 
+// Stored ids stay English; only the visible label is translated.
+const HEALTH_EVENT_LABEL_KEYS = {
+  Temperature: 'kids_logForm_healthTemp',
+  Vaccine: 'kids_logForm_healthVaccine',
+  Medicine: 'kids_logForm_healthMedicine',
+  'Doctor visit': 'kids_logForm_healthDoctor',
+  Injury: 'kids_logForm_healthInjury',
+  Other: 'kids_logForm_healthOther',
+} as const
+function healthEventLabel(id: string): string {
+  const key = (HEALTH_EVENT_LABEL_KEYS as Record<string, (typeof HEALTH_EVENT_LABEL_KEYS)[keyof typeof HEALTH_EVENT_LABEL_KEYS]>)[id]
+  return key ? tNow(key) : id
+}
+
 // Event label → { Character blob concept, hue }, per the canonical log-type
 // map in DiffuseLogTimeline (kept in sync with HEALTH_EVENTS ids below).
 const HEALTH_EVENT_CONCEPT: Record<string, string> = {
@@ -2797,7 +2812,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
   const activeChild = useChildStore((s) => s.activeChild)
   const HEALTH_OPTS: ChoiceOption[] = HEALTH_EVENTS.map((e) => {
     const concept = HEALTH_EVENT_CONCEPT[e]
-    return { id: e, label: e, blob: concept as ChoiceOption['blob'], color: diffuseLogHue(concept) }
+    return { id: e, label: healthEventLabel(e), blob: concept as ChoiceOption['blob'], color: diffuseLogHue(concept) }
   })
 
   const [childId, setChildId] = useState(prefill?.childId ?? editLog?.child_id ?? activeChild?.id ?? children[0]?.id ?? '')
@@ -2877,8 +2892,8 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
       const trimmedValue = value.trim()
       if (!trimmedValue && (logType === 'vaccine' || logType === 'medicine' || logType === 'temperature')) {
         Alert.alert(
-          `Add a ${eventType.toLowerCase()} name`,
-          `Please enter the ${eventType.toLowerCase()} before saving so it shows up correctly in your health history.`,
+          t('kp_klf_addTypeTitle', { type: healthEventLabel(eventType).toLocaleLowerCase(dateLoc()) }),
+          t('kp_klf_addTypeBody', { type: healthEventLabel(eventType).toLocaleLowerCase(dateLoc()) }),
         )
         return
       }
@@ -3178,7 +3193,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
     if (photos.length === 0) {
       Alert.alert(
         t('kids_logForm_addPhoto'),
-        'Memories need at least one photo. Tap the camera or gallery to add one.',
+        t('kp_klf_memoryNeedsPhoto'),
       )
       return
     }
@@ -3190,14 +3205,14 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
       if (upload.urls.length === 0) {
         Alert.alert(
           t('kids_logForm_alertPhotosFailedAll'),
-          'None of the photos could be uploaded. Check your connection and try again.',
+          t('kp_klf_noneUploaded'),
         )
         return
       }
       if (upload.failed > 0) {
         Alert.alert(
           t('kids_logForm_alertPhotosPartialUpload'),
-          `${upload.failed} of ${photos.length} photos failed. Saving the memory with the ones that worked.`,
+          t('kp_klf_photosPartialMemory', { failed: upload.failed, total: photos.length }),
         )
       }
       await saveChildLog(childId, 'photo', 'memory', caption || undefined, upload.urls, logDate)
@@ -3600,7 +3615,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
       if (upload.failed > 0) {
         Alert.alert(
           t('kids_logForm_alertPhotosPartialUpload'),
-          `${upload.failed} of ${photos.length} photos failed. Saving the diaper log anyway.`,
+          t('kp_klf_photosPartialDiaper', { failed: upload.failed, total: photos.length }),
         )
       }
       const uploadedPhotos = upload.urls.length ? upload.urls : undefined
@@ -3867,10 +3882,10 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
     if (!openLog) return ''
     const bedDate = new Date(openLog.date + 'T' + openLog.startTime + ':00')
     const mins = Math.round((Date.now() - bedDate.getTime()) / 60000)
-    if (mins < 60) return `${mins}m ago`
+    if (mins < 60) return t('kp_klf_agoMin', { m: mins })
     const h = Math.floor(mins / 60)
     const m = mins % 60
-    return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`
+    return m > 0 ? t('kp_klf_agoHm', { h, m }) : t('kp_klf_agoH', { h })
   }
 
   async function save() {

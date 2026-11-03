@@ -9,6 +9,7 @@
  * trimester-aware tips. ScoreInfoModal explains how Wellbeing is computed.
  */
 
+import { dateLoc } from '../../lib/kpLocale'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   View,
@@ -31,7 +32,7 @@ import { DiffuseSheet, DiffuseStatCard, DiffuseMetricTile, DiffuseSectionHeader 
 import { MoodBubbleCluster, type MoodBubbleItem } from '../charts/SvgCharts'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { kgToDisplay, weightLabel } from '../../lib/units'
@@ -443,7 +444,7 @@ function barDayLabels(dates: string[]): string[] {
 function shortDay(isoDate: string): string {
   try {
     const d = new Date(isoDate + 'T12:00:00')
-    return d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1)
+    return d.toLocaleDateString(dateLoc(), { weekday: 'short' }).slice(0, 1)
   } catch {
     return ''
   }
@@ -455,14 +456,14 @@ function weekdayName(isoDate: string, language: string): string {
   try {
     return d.toLocaleDateString(language, { weekday: 'long' })
   } catch {
-    return d.toLocaleDateString('en-US', { weekday: 'long' })
+    return d.toLocaleDateString(dateLoc(), { weekday: 'long' })
   }
 }
 
 function formatLogDate(isoDate: string): string {
   try {
     const d = new Date(isoDate + 'T12:00:00')
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
   } catch {
     return isoDate
   }
@@ -538,7 +539,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         const f = new Date(customRange.from + 'T00:00:00')
         const t = new Date(customRange.to + 'T00:00:00')
         const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-        return `${f.toLocaleDateString('en-US', opts)} – ${t.toLocaleDateString('en-US', opts)}`
+        return `${f.toLocaleDateString(dateLoc(), opts)} – ${t.toLocaleDateString(dateLoc(), opts)}`
       })()
     : undefined
 
@@ -833,7 +834,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             <SiteRow
               first
               sticker={PILLAR_SITE_STICKER.kicks}
-              label="Kicks"
+              label={tNow('kp_pc_m_kick_count')}
               sub={t('pregAnalytics_avgPerSession')}
               value={avgKicks ? String(avgKicks) : '—'}
               tone={stickers.pinkSoft}
@@ -841,15 +842,15 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
             />
             <SiteRow
               sticker={PILLAR_SITE_STICKER.symptoms}
-              label="Symptoms"
+              label={tNow('kp_pc_m_symptom')}
               sub={t('pregAnalytics_totalLoggedThisPeriod')}
-              value={symptomCount > 0 ? String(symptomCount) : 'None'}
+              value={symptomCount > 0 ? String(symptomCount) : tNow('kp_pa_none')}
               tone={stickers.yellowSoft}
               onPress={() => setOpenPillar('symptoms')}
             />
             <SiteRow
               sticker={PILLAR_SITE_STICKER.sleep}
-              label="Sleep"
+              label={tNow('kp_pc_m_sleep')}
               sub={t('pregAnalytics_avgPerNight')}
               value={sleepAvg}
               pct={tk.sleep.pct}
@@ -880,8 +881,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         {/* Mood trend strip */}
         {moodTrend.length > 0 && (
           <Section
-            title="Mood Trend"
-            subtitle={`Past 4 weeks — ${moodTrend.length} logged`}
+            title={tNow('kp_pa_moodTrend')}
+            subtitle={tNow('kp_pa_past4', { n: moodTrend.length })}
             onPress={() => setOpenPillar('mood')}
           >
             <MoodStrip data={pregMoodToStrip(moodTrend)} />
@@ -891,8 +892,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         {/* Hydration bars */}
         {hydrationData.some((v) => v > 0) && (
           <Section
-            title="Hydration"
-            subtitle="Glasses per day · target 8"
+            title={tNow('pregnancy_logTitle_water')}
+            subtitle={tNow('kp_pa_glassesTarget')}
             onPress={() => setOpenPillar('hydration')}
           >
             <View style={diffuse
@@ -917,7 +918,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
                   tone={stickers.blueSoft}
                   target={8}
                   unit=""
-                  caption="Glasses per day"
+                  caption={tNow('kp_pa_glassesDay')}
                 />
               )}
             </View>
@@ -927,8 +928,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         {/* Nutrition matrix mini */}
         {nutritionMatrix && (nutritionMatrix.iron.some(Boolean) || nutritionMatrix.folic.some(Boolean) || nutritionMatrix.protein.some(Boolean) || nutritionMatrix.calcium.some(Boolean)) && (
           <Section
-            title="Nutrition"
-            subtitle="4 nutrients × 7 days"
+            title={tNow('kp_pc_m_nutrition')}
+            subtitle={tNow('kp_pa_nutrients')}
             onPress={() => setOpenPillar('nutrition')}
           >
             <View style={styles.chartBare}>
@@ -940,7 +941,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         {/* Movement / exercise mini */}
         {exerciseHistory.some((e) => e.minutes > 0) && (
           <Section
-            title="Movement"
+            title={tNow('kp_pc_d_exercise')}
             subtitle={diffuse ? 'Minutes per session · target 150 / week' : t('pregAnalytics_minutesPerDayTarget')}
             onPress={() => setOpenPillar('exercise')}
           >
@@ -971,8 +972,8 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
         {/* Top symptoms list */}
         {symptomFreq.length > 0 && (
           <Section
-            title="Top Symptoms"
-            subtitle={`${symptomFreq.length} unique this period`}
+            title={tNow('kp_pa_topSymptoms')}
+            subtitle={tNow('kp_pa_uniqueSymptoms', { n: symptomFreq.length })}
             onPress={() => setOpenPillar('symptoms')}
           >
             {diffuse ? (
@@ -1013,12 +1014,12 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               <Text style={diffuse
                 ? { fontSize: 20, color: dt.colors.ink, fontFamily: diffuseFont.display, letterSpacing: -0.3 }
                 : { fontSize: 20, color: colors.text, fontFamily: font.display, letterSpacing: 0.2, textTransform: 'uppercase' }}>
-                {'Labor & birth'}
+                {tNow('kp_pa_labor')}
               </Text>
               <Text style={diffuse
                 ? { fontSize: 10, color: dt.colors.ink3, fontFamily: diffuseFont.mono, marginTop: 4, letterSpacing: 1, textTransform: 'uppercase' }
                 : { fontSize: 10, color: colors.textMuted, fontFamily: MONO, marginTop: 3, letterSpacing: 1.4, textTransform: 'uppercase' }}>
-                {'Track contractions and how ready you are'}
+                {tNow('kp_pa_laborSub')}
               </Text>
             </View>
           </View>
@@ -1045,10 +1046,10 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
           ) : (
             <HeroBanner
               pillarKey="birth"
-              label={diffuse ? 'BIRTH READINESS' : 'BIRTH PREP'}
+              label={diffuse ? 'BIRTH READINESS' : tNow('kp_pa_birthPrep')}
               // Light: a count of tasks marked done and the next concrete step — no readiness %
               // (a composite score that read as "how ready you are for birth").
-              title={diffuse ? tk.birth.headline : birthReady ? `${birthReady.birthPlanCount + birthReady.nestingCount} done` : '—'}
+              title={diffuse ? tk.birth.headline : birthReady ? tNow('kp_pa_nDone', { n: birthReady.birthPlanCount + birthReady.nestingCount }) : '—'}
               // Light never shows the "Loading your readiness…" placeholder copy:
               // loading is the skeleton above; a failed load just has no subtitle.
               subtitle={diffuse ? (tk.birth.takeaway ?? '') : birthReady ? birthNextStep(birthReady, trimester) : ''}
@@ -1218,10 +1219,10 @@ function HeroWeekCard({
   const dDaysText = daysToDue === null
     ? '—'
     : daysToDue > 0
-    ? `${daysToDue} day${daysToDue === 1 ? '' : 's'} to go`
+    ? tNow(daysToDue === 1 ? 'kp_pa_dayToGo1' : 'kp_ph_daysToGo', { n: daysToDue })
     : daysToDue === 0
-    ? 'Due today'
-    : `${Math.abs(daysToDue)} day${daysToDue === -1 ? '' : 's'} past due`
+    ? tNow('kp_pa_dueToday')
+    : tNow(daysToDue === -1 ? 'kp_pa_pastDue1' : 'kp_pa_pastDueN', { n: Math.abs(daysToDue) })
 
   if (diffuse) {
     return (
@@ -1239,7 +1240,7 @@ function HeroWeekCard({
             {trimesterLabel(trimester).toUpperCase()}
           </Text>
           <Text style={[styles.heroValue, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>
-            {'Week '}{weekNumber}
+            {tNow('kp_pa_weekN', { n: weekNumber })}
           </Text>
           <Text style={[styles.heroSub, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 0.6, textTransform: 'uppercase', fontSize: 10 }]}>
             {dDaysText}
@@ -1274,7 +1275,7 @@ function HeroWeekCard({
           {trimesterLabel(trimester).toUpperCase()}
         </Text>
         <Text style={[styles.heroValue, { color: colors.text, fontFamily: font.display }]}>
-          {'Week '}{weekNumber}
+          {tNow('kp_pa_weekN', { n: weekNumber })}
         </Text>
         <Text style={[styles.heroSub, { color: colors.textSecondary, fontFamily: font.bodyMedium }]}>
           {dDaysText}
@@ -1900,10 +1901,9 @@ function KicksDetail({ kickSessions, kickHours, weekNumber, trimester, accentCol
           the 2 hours) and showed a % plus "less than that warrants a call" — a verdict on the baby.
           Shown from week 28, which is what the copy says. */}
       {!diffuse && weekNumber >= 28 ? (
-        <PaperCard title="Counting kicks">
+        <PaperCard title={tNow('kp_pa_kicksTitle')}>
           <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-            Many care teams suggest counting movements from about week 28 and getting in touch if you
-            notice fewer than usual for your baby. Follow what your midwife or OB has told you.
+            {tNow('kp_pa_kicksBody')}
           </Body>
         </PaperCard>
       ) : null}
@@ -2186,11 +2186,11 @@ function SymptomsDetail({ symptomFreq, trimester, weekNumber, accentColor, accen
             </Body>
           </View>
         ) : (
-          <PaperCard title="Worth a call">
+          <PaperCard title={tNow('kp_pa_worthCall')}>
             <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-              You've logged{' '}
+              {tNow('kp_pa_loggedPrefix')}{' '}
               <Body size={13} color={ink}>{severeHits.map((s) => s.symptom).join(', ')}</Body>
-              . It's worth a call to your provider — especially if any of these persist or feel severe.
+              {tNow('kp_pa_worthCallSuffix')}
             </Body>
           </PaperCard>
         )
@@ -2362,7 +2362,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                 tone={tint}
                 height={140}
                 target={TARGET}
-                caption="Glasses per day"
+                caption={tNow('kp_pa_glassesDay')}
               />
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
@@ -2773,10 +2773,10 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
 
 /** Light look: the next concrete prep step, from the first thing not started. */
 function birthNextStep(b: BirthReadiness, trimester: 1 | 2 | 3): string {
-  if (!b.emergencyCardComplete) return 'Next: add a primary emergency contact — it takes 2 minutes.'
-  if (b.birthPlanCount === 0) return 'Next: note what matters to you for the birth in the birth plan.'
-  if (b.nestingCount === 0) return trimester === 3 ? 'Next: start the hospital bag list.' : 'Next: start a nesting list when you feel ready.'
-  return 'Bring your birth plan to your next appointment to talk it through.'
+  if (!b.emergencyCardComplete) return tNow('kp_pa_next1')
+  if (b.birthPlanCount === 0) return tNow('kp_pa_next2')
+  if (b.nestingCount === 0) return trimester === 3 ? tNow('kp_pa_next3a') : tNow('kp_pa_next3b')
+  return tNow('kp_pa_next4')
 }
 
 function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
@@ -2796,28 +2796,32 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
   }
   const buckets = [
     {
-      label: 'Birth plan items',
+      id: 'plan',
+      label: tNow('kp_pa_bPlan'),
       value: birthReady.birthPlanCount,
       target: 5,
       color: stickers.lilac,
       tint: stickers.lilacSoft,
     },
     {
-      label: 'Hospital bag prep',
+      id: 'bag',
+      label: tNow('kp_pa_bBag'),
       value: birthReady.nestingCount,
       target: 8,
       color: stickers.coral,
       tint: stickers.peachSoft,
     },
     {
-      label: 'Exam records',
+      id: 'exams',
+      label: tNow('kp_pa_bExams'),
       value: birthReady.examDocs,
       target: 4,
       color: stickers.green,
       tint: stickers.greenSoft,
     },
     {
-      label: 'Emergency card',
+      id: 'card',
+      label: tNow('kp_pa_bCard'),
       value: birthReady.emergencyCardComplete ? 1 : 0,
       target: 1,
       color: stickers.pink,
@@ -2836,7 +2840,7 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
         </View>
       ) : null /* light: no readiness % — the list below says what's done */}
 
-      <PaperCard title="What's ready">
+      <PaperCard title={tNow('kp_pa_whatsReady')}>
         {diffuse ? (
           // Checkpoint fill pills — each item fills; complete = green ✓.
           <CheckpointPills
@@ -2852,7 +2856,7 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
                   {b.label}
                 </Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body }}>
-                  {b.label === 'Emergency card' ? (b.value ? 'Set' : 'Not set yet') : b.label === 'Exam records' ? `${b.value} on file` : `${b.value} done`}
+                  {b.id === 'card' ? (b.value ? tNow('kp_pa_set') : tNow('kp_pa_notSet')) : b.id === 'exams' ? tNow('kp_pa_nOnFile', { n: b.value }) : tNow('kp_pa_nDone', { n: b.value })}
                 </Text>
               </View>
             ))}
@@ -2860,7 +2864,7 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
         )}
       </PaperCard>
 
-      <PaperCard title="Suggested next step">
+      <PaperCard title={tNow('kp_pa_nextStepTitle')}>
         <Body size={13} color={colors.textSecondary} style={{ lineHeight: 20 }}>
           {!diffuse ? birthNextStep(birthReady, trimester) : birthReady.pct >= 80
             ? 'You\'re in great shape. Confirm car-seat installation and put a printed birth plan in the bag.'
@@ -2929,7 +2933,7 @@ function ScoreInfoModal({
             onClose={onClose}
           />
           <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
-            {'Week '}{weekNumber}{' · '}{trimesterLabel(trimester)}
+            {tNow('kp_pa_weekN', { n: weekNumber })}{' · '}{trimesterLabel(trimester)}
           </Text>
         </View>
         <ScrollView
@@ -3009,7 +3013,7 @@ function ScoreInfoModal({
                   {'Wellbeing score guide'}
                 </Text>
                 <Text style={{ color: stickers.green, fontSize: 13, fontFamily: font.bodyMedium, marginTop: 2 }}>
-                  {'Week '}{weekNumber}{' · '}{trimesterLabel(trimester).toLowerCase()}
+                  {tNow('kp_pa_weekN', { n: weekNumber })}{' · '}{trimesterLabel(trimester).toLowerCase()}
                 </Text>
               </View>
             </View>

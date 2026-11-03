@@ -24,7 +24,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Baby, Heart, Mail, Send, Check, Copy, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase'
-import { useTranslation } from '../lib/i18n'
+import { useTranslation, type TranslationKey } from '../lib/i18n'
 import { useChildStore } from '../store/useChildStore'
 import { useTheme, radius, spacing, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { Display, MonoCaps, Body } from '../components/ui/Typography'
@@ -40,9 +40,9 @@ import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
 
 type RoleGlyph = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
 
-const ROLES: { id: string; label: string; Sticker: React.ComponentType<{ size?: number }>; Glyph: RoleGlyph; site: 'baby' | 'heart' }[] = [
-  { id: 'nanny', label: 'Nanny', Sticker: MissingStickers.CaregiverNanny, Glyph: Baby, site: 'baby' },
-  { id: 'family', label: 'Family', Sticker: MissingStickers.CaregiverFamily, Glyph: Heart, site: 'heart' },
+const ROLES: { id: string; label: TranslationKey; Sticker: React.ComponentType<{ size?: number }>; Glyph: RoleGlyph; site: 'baby' | 'heart' }[] = [
+  { id: 'nanny', label: 'careCircle_nanny', Sticker: MissingStickers.CaregiverNanny, Glyph: Baby, site: 'baby' },
+  { id: 'family', label: 'careCircle_family', Sticker: MissingStickers.CaregiverFamily, Glyph: Heart, site: 'heart' },
 ]
 
 export default function InviteCaregiver() {
@@ -54,6 +54,7 @@ export default function InviteCaregiver() {
   const mode = useModeStore((s) => s.mode)
   const accent = getDiffuseAccent(mode, dt.isDark)
   const { t } = useTranslation()
+  const roles = ROLES.map((r) => ({ ...r, label: t(r.label) }))
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -159,7 +160,7 @@ export default function InviteCaregiver() {
 
   async function handleInvite() {
     if (!email.trim() || !email.includes('@')) {
-      Alert.alert('Invalid email', 'Please enter a valid email address')
+      Alert.alert(t('auth_invalidEmail'), t('app_ic_validEmailMsg'))
       return
     }
     if (!child?.id) return
@@ -189,7 +190,7 @@ export default function InviteCaregiver() {
       const link = `grandma-app://invite/${data.inviteToken}`
       setInviteLink(link)
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setLoading(false)
     }
@@ -198,7 +199,7 @@ export default function InviteCaregiver() {
   async function copyLink() {
     if (!inviteLink) return
     await Clipboard.setStringAsync(inviteLink)
-    toast.show({ title: 'Copied!', message: 'Share this link with the caregiver.' })
+    toast.show({ title: t('channelScreen_copiedTitle'), message: t('app_ic_copiedMsg') })
   }
 
   return (
@@ -218,7 +219,7 @@ export default function InviteCaregiver() {
           {/* Close button top-right */}
           {!diffuse ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: spacing.sm }}>
-              <InkBackButton icon="close" label="Close" ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+              <InkBackButton icon="close" label={t('common_close')} ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
               <SiteSticker name={inviteLink ? 'star' : 'heart'} size={30} cut />
               <Display size={26} color={colors.text} style={{ textTransform: 'uppercase', letterSpacing: 0.3, flexShrink: 1 }}>
                 {inviteLink ? t('careInvite_sent_title') : t('careInvite_title')}
@@ -235,7 +236,7 @@ export default function InviteCaregiver() {
               ]}
               hitSlop={12}
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel={t('common_close')}
             >
               {diffuse ? (
                 <X size={18} color={dt.colors.ink} strokeWidth={1.6} />
@@ -278,7 +279,7 @@ export default function InviteCaregiver() {
                         : { color: colors.text, fontFamily: font.body },
                     ]}
                     selectionColor={diffuse ? accent : brand.secondary}
-                    placeholder="nanny@email.com"
+                    placeholder={t('app_ic_emailPh')}
                     placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
                     value={email}
                     onChangeText={setEmail}
@@ -292,7 +293,7 @@ export default function InviteCaregiver() {
               <View style={styles.field}>
                 <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('careInvite_field_role')}</MonoCaps>
                 <View style={styles.roleRow}>
-                  {ROLES.map((r) => {
+                  {roles.map((r) => {
                     const isActive = role === r.id
                     if (diffuse) {
                       return (
@@ -308,7 +309,7 @@ export default function InviteCaregiver() {
                             },
                           ]}
                           accessibilityRole="button"
-                          accessibilityLabel={`Select role ${r.label}`}
+                          accessibilityLabel={t('app_ic_selectRoleA11y', { role: r.label })}
                         >
                           <DiffuseBloomIcon color={accent} size={40} intensity={isActive ? 0.55 : 0.32}>
                             <r.Glyph size={22} color={dt.colors.ink3} strokeWidth={1.6} />
@@ -340,7 +341,7 @@ export default function InviteCaregiver() {
 
               {/* Send button */}
               <PillButton
-                label={loading ? 'Sending…' : 'Send Invite'}
+                label={loading ? t('auth_sending') : t('prepreg_partnerView_sendInvite')}
                 variant="ink"
                 onPress={handleInvite}
                 disabled={loading}
@@ -383,7 +384,7 @@ export default function InviteCaregiver() {
                 {t('careInvite_share_with', { email })}
               </Body>
 
-              <Pressable onPress={copyLink} style={styles.linkCard} accessibilityRole="button" accessibilityLabel="Copy invite link">
+              <Pressable onPress={copyLink} style={styles.linkCard} accessibilityRole="button" accessibilityLabel={t('app_ic_copyLinkA11y')}>
                 {diffuse ? (
                   <View style={{
                     flex: 1,
@@ -420,7 +421,7 @@ export default function InviteCaregiver() {
                 style={styles.doneButton}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Done"
+                accessibilityLabel={t('common_done')}
               >
                 <Body
                   size={diffuse ? 12 : 16}

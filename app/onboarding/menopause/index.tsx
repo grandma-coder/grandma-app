@@ -60,40 +60,42 @@ import { useJourneyStore } from '../../../store/useJourneyStore'
 import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import type { MenopauseStage } from '../../../lib/menopauseStage'
+import { menopauseGroupLabel } from '../../../components/menopause/menopauseIcons'
+import { useTranslation, t as tNow } from '../../../lib/i18n'
 import {
   ALL_MENOPAUSE_SYMPTOMS,
+  menopauseSymptomLabel,
   type MenopauseSymptomId,
   type MenopauseGroup,
 } from '../../../lib/menopauseSymptoms'
 
-// ─── Copy (English literals — no menopause i18n keys exist yet) ──────────────
+// ─── Copy (getters: resolved at render so a language change applies live) ────
 
 const COPY = {
-  introQ: 'A calmer space for',
-  introItalic: 'this season.',
-  introBody:
-    'This is a place to notice how you feel and track what changes — gently, at your own pace. No labels, no diagnoses. You can update anything anytime.',
-  introCta: 'Begin',
-  stageQ: 'Where are you right now?',
-  stageNote: 'This is your call, not a diagnosis — change it whenever it feels right.',
-  lastPeriodQ: 'When did your last period start?',
-  lastPeriodSkip: 'Not sure',
-  lastPeriodHint: 'Scroll the wheel to pick a date, then continue.',
-  symptomsQ: 'What have you been noticing?',
-  symptomsNote: 'Pick anything that feels relevant — or none.',
-  hrtQ: 'Using HRT or other treatment?',
-  hrtNote: 'Optional — it just helps tailor your space.',
-  hrtYes: 'Yes, I am',
-  hrtNo: 'Not right now',
-  doneTitle: "You're all set.",
-  doneBody: 'Your space is ready. We’ll keep it gentle and let you lead the way.',
-  doneCta: 'Enter my space',
+  get introQ() { return tNow('meno_ob_intro_q') },
+  get introItalic() { return tNow('meno_ob_intro_italic') },
+  get introBody() { return tNow('meno_ob_intro_body') },
+  get introCta() { return tNow('meno_ob_begin') },
+  get stageQ() { return tNow('meno_ob_stage_q') },
+  get stageNote() { return tNow('meno_ob_stage_note') },
+  get lastPeriodQ() { return tNow('meno_ob_last_q') },
+  get lastPeriodSkip() { return tNow('meno_ob_last_skip') },
+  get lastPeriodHint() { return tNow('meno_ob_last_hint') },
+  get symptomsQ() { return tNow('meno_ob_symptoms_q') },
+  get symptomsNote() { return tNow('meno_ob_symptoms_note') },
+  get hrtQ() { return tNow('meno_ob_hrt_q') },
+  get hrtNote() { return tNow('meno_ob_hrt_note') },
+  get hrtYes() { return tNow('meno_ob_hrt_yes') },
+  get hrtNo() { return tNow('meno_ob_hrt_no') },
+  get doneTitle() { return tNow('meno_ob_done_title') },
+  get doneBody() { return tNow('meno_ob_done_body') },
+  get doneCta() { return tNow('meno_ob_done_cta') },
 }
 
-const STAGE_OPTIONS: { id: MenopauseStage; label: string; desc: string; icon: CharacterName }[] = [
-  { id: 'peri', label: 'Perimenopause', desc: 'Still having periods, but they’re changing', icon: 'sun' },
-  { id: 'meno', label: 'Around menopause', desc: 'Periods have mostly stopped recently', icon: 'phase' },
-  { id: 'post', label: 'Postmenopause', desc: 'A year or more since my last period', icon: 'star' },
+const stageOptions = (): { id: MenopauseStage; label: string; desc: string; icon: CharacterName }[] => [
+  { id: 'peri', label: tNow('report_meno_stage_peri'), desc: tNow('meno_ob_stage_peri_desc'), icon: 'sun' },
+  { id: 'meno', label: tNow('meno_ob_stage_meno_label'), desc: tNow('meno_ob_stage_meno_desc'), icon: 'phase' },
+  { id: 'post', label: tNow('report_meno_stage_post'), desc: tNow('meno_ob_stage_post_desc'), icon: 'star' },
 ]
 
 // Site-look stickers (non-diffuse only)
@@ -112,12 +114,12 @@ const SYMPTOM_STICKERS: Partial<Record<MenopauseSymptomId, SiteStickerName>> = {
   libido: 'heart',
 }
 
-const GROUP_META: Record<MenopauseGroup, { label: string; icon: CharacterName }> = {
-  vasomotor: { label: 'Temperature', icon: 'temperature' },
-  sleep: { label: 'Sleep & energy', icon: 'sleep' },
-  mood: { label: 'Mind & mood', icon: 'mood' },
-  physical: { label: 'Body', icon: 'activity' },
-  genitourinary: { label: 'Intimate', icon: 'heart' },
+const GROUP_META: Record<MenopauseGroup, { icon: CharacterName }> = {
+  vasomotor: { icon: 'temperature' },
+  sleep: { icon: 'sleep' },
+  mood: { icon: 'mood' },
+  physical: { icon: 'activity' },
+  genitourinary: { icon: 'heart' },
 }
 const GROUP_ORDER: MenopauseGroup[] = ['vasomotor', 'sleep', 'mood', 'physical', 'genitourinary']
 
@@ -327,6 +329,7 @@ export default function MenopauseOnboarding() {
 
 function StepIntro({ step, total, onContinue }: { step: number; total: number; onContinue: () => void }) {
   const pal = useMenoPalette()
+  const { t } = useTranslation() // subscribes to language changes (COPY reads the current language)
   return (
     <OnboardingStep
       step={step}
@@ -355,6 +358,7 @@ function StepIntro({ step, total, onContinue }: { step: number; total: number; o
 
 function StepStage({ step, total, onContinue }: { step: number; total: number; onContinue: () => void }) {
   const pal = useMenoPalette()
+  const { t } = useTranslation() // subscribes to language changes (COPY reads the current language)
   const stage = useMenopauseOnboardingStore((s) => s.stage)
   const setStage = useMenopauseOnboardingStore((s) => s.setStage)
 
@@ -372,7 +376,7 @@ function StepStage({ step, total, onContinue }: { step: number; total: number; o
         // Diffuse: shared vertical connector-line single-select (ring-dot nodes +
         // per-stage bloom halo), matching the kids caregiver step.
         <ChoiceTimeline
-          options={STAGE_OPTIONS.map((opt, i) => ({
+          options={stageOptions().map((opt, i) => ({
             key: opt.id,
             label: opt.label,
             sub: opt.desc,
@@ -383,7 +387,7 @@ function StepStage({ step, total, onContinue }: { step: number; total: number; o
         />
       ) : (
         <View style={styles.optionList}>
-          {STAGE_OPTIONS.map((opt) => {
+          {stageOptions().map((opt) => {
             const selected = stage === opt.id
             return (
               <SiteChoice
@@ -419,6 +423,7 @@ function StepLastPeriod({
   onSkip: () => void
 }) {
   const pal = useMenoPalette()
+  const { t } = useTranslation() // subscribes to language changes (COPY reads the current language)
   const date = useMenopauseOnboardingStore((s) => s.lastPeriodDate)
   const setDate = useMenopauseOnboardingStore((s) => s.setLastPeriodDate)
 
@@ -474,6 +479,7 @@ function StepSymptoms({
   onSkip: () => void
 }) {
   const pal = useMenoPalette()
+  const { t } = useTranslation() // subscribes to language changes (COPY reads the current language)
   const symptoms = useMenopauseOnboardingStore((s) => s.symptoms)
   const setSymptoms = useMenopauseOnboardingStore((s) => s.setSymptoms)
 
@@ -500,7 +506,7 @@ function StepSymptoms({
               <View style={styles.groupHead}>
                 <Character name={meta.icon} size={20} color={pal.accent} bg={pal.bg} />
                 <Text style={[styles.groupLabel, { color: pal.textMuted, fontFamily: pal.diffuse ? pal.fontBodySemiBold : 'SpaceMono_400Regular' }]}>
-                  {meta.label}
+                  {menopauseGroupLabel(group)}
                 </Text>
               </View>
               {pal.diffuse ? (
@@ -508,7 +514,7 @@ function StepSymptoms({
                 // matches the kids allergies step. Global symptom array is spliced
                 // per group so each BloomChips only owns its own ids.
                 <BloomChips
-                  options={items.map((s) => ({ key: s.id, label: s.label }))}
+                  options={items.map((s) => ({ key: s.id, label: menopauseSymptomLabel(s.id) }))}
                   value={symptoms.filter((id) => items.some((s) => s.id === id))}
                   onChange={(next) => {
                     const others = symptoms.filter((id) => !items.some((s) => s.id === id))
@@ -522,7 +528,7 @@ function StepSymptoms({
                     return (
                       <SiteChoice
                         key={s.id}
-                        label={s.label}
+                        label={menopauseSymptomLabel(s.id)}
                         selected={selected}
                         onPress={() => toggle(s.id)}
                         tone={pal.accentSoft}
@@ -545,6 +551,7 @@ function StepSymptoms({
 
 function StepHrt({ step, total, onContinue }: { step: number; total: number; onContinue: () => void }) {
   const pal = useMenoPalette()
+  const { t } = useTranslation() // subscribes to language changes (COPY reads the current language)
   const onHrt = useMenopauseOnboardingStore((s) => s.onHrt)
   const setOnHrt = useMenopauseOnboardingStore((s) => s.setOnHrt)
 
@@ -581,6 +588,7 @@ function StepHrt({ step, total, onContinue }: { step: number; total: number; onC
 
 function TogglePill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const pal = useMenoPalette()
+  const { t } = useTranslation() // subscribes to language changes (COPY reads the current language)
   if (!pal.diffuse) {
     return <SiteChoice label={label} selected={active} onPress={onPress} tone={pal.accentSoft} style={{ flex: 1 }} />
   }
@@ -608,9 +616,10 @@ function TogglePill({ label, active, onPress }: { label: string; active: boolean
 function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: boolean }) {
   const insets = useSafeAreaInsets()
   const pal = useMenoPalette()
+  const { t } = useTranslation() // subscribes to language changes (COPY reads the current language)
   const symptomCount = useMenopauseOnboardingStore((s) => s.symptoms.length)
   const stage = useMenopauseOnboardingStore((s) => s.stage)
-  const stageLabel = STAGE_OPTIONS.find((o) => o.id === stage)?.label ?? null
+  const stageLabel = stageOptions().find((o) => o.id === stage)?.label ?? null
 
   return (
     <View style={[completeStyles.root, { backgroundColor: pal.bg }]}>
@@ -629,12 +638,12 @@ function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: 
         {pal.diffuse ? (
           <View style={[completeStyles.summary, { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
           {stageLabel && (
-            <SummaryRow icon="phase" label="Stage" value={stageLabel} pal={pal} />
+            <SummaryRow icon="phase" label={t('meno_ob_sum_stage')} value={stageLabel} pal={pal} />
           )}
           <SummaryRow
             icon="health"
-            label="Tracking"
-            value={symptomCount > 0 ? `${symptomCount} thing${symptomCount === 1 ? '' : 's'}` : 'Nothing yet'}
+            label={t('meno_ob_sum_tracking')}
+            value={symptomCount > 0 ? t(symptomCount === 1 ? 'meno_ob_sum_things_one' : 'meno_ob_sum_things_other', { n: symptomCount }) : t('meno_ob_sum_none')}
             pal={pal}
             last
           />
@@ -643,12 +652,12 @@ function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: 
           <FadeUp index={0} delay={700} style={{ alignSelf: 'stretch' }}>
             <HandDrawnBox fill={pal.surface} stroke={pal.text} radius={20} seed="meno-summary" style={completeStyles.summarySite}>
           {stageLabel && (
-            <SummaryRow icon="phase" label="Stage" value={stageLabel} pal={pal} />
+            <SummaryRow icon="phase" label={t('meno_ob_sum_stage')} value={stageLabel} pal={pal} />
           )}
           <SummaryRow
             icon="health"
-            label="Tracking"
-            value={symptomCount > 0 ? `${symptomCount} thing${symptomCount === 1 ? '' : 's'}` : 'Nothing yet'}
+            label={t('meno_ob_sum_tracking')}
+            value={symptomCount > 0 ? t(symptomCount === 1 ? 'meno_ob_sum_things_one' : 'meno_ob_sum_things_other', { n: symptomCount }) : t('meno_ob_sum_none')}
             pal={pal}
             last
           />

@@ -24,7 +24,8 @@ import { SymptomBlob, CustomSymptomBlob } from '../calendar/symptomStickers'
 import { symptomLabel, resolveSymptomId } from '../../lib/cycleSymptoms'
 import { MiniLineChart, BeadedThread } from './shared/MiniCharts'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as translate, type TranslationKey } from '../../lib/i18n'
+import { appIntlLocale } from '../../lib/cycleLogForms'
 
 const MONO = 'SpaceMono_400Regular'
 const HAIR = StyleSheet.hairlineWidth * 2
@@ -206,7 +207,7 @@ function CycleLengthDetail() {
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.avg === null || data.cycles.length === 0) {
-    const copy = 'Log your first period to start tracking cycle length.'
+    const copy = t('cyc_detail_lengthEmpty')
     return diffuse ? (
       <DiffuseEmptyState
         icon={<Character name="sparkle" size={40} color={stickers.pink} />}
@@ -428,12 +429,12 @@ function StatChip({ label, value, tint }: { label: string; value: string; tint: 
 
 function formatRange(start: string, end: string | null): string {
   const s = formatShort(start)
-  if (!end) return `${s} – now`
+  if (!end) return translate('cyc_detail_rangeNow', { start: s })
   return `${s} – ${formatShort(end)}`
 }
 
 function formatShort(iso: string): string {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return new Date(iso + 'T00:00:00').toLocaleDateString(appIntlLocale(), { month: 'short', day: 'numeric' })
 }
 
 const detailStyles = StyleSheet.create({
@@ -492,7 +493,7 @@ function RegularityDetail() {
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.percent === null) {
-    const copy = 'We need at least 3 complete cycles to measure regularity.'
+    const copy = t('cyc_detail_regEmpty')
     return diffuse ? (
       <DiffuseEmptyState
         icon={<Character name="period" size={40} color={stickers.lilac} />}
@@ -508,16 +509,16 @@ function RegularityDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <HeroRow size={56} value={<>{data.percent}%</>} unit={t('cycleDetail_regular')} note="Share of your closed cycles that landed within 2 days of your average length." />
+      <HeroRow size={56} value={<>{data.percent}%</>} unit={t('cycleDetail_regular')} note={t('cyc_detail_regNote')} />
 
       <View style={{ gap: 6 }}>
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
           {t('cycleDetail_legend')}
         </Text>
         <View style={regStyles.legendRow}>
-          <LegendDot color={stickers.green} text="≤ 2 days off avg" />
-          <LegendDot color={stickers.yellow} text="≤ 4 days off avg" />
-          <LegendDot color={stickers.coral} text="> 4 days off avg" />
+          <LegendDot color={stickers.green} text={t('cyc_detail_legend_2')} />
+          <LegendDot color={stickers.yellow} text={t('cyc_detail_legend_4')} />
+          <LegendDot color={stickers.coral} text={t('cyc_detail_legend_over4')} />
         </View>
       </View>
 
@@ -609,7 +610,7 @@ function PMSDetail() {
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || (data.avgDays === null && data.topSymptoms.length === 0)) {
-    const copy = 'Log symptoms on the Agenda tab to start tracking PMS trends.'
+    const copy = t('cyc_detail_pmsEmpty')
     return diffuse ? (
       <DiffuseEmptyState
         icon={<Character name="activity" size={40} color={stickers.coral} />}
@@ -643,7 +644,7 @@ function PMSDetail() {
   return (
     <View style={{ gap: 18 }}>
       {data.avgDays !== null && (
-        <HeroRow size={40} value={<>{data.avgDays}</>} unit={t('cycleDetail_daysOfSymptomsPerCycle')} note="Average per closed cycle. The counts below are totals across every cycle you logged." />
+        <HeroRow size={40} value={<>{data.avgDays}</>} unit={t('cycleDetail_daysOfSymptomsPerCycle')} note={t('cyc_detail_pmsNote')} />
       )}
 
       {headline && (
@@ -824,7 +825,7 @@ function FertileDetail() {
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || !data.current) {
-    const copy = 'Log your last period to see your fertile window predictions.'
+    const copy = t('cyc_detail_fertileEmpty')
     return diffuse ? (
       <DiffuseEmptyState
         icon={<Character name="ovulation" size={40} color={stickers.pink} />}
@@ -908,13 +909,13 @@ const MOOD_STICKER: Record<MoodId, SiteStickerName> = {
   great: 'face4', energetic: 'star', good: 'face3', okay: 'face2', down: 'face1', low: 'face1',
 }
 
-const MOOD_LABELS: Record<MoodId, string> = {
-  great: 'Great',
-  energetic: 'Energetic',
-  good: 'Good',
-  okay: 'Okay',
-  down: 'Down',
-  low: 'Low',
+const MOOD_LABEL_KEYS: Record<MoodId, TranslationKey> = {
+  great: 'cyc_mood_great',
+  energetic: 'cyc_mood_energetic',
+  good: 'cyc_mood_good',
+  okay: 'cyc_mood_okay',
+  down: 'cyc_mood_down',
+  low: 'cyc_mood_low',
 }
 
 function MoodDetail() {
@@ -928,7 +929,7 @@ function MoodDetail() {
   if (isLoading) return <Loading />
   if (error) return <ErrorState />
   if (!data || data.avgScore === null) {
-    const copy = 'Log your mood on the Agenda tab to see mood trends.'
+    const copy = t('cyc_detail_moodEmpty')
     return diffuse ? (
       <DiffuseEmptyState
         icon={<Character name="mood" size={40} color={stickers.coral} />}
@@ -946,7 +947,7 @@ function MoodDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <HeroRow size={40} value={<>{data.avgScore}</>} unit={t('cycleDetail_fiveAvg')} note="Average of the last 30 days of mood logs, where 5 is great. The counts below are totals, all time." />
+      <HeroRow size={40} value={<>{data.avgScore}</>} unit={t('cycleDetail_fiveAvg')} note={t('cyc_detail_moodNote')} />
 
       <View style={{ gap: 8 }}>
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
@@ -963,7 +964,7 @@ function MoodDetail() {
               <View key={row.mood} style={moodStyles.row}>
                 <SiteSticker name={MOOD_STICKER[row.mood]} size={30} cut />
                 <Body size={13} color={colors.text} style={{ width: 74 }}>
-                  {MOOD_LABELS[row.mood]}
+                  {t(MOOD_LABEL_KEYS[row.mood])}
                 </Body>
                 <View style={[moodStyles.barTrack, { backgroundColor: colors.borderLight }]}>
                   {row.count > 0 && (
@@ -990,7 +991,7 @@ function MoodDetail() {
               style={[detailStyles.historyRow, { borderColor: diffuse ? dt.colors.line : colors.border }]}
             >
               <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{formatShort(r.date)}</Body>
-              <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{MOOD_LABELS[r.mood]}</Body>
+              <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textSecondary}>{t(MOOD_LABEL_KEYS[r.mood])}</Body>
             </View>
           ))}
         </View>
@@ -1087,8 +1088,8 @@ function BBTDetail() {
 
 // ─── Cervical mucus ─────────────────────────────────────────────────────────
 
-const MUCUS_LABELS: Record<MucusType, string> = {
-  dry: 'Dry', sticky: 'Sticky', creamy: 'Creamy', watery: 'Watery', eggwhite: 'Egg-white',
+const MUCUS_LABEL_KEYS: Record<MucusType, TranslationKey> = {
+  dry: 'cyc_cm_dry', sticky: 'cyc_cm_sticky', creamy: 'cyc_cm_creamy', watery: 'cyc_cm_watery', eggwhite: 'cyc_cm_eggwhite',
 }
 
 function MucusDetail() {
@@ -1138,7 +1139,7 @@ function MucusDetail() {
                 <Body size={13} color={diffuse ? dt.colors.ink : colors.text}>{t('cycleAnalytics_dayNumber', { currentDay: s.cycleDay })}</Body>
               </View>
               <Body size={13} color={diffuse ? (fertile ? fertileHue : dt.colors.ink3) : colors.text}>
-                {MUCUS_LABELS[s.type]}
+                {t(MUCUS_LABEL_KEYS[s.type])}
               </Body>
             </View>
           )

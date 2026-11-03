@@ -76,7 +76,7 @@ export default function SignIn() {
       })
       if (error) Alert.alert(t('auth_signInFailed'), error.message)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Network error'
+      const msg = e instanceof Error ? e.message : t('error_network')
       Alert.alert(t('auth_signInFailed'), msg)
     } finally {
       setLoading(false)
@@ -361,6 +361,7 @@ function InputField({
   ink4,
   font,
 }: InputFieldProps) {
+  const { t } = useTranslation()
   return (
     <HandDrawnBox style={styles.inputCard} fill={paper} stroke={paperBorder} radius={14} seed={'field1'}>
       <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: ink4 }]}>
@@ -374,7 +375,7 @@ function InputField({
         autoCapitalize={autoCapitalize}
         style={[styles.inputText, { fontFamily: font.body, color: ink }]}
         selectionColor={ink}
-        placeholder={secureTextEntry ? '••••••••' : 'your@email.com'}
+        placeholder={secureTextEntry ? '••••••••' : t('auth_emailPlaceholder')}
         placeholderTextColor={ink4}
       />
     </HandDrawnBox>

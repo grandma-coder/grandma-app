@@ -6,6 +6,7 @@
  * All real data from Supabase.
  */
 
+import { dateLoc, weekdayShort } from '../../lib/kpLocale'
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react'
 import {
   View, Text, Pressable, ScrollView, StyleSheet, Dimensions, Image, Modal, TextInput, Platform,
@@ -82,7 +83,7 @@ import {
 } from '../../lib/vaccineSchedule'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import type { MoodBubbleItem } from '../charts/SvgCharts'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 
 const SW = Dimensions.get('window').width
 const SH = Dimensions.get('window').height
@@ -290,10 +291,10 @@ function formatAge(bd: string): string {
   if (!bd) return ''
   const b = parseLocalDate(bd), n = new Date()
   const m = (n.getFullYear() - b.getFullYear()) * 12 + (n.getMonth() - b.getMonth())
-  if (m < 1) return 'Newborn'
-  if (m < 12) return `${m}mo`
+  if (m < 1) return tNow('kids_home_age_newborn')
+  if (m < 12) return tNow('kp_kh_ageMo', { n: m })
   const y = Math.floor(m / 12), r = m % 12
-  return r > 0 ? `${y}y ${r}mo` : `${y}y`
+  return r > 0 ? tNow('kp_kh_ageYMo', { y, r }) : tNow('kp_kh_ageY', { y })
 }
 
 function getRecommendedSleep(bd: string, days: number): number {
@@ -343,7 +344,11 @@ const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
 }
 const MOOD_LABELS: Record<string, string> = {
-  happy: 'Happy', calm: 'Calm', energetic: 'Active', fussy: 'Fussy', cranky: 'Cranky',
+  get happy() { return tNow('kids_logForm_moodHappy') },
+  get calm() { return tNow('kids_logForm_moodCalm') },
+  get energetic() { return tNow('kp_kh_moodActive') },
+  get fussy() { return tNow('kids_logForm_moodFussy') },
+  get cranky() { return tNow('kids_logForm_moodCranky') },
 }
 
 /**
@@ -424,11 +429,11 @@ const PILLAR_COLORS = {
 type DateRange = 'today' | 'yesterday' | '7days' | '30days' | 'custom'
 
 const DATE_RANGE_OPTIONS: { key: DateRange; label: string }[] = [
-  { key: 'today', label: 'Today' },
-  { key: 'yesterday', label: 'Yesterday' },
-  { key: '7days', label: '7 Days' },
-  { key: '30days', label: '30 Days' },
-  { key: 'custom', label: 'Custom' },
+  { key: 'today', get label() { return tNow('common_today') } },
+  { key: 'yesterday', get label() { return tNow('common_yesterday') } },
+  { key: '7days', get label() { return tNow('kp_ka_p7') } },
+  { key: '30days', get label() { return tNow('kp_ka_p30') } },
+  { key: 'custom', get label() { return tNow('kp_ka_custom') } },
 ]
 
 function getDateRange(
@@ -470,18 +475,18 @@ function getDateRange(
 }
 
 function fmtShortDate(d: Date): string {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
 }
 
 function subtitleForRange(range: DateRange, childName: string, custom?: { start: Date; end: Date }): string {
   switch (range) {
-    case 'today': return `${childName}'s Day`
-    case 'yesterday': return `${childName}'s Yesterday`
-    case '7days': return `${childName}'s Week`
-    case '30days': return `${childName}'s Month`
+    case 'today': return tNow('kp_kh_subDay', { name: childName })
+    case 'yesterday': return tNow('kp_kh_subYesterday', { name: childName })
+    case '7days': return tNow('kp_kh_subWeek', { name: childName })
+    case '30days': return tNow('kp_kh_subMonth', { name: childName })
     case 'custom':
-      if (custom) return `${childName}: ${fmtShortDate(custom.start)} – ${fmtShortDate(custom.end)}`
-      return `${childName}'s Week`
+      if (custom) return tNow('kp_kh_subCustom', { name: childName, from: fmtShortDate(custom.start), to: fmtShortDate(custom.end) })
+      return tNow('kp_kh_subWeek', { name: childName })
   }
 }
 
@@ -1205,7 +1210,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     miniStart.setDate(miniStart.getDate() - 6)
     const miniStartStr = localDateStr(miniStart)
 
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const dayNames = Array.from({ length: 7 }, (_, i) => weekdayShort(i))
     const miniDates: string[] = []
     const miniLabels: string[] = []
     for (let i = 6; i >= 0; i--) {
@@ -1433,8 +1438,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     const memories = photoLogs.map((l) => ({
       id: l.created_at,
       uri: l.photos[0] ?? null,
-      label: l.notes || l.type || 'Memory',
-      date: new Date(l.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      label: l.notes || l.type || tNow('kids_calendar_labelMemory'),
+      date: new Date(l.created_at).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' }),
     }))
 
     // ── Mini ring daily data (always last 7 days) ──
@@ -1543,14 +1548,14 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
   // Nutrition center data adapts to feeding stage
   const nutritionCenter = feedingStage === 'solids'
-    ? { value: rangeData.caloriesTotal > 0 ? rangeData.caloriesTotal.toLocaleString() : '—', unit: 'Calories', pct: Math.round(nutritionProgress * 100) }
-    : { value: rangeData.feedingCount > 0 ? `${rangeData.feedingCount}` : '—', unit: feedingStage === 'liquid' ? 'Feedings' : 'Feeds + Meals', pct: Math.round(nutritionProgress * 100) }
+    ? { value: rangeData.caloriesTotal > 0 ? rangeData.caloriesTotal.toLocaleString() : '—', unit: t('kp_kh_calories'), pct: Math.round(nutritionProgress * 100) }
+    : { value: rangeData.feedingCount > 0 ? `${rangeData.feedingCount}` : '—', unit: feedingStage === 'liquid' ? t('kp_kh_feedings') : t('kp_kh_feedsMeals'), pct: Math.round(nutritionProgress * 100) }
 
   // Focused ring center data
   const centerData = {
-    sleep: { value: rangeData.sleepTotal > 0 ? `${rangeData.sleepTotal.toFixed(1)}` : '—', unit: 'Hours Slept', pct: Math.round(sleepProgress * 100), icon: Moon, color: PILLAR_COLORS.sleep },
+    sleep: { value: rangeData.sleepTotal > 0 ? `${rangeData.sleepTotal.toFixed(1)}` : '—', unit: t('kp_kh_hoursSlept'), pct: Math.round(sleepProgress * 100), icon: Moon, color: PILLAR_COLORS.sleep },
     nutrition: { value: nutritionCenter.value, unit: nutritionCenter.unit, pct: nutritionCenter.pct, icon: feedingStage === 'solids' ? Utensils : Droplets, color: PILLAR_COLORS.nutrition },
-    activity: { value: rangeData.activityCount > 0 ? `${rangeData.activityCount}` : '—', unit: 'Activities', pct: Math.round(activityProgress * 100), icon: Zap, color: PILLAR_COLORS.activity },
+    activity: { value: rangeData.activityCount > 0 ? `${rangeData.activityCount}` : '—', unit: t('kp_kh_activities'), pct: Math.round(activityProgress * 100), icon: Zap, color: PILLAR_COLORS.activity },
   }
   const focused = centerData[focusedRing]
 
@@ -2526,7 +2531,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                 style={[s.reminderSeeAll]}
               >
                 <Text style={[s.reminderSeeAllText, { color: brand.kids }]}>
-                  {'+' + (active.length - 4) + ' more'}
+                  {t('healthHistory_nMore', { n: active.length - 4 })}
                 </Text>
                 <ChevronRight size={13} color={brand.kids} strokeWidth={2} />
               </Pressable>
@@ -2754,14 +2759,14 @@ function DiffuseHeroTiles({
   const sleepMins = Math.round((sleepTotal - sleepHours) * 60)
   const hasSleep = sleepTotal > 0
   const sleepValue = hasSleep ? `${sleepHours}${sleepMins > 0 ? `·${String(sleepMins).padStart(2, '0')}` : ''}` : undefined
-  const sleepSub = sleepTarget > 0 ? `of ${Math.round(sleepTarget)}h target` : t('kids_home_tile_no_goal')
+  const sleepSub = sleepTarget > 0 ? t('kp_kh_ofSleepTarget', { n: Math.round(sleepTarget) }) : t('kids_home_tile_no_goal')
 
   // Mood
   const moodKeys = ['happy', 'calm', 'energetic', 'fussy', 'cranky'] as const
   const totalMoodLogs = moodKeys.reduce((s, m) => s + (moodCounts[m] || 0), 0)
   const hasMoods = totalMoodLogs > 0
-  const moodDisplay = hasMoods && dominantMood ? (MOOD_LABELS[dominantMood] ?? 'Content') : undefined
-  const moodSub = hasMoods ? `${totalMoodLogs} log${totalMoodLogs !== 1 ? 's' : ''}` : t('kids_home_tile_tap_to_log')
+  const moodDisplay = hasMoods && dominantMood ? (MOOD_LABELS[dominantMood] ?? t('kp_kh_moodContent')) : undefined
+  const moodSub = hasMoods ? t(totalMoodLogs !== 1 ? 'kp_kh_logsN' : 'kp_kh_logs1', { n: totalMoodLogs }) : t('kids_home_tile_tap_to_log')
 
   // Calories / feedings
   const isLiquid = stage === 'liquid' || stage === 'mixed'
@@ -2769,13 +2774,13 @@ function DiffuseHeroTiles({
   const calValue = hasFeed ? (isLiquid ? `${feedingCount}` : caloriesTotal.toLocaleString()) : undefined
   const calTarget = isLiquid ? feedingTarget : caloriesTarget
   const calPct = calTarget > 0 ? Math.min((isLiquid ? feedingCount : caloriesTotal) / calTarget, 1) : 0
-  const calSub = calTarget > 0 ? `of ${calTarget.toLocaleString()} target` : (isLiquid ? 'Tap for details' : 'Set a target')
+  const calSub = calTarget > 0 ? t('kp_kh_ofTarget', { n: calTarget.toLocaleString() }) : (isLiquid ? t('kids_home_mood_tap_details') : t('kp_kh_setTarget'))
 
   // Activity
   const activityEngagement = activityRangeDays > 0 ? Math.min(activityActiveDays / activityRangeDays, 1) : 0
   const hasActivity = activityCount > 0
   const activitySub = hasActivity
-    ? (activityRangeDays > 0 ? `${activityActiveDays}/${activityRangeDays} active` : `${activityActiveDays} active`)
+    ? (activityRangeDays > 0 ? t('kp_kh_activeOf', { a: activityActiveDays, b: activityRangeDays }) : t('kp_kh_activeN', { a: activityActiveDays }))
     : t('kids_home_tile_activity_empty_sub')
 
   return (
@@ -2879,17 +2884,17 @@ function CurrentHeroTiles({
   const activityEngagement = activityRangeDays > 0 ? Math.min(activityActiveDays / activityRangeDays, 1) : 0
   const activityValueLabel = activityCount > 0 ? `${activityCount}` : '—'
   const activitySub = activityCount > 0
-    ? (activityRangeDays > 0 ? `${activityActiveDays}/${activityRangeDays} active days` : `${activityActiveDays} active days`)
+    ? (activityRangeDays > 0 ? t('kp_kh_activeDaysOf', { a: activityActiveDays, b: activityRangeDays }) : t('kp_kh_activeDaysN', { a: activityActiveDays }))
     : t('kids_home_tile_activity_empty_sub')
   const activityMeta = activityCount > 0
-    ? `${activityTypesCount} type${activityTypesCount !== 1 ? 's' : ''}${activityTopLabel ? ` · Top: ${activityTopLabel}` : ''}`
+    ? `${t(activityTypesCount !== 1 ? 'kp_kh_typesN' : 'kp_kh_types1', { n: activityTypesCount })}${activityTopLabel ? t('kp_kh_top', { label: activityTopLabel }) : ''}`
     : ''
 
   // Last sleep value: show total hours + minutes for the selected range
   const sleepHours = Math.floor(sleepTotal)
   const sleepMins = Math.round((sleepTotal - sleepHours) * 60)
   const sleepLabel = sleepTotal > 0 ? `${sleepHours}h ${String(sleepMins).padStart(2, '0')}` : '—'
-  const sleepSub = sleepTarget > 0 ? `of ${Math.round(sleepTarget)}h target` : t('kids_home_tile_no_goal')
+  const sleepSub = sleepTarget > 0 ? t('kp_kh_ofSleepTarget', { n: Math.round(sleepTarget) }) : t('kids_home_tile_no_goal')
 
   // Mood — each bar reflects its count, colored by mood, dominant bar highlighted
   const moodKeys = ['happy', 'calm', 'energetic', 'fussy', 'cranky'] as const
@@ -2897,7 +2902,7 @@ function CurrentHeroTiles({
   const totalMoodLogs = moodValues.reduce((a, b) => a + b, 0)
   const maxMood = Math.max(...moodValues, 1)
   const hasMoods = totalMoodLogs > 0
-  const moodDisplay = hasMoods && dominantMood ? (MOOD_LABELS[dominantMood] ?? 'Content') : 'No data'
+  const moodDisplay = hasMoods && dominantMood ? (MOOD_LABELS[dominantMood] ?? t('kp_kh_moodContent')) : t('kp_kh_noData')
   const moodEmoji = hasMoods && dominantMood ? (MOOD_EMOJI[dominantMood] ?? '🙂') : '—'
 
   // Calories / feedings
@@ -2907,7 +2912,7 @@ function CurrentHeroTiles({
     : (caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—')
   const calTarget = isLiquid ? feedingTarget : caloriesTarget
   const calPct = calTarget > 0 ? Math.min((isLiquid ? feedingCount : caloriesTotal) / calTarget, 1) : 0
-  const calSub = calTarget > 0 ? `of ${calTarget.toLocaleString()} target` : (isLiquid ? 'Tap for details' : 'Set a target')
+  const calSub = calTarget > 0 ? t('kp_kh_ofTarget', { n: calTarget.toLocaleString() }) : (isLiquid ? t('kids_home_mood_tap_details') : t('kp_kh_setTarget'))
 
   // Empty/data flags so we render inviting copy instead of bare "—"
   const hasSleep = sleepTotal > 0
@@ -2995,7 +3000,7 @@ function CurrentHeroTiles({
             })}
           </View>
           <Text style={[tileStyles.metaSub, { color: ink3 }]}>
-            {hasMoods ? `${totalMoodLogs} log${totalMoodLogs !== 1 ? 's' : ''}` : t('kids_home_tile_tap_to_log')}
+            {hasMoods ? t(totalMoodLogs !== 1 ? 'kp_kh_logsN' : 'kp_kh_logs1', { n: totalMoodLogs }) : t('kids_home_tile_tap_to_log')}
           </Text>
         </Pressable>
       </View>
@@ -3325,7 +3330,7 @@ function MultiRingHero({ sleepProgress, nutritionProgress, activityProgress, foc
           {centerData.pct > 0 && (
             <View style={[s.heroBadge, { backgroundColor: centerData.pct >= 90 ? 'rgba(110,201,110,0.12)' : 'rgba(255,152,0,0.12)' }]}>
               <Text style={[s.heroBadgeText, { color: centerData.pct >= 90 ? brand.success : brand.warning }]}>
-                {centerData.pct >= 100 ? 'On target' : `${centerData.pct}% of goal`}
+                {centerData.pct >= 100 ? tNow('kp_kh_onTarget') : tNow('kp_kh_pctGoal', { pct: centerData.pct })}
               </Text>
             </View>
           )}
@@ -3489,8 +3494,8 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
         <>
           <Text style={[s.metricValue, { color: coral }]}>
             {caloriesTotal > 0
-              ? (target > 0 ? `${Math.round(pct * 100)}% of daily` : `${caloriesTotal} kcal`)
-              : `${meals} meals`}
+              ? (target > 0 ? t('kp_kh_pctDaily', { pct: Math.round(pct * 100) }) : t('kp_kh_nKcal', { n: caloriesTotal }))
+              : t('kp_kh_nMeals', { n: meals })}
           </Text>
           <Text style={[s.metricSmall, { color: ink3 }]}>
             {feedingCount > 0 ? `+ ${feedingCount} bottles (${feedingMl}ml)` : t('kids_home_nutrition_tap_breakdown')}
@@ -3619,7 +3624,7 @@ function HealthCard({ reminders, healthHistory, child }: {
             <View style={s.hcDetailItem}>
               <Bell size={12} color="#F5D652" strokeWidth={2} />
               <Text style={[s.hcDetail, { color: ink3 }]}>
-                {activeReminders}{' reminder'}{activeReminders !== 1 ? 's' : ''}
+                {t(activeReminders !== 1 ? 'kp_kh_reminderN' : 'kp_kh_reminder1', { n: activeReminders })}
               </Text>
             </View>
           )}
@@ -3787,7 +3792,7 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
                 }} />
               </View>
               <Text style={[s.diaperSparkLabel, { color: isToday ? ink : ink3 }]}>
-                {new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'narrow' })}
+                {new Date(d + 'T00:00:00').toLocaleDateString(dateLoc(), { weekday: 'narrow' })}
               </Text>
             </View>
           )
@@ -3800,12 +3805,12 @@ function DiaperCard({ count, pee, poop, mixed, diaperByDay, startDate, endDate }
 // ─── Diaper Detail Modal ────────────────────────────────────────────────────
 
 const DIAPER_COLOR_META: Record<string, { label: string; swatch: string }> = {
-  yellow:  { label: 'Yellow',  swatch: '#FBBF24' },
-  green:   { label: 'Green',   swatch: '#4ADE80' },
-  brown:   { label: 'Brown',   swatch: '#A16207' },
-  black:   { label: 'Black',   swatch: '#6B7280' },
-  red:     { label: 'Red',     swatch: '#EF4444' },
-  orange:  { label: 'Orange',  swatch: '#F97316' },
+  yellow:  { get label() { return tNow('kids_logForm_diaperColorYellow') },  swatch: '#FBBF24' },
+  green:   { get label() { return tNow('kids_logForm_diaperColorGreen') },   swatch: '#4ADE80' },
+  brown:   { get label() { return tNow('kids_logForm_diaperColorBrown') },   swatch: '#A16207' },
+  black:   { get label() { return tNow('kp_kh_dc_black') },   swatch: '#6B7280' },
+  red:     { get label() { return tNow('kp_kh_dc_red') },     swatch: '#EF4444' },
+  orange:  { get label() { return tNow('kp_kh_dc_orange') },  swatch: '#F97316' },
 }
 
 function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperByDay, diaperColors, rangeDays, dateRange, startDate, endDate, childName, childColor }: {
@@ -3825,7 +3830,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
 
   // Build date buckets (same logic as MoodDetailModal)
   const chartDays = useMemo(() => {
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const dayNames = Array.from({ length: 7 }, (_, i) => weekdayShort(i))
     const start = new Date(startDate + 'T00:00:00')
     const end   = new Date(endDate   + 'T00:00:00')
     const totalDays = daysInclusive(start, end)
@@ -4116,11 +4121,11 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
               }]}>
                 <SiteSticker name={MOOD_SITE_STICKER[dominantMood] ?? 'face3'} size={28} cut />
                 <Text style={[s.modalSummaryText, { color: colors.text }]}>
-                  {'Mostly '}
+                  {tNow('kp_kh_mostlyPre')}
                   <Text style={{ color: colors.text, fontFamily: font.bodyBold, backgroundColor: (MOOD_COLORS[dominantMood] || brand.accent) + '55' }}>
                     {MOOD_LABELS[dominantMood] || '—'}
                   </Text>
-                  {' this period'}
+                  {tNow('kp_kh_mostlyPost')}
                 </Text>
               </View>
             </>
@@ -5530,7 +5535,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
   function formatEntryDate(dateStr: string): string {
     const d = new Date(dateStr + 'T00:00:00')
     if (isNaN(d.getTime())) return dateStr
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    return d.toLocaleDateString(dateLoc(), { weekday: 'short', month: 'short', day: 'numeric' })
   }
 
   function formatEntryTime(start?: string, end?: string): string {
@@ -6060,9 +6065,9 @@ function ReminderRow({
   const dueDateColor = isOverdue ? brand.error : isDueToday ? '#C08000' : isDueSoon ? brand.warning : colors.textMuted
   const timeSuffix = r.dueTime ? ` · ${formatTime12h(r.dueTime)}` : ''
   const dueDateLabel = due
-    ? isOverdue ? `${Math.abs(diffDays!)}d overdue${timeSuffix}`
-    : isDueToday ? `Due today${timeSuffix}`
-    : `Due ${due.toLocaleDateString('en', { month: 'short', day: 'numeric' })}${timeSuffix}`
+    ? isOverdue ? `${tNow('kp_kh_overdue', { n: Math.abs(diffDays!) })}${timeSuffix}`
+    : isDueToday ? `${tNow('kp_kh_dueToday')}${timeSuffix}`
+    : `${tNow('kp_kh_dueOn', { date: due.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' }) })}${timeSuffix}`
     : null
 
   const taggedChild = allChildren && r.childId ? allChildren.find(c => c.id === r.childId) : null
@@ -6464,9 +6469,9 @@ function RemindersModal({
     const groups: Record<string, { label: string; items: Reminder[] }> = {}
     for (const r of archived) {
       const date = r.archivedAt ? r.archivedAt.split('T')[0] : 'unknown'
-      let label = date === today ? 'Today' : date === yesterday ? 'Yesterday'
-        : date === 'unknown' ? 'Earlier'
-        : parseLocalDate(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+      let label = date === today ? tNow('common_today') : date === yesterday ? tNow('common_yesterday')
+        : date === 'unknown' ? tNow('kp_kh_earlier')
+        : parseLocalDate(date).toLocaleDateString(dateLoc(), { weekday: 'long', month: 'short', day: 'numeric' })
       if (!groups[date]) groups[date] = { label, items: [] }
       groups[date].items.push(r)
     }
@@ -6504,7 +6509,7 @@ function RemindersModal({
               </View>
             </Pressable>
           ) : (
-            <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label="Close" style={{ marginBottom: 0 }} />
+            <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={tNow('common_close')} style={{ marginBottom: 0 }} />
           )}
         </View>
 
@@ -7026,7 +7031,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
             <Text style={{ fontSize: 24, fontFamily: font.display, color: ink, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('kids_home_leaps_detail_title')}</Text>
             <Text style={{ fontSize: 10, fontFamily: 'SpaceMono_400Regular', color: ink3, marginTop: 2, letterSpacing: 1.4, textTransform: 'uppercase' }}>{childName}{' · Week '}{leap.weekAge}</Text>
           </View>
-          <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label="Close" style={{ marginBottom: 0 }} />
+          <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label={tNow('common_close')} style={{ marginBottom: 0 }} />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 56 }}>

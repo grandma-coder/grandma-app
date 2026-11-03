@@ -21,6 +21,7 @@ import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import { isFutureDate } from '../../lib/futureDate'
+import { appIntlLocale } from '../../lib/cycleLogForms'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { formatTemp, formatWeight } from '../../lib/units'
 import { translations, type TranslationKey } from '../../lib/i18n'
@@ -116,7 +117,7 @@ function phaseAccent(phase: CyclePhase, s: ReturnType<typeof useTheme>['stickers
 }
 
 function formatLongDate(d: string): string {
-  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+  return new Date(d + 'T12:00:00').toLocaleDateString(appIntlLocale(), {
     weekday: 'long', month: 'short', day: 'numeric',
   })
 }

@@ -80,24 +80,24 @@ export default function ExamDetailScreen() {
     // Build a doctor-ready text summary. We deliberately do NOT include photo
     // URLs — photos live in a private bucket and their signed URLs expire.
     const lines: string[] = []
-    lines.push(`Exam: ${currentExam.title}`)
-    lines.push(`Date: ${formatExamDate(currentExam.examDate)}`)
-    if (currentExam.provider) lines.push(`Provider: ${currentExam.provider}`)
-    if (currentExam.result) lines.push(`Result: ${currentExam.result}`)
-    if (currentExam.extracted?.referenceRange) lines.push(`Reference range: ${currentExam.extracted.referenceRange}`)
+    lines.push(t('app_exam_shareExam', { value: currentExam.title }))
+    lines.push(t('app_exam_shareDate', { value: formatExamDate(currentExam.examDate) }))
+    if (currentExam.provider) lines.push(t('app_exam_shareProvider', { value: currentExam.provider }))
+    if (currentExam.result) lines.push(t('app_exam_shareResult', { value: currentExam.result }))
+    if (currentExam.extracted?.referenceRange) lines.push(t('app_exam_shareRange', { value: currentExam.extracted.referenceRange }))
     if (currentExam.extracted?.flagged && currentExam.extracted.flagged.length > 0) {
       lines.push('')
-      lines.push('Flagged findings:')
+      lines.push(t('app_exam_shareFlagged'))
       for (const f of currentExam.extracted.flagged) lines.push(`  • ${f}`)
     }
     if (currentExam.notes) {
       lines.push('')
-      lines.push('Notes:')
+      lines.push(t('app_exam_shareNotes'))
       lines.push(currentExam.notes)
     }
     if (currentExam.photos.length > 0) {
       lines.push('')
-      lines.push(`(${currentExam.photos.length} photo${currentExam.photos.length === 1 ? '' : 's'} attached in app)`)
+      lines.push(currentExam.photos.length === 1 ? t('app_exam_sharePhotoOne') : t('app_exam_sharePhotoMany', { n: currentExam.photos.length }))
     }
     try {
       await Share.share({ message: lines.join('\n'), title: currentExam.title })

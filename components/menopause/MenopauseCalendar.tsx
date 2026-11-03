@@ -19,7 +19,8 @@ import { diffuseFont, useTheme, useDiffuseTheme, getDiffuseAccent, getModeColorS
 import { AgendaCalendar, DayMarks } from '../calendar/AgendaCalendar'
 import { menopauseDayMarks } from '../../lib/logStickers'
 import { menopauseDayLevel, menopauseDayTint, type MenopauseDayLevel } from '../../lib/menopauseDayLoad'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
+import { useLanguageStore } from '../../store/useLanguageStore'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnalytics'
@@ -33,20 +34,19 @@ import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
 import { isFutureDate } from '../../lib/futureDate'
 
 const COPY = {
-  loggedThisDay: 'Logged this day',
-  empty: 'Nothing logged for this day yet.',
-  logActivity: 'Log a symptom',
-  chooserTitle: 'What would you like to log?',
-  chooserSymptom: 'A symptom',
-  chooserSymptomDesc: 'Hot flashes, sleep, mood, and more',
-  chooserPeriod: 'A period',
-  chooserPeriodDesc: 'Track flow and reset your counter',
-  sheetSymptom: 'Log a symptom',
-  sheetPeriod: 'Log a period',
-  period: 'Period',
-  note: 'Note',
-  flow: 'flow',
-  intensity: 'Intensity',
+  get loggedThisDay() { return tNow('meno_c_logged_this_day') },
+  get empty() { return tNow('meno_c_empty') },
+  get logActivity() { return tNow('meno_h_log_symptom') },
+  get chooserTitle() { return tNow('meno_c_chooser_title') },
+  get chooserSymptom() { return tNow('meno_c_chooser_symptom') },
+  get chooserSymptomDesc() { return tNow('meno_c_chooser_symptom_desc') },
+  get chooserPeriod() { return tNow('meno_c_chooser_period') },
+  get chooserPeriodDesc() { return tNow('meno_c_chooser_period_desc') },
+  get sheetSymptom() { return tNow('meno_h_log_symptom') },
+  get sheetPeriod() { return tNow('meno_h_log_period') },
+  get period() { return tNow('meno_s_period') },
+  get note() { return tNow('meno_c_note') },
+  get today() { return tNow('meno_c_today') },
 }
 
 // ─── Date helpers (local, never toISOString) ─────────────────────────────────
@@ -55,7 +55,7 @@ function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 function formatLongDate(dateStr: string): string {
-  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString(useLanguageStore.getState().language, { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
 // ─── Entry title/subtitle (shared with the old timeline) ─────────────────────
@@ -67,17 +67,20 @@ function entryTitle(row: MenopauseLogRow): string {
   return id ? menopauseSymptomLabel(id) : COPY.note
 }
 function entrySubtitle(row: MenopauseLogRow): string | null {
-  if (row.type === 'period') return row.value ? `${capitalize(row.value)} ${COPY.flow}` : null
-  if (row.severity != null) return `${COPY.intensity} ${row.severity}/5`
+  if (row.type === 'period') {
+    if (!row.value) return null
+    return row.value === 'light' || row.value === 'medium' || row.value === 'heavy'
+      ? tNow(`meno_c_flow_${row.value}` as const)
+      : row.value
+  }
+  if (row.severity != null) return tNow('meno_c_intensity', { n: row.severity })
   return null
-}
-function capitalize(s: string): string {
-  return s.length ? s[0].toUpperCase() + s.slice(1) : s
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function MenopauseCalendar() {
+  useTranslation() // re-render on language change (COPY reads the current language)
   const pal = useMenoPalette()
   const { stickers, colors, font, isDark } = useTheme()
   const dt = useDiffuseTheme()
@@ -178,7 +181,7 @@ export function MenopauseCalendar() {
           <View style={styles.detail}>
             <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 20, letterSpacing: 0.3, textTransform: 'uppercase' }}>
               {formatLongDate(selectedDate)}
-              {selectedDate === today ? ' · Today' : ''}
+              {selectedDate === today ? ` · ${COPY.today}` : ''}
             </Text>
             <Text style={{ color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 8 }}>
               {COPY.loggedThisDay}
@@ -225,7 +228,7 @@ export function MenopauseCalendar() {
         <View style={styles.detail}>
           <Text style={[styles.detailTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>
             {formatLongDate(selectedDate)}
-            {selectedDate === today ? ' · Today' : ''}
+            {selectedDate === today ? ` · ${COPY.today}` : ''}
           </Text>
           <Text style={[styles.detailLabel, { color: pal.textMuted, fontFamily: pal.diffuse ? diffuseFont.mono : pal.fontBodySemiBold }]}>
             {COPY.loggedThisDay.toUpperCase()}
@@ -289,7 +292,7 @@ export function MenopauseCalendar() {
         onClose={() => setGridOpen(false)}
         onPick={onPick}
         isPeri={isPeri}
-        title="Log a symptom"
+        title={COPY.sheetSymptom}
       />
       <LogSheet visible={!!pickedSymptom} sticker={pickedSymptom ? menoSticker(pickedSymptom) : 'pencil'} title={COPY.sheetSymptom} onClose={() => setPickedSymptom(null)}>
         {pickedSymptom ? (

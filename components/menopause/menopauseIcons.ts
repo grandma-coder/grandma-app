@@ -7,6 +7,7 @@
  * timeline stay visually consistent.
  */
 
+import { t, type TranslationKey } from '../../lib/i18n'
 import type { CharacterName } from '../characters/Characters'
 import {
   resolveMenopauseSymptomId,
@@ -15,12 +16,17 @@ import {
   type MenopauseSymptomId,
 } from '../../lib/menopauseSymptoms'
 
-export const GROUP_META: Record<MenopauseGroup, { label: string; icon: CharacterName }> = {
-  vasomotor: { label: 'Temperature', icon: 'temperature' },
-  sleep: { label: 'Sleep & energy', icon: 'sleep' },
-  mood: { label: 'Mind & mood', icon: 'mood' },
-  physical: { label: 'Body', icon: 'activity' },
-  genitourinary: { label: 'Intimate', icon: 'heart' },
+export const GROUP_META: Record<MenopauseGroup, { icon: CharacterName }> = {
+  vasomotor: { icon: 'temperature' },
+  sleep: { icon: 'sleep' },
+  mood: { icon: 'mood' },
+  physical: { icon: 'activity' },
+  genitourinary: { icon: 'heart' },
+}
+
+/** Group heading in the current language. */
+export function menopauseGroupLabel(group: MenopauseGroup): string {
+  return t(`meno_group_${group}` as TranslationKey)
 }
 
 export const GROUP_ORDER: MenopauseGroup[] = ['vasomotor', 'sleep', 'mood', 'physical', 'genitourinary']

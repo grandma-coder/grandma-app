@@ -7,6 +7,7 @@
  *        NestingTask, BirthPrepTask, ContractionTimer, Weight
  */
 
+import { dateLoc } from '../../lib/kpLocale'
 import { SheetFooterAction } from './LogSheet'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { useState } from 'react'
@@ -40,7 +41,7 @@ import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClien
 import { toDateStr } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { kgToDisplay, displayToKg, weightLabel } from '../../lib/units'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { LogFormSticker } from './LogFormSticker'
 import { logSticker } from './logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
@@ -67,7 +68,7 @@ async function savePregnancyLog(
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  if (!session) throw new Error('Not authenticated')
+  if (!session) throw new Error(tNow('kp_pk_notAuth'))
 
   // ── Optimistic patch ───────────────────────────────────────────────────
   // Flip the UI to "logged" the instant the user taps save, before the
@@ -265,6 +266,22 @@ function SiteCounter({
 const MOOD_STICKER: Record<(typeof MOOD_IDS)[number], SiteStickerName> = {
   excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face1', energetic: 'star',
 }
+// Stored ids stay English; only the visible label is translated.
+const PLF_LABEL_KEYS = {
+  'Regular checkup': 'kp_plf_l_checkup', Ultrasound: 'preg_appts_type_ultrasound', 'Blood test': 'kp_plf_l_blood',
+  'Glucose test': 'kp_plf_l_glucose', 'Group B strep': 'kp_plf_l_gbs', Specialist: 'preg_appts_type_specialist',
+  Other: 'preg_appts_type_other', Yoga: 'kp_plf_l_yoga', Walk: 'kp_plf_l_walk', Swim: 'kp_plf_l_swim',
+  Stretching: 'kp_plf_l_stretch', Pilates: 'kp_plf_l_pilates', Iron: 'kp_plf_l_iron', 'Folic acid': 'kp_plf_l_folic',
+  Protein: 'kp_plf_l_protein', Calcium: 'kp_plf_l_calcium', DHA: 'kp_plf_l_dha', 'Vitamin D': 'kp_plf_l_vitd',
+  Nursery: 'kp_plf_l_nursery', Cleaning: 'kp_plf_l_cleaning', Laundry: 'kp_plf_l_laundry', Shopping: 'kp_plf_l_shopping',
+  Organizing: 'kp_plf_l_organizing', 'Hospital bag': 'kp_plf_l_bag', 'Birth plan': 'kp_plf_l_plan', Classes: 'kp_plf_l_classes',
+  Postpartum: 'kp_plf_l_postpartum', 'Baby gear': 'kp_plf_l_gear', Admin: 'kp_plf_l_admin',
+} as const
+function plfLabel(id: string): string {
+  const key = (PLF_LABEL_KEYS as Record<string, (typeof PLF_LABEL_KEYS)[keyof typeof PLF_LABEL_KEYS]>)[id]
+  return key ? tNow(key) : id
+}
+
 const APPOINTMENT_STICKER: Record<string, SiteStickerName> = {
   'Regular checkup': 'doc', Ultrasound: 'camera', 'Blood test': 'syringe', 'Glucose test': 'drop',
   'Group B strep': 'otest', Specialist: 'heart', Other: 'pencil',
@@ -305,7 +322,7 @@ export function PregnancyMoodForm({
       await savePregnancyLog(date, 'mood', mood, notes || undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -457,7 +474,7 @@ export function PregnancySymptomsForm({
       await savePregnancyLog(date, 'symptom', selected.join(', '), notes || undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -653,7 +670,7 @@ export function AppointmentForm({
       )
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -674,18 +691,18 @@ export function AppointmentForm({
   if (!diffuse) {
     return (
       <View style={styles.form}>
-        <SiteQuestion>{`Visit on ${formatDate(date)}`}</SiteQuestion>
+        <SiteQuestion>{tNow('kp_plf_visitOn', { date: formatDate(date) })}</SiteQuestion>
         <SiteStickerGrid
-          options={APPOINTMENT_TYPES.map((x) => ({ id: x, label: x, sticker: APPOINTMENT_STICKER[x] ?? 'doc' }))}
+          options={APPOINTMENT_TYPES.map((x) => ({ id: x, label: plfLabel(x), sticker: APPOINTMENT_STICKER[x] ?? 'doc' }))}
           isOn={(id) => type === id}
           onPress={setType}
         />
         {isOther && (
-          <SiteInput value={customType} onChangeText={setCustomType} placeholder="Describe the appointment" autoFocus />
+          <SiteInput value={customType} onChangeText={setCustomType} placeholder={tNow('kp_plf_describeAppt')} autoFocus />
         )}
-        <MoreSection label="More">
-          <SiteInput value={doctor} onChangeText={setDoctor} placeholder="Doctor name (optional)" />
-          <SiteInput value={notes} onChangeText={setNotes} placeholder="Notes (optional)" multiline />
+        <MoreSection label={tNow('kids_logForm_more')}>
+          <SiteInput value={doctor} onChangeText={setDoctor} placeholder={tNow('kp_plf_doctorOpt')} />
+          <SiteInput value={notes} onChangeText={setNotes} placeholder={tNow('kp_plf_notesOpt')} multiline />
         </MoreSection>
         <SaveButton onPress={save} saving={saving} disabled={!canSave} />
       </View>
@@ -699,7 +716,7 @@ export function AppointmentForm({
       ) : (
         <LogFormSticker
           type="appointment"
-          label={`Visit on ${formatDate(date)}`}
+          label={tNow('kp_plf_visitOn', { date: formatDate(date) })}
           tint={s.yellowSoft}
         />
       )}
@@ -865,7 +882,7 @@ export function KickCountForm({
       )
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -885,7 +902,7 @@ export function KickCountForm({
     const tone = getModeColorSoft('preg', isDark)
     return (
       <View style={styles.form}>
-        <SiteQuestion>Count baby's kicks</SiteQuestion>
+        <SiteQuestion>{tNow('kp_plf_countKicks')}</SiteQuestion>
         <View style={styles.kickCenter}>
           <Pressable
             onPress={() => setCount((c) => c + 1)}
@@ -902,7 +919,7 @@ export function KickCountForm({
           </Pressable>
           <Text style={{ fontSize: 56, lineHeight: 62, fontFamily: font.displayBold, color: colors.text, marginTop: 10 }}>
             {count}
-            <Text style={{ fontSize: 20, fontFamily: font.bodyMedium, color: colors.textMuted }}>{count === 1 ? ' kick' : ' kicks'}</Text>
+            <Text style={{ fontSize: 20, fontFamily: font.bodyMedium, color: colors.textMuted }}>{` ${tNow(count === 1 ? 'kp_plf_kick' : 'kp_plf_kicks')}`}</Text>
           </Text>
           <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
             {dots.map((filled, i) => (
@@ -913,10 +930,10 @@ export function KickCountForm({
             ))}
           </View>
           <Text style={{ fontSize: 13, fontFamily: font.bodyMedium, color: colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
-            {goalReached ? 'Goal reached! Great session.' : 'Goal: 10 kicks in 2 hours'}
+            {goalReached ? tNow('kp_plf_goalReached') : tNow('kp_plf_goal')}
           </Text>
         </View>
-        <SaveButton onPress={save} saving={saving} disabled={count === 0} label="Save Session" />
+        <SaveButton onPress={save} saving={saving} disabled={count === 0} label={tNow('kp_plf_saveSession')} />
       </View>
     )
   }
@@ -928,7 +945,7 @@ export function KickCountForm({
       ) : (
         <LogFormSticker
           type="kick_count"
-          label="Count baby's kicks"
+          label={tNow('kp_plf_countKicks')}
           tint={s.pinkSoft}
         />
       )}
@@ -1115,7 +1132,7 @@ function SaveButton({
     <SheetFooterAction>
       <View style={{ alignItems: 'center' }}>
         <EyeAction
-          label={label ?? 'Save'}
+          label={label ?? tNow('common_save')}
           onPress={onPress}
           ink={colors.text}
           loading={saving}
@@ -1132,7 +1149,7 @@ function SaveButton({
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString(dateLoc(), {
     month: 'short',
     day: 'numeric',
   })
@@ -1159,7 +1176,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
       await savePregnancyLog(date, 'sleep', hours.toString(), JSON.stringify({ quality }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -1169,7 +1186,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
     return (
       <View style={styles.form}>
         <SiteQuestion>{t('preg_form_sleep_hoursSlept')}</SiteQuestion>
-        <SiteCounter value={hours} onChange={setHours} min={3} max={12} unit={hours === 1 ? 'hour' : 'hours'} />
+        <SiteCounter value={hours} onChange={setHours} min={3} max={12} unit={tNow(hours === 1 ? 'kp_u_hour' : 'kp_u_hours')} />
         <MoreSection label={t('kids_logForm_more')}>
           <SiteEyebrow>{t('preg_form_sleep_qualityRange')}</SiteEyebrow>
           <SiteCounter value={quality} onChange={setQuality} min={1} max={10} unit="/ 10" />
@@ -1186,7 +1203,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
       ) : (
         <LogFormSticker
           type="sleep"
-          label={`Sleep on ${formatDate(date)}`}
+          label={tNow('kp_plf_sleepOn', { date: formatDate(date) })}
           tint={s.lilacSoft}
         />
       )}
@@ -1241,7 +1258,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
       await savePregnancyLog(date, 'exercise', minutes.toString(), JSON.stringify({ type: finalType }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -1252,17 +1269,17 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
       <View style={styles.form}>
         <SiteQuestion>{t('preg_form_exercise_typeLabel')}</SiteQuestion>
         <SiteStickerGrid
-          options={EXERCISE_TYPES.map((x) => ({ id: x, label: x, sticker: EXERCISE_STICKER[x] ?? 'shoe' }))}
+          options={EXERCISE_TYPES.map((x) => ({ id: x, label: plfLabel(x), sticker: EXERCISE_STICKER[x] ?? 'shoe' }))}
           isOn={(id) => exerciseType === id}
           onPress={setExerciseType}
         />
         {isOther && (
-          <SiteInput value={customType} onChangeText={setCustomType} placeholder="What kind of movement?" autoFocus />
+          <SiteInput value={customType} onChangeText={setCustomType} placeholder={tNow('kp_plf_whatMovement')} autoFocus />
         )}
         <SiteEyebrow>{t('preg_form_exercise_minutesFieldLabel')}</SiteEyebrow>
-        <SitePresets value={minutes} onChange={setMinutes} presets={[15, 20, 30, 45, 60, 90]} unit="min" />
+        <SitePresets value={minutes} onChange={setMinutes} presets={[15, 20, 30, 45, 60, 90]} unit={tNow('kp_u_min')} />
         <MoreSection label={t('kids_logForm_more')}>
-          <SiteCounter value={minutes} onChange={setMinutes} min={5} max={120} unit="min" />
+          <SiteCounter value={minutes} onChange={setMinutes} min={5} max={120} unit={tNow('kp_u_min')} />
         </MoreSection>
         <SaveButton onPress={save} saving={saving} disabled={!canSave} />
       </View>
@@ -1276,7 +1293,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
       ) : (
         <LogFormSticker
           type="exercise"
-          label={`Movement on ${formatDate(date)}`}
+          label={tNow('kp_plf_movementOn', { date: formatDate(date) })}
           tint={s.greenSoft}
         />
       )}
@@ -1370,7 +1387,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
       await savePregnancyLog(date, 'nutrition', tags.join(','), nutritionNotes || undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -1382,12 +1399,12 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
         <SiteQuestion>{t('preg_form_nutrition_coverageLabel')}</SiteQuestion>
         <View style={sl.pills}>
           {NUTRITION_TAGS.map((tag) => (
-            <SiteChoice key={tag} compact label={tag} selected={tags.includes(tag)}
+            <SiteChoice key={tag} compact label={plfLabel(tag)} selected={tags.includes(tag)}
               tone={getModeColorSoft('preg', isDark)} onPress={() => toggle(tag)} />
           ))}
         </View>
         <MoreSection label={t('kids_logForm_more')}>
-          <SiteInput value={nutritionNotes} onChangeText={setNutritionNotes} placeholder="Notes (optional)" multiline />
+          <SiteInput value={nutritionNotes} onChangeText={setNutritionNotes} placeholder={tNow('kp_plf_notesOpt')} multiline />
         </MoreSection>
         <SaveButton onPress={save} saving={saving} disabled={tags.length === 0} />
       </View>
@@ -1401,7 +1418,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
       ) : (
         <LogFormSticker
           type="nutrition"
-          label={`Nourish on ${formatDate(date)}`}
+          label={tNow('kp_plf_nourishOn', { date: formatDate(date) })}
           tint={s.greenSoft}
         />
       )}
@@ -1470,7 +1487,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
       await savePregnancyLog(date, 'kegel', sets.toString(), undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -1480,7 +1497,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
     return (
       <View style={styles.form}>
         <SiteQuestion>{t('preg_form_kegel_setsCompletedLabel')}</SiteQuestion>
-        <SiteCounter value={sets} onChange={setSets} min={1} max={20} unit={sets === 1 ? 'set' : 'sets'} />
+        <SiteCounter value={sets} onChange={setSets} min={1} max={20} unit={tNow(sets === 1 ? 'kp_u_set' : 'kp_u_sets')} />
         <SaveButton onPress={save} saving={saving} disabled={false} />
       </View>
     )
@@ -1493,7 +1510,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
       ) : (
         <LogFormSticker
           type="kegel"
-          label="Pelvic floor practice"
+          label={tNow('kp_plf_pelvic')}
           tint={s.lilacSoft}
         />
       )}
@@ -1540,7 +1557,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
       await savePregnancyLog(date, 'water', glasses.toString(), undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -1574,7 +1591,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
       {diffuse ? (
         <DiffuseFormHeader type="water" title="Hydration check-in" />
       ) : (
-        <LogFormSticker type="water" label="Hydration check-in" tint={s.blueSoft} />
+        <LogFormSticker type="water" label={tNow('kp_plf_hydration')} tint={s.blueSoft} />
       )}
 
       {/* Counter card */}
@@ -1671,7 +1688,7 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
       await savePregnancyLog(date, 'vitamins', taken ? '1' : '0', undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -1699,7 +1716,7 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
       ) : (
         <LogFormSticker
           type="vitamins"
-          label="Prenatal vitamins"
+          label={tNow('kp_plf_prenatalVit')}
           tint={s.greenSoft}
         />
       )}
@@ -1772,7 +1789,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
       await savePregnancyLog(date, 'nesting', done ? '1' : '0', JSON.stringify({ title: nestingTitle, category: finalCategory }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -1781,15 +1798,15 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
   if (!diffuse) {
     return (
       <View style={styles.form}>
-        <SiteInput value={nestingTitle} onChangeText={setNestingTitle} placeholder="Task name (e.g. Set up crib)" />
+        <SiteInput value={nestingTitle} onChangeText={setNestingTitle} placeholder={tNow('kp_plf_taskNest')} />
         <SiteEyebrow>{t('preg_form_nesting_categoryLabel')}</SiteEyebrow>
         <SiteStickerGrid
-          options={NESTING_CATEGORIES.map((x) => ({ id: x, label: x, sticker: NESTING_STICKER[x] ?? 'house' }))}
+          options={NESTING_CATEGORIES.map((x) => ({ id: x, label: plfLabel(x), sticker: NESTING_STICKER[x] ?? 'house' }))}
           isOn={(id) => nestingCategory === id}
           onPress={setNestingCategory}
         />
         {isOther && (
-          <SiteInput value={customCategory} onChangeText={setCustomCategory} placeholder="Custom category" autoFocus />
+          <SiteInput value={customCategory} onChangeText={setCustomCategory} placeholder={tNow('kp_plf_customCat')} autoFocus />
         )}
         <SiteChoice compact label={t('preg_form_nesting_alreadyDone')} selected={done}
           tone={getModeColorSoft('preg', isDark)} onPress={() => setDone((d) => !d)} style={{ alignSelf: 'flex-start' }} />
@@ -1805,7 +1822,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
       ) : (
         <LogFormSticker
           type="nesting"
-          label="Getting ready at home"
+          label={tNow('kp_plf_gettingReady')}
           tint={s.peachSoft}
         />
       )}
@@ -1906,7 +1923,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
       await savePregnancyLog(date, 'birth_prep', done ? '1' : '0', JSON.stringify({ title: birthPrepTitle, category: finalCategory, dueWeek }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -1915,21 +1932,21 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
   if (!diffuse) {
     return (
       <View style={styles.form}>
-        <SiteInput value={birthPrepTitle} onChangeText={setBirthPrepTitle} placeholder="Task name (e.g. Pack hospital bag)" />
+        <SiteInput value={birthPrepTitle} onChangeText={setBirthPrepTitle} placeholder={tNow('kp_plf_taskBirth')} />
         <SiteEyebrow>{t('preg_form_nesting_categoryLabel')}</SiteEyebrow>
         <SiteStickerGrid
-          options={BIRTH_PREP_CATEGORIES.map((x) => ({ id: x, label: x, sticker: BIRTH_PREP_STICKER[x] ?? 'doc' }))}
+          options={BIRTH_PREP_CATEGORIES.map((x) => ({ id: x, label: plfLabel(x), sticker: BIRTH_PREP_STICKER[x] ?? 'doc' }))}
           isOn={(id) => birthPrepCategory === id}
           onPress={setBirthPrepCategory}
         />
         {isOther && (
-          <SiteInput value={customCategory} onChangeText={setCustomCategory} placeholder="Custom category" autoFocus />
+          <SiteInput value={customCategory} onChangeText={setCustomCategory} placeholder={tNow('kp_plf_customCat')} autoFocus />
         )}
         <SiteChoice compact label={t('preg_form_nesting_alreadyDone')} selected={done}
           tone={getModeColorSoft('preg', isDark)} onPress={() => setDone((d) => !d)} style={{ alignSelf: 'flex-start' }} />
         <MoreSection label={t('kids_logForm_more')}>
           <SiteEyebrow>{t('preg_form_birthprep_dueByWeek')}</SiteEyebrow>
-          <SiteCounter value={dueWeek} onChange={setDueWeek} min={20} max={42} unit={`week${dueWeek === 1 ? '' : 's'}`} />
+          <SiteCounter value={dueWeek} onChange={setDueWeek} min={20} max={42} unit={tNow(dueWeek === 1 ? 'kp_u_week' : 'kp_u_weeks')} />
         </MoreSection>
         <SaveButton onPress={save} saving={saving} disabled={!birthPrepTitle} />
       </View>
@@ -1943,7 +1960,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
       ) : (
         <LogFormSticker
           type="birth_prep"
-          label="Preparing for baby"
+          label={tNow('kp_plf_preparingBaby')}
           tint={s.lilacSoft}
         />
       )}
@@ -2045,7 +2062,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
       await savePregnancyLog(date, 'contraction', durationSec.toString(), JSON.stringify({ intervalMin, notes: contractionNotes || undefined }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -2055,15 +2072,15 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
     return (
       <View style={styles.form}>
         <SiteQuestion>{t('preg_form_contraction_durationLabel')}</SiteQuestion>
-        <SitePresets value={durationSec} onChange={setDurationSec} presets={[30, 45, 60, 90]} unit="sec" />
+        <SitePresets value={durationSec} onChange={setDurationSec} presets={[30, 45, 60, 90]} unit={tNow('kp_u_sec')} />
         <SiteEyebrow>{t('preg_form_contraction_intervalLabel')}</SiteEyebrow>
-        <SitePresets value={intervalMin} onChange={setIntervalMin} presets={[3, 5, 10, 15, 20]} unit="min" />
+        <SitePresets value={intervalMin} onChange={setIntervalMin} presets={[3, 5, 10, 15, 20]} unit={tNow('kp_u_min')} />
         <MoreSection label={t('kids_logForm_more')}>
           <SiteEyebrow>{t('preg_form_contraction_durationLabel')}</SiteEyebrow>
-          <SiteCounter value={durationSec} onChange={setDurationSec} min={10} max={180} unit="sec" />
+          <SiteCounter value={durationSec} onChange={setDurationSec} min={10} max={180} unit={tNow('kp_u_sec')} />
           <SiteEyebrow>{t('preg_form_contraction_intervalLabel')}</SiteEyebrow>
-          <SiteCounter value={intervalMin} onChange={setIntervalMin} min={1} max={30} unit={intervalMin === 1 ? 'minute' : 'minutes'} />
-          <SiteInput value={contractionNotes} onChangeText={setContractionNotes} placeholder="Notes (intensity, location)" multiline />
+          <SiteCounter value={intervalMin} onChange={setIntervalMin} min={1} max={30} unit={tNow(intervalMin === 1 ? 'kp_u_minute' : 'kp_u_minutes')} />
+          <SiteInput value={contractionNotes} onChangeText={setContractionNotes} placeholder={tNow('kp_plf_notesIntensity')} multiline />
         </MoreSection>
         <SaveButton onPress={save} saving={saving} disabled={false} />
       </View>
@@ -2077,7 +2094,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
       ) : (
         <LogFormSticker
           type="contraction"
-          label={`Contraction on ${formatDate(date)}`}
+          label={tNow('kp_plf_contractionOn', { date: formatDate(date) })}
           tint={s.pinkSoft}
         />
       )}
@@ -2133,7 +2150,7 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
 
   async function save() {
     if (isNaN(weight) || weight <= 0) {
-      Alert.alert('Invalid', 'Please enter a valid weight.')
+      Alert.alert(tNow('kp_plf_invalid'), tNow('kp_plf_validWeight'))
       return
     }
     setSaving(true)
@@ -2143,7 +2160,7 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
       await savePregnancyLog(date, 'weight', kg.toFixed(2), undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Unknown error')
+      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
     } finally {
       setSaving(false)
     }
@@ -2177,7 +2194,7 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
       ) : (
         <LogFormSticker
           type="weight"
-          label={`Weight on ${formatDate(date)}`}
+          label={tNow('kp_plf_weightOn', { date: formatDate(date) })}
           tint={s.peachSoft}
         />
       )}

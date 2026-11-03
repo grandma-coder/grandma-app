@@ -38,7 +38,7 @@ import { useJourneyStore } from '../../store/useJourneyStore'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseSectionHeader } from '../ui/diffuse/DiffusePrimitives'
 import { diffuseFont, useTheme } from '../../constants/theme'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
 import { MenopauseRing } from '../menopause/MenopauseRing'
 import { MenopauseWeekStrip } from '../menopause/MenopauseWeekStrip'
@@ -67,39 +67,26 @@ import {
 } from '../../lib/menopauseSymptoms'
 import { supabase } from '../../lib/supabase'
 
-// ─── Static copy (no menopause i18n keys exist yet — English literals) ───────
+// ─── Static copy (resolved at render so a language change applies live) ──────
 
-const STAGE_LABEL: Record<MenopauseStage, string> = {
-  peri: 'Perimenopause',
-  meno: 'Menopause',
-  post: 'Postmenopause',
-}
+const stageLabelOf = (stage: MenopauseStage): string =>
+  tNow(`report_meno_stage_${stage}` as const)
 
 // One warm, non-prescriptive line per stage. E3 replaces this with real content.
-const WISDOM: Record<MenopauseStage, string> = {
-  peri: 'Perimenopause can feel like a moving target. Noticing your patterns, gently, is how you find steady ground.',
-  meno: 'This is a season of change, not decline. A few small notes each week help you — and your clinician — see the whole picture.',
-  post: 'You have crossed a threshold. Tending to sleep, movement, and rest keeps this next chapter strong.',
-}
-
-const WISDOM_FALLBACK = 'However this season arrives, you do not have to navigate it alone.'
+const wisdomOf = (stage: MenopauseStage): string => tNow(`meno_h_wisdom_${stage}` as const)
 
 // Short labels for the 5-per-row log dock (full names stay in the log sheet).
-const DOCK_LABEL: Record<MenopauseSymptomId, string> = {
-  hot_flash: 'Hot flash', night_sweat: 'Sweats', sleep: 'Sleep', fatigue: 'Fatigue',
-  low_mood: 'Mood', anxiety: 'Anxiety', brain_fog: 'Fog', joint_pain: 'Joints',
-  headache: 'Head', palpitations: 'Heart', weight: 'Weight', vaginal_dryness: 'Dryness', libido: 'Libido',
-}
+const dockLabelOf = (id: MenopauseSymptomId): string => tNow(`meno_h_dock_${id}` as const)
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function getMicroLabel(): string {
+function getMicroLabel(language: string): string {
   const d = new Date()
-  const day = d.toLocaleDateString('en-US', { weekday: 'long' })
-  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return `${day.toUpperCase()} · ${date.toUpperCase()} · MENOPAUSE`
+  const day = d.toLocaleDateString(language, { weekday: 'long' })
+  const date = d.toLocaleDateString(language, { month: 'short', day: 'numeric' })
+  return `${day} · ${date} · ${tNow('meno_h_micro_suffix')}`.toUpperCase()
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -108,7 +95,7 @@ export function MenopauseHome() {
   const insets = useSafeAreaInsets()
   const bottomInset = useScrollBottomInset(insets.bottom + 120)
   const pal = useMenoPalette()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   // Per-symptom-group hues from the shared sticker palette (active both variants),
   // so signals read with varied colour like the other behaviors.
   const { stickers, font } = useTheme()
@@ -130,7 +117,7 @@ export function MenopauseHome() {
   const logsFirstLoad = logsLoading && !data
   const rows = useMemo<MenopauseLogRow[]>(() => data ?? [], [data])
 
-  const microLabel = useMemo(() => getMicroLabel(), [])
+  const microLabel = useMemo(() => getMicroLabel(language), [language])
 
   // Quick-log set: the symptoms the user actually logs (their tracked signals),
   // most-frequent first; fall back to the vasomotor + sleep starter set when
@@ -159,7 +146,7 @@ export function MenopauseHome() {
           : <SiteSticker name={menoSticker(s.id)} size={26} />,
         soft: hueSoftOf(s.id),
       })),
-    [stickers], // eslint-disable-line react-hooks/exhaustive-deps
+    [stickers, language], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   // Which log sheet (if any) is open. Both reuse U7's forms verbatim.
@@ -223,14 +210,14 @@ export function MenopauseHome() {
     )
   }
 
-  const stageLabel = stage ? STAGE_LABEL[stage] : 'Your journey'
-  const wisdomLine = stage ? WISDOM[stage] : WISDOM_FALLBACK
+  const stageLabel = stage ? stageLabelOf(stage) : t('meno_h_your_journey')
+  const wisdomLine = stage ? wisdomOf(stage) : t('meno_h_wisdom_fallback')
   const monthsCaption =
     months === null
-      ? 'Log a period to start your counter'
+      ? t('meno_h_months_none')
       : months === 1
-        ? 'month since your last period'
-        : 'months since your last period'
+        ? t('meno_h_months_one')
+        : t('meno_h_months_other')
 
   // Quick-log chip → straight to the compact severity form for that symptom.
   const openSymptom = (id: MenopauseSymptomId) => { setLogDate(null); setPendingSymptom(id); setActiveSheet('symptom') }
@@ -254,12 +241,12 @@ export function MenopauseHome() {
   const dockItems: LogDockItem[] = [
     ...trackedIds.map((id) => ({
       key: id,
-      label: DOCK_LABEL[id] ?? menopauseSymptomLabel(id),
+      label: dockLabelOf(id) ?? menopauseSymptomLabel(id),
       sticker: menoSticker(id),
       done: loggedToday.has(id),
       onPress: () => openSymptom(id),
     })),
-    { key: 'more', label: 'More', sticker: 'pencil' as const, done: false, onPress: openMore },
+    { key: 'more', label: t('meno_h_more'), sticker: 'pencil' as const, done: false, onPress: openMore },
   ]
 
         const offerBlock = showOffer && (
@@ -290,22 +277,19 @@ export function MenopauseHome() {
             <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={18} borderColor={pal.accent} style={styles.section}>
               <View style={styles.rowHead}>
                 <SiteSticker name="star" size={28} />
-                <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>A gentle milestone</Text>
+                <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>{t('meno_h_offer_title')}</Text>
               </View>
-              <Text style={[styles.offerBody, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>
-                It&apos;s been 12 months since your last period — many people consider this menopause.
-                Update your stage?
-              </Text>
+              <Text style={[styles.offerBody, { color: pal.textSecondary, fontFamily: pal.fontBody }]}>{t('meno_h_offer_body')}</Text>
               <View style={styles.offerActions}>
-                <PillButton label="Update to menopause" variant="ink" onPress={confirmMenopause} loading={confirming} style={styles.offerCta} />
+                <PillButton label={t('meno_h_offer_cta')} variant="ink" onPress={confirmMenopause} loading={confirming} style={styles.offerCta} />
                 <Pressable
                   onPress={() => setOfferDismissed(true)}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel="Dismiss the menopause update prompt"
+                  accessibilityLabel={t('meno_h_offer_dismiss_a11y')}
                   style={styles.dismiss}
                 >
-                  <Text style={[styles.dismissText, { color: pal.textMuted, fontFamily: pal.fontBodyMedium }]}>Not now</Text>
+                  <Text style={[styles.dismissText, { color: pal.textMuted, fontFamily: pal.fontBodyMedium }]}>{t('meno_h_not_now')}</Text>
                 </Pressable>
               </View>
             </PaperCard>
@@ -338,11 +322,11 @@ const quickBlock = (
         ) : (
           <View style={styles.section}>
             <View style={styles.quickHead}>
-              <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Quick log</Text>
+              <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>{t('meno_h_quick_log')}</Text>
               <QuietPill
                 leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
                 onPress={() => setQuickPickerOpen(true)}
-                accessibilityLabel="Edit quick-log signals"
+                accessibilityLabel={t('meno_h_quick_edit_a11y')}
               />
             </View>
             <View style={{ marginTop: 10 }}>
@@ -364,7 +348,7 @@ const wisdomBlock = (
           <PaperCard tint={pal.accentSoft} radius={pal.radius.lg} padding={18} style={styles.section}>
             <View style={styles.rowHead}>
               <SiteSticker name="owl" size={28} />
-              <Text style={[styles.eyebrow, { color: pal.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, fontSize: 10 }]}>FROM GRANDMA</Text>
+              <Text style={[styles.eyebrow, { color: pal.textMuted, fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, fontSize: 10 }]}>{t('meno_h_from_grandma').toUpperCase()}</Text>
             </View>
             <Text style={[styles.wisdomText, { color: pal.text, fontFamily: pal.fontBody, fontSize: 16, lineHeight: 24, letterSpacing: 0 }]}>{wisdomLine}</Text>
           </PaperCard>
@@ -390,13 +374,11 @@ const periodBlock = stage === 'peri' && (
               <View style={styles.periodRow}>
                 <SiteSticker name="drop" size={44} />
                 <View style={styles.periodCopy}>
-                  <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>Still spotting?</Text>
-                  <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>
-                    Log a period to keep your counter accurate.
-                  </Text>
+                  <Text style={[styles.cardTitle, styles.siteTitle, { color: pal.text, fontFamily: pal.fontDisplay }]}>{t('meno_h_still_spotting')}</Text>
+                  <Text style={[styles.cardSub, { color: pal.textMuted, fontFamily: pal.fontBody }]}>{t('meno_h_log_period_hint')}</Text>
                 </View>
               </View>
-              <PeachPill label="Log a period" sticker="pencil" onPress={() => setActiveSheet('period')} style={[styles.periodCta, { alignSelf: 'flex-start' }]} />
+              <PeachPill label={t('meno_h_log_period')} sticker="pencil" onPress={() => setActiveSheet('period')} style={[styles.periodCta, { alignSelf: 'flex-start' }]} />
             </PaperCard>
           )
         )
@@ -467,7 +449,7 @@ const walletBlock = (
       <LogSheet
         visible={activeSheet === 'symptom'}
         sticker="thermo"
-        title="Log a symptom"
+        title={t('meno_h_log_symptom')}
         onClose={() => { setActiveSheet(null); setLogDate(null) }}
       >
         <MenopauseSymptomForm
@@ -479,7 +461,7 @@ const walletBlock = (
       <LogSheet
         visible={activeSheet === 'period'}
         sticker="drop"
-        title="Log a period"
+        title={t('meno_h_log_period')}
         onClose={() => { setActiveSheet(null); setLogDate(null) }}
       >
         <MenopausePeriodForm logDate={logDate ?? undefined} onSaved={() => { setActiveSheet(null); setLogDate(null) }} />
@@ -492,7 +474,7 @@ const walletBlock = (
         onClose={() => setGridOpen(false)}
         onPick={onGridPick}
         isPeri={stage === 'peri'}
-        title="Log a symptom"
+        title={t('meno_h_log_symptom')}
       />
 
       {/* Quick-log Edit picker — choose which signals are pinned (shared with the
@@ -519,6 +501,7 @@ function QuickChip({
   pal: MenoPalette
   onPress: () => void
 }) {
+  const { t } = useTranslation()
   const label = menopauseSymptomLabel(id)
   const { stickers, font } = useTheme()
   const hue = (stickers as Record<string, string>)[symptomStickerKey(id)]
@@ -526,7 +509,7 @@ function QuickChip({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Log ${label}`}
+      accessibilityLabel={t('meno_h_log_a11y', { label })}
       style={({ pressed }) => [
         styles.quickChip,
         // Hard-offset sticker shadow — CURRENT variant only; Diffuse stays flat.
@@ -560,11 +543,12 @@ function QuickChip({
 
 function MoreChip({ pal, onPress }: { pal: MenoPalette; onPress: () => void }) {
   const { font } = useTheme()
+  const { t } = useTranslation()
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Log another symptom"
+      accessibilityLabel={t('meno_h_log_another_a11y')}
       style={({ pressed }) => [
         styles.quickChip,
         !pal.diffuse && { ...STICKER_SHADOW, shadowColor: pal.text },
@@ -586,7 +570,7 @@ function MoreChip({ pal, onPress }: { pal: MenoPalette; onPress: () => void }) {
             : { color: pal.text, fontFamily: font.bodyBold, fontSize: 13 },
         ]}
       >
-        More
+        {t('meno_h_more')}
       </Text>
     </Pressable>
   )

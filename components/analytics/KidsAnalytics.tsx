@@ -13,6 +13,7 @@
  *  9. Ask Grandma passes full analytics context automatically
  */
 
+import { dateLoc } from '../../lib/kpLocale'
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Animated, {
   useSharedValue,
@@ -147,7 +148,7 @@ import {
 } from '../ui/Stickers'
 import { BrandedLoader } from '../ui/BrandedLoader'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { FadeUp } from '../ui/Motion'
@@ -232,7 +233,7 @@ function SiteClose({ onPress }: { onPress: () => void }) {
       onPress={onPress}
       hitSlop={10}
       accessibilityRole="button"
-      accessibilityLabel="Close"
+      accessibilityLabel={tNow('common_close')}
       style={({ pressed }) => [
         { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: colors.text, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
         pressed && { opacity: 0.7 },
@@ -275,12 +276,12 @@ function radarWobble(i: number, phase: number): number {
 // Pillar colors map to the cream-paper sticker palette (not the legacy neon).
 // These are the vivid sticker chip tones; soft tints come from `pillarPalette()`.
 const PILLAR_CONFIG = {
-  nutrition: { label: 'Nutrition', color: '#7A9D4A', icon: Utensils },  // sticker green (deepened)
-  sleep:     { label: 'Sleep',     color: '#8E72C9', icon: Moon },      // sticker lilac (deepened)
-  mood:      { label: 'Mood',      color: '#D87CA0', icon: Smile },     // sticker pink (deepened)
-  health:    { label: 'Health',    color: '#5F8FC1', icon: Heart },     // sticker blue (deepened)
-  growth:    { label: 'Growth',    color: '#C9A02C', icon: TrendingUp }, // sticker yellow (deepened)
-  activity:  { label: 'Activity',  color: '#D86A4F', icon: Zap },        // sticker coral (deepened)
+  nutrition: { get label() { return tNow('kp_ka_p_nutrition') }, color: '#7A9D4A', icon: Utensils },  // sticker green (deepened)
+  sleep:     { get label() { return tNow('kp_ka_p_sleep') },     color: '#8E72C9', icon: Moon },      // sticker lilac (deepened)
+  mood:      { get label() { return tNow('kp_ka_p_mood') },      color: '#D87CA0', icon: Smile },     // sticker pink (deepened)
+  health:    { get label() { return tNow('kp_ka_p_health') },    color: '#5F8FC1', icon: Heart },     // sticker blue (deepened)
+  growth:    { get label() { return tNow('kp_ka_p_growth') },    color: '#C9A02C', icon: TrendingUp }, // sticker yellow (deepened)
+  activity:  { get label() { return tNow('kp_ka_p_activity') },  color: '#D86A4F', icon: Zap },        // sticker coral (deepened)
 } as const
 
 type PillarKey = keyof typeof PILLAR_CONFIG
@@ -926,7 +927,7 @@ export function KidsAnalytics() {
         const f = new Date(customRange.from)
         const t = new Date(customRange.to)
         const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-        return `${f.toLocaleDateString('en-US', opts)} – ${t.toLocaleDateString('en-US', opts)}`
+        return `${f.toLocaleDateString(dateLoc(), opts)} – ${t.toLocaleDateString(dateLoc(), opts)}`
       })()
     : undefined
 
@@ -975,7 +976,7 @@ export function KidsAnalytics() {
 
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? children[0] ?? null
   const ageMonths = selectedChild?.birthDate ? getAgeMonths(selectedChild.birthDate) : 12
-  const childName = selectedChild?.name ?? 'your child'
+  const childName = selectedChild?.name ?? t('kp_ka_yourChild')
   // Resolves the same way `buildScores`/analyticsData does: an unresolved
   // sex (`isFallback`) can't be placed on a sex-specific WHO curve with
   // confidence, so the growth pop-up insight gets `null`, never a silently
@@ -1024,11 +1025,11 @@ export function KidsAnalytics() {
 
   // ── Diffuse period options for the hairline segment pill ──
   const diffusePeriodOptions: { key: Period; label: string }[] = [
-    { key: 'week', label: '7 Days' },
-    { key: 'month', label: '30 Days' },
-    { key: '3mo', label: '3 Mo' },
-    { key: 'year', label: '1 Yr' },
-    { key: 'custom', label: customLabel ? customLabel : 'Custom' },
+    { key: 'week', label: t('kp_ka_p7') },
+    { key: 'month', label: t('kp_ka_p30') },
+    { key: '3mo', label: t('kp_ka_p3m') },
+    { key: 'year', label: t('kp_ka_p1y') },
+    { key: 'custom', label: customLabel ? customLabel : t('kp_ka_custom') },
   ]
 
   return (
@@ -1044,7 +1045,7 @@ export function KidsAnalytics() {
           <View style={{ marginTop: 8, marginBottom: 4 }}>
             <DiffuseSectionHeader
               eyebrow={getAgeLabel(ageMonths)}
-              title={`${childName}'s patterns`}
+              title={t('kp_ka_patterns', { name: childName })}
               right={(
                 <Pressable
                   onPress={() => setShowScoreInfo(true)}
@@ -1069,7 +1070,7 @@ export function KidsAnalytics() {
                 <Pressable
                   onPress={() => setShowScoreInfo(true)}
                   hitSlop={10}
-                  accessibilityLabel="How analytics work"
+                  accessibilityLabel={t('kp_ka_howWork')}
                   style={({ pressed }) => [
                     styles.infoBtnNew,
                     { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 2, width: 34, height: 34 },
@@ -1260,7 +1261,7 @@ export function KidsAnalytics() {
               icon: PILLAR_LINE_ICON[key],
               reference: key === 'health',
               statusText: key === 'health'
-                ? (healthConcerns === 0 ? 'All clear' : `${healthConcerns} to note`)
+                ? (healthConcerns === 0 ? t('kp_ka_allClear') : t('kp_ka_toNote', { n: healthConcerns }))
                 : undefined,
             }))
             return (
@@ -2102,7 +2103,7 @@ function WellnessScoreArc({
               {PILLAR_CONFIG[activePillar].label}
               {' — '}
               {activePillar === 'health'
-                ? 'Reference'
+                ? tNow('kp_ka_reference')
                 : scores[activePillar].hasData
                 ? `${scores[activePillar].value.toFixed(1)}/10`
                 : t('kids_analytics_no_data_short')}
@@ -2191,7 +2192,7 @@ function GrandmaInsightCard({
               {t('kids_analytics_grandma_says_label')}
             </Text>
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', color: dt.colors.ink3 }}>
-              {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {new Date().toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}
             </Text>
           </View>
           <Text
@@ -2270,7 +2271,7 @@ function GrandmaInsightCard({
             </Animated.View>
           </View>
           <Text style={[styles.grandmaInsightDate, { color: colors.textSecondary, fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
-            {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {new Date().toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}
           </Text>
         </View>
 
@@ -3438,7 +3439,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
         <Text style={diffuse
           ? [styles.diffuseEyebrow, { color: dt.colors.ink3, marginBottom: 0 }]
           : [styles.siteEyebrow, { color: colors.text, marginBottom: 0 }]}>
-          {showDetails ? 'Hide details' : 'Show details'}
+          {showDetails ? t('kp_ka_hideDetails') : t('kp_ka_showDetails')}
         </Text>
         <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: diffuse ? dt.colors.ink3 : colors.text, fontSize: 15 }}>{showDetails ? '▾' : '▸'}</Text>
       </Pressable>
@@ -3485,7 +3486,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           <StatRow>
             {isMilkPhase ? (
               <>
-                <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
+                <StatPill label={t('kp_ka_avgFeeds')} value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
                 <StatPill label={t('kidsAnalytics_breastTotal')} value={`${totalBreast}`} color={brand.secondary} />
                 <StatPill
                   label={t('kidsAnalytics_bottleTotal')}
@@ -3495,22 +3496,22 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               </>
             ) : isMixedPhase ? (
               <>
-                <StatPill label="Avg feeds/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
+                <StatPill label={t('kp_ka_avgFeeds')} value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
                 <StatPill label={t('kidsAnalytics_milkFeedsTotal')} value={`${totalBreast + totalBottle}`} color={brand.secondary} />
                 <StatPill label={t('kidsAnalytics_foodsTriedTotal')} value={`${variety}`} color={brand.accent} />
               </>
             ) : (
               <>
-                <StatPill label="Ate well" value={ratedTotal > 0 ? `${pctGood}%` : '—'} color={brand.success} />
-                <StatPill label="Avg meals/day" value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
-                <StatPill label="Foods variety" value={`${variety}`} color={brand.secondary} />
+                <StatPill label={t('kids_logForm_ateWell')} value={ratedTotal > 0 ? `${pctGood}%` : '—'} color={brand.success} />
+                <StatPill label={t('kp_ka_avgMeals')} value={avgPerDay} color={PILLAR_CONFIG.nutrition.color} />
+                <StatPill label={t('kp_ka_foodsVariety')} value={`${variety}`} color={brand.secondary} />
               </>
             )}
           </StatRow>
 
           {/* Mode-specific charts */}
           {isMilkPhase && (
-            <ChartCard title="Feeds per Day" onExpand={() => onFullScreen('meal_freq')}>
+            <ChartCard title={t('kp_ka_feedsPerDay')} onExpand={() => onFullScreen('meal_freq')}>
               <MealsLineChart
                 data={analytics.nutrition.mealFrequency}
                 labels={analytics.nutrition.weekLabels}
@@ -3532,7 +3533,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
                 <View style={{ flex: 1, alignItems: diffuse ? 'center' : 'flex-start', padding: diffuse ? 16 : 0, backgroundColor: diffuse ? colors.surfaceRaised : 'transparent', borderRadius: radius.lg }}>
                   <Text style={{ color: diffuse ? brand.secondary : colors.text, fontSize: 28, fontFamily: diffuse ? font.display : font.displayBold }}>{totalBottle}</Text>
                   <Text style={{ color: diffuse ? colors.textMuted : colors.textSecondary, fontSize: 12, fontFamily: font.bodyMedium, marginTop: 4 }}>
-                    {totalBottleMl > 0 ? `${Math.round(totalBottleMl)}ml total` : 'bottles'}
+                    {totalBottleMl > 0 ? t('kp_ka_mlTotal', { n: Math.round(totalBottleMl) }) : t('kp_ka_bottles')}
                   </Text>
                 </View>
               </View>
@@ -3540,7 +3541,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           )}
 
           {!isMilkPhase && (
-            <ChartCard title="Eat Quality" onExpand={() => onFullScreen('eat_quality')}>
+            <ChartCard title={t('kp_ka_eatQuality')} onExpand={() => onFullScreen('eat_quality')}>
               <EatQualityBubbles
                 good={analytics.nutrition.eatQuality.good}
                 little={analytics.nutrition.eatQuality.little}
@@ -3549,7 +3550,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             </ChartCard>
           )}
           {!isMilkPhase && (
-            <ChartCard title="Meals per Day" onExpand={() => onFullScreen('meal_freq')}>
+            <ChartCard title={t('kp_ka_mealsPerDay')} onExpand={() => onFullScreen('meal_freq')}>
               <MealsLineChart
                 data={analytics.nutrition.mealFrequency}
                 labels={analytics.nutrition.weekLabels}
@@ -3613,12 +3614,12 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {/* Stats at top */}
           <StatRow>
             <StatPill label={t('kidsAnalytics_avgPerNight')} value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
-            <StatPill label="Quality" value={getBestQuality(analytics.sleep.qualityCounts)} color={brand.success} />
+            <StatPill label={t('kp_ka_quality')} value={getBestQuality(analytics.sleep.qualityCounts)} color={brand.success} />
             <StatPill label={t('kidsAnalytics_targetPerNight')} value={`${target}h`} color={colors.textMuted} />
           </StatRow>
 
           {/* Highlighted bar chart */}
-          <ChartCard title="Daily Sleep Hours" onExpand={() => onFullScreen('sleep_weekly')}>
+          <ChartCard title={t('kp_ka_dailySleep')} onExpand={() => onFullScreen('sleep_weekly')}>
             <HighlightBarChart
               data={analytics.sleep.dailyHours}
               labels={analytics.sleep.weekLabels}
@@ -3630,7 +3631,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           </ChartCard>
 
           {/* Sleep quality breakdown */}
-          <ChartCard title="Sleep Quality Breakdown" onExpand={() => onFullScreen('sleep_quality')}>
+          <ChartCard title={t('kp_ka_sleepQualityBreakdown')} onExpand={() => onFullScreen('sleep_quality')}>
             <SleepQualityChart counts={analytics.sleep.qualityCounts} />
           </ChartCard>
           </>)}
@@ -3645,10 +3646,10 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {renderLead(insight)}
           {!analytics.mood.hasData && <EmptyDetail pillar="mood" />}
           {insight.demotedAvailable && renderDetailsToggle(<>
-          <ChartCard title="Mood Distribution" onExpand={() => onFullScreen('mood_dist')}>
+          <ChartCard title={t('kp_ka_moodDist')} onExpand={() => onFullScreen('mood_dist')}>
             <MoodDistribution moods={analytics.mood.dominantMoods} />
           </ChartCard>
-          <ChartCard title="Daily Mood Tracking" onExpand={() => onFullScreen('mood_daily')}>
+          <ChartCard title={t('kp_ka_moodDaily')} onExpand={() => onFullScreen('mood_daily')}>
             <MoodDailyChart dailyCounts={analytics.mood.dailyCounts} labels={analytics.mood.weekLabels} width={chartW} />
           </ChartCard>
           </>)}
@@ -3683,7 +3684,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               not a graded score), so this low-value frequency chart is dropped
               in Diffuse; kept for the legacy theme. */}
           {analytics.health.hasData && !diffuse && (
-            <ChartCard title="Care logged" onExpand={() => onFullScreen('health_freq')}>
+            <ChartCard title={t('kp_ka_careLogged')} onExpand={() => onFullScreen('health_freq')}>
               <BarChart data={analytics.health.weeklyFrequency} labels={analytics.health.weekLabels} color={PILLAR_CONFIG.health.color} width={chartW} />
             </ChartCard>
           )}
@@ -3697,7 +3698,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               : quietSection}>
               <Text style={diffuse
                 ? [styles.diffuseEyebrow, { color: dt.colors.ink3 }]
-                : siteEyebrowStyle}>Recent care log</Text>
+                : siteEyebrowStyle}>{t('kp_ka_recentCare')}</Text>
               {Object.entries(eventsByType).map(([type, events]) => (
                 <View key={type} style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
@@ -3742,7 +3743,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               <View style={{ width: `${vaccinePct}%`, height: '100%', backgroundColor: diffuse ? getDiffuseAccent('kids', dt.isDark) : stickers.green, borderRadius: 999 }} />
             </View>
             <Text style={[styles.detailExplain, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, marginBottom: 14, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
-              {`${doneVaccines}/${totalVaccines} logged as completed`}
+              {t('kp_ka_completed', { done: doneVaccines, total: totalVaccines })}
             </Text>
             <View style={styles.vaccineGrid}>
               {analytics.health.vaccines.map((v, i) => (
@@ -3784,14 +3785,14 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               <StatRow>
                 {lastWeight && (
                   <StatPill
-                    label={`Weight (${parseLocalDate(lastWeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
+                    label={t('kp_ka_weightDate', { date: parseLocalDate(lastWeight.date).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' }) })}
                     value={`${lastWeight.value}kg`}
                     color={PILLAR_CONFIG.health.color}
                   />
                 )}
                 {lastHeight && (
                   <StatPill
-                    label={`Height (${parseLocalDate(lastHeight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`}
+                    label={t('kp_ka_heightDate', { date: parseLocalDate(lastHeight.date).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' }) })}
                     value={`${lastHeight.value}cm`}
                     color={PILLAR_CONFIG.growth.color}
                   />
@@ -3802,7 +3803,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Growth over time — Diffuse: Kids milestone-trail bubbles; else line */}
           {analytics.growth.weights.length >= 2 && (
-            <ChartCard title="Weight over time (kg)" onExpand={() => onFullScreen('weight')}>
+            <ChartCard title={t('kp_ka_weightOverTime')} onExpand={() => onFullScreen('weight')}>
               {diffuse ? (
                 <MilestoneTrail
                   data={analytics.growth.weights.map((w) => w.value)}
@@ -3823,7 +3824,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
             </ChartCard>
           )}
           {analytics.growth.heights.length >= 2 && (
-            <ChartCard title="Height over time (cm)" onExpand={() => onFullScreen('height')}>
+            <ChartCard title={t('kp_ka_heightOverTime')} onExpand={() => onFullScreen('height')}>
               {diffuse ? (
                 <MilestoneTrail
                   data={analytics.growth.heights.map((h) => h.value)}
@@ -3903,7 +3904,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
 
           {/* Weekly sessions bar chart */}
           {act.hasData && (
-            <ChartCard title="Activity Sessions" onExpand={() => onFullScreen('activity_weekly')}>
+            <ChartCard title={t('kp_ka_activitySessions')} onExpand={() => onFullScreen('activity_weekly')}>
               <HighlightBarChart
                 data={act.dailySessions}
                 labels={act.weekLabels}
@@ -4065,12 +4066,12 @@ function EmptyDetail({ pillar }: { pillar: PillarKey }) {
   const config = PILLAR_CONFIG[pillar]
   const Icon = config.icon
   const messages: Record<PillarKey, string> = {
-    nutrition: 'No meals logged yet this week. Log feeding from the calendar to see nutrition trends.',
-    sleep: 'No sleep entries yet. Log sleep from the calendar to track patterns.',
-    mood: "No mood entries yet. Track your child's mood daily to see patterns.",
-    health: 'No health events logged. Record temperatures, vaccines, and doctor visits here.',
-    growth: 'No growth data yet. Log weight and height measurements to track development.',
-    activity: 'No activities logged yet this week. Log sessions from the calendar to track movement.',
+    nutrition: tNow('kp_ka_emptyNutrition'),
+    sleep: tNow('kp_ka_emptySleep'),
+    mood: tNow('kp_ka_emptyMood'),
+    health: tNow('kp_ka_emptyHealth'),
+    growth: tNow('kp_ka_emptyGrowth'),
+    activity: tNow('kp_ka_emptyActivity'),
   }
   if (diffuse) {
     return (
@@ -4184,9 +4185,9 @@ function StackedBarChart({ good, little, none, labels, width = 300, height = 200
         {labels.map((l, i) => <Text key={i} style={[styles.label, { color: axisText }]}>{l}</Text>)}
       </View>
       <View style={styles.legendRow}>
-        <LegendDot color={colGood} label="Ate well" />
-        <LegendDot color={colLittle} label="A little" />
-        <LegendDot color={colNone} label="Didn't eat" />
+        <LegendDot color={colGood} label={t('kids_analytics_legend_ate_well')} />
+        <LegendDot color={colLittle} label={t('kids_analytics_legend_a_little')} />
+        <LegendDot color={colNone} label={t('kids_analytics_legend_didnt_eat')} />
       </View>
     </View>
   )
@@ -4263,9 +4264,9 @@ function EatQualityBubbles({
   const pctNone = 100 - pctGood - pctLittle
 
   const items = [
-    { label: 'Ate well', pct: pctGood, color: st.green },
-    { label: 'A little', pct: pctLittle, color: st.peach },
-    { label: "Didn't eat", pct: pctNone, color: st.coral },
+    { label: t('kids_analytics_legend_ate_well'), pct: pctGood, color: st.green },
+    { label: t('kids_analytics_legend_a_little'), pct: pctLittle, color: st.peach },
+    { label: t('kids_analytics_legend_didnt_eat'), pct: pctNone, color: st.coral },
   ].filter((i) => i.pct > 0)
 
   // Diffuse: the Kids dot-count rows — consistent with the sleep-quality
@@ -4529,10 +4530,10 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
     )
   }
   const items = [
-    { label: 'Great', count: counts.great, color: brand.success, emoji: '😴' },
-    { label: 'Good', count: counts.good, color: PILLAR_CONFIG.health.color, emoji: '🙂' },
-    { label: 'Restless', count: counts.restless, color: brand.accent, emoji: '😐' },
-    { label: 'Poor', count: counts.poor, color: brand.error, emoji: '😣' },
+    { label: t('kids_analytics_sleep_quality_great'), count: counts.great, color: brand.success, emoji: '😴' },
+    { label: t('kids_analytics_sleep_quality_good'), count: counts.good, color: PILLAR_CONFIG.health.color, emoji: '🙂' },
+    { label: t('kids_analytics_sleep_quality_restless'), count: counts.restless, color: brand.accent, emoji: '😐' },
+    { label: t('kids_analytics_sleep_quality_poor'), count: counts.poor, color: brand.error, emoji: '😣' },
   ]
 
   // Diffuse: the distinct Kids dot-count rows (one row per quality level with a
@@ -4646,10 +4647,10 @@ function getEventColor(type: string): string {
 
 function getHealthEventLabel(type: string): string {
   switch (type.toLowerCase()) {
-    case 'temperature': return 'Temperature'
-    case 'medicine': return 'Medicine'
-    case 'vaccine': return 'Vaccine'
-    case 'note': return 'Note'
+    case 'temperature': return tNow('kids_logForm_healthTemp')
+    case 'medicine': return tNow('kids_logForm_healthMedicine')
+    case 'vaccine': return tNow('kids_logForm_healthVaccine')
+    case 'note': return tNow('kids_calendar_labelNote')
     default: return type
   }
 }
@@ -4667,7 +4668,7 @@ function getHealthEventEmoji(type: string): string {
 function getBestQuality(counts: { great: number; good: number; restless: number; poor: number }): string {
   const total = counts.great + counts.good + counts.restless + counts.poor
   if (total === 0) return '—'
-  return `${Math.round(((counts.great + counts.good) / total) * 100)}% good`
+  return tNow('kp_ka_pctGood', { pct: Math.round(((counts.great + counts.good) / total) * 100) })
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────

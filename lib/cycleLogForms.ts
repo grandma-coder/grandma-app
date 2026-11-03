@@ -3,6 +3,14 @@
  * forms. Pure functions, no React.
  */
 import type { CyclePhase } from './cycleLogic'
+import { t, type TranslationKey } from './i18n'
+import { useLanguageStore } from '../store/useLanguageStore'
+
+/** BCP-47 locale for Intl/toLocale*String from the current app language. */
+export function appIntlLocale(): string {
+  const lang = useLanguageStore.getState().language
+  return lang === 'en' ? 'en-US' : lang
+}
 
 export type FormId =
   | 'period_start'
@@ -23,119 +31,119 @@ export type FormId =
 
 // Phase pills are context, never a verdict: no "unusual", "normal", "early/late" or fertility
 // claims (the phase is a prediction, and before a logged period it was an invented one).
-const PHASE_PILL: Record<FormId, Record<CyclePhase, string>> = {
+const PHASE_PILL: Record<FormId, Record<CyclePhase, TranslationKey>> = {
   period_start: {
-    menstruation: 'Menstruation begins',
-    follicular:   'Marking period start',
-    ovulation:    'Marking period start',
-    luteal:       'Marking period start',
+    menstruation: 'cyc_pill_ps_menstruation',
+    follicular:   'cyc_pill_ps_other',
+    ovulation:    'cyc_pill_ps_other',
+    luteal:       'cyc_pill_ps_other',
   },
   period_end: {
-    menstruation: 'Last day of period',
-    follicular:   'Marking period end',
-    ovulation:    'Marking period end',
-    luteal:       'Marking period end',
+    menstruation: 'cyc_pill_pe_menstruation',
+    follicular:   'cyc_pill_pe_other',
+    ovulation:    'cyc_pill_pe_other',
+    luteal:       'cyc_pill_pe_other',
   },
   symptoms: {
-    menstruation: 'Common in Menstruation',
-    follicular:   'Common in Follicular',
-    ovulation:    'Common in Ovulation',
-    luteal:       'Common in Luteal',
+    menstruation: 'cyc_pill_symptoms_menstruation',
+    follicular:   'cyc_pill_symptoms_follicular',
+    ovulation:    'cyc_pill_symptoms_ovulation',
+    luteal:       'cyc_pill_symptoms_luteal',
   },
   mood: {
-    menstruation: 'Menstruation · be gentle',
-    follicular:   'Follicular · energy rising',
-    ovulation:    'Ovulation · peak energy',
-    luteal:       'Luteal · mood often softer',
+    menstruation: 'cyc_pill_mood_menstruation',
+    follicular:   'cyc_pill_mood_follicular',
+    ovulation:    'cyc_pill_mood_ovulation',
+    luteal:       'cyc_pill_mood_luteal',
   },
   bbt: {
-    menstruation: 'Track every morning',
-    follicular:   'Track every morning',
-    ovulation:    'Track every morning',
-    luteal:       'Track every morning',
+    menstruation: 'cyc_pill_bbt',
+    follicular:   'cyc_pill_bbt',
+    ovulation:    'cyc_pill_bbt',
+    luteal:       'cyc_pill_bbt',
   },
   lh: {
-    menstruation: 'Predicts ovulation 24–36h ahead',
-    follicular:   'Predicts ovulation 24–36h ahead',
-    ovulation:    'Surge today?',
-    luteal:       'Logged for your records',
+    menstruation: 'cyc_pill_lh_before',
+    follicular:   'cyc_pill_lh_before',
+    ovulation:    'cyc_pill_lh_today',
+    luteal:       'cyc_pill_records',
   },
   cm: {
-    menstruation: 'Fertility signal',
-    follicular:   'Fertility signal',
-    ovulation:    'Fertility signal',
-    luteal:       'Fertility signal',
+    menstruation: 'cyc_pill_cm',
+    follicular:   'cyc_pill_cm',
+    ovulation:    'cyc_pill_cm',
+    luteal:       'cyc_pill_cm',
   },
   intimacy: {
-    menstruation: 'Logged for cycle insights',
-    follicular:   'Logged for cycle insights',
-    ovulation:    'Logged for cycle insights',
-    luteal:       'Logged for cycle insights',
+    menstruation: 'cyc_pill_insights',
+    follicular:   'cyc_pill_insights',
+    ovulation:    'cyc_pill_insights',
+    luteal:       'cyc_pill_insights',
   },
   ovulation: {
-    menstruation: 'Logged for your records',
-    follicular:   'Logged for your records',
-    ovulation:    'Logged for your records',
-    luteal:       'Logged for your records',
+    menstruation: 'cyc_pill_records',
+    follicular:   'cyc_pill_records',
+    ovulation:    'cyc_pill_records',
+    luteal:       'cyc_pill_records',
   },
   pregnancy_test: {
-    menstruation: 'Most reliable after a missed period',
-    follicular:   'Most reliable after a missed period',
-    ovulation:    'Most reliable after a missed period',
-    luteal:       'Most accurate once your period is late',
+    menstruation: 'cyc_pill_preg_early',
+    follicular:   'cyc_pill_preg_early',
+    ovulation:    'cyc_pill_preg_early',
+    luteal:       'cyc_pill_preg_late',
   },
   sex_drive: {
-    menstruation: 'Libido often dips',
-    follicular:   'Libido often rising',
-    ovulation:    'Libido often peaks',
-    luteal:       'Libido varies',
+    menstruation: 'cyc_pill_sexdrive_menstruation',
+    follicular:   'cyc_pill_sexdrive_follicular',
+    ovulation:    'cyc_pill_sexdrive_ovulation',
+    luteal:       'cyc_pill_sexdrive_luteal',
   },
   clots: {
-    menstruation: 'Common on heavier days',
-    follicular:   'Logged for your records',
-    ovulation:    'Logged for your records',
-    luteal:       'Logged for your records',
+    menstruation: 'cyc_pill_clots_menstruation',
+    follicular:   'cyc_pill_records',
+    ovulation:    'cyc_pill_records',
+    luteal:       'cyc_pill_records',
   },
   weight: {
-    menstruation: 'Track for your trend',
-    follicular:   'Track for your trend',
-    ovulation:    'Track for your trend',
-    luteal:       'Track for your trend',
+    menstruation: 'cyc_pill_weight',
+    follicular:   'cyc_pill_weight',
+    ovulation:    'cyc_pill_weight',
+    luteal:       'cyc_pill_weight',
   },
   water: {
-    menstruation: 'Hydration helps with cramps',
-    follicular:   'Aim for steady hydration',
-    ovulation:    'Aim for steady hydration',
-    luteal:       'Extra water helps with bloating',
+    menstruation: 'cyc_pill_water_menstruation',
+    follicular:   'cyc_pill_water_steady',
+    ovulation:    'cyc_pill_water_steady',
+    luteal:       'cyc_pill_water_luteal',
   },
   activity: {
-    menstruation: 'Gentle movement can ease cramps',
-    follicular:   'Energy often peaks — great for movement',
-    ovulation:    'Peak energy window',
-    luteal:       'Listen to your body',
+    menstruation: 'cyc_pill_activity_menstruation',
+    follicular:   'cyc_pill_activity_follicular',
+    ovulation:    'cyc_pill_activity_ovulation',
+    luteal:       'cyc_pill_activity_luteal',
   },
 }
 
 export function phaseHint(form: FormId, phase: CyclePhase): string {
-  return PHASE_PILL[form][phase]
+  return t(PHASE_PILL[form][phase])
 }
 
-const IDLE_LABEL: Record<FormId, string> = {
-  period_start: 'Start period',
-  period_end:   'Mark as ended',
-  symptoms:     'Save symptoms',
-  mood:         'Save mood',
-  bbt:          'Save temperature',
-  lh:           'Save result',
-  cm:           'Save mucus',
-  intimacy:     'Save',
-  ovulation:    'Confirm ovulation',
-  pregnancy_test: 'Save result',
-  sex_drive:    'Save',
-  clots:        'Save',
-  weight:       'Save weight',
-  water:        'Save water',
-  activity:     'Save',
+const IDLE_LABEL: Record<FormId, TranslationKey> = {
+  period_start: 'cyc_save_startPeriod',
+  period_end:   'cyc_save_markEnded',
+  symptoms:     'cyc_save_symptoms',
+  mood:         'cyc_save_mood',
+  bbt:          'cyc_save_temperature',
+  lh:           'cyc_save_result',
+  cm:           'cyc_save_mucus',
+  intimacy:     'common_save',
+  ovulation:    'cyc_save_confirmOvulation',
+  pregnancy_test: 'cyc_save_result',
+  sex_drive:    'common_save',
+  clots:        'common_save',
+  weight:       'cyc_save_weight',
+  water:        'cyc_save_water',
+  activity:     'common_save',
 }
 
 export function saveLabel(
@@ -145,9 +153,9 @@ export function saveLabel(
   if (form === 'symptoms') {
     const count = opts?.count ?? 0
     const initial = opts?.initialCount ?? 0
-    if (count === 0 && initial > 0) return 'Update symptoms'
-    if (count > 0) return `Save ${count} symptom${count === 1 ? '' : 's'}`
-    return IDLE_LABEL.symptoms
+    if (count === 0 && initial > 0) return t('cyc_save_updateSymptoms')
+    if (count > 0) return count === 1 ? t('cyc_save_symptoms_one') : t('cyc_save_symptoms_other', { count })
+    return t(IDLE_LABEL.symptoms)
   }
-  return IDLE_LABEL[form]
+  return t(IDLE_LABEL[form])
 }

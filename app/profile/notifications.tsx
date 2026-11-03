@@ -17,7 +17,7 @@ import { Sun, Sparkle, Star, Moon, Heart, Flower, Leaf } from '../../components/
 import { Character, type CharacterName } from '../../components/characters/Characters'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle } from '../../components/profile/SiteSettingsKit'
 import type { SiteStickerName } from '../../components/stickers/SiteSticker'
 import {
@@ -35,20 +35,20 @@ type ToggleId = Exclude<keyof NotificationPrefs, 'daily_reminder_time'>
 
 interface NotifToggle {
   id: ToggleId
-  label: string
-  description: string
+  label: TranslationKey
+  description: TranslationKey
   group: 'daily' | 'health' | 'community'
   sticker: StickerName
 }
 
 const NOTIFICATION_SETTINGS: NotifToggle[] = [
-  { id: 'daily_reminder', label: 'Daily Log Reminder', description: 'Remind me to log each day', group: 'daily', sticker: 'sun' },
-  { id: 'insights', label: 'New Insights', description: 'When Grandma generates new insights', group: 'daily', sticker: 'sparkle' },
-  { id: 'weekly_summary', label: 'Weekly Summary', description: 'Weekly digest of activity and insights', group: 'daily', sticker: 'leaf' },
-  { id: 'appointments', label: 'Appointment Reminders', description: 'Before scheduled appointments', group: 'health', sticker: 'star' },
-  { id: 'cycle_predictions', label: 'Cycle Predictions', description: 'Period and fertile window alerts', group: 'health', sticker: 'moon' },
-  { id: 'milestones', label: 'Milestone Alerts', description: 'Upcoming developmental milestones', group: 'health', sticker: 'flower' },
-  { id: 'care_circle', label: 'Care Circle Updates', description: 'When caregivers log activities', group: 'community', sticker: 'heart' },
+  { id: 'daily_reminder', label: 'app_notif_dailyLog_label', description: 'app_notif_dailyLog_desc', group: 'daily', sticker: 'sun' },
+  { id: 'insights', label: 'app_notif_insights_label', description: 'app_notif_insights_desc', group: 'daily', sticker: 'sparkle' },
+  { id: 'weekly_summary', label: 'app_notif_weekly_label', description: 'app_notif_weekly_desc', group: 'daily', sticker: 'leaf' },
+  { id: 'appointments', label: 'app_notif_appointments_label', description: 'app_notif_appointments_desc', group: 'health', sticker: 'star' },
+  { id: 'cycle_predictions', label: 'app_notif_cycle_label', description: 'app_notif_cycle_desc', group: 'health', sticker: 'moon' },
+  { id: 'milestones', label: 'app_notif_milestones_label', description: 'app_notif_milestones_desc', group: 'health', sticker: 'flower' },
+  { id: 'care_circle', label: 'app_notif_careCircle_label', description: 'app_notif_careCircle_desc', group: 'community', sticker: 'heart' },
 ]
 
 // "HH:MM" ↔ Date helpers for the daily-reminder time picker.
@@ -78,10 +78,10 @@ const SITE_STICKER: Record<StickerName, SiteStickerName> = {
   leaf: 'doc',
 }
 
-const GROUPS: { id: NotifToggle['group']; label: string }[] = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'health', label: 'Health' },
-  { id: 'community', label: 'Community' },
+const GROUP_DEFS: { id: NotifToggle['group']; label: TranslationKey }[] = [
+  { id: 'daily', label: 'app_notif_groupDaily' },
+  { id: 'health', label: 'app_notif_groupHealth' },
+  { id: 'community', label: 'app_notif_groupCommunity' },
 ]
 
 // Character-blob concept per sticker, for the Diffuse branch — chosen for the
@@ -136,6 +136,8 @@ export default function NotificationsScreen() {
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  const GROUPS = GROUP_DEFS.map((g) => ({ ...g, label: t(g.label) }))
+  const NOTIFS = NOTIFICATION_SETTINGS.map((n) => ({ ...n, label: t(n.label), description: t(n.description) }))
   const mode = useModeStore((s) => s.mode)
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
 
@@ -205,7 +207,7 @@ export default function NotificationsScreen() {
         </View>}
 
         {!diffuse && GROUPS.map((group) => {
-          const items = NOTIFICATION_SETTINGS.filter((n) => n.group === group.id)
+          const items = NOTIFS.filter((n) => n.group === group.id)
           return (
             <View key={group.id}>
               <SiteEyebrow>{group.label}</SiteEyebrow>
@@ -223,9 +225,9 @@ export default function NotificationsScreen() {
                       <Pressable
                         onPress={() => setShowTimePicker((s) => !s)}
                         style={[styles.timePill, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}
-                        accessibilityLabel="Set daily reminder time"
+                        accessibilityLabel={t('app_notif_setTimeA11y')}
                       >
-                        <Body size={13} color={colors.textMuted} style={{ fontFamily: font.bodyMedium }}>{'Remind me at '}</Body>
+                        <Body size={13} color={colors.textMuted} style={{ fontFamily: font.bodyMedium }}>{t('app_notif_remindAt') + ' '}</Body>
                         <Body size={14} color={colors.text} style={{ fontFamily: font.bodyBold }}>{formatTime(prefs.daily_reminder_time)}</Body>
                       </Pressable>
                       {showTimePicker && (
@@ -248,7 +250,7 @@ export default function NotificationsScreen() {
         })}
 
         {diffuse && GROUPS.map((group) => {
-          const items = NOTIFICATION_SETTINGS.filter((n) => n.group === group.id)
+          const items = NOTIFS.filter((n) => n.group === group.id)
           return (
             <View key={group.id} style={{ marginBottom: spacing.lg }}>
               <View style={{ marginTop: spacing.sm, marginBottom: spacing.sm }}>

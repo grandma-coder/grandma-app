@@ -5,6 +5,7 @@
  * Milestones Timeline, Recent Events. Tap any section for detail popup.
  */
 
+import { dateLoc } from '../../lib/kpLocale'
 import { useState, useCallback, useMemo } from 'react'
 import { healthLogText } from '../../lib/kidsHealthLogText'
 import {
@@ -34,7 +35,7 @@ import { InkBackButton } from '../../components/ui/InkBackButton'
 import { SiteChoice } from '../../components/ui/SiteChoice'
 import { StickerChoice } from '../../components/calendar/QuickLogKit'
 import { EyeAction, ACTION_TONES } from '../../components/ui/AuthDock'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { useChildStore } from '../../store/useChildStore'
 import { supabase } from '../../lib/supabase'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -71,12 +72,22 @@ interface HealthEvent {
 }
 
 const TYPE_CFG: Record<string, { label: string; icon: typeof Syringe; charName: CharacterName; color: string; placeholder: string }> = {
-  vaccine:     { label: 'Vaccine',     icon: Syringe,     charName: 'vaccine',     color: brand.success,        placeholder: 'e.g. MMR, DTaP, Hepatitis B' },
-  medicine:    { label: 'Medicine',    icon: Pill,         charName: 'medicine',    color: brand.secondary,      placeholder: 'e.g. Ibuprofen 5ml, Amoxicillin' },
-  temperature: { label: 'Temperature', icon: Thermometer, charName: 'temperature', color: brand.error,           placeholder: 'e.g. 38.5°C / 101.3°F' },
-  growth:      { label: 'Growth',      icon: TrendingUp,  charName: 'growth',      color: brand.kids,            placeholder: 'e.g. Weight: 10.2kg, Height: 78cm' },
-  milestone:   { label: 'Milestone',   icon: Star,        charName: 'star',        color: brand.accent,          placeholder: 'e.g. First steps, First word' },
-  note:        { label: 'Health Note', icon: FileText,     charName: 'note',        color: brand.phase.luteal,   placeholder: 'e.g. Doctor visit, diagnosis' },
+  vaccine:     { get label() { return tNow('kids_logForm_healthVaccine') },  icon: Syringe,     charName: 'vaccine',     color: brand.success,        get placeholder() { return tNow('kp_hh_phVaccine') } },
+  medicine:    { get label() { return tNow('kids_logForm_healthMedicine') }, icon: Pill,         charName: 'medicine',    color: brand.secondary,      get placeholder() { return tNow('kp_hh_phMedicine') } },
+  temperature: { get label() { return tNow('kids_logForm_healthTemp') },     icon: Thermometer, charName: 'temperature', color: brand.error,           get placeholder() { return tNow('kp_hh_phTemp') } },
+  growth:      { get label() { return tNow('kids_calendar_labelGrowth') },   icon: TrendingUp,  charName: 'growth',      color: brand.kids,            get placeholder() { return tNow('kp_hh_phGrowth') } },
+  milestone:   { get label() { return tNow('kids_calendar_labelMilestone') }, icon: Star,        charName: 'star',        color: brand.accent,          get placeholder() { return tNow('kp_hh_phMilestone') } },
+  note:        { get label() { return tNow('kp_hh_typeNote') },              icon: FileText,     charName: 'note',        color: brand.phase.luteal,   get placeholder() { return tNow('kp_hh_phNote') } },
+}
+
+/** Display text for a schedule age like "Birth", "6 months", "15-18 months", "4-6 years". */
+function ageLabel(raw: string): string {
+  if (raw === 'Birth') return tNow('kp_hh_ageBirth')
+  const m = raw.match(/^([\d-]+) (month|months|years)( \(yearly\))?$/)
+  if (!m) return raw
+  if (m[2] === 'years') return tNow('kp_hh_ageYears', { n: m[1] })
+  if (m[3]) return tNow('kp_hh_ageMonthsYearly', { n: m[1] })
+  return tNow(m[2] === 'month' ? 'kp_hh_ageMonth' : 'kp_hh_ageMonths', { n: m[1] })
 }
 
 // Common vaccine schedule for reference
@@ -135,7 +146,7 @@ export default function HealthHistoryScreen() {
 
     setEvents(((data ?? []) as any[]).map((log) => {
       const child = children.find((c) => c.id === log.child_id)
-      return { id: log.id, childId: log.child_id, childName: child?.name ?? 'Child', date: log.date, type: log.type, value: healthLogText(log.value, null).text ?? healthLogText(log.value, null).kind ?? '', notes: log.notes ?? '' }
+      return { id: log.id, childId: log.child_id, childName: child?.name ?? tNow('kp_kc_child'), date: log.date, type: log.type, value: healthLogText(log.value, null).text ?? healthLogText(log.value, null).kind ?? '', notes: log.notes ?? '' }
     }))
     setLoading(false)
   }
@@ -158,7 +169,7 @@ export default function HealthHistoryScreen() {
       <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         {diffuse ? (
         <ScreenHeader
-          title="Health History"
+          title={t('kp_hh_title')}
           right={
             <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10}>
               <View style={[styles.headerAddBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}>
@@ -171,7 +182,7 @@ export default function HealthHistoryScreen() {
           <View style={styles.siteHeader}>
             <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="syringe" size={30} cut />
-            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>Health History</Text>
+            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>{t('kp_hh_title')}</Text>
             <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('healthHistory_logEvent')}>
               <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: ink, borderWidth: 1.5 }]}>
                 <Ionicons name="add" size={20} color={ink} />
@@ -187,7 +198,7 @@ export default function HealthHistoryScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
             {diffuse ? (
               <>
-                <DiffuseChoicePill label="All Kids" active={!filterChild} onPress={() => setFilterChild(null)} />
+                <DiffuseChoicePill label={t('kp_hh_allKids')} active={!filterChild} onPress={() => setFilterChild(null)} />
                 {children.map((c) => (
                   <DiffuseChoicePill
                     key={c.id}
@@ -199,7 +210,7 @@ export default function HealthHistoryScreen() {
               </>
             ) : (
               <>
-                <SiteChoice compact tick={false} label="All Kids" selected={!filterChild} tone={soft} onPress={() => setFilterChild(null)} />
+                <SiteChoice compact tick={false} label={t('kp_hh_allKids')} selected={!filterChild} tone={soft} onPress={() => setFilterChild(null)} />
                 {children.map((c) => (
                   <SiteChoice
                     key={c.id}
@@ -220,10 +231,10 @@ export default function HealthHistoryScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* ─── Quick Stats ──────────────────────────────────────────── */}
         <View style={styles.statsRow}>
-          <StatCard icon={Syringe} charName="vaccine" color={stickers.greenInk} bg={stickers.green} num={vaccines.length} label="Vaccines" onPress={() => setDetailSection('vaccine')} />
-          <StatCard icon={Pill} charName="medicine" color={stickers.blueInk} bg={stickers.blue} num={medications.length} label="Meds" onPress={() => setDetailSection('medicine')} />
-          <StatCard icon={Thermometer} charName="temperature" color={stickers.coralInk} bg={stickers.coral} num={temperatures.length} label="Temps" onPress={() => setDetailSection('temperature')} />
-          <StatCard icon={Star} charName="star" color={stickers.yellowInk} bg={stickers.yellow} num={milestones.length} label="Milestones" onPress={() => setDetailSection('milestone')} />
+          <StatCard icon={Syringe} charName="vaccine" color={stickers.greenInk} bg={stickers.green} num={vaccines.length} label={t('kp_hh_statVaccines')} onPress={() => setDetailSection('vaccine')} />
+          <StatCard icon={Pill} charName="medicine" color={stickers.blueInk} bg={stickers.blue} num={medications.length} label={t('kp_hh_statMeds')} onPress={() => setDetailSection('medicine')} />
+          <StatCard icon={Thermometer} charName="temperature" color={stickers.coralInk} bg={stickers.coral} num={temperatures.length} label={t('kp_hh_statTemps')} onPress={() => setDetailSection('temperature')} />
+          <StatCard icon={Star} charName="star" color={stickers.yellowInk} bg={stickers.yellow} num={milestones.length} label={t('kp_hh_statMilestones')} onPress={() => setDetailSection('milestone')} />
         </View>
 
         {/* ─── Vaccine Tracker ──────────────────────────────────────── */}
@@ -235,7 +246,7 @@ export default function HealthHistoryScreen() {
                 <View key={v.id} style={styles.vaccineItem}>
                   <Check size={14} color={diffuse ? dt.colors.ink3 : ink} strokeWidth={diffuse ? 1.6 : 2.5} />
                   <Text style={[styles.vaccineText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{v.value}</Text>
-                  <Text style={[styles.vaccineDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{parseLocalDate(v.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
+                  <Text style={[styles.vaccineDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{parseLocalDate(v.date).toLocaleDateString(dateLoc(), { month: 'short', year: 'numeric' })}</Text>
                 </View>
               ))}
               {vaccines.length > 3 && (
@@ -265,14 +276,14 @@ export default function HealthHistoryScreen() {
             : { backgroundColor: 'transparent', borderTopWidth: 1, borderTopColor: paperBorder, borderRadius: 0, paddingHorizontal: 0 }]}>
             <Text style={[styles.nextLabel, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular', letterSpacing: diffuse ? 1.4 : 1.4, textTransform: 'uppercase', fontSize: diffuse ? undefined : 10 }]}>{t('healthHistory_recommendedSchedule')}</Text>
             <Text style={[styles.nextText, { color: diffuse ? dt.colors.ink2 : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-              {VACCINE_SCHEDULE.filter((v) => !givenVaccineNames.has(v.name)).slice(0, 2).map((v) => `${v.name} (${v.ages[0]})`).join(', ') || 'All up to date!'}
+              {VACCINE_SCHEDULE.filter((v) => !givenVaccineNames.has(v.name)).slice(0, 2).map((v) => `${v.name} (${ageLabel(v.ages[0])})`).join(', ') || t('kp_hh_upToDate')}
             </Text>
           </View>
         </Pressable>
 
         {/* ─── Medications ──────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('medicine')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse ? styles.diffuseCard : styles.siteSection]}>
-          <SectionHeader icon={Pill} charName="medicine" color={stickers.blueInk} title="Medications" />
+          <SectionHeader icon={Pill} charName="medicine" color={stickers.blueInk} title={t('kp_hh_medications')} />
           {medications.length > 0 ? (
             medications.slice(0, 3).map((m) => (
               <View key={m.id} style={styles.medItem}>
@@ -283,7 +294,7 @@ export default function HealthHistoryScreen() {
                   <Text style={[styles.medName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodyMedium }]}>{m.value}</Text>
                   {m.notes ? <Text style={[styles.medNotes, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={1}>{m.notes}</Text> : null}
                 </View>
-                <Text style={[styles.medDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{parseLocalDate(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
+                <Text style={[styles.medDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>{parseLocalDate(m.date).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}</Text>
               </View>
             ))
           ) : diffuse ? (
@@ -314,7 +325,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Growth ───────────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('growth')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse ? styles.diffuseCard : styles.siteSection]}>
-          <SectionHeader icon={TrendingUp} charName="growth" color={stickers.blueInk} title="Growth" />
+          <SectionHeader icon={TrendingUp} charName="growth" color={stickers.blueInk} title={t('kp_hh_growth')} />
           {growthEntries.length > 0 ? (
             <>
               {/* Separate weight + height lines */}
@@ -342,7 +353,7 @@ export default function HealthHistoryScreen() {
                               <View key={g.id} style={styles.barCol}>
                                 <Text style={[styles.barValue, { color: wColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{diffuse ? num : Math.round(num * 10) / 10}</Text>
                                 <View style={[styles.bar, { height: h, backgroundColor: diffuse ? dt.colors.line2 : stickers.blueSoft, borderColor: diffuse ? 'transparent' : ink, borderWidth: diffuse ? 1 : 1.5, borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
-                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{parseLocalDate(g.date).toLocaleDateString('en-US', diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
+                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{parseLocalDate(g.date).toLocaleDateString(dateLoc(), diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
                               </View>
                             )
                           })}
@@ -361,7 +372,7 @@ export default function HealthHistoryScreen() {
                               <View key={g.id} style={styles.barCol}>
                                 <Text style={[styles.barValue, { color: hColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{diffuse ? num : Math.round(num * 10) / 10}</Text>
                                 <View style={[styles.bar, { height: h, backgroundColor: diffuse ? dt.colors.line2 : stickers.peachSoft, borderColor: diffuse ? 'transparent' : ink, borderWidth: diffuse ? 1 : 1.5, borderTopLeftRadius: 8, borderTopRightRadius: 8 }]} />
-                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{parseLocalDate(g.date).toLocaleDateString('en-US', diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
+                                <Text style={[styles.barLabel, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }]}>{parseLocalDate(g.date).toLocaleDateString(dateLoc(), diffuse ? { month: 'short' } : { month: 'short', day: 'numeric' })}</Text>
                               </View>
                             )
                           })}
@@ -369,9 +380,9 @@ export default function HealthHistoryScreen() {
                       </>
                     )}
                     <Text style={[styles.lastMeasure, { color: diffuse ? dt.colors.ink2 : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-                      {latestWeight ? `Weight: ${latestWeight.value.replace(/weight:?\s*/i, '')}` : ''}
+                      {latestWeight ? t('kp_hh_weightLine', { v: latestWeight.value.replace(/weight:?\s*/i, '') }) : ''}
                       {latestWeight && latestHeight ? '  ·  ' : ''}
-                      {latestHeight ? `Height: ${latestHeight.value.replace(/height:?\s*/i, '')}` : ''}
+                      {latestHeight ? t('kp_hh_heightLine', { v: latestHeight.value.replace(/height:?\s*/i, '') }) : ''}
                     </Text>
                   </>
                 )
@@ -394,7 +405,7 @@ export default function HealthHistoryScreen() {
 
         {/* ─── Milestones ───────────────────────────────────────────── */}
         <Pressable onPress={() => setDetailSection('milestone')} style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse ? styles.diffuseCard : styles.siteSection]}>
-          <SectionHeader icon={Star} charName="star" color={stickers.yellowInk} title="Milestones" />
+          <SectionHeader icon={Star} charName="star" color={stickers.yellowInk} title={t('kp_hh_milestones')} />
           {milestones.length > 0 ? (
             <View style={styles.milestoneList}>
               {milestones.slice(0, 4).map((m) => (
@@ -405,7 +416,7 @@ export default function HealthHistoryScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.milestoneText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.bodySemiBold }]}>{m.value}</Text>
                     <Text style={[styles.milestoneDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>
-                      {`${m.childName} · ${parseLocalDate(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                      {`${m.childName} · ${parseLocalDate(m.date).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' })}`}
                     </Text>
                   </View>
                 </View>
@@ -438,7 +449,7 @@ export default function HealthHistoryScreen() {
           if (alertKids.length === 0) return null
           return (
           <View style={[styles.sectionCard, { backgroundColor: paper, borderColor: paperBorder }, diffuse ? styles.diffuseCard : styles.siteSection]}>
-            <SectionHeader icon={AlertTriangle} charName="warning" color={stickers.coralInk} title="Allergies & Alerts" showChevron={false} />
+            <SectionHeader icon={AlertTriangle} charName="warning" color={stickers.coralInk} title={t('kp_hh_alerts')} showChevron={false} />
             {alertKids.map((c) => (
               <View key={c.id} style={styles.refChild}>
                 <Text style={[styles.refChildName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display, letterSpacing: diffuse ? -0.5 : 0.3 }, !diffuse && { textTransform: 'uppercase' }]}>{c.name}</Text>
@@ -626,7 +637,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
               </View>
             </Pressable>
           ) : (
-            <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label="Close" onPress={onClose} style={{ marginBottom: 0 }} />
+            <InkBackButton icon="close" ink={colors.text} paper={colors.surface} label={t('common_close')} onPress={onClose} style={{ marginBottom: 0 }} />
           )}
         </View>
 
@@ -672,7 +683,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
               </View>
               {e.notes ? <Text style={[styles.detailItemNotes, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{e.notes}</Text> : null}
               <Text style={[styles.detailItemDate, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : 0 }]}>
-                {parseLocalDate(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+                {parseLocalDate(e.date).toLocaleDateString(dateLoc(), { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
               </Text>
             </View>
           ))}
@@ -716,20 +727,20 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
   }
 
   async function handleSave() {
-    if (!eventType) return Alert.alert('Missing Type', 'Please select a health event type (Vaccine, Medicine, etc.)')
-    if (!selectedChild) return Alert.alert('Missing Child', 'Please select which child this is for.')
+    if (!eventType) return Alert.alert(t('kp_hh_missingType'), t('kp_hh_missingTypeBody'))
+    if (!selectedChild) return Alert.alert(t('kp_hh_missingChild'), t('kp_hh_missingChildBody'))
 
     // Growth: need at least weight, height, or head circumference
     if (eventType === 'growth') {
-      if (!weight.trim() && !height.trim() && !headCirc.trim()) return Alert.alert('Missing Data', 'Please enter weight, height, or head circumference.')
+      if (!weight.trim() && !height.trim() && !headCirc.trim()) return Alert.alert(t('kp_hh_missingData'), t('kp_hh_missingDataBody'))
     } else {
-      if (!value.trim()) return Alert.alert('Missing Details', `Please describe the ${TYPE_CFG[eventType]?.label.toLowerCase() ?? 'event'}.`)
+      if (!value.trim()) return Alert.alert(t('kp_hh_missingDetails'), t('kp_hh_missingDetailsBody', { what: (TYPE_CFG[eventType]?.label ?? t('kp_hh_event')).toLocaleLowerCase(dateLoc()) }))
     }
 
     setSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Not authenticated')
+      if (!session) throw new Error(tNow('kp_pk_notAuth'))
       const dateStr = toDateStr(eventDate)
 
       if (eventType === 'growth') {
@@ -772,14 +783,14 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
       reset(); onSaved()
       void invalidateKidsLogQueries()
-    } catch (e: any) { Alert.alert('Error', e.message) }
+    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
     finally { setSaving(false) }
   }
 
   const selCfg = ADD_TYPES.find((t) => t.id === eventType)
 
   return (
-    <LogSheet visible={visible} title="Log Health Event" onClose={() => { reset(); onClose() }} sticker="syringe">
+    <LogSheet visible={visible} title={t('kp_hh_logEvent')} onClose={() => { reset(); onClose() }} sticker="syringe">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
           <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('emergencyInsurance_fieldType')}</MonoCaps>
@@ -855,7 +866,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
             style={[formStyles.dateBtn, { backgroundColor: paper, borderColor: paperBorder }, !diffuse && { borderWidth: bw, borderRadius: 16, height: 52, paddingHorizontal: 16 }]}
           >
             {diffuse ? <Calendar size={16} color={dt.colors.ink3} strokeWidth={1.6} /> : <SiteSticker name="cal" size={24} />}
-            <Text style={[formStyles.dateBtnText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }, !diffuse && { fontSize: 16 }]}>{eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</Text>
+            <Text style={[formStyles.dateBtnText, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }, !diffuse && { fontSize: 16 }]}>{eventDate.toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric', year: 'numeric' })}</Text>
           </Pressable>
           {showDatePicker && (
             <DateTimePicker
@@ -905,7 +916,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
               <TextInput
                 value={value}
                 onChangeText={setValue}
-                placeholder={selCfg?.placeholder ?? 'Describe…'}
+                placeholder={selCfg?.placeholder ?? t('kp_hh_describe')}
                 placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
                 style={[formStyles.input, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }, siteField]}
               />
@@ -916,7 +927,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
           <TextInput
             value={notes}
             onChangeText={setNotes}
-            placeholder="Additional details…"
+            placeholder={t('kp_hh_extra')}
             placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
             multiline
             style={[formStyles.inputMulti, { color: diffuse ? dt.colors.ink : colors.text, backgroundColor: paper, borderColor: paperBorder, fontFamily: diffuse ? diffuseFont.body : font.body }, !diffuse && { borderWidth: bw, borderRadius: 16, fontSize: 16, paddingHorizontal: 16 }]}
@@ -924,7 +935,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
           {diffuse ? (
             <PillButton
-              label={saving ? 'Saving…' : 'Save'}
+              label={saving ? t('account_saving') : t('common_save')}
               variant="ink"
               onPress={handleSave}
               disabled={saving}
@@ -933,7 +944,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
             />
           ) : (
             <SheetFooterAction>
-              <EyeAction label={saving ? 'Saving…' : 'Save'} onPress={handleSave} ink={colors.text} loading={saving} sticker={selCfg ? (SITE_STICKER[selCfg.charName] ?? 'pencil') : 'pencil'} fill={ACTION_TONES.yellow} size={64} />
+              <EyeAction label={saving ? t('account_saving') : t('common_save')} onPress={handleSave} ink={colors.text} loading={saving} sticker={selCfg ? (SITE_STICKER[selCfg.charName] ?? 'pencil') : 'pencil'} fill={ACTION_TONES.yellow} size={64} />
             </SheetFooterAction>
           )}
         </View>

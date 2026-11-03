@@ -163,13 +163,13 @@ export default function PrivacyScreen() {
 
   async function handleClearLogs() {
     const childIds = children.map((c) => c.id)
-    if (childIds.length === 0) return Alert.alert(t('privacy_noData'), 'No children to clear logs for.')
+    if (childIds.length === 0) return Alert.alert(t('privacy_noData'), t('app_privacy_noChildrenLogs'))
 
     Alert.alert(
       t('privacy_clearLogsTitle'),
-      `Delete all feeding, sleep, diaper, and mood logs for ${children.map((c) => c.name).join(', ')}?\n\nHealth records and memories will NOT be deleted.`,
+      t('app_privacy_clearLogsMsg', { names: children.map((c) => c.name).join(', ') }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
           text: t('privacy_clearLogsBtn'),
           style: 'destructive',
@@ -183,8 +183,8 @@ export default function PrivacyScreen() {
                 .in('type', ['feeding', 'sleep', 'diaper', 'mood'])
 
               if (error) throw error
-              toast.show({ title: 'Cleared', message: 'Activity logs have been cleared.' })
-            } catch (e: any) { Alert.alert('Error', e.message) }
+              toast.show({ title: t('app_privacy_cleared'), message: t('app_privacy_logsCleared') })
+            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
             finally { setClearingLogs(false) }
           },
         },
@@ -197,9 +197,9 @@ export default function PrivacyScreen() {
 
     Alert.alert(
       t('privacy_clearChatTitle'),
-      'Delete all conversations with Grandma AI? This cannot be undone.',
+      t('app_privacy_clearChatMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
           text: t('privacy_clearChatBtn'),
           style: 'destructive',
@@ -213,8 +213,8 @@ export default function PrivacyScreen() {
               // The chat history users actually see lives on the device; the server table above is
               // legacy. Without this, 'Cleared' showed while every conversation was still there.
               useGrandmaHistoryStore.getState().clearAll()
-              toast.show({ title: 'Cleared', message: 'Chat history has been cleared.' })
-            } catch (e: any) { Alert.alert('Error', e.message) }
+              toast.show({ title: t('app_privacy_cleared'), message: t('app_privacy_chatCleared') })
+            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
             finally { setClearingChat(false) }
           },
         },
@@ -227,9 +227,9 @@ export default function PrivacyScreen() {
 
     Alert.alert(
       t('privacy_clearMemoriesTitle'),
-      'Delete ALL photos and memories? This cannot be undone.',
+      t('app_privacy_clearMemoriesMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
           text: t('privacy_clearMemoriesBtn'),
           style: 'destructive',
@@ -240,7 +240,7 @@ export default function PrivacyScreen() {
               // pregnancy memories per user. Only the kids rows were cleared before, and users with no
               // kids couldn't clear anything.
               const { data: { session } } = await supabase.auth.getSession()
-              if (!session) throw new Error('Not signed in')
+              if (!session) throw new Error(t('app_privacy_notSignedIn'))
               const uid = session.user.id
               // Remove the photo files first (paths live in each row's `photos`), then the rows —
               // otherwise the images outlived the 'deleted' memories in storage. Best-effort.
@@ -268,8 +268,8 @@ export default function PrivacyScreen() {
               const failed = results.find((r) => r.error)
               if (failed?.error) throw failed.error
               void queryClient.invalidateQueries({ queryKey: ['memories'] })
-              toast.show({ title: 'Cleared', message: 'All memories have been deleted.' })
-            } catch (e: any) { Alert.alert('Error', e.message) }
+              toast.show({ title: t('app_privacy_cleared'), message: t('app_privacy_memoriesCleared') })
+            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
             finally { setClearingMemories(false) }
           },
         },
@@ -279,13 +279,13 @@ export default function PrivacyScreen() {
 
   async function handleClearHealthRecords() {
     const childIds = children.map((c) => c.id)
-    if (childIds.length === 0) return Alert.alert(t('privacy_noData'), 'No children to clear records for.')
+    if (childIds.length === 0) return Alert.alert(t('privacy_noData'), t('app_privacy_noChildrenRecords'))
 
     Alert.alert(
       t('privacy_clearHealthTitle'),
-      'Delete all vaccines, medications, temperature, growth, and milestone records? This cannot be undone.',
+      t('app_privacy_clearHealthMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
           text: t('privacy_clearHealthBtn'),
           style: 'destructive',
@@ -298,8 +298,8 @@ export default function PrivacyScreen() {
                 .in('type', ['vaccine', 'medicine', 'temperature', 'growth', 'milestone', 'note'])
 
               if (error) throw error
-              toast.show({ title: 'Cleared', message: 'Health records have been deleted.' })
-            } catch (e: any) { Alert.alert('Error', e.message) }
+              toast.show({ title: t('app_privacy_cleared'), message: t('app_privacy_healthCleared') })
+            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
           },
         },
       ]

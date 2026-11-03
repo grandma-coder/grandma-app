@@ -643,13 +643,13 @@ export default function CareCircleScreen() {
 
   async function pauseMember(member: CareCircleMember) {
     const isPaused = member.permissions._paused === true
-    const action = isPaused ? 'Activate' : 'Pause'
+    const action = isPaused ? t('app_cc_activate') : t('app_cc_pause')
     const msg = isPaused
-      ? `Reactivate access for ${member.displayName || 'this member'}?`
-      : `Temporarily suspend ${member.displayName || 'this member'}?`
+      ? t('app_cc_reactivateMsg', { name: member.displayName || t('app_cc_thisMember') })
+      : t('app_cc_suspendMsg', { name: member.displayName || t('app_cc_thisMember') })
 
-    Alert.alert(`${action} Access`, msg, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(isPaused ? t('app_cc_activateAccess') : t('app_cc_pauseAccess'), msg, [
+      { text: t('common_cancel'), style: 'cancel' },
       {
         text: action,
         onPress: async () => {
@@ -660,7 +660,7 @@ export default function CareCircleScreen() {
               if (error) throw error
             }
           } catch (e: any) {
-            Alert.alert(`Couldn’t ${action.toLowerCase()} access`, e?.message ?? 'Please try again.')
+            Alert.alert(isPaused ? t('app_cc_couldntActivate') : t('app_cc_couldntPause'), e?.message ?? t('common_tryAgain'))
           }
           loadMembers()
         },
@@ -682,7 +682,7 @@ export default function CareCircleScreen() {
         if (error) throw error
       }
     } catch (e: any) {
-      Alert.alert("Couldn’t remove caregiver", e?.message ?? 'Please try again.')
+      Alert.alert(t('app_cc_couldntRemove'), e?.message ?? t('common_tryAgain'))
     }
     loadMembers()
   }
@@ -744,21 +744,21 @@ export default function CareCircleScreen() {
 
       loadMembers()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     }
   }
 
   function resendInvite(member: CareCircleMember) {
     const token = member.invite_token ?? ''
     const inviteLink = `grandma-app://accept-invite?token=${token}`
-    const msg = `Hey ${member.displayName || 'there'}! You're invited to join my Care Circle on grandma.app.\n\nTap to accept: ${inviteLink}`
+    const msg = t('app_cc_inviteMsg', { name: member.displayName || t('app_cc_there'), link: inviteLink })
 
-    Alert.alert('Resend Invite', `How would you like to reach ${member.displayName || 'them'}?`, [
+    Alert.alert(t('careCircle_resend_invite'), t('app_cc_resendHow', { name: member.displayName || t('app_cc_them') }), [
       {
-        text: 'Email',
+        text: t('careCircle_field_email'),
         onPress: () => {
           const to = member.email || ''
-          const subject = encodeURIComponent('Join my Care Circle on grandma.app')
+          const subject = encodeURIComponent(t('app_cc_inviteSubject'))
           const body = encodeURIComponent(msg)
           Linking.openURL(`mailto:${to}?subject=${subject}&body=${body}`).catch(() => {})
         },
@@ -772,10 +772,10 @@ export default function CareCircleScreen() {
         },
       },
       {
-        text: 'Share Link',
+        text: t('app_cc_shareLink'),
         onPress: () => { Share.share({ message: msg }).catch(() => {}) },
       },
-      { text: 'Cancel', style: 'cancel' },
+      { text: t('common_cancel'), style: 'cancel' },
     ])
   }
 
@@ -967,7 +967,7 @@ export default function CareCircleScreen() {
                           <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{roleLabel}</Text>
                         </View>
                         <View style={[styles.siteTag, { borderColor: colors.text, backgroundColor: statusTone }]}>
-                          <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{isPaused ? 'Paused' : m.status}</Text>
+                          <Text style={[styles.siteTagText, { color: colors.text, fontFamily: font.bodyBold }]}>{isPaused ? t('app_cc_paused') : m.status}</Text>
                         </View>
                       </View>
                     </View>
@@ -994,7 +994,7 @@ export default function CareCircleScreen() {
                     )}
                     <Pressable onPress={() => pauseMember(m)} hitSlop={8} style={styles.siteAction} accessibilityRole="button">
                       {isPaused ? <Check size={14} color={colors.text} strokeWidth={2} /> : <Pause size={14} color={colors.text} strokeWidth={2} />}
-                      <Text style={[styles.siteActionText, { color: colors.text, fontFamily: font.bodyBold }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
+                      <Text style={[styles.siteActionText, { color: colors.text, fontFamily: font.bodyBold }]}>{isPaused ? t('app_cc_activate') : t('app_cc_pause')}</Text>
                     </Pressable>
                     <Pressable onPress={() => removeMember(m)} hitSlop={8} style={styles.siteAction} accessibilityRole="button">
                       <Trash2 size={14} color={colors.text} strokeWidth={2} />
@@ -1102,7 +1102,7 @@ export default function CareCircleScreen() {
                               : stickers.greenInk,
                             fontFamily: font.bodySemiBold,
                           }]}>
-                            {isPaused ? 'Paused' : m.status}
+                            {isPaused ? t('app_cc_paused') : m.status}
                           </Text>
                         </View>
                       )}
@@ -1216,7 +1216,7 @@ export default function CareCircleScreen() {
                       : (isPaused ? <Check size={14} color={stickers.greenInk} /> : <Pause size={14} color={stickers.yellowInk} />)}
                     <Text style={[styles.actionText, diffuse
                       ? { color: isPaused ? dt.colors.success : dt.colors.warning, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 }
-                      : { color: isPaused ? stickers.greenInk : stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{isPaused ? 'Activate' : 'Pause'}</Text>
+                      : { color: isPaused ? stickers.greenInk : stickers.yellowInk, fontFamily: font.bodySemiBold }]}>{isPaused ? t('app_cc_activate') : t('app_cc_pause')}</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.actionBtn, { borderColor: diffuse ? dt.colors.line2 : stickers.coral + '40' }]}
@@ -1236,7 +1236,7 @@ export default function CareCircleScreen() {
               Free tier has 0 seats: send them to the paywall up front rather
               than letting them fill out 4 steps only to be blocked by the DB. */}
           <PillButton
-            label={effectiveSeatLimit(tier, paywallOn) === 0 ? 'Upgrade to add caregivers' : 'Add to Care Circle'}
+            label={effectiveSeatLimit(tier, paywallOn) === 0 ? t('app_cc_upgradeToAdd') : t('app_cc_addToCircle')}
             variant="ink"
             height={64}
             onPress={() =>
@@ -1255,7 +1255,7 @@ export default function CareCircleScreen() {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Filter: By child */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
-            <FilterChip label="All Kids" active={!filterChild} onPress={() => setFilterChild(null)} />
+            <FilterChip label={t('app_cc_allKids')} active={!filterChild} onPress={() => setFilterChild(null)} />
             {children.map((c) => (
               <FilterChip key={c.id} label={c.name} active={filterChild === c.id} onPress={() => setFilterChild(filterChild === c.id ? null : c.id)} />
             ))}
@@ -1264,8 +1264,8 @@ export default function CareCircleScreen() {
           {/* Filter: By caregiver */}
           {members.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
-              <FilterChip kind="person" label="All People" active={!filterMember} onPress={() => setFilterMember(null)} />
-              <FilterChip kind="person" label="You" active={filterMember === 'self'} onPress={() => setFilterMember(filterMember === 'self' ? null : 'self')} />
+              <FilterChip kind="person" label={t('app_cc_allPeople')} active={!filterMember} onPress={() => setFilterMember(null)} />
+              <FilterChip kind="person" label={t('app_cc_you')} active={filterMember === 'self'} onPress={() => setFilterMember(filterMember === 'self' ? null : 'self')} />
               {members.map((m) => (
                 <FilterChip kind="person" key={m.rowIds[0]} label={m.displayName || m.role} active={filterMember === m.rowIds[0]} onPress={() => setFilterMember(filterMember === m.rowIds[0] ? null : m.rowIds[0])} />
               ))}
@@ -1451,11 +1451,11 @@ export default function CareCircleScreen() {
 
       <PaperAlert
         visible={pendingRemove !== null}
-        title="Remove member?"
-        message={`Remove ${pendingRemove?.displayName || 'this member'} and revoke all access? This cannot be undone.`}
+        title={t('app_cc_removeTitle')}
+        message={t('app_cc_removeMsg', { name: pendingRemove?.displayName || t('app_cc_thisMember') })}
         buttons={[
-          { label: 'Cancel', variant: 'secondary' },
-          { label: 'Remove', variant: 'danger', onPress: confirmRemove },
+          { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('common_remove'), variant: 'danger', onPress: confirmRemove },
         ]}
         onRequestClose={() => setPendingRemove(null)}
       />
@@ -1576,7 +1576,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
     setSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Not authenticated')
+      if (!session) throw new Error(t('app_cc_notAuthenticated'))
 
       const perms = PERMISSION_LEVELS.find((p) => p.id === permLevel)?.perms ?? ['view']
       const selectedRole = ROLES.find((r) => r.id === role)
@@ -1636,7 +1636,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
         }
       }
 
-      if (!insertedAny) throw new Error('No children selected for this invite.')
+      if (!insertedAny) throw new Error(t('app_cc_noChildrenSelected'))
 
       // Get token for invite link
       const { data: tokenRow } = await supabase
@@ -1649,10 +1649,10 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
 
       const token = tokenRow?.invite_token ?? ''
       const inviteLink = `grandma-app://accept-invite?token=${token}`
-      const msg = `Hey ${name.trim() || 'there'}! You're invited to join my Care Circle on grandma.app.\n\nTap to accept: ${inviteLink}`
+      const msg = t('app_cc_inviteMsg', { name: name.trim() || t('app_cc_there'), link: inviteLink })
 
       if (sendMethod === 'email') {
-        const subject = encodeURIComponent('Join my Care Circle on grandma.app')
+        const subject = encodeURIComponent(t('app_cc_inviteSubject'))
         const body = encodeURIComponent(msg)
         Linking.openURL(`mailto:${inviteEmail.trim()}?subject=${subject}&body=${body}`).catch(() => {})
       } else if (sendMethod === 'sms') {
@@ -1666,8 +1666,8 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
       }
 
       toast.show({
-        title: 'Invite Sent!',
-        message: `${name.trim() || 'Caregiver'} will appear as "Pending" until they accept.`,
+        title: t('app_cc_inviteSentTitle'),
+        message: t('app_cc_inviteSentMsg', { name: name.trim() || t('app_cc_caregiver') }),
         autoDismiss: 2600,
       })
       reset()
@@ -1683,25 +1683,25 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
       } else if (msg.includes('seat_limit_exceeded')) {
         handleClose()
         Alert.alert(
-          'Caregivers are a premium feature',
-          'Upgrade to invite a partner, nanny, or family member to your Care Circle.',
+          t('app_cc_premiumTitle'),
+          t('app_cc_premiumBody'),
           [
-            { text: 'Not now', style: 'cancel' },
-            { text: 'See plans', onPress: () => router.push('/paywall?tier=premium_solo') },
+            { text: t('kids_analytics_confirm_share_no'), style: 'cancel' },
+            { text: t('app_cc_seePlans'), onPress: () => router.push('/paywall?tier=premium_solo') },
           ],
         )
       } else {
-        Alert.alert('Couldn’t send invite', msg || 'Please try again.')
+        Alert.alert(t('app_cc_couldntSendInvite'), msg || t('common_tryAgain'))
       }
     } finally {
       setSaving(false)
     }
   }
 
-  const STEP_TITLES = ['Who', 'Children', 'Permissions', 'Send Invite']
+  const STEP_TITLES = [t('careCircle_step1_who'), t('app_cc_stepChildren'), t('app_cc_stepPermissions'), t('prepreg_partnerView_sendInvite')]
 
   return (
-    <LogSheet visible={visible} title={STEP_TITLES[step - 1] ?? 'Add Member'} onClose={handleClose} sticker="heart">
+    <LogSheet visible={visible} title={STEP_TITLES[step - 1] ?? t('app_cc_addMember')} onClose={handleClose} sticker="heart">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={sheetStyles.form}>
           {/* Progress dots */}
@@ -1727,7 +1727,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="Caregiver's name"
+                placeholder={t('app_cc_caregiverNamePh')}
                 placeholderTextColor={mutedColor}
                 style={[sheetStyles.input, !diffuse && sheetStyles.inputSite, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
               />
@@ -1755,7 +1755,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                 })}
               </View>
               <SheetFooterAction>
-                <SheetButton label="Next — Select Children" onPress={() => setStep(2)} disabled={!role || !name.trim()} />
+                <SheetButton label={t('app_cc_nextChildren')} onPress={() => setStep(2)} disabled={!role || !name.trim()} />
               </SheetFooterAction>
             </>
           )}
@@ -1797,7 +1797,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <SheetButton label="Next — Permissions" onPress={() => setStep(3)} disabled={selectedChildren.length === 0} />
+                    <SheetButton label={t('app_cc_nextPermissions')} onPress={() => setStep(3)} disabled={selectedChildren.length === 0} />
                   </View>
                 </View>
               </SheetFooterAction>
@@ -1839,7 +1839,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <SheetButton label="Next — Send Invite" onPress={() => setStep(4)} />
+                    <SheetButton label={t('app_cc_nextSend')} onPress={() => setStep(4)} />
                   </View>
                 </View>
               </SheetFooterAction>
@@ -1857,7 +1857,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
               <View style={sheetStyles.chipGrid}>
                 {(['email', 'sms', 'link'] as const).map((m) => {
                   const active = sendMethod === m
-                  const labels = { email: 'Via Email', sms: 'Via SMS', link: 'Share Link' }
+                  const labels = { email: t('app_cc_viaEmail'), sms: t('app_cc_viaSms'), link: t('app_cc_shareLink') }
                   if (!diffuse) {
                     return (
                       <SiteChoice key={m} compact tick={false} label={labels[m]} selected={active} onPress={() => setSendMethod(m)} tone={stickers.yellowSoft} />
@@ -1910,7 +1910,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                     <TextInput
                       value={invitePhone}
                       onChangeText={setInvitePhone}
-                      placeholder="Phone number"
+                      placeholder={t('careCircle_field_phone_number')}
                       placeholderTextColor={mutedColor}
                       keyboardType="phone-pad"
                       style={[sheetStyles.input, !diffuse && sheetStyles.inputSite, { flex: 1, color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
@@ -1949,7 +1949,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                       : { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('common_back')}</Text>
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <SheetButton label={saving ? 'Sending…' : 'Send Invite'} onPress={handleSendInvite} disabled={saving} />
+                    <SheetButton label={saving ? t('auth_sending') : t('prepreg_partnerView_sendInvite')} onPress={handleSendInvite} disabled={saving} />
                   </View>
                 </View>
               </SheetFooterAction>
@@ -2076,7 +2076,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
   const showGranular = flagsHydrated && granularEnabled
 
   return (
-    <LogSheet visible title={`Edit ${member.displayName || 'Member'}`} onClose={onClose} sticker="me">
+    <LogSheet visible title={t('careCircle_editMember', { name: member.displayName || t('app_cc_member') })} onClose={onClose} sticker="me">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={sheetStyles.form}>
           <PhotoPickerAvatar uri={editPhotoUri} onPick={setEditPhotoUri} />
@@ -2085,7 +2085,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
           <TextInput
             value={editName}
             onChangeText={setEditName}
-            placeholder="Caregiver name"
+            placeholder={t('app_cc_caregiverNamePh')}
             placeholderTextColor={mutedColor}
             style={[sheetStyles.input, !diffuse && sheetStyles.inputSite, { color: textColor, backgroundColor: paper, borderColor: paperBorder, fontFamily: bodyFont }]}
           />
@@ -2155,7 +2155,7 @@ function EditMemberSheet({ member, onClose, onSaved }: {
 
           <SheetFooterAction>
             <SheetButton
-              label="Save Changes"
+              label={t('app_cc_saveChanges')}
               onPress={() =>
                 onSaved(
                   showGranular

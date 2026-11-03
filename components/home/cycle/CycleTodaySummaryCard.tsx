@@ -29,7 +29,8 @@ import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
 import { SymptomSticker } from '../../calendar/symptomStickers'
 import { CycleTodayDashboardModal } from './CycleTodayDashboardModal'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../../lib/i18n'
+import { appIntlLocale } from '../../../lib/cycleLogForms'
 import { LogSheet } from '../../calendar/LogSheet'
 import {
   MoodForm, SymptomsForm, BbtForm, LhForm, CmForm, IntimacyForm, PeriodStartForm,
@@ -69,20 +70,20 @@ interface Props {
 
 type Row = { type: string; value: string | null }
 
-const MOOD_META: Record<string, { Sticker: typeof Sad; fill: string; label: string }> = {
-  low:   { Sticker: Sad,    fill: '#EE7B6D', label: 'Low' },
-  down:  { Sticker: Sad,    fill: '#9DC3E8', label: 'Down' },
-  okay:  { Sticker: Sleepy, fill: '#C8B6E8', label: 'Okay' },
-  good:  { Sticker: Smiley, fill: '#F5D652', label: 'Good' },
-  great: { Sticker: Smiley, fill: '#BDD48C', label: 'Great' },
+const MOOD_META: Record<string, { Sticker: typeof Sad; fill: string; labelKey: TranslationKey }> = {
+  low:   { Sticker: Sad,    fill: '#EE7B6D', labelKey: 'cyc_mood_low' },
+  down:  { Sticker: Sad,    fill: '#9DC3E8', labelKey: 'cyc_mood_down' },
+  okay:  { Sticker: Sleepy, fill: '#C8B6E8', labelKey: 'cyc_mood_okay' },
+  good:  { Sticker: Smiley, fill: '#F5D652', labelKey: 'cyc_mood_good' },
+  great: { Sticker: Smiley, fill: '#BDD48C', labelKey: 'cyc_mood_great' },
 }
 
-const CM_LABEL: Record<string, string> = {
-  dry: 'Dry', sticky: 'Sticky', creamy: 'Creamy', watery: 'Watery', eggwhite: 'Eggwhite',
+const CM_LABEL_KEY: Record<string, TranslationKey> = {
+  dry: 'cyc_cm_dry', sticky: 'cyc_cm_sticky', creamy: 'cyc_cm_creamy', watery: 'cyc_cm_watery', eggwhite: 'cyc_cm_eggwhite',
 }
 
-const LH_LABEL: Record<string, string> = {
-  negative: 'Neg', faint: 'Faint', positive: 'Pos', peak: 'Peak',
+const LH_LABEL_KEY: Record<string, TranslationKey> = {
+  negative: 'cyc_chip_neg', faint: 'cyc_chip_faint', positive: 'cyc_chip_pos', peak: 'cyc_chip_peak',
 }
 
 // Site-look dock sticker per chip key (mood face is value-driven, resolved in the component).
@@ -208,7 +209,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
         : (moodMeta
             ? <moodMeta.Sticker size={22} fill={moodMeta.fill} />
             : <Smiley size={22} fill={stickers.yellowSoft} />),
-      label: moodMeta?.label ?? '+',
+      label: moodMeta ? t(moodMeta.labelKey) : '+',
       done: !!moodMeta,
     },
     {
@@ -234,14 +235,14 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
       key: 'lh',
       sheet: 'lh',
       icon: diffuse ? diffuseBlob('lh') : <SiteSticker name="otest" size={22} />,
-      label: lhValue ? (LH_LABEL[lhValue] ?? lhValue) : '+',
+      label: lhValue ? (LH_LABEL_KEY[lhValue] ? t(LH_LABEL_KEY[lhValue]) : lhValue) : '+',
       done: !!lhValue,
     },
     {
       key: 'cm',
       sheet: 'cm',
       icon: diffuse ? diffuseBlob('cm') : <Drop size={22} fill={stickers.green} />,
-      label: cmValue ? (CM_LABEL[cmValue] ?? cmValue) : '+',
+      label: cmValue ? (CM_LABEL_KEY[cmValue] ? t(CM_LABEL_KEY[cmValue]) : cmValue) : '+',
       done: !!cmValue,
     },
     {
@@ -255,7 +256,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
       key: 'period_start',
       sheet: 'period_start',
       icon: diffuse ? diffuseBlob('period_start') : <SiteSticker name="drop" size={22} />,
-      label: periodStart ? (periodStart === 'light' ? 'Lt' : periodStart === 'medium' ? 'Md' : periodStart === 'heavy' ? 'Hv' : '✓') : '+',
+      label: periodStart ? (periodStart === 'light' ? t('cyc_chip_light') : periodStart === 'medium' ? t('cyc_chip_medium') : periodStart === 'heavy' ? t('cyc_chip_heavy') : '✓') : '+',
       done: !!periodStart,
     },
     {
@@ -266,7 +267,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     {
       key: 'pregnancy_test', sheet: 'pregnancy_test',
       icon: diffuse ? diffuseBlob('pregnancy_test') : <SiteSticker name="otest" size={22} />,
-      label: pregTest ? (pregTest === 'positive' ? 'Pos' : pregTest === 'negative' ? 'Neg' : '✓') : '+', done: !!pregTest,
+      label: pregTest ? (pregTest === 'positive' ? t('cyc_chip_pos') : pregTest === 'negative' ? t('cyc_chip_neg') : '✓') : '+', done: !!pregTest,
     },
     {
       key: 'sex_drive', sheet: 'sex_drive',
@@ -317,7 +318,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
   const logTitle = isToday
     ? t('cycleLog_todayTitle')
     : t('cycleLog_dateTitle', {
-        date: new Date(logDate + 'T12:00:00').toLocaleDateString('en-US', {
+        date: new Date(logDate + 'T12:00:00').toLocaleDateString(appIntlLocale(), {
           weekday: 'short', month: 'short', day: 'numeric',
         }),
       })
@@ -326,7 +327,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     completed === totalTrackable
       ? t('cycleLog_hint')
       : completed >= 1
-        ? `${completed} of ${totalTrackable} logged · ${t('cycleLog_hint')}`
+        ? `${t('cyc_summary_logged', { done: completed, total: totalTrackable })} · ${t('cycleLog_hint')}`
         : t('cycleLog_hint')
 
   const sheetTitle: Record<CycleSheetType, string> = {

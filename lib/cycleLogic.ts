@@ -17,6 +17,7 @@
  */
 
 import { brand, stickers } from '../constants/theme'
+import { t } from './i18n'
 
 export type CyclePhase = 'menstruation' | 'follicular' | 'ovulation' | 'luteal'
 
@@ -212,8 +213,8 @@ function getEmptyCycleInfo(cfg: CycleConfig): CycleInfo {
   return {
     cycleDay: 0,
     phase: 'follicular',
-    phaseLabel: 'Not Tracking',
-    phaseDescription: 'Log your last period start date to begin tracking your cycle.',
+    phaseLabel: t('cyc_phase_notTracking'),
+    phaseDescription: t('cyc_phase_emptyDesc'),
     phaseColor: stickers.lilac,
     daysUntilPeriod: 0,
     daysUntilOvulation: 0,
@@ -227,7 +228,7 @@ function getEmptyCycleInfo(cfg: CycleConfig): CycleInfo {
     nextPeriodDate: '',
     ovulationDate: '',
     conceptionProbability: 'none',
-    dailyTips: ['Log your last period start date to begin cycle tracking.'],
+    dailyTips: [t('cyc_phase_emptyDesc')],
     activities: [],
     nutritionTips: [],
   }
@@ -235,24 +236,15 @@ function getEmptyCycleInfo(cfg: CycleConfig): CycleInfo {
 
 function getPhaseLabel(phase: CyclePhase): string {
   switch (phase) {
-    case 'menstruation': return 'Menstruation'
-    case 'follicular': return 'Follicular Phase'
-    case 'ovulation': return 'Ovulation'
-    case 'luteal': return 'Luteal Phase'
+    case 'menstruation': return t('cyc_phase_menstruation')
+    case 'follicular': return t('cyc_phase_name_follicular')
+    case 'ovulation': return t('cyc_phase_ovulation')
+    case 'luteal': return t('cyc_phase_name_luteal')
   }
 }
 
 function getPhaseDescription(phase: CyclePhase): string {
-  switch (phase) {
-    case 'menstruation':
-      return 'Your body is shedding the uterine lining. Rest, stay hydrated, and be gentle with yourself.'
-    case 'follicular':
-      return 'Estrogen is rising. Energy increases, mood lifts. Great time for planning and new activities.'
-    case 'ovulation':
-      return 'Peak fertility! The egg is released. Best time to conceive if trying.'
-    case 'luteal':
-      return 'Progesterone rises preparing for possible implantation. You may feel PMS symptoms toward the end.'
-  }
+  return t(`cyc_phase_desc_${phase}` as const)
 }
 
 function getPhaseColor(phase: CyclePhase): string {

@@ -84,31 +84,31 @@ export default function AccountScreen() {
   }
 
   async function handleChangeEmail() {
-    if (!email.trim() || !email.includes('@')) return Alert.alert('Invalid email')
+    if (!email.trim() || !email.includes('@')) return Alert.alert(t('auth_invalidEmail'))
     setSaving(true)
     try {
       const { error } = await supabase.auth.updateUser({ email: email.trim() })
       if (error) throw error
-      toast.show({ title: 'Verification Sent', message: 'Check your new email for a confirmation link.', autoDismiss: 0 })
-    } catch (e: any) { Alert.alert('Error', e.message) }
+      toast.show({ title: t('app_account_verificationSentTitle'), message: t('app_account_verificationSentMsg'), autoDismiss: 0 })
+    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
     finally { setSaving(false) }
   }
 
   async function handleChangePassword() {
-    if (newPassword.length < 6) return Alert.alert('Too short', 'Password must be at least 6 characters.')
+    if (newPassword.length < 6) return Alert.alert(t('app_account_tooShortTitle'), t('app_account_tooShortMsg'))
     setSaving(true)
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword })
       if (error) throw error
       setNewPassword('')
-      toast.show({ title: 'Password Updated', message: 'Your password has been changed.' })
-    } catch (e: any) { Alert.alert('Error', e.message) }
+      toast.show({ title: t('app_account_passwordUpdatedTitle'), message: t('app_account_passwordUpdatedMsg') })
+    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
     finally { setSaving(false) }
   }
 
   async function handleSignOutAll() {
     Alert.alert(t('account_signOutEverywhereTitle'), t('account_signOutEverywhereMsg'), [
-      { text: 'Cancel', style: 'cancel' },
+      { text: t('common_cancel'), style: 'cancel' },
       {
         text: t('account_signOutAll'),
         style: 'destructive',
@@ -124,7 +124,7 @@ export default function AccountScreen() {
       t('account_deleteTitle'),
       t('account_deleteMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
           text: t('account_deleteConfirmBtn'),
           style: 'destructive',

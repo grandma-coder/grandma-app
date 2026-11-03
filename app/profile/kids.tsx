@@ -5,6 +5,7 @@
  * conditions, dietary restrictions, preferred foods, disliked foods, pediatrician, notes.
  */
 
+import { dateLoc } from '../../lib/kpLocale'
 import { useState } from 'react'
 import {
   View,
@@ -29,7 +30,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, t as tNow } from '../../lib/i18n'
 import { searchCountries, countryByCode } from '../../lib/countries'
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -99,9 +100,9 @@ function useKidsTheme() {
 // ─── Constants ────────────────────────────────────────────────────────────
 
 const SEX_OPTIONS = [
-  { value: 'male', label: 'Boy' },
-  { value: 'female', label: 'Girl' },
-  { value: 'other', label: 'Other' },
+  { value: 'male', labelKey: 'kp_pk_boy' as const },
+  { value: 'female', labelKey: 'kp_pk_girl' as const },
+  { value: 'other', labelKey: 'kp_pk_other' as const },
 ]
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
@@ -130,11 +131,11 @@ function formatAge(birthDate: string): string {
   const born = new Date(birthDate)
   const now = new Date()
   const months = (now.getFullYear() - born.getFullYear()) * 12 + (now.getMonth() - born.getMonth())
-  if (months < 1) return 'Newborn'
-  if (months < 12) return `${months} months`
+  if (months < 1) return tNow('kids_home_age_newborn')
+  if (months < 12) return tNow('kp_pk_ageMonths', { n: months })
   const y = Math.floor(months / 12)
   const m = months % 12
-  return m > 0 ? `${y}y ${m}m` : `${y} year${y > 1 ? 's' : ''}`
+  return m > 0 ? tNow('kp_pk_ageYM', { y, m }) : tNow(y > 1 ? 'kp_pk_ageYears' : 'kp_pk_ageYear', { y })
 }
 
 function mapDbChild(c: any): ChildWithRole {
@@ -228,7 +229,7 @@ function AvatarField({ value, onChange, accent, initial }: {
   const local = isLocalPhotoUri(value)
   return (
     <View style={{ alignItems: 'center', gap: 8, marginBottom: 4 }}>
-      <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" accessibilityLabel="Change photo">
+      <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" accessibilityLabel={tNow('kp_pk_changePhoto')}>
         {local ? (
           // AvatarView would try to sign a local file:// URI as a storage path
           // (and fail) — render the freshly-picked file directly for preview.
@@ -241,7 +242,7 @@ function AvatarField({ value, onChange, accent, initial }: {
         )}
       </Pressable>
       <Pressable onPress={() => setPickerOpen(true)} hitSlop={8}>
-        <MonoCaps color={colors.textMuted}>{value ? 'Change photo' : 'Add photo'}</MonoCaps>
+        <MonoCaps color={colors.textMuted}>{value ? tNow('kp_pk_changePhoto') : tNow('kp_pk_addPhoto')}</MonoCaps>
       </Pressable>
       <AvatarPickerModal
         visible={pickerOpen}
@@ -271,12 +272,12 @@ export default function KidsProfileScreen() {
 
   async function handleDelete(child: ChildWithRole) {
     Alert.alert(
-      `Remove ${child.name}?`,
-      'This will remove this child profile and all associated logs. This cannot be undone.',
+      t('kp_pk_removeTitle', { name: child.name }),
+      t('kp_pk_removeBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common_remove'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -287,7 +288,7 @@ export default function KidsProfileScreen() {
               if (error) throw error
               setChildren(children.filter((c) => c.id !== child.id))
             } catch (e: any) {
-              Alert.alert('Error', e.message)
+              Alert.alert(t('common_error'), e.message)
             }
           },
         },
@@ -302,8 +303,8 @@ export default function KidsProfileScreen() {
           <View style={styles.siteHeader}>
             <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="baby" size={30} cut />
-            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>Kids Profile</Text>
-            <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Add a child">
+            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{t('kp_pk_kidsProfile')}</Text>
+            <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('kp_pk_addChildA11y')}>
               <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: colors.text, borderWidth: bw }]}>
                 <Ionicons name="add" size={20} color={colors.text} />
               </View>
@@ -311,7 +312,7 @@ export default function KidsProfileScreen() {
           </View>
         ) : (
         <ScreenHeader
-          title="Kids Profile"
+          title={t('kp_pk_kidsProfile')}
           right={
             <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10}>
               <View
@@ -357,7 +358,7 @@ export default function KidsProfileScreen() {
         ))}
 
         <PillButton
-          label="Add a Child"
+          label={t('kp_pk_addChild')}
           variant="paper"
           onPress={() => setShowAddSheet(true)}
           leading={<Ionicons name="add" size={18} color={colors.text} />}
@@ -413,11 +414,11 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
   const foodParts: string[] = []
   const uniqPreferred = Array.from(new Set(child.preferredFoods))
   const uniqDisliked = Array.from(new Set(child.dislikedFoods))
-  if (uniqPreferred.length > 0) foodParts.push(`Loves: ${uniqPreferred.slice(0, 3).join(', ')}`)
-  if (uniqDisliked.length > 0) foodParts.push(`Avoids: ${uniqDisliked.slice(0, 3).join(', ')}`)
+  if (uniqPreferred.length > 0) foodParts.push(tNow('kp_pk_loves', { list: uniqPreferred.slice(0, 3).join(', ') }))
+  if (uniqDisliked.length > 0) foodParts.push(tNow('kp_pk_avoids', { list: uniqDisliked.slice(0, 3).join(', ') }))
   const foodSummary = foodParts.join(' · ')
 
-  const sexLabel = child.sex === 'male' ? 'Boy' : child.sex === 'female' ? 'Girl' : 'Other'
+  const sexLabel = child.sex === 'male' ? tNow('kp_pk_boy') : child.sex === 'female' ? tNow('kp_pk_girl') : tNow('kp_pk_other')
   const sexColor = child.sex === 'male' ? stickers.blue : child.sex === 'female' ? stickers.pink : stickers.lilac
 
   return (
@@ -490,7 +491,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
             ]}
             numberOfLines={1}
           >
-            {child.birthDate ? `${formatAge(child.birthDate)} — Born ${parseLocalDate(child.birthDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'No birth date set'}
+            {child.birthDate ? tNow('kp_pk_bornOn', { age: formatAge(child.birthDate), date: parseLocalDate(child.birthDate).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' }) }) : tNow('kp_pk_noBirthDate')}
           </Text>
         </View>
         <View style={styles.cardActions}>
@@ -694,9 +695,9 @@ function EditChildSheet({
   const canSave = name.trim().length > 0 && sex.length > 0 && !!birthDate
 
   async function handleSave() {
-    if (!name.trim()) return Alert.alert('Missing Info', 'Name is required.')
-    if (!sex) return Alert.alert('Missing Info', 'Please select the sex.')
-    if (!birthDate) return Alert.alert('Missing Info', 'Please set the birth date.')
+    if (!name.trim()) return Alert.alert(t('auth_missingInfo'), t('kp_pk_nameRequired'))
+    if (!sex) return Alert.alert(t('auth_missingInfo'), t('kp_pk_selectSex'))
+    if (!birthDate) return Alert.alert(t('auth_missingInfo'), t('kp_pk_setBirthDate'))
     setSaving(true)
     try {
       const pediatrician = pedName.trim() ? { name: pedName.trim(), phone: pedPhone.trim(), clinic: pedClinic.trim() } : null
@@ -755,14 +756,14 @@ function EditChildSheet({
         notes: notes.trim(),
       })
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <LogSheet visible title={`Edit ${child.name}`} onClose={onClose} sticker="baby">
+    <LogSheet visible title={t('kp_pk_editChild', { name: child.name })} onClose={onClose} sticker="baby">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
           <AvatarField
@@ -771,13 +772,13 @@ function EditChildSheet({
             accent={stickers.blue}
             initial={(name.trim()[0] ?? '?').toUpperCase()}
           />
-          <SectionHeader label="Basic Info" />
-          <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child name" />
+          <SectionHeader label={t('kp_pk_basicInfo')} />
+          <FormField label={t('kp_pk_nameLabel')} value={name} onChangeText={setName} placeholder={t('kp_pk_childName')} />
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelSex')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {!diffuse ? SEX_OPTIONS.map((opt) => (
-              <SiteChoice key={opt.value} compact label={opt.label} selected={sex === opt.value} tone={soft}
+              <SiteChoice key={opt.value} compact label={t(opt.labelKey)} selected={sex === opt.value} tone={soft}
                 onPress={() => setSex(sex === opt.value ? '' : opt.value)} />
             )) : SEX_OPTIONS.map((opt) => (
               <Pressable
@@ -791,7 +792,7 @@ function EditChildSheet({
                   },
                 ]}
               >
-                <Text style={[formStyles.optionText, { color: sex === opt.value ? colors.bg : colors.text, fontFamily: font.bodyMedium }]}>{opt.label}</Text>
+                <Text style={[formStyles.optionText, { color: sex === opt.value ? colors.bg : colors.text, fontFamily: font.bodyMedium }]}>{t(opt.labelKey)}</Text>
               </Pressable>
             ))}
           </View>
@@ -815,12 +816,12 @@ function EditChildSheet({
             <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}>
               {birthDate
                 ? `${parseLocalDate(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
-                : 'Select date'}
+                : t('kp_pk_selectDate')}
             </Text>
           </Pressable>
           <StickerDateModal
             visible={dateModalOpen}
-            title="Birth date"
+            title={t('kp_pk_birthDateTitle')}
             value={dateDraft}
             onChange={setDateDraft}
             onClose={() => setDateModalOpen(false)}
@@ -872,7 +873,7 @@ function EditChildSheet({
                 value={countryQuery}
                 onChangeText={(t) => { setCountryQuery(t); setCountryDropdownOpen(true) }}
                 onFocus={() => setCountryDropdownOpen(true)}
-                placeholder="Search country..."
+                placeholder={t('kp_pk_searchCountry')}
                 placeholderTextColor={colors.textMuted}
                 style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}
               />
@@ -920,30 +921,30 @@ function EditChildSheet({
           </View>
 
           {/* Health — chips with autocomplete */}
-          <SectionHeader label="Health & Medical" />
-          <ChipInput label="Allergies" value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} softColor={stickers.pinkSoft} placeholder="Search allergies..." />
-          <ChipInput label="Medications" value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} softColor={stickers.blueSoft} placeholder="Search medications..." />
-          <ChipInput label="Conditions" value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} softColor={stickers.peachSoft} placeholder="e.g. Asthma, Eczema" />
+          <SectionHeader label={t('kp_pk_healthMedical')} />
+          <ChipInput label={t('children_allergies')} value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} softColor={stickers.pinkSoft} placeholder={t('kp_pk_searchAllergies')} />
+          <ChipInput label={t('kids_home_health_medications')} value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} softColor={stickers.blueSoft} placeholder={t('kp_pk_searchMeds')} />
+          <ChipInput label={t('kp_pk_conditions')} value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} softColor={stickers.peachSoft} placeholder={t('kp_pk_conditionsPh')} />
 
           {/* Food */}
-          <SectionHeader label="Food Preferences" />
-          <ChipInput label="Preferred Foods" value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} softColor={stickers.greenSoft} placeholder="e.g. Banana, Rice" />
-          <ChipInput label="Disliked Foods" value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} softColor={stickers.yellowSoft} placeholder="e.g. Broccoli, Spinach" />
-          <ChipInput label="Dietary Restrictions" value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} softColor={stickers.lilacSoft} placeholder="e.g. Gluten-free, No pork" />
+          <SectionHeader label={t('kp_pk_foodPrefs')} />
+          <ChipInput label={t('kp_pk_preferredFoods')} value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} softColor={stickers.greenSoft} placeholder={t('kp_pk_preferredPh')} />
+          <ChipInput label={t('kp_pk_dislikedFoods')} value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} softColor={stickers.yellowSoft} placeholder={t('kp_pk_dislikedPh')} />
+          <ChipInput label={t('kp_pk_dietary')} value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} softColor={stickers.lilacSoft} placeholder={t('kp_pk_dietaryPh')} />
 
           {/* Pediatrician */}
-          <SectionHeader label="Pediatrician" />
-          <FormField label="Doctor Name" value={pedName} onChangeText={setPedName} placeholder="Dr. Smith" />
-          <FormField label="Phone" value={pedPhone} onChangeText={setPedPhone} placeholder="+1 555-0100" keyboardType="phone-pad" />
-          <FormField label="Clinic" value={pedClinic} onChangeText={setPedClinic} placeholder="Children's Hospital" />
+          <SectionHeader label={t('children_pediatrician')} />
+          <FormField label={t('kp_pk_doctorName')} value={pedName} onChangeText={setPedName} placeholder="Dr. Smith" />
+          <FormField label={t('emergencyInsurance_fieldPhone')} value={pedPhone} onChangeText={setPedPhone} placeholder="+1 555-0100" keyboardType="phone-pad" />
+          <FormField label={t('kp_pk_clinic')} value={pedClinic} onChangeText={setPedClinic} placeholder={t('kp_pk_clinicPh')} />
 
           {/* Notes */}
-          <SectionHeader label="Additional Notes" />
-          <FormField label="Notes" value={notes} onChangeText={setNotes} placeholder="Any important information..." multiline />
+          <SectionHeader label={t('kp_pk_additionalNotes')} />
+          <FormField label={t('reminders_notesLabel')} value={notes} onChangeText={setNotes} placeholder={t('kp_pk_notesPh')} multiline />
 
           {diffuse ? (
             <PillButton
-              label={saving ? 'Saving…' : 'Save Changes'}
+              label={saving ? t('account_saving') : t('personal_saveChanges')}
               variant="ink"
               onPress={handleSave}
               disabled={saving || !canSave}
@@ -952,7 +953,7 @@ function EditChildSheet({
             />
           ) : (
             <SheetFooterAction>
-              <EyeAction label={saving ? 'Saving…' : 'Save Changes'} onPress={handleSave} ink={colors.text} loading={saving} disabled={!canSave} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
+              <EyeAction label={saving ? t('account_saving') : t('personal_saveChanges')} onPress={handleSave} ink={colors.text} loading={saving} disabled={!canSave} sticker="pencil" fill={ACTION_TONES.yellow} size={64} />
             </SheetFooterAction>
           )}
         </View>
@@ -1016,13 +1017,13 @@ function AddChildSheet({
   const canSave = name.trim().length > 0 && sex.length > 0 && !!birthDate
 
   async function handleSave() {
-    if (!name.trim()) return Alert.alert('Missing Info', 'Name is required.')
-    if (!sex) return Alert.alert('Missing Info', 'Please select the sex.')
-    if (!birthDate) return Alert.alert('Missing Info', 'Please set the birth date.')
+    if (!name.trim()) return Alert.alert(t('auth_missingInfo'), t('kp_pk_nameRequired'))
+    if (!sex) return Alert.alert(t('auth_missingInfo'), t('kp_pk_selectSex'))
+    if (!birthDate) return Alert.alert(t('auth_missingInfo'), t('kp_pk_setBirthDate'))
     setSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Not authenticated')
+      if (!session) throw new Error(tNow('kp_pk_notAuth'))
 
       const pediatrician = pedName.trim() ? { name: pedName.trim(), phone: pedPhone.trim(), clinic: pedClinic.trim() } : null
 
@@ -1077,14 +1078,14 @@ function AddChildSheet({
       reset()
       onAdded(newChild)
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      Alert.alert(t('common_error'), e.message)
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <LogSheet visible={visible} title="Add a Child" onClose={() => { reset(); onClose() }} sticker="baby">
+    <LogSheet visible={visible} title={t('kp_pk_addChild')} onClose={() => { reset(); onClose() }} sticker="baby">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={formStyles.form}>
           <AvatarField
@@ -1093,13 +1094,13 @@ function AddChildSheet({
             accent={stickers.blue}
             initial={(name.trim()[0] ?? '?').toUpperCase()}
           />
-          <SectionHeader label="Basic Info" />
-          <FormField label="Name *" value={name} onChangeText={setName} placeholder="Child's name" />
+          <SectionHeader label={t('kp_pk_basicInfo')} />
+          <FormField label={t('kp_pk_nameLabel')} value={name} onChangeText={setName} placeholder={t('kp_pk_childName')} />
 
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelSex')}</MonoCaps></View>
           <View style={formStyles.optionRow}>
             {!diffuse ? SEX_OPTIONS.map((opt) => (
-              <SiteChoice key={opt.value} compact label={opt.label} selected={sex === opt.value} tone={soft}
+              <SiteChoice key={opt.value} compact label={t(opt.labelKey)} selected={sex === opt.value} tone={soft}
                 onPress={() => setSex(sex === opt.value ? '' : opt.value)} />
             )) : SEX_OPTIONS.map((opt) => (
               <Pressable
@@ -1113,7 +1114,7 @@ function AddChildSheet({
                   },
                 ]}
               >
-                <Text style={[formStyles.optionText, { color: sex === opt.value ? colors.bg : colors.text, fontFamily: font.bodyMedium }]}>{opt.label}</Text>
+                <Text style={[formStyles.optionText, { color: sex === opt.value ? colors.bg : colors.text, fontFamily: font.bodyMedium }]}>{t(opt.labelKey)}</Text>
               </Pressable>
             ))}
           </View>
@@ -1137,12 +1138,12 @@ function AddChildSheet({
             <Text style={[formStyles.dateText, { color: birthDate ? colors.text : colors.textMuted, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}>
               {birthDate
                 ? `${parseLocalDate(birthDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}  ·  ${formatAge(birthDate)}`
-                : 'Select date'}
+                : t('kp_pk_selectDate')}
             </Text>
           </Pressable>
           <StickerDateModal
             visible={dateModalOpen}
-            title="Birth date"
+            title={t('kp_pk_birthDateTitle')}
             value={dateDraft}
             onChange={setDateDraft}
             onClose={() => setDateModalOpen(false)}
@@ -1194,7 +1195,7 @@ function AddChildSheet({
                 value={countryQuery}
                 onChangeText={(txt) => { setCountryQuery(txt); setCountryDropdownOpen(true) }}
                 onFocus={() => setCountryDropdownOpen(true)}
-                placeholder="Search country..."
+                placeholder={t('kp_pk_searchCountry')}
                 placeholderTextColor={colors.textMuted}
                 style={[formStyles.inputInner, { color: colors.text, fontFamily: font.body }, !diffuse && { fontSize: 16 }]}
               />
@@ -1241,27 +1242,27 @@ function AddChildSheet({
             })()}
           </View>
 
-          <SectionHeader label="Health & Medical" />
-          <ChipInput label="Allergies" value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} softColor={stickers.pinkSoft} placeholder="Search allergies..." />
-          <ChipInput label="Medications" value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} softColor={stickers.blueSoft} placeholder="Search medications..." />
-          <ChipInput label="Conditions" value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} softColor={stickers.peachSoft} placeholder="e.g. Asthma, Eczema" />
+          <SectionHeader label={t('kp_pk_healthMedical')} />
+          <ChipInput label={t('children_allergies')} value={allergies} onChange={setAllergies} suggestions={COMMON_CHILD_ALLERGIES} chipColor={brand.error} softColor={stickers.pinkSoft} placeholder={t('kp_pk_searchAllergies')} />
+          <ChipInput label={t('kids_home_health_medications')} value={medications} onChange={setMedications} suggestions={COMMON_MEDICATIONS} chipColor={brand.secondary} softColor={stickers.blueSoft} placeholder={t('kp_pk_searchMeds')} />
+          <ChipInput label={t('kp_pk_conditions')} value={conditions} onChange={setConditions} suggestions={[]} chipColor={colors.textSecondary} softColor={stickers.peachSoft} placeholder={t('kp_pk_conditionsPh')} />
 
-          <SectionHeader label="Food Preferences" />
-          <ChipInput label="Preferred Foods" value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} softColor={stickers.greenSoft} placeholder="e.g. Banana, Rice" />
-          <ChipInput label="Disliked Foods" value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} softColor={stickers.yellowSoft} placeholder="e.g. Broccoli, Spinach" />
-          <ChipInput label="Dietary Restrictions" value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} softColor={stickers.lilacSoft} placeholder="e.g. Gluten-free, No pork" />
+          <SectionHeader label={t('kp_pk_foodPrefs')} />
+          <ChipInput label={t('kp_pk_preferredFoods')} value={preferredFoods} onChange={setPreferredFoods} suggestions={[]} chipColor={brand.success} softColor={stickers.greenSoft} placeholder={t('kp_pk_preferredPh')} />
+          <ChipInput label={t('kp_pk_dislikedFoods')} value={dislikedFoods} onChange={setDislikedFoods} suggestions={[]} chipColor={brand.warning} softColor={stickers.yellowSoft} placeholder={t('kp_pk_dislikedPh')} />
+          <ChipInput label={t('kp_pk_dietary')} value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} softColor={stickers.lilacSoft} placeholder={t('kp_pk_dietaryPh')} />
 
-          <SectionHeader label="Pediatrician" />
-          <FormField label="Doctor Name" value={pedName} onChangeText={setPedName} placeholder="Dr. Smith" />
-          <FormField label="Phone" value={pedPhone} onChangeText={setPedPhone} placeholder="+1 555-0100" keyboardType="phone-pad" />
-          <FormField label="Clinic" value={pedClinic} onChangeText={setPedClinic} placeholder="Children's Hospital" />
+          <SectionHeader label={t('children_pediatrician')} />
+          <FormField label={t('kp_pk_doctorName')} value={pedName} onChangeText={setPedName} placeholder="Dr. Smith" />
+          <FormField label={t('emergencyInsurance_fieldPhone')} value={pedPhone} onChangeText={setPedPhone} placeholder="+1 555-0100" keyboardType="phone-pad" />
+          <FormField label={t('kp_pk_clinic')} value={pedClinic} onChangeText={setPedClinic} placeholder={t('kp_pk_clinicPh')} />
 
-          <SectionHeader label="Additional Notes" />
-          <FormField label="Notes" value={notes} onChangeText={setNotes} placeholder="Any important information..." multiline />
+          <SectionHeader label={t('kp_pk_additionalNotes')} />
+          <FormField label={t('reminders_notesLabel')} value={notes} onChangeText={setNotes} placeholder={t('kp_pk_notesPh')} multiline />
 
           {diffuse ? (
             <PillButton
-              label={saving ? 'Adding…' : 'Add Child'}
+              label={saving ? t('kp_pk_adding') : t('children_addChild')}
               variant="ink"
               onPress={handleSave}
               disabled={saving || !canSave}
@@ -1270,7 +1271,7 @@ function AddChildSheet({
             />
           ) : (
             <SheetFooterAction>
-              <EyeAction label={saving ? 'Adding…' : 'Add Child'} onPress={handleSave} ink={colors.text} loading={saving} disabled={!canSave} sticker="baby" fill={ACTION_TONES.yellow} size={64} />
+              <EyeAction label={saving ? t('kp_pk_adding') : t('children_addChild')} onPress={handleSave} ink={colors.text} loading={saving} disabled={!canSave} sticker="baby" fill={ACTION_TONES.yellow} size={64} />
             </SheetFooterAction>
           )}
         </View>

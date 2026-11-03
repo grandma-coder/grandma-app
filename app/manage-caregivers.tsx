@@ -151,7 +151,7 @@ export default function ManageCaregivers() {
   const seatLimit = effectiveSeatLimit(tier, paywallOn)
   const activeSeats = caregivers.filter((c) => c.status === 'accepted' && !c.is_locked).length
   const atLimit = activeSeats >= seatLimit
-  const nextTierLabel = tier === 'free' ? 'Premium Solo' : tier === 'premium_solo' ? 'Family' : null
+  const nextTierLabel = tier === 'free' ? 'Premium Solo' : tier === 'premium_solo' ? t('paywall_tierFamily') : null
   // No upgrade path while subscriptions are switched off (paywall flag).
   const nextTierRoute = !paywallOn || tier === 'premium_family' ? null : (tier === 'premium_solo' ? 'premium_family' : 'premium_solo')
 
@@ -215,8 +215,8 @@ export default function ManageCaregivers() {
           diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase', fontSize: 11 },
         ]}>
           {seatLimit === 0
-            ? 'Upgrade to invite caregivers'
-            : `${activeSeats} of ${seatLimit} seat${seatLimit === 1 ? '' : 's'} used`}
+            ? t('app_mc_upgradeToInvite')
+            : t(seatLimit === 1 ? 'app_mc_seatsUsedOne' : 'app_mc_seatsUsedMany', { used: activeSeats, limit: seatLimit })}
         </Text>
       </View>
 
@@ -298,8 +298,8 @@ export default function ManageCaregivers() {
               <EmptyState
                 icon={<Heart fill={stickers.pink} size={36} />}
                 iconBg={stickers.pinkSoft}
-                title="No caregivers yet"
-                message="Invite a nanny or family member to share care."
+                title={t('careCircle_no_caregivers')}
+                message={t('app_mc_emptyMsg')}
               />
             )
           }
@@ -332,7 +332,7 @@ export default function ManageCaregivers() {
                     </View>
                   </View>
                   {item.status !== 'revoked' && (
-                    <Pressable onPress={() => revoke(item.id)} style={styles.revokeButton} hitSlop={8} accessibilityRole="button" accessibilityLabel="Revoke access">
+                    <Pressable onPress={() => revoke(item.id)} style={styles.revokeButton} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('app_mc_revokeA11y')}>
                       <Ionicons name="close" size={22} color={colors.text} />
                     </Pressable>
                   )}
@@ -413,11 +413,11 @@ export default function ManageCaregivers() {
 
       <PaperAlert
         visible={pendingRevoke !== null}
-        title="Revoke access?"
-        message="This person will lose access to your child's data."
+        title={t('app_mc_revokeTitle')}
+        message={t('app_mc_revokeMsg')}
         buttons={[
-          { label: 'Cancel', variant: 'secondary' },
-          { label: 'Revoke', variant: 'danger', onPress: confirmRevoke },
+          { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('app_mc_revoke'), variant: 'danger', onPress: confirmRevoke },
         ]}
         onRequestClose={() => setPendingRevoke(null)}
       />

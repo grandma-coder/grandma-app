@@ -47,13 +47,17 @@ import { Character } from '../../components/characters/Characters'
 import { MemoriesSheet } from '../../components/home/MemoriesSheet'
 import { usePaywallEnabled, useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 
+function intlLocaleFor(language: string): string {
+  return language === 'en' ? 'en-US' : language
+}
+
 export default function ProfileScreen() {
   const { colors, radius, isDark, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
   const bottomInset = useScrollBottomInset()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   const mode = useModeStore((s) => s.mode)
   const currentBehavior = useBehaviorStore((s) => s.currentBehavior)
@@ -193,12 +197,12 @@ export default function ProfileScreen() {
 
   // Pregnancy summary value (e.g. "Week 24" or "Due Aug 12")
   const pregnancySummary = (() => {
-    if (pregnancyWeek != null) return `Week ${pregnancyWeek}`
+    if (pregnancyWeek != null) return t('app_settings_weekN', { n: pregnancyWeek })
     if (pregnancyDueDate) {
       const d = new Date(pregnancyDueDate + 'T12:00:00')
-      return `Due ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+      return t('app_settings_dueDate', { date: d.toLocaleDateString(intlLocaleFor(language), { month: 'short', day: 'numeric' }) })
     }
-    return 'Set up'
+    return t('app_settings_setUp')
   })()
 
   function handleKidPillPress(id: string) {
@@ -386,7 +390,7 @@ export default function ProfileScreen() {
               <SiteRow
                 sticker="heart"
                 label={t('profile_careCircle')}
-                value={careCircleCount === 1 ? '1 person' : `${careCircleCount} people`}
+                value={careCircleCount === 1 ? t('app_settings_onePerson') : t('app_settings_nPeople', { n: careCircleCount })}
                 onPress={() => router.push('/profile/care-circle')}
               />
 
@@ -394,7 +398,7 @@ export default function ProfileScreen() {
               {isPregnancyBehavior && (
                 <SiteRow
                   sticker="egg"
-                  label="Pregnancy"
+                  label={t('mode_pregnancy')}
                   value={pregnancySummary}
                   onPress={() => router.push('/profile/pregnancy')}
                 />
@@ -404,8 +408,8 @@ export default function ProfileScreen() {
               {isPrePregBehavior && (
                 <SiteRow
                   sticker="drop"
-                  label="Cycle"
-                  value="Tracking"
+                  label={t('onboardingJourney_trying')}
+                  value={t('app_settings_tracking')}
                   onPress={() => router.push('/(tabs)')}
                 />
               )}
@@ -421,8 +425,8 @@ export default function ProfileScreen() {
               {showKidsItems && (
                 <SiteRow
                   sticker="baby"
-                  label="Kids Profile"
-                  value={children.length === 1 ? '1 child' : `${children.length} children`}
+                  label={t('app_settings_kidsProfile')}
+                  value={children.length === 1 ? t('app_settings_oneChild') : t('app_settings_nChildren', { n: children.length })}
                   onPress={() => router.push('/profile/kids')}
                 />
               )}
@@ -438,14 +442,14 @@ export default function ProfileScreen() {
                 <SiteRow
                   sticker="thermo"
                   label={t('profile_healthHistory')}
-                  value={joinedYear ? `Since ${joinedYear}` : '—'}
+                  value={joinedYear ? t('app_settings_sinceYear', { year: joinedYear }) : '—'}
                   onPress={() => router.push('/profile/health-history')}
                 />
               )}
               <SiteRow
                 sticker="phone"
                 label={t('profile_emergencyInsurance')}
-                value={hasEmergency ? 'Ready' : 'Not set'}
+                value={hasEmergency ? t('app_settings_ready') : t('app_settings_notSet')}
                 onPress={() => router.push('/profile/emergency-insurance')}
               />
               <SiteRow
@@ -467,7 +471,7 @@ export default function ProfileScreen() {
                 <SiteRow
                   sticker="star"
                   label={t('profile_subscription')}
-                  value={isPremium ? 'Premium' : 'Upgrade'}
+                  value={isPremium ? t('app_settings_premium') : t('app_settings_upgrade')}
                   onPress={() => router.push('/paywall')}
                 />
               )}

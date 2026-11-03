@@ -53,6 +53,7 @@ import { Section } from './shared/Section'
 import { MoodStrip } from './shared/MoodStrip'
 import { cycleMoodToStrip } from '../../lib/moodTrend'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
+import { appIntlLocale } from '../../lib/cycleLogForms'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 import { ReportEntryRow } from '../../lib/reports/ReportEntryRow'
 import { buildCycleNote } from '../../lib/grandmaNotes/cycle'
@@ -354,7 +355,7 @@ export function CycleAnalytics() {
             sticker={<Star size={22} fill={stickers.pink} stroke={colors.text} />}
             diffuseIcon={<Character name="sparkle" size={26} color={stickerPalette.pink} />}
             value={avgLabel === '—' ? '—' : `${avgLabel}${t('cycle_ring_unit_d')}`}
-            sub={diffuse ? t('cycleAnalytics_lengthSub') : `${t('cycleAnalytics_lengthSub')} · ${closed} closed cycles`}
+            sub={diffuse ? t('cycleAnalytics_lengthSub') : `${t('cycleAnalytics_lengthSub')} · ${t('cyc_analytics_closedN', { n: closed })}`}
             label={t('cycleAnalytics_tileLabel_length')}
             hue={stickerPalette.pink}
             onPress={() => setDetailType('cycleLength')}
@@ -439,7 +440,7 @@ export function CycleAnalytics() {
               diffuseIcon={<Character name="mood" size={26} color={stickerPalette.coral} />}
               siteSticker="face3"
               value={moodLabel}
-              sub={mood?.avgScore == null ? moodSub : `${moodSub} · last 30 days`}
+              sub={mood?.avgScore == null ? moodSub : `${moodSub} · ${t('cyc_analytics_last30')}`}
               label={t('cycleAnalytics_tileLabel_mood')}
               hue={stickerPalette.coral}
               onPress={() => setDetailType('mood')}
@@ -525,6 +526,7 @@ function CycleLengthTrend({
 }) {
   const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
+  const { t } = useTranslation()
   const dt = useDiffuseTheme()
   const ink = diffuse ? dt.colors.ink : colors.text
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
@@ -537,7 +539,7 @@ function CycleLengthTrend({
     return (
       <View style={styles.trendEmpty}>
         <Text style={[styles.trendEmptyText, { color: muted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-          {closed.length < 2 ? 'Log a few periods to see your rhythm.' : ''}
+          {closed.length < 2 ? t('cyc_analytics_logRhythm') : ''}
         </Text>
       </View>
     )
@@ -722,10 +724,10 @@ function RecentCyclesCard({
   const today = new Date()
   const formatRange = (start: string, end: string | null) => {
     const s = new Date(start + 'T00:00:00')
-    if (!end) return s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · current'
+    if (!end) return s.toLocaleDateString(appIntlLocale(), { month: 'short', day: 'numeric' }) + ' · ' + t('cyc_analytics_current')
     const e = new Date(end + 'T00:00:00')
-    const sStr = s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    const eStr = e.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const sStr = s.toLocaleDateString(appIntlLocale(), { month: 'short', day: 'numeric' })
+    const eStr = e.toLocaleDateString(appIntlLocale(), { month: 'short', day: 'numeric' })
     return `${sStr} – ${eStr}`
   }
 
@@ -886,8 +888,8 @@ function formatFertile(current: { start: string; end: string } | null | undefine
   if (!current) return '—'
   const s = new Date(current.start + 'T00:00:00')
   const e = new Date(current.end + 'T00:00:00')
-  const sMonth = s.toLocaleDateString('en-US', { month: 'short' })
-  const eMonth = e.toLocaleDateString('en-US', { month: 'short' })
+  const sMonth = s.toLocaleDateString(appIntlLocale(), { month: 'short' })
+  const eMonth = e.toLocaleDateString(appIntlLocale(), { month: 'short' })
   if (sMonth === eMonth) {
     return `${sMonth} ${s.getDate()}–${e.getDate()}`
   }
