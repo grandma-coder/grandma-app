@@ -3823,4 +3823,9 @@ export const zh: TranslationKeys = {
   preg_form_water_hintDone: "今天的水喝得很好。",
   preg_form_water_hintHalf: "已经一半了——还差 {{count}} 杯。",
   preg_form_water_hintMore: "距离今天的目标还差 {{count}} 杯。",
+  cycle_fertility_none: "很低",
+  cycle_fertility_low: "低",
+  cycle_fertility_medium: "中",
+  cycle_fertility_high: "高",
+  cycle_fertility_peak: "高峰",
 }

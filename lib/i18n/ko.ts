@@ -3823,4 +3823,9 @@ export const ko: TranslationKeys = {
   preg_form_water_hintDone: "오늘 수분 섭취 잘했어요.",
   preg_form_water_hintHalf: "절반 왔어요 — {{count}}잔 남았어요.",
   preg_form_water_hintMore: "오늘 목표까지 {{count}}잔 남았어요.",
+  cycle_fertility_none: "매우 낮음",
+  cycle_fertility_low: "낮음",
+  cycle_fertility_medium: "보통",
+  cycle_fertility_high: "높음",
+  cycle_fertility_peak: "최고",
 }

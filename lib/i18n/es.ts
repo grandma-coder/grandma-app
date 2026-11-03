@@ -3823,4 +3823,9 @@ export const es: TranslationKeys = {
   preg_form_water_hintDone: "Muy bien hidratada hoy.",
   preg_form_water_hintHalf: "A mitad de camino — faltan {{count}}.",
   preg_form_water_hintMore: "Faltan {{count}} para la meta de hoy.",
+  cycle_fertility_none: "Muy baja",
+  cycle_fertility_low: "Baja",
+  cycle_fertility_medium: "Media",
+  cycle_fertility_high: "Alta",
+  cycle_fertility_peak: "Pico",
 }

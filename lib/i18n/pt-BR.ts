@@ -3823,4 +3823,9 @@ export const ptBR: TranslationKeys = {
   preg_form_water_hintDone: "Hidratação ótima hoje.",
   preg_form_water_hintHalf: "Metade do caminho — faltam {{count}}.",
   preg_form_water_hintMore: "Faltam {{count}} para a meta de hoje.",
+  cycle_fertility_none: "Muito baixa",
+  cycle_fertility_low: "Baixa",
+  cycle_fertility_medium: "Média",
+  cycle_fertility_high: "Alta",
+  cycle_fertility_peak: "Pico",
 }

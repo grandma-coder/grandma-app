@@ -3823,4 +3823,9 @@ export const tr: TranslationKeys = {
   preg_form_water_hintDone: "Bugün güzelce su içtin.",
   preg_form_water_hintHalf: "Yarı yoldasın — {{count}} tane kaldı.",
   preg_form_water_hintMore: "Bugünkü hedefe {{count}} tane kaldı.",
+  cycle_fertility_none: "Çok düşük",
+  cycle_fertility_low: "Düşük",
+  cycle_fertility_medium: "Orta",
+  cycle_fertility_high: "Yüksek",
+  cycle_fertility_peak: "Zirve",
 }

@@ -3823,4 +3823,9 @@ export const ar: TranslationKeys = {
   preg_form_water_hintDone: "ترطيب ممتاز اليوم.",
   preg_form_water_hintHalf: "في منتصف الطريق — بقي {{count}}.",
   preg_form_water_hintMore: "بقي {{count}} للوصول إلى هدف اليوم.",
+  cycle_fertility_none: "منخفضة جدًا",
+  cycle_fertility_low: "منخفضة",
+  cycle_fertility_medium: "متوسطة",
+  cycle_fertility_high: "مرتفعة",
+  cycle_fertility_peak: "الذروة",
 }

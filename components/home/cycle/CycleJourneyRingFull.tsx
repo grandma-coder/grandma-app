@@ -545,15 +545,9 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
 
   const statusLabel = isToday ? 'TODAY' : isPast ? 'PAST' : 'UPCOMING'
   const titleItalic = phaseTitleItalic(selPhase, t)
-  const fertilityPct = useMemo(() => {
-    switch (selectedInfo.conceptionProbability) {
-      case 'peak':   return 95
-      case 'high':   return 70
-      case 'medium': return 40
-      case 'low':    return 12
-      default:       return 3
-    }
-  }, [selectedInfo.conceptionProbability])
+  // A word, not a percentage: the phase estimate isn't precise enough to quote odds, and a
+  // number reads like a score or a contraception figure.
+  const fertilityLevel = t(FERTILITY_LEVEL_KEY[selectedInfo.conceptionProbability])
 
   // 7-day strip centered on the selected day (3 before, selected, 3 after).
   // A weekday strip (MON/TUE/…) is a CALENDAR affordance, so the number under
@@ -870,8 +864,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
               {t('cycle_ring_label_fertility')}
             </Text>
             <Text style={[styles.statValue, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.display }]}>
-              {fertilityPct}
-              <Text style={[styles.statUnit, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal' } : { color: colors.textSecondary, fontFamily: font.italic }]}>%</Text>
+              {fertilityLevel}
             </Text>
           </View>
           <View style={[styles.statCell, { borderTopColor: diffuse ? dt.colors.line2 : accent + '66' }]}>
@@ -889,6 +882,14 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
     </View>
   )
 }
+
+const FERTILITY_LEVEL_KEY = {
+  none: 'cycle_fertility_none',
+  low: 'cycle_fertility_low',
+  medium: 'cycle_fertility_medium',
+  high: 'cycle_fertility_high',
+  peak: 'cycle_fertility_peak',
+} as const
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({

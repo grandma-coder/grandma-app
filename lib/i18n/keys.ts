@@ -4105,4 +4105,9 @@ export interface TranslationKeys {
   preg_form_water_hintDone: string
   preg_form_water_hintHalf: string
   preg_form_water_hintMore: string
+  cycle_fertility_none: string
+  cycle_fertility_low: string
+  cycle_fertility_medium: string
+  cycle_fertility_high: string
+  cycle_fertility_peak: string
 }

@@ -3823,4 +3823,9 @@ export const ja: TranslationKeys = {
   preg_form_water_hintDone: "今日はしっかり水分がとれています。",
   preg_form_water_hintHalf: "半分まで来ました — あと{{count}}杯。",
   preg_form_water_hintMore: "今日の目標まであと{{count}}杯。",
+  cycle_fertility_none: "とても低い",
+  cycle_fertility_low: "低い",
+  cycle_fertility_medium: "中くらい",
+  cycle_fertility_high: "高い",
+  cycle_fertility_peak: "ピーク",
 }

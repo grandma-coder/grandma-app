@@ -158,13 +158,13 @@ export function CycleDayDetail({ cycleConfig, date, onAddLog, onOpenLog }: Props
           diffuse ? (
             <View style={[styles.fertPillD, { borderColor: dt.colors.hairline }]}>
               <Text style={[styles.fertPillText, { color: dt.colors.ink, fontFamily: diffuseFont.mono }]}>
-                {info.conceptionProbability.toUpperCase()}
+                {t(`cycle_fertility_${info.conceptionProbability}`).toUpperCase()}
               </Text>
             </View>
           ) : (
             <View style={[styles.fertPill, { backgroundColor: stickers.greenSoft, borderColor: colors.text, borderWidth: 1.5 }]}>
               <Text style={[styles.fertPillText, { color: colors.text, fontFamily: font.bodyBold }]}>
-                {info.conceptionProbability.toUpperCase()}
+                {t(`cycle_fertility_${info.conceptionProbability}`).toUpperCase()}
               </Text>
             </View>
           )

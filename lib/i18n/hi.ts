@@ -3823,4 +3823,9 @@ export const hi: TranslationKeys = {
   preg_form_water_hintDone: "आज पानी अच्छी तरह पिया।",
   preg_form_water_hintHalf: "आधा हो गया — {{count}} और।",
   preg_form_water_hintMore: "आज के लक्ष्य तक {{count}} और।",
+  cycle_fertility_none: "बहुत कम",
+  cycle_fertility_low: "कम",
+  cycle_fertility_medium: "मध्यम",
+  cycle_fertility_high: "अधिक",
+  cycle_fertility_peak: "चरम",
 }
