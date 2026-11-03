@@ -2,31 +2,15 @@ import { router } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import { supabase } from './supabase'
 import { queryClient } from './queryClient'
-import { useModeStore } from '../store/useModeStore'
-import { useBehaviorStore } from '../store/useBehaviorStore'
-import { useJourneyStore } from '../store/useJourneyStore'
-import { useCaregiverStore } from '../store/useCaregiverStore'
-import { usePregnancyStore } from '../store/usePregnancyStore'
-import { useBadgeStore } from '../store/useBadgeStore'
-import { useGoalsStore } from '../store/useGoalsStore'
-import { useGrandmaHistoryStore } from '../store/useGrandmaHistoryStore'
-import { useChildStore } from '../store/useChildStore'
-import { useChatStore } from '../store/useChatStore'
-import { useFoodStore } from '../store/useFoodStore'
-import { useVaultStore } from '../store/useVaultStore'
-import { useEmergencyInsuranceStore } from '../store/useEmergencyInsuranceStore'
-import { useChannelsStore } from '../store/useChannelsStore'
-import { useOnboardingStore } from '../store/useOnboardingStore'
-import { useCycleOnboardingStore } from '../store/useCycleOnboardingStore'
-import { usePregnancyOnboardingStore } from '../store/usePregnancyOnboardingStore'
-import { useKidsOnboardingStore } from '../store/useKidsOnboardingStore'
+import { resetUserStores, USER_STORE_PERSIST } from './resetUserStores'
+import { clearPin } from './appLock'
 
 type Scope = 'local' | 'global'
 
 /**
  * Single source of truth for signing out. Clears the React Query cache,
- * wipes every persisted Zustand store that holds user data (theme + language
- * are preferences, not data — left intact), and navigates to welcome.
+ * wipes and resets every Zustand store that holds user data (lib/resetUserStores —
+ * theme, language and units are device preferences, left intact), and navigates to welcome.
  *
  * Theme and language are intentionally preserved: a user signing out on a
  * shared device should not see the next user's preferred language reset.
@@ -89,41 +73,15 @@ export async function signOut(scope: Scope = 'local'): Promise<void> {
 
   queryClient.clear()
 
-  const persisted = [
-    useModeStore,
-    useBehaviorStore,
-    useJourneyStore,
-    useCaregiverStore,
-    usePregnancyStore,
-    useBadgeStore,
-    useGoalsStore,
-    useGrandmaHistoryStore,
-  ]
-  for (const store of persisted) {
+  // Wipe the persisted keys, then reset the live stores: clearing storage alone left the previous
+  // user's state in memory, and the next write put it straight back (journeys, due date, consent,
+  // PIN lock) for whoever signs in next on this phone.
+  for (const store of USER_STORE_PERSIST) {
     const persistApi = (store as unknown as { persist?: { clearStorage: () => Promise<void> | void } }).persist
-    if (persistApi?.clearStorage) {
-      await persistApi.clearStorage()
-    }
+    if (persistApi?.clearStorage) await persistApi.clearStorage()
   }
-
-  const inMemory = [
-    useChildStore,
-    useChatStore,
-    useFoodStore,
-    useVaultStore,
-    useEmergencyInsuranceStore,
-    useChannelsStore,
-    useOnboardingStore,
-    useCycleOnboardingStore,
-    usePregnancyOnboardingStore,
-    useKidsOnboardingStore,
-  ]
-  for (const store of inMemory) {
-    const initial = (store as unknown as { getInitialState?: () => unknown }).getInitialState?.()
-    if (initial) {
-      ;(store as unknown as { setState: (s: unknown, replace: true) => void }).setState(initial, true)
-    }
-  }
+  resetUserStores()
+  await clearPin().catch(() => {})
 
   router.replace('/(auth)/welcome')
 }
