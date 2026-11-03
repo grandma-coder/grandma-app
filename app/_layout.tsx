@@ -348,8 +348,12 @@ export default function RootLayout() {
       const linksTimedOut = (linksRes as any).error?.code === 'TIMEOUT'
       const behTimedOut = (behRes as any).error?.code === 'TIMEOUT'
       const allTimedOut = profileTimedOut && linksTimedOut && behTimedOut
-      if (allTimedOut) {
-        console.warn('[auth] every data query timed out — keeping user where they are, not routing to onboarding')
+      // Journeys and children decide "has this user onboarded?". If either read failed (not just
+      // when all three timed out), an empty result is unknown, not "new user" — routing a returning
+      // user into onboarding then re-inserts their children and logs as duplicates.
+      const onboardingSignalFailed = !!(linksRes as any).error || !!(behRes as any).error
+      if (allTimedOut || onboardingSignalFailed) {
+        console.warn('[auth] journeys/children read failed — keeping user where they are, not routing to onboarding')
         setLoadFailed(true)
       } else {
         setLoadFailed(false)
