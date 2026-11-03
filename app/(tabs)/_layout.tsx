@@ -824,6 +824,10 @@ export default function TabLayout() {
   return (
     <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
       <Tabs
+        // Keep the four tab screens attached. With tab animations on, bottom-tabs detaches the
+        // previous screen when its animated progress reaches the end; a quick switch back
+        // interrupted that and left the returning tab detached — a blank Calendar.
+        detachInactiveScreens={false}
         // Light look: tabs shift sideways while they cross-fade (more motion than a plain fade, no
         // hard cut). Diffuse keeps the cut.
         screenOptions={{
