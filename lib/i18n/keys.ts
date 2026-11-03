@@ -4110,4 +4110,6 @@ export interface TranslationKeys {
   cycle_fertility_medium: string
   cycle_fertility_high: string
   cycle_fertility_peak: string
+  preg_onboard_dueDateHint: string
+  onboard_dateHint: string
 }

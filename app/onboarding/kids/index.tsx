@@ -738,6 +738,7 @@ function StepChildDob({
           modalTitle={`${childName}'s birth date`}
           maximumDate={new Date()}
           minimumDate={minDate}
+          emptyHint={t('onboard_dateHint')}
         />
 
         {tooOld && (

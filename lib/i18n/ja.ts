@@ -3828,4 +3828,6 @@ export const ja: TranslationKeys = {
   cycle_fertility_medium: "中くらい",
   cycle_fertility_high: "高い",
   cycle_fertility_peak: "ピーク",
+  preg_onboard_dueDateHint: "出産予定日までスクロールして続けてください。",
+  onboard_dateHint: "ホイールを回して日付を選んでから、続けてください。",
 }

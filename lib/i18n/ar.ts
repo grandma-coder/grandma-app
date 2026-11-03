@@ -3828,4 +3828,6 @@ export const ar: TranslationKeys = {
   cycle_fertility_medium: "متوسطة",
   cycle_fertility_high: "مرتفعة",
   cycle_fertility_peak: "الذروة",
+  preg_onboard_dueDateHint: "مرّري إلى موعد الولادة المتوقع للمتابعة.",
+  onboard_dateHint: "حرّكي العجلة لاختيار التاريخ، ثم تابعي.",
 }

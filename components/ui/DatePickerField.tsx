@@ -61,6 +61,11 @@ interface DatePickerFieldProps {
   inline?: boolean
   /** Where the wheel starts when there's no value yet (defaults to today). */
   defaultDate?: Date
+  /**
+   * Inline only: shown under the wheel while nothing is picked. The wheel already displays a
+   * date before any pick, so a gated Continue needs to say why it waits.
+   */
+  emptyHint?: string
 }
 
 function toISO(d: Date): string {
@@ -100,6 +105,7 @@ export default function DatePickerField({
   modalTitle,
   accentColor,
   inline = false,
+  emptyHint,
   defaultDate,
 }: DatePickerFieldProps) {
   const { colors, isDark } = useTheme()
@@ -176,6 +182,11 @@ export default function DatePickerField({
             {wheel}
           </HandDrawnBox>
         )}
+        {emptyHint && !value ? (
+          <Text style={[styles.emptyHint, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? undefined : font.body }]}>
+            {emptyHint}
+          </Text>
+        ) : null}
       </View>
     )
   }
@@ -366,6 +377,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyHint: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 14,
   },
   inlineLabel: {
     alignSelf: 'flex-start',

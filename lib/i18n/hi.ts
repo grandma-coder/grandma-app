@@ -3828,4 +3828,6 @@ export const hi: TranslationKeys = {
   cycle_fertility_medium: "मध्यम",
   cycle_fertility_high: "अधिक",
   cycle_fertility_peak: "चरम",
+  preg_onboard_dueDateHint: "आगे बढ़ने के लिए अपनी ड्यू डेट तक स्क्रॉल करें।",
+  onboard_dateHint: "तारीख चुनने के लिए व्हील घुमाएँ, फिर आगे बढ़ें।",
 }

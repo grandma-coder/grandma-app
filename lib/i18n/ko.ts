@@ -3828,4 +3828,6 @@ export const ko: TranslationKeys = {
   cycle_fertility_medium: "보통",
   cycle_fertility_high: "높음",
   cycle_fertility_peak: "최고",
+  preg_onboard_dueDateHint: "출산 예정일로 스크롤하면 계속할 수 있어요.",
+  onboard_dateHint: "휠을 돌려 날짜를 고른 뒤 계속하세요.",
 }

@@ -3828,4 +3828,6 @@ export const de: TranslationKeys = {
   cycle_fertility_medium: "Mittel",
   cycle_fertility_high: "Hoch",
   cycle_fertility_peak: "Höhepunkt",
+  preg_onboard_dueDateHint: "Scrolle zu deinem Geburtstermin, um fortzufahren.",
+  onboard_dateHint: "Dreh am Rad, um ein Datum zu wählen, dann geht es weiter.",
 }

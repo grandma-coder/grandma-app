@@ -3828,4 +3828,6 @@ export const it: TranslationKeys = {
   cycle_fertility_medium: "Media",
   cycle_fertility_high: "Alta",
   cycle_fertility_peak: "Picco",
+  preg_onboard_dueDateHint: "Scorri fino alla data presunta per continuare.",
+  onboard_dateHint: "Scorri la rotella per scegliere la data, poi continua.",
 }

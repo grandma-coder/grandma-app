@@ -428,6 +428,7 @@ function StepDueDate({
             modalTitle="Due date"
             minimumDate={new Date()}
             maximumDate={maxDue}
+            emptyHint={t('preg_onboard_dueDateHint')}
           />
 
           {/* Week indicator */}

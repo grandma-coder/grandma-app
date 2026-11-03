@@ -78,6 +78,7 @@ const COPY = {
   stageNote: 'This is your call, not a diagnosis — change it whenever it feels right.',
   lastPeriodQ: 'When did your last period start?',
   lastPeriodSkip: 'Not sure',
+  lastPeriodHint: 'Scroll the wheel to pick a date, then continue.',
   symptomsQ: 'What have you been noticing?',
   symptomsNote: 'Pick anything that feels relevant — or none.',
   hrtQ: 'Using HRT or other treatment?',
@@ -451,6 +452,7 @@ function StepLastPeriod({
             modalTitle={COPY.lastPeriodQ}
             maximumDate={new Date()}
             accentColor={pal.accent}
+            emptyHint={COPY.lastPeriodHint}
           />
         </View>
       )}

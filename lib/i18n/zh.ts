@@ -3828,4 +3828,6 @@ export const zh: TranslationKeys = {
   cycle_fertility_medium: "中",
   cycle_fertility_high: "高",
   cycle_fertility_peak: "高峰",
+  preg_onboard_dueDateHint: "滚动到你的预产期即可继续。",
+  onboard_dateHint: "滚动滚轮选择日期，然后继续。",
 }

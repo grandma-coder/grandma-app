@@ -361,6 +361,7 @@ function StepLastPeriod({
             modalTitle={t('cycleOnboarding_modalLastPeriod')}
             maximumDate={new Date()}
             minimumDate={new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)}
+            emptyHint={t('onboard_dateHint')}
           />
         </View>
       )}
