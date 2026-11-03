@@ -1557,7 +1557,7 @@ function ArticleDetailModal({
   const Icon = meta.icon
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
       <View style={s.modalOverlay}>
         <Pressable style={s.modalBackdrop} onPress={onClose} />
         <View style={s.modalSheet}>
@@ -1739,7 +1739,7 @@ function InsightDetailModal({
   const DetailIcon = config.detailIcon
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
       <View style={s.modalOverlay}>
         <Pressable style={s.modalBackdrop} onPress={onClose} />
         <View style={s.modalSheet}>

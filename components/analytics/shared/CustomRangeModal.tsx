@@ -87,7 +87,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
     const dCol = dt.colors
     const acc = getDiffuseAccent(mode, dt.isDark)
     return (
-      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
         <Pressable style={styles.overlay} onPress={onClose}>
           <Pressable
             style={[
@@ -167,7 +167,7 @@ export function CustomRangeModal({ visible, initialFrom, initialTo, onClose, onA
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable
           style={[

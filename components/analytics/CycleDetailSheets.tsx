@@ -26,6 +26,7 @@ import { MiniLineChart, BeadedThread } from './shared/MiniCharts'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import { useTranslation, t as translate, type TranslationKey } from '../../lib/i18n'
 import { appIntlLocale } from '../../lib/cycleLogForms'
+import { SheetModal } from '../ui/SheetModal'
 
 const MONO = 'SpaceMono_400Regular'
 const HAIR = StyleSheet.hairlineWidth * 2
@@ -162,9 +163,9 @@ function LightSheet({ visible, onClose, title, sticker, tone, children }: {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+    // Sheet motion shared with every log sheet: fading backdrop, eased rise, played-out close, drag to close.
+    <SheetModal visible={visible} onClose={onClose} avoidKeyboard={false}>
+      {(dragZone) => (
         <View
           style={{
             maxHeight: SCREEN_H * 0.88,
@@ -175,7 +176,7 @@ function LightSheet({ visible, onClose, title, sticker, tone, children }: {
             borderColor: colors.text,
           }}
         >
-          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+          <View {...dragZone} style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
           </View>
           <View style={{ paddingHorizontal: 20 }}>
@@ -188,8 +189,8 @@ function LightSheet({ visible, onClose, title, sticker, tone, children }: {
             {children}
           </ScrollView>
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

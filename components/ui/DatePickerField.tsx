@@ -266,7 +266,7 @@ export default function DatePickerField({
       ) : null}
       {trigger}
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}

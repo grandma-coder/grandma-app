@@ -193,7 +193,7 @@ export function AvatarPickerModal({
   const { t } = useTranslation()
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <Pressable onPress={onClose} style={styles.backdrop}>
         <Pressable
           onPress={(e) => e.stopPropagation()}

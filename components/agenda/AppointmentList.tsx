@@ -151,7 +151,7 @@ export function AppointmentList({ appointments, selectedDate, onAdd }: Appointme
 
       <Modal
         visible={showAdd}
-        animationType="slide"
+        animationType="fade"
         transparent
         onRequestClose={() => setShowAdd(false)}
       >

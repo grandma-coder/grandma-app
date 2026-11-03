@@ -81,7 +81,7 @@ export function LogActivitySheet({ open, onClose, onSelect, title }: Props) {
   const heading = title ?? t('cycleCalendar_logActivity')
 
   return (
-    <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={open} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
       <Pressable style={styles.sheetBackdrop} onPress={onClose} />
       <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : { borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
         <View style={styles.handleWrap}>

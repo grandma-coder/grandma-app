@@ -857,7 +857,7 @@ function DeleteChannelSheet({
   const { t } = useTranslation()
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onCancel}>
       <Pressable style={s.deleteOverlay} onPress={onCancel}>
         <Pressable
           style={[s.deleteSheet, diffuse

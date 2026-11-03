@@ -784,7 +784,7 @@ function LogActivitySheet({
   const ink = colors.text
 
   return (
-    <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={open} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
       <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
       <View style={[styles.fabSheet, siteSheetFrame(colors, insets.bottom + 16)]}>
         <SiteGrabber />
@@ -3315,7 +3315,7 @@ export function KidsCalendar() {
         </DiffuseSheet>
       )}
       {!diffuse && (
-      <Modal visible={kidPickerOpen} transparent animationType="slide" onRequestClose={() => setKidPickerOpen(false)}>
+      <Modal visible={kidPickerOpen} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={() => setKidPickerOpen(false)}>
         <Pressable style={styles.kidPickerOverlay} onPress={() => setKidPickerOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}
@@ -3445,7 +3445,7 @@ export function KidsCalendar() {
       {!diffuse && (
       <Modal
         visible={showRoutineManager}
-        animationType="slide"
+        animationType={diffuse ? 'slide' : 'fade'}
         transparent
         onRequestClose={() => {
           setShowRoutineManager(false)
@@ -3736,7 +3736,7 @@ export function KidsCalendar() {
       {!diffuse && (
       <Modal
         visible={!!selectedLog}
-        animationType="slide"
+        animationType={diffuse ? 'slide' : 'fade'}
         transparent
         onRequestClose={() => { setSelectedLog(null); setEditing(false) }}
       >

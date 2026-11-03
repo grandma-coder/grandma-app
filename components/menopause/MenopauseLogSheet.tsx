@@ -67,7 +67,7 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
       ...(isPeri ? [{ key: 'period', label: t('meno_s_period'), sticker: menoSticker('period'), type: 'period' as MenopauseLogPick }] : []),
     ]
     return (
-      <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+      <Modal visible={open} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
         <Pressable style={styles.backdrop} onPress={onClose} />
         <View
           style={[
@@ -113,7 +113,7 @@ export function MenopauseLogSheet({ open, onClose, onPick, isPeri, title }: Prop
   }
 
   return (
-    <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={open} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={[styles.sheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : null]}>
         <View style={styles.handleWrap}>

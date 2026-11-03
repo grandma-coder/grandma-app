@@ -353,7 +353,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={diffuse ? 'slide' : 'fade'}
       onRequestClose={() => {
         if (selectedPrep) setSelectedPrep(null)
         else onClose()

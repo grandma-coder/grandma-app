@@ -624,7 +624,7 @@ export default function MemoriesScreen() {
       )}
 
       {/* ─── Add Memory Sheet ──────────────────────────────────────── */}
-      <Modal visible={showAddSheet} animationType="slide" presentationStyle="pageSheet">
+      <Modal visible={showAddSheet} animationType={diffuse ? 'slide' : 'fade'} presentationStyle="pageSheet">
         <View style={[styles.sheetRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
           <View style={[styles.sheetHeader, { paddingTop: insets.top + 8 }]}>
             {diffuse ? (

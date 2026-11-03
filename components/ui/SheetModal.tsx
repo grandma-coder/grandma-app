@@ -40,6 +40,7 @@ export function SheetModal({ visible, onClose, children, backdropColor = BACKDRO
   const backdrop = useRef(new Animated.Value(0)).current
   const offset = useRef(new Animated.Value(screenH)).current
   const drag = useRef(new Animated.Value(0)).current
+  const shown = useRef(false)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
@@ -48,19 +49,27 @@ export function SheetModal({ visible, onClose, children, backdropColor = BACKDRO
       // Park the sheet below and the backdrop clear; the entrance starts in the Modal's onShow —
       // starting here lost the first ~250ms to the Modal's own presentation, so the sheet popped.
       drag.setValue(0)
-      offset.setValue(reduce ? 0 : screenH * 0.6)
-      backdrop.setValue(0)
+      if (shown.current) {
+        // Reopened while the Modal is still presented (e.g. during the close animation): onShow
+        // won't fire again, so ease back in from wherever it is.
+        animateIn()
+      } else {
+        offset.setValue(reduce ? 0 : screenH * 0.6)
+        backdrop.setValue(0)
+      }
       setMounted(true)
     } else if (mounted) {
       Animated.parallel([
         Animated.timing(backdrop, { toValue: 0, duration: OUT_MS, easing: Easing.in(Easing.quad), useNativeDriver: true }),
         Animated.timing(offset, { toValue: reduce ? 0 : screenH * 0.6, duration: reduce ? 0 : OUT_MS, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
-      ]).start(() => setMounted(false))
+      ]).start(({ finished }) => {
+        if (finished) { shown.current = false; setMounted(false) }
+      })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible])
 
-  const animateIn = () => {
+  function animateIn() {
     Animated.parallel([
       Animated.timing(backdrop, { toValue: 1, duration: reduce ? 160 : 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       Animated.timing(offset, { toValue: 0, duration: reduce ? 0 : IN_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
@@ -98,7 +107,7 @@ export function SheetModal({ visible, onClose, children, backdropColor = BACKDRO
   )
 
   return (
-    <Modal visible transparent animationType="none" statusBarTranslucent onShow={animateIn} onRequestClose={onClose}>
+    <Modal visible transparent animationType="none" statusBarTranslucent onShow={() => { shown.current = true; animateIn() }} onRequestClose={onClose}>
       {avoidKeyboard ? (
         <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {sheet}

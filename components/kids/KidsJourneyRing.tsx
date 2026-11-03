@@ -712,7 +712,7 @@ function LeapDetailModal({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
       <View style={modalStyles.overlay}>
         <View style={[
           modalStyles.sheet,

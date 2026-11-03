@@ -103,6 +103,7 @@ import {
   type PregnancyWeekFacts,
   type PregnancyWeekArea,
 } from '../../lib/pregnancyWeekFacts'
+import { SheetModal } from '../ui/SheetModal'
 
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
@@ -130,9 +131,9 @@ function LightSheet({ visible, onClose, height, children }: {
 }) {
   const { colors } = useTheme()
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+    // Sheet motion shared with every log sheet: fading backdrop, eased rise, played-out close, drag to close.
+    <SheetModal visible={visible} onClose={onClose} avoidKeyboard={false}>
+      {(dragZone) => (
         <View
           style={[
             styles.modalSheet,
@@ -147,13 +148,13 @@ function LightSheet({ visible, onClose, height, children }: {
             },
           ]}
         >
-          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
+          <View {...dragZone} style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 8 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.text, opacity: 0.25 }} />
           </View>
           {children}
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 
@@ -3018,7 +3019,7 @@ function ScoreInfoModal({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View

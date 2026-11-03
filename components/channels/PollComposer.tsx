@@ -71,7 +71,7 @@ export function PollComposer({ visible, channelId, onClose, onCreated }: Props) 
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={[styles.sheet, { backgroundColor: diffuse ? dt.colors.bg : colors.bg, paddingBottom: insets.bottom + 16, borderTopColor: diffuse ? line : colors.text }, !diffuse && { borderTopWidth: 2.5, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
           <View style={styles.header}>

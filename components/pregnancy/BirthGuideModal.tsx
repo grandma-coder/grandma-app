@@ -211,7 +211,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
       <Modal
         visible={visible && detailTopic === null}
         transparent
-        animationType="slide"
+        animationType={diffuse ? 'slide' : 'fade'}
         onRequestClose={handleClose}
       >
         <View style={styles.overlay}>

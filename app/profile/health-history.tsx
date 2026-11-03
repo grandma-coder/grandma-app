@@ -617,7 +617,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
   const Icon = cfg.icon
 
   return (
-    <Modal visible animationType="slide" presentationStyle="overFullScreen">
+    <Modal visible animationType={diffuse ? 'slide' : 'fade'} presentationStyle="overFullScreen">
       <View style={[styles.detailRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
         <View style={[styles.detailHeader, { paddingTop: insets.top + 8 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

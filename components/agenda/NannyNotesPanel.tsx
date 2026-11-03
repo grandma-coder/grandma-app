@@ -104,7 +104,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
       )}
 
       {/* ─── Compose Modal ─── */}
-      <Modal visible={showCompose} animationType="slide" transparent>
+      <Modal visible={showCompose} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             {/* Handle bar */}

@@ -96,7 +96,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
   }
 
   return (
-    <Modal visible={visible} presentationStyle="pageSheet" animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} presentationStyle="pageSheet" animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <SafeAreaView style={[styles.container, { backgroundColor: paperBg }]} edges={['top']}>
 
         {/* Header */}

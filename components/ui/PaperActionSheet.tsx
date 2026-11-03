@@ -25,6 +25,7 @@ import { type ReactNode } from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, radius, spacing, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { SheetModal } from './SheetModal'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
 
 export interface ActionSheetItem {
@@ -67,9 +68,9 @@ function CurrentActionSheet({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onRequestClose}>
-      <Pressable style={styles.backdrop} onPress={onRequestClose} />
-      <View pointerEvents="box-none" style={styles.anchor}>
+    // Backdrop fades, card eases up, both play out on close (SheetModal).
+    <SheetModal visible={visible} onClose={onRequestClose} avoidKeyboard={false} backdropColor="rgba(20,19,19,0.4)">
+      {(dragZone) => (
         <View
           style={[
             styles.card,
@@ -81,7 +82,9 @@ function CurrentActionSheet({
             },
           ]}
         >
-          <View style={[styles.handle, { backgroundColor: colors.text, opacity: 0.25 }]} />
+          <View {...dragZone} style={{ alignSelf: 'stretch', alignItems: 'center' }}>
+            <View style={[styles.handle, { backgroundColor: colors.text, opacity: 0.25 }]} />
+          </View>
 
           {title ? (
             <Text style={[styles.title, siteStyles.title, { color: colors.text, fontFamily: font.display }]}>{title}</Text>
@@ -123,8 +126,8 @@ function CurrentActionSheet({
             </Text>
           </Pressable>
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

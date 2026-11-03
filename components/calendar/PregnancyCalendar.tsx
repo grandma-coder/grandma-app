@@ -514,7 +514,7 @@ function QuickLogSheet({
 
   if (!diffuse) {
     return (
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
         <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
         <View style={[styles.fabSheet, siteSheetFrame(colors, insets.bottom + 16), { paddingHorizontal: 0, paddingTop: 0 }]}>
           <SiteGrabber />
@@ -550,7 +550,7 @@ function QuickLogSheet({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
       <Pressable style={styles.fabSheetBackdrop} onPress={onClose} />
       <View style={[styles.fabSheet, { backgroundColor: bg, paddingBottom: insets.bottom + 16 }, diffuse ? { borderTopWidth: 1, borderColor: dt.colors.line } : null]}>
         <View style={styles.fabSheetHandle}>
@@ -938,7 +938,7 @@ function RoutineManager({
     return (
       <>
         {/* ─── Manager sheet ─── */}
-        <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+        <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
           <View style={styles.modalOverlay}>
             <View style={[siteSheetFrame(colors, insets.bottom + 20), { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '90%' }]}>
               <SiteGrabber />
@@ -996,7 +996,7 @@ function RoutineManager({
         </Modal>
 
         {/* ─── Edit routine sheet ─── */}
-        <Modal visible={!!editingRoutine} animationType="slide" transparent onRequestClose={cancelEdit}>
+        <Modal visible={!!editingRoutine} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={cancelEdit}>
           <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={cancelEdit}>
             <Pressable onPress={(e) => e.stopPropagation()} style={siteSheetFrame(colors, insets.bottom + 16)}>
               <SiteGrabber />
@@ -1044,7 +1044,7 @@ function RoutineManager({
   return (
     <>
       {/* ─── Manager sheet (sticker-on-paper) ─────────────────────── */}
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
         <View style={styles.modalOverlay}>
           <View
             style={{

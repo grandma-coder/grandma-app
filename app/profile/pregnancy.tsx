@@ -248,7 +248,7 @@ function EditFieldModal({ visible, label, value, onSave, onClose, multiline = fa
   useEffect(() => { setText(value) }, [value])
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <View style={styles.editOverlay}>
         <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
           <ModalHeader label={label} onClose={onClose} stickers={st} />
@@ -461,7 +461,7 @@ function OptionsSheet({ visible, label, value, options, onSave, onClose }: Optio
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <View style={styles.editOverlay}>
         <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
           <ModalHeader label={label} onClose={onClose} stickers={st} />
@@ -583,7 +583,7 @@ function WheelSheet({ visible, label, value, options, unit, onSave, onClose }: W
   }, [visible, value, options])
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <View style={styles.editOverlay}>
         <View style={[styles.editSheet, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1 }, !diffuse && { borderWidth: 0, borderTopWidth: 2.5, borderColor: colors.text, borderTopLeftRadius: 26, borderTopRightRadius: 26 }]}>
           <ModalHeader label={label} onClose={onClose} stickers={st} />

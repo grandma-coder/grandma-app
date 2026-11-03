@@ -622,7 +622,7 @@ function ContactFormModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={diffuse ? 'slide' : 'fade'}
       presentationStyle="pageSheet"
       onRequestClose={onClose}
       onShow={resetForm}
@@ -904,7 +904,7 @@ function PlanFormModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={diffuse ? 'slide' : 'fade'}
       presentationStyle="pageSheet"
       onRequestClose={onClose}
       onShow={resetForm}

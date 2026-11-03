@@ -1465,7 +1465,7 @@ function ShareChannelSheet({
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <Pressable style={styles.shareOverlay} onPress={onClose}>
         <Pressable
           style={[styles.shareSheet, diffuse
@@ -1530,7 +1530,7 @@ function LeaveChannelSheet({
   const { t } = useTranslation()
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onCancel}>
       <Pressable style={styles.shareOverlay} onPress={onCancel}>
         <Pressable
           style={[styles.shareSheet, diffuse

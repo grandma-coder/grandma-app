@@ -1563,7 +1563,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           </View>
         </DiffuseSheet>
       ) : (
-      <Modal visible={overflowKidsVisible} transparent animationType="slide">
+      <Modal visible={overflowKidsVisible} transparent animationType={diffuse ? 'slide' : 'fade'}>
         <Pressable style={s.modalOverlay} onPress={() => setOverflowKidsVisible(false)}>
           <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
             <View style={s.modalHeader}>
@@ -1679,7 +1679,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       </ScrollView>
 
       {/* ─── Custom Range Picker Modal ────────────────────────── */}
-      <Modal visible={customPickerVisible} transparent animationType="slide">
+      <Modal visible={customPickerVisible} transparent animationType={diffuse ? 'slide' : 'fade'}>
         <Pressable
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
           onPress={() => setCustomPickerVisible(false)}
@@ -3866,7 +3866,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
       <View style={s.modalOverlay}>
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           {/* Header */}
@@ -3956,7 +3956,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
       <View style={s.modalOverlay}>
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={t('kids_home_mood_trends_title')} sticker="face3" tone={StickerPalette.yellowSoft} childName={childName} childColor={childColor} onClose={onClose} />
@@ -4320,7 +4320,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
       <Pressable style={s.modalOverlay} onPress={onClose}>
         <Pressable onPress={(e) => e.stopPropagation()} style={[s.modalContent, { backgroundColor: colors.bg, maxHeight: '78%' }]}>
           <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 6 }}>
@@ -5107,7 +5107,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
       <View style={s.modalOverlay}>
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={stage === 'liquid' ? 'Feeding' : 'Nutrition'} sticker="bottle" tone={StickerPalette.pinkSoft} childName={childName} childColor={childColor} onClose={onClose} />
@@ -5560,7 +5560,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
       <View style={s.modalOverlay}>
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={t('kids_home_activities_modal_title')} sticker="shoe" tone={StickerPalette.greenSoft} childName={childName} childColor={childColor} onClose={onClose} />
@@ -5730,7 +5730,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
     const dCol = dt.colors
     const acc = getDiffuseAccent('kids', dt.isDark)
     return (
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
         <View style={s.modalOverlay}>
           <View style={[s.gsSheet, { backgroundColor: dCol.bg, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dCol.line2 }]}>
 
@@ -5832,7 +5832,7 @@ function GoalSettingModal({ visible, onClose, childId, childName, birthDate, onS
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
       <View style={s.modalOverlay}>
         <View style={[s.gsSheet, { backgroundColor: colors.bg }]}>
 
@@ -6370,7 +6370,7 @@ function RemindersModal({
   }, [archived])
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent onRequestClose={onClose}>
       <View style={[s.reminderModalOverlay]}>
       <View style={[s.reminderModal, { backgroundColor: diffuse ? dt.colors.bg : (isDark ? colors.bg : '#FFFEF8') }]}>
         {/* Drag handle */}
@@ -6824,7 +6824,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
     const heroBloom = isDone ? stickers.green : acc
     const HeroGlyph = isDone ? PartyPopper : Layers
     return (
-      <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+      <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent={false} onRequestClose={onClose}>
         <View style={{ flex: 1, backgroundColor: dCol.bg }}>
           {/* Header — hairline X + serif title + mono sub */}
           <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: dCol.line2 }}>
@@ -6912,7 +6912,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent={false} onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: paperBg }}>
         {/* Header — paper with soft divider */}
         <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.border }}>
@@ -7403,7 +7403,7 @@ function LeapFocusSheet({ leapIdx, currentLeap, isCurrentActive, currentPhaseInd
   }
 
   return (
-    <Modal visible animationType="slide" transparent={false} onRequestClose={onClose}>
+    <Modal visible animationType={diffuse ? 'slide' : 'fade'} transparent={false} onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: paperBg }}>
         {/* Header — paper */}
         <View style={{ paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: line }}>

@@ -199,7 +199,7 @@ export function BirthDetailModal({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={diffuse ? 'slide' : 'fade'}
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>

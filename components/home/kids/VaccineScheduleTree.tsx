@@ -90,7 +90,7 @@ function VaccineInfoModal({ visible, onClose, vaccineName, doseLabel, info, acce
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} transparent>
       <Pressable style={s.modalOverlay} onPress={onClose}>
         <Pressable
           onPress={(e) => e.stopPropagation()}

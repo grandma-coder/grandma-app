@@ -105,7 +105,7 @@ export function AppointmentDetailModal({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={diffuse ? 'slide' : 'fade'}
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>

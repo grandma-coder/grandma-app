@@ -61,7 +61,7 @@ export function DailyMessageModal({ visible, onClose }: Props) {
   if (!todayQuestion) return null
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <View style={[styles.fill, { backgroundColor: colors.bg, paddingTop: insets.top + 12 }]}>
         {diffuse ? (
           <Pressable onPress={onClose} style={[styles.close, { borderColor: colors.border }]} hitSlop={12}>

@@ -482,7 +482,7 @@ export default function SettingsScreen() {
       {/* ── Language Picker Modal ── */}
       <Modal
         visible={langModalVisible}
-        animationType="slide"
+        animationType={diffuse ? 'slide' : 'fade'}
         presentationStyle="pageSheet"
         onRequestClose={() => setLangModalVisible(false)}
       >
