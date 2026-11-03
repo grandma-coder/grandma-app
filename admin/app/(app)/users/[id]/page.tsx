@@ -1,0 +1,37 @@
+import Link from "next/link"
+import { notFound } from "next/navigation"
+import { createContext } from "@/server/context"
+import { appRouter } from "@/server/routers"
+import { UserDetail } from "./UserDetail"
+
+/**
+ * User detail — PII, admin-only, audit-logged. We call the tRPC router
+ * server-side via a caller so the piiProcedure gate AND writeAudit both run
+ * (the audit row records who viewed which user). The rich profile UI + the
+ * promote action live in the UserDetail client component.
+ */
+export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const ctx = await createContext()
+
+  if (!ctx.allowed || ctx.role !== "admin") {
+    return (
+      <main className="mx-auto max-w-3xl p-8">
+        <h1 className="display text-xl font-semibold text-fg-primary">Admin only</h1>
+        <p className="mt-2 text-fg-secondary">User detail contains personal data and requires the admin role.</p>
+        <Link href="/users" className="mt-4 inline-block text-sm text-accent-500 hover:text-accent-600">← back to users</Link>
+      </main>
+    )
+  }
+
+  const caller = appRouter.createCaller(ctx)
+  const profile = (await caller.users.detail({ userId: id })) as Record<string, unknown> | null
+  if (!profile) notFound()
+
+  return (
+    <main className="mx-auto max-w-5xl px-8 py-8">
+      <Link href="/users" className="text-sm text-fg-tertiary hover:text-fg-secondary">← back to users</Link>
+      <UserDetail userId={id} profile={profile} />
+    </main>
+  )
+}

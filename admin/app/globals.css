@@ -1,0 +1,266 @@
+@import "tailwindcss";
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Design tokens — mirrored from mother-internal-dashboard.
+   Core token system only (shared + dark + light). The mother dashboard's extra
+   canvases (brand/navy/black/pink/mint), legacy-hex compat shims, and the
+   `central` skin are intentionally omitted — this is a clean, new app that
+   consumes the tokens directly.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Shared tokens (theme-independent) ─────────────────────────────────────── */
+:root {
+  --font-sans:    var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), system-ui, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  /* Radii */
+  --radius-xs: 4px;  --radius-sm: 6px;  --radius-md: 8px;
+  --radius-lg: 10px; --radius-xl: 12px; --radius-2xl: 16px; --radius-full: 9999px;
+
+  /* Easing / motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms; --duration: 200ms; --duration-slow: 500ms;
+
+  /* Mother brand raw palette */
+  --mother-blue:      #5A5FFE;
+  --mother-blue-deep: #4A4FE4;
+  --mother-blue-soft: #7B7FFF;
+  --mother-green:     #00CC9A;
+  --brand-pink:       #FF52A4;
+  --brand-yellow:     #FED92A;
+  --brand-mint:       #04D7AB;
+  --brand-orange:     #FD7743;
+}
+
+/* ─── Dark theme ────────────────────────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-root:       #0d0e17;
+  --bg-sidebar:    #0a0b12;
+  --bg-card:       #14151f;
+  --bg-card-hover: #1a1b2e;
+  --bg-deep:       #0a0b14;
+  --bg-tooltip:    #1c1d2e;
+
+  --border-subtle:  rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.10);
+  --border-strong:  rgba(255,255,255,0.20);
+
+  --fg-primary:   #ffffff;
+  --fg-secondary: rgba(255,255,255,0.70);
+  --fg-tertiary:  rgba(255,255,255,0.40);
+  --fg-muted:     rgba(255,255,255,0.25);
+  --fg-inverse:   #0d0e17;
+
+  --accent-400: #7B7FFF; --accent-500: #5A5FFE; --accent-600: #4A4FE4;
+  --accent-glow: rgba(90,95,254,0.18);
+
+  --success-400: #04D7AB; --success-500: #00CC9A;
+  --warning-400: #FED92A; --warning-500: #FD7743;
+  --danger-400:  #FF52A4; --danger-500:  #FF006B;
+  --info-400:    #7B7FFF;
+
+  --pill-success-bg: rgba(0,204,154,0.15);  --pill-success-fg: #04D7AB;
+  --pill-warning-bg: rgba(253,119,67,0.15); --pill-warning-fg: #FD7743;
+  --pill-danger-bg:  rgba(255,0,107,0.15);  --pill-danger-fg:  #FF52A4;
+  --pill-info-bg:    rgba(90,95,254,0.15);  --pill-info-fg:    #7B7FFF;
+
+  --chart-1: #5A5FFE; --chart-2: #00CC9A; --chart-3: #FF52A4; --chart-4: #FED92A;
+  --chart-5: #04D7AB; --chart-6: #FD7743; --chart-7: #7B7FFF; --chart-8: #FF006B;
+  --chart-grid: rgba(255,255,255,0.05); --chart-axis: rgba(255,255,255,0.30);
+
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.30);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.35);
+  --shadow-xl:  0 20px 40px -10px rgba(0,0,0,0.50);
+  --scrollbar-thumb: rgba(255,255,255,0.10);
+  --scrollbar-track: transparent;
+}
+
+/* ─── Light theme (default for this app) ────────────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-root:       #f7f7fb;
+  --bg-sidebar:    #ffffff;
+  --bg-card:       #ffffff;
+  --bg-card-hover: #fafafd;
+  --bg-deep:       #f1f1f6;
+  --bg-tooltip:    #1c1d2e;
+
+  --border-subtle:  rgba(13,14,23,0.05);
+  --border-default: rgba(13,14,23,0.08);
+  --border-strong:  rgba(13,14,23,0.14);
+
+  --fg-primary:   #0d0e17;
+  --fg-secondary: rgba(13,14,23,0.72);
+  --fg-tertiary:  rgba(13,14,23,0.52);
+  --fg-muted:     rgba(13,14,23,0.38);
+  --fg-inverse:   #ffffff;
+
+  --accent-400: #5A5FFE; --accent-500: #4A4FE4; --accent-600: #3A3FC4;
+  --accent-glow: rgba(74,79,228,0.10);
+
+  --success-400: #00CC9A; --success-500: #00A77E;
+  --warning-400: #D9A800; --warning-500: #C05A20;
+  --danger-400:  #E63F87; --danger-500:  #D6004F;
+  --info-400:    #4A4FE4;
+
+  --pill-success-bg: rgba(0,167,126,0.12);  --pill-success-fg: #006B52;
+  --pill-warning-bg: rgba(192,90,32,0.12);  --pill-warning-fg: #8A3E10;
+  --pill-danger-bg:  rgba(214,0,79,0.12);   --pill-danger-fg:  #9E0038;
+  --pill-info-bg:    rgba(74,79,228,0.10);  --pill-info-fg:    #3A3FC4;
+
+  --chart-1: #4A4FE4; --chart-2: #00A77E; --chart-3: #D6004F; --chart-4: #D9A800;
+  --chart-5: #00A77E; --chart-6: #C05A20; --chart-7: #3C468F; --chart-8: #D6004F;
+  --chart-grid: rgba(13,14,23,0.06); --chart-axis: rgba(13,14,23,0.45);
+
+  --shadow-sm:  0 1px 2px rgba(13,14,23,0.04);
+  --shadow-md:  0 4px 12px rgba(13,14,23,0.06);
+  --shadow-xl:  0 20px 40px -10px rgba(13,14,23,0.10);
+  --scrollbar-thumb: rgba(13,14,23,0.14);
+  --scrollbar-track: transparent;
+}
+
+/* ─── Tailwind v4 theme mapping — exposes tokens as utility classes ──────────── */
+@theme inline {
+  --color-root:        var(--bg-root);
+  --color-sidebar:     var(--bg-sidebar);
+  --color-card:        var(--bg-card);
+  --color-card-hover:  var(--bg-card-hover);
+  --color-deep:        var(--bg-deep);
+
+  --color-border-subtle:  var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong:  var(--border-strong);
+
+  --color-fg-primary:   var(--fg-primary);
+  --color-fg-secondary: var(--fg-secondary);
+  --color-fg-tertiary:  var(--fg-tertiary);
+  --color-fg-muted:     var(--fg-muted);
+
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+
+  --color-success: var(--success-400);
+  --color-warning: var(--warning-400);
+  --color-danger:  var(--danger-400);
+
+  --font-sans:    var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono:    var(--font-mono);
+
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
+html { background: var(--bg-root); }
+body {
+  background: var(--bg-root);
+  color: var(--fg-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-default); }
+
+/* Reusable status pill (mirrors mother dashboard semantics) */
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 500; }
+.pill-success { background: var(--pill-success-bg); color: var(--pill-success-fg); }
+.pill-warning { background: var(--pill-warning-bg); color: var(--pill-warning-fg); }
+.pill-danger  { background: var(--pill-danger-bg);  color: var(--pill-danger-fg); }
+.pill-info    { background: var(--pill-info-bg);    color: var(--pill-info-fg); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   "Central" skin — the Mother internal-dashboard app shell.
+   Mirrored from mother-internal-dashboard's [data-skin="central"] block.
+   Navy accent (#14213D), grey sidebar, pill nav, bordered profile card.
+   Font swap: Mother's licensed Safiro → our Space Grotesk (display); Geist →
+   Inter (body). Applied via data-skin="central" on <html>.
+   ════════════════════════════════════════════════════════════════════════════ */
+[data-skin="central"] {
+  --c-accent:    #14213D;
+  --c-accent-fg: #FFFFFF;
+  --c-bg:        #FFFFFF;
+  --c-bg-2:      #FAFAFA;
+  --c-surface:   #FFFFFF;
+  --c-surface-2: #F7F7F7;
+  --c-line:      rgba(0,0,0,0.08);
+  --c-line-2:    rgba(0,0,0,0.14);
+  --c-fg:        #0B0B0B;
+  --c-fg-2:      #1F1F1F;
+  --c-fg-3:      #4A4A4A;
+  --c-fg-4:      #8A8A8A;
+  --c-fg-5:      #B5B5B5;
+
+  --c-font-display: var(--font-space-grotesk), system-ui, sans-serif;
+  --c-font-body:    var(--font-inter), system-ui, -apple-system, sans-serif;
+  --c-font-mono:    ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Re-bind the shared tokens so token utilities adopt the Central palette */
+  color-scheme: light;
+  --bg-root: var(--c-bg); --bg-sidebar: var(--c-bg-2);
+  --bg-card: var(--c-surface); --bg-card-hover: var(--c-surface-2); --bg-deep: var(--c-surface-2);
+  --border-subtle: rgba(0,0,0,0.04); --border-default: var(--c-line); --border-strong: var(--c-line-2);
+  --fg-primary: var(--c-fg); --fg-secondary: var(--c-fg-2); --fg-tertiary: var(--c-fg-3); --fg-muted: var(--c-fg-4);
+  --accent-400: #2A3760; --accent-500: var(--c-accent); --accent-600: #0E1729;
+  --pill-info-bg: rgba(20,33,61,0.08); --pill-info-fg: #14213D;
+  --chart-1: #14213D; --chart-2: #4A4FE4; --chart-3: #00A77E; --chart-4: #C05A20;
+  --chart-5: #D6004F; --chart-6: #7AA2F7; --chart-7: #BB9AF7; --chart-8: #E0AF68;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04); --shadow-md: 0 4px 16px rgba(0,0,0,0.05);
+  background: var(--c-bg); color: var(--c-fg-2);
+}
+[data-skin="central"] body { font-family: var(--c-font-body); }
+
+/* App shell — sidebar + content grid */
+[data-skin="central"] .central-app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; background: var(--c-bg); }
+
+[data-skin="central"] .central-sidebar {
+  background: var(--c-bg-2); border-right: 1px solid var(--c-line);
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow: hidden; padding-top: 12px;
+}
+[data-skin="central"] .central-sidebar .brand { display: flex; gap: 10px; align-items: center; height: 64px; padding: 0 16px; flex-shrink: 0; }
+[data-skin="central"] .central-sidebar .brand-mark {
+  width: 28px; height: 28px; border-radius: 999px; background: var(--c-accent); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+  font-family: var(--c-font-display); flex-shrink: 0;
+}
+[data-skin="central"] .central-sidebar .brand-logo { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; }
+[data-skin="central"] .central-sidebar .brand-name { font-family: var(--c-font-display); font-size: 15px; line-height: 1; color: var(--c-fg); letter-spacing: -0.01em; font-weight: 700; }
+[data-skin="central"] .central-nav { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+[data-skin="central"] .nav-section-header {
+  padding: 14px 10px 6px; font-family: var(--c-font-mono); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.10em; color: var(--c-fg-5);
+}
+[data-skin="central"] .central-sidebar .nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 999px;
+  color: var(--c-fg-3); font-size: 13px; font-weight: 500; letter-spacing: -0.005em;
+  transition: background 0.12s, color 0.12s; text-decoration: none;
+}
+[data-skin="central"] .central-sidebar .nav-item span { flex: 1; }
+[data-skin="central"] .central-sidebar .nav-item:hover { background: rgba(0,0,0,0.04); color: var(--c-fg); }
+[data-skin="central"] .central-sidebar .nav-item.on { background: var(--c-accent); color: var(--c-accent-fg); }
+[data-skin="central"] .central-sidebar .nav-item.on svg { color: var(--c-accent-fg); }
+[data-skin="central"] .central-sidebar .nav-item.disabled { color: var(--c-fg-5); pointer-events: none; }
+
+[data-skin="central"] .sidebar-foot {
+  flex-shrink: 0; padding: 10px 12px 14px; background: var(--c-bg-2);
+  border-top: 1px solid var(--c-line); display: flex; flex-direction: column; gap: 8px;
+}
+[data-skin="central"] .user-card {
+  padding: 4px 12px 4px 4px; border-radius: 999px; border: 1px solid var(--c-line);
+  display: flex; align-items: center; gap: 8px; width: fit-content; max-width: 100%;
+}
+[data-skin="central"] .user-card .uc-name { font-size: 12px; color: var(--c-fg); font-weight: 500; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-skin="central"] .user-card .uc-role { font-size: 10px; color: var(--c-fg-4); font-family: var(--c-font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+
+[data-skin="central"] .central-content { min-width: 0; }
+[data-skin="central"] .display { font-family: var(--c-font-display); }
