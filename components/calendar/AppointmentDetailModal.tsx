@@ -85,6 +85,9 @@ export function AppointmentDetailModal({
   const hairline = colors.border
   const inkText = colors.text
   const muted = colors.textMuted
+  // Site look: cards, chips and the close button carry the ink outline like every other sheet.
+  const line = diffuse ? hairline : inkText
+  const lineW = diffuse ? 1 : 1.5
 
   // Per-status accent, from the sticker palette (soft wash + dark ink). The
   // "next/soon" status is the only place lavender appears as a fill, and even
@@ -126,10 +129,10 @@ export function AppointmentDetailModal({
             onPress={onClose}
             style={({ pressed }) => [
               styles.closeBtn,
-              { backgroundColor: paper, borderColor: hairline, opacity: pressed ? 0.7 : 1 },
+              { backgroundColor: paper, borderColor: line, borderWidth: lineW, opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            <X size={16} color={muted} strokeWidth={2.5} />
+            <X size={16} color={diffuse ? muted : inkText} strokeWidth={2.5} />
           </Pressable>
 
           {appointment && (
@@ -143,11 +146,11 @@ export function AppointmentDetailModal({
               <View
                 style={[
                   styles.hero,
-                  { backgroundColor: accent.soft, borderColor: hairline, borderRadius: radius.lg },
+                  { backgroundColor: accent.soft, borderColor: line, borderWidth: lineW, borderRadius: radius.lg },
                   shadows.card,
                 ]}
               >
-                <View style={[styles.heroIcon, { backgroundColor: paper, borderColor: hairline }]}>
+                <View style={[styles.heroIcon, { backgroundColor: paper, borderColor: line, borderWidth: lineW }]}>
                   {status === 'done'
                     ? <Check size={24} color={accent.ink} strokeWidth={2.6} />
                     : <Character name="checkup" size={24} color={accent.ink} />
@@ -160,7 +163,7 @@ export function AppointmentDetailModal({
                   <Display size={24} color={inkText} style={{ marginTop: 4 }}>
                     {appointment.name}
                   </Display>
-                  <View style={[styles.statusChip, { backgroundColor: paper, borderColor: hairline, borderRadius: radius.full }]}>
+                  <View style={[styles.statusChip, { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.full }]}>
                     <MonoCaps size={11} color={accent.ink}>
                       {STATUS_LABEL[status]}
                     </MonoCaps>
@@ -204,7 +207,7 @@ export function AppointmentDetailModal({
                       key={i}
                       style={[
                         styles.questionRow,
-                        { backgroundColor: paper, borderColor: hairline, borderRadius: radius.md },
+                        { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.md },
                       ]}
                     >
                       {/* Small violet dot — the "specific detail" accent. */}
@@ -238,7 +241,7 @@ export function AppointmentDetailModal({
                     onPress={onAddToLogs}
                     style={({ pressed }) => [
                       styles.secondaryBtn,
-                      { backgroundColor: paper, borderColor: hairline, borderRadius: radius.full, opacity: pressed ? 0.7 : 1 },
+                      { backgroundColor: paper, borderColor: line, borderWidth: lineW, borderRadius: radius.full, opacity: pressed ? 0.7 : 1 },
                     ]}
                   >
                     <Plus size={16} color={inkText} strokeWidth={2.5} />
