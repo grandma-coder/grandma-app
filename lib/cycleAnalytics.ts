@@ -14,6 +14,7 @@ import {
   getChecklistTitle,
   type ChecklistIntent,
 } from './cycleChecklist'
+import { useCycleSettingsStore } from '../store/useCycleSettingsStore'
 
 // ─── Raw row shape ────────────────────────────────────────────────────────
 
@@ -365,21 +366,26 @@ function formatFromCycleDay(cycleStart: string, dayOffset: number): string {
 
 export function useFertileWindow() {
   const { data: history, ...rest } = useCycleHistory()
+  const settings = useCycleSettingsStore()
   if (!history || history.cycles.length === 0) {
     return { ...rest, data: { current: null, history: [] } satisfies FertileWindow }
   }
 
-  const avgLen = history.avg ?? 28
+  // Same config as the home (declared settings win over the measured average), and anchored on the
+  // CURRENT cycle: anchoring on the last logged start left a past window with daysLeft 0 once that
+  // cycle had ended without a new log.
+  const avgLen = settings.cycleLength ?? history.avg ?? 28
   const today = toDateStr(new Date())
   const latestCycle = history.cycles[history.cycles.length - 1]
 
   const info = getCycleInfo(
-    { lastPeriodStart: latestCycle.startDate, cycleLength: avgLen },
+    { lastPeriodStart: latestCycle.startDate, cycleLength: avgLen, periodLength: settings.periodLength, lutealPhase: settings.lutealPhase },
     today
   )
+  const currentCycleStart = formatFromCycleDay(info.ovulationDate, -(info.ovulationDay - 1))
 
-  const currentStart = formatFromCycleDay(latestCycle.startDate, info.fertileStart - 1)
-  const currentEnd = formatFromCycleDay(latestCycle.startDate, info.fertileEnd - 1)
+  const currentStart = formatFromCycleDay(currentCycleStart, info.fertileStart - 1)
+  const currentEnd = formatFromCycleDay(currentCycleStart, info.fertileEnd - 1)
   const todayD = new Date(today + 'T00:00:00')
   const endD = new Date(currentEnd + 'T00:00:00')
   const daysLeft = Math.max(0, Math.round((endD.getTime() - todayD.getTime()) / 86400000))
@@ -390,8 +396,8 @@ export function useFertileWindow() {
     .slice(-4, -1) // last 3 closed cycles
     .filter((c) => c.lengthDays !== null)
     .map((c) => ({
-      start: formatFromCycleDay(c.startDate, (c.lengthDays as number) - 14 - 5 - 1),
-      end: formatFromCycleDay(c.startDate, (c.lengthDays as number) - 14 + 1 - 1),
+      start: formatFromCycleDay(c.startDate, (c.lengthDays as number) - settings.lutealPhase - 5 - 1),
+      end: formatFromCycleDay(c.startDate, (c.lengthDays as number) - settings.lutealPhase + 1 - 1),
       cycleIdx: history.cycles.indexOf(c) + 1,
     }))
 
@@ -580,9 +586,13 @@ export function computeIntercourseStats(logs: CycleLogRow[], history: CycleHisto
   const latest = history.cycles[history.cycles.length - 1]
   if (!latest) return empty
   const start = new Date(latest.startDate + 'T00:00:00')
-  const avgLen = history.avg ?? 28
+  const settings = useCycleSettingsStore.getState()
+  const avgLen = settings.cycleLength ?? history.avg ?? 28
 
-  const info = getCycleInfo({ lastPeriodStart: latest.startDate, cycleLength: avgLen }, toDateStr(new Date()))
+  const info = getCycleInfo(
+    { lastPeriodStart: latest.startDate, cycleLength: avgLen, periodLength: settings.periodLength, lutealPhase: settings.lutealPhase },
+    toDateStr(new Date()),
+  )
   const fertileStartDate = new Date(start.getTime() + (info.fertileStart - 1) * 86400000)
   const fertileEndDate = new Date(start.getTime() + (info.fertileEnd - 1) * 86400000)
 

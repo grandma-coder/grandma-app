@@ -19,6 +19,7 @@ import { getCycleInfo, toDateStr, type CycleConfig } from '../../lib/cycleLogic'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../lib/i18n'
+import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 
 interface Stat {
   label: string
@@ -100,14 +101,16 @@ function useCycleStats(pillarId: PillarId): Stat[] | null {
   if (!PRE_PREG_IDS.has(pillarId)) return null
 
   const { data: history } = useCycleHistory()
+  const settings = useCycleSettingsStore()
   const latest = history?.cycles[history.cycles.length - 1]
   if (!latest) return []
 
+  // Same config as the cycle home: declared settings win over the measured average and defaults.
   const cfg: CycleConfig = {
     lastPeriodStart: latest.startDate,
-    cycleLength: history?.avg ?? 28,
-    periodLength: 5,
-    lutealPhase: 14,
+    cycleLength: settings.cycleLength ?? history?.avg ?? 28,
+    periodLength: settings.periodLength,
+    lutealPhase: settings.lutealPhase,
   }
   const info = getCycleInfo(cfg, toDateStr(new Date()))
 
