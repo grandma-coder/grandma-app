@@ -16,6 +16,7 @@ import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../../components/ui/Typography'
 import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { SiteHeader, SiteEyebrow, useSiteInput } from '../../components/profile/SiteSettingsKit'
+import { useGrandmaChatEnabled, usePaywallEnabled } from '../../store/useFeatureFlags'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -90,11 +91,20 @@ export default function HelpScreen() {
   const cardBg = diffuse ? dt.colors.surface : colors.surface
   const cardBorder = diffuse ? dt.colors.line : colors.border
 
+  // Hide answers about features that are switched off remotely: the AI chat question while
+  // grandma_chat is off, and billing while the paywall is off.
+  const chatOn = useGrandmaChatEnabled()
+  const paywallOn = usePaywallEnabled()
+  const categories = useMemo(() => CATEGORIES
+    .filter((cat) => paywallOn || cat.key !== 'billing')
+    .map((cat) => ({ ...cat, items: cat.items.filter((it) => chatOn || it.qKey !== 'help_q_grandma') }))
+    .filter((cat) => cat.items.length > 0), [chatOn, paywallOn])
+
   // Filter Q/A by query across all categories (matches question OR answer).
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return CATEGORIES
-    return CATEGORIES
+    if (!q) return categories
+    return categories
       .map((cat) => ({
         ...cat,
         items: cat.items.filter((it) => {
@@ -104,7 +114,7 @@ export default function HelpScreen() {
         }),
       }))
       .filter((cat) => cat.items.length > 0)
-  }, [query, t])
+  }, [query, t, categories])
 
   function toggle(id: string) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)

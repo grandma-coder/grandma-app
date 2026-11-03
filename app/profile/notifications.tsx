@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { View, ScrollView, Switch, StyleSheet, Pressable, Platform } from 'react-native'
+import { View, ScrollView, Switch, StyleSheet, Pressable, Platform, Alert } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { useTheme, getModeColor, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
@@ -156,8 +156,21 @@ export default function NotificationsScreen() {
 
   // Apply a change optimistically, then persist (+ reschedule) in the background.
   function apply(next: NotificationPrefs) {
+    const prev = prefs
     setPrefs(next)
-    saveNotificationPrefs(next).catch(() => {})
+    // saveNotificationPrefs returns false on failure (it doesn't throw); ignoring it left the toggle
+    // showing OFF while the server and the local schedule kept the old setting.
+    saveNotificationPrefs(next)
+      .then((ok) => {
+        if (!ok) {
+          setPrefs(prev)
+          Alert.alert(t('common_error'), t('common_tryAgain'))
+        }
+      })
+      .catch(() => {
+        setPrefs(prev)
+        Alert.alert(t('common_error'), t('common_tryAgain'))
+      })
   }
 
   function handleToggle(id: ToggleId) {

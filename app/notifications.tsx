@@ -343,7 +343,9 @@ export default function NotificationsScreen() {
   const load = useCallback(async () => {
     await runNotificationEngine()
     const data = await fetchNotifications()
-    setNotifications(data)
+    // Streak rows already in the inbox belong to Daily Rewards; hide them while that flag is off.
+    const rewardsOn = useFeatureFlags.getState().dailyRewards
+    setNotifications(rewardsOn ? data : data.filter((n) => n.type !== 'streak' && n.type !== 'streak_broken'))
   }, [])
 
   useEffect(() => {

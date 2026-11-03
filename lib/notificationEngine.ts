@@ -12,6 +12,7 @@
  */
 
 import { supabase } from './supabase'
+import { useFeatureFlags } from '../store/useFeatureFlags'
 import { getCycleInfo, toDateStr } from './cycleLogic'
 import { getWeekData } from './pregnancyData'
 
@@ -1066,7 +1067,8 @@ export async function runNotificationEngine(): Promise<number> {
       generateRoutineNotifications(userId),
       generateHealthAlertNotifications(userId),
       generateGoalNotifications(userId),
-      generateStreakNotifications(userId),
+      // Streaks belong to Daily Rewards; with the flag off they'd list rows that lead nowhere.
+      useFeatureFlags.getState().dailyRewards ? generateStreakNotifications(userId) : Promise.resolve(0),
       generateCaregiverNotifications(userId),
       generateInsightNotifications(userId),
       generateAppointmentReminders(userId),

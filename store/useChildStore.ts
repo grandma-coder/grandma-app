@@ -14,9 +14,10 @@ export const useChildStore = create<ChildStore>((set) => ({
   activeChild: null,
   setChildren: (children) => set((state) => ({
     children,
-    activeChild: state.activeChild && children.find((c) => c.id === state.activeChild!.id)
-      ? state.activeChild
-      : (children[0] ?? null),
+    // Take the fresh object for the same id — keeping the old one left an edited name/birth date
+    // stale on every screen that reads activeChild until a restart.
+    activeChild: (state.activeChild && children.find((c) => c.id === state.activeChild!.id))
+      ?? (children[0] ?? null),
   })),
   setActiveChild: (activeChild) => set({ activeChild }),
   clearChildren: () => set({ children: [], activeChild: null }),
