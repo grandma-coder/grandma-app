@@ -2,7 +2,7 @@
 
 Internal, admin-only web console for **grandma.app** — see users, view metrics, send push notifications, and triage crashes. Reads/writes grandma's Supabase Postgres from a privileged server context. App users never see it.
 
-**Live:** `grandma-command-center.vercel.app` · **Repo:** `grandma-coder/grandma-command-center` (private)
+**Live:** `admin.thegrandma.app` (also `grandma-command-center.vercel.app`) · **Repo:** `admin/` in `grandma-coder/grandma-app` (private); deploys through the Vercel project `grandma-command-center` (root directory `admin`)
 
 ---
 

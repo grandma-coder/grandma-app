@@ -1,4 +1,6 @@
-# v0-grandma-app
+# grandma site
+
+Marketing site and waitlist for thegrandma.app. Lives in `site/` of the `grandma-coder/grandma-app` repo and deploys through the Vercel project `v0-grandma-app` (root directory `site`).
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
 
