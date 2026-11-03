@@ -308,7 +308,7 @@ export const dataPt: DemoData = {
     'ovtest:negative': ['otest'], 'ovtest:positive': ['otest', 'heart'],
     'visit:prenatal': ['bell'], 'visit:ultrasound': ['pola'], 'visit:blood': ['syringe'], 'visit:other': ['doc'],
     'food:nursing': ['bottle'], 'food:puree': ['pumpkin'], 'food:fruit': ['banana'], 'food:snack': ['avocado'],
-    'diaper:pee': ['diaper', 'dropBlue'], 'diaper:poop': ['diaper'], 'diaper:both': ['diaper', 'star'],
+    'diaper:pee': ['diaper', 'dropBlue'], 'diaper:poop': ['diaper', 'dropPeach'], 'diaper:both': ['diaper', 'dropBlue', 'dropPeach'],
     'milestone:firstStep': ['shoe'], 'milestone:firstWord': ['bubble'], 'milestone:firstTooth': ['star'], 'milestone:other': ['pola'],
     'fog:mild': ['brain'], 'fog:medium': ['brain', 'brain'], 'fog:strong': ['brain', 'brain', 'brain'],
   },
