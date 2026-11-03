@@ -895,8 +895,11 @@ export function KidsAnalytics() {
   const bottomInset = useScrollBottomInset(insets.bottom + 56)
   const children = useChildStore((s) => s.children)
   const setActiveChild = useChildStore((s) => s.setActiveChild)
+  const activeChild = useChildStore((s) => s.activeChild)
 
-  const [selectedChildId, setSelectedChildId] = useState<string>(() => children[0]?.id ?? '')
+  // Start on (and follow) the child picked anywhere else in the app — Home's pills set the shared
+  // active child, and this tab stays mounted, so a local-only pick showed a different child.
+  const [selectedChildId, setSelectedChildId] = useState<string>(() => activeChild?.id ?? children[0]?.id ?? '')
   const [selectedPillar, setSelectedPillar] = useState<PillarKey | null>(null)
   const [fullScreen, setFullScreen] = useState<string | null>(null)
   const [showScoreInfo, setShowScoreInfo] = useState(false)
@@ -949,13 +952,20 @@ export function KidsAnalytics() {
     setShowCustomModal(false)
   }
 
-  // Default to first child when children load
+  useEffect(() => {
+    if (activeChild && activeChild.id !== selectedChildId && children.some((c) => c.id === activeChild.id)) {
+      setSelectedChildId(activeChild.id)
+    }
+  }, [activeChild?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Default to the active child (or the first) when children load
   useEffect(() => {
     if (!selectedChildId && children.length > 0) {
-      setSelectedChildId(children[0].id)
-      setActiveChild(children[0])
+      const first = activeChild ?? children[0]
+      setSelectedChildId(first.id)
+      if (!activeChild) setActiveChild(first)
     }
-  }, [children, selectedChildId, setActiveChild])
+  }, [children, selectedChildId, setActiveChild, activeChild])
 
   const { data: analytics, isLoading, error, refetch } = useKidsAnalytics(
     selectedChildId,
