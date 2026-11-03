@@ -242,6 +242,22 @@ export default function PrivacyScreen() {
               const { data: { session } } = await supabase.auth.getSession()
               if (!session) throw new Error('Not signed in')
               const uid = session.user.id
+              // Remove the photo files first (paths live in each row's `photos`), then the rows —
+              // otherwise the images outlived the 'deleted' memories in storage. Best-effort.
+              const [cyc, preg, kids] = await Promise.all([
+                supabase.from('cycle_logs').select('photos').eq('user_id', uid).eq('type', 'memory'),
+                supabase.from('pregnancy_logs').select('photos').eq('user_id', uid).eq('log_type', 'memory'),
+                childIds.length > 0
+                  ? supabase.from('child_logs').select('photos').in('child_id', childIds).eq('type', 'photo')
+                  : Promise.resolve({ data: [] as { photos: string[] | null }[] }),
+              ])
+              const paths = (rows: { photos?: string[] | null }[] | null | undefined) =>
+                (rows ?? []).flatMap((r) => r.photos ?? []).filter((x) => x && !x.startsWith('http'))
+              await Promise.all([
+                paths(cyc.data).length ? supabase.storage.from('cycle-photos').remove(paths(cyc.data)) : null,
+                paths(preg.data).length ? supabase.storage.from('pregnancy-nutrition').remove(paths(preg.data)) : null,
+                paths(kids.data).length ? supabase.storage.from('child-photos').remove(paths(kids.data)) : null,
+              ]).catch(() => {})
               const results = await Promise.all([
                 childIds.length > 0
                   ? supabase.from('child_logs').delete().in('child_id', childIds).eq('type', 'photo')
