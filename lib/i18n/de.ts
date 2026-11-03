@@ -3843,4 +3843,6 @@ export const de: TranslationKeys = {
   cycleHome_late_logTest: "Schwangerschaftstest eintragen",
   sleepCalm_ratedRestful: "Bei {{good}} von {{total}} eingetragenen Schlafphasen als super oder gut bewertet.",
   log_futureDateError: "Du kannst nur heute oder vergangene Tage eintragen.",
+  scan_limitReachedTitle: "Kostenlose Scans aufgebraucht",
+  scan_limitReachedBody: "Du hast die kostenlosen Scans dieses Kontos genutzt. Du kannst weiterhin alles von Hand eintragen.",
 }

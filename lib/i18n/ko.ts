@@ -3843,4 +3843,6 @@ export const ko: TranslationKeys = {
   cycleHome_late_logTest: "임신 테스트 기록",
   sleepCalm_ratedRestful: "기록한 수면 {{total}}번 중 {{good}}번을 '아주 좋음' 또는 '좋음'으로 기록했어요.",
   log_futureDateError: "오늘이나 지난 날짜만 기록할 수 있어요.",
+  scan_limitReachedTitle: "무료 스캔을 모두 사용했어요",
+  scan_limitReachedBody: "이 계정의 무료 스캔을 모두 사용했어요. 직접 입력으로는 계속 기록할 수 있어요.",
 }

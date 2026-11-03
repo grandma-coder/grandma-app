@@ -3843,4 +3843,6 @@ export const ptBR: TranslationKeys = {
   cycleHome_late_logTest: "Registrar um teste de gravidez",
   sleepCalm_ratedRestful: "Avaliado como ótimo ou bom em {{good}} de {{total}} sonos registrados.",
   log_futureDateError: "Só dá para registrar hoje ou dias passados.",
+  scan_limitReachedTitle: "Scans gratuitos usados",
+  scan_limitReachedBody: "Você usou os scans gratuitos desta conta. Ainda dá para registrar tudo à mão.",
 }

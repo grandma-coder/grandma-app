@@ -3843,4 +3843,6 @@ export const zh: TranslationKeys = {
   cycleHome_late_logTest: "记录验孕结果",
   sleepCalm_ratedRestful: "在记录的 {{total}} 次睡眠中，有 {{good}} 次被评为很好或好。",
   log_futureDateError: "只能记录今天或过去的日期。",
+  scan_limitReachedTitle: "免费扫描次数已用完",
+  scan_limitReachedBody: "此账户的免费扫描已用完。你仍可以手动记录所有内容。",
 }

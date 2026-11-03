@@ -3843,4 +3843,6 @@ export const ar: TranslationKeys = {
   cycleHome_late_logTest: "سجّلي اختبار حمل",
   sleepCalm_ratedRestful: "قُيِّم بممتاز أو جيد في {{good}} من {{total}} نومات مسجلة.",
   log_futureDateError: "يمكنك التسجيل لليوم أو للأيام الماضية فقط.",
+  scan_limitReachedTitle: "استُخدمت عمليات المسح المجانية",
+  scan_limitReachedBody: "استخدمتِ عمليات المسح المجانية لهذا الحساب. لا يزال بإمكانك تسجيل كل شيء يدويًا.",
 }

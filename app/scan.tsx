@@ -31,6 +31,7 @@ import { useTranslation } from '../lib/i18n'
 import { InkBackButton } from '../components/ui/InkBackButton'
 import { SiteSticker } from '../components/stickers/SiteSticker'
 import { getModeColorSoft } from '../constants/theme'
+import { usePaywallEnabled } from '../store/useFeatureFlags'
 
 const FREE_SCAN_LIMIT = 3
 
@@ -174,6 +175,7 @@ export default function Scan() {
     },
   }), [colors])
   const { t } = useTranslation()
+  const paywallOn = usePaywallEnabled()
   const scanTypes = getScanTypes(t)
   const child = useChildStore((s) => s.activeChild)
   const pregnancyDueDate = usePregnancyStore((s) => s.dueDate)
@@ -206,9 +208,16 @@ export default function Scan() {
     }
   }, [])
 
+  // With the paywall flag off, /paywall closes itself immediately — the old push just flashed a
+  // modal. Say what happened instead. (The free quota stays: scans cost API calls.)
+  function showLimitReached() {
+    if (paywallOn) router.push('/paywall')
+    else Alert.alert(t('scan_limitReachedTitle'), t('scan_limitReachedBody'))
+  }
+
   async function pickImage(useCamera: boolean) {
     if (!isPremium && scanCount >= FREE_SCAN_LIMIT) {
-      router.push('/paywall')
+      showLimitReached()
       return
     }
     const permissionFn = useCamera
@@ -300,7 +309,7 @@ export default function Scan() {
       // Server enforces the free-tier quota and may 402 even if the local
       // count looked under-limit (e.g. scans recorded on another device).
       if (e instanceof ScanLimitReachedError) {
-        router.push('/paywall')
+        showLimitReached()
         return
       }
       Alert.alert(t('scan_failed'), e.message)

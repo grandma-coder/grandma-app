@@ -3843,4 +3843,6 @@ export const tr: TranslationKeys = {
   cycleHome_late_logTest: "Gebelik testi kaydet",
   sleepCalm_ratedRestful: "Kaydedilen {{total}} uykudan {{good}} tanesi harika ya da iyi olarak işaretlendi.",
   log_futureDateError: "Yalnızca bugünü ya da geçmiş günleri kaydedebilirsin.",
+  scan_limitReachedTitle: "Ücretsiz taramalar bitti",
+  scan_limitReachedBody: "Bu hesabın ücretsiz taramalarını kullandın. Her şeyi yine elle kaydedebilirsin.",
 }

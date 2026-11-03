@@ -4130,4 +4130,6 @@ export const en: TranslationKeys = {
   cycleHome_late_logTest: "Log a pregnancy test",
   sleepCalm_ratedRestful: "Rated great or good on {{good}} of {{total}} logged sleeps.",
   log_futureDateError: "You can only log today or past days.",
+  scan_limitReachedTitle: "Free scans used",
+  scan_limitReachedBody: "You've used the free scans on this account. You can still log everything by hand.",
 }

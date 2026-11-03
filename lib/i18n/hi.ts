@@ -3843,4 +3843,6 @@ export const hi: TranslationKeys = {
   cycleHome_late_logTest: "प्रेग्नेंसी टेस्ट दर्ज करें",
   sleepCalm_ratedRestful: "दर्ज की गई {{total}} नींद में से {{good}} को बढ़िया या अच्छा आँका गया।",
   log_futureDateError: "आप सिर्फ़ आज या बीते दिनों का ही रिकॉर्ड दर्ज कर सकती हैं।",
+  scan_limitReachedTitle: "मुफ़्त स्कैन पूरे हो गए",
+  scan_limitReachedBody: "आपने इस खाते के मुफ़्त स्कैन इस्तेमाल कर लिए हैं। आप अब भी सब कुछ हाथ से दर्ज कर सकती हैं।",
 }

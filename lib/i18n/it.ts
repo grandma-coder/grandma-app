@@ -3843,4 +3843,6 @@ export const it: TranslationKeys = {
   cycleHome_late_logTest: "Registra un test di gravidanza",
   sleepCalm_ratedRestful: "Valutato ottimo o buono in {{good}} su {{total}} sonni registrati.",
   log_futureDateError: "Puoi registrare solo oggi o i giorni passati.",
+  scan_limitReachedTitle: "Scansioni gratuite esaurite",
+  scan_limitReachedBody: "Hai usato le scansioni gratuite di questo account. Puoi comunque registrare tutto a mano.",
 }

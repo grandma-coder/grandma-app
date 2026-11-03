@@ -3843,4 +3843,6 @@ export const ja: TranslationKeys = {
   cycleHome_late_logTest: "妊娠検査を記録",
   sleepCalm_ratedRestful: "記録した睡眠{{total}}回のうち{{good}}回が「とても良い」か「良い」。",
   log_futureDateError: "記録できるのは今日か過去の日だけです。",
+  scan_limitReachedTitle: "無料スキャンを使い切りました",
+  scan_limitReachedBody: "このアカウントの無料スキャンを使い切りました。手入力ならすべて記録できます。",
 }
