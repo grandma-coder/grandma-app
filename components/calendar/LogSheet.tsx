@@ -15,6 +15,7 @@ import { InkBackButton } from '../ui/InkBackButton'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { StickerEnter } from '../ui/Motion'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
+import { SheetModal } from '../ui/SheetModal'
 import { useTranslation } from '../../lib/i18n'
 
 // Forms rendered inside a sheet hand their primary action to the sheet so it sits in a
@@ -61,13 +62,10 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
   const paperBorder = colors.borderStrong
   const ink = colors.text
 
+  // Backdrop fades, sheet eases up, both play out on close (SheetModal); drag the handle/header down to close.
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <Pressable style={styles.backdrop} onPress={onClose} />
+    <SheetModal visible={visible} onClose={onClose}>
+      {(dragZone) => (
         <View
           style={[
             styles.sheet,
@@ -83,22 +81,24 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
             },
           ]}
         >
-          <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: ink, opacity: 0.25 }]} />
-          </View>
-
-          <View style={styles.header}>
-            <View style={styles.titleRow}>
-              {sticker ? <StickerEnter delay={180} tilt={-8}><SiteSticker name={sticker} size={34} cut /></StickerEnter> : null}
-              <Display size={24} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2, flexShrink: 1 }}>{title}</Display>
-              {chip ? (
-                <View style={[styles.chip, { backgroundColor: paper, borderColor: ink }]}>
-                  <Text style={[styles.chipText, { color: ink }]}>{chip}</Text>
-                </View>
-              ) : null}
-              {titleRight}
+          <View {...dragZone}>
+            <View style={styles.handleWrap}>
+              <View style={[styles.handle, { backgroundColor: ink, opacity: 0.25 }]} />
             </View>
-            <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
+
+            <View style={styles.header}>
+              <View style={styles.titleRow}>
+                {sticker ? <StickerEnter delay={180} tilt={-8}><SiteSticker name={sticker} size={34} cut /></StickerEnter> : null}
+                <Display size={24} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.2, flexShrink: 1 }}>{title}</Display>
+                {chip ? (
+                  <View style={[styles.chip, { backgroundColor: paper, borderColor: ink }]}>
+                    <Text style={[styles.chipText, { color: ink }]}>{chip}</Text>
+                  </View>
+                ) : null}
+                {titleRight}
+              </View>
+              <InkBackButton onPress={onClose} ink={ink} paper={paper} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
+            </View>
           </View>
 
           <ScrollView
@@ -116,8 +116,8 @@ function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, t
             </View>
           ) : null}
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      )}
+    </SheetModal>
   )
 }
 

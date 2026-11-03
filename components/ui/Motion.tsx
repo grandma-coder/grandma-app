@@ -14,7 +14,7 @@ import { AccessibilityInfo, Animated, Easing, type StyleProp, type ViewStyle } f
 
 const STAGGER = 70
 
-function useReduceMotion(): boolean {
+export function useReduceMotion(): boolean {
   const [reduce, setReduce] = useState(false)
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setReduce).catch(() => {})
