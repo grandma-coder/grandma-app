@@ -354,6 +354,15 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
     return addDays(todayStr, selectedDay - cycleDayToday)
   }, [todayStr, selectedDay, cycleDayToday])
 
+  /** The ring's cycle day for a date, or null when the date falls outside the drawn window. */
+  const cycleDayInWindow = useCallback((date: string): number | null => {
+    const dayDiff = Math.round(
+      (new Date(date + 'T00:00:00').getTime() - new Date(todayStr + 'T00:00:00').getTime()) / 86400000,
+    )
+    const target = cycleDayToday + dayDiff
+    return target >= 1 && target <= cycleLength ? target : null
+  }, [todayStr, cycleDayToday, cycleLength])
+
   // Lift the selected date up so sibling surfaces (daily nudge) can follow it.
   useEffect(() => {
     onSelectedDateChange?.(selectedDate)
@@ -413,12 +422,12 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
   // show a day it isn't rendering).
   useEffect(() => {
     if (!selectDate) return
-    const dayDiff = Math.round(
-      (new Date(selectDate + 'T00:00:00').getTime() - new Date(todayStr + 'T00:00:00').getTime())
-        / 86400000,
-    )
-    const targetCycleDay = Math.min(cycleLength, Math.max(1, cycleDayToday + dayDiff))
-    snapToDay(targetCycleDay)
+    const target = cycleDayInWindow(selectDate)
+    // A day outside the window used to be clamped to the nearest end, and the ring then emitted
+    // THAT date — so logging for a day picked last month saved it on cycle day 1. Out-of-window
+    // picks leave the wheel where it is and hand the exact date up instead.
+    if (target == null) onSelectedDateChange?.(selectDate)
+    else snapToDay(target)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectDate])
 
@@ -576,7 +585,13 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
   // What was logged on the strip days — heart for intimacy, tests, period… under each date.
   const stripLogs = useCycleLogDates(strip[0]?.date ?? todayStr, strip[strip.length - 1]?.date ?? todayStr)
 
-  const onStripPress = useCallback((cycleDay: number) => snapToDay(cycleDay), [snapToDay])
+  // Strip cells can belong to the previous cycle; snapping to their (wrapped) cycle day put the
+  // wheel on a date in the CURRENT cycle, and its emit overwrote the tapped date — a backfilled
+  // period start 3 days ago was saved ~25 days in the future. Only snap when the date is in view.
+  const onStripPress = useCallback((date: string) => {
+    const target = cycleDayInWindow(date)
+    if (target != null) snapToDay(target)
+  }, [snapToDay, cycleDayInWindow])
 
   return (
     <View style={styles.container}>
@@ -815,7 +830,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
             accentColor={phaseAccent(s.phase, stickers)}
             fontSemiBold={font.bodySemiBold}
             fontDisplay={font.display}
-            onPress={() => { onStripPress(s.cycleDay); onDatePress?.(s.date) }}
+            onPress={() => { onStripPress(s.date); onDatePress?.(s.date) }}
             marks={cycleDayMarks(stripLogs.logsByDate.get(s.date) ?? [])}
             diffuse={diffuse}
             diffuseLine={dt.colors.line}
