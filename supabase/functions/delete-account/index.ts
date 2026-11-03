@@ -72,7 +72,7 @@ serve(async (req) => {
 
     // ── Storage cleanup (before the cascade wipes child IDs) ──────────────
     // Collect the user's child IDs for child-photo cleanup.
-    const { data: kids } = await admin.from('children').select('id').eq('user_id', userId)
+    const { data: kids } = await admin.from('children').select('id').eq('parent_id', userId)
     const childPrefixes = (kids ?? []).map((k: any) => k.id)
 
     await purgeBucketPrefixes(admin, 'profile-avatars', [userId])

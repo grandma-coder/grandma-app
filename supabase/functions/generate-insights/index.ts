@@ -102,7 +102,7 @@ serve(async (req) => {
       const { data: children, error: childErr } = await supabase
         .from('children')
         .select('id, name, birth_date')
-        .eq('user_id', user_id)
+        .eq('parent_id', user_id)
 
       if (childErr) {
         console.error('Failed to fetch children:', childErr.message)

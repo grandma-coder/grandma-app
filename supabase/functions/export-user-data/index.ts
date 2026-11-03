@@ -46,7 +46,7 @@ serve(async (req) => {
     // Tables keyed directly to the user.
     const profile = (await admin.from('profiles').select('*').eq('id', uid).maybeSingle()).data
     const behaviors = await byUser('behaviors', 'user_id')
-    const children = await byUser('children', 'user_id')
+    const children = await byUser('children', 'parent_id')
     const cycleLogs = await byUser('cycle_logs', 'user_id')
     const pregnancyLogs = await byUser('pregnancy_logs', 'user_id')
     const notifications = await byUser('notifications', 'user_id')

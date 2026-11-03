@@ -42,7 +42,7 @@ interface Category {
 
 const CATEGORIES: Category[] = [
   { key: 'profile', labelKey: 'dataInv_profile', table: 'profiles', by: 'profile' },
-  { key: 'children', labelKey: 'dataInv_children', table: 'children', by: 'user' },
+  { key: 'children', labelKey: 'dataInv_children', table: 'children', by: 'user', col: 'parent_id' },
   { key: 'child_logs', labelKey: 'dataInv_childLogs', table: 'child_logs', by: 'child' },
   { key: 'cycle_logs', labelKey: 'dataInv_cycleLogs', table: 'cycle_logs', by: 'user' },
   { key: 'pregnancy_logs', labelKey: 'dataInv_pregnancyLogs', table: 'pregnancy_logs', by: 'user' },

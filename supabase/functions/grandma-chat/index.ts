@@ -141,8 +141,8 @@ Deno.serve(async (req) => {
     if (allBehaviors.includes('kids')) {
       const { data: children } = await supabase
         .from('children')
-        .select('id, name, dob, allergies, conditions')
-        .eq('user_id', user_id)
+        .select('id, name, birth_date, allergies, conditions')
+        .eq('parent_id', user_id)
 
       childrenData = children ?? []
       const childIds = childrenData.map((c: any) => c.id)
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
         recentLogs += '\n[KIDS DATA]\n'
         if (childrenData.length) {
           recentLogs += 'Children: ' + childrenData.map((c: any) =>
-            `${c.name} (born ${c.dob ?? 'unknown'}${c.allergies?.length ? `, allergies: ${c.allergies.join(', ')}` : ''})`
+            `${c.name} (born ${c.birth_date ?? 'unknown'}${c.allergies?.length ? `, allergies: ${c.allergies.join(', ')}` : ''})`
           ).join(', ') + '\n'
         }
         if (ownsActiveChild) {
