@@ -3836,4 +3836,9 @@ export const ar: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "اليوم الأول",
   cycleHome_firstPeriod_datePlaceholder: "اختاري تاريخًا",
   cycleHome_firstPeriod_cta: "سجّلي هذه الدورة",
+  cycleHome_late_titleOne: "دورتك متأخرة يومًا واحدًا عن الموعد المتوقع",
+  cycleHome_late_title: "دورتك متأخرة {{count}} أيام عن الموعد المتوقع",
+  cycleHome_late_body: "توقف Grandma التوقعات حتى تسجّلي ما يحدث بعد ذلك. الدورات تختلف — سجّلي دورتك عندما تبدأ.",
+  cycleHome_late_logPeriod: "سجّلي بداية الدورة",
+  cycleHome_late_logTest: "سجّلي اختبار حمل",
 }

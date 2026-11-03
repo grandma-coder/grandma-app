@@ -3836,4 +3836,9 @@ export const it: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "Primo giorno",
   cycleHome_firstPeriod_datePlaceholder: "Scegli una data",
   cycleHome_firstPeriod_cta: "Registra questo ciclo",
+  cycleHome_late_titleOne: "Il ciclo è in ritardo di 1 giorno rispetto al previsto",
+  cycleHome_late_title: "Il ciclo è in ritardo di {{count}} giorni rispetto al previsto",
+  cycleHome_late_body: "Grandma mette in pausa le previsioni finché non registri cosa succede. I cicli variano: registra il ciclo quando arriva.",
+  cycleHome_late_logPeriod: "Registra l'inizio del ciclo",
+  cycleHome_late_logTest: "Registra un test di gravidanza",
 }

@@ -1,4 +1,4 @@
-import { toDateStr, dailyFertilityCurve } from '../cycleLogic'
+import { toDateStr, dailyFertilityCurve, getDaysLate } from '../cycleLogic'
 
 describe('toDateStr', () => {
   it('formats a local date as YYYY-MM-DD', () => {
@@ -40,5 +40,25 @@ describe('dailyFertilityCurve', () => {
   it('clamps cycle length to medical range', () => {
     expect(dailyFertilityCurve(10)).toHaveLength(21)
     expect(dailyFertilityCurve(120)).toHaveLength(60)
+  })
+})
+
+// A late period used to wrap silently into a new predicted cycle (day 35 of 28 read as "day 7,
+// next period in 22 days"), hiding the one signal a TTC user most needs.
+describe('getDaysLate', () => {
+  const cfg = { lastPeriodStart: '2026-10-01', cycleLength: 28, periodLength: 5, lutealPhase: 14 }
+
+  it('is 0 before and on the expected day', () => {
+    expect(getDaysLate(cfg, '2026-10-20')).toBe(0)
+    expect(getDaysLate(cfg, '2026-10-29')).toBe(0) // expected next start
+  })
+
+  it('counts days past the expected start', () => {
+    expect(getDaysLate(cfg, '2026-10-30')).toBe(1)
+    expect(getDaysLate(cfg, '2026-11-04')).toBe(6)
+  })
+
+  it('is 0 with no logged period', () => {
+    expect(getDaysLate({ ...cfg, lastPeriodStart: '' }, '2026-11-04')).toBe(0)
   })
 })

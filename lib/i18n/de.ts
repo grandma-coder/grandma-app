@@ -3836,4 +3836,9 @@ export const de: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "Erster Tag",
   cycleHome_firstPeriod_datePlaceholder: "Datum wählen",
   cycleHome_firstPeriod_cta: "Diese Periode eintragen",
+  cycleHome_late_titleOne: "Deine Periode ist 1 Tag später als erwartet",
+  cycleHome_late_title: "Deine Periode ist {{count}} Tage später als erwartet",
+  cycleHome_late_body: "Grandma pausiert die Vorhersagen, bis du einträgst, was passiert. Zyklen schwanken – trag deine Periode ein, wenn sie beginnt.",
+  cycleHome_late_logPeriod: "Periodenbeginn eintragen",
+  cycleHome_late_logTest: "Schwangerschaftstest eintragen",
 }

@@ -3836,4 +3836,9 @@ export const tr: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "İlk gün",
   cycleHome_firstPeriod_datePlaceholder: "Bir tarih seç",
   cycleHome_firstPeriod_cta: "Bu adeti kaydet",
+  cycleHome_late_titleOne: "Adetin beklenenden 1 gün geç",
+  cycleHome_late_title: "Adetin beklenenden {{count}} gün geç",
+  cycleHome_late_body: "Sen bir sonraki kaydı girene kadar Grandma tahminleri durdurur. Döngüler değişir — adetin başlayınca kaydet.",
+  cycleHome_late_logPeriod: "Adet başlangıcını kaydet",
+  cycleHome_late_logTest: "Gebelik testi kaydet",
 }

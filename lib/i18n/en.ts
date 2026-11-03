@@ -4123,4 +4123,9 @@ export const en: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "First day",
   cycleHome_firstPeriod_datePlaceholder: "Pick a date",
   cycleHome_firstPeriod_cta: "Log this period",
+  cycleHome_late_titleOne: "Your period is 1 day later than expected",
+  cycleHome_late_title: "Your period is {{count}} days later than expected",
+  cycleHome_late_body: "Grandma pauses predictions until you log what happens next. Cycles vary — log your period when it starts.",
+  cycleHome_late_logPeriod: "Log period start",
+  cycleHome_late_logTest: "Log a pregnancy test",
 }

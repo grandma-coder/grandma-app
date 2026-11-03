@@ -13,7 +13,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
-import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
+import { getCycleInfo, getDaysLate, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import type { CaregiverView } from '../../lib/caregiverPermissions'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useCycleReminderSync } from '../../lib/cycleReminders'
@@ -33,6 +33,7 @@ import { LogSheet } from '../calendar/LogSheet'
 import { CycleMonthGrid } from '../calendar/CycleMonthGrid'
 import { LogActivitySheet, type LogType } from '../calendar/LogActivitySheet'
 import { FirstPeriodCard } from './cycle/FirstPeriodCard'
+import { LatePeriodCard } from './cycle/LatePeriodCard'
 import { CycleLogRouter } from '../calendar/CycleLogRouter'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from '../../lib/i18n'
@@ -157,6 +158,9 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   // Phase for the *selected* day (not just today), so the log card + forms use
   // the correct phase-aware copy/colors for the day being logged.
   const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
+  // Light look: once the expected start has passed with no new period, the ring would wrap into an
+  // invented new cycle — show how late it is instead. Needs a real logged start (not a placeholder).
+  const daysLate = !diffuse && history && history.cycles.length > 0 ? getDaysLate(cycleConfig, todayStr) : 0
 
   function handleMonthPick(date: string) {
     // Drive the ring only. It snaps to the picked day and then emits the real
@@ -242,7 +246,14 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
         {show('journey_ring') && noPeriodYet && !readOnly && (
           <FirstPeriodCard onLog={(date) => { setSelectedDate(date); setLogSheetType('period_start') }} />
         )}
-        {show('journey_ring') && !ringSkeleton && !noPeriodYet && (
+        {show('journey_ring') && !ringSkeleton && !noPeriodYet && daysLate > 0 && (
+          <LatePeriodCard
+            daysLate={daysLate}
+            onLogPeriod={readOnly ? undefined : () => { setSelectedDate(todayStr); setLogSheetType('period_start') }}
+            onLogTest={readOnly ? undefined : () => { setSelectedDate(todayStr); setLogSheetType('pregnancy_test') }}
+          />
+        )}
+        {show('journey_ring') && !ringSkeleton && !noPeriodYet && !(daysLate > 0) && (
         <CycleJourneyRingFull
           cycleConfig={cycleConfig}
           onSelectedDateChange={handleRingDate}

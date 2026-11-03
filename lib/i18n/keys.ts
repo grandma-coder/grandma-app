@@ -4118,4 +4118,9 @@ export interface TranslationKeys {
   cycleHome_firstPeriod_dateLabel: string
   cycleHome_firstPeriod_datePlaceholder: string
   cycleHome_firstPeriod_cta: string
+  cycleHome_late_titleOne: string
+  cycleHome_late_title: string
+  cycleHome_late_body: string
+  cycleHome_late_logPeriod: string
+  cycleHome_late_logTest: string
 }

@@ -97,6 +97,18 @@ export function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/**
+ * Days past the expected start of the next period (0 if not late, or no period logged). getCycleInfo
+ * wraps forward into a new predicted cycle, so callers use this to say "later than expected"
+ * instead of showing a fresh fertile window.
+ */
+export function getDaysLate(config: Partial<CycleConfig>, today: string = toDateStr(new Date())): number {
+  const cfg = { ...DEFAULT_CONFIG, ...config }
+  if (!cfg.lastPeriodStart) return 0
+  const cycleLength = Math.min(60, Math.max(21, cfg.cycleLength))
+  return Math.max(0, daysBetween(cfg.lastPeriodStart, today) - cycleLength)
+}
+
 export function getCycleInfo(config: Partial<CycleConfig>, forDate?: string): CycleInfo {
   const cfg = { ...DEFAULT_CONFIG, ...config }
   // Medical normal range is ~21–45 days. Below 15, ovulationDay = cycleLength

@@ -3836,4 +3836,9 @@ export const ko: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "첫날",
   cycleHome_firstPeriod_datePlaceholder: "날짜 선택",
   cycleHome_firstPeriod_cta: "이 생리 기록하기",
+  cycleHome_late_titleOne: "생리가 예상보다 1일 늦어지고 있어요",
+  cycleHome_late_title: "생리가 예상보다 {{count}}일 늦어지고 있어요",
+  cycleHome_late_body: "다음 기록이 있을 때까지 Grandma는 예측을 멈춰요. 주기는 달라질 수 있어요. 생리가 시작되면 기록하세요.",
+  cycleHome_late_logPeriod: "생리 시작 기록",
+  cycleHome_late_logTest: "임신 테스트 기록",
 }

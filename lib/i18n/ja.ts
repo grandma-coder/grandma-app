@@ -3836,4 +3836,9 @@ export const ja: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "初日",
   cycleHome_firstPeriod_datePlaceholder: "日付を選ぶ",
   cycleHome_firstPeriod_cta: "この生理を記録",
+  cycleHome_late_titleOne: "生理が予定より1日遅れています",
+  cycleHome_late_title: "生理が予定より{{count}}日遅れています",
+  cycleHome_late_body: "次の記録があるまで、Grandmaは予測を止めます。周期は変わるもの。始まったら生理を記録してください。",
+  cycleHome_late_logPeriod: "生理の開始を記録",
+  cycleHome_late_logTest: "妊娠検査を記録",
 }

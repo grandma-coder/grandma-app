@@ -3836,4 +3836,9 @@ export const fr: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "Premier jour",
   cycleHome_firstPeriod_datePlaceholder: "Choisir une date",
   cycleHome_firstPeriod_cta: "Noter ces règles",
+  cycleHome_late_titleOne: "Vos règles ont 1 jour de retard sur la date prévue",
+  cycleHome_late_title: "Vos règles ont {{count}} jours de retard sur la date prévue",
+  cycleHome_late_body: "Grandma met les prévisions en pause jusqu'à votre prochaine saisie. Les cycles varient : notez vos règles quand elles arrivent.",
+  cycleHome_late_logPeriod: "Noter le début des règles",
+  cycleHome_late_logTest: "Noter un test de grossesse",
 }

@@ -3836,4 +3836,9 @@ export const zh: TranslationKeys = {
   cycleHome_firstPeriod_dateLabel: "第一天",
   cycleHome_firstPeriod_datePlaceholder: "选择日期",
   cycleHome_firstPeriod_cta: "记录这次月经",
+  cycleHome_late_titleOne: "月经比预期晚了 1 天",
+  cycleHome_late_title: "月经比预期晚了 {{count}} 天",
+  cycleHome_late_body: "在你记录接下来的情况之前，Grandma 会暂停预测。周期本来就会变化——月经来了就记录一下。",
+  cycleHome_late_logPeriod: "记录月经开始",
+  cycleHome_late_logTest: "记录验孕结果",
 }
