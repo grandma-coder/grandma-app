@@ -87,11 +87,24 @@ export interface CycleHistory {
   max: number | null
 }
 
-function computeCycleHistory(logs: CycleLogRow[]): CycleHistory {
-  const starts = logs
+/** Starts closer than this to the previous one are the same period logged twice. */
+const MIN_GAP_DAYS = 10
+/** Cycle lengths kept for the average; outside this they're missed logs or a skipped month. */
+const AVG_RANGE = { min: 15, max: 45 }  // matches the settings' cycle-length range
+
+export function computeCycleHistory(logs: CycleLogRow[]): CycleHistory {
+  const sorted = [...new Set(logs
     .filter((l) => l.type === 'period_start')
-    .map((l) => l.date)
+    .map((l) => l.date))]
     .sort()
+  // Period starts logged on consecutive days (or re-logged a few days in) made 1-day "cycles" that
+  // dragged the average to the 21-day floor and moved ovulation to day 7. Merge them.
+  const starts: string[] = []
+  for (const d of sorted) {
+    const prev = starts[starts.length - 1]
+    if (prev && (new Date(d + 'T00:00:00').getTime() - new Date(prev + 'T00:00:00').getTime()) / 86400000 < MIN_GAP_DAYS) continue
+    starts.push(d)
+  }
 
   if (starts.length === 0) return { cycles: [], avg: null, min: null, max: null }
 
@@ -106,7 +119,11 @@ function computeCycleHistory(logs: CycleLogRow[]): CycleHistory {
     return { startDate, endDate: endStr, lengthDays: length }
   })
 
-  const closed = cycles.filter((c) => c.lengthDays !== null).map((c) => c.lengthDays as number)
+  // A missed month logs as one ~56-day cycle; leave such outliers out of the average/min/max.
+  const closed = cycles
+    .filter((c) => c.lengthDays !== null)
+    .map((c) => c.lengthDays as number)
+    .filter((n) => n >= AVG_RANGE.min && n <= AVG_RANGE.max)
   if (closed.length === 0) return { cycles, avg: null, min: null, max: null }
 
   const avg = Math.round(closed.reduce((a, b) => a + b, 0) / closed.length)
