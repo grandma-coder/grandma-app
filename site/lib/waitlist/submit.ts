@@ -1,10 +1,10 @@
 import { waitlistSchema } from './schema'
-import type { Country } from '@/lib/countries'
+import { NO_PLACE, type Country, type Place } from '@/lib/countries'
 import type { WaitlistDeps, WaitlistErrorCode, WaitlistField, WaitlistState } from './types'
 
 const FIELDS: WaitlistField[] = ['email', 'name', 'mode']
 
-export async function submitWaitlist(raw: Record<string, string>, ip: string | null, deps: WaitlistDeps, country: Country): Promise<WaitlistState> {
+export async function submitWaitlist(raw: Record<string, string>, ip: string | null, deps: WaitlistDeps, country: Country, place: Place = NO_PLACE): Promise<WaitlistState> {
   if (raw.company && raw.company.trim() !== '') return { status: 'success' }
 
   const parsed = waitlistSchema.safeParse(raw)
@@ -16,7 +16,7 @@ export async function submitWaitlist(raw: Record<string, string>, ip: string | n
   }
 
   try {
-    const result = await deps.join({ ...parsed.data, country }, deps.hashIp(ip))
+    const result = await deps.join({ ...parsed.data, country, ...place }, deps.hashIp(ip))
     return result === 'rate_limited' ? { status: 'rate_limited' } : { status: 'success' }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

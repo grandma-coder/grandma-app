@@ -17,7 +17,7 @@ export const waitlistSchema = z
     utm_campaign: optionalText(200),
     referrer: optionalText(200),
   })
-  .transform((v): Omit<WaitlistRow, 'country'> => ({
+  .transform((v): Omit<WaitlistRow, 'country' | 'region' | 'city'> => ({
     email: v.email, name: v.name, mode: v.mode, locale: v.locale, notifyLaunch: v.notify_launch,
     utmSource: v.utm_source, utmMedium: v.utm_medium, utmCampaign: v.utm_campaign, referrer: v.referrer,
   }))
