@@ -107,6 +107,8 @@ import {
 } from '../../lib/pregnancyWeekFacts'
 import { SheetModal } from '../ui/SheetModal'
 
+const nf = (x: number, n: number): string => x.toLocaleString(dateLoc(), { minimumFractionDigits: n, maximumFractionDigits: n, useGrouping: false })
+
 const SCREEN_W = Dimensions.get('window').width
 const SCREEN_H = Dimensions.get('window').height
 
@@ -223,7 +225,7 @@ function SiteBars({ data: rawData, labels: rawLabels, tone, height = 140, unit =
   const BAR_AREA = Math.max(height - 40, 80)
   const maxIdx = data.indexOf(trueMax)
   const showAll = data.length <= 9
-  const fmt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? `${Math.round(v)}` : v.toFixed(1))
+  const fmt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? `${Math.round(v)}` : nf(v, 1))
   return (
     <View style={{ width: '100%', paddingVertical: 4 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, position: 'relative' }}>
@@ -656,9 +658,9 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
       ? (latestWeight - firstWeight) / Math.max(1, weights.length - 1)
       : null
 
-  const weightValue = latestWeight ? kgToDisplay(latestWeight, prefWeightUnit).toFixed(1) : '—'
+  const weightValue = latestWeight ? nf(kgToDisplay(latestWeight, prefWeightUnit), 1) : '—'
   const weightUnit = weeklyGain !== null
-    ? `${prefWeightLabel} · ${weeklyGain >= 0 ? '+' : ''}${kgToDisplay(weeklyGain, prefWeightUnit).toFixed(1)} / wk`
+    ? `${prefWeightLabel} · ${weeklyGain >= 0 ? '+' : ''}${nf(kgToDisplay(weeklyGain, prefWeightUnit), 1)} / wk`
     : prefWeightLabel
 
   const avgKicks = kickSessions.length > 0
@@ -667,7 +669,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
   const symptomCount = symptomFreq.reduce((a, b) => a + b.count, 0)
   const sleepHrsArr = sleepHistory.map((s) => s.hours)
   const sleepAvg = sleepHrsArr.length > 0
-    ? (sleepHrsArr.reduce((a, b) => a + b, 0) / sleepHrsArr.length).toFixed(1) + 'h'
+    ? nf(sleepHrsArr.reduce((a, b) => a + b, 0) / sleepHrsArr.length, 1) + 'h'
     : '—'
   const hydrationData = hydrationHistory.map((h) => h.glasses)
 
@@ -801,7 +803,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               </Text>
               <Text style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textSecondary }}>
                 {weeklyGain !== null
-                  ? t('sw1_pa_wLatestAvg', { unit: prefWeightLabel, delta: `${weeklyGain >= 0 ? '+' : ''}${kgToDisplay(weeklyGain, prefWeightUnit).toFixed(1)}` })
+                  ? t('sw1_pa_wLatestAvg', { unit: prefWeightLabel, delta: `${weeklyGain >= 0 ? '+' : ''}${nf(kgToDisplay(weeklyGain, prefWeightUnit), 1)}` })
                   : t('sw1_pa_wLatest', { unit: prefWeightLabel })}
               </Text>
             </View>
@@ -1621,7 +1623,7 @@ function WeekDetail({ weekFacts: facts, weekNumber, trimester, accentColor, acce
     switch (key) {
       case 'sleep':
         return facts.sleep
-          ? t('preg_week_sleepFact', { hours: facts.sleep.avgHours.toFixed(1), nights: facts.sleep.nights, total })
+          ? t('preg_week_sleepFact', { hours: nf(facts.sleep.avgHours, 1), nights: facts.sleep.nights, total })
           : t('preg_week_notLogged')
       case 'mood':
         return facts.mood
@@ -1637,7 +1639,7 @@ function WeekDetail({ weekFacts: facts, weekNumber, trimester, accentColor, acce
           : t('preg_week_notLogged')
       case 'water':
         return facts.water
-          ? t('preg_week_waterFact', { days: facts.water.days, glasses: facts.water.avgGlasses.toFixed(1), total })
+          ? t('preg_week_waterFact', { days: facts.water.days, glasses: nf(facts.water.avgGlasses, 1), total })
           : t('preg_week_notLogged')
     }
   }
@@ -1749,7 +1751,7 @@ function WellbeingDetailDiffuse({ wellbeing, weekNumber, trimester }: DetailProp
                 {p.label}
               </Text>
               <Text style={{ color: dt.colors.ink, fontSize: 12, fontFamily: diffuseFont.mono }}>
-                {(wellbeing[p.key] as number).toFixed(1)}
+                {nf(wellbeing[p.key] as number, 1)}
               </Text>
             </View>
           ))}
@@ -1806,9 +1808,9 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: t('sw1_pa_latest'), value: lastW ? `${lastW.toFixed(1)} ${uLabel}` : '—' },
-          { label: t('sw1_pa_totalGain'), value: totalGain !== null ? `${totalGain >= 0 ? '+' : ''}${totalGain.toFixed(1)} ${uLabel}` : '—' },
-          { label: diffuse ? 'Per week' : t('sw1_pa_avgWeek'), value: avgWeekly !== null ? `${avgWeekly >= 0 ? '+' : ''}${avgWeekly.toFixed(2)}` : '—' },
+          { label: t('sw1_pa_latest'), value: lastW ? `${nf(lastW, 1)} ${uLabel}` : '—' },
+          { label: t('sw1_pa_totalGain'), value: totalGain !== null ? `${totalGain >= 0 ? '+' : ''}${nf(totalGain, 1)} ${uLabel}` : '—' },
+          { label: diffuse ? 'Per week' : t('sw1_pa_avgWeek'), value: avgWeekly !== null ? `${avgWeekly >= 0 ? '+' : ''}${nf(avgWeekly, 2)}` : '—' },
         ]}
       />
 
@@ -1840,7 +1842,7 @@ function WeightDetail({ weightHistory, weightByWeek, weekNumber, trimester, acce
                   color={accentColor ?? stickers.green}
                   min={min}
                   max={max}
-                  rows={rows.map((w) => ({ label: `W${w.week}`, value: toU(w.weight), display: `${toU(w.weight).toFixed(1)}${uLabel}` } as TierRow))}
+                  rows={rows.map((w) => ({ label: `W${w.week}`, value: toU(w.weight), display: `${nf(toU(w.weight), 1)}${uLabel}` } as TierRow))}
                 />
               )
             })()
@@ -2020,9 +2022,9 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
         tint={accentTint}
         color={accentColor}
         items={[
-          { label: diffuse ? 'Average' : t('sw1_pa_avgNight'), value: avg ? `${avg.toFixed(1)}h` : '—' },
-          { label: diffuse ? 'Best' : t('sw1_pa_longest'), value: best ? `${best.toFixed(1)}h` : '—' },
-          { label: diffuse ? 'Worst' : t('sw1_pa_shortest'), value: worst ? `${worst.toFixed(1)}h` : '—' },
+          { label: diffuse ? 'Average' : t('sw1_pa_avgNight'), value: avg ? `${nf(avg, 1)}h` : '—' },
+          { label: diffuse ? 'Best' : t('sw1_pa_longest'), value: best ? `${nf(best, 1)}h` : '—' },
+          { label: diffuse ? 'Worst' : t('sw1_pa_shortest'), value: worst ? `${nf(worst, 1)}h` : '—' },
         ]}
       />
 
@@ -2043,7 +2045,7 @@ function SleepDetail({ sleepHistory, trimester, weekNumber, accentColor, accentT
       {hours.length > 0 ? (
         <PaperCard title={diffuse ? 'Sleep debt' : t('pregAnalytics_sleepDebtTotal')}>
           <Text style={{ color: ink, fontSize: 24, fontFamily: diffuse ? diffuseFont.display : font.displayBold }}>
-            {debt.toFixed(1)}{'h'}
+            {nf(debt, 1)}{'h'}
           </Text>
           <Body size={13} color={sec}>
             {diffuse ? `vs an 8-hour target across the last ${hours.length} nights you logged.` : t('sw1_pa_sleepVs', { n: hours.length })}
@@ -2295,7 +2297,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         tint={tint}
         color={accent}
         items={[
-          { label: t('sw1_pa_avgDay'), value: avg ? avg.toFixed(1) : '—' },
+          { label: t('sw1_pa_avgDay'), value: avg ? nf(avg, 1) : '—' },
           { label: t('sw1_pa_target'), value: `${TARGET} ${t('sw1_pa_glAbbr')}` },
           { label: t('sw1_pa_onTarget'), value: data.length ? `${daysHittingTarget}/${data.length}` : '—' },
         ]}
@@ -2438,7 +2440,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
         />
         <MiniInfoTile
           label={diffuse ? 'Volume' : t('sw1_pa_totalVolume')}
-          value={totalLitres ? `${totalLitres.toFixed(1)}L` : '—'}
+          value={totalLitres ? `${nf(totalLitres, 1)}L` : '—'}
           caption={diffuse ? `${totalGlasses} glasses · 7d` : t('sw1_pa_glassesTotal', { n: totalGlasses })}
           tint={tint}
           accent={accent}
@@ -2454,9 +2456,9 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
             // not the violet progress bars.
             <SplitMeters
               rows={[
-                { label: `Morning · ${morning.toFixed(1)} gl`, frac: morning / TARGET, color: stickers.blue },
-                { label: `Afternoon · ${afternoon.toFixed(1)} gl`, frac: afternoon / TARGET, color: stickers.green },
-                { label: `Evening · ${evening.toFixed(1)} gl`, frac: evening / TARGET, color: stickers.lilac },
+                { label: `Morning · ${nf(morning, 1)} gl`, frac: morning / TARGET, color: stickers.blue },
+                { label: `Afternoon · ${nf(afternoon, 1)} gl`, frac: afternoon / TARGET, color: stickers.green },
+                { label: `Evening · ${nf(evening, 1)} gl`, frac: evening / TARGET, color: stickers.lilac },
               ]}
             />
           ) : (
@@ -2476,7 +2478,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                       <SiteMeter pct={pct} tone={tint} height={8} />
                     </View>
                     <Text style={{ width: 60, textAlign: 'right', fontSize: 13, color: ink, fontFamily: font.bodySemiBold }}>
-                      {row.value.toFixed(1)}{' '}{t('sw1_pa_glAbbr')}
+                      {nf(row.value, 1)}{' '}{t('sw1_pa_glAbbr')}
                     </Text>
                   </View>
                 )
@@ -2493,11 +2495,11 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
       {data.length > 0 ? (
         <PaperCard title={t('sw1_pa_weekStatus', { n: weekNumber })}>
           <Body size={13} color={sec} style={{ lineHeight: 20 }}>
-            {!diffuse ? t('sw1_pa_hydStatus', { avg: avg.toFixed(1), target: TARGET }) : avg >= TARGET
-              ? `You're averaging ${avg.toFixed(1)} glasses — great rhythm. Keep sipping consistently across the day.`
+            {!diffuse ? t('sw1_pa_hydStatus', { avg: nf(avg, 1), target: TARGET }) : avg >= TARGET
+              ? `You're averaging ${nf(avg, 1)} glasses — great rhythm. Keep sipping consistently across the day.`
               : avg >= TARGET * 0.75
-              ? `Close to target at ${avg.toFixed(1)} glasses. Try one extra glass with each meal to close the gap.`
-              : `Averaging only ${avg.toFixed(1)} glasses — well below the ${TARGET}-glass target. Keep a bottle within reach.`}
+              ? `Close to target at ${nf(avg, 1)} glasses. Try one extra glass with each meal to close the gap.`
+              : `Averaging only ${nf(avg, 1)} glasses — well below the ${TARGET}-glass target. Keep a bottle within reach.`}
           </Body>
           {!diffuse ? null : avg >= TARGET ? (
             <Pill color={stickers.green} tint={stickers.greenSoft} label={t('preg_analytics_pill_onTrack')} />
@@ -3133,7 +3135,7 @@ function ScoreInfoModal({
                       {wellbeing && (
                         <View style={{ paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, backgroundColor: p.color + '22' }}>
                           <Text style={{ color: p.color, fontSize: 12, fontFamily: font.bodySemiBold }}>
-                            {(wellbeing[p.key] as number).toFixed(1)}
+                            {nf(wellbeing[p.key] as number, 1)}
                           </Text>
                         </View>
                       )}
@@ -3429,7 +3431,7 @@ function WeightByWeekList({
                 textAlign: 'right',
               }}
             >
-              {toDisplay(w.weight).toFixed(1)}{' ' + unit}
+              {nf(toDisplay(w.weight), 1)}{' ' + unit}
             </Text>
           </View>
         )
@@ -3655,9 +3657,9 @@ function buildTakeaways(args: {
         }
       : { headline: '—', pct: 0, takeaway: 'Log a few days to see your week.' },
     weight: {
-      headline: lastW ? `${kgToDisplay(lastW, weightUnit).toFixed(1)} ${wLabel}` : '—',
+      headline: lastW ? `${nf(kgToDisplay(lastW, weightUnit), 1)} ${wLabel}` : '—',
       takeaway: weeklyGain !== null
-        ? `${weeklyGain >= 0 ? '+' : ''}${kgToDisplay(weeklyGain, weightUnit).toFixed(2)} ${wLabel}/wk on average`
+        ? `${weeklyGain >= 0 ? '+' : ''}${nf(kgToDisplay(weeklyGain, weightUnit), 2)} ${wLabel}/wk on average`
         : 'Log weight weekly to track trend.',
       pct: weights.length > 0 ? Math.min(100, weights.length * 10) : 0,
       trend: weeklyGain !== null
@@ -3670,7 +3672,7 @@ function buildTakeaways(args: {
       pct: kickSessions.length > 0 ? Math.min(100, (kickSessions.length / 14) * 100) : 0,
     },
     sleep: {
-      headline: avgSleep ? `${avgSleep.toFixed(1)}h` : '—',
+      headline: avgSleep ? `${nf(avgSleep, 1)}h` : '—',
       takeaway: avgSleep >= 7 ? 'Hitting the 7–9h window.' : avgSleep > 0 ? 'Below 7h — try an afternoon rest.' : 'Log a few nights to see your sleep.',
       pct: avgSleep ? Math.min(100, (avgSleep / 9) * 100) : 0,
     },
@@ -3685,7 +3687,7 @@ function buildTakeaways(args: {
       pct: symptomFreq.length > 0 ? Math.min(100, symptomFreq.length * 20) : 0,
     },
     hydration: {
-      headline: hydAvg ? `${hydAvg.toFixed(1)}` : '—',
+      headline: hydAvg ? `${nf(hydAvg, 1)}` : '—',
       takeaway: hydAvg >= 8 ? 'Hitting the 8 glasses target.' : hydAvg > 0 ? 'Aim for 8 glasses — sip early.' : 'Tap water in the calendar to log.',
       pct: hydAvg ? Math.min(100, (hydAvg / 8) * 100) : 0,
     },

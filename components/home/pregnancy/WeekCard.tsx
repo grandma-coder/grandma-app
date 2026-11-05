@@ -18,6 +18,7 @@ import { getWeekStat, formatWeight } from '../../../lib/weekStats'
 import { font, diffuseFont, useDiffuseTheme, getDiffuseAccent, getModeField, getModeColorSoft, useTheme } from '../../../constants/theme'
 import { useIsDiffuse, DiffuseFieldSurface } from '../../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../../lib/i18n'
+import { dateLoc } from '../../../lib/kpLocale'
 import { useLanguageStore } from '../../../store/useLanguageStore'
 import type { TranslationKey } from '../../../lib/i18n'
 
@@ -301,7 +302,7 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
 function formatWeightValue(g: number | null): string {
   if (g == null) return '<1'
   if (g < 1000) return String(g)
-  return (g / 1000).toFixed(2).replace(/0+$/, '').replace(/\.$/, '')
+  return (g / 1000).toLocaleString(dateLoc(), { maximumFractionDigits: 2, useGrouping: false })
 }
 function formatWeightUnit(g: number | null): string {
   if (g == null || g < 1000) return 'g'

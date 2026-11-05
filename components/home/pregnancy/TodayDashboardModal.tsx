@@ -27,6 +27,8 @@ import { supabase } from '../../../lib/supabase'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
 import { dateLoc } from '../../../lib/kpLocale'
 
+const nf = (x: number, n: number): string => x.toLocaleString(dateLoc(), { minimumFractionDigits: n, maximumFractionDigits: n, useGrouping: false })
+
 interface Props {
   visible: boolean
   onClose: () => void
@@ -200,7 +202,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
               <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelSleep')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
-              {sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '—'}
+              {sleepVal !== null ? `${nf(sleepVal, 1)}h` : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: italicFont }}>
               {sleepVal !== null
@@ -270,7 +272,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
                 <MonoCaps size={10} color={muted}>{t('pregnancy_todayDash_labelWeight')}</MonoCaps>
               </View>
               <Display size={28} color={ink} style={{ marginTop: 4 }}>
-                {weightVal !== null ? `${weightVal.toFixed(1)}` : '—'}
+                {weightVal !== null ? `${nf(weightVal, 1)}` : '—'}
                 {weightVal !== null && (
                   <Text style={{ fontSize: 14, color: muted, fontFamily: italicFont }}>{t('pregnancy_todayDash_unitKg')}</Text>
                 )}
@@ -391,7 +393,7 @@ function CalmBody(p: {
         <Divider />
         <Row
           sticker="zz" label={t('pregnancy_todayDash_labelSleep')}
-          value={p.sleepVal !== null ? `${p.sleepVal.toFixed(1)}h` : '—'}
+          value={p.sleepVal !== null ? `${nf(p.sleepVal, 1)}h` : '—'}
           sub={p.sleepVal !== null ? (p.sleepVal >= 7 ? t('pregnancy_dashboard_restfulNight') : t('pregnancy_dashboard_couldUseMore')) : notLogged}
         />
         <Divider />
@@ -416,7 +418,7 @@ function CalmBody(p: {
         ) : (
           <Row
             sticker="ruler" label={t('pregnancy_todayDash_labelWeight')}
-            value={p.weightVal !== null ? `${p.weightVal.toFixed(1)}${t('pregnancy_todayDash_unitKg')}` : '—'}
+            value={p.weightVal !== null ? `${nf(p.weightVal, 1)}${t('pregnancy_todayDash_unitKg')}` : '—'}
             sub={p.weightVal !== null ? t('pregnancy_dashboard_loggedToday') : notLogged}
           />
         )}

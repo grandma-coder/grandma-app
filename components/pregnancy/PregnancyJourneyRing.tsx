@@ -64,7 +64,7 @@ function articleFor(name: string): 'a' | 'an' {
 function formatWeightValue(g: number | null): string {
   if (g == null) return '<1'
   if (g < 1000) return String(g)
-  return (g / 1000).toFixed(2).replace(/0+$/, '').replace(/\.$/, '')
+  return (g / 1000).toLocaleString(dateLoc(), { maximumFractionDigits: 2, useGrouping: false })
 }
 
 function formatWeightUnit(g: number | null): string {

@@ -18,6 +18,7 @@ import { Character } from '../../characters/Characters'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { LogDock } from '../../ui/LogDock'
 import { useTranslation } from '../../../lib/i18n'
+import { dateLoc } from '../../../lib/kpLocale'
 import { Display, MonoCaps } from '../../ui/Typography'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition,
@@ -30,6 +31,8 @@ import { TodayDashboardModal } from './TodayDashboardModal'
 import { QuickLogPicker } from './QuickLogPicker'
 import { PREG_QUICK_LOGS } from '../../../lib/pregnancyQuickLogs'
 import { useQuickLogStore } from '../../../store/useQuickLogStore'
+
+const nf = (x: number, n: number): string => x.toLocaleString(dateLoc(), { minimumFractionDigits: n, maximumFractionDigits: n, useGrouping: false })
 
 interface Props {
   todayLogs: Record<string, TodayLogEntry>
@@ -109,7 +112,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
     sleep: {
       key: 'sleep', logType: 'sleep',
       icon: diffuse ? <Character name="sleep" size={24} color={stickers.lilac} /> : <SiteSticker name="zz" size={22} />,
-      label: sleepVal !== null ? `${sleepVal.toFixed(1)}h` : '+', done: sleepVal !== null,
+      label: sleepVal !== null ? `${nf(sleepVal, 1)}h` : '+', done: sleepVal !== null,
     },
     meals: {
       key: 'meals', logType: 'nutrition',
@@ -119,7 +122,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
     weight: {
       key: 'weight', logType: 'weight',
       icon: diffuse ? <Character name="growth" size={24} color={stickers.peach} /> : <LogWeight size={22} />,
-      label: weightVal !== null ? `${weightVal.toFixed(1)}kg` : '+', done: weightVal !== null,
+      label: weightVal !== null ? `${nf(weightVal, 1)}kg` : '+', done: weightVal !== null,
     },
     kicks: {
       key: 'kicks', logType: 'kick_count',

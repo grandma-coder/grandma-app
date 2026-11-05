@@ -9,6 +9,9 @@
 import { View, StyleSheet } from 'react-native'
 import Svg, { Line, Circle, Text as SvgText } from 'react-native-svg'
 import { useTranslation } from '../../../lib/i18n'
+import { dateLoc } from '../../../lib/kpLocale'
+
+const nf = (x: number, n: number): string => x.toLocaleString(dateLoc(), { minimumFractionDigits: n, maximumFractionDigits: n, useGrouping: false })
 
 interface WeekRulerProps {
   /** Baby length in centimeters (0–51) */
@@ -40,7 +43,7 @@ export function WeekRuler({ cm, dotColor, lineColor, textColor, dotStroke, value
   const endFont = labelFont ?? 'HankenGrotesk_500Medium'
   const clamped = Math.max(0, Math.min(MAX_CM, cm))
   const x = X_START + (clamped / MAX_CM) * (X_END - X_START)
-  const label = clamped < 1 ? `${clamped.toFixed(2)}cm` : clamped < 10 ? `${clamped.toFixed(1)}cm` : `${Math.round(clamped)}cm`
+  const label = clamped < 1 ? `${nf(clamped, 2)}cm` : clamped < 10 ? `${nf(clamped, 1)}cm` : `${Math.round(clamped)}cm`
 
   const tickXs = Array.from({ length: TICKS }, (_, i) => X_START + (i / (TICKS - 1)) * (X_END - X_START))
 
