@@ -6,6 +6,7 @@ import type { AppLanguage } from '../../store/useLanguageStore'
 import type { PregnancyContentLocale } from './types'
 import { getWeekContent, type WeekContent, type PrepItemDef } from '../weekContent'
 import { getPrepGuide, prepGuideId, type PrepGuide } from '../prepGuide'
+import { birthTypes, hospitalBagChecklist, type BirthType, type HospitalBagSection } from '../birthData'
 import { ptBR } from './pt-BR'
 import { es } from './es'
 import { fr } from './fr'
@@ -60,4 +61,24 @@ export function localizedPrepGuide(englishItem: PrepItemDef, lang: AppLanguage):
     how: g.how.map((s, i) => pick(lang, `pg_${id}_how${i}`, s)),
     watch: g.watch ? pick(lang, `pg_${id}_watch`, g.watch) : undefined,
   }
+}
+
+/** Birth types (title + description) in `lang`. */
+export function localizedBirthTypes(lang: AppLanguage): BirthType[] {
+  if (lang === 'en') return birthTypes
+  return birthTypes.map((b) => ({
+    ...b,
+    title: pick(lang, `birth_${b.id}_title`, b.title),
+    description: pick(lang, `birth_${b.id}_desc`, b.description),
+  }))
+}
+
+/** Hospital-bag checklist (section names + items, same ids) in `lang`. */
+export function localizedHospitalBag(lang: AppLanguage): HospitalBagSection[] {
+  if (lang === 'en') return hospitalBagChecklist
+  return hospitalBagChecklist.map((s) => ({
+    ...s,
+    category: pick(lang, `birth_bag_cat_${s.id}`, s.category),
+    items: s.items.map((it) => ({ ...it, text: pick(lang, `birth_bag_${it.id}`, it.text) })),
+  }))
 }

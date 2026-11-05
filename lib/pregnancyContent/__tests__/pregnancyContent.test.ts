@@ -1,4 +1,4 @@
-import { PREGNANCY_CONTENT, localizedWeekContent, localizedPrepGuide } from '../index'
+import { PREGNANCY_CONTENT, localizedWeekContent, localizedPrepGuide, localizedBirthTypes, localizedHospitalBag } from '../index'
 import { pregnancyContentEnglish } from '../english'
 import { getWeekContent } from '../../weekContent'
 
@@ -37,5 +37,17 @@ describe('bundled pregnancy week content', () => {
     const g = localizedPrepGuide(getWeekContent(37).prep[0], 'pt-BR')
     expect(g.how.length).toBeGreaterThan(0)
     expect(localizedWeekContent(37, 'en')).toBe(getWeekContent(37))
+  })
+
+  it('covers the birth-plan page (birth types + hospital bag) in every language', () => {
+    expect(KEYS.filter((k) => k.startsWith('birth_')).length).toBe(31)
+    for (const lang of Object.keys(PREGNANCY_CONTENT) as (keyof typeof PREGNANCY_CONTENT)[]) {
+      const types = localizedBirthTypes(lang)
+      expect(types.map((b) => b.id)).toEqual(['natural', 'c-section', 'home-birth', 'water-birth'])
+      types.forEach((b) => { expect(b.title).not.toBe(EN[`birth_${b.id}_title`]) })
+      const bag = localizedHospitalBag(lang)
+      expect(bag.map((s) => s.items.length)).toEqual([10, 5, 5])
+      bag.forEach((s) => s.items.forEach((i) => { expect(i.text).toBe(PREGNANCY_CONTENT[lang][`birth_bag_${i.id}`]) }))
+    }
   })
 })

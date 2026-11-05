@@ -93,31 +93,59 @@ export const birthTypes: BirthType[] = [
   },
 ]
 
-export const hospitalBagChecklist = [
-  { category: 'For Mom', items: [
-    'Photo ID and insurance card',
-    'Birth plan copies',
-    'Comfortable robe or nightgown',
-    'Slippers and warm socks',
-    'Nursing bra and pads',
-    'Toiletries and lip balm',
-    'Phone charger (long cable!)',
-    'Snacks and water bottle',
-    'Going-home outfit (maternity size)',
-    'Pillow from home',
+export interface HospitalBagItem { id: string; text: string }
+export interface HospitalBagSection { id: string; category: string; items: HospitalBagItem[] }
+
+// Item ids are STABLE (persisted as the checked state) — never rename one. `text`/`category` are the
+// English source; the page shows the bundled translation (lib/pregnancyContent, keys birth_bag_*).
+export const hospitalBagChecklist: HospitalBagSection[] = [
+  { id: 'mom', category: 'For Mom', items: [
+    { id: 'mom_id', text: 'Photo ID and insurance card' },
+    { id: 'mom_plans', text: 'Birth plan copies' },
+    { id: 'mom_robe', text: 'Comfortable robe or nightgown' },
+    { id: 'mom_slippers', text: 'Slippers and warm socks' },
+    { id: 'mom_nursing', text: 'Nursing bra and pads' },
+    { id: 'mom_toiletries', text: 'Toiletries and lip balm' },
+    { id: 'mom_charger', text: 'Phone charger (long cable!)' },
+    { id: 'mom_snacks', text: 'Snacks and water bottle' },
+    { id: 'mom_outfit', text: 'Going-home outfit (maternity size)' },
+    { id: 'mom_pillow', text: 'Pillow from home' },
   ]},
-  { category: 'For Baby', items: [
-    'Going-home outfit (newborn + 0-3m)',
-    'Receiving blanket',
-    'Car seat (installed!)',
-    'Diapers and wipes (hospital provides, but just in case)',
-    'Baby hat',
+  { id: 'baby', category: 'For Baby', items: [
+    { id: 'baby_outfit', text: 'Going-home outfit (newborn + 0-3m)' },
+    { id: 'baby_blanket', text: 'Receiving blanket' },
+    { id: 'baby_carseat', text: 'Car seat (installed!)' },
+    { id: 'baby_diapers', text: 'Diapers and wipes (hospital provides, but just in case)' },
+    { id: 'baby_hat', text: 'Baby hat' },
   ]},
-  { category: 'For Partner', items: [
-    'Change of clothes',
-    'Snacks and drinks',
-    'Camera or phone charger',
-    'Entertainment for long labor',
-    'Pillow and blanket',
+  { id: 'partner', category: 'For Partner', items: [
+    { id: 'partner_clothes', text: 'Change of clothes' },
+    { id: 'partner_snacks', text: 'Snacks and drinks' },
+    { id: 'partner_charger', text: 'Camera or phone charger' },
+    { id: 'partner_entertainment', text: 'Entertainment for long labor' },
+    { id: 'partner_pillow', text: 'Pillow and blanket' },
   ]},
 ]
+
+/**
+ * Checked state is persisted as `{ [itemId]: true }`. Older builds stored `"<English category>::<English
+ * item text>"` keys — read those too (mapped to the id) so nobody loses their ticks.
+ */
+export function normalizeBagState(raw: unknown): Record<string, boolean> {
+  const out: Record<string, boolean> = {}
+  if (!raw || typeof raw !== 'object') return out
+  const legacy = new Map<string, string>()
+  const ids = new Set<string>()
+  for (const sec of hospitalBagChecklist) {
+    for (const it of sec.items) {
+      legacy.set(`${sec.category}::${it.text}`, it.id)
+      ids.add(it.id)
+    }
+  }
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (v !== true) continue
+    const id = ids.has(k) ? k : legacy.get(k)
+    if (id) out[id] = true
+  }
+  return out
+}

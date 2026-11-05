@@ -2,10 +2,12 @@
 // (lib/weekContent.ts + lib/prepGuide.ts) so the translated locale files and the test always
 // agree on the key set. Keys:
 //   w<week>_dev<i> · w<week>_sym<i> · w<week>_prep<i>_t · w<week>_prep<i>_d
+//   birth_<typeId>_title|desc · birth_bag_cat_<sectionId> · birth_bag_<itemId>   (birth-plan page)
 //   appt_<id>_name|description|prepNote|whatToExpect|q<i> · appt_sourceNote
 //   pg_<guideId>_why · pg_<guideId>_how<i> · pg_<guideId>_watch
 import { weekContent } from '../weekContent'
 import { allPrepGuides } from '../prepGuide'
+import { birthTypes, hospitalBagChecklist } from '../birthData'
 import { STANDARD_APPOINTMENTS, APPOINTMENTS_SOURCE_NOTE } from '../pregnancyAppointments'
 
 export function pregnancyContentEnglish(): Record<string, string> {
@@ -29,6 +31,14 @@ export function pregnancyContentEnglish(): Record<string, string> {
     out[`appt_${a.id}_prepNote`] = a.prepNote
     out[`appt_${a.id}_whatToExpect`] = a.whatToExpect
     a.questions.forEach((q, i) => { out[`appt_${a.id}_q${i}`] = q })
+  }
+  for (const b of birthTypes) {
+    out[`birth_${b.id}_title`] = b.title
+    out[`birth_${b.id}_desc`] = b.description
+  }
+  for (const sec of hospitalBagChecklist) {
+    out[`birth_bag_cat_${sec.id}`] = sec.category
+    for (const it of sec.items) out[`birth_bag_${it.id}`] = it.text
   }
   out.appt_sourceNote = APPOINTMENTS_SOURCE_NOTE
   return out

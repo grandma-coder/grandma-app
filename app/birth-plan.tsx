@@ -9,7 +9,8 @@ import { BirthTypeCard } from '../components/pregnancy/BirthTypeCard'
 import { BirthDetailModal } from '../components/pregnancy/BirthDetailModal'
 import { SiteSticker } from '../components/stickers/SiteSticker'
 import { InkBackButton } from '../components/ui/InkBackButton'
-import { birthTypes, hospitalBagChecklist } from '../lib/birthData'
+import { normalizeBagState } from '../lib/birthData'
+import { localizedBirthTypes, localizedHospitalBag } from '../lib/pregnancyContent'
 import type { BirthTopicKey } from '../lib/birthGuideData'
 import { useTheme, spacing, radius, getModeColor, getModeColorSoft, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
@@ -25,7 +26,8 @@ const BIRTH_TYPE_TO_TOPIC: Record<string, BirthTopicKey> = {
 }
 
 // AsyncStorage key for the persisted hospital-bag checklist state.
-// Map keyed by "<section>::<item>" → boolean.
+// Map keyed by stable item id → boolean (older builds keyed by English "<section>::<item>" text;
+// normalizeBagState reads both).
 const BAG_STATE_KEY = 'grandma:hospital_bag_checklist:v1'
 
 export default function BirthPlan() {
@@ -33,7 +35,9 @@ export default function BirthPlan() {
   const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  const birthTypes = useMemo(() => localizedBirthTypes(language), [language])
+  const hospitalBagChecklist = useMemo(() => localizedHospitalBag(language), [language])
   const accent = diffuse ? getDiffuseAccent('preg', dt.isDark) : getModeColor('preg', isDark)
   const soft = getModeColorSoft('preg', isDark)
   const [detailTopic, setDetailTopic] = useState<BirthTopicKey | null>(null)
@@ -47,11 +51,11 @@ export default function BirthPlan() {
     for (const section of hospitalBagChecklist) {
       for (const item of section.items) {
         total += 1
-        if (checked[`${section.category}::${item}`]) done += 1
+        if (checked[item.id]) done += 1
       }
     }
     return { total, doneCount: done }
-  }, [checked])
+  }, [checked, hospitalBagChecklist])
 
   // Load persisted state on mount.
   useEffect(() => {
@@ -61,7 +65,7 @@ export default function BirthPlan() {
         if (!alive) return
         if (raw) {
           try {
-            setChecked(JSON.parse(raw))
+            setChecked(normalizeBagState(JSON.parse(raw)))
           } catch {
             // ignore parse errors
           }
@@ -81,9 +85,8 @@ export default function BirthPlan() {
     AsyncStorage.setItem(BAG_STATE_KEY, JSON.stringify(checked)).catch(() => {})
   }, [checked, hydrated])
 
-  function toggle(section: string, item: string) {
-    const key = `${section}::${item}`
-    setChecked((prev) => ({ ...prev, [key]: !prev[key] }))
+  function toggle(id: string) {
+    setChecked((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
   return (
@@ -176,9 +179,8 @@ export default function BirthPlan() {
           </Text>
         </View>
         {hospitalBagChecklist.map((section) => {
-          const cat = section.category.toLowerCase()
-          const isMom = cat.includes('mom')
-          const isBaby = cat.includes('baby')
+          const isMom = section.id === 'mom'
+          const isBaby = section.id === 'baby'
           const Sticker = diffuse ? (
             <DiffuseBloomIcon color={accent} size={26} intensity={0.45}>
               {isMom ? (
@@ -194,7 +196,7 @@ export default function BirthPlan() {
           )
           return (
             <View
-              key={section.category}
+              key={section.id}
               style={[
                 styles.bagSection,
                 diffuse
@@ -220,17 +222,16 @@ export default function BirthPlan() {
                   {section.category}
                 </Text>
               </View>
-              {section.items.map((item, i) => {
-                const key = `${section.category}::${item}`
-                const isChecked = !!checked[key]
+              {section.items.map((item) => {
+                const isChecked = !!checked[item.id]
                 return (
                   <Pressable
-                    key={i}
-                    onPress={() => toggle(section.category, item)}
+                    key={item.id}
+                    onPress={() => toggle(item.id)}
                     style={({ pressed }) => [styles.bagItem, pressed && { opacity: 0.7 }]}
                     accessibilityRole="checkbox"
                     accessibilityState={{ checked: isChecked }}
-                    accessibilityLabel={`${item} — ${isChecked ? t('preg_birthPlan_a11y_packed') : t('preg_birthPlan_a11y_notPacked')}`}
+                    accessibilityLabel={`${item.text} — ${isChecked ? t('preg_birthPlan_a11y_packed') : t('preg_birthPlan_a11y_notPacked')}`}
                   >
                     <View
                       style={[
@@ -271,7 +272,7 @@ export default function BirthPlan() {
                             },
                       ]}
                     >
-                      {item}
+                      {item.text}
                     </Text>
                   </Pressable>
                 )

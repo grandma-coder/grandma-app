@@ -4,7 +4,7 @@ import { hospitalBagChecklist } from '../birthData'
 function bagItems(category: string): string[] {
   const found = hospitalBagChecklist.find((c) => c.category === category)
   if (!found) throw new Error(`hospitalBagChecklist missing category "${category}"`)
-  return found.items
+  return found.items.map((i) => i.text)
 }
 
 export const HOSPITAL_BAG_TOPIC: BirthTopic = {
