@@ -13,13 +13,23 @@ import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { MonoCaps } from '../../ui/Typography'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, t as translate, type TranslationKey } from '../../../lib/i18n'
+import { useLanguageStore } from '../../../store/useLanguageStore'
 import { AffirmationShareModal } from './AffirmationShareModal'
 
 // ─── Fetch daily affirmation from Supabase ────────────────────────────────────
 
+const AFFIRMATION_COUNT = 20
+
+function localAffirmation(): string {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
+  return translate(`pregnancy_affirmationFallback_${dayOfYear % AFFIRMATION_COUNT}` as TranslationKey)
+}
+
 async function loadDailyAffirmation(): Promise<string> {
   const today = toDateStr(new Date())
+  const lang = useLanguageStore.getState().language
+  if (lang !== 'en') return localAffirmation()
   const cacheKey = `affirmation_${today}`
 
   try {
@@ -39,31 +49,9 @@ async function loadDailyAffirmation(): Promise<string> {
     // ignore network errors
   }
 
-  // Fallback phrases — used only when the RPC is unreachable.
-  const fallbacks = [
-    'Your body knows exactly what to do. Trust it completely.',
-    'You are stronger than you know and braver than you feel.',
-    'Every day you are growing a miracle. You are extraordinary.',
-    'Be gentle with yourself today. You are doing enough.',
-    'Your baby feels your love with every heartbeat.',
-    'You were made for this. Your instincts are wise.',
-    'Rest is productive. Nourishing yourself nourishes your baby.',
-    'Your emotions are valid. Growing life is hard and beautiful work.',
-    'You are not alone on this journey. You are held and supported.',
-    'Every ache and change is your body doing its incredible work.',
-    'The love you already feel for your baby is real and powerful.',
-    'You are exactly where you are supposed to be right now.',
-    'Your body has built a human from scratch. That is extraordinary.',
-    'Your baby hears your voice and finds comfort in it.',
-    'Take a deep breath. You and your baby are okay.',
-    'Trust the process. Your body and your baby are in sync.',
-    'You don’t need to be perfect — your baby just needs you.',
-    'Today, give yourself credit for every small thing you did right.',
-    'You are not falling apart. You are expanding.',
-    'You are a miracle carrying a miracle.',
-  ]
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
-  return fallbacks[dayOfYear % fallbacks.length]
+  // Localized fallback phrases (the RPC text is English-only, so non-English users always land here).
+  return localAffirmation()
+
 }
 
 // ─── Reveal persistence ──────────────────────────────────────────────────────

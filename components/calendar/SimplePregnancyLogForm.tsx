@@ -94,8 +94,7 @@ export function SimplePregnancyLogForm({ type, userId, onSaved }: Props) {
       // Roll back the optimistic chip AND tell the user — otherwise the ✓
       // silently un-flips and the log appears lost with no explanation.
       queryClient.setQueryData(todayKey, previousToday)
-      const msg = e instanceof Error ? e.message : t('common_tryAgain')
-      Alert.alert(t('sw1_common_couldntSave'), msg)
+      Alert.alert(t('sw1_common_couldntSave'), t('common_tryAgain'))
       return
     }
     void invalidatePregnancyLogQueries()

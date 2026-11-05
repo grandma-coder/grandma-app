@@ -943,7 +943,7 @@ export default function PregnancyProfileScreen() {
     try {
       await persistDueDateToDb(iso)
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
+      Alert.alert(t('common_error'), t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1045,7 +1045,7 @@ export default function PregnancyProfileScreen() {
       if (error) throw error
       setProfile((prev) => ({ ...prev, birthPreferences: merged }))
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
+      Alert.alert(t('common_error'), t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1064,7 +1064,7 @@ export default function PregnancyProfileScreen() {
       if (error) throw error
       setCurrentWeight(value)
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
+      Alert.alert(t('common_error'), t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1083,7 +1083,7 @@ export default function PregnancyProfileScreen() {
       try {
         await persistDueDateToDb(newDue)
       } catch (e: unknown) {
-        Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
+        Alert.alert(t('common_error'), t('common_saveFailed'))
       }
     }
   }
@@ -1099,7 +1099,7 @@ export default function PregnancyProfileScreen() {
         .eq('id', session.user.id)
       if (error) throw error
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
+      Alert.alert(t('common_error'), t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1117,7 +1117,7 @@ export default function PregnancyProfileScreen() {
         .eq('id', childId)
       if (error) throw error
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('common_saveFailed'))
+      Alert.alert(t('common_error'), t('common_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1177,7 +1177,7 @@ export default function PregnancyProfileScreen() {
             )}
             {daysToGo !== null && (
               <View style={[styles.heroDaysRibbon, { borderColor: ink, borderWidth: 1.5, backgroundColor: colors.surface }]}>
-                <Text style={[styles.heroDaysText, { color: ink, fontFamily: font.bodyBold }]}>{t('profPreg_daysToGo', { n: daysToGo })}</Text>
+                <Text style={[styles.heroDaysText, { color: ink, fontFamily: font.bodyBold }]}>{daysToGo === 0 ? t('preg_anyDayNow') : t('profPreg_daysToGo', { n: daysToGo })}</Text>
               </View>
             )}
             {bp.birthLocation ? (
@@ -1255,7 +1255,7 @@ export default function PregnancyProfileScreen() {
             <View style={[styles.heroDaysRibbon, { borderColor: stickers.lilac, backgroundColor: colors.surface }]}>
               <Sparkle size={14} fill={stickers.yellow} />
               <Text style={[styles.heroDaysText, { color: colors.text, fontFamily: font.bodySemiBold }]}>
-                {t('profPreg_daysToGo', { n: daysToGo })}
+                {daysToGo === 0 ? t('preg_anyDayNow') : t('profPreg_daysToGo', { n: daysToGo })}
               </Text>
               <Sparkle size={14} fill={stickers.yellow} />
             </View>
@@ -1290,7 +1290,7 @@ export default function PregnancyProfileScreen() {
           />
           <InfoRow dotColor={ROW_DOTS[1]} label={t('preg_profile_currentWeek')} value={weekNumber != null ? t('profPreg_chipWeek', { n: weekNumber }) : ''} />
           <InfoRow dotColor={ROW_DOTS[2]} label={t('preg_profile_trimester')} value={weekNumber != null ? t(TRIMESTER_LABEL(weekNumber)) : ''} />
-          <InfoRow dotColor={ROW_DOTS[3]} label={t('preg_profile_daysToGo')} value={daysToGo != null ? t('sw1_pp_nDays', { n: daysToGo }) : ''} />
+          <InfoRow dotColor={ROW_DOTS[3]} label={t('preg_profile_daysToGo')} value={daysToGo != null ? (daysToGo === 0 ? t('preg_anyDayNow') : t('sw1_pp_nDays', { n: daysToGo })) : ''} />
           <InfoRow
             dotColor={ROW_DOTS[4]}
             label={t('sw1_pp_lmp')}

@@ -3680,7 +3680,7 @@ function buildTakeaways(args: {
     },
     contractions: {
       headline: contractions.length ? `${contractions[contractions.length - 1].count}` : '—',
-      takeaway: contractions.length > 0 ? `${contractions.length} session${contractions.length === 1 ? '' : 's'} logged` : tNow('sw1_pa_timeThem'),
+      takeaway: contractions.length > 0 ? tNow(contractions.length === 1 ? 'sw1_pa_contrSessions_one' : 'sw1_pa_contrSessions_other', { count: contractions.length }) : tNow('sw1_pa_timeThem'),
       pct: contractions.length > 0 ? Math.min(100, contractions.length * 20) : 0,
     },
     birth: birthReady

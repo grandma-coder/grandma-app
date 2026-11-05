@@ -24,6 +24,8 @@ import { SiteChoice } from '../ui/SiteChoice'
 import { getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { supabase } from '../../lib/supabase'
+import { assertNotFuture } from '../../lib/futureDate'
+import { pregnancyLogErrorText } from '../../lib/pregnancyLogError'
 import { invalidatePregnancyLogQueries, queryClient } from '../../lib/queryClient'
 import { toDateStr } from '../../lib/cycleLogic'
 import { estimateFromImage, type AiFoodItem } from '../../lib/foodAi'
@@ -90,7 +92,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       setFoods([])
       await scan(uri)
     } catch (e: any) {
-      toast.show({ title: t('sw1_common_somethingWrong'), message: e?.message ?? t('sw1_meal_openFail'), autoDismiss: 0, accent: '#EE7B6D' })
+      toast.show({ title: t('sw1_common_somethingWrong'), message: t('sw1_meal_openFail'), autoDismiss: 0, accent: '#EE7B6D' })
     }
   }
 
@@ -129,7 +131,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
     } catch (e: any) {
       toast.show({
         title: t('scan_failed'),
-        message: e?.message ?? t('sw1_common_tryAgainMoment'),
+        message: t('sw1_common_tryAgainMoment'),
         autoDismiss: 0,
         accent: '#EE7B6D',
       })
@@ -150,6 +152,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       if (!uid) throw new Error(t('app_privacy_notSignedIn'))
       const uploaded = photoUri ? await uploadPlatePhoto(photoUri, uid) : null
       const logDate = date ?? toDateStr(new Date())
+      assertNotFuture(logDate)
       const payload = {
         photoUrl: uploaded,
         foods: foods.map((f) => ({ name: f.name, cals: f.cals, category: f.category })),
@@ -206,7 +209,7 @@ export function PregnancyMealForm({ userId: userIdProp, date, onSaved }: Props) 
       }
       void invalidatePregnancyLogQueries()
     } catch (e: any) {
-      toast.show({ title: t('sw1_common_couldntSave'), message: e?.message ?? t('sw1_common_tryAgainMoment'), autoDismiss: 0, accent: '#EE7B6D' })
+      toast.show({ title: t('sw1_common_couldntSave'), message: pregnancyLogErrorText(e), autoDismiss: 0, accent: '#EE7B6D' })
     } finally {
       setSaving(false)
     }

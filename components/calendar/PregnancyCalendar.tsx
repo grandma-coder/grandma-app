@@ -110,6 +110,8 @@ import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import { PregnancyLogRouter, type PregnancyLogType } from './PregnancyLogRouter'
 import { useTranslation, t as tNow } from '../../lib/i18n'
+import { isFutureDate } from '../../lib/futureDate'
+import { Skeleton } from '../ui/Skeleton'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { InkBackButton } from '../ui/InkBackButton'
 import { PillButton } from '../ui/PillButton'
@@ -699,7 +701,7 @@ function RoutineManager({
       setEditingRoutine(null)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('pregCal_alertSaveError'), e instanceof Error ? e.message : t('common_saveFailed'))
+      Alert.alert(t('pregCal_alertSaveError'), t('error_generic'))
     } finally {
       setSaving(false)
     }
@@ -724,7 +726,7 @@ function RoutineManager({
       if (error) throw error
       onDeleted()
     } catch (e: unknown) {
-      Alert.alert(t('pregCal_alertDeleteError'), e instanceof Error ? e.message : t('kp_ob_checkConnection'))
+      Alert.alert(t('pregCal_alertDeleteError'), t('error_generic'))
     } finally {
       setDeleting(false)
       setConfirmDeleteId(null)
@@ -1675,7 +1677,7 @@ function LogDetailPopup({
     setConfirmingDelete(false)
     const { error } = await supabase.from('pregnancy_logs').delete().eq('id', log.id)
     if (error) {
-      Alert.alert(t('pregCal_alertDeleteError'), error.message)
+      Alert.alert(t('pregCal_alertDeleteError'), t('error_generic'))
       return
     }
     await invalidatePregnancyLogQueries()
@@ -2454,7 +2456,7 @@ export function PregnancyCalendar() {
       error = { message: e?.message ?? tNow('kp_pc_network') }
     }
     if (error) {
-      Alert.alert(t('pregCal_alertDeleteError'), error.message)
+      Alert.alert(t('pregCal_alertDeleteError'), t('error_generic'))
       return
     }
     await invalidatePregnancyLogQueries()
@@ -2616,6 +2618,7 @@ export function PregnancyCalendar() {
   // ── Cards mode ────────────────────────────────────────────────────────────
 
   function renderTimelineCards() {
+    const dayLoading = (!sessionChecked || calLogsLoading) && !calLogsData
     const selLogs = (calLogs[selectedDate] ?? []).filter((l) => l.log_type !== 'skipped')
     const selPending = pendingRoutinesForDate(selectedDate)
     const selDow = new Date(selectedDate + 'T12:00:00').getDay()
@@ -2623,7 +2626,7 @@ export function PregnancyCalendar() {
     const summary = [
       selPending.length > 0 && tNow('pregCal_pending_count', { count: selPending.length }),
       selLogs.length > 0 && tNow('pregCal_logged_count', { count: selLogs.length }),
-    ].filter(Boolean).join(' · ') || tNow('kp_pc_nothingPlanned')
+    ].filter(Boolean).join(' · ') || (dayLoading ? '' : tNow('kp_pc_nothingPlanned'))
 
     interface Row {
       key: string
@@ -2655,10 +2658,14 @@ export function PregnancyCalendar() {
         time: r.time ? fmtTime(r.time) : '—',
         sortHours,
         title: r.name,
-        subtitle: t('pregCal_tap_to_log'),
+        // A routine on a future day can't be logged yet — no "tap to log" there.
+        subtitle: isFutureDate(selectedDate, todayStr) ? undefined : t('pregCal_tap_to_log'),
         tint: tintKey,
         icon: logSticker(r.type, 28, isDark),
-        onPress: () => setLogForm({ type: r.type as PregnancyLogType, date: selectedDate }),
+        onPress: () => {
+          if (isFutureDate(selectedDate, todayStr)) return
+          setLogForm({ type: r.type as PregnancyLogType, date: selectedDate })
+        },
       })
     }
 
@@ -2730,7 +2737,17 @@ export function PregnancyCalendar() {
           )}
         </View>
 
-        {rows.length === 0 ? (
+        {!diffuse && dayLoading && rows.length === 0 ? (
+          // Skeleton while the month's logs load — never a "nothing planned" flash.
+          <View style={{ gap: 14, paddingVertical: 12 }}>
+            {[0, 1].map((i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Skeleton width={38} height={38} radius={19} />
+                <Skeleton width={i === 0 ? '55%' : '40%'} height={12} radius={6} />
+              </View>
+            ))}
+          </View>
+        ) : rows.length === 0 ? (
           diffuse ? (
             <DiffuseEmptyState
               title={t('pregCal_nothing_planned')}
@@ -3435,7 +3452,7 @@ export function PregnancyCalendar() {
       <QuickLogSheet
         visible={showQuickLog}
         onClose={() => setShowQuickLog(false)}
-        onSelect={(type) => setLogForm({ type, date: selectedDate })}
+        onSelect={(type) => setLogForm({ type, date: isFutureDate(selectedDate, todayStr) ? todayStr : selectedDate })}
         onManageRoutines={() => setShowRoutineManager(true)}
       />
 

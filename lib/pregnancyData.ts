@@ -67,11 +67,10 @@ export function getWeekData(week: number): PregnancyWeekData {
   return pregnancyWeeks[clamped - 1]
 }
 
-export function getDaysToGo(dueDate: string): number {
+export function getDaysToGo(dueDate: string, now: Date = new Date()): number {
   // Whole calendar days between local today and the due date (not a ceil of a UTC-midnight
   // difference, which jumped by a day in the evening and disagreed with the week math).
   const due = parseLocalDate(dueDate)
-  const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   return Math.max(0, Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)))
 }
@@ -81,10 +80,13 @@ export function getDaysToGo(dueDate: string): number {
  * EDD is reached at week 40, so weeks-to-go subtracts from 40.
  * Clamped to [1, 42] so the UI stays valid for early/late inputs.
  */
-export function getCurrentWeekFromDueDate(dueDate: string): number {
-  const due = new Date(dueDate + 'T00:00:00')
-  const now = new Date()
-  const daysLeft = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+export function getCurrentWeekFromDueDate(dueDate: string, now: Date = new Date()): number {
+  // Whole calendar days (same basis as getDaysToGo) — a ms difference against local midnight
+  // drifted by an hour across DST changes and flipped the week on the boundary night.
+  const due = parseLocalDate(dueDate)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const daysLeft = Math.round((due.getTime() - today.getTime()) / 86400000)
+  if (Number.isNaN(daysLeft)) return 1
   const week = 40 - Math.ceil(daysLeft / 7)
   return Math.max(1, Math.min(42, week))
 }

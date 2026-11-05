@@ -10,7 +10,10 @@
 import { dateLoc } from '../../lib/kpLocale'
 import { SheetFooterAction } from './LogSheet'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { assertNotFuture } from '../../lib/futureDate'
+import { pregnancyLogErrorText } from '../../lib/pregnancyLogError'
 import {
   View,
   Text,
@@ -60,12 +63,63 @@ import { StickerChoice, MoreSection } from './QuickLogKit'
 
 // ─── Shared save helper ────────────────────────────────────────────────────
 
+/** Log types that hold one value per day (the rest — appointments, kicks, contractions, tasks —
+ *  legitimately repeat). */
+const SINGLE_PER_DAY = new Set(['mood', 'symptom', 'sleep', 'exercise', 'kegel', 'water', 'vitamins', 'weight'])
+
+/**
+ * The row already saved for this day + type, so re-opening a form shows what she logged instead
+ * of a blank form. `apply` runs once per date/type when the row arrives.
+ */
+function useExistingPregnancyLog(
+  date: string,
+  type: string,
+  apply: (row: { value: string | null; notes: string | null }) => void,
+) {
+  const [userId, setUserId] = useState<string | undefined>()
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id))
+  }, [])
+  const { data } = useQuery({
+    queryKey: ['pregnancy-logs', 'existing', userId, date, type],
+    queryFn: async (): Promise<{ value: string | null; notes: string | null } | null> => {
+      if (!userId) return null
+      const { data: rows, error } = await supabase
+        .from('pregnancy_logs')
+        .select('value, notes')
+        .eq('user_id', userId)
+        .eq('log_date', date)
+        .eq('log_type', type)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      if (error) throw error
+      return rows?.[0] ?? null
+    },
+    enabled: !!userId,
+    staleTime: 0,
+  })
+  const [appliedFor, setAppliedFor] = useState<string | null>(null)
+  const key = `${date}|${type}`
+  useEffect(() => {
+    if (data && appliedFor !== key) {
+      apply(data)
+      setAppliedFor(key)
+    }
+  }, [data, key]) // eslint-disable-line react-hooks/exhaustive-deps
+}
+
+function parseJson<T>(s: string | null): Partial<T> {
+  if (!s) return {}
+  try { const v = JSON.parse(s); return v && typeof v === 'object' ? v : {} } catch { return {} }
+}
+
 async function savePregnancyLog(
   date: string,
   type: string,
   value?: string,
   notes?: string
 ) {
+  assertNotFuture(date)
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -93,6 +147,16 @@ async function savePregnancyLog(
   }
 
   try {
+    // One row per day for single-value types: re-saving replaces instead of stacking duplicates.
+    if (SINGLE_PER_DAY.has(type)) {
+      const { error: deleteError } = await supabase
+        .from('pregnancy_logs')
+        .delete()
+        .eq('user_id', userId)
+        .eq('log_date', date)
+        .eq('log_type', type)
+      if (deleteError) throw deleteError
+    }
     const { error } = await supabase.from('pregnancy_logs').insert({
       user_id: userId,
       log_date: date,
@@ -313,6 +377,7 @@ export function PregnancyMoodForm({
   const [mood, setMood] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  useExistingPregnancyLog(date, 'mood', (r) => { if (r.value) setMood(r.value); if (r.notes) setNotes(r.notes) })
 
   async function save() {
     if (!mood) return
@@ -321,7 +386,7 @@ export function PregnancyMoodForm({
       await savePregnancyLog(date, 'mood', mood, notes || undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -459,6 +524,10 @@ export function PregnancySymptomsForm({
   const [selected, setSelected] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  useExistingPregnancyLog(date, 'symptom', (r) => {
+    if (r.value) setSelected(r.value.split(', ').filter(Boolean))
+    if (r.notes) setNotes(r.notes)
+  })
 
   function toggle(sym: string) {
     setSelected((prev) =>
@@ -473,7 +542,7 @@ export function PregnancySymptomsForm({
       await savePregnancyLog(date, 'symptom', selected.join(', '), notes || undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -669,7 +738,7 @@ export function AppointmentForm({
       )
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -881,7 +950,7 @@ export function KickCountForm({
       )
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1168,6 +1237,10 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
   const [hours, setHours] = useState(7)
   const [quality, setQuality] = useState(5)
   const [saving, setSaving] = useState(false)
+  useExistingPregnancyLog(date, 'sleep', (r) => {
+    const h = Number(r.value); if (r.value && !isNaN(h)) setHours(h)
+    const q = parseJson<{ quality: number }>(r.notes).quality; if (typeof q === 'number') setQuality(q)
+  })
 
   async function save() {
     setSaving(true)
@@ -1175,7 +1248,7 @@ export function SleepLogForm({ date, onSaved }: { date: string; onSaved: () => v
       await savePregnancyLog(date, 'sleep', hours.toString(), JSON.stringify({ quality }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1245,6 +1318,14 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
   const [customType, setCustomType] = useState('')
   const [minutes, setMinutes] = useState(30)
   const [saving, setSaving] = useState(false)
+  useExistingPregnancyLog(date, 'exercise', (r) => {
+    const m = Number(r.value); if (r.value && !isNaN(m)) setMinutes(m)
+    const ty = parseJson<{ type: string }>(r.notes).type
+    if (ty) {
+      if (EXERCISE_TYPES.includes(ty)) setExerciseType(ty)
+      else { setExerciseType('Other'); setCustomType(ty) }
+    }
+  })
 
   const isOther = exerciseType === 'Other'
   const finalType = isOther ? customType.trim() : exerciseType
@@ -1257,7 +1338,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
       await savePregnancyLog(date, 'exercise', minutes.toString(), JSON.stringify({ type: finalType }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1386,7 +1467,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
       await savePregnancyLog(date, 'nutrition', tags.join(','), nutritionNotes || undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1479,6 +1560,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
   const s = isDark ? stickersDark : stickersLight
   const [sets, setSets] = useState(3)
   const [saving, setSaving] = useState(false)
+  useExistingPregnancyLog(date, 'kegel', (r) => { const n = Number(r.value); if (r.value && !isNaN(n)) setSets(n) })
 
   async function save() {
     setSaving(true)
@@ -1486,7 +1568,7 @@ export function KegelLogForm({ date, onSaved }: { date: string; onSaved: () => v
       await savePregnancyLog(date, 'kegel', sets.toString(), undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1539,6 +1621,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
   const s = isDark ? stickersDark : stickersLight
   const [glasses, setGlasses] = useState(1)
   const [saving, setSaving] = useState(false)
+  useExistingPregnancyLog(date, 'water', (r) => { const n = Number(r.value); if (r.value && !isNaN(n)) setGlasses(n) })
 
   const GOAL = 8
   const remaining = Math.max(0, GOAL - glasses)
@@ -1556,7 +1639,7 @@ export function WaterLogForm({ date, onSaved }: { date: string; onSaved: () => v
       await savePregnancyLog(date, 'water', glasses.toString(), undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1674,6 +1757,7 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
   const s = isDark ? stickersDark : stickersLight
   const [taken, setTaken] = useState<boolean | null>(null)
   const [saving, setSaving] = useState(false)
+  useExistingPregnancyLog(date, 'vitamins', (r) => { if (r.value) setTaken(r.value === '1') })
 
   const OPTIONS: { value: boolean; label: string }[] = [
     { value: true, label: t('common_yes') },
@@ -1687,7 +1771,7 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
       await savePregnancyLog(date, 'vitamins', taken ? '1' : '0', undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1788,7 +1872,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
       await savePregnancyLog(date, 'nesting', done ? '1' : '0', JSON.stringify({ title: nestingTitle, category: finalCategory }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1922,7 +2006,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
       await savePregnancyLog(date, 'birth_prep', done ? '1' : '0', JSON.stringify({ title: birthPrepTitle, category: finalCategory, dueWeek }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -2061,7 +2145,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
       await savePregnancyLog(date, 'contraction', durationSec.toString(), JSON.stringify({ intervalMin, notes: contractionNotes || undefined }))
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -2145,6 +2229,10 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
   // Stepper default 70 kg, shown in the display unit.
   const [weight, setWeight] = useState(() => Math.round(kgToDisplay(70, weightUnit) * 10) / 10)
   const [saving, setSaving] = useState(false)
+  useExistingPregnancyLog(date, 'weight', (r) => {
+    const kg = Number(r.value)
+    if (r.value && !isNaN(kg) && kg > 0) setWeight(Math.round(kgToDisplay(kg, weightUnit) * 10) / 10)
+  })
   const accent = diffuse ? diffuseLogHue('weight') : (isDark ? stickersDark.peach : stickersLight.peach)
 
   async function save() {
@@ -2159,7 +2247,7 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
       await savePregnancyLog(date, 'weight', kg.toFixed(2), undefined)
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(tNow('common_error'), e instanceof Error ? e.message : tNow('kp_unknownError'))
+      Alert.alert(tNow('common_error'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }

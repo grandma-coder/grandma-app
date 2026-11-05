@@ -98,10 +98,10 @@ function BabyHeroCarousel({ currentWeek, daysToGo, onPressWeek }: BabyHeroCarous
 
   const renderItem = useCallback(
     ({ item }: { item: HeroItem }) => {
-      const isCurrent = item.week === currentWeek
+      const isCurrent = item.week === Math.min(currentWeek, HERO_ITEMS.length)
       const daysLabel =
         isCurrent && daysToGo !== null
-          ? t('kp_ph_daysToGo', { n: daysToGo })
+          ? daysToGo === 0 ? t('preg_anyDayNow') : t('kp_ph_daysToGo', { n: daysToGo })
           : item.week < currentWeek
           ? t('kp_ph_pastWeek')
           : t('kp_ph_weeksAhead', { n: item.week - currentWeek })

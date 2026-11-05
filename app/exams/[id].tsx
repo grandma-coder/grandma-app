@@ -102,7 +102,7 @@ export default function ExamDetailScreen() {
     try {
       await Share.share({ message: lines.join('\n'), title: currentExam.title })
     } catch (e) {
-      Alert.alert(t('examDetail_shareFailed'), e instanceof Error ? e.message : t('common_unknownError'))
+      Alert.alert(t('examDetail_shareFailed'), t('error_generic'))
     }
   }
 
@@ -120,7 +120,7 @@ export default function ExamDetailScreen() {
       invalidate()
       router.back()
     } catch (e) {
-      Alert.alert(t('examDetail_deleteFailed'), e instanceof Error ? e.message : t('common_unknownError'))
+      Alert.alert(t('examDetail_deleteFailed'), t('error_generic'))
     } finally {
       setDeleting(false)
     }

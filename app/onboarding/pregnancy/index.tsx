@@ -234,7 +234,7 @@ export default function PregnancyOnboarding() {
       // strands them in a broken pregnancy mode on every cold start.
       Alert.alert(
         t('preg_onboard_errorTitle'),
-        t('preg_onboard_errorBehavior', { message: behaviorErr.message })
+        t('preg_onboard_errorBehavior')
       )
       return
     }
@@ -282,7 +282,7 @@ export default function PregnancyOnboarding() {
       if (logsErr) {
         Alert.alert(
           t('preg_onboard_errorTitle'),
-          t('preg_onboard_errorDueDate', { message: logsErr.message })
+          t('preg_onboard_errorDueDate')
         )
         return
       }
@@ -311,7 +311,7 @@ export default function PregnancyOnboarding() {
       console.warn('Failed to save pregnancy onboarding:', msg)
       Alert.alert(
         t('preg_onboard_errorTitle'),
-        t('preg_onboard_errorBehavior', { message: msg })
+        t('preg_onboard_errorBehavior')
       )
     } finally {
       // Release the submit guard unless we completed (success navigates away).

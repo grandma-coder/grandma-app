@@ -169,7 +169,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       }
     } catch (e) {
       setUploading(false)
-      Alert.alert(t('examForm_uploadFailed'), e instanceof Error ? e.message : t('common_unknownError'))
+      Alert.alert(t('examForm_uploadFailed'), t('error_generic'))
     }
   }, [photos.length, uploading, date])
 
@@ -200,7 +200,7 @@ export function ExamForm({ behavior, childId, date, onSaved }: Props) {
       invalidate()
       onSaved()
     } catch (e) {
-      Alert.alert(t('examForm_saveFailed'), e instanceof Error ? e.message : t('common_unknownError'))
+      Alert.alert(t('examForm_saveFailed'), t('error_generic'))
     } finally {
       setSaving(false)
     }

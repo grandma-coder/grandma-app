@@ -6309,4 +6309,27 @@ export interface TranslationKeys {
   preg_weekDetail_heroLabel_t1: string
   preg_weekDetail_heroLabel_t2: string
   preg_weekDetail_heroLabel_t3: string
+  sw1_pa_contrSessions_one: string
+  sw1_pa_contrSessions_other: string
+  pregnancy_affirmationFallback_0: string
+  pregnancy_affirmationFallback_1: string
+  pregnancy_affirmationFallback_2: string
+  pregnancy_affirmationFallback_3: string
+  pregnancy_affirmationFallback_4: string
+  pregnancy_affirmationFallback_5: string
+  pregnancy_affirmationFallback_6: string
+  pregnancy_affirmationFallback_7: string
+  pregnancy_affirmationFallback_8: string
+  pregnancy_affirmationFallback_9: string
+  pregnancy_affirmationFallback_10: string
+  pregnancy_affirmationFallback_11: string
+  pregnancy_affirmationFallback_12: string
+  pregnancy_affirmationFallback_13: string
+  pregnancy_affirmationFallback_14: string
+  pregnancy_affirmationFallback_15: string
+  pregnancy_affirmationFallback_16: string
+  pregnancy_affirmationFallback_17: string
+  pregnancy_affirmationFallback_18: string
+  pregnancy_affirmationFallback_19: string
+  preg_anyDayNow: string
 }
