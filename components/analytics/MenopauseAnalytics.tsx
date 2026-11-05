@@ -38,7 +38,7 @@ import { symptomBlob } from '../menopause/menopauseIcons'
 import { menoSticker } from '../menopause/MenopauseLogSheet'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useTheme } from '../../constants/theme'
-import { useTranslation } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { TRIGGER_LABEL_KEY, countMenopauseTriggers } from '../../lib/menopauseTriggers'
 import { monthsSinceDate } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
@@ -171,7 +171,7 @@ export function MenopauseAnalytics() {
                       label={menopauseSymptomLabel(s.id as MenopauseSymptomId)}
                       count={s.count}
                       max={symptomStats[0].count}
-                      sub={s.avgSeverity > 0 ? t('meno_an_avg', { avg: s.avgSeverity.toFixed(1) }) : t(s.count === 1 ? 'meno_an_time_one' : 'meno_an_time_other')}
+                      sub={s.avgSeverity > 0 ? t(`meno_f_sev_${Math.min(5, Math.max(1, Math.round(s.avgSeverity)))}` as TranslationKey) : t(s.count === 1 ? 'meno_an_time_one' : 'meno_an_time_other')}
                       tone={palette.accentSoft}
                     />
                   ))}

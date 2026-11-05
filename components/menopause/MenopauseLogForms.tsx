@@ -17,7 +17,7 @@
  * toDateStr(new Date()) for the log date.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native'
 import { SheetFooterAction } from '../calendar/LogSheet'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
@@ -29,12 +29,15 @@ import { SiteSticker } from '../stickers/SiteSticker'
 import { menoSticker } from './MenopauseLogSheet'
 import { toDateStr } from '../../lib/cycleLogic'
 import { saveMenopauseLog } from '../../lib/menopauseLogs'
+import { useMenopauseLogs } from '../../lib/menopauseAnalytics'
+import { FutureDateError } from '../../lib/futureDate'
 import {
   MENOPAUSE_TRIGGERS,
   TRIGGER_LABEL_KEY,
   TRIGGER_STICKER,
   TRIGGER_SYMPTOMS,
   encodeMenopauseTriggers,
+  parseMenopauseTriggers,
   type MenopauseTrigger,
 } from '../../lib/menopauseTriggers'
 import { useTranslation, t as tNow } from '../../lib/i18n'
@@ -96,6 +99,18 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
   const [triggers, setTriggers] = useState<MenopauseTrigger[]>([])
   const [saving, setSaving] = useState(false)
   const { t } = useTranslation()
+  // Re-opening a day that already has this symptom pre-fills its saved intensity / note / triggers
+  // (saving replaces that row — see saveMenopauseLog).
+  const { data: existingRows } = useMenopauseLogs()
+  const saveDate = logDate ?? toDateStr(new Date())
+  const existing = symptomId ? existingRows?.find((r) => r.date === saveDate && r.type === symptomId) : undefined
+  useEffect(() => {
+    if (!existing) return
+    if (existing.severity != null) setSeverity(existing.severity)
+    setNotes(existing.notes ?? '')
+    setTriggers(parseMenopauseTriggers(existing.value))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symptomId, saveDate, !!existing])
   // Optional "What might have set it off?" tags — hot flash / night sweat only.
   const showTriggers = site && !!symptomId && TRIGGER_SYMPTOMS.has(symptomId)
   const toggleTrigger = (id: MenopauseTrigger) =>
@@ -107,7 +122,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
     try {
       await saveMenopauseLog({
         // logDate = the calendar/week-strip selected day; defaults to today.
-        date: logDate ?? toDateStr(new Date()),
+        date: saveDate,
         type: symptomId,
         severity,
         // Triggers ride in the existing `value` text column as JSON (see menopauseTriggers).
@@ -117,7 +132,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
       onSaved()
     } catch (e) {
       setSaving(false)
-      Alert.alert(COPY.savedError, COPY.savedErrorBody)
+      Alert.alert(COPY.savedError, e instanceof FutureDateError ? e.message : COPY.savedErrorBody)
     }
   }
 
@@ -305,6 +320,11 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
   const [flow, setFlow] = useState<Flow | null>(null)
   const [saving, setSaving] = useState(false)
   useTranslation() // re-render on language change (COPY reads the current language)
+  const { data: existingRows } = useMenopauseLogs()
+  const existingFlow = existingRows?.find((r) => r.date === (logDate ?? toDateStr(new Date())) && r.type === 'period')?.value
+  useEffect(() => {
+    if (existingFlow === 'light' || existingFlow === 'medium' || existingFlow === 'heavy') setFlow(existingFlow)
+  }, [existingFlow])
 
   async function handleSave() {
     if (!flow || saving) return
@@ -332,7 +352,7 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
       onSaved()
     } catch (e) {
       setSaving(false)
-      Alert.alert(COPY.savedError, COPY.savedErrorBody)
+      Alert.alert(COPY.savedError, e instanceof FutureDateError ? e.message : COPY.savedErrorBody)
     }
   }
 

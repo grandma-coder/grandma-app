@@ -39,6 +39,7 @@ import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseSectionHeader } from '../ui/diffuse/DiffusePrimitives'
 import { diffuseFont, useTheme } from '../../constants/theme'
 import { useTranslation, t as tNow } from '../../lib/i18n'
+import { isFutureDate } from '../../lib/futureDate'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from '../menopause/menoPalette'
 import { MenopauseRing } from '../menopause/MenopauseRing'
 import { MenopauseWeekStrip } from '../menopause/MenopauseWeekStrip'
@@ -205,7 +206,7 @@ export function MenopauseHome() {
     }
     return (
       <View style={[styles.root, styles.loaderRoot, { backgroundColor: pal.bg }]}>
-        <BrandedLoader label="Loading" />
+        <BrandedLoader label={t('common_loading')} />
       </View>
     )
   }
@@ -223,7 +224,7 @@ export function MenopauseHome() {
   const openSymptom = (id: MenopauseSymptomId) => { setLogDate(null); setPendingSymptom(id); setActiveSheet('symptom') }
   // "More" and a week-strip tap open the tile grid (cycle LogActivitySheet parity).
   const openMore = () => { setGridDate(null); setGridOpen(true) }
-  const openLogForDate = (date: string) => { setGridDate(date); setGridOpen(true) }
+  const openLogForDate = (date: string) => { if (isFutureDate(date)) return; setGridDate(date); setGridOpen(true) }
   const onGridPick = (type: MenopauseLogPick) => {
     setLogDate(gridDate)
     if (type === 'period') setActiveSheet('period')

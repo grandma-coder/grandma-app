@@ -116,6 +116,7 @@ export function MenopauseCalendar() {
   const selectedLogs = logsByDate.get(selectedDate) ?? []
 
   function openAdd() {
+    if (isFutureDate(selectedDate)) return // logs describe what happened; no future entries
     setGridOpen(true)
   }
   function onPick(type: MenopauseLogPick) {
