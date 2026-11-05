@@ -6121,4 +6121,6 @@ export const fr: TranslationKeys = {
   onb_saveLater_title: "Enregistré sur ce téléphone",
   onb_saveLater_body: "Nous n'avons pas pu synchroniser vos réponses avec votre compte pour le moment. Tout est conservé ici, et vous pourrez vérifier vos informations dans Profil une fois de nouveau en ligne.",
   aboutYou_nameHint: "Saisissez votre prénom pour continuer, ou touchez Passer.",
+  garage_create_safetyBody: "Pour protéger la vie privée et la sécurité des enfants :\n\n• NE partagez PAS de photos montrant des visages d'enfants\n• Floutez ou recadrez les visages avant de partager\n• Aucune information identifiante (nom d'école, adresse)\n• Les photos de produits et d'articles sont toujours les bienvenues\n\nTout manquement entraîne la suppression du contenu et une possible suspension du compte.",
+  channelCreate_nameTaken: "Un canal portant ce nom existe déjà. Essayez un autre nom.",
 }

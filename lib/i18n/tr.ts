@@ -6121,4 +6121,6 @@ export const tr: TranslationKeys = {
   onb_saveLater_title: "Bu telefona kaydedildi",
   onb_saveLater_body: "Cevapların şu anda hesabınla eşitlenemedi. Her şey burada duruyor; tekrar çevrimiçi olduğunda Profil'den bilgilerini kontrol edebilirsin.",
   aboutYou_nameHint: "Devam etmek için adını yaz ya da Atla'ya dokun.",
+  garage_create_safetyBody: "Çocukların gizliliğini ve güvenliğini korumak için:\n\n• Çocukların yüzlerinin göründüğü fotoğraflar paylaşma\n• Paylaşmadan önce yüzleri bulanıklaştır veya kırp\n• Kimliği belli eden bilgi ekleme (okul adı, adres)\n• Ürün ve eşya fotoğrafları her zaman memnuniyetle karşılanır\n\nİhlaller içeriğin kaldırılmasına ve hesabın askıya alınmasına yol açabilir.",
+  channelCreate_nameTaken: "Bu adla bir kanal zaten var. Başka bir ad dene.",
 }

@@ -6121,4 +6121,6 @@ export const zh: TranslationKeys = {
   onb_saveLater_title: "已保存在这部手机上",
   onb_saveLater_body: "刚才没能把你的回答同步到账号。内容都保存在本机，恢复联网后可在“个人资料”中查看。",
   aboutYou_nameHint: "请输入你的名字以继续，或点按“跳过”。",
+  garage_create_safetyBody: "为了保护孩子的隐私和安全：\n\n• 请勿分享能看到孩子面部的照片\n• 分享前请先将面部模糊或裁掉\n• 不要包含可识别身份的信息（学校名称、地址）\n• 欢迎分享商品和物品的照片\n\n违规内容将被删除，账号可能被暂停。",
+  channelCreate_nameTaken: "已有同名频道，请换一个名称试试。",
 }

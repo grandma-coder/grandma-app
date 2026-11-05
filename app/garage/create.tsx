@@ -136,13 +136,7 @@ export default function CreatePostScreen() {
     }
     setAlert({
       title: t('garage_create_safetyTitle'),
-      message:
-        "To protect children's privacy and safety:\n\n" +
-        "• Do NOT share photos showing children's faces\n" +
-        '• Blur or crop faces before sharing\n' +
-        '• No identifying information (school names, addresses)\n' +
-        '• Product and item photos are always welcome\n\n' +
-        'Violations will result in content removal and possible account suspension.',
+      message: t('garage_create_safetyBody'),
       buttons: [
         { label: t('garage_create_safetyDecline'), variant: 'secondary' },
         {
@@ -288,7 +282,7 @@ export default function CreatePostScreen() {
         router.back()
       }, 600)
     } catch (e: any) {
-      setAlert({ title: t('garage_create_uploadError'), message: e.message })
+      setAlert({ title: t('garage_create_uploadError'), message: t('common_checkConnection') })
       setPosting(false)
     }
   }

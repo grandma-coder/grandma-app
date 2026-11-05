@@ -6422,4 +6422,6 @@ export const en: TranslationKeys = {
   onb_saveLater_title: "Saved on this phone",
   onb_saveLater_body: "We couldn't sync your answers to your account just now. Everything is kept here, and you can check your details in Profile once you're back online.",
   aboutYou_nameHint: "Add your first name to continue, or tap Skip.",
+  garage_create_safetyBody: "To protect children's privacy and safety:\n\n• Do NOT share photos showing children's faces\n• Blur or crop faces before sharing\n• No identifying information (school names, addresses)\n• Product and item photos are always welcome\n\nViolations will result in content removal and possible account suspension.",
+  channelCreate_nameTaken: "A channel with this name already exists. Try a different name.",
 }

@@ -107,7 +107,7 @@ export default function ShareToChannel() {
         { text: t('garage_share_shareMore'), style: 'cancel' },
       ])
     } catch (e: any) {
-      Alert.alert(t('garage_share_errorTitle'), e.message)
+      Alert.alert(t('garage_share_errorTitle'), t('common_checkConnection'))
     } finally {
       setSharing(null)
     }

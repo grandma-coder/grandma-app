@@ -202,7 +202,7 @@ export default function Paywall() {
         })
       }
     } catch (e: any) {
-      if (!e.userCancelled) setAlert({ title: t('paywall_errorTitle'), message: e.message })
+      if (!e.userCancelled) setAlert({ title: t('paywall_errorTitle'), message: t('common_checkConnection') })
     } finally {
       setPurchasing(false)
     }
@@ -235,7 +235,7 @@ export default function Paywall() {
         })
       }
     } catch (e: any) {
-      setAlert({ title: t('paywall_errorTitle'), message: e.message })
+      setAlert({ title: t('paywall_errorTitle'), message: t('common_checkConnection') })
     } finally {
       setPurchasing(false)
     }

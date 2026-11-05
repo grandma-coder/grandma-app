@@ -48,7 +48,7 @@ import {
 } from '../components/ui/diffuse/DiffusePrimitives'
 import { Character } from '../components/characters/Characters'
 import { useModeStore } from '../store/useModeStore'
-import { useTranslation } from '../lib/i18n'
+import { useTranslation, t as tNow } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
 import { AvatarView, isIconAvatar } from '../components/ui/AvatarPicker'
 import { BrandedLoader } from '../components/ui/BrandedLoader'
@@ -215,7 +215,7 @@ async function fetchFullLeaderboard(): Promise<LeaderEntry[]> {
 
     return {
       user_id: p.id,
-      name: p.name || 'Anonymous',
+      name: p.name || tNow('leaderboard_anonymous'),
       photo_url: p.photo_url,
       user_role: p.user_role || 'parent',
       caregiver_role: caregiverRoleMap.get(p.id) || null,

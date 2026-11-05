@@ -312,7 +312,7 @@ export default function Scan() {
         showLimitReached()
         return
       }
-      Alert.alert(t('scan_failed'), e.message)
+      Alert.alert(t('scan_failed'), t('common_checkConnection'))
     } finally {
       setLoading(false)
     }

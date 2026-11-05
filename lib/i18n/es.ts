@@ -6124,4 +6124,6 @@ export const es: TranslationKeys = {
   onb_saveLater_title: "Guardado en este teléfono",
   onb_saveLater_body: "Ahora no pudimos sincronizar tus respuestas con tu cuenta. Todo está guardado aquí, y puedes revisar tus datos en Perfil cuando vuelvas a tener conexión.",
   aboutYou_nameHint: "Escribe tu nombre para continuar, o toca Omitir.",
+  garage_create_safetyBody: "Para proteger la privacidad y la seguridad de los niños:\n\n• NO compartas fotos donde se vean las caras de niños\n• Difumina o recorta las caras antes de compartir\n• Nada que los identifique (nombres de colegios, direcciones)\n• Las fotos de productos y artículos siempre son bienvenidas\n\nLas infracciones conllevan la eliminación del contenido y posible suspensión de la cuenta.",
+  channelCreate_nameTaken: "Ya existe un canal con ese nombre. Prueba con otro nombre.",
 }

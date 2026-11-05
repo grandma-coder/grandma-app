@@ -6121,4 +6121,6 @@ export const de: TranslationKeys = {
   onb_saveLater_title: "Auf diesem Handy gespeichert",
   onb_saveLater_body: "Wir konnten deine Antworten gerade nicht mit deinem Konto abgleichen. Alles ist hier gespeichert, und du kannst deine Angaben im Profil prüfen, sobald du wieder online bist.",
   aboutYou_nameHint: "Gib deinen Vornamen ein, um fortzufahren, oder tippe auf Überspringen.",
+  garage_create_safetyBody: "Zum Schutz der Privatsphäre und Sicherheit von Kindern:\n\n• Teile KEINE Fotos, auf denen Gesichter von Kindern zu sehen sind\n• Verpixele oder beschneide Gesichter vor dem Teilen\n• Keine identifizierenden Angaben (Schulnamen, Adressen)\n• Fotos von Produkten und Gegenständen sind immer willkommen\n\nVerstöße führen zur Entfernung des Inhalts und können zur Sperrung des Kontos führen.",
+  channelCreate_nameTaken: "Einen Kanal mit diesem Namen gibt es schon. Versuche einen anderen Namen.",
 }

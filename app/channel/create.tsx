@@ -116,7 +116,7 @@ export default function CreateChannel() {
       setCreatedChannelId(id)
       setShowSuccess(true)
     } catch (e: any) {
-      await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+      await confirm({ title: t('common_error'), message: (e?.code === '23505' || /duplicate key|unique/i.test(e?.message ?? '')) ? t('channelCreate_nameTaken') : t('common_checkConnection'), cancelLabel: null })
     } finally {
       setLoading(false)
     }

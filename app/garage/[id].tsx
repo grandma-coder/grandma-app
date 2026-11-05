@@ -29,6 +29,7 @@ import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { useTheme, getModeColor, getModeColorSoft, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
 import { useTranslation } from '../../lib/i18n'
+import { chatTime } from '../../components/connections/communityLabels'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { useSavedToast } from '../../components/ui/SavedToast'
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
@@ -585,20 +586,7 @@ function CommentText({ text }: { text: string }) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
-function formatTimeAgo(dateStr: string): string {
-  const d = new Date(dateStr)
-  const now = new Date()
-  const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000)
-
-  if (diffSec < 60) return 'Just now'
-  const diffMin = Math.floor(diffSec / 60)
-  if (diffMin < 60) return `${diffMin}m`
-  const diffHrs = Math.floor(diffMin / 60)
-  if (diffHrs < 24) return `${diffHrs}h`
-  const diffDays = Math.floor(diffHrs / 24)
-  if (diffDays < 7) return `${diffDays}d`
-  return `${Math.floor(diffDays / 7)}w`
-}
+const formatTimeAgo = chatTime
 
 // ─── Styles ───────────────────────────────────────────────────────────────
 

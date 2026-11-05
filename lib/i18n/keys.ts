@@ -6423,4 +6423,6 @@ export interface TranslationKeys {
   onb_saveLater_title: string
   onb_saveLater_body: string
   aboutYou_nameHint: string
+  garage_create_safetyBody: string
+  channelCreate_nameTaken: string
 }

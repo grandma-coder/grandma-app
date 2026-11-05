@@ -6124,4 +6124,6 @@ export const ptBR: TranslationKeys = {
   onb_saveLater_title: "Salvo neste celular",
   onb_saveLater_body: "Não conseguimos sincronizar suas respostas com a sua conta agora. Está tudo guardado aqui, e você pode conferir seus dados no Perfil quando estiver online de novo.",
   aboutYou_nameHint: "Escreva seu primeiro nome para continuar, ou toque em Pular.",
+  garage_create_safetyBody: "Para proteger a privacidade e a segurança das crianças:\n\n• NÃO compartilhe fotos que mostrem rostos de crianças\n• Desfoque ou recorte os rostos antes de compartilhar\n• Nada que identifique a criança (nome da escola, endereços)\n• Fotos de produtos e itens são sempre bem-vindas\n\nInfrações resultam na remoção do conteúdo e podem levar à suspensão da conta.",
+  channelCreate_nameTaken: "Já existe um canal com esse nome. Tente outro nome.",
 }
