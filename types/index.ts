@@ -50,6 +50,8 @@ export interface PillarTip {
   weekRange?: [number, number]
   /** Kids: child age in months [min, max] inclusive. */
   ageMonthsRange?: [number, number]
+  /** Ids into lib/medicalSources.ts backing the health claims in this tip (cycle pillars). */
+  sources?: string[]
 }
 
 export interface Pillar {
@@ -59,6 +61,8 @@ export interface Pillar {
   description: string
   color: string
   intro?: string
+  /** Ids into lib/medicalSources.ts backing the health claims in the intro. */
+  introSources?: string[]
   tips: PillarTip[]
   suggestions: string[]
 }

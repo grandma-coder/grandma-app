@@ -5985,4 +5985,8 @@ export const ja: TranslationKeys = {
   gn_phaseIn_ovulation: "排卵期",
   gn_phaseCap_luteal: "黄体期",
   gn_phaseIn_luteal: "黄体期",
+  pillarSources_source: "出典",
+  pillarSources_title: "出典",
+  pillarSources_disclaimer: "これは心の準備に役立つ一般的な情報です。あなたのことをよく知る医師や助産師のアドバイスに代わるものではありません。",
+  pillarSources_openHint: "ブラウザでページを開きます",
 }

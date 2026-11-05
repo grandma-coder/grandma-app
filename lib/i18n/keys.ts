@@ -6287,4 +6287,8 @@ export interface TranslationKeys {
   gn_phaseIn_ovulation: string
   gn_phaseCap_luteal: string
   gn_phaseIn_luteal: string
+  pillarSources_source: string
+  pillarSources_title: string
+  pillarSources_disclaimer: string
+  pillarSources_openHint: string
 }

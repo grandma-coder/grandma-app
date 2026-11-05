@@ -4,6 +4,8 @@
  * Site look: a bold Hanken title with a small hand-drawn tone dot, body below, hairline between
  * tips. Diffuse: the editorial row with the big italic 01 / 02 number (unchanged).
  *
+ * Site look also shows where the tip comes from (`sources` → "Source: CDC · NHS", tappable).
+ *
  * Title and body are localized (lib/pillarContent/usePillarText) when `translationKey` is given:
  * a bundled translation (cycle pillars) shows at once; otherwise the runtime translator runs and
  * the row shows a soft placeholder meanwhile, so a non-English reader never sees English flash by.
@@ -15,6 +17,8 @@ import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { usePillarText } from '../../lib/pillarContent/usePillarText'
 import { Skeleton, SkeletonLines } from '../ui/Skeleton'
 import { HandDrawnPill } from '../ui/HandDrawn'
+import { SourceLine } from './PillarSources'
+import type { MedicalSource } from '../../lib/medicalSources'
 
 interface TipCardProps {
   label: string
@@ -29,9 +33,11 @@ interface TipCardProps {
   translationKey?: string
   /** Stable id-based key for runtime translation of `label`. */
   labelTranslationKey?: string
+  /** Site look: where the tip's health claims come from — a small "Source: CDC · NHS" line. */
+  sources?: readonly MedicalSource[]
 }
 
-export default function TipCard({ label, text, index, isLast, accent, translationKey, labelTranslationKey }: TipCardProps) {
+export default function TipCard({ label, text, index, isLast, accent, translationKey, labelTranslationKey, sources }: TipCardProps) {
   const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -71,6 +77,7 @@ export default function TipCard({ label, text, index, isLast, accent, translatio
             <Text style={[styles.siteLabel, { color: colors.text, fontFamily: font.bodyBold }]}>{labelText}</Text>
           </View>
           <Text style={[styles.siteText, { color: colors.textSecondary, fontFamily: font.body }]}>{bodyText}</Text>
+          {!!sources?.length && <SourceLine sources={sources} style={styles.siteSources} />}
         </>
       )}
     </View>
@@ -89,4 +96,5 @@ const styles = StyleSheet.create({
   dot: { width: 14, height: 14, marginTop: 3 },
   siteLabel: { flex: 1, fontSize: 16, lineHeight: 21 },
   siteText: { fontSize: 15, lineHeight: 22, paddingLeft: 24 },
+  siteSources: { paddingLeft: 24, marginTop: 6 },
 })

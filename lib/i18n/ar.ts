@@ -5985,4 +5985,8 @@ export const ar: TranslationKeys = {
   gn_phaseIn_ovulation: "الإباضة",
   gn_phaseCap_luteal: "الأصفري",
   gn_phaseIn_luteal: "الأصفري",
+  pillarSources_source: "المصدر",
+  pillarSources_title: "المصادر",
+  pillarSources_disclaimer: "هذه معلومات عامة لتساعدكِ على الشعور بالاستعداد، ولا تُغني عن نصيحة طبيبكِ أو قابلتكِ اللذين يعرفان قصتكِ.",
+  pillarSources_openHint: "يفتح الصفحة في المتصفح",
 }

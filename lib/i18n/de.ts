@@ -5985,4 +5985,8 @@ export const de: TranslationKeys = {
   gn_phaseIn_ovulation: "rund um den Eisprung",
   gn_phaseCap_luteal: "Lutealphase",
   gn_phaseIn_luteal: "in der Lutealphase",
+  pillarSources_source: "Quelle",
+  pillarSources_title: "Quellen",
+  pillarSources_disclaimer: "Das sind allgemeine Informationen, damit du dich vorbereitet fühlst. Sie ersetzen nicht den Rat deiner Ärztin, deines Arztes oder deiner Hebamme, die deine Geschichte kennen.",
+  pillarSources_openHint: "Öffnet die Seite im Browser",
 }

@@ -6290,4 +6290,8 @@ export const en: TranslationKeys = {
   gn_phaseIn_ovulation: "around ovulation",
   gn_phaseCap_luteal: "Luteal phase",
   gn_phaseIn_luteal: "in the luteal phase",
+  pillarSources_source: "Source",
+  pillarSources_title: "Sources",
+  pillarSources_disclaimer: "This is general information to help you feel prepared. It doesn't replace advice from your doctor or midwife, who know your story.",
+  pillarSources_openHint: "Opens the page in your browser",
 }

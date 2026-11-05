@@ -11,6 +11,9 @@
  * and fall back to the runtime translator otherwise (lib/useTranslatedContent) — placeholders show
  * while a translation loads, so English never flashes for non-English readers.
  *
+ * Cited sources (site look): a small "Source: CDC · NHS" line under the intro and each sourced tip,
+ * and a "Sources" list + short disclaimer at the end (lib/medicalSources.ts).
+ *
  * Diffuse look: unchanged layout (big sticker circle, editorial numbered tips).
  */
 
@@ -39,6 +42,8 @@ import { usePillarTipBuckets } from '../../lib/pillarAdaptive'
 import { useTranslation } from '../../lib/i18n'
 import { usePillarText } from '../../lib/pillarContent/usePillarText'
 import { findPillar, pillarContentKeys, pillarDescKey, pillarLook, pillarNameKey } from '../../lib/pillarCopy'
+import { pillarSources, resolveSources } from '../../lib/medicalSources'
+import { SourceLine, SourcesSection } from '../../components/pillar/PillarSources'
 
 function goBack() {
   if (router.canGoBack()) router.back()
@@ -118,6 +123,7 @@ function SiteBody({ pillar, name, description, intro, buckets, chatOn, ask }: Bo
   const tone = (stickers as Record<string, string>)[look.tone] ?? colors.surface
   const ink = colors.text
   const { forYou, general, contextLabel } = buckets
+  const sources = pillarSources(pillar)
 
   const sectionTitle = (label: string) => (
     <Display size={20} color={ink} style={styles.siteSection}>{label}</Display>
@@ -152,7 +158,10 @@ function SiteBody({ pillar, name, description, intro, buckets, chatOn, ask }: Bo
               {intro.loading ? (
                 <SkeletonLines lines={4} />
               ) : (
-                <Text style={[styles.introText, { color: ink, fontFamily: font.body }]}>{intro.text}</Text>
+                <>
+                  <Text style={[styles.introText, { color: ink, fontFamily: font.body }]}>{intro.text}</Text>
+                  <SourceLine sources={resolveSources(pillar.introSources)} style={styles.introSources} />
+                </>
               )}
             </HandDrawnBox>
           </FadeUp>
@@ -181,6 +190,7 @@ function SiteBody({ pillar, name, description, intro, buckets, chatOn, ask }: Bo
                     accent={tone}
                     translationKey={pillarContentKeys.tipBody(pillar.id, tip.label)}
                     labelTranslationKey={pillarContentKeys.tipLabel(pillar.id, tip.label)}
+                    sources={resolveSources(tip.sources)}
                   />
                 ))}
               </>
@@ -196,6 +206,7 @@ function SiteBody({ pillar, name, description, intro, buckets, chatOn, ask }: Bo
                 accent={tone}
                 translationKey={pillarContentKeys.tipBody(pillar.id, tip.label)}
                 labelTranslationKey={pillarContentKeys.tipLabel(pillar.id, tip.label)}
+                sources={resolveSources(tip.sources)}
               />
             ))}
 
@@ -208,6 +219,14 @@ function SiteBody({ pillar, name, description, intro, buckets, chatOn, ask }: Bo
                     <SiteQuestion key={i} pillarId={pillar.id} index={i} question={q} onAsk={ask} />
                   ))}
                 </View>
+              </>
+            )}
+
+            {/* Where the health claims come from (App Store 1.4.1) — only pillars that cite any */}
+            {sources.length > 0 && (
+              <>
+                {sectionTitle(t('pillarSources_title'))}
+                <SourcesSection sources={sources} />
               </>
             )}
           </FadeIn>
@@ -366,6 +385,7 @@ const styles = StyleSheet.create({
   siteSubtitle: { fontSize: 15, lineHeight: 22, marginTop: 4 },
   introCard: { marginTop: 18, padding: 16 },
   introText: { fontSize: 15, lineHeight: 23 },
+  introSources: { marginTop: 10 },
   siteSection: { textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 30 },
   question: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

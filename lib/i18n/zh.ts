@@ -5985,4 +5985,8 @@ export const zh: TranslationKeys = {
   gn_phaseIn_ovulation: "排卵期",
   gn_phaseCap_luteal: "黄体期",
   gn_phaseIn_luteal: "黄体期",
+  pillarSources_source: "来源",
+  pillarSources_title: "参考来源",
+  pillarSources_disclaimer: "这些是帮助你做好准备的一般信息，不能代替了解你情况的医生或助产士的建议。",
+  pillarSources_openHint: "在浏览器中打开页面",
 }

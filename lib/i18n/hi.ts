@@ -5985,4 +5985,8 @@ export const hi: TranslationKeys = {
   gn_phaseIn_ovulation: "ओव्यूलेशन",
   gn_phaseCap_luteal: "ल्यूटियल",
   gn_phaseIn_luteal: "ल्यूटियल",
+  pillarSources_source: "स्रोत",
+  pillarSources_title: "स्रोत",
+  pillarSources_disclaimer: "यह आम जानकारी है ताकि आप खुद को तैयार महसूस करें। यह आपके डॉक्टर या दाई की सलाह की जगह नहीं लेती, जो आपकी कहानी जानते हैं।",
+  pillarSources_openHint: "पेज ब्राउज़र में खोलता है",
 }

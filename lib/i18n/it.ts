@@ -5985,4 +5985,8 @@ export const it: TranslationKeys = {
   gn_phaseIn_ovulation: "intorno all’ovulazione",
   gn_phaseCap_luteal: "Fase luteale",
   gn_phaseIn_luteal: "nella fase luteale",
+  pillarSources_source: "Fonte",
+  pillarSources_title: "Fonti",
+  pillarSources_disclaimer: "Sono informazioni generali per aiutarti a sentirti pronta. Non sostituiscono il consiglio del tuo medico o della tua ostetrica, che conoscono la tua storia.",
+  pillarSources_openHint: "Apre la pagina nel browser",
 }

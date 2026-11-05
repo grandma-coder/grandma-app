@@ -5985,4 +5985,8 @@ export const tr: TranslationKeys = {
   gn_phaseIn_ovulation: "Yumurtlama",
   gn_phaseCap_luteal: "Luteal",
   gn_phaseIn_luteal: "Luteal",
+  pillarSources_source: "Kaynak",
+  pillarSources_title: "Kaynaklar",
+  pillarSources_disclaimer: "Bu, kendini hazır hissetmen için genel bilgilerdir. Seni tanıyan doktorunun ya da ebenin tavsiyesinin yerini tutmaz.",
+  pillarSources_openHint: "Sayfayı tarayıcıda açar",
 }

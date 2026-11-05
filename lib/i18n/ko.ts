@@ -5985,4 +5985,8 @@ export const ko: TranslationKeys = {
   gn_phaseIn_ovulation: "배란기",
   gn_phaseCap_luteal: "황체기",
   gn_phaseIn_luteal: "황체기",
+  pillarSources_source: "출처",
+  pillarSources_title: "출처",
+  pillarSources_disclaimer: "마음의 준비를 돕기 위한 일반적인 정보예요. 당신을 잘 아는 의사나 조산사의 조언을 대신하지는 않아요.",
+  pillarSources_openHint: "브라우저에서 페이지를 열어요",
 }

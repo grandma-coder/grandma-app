@@ -5988,4 +5988,8 @@ export const ptBR: TranslationKeys = {
   gn_phaseIn_ovulation: "perto da ovulação",
   gn_phaseCap_luteal: "Fase lútea",
   gn_phaseIn_luteal: "na fase lútea",
+  pillarSources_source: "Fonte",
+  pillarSources_title: "Fontes",
+  pillarSources_disclaimer: "Isto é informação geral para você se sentir mais preparada. Não substitui a orientação do seu médico ou da sua parteira, que conhecem a sua história.",
+  pillarSources_openHint: "Abre a página no navegador",
 }
