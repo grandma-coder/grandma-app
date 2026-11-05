@@ -1109,7 +1109,7 @@ export const ptBR: TranslationKeys = {
   kids_home_reminders_modal_no_active: "Nenhum lembrete ativo",
   kids_home_reminders_modal_no_archived: "Nada arquivado ainda",
   kids_home_leaps_all_complete: "Todos os Saltos Completos",
-  kids_home_leaps_all_complete_desc: "Seu filho completou os 10 Wonder Weeks",
+  kids_home_leaps_all_complete_desc: "Seu filho já passou pelos 10 saltos",
   kids_home_leaps_status_now: "AGORA",
   kids_home_leaps_status_all_done: "TUDO PRONTO",
   kids_home_leaps_detail_title: "Saltos de Desenvolvimento",
@@ -6077,4 +6077,6 @@ export const ptBR: TranslationKeys = {
   preg_sum_vitaminsTaken: "Tomadas",
   preg_sum_vitaminsNotTaken: "Não tomadas",
   preg_analytics_logsShort: "registros",
+  kidsTile_logsUnit_one: "registro",
+  kids_summary_sleepStarted: "Começou às {{time}}",
 }

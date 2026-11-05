@@ -92,7 +92,8 @@ import { buildPermissionsObject } from '../../lib/caregiverPermissions'
 import { useFeatureFlags } from '../../store/useFeatureFlags'
 import { modeToBehavior } from '../../lib/caregiverCards'
 import { ShareCardsEditor } from '../../components/caregiver/ShareCardsEditor'
-import { healthLogText } from '../../lib/kidsHealthLogText'
+import { kidsLogSummary, kidsLogTitle } from '../../lib/kidsLogSummary'
+import { useUnitsStore } from '../../store/useUnitsStore'
 import { dateLoc } from '../../lib/kpLocale'
 import { AfterTransition } from '../../components/ui/AfterTransition'
 
@@ -270,123 +271,17 @@ const EVENT_COLORS: Record<string, string> = {
   note: brand.secondary,
 }
 
-/** Convert raw log type + JSON value into a friendly, human-readable summary */
-function formatActivitySummary(type: string, value: string | null, notes: string | null): string {
-  if (!value) return notes ?? ''
-  try {
-    const v = JSON.parse(value)
-    if (typeof v === 'number') return type === 'temperature' ? `${v}°` : String(v)
-    if (typeof v !== 'object' || v === null) return typeof v === 'string' ? v : (notes ?? '')
-
-    switch (type) {
-      case 'feeding': {
-        const parts: string[] = []
-        if (v.feedType === 'breast') {
-          parts.push('Breastfed')
-          if (v.side) parts.push(v.side === 'left' ? 'Left side' : v.side === 'right' ? 'Right side' : 'Both sides')
-          if (v.duration) parts.push(`${v.duration} min`)
-        } else if (v.feedType === 'bottle') {
-          parts.push('Bottle')
-          if (v.amount) parts.push(`${v.amount} ml`)
-        }
-        if (v.time) parts.push(fmtTime12(v.time))
-        return parts.join(' · ') || notes || ''
-      }
-      case 'food': {
-        const parts: string[] = []
-        const meals: Record<string, string> = { breakfast: 'Breakfast', morning_snack: 'AM Snack', lunch: 'Lunch', afternoon_snack: 'PM Snack', dinner: 'Dinner', night_snack: 'Night Snack' }
-        if (v.meal) parts.push(meals[v.meal] ?? v.meal)
-        const quality: Record<string, string> = { ate_well: 'Ate well', ate_little: 'Ate a little', did_not_eat: 'Did not eat' }
-        if (v.quality) parts.push(quality[v.quality] ?? v.quality)
-        if (v.estimatedCals) parts.push(`~${v.estimatedCals} kcal`)
-        if (v.time) parts.push(fmtTime12(v.time))
-        return parts.join(' · ') || notes || ''
-      }
-      case 'sleep': {
-        const parts: string[] = []
-        if (v.startTime && v.endTime) parts.push(`${fmtTime12(v.startTime)} – ${fmtTime12(v.endTime)}`)
-        else if (v.startTime) parts.push(`Started ${fmtTime12(v.startTime)}`)
-        if (v.duration) parts.push(`${v.duration} hrs`)
-        if (v.quality) parts.push(v.quality.charAt(0).toUpperCase() + v.quality.slice(1))
-        return parts.join(' · ') || notes || ''
-      }
-      case 'diaper': {
-        const parts: string[] = []
-        const types: Record<string, string> = { pee: 'Wet 💧', poop: 'Dirty 💩', mixed: 'Both 🔄' }
-        if (v.diaperType) parts.push(types[v.diaperType] ?? v.diaperType)
-        if (v.color) parts.push(v.color.charAt(0).toUpperCase() + v.color.slice(1))
-        if (v.consistency) parts.push(v.consistency)
-        if (v.time) parts.push(fmtTime12(v.time))
-        return parts.join(' · ') || notes || ''
-      }
-      case 'activity': {
-        const parts: string[] = []
-        if (v.name) parts.push(v.name)
-        else if (v.activityType) parts.push(v.activityType.charAt(0).toUpperCase() + v.activityType.slice(1))
-        if (v.startTime && v.endTime) parts.push(`${fmtTime12(v.startTime)} – ${fmtTime12(v.endTime)}`)
-        if (v.duration) parts.push(v.duration)
-        return parts.join(' · ') || notes || ''
-      }
-      case 'temperature':
-        return v ? `${v}°C` : (notes ?? '')
-      case 'mood':
-        return ''  // mood value is a raw string, handled by the title
-      default: {
-        // For unknown types, try to extract meaningful fields (health notes carry {eventType, description|text})
-        if (v.name) return v.name
-        if (v.value) return String(v.value)
-        const { kind, text } = healthLogText(value, notes)
-        if (text) return kind ? `${kind}: ${text}` : text
-        return notes ?? ''
-      }
-    }
-  } catch {
-    // Not JSON — mood values are just the mood string
-    if (type === 'mood') return ''
-    return value
+/** DB member role → translated label (never the raw id). */
+function roleLabel(role: string): string {
+  switch (role) {
+    case 'parent': return tNow('careCircle_parent')
+    case 'nanny': return tNow('careCircle_nanny')
+    case 'family': return tNow('careCircle_family')
+    case 'doctor': return tNow('careCircle_doctor')
+    case 'partner': return tNow('sw3_cc_rolePartner')
+    case 'babysitter': return tNow('sw3_cc_roleBabysitter')
+    default: return tNow('careCircle_family')
   }
-}
-
-/** Format "HH:MM" to "H:MM AM/PM" */
-function fmtTime12(t: string): string {
-  return clockLabel(t)
-}
-
-/** Friendly label for log type */
-function friendlyTypeLabel(type: string, value: string | null): string {
-  try {
-    const v = value ? JSON.parse(value) : null
-    if (type === 'feeding' && v?.feedType === 'breast') return 'Breastfeed'
-    if (type === 'feeding' && v?.feedType === 'bottle') return 'Bottle Feed'
-    // Mood can be a bare string (legacy) or { mood: 'happy', routineId, ... }
-    // (the routine-tagged shape introduced when mood is logged from a routine).
-    if (type === 'mood') {
-      const moodId = typeof v === 'string' ? v : v?.mood
-      if (typeof moodId === 'string' && moodId) {
-        return `Mood: ${moodId.charAt(0).toUpperCase() + moodId.slice(1)}`
-      }
-    }
-  } catch {
-    if (type === 'mood' && value) return `Mood: ${value.charAt(0).toUpperCase() + value.slice(1)}`
-  }
-  const labels: Record<string, string> = {
-    feeding: 'Feeding',
-    food: 'Meal',
-    sleep: 'Sleep',
-    diaper: 'Diaper Change',
-    mood: 'Mood',
-    activity: 'Activity',
-    temperature: 'Temperature',
-    vaccine: 'Vaccine',
-    medicine: 'Medicine',
-    health: 'Health',
-    photo: 'Memory',
-    memory: 'Memory',
-    growth: 'Growth',
-    milestone: 'Milestone',
-    note: 'Note',
-  }
-  return labels[type] ?? type.charAt(0).toUpperCase() + type.slice(1)
 }
 
 // ─── Photo Picker ─────────────────────────────────────────────────────────
@@ -517,6 +412,7 @@ export default function CareCircleScreen() {
 
   // Activity filters
   const [filterMember, setFilterMember] = useState<string | null>(null)
+  const tempUnit = useUnitsStore((u) => u.tempUnit)
   const [filterChild, setFilterChild] = useState<string | null>(null)
 
   useEffect(() => {
@@ -935,7 +831,7 @@ export default function CareCircleScreen() {
             const isPending = m.status === 'pending'
             const childNames = getChildNames(m.childIds)
             const permKeys = Object.entries(m.permissions).filter(([k, v]) => v === true && !k.startsWith('_')).map(([k]) => k)
-            const localizedRole = m.role === 'parent' ? t('careCircle_parent') : m.role === 'nanny' ? t('careCircle_nanny') : m.role === 'family' ? t('careCircle_family') : m.role === 'doctor' ? t('careCircle_doctor') : m.role === 'partner' ? t('sw3_cc_rolePartner') : m.role.charAt(0).toUpperCase() + m.role.slice(1)
+            const localizedRole = roleLabel(m.role)
             const title = m.displayName || localizedRole
             const isPaused = m.permissions._paused === true
             const statusColor = isPaused ? stickers.coral : stickers.green
@@ -1065,13 +961,13 @@ export default function CareCircleScreen() {
                       {diffuse ? (
                         <View style={[styles.badge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.line2 }]}>
                           <Text style={[styles.badgeText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' }]}>
-                            {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
+                            {roleLabel(m.role)}
                           </Text>
                         </View>
                       ) : (
                         <View style={[styles.badge, { backgroundColor: roleColor + (isDark ? '32' : '38') }]}>
                           <Text style={[styles.badgeText, { color: isDark ? roleColor : colors.textSecondary, fontFamily: font.bodySemiBold }]}>
-                            {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
+                            {roleLabel(m.role)}
                           </Text>
                         </View>
                       )}
@@ -1286,7 +1182,7 @@ export default function CareCircleScreen() {
               <FilterChip kind="person" label={t('app_cc_allPeople')} active={!filterMember} onPress={() => setFilterMember(null)} />
               <FilterChip kind="person" label={t('app_cc_you')} active={filterMember === 'self'} onPress={() => setFilterMember(filterMember === 'self' ? null : 'self')} />
               {members.map((m) => (
-                <FilterChip kind="person" key={m.rowIds[0]} label={m.displayName || m.role} active={filterMember === m.rowIds[0]} onPress={() => setFilterMember(filterMember === m.rowIds[0] ? null : m.rowIds[0])} />
+                <FilterChip kind="person" key={m.rowIds[0]} label={m.displayName || roleLabel(m.role)} active={filterMember === m.rowIds[0]} onPress={() => setFilterMember(filterMember === m.rowIds[0] ? null : m.rowIds[0])} />
               ))}
             </ScrollView>
           )}
@@ -1349,8 +1245,8 @@ export default function CareCircleScreen() {
                   ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
                   : { color: colors.textMuted, fontFamily: font.bodyMedium }]}>{dateLabel}</Text>
                 {items.map((a) => {
-                  const summary = formatActivitySummary(a.type, a.value, a.notes)
-                  const typeLabel = friendlyTypeLabel(a.type, a.value)
+                  const summary = kidsLogSummary(tNow, tempUnit, a.type, a.value, a.notes)
+                  const typeLabel = kidsLogTitle(tNow, a.type, a.value) || a.type
                   if (!diffuse) {
                     return (
                       <View key={a.id} style={[styles.siteActivity, { borderBottomColor: colors.border }]}>

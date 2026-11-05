@@ -1108,7 +1108,7 @@ export const ar: TranslationKeys = {
   kids_home_reminders_modal_no_active: "لا تذكيرات نشطة",
   kids_home_reminders_modal_no_archived: "لا شيء مؤرشف بعد",
   kids_home_leaps_all_complete: "اكتملت كل القفزات",
-  kids_home_leaps_all_complete_desc: "أتمّ طفلك كل أسابيع العجائب العشرة",
+  kids_home_leaps_all_complete_desc: "مرّ طفلك بالقفزات العشر كلها",
   kids_home_leaps_status_now: "NOW",
   kids_home_leaps_status_all_done: "ALL DONE",
   kids_home_leaps_detail_title: "قفزات النمو",
@@ -6074,4 +6074,6 @@ export const ar: TranslationKeys = {
   preg_sum_vitaminsTaken: "تم تناولها",
   preg_sum_vitaminsNotTaken: "لم تُتناول",
   preg_analytics_logsShort: "تسجيلات",
+  kidsTile_logsUnit_one: "تسجيل",
+  kids_summary_sleepStarted: "بدأ في {{time}}",
 }

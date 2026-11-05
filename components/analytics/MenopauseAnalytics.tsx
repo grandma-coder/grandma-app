@@ -46,6 +46,7 @@ import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 import { ReportEntryRow } from '../../lib/reports/ReportEntryRow'
 import { buildMenopauseNote } from '../../lib/grandmaNotes/menopause'
 import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
+import { fmt1 } from '../../lib/grandmaNotes/shared'
 import { SkeletonChartSection, SkeletonHeadline, SkeletonStatRows } from './shared/AnalyticsSkeleton'
 
 const CHART_W = Dimensions.get('window').width - 80 // screen − card margins − card padding
@@ -149,7 +150,7 @@ export function MenopauseAnalytics() {
                 </View>
                 {vaso.length >= 1 ? (
                   <>
-                    <SiteNote>{t('menoAnalytics_vasoAverageNote', { avg: vasoAvg.toFixed(1), count: lastVaso.length })}</SiteNote>
+                    <SiteNote>{t('menoAnalytics_vasoAverageNote', { avg: fmt1(vasoAvg), count: lastVaso.length })}</SiteNote>
                     <SiteBars values={lastVaso.map((d) => d.count)} labels={lastVaso.map((d) => shortDate(d.date))} tone={palette.accentSoft} capped />
                     {topTriggers.length > 0 && (
                       <SiteNote>{t('meno_trigger_most_noted', { list: topTriggers.map((x) => `${t(TRIGGER_LABEL_KEY[x.id])} (${x.count})`).join(', ') })}</SiteNote>
@@ -274,7 +275,7 @@ export function MenopauseAnalytics() {
                       blob={symptomBlob(s.id)}
                       label={menopauseSymptomLabel(s.id as MenopauseSymptomId)}
                       value={String(s.count)}
-                      sub={s.avgSeverity > 0 ? t('sw4_menoAvgSeverity', { n: s.avgSeverity.toFixed(1) }) : (s.count === 1 ? t('sw4_menoTime') : t('sw4_menoTimes'))}
+                      sub={s.avgSeverity > 0 ? t('sw4_menoAvgSeverity', { n: fmt1(s.avgSeverity) }) : (s.count === 1 ? t('sw4_menoTime') : t('sw4_menoTimes'))}
                     />
                   ))}
                 </View>
@@ -621,7 +622,7 @@ function SiteBars({ values, labels, tone, capped = false, fixedMax }: { values: 
     const median = sorted[Math.floor(sorted.length / 2)] || 1
     scaleMax = Math.min(max, Math.max(median * 3, 4))
   }
-  const fmt = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1))
+  const fmt = (v: number) => (Number.isInteger(v) ? String(v) : fmt1(v))
   return (
     <View style={{ marginTop: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: H + 18, gap: 4 }}>

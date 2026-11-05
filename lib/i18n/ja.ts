@@ -1108,7 +1108,7 @@ export const ja: TranslationKeys = {
   kids_home_reminders_modal_no_active: "進行中のリマインダーはありません",
   kids_home_reminders_modal_no_archived: "アーカイブはまだありません",
   kids_home_leaps_all_complete: "すべての成長ジャンプが完了",
-  kids_home_leaps_all_complete_desc: "お子さまは10のワンダーウィークをすべて終えました",
+  kids_home_leaps_all_complete_desc: "10回のメンタルリープをすべて通過しました",
   kids_home_leaps_status_now: "NOW",
   kids_home_leaps_status_all_done: "ALL DONE",
   kids_home_leaps_detail_title: "成長ジャンプ",
@@ -6074,4 +6074,6 @@ export const ja: TranslationKeys = {
   preg_sum_vitaminsTaken: "服用済み",
   preg_sum_vitaminsNotTaken: "未服用",
   preg_analytics_logsShort: "件の記録",
+  kidsTile_logsUnit_one: "件",
+  kids_summary_sleepStarted: "{{time}}に開始",
 }

@@ -14,6 +14,7 @@
  */
 
 import { dateLoc } from '../../lib/kpLocale'
+import { fmt1 } from '../../lib/grandmaNotes/shared'
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Animated, {
   useSharedValue,
@@ -479,7 +480,7 @@ function pillarStat(key: PillarKey, a: AnalyticsData): PillarStat | null {
   switch (key) {
     case 'sleep':
       if (!a.sleep.hasData) return null
-      return { value: a.sleep.avgHours.toFixed(1), unitKey: 'kids_analytics_unit_h_day', coverage: dayCoverage(a.sleep.dailyHours) }
+      return { value: fmt1(a.sleep.avgHours), unitKey: 'kids_analytics_unit_h_day', coverage: dayCoverage(a.sleep.dailyHours) }
     case 'nutrition': {
       if (!a.nutrition.hasData) return null
       const total = a.nutrition.mealFrequency.reduce((x, y) => x + y, 0)
@@ -701,8 +702,8 @@ function getNeutralHealthTips(
       const below = avg < target * 0.85
       tips.push({
         title: tNow('sw2_an_sleepTitle'),
-        body: tNow('sw2_an_sleepBody', { avg: avg.toFixed(1), target }),
-        detail: `${tNow('sw2_an_sleepDetail', { name: childName, avg: avg.toFixed(1), months: ageMonths, target })}${totalQ > 0 ? ` ${tNow('sw2_an_sleepGood', { good: goodCount, total: totalQ })}` : ''}${below ? ` ${tNow('sw2_an_sleepHint')}` : ''}`,
+        body: tNow('sw2_an_sleepBody', { avg: fmt1(avg), target }),
+        detail: `${tNow('sw2_an_sleepDetail', { name: childName, avg: fmt1(avg), months: ageMonths, target })}${totalQ > 0 ? ` ${tNow('sw2_an_sleepGood', { good: goodCount, total: totalQ })}` : ''}${below ? ` ${tNow('sw2_an_sleepHint')}` : ''}`,
         color: PILLAR_CONFIG.sleep.color,
         icon: Moon,
       })
@@ -722,7 +723,7 @@ function getNeutralHealthTips(
     const n = analytics.nutrition
     const totalMeals = n.mealFrequency.reduce((a, b) => a + b, 0)
     const daysLogged = n.mealFrequency.filter((m) => m > 0).length
-    const avgMeals = daysLogged > 0 ? (totalMeals / daysLogged).toFixed(1) : '0'
+    const avgMeals = daysLogged > 0 ? fmt1(totalMeals / daysLogged) : '0'
     const goodTotal = n.eatQuality.good.reduce((a, b) => a + b, 0)
     const goodPct = totalMeals > 0 ? Math.round((goodTotal / totalMeals) * 100) : 0
     const isMilk = n.mode === 'milk'
@@ -788,7 +789,7 @@ function getNeutralHealthTips(
   if (analytics.diaper.hasData) {
     const { totalCount } = analytics.diaper
     const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
-    const avgPerDay = (totalCount / windowDays).toFixed(1)
+    const avgPerDay = fmt1(totalCount / windowDays)
     const green = analytics.diaper.colorCounts['green'] ?? 0
     if (ageMonths < 6 && totalCount / windowDays < 6) {
       tips.push({
@@ -3461,7 +3462,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
       const mode = nutr.mode
       const totalMeals = nutr.mealFrequency.reduce((a, b) => a + b, 0)
       const daysLogged = nutr.mealFrequency.filter((m) => m > 0).length
-      const avgPerDay = daysLogged > 0 ? (totalMeals / daysLogged).toFixed(1) : '—'
+      const avgPerDay = daysLogged > 0 ? fmt1(totalMeals / daysLogged) : '—'
       const variety = nutr.topFoods.length
 
       const totalBreast = nutr.breastSessions.reduce((a, b) => a + b, 0)
@@ -3621,7 +3622,7 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
           {insight.demotedAvailable && renderDetailsToggle(<>
           {/* Stats at top */}
           <StatRow>
-            <StatPill label={t('kidsAnalytics_avgPerNight')} value={`${avg.toFixed(1)}h`} color={PILLAR_CONFIG.sleep.color} />
+            <StatPill label={t('kidsAnalytics_avgPerNight')} value={`${fmt1(avg)}h`} color={PILLAR_CONFIG.sleep.color} />
             <StatPill label={t('kp_ka_quality')} value={getBestQuality(analytics.sleep.qualityCounts)} color={brand.success} />
             <StatPill label={t('kidsAnalytics_targetPerNight')} value={`${target}h`} color={colors.textMuted} />
           </StatRow>
@@ -4459,7 +4460,7 @@ function HighlightBarChart({
   const BAR_AREA = Math.max(height - 40, 80)
   const maxIdx = data.indexOf(trueMax)
   const showAll = data.length <= 9
-  const fmt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? `${Math.round(v)}` : v.toFixed(1))
+  const fmt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? `${Math.round(v)}` : fmt1(v))
   const tone = SOFT_BY_PILLAR_COLOR[color] ?? stickers.lilacSoft
 
   return (

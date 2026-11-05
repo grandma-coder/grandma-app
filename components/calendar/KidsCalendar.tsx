@@ -140,7 +140,8 @@ interface ChildRoutine {
 import { CHILD_COLORS, childColor } from '../ui/ChildPills'
 import { healthLogText } from '../../lib/kidsHealthLogText'
 import { QuietPill } from '../profile/SiteSettingsKit'
-import { sleepQualityLabel } from '../../lib/sleepQuality'
+import { sleepQualityLabel, normalizeSleepQuality } from '../../lib/sleepQuality'
+import { activityTypeLabel, diaperColorLabel, diaperConsistencyLabel, moodLabel } from '../../lib/kidsLogSummary'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { Skeleton } from '../ui/Skeleton'
 import { SheetModal } from '../ui/SheetModal'
@@ -606,10 +607,8 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
         }
         case 'activity': {
           const parts: string[] = []
-          if (parsed.activityType) {
-            const label = parsed.activityType.charAt(0).toUpperCase() + parsed.activityType.slice(1)
-            parts.push(label)
-          }
+          const actLabel = activityTypeLabel(tNow, parsed.activityType)
+          if (actLabel) parts.push(actLabel)
           if (parsed.name) parts.push(parsed.name)
           if (parsed.startTime && parsed.endTime) parts.push(`${fmtTime(parsed.startTime)}–${fmtTime(parsed.endTime)}`)
           else if (parsed.startTime) parts.push(fmtTime(parsed.startTime))
@@ -623,8 +622,10 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
           const parts: string[] = []
           const typeLabels: Record<string, string> = { pee: tNow('kids_logForm_diaperPee'), poop: tNow('kids_logForm_diaperPoop'), mixed: tNow('kids_logForm_diaperBoth') }
           if (parsed.diaperType) parts.push(typeLabels[parsed.diaperType] ?? parsed.diaperType)
-          if (parsed.color) parts.push(parsed.color.charAt(0).toUpperCase() + parsed.color.slice(1))
-          if (parsed.consistency) parts.push(parsed.consistency.charAt(0).toUpperCase() + parsed.consistency.slice(1))
+          const colorLbl = diaperColorLabel(tNow, parsed.color)
+          if (colorLbl) parts.push(colorLbl)
+          const consistLbl = diaperConsistencyLabel(tNow, parsed.consistency)
+          if (consistLbl) parts.push(consistLbl)
           if (parsed.time) parts.push(fmtTime(parsed.time))
           return parts.join(' · ') || notes || ''
         }
@@ -632,7 +633,8 @@ function formatLogDisplay(type: string, value: string | null, notes: string | nu
           // Routine-logged moods store { mood, routineId, routineName, ... }.
           // Show only the mood label — never the internal routine keys.
           const moodVal = parsed.mood ?? parsed.value ?? parsed.label
-          if (typeof moodVal === 'string' && moodVal.trim()) return moodVal
+          const moodLbl = moodLabel(tNow, moodVal)
+          if (moodLbl) return moodLbl
           return notes || ''
         }
         default: {
@@ -3880,7 +3882,7 @@ export function KidsCalendar() {
                       try { sp = JSON.parse(shownLog.value ?? '{}') } catch {}
                       // Duration is stored as "10h 10m", "45m", "2h" — display it directly
                       const durStr = sp.duration ? String(sp.duration) : null
-                      const qFace = sp.quality ? faceFor[String(sp.quality).toLowerCase()] ?? null : null
+                      const qFace = sp.quality ? faceFor[normalizeSleepQuality(sp.quality) ?? ''] ?? null : null
                       return (
                         <>
                           <DetailHero
@@ -3894,7 +3896,7 @@ export function KidsCalendar() {
                               <InfoPill label={`${fmtTime(sp.startTime)} – ${fmtTime(sp.endTime)}`} leading={<Clock size={13} color={ink} strokeWidth={2.2} />} />
                             )}
                             {sp.quality && (
-                              <InfoPill label={sp.quality.charAt(0).toUpperCase() + sp.quality.slice(1)} leading={qFace ? <SiteSticker name={qFace} size={20} /> : undefined} />
+                              <InfoPill label={sleepQualityLabel(sp.quality)} leading={qFace ? <SiteSticker name={qFace} size={20} /> : undefined} />
                             )}
                           </View>
                         </>
@@ -3917,7 +3919,7 @@ export function KidsCalendar() {
                           />
                           <View style={styles.siteInfoRow}>
                             {ap.name && durUnit ? <InfoPill label={durUnit} /> : null}
-                            {ap.activityType && <InfoPill tone={tone} label={ap.activityType.charAt(0).toUpperCase() + ap.activityType.slice(1)} />}
+                            {activityTypeLabel(tNow, ap.activityType) && <InfoPill tone={tone} label={activityTypeLabel(tNow, ap.activityType) as string} />}
                             {ap.startTime && ap.endTime && (
                               <InfoPill label={`${fmtTime(ap.startTime)} – ${fmtTime(ap.endTime)}`} leading={<Clock size={13} color={ink} strokeWidth={2.2} />} />
                             )}

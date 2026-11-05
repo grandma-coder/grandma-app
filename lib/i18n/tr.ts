@@ -1108,7 +1108,7 @@ export const tr: TranslationKeys = {
   kids_home_reminders_modal_no_active: "Aktif hatırlatıcı yok",
   kids_home_reminders_modal_no_archived: "Henüz arşivlenen yok",
   kids_home_leaps_all_complete: "Tüm Atılımlar Tamamlandı",
-  kids_home_leaps_all_complete_desc: "Çocuğun 10 Wonder Weeks atılımının hepsini tamamladı",
+  kids_home_leaps_all_complete_desc: "Çocuğun 10 gelişim atağının hepsini geçirdi",
   kids_home_leaps_status_now: "NOW",
   kids_home_leaps_status_all_done: "ALL DONE",
   kids_home_leaps_detail_title: "Büyüme Atılımları",
@@ -6074,4 +6074,6 @@ export const tr: TranslationKeys = {
   preg_sum_vitaminsTaken: "Alındı",
   preg_sum_vitaminsNotTaken: "Alınmadı",
   preg_analytics_logsShort: "kayıt",
+  kidsTile_logsUnit_one: "kayıt",
+  kids_summary_sleepStarted: "Başlangıç {{time}}",
 }

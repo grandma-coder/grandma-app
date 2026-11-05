@@ -1108,7 +1108,7 @@ export const ko: TranslationKeys = {
   kids_home_reminders_modal_no_active: "진행 중인 알림이 없어요",
   kids_home_reminders_modal_no_archived: "보관된 항목이 없어요",
   kids_home_leaps_all_complete: "모든 도약기 완료",
-  kids_home_leaps_all_complete_desc: "아이가 10개의 원더 위크를 모두 지났어요",
+  kids_home_leaps_all_complete_desc: "아이가 10번의 성장 도약기를 모두 지났어요",
   kids_home_leaps_status_now: "NOW",
   kids_home_leaps_status_all_done: "ALL DONE",
   kids_home_leaps_detail_title: "성장 도약기",
@@ -6074,4 +6074,6 @@ export const ko: TranslationKeys = {
   preg_sum_vitaminsTaken: "복용함",
   preg_sum_vitaminsNotTaken: "복용 안 함",
   preg_analytics_logsShort: "건 기록",
+  kidsTile_logsUnit_one: "건",
+  kids_summary_sleepStarted: "{{time}}에 시작",
 }

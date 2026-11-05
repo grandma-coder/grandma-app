@@ -1108,7 +1108,7 @@ export const zh: TranslationKeys = {
   kids_home_reminders_modal_no_active: "没有进行中的提醒",
   kids_home_reminders_modal_no_archived: "还没有归档",
   kids_home_leaps_all_complete: "所有跃进期已完成",
-  kids_home_leaps_all_complete_desc: "你的孩子已经走完全部 10 个神奇周",
+  kids_home_leaps_all_complete_desc: "孩子已经度过全部10次成长飞跃",
   kids_home_leaps_status_now: "NOW",
   kids_home_leaps_status_all_done: "ALL DONE",
   kids_home_leaps_detail_title: "成长跃进期",
@@ -6074,4 +6074,6 @@ export const zh: TranslationKeys = {
   preg_sum_vitaminsTaken: "已服用",
   preg_sum_vitaminsNotTaken: "未服用",
   preg_analytics_logsShort: "条记录",
+  kidsTile_logsUnit_one: "条",
+  kids_summary_sleepStarted: "{{time}} 开始",
 }

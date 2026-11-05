@@ -509,13 +509,10 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                 borderWidth: 1.5, borderColor: ST_INK,
                 alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
-                <Text style={{
-                  fontSize: 11, fontFamily: font.display,
-                  color: ST_INK,
-                  textAlign: 'center', lineHeight: 13, letterSpacing: 0.2, textTransform: 'uppercase',
-                }}>
-                  {milestone.label.replace(/^Months$/i, 'mo').replace(/\bMonths\b/g, 'mo').replace(/\bYears\b/g, 'yr')}
-                </Text>
+                {/* The age is already the title beside it — the node just shows progress. */}
+                {isDoneMilestone
+                  ? <Check size={20} color={ST_INK} strokeWidth={3} />
+                  : <SiteSticker name="syringe" size={26} />}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, letterSpacing: 0.3, textTransform: 'uppercase' }}>

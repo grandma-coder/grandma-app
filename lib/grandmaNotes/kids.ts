@@ -69,7 +69,7 @@ export function buildKidsNote(input: KidsNoteInput, t: Translate): GrandmaLetter
         const good = sum(n.eatQuality?.good)
         const pct = Math.round((good / total) * 100)
         c.push({
-          id: 'food', area: 'nutrition', sticker: 'banana', weight: 2.5 + (bonus.nutrition ?? 0), title: t('gn_kids_meals_title'),
+          id: 'food', area: 'nutrition', sticker: 'avocado', weight: 2.5 + (bonus.nutrition ?? 0), title: t('gn_kids_meals_title'),
           body: pct > 0
             ? t(total === 1 ? 'gn_kids_meals_pct_one' : 'gn_kids_meals_pct_other', { count: total, pct })
             : t(total === 1 ? 'gn_kids_meals_body_one' : 'gn_kids_meals_body_other', { count: total }),

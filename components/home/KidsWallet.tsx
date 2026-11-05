@@ -132,7 +132,7 @@ export function KidsWallet({
     }
     switch (id) {
       case 'goals': return <SiteSticker name="star" size={26} />
-      case 'health': return <SiteSticker name="heart" size={26} />
+      case 'health': return <SiteSticker name="thermo" size={26} />
       case 'vaccines': return <SiteSticker name="syringe" size={26} />
       case 'exams': return <SiteSticker name="doc" size={26} />
       case 'diaper': return <SiteSticker name="diaper" size={26} />
@@ -212,7 +212,7 @@ export function KidsWallet({
   const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
 
   const SITE_STICKER: Record<KidsCardId, SiteStickerName> = {
-    goals: 'star', health: 'heart', vaccines: 'syringe', exams: 'doc', diaper: 'diaper',
+    goals: 'star', health: 'thermo', vaccines: 'syringe', exams: 'doc', diaper: 'diaper',
     growth_leap: 'brain', reminders: 'bell', memories: 'camera', ask_grandma: 'bubble',
     rewards: 'star', channels: 'bubble', village: 'house',
   }

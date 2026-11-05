@@ -145,7 +145,7 @@ export function ActivitiesDetailCalm(p: ActivitiesDetailCalmProps) {
                     <View style={styles.rowBetween}>
                       <Text style={[styles.line, { color: ink, fontFamily: font.bodySemiBold }]}>{t(labelKey(id))}</Text>
                       <Text style={[styles.line, { color: ink, fontFamily: font.bodyBold }]}>
-                        {count.toLocaleString()}
+                        {count.toLocaleString(dateLoc())}
                         <Text style={{ color: ink2, fontFamily: font.body }}>{`  ${share}%`}</Text>
                       </Text>
                     </View>

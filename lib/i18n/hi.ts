@@ -1108,7 +1108,7 @@ export const hi: TranslationKeys = {
   kids_home_reminders_modal_no_active: "कोई चालू रिमाइंडर नहीं",
   kids_home_reminders_modal_no_archived: "अभी कुछ संग्रहीत नहीं",
   kids_home_leaps_all_complete: "सभी उछाल पूरे",
-  kids_home_leaps_all_complete_desc: "आपके बच्चे ने सभी 10 वंडर वीक्स पूरे कर लिए",
+  kids_home_leaps_all_complete_desc: "आपका बच्चा सभी 10 विकास छलाँगों से गुज़र चुका है",
   kids_home_leaps_status_now: "NOW",
   kids_home_leaps_status_all_done: "ALL DONE",
   kids_home_leaps_detail_title: "विकास के उछाल",
@@ -6074,4 +6074,6 @@ export const hi: TranslationKeys = {
   preg_sum_vitaminsTaken: "ली गईं",
   preg_sum_vitaminsNotTaken: "नहीं ली गईं",
   preg_analytics_logsShort: "एंट्री",
+  kidsTile_logsUnit_one: "एंट्री",
+  kids_summary_sleepStarted: "{{time}} बजे शुरू",
 }

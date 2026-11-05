@@ -17,6 +17,7 @@
  * a one-day range drops "per day".
  */
 
+import { dateLoc } from '../../../lib/kpLocale'
 import { ScrollView, Text, View, StyleSheet } from 'react-native'
 import { useTheme, stickers } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
@@ -139,7 +140,7 @@ export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
               {oneDay ? milk : r1(milk / days)}
             </Text>
             <Text style={[styles.heroSub, { color: ink2, fontFamily: font.body }]}>
-              {[!oneDay ? t('feedCalm_feeds', { n: milk }) : null, p.feedingMl > 0 ? t('feedCalm_mlByBottle', { ml: p.feedingMl.toLocaleString() }) : null]
+              {[!oneDay ? t('feedCalm_feeds', { n: milk }) : null, p.feedingMl > 0 ? t('feedCalm_mlByBottle', { ml: p.feedingMl.toLocaleString(dateLoc()) }) : null]
                 .filter(Boolean).join(' · ')}
             </Text>
           </View>
@@ -217,11 +218,11 @@ export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
           <Text style={eyebrow}>{oneDay ? t('feedCalm_solids') : t('feedCalm_solidsPerDay')}</Text>
           <View style={styles.heroRow}>
             <Text style={[styles.solidHero, { color: ink, fontFamily: font.displayBold }]} testID="solids-hero">
-              {Math.round(kcal / days).toLocaleString()} kcal
+              {Math.round(kcal / days).toLocaleString(dateLoc())} kcal
             </Text>
             {kcalGoal > 0 ? (
               <Text style={[styles.heroSub, { color: ink2, fontFamily: font.body }]}>
-                {oneDay ? t('feedCalm_of', { n: Math.round(kcalGoal).toLocaleString() }) : t('feedCalm_ofDay', { n: Math.round(kcalGoal / days).toLocaleString() })}
+                {oneDay ? t('feedCalm_of', { n: Math.round(kcalGoal).toLocaleString(dateLoc()) }) : t('feedCalm_ofDay', { n: Math.round(kcalGoal / days).toLocaleString(dateLoc()) })}
               </Text>
             ) : null}
           </View>
@@ -240,7 +241,7 @@ export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
                       <View style={styles.rowBetween}>
                         <Text style={[styles.line, { color: ink, fontFamily: font.bodySemiBold, textTransform: 'capitalize' }]}>{c.label}</Text>
                         <Text style={[styles.line, { color: ink, fontFamily: font.bodyBold }]}>
-                          {perDay.toLocaleString()} kcal
+                          {perDay.toLocaleString(dateLoc())} kcal
                           <Text style={{ color: ink2, fontFamily: font.body }}>{`  ${share}%`}</Text>
                         </Text>
                       </View>

@@ -1506,7 +1506,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
   // Nutrition center data adapts to feeding stage
   const nutritionCenter = feedingStage === 'solids'
-    ? { value: rangeData.caloriesTotal > 0 ? rangeData.caloriesTotal.toLocaleString() : '—', unit: t('kp_kh_calories'), pct: Math.round(nutritionProgress * 100) }
+    ? { value: rangeData.caloriesTotal > 0 ? rangeData.caloriesTotal.toLocaleString(dateLoc()) : '—', unit: t('kp_kh_calories'), pct: Math.round(nutritionProgress * 100) }
     : { value: rangeData.feedingCount > 0 ? `${rangeData.feedingCount}` : '—', unit: feedingStage === 'liquid' ? t('kp_kh_feedings') : t('kp_kh_feedsMeals'), pct: Math.round(nutritionProgress * 100) }
 
   // Focused ring center data
@@ -2748,10 +2748,10 @@ function DiffuseHeroTiles({
   // Calories / feedings
   const isLiquid = stage === 'liquid' || stage === 'mixed'
   const hasFeed = isLiquid ? feedingCount > 0 : caloriesTotal > 0
-  const calValue = hasFeed ? (isLiquid ? `${feedingCount}` : caloriesTotal.toLocaleString()) : undefined
+  const calValue = hasFeed ? (isLiquid ? `${feedingCount}` : caloriesTotal.toLocaleString(dateLoc())) : undefined
   const calTarget = isLiquid ? feedingTarget : caloriesTarget
   const calPct = calTarget > 0 ? Math.min((isLiquid ? feedingCount : caloriesTotal) / calTarget, 1) : 0
-  const calSub = calTarget > 0 ? t('kp_kh_ofTarget', { n: calTarget.toLocaleString() }) : (isLiquid ? t('kids_home_mood_tap_details') : t('kp_kh_setTarget'))
+  const calSub = calTarget > 0 ? t('kp_kh_ofTarget', { n: calTarget.toLocaleString(dateLoc()) }) : (isLiquid ? t('kids_home_mood_tap_details') : t('kp_kh_setTarget'))
 
   // Activity
   const activityEngagement = activityRangeDays > 0 ? Math.min(activityActiveDays / activityRangeDays, 1) : 0
@@ -2886,10 +2886,10 @@ function CurrentHeroTiles({
   const isLiquid = stage === 'liquid' || stage === 'mixed'
   const calValue = isLiquid
     ? (feedingCount > 0 ? `${feedingCount}` : '—')
-    : (caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—')
+    : (caloriesTotal > 0 ? caloriesTotal.toLocaleString(dateLoc()) : '—')
   const calTarget = isLiquid ? feedingTarget : caloriesTarget
   const calPct = calTarget > 0 ? Math.min((isLiquid ? feedingCount : caloriesTotal) / calTarget, 1) : 0
-  const calSub = calTarget > 0 ? t('kp_kh_ofTarget', { n: calTarget.toLocaleString() }) : (isLiquid ? t('kids_home_mood_tap_details') : t('kp_kh_setTarget'))
+  const calSub = calTarget > 0 ? t('kp_kh_ofTarget', { n: calTarget.toLocaleString(dateLoc()) }) : (isLiquid ? t('kids_home_mood_tap_details') : t('kp_kh_setTarget'))
 
   // Empty/data flags so we render inviting copy instead of bare "—"
   const hasSleep = sleepTotal > 0
@@ -3030,7 +3030,7 @@ function CurrentHeroTiles({
               {hasActivity ? (
                 <Text style={[tileStyles.heroNumber, { color: ink }]}>
                   {activityValueLabel}
-                  <Text style={[tileStyles.heroUnit, { color: ink }]}>{t('kidsTile_logsUnit')}</Text>
+                  <Text style={[tileStyles.heroUnit, { color: ink }]}>{t(activityValueLabel === '1' ? 'kidsTile_logsUnit_one' : 'kidsTile_logsUnit')}</Text>
                 </Text>
               ) : (
                 <Text style={[tileStyles.emptyHero, { color: ink }]}>{t('kids_home_tile_tap_to_log')}</Text>
@@ -3455,7 +3455,7 @@ function NutritionCard({ stage, caloriesTotal, caloriesTarget, feedingCount, fee
           />
         </Svg>
         <Text style={[s.calorieNumber, { color: ink }]}>
-          {isLiquid ? (feedingCount > 0 ? `${feedingCount}` : '—') : (caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—')}
+          {isLiquid ? (feedingCount > 0 ? `${feedingCount}` : '—') : (caloriesTotal > 0 ? caloriesTotal.toLocaleString(dateLoc()) : '—')}
         </Text>
       </View>
       {isLiquid ? (
@@ -4241,7 +4241,7 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
         visible={visible}
         title={t('kids_home_activity_breakdown_title')}
         onClose={onClose}
-        chip={total > 0 ? `${total.toLocaleString()} ${t('kids_home_activity_total_suffix')}` : undefined}
+        chip={total > 0 ? `${total.toLocaleString(dateLoc())} ${t('kids_home_activity_total_suffix')}` : undefined}
       >
         {entries.length === 0 ? (
           <DiffuseEmptyState
@@ -4257,7 +4257,7 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
                 <View key={type} style={{ gap: 8 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 15, color: dCol.ink }}>{meta.label}</Text>
-                    <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dCol.ink }}>{count.toLocaleString()}</Text>
+                    <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 13, color: dCol.ink }}>{count.toLocaleString(dateLoc())}</Text>
                     <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: dCol.ink3, minWidth: 38, textAlign: 'right' }}>{pct}%</Text>
                   </View>
                   <View style={{ height: 3, borderRadius: 999, backgroundColor: dCol.line, overflow: 'hidden' }}>
@@ -4291,7 +4291,7 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                 <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
                 <Text style={{ fontFamily: 'HankenGrotesk_600SemiBold', flex: 1, color: colors.textSecondary, fontSize: 14, fontWeight: '600' }}>{meta.label}</Text>
-                <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.text, fontSize: 14, fontWeight: '700' }}>{count.toLocaleString()}</Text>
+                <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: colors.text, fontSize: 14, fontWeight: '700' }}>{count.toLocaleString(dateLoc())}</Text>
                 <Text style={{ fontFamily: 'HankenGrotesk_700Bold', color: meta.color, fontSize: 12, fontWeight: '700', minWidth: 38, textAlign: 'right' }}>{pct}%</Text>
               </View>
               <View style={{ height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
@@ -4301,7 +4301,7 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
           )
         })}
         <Text style={{ fontFamily: 'HankenGrotesk_400Regular', color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
-          {total.toLocaleString()} {t('kids_home_activity_total_suffix')}
+          {total.toLocaleString(dateLoc())} {t('kids_home_activity_total_suffix')}
         </Text>
       </Pressable>
     </CenterModal>
@@ -4476,7 +4476,7 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
           {/* Label */}
           <Text style={{ fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink, flex: 1 }} numberOfLines={1}>{cat.label}</Text>
           {/* Calories + pct */}
-          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, color: dCol.ink2 }}>{cat.cals.toLocaleString()}{' cal'}</Text>
+          <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, color: dCol.ink2 }}>{cat.cals.toLocaleString(dateLoc())}{' cal'}</Text>
           <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: dCol.ink3, width: 40, textAlign: 'right' }}>{pctOfTotal}%</Text>
         </View>
         {/* Thin proportion bar */}
@@ -4530,7 +4530,7 @@ function CategoryRankCard({ cat, rank, pctOfTotal, barWidth, visible }: {
         {/* Label */}
         <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: font.bodySemiBold, flex: 1 }} numberOfLines={1}>{cat.label}</Text>
         {/* Calories */}
-        <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: font.displayBold }}>{cat.cals.toLocaleString()}{' cal'}</Text>
+        <Text style={{ color: DIAPER_STICKER_INK, fontSize: 14, fontFamily: font.displayBold }}>{cat.cals.toLocaleString(dateLoc())}{' cal'}</Text>
       </View>
       {/* Proportion bar + bold % pill */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -5046,12 +5046,12 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_feeding_modal_feedings')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
-                  <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{feedingCount.toLocaleString()}</Text>
+                  <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{feedingCount.toLocaleString(dateLoc())}</Text>
                   <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{'total'}</Text>
                 </View>
                 {avgMl > 0 && (
                   <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dCol.ink3, marginTop: 6 }}>
-                    {t('kids_home_feeding_modal_avg_ml', { ml: avgMl.toLocaleString() })}
+                    {t('kids_home_feeding_modal_avg_ml', { ml: avgMl.toLocaleString(dateLoc()) })}
                   </Text>
                 )}
               </View>
@@ -5062,17 +5062,17 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
             {(feedingBreast + feedingBottle) > 0 ? (
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
                 <DiffuseMetricTile
-                  value={feedingBreast.toLocaleString()}
+                  value={feedingBreast.toLocaleString(dateLoc())}
                   label={tNow('kids_home_feeding_modal_breast')}
                   icon={<Character name="baby" size={20} color={stickers.pink} />}
                 />
                 <DiffuseMetricTile
-                  value={feedingBottle.toLocaleString()}
+                  value={feedingBottle.toLocaleString(dateLoc())}
                   label={tNow('kids_home_feeding_modal_bottle')}
                   icon={<Character name="milk" size={20} color={stickers.blue} />}
                 />
                 <DiffuseMetricTile
-                  value={feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—'}
+                  value={feedingMl > 0 ? `${feedingMl.toLocaleString(dateLoc())}ml` : '—'}
                   label={tNow('kids_home_feeding_modal_total_vol')}
                   icon={<Character name="water" size={20} color={stickers.peach} />}
                 />
@@ -5144,7 +5144,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{stage === 'mixed' ? 'Solids Calories' : 'Calories'}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
                 <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>
-                  {caloriesTotal > 0 ? caloriesTotal.toLocaleString() : '—'}
+                  {caloriesTotal > 0 ? caloriesTotal.toLocaleString(dateLoc()) : '—'}
                 </Text>
                 {caloriesTotal > 0 ? (
                   <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{'cal'}</Text>
@@ -5152,7 +5152,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               </View>
               {stage === 'solids' && (
                 <Text style={{ fontFamily: diffuseFont.italic, fontSize: 13, color: dCol.ink3, marginTop: 6 }}>
-                  {pct}{'% of '}{caloriesTarget.toLocaleString()}
+                  {pct}{'% of '}{caloriesTarget.toLocaleString(dateLoc())}
                 </Text>
               )}
             </View>
@@ -5239,12 +5239,12 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>{t('kids_home_feeding_modal_feedings')}</Text>
                   <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, marginTop: 2 }}>
-                    {feedingCount.toLocaleString()}{' total'}
+                    {feedingCount.toLocaleString(dateLoc())}{' total'}
                   </Text>
                 </View>
                 {avgMl > 0 && (
                   <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: font.italic, fontStyle: 'italic' }}>
-                    {t('kids_home_feeding_modal_avg_ml', { ml: avgMl.toLocaleString() })}
+                    {t('kids_home_feeding_modal_avg_ml', { ml: avgMl.toLocaleString(dateLoc()) })}
                   </Text>
                 )}
               </View>
@@ -5256,9 +5256,9 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               {(feedingBreast + feedingBottle) > 0 ? (
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   {[
-                    { Icon: Baby, sticker: 'heart' as const, value: feedingBreast.toLocaleString(), label: tNow('kids_home_feeding_modal_breast'), fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
-                    { Icon: Milk, sticker: 'bottle' as const, value: feedingBottle.toLocaleString(), label: tNow('kids_home_feeding_modal_bottle'), fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
-                    { Icon: Droplets, sticker: 'drop' as const, value: feedingMl > 0 ? `${feedingMl.toLocaleString()}ml` : '—', label: tNow('kids_home_feeding_modal_total_vol'), fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
+                    { Icon: Baby, sticker: 'heart' as const, value: feedingBreast.toLocaleString(dateLoc()), label: tNow('kids_home_feeding_modal_breast'), fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
+                    { Icon: Milk, sticker: 'bottle' as const, value: feedingBottle.toLocaleString(dateLoc()), label: tNow('kids_home_feeding_modal_bottle'), fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
+                    { Icon: Droplets, sticker: 'drop' as const, value: feedingMl > 0 ? `${feedingMl.toLocaleString(dateLoc())}ml` : '—', label: tNow('kids_home_feeding_modal_total_vol'), fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
                   ].map((card, i) => (
                     <View
                       key={i}
@@ -5420,12 +5420,12 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
               <View style={{ flex: 1 }}>
                 <Text style={{ color: '#6E6763', fontSize: 10, fontFamily: font.bodyBold, letterSpacing: 1, textTransform: 'uppercase' }}>{'Calories'}</Text>
                 <Text style={{ color: DIAPER_STICKER_INK, fontSize: 22, fontFamily: font.displayBold, letterSpacing: -0.3, marginTop: 2 }}>
-                  {caloriesTotal > 0 ? `${caloriesTotal.toLocaleString()} cal` : '—'}
+                  {caloriesTotal > 0 ? `${caloriesTotal.toLocaleString(dateLoc())} cal` : '—'}
                 </Text>
               </View>
               {stage === 'solids' && (
                 <Text style={{ color: DIAPER_STICKER_INK, fontSize: 12, fontFamily: font.italic, fontStyle: 'italic' }}>
-                  {pct}{'% of '}{caloriesTarget.toLocaleString()}
+                  {pct}{'% of '}{caloriesTarget.toLocaleString(dateLoc())}
                 </Text>
               )}
             </View>
@@ -5531,7 +5531,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_activities_modal_title')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
-              <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 44, color: dCol.ink, letterSpacing: -1 }}>{activityCount > 0 ? activityCount.toLocaleString() : '—'}</Text>
+              <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 44, color: dCol.ink, letterSpacing: -1 }}>{activityCount > 0 ? activityCount.toLocaleString(dateLoc()) : '—'}</Text>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{'total'}</Text>
             </View>
             {activeDays > 0 && rangeDays > 0 ? (
@@ -5585,7 +5585,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                       <View style={{ width: 7, height: 7, borderRadius: 999, backgroundColor: meta.color }} />
                       <Text style={{ flex: 1, fontFamily: diffuseFont.body, fontSize: 14, color: dCol.ink }}>{meta.label}</Text>
-                      <Text style={{ fontFamily: diffuseFont.mono, fontSize: 13, color: dCol.ink }}>{count.toLocaleString()}</Text>
+                      <Text style={{ fontFamily: diffuseFont.mono, fontSize: 13, color: dCol.ink }}>{count.toLocaleString(dateLoc())}</Text>
                       <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, color: dCol.ink3, minWidth: 38, textAlign: 'right' }}>{typePct}%</Text>
                       <ChevronRight
                         size={14}

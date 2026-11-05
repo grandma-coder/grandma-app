@@ -6376,4 +6376,6 @@ export interface TranslationKeys {
   preg_sum_vitaminsTaken: string
   preg_sum_vitaminsNotTaken: string
   preg_analytics_logsShort: string
+  kidsTile_logsUnit_one: string
+  kids_summary_sleepStarted: string
 }

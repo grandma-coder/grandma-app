@@ -9,6 +9,7 @@
  * on press (light haptic).
  */
 
+import { dateLoc } from '../../../lib/kpLocale'
 import { useEffect, useRef, useState } from 'react'
 import { Animated, Easing, Pressable, Text, View, StyleSheet } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
@@ -69,7 +70,7 @@ function CountUp({ value, decimals = 0, style }: { value: number; decimals?: num
     Animated.timing(v, { toValue: value, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start()
     return () => v.removeListener(id)
   }, [value, v])
-  const txt = decimals ? shown.toFixed(decimals) : Math.round(shown).toLocaleString()
+  const txt = decimals ? shown.toFixed(decimals) : Math.round(shown).toLocaleString(dateLoc())
   return <Text style={style}>{txt}</Text>
 }
 
@@ -252,7 +253,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
             </Text>
           ) : <Text style={emptyStyle}>{t('kids_home_tile_tap_to_log')}</Text>}
           <Text style={subStyle} numberOfLines={1}>
-            {foodGoal > 0 ? t('kidsTile_ofDay', { n: Math.round(foodGoal).toLocaleString() }) : t('kids_home_tile_no_goal')}
+            {foodGoal > 0 ? t('kidsTile_ofDay', { n: Math.round(foodGoal).toLocaleString(dateLoc()) }) : t('kids_home_tile_no_goal')}
           </Text>
           <WaveMeter pct={foodGoal > 0 ? foodVal / foodGoal : 0} color="#EE7B6D" ink={ink} />
           </FadeIn>}
@@ -265,7 +266,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           {hasAct ? (
             <Text style={styles.numRow}>
               <CountUp value={p.activityCount} style={numStyle} />
-              <Text style={unitStyle}> {t('kidsTile_logsUnit')}</Text>
+              <Text style={unitStyle}> {t(p.activityCount === 1 ? 'kidsTile_logsUnit_one' : 'kidsTile_logsUnit')}</Text>
             </Text>
           ) : <Text style={emptyStyle}>{t('kids_home_tile_tap_to_log')}</Text>}
           <Text style={subStyle} numberOfLines={1}>

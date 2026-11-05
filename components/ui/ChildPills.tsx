@@ -11,6 +11,8 @@
  * home, exams, profile, leaderboard.
  */
 
+import { t as tNow } from '../../lib/i18n'
+import { parseLocalDate } from '../../lib/localDate'
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { stickers, font } from '../../constants/theme'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
@@ -36,17 +38,17 @@ export function childColor(index: number): string {
 // ─── Age formatting ───────────────────────────────────────────────────────
 
 export function formatChildAge(birthDate: string): string {
-  const dob = new Date(birthDate)
+  // Same wording as the kids home chips, in the app language.
+  const dob = parseLocalDate(birthDate)
   const now = new Date()
   const months =
     (now.getFullYear() - dob.getFullYear()) * 12 +
     (now.getMonth() - dob.getMonth())
-  if (months < 1) return 'newborn'
-  if (months < 12) return `${months}mo`
+  if (months < 1) return tNow('kids_home_age_newborn')
+  if (months < 12) return tNow('kp_kh_ageMo', { n: months })
   const years = Math.floor(months / 12)
   const rem = months % 12
-  if (rem === 0) return years === 1 ? '1yr' : `${years}yr`
-  return `${years}yr ${rem}mo`
+  return rem > 0 ? tNow('kp_kh_ageYMo', { y: years, r: rem }) : tNow('kp_kh_ageY', { y: years })
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────
