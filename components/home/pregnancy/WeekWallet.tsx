@@ -162,7 +162,7 @@ export function WeekWallet({
       case 'ask_grandma': return <GrandmaLogo size={26} palette="lilac" outline={colors.text} />
       case 'rewards': return <SiteSticker name="star" size={26} />
       case 'channels': return <SiteSticker name="bubble" size={26} />
-      case 'village': return <SiteSticker name="us" size={26} />
+      case 'village': return <SiteSticker name="bodysuit" size={26} />
     }
   }
 

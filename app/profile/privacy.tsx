@@ -329,7 +329,7 @@ export default function PrivacyScreen() {
         {!diffuse && (
           <View>
             <SiteEyebrow>{t('privacy_sectionDataSharing')}</SiteEyebrow>
-            <SiteRow sticker="us" label={t('privacy_whoSeesWhat')} desc={t('privacy_whoSeesWhatDesc')} onPress={() => router.push('/profile/care-circle')} last />
+            <SiteRow sticker="love" label={t('privacy_whoSeesWhat')} desc={t('privacy_whoSeesWhatDesc')} onPress={() => router.push('/profile/care-circle')} last />
 
             {/* AI personalization only exists while the Grandma AI (chat flag) is on. */}
             {chatOn && (<>

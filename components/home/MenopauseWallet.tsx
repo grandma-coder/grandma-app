@@ -62,7 +62,7 @@ export function MenopauseWallet() {
       case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
       case 'reminders': return diffuse ? <Character name="clock" size={26} color={stickers.blue} /> : <SiteSticker name="bell" size={26} />
       case 'rewards': return diffuse ? <Character name="crown" size={26} color={stickers.yellow} /> : <SiteSticker name="star" size={26} />
-      case 'community': return diffuse ? <Character name="community" size={26} color={stickers.green} /> : <SiteSticker name="us" size={26} />
+      case 'community': return diffuse ? <Character name="community" size={26} color={stickers.green} /> : <SiteSticker name="globe" size={26} />
     }
   }
 

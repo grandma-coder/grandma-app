@@ -9,6 +9,7 @@
  * trimester-aware tips. ScoreInfoModal explains how Wellbeing is computed.
  */
 
+import { router } from 'expo-router'
 import { dateLoc } from '../../lib/kpLocale'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
@@ -2812,6 +2813,14 @@ function ContractionsDetail({ contractions, trimester, weekNumber, accentColor, 
 }
 
 /** Light look: the next concrete prep step, from the first thing not started. */
+// Where each readiness row leads: plan + bag live on the birth-plan page.
+const BIRTH_BUCKET_ROUTE: Record<string, string> = {
+  plan: '/birth-plan',
+  bag: '/birth-plan',
+  exams: '/exams?behavior=pregnancy',
+  card: '/profile/emergency-insurance',
+}
+
 function birthNextStep(b: BirthReadiness, trimester: 1 | 2 | 3): string {
   if (!b.emergencyCardComplete) return tNow('kp_pa_next1')
   if (b.birthPlanCount === 0) return tNow('kp_pa_next2')
@@ -2819,7 +2828,7 @@ function birthNextStep(b: BirthReadiness, trimester: 1 | 2 | 3): string {
   return tNow('kp_pa_next4')
 }
 
-function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTint }: DetailProps & { accentColor?: string; accentTint?: string }) {
+function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTint, onClose }: DetailProps & { accentColor?: string; accentTint?: string }) {
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const { t } = useTranslation()
@@ -2889,16 +2898,27 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
             rows={buckets.map((b) => ({ label: b.label, done: Math.max(0, Math.min(1, b.value / b.target)) } as CheckRow))}
           />
         ) : (
-          <View style={{ gap: 12 }}>
+          <View style={{ gap: 4 }}>
             {buckets.map((b) => (
-              <View key={b.label} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ color: colors.text, fontSize: 14, fontFamily: font.bodySemiBold }}>
+              <Pressable
+                key={b.label}
+                accessibilityRole="button"
+                accessibilityLabel={b.label}
+                onPress={() => {
+                  // Close the sheet first so the next screen isn't hidden under the modal.
+                  onClose()
+                  router.push(BIRTH_BUCKET_ROUTE[b.id] as never)
+                }}
+                style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }, pressed && { opacity: 0.6 }]}
+              >
+                <Text style={{ flex: 1, color: colors.text, fontSize: 14, fontFamily: font.bodySemiBold }}>
                   {b.label}
                 </Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 14, fontFamily: font.body }}>
                   {b.id === 'card' ? (b.value ? tNow('kp_pa_set') : tNow('kp_pa_notSet')) : b.id === 'exams' ? tNow('kp_pa_nOnFile', { n: b.value }) : tNow('kp_pa_nDone', { n: b.value })}
                 </Text>
-              </View>
+                <ChevronRight size={16} color={colors.text} strokeWidth={2.2} />
+              </Pressable>
             ))}
           </View>
         )}

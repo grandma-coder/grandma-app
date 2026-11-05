@@ -42,7 +42,7 @@ export const en: TranslationKeys = {
   common_chevronPrev: '‹',
   common_chevronNext: '›',
   common_arrowRight: '→',
-  common_learnMore: 'Learn more →',
+  common_learnMore: 'Learn more',
   common_typewriterCursor: '|',
 
   // Tabs
@@ -4870,10 +4870,10 @@ export const en: TranslationKeys = {
   kp_pa_bCard: "Emergency card",
   kp_pa_whatsReady: "What's ready",
   kp_pa_nextStepTitle: "Suggested next step",
-  kp_pa_next1: "Next: add a primary emergency contact — it takes 2 minutes.",
-  kp_pa_next2: "Next: note what matters to you for the birth in the birth plan.",
-  kp_pa_next3a: "Next: start the hospital bag list.",
-  kp_pa_next3b: "Next: start a nesting list when you feel ready.",
+  kp_pa_next1: "Add a primary emergency contact — it takes 2 minutes.",
+  kp_pa_next2: "Note what matters to you for the birth in the birth plan.",
+  kp_pa_next3a: "Start the hospital bag list.",
+  kp_pa_next3b: "Start a nesting list when you feel ready.",
   kp_pa_next4: "Bring your birth plan to your next appointment to talk it through.",
   kp_pa_kicksTitle: "Counting kicks",
   kp_pa_kicksBody: "Many care teams suggest counting movements from about week 28 and getting in touch if you notice fewer than usual for your baby. Follow what your midwife or OB has told you.",

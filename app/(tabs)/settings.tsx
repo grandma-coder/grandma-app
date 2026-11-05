@@ -431,7 +431,7 @@ export default function ProfileScreen() {
                   with no children and nobody invited it would be an empty dead end. */}
               {(hasChildren || careCircleCount > 0) && (
                 <SiteRow
-                  sticker="us"
+                  sticker="love"
                   label={t('profile_careCircle')}
                   value={careCircleCount === 1 ? t('app_settings_onePerson') : t('app_settings_nPeople', { n: careCircleCount })}
                   onPress={() => router.push('/profile/care-circle')}

@@ -806,7 +806,7 @@ export default function CareCircleScreen() {
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 }}>
               <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
-              <SiteSticker name="heart" size={30} cut />
+              <SiteSticker name="love" size={30} cut />
               <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
                 {t('careCircle_title')}
               </Text>
@@ -1721,7 +1721,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
   const STEP_TITLES = [t('careCircle_step1_who'), t('app_cc_stepChildren'), t('app_cc_stepPermissions'), t('prepreg_partnerView_sendInvite')]
 
   return (
-    <LogSheet visible={visible} title={STEP_TITLES[step - 1] ?? t('app_cc_addMember')} onClose={handleClose} sticker="heart">
+    <LogSheet visible={visible} title={STEP_TITLES[step - 1] ?? t('app_cc_addMember')} onClose={handleClose} sticker="love">
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={sheetStyles.form}>
           {/* Progress dots */}
