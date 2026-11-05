@@ -1,6 +1,10 @@
 /**
- * CyclePillarsGrid — 2×2 grid of 4 pre-preg pillars with branded stickers,
- * tappable → /pillar/[id].
+ * CyclePillarsGrid — the cycle journey's pillars, tappable → /pillar/[id].
+ *
+ * Site look ("Seus pilares" pop-up + home section): every pre-pregnancy pillar as a sticker row,
+ * titled with the pillar's own localized name + one-line description — the same name and sticker
+ * the pillar screen opens with, so tapping "Nutrition" never lands on a page called something else.
+ * Diffuse: the original curated 2×2 tile grid (unchanged).
  */
 
 import { View, Text, Pressable, StyleSheet } from 'react-native'
@@ -14,6 +18,8 @@ import { ChevronRight } from 'lucide-react-native'
 import { SiteSticker } from '../../stickers/SiteSticker'
 import { prePregPillars } from '../../../lib/prePregPillars'
 import { useTranslation, type TranslationKey } from '../../../lib/i18n'
+import { pillarDescKey, pillarLook, pillarNameKey } from '../../../lib/pillarCopy'
+import { FadeUp } from '../../ui/Motion'
 
 interface PillarTile {
   id: string              // routes to /pillar/[id]
@@ -127,26 +133,27 @@ export function CyclePillarsGrid({ bare = false, onNavigate }: CyclePillarsGridP
         </View>
       )}
       {!diffuse ? (
-        // Site look: card-less sticker + label rows split by hairlines.
+        // Site look: card-less sticker rows split by hairlines — all six pillars, real names.
         <View>
-          {TILES.map((tile, i) => (
-            <Pressable
-              key={tile.id}
-              onPress={() => openPillar(tile.id)}
-              accessibilityRole="button"
-              accessibilityLabel={t(tile.titleKey)}
-              style={({ pressed }) => [
-                styles.siteRow,
-                { borderTopColor: colors.border, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <SiteSticker name={tile.sticker} size={44} />
-              <View style={[styles.textCol, { flex: 1 }]}>
-                <Display size={18} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t(tile.titleKey)}</Display>
-                <Text style={{ fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: colors.textMuted }}>{t(tile.subtitleKey)}</Text>
-              </View>
-              <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
-            </Pressable>
+          {prePregPillars.map((p, i) => (
+            <FadeUp key={p.id} index={i}>
+              <Pressable
+                onPress={() => openPillar(p.id)}
+                accessibilityRole="button"
+                accessibilityLabel={t(pillarNameKey(p.id))}
+                style={({ pressed }) => [
+                  styles.siteRow,
+                  { borderTopColor: colors.border, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <SiteSticker name={pillarLook(p.id).sticker} size={40} />
+                <View style={[styles.textCol, { flex: 1 }]}>
+                  <Display size={18} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t(pillarNameKey(p.id))}</Display>
+                  <Body size={13} color={colors.textSecondary} numberOfLines={2}>{t(pillarDescKey(p.id))}</Body>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
+              </Pressable>
+            </FadeUp>
           ))}
         </View>
       ) : (

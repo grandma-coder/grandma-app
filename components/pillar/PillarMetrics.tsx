@@ -1,263 +1,158 @@
 /**
- * PillarMetrics — inline editorial strip of relevant stats shown above the
- * pillar intro. Renders nothing when no data is available.
+ * PillarMetrics — "where you are now" for a pillar: cycle day / phase / days to period, pregnancy
+ * week, the child's age… Renders nothing when there is no data.
  *
- * Style: small caps label · value · separator · value … sits flush left,
- * single line, no card chrome.
+ * Each item is one whole translated phrase (see lib/pillarMeta), so grammar and plurals are right
+ * in every language. Site look: ink-outlined tags that wrap freely. Diffuse: the quiet inline strip,
+ * with the "·" kept at the end of the previous phrase so a wrapped line never starts with it.
  */
 
 import { useEffect, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { useTheme, getModeColor, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
+import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import type { PillarId } from '../../types'
 import { useChildStore } from '../../store/useChildStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
-import { useModeStore } from '../../store/useModeStore'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { getCycleInfo, toDateStr, type CycleConfig } from '../../lib/cycleLogic'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import { supabase } from '../../lib/supabase'
-import { useTranslation, t as tr } from '../../lib/i18n'
+import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
-
-interface Stat {
-  label: string
-  value: string
-}
+import { findPillar } from '../../lib/pillarCopy'
+import { cycleMetaChips, pregnancyMetaChips, childAgeChip } from '../../lib/pillarMeta'
 
 interface PillarMetricsProps {
   pillarId: PillarId
+  /** Site look: tag fill behind the ink outline (the pillar's tone). */
+  tone?: string
 }
 
-export default function PillarMetrics({ pillarId }: PillarMetricsProps) {
-  const mode = useModeStore((s) => s.mode)
-  const { colors, font, isDark } = useTheme()
+export default function PillarMetrics({ pillarId, tone }: PillarMetricsProps) {
+  const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const accent = diffuse ? dt.colors.ink : getModeColor(mode, isDark)
-  const stats = useStatsForPillar(pillarId)
+  const chips = usePillarMetaChips(pillarId)
 
-  if (stats.length === 0) return null
+  if (chips.length === 0) return null
+
+  if (diffuse) {
+    return (
+      <View style={styles.diffuseWrap}>
+        {chips.map((c, i) => (
+          <Text key={i} style={[styles.diffuseText, { color: dt.colors.ink3, fontFamily: diffuseFont.mono }]}>
+            {c}
+            {i < chips.length - 1 ? ` ${t('common_dotSeparator')}` : ''}
+          </Text>
+        ))}
+      </View>
+    )
+  }
 
   return (
     <View style={styles.wrap}>
-      {stats.map((s, i) => (
-        <View key={i} style={styles.statRow}>
-          {i > 0 && (
-            <Text
-              style={[
-                styles.sep,
-                { color: colors.textFaint, fontFamily: font.body },
-              ]}
-            >
-              {t('common_dotSeparator')}
-            </Text>
-          )}
-          <Text
-            style={[
-              styles.value,
-              { color: accent, fontFamily: diffuse ? diffuseFont.display : font.display },
-            ]}
-          >
-            {s.value}
-          </Text>
-          <Text
-            style={[
-              styles.label,
-              { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.body },
-            ]}
-          >
-            {s.label}
-          </Text>
+      {chips.map((c, i) => (
+        <View
+          key={i}
+          style={[styles.tag, { backgroundColor: tone ?? colors.surface, borderColor: colors.text, transform: [{ rotate: i % 2 === 0 ? '-1.2deg' : '1deg' }] }]}
+        >
+          <Text style={[styles.tagText, { color: colors.text, fontFamily: font.bodyBold }]}>{c}</Text>
         </View>
       ))}
     </View>
   )
 }
 
-// ─── Per-pillar stat selection ─────────────────────────────────────────────
+// ─── Data ──────────────────────────────────────────────────────────────────
 
-function useStatsForPillar(pillarId: PillarId): Stat[] {
-  const cycle = useCycleStats(pillarId)
-  if (cycle) return cycle
-  const preg = usePregnancyStats(pillarId)
-  if (preg) return preg
-  const kids = useKidsStats(pillarId)
-  if (kids) return kids
+const MOOD_KEYS: Record<string, TranslationKey> = {
+  excited: 'preg_mood_excited',
+  happy: 'preg_mood_happy',
+  okay: 'preg_mood_okay',
+  anxious: 'preg_mood_anxious',
+  energetic: 'preg_mood_energetic',
+  radiant: 'sw1_pa_moodRadiant',
+}
+
+/** Every hook runs on every render (Rules of Hooks); `journey` decides which data is used. */
+function usePillarMetaChips(pillarId: PillarId): string[] {
+  const { t } = useTranslation()
+  const journey = findPillar(pillarId)?.journey
+
+  // Cycle
+  const { data: history } = useCycleHistory()
+  const settings = useCycleSettingsStore()
+
+  // Pregnancy
+  const [userId, setUserId] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    if (journey !== 'pregnancy') return
+    supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user?.id))
+  }, [journey])
+  const week = usePregnancyStore((s) => s.weekNumber)
+  const dueDate = usePregnancyStore((s) => s.dueDate)
+  const { data: todayLogs } = usePregnancyTodayLogs(journey === 'pregnancy' ? userId : undefined)
+
+  // Kids
+  const activeChild = useChildStore((s) => s.activeChild)
+  const [now] = useState(() => Date.now())
+
+  if (journey === 'pre-pregnancy') {
+    const latest = history?.cycles[history.cycles.length - 1]
+    if (!latest) return []
+    // Same config as the cycle home: declared settings win over the measured average and defaults.
+    const cfg: CycleConfig = {
+      lastPeriodStart: latest.startDate,
+      cycleLength: settings.cycleLength ?? history?.avg ?? 28,
+      periodLength: settings.periodLength,
+      lutealPhase: settings.lutealPhase,
+    }
+    const info = getCycleInfo(cfg, toDateStr(new Date()))
+    return cycleMetaChips(t, pillarId, info)
+  }
+
+  if (journey === 'pregnancy') {
+    if (!week && !dueDate) return []
+    const daysToGo = dueDate
+      ? Math.max(0, Math.ceil((new Date(dueDate + 'T00:00:00').getTime() - now) / 86_400_000))
+      : null
+    const logs = todayLogs as Record<string, { value?: unknown } | undefined> | undefined
+    const waterRaw = logs?.water?.value
+    const water = waterRaw != null ? parseInt(String(waterRaw), 10) : 0
+    const moodRaw = logs?.mood?.value
+    const moodKey = typeof moodRaw === 'string' ? MOOD_KEYS[moodRaw.toLowerCase()] : undefined
+    return pregnancyMetaChips(t, pillarId, {
+      week: week ?? null,
+      daysToGo,
+      water: Number.isFinite(water) ? water : 0,
+      // Unknown mood words are dropped rather than shown untranslated.
+      moodLabel: moodKey ? t(moodKey) : null,
+    })
+  }
+
+  if (journey === 'kids') {
+    if (!activeChild) return []
+    let ageMonths: number | null = null
+    if (activeChild.birthDate) {
+      const d = new Date(activeChild.birthDate)
+      if (!isNaN(d.getTime())) {
+        const now = new Date()
+        ageMonths = Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()))
+      }
+    }
+    const age = childAgeChip(t, ageMonths)
+    return [activeChild.name, ...(age ? [age] : [])].filter(Boolean)
+  }
+
   return []
 }
 
-function useCycleStats(pillarId: PillarId): Stat[] | null {
-  const PRE_PREG_IDS = new Set([
-    'fertility',
-    'nutrition-prep',
-    'emotional-readiness',
-    'financial-planning',
-    'partner-journey',
-    'health-checkups',
-  ])
-  if (!PRE_PREG_IDS.has(pillarId)) return null
-
-  const { data: history } = useCycleHistory()
-  const settings = useCycleSettingsStore()
-  const latest = history?.cycles[history.cycles.length - 1]
-  if (!latest) return []
-
-  // Same config as the cycle home: declared settings win over the measured average and defaults.
-  const cfg: CycleConfig = {
-    lastPeriodStart: latest.startDate,
-    cycleLength: settings.cycleLength ?? history?.avg ?? 28,
-    periodLength: settings.periodLength,
-    lutealPhase: settings.lutealPhase,
-  }
-  const info = getCycleInfo(cfg, toDateStr(new Date()))
-
-  if (pillarId === 'fertility') {
-    return [
-      { value: String(info.cycleDay), label: tr('cyc_metric_cycleDay') },
-      {
-        value: String(Math.abs(info.daysUntilOvulation)),
-        label: info.daysUntilOvulation > 0 ? tr('cyc_metric_daysToOvulation') : tr('cyc_metric_daysSinceOvulation'),
-      },
-      { value: `${info.fertileStart}–${info.fertileEnd}`, label: tr('cyc_metric_fertileWindow') },
-    ]
-  }
-
-  return [
-    { value: String(info.cycleDay), label: tr('cyc_metric_cycleDay') },
-    { value: info.phaseLabel, label: tr('cyc_metric_phase') },
-    { value: String(info.daysUntilPeriod), label: tr('cyc_metric_daysToPeriod') },
-  ]
-}
-
-function usePregnancyStats(pillarId: PillarId): Stat[] | null {
-  const PREG_IDS = new Set([
-    'week-by-week',
-    'symptoms-relief',
-    'birth-planning',
-    'breastfeeding-prep',
-    'baby-gear',
-    'partner-support',
-    'postpartum-prep',
-    'pregnancy-nutrition',
-    'emotional-wellness',
-  ])
-  if (!PREG_IDS.has(pillarId)) return null
-
-  const [userId, setUserId] = useState<string | undefined>(undefined)
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id)
-    })
-  }, [])
-  const week = usePregnancyStore((s) => s.weekNumber)
-  const dueDate = usePregnancyStore((s) => s.dueDate)
-  const { data: todayLogs } = usePregnancyTodayLogs(userId)
-
-  if (!week && !dueDate) return []
-
-  const daysToGo = (() => {
-    if (!dueDate) return null
-    const due = new Date(dueDate + 'T00:00:00')
-    return Math.max(
-      0,
-      Math.ceil((due.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-    )
-  })()
-
-  if (pillarId === 'pregnancy-nutrition') {
-    const water = (todayLogs as any)?.water?.value ?? 0
-    return [
-      { value: String(week ?? '—'), label: tr('cyc_metric_week') },
-      { value: `${water}`, label: tr('cyc_metric_waterToday') },
-      ...(daysToGo !== null ? [{ value: String(daysToGo), label: tr('cyc_metric_daysToGo') }] : []),
-    ]
-  }
-
-  if (pillarId === 'symptoms-relief' || pillarId === 'emotional-wellness') {
-    const mood = (todayLogs as any)?.mood?.value
-    const moodValue = typeof mood === 'string' ? mood : null
-    return [
-      { value: String(week ?? '—'), label: tr('cyc_metric_week') },
-      ...(moodValue ? [{ value: moodValue, label: tr('cyc_metric_moodToday') }] : []),
-      ...(daysToGo !== null ? [{ value: String(daysToGo), label: tr('cyc_metric_daysToGo') }] : []),
-    ]
-  }
-
-  return [
-    { value: String(week ?? '—'), label: tr('cyc_metric_week') },
-    ...(daysToGo !== null ? [{ value: String(daysToGo), label: tr('cyc_metric_daysToGo') }] : []),
-  ]
-}
-
-function useKidsStats(pillarId: PillarId): Stat[] | null {
-  const KIDS_IDS = new Set([
-    'milk',
-    'food',
-    'nutrition',
-    'vaccines',
-    'clothes',
-    'recipes',
-    'habits',
-    'medicine',
-    'milestones',
-  ])
-  if (!KIDS_IDS.has(pillarId)) return null
-
-  const activeChild = useChildStore((s) => s.activeChild)
-  const children = useChildStore((s) => s.children)
-  if (!activeChild) return []
-
-  const ageMonths = (() => {
-    if (!activeChild.birthDate) return null
-    const d = new Date(activeChild.birthDate)
-    if (isNaN(d.getTime())) return null
-    const now = new Date()
-    return Math.max(
-      0,
-      (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()),
-    )
-  })()
-
-  const ageLabel = (() => {
-    if (ageMonths === null) return '—'
-    if (ageMonths < 24) return tr('cyc_metric_ageMonths', { n: ageMonths })
-    return tr('cyc_metric_ageYears', { n: Math.floor(ageMonths / 12) })
-  })()
-
-  return [
-    { value: activeChild.name, label: tr('cyc_metric_child') },
-    { value: ageLabel, label: tr('cyc_metric_age') },
-    ...(children.length > 1 ? [{ value: String(children.length), label: tr('cyc_metric_children') }] : []),
-  ]
-}
-
 const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    marginTop: 4,
-    marginBottom: 16,
-    gap: 8,
-  },
-  statRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-  },
-  value: {
-    fontSize: 22,
-    letterSpacing: -0.3,
-  },
-  label: {
-    fontSize: 13,
-    letterSpacing: 0.1,
-  },
-  sep: {
-    fontSize: 18,
-    marginHorizontal: 2,
-  },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14, marginBottom: 6 },
+  tag: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
+  tagText: { fontSize: 13, lineHeight: 18 },
+  diffuseWrap: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 6, rowGap: 4, marginTop: 4, marginBottom: 16 },
+  diffuseText: { fontSize: 12, letterSpacing: 0.4 },
 })

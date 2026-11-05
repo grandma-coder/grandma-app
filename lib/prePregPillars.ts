@@ -16,7 +16,7 @@ export const prePregPillars: Pillar[] = [
       { label: 'LH strips help', text: 'Ovulation predictor kits detect the LH surge 24-36 hours before ovulation. Test in the early afternoon, not first morning urine, for the most accurate read.', phases: ['follicular', 'ovulation'] },
       { label: 'BBT confirms, not predicts', text: 'Basal body temperature charting tells you ovulation already happened — useful for learning your pattern over 2-3 cycles, but not for catching it in real time.', phases: ['ovulation', 'luteal'] },
       { label: 'Skip the douching and lube', text: 'Most lubricants are sperm-toxic. If you need one, use a fertility-friendly brand like Pre-Seed. Skip douching entirely — it disrupts vaginal pH.' },
-      { label: 'Give it time', text: 'In healthy couples under 35, about 85% conceive within a year of trying. It is not a race, and a normal cycle or two without success is not a problem.' },
+      { label: 'Give it time', text: 'In healthy couples under 35, about 85% conceive within a year of trying. It is not a race, and a cycle or two without success is very common and not a problem.' },
       { label: 'When to see a doctor', text: 'See a fertility specialist after 12 months of trying if you are under 35, after 6 months if you are 35-39, and right away if you are 40 or have irregular cycles.' },
       { label: 'Rest is part of the work', text: 'Your body is selecting the next lead follicle right now, love. A quiet period week sets up a stronger cycle — there is nothing to optimize today.', phases: ['menstruation'] },
       { label: 'The window is closing', text: 'After ovulation the egg lives only 12 to 24 hours. If you have been timing things, the work is done — the luteal phase is for waiting, not chasing.', phases: ['luteal'] },
@@ -78,7 +78,7 @@ export const prePregPillars: Pillar[] = [
     ],
     suggestions: [
       'How do I deal with the stress of trying to conceive?',
-      'Is it normal to feel anxious about getting pregnant?',
+      'Is it common to feel anxious about getting pregnant?',
       'How do I stay positive during the TTC journey?',
       'What conversations should we have before trying?',
     ],

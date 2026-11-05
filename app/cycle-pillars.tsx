@@ -2,7 +2,8 @@
  * /cycle-pillars — index of all 6 pre-pregnancy pillars.
  *
  * Reached via the "See all" link on CyclePillarsGrid.
- * Each tile routes to /pillar/[id].
+ * Each row routes to /pillar/[id]. Names and descriptions come from the i18n catalogs
+ * (lib/pillarCopy), stickers match the pillar screen's header.
  */
 
 import { View, ScrollView, Text, Pressable, StyleSheet } from 'react-native'
@@ -16,12 +17,13 @@ import { getPillarSticker } from '../lib/pillarStickerMap'
 import { Display, Body } from '../components/ui/Typography'
 import { useTranslation } from '../lib/i18n'
 import { InkBackButton } from '../components/ui/InkBackButton'
-import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
+import { SiteSticker } from '../components/stickers/SiteSticker'
+import { FadeUp } from '../components/ui/Motion'
+import { pillarDescKey, pillarLook, pillarNameKey } from '../lib/pillarCopy'
 
-const SITE_PILLAR: Record<string, SiteStickerName> = {
-  fertility: 'flower', 'fertility-basics': 'flower', 'nutrition-prep': 'leaf',
-  'emotional-readiness': 'heart', 'financial-planning': 'bars', 'partner-journey': 'me',
-  'health-checkups': 'thermo',
+function goBack() {
+  if (router.canGoBack()) router.back()
+  else router.replace('/(tabs)' as never)
 }
 
 const TINT_BY_INDEX = ['greenSoft', 'lilacSoft', 'peachSoft', 'blueSoft', 'yellowSoft', 'pinkSoft'] as const
@@ -48,7 +50,7 @@ export default function CyclePillarsIndex() {
         {diffuse ? (
         <>
         <Pressable
-          onPress={() => router.back()}
+          onPress={goBack}
           style={[styles.back, { backgroundColor: 'transparent', borderColor: dt.colors.hairline }]}
           accessibilityRole="button"
           accessibilityLabel={t('cyclePillars_back')}
@@ -63,11 +65,13 @@ export default function CyclePillarsIndex() {
         </>
         ) : (
         <>
-        <InkBackButton ink={colors.text} paper={colors.bg} label={t('cyclePillars_back')} />
-        <Display size={30} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('cyclePillars_title')}</Display>
-        <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
-          {t('cyclePillars_subtitle')}
-        </Text>
+        <InkBackButton onPress={goBack} ink={colors.text} paper={colors.surface} label={t('cyclePillars_back')} />
+        <FadeUp index={0}>
+          <Display size={30} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t('cyclePillars_title')}</Display>
+          <Text style={[styles.subtitle, { color: colors.textSecondary, fontFamily: font.body, fontSize: 15 }]}>
+            {t('cyclePillars_subtitle')}
+          </Text>
+        </FadeUp>
         </>
         )}
 
@@ -75,20 +79,21 @@ export default function CyclePillarsIndex() {
           // Site look: card-less sticker rows split by hairlines.
           <View>
             {prePregPillars.map((p, i) => (
-              <Pressable
-                key={p.id}
-                onPress={() => router.push(`/pillar/${p.id}` as any)}
-                accessibilityRole="button"
-                accessibilityLabel={p.name}
-                style={({ pressed }) => [styles.siteRow, { borderTopColor: colors.border, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.7 : 1 }]}
-              >
-                <SiteSticker name={SITE_PILLAR[p.id] ?? 'star'} size={48} />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Display size={18} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{p.name}</Display>
-                  <Body size={13} color={colors.textSecondary} numberOfLines={2}>{p.description}</Body>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-              </Pressable>
+              <FadeUp key={p.id} index={i + 1}>
+                <Pressable
+                  onPress={() => router.push(`/pillar/${p.id}` as any)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(pillarNameKey(p.id))}
+                  style={({ pressed }) => [styles.siteRow, { borderTopColor: colors.border, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, opacity: pressed ? 0.7 : 1 }]}
+                >
+                  <SiteSticker name={pillarLook(p.id).sticker} size={44} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Display size={18} color={ink} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{t(pillarNameKey(p.id))}</Display>
+                    <Body size={13} color={colors.textSecondary} numberOfLines={2}>{t(pillarDescKey(p.id))}</Body>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </Pressable>
+              </FadeUp>
             ))}
           </View>
         ) : (
@@ -110,9 +115,9 @@ export default function CyclePillarsIndex() {
                 <View style={[styles.stickerChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: colors.surface, borderColor: colors.border }]}>
                   {Sticker ? <Sticker size={28} /> : <Text style={{ fontFamily: 'HankenGrotesk_400Regular', fontSize: 24 }}>{p.icon}</Text>}
                 </View>
-                <Display size={18} color={ink}>{p.name}</Display>
+                <Display size={18} color={ink}>{t(pillarNameKey(p.id))}</Display>
                 <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted} numberOfLines={2}>
-                  {p.description}
+                  {t(pillarDescKey(p.id))}
                 </Body>
               </Pressable>
             )

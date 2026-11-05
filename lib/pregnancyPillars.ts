@@ -22,7 +22,7 @@ export const pregnancyPillars: Pillar[] = [
     suggestions: [
       'What is my baby doing at this stage?',
       'What body changes should I expect this week?',
-      'Is my baby\'s size normal for this week?',
+      'How big is my baby this week?',
       'What milestones happen this trimester?',
     ],
   },
@@ -32,7 +32,7 @@ export const pregnancyPillars: Pillar[] = [
     icon: '🩹',
     description: 'Managing nausea, back pain, swelling, and other pregnancy symptoms.',
     color: '#FCA5A5',
-    intro: 'Pregnancy symptoms come in waves, love, and most have surprisingly simple remedies. Knowing what\'s normal versus what needs a phone call to your doctor will save you a lot of late-night worry.',
+    intro: 'Pregnancy symptoms come in waves, love, and most have surprisingly simple remedies. Knowing what is common versus what needs a phone call to your doctor will save you a lot of late-night worry.',
     tips: [
       { label: 'Morning sickness', text: 'Eat small, frequent meals every 2-3 hours. Ginger tea, vitamin B6, and crackers before getting out of bed all help calm the queasiness.', weekRange: [4, 16] },
       { label: 'Back pain', text: 'Use a pregnancy pillow between your knees, practice prenatal yoga, and avoid standing for long stretches. A maternity support belt helps after week 24.', weekRange: [20, 40] },
@@ -46,7 +46,7 @@ export const pregnancyPillars: Pillar[] = [
     ],
     suggestions: [
       'How can I relieve morning sickness naturally?',
-      'Is it normal to have back pain at this stage?',
+      'Is back pain common at this stage?',
       'What helps with pregnancy insomnia?',
       'When should I worry about swelling?',
     ],
@@ -88,10 +88,10 @@ export const pregnancyPillars: Pillar[] = [
       { label: 'Equipment', text: 'Consider a breast pump (often free through insurance in the US), nursing pads, lanolin or nipple cream, and 2-3 nursing bras before baby arrives.', weekRange: [28, 40] },
       { label: 'Latch practice', text: 'Watch videos and book a prenatal lactation consult if possible. A deep latch — mouth covering the areola, not just the nipple — prevents pain.', weekRange: [28, 40] },
       { label: 'Milk comes in', text: 'Mature milk replaces colostrum around days 3-5. Your breasts may feel rock-hard for 24-48 hours — frequent nursing and cool cabbage leaves help.', weekRange: [40, 44] },
-      { label: 'Feed on demand', text: 'Newborns nurse 8-12 times in 24 hours, sometimes cluster-feeding for hours. This is normal and builds your supply for the months ahead.', weekRange: [40, 44] },
+      { label: 'Feed on demand', text: 'Newborns nurse 8-12 times in 24 hours, sometimes cluster-feeding for hours. This is expected and builds your supply for the months ahead.', weekRange: [40, 44] },
       { label: 'Pumping basics', text: 'If you\'re returning to work, start introducing a bottle around weeks 4-6 to avoid bottle refusal. Begin building a freezer stash 2-3 weeks before going back.' },
       { label: 'Common myths', text: 'Small breasts make plenty of milk. Beer doesn\'t boost supply. And nipple shape almost never prevents breastfeeding with the right support.' },
-      { label: 'When it hurts', text: 'Latch pain beyond the first 10 seconds, cracked nipples, or shooting pain after feeding aren\'t normal — call a lactation consultant, don\'t suffer through.', weekRange: [40, 44] },
+      { label: 'When it hurts', text: 'Latch pain beyond the first 10 seconds, cracked nipples, or shooting pain after feeding are a sign to get help — call a lactation consultant, don\'t suffer through.', weekRange: [40, 44] },
       { label: 'Combo feeding works', text: 'Breast, bottle, formula, or any combination — fed is the goal. Your mental health and ability to function matter as much as the source of the milk.' },
     ],
     suggestions: [
@@ -160,14 +160,14 @@ export const pregnancyPillars: Pillar[] = [
     intro: 'The fourth trimester — those first 12 weeks after birth — is when YOU need the most care, sweetheart. Preparing for postpartum before baby comes is the kindest gift you can give your future self.',
     tips: [
       { label: 'Recovery takes time', text: 'Your body needs 6-8 weeks minimum to recover, longer for c-sections. Accept help, rest when baby sleeps, and be gentle with yourself about everything.', weekRange: [40, 44] },
-      { label: 'Baby blues vs PPD', text: 'Feeling weepy and emotional in the first 2 weeks is normal hormone crash. If sadness, anxiety, rage, or numbness persist past 2 weeks, call your OB the same day.', weekRange: [40, 44] },
+      { label: 'Baby blues vs PPD', text: 'Feeling weepy and emotional in the first 2 weeks is a common hormone crash. If sadness, anxiety, rage, or numbness persist past 2 weeks, call your OB the same day.', weekRange: [40, 44] },
       { label: 'Meal prep now', text: 'Freeze 10-15 meals before birth. You won\'t want to cook with a newborn. Accept every meal offer, and set up a meal train through Take Them A Meal or similar.', weekRange: [32, 40] },
       { label: 'Postpartum supplies', text: 'Stock up on adult diapers, peri bottle, witch hazel pads, dermoplast spray, stool softener, and large overnight pads. The hospital sends you home with starters — buy more.', weekRange: [32, 40] },
       { label: 'Bleeding timeline', text: 'Lochia (postpartum bleeding) lasts 4-6 weeks, going from red to pink to yellow. Saturating a pad in under an hour or passing golf-ball clots means call the doctor.', weekRange: [40, 44] },
       { label: 'Pelvic floor', text: 'See a pelvic floor physical therapist around week 6, regardless of delivery type. Standard in Europe, life-changing in the US — leaks and pain aren\'t something you have to live with.', weekRange: [40, 44] },
       { label: 'Visitor boundaries', text: 'You don\'t owe anyone a visit. Set rules in advance: wash hands, no kissing baby, no visits if sick, no unsolicited advice. Partner enforces.', weekRange: [36, 44] },
-      { label: 'Hormone whiplash', text: 'Days 3-5 estrogen drops faster than at any other point in life. Crying randomly, night sweats, hair shedding around month 3 — all normal physiology.', weekRange: [40, 44] },
-      { label: 'Identity shift', text: 'Matrescence is the developmental transition into motherhood, like adolescence. Feeling like a stranger to yourself for months is normal, not a red flag.' },
+      { label: 'Hormone whiplash', text: 'Days 3-5 estrogen drops faster than at any other point in life. Crying randomly, night sweats, hair shedding around month 3 — all common, expected physiology.', weekRange: [40, 44] },
+      { label: 'Identity shift', text: 'Matrescence is the developmental transition into motherhood, like adolescence. Feeling like a stranger to yourself for months is common, not a red flag.' },
     ],
     suggestions: [
       'How long does postpartum recovery take?',
@@ -209,8 +209,8 @@ export const pregnancyPillars: Pillar[] = [
     color: '#67E8F9',
     intro: 'Growing a human is emotional work, love — your hormones are doing somersaults and your identity is shifting underneath you. Tending your mind is just as important as tending your body, and asking for help is strength, not weakness.',
     tips: [
-      { label: 'Mood swings normal', text: 'Estrogen and progesterone rise dramatically in pregnancy. Crying at commercials, sudden irritability, and emotional whiplash are biology, not personality.' },
-      { label: 'Anxiety check', text: 'Some worry about baby\'s health is normal. If anxiety is consuming your thoughts, affecting sleep, or causing panic attacks, ask your OB about therapy — many therapists specialize in perinatal mental health.' },
+      { label: 'Mood swings are common', text: 'Estrogen and progesterone rise dramatically in pregnancy. Crying at commercials, sudden irritability, and emotional whiplash are biology, not personality.' },
+      { label: 'Anxiety check', text: 'Some worry about baby\'s health is natural. If anxiety is consuming your thoughts, affecting sleep, or causing panic attacks, ask your OB about therapy — many therapists specialize in perinatal mental health.' },
       { label: 'Self-care basics', text: 'Prenatal yoga, daily walks, warm (not hot) baths, journaling, and connecting with other expecting parents. Twenty minutes of nature lowers cortisol measurably.' },
       { label: 'Prenatal depression', text: 'About 1 in 7 women experience depression DURING pregnancy, not just after. Persistent sadness, loss of interest, or hopelessness deserves the same urgent care as PPD.' },
       { label: 'Limit doom scrolling', text: 'Pregnancy forums and Google can fuel anxiety fast. Set a time limit, choose 1-2 trusted sources, and ask your OB about your specific worries instead.' },
@@ -220,7 +220,7 @@ export const pregnancyPillars: Pillar[] = [
       { label: 'When to escalate', text: 'Thoughts of harming yourself or baby, inability to function, or feeling completely disconnected from the pregnancy are emergencies. Call your OB or 988 today, not tomorrow.' },
     ],
     suggestions: [
-      'Is it normal to feel anxious during pregnancy?',
+      'Is it common to feel anxious during pregnancy?',
       'How can I manage pregnancy mood swings?',
       'What relaxation techniques are safe during pregnancy?',
       'When should I seek help for prenatal anxiety?',

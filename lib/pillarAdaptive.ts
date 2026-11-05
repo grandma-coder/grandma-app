@@ -7,12 +7,14 @@
  * them as separate sections.
  */
 
-import { useEffect, useState } from 'react'
 import type { PillarTip, PillarId } from '../types'
 import { useCycleHistory } from './cycleAnalytics'
 import { getCycleInfo, toDateStr, type CycleConfig } from './cycleLogic'
 import { useChildStore } from '../store/useChildStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
+import { useCycleSettingsStore } from '../store/useCycleSettingsStore'
+import { useTranslation } from './i18n'
+import { contextLine } from './pillarMeta'
 import { splitTips, type AdaptiveContext } from './pillarTipSplit'
 
 export { splitTips }
@@ -60,33 +62,17 @@ export function usePillarTipBuckets(
   pillarId: PillarId,
   tips: PillarTip[],
 ): PillarTipBuckets {
+  const { t } = useTranslation()
   const context = useAdaptiveContext(pillarId)
   const cycleDay = context.cycleDay ?? 1
   const { forYou, general } = splitTips(tips, context, cycleDay)
-  const contextLabel = buildContextLabel(pillarId, context)
+  const journey = PRE_PREG_IDS.has(pillarId) ? 'pre-pregnancy'
+    : PREG_IDS.has(pillarId) ? 'pregnancy'
+    : KIDS_IDS.has(pillarId) ? 'kids'
+    : undefined
+  const contextLabel = contextLine(t, journey, context)
 
   return { forYou, general, context, contextLabel }
-}
-
-function buildContextLabel(pillarId: PillarId, ctx: AdaptiveContext): string | null {
-  if (PRE_PREG_IDS.has(pillarId) && ctx.cyclePhase && ctx.cycleDay) {
-    const phase = ctx.cyclePhase
-    const label =
-      phase === 'menstruation' ? 'Menstrual phase'
-      : phase === 'follicular' ? 'Follicular phase'
-      : phase === 'ovulation' ? 'Ovulation window'
-      : 'Luteal phase'
-    return `${label} · day ${ctx.cycleDay}`
-  }
-  if (PREG_IDS.has(pillarId) && ctx.pregnancyWeek) {
-    return `Week ${ctx.pregnancyWeek}`
-  }
-  if (KIDS_IDS.has(pillarId) && ctx.childAgeMonths !== undefined) {
-    if (ctx.childAgeMonths < 24) return `${ctx.childAgeMonths} months old`
-    const years = Math.floor(ctx.childAgeMonths / 12)
-    return `${years} year${years === 1 ? '' : 's'} old`
-  }
-  return null
 }
 
 // ─── Context source ────────────────────────────────────────────────────────
@@ -100,14 +86,17 @@ function useAdaptiveContext(pillarId: PillarId): AdaptiveContext {
 
 function useCycleContext(enabled: boolean): AdaptiveContext {
   const { data: history } = useCycleHistory()
+  const settings = useCycleSettingsStore()
   if (!enabled) return {}
   const latest = history?.cycles[history.cycles.length - 1]
   if (!latest) return {}
+  // Same config as the cycle home and the pillar chips (declared settings win over the measured
+  // average), so "For you" never picks tips for a different phase than the one the chips show.
   const cfg: CycleConfig = {
     lastPeriodStart: latest.startDate,
-    cycleLength: history?.avg ?? 28,
-    periodLength: 5,
-    lutealPhase: 14,
+    cycleLength: settings.cycleLength ?? history?.avg ?? 28,
+    periodLength: settings.periodLength,
+    lutealPhase: settings.lutealPhase,
   }
   const info = getCycleInfo(cfg, toDateStr(new Date()))
   return { cyclePhase: info.phase, cycleDay: info.cycleDay }
