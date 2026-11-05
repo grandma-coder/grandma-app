@@ -4,15 +4,15 @@
  * Site look: a bold Hanken title with a small hand-drawn tone dot, body below, hairline between
  * tips. Diffuse: the editorial row with the big italic 01 / 02 number (unchanged).
  *
- * Title and body are runtime-translated (lib/useTranslatedContent) when `translationKey` is given.
- * While a translation is on its way the row shows a soft placeholder instead of the English
- * source, so a non-English reader never sees English flash by.
+ * Title and body are localized (lib/pillarContent/usePillarText) when `translationKey` is given:
+ * a bundled translation (cycle pillars) shows at once; otherwise the runtime translator runs and
+ * the row shows a soft placeholder meanwhile, so a non-English reader never sees English flash by.
  */
 
 import { StyleSheet, Text, View } from 'react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
-import { useTranslatedContent } from '../../lib/useTranslatedContent'
+import { usePillarText } from '../../lib/pillarContent/usePillarText'
 import { Skeleton, SkeletonLines } from '../ui/Skeleton'
 import { HandDrawnPill } from '../ui/HandDrawn'
 
@@ -35,8 +35,8 @@ export default function TipCard({ label, text, index, isLast, accent, translatio
   const { colors, font, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const body = useTranslatedContent(translationKey ?? '', translationKey ? text : '')
-  const title = useTranslatedContent(labelTranslationKey ?? '', labelTranslationKey ? label : '')
+  const body = usePillarText(translationKey ?? '', translationKey ? text : '')
+  const title = usePillarText(labelTranslationKey ?? '', labelTranslationKey ? label : '')
   const bodyText = translationKey ? body.text : text
   const labelText = labelTranslationKey ? title.text : label
   const loading = (!!translationKey && body.loading) || (!!labelTranslationKey && title.loading)

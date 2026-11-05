@@ -5,9 +5,10 @@
  * Two layers, on purpose:
  *  - Short, fixed copy (pillar name + one-line description) lives in the i18n catalogs
  *    (`pillar_name_<id>` / `pillar_desc_<id>`), so lists and headers never flash English.
- *  - Long editorial copy (intro, tip titles, tip bodies, "ask Grandma" questions) goes through
- *    the runtime translator (`useTranslatedContent`, cached per key + locale). This module owns
- *    the stable cache keys for those, so every screen asks for the same translation.
+ *  - Long editorial copy (intro, tip titles, tip bodies, "ask Grandma" questions) is bundled for
+ *    the cycle pillars (lib/pillarContent/<lang>.ts) and otherwise goes through the runtime
+ *    translator (`useTranslatedContent`, cached per key + locale). This module owns the stable
+ *    keys for both, so every screen asks for the same translation.
  */
 
 import type { TranslationKey } from './i18n'

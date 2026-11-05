@@ -7,7 +7,8 @@
  * Header rises in on mount; the tip list mounts after the push animation and fades up.
  *
  * Language: name + description come from the i18n catalogs; intro, tip titles, tip bodies and
- * questions are runtime-translated and cached (lib/useTranslatedContent) — placeholders show
+ * questions use the bundled translations for cycle pillars (lib/pillarContent — instant, offline)
+ * and fall back to the runtime translator otherwise (lib/useTranslatedContent) — placeholders show
  * while a translation loads, so English never flashes for non-English readers.
  *
  * Diffuse look: unchanged layout (big sticker circle, editorial numbered tips).
@@ -36,7 +37,7 @@ import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { getPillarSticker } from '../../lib/pillarStickerMap'
 import { usePillarTipBuckets } from '../../lib/pillarAdaptive'
 import { useTranslation } from '../../lib/i18n'
-import { useTranslatedContent } from '../../lib/useTranslatedContent'
+import { usePillarText } from '../../lib/pillarContent/usePillarText'
 import { findPillar, pillarContentKeys, pillarDescKey, pillarLook, pillarNameKey } from '../../lib/pillarCopy'
 
 function goBack() {
@@ -85,7 +86,7 @@ function PillarDetail({ pillar }: { pillar: Pillar }) {
   const chatOn = useGrandmaChatEnabled()
   const name = t(pillarNameKey(pillar.id))
   const description = t(pillarDescKey(pillar.id))
-  const intro = useTranslatedContent(pillarContentKeys.intro(pillar.id), pillar.intro ?? '')
+  const intro = usePillarText(pillarContentKeys.intro(pillar.id), pillar.intro ?? '')
   const buckets = usePillarTipBuckets(pillar.id, pillar.tips)
 
   const ask = (question: string) => {
@@ -212,13 +213,15 @@ function SiteBody({ pillar, name, description, intro, buckets, chatOn, ask }: Bo
           </FadeIn>
         )}
       </ScrollView>
+      {/* Paper band behind the status bar so scrolled content never runs under the clock. */}
+      <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.bg }} />
     </View>
   )
 }
 
 function SiteQuestion({ pillarId, index, question, onAsk }: { pillarId: string; index: number; question: string; onAsk: (q: string) => void }) {
   const { colors, font } = useTheme()
-  const { text, loading } = useTranslatedContent(pillarContentKeys.suggestion(pillarId, index), question)
+  const { text, loading } = usePillarText(pillarContentKeys.suggestion(pillarId, index), question)
   return (
     <Pressable
       onPress={() => onAsk(text)}
@@ -347,7 +350,7 @@ function DiffuseBody({ pillar, name, description, intro, buckets, chatOn, ask }:
 }
 
 function DiffuseQuestion({ pillarId, index, question, onAsk }: { pillarId: string; index: number; question: string; onAsk: (q: string) => void }) {
-  const { text, loading } = useTranslatedContent(pillarContentKeys.suggestion(pillarId, index), question)
+  const { text, loading } = usePillarText(pillarContentKeys.suggestion(pillarId, index), question)
   if (loading) return <Skeleton height={44} radius={22} />
   return <PillButton label={text} variant="paper" onPress={() => onAsk(text)} style={{ alignSelf: 'flex-start' }} />
 }
