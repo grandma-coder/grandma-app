@@ -21,7 +21,6 @@ import { Character } from '../characters/Characters'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, font, shadows } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
-import { useTranslatedContent } from '../../lib/useTranslatedContent'
 import { Display, Body, MonoCaps } from '../ui/Typography'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
@@ -62,18 +61,9 @@ export function AppointmentDetailModal({
 
   // Long-form appointment prose is translated at runtime + cached (Phase C).
   // Stable id-based keys so cache survives content edits (hash guards staleness).
-  const { text: description } = useTranslatedContent(
-    `appt_${appointment?.id ?? 'none'}_description`,
-    appointment?.description ?? '',
-  )
-  const { text: prepNote } = useTranslatedContent(
-    `appt_${appointment?.id ?? 'none'}_prepNote`,
-    appointment?.prepNote ?? '',
-  )
-  const { text: whatToExpect } = useTranslatedContent(
-    `appt_${appointment?.id ?? 'none'}_whatToExpect`,
-    appointment?.whatToExpect ?? '',
-  )
+  const description = appointment?.description ?? ''
+  const prepNote = appointment?.prepNote ?? ''
+  const whatToExpect = appointment?.whatToExpect ?? ''
 
   const visible = appointment !== null
 

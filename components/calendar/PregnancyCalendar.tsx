@@ -18,7 +18,7 @@
  */
 
 import { dateLoc, weekdayShort } from '../../lib/kpLocale'
-import { PREGNANCY_LOG_STICKER_MAP } from '../../lib/logStickers'
+import { PREGNANCY_LOG_STICKER_MAP, PREGNANCY_MOOD_STICKER } from '../../lib/logStickers'
 import { healthLogText } from '../../lib/kidsHealthLogText'
 import { PREGNANCY_LOG_STICKER } from './PregnancyLogRouter'
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
@@ -87,7 +87,7 @@ import {
   usePregnancyTodayLogs,
 } from '../../lib/analyticsData'
 import type { PregnancyCalendarLog } from '../../lib/analyticsData'
-import { STANDARD_APPOINTMENTS } from '../../lib/pregnancyAppointments'
+import { getStandardAppointments } from '../../lib/pregnancyAppointments'
 import Svg, { Path as SvgPath, Circle as SvgCircle, G as SvgG, Line as SvgLine } from 'react-native-svg'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
@@ -348,9 +348,7 @@ const PREG_LOG_STICKER: Record<string, SiteStickerName> = {
   ...PREGNANCY_LOG_STICKER_MAP,
 }
 const stickerForPregLog = (type: string): SiteStickerName => PREG_LOG_STICKER[type] ?? 'pencil'
-const MOOD_FACE: Record<string, SiteStickerName> = {
-  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face2', energetic: 'face4', sad: 'face1',
-}
+const MOOD_FACE = PREGNANCY_MOOD_STICKER
 
 const SITE_MONO = 'SpaceMono_400Regular'
 
@@ -2358,8 +2356,8 @@ export function PregnancyCalendar() {
     if (view !== 'appointments') return
     const BEAD_GAP = 90
     const SIDE_PAD = 32
-    const nextIdx = STANDARD_APPOINTMENTS.findIndex((a) => weekNumber <= a.week)
-    const idx = nextIdx === -1 ? STANDARD_APPOINTMENTS.length - 1 : Math.max(0, nextIdx)
+    const nextIdx = getStandardAppointments().findIndex((a) => weekNumber <= a.week)
+    const idx = nextIdx === -1 ? getStandardAppointments().length - 1 : Math.max(0, nextIdx)
     const targetX = SIDE_PAD + idx * BEAD_GAP
     const winW = Dimensions.get('window').width
     const x = Math.max(0, targetX - winW / 2 + 16)
@@ -2689,7 +2687,7 @@ export function PregnancyCalendar() {
     }
 
     // Standard appointments occurring this week (based on weekNumber)
-    for (const appt of STANDARD_APPOINTMENTS) {
+    for (const appt of getStandardAppointments()) {
       const isThisWeek = appt.week === weekNumber
       if (!isThisWeek) continue
       // Surface on Mondays of the selected day's week (avoid duplication across days)
@@ -2837,11 +2835,11 @@ export function PregnancyCalendar() {
     const BEAD_GAP = 90
     const SIDE_PAD = 32
     const VB_H = 130
-    const minWeek = STANDARD_APPOINTMENTS[0]?.week ?? 12
-    const maxWeek = STANDARD_APPOINTMENTS[STANDARD_APPOINTMENTS.length - 1]?.week ?? 40
-    const VB_W = SIDE_PAD * 2 + Math.max(1, STANDARD_APPOINTMENTS.length - 1) * BEAD_GAP
-    const curveBeads = STANDARD_APPOINTMENTS.map((appt, i) => {
-      const t = STANDARD_APPOINTMENTS.length > 1
+    const minWeek = getStandardAppointments()[0]?.week ?? 12
+    const maxWeek = getStandardAppointments()[getStandardAppointments().length - 1]?.week ?? 40
+    const VB_W = SIDE_PAD * 2 + Math.max(1, getStandardAppointments().length - 1) * BEAD_GAP
+    const curveBeads = getStandardAppointments().map((appt, i) => {
+      const t = getStandardAppointments().length > 1
         ? (appt.week - minWeek) / (maxWeek - minWeek)
         : 0.5
       const x = SIDE_PAD + i * BEAD_GAP
@@ -2891,7 +2889,7 @@ export function PregnancyCalendar() {
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, paddingHorizontal: 4 }}>
             <View style={{ flex: 1 }}>
               <SiteTitle size={28}>{t('pregCal_pregnancy_path')}</SiteTitle>
-              <SiteEyebrow style={{ marginTop: 6 }}>{t('pregCal_milestones_40w', { count: STANDARD_APPOINTMENTS.length })}</SiteEyebrow>
+              <SiteEyebrow style={{ marginTop: 6 }}>{t('pregCal_milestones_40w', { count: getStandardAppointments().length })}</SiteEyebrow>
             </View>
             <InfoPill label={t('pregCal_trimester', { n: trimester })} tone={tone} />
           </View>
@@ -2956,7 +2954,7 @@ export function PregnancyCalendar() {
 
           {/* Milestones — card-less sticker rows */}
           <View>
-            {STANDARD_APPOINTMENTS.map((appt, idx) => {
+            {getStandardAppointments().map((appt, idx) => {
               const isDone = weekNumber > appt.week
               const isNext = !isDone && weekNumber >= appt.week - 2
               // Pending "next appointment" questions count toward the next-up row until it's opened.
@@ -3060,7 +3058,7 @@ export function PregnancyCalendar() {
               <Text style={diffuse
                 ? { color: dt.colors.ink3, fontSize: 10, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', marginTop: 4 }
                 : { color: colors.textMuted, fontSize: 11, fontFamily: font.bodyBold, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 }}>
-                {t('pregCal_milestones_40w', { count: STANDARD_APPOINTMENTS.length })}
+                {t('pregCal_milestones_40w', { count: getStandardAppointments().length })}
               </Text>
             </View>
             <View style={diffuse ? {
@@ -3188,7 +3186,7 @@ export function PregnancyCalendar() {
         {/* ─── Appointment cards (tap to open detail) ─────────────────── */}
         {diffuse ? (
           <View style={{ backgroundColor: dt.colors.surface, borderRadius: diffuseRadius.lg, borderWidth: 1, borderColor: dt.colors.line, paddingHorizontal: 16 }}>
-            {STANDARD_APPOINTMENTS.map((appt, idx) => {
+            {getStandardAppointments().map((appt, idx) => {
               const isDone = weekNumber > appt.week
               const isNext = !isDone && weekNumber >= appt.week - 2
               const beadColor = isDone ? ST_GREEN : isNext ? ST_CORAL : dt.colors.surface
@@ -3222,12 +3220,12 @@ export function PregnancyCalendar() {
                   sub={sub}
                   onPress={() => setSelectedAppt(appt)}
                   showArrow
-                  last={idx === STANDARD_APPOINTMENTS.length - 1}
+                  last={idx === getStandardAppointments().length - 1}
                 />
               )
             })}
           </View>
-        ) : STANDARD_APPOINTMENTS.map((appt) => {
+        ) : getStandardAppointments().map((appt) => {
           const isDone = weekNumber > appt.week
           const isNext = !isDone && weekNumber >= appt.week - 2
           const status: 'done' | 'next' | 'future' = isDone ? 'done' : isNext ? 'next' : 'future'

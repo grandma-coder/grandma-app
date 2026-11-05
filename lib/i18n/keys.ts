@@ -6291,4 +6291,22 @@ export interface TranslationKeys {
   pillarSources_title: string
   pillarSources_disclaimer: string
   pillarSources_openHint: string
+  pregQuickLog_short_mood: string
+  pregQuickLog_short_water: string
+  pregQuickLog_short_sleep: string
+  pregQuickLog_short_meals: string
+  pregQuickLog_short_weight: string
+  pregQuickLog_short_kicks: string
+  pregQuickLog_short_symptom: string
+  pregQuickLog_short_exercise: string
+  pregQuickLog_short_vitamins: string
+  pregQuickLog_short_kegel: string
+  pregQuickLog_short_contraction: string
+  pregQuickLog_short_appointment: string
+  pregQuickLog_short_exam_result: string
+  pregQuickLog_short_nesting: string
+  pregQuickLog_short_birth_prep: string
+  preg_weekDetail_heroLabel_t1: string
+  preg_weekDetail_heroLabel_t2: string
+  preg_weekDetail_heroLabel_t3: string
 }

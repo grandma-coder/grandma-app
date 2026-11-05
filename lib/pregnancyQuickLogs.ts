@@ -7,6 +7,7 @@ export interface QuickLogDef {
   key: string          // stable id, stored in the user's enabled list
   logType: string      // the inline log sheet this chip opens (onLogMetric)
   labelKey: TranslationKey // display label in the picker
+  shortKey: TranslationKey // one-word label for the home row (never truncates)
   minWeek?: number     // only offered from this pregnancy week onward
 }
 
@@ -17,25 +18,25 @@ export interface QuickLogDef {
 // / bare nouns. The verbose log-SHEET titles (pregnancy_logTitle_* / preg_form_*)
 // are left untouched; those are correct in their own context.
 export const PREG_QUICK_LOGS: QuickLogDef[] = [
-  { key: 'mood',   logType: 'mood',       labelKey: 'preg_ring_log_mood' },
-  { key: 'water',  logType: 'water',      labelKey: 'preg_ring_log_water' },
-  { key: 'sleep',  logType: 'sleep',      labelKey: 'preg_ring_log_sleep' },
-  { key: 'meals',  logType: 'nutrition',  labelKey: 'preg_ring_log_nutrition' },
-  { key: 'weight', logType: 'weight',     labelKey: 'preg_ring_log_weight' },
-  { key: 'kicks',  logType: 'kick_count', labelKey: 'preg_ring_log_kicks', minWeek: 28 },
+  { key: 'mood',   logType: 'mood',       labelKey: 'preg_ring_log_mood', shortKey: 'pregQuickLog_short_mood' },
+  { key: 'water',  logType: 'water',      labelKey: 'preg_ring_log_water', shortKey: 'pregQuickLog_short_water' },
+  { key: 'sleep',  logType: 'sleep',      labelKey: 'preg_ring_log_sleep', shortKey: 'pregQuickLog_short_sleep' },
+  { key: 'meals',  logType: 'nutrition',  labelKey: 'preg_ring_log_nutrition', shortKey: 'pregQuickLog_short_meals' },
+  { key: 'weight', logType: 'weight',     labelKey: 'preg_ring_log_weight', shortKey: 'pregQuickLog_short_weight' },
+  { key: 'kicks',  logType: 'kick_count', labelKey: 'preg_ring_log_kicks', minWeek: 28, shortKey: 'pregQuickLog_short_kicks' },
   // Gap types — full calendar parity. OFF by default (see DEFAULT_QUICK_LOG_KEYS).
-  { key: 'symptom',     logType: 'symptom',     labelKey: 'preg_ring_log_symptom' },
-  { key: 'exercise',    logType: 'exercise',    labelKey: 'preg_ring_log_exercise' },
-  { key: 'vitamins',    logType: 'vitamins',    labelKey: 'preg_ring_log_vitamins' },
-  { key: 'kegel',       logType: 'kegel',       labelKey: 'preg_ring_log_kegel' },
-  { key: 'contraction', logType: 'contraction', labelKey: 'preg_ring_log_contraction', minWeek: 32 },
-  { key: 'appointment', logType: 'appointment', labelKey: 'preg_ring_log_appointment' },
+  { key: 'symptom',     logType: 'symptom',     labelKey: 'preg_ring_log_symptom', shortKey: 'pregQuickLog_short_symptom' },
+  { key: 'exercise',    logType: 'exercise',    labelKey: 'preg_ring_log_exercise', shortKey: 'pregQuickLog_short_exercise' },
+  { key: 'vitamins',    logType: 'vitamins',    labelKey: 'preg_ring_log_vitamins', shortKey: 'pregQuickLog_short_vitamins' },
+  { key: 'kegel',       logType: 'kegel',       labelKey: 'preg_ring_log_kegel', shortKey: 'pregQuickLog_short_kegel' },
+  { key: 'contraction', logType: 'contraction', labelKey: 'preg_ring_log_contraction', minWeek: 32, shortKey: 'pregQuickLog_short_contraction' },
+  { key: 'appointment', logType: 'appointment', labelKey: 'preg_ring_log_appointment', shortKey: 'pregQuickLog_short_appointment' },
   // exam_result opens the working exam form but its chip never lights "done":
   // ExamResultForm delegates to ExamForm, which writes the separate `exams`
   // table (not pregnancy_logs), so todayLogs['exam_result'] is never populated.
-  { key: 'exam_result', logType: 'exam_result', labelKey: 'preg_ring_log_examResult' },
-  { key: 'nesting',     logType: 'nesting',     labelKey: 'preg_ring_log_nesting',    minWeek: 28 },
-  { key: 'birth_prep',  logType: 'birth_prep',  labelKey: 'preg_ring_log_birthPrep',  minWeek: 28 },
+  { key: 'exam_result', logType: 'exam_result', labelKey: 'preg_ring_log_examResult', shortKey: 'pregQuickLog_short_exam_result' },
+  { key: 'nesting',     logType: 'nesting',     labelKey: 'preg_ring_log_nesting',    minWeek: 28, shortKey: 'pregQuickLog_short_nesting' },
+  { key: 'birth_prep',  logType: 'birth_prep',  labelKey: 'preg_ring_log_birthPrep',  minWeek: 28, shortKey: 'pregQuickLog_short_birth_prep' },
 ]
 
 // The default chips a new user sees before they customize.

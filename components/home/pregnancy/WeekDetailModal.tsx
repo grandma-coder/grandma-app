@@ -30,12 +30,12 @@ import { InkBackButton } from '../../ui/InkBackButton'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeField, getModeColorSoft } from '../../../constants/theme'
 import { useIsDiffuse, SoftBloom, DiffuseGrain } from '../../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
-import { useTranslation } from '../../../lib/i18n'
-import { useTranslatedContent } from '../../../lib/useTranslatedContent'
+import { useTranslation, type TranslationKey } from '../../../lib/i18n'
+import { useLanguageStore } from '../../../store/useLanguageStore'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight } from '../../../lib/weekStats'
 import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
-import { getPrepGuide } from '../../../lib/prepGuide'
+import { localizedWeekContent, localizedPrepGuide } from '../../../lib/pregnancyContent'
 import { StickerIcon } from './stickerIcons'
 import { BabyIllustration } from './babyIllustrations'
 import { localizeBabySizeName } from '../../../lib/pregnancyData'
@@ -55,7 +55,6 @@ function getTrimester(week: number): 1 | 2 | 3 {
   if (week <= 26) return 2
   return 3
 }
-const TRI_NAMES = ['First', 'Second', 'Third'] as const
 
 interface HeroPalette {
   bg: string
@@ -99,14 +98,12 @@ function paletteForWeek(week: number): HeroPalette {
 // pattern in BirthDetailModal.tsx for why this can't live inline in a .map) ──
 
 function DevPointRow({
-  week,
-  index,
   point,
   dotColor,
   textColor,
-}: { week: number; index: number; point: string; dotColor: string; textColor: string }) {
+}: { point: string; dotColor: string; textColor: string }) {
   const diffuse = useIsDiffuse()
-  const { text } = useTranslatedContent(`week_${week}_dev${index}`, point)
+  const text = point
   return (
     <View style={styles.devRow}>
       <View style={[styles.devDot, { backgroundColor: dotColor }]} />
@@ -116,7 +113,6 @@ function DevPointRow({
 }
 
 function PrepListRow({
-  week,
   item,
   cardBg,
   cardBorder,
@@ -127,7 +123,6 @@ function PrepListRow({
   accent,
   onPress,
 }: {
-  week: number
   item: PrepItemDef
   cardBg: string
   cardBorder: string
@@ -139,12 +134,12 @@ function PrepListRow({
   onPress: () => void
 }) {
   const diffuse = useIsDiffuse()
-  const { text: desc } = useTranslatedContent(`week_${week}_prep_${item.i}_summary`, item.d)
+  const desc = item.d
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${item.t}. Tap to read more.`}
+      accessibilityLabel={item.t}
       style={({ pressed }) => [
         styles.prepCard,
         { backgroundColor: cardBg, borderColor: cardBorder, opacity: pressed ? 0.7 : 1 },
@@ -171,28 +166,26 @@ function PrepListRow({
 
 function PrepDetailSheet({
   item,
-  week,
+  englishItem,
   onBack,
   accent,
   accentSoft,
-}: { item: PrepItemDef; week: number; onBack: () => void; accent: string; accentSoft: string }) {
+}: { item: PrepItemDef; englishItem: PrepItemDef; onBack: () => void; accent: string; accentSoft: string }) {
   const { colors, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const guide = getPrepGuide(item, week)
+  const lang = useLanguageStore((s) => s.language)
+  const guide = localizedPrepGuide(englishItem, lang)
   const ink = diffuse ? dt.colors.ink : colors.text
   const ink2 = diffuse ? dt.colors.ink2 : colors.textSecondary
   const ink3 = diffuse ? dt.colors.ink3 : colors.textMuted
   const rootBg = diffuse ? dt.colors.bg : colors.bg
   const headerBg = diffuse ? dt.colors.surface : 'transparent'
 
-  // Long-form week/prep prose is translated at runtime + cached (Phase C).
-  // Stable id-based keys so cache survives content edits (hash guards staleness).
-  const prepKey = `week_${week}_prep_${item.i}`
-  const { text: prepSummary } = useTranslatedContent(`${prepKey}_summary`, item.d)
-  const { text: prepWhy } = useTranslatedContent(`${prepKey}_why`, guide.why)
-  const { text: prepWatch } = useTranslatedContent(`${prepKey}_watch`, guide.watch ?? '')
+  const prepSummary = item.d
+  const prepWhy = guide.why
+  const prepWatch = guide.watch ?? ''
 
   return (
     <View style={[styles.prepDetailRoot, { backgroundColor: rootBg }]}>
@@ -206,7 +199,7 @@ function PrepDetailSheet({
           style={styles.prepBackRow}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Back to week details"
+          accessibilityLabel={t('common_back')}
         >
           <ArrowLeft size={18} color={accent} strokeWidth={2} />
           <Text style={[styles.prepBackText, { color: accent }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase' } : null]}>{t('common_back')}</Text>
@@ -237,7 +230,7 @@ function PrepDetailSheet({
 
         <Text style={[styles.prepSectionTitle, { color: ink3, marginTop: 22 }, diffuse ? { fontFamily: diffuseFont.mono } : styles.monoEyebrow]}>{t('preg_weekDetail_prep_howToDoIt')}</Text>
         {guide.how.map((step, i) => (
-          <PrepStepRow key={i} prepKey={prepKey} index={i} step={step} accent={accent} textColor={ink2} />
+          <PrepStepRow key={i} step={step} accent={accent} textColor={ink2} />
         ))}
 
         {guide.watch ? (
@@ -254,14 +247,12 @@ function PrepDetailSheet({
 }
 
 function PrepStepRow({
-  prepKey,
-  index,
   step,
   accent,
   textColor,
-}: { prepKey: string; index: number; step: string; accent: string; textColor: string }) {
+}: { step: string; accent: string; textColor: string }) {
   const diffuse = useIsDiffuse()
-  const { text } = useTranslatedContent(`${prepKey}_how${index}`, step)
+  const text = step
   return (
     <View style={styles.prepStepRow}>
       <View style={[styles.prepStepDot, { backgroundColor: accent }]} />
@@ -277,14 +268,15 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const [selectedPrep, setSelectedPrep] = useState<PrepItemDef | null>(null)
+  const lang = useLanguageStore((st) => st.language)
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   // Keep the last prep item rendered while sliding back so the animation has content
-  const [pendingPrep, setPendingPrep] = useState<PrepItemDef | null>(null)
+  const [pendingIdx, setPendingIdx] = useState<number | null>(null)
   const slide = useSharedValue(0) // 0 = main, 1 = prep detail
 
   useEffect(() => {
-    if (selectedPrep) {
-      setPendingPrep(selectedPrep)
+    if (selectedIdx != null) {
+      setPendingIdx(selectedIdx)
       slide.value = withTiming(1, { duration: 280, easing: Easing.out(Easing.cubic) })
     } else {
       slide.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) }, (finished) => {
@@ -293,10 +285,10 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
         }
       })
       // Clear after the animation duration so the view stays mounted while sliding back
-      const t = setTimeout(() => setPendingPrep(null), 280)
+      const t = setTimeout(() => setPendingIdx(null), 280)
       return () => clearTimeout(t)
     }
-  }, [selectedPrep, slide])
+  }, [selectedIdx, slide])
 
   const mainAnimStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: -slide.value * SCREEN_W * 0.25 }],
@@ -308,7 +300,11 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
   }))
 
   const weekData = getWeekData(week)
-  const content = getWeekContent(week)
+  const content = localizedWeekContent(week, lang)
+  const enContent = getWeekContent(week)
+  const selectedPrep = selectedIdx != null ? content.prep[selectedIdx] ?? null : null
+  const setSelectedPrep = (_: null) => setSelectedIdx(null)
+  const pendingPrep = pendingIdx != null ? content.prep[pendingIdx] ?? null : null
   const stat = getWeekStat(week)
   const tri = getTrimester(week)
 
@@ -316,7 +312,8 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
   const lengthStr = `${stat.cm}cm`
   const weightStr = formatWeight(stat.g)
   const fruitName = localizeBabySizeName(weekData.babySize).toLowerCase()
-  const article = /^[aeiou]/i.test(fruitName) ? 'an' : 'a'
+  // English reads "a lime" / "an apple"; other languages show the bare name (gendered articles differ).
+  const article = lang === 'en' ? (/^[aeiou]/i.test(fruitName) ? 'an ' : 'a ') : ''
 
   // Same proportional scaling as WeekCard.illustrationSize, capped at 130 for the smaller hero.
   const cm = stat.cm > 0 ? stat.cm : 0
@@ -369,7 +366,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 style={[styles.closeBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: dt.colors.hairline }]}
                 hitSlop={10}
                 accessibilityRole="button"
-                accessibilityLabel="Close week details"
+                accessibilityLabel={t('sw4_closeWeekDetails')}
               >
                 <X size={18} color={heroCloseIcon} strokeWidth={2.5} />
               </Pressable>
@@ -385,24 +382,24 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
             </View>
 
             <Text style={[styles.heroLabel, { color: heroMetaFg }, diffuse ? { fontFamily: diffuseFont.mono, letterSpacing: 1.6 } : styles.monoEyebrow]}>
-              {t('preg_weekDetail_heroLabel', { week, trimester: TRI_NAMES[tri - 1].toUpperCase() })}
+              {t(`preg_weekDetail_heroLabel_t${tri}` as TranslationKey, { week })}
             </Text>
 
             <Text style={[styles.heroMega, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.displayLight, fontWeight: '300' } : null]}>{weekStr}</Text>
 
             <View style={styles.heroSizeRow}>
               <Text style={[styles.heroSize, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.display } : null]}>
-                {article}{' '}
+                {article}
                 <Text style={[styles.heroSizeBold, diffuse ? { fontFamily: diffuseFont.italic } : null]}>{fruitName}</Text>
               </Text>
               <Text style={[styles.heroSizeDot, { color: heroFg }]}>{t('common_dotSeparator')}</Text>
               <View style={styles.heroStatBox}>
-                <View style={[styles.heroStatTick, { backgroundColor: diffuse ? dAccent : heroFg }]} />
+                {diffuse ? <View style={[styles.heroStatTick, { backgroundColor: dAccent }]} /> : null}
                 <Text style={[styles.heroStat, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 13 } : null]}>{lengthStr}</Text>
               </View>
               <Text style={[styles.heroSizeDot, { color: heroFg }]}>{t('common_dotSeparator')}</Text>
               <View style={styles.heroStatBox}>
-                <View style={[styles.heroStatTick, { backgroundColor: diffuse ? dAccent : heroFg }]} />
+                {diffuse ? <View style={[styles.heroStatTick, { backgroundColor: dAccent }]} /> : null}
                 <Text style={[styles.heroStat, { color: heroFg }, diffuse ? { fontFamily: diffuseFont.mono, fontSize: 13 } : null]}>{weightStr}</Text>
               </View>
             </View>
@@ -413,7 +410,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: bodyInk3 }, diffuse ? { fontFamily: diffuseFont.mono } : styles.monoEyebrow]}>{t('preg_weekDetail_babyDevelopment')}</Text>
               {content.dev.map((point, i) => (
-                <DevPointRow key={i} week={week} index={i} point={point} dotColor={devDotColor} textColor={bodyInk2} />
+                <DevPointRow key={i} point={point} dotColor={devDotColor} textColor={bodyInk2} />
               ))}
             </View>
 
@@ -439,7 +436,6 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                 {content.prep.map((item, i) => (
                   <PrepListRow
                     key={`${item.i}-${i}`}
-                    week={week}
                     item={item}
                     cardBg={prepCardBg}
                     cardBorder={prepCardBorder}
@@ -448,7 +444,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
                     descColor={bodyInk3}
                     chevronColor={bodyInk3}
                     accent={dAccent}
-                    onPress={() => setSelectedPrep(item)}
+                    onPress={() => setSelectedIdx(i)}
                   />
                 ))}
               </View>
@@ -464,7 +460,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
         {pendingPrep ? (
           <PrepDetailSheet
             item={pendingPrep}
-            week={week}
+            englishItem={enContent.prep[pendingIdx as number]}
             onBack={() => setSelectedPrep(null)}
             accent={diffuse ? dAccent : colors.text}
             accentSoft={diffuse ? paletteForWeek(week).accentSoft : getModeColorSoft('preg', isDark)}

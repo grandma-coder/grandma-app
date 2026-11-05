@@ -245,7 +245,7 @@ export function TodaySummaryCard({ todayLogs, weekNumber, userId, onLogMetric, b
           accent={getModeAccent('pregnancy')}
           items={pills.map((p) => ({
             key: p.key,
-            label: t(PREG_QUICK_LOGS.find((q) => q.key === p.key)?.labelKey ?? 'preg_ring_log_mood'),
+            label: t(PREG_QUICK_LOGS.find((q) => q.key === p.key)?.shortKey ?? 'pregQuickLog_short_mood'),
             sticker: SITE_FOR[p.key] ?? 'star',
             done: p.done,
             onPress: onLogMetric ? () => onLogMetric(p.logType) : undefined,

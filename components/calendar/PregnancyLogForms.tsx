@@ -44,6 +44,7 @@ import { kgToDisplay, displayToKg, weightLabel } from '../../lib/units'
 import { useTranslation, t as tNow } from '../../lib/i18n'
 import { LogFormSticker } from './LogFormSticker'
 import { logSticker } from './logStickers'
+import { PREGNANCY_LOG_STICKER, PREGNANCY_MOOD_STICKER } from '../../lib/logStickers'
 import { MoodFace } from '../stickers/RewardStickers'
 import { Heart as HeartSticker, Burst as BurstSticker, Star as StarSticker } from '../stickers/BrandStickers'
 import { moodFaceVariant, moodFaceFill, moodExpression, moodBlobFill } from '../../lib/moodFace'
@@ -263,9 +264,7 @@ function SiteCounter({
   )
 }
 
-const MOOD_STICKER: Record<(typeof MOOD_IDS)[number], SiteStickerName> = {
-  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face1', energetic: 'star',
-}
+const MOOD_STICKER = PREGNANCY_MOOD_STICKER as Record<(typeof MOOD_IDS)[number], SiteStickerName>
 // Stored ids stay English; only the visible label is translated.
 const PLF_LABEL_KEYS = {
   'Regular checkup': 'kp_plf_l_checkup', Ultrasound: 'preg_appts_type_ultrasound', 'Blood test': 'kp_plf_l_blood',
@@ -914,7 +913,7 @@ export function KickCountForm({
               transform: [{ scale: pressed ? 0.96 : 1 }],
             }]}
           >
-            <SiteSticker name="shoe" size={58} cut />
+            <SiteSticker name={PREGNANCY_LOG_STICKER.kick_count} size={58} cut />
             <Text style={[sl.eyebrow, { color: colors.text, marginTop: 6 }]}>{t('preg_form_kick_tap')}</Text>
           </Pressable>
           <Text style={{ fontSize: 56, lineHeight: 62, fontFamily: font.displayBold, color: colors.text, marginTop: 10 }}>

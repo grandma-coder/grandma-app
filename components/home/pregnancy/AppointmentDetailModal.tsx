@@ -16,7 +16,6 @@ import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorS
 import { useIsDiffuse, DiffuseArrow } from '../../ui/diffuse/DiffuseKit'
 import { DiffuseSheet } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation, type TranslationKey } from '../../../lib/i18n'
-import { useTranslatedContent } from '../../../lib/useTranslatedContent'
 import { LogSheet } from '../../calendar/LogSheet'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { FadeUp } from '../../ui/Motion'
@@ -47,18 +46,9 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
   const chatOn = useGrandmaChatEnabled()
   // Long-form appointment prose is translated at runtime + cached (Phase C).
   // Stable id-based keys so cache survives content edits (hash guards staleness).
-  const { text: description } = useTranslatedContent(
-    `appt_${appointment?.id ?? 'none'}_description`,
-    appointment?.description ?? '',
-  )
-  const { text: prepNote } = useTranslatedContent(
-    `appt_${appointment?.id ?? 'none'}_prepNote`,
-    appointment?.prepNote ?? '',
-  )
-  const { text: whatToExpect } = useTranslatedContent(
-    `appt_${appointment?.id ?? 'none'}_whatToExpect`,
-    appointment?.whatToExpect ?? '',
-  )
+  const description = appointment?.description ?? ''
+  const prepNote = appointment?.prepNote ?? ''
+  const whatToExpect = appointment?.whatToExpect ?? ''
   if (!appointment) return null
 
   const typeInfo = TYPE_LABEL[appointment.type]

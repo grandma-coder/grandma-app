@@ -100,7 +100,7 @@ export default function BirthPlan() {
             onPress={() => router.back()}
             style={[styles.backBtn, { backgroundColor: 'transparent', borderColor: dt.colors.line2 }]}
             accessibilityRole="button"
-            accessibilityLabel="Back"
+            accessibilityLabel={t('common_back')}
           >
             <ArrowLeft size={22} color={dt.colors.ink} strokeWidth={1.8} />
           </Pressable>

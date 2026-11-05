@@ -11,11 +11,24 @@ export const KIDS_LOG_STICKER: Record<string, SiteStickerName> = {
   memory: 'camera', exam: 'doc', bath: 'drop', potty: 'diaper',
 }
 
-export const PREGNANCY_LOG_STICKER_MAP: Record<string, SiteStickerName> = {
+/**
+ * Pregnancy: ONE sticker per log type, never shared between two different types. Used by the home
+ * quick-log row, the "what do you want to track?" picker, every log sheet header, the quick-access
+ * tiles, the calendar day marks and the day detail. Keys cover the quick-log key, the sheet id and
+ * the stored `pregnancy_logs.log_type` (`meals` → `nutrition`, `kicks` → `kick_count`; `exam` is the
+ * legacy name of `exam_result`).
+ */
+export const PREGNANCY_LOG_STICKER: Record<string, SiteStickerName> = {
   mood: 'face3', water: 'glass', sleep: 'moon', meals: 'avocado', nutrition: 'avocado', weight: 'scale',
   kicks: 'foot', kick_count: 'foot', symptom: 'headache', exercise: 'dumbbell', vitamins: 'pill',
   kegel: 'flower', contraction: 'stopwatch', appointment: 'cal', exam_result: 'doc', exam: 'doc',
   nesting: 'crib', birth_prep: 'backpack', ultrasound: 'camera',
+}
+export const PREGNANCY_LOG_STICKER_MAP = PREGNANCY_LOG_STICKER
+
+/** Pregnancy mood options (form + day detail): five moods, five different stickers. */
+export const PREGNANCY_MOOD_STICKER: Record<string, SiteStickerName> = {
+  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face1', energetic: 'star', sad: 'face1',
 }
 
 /**

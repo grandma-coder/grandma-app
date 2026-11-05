@@ -214,9 +214,9 @@ const ICON_GUIDES: Partial<Record<StickerIconName, PrepGuide>> = {
     ],
   },
   clipboard: {
-    why: 'Following up on results closes the loop — what looked normal might need a recheck, and you want to catch that early.',
+    why: 'Following up on results closes the loop — what looked fine might need a recheck, and you want to catch that early.',
     how: [
-      'Ask your provider to walk through each result, not just "all normal".',
+      'Ask your provider to walk through each result, not just "all good".',
       'Save reports in one folder — physical or digital.',
       'Note any flagged values and the recheck timing.',
     ],
@@ -453,8 +453,9 @@ const ICON_GUIDES: Partial<Record<StickerIconName, PrepGuide>> = {
 }
 
 // ─── Title-keyed overrides (regex against item.t) ────────────────────────────
-const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
+const TITLE_OVERRIDES: Array<{ id: string; match: RegExp; guide: PrepGuide }> = [
   {
+    id: 'pregnancy_test',
     match: /pregnancy test/i,
     guide: {
       why: 'A home pregnancy test detects hCG in urine — by the time of a missed period, accuracy is over 99% with most modern tests.',
@@ -468,6 +469,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'first_visit',
     match: /book.*OB|first.*appointment|first.*visit/i,
     guide: {
       why: 'The first prenatal visit (typically week 8–12) confirms the pregnancy, dates it, and screens for anything that benefits from early support.',
@@ -480,6 +482,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'nipt',
     match: /NIPT|cell-free|noninvasive/i,
     guide: {
       why: 'NIPT screens fetal DNA in your blood for trisomy 13/18/21 and (optionally) sex from week 10. It\'s highly sensitive but a screen, not a diagnosis.',
@@ -492,6 +495,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'anatomy_scan',
     match: /anatomy scan|20.?week scan/i,
     guide: {
       why: 'The anatomy scan (typically weeks 18–22) is a head-to-toe ultrasound check of baby\'s organs, bones, and growth.',
@@ -504,6 +508,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'glucose',
     match: /glucose|GTT|gestational diabetes/i,
     guide: {
       why: 'Universal screening between weeks 24–28 catches gestational diabetes — common, treatable, and important to manage for both of you.',
@@ -516,6 +521,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'gbs',
     match: /strep|GBS/i,
     guide: {
       why: 'Group B Strep screening (weeks 36–37) tells your team whether to give antibiotics during labor to protect baby from infection.',
@@ -527,6 +533,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'kick_count',
     match: /count.*kicks|kick count|fetal movement/i,
     guide: {
       why: 'From week 28, daily kick counts give you a sense of baby\'s baseline pattern — and a way to spot changes early.',
@@ -536,10 +543,11 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
         'Most providers want 10 movements within 2 hours.',
         'Apps make tracking easy — or a simple paper tally works.',
       ],
-      watch: 'A clear drop in normal movement, especially after week 28, is a same-day call to your provider — even if it\'s 2 AM.',
+      watch: 'A clear drop in baby\'s usual movement, especially after week 28, is a same-day call to your provider — even if it\'s 2 AM.',
     },
   },
   {
+    id: 'birth_plan',
     match: /birth plan/i,
     guide: {
       why: 'A birth plan is less about scripting the day and more about aligning with your team on values: pain management, support people, immediate skin-to-skin, feeding intentions.',
@@ -552,6 +560,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'pediatrician',
     match: /pediatrician|baby.*doctor/i,
     guide: {
       why: 'You\'ll see your pediatrician many times in the first year. Picking someone you click with — and who is in network — pays off.',
@@ -563,6 +572,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'pelvic_floor',
     match: /pelvic.?floor|kegel/i,
     guide: {
       why: 'Pelvic floor strength supports baby\'s weight, makes pushing more effective, and protects you from incontinence and prolapse postpartum.',
@@ -575,6 +585,7 @@ const TITLE_OVERRIDES: Array<{ match: RegExp; guide: PrepGuide }> = [
     },
   },
   {
+    id: 'track_cycle',
     match: /track.*cycle|basal.*temp/i,
     guide: {
       why: 'Tracking your cycle helps you predict ovulation, time intercourse during the fertile window, and date a future pregnancy accurately.',
@@ -597,15 +608,29 @@ const FALLBACK: PrepGuide = {
   ],
 }
 
-export function getPrepGuide(item: PrepItemDef, week?: number): PrepGuide {
+/**
+ * Stable id of the guide an item resolves to — `ov_<id>` (title override), `icon_<name>` or
+ * `fallback`. The bundled translations (lib/pregnancyContent) are keyed by it.
+ */
+export function prepGuideId(item: PrepItemDef): string {
+  const ov = TITLE_OVERRIDES.find((o) => o.match.test(item.t))
+  if (ov) return `ov_${ov.id}`
+  return ICON_GUIDES[item.i] ? `icon_${item.i}` : 'fallback'
+}
+
+export function getPrepGuide(item: PrepItemDef): PrepGuide {
   // Title overrides win
   for (const ov of TITLE_OVERRIDES) {
     if (ov.match.test(item.t)) return ov.guide
   }
-  const guide = ICON_GUIDES[item.i] ?? FALLBACK
-  // Inject week phrasing into the why for a touch of context (optional)
-  if (week && week > 0) {
-    return { ...guide }
-  }
-  return guide
+  return ICON_GUIDES[item.i] ?? FALLBACK
+}
+
+/** Every guide by id (English source for the bundled translations). */
+export function allPrepGuides(): Record<string, PrepGuide> {
+  const out: Record<string, PrepGuide> = {}
+  for (const ov of TITLE_OVERRIDES) out[`ov_${ov.id}`] = ov.guide
+  for (const [icon, guide] of Object.entries(ICON_GUIDES)) if (guide) out[`icon_${icon}`] = guide
+  out.fallback = FALLBACK
+  return out
 }

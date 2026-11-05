@@ -22,13 +22,13 @@ import {
   useAppointmentQuestionsStore,
 } from '../../store/useAppointmentQuestionsStore'
 import type { Behavior } from '../../store/useBehaviorStore'
-import { STANDARD_APPOINTMENTS } from '../../lib/pregnancyAppointments'
+import { getStandardAppointments } from '../../lib/pregnancyAppointments'
 
 const MONO = 'SpaceMono_400Regular'
 
 /** The pregnancy appointment that's next up (first one not yet past). */
 export function nextStandardAppointmentId(currentWeek: number): string | null {
-  return STANDARD_APPOINTMENTS.find((a) => a.week >= currentWeek)?.id ?? null
+  return getStandardAppointments().find((a) => a.week >= currentWeek)?.id ?? null
 }
 
 /** Kids logs that are a visit someone can bring questions to: doctor visits and vaccines. */

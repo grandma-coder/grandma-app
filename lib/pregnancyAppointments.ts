@@ -5,6 +5,9 @@
 // flu shot, COVID booster) are intentionally not in the curve to keep it
 // focused — they surface contextually elsewhere.
 
+import { useLanguageStore } from '../store/useLanguageStore'
+import { PREGNANCY_CONTENT } from './pregnancyContent'
+
 // User-facing attribution for the schedule screen (audit Medium #13: surface
 // the ACOG basis to users, not only in this code comment).
 export const APPOINTMENTS_SOURCE_NOTE =
@@ -86,7 +89,7 @@ export const STANDARD_APPOINTMENTS: StandardAppointment[] = [
     whatToExpect:
       "A simple blood draw — under 5 minutes. Combines four protein markers with your age and history into a single risk score.",
     questions: [
-      'Do I still need this if my NIPT was normal?',
+      'Do I still need this if my NIPT came back low-risk?',
       'How will I receive the results?',
       'What happens if the screen is positive?',
       'Is my weight gain on track?',
@@ -116,7 +119,7 @@ export const STANDARD_APPOINTMENTS: StandardAppointment[] = [
     description: '1-hour glucose challenge to screen for gestational diabetes.',
     prepNote: 'Drink the glucose solution within 5 minutes when you arrive. Eat normally before — fasting is not required for the 1-hour.',
     whatToExpect:
-      'Drink the glucola, wait one hour seated in the office, then a quick blood draw. Bring a book — feeling jittery or nauseous afterwards is normal. If positive, a 3-hour fasting test is scheduled.',
+      'Drink the glucola, wait one hour seated in the office, then a quick blood draw. Bring a book — feeling jittery or nauseous afterwards is common. If positive, a 3-hour fasting test is scheduled.',
     questions: [
       'When will I know my result?',
       'What happens if I need the 3-hour test?',
@@ -153,7 +156,7 @@ export const STANDARD_APPOINTMENTS: StandardAppointment[] = [
       'A standard checkup with fundal-height measurement, fetal heartbeat, and possibly a growth ultrasound. Bring questions about your birth preferences.',
     questions: [
       'Is the baby head-down yet?',
-      'Are my fluid levels normal?',
+      'Are my fluid levels where they should be?',
       'Can we go over my birth plan?',
       'When should I take a hospital tour?',
     ],
@@ -197,9 +200,39 @@ export function getAppointmentByWeek(week: number): StandardAppointment | undefi
 }
 
 export function getUpcomingAppointment(currentWeek: number): StandardAppointment | undefined {
-  return STANDARD_APPOINTMENTS.find((a) => a.week >= currentWeek)
+  return getStandardAppointments().find((a) => a.week >= currentWeek)
+}
+
+const localizedCache = new Map<string, StandardAppointment[]>()
+
+/** The standard timeline in the app language (bundled translations; English falls through). */
+export function getStandardAppointments(): StandardAppointment[] {
+  const lang = useLanguageStore.getState().language
+  if (lang === 'en') return STANDARD_APPOINTMENTS
+  const hit = localizedCache.get(lang)
+  if (hit) return hit
+  const c = PREGNANCY_CONTENT[lang] ?? {}
+  const pick = (key: string, en: string) => (c[key] && c[key].trim() ? c[key] : en)
+  const out = STANDARD_APPOINTMENTS.map((a) => ({
+    ...a,
+    name: pick(`appt_${a.id}_name`, a.name),
+    description: pick(`appt_${a.id}_description`, a.description),
+    prepNote: pick(`appt_${a.id}_prepNote`, a.prepNote),
+    whatToExpect: pick(`appt_${a.id}_whatToExpect`, a.whatToExpect),
+    questions: a.questions.map((q, i) => pick(`appt_${a.id}_q${i}`, q)),
+  }))
+  localizedCache.set(lang, out)
+  return out
+}
+
+/** The ACOG attribution line in the app language. */
+export function appointmentsSourceNote(): string {
+  const lang = useLanguageStore.getState().language
+  if (lang === 'en') return APPOINTMENTS_SOURCE_NOTE
+  const v = PREGNANCY_CONTENT[lang]?.appt_sourceNote
+  return v && v.trim() ? v : APPOINTMENTS_SOURCE_NOTE
 }
 
 export function getPastAppointments(currentWeek: number): StandardAppointment[] {
-  return STANDARD_APPOINTMENTS.filter((a) => a.week < currentWeek)
+  return getStandardAppointments().filter((a) => a.week < currentWeek)
 }

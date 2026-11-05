@@ -13,6 +13,7 @@ import { useTranslation } from '../../../lib/i18n'
 import { Character } from '../../characters/Characters'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogTimeline'
 import { PREG_QUICK_LOGS } from '../../../lib/pregnancyQuickLogs'
+import { PREGNANCY_LOG_STICKER } from '../../../lib/logStickers'
 import { useQuickLogStore } from '../../../store/useQuickLogStore'
 import { QuickLogPickerGrid, type QuickLogGridItem } from '../QuickLogPickerGrid'
 
@@ -51,12 +52,6 @@ function blobFor(logType: string, stickers: ReturnType<typeof useTheme>['sticker
 }
 
 // Site look: each pregnancy log type → a card-less Site sticker.
-const SITE_STICKER: Record<string, SiteStickerName> = {
-  mood: 'face3', water: 'drop', sleep: 'zz', nutrition: 'avocado', weight: 'ruler', kick_count: 'shoe',
-  symptom: 'thermo', exercise: 'flame', vitamins: 'syringe', kegel: 'flower', contraction: 'bell',
-  appointment: 'cal', exam_result: 'doc', nesting: 'house', birth_prep: 'bodysuit',
-}
-
 export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
   const { stickers, colors } = useTheme()
   const diffuse = useIsDiffuse()
@@ -90,7 +85,7 @@ export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
     return {
       key: q.key,
       label: t(q.labelKey),
-      icon: diffuse ? s.node : <SiteSticker name={SITE_STICKER[q.logType] ?? 'star'} size={30} cut />,
+      icon: diffuse ? s.node : <SiteSticker name={PREGNANCY_LOG_STICKER[q.logType] ?? 'star'} size={30} cut />,
       socketTint: diffuse ? s.soft : 'transparent',
       selected: draft.includes(q.key),
       onToggle: () => toggleDraft(q.key),

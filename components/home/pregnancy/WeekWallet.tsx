@@ -12,6 +12,7 @@
  * behavior cards. When uncustomized (enabledKeys null) the builder order is used.
  */
 
+import { PREGNANCY_LOG_STICKER } from '../../../lib/logStickers'
 import { useGrandmaChatEnabled, useDailyRewardsEnabled } from '../../../store/useFeatureFlags'
 import React, { useState, useEffect } from 'react'
 import { View } from 'react-native'
@@ -153,7 +154,7 @@ export function WeekWallet({
     switch (id) {
       case 'appointment': return <SiteSticker name="cal" size={26} />
       case 'week_tip': return <SiteSticker name="brain" size={26} />
-      case 'kicks': return <SiteSticker name="shoe" size={26} />
+      case 'kicks': return <SiteSticker name={PREGNANCY_LOG_STICKER.kick_count} size={26} />
       case 'reminders': return <SiteSticker name="bell" size={26} />
       case 'memories': return <SiteSticker name="camera" size={26} />
       case 'exams': return <SiteSticker name="doc" size={26} />
@@ -169,7 +170,7 @@ export function WeekWallet({
     switch (id) {
       case 'appointment': return appt?.name ?? ''
       case 'week_tip': return t('pregnancy_reminder_weekTip', { week: weekNumber })
-      case 'kicks': return t('pregnancy_reminder_kickCountTitle')
+      case 'kicks': return t('pregQuickLog_short_kicks')
       case 'reminders': return t('wallet_reminders_title')
       case 'memories': return t('wallet_memories_title')
       case 'exams': return t('wallet_exams_title')
@@ -224,7 +225,7 @@ export function WeekWallet({
   const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
 
   const SITE_STICKER: Record<PregCardId, SiteStickerName> = {
-    appointment: 'cal', week_tip: 'brain', kicks: 'shoe', reminders: 'bell', memories: 'camera',
+    appointment: 'cal', week_tip: 'brain', kicks: PREGNANCY_LOG_STICKER.kicks, reminders: 'bell', memories: 'camera',
     exams: 'doc', birth_guide: 'books', ask_grandma: 'bubble', rewards: 'star', channels: 'bubble',
     village: 'house',
   }
