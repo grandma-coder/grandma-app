@@ -2,21 +2,14 @@
 // bodies, "ask Grandma" questions), so a non-English user never sees an English word on
 // the pillar screen — even offline, before any runtime translation arrives.
 import { prePregPillars } from '../../prePregPillars'
+import { pillarContentEnglish } from '../english'
 import { pillarContentKeys } from '../../pillarCopy'
 import { PILLAR_CONTENT, bundledPillarText } from '..'
 
 const CYCLE_IDS = ['fertility', 'nutrition-prep', 'emotional-readiness', 'financial-planning', 'partner-journey', 'health-checkups']
 
 /** English source keyed exactly as the pillar screen asks for it. */
-const SOURCE: Record<string, string> = {}
-for (const p of prePregPillars) {
-  if (p.intro) SOURCE[pillarContentKeys.intro(p.id)] = p.intro
-  for (const tip of p.tips) {
-    SOURCE[pillarContentKeys.tipLabel(p.id, tip.label)] = tip.label
-    SOURCE[pillarContentKeys.tipBody(p.id, tip.label)] = tip.text
-  }
-  p.suggestions.forEach((q, i) => { SOURCE[pillarContentKeys.suggestion(p.id, i)] = q })
-}
+const SOURCE: Record<string, string> = pillarContentEnglish()
 
 /** Strings allowed to stay identical to English (acronym-only text). Keep it short. */
 const SAME_AS_ENGLISH_OK = new Set(['MTHFR', 'DHA'])
