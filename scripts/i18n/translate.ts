@@ -12,10 +12,15 @@ const MODEL = 'claude-sonnet-5-5'
 
 export function apiKey(): string | undefined {
   if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY
-  const envPath = join(__dirname, '../../.env')
-  if (!existsSync(envPath)) return undefined
-  const m = readFileSync(envPath, 'utf8').match(/^ANTHROPIC_API_KEY=(.*)$/m)
-  return m ? m[1].trim().replace(/^["']|["']$/g, '') : undefined
+  // .env.local wins over .env (both git-ignored); an empty value falls through.
+  for (const file of ['.env.local', '.env']) {
+    const envPath = join(__dirname, '../..', file)
+    if (!existsSync(envPath)) continue
+    const m = readFileSync(envPath, 'utf8').match(/^ANTHROPIC_API_KEY=(.*)$/m)
+    const v = m ? m[1].trim().replace(/^["']|["']$/g, '') : ''
+    if (v) return v
+  }
+  return undefined
 }
 
 function systemPrompt(lang: string): string {
