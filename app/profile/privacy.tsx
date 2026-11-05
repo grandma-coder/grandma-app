@@ -329,23 +329,14 @@ export default function PrivacyScreen() {
         {!diffuse && (
           <View>
             <SiteEyebrow>{t('privacy_sectionDataSharing')}</SiteEyebrow>
-            <SiteRow sticker="heart" label={t('privacy_toggleShareCareCircle')} desc={t('privacy_toggleShareCareCircleDesc')}
-              right={<SiteToggle value={settings.share_with_caregivers} onValueChange={(v) => updateSetting('share_with_caregivers', v)} label={t('privacy_toggleShareCareCircle')} />} />
-            <SiteRow sticker="thermo" label={t('privacy_toggleShareHealth')} desc={t('privacy_toggleShareHealthDesc')}
-              right={<SiteToggle value={settings.share_health_data} onValueChange={(v) => updateSetting('share_health_data', v)} label={t('privacy_toggleShareHealth')} />} />
-            <SiteRow sticker="camera" label={t('privacy_toggleSharePhotos')} desc={t('privacy_toggleSharePhotosDesc')}
-              right={<SiteToggle value={settings.share_photos} onValueChange={(v) => updateSetting('share_photos', v)} label={t('privacy_toggleSharePhotos')} />} last />
+            <SiteRow sticker="us" label={t('privacy_whoSeesWhat')} desc={t('privacy_whoSeesWhatDesc')} onPress={() => router.push('/profile/care-circle')} last />
 
-            <SiteEyebrow>{t('privacy_sectionAI')}</SiteEyebrow>
             {/* AI personalization only exists while the Grandma AI (chat flag) is on. */}
-            {chatOn && (
+            {chatOn && (<>
+              <SiteEyebrow>{t('privacy_sectionAI')}</SiteEyebrow>
               <SiteRow sticker="brain" label={t('privacy_toggleAI')} desc={t('privacy_toggleAIDesc')}
-                right={<SiteToggle value={settings.ai_data_usage} onValueChange={(v) => updateSetting('ai_data_usage', v)} label={t('privacy_toggleAI')} />} />
-            )}
-            <SiteRow sticker="bars" label={t('privacy_toggleAnalytics')} desc={t('privacy_toggleAnalyticsDesc')}
-              right={<SiteToggle value={settings.analytics} onValueChange={(v) => updateSetting('analytics', v)} label={t('privacy_toggleAnalytics')} />} />
-            <SiteRow sticker="bubble" label={t('privacy_toggleMarketing')} desc={t('privacy_toggleMarketingDesc')}
-              right={<SiteToggle value={settings.marketing} onValueChange={(v) => updateSetting('marketing', v)} label={t('privacy_toggleMarketing')} />} last />
+                right={<SiteToggle value={settings.ai_data_usage} onValueChange={(v) => updateSetting('ai_data_usage', v)} label={t('privacy_toggleAI')} />} last />
+            </>)}
 
             <SiteEyebrow>{t('privacy_sectionRights')}</SiteEyebrow>
             <SiteRow sticker="eye" label={t('privacy_dataInventory')} desc={t('privacy_dataInventoryDesc')} onPress={() => router.push('/profile/data-inventory')} />

@@ -26,6 +26,7 @@ import { MiniLineChart, BeadedThread } from './shared/MiniCharts'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import { useTranslation, t as translate, type TranslationKey } from '../../lib/i18n'
 import { appIntlLocale } from '../../lib/cycleLogForms'
+import { regularityWord, regularityWordKey, moodWord, moodWordKey } from '../../lib/cycleWords'
 import { SheetModal } from '../ui/SheetModal'
 
 const MONO = 'SpaceMono_400Regular'
@@ -510,7 +511,7 @@ function RegularityDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <HeroRow size={56} value={<>{data.percent}%</>} unit={t('cycleDetail_regular')} note={t('cyc_detail_regNote')} />
+      <HeroRow size={36} value={<>{t(regularityWordKey(regularityWord(data.percent) ?? 'varies'))}</>} unit={t('cycleDetail_regular')} note={t('cyc_detail_regNote')} />
 
       <View style={{ gap: 6 }}>
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>
@@ -948,7 +949,7 @@ function MoodDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <HeroRow size={40} value={<>{data.avgScore}</>} unit={t('cycleDetail_fiveAvg')} note={t('cyc_detail_moodNote')} />
+      <HeroRow size={36} value={<>{t(moodWordKey(moodWord(data.avgScore) ?? 'mixed'))}</>} unit={t('cycleDetail_fiveAvg')} note={t('cyc_detail_moodNote')} />
 
       <View style={{ gap: 8 }}>
         <Text style={[detailStyles.sectionLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: MONO, letterSpacing: 1.4 }]}>

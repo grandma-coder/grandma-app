@@ -57,6 +57,7 @@ import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { appIntlLocale } from '../../lib/cycleLogForms'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 import { ReportEntryRow } from '../../lib/reports/ReportEntryRow'
+import { regularityWord, regularityWordKey, moodWord, moodWordKey } from '../../lib/cycleWords'
 import { buildCycleNote } from '../../lib/grandmaNotes/cycle'
 import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
 import { SkeletonChartSection, SkeletonStatRows } from './shared/AnalyticsSkeleton'
@@ -189,21 +190,19 @@ export function CycleAnalytics() {
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
 
   const avgLabel = history?.avg != null ? String(history.avg) : '—'
-  const regularLabel =
-    regularity?.percent != null ? `${regularity.percent}%` : '—'
+  const regWord = regularityWord(regularity?.percent)
+  const regularLabel = regWord ? t(regularityWordKey(regWord)) : '—'
   const pmsLabel = pms?.avgDays != null ? String(pms.avgDays) : '—'
-  const moodLabel = mood?.avgScore != null ? String(mood.avgScore) : '—'
+  const moodW = moodWord(mood?.avgScore)
+  const moodLabel = moodW ? t(moodWordKey(moodW)) : '—'
   const fertileLabel = formatFertile(fertile?.current)
 
   // Warm sub-copy for each chip — turns the number into a little read.
   const regularSub =
-    regularity?.percent == null
-      ? t('cycleAnalytics_regularSub_rhythm')
-      : regularity.percent >= 80
-        ? t('cycleAnalytics_regularSub_steady')
-        : regularity.percent >= 50
-          ? t('cycleAnalytics_regularSub_mostly')
-          : t('cycleAnalytics_regularSub_unpredictable')
+    regWord === 'steady' ? t('cycleAnalytics_regularSub_steady')
+    : regWord === 'mostly' ? t('cycleAnalytics_regularSub_mostly')
+    : regWord === 'varies' ? t('cycleAnalytics_regularSub_unpredictable')
+    : t('cycleAnalytics_regularSub_rhythm')
   const pmsSub = pms?.avgDays == null ? t('cycleAnalytics_pmsSub_none') : t('cycleAnalytics_pmsSub_symptomDays')
   const moodSub = mood?.avgScore == null ? t('cycleAnalytics_moodSub_log') : t('cycleAnalytics_moodSub_avg')
   // No period logged yet: `info` is built from a placeholder start, so don't

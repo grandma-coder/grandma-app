@@ -30,7 +30,6 @@ import {
   type NotificationPermissionStatus,
 } from '../../lib/pushNotifications'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
-import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { resolvePeriodReminderEnabled } from '../../lib/cycleReminders'
@@ -147,17 +146,17 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets()
   const GROUPS = GROUP_DEFS.map((g) => ({ ...g, label: t(g.label) }))
 
-  // Only show toggles that can do something for this person: AI insights ride the
-  // (off) Grandma chat flag, cycle predictions need the Cycle journey, milestone
-  // alerts are pregnancy/kids. The light look filters; Diffuse is left as it was.
+  // Only show toggles that actually do something: daily + weekly are scheduled on-device,
+  // cycle predictions need the Cycle journey. The light look filters; Diffuse is left as it was.
   const enrolled = useBehaviorStore((st) => st.enrolledBehaviors)
-  const chatOn = useGrandmaChatEnabled()
   const cycleEnrolled = enrolled.includes('pre-pregnancy')
   const relevant = (id: ToggleId) => {
     if (diffuse) return true
-    if (id === 'insights') return chatOn
+    // Nothing reads these prefs to schedule or send a notification (the in-app list is
+    // generated regardless; no push sender reads them), so a switch would be a lie.
+    // The stored keys stay in profiles.notification_prefs. Re-enable when a sender exists.
+    if (id === 'insights' || id === 'appointments' || id === 'milestones' || id === 'care_circle') return false
     if (id === 'cycle_predictions') return cycleEnrolled
-    if (id === 'milestones') return enrolled.includes('pregnancy') || enrolled.includes('kids')
     return true
   }
   const NOTIFS = NOTIFICATION_SETTINGS

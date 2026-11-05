@@ -6361,4 +6361,19 @@ export interface TranslationKeys {
   kids_vac_booster: string
   kids_vac_every6mo: string
   kids_vac_dose: string
+  privacy_whoSeesWhat: string
+  privacy_whoSeesWhatDesc: string
+  cycleWords_regularity_steady: string
+  cycleWords_regularity_mostly: string
+  cycleWords_regularity_varies: string
+  cycleWords_mood_lighter: string
+  cycleWords_mood_mixed: string
+  cycleWords_mood_heavier: string
+  preg_unit_kicks_one: string
+  preg_unit_kicks_other: string
+  preg_unit_glasses_one: string
+  preg_unit_glasses_other: string
+  preg_sum_vitaminsTaken: string
+  preg_sum_vitaminsNotTaken: string
+  preg_analytics_logsShort: string
 }
