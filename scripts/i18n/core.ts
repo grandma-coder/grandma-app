@@ -28,7 +28,11 @@ export function paramMismatch(english: string, translated: string): boolean {
   return paramsOf(english) !== paramsOf(translated)
 }
 
-const LINE = /^(\s+)([A-Za-z0-9_]+):\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'),?\s*$/
+// Key may be bare (`ab_c:`) or quoted (`"pillar_x-y":`, used when it isn't an identifier).
+const LINE = /^(\s+)(?:"([^"]+)"|'([^']+)'|([A-Za-z0-9_$]+)):\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'),?\s*$/
+
+function lineKey(m: RegExpMatchArray): string { return m[2] ?? m[3] ?? m[4] }
+function keyLiteral(k: string): string { return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k) ? k : JSON.stringify(k) }
 
 function parseLiteral(lit: string): string {
   if (lit.startsWith('"')) return JSON.parse(lit)
@@ -41,7 +45,7 @@ export function readLocaleFile(path: string): Record<string, string> {
   const out: Record<string, string> = {}
   for (const line of readFileSync(path, 'utf8').split('\n')) {
     const m = line.match(LINE)
-    if (m) out[m[2]] = parseLiteral(m[3])
+    if (m) out[lineKey(m)] = parseLiteral(m[5])
   }
   return out
 }
@@ -54,10 +58,11 @@ export function writeLocaleFile(path: string, updates: Record<string, string>, r
   const out: string[] = []
   for (const line of lines) {
     const m = line.match(LINE)
-    if (m && drop.has(m[2])) continue
-    if (m && m[2] in pending) {
-      out.push(`${m[1]}${m[2]}: ${JSON.stringify(pending[m[2]])},`)
-      delete pending[m[2]]
+    if (m && drop.has(lineKey(m))) continue
+    if (m && lineKey(m) in pending) {
+      const k = lineKey(m)
+      out.push(`${m[1]}${keyLiteral(k)}: ${JSON.stringify(pending[k])},`)
+      delete pending[k]
       continue
     }
     out.push(line)
@@ -65,7 +70,7 @@ export function writeLocaleFile(path: string, updates: Record<string, string>, r
   let close = -1
   for (let i = out.length - 1; i >= 0; i--) if (/^}/.test(out[i])) { close = i; break }
   if (close === -1) throw new Error(`No closing brace in ${path}`)
-  const added = Object.entries(pending).map(([k, v]) => `  ${k}: ${JSON.stringify(v)},`)
+  const added = Object.entries(pending).map(([k, v]) => `  ${keyLiteral(k)}: ${JSON.stringify(v)},`)
   out.splice(close, 0, ...added)
   writeFileSync(path, out.join('\n'))
 }

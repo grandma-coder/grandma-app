@@ -8,7 +8,7 @@
 import { weekContent } from '../weekContent'
 import { allPrepGuides } from '../prepGuide'
 import { birthTypes, hospitalBagChecklist } from '../birthData'
-import { STANDARD_APPOINTMENTS, APPOINTMENTS_SOURCE_NOTE } from '../pregnancyAppointments'
+import { STANDARD_APPOINTMENTS, APPOINTMENTS_SOURCE_NOTE } from '../pregnancyAppointmentsData'
 
 export function pregnancyContentEnglish(): Record<string, string> {
   const out: Record<string, string> = {}

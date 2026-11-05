@@ -5,7 +5,25 @@
 //   bg_<topic>_s<i>_sub<k>_title|content · bg_<topic>_s<i>_sub<k>_b<j>
 //   bg_<topic>_s<i>_callout_title|text
 // Source names/URLs are not translated.
-import { BIRTH_TOPICS, type BirthTopic } from '../birthGuideData'
+import type { BirthTopic } from '../birthGuideData'
+import { NATURAL_TOPIC } from '../birthGuide/natural'
+import { CSECTION_TOPIC } from '../birthGuide/csection'
+import { HOME_TOPIC } from '../birthGuide/home'
+import { WATER_TOPIC } from '../birthGuide/water'
+import { LABOR_STAGES_TOPIC } from '../birthGuide/labor-stages'
+import { WARNING_SIGNS_TOPIC } from '../birthGuide/warning-signs'
+import { HOSPITAL_BAG_TOPIC } from '../birthGuide/hospital-bag'
+import { PAIN_RELIEF_TOPIC } from '../birthGuide/pain-relief'
+import { POSITIONS_TOPIC } from '../birthGuide/positions'
+import { PARTNER_GUIDE_TOPIC } from '../birthGuide/partner-guide'
+import { RECOVERY_TOPIC } from '../birthGuide/recovery'
+
+// Same topics as lib/birthGuideData.ts BUNDLED_BIRTH_TOPICS, imported directly so the sync
+// scripts don't pull in the remote (Supabase / React Native) module.
+const BUNDLED: BirthTopic[] = [
+  NATURAL_TOPIC, CSECTION_TOPIC, HOME_TOPIC, WATER_TOPIC, LABOR_STAGES_TOPIC, WARNING_SIGNS_TOPIC,
+  HOSPITAL_BAG_TOPIC, PAIN_RELIEF_TOPIC, POSITIONS_TOPIC, PARTNER_GUIDE_TOPIC, RECOVERY_TOPIC,
+]
 
 export function birthTopicEntries(topic: BirthTopic): Record<string, string> {
   const out: Record<string, string> = {}
@@ -33,5 +51,5 @@ export function birthTopicEntries(topic: BirthTopic): Record<string, string> {
 }
 
 export function birthGuideEnglish(): Record<string, string> {
-  return Object.assign({}, ...BIRTH_TOPICS.map(birthTopicEntries))
+  return Object.assign({}, ...BUNDLED.map(birthTopicEntries))
 }

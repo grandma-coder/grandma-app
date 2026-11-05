@@ -49,18 +49,20 @@ describe('locale file round-trip', () => {
       "  single: 'it\\'s',",
       '  change: "old",',
       '  drop: "bye",',
+      '  "pillar_a-b": "hífen",',
       '}',
       '',
     ].join('\n')
     writeFileSync(p, src)
-    expect(readLocaleFile(p)).toEqual({ keep: 'a "q" \n ç', single: "it's", change: 'old', drop: 'bye' })
-    writeLocaleFile(p, { change: 'novo', added: 'olá "x"' }, ['drop'])
+    expect(readLocaleFile(p)).toEqual({ keep: 'a "q" \n ç', single: "it's", change: 'old', drop: 'bye', 'pillar_a-b': 'hífen' })
+    writeLocaleFile(p, { change: 'novo', added: 'olá "x"', 'pillar_a-b': 'traço' }, ['drop'])
     const out = readFileSync(p, 'utf8')
     expect(out).toContain('  keep: "a \\"q\\" \\n ç",')
     expect(out).toContain("  single: 'it\\'s',")
     expect(out).toContain('  change: "novo",')
     expect(out).not.toContain('drop')
     expect(out).toMatch(/ {2}added: "olá \\"x\\"",\n}\n$/)
-    expect(readLocaleFile(p)).toEqual({ keep: 'a "q" \n ç', single: "it's", change: 'novo', added: 'olá "x"' })
+    expect(out).toContain('  "pillar_a-b": "traço",')
+    expect(readLocaleFile(p)).toEqual({ keep: 'a "q" \n ç', single: "it's", change: 'novo', 'pillar_a-b': 'traço', added: 'olá "x"' })
   })
 })

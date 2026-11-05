@@ -63,7 +63,6 @@ docs/claude-design/
 .env.local
 
 # Tolgee CLI build artifacts (generated JSON; do NOT commit)
-tolgee/
 /*.png
 screenshot-*.png
 smoke-*.png
