@@ -20,6 +20,7 @@
  *   7. Wallet        — the shared "Quick access" stack every behavior home carries.
  */
 
+import { parseLocalDate } from '../../lib/localDate'
 import { useMemo, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -56,6 +57,7 @@ import { symptomBlob, symptomStickerKey } from '../menopause/menopauseIcons'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import {
   monthsSinceDate,
+  latestPeriodDate,
   shouldOfferMenopauseUpdate,
   type MenopauseStage,
 } from '../../lib/menopauseStage'
@@ -165,9 +167,12 @@ export function MenopauseHome() {
   const [confirming, setConfirming] = useState(false)
 
   const now = new Date()
-  const months = monthsSinceDate(lastPeriodDate, now)
+  // Latest period: the newest logged 'period' row or the stored onboarding date, whichever is later
+  // (the store alone misses periods logged on another device or before a reinstall).
+  const latestPeriod = useMemo(() => latestPeriodDate(rows, lastPeriodDate), [rows, lastPeriodDate])
+  const months = monthsSinceDate(latestPeriod, now)
   const showOffer =
-    !offerDismissed && stage != null && shouldOfferMenopauseUpdate(stage, lastPeriodDate, now)
+    !offerDismissed && stage != null && shouldOfferMenopauseUpdate(stage, latestPeriod, now)
 
   // Confirm-only stage flip. setStage('meno') makes shouldOfferMenopauseUpdate
   // false on the next render (stage !== 'peri'), so the card self-hides. The
@@ -213,12 +218,19 @@ export function MenopauseHome() {
 
   const stageLabel = stage ? stageLabelOf(stage) : t('meno_h_your_journey')
   const wisdomLine = stage ? wisdomOf(stage) : t('meno_h_wisdom_fallback')
+  // Under a month, count days — "0 months since your last period" reads as a mistake.
+  const daysSince = months === 0 && latestPeriod
+    ? Math.max(0, Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - parseLocalDate(latestPeriod).getTime()) / 86400000))
+    : null
+  const ringCount = daysSince ?? months
   const monthsCaption =
     months === null
       ? t('meno_h_months_none')
-      : months === 1
-        ? t('meno_h_months_one')
-        : t('meno_h_months_other')
+      : daysSince !== null
+        ? t(daysSince === 1 ? 'meno_h_days_one' : 'meno_h_days_other')
+        : months === 1
+          ? t('meno_h_months_one')
+          : t('meno_h_months_other')
 
   // Quick-log chip → straight to the compact severity form for that symptom.
   const openSymptom = (id: MenopauseSymptomId) => { setLogDate(null); setPendingSymptom(id); setActiveSheet('symptom') }
@@ -414,7 +426,7 @@ const walletBlock = (
             rows={rows}
             pal={pal}
             stageLabel={stageLabel}
-            months={months}
+            months={ringCount}
             monthsCaption={monthsCaption}
             loading={logsFirstLoad}
           />

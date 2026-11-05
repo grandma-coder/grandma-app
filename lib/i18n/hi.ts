@@ -6076,4 +6076,9 @@ export const hi: TranslationKeys = {
   preg_analytics_logsShort: "एंट्री",
   kidsTile_logsUnit_one: "एंट्री",
   kids_summary_sleepStarted: "{{time}} बजे शुरू",
+  meno_c_deleteTitle: "यह एंट्री हटाएँ?",
+  meno_c_deleteBody: "इस दिन से {{label}} हटा दिया जाएगा।",
+  meno_c_editA11y: "{{label}} बदलें",
+  meno_h_days_one: "दिन तुम्हारे आखिरी पीरियड के बाद",
+  meno_h_days_other: "दिन तुम्हारे आखिरी पीरियड के बाद",
 }

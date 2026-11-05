@@ -6076,4 +6076,9 @@ export const ja: TranslationKeys = {
   preg_analytics_logsShort: "件の記録",
   kidsTile_logsUnit_one: "件",
   kids_summary_sleepStarted: "{{time}}に開始",
+  meno_c_deleteTitle: "この記録を削除しますか?",
+  meno_c_deleteBody: "この日の「{{label}}」を削除します。",
+  meno_c_editA11y: "{{label}}を編集",
+  meno_h_days_one: "日（最後の生理から）",
+  meno_h_days_other: "日（最後の生理から）",
 }

@@ -19,11 +19,11 @@ import { Skeleton } from '../ui/Skeleton'
 import { useTranslation } from '../../lib/i18n'
 import type { AppLanguage } from '../../store/useLanguageStore'
 
-/** Short weekday label in the language: 2 letters for Latin scripts, the native short/narrow form otherwise. */
+/** Short weekday label: 3 letters for Latin scripts (2 is ambiguous — PT "SE" is both sexta and segunda), the native short/narrow form otherwise. */
 function weekdayShort(d: Date, language: AppLanguage): string {
   if (language === 'ar' || language === 'hi') return d.toLocaleDateString(language, { weekday: 'narrow' })
   const short = d.toLocaleDateString(language, { weekday: 'short' })
-  return language === 'ja' || language === 'ko' || language === 'zh' ? short : short.slice(0, 2)
+  return language === 'ja' || language === 'ko' || language === 'zh' ? short : short.replace(/\./g, '').slice(0, 3)
 }
 
 function localDateStr(d: Date): string {

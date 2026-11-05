@@ -9,6 +9,7 @@
  * trimester-aware tips. ScoreInfoModal explains how Wellbeing is computed.
  */
 
+import { shortDayMonth } from '../../lib/timeFormat'
 import { router } from 'expo-router'
 import { dateLoc } from '../../lib/kpLocale'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -473,7 +474,7 @@ function barDayLabels(dates: string[]): string[] {
   if (dates.length <= 14) return dates.map(shortDay)
   return dates.map((iso) => {
     const d = new Date(iso + 'T12:00:00')
-    return isNaN(d.getTime()) ? '' : `${d.getMonth() + 1}/${d.getDate()}`
+    return isNaN(d.getTime()) ? '' : shortDayMonth(d)
   })
 }
 

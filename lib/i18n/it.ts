@@ -6076,4 +6076,9 @@ export const it: TranslationKeys = {
   preg_analytics_logsShort: "voci",
   kidsTile_logsUnit_one: "voce",
   kids_summary_sleepStarted: "Iniziato alle {{time}}",
+  meno_c_deleteTitle: "Eliminare questa voce?",
+  meno_c_deleteBody: "{{label}} verrà rimosso da questo giorno.",
+  meno_c_editA11y: "Modifica {{label}}",
+  meno_h_days_one: "giorno dall'ultimo ciclo",
+  meno_h_days_other: "giorni dall'ultimo ciclo",
 }

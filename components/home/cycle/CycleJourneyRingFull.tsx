@@ -571,10 +571,10 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
       const info = getCycleInfo(cycleConfig, date)
       const jsDate = new Date(date + 'T12:00:00')
       const loc = appIntlLocale()
-      // Two letters for Latin scripts (Mo, Tu); Arabic uses the narrow form (the short form is long and
-      // shares a prefix); other scripts are already short.
+      // Three letters for Latin scripts (two is ambiguous: PT "Se" is both sexta and segunda); Arabic uses
+      // the narrow form (the short form is long and shares a prefix); other scripts are already short.
       const short = jsDate.toLocaleDateString(loc, { weekday: language === 'ar' ? 'narrow' : 'short' })
-      const wd = /^[A-Za-zÀ-ÿ]/.test(short) ? short.slice(0, 2) : short
+      const wd = /^[A-Za-zÀ-ÿ]/.test(short) ? short.replace(/\./g, '').slice(0, 3) : short
       out.push({
         date,
         dayOfMonth: jsDate.getDate(),

@@ -6076,4 +6076,9 @@ export const tr: TranslationKeys = {
   preg_analytics_logsShort: "kayıt",
   kidsTile_logsUnit_one: "kayıt",
   kids_summary_sleepStarted: "Başlangıç {{time}}",
+  meno_c_deleteTitle: "Bu kayıt silinsin mi?",
+  meno_c_deleteBody: "{{label}} bu günden kaldırılacak.",
+  meno_c_editA11y: "{{label}} düzenle",
+  meno_h_days_one: "gün son adetinden beri",
+  meno_h_days_other: "gün son adetinden beri",
 }

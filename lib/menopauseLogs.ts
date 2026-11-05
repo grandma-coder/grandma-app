@@ -49,3 +49,18 @@ export async function saveMenopauseLog(input: {
   if (error) throw error
   invalidateMenopauseLogQueries()
 }
+
+/** Remove a single-value entry (symptom or period) for one day. */
+export async function deleteMenopauseLog(date: string, type: string): Promise<void> {
+  const { data: s } = await supabase.auth.getSession()
+  const userId = s.session?.user.id
+  if (!userId) throw new Error('Not authenticated')
+  const { error } = await supabase
+    .from('menopause_logs')
+    .delete()
+    .eq('user_id', userId)
+    .eq('date', date)
+    .eq('type', type)
+  if (error) throw error
+  invalidateMenopauseLogQueries()
+}

@@ -18,6 +18,8 @@
  * blobs (never Lucide). Charts reuse the shared `SvgCharts` exports.
  */
 
+import { parseLocalDate } from '../../lib/localDate'
+import { shortDayMonth } from '../../lib/timeFormat'
 import { useMemo } from 'react'
 import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -40,7 +42,7 @@ import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useTheme } from '../../constants/theme'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
 import { TRIGGER_LABEL_KEY, countMenopauseTriggers } from '../../lib/menopauseTriggers'
-import { monthsSinceDate } from '../../lib/menopauseStage'
+import { monthsSinceDate, latestPeriodDate } from '../../lib/menopauseStage'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 import { ReportEntryRow } from '../../lib/reports/ReportEntryRow'
@@ -55,8 +57,7 @@ const MONTH_PIPS = 12
 
 /** 'YYYY-MM-DD' → 'M/D' short axis label. */
 function shortDate(iso: string): string {
-  const [, m, d] = iso.split('-')
-  return `${Number(m)}/${Number(d)}`
+  return shortDayMonth(parseLocalDate(iso))
 }
 
 /** Per-day mean severity for one log type, ordered by date. */
@@ -94,8 +95,9 @@ export function MenopauseAnalytics() {
   // Gate BOTH store fields on hydration — reading lastPeriodDate before the
   // AsyncStorage rehydrate lands would flash a wrong "months since" value.
   const stage = hydrated ? storeStage : null
-  const lastPeriodDate = hydrated ? storeLastPeriodDate : null
 
+  // Newest logged period wins over the stored onboarding date.
+  const lastPeriodDate = hydrated ? latestPeriodDate(rows, storeLastPeriodDate) : null
   const vaso = useMemo(() => computeVasomotorFrequency(rows), [rows])
   const symptomStats = useMemo(() => computeSymptomStats(rows), [rows])
   const sleepSeries = useMemo(() => severitySeries(rows, 'sleep'), [rows])

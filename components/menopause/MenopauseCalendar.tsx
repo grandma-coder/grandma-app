@@ -9,7 +9,9 @@
  * hues (like the home + cycle calendar); Character blobs for icons.
  */
 import { useMemo, useState } from 'react'
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from 'react-native'
+import { Trash2 } from 'lucide-react-native'
+import { deleteMenopauseLog } from '../../lib/menopauseLogs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { AgendaHeader } from '../calendar/AgendaHeader'
@@ -73,7 +75,8 @@ function entrySubtitle(row: MenopauseLogRow): string | null {
       ? tNow(`meno_c_flow_${row.value}` as const)
       : row.value
   }
-  if (row.severity != null) return tNow('meno_c_intensity', { n: row.severity })
+  // The same word the log form shows for that level ("Forte"), never a 4/5 grade.
+  if (row.severity != null) return tNow(`meno_f_sev_${Math.min(5, Math.max(1, Math.round(row.severity)))}` as Parameters<typeof tNow>[0])
   return null
 }
 
@@ -192,17 +195,40 @@ export function MenopauseCalendar() {
               <View style={{ marginTop: 6 }}>
                 {selectedLogs.map((row, i) => {
                   const sub = entrySubtitle(row)
+                  // Symptoms and periods are one row per day: tap re-opens the pre-filled form,
+                  // the bin removes it. Free notes stack, so they stay read-only here.
+                  const editable = row.type !== 'note'
+                  const label = entryTitle(row)
                   return (
-                    <View
+                    <Pressable
                       key={`${row.type}-${i}`}
-                      style={[styles.siteRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}
+                      disabled={!editable}
+                      onPress={() => onPick(row.type === 'period' ? 'period' : (row.type as MenopauseLogPick))}
+                      accessibilityRole={editable ? 'button' : undefined}
+                      accessibilityLabel={editable ? tNow('meno_c_editA11y', { label }) : label}
+                      style={({ pressed }) => [styles.siteRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }, pressed && { opacity: 0.6 }]}
                     >
                       <SiteSticker name={menoSticker(row.type)} size={38} />
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{entryTitle(row)}</Text>
+                        <Text numberOfLines={1} style={{ fontFamily: font.bodyBold, fontSize: 15, color: colors.text }}>{label}</Text>
                         {sub ? <Text numberOfLines={2} style={{ fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>{sub}</Text> : null}
                       </View>
-                    </View>
+                      {editable ? (
+                        <Pressable
+                          hitSlop={10}
+                          accessibilityRole="button"
+                          accessibilityLabel={tNow('common_delete')}
+                          onPress={() => Alert.alert(tNow('meno_c_deleteTitle'), tNow('meno_c_deleteBody', { label }), [
+                            { text: tNow('common_cancel'), style: 'cancel' },
+                            { text: tNow('common_delete'), style: 'destructive', onPress: () => {
+                              deleteMenopauseLog(row.date, row.type).catch(() => Alert.alert(tNow('common_error'), tNow('common_checkConnection')))
+                            } },
+                          ])}
+                        >
+                          <Trash2 size={18} color={colors.textSecondary} strokeWidth={2} />
+                        </Pressable>
+                      ) : null}
+                    </Pressable>
                   )
                 })}
               </View>

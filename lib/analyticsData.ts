@@ -3,6 +3,7 @@
  * and transforms them into chart-ready structures for KidsAnalytics.
  */
 
+import { shortDayMonth } from './timeFormat'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
 import { useChildStore } from '../store/useChildStore'
@@ -186,7 +187,7 @@ function getLastNDays(n: number, until?: Date): { dates: string[]; labels: strin
       const mo = d.toLocaleDateString(dateLoc(), { month: 'short' })
       labels.push(`${mo} ${d.getDate()}`)
     } else {
-      labels.push(i % stride === 0 ? `${d.getMonth() + 1}/${d.getDate()}` : '')
+      labels.push(i % stride === 0 ? shortDayMonth(d) : '')
     }
   }
   return { dates, labels }

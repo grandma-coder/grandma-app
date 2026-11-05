@@ -111,7 +111,7 @@ export function MenopauseWallet() {
   }))
 
   const SITE_STICKER: Record<MenoWalletId, SiteStickerName> = {
-    ask_grandma: 'bubble', reminders: 'bell', rewards: 'star', community: 'house',
+    ask_grandma: 'bubble', reminders: 'bell', rewards: 'star', community: 'globe',
   }
 
   // Site look: heading + edit on one row, shortcuts as a sticker tile grid.

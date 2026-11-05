@@ -6079,4 +6079,9 @@ export const ptBR: TranslationKeys = {
   preg_analytics_logsShort: "registros",
   kidsTile_logsUnit_one: "registro",
   kids_summary_sleepStarted: "Começou às {{time}}",
+  meno_c_deleteTitle: "Apagar este registro?",
+  meno_c_deleteBody: "{{label}} será removido deste dia.",
+  meno_c_editA11y: "Editar {{label}}",
+  meno_h_days_one: "dia desde sua última menstruação",
+  meno_h_days_other: "dias desde sua última menstruação",
 }

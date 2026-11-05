@@ -6076,4 +6076,9 @@ export const de: TranslationKeys = {
   preg_analytics_logsShort: "Einträge",
   kidsTile_logsUnit_one: "Eintrag",
   kids_summary_sleepStarted: "Beginn {{time}}",
+  meno_c_deleteTitle: "Diesen Eintrag löschen?",
+  meno_c_deleteBody: "{{label}} wird von diesem Tag entfernt.",
+  meno_c_editA11y: "{{label}} bearbeiten",
+  meno_h_days_one: "Tag seit deiner letzten Periode",
+  meno_h_days_other: "Tage seit deiner letzten Periode",
 }

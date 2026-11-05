@@ -6076,4 +6076,9 @@ export const zh: TranslationKeys = {
   preg_analytics_logsShort: "条记录",
   kidsTile_logsUnit_one: "条",
   kids_summary_sleepStarted: "{{time}} 开始",
+  meno_c_deleteTitle: "删除这条记录?",
+  meno_c_deleteBody: "将从这一天移除「{{label}}」。",
+  meno_c_editA11y: "编辑{{label}}",
+  meno_h_days_one: "天（距上次月经）",
+  meno_h_days_other: "天（距上次月经）",
 }

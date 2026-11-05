@@ -6076,4 +6076,9 @@ export const ko: TranslationKeys = {
   preg_analytics_logsShort: "건 기록",
   kidsTile_logsUnit_one: "건",
   kids_summary_sleepStarted: "{{time}}에 시작",
+  meno_c_deleteTitle: "이 기록을 삭제할까요?",
+  meno_c_deleteBody: "이 날의 {{label}} 기록이 삭제돼요.",
+  meno_c_editA11y: "{{label}} 수정",
+  meno_h_days_one: "일 (마지막 생리 이후)",
+  meno_h_days_other: "일 (마지막 생리 이후)",
 }

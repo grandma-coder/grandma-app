@@ -6377,4 +6377,9 @@ export const en: TranslationKeys = {
   preg_analytics_logsShort: "logs",
   kidsTile_logsUnit_one: "log",
   kids_summary_sleepStarted: "Started {{time}}",
+  meno_c_deleteTitle: "Delete this entry?",
+  meno_c_deleteBody: "{{label}} will be removed from this day.",
+  meno_c_editA11y: "Edit {{label}}",
+  meno_h_days_one: "day since your last period",
+  meno_h_days_other: "days since your last period",
 }

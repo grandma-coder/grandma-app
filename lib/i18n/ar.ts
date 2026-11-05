@@ -6076,4 +6076,9 @@ export const ar: TranslationKeys = {
   preg_analytics_logsShort: "تسجيلات",
   kidsTile_logsUnit_one: "تسجيل",
   kids_summary_sleepStarted: "بدأ في {{time}}",
+  meno_c_deleteTitle: "حذف هذا التسجيل؟",
+  meno_c_deleteBody: "ستتم إزالة {{label}} من هذا اليوم.",
+  meno_c_editA11y: "تعديل {{label}}",
+  meno_h_days_one: "يوم منذ آخر دورة",
+  meno_h_days_other: "أيام منذ آخر دورة",
 }

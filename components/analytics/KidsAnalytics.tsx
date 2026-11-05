@@ -13,6 +13,7 @@
  *  9. Ask Grandma passes full analytics context automatically
  */
 
+import { shortDayMonth } from '../../lib/timeFormat'
 import { dateLoc } from '../../lib/kpLocale'
 import { fmt1 } from '../../lib/grandmaNotes/shared'
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
@@ -1436,12 +1437,12 @@ export function KidsAnalytics() {
           </FullScreenChart>
           {analytics.growth.weights.length >= 2 && (
             <FullScreenChart visible={fullScreen === 'weight'} title={t('kids_analytics_chart_weight')} onClose={() => setFullScreen(null)}>
-              <LineChart data={analytics.growth.weights.map((w) => w.value)} labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={PILLAR_CONFIG.health.color} width={SCREEN_W - 48} height={220} unit="kg" showAverage />
+              <LineChart data={analytics.growth.weights.map((w) => w.value)} labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return shortDayMonth(d) })} color={PILLAR_CONFIG.health.color} width={SCREEN_W - 48} height={220} unit="kg" showAverage />
             </FullScreenChart>
           )}
           {analytics.growth.heights.length >= 2 && (
             <FullScreenChart visible={fullScreen === 'height'} title={t('kids_analytics_chart_height')} onClose={() => setFullScreen(null)}>
-              <LineChart data={analytics.growth.heights.map((h) => h.value)} labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })} color={PILLAR_CONFIG.growth.color} width={SCREEN_W - 48} height={220} unit="cm" showAverage />
+              <LineChart data={analytics.growth.heights.map((h) => h.value)} labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return shortDayMonth(d) })} color={PILLAR_CONFIG.growth.color} width={SCREEN_W - 48} height={220} unit="cm" showAverage />
             </FullScreenChart>
           )}
         </>
@@ -3816,14 +3817,14 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               {diffuse ? (
                 <MilestoneTrail
                   data={analytics.growth.weights.map((w) => w.value)}
-                  labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return shortDayMonth(d) })}
                   color={stickers.yellow}
                   accent={getDiffuseAccent('kids', dt.isDark)}
                 />
               ) : (
                 <LineChart
                   data={analytics.growth.weights.map((w) => w.value)}
-                  labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  labels={analytics.growth.weights.map((w) => { const d = parseLocalDate(w.date); return shortDayMonth(d) })}
                   color={PILLAR_CONFIG.health.color}
                   width={chartW}
                   unit="kg"
@@ -3837,14 +3838,14 @@ function PillarDetail({ pillarKey, analytics, chartW, onFullScreen, childName, a
               {diffuse ? (
                 <MilestoneTrail
                   data={analytics.growth.heights.map((h) => h.value)}
-                  labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return shortDayMonth(d) })}
                   color={stickers.green}
                   accent={getDiffuseAccent('kids', dt.isDark)}
                 />
               ) : (
                 <LineChart
                   data={analytics.growth.heights.map((h) => h.value)}
-                  labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return `${d.getMonth() + 1}/${d.getDate()}` })}
+                  labels={analytics.growth.heights.map((h) => { const d = parseLocalDate(h.date); return shortDayMonth(d) })}
                   color={PILLAR_CONFIG.growth.color}
                   width={chartW}
                   unit="cm"

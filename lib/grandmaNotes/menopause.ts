@@ -102,7 +102,7 @@ export function buildMenopauseNote(input: MenopauseNoteInput, t: Translate): Gra
   }
 
   // Months since the last period — a gentle anchor, lowest priority.
-  if (input.monthsSincePeriod != null && input.monthsSincePeriod >= 0) {
+  if (input.monthsSincePeriod != null && input.monthsSincePeriod >= 1) {
     const m = input.monthsSincePeriod
     c.push({ id: 'months', sticker: 'moon2', weight: 1, title: t('gn_meno_months_title'), body: t(m === 1 ? 'gn_meno_months_body_one' : 'gn_meno_months_body_other', { count: m }) })
   }

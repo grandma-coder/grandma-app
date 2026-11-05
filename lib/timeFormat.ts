@@ -11,3 +11,8 @@ export function clockLabel(hhmm: string): string {
 export function hourLabel(h: number): string {
   return new Date(2000, 0, 1, h, 0).toLocaleTimeString(dateLoc(), { hour: 'numeric' })
 }
+
+/** Compact day + month in the app language ("9/21" en, "21/09" pt-BR) for chart axes. */
+export function shortDayMonth(d: Date): string {
+  return d.toLocaleDateString(dateLoc(), { day: 'numeric', month: 'numeric' })
+}

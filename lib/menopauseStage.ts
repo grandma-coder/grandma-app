@@ -28,3 +28,13 @@ export function shouldOfferMenopauseUpdate(
   const months = monthsSinceDate(lastPeriodISO, now)
   return months !== null && months >= 12
 }
+
+/**
+ * The most recent period: the newest logged 'period' row or the stored onboarding date, whichever is
+ * later. The stored date alone misses periods logged on another device or before a reinstall.
+ */
+export function latestPeriodDate(rows: { type: string; date: string }[], stored: string | null): string | null {
+  let best = stored
+  for (const r of rows) if (r.type === 'period' && (!best || r.date > best)) best = r.date
+  return best
+}

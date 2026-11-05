@@ -6378,4 +6378,9 @@ export interface TranslationKeys {
   preg_analytics_logsShort: string
   kidsTile_logsUnit_one: string
   kids_summary_sleepStarted: string
+  meno_c_deleteTitle: string
+  meno_c_deleteBody: string
+  meno_c_editA11y: string
+  meno_h_days_one: string
+  meno_h_days_other: string
 }

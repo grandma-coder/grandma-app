@@ -6079,4 +6079,9 @@ export const es: TranslationKeys = {
   preg_analytics_logsShort: "registros",
   kidsTile_logsUnit_one: "registro",
   kids_summary_sleepStarted: "Empezó a las {{time}}",
+  meno_c_deleteTitle: "¿Borrar este registro?",
+  meno_c_deleteBody: "{{label}} se quitará de este día.",
+  meno_c_editA11y: "Editar {{label}}",
+  meno_h_days_one: "día desde tu última regla",
+  meno_h_days_other: "días desde tu última regla",
 }
