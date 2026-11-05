@@ -33,6 +33,9 @@ import { StickerButton } from '../../ui/StickerButton'
 import { InkBackButton } from '../../ui/InkBackButton'
 import { SiteChoice } from '../../ui/SiteChoice'
 import { useTranslation } from '../../../lib/i18n'
+import { FadeIn, FadeUp } from '../../ui/Motion'
+import { SiteSticker } from '../../stickers/SiteSticker'
+import { dailyDisplayFace } from '../../../lib/dailyMessage/typeface'
 
 interface Props {
   visible: boolean
@@ -60,6 +63,8 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
   const { t } = useTranslation()
 
   const templates = useMemo(() => templatesForMode(mode), [mode])
+  const toneSoft = getModeColorSoft(mode === 'prePreg' ? 'pre-pregnancy' : 'pregnancy')
+  const titleFace = dailyDisplayFace(t('pregnancy_shareAffirmation'))
 
   const { stickers } = useTheme()
   // Sheet-chrome canvas: reskin under Diffuse. Tile socket (cardBg/borderCol)
@@ -99,54 +104,58 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
     <Modal visible={visible} presentationStyle="pageSheet" animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <SafeAreaView style={[styles.container, { backgroundColor: paperBg }]} edges={['top']}>
 
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: chromeBorder }]}>
-          {diffuse ? (
-            <PillButton
-              label={t('common_close')}
-              onPress={onClose}
-              variant="paper"
-              height={38}
-              style={styles.headerSideBtn}
-            />
-          ) : (
-            <View style={styles.headerSideBtn}>
-              <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
+        {diffuse ? (
+          <>
+            {/* Header (Diffuse — unchanged) */}
+            <View style={[styles.header, { borderBottomColor: chromeBorder }]}>
+              <PillButton
+                label={t('common_close')}
+                onPress={onClose}
+                variant="paper"
+                height={38}
+                style={styles.headerSideBtn}
+              />
+              <View style={styles.headerCenter}>
+                <Text style={[styles.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]} numberOfLines={1}>
+                  {t('pregnancy_shareAffirmation')}
+                </Text>
+              </View>
+              <PillButton
+                label={t('affirmationShare_share')}
+                onPress={handleHeaderShare}
+                variant="ink"
+                height={38}
+                style={styles.headerSideBtn}
+              />
             </View>
-          )}
-          <View style={styles.headerCenter}>
-            <Text
-              style={[
-                styles.headerTitle,
-                diffuse
-                  ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
-                  : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 },
-              ]}
-              numberOfLines={1}
-            >
-              {t('pregnancy_shareAffirmation')}
+            <Text style={[styles.instructions, { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 11 }]}>
+              {styleMode === 'text' ? t('affirmationShare_hintTextOnly') : t('affirmationShare_hintWithBg')}
             </Text>
-          </View>
-          <PillButton
-            label={t('affirmationShare_share')}
-            onPress={handleHeaderShare}
-            variant="ink"
-            height={38}
-            style={styles.headerSideBtn}
-          />
-        </View>
-
-        {/* Instruction line */}
-        <Text
-          style={[
-            styles.instructions,
-            diffuse
-              ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 11 }
-              : { color: colors.textSecondary, fontFamily: font.body },
-          ]}
-        >
-          {styleMode === 'text' ? t('affirmationShare_hintTextOnly') : t('affirmationShare_hintWithBg')}
-        </Text>
+          </>
+        ) : (
+          <FadeIn>
+            {/* Site look: close + share on one row, the title on its own line
+                below so it never truncates in long languages. */}
+            <View style={styles.siteTopRow}>
+              <InkBackButton onPress={onClose} ink={colors.text} paper={colors.surface} icon="close" label={t('common_close')} style={{ marginBottom: 0 }} />
+              <PillButton label={t('affirmationShare_share')} onPress={handleHeaderShare} variant="ink" height={44} style={{ minWidth: 120 }} />
+            </View>
+            <View style={styles.siteTitleRow}>
+              <SiteSticker name="pola" size={34} cut />
+              <Text
+                style={[styles.siteTitle, { color: colors.text, fontFamily: titleFace.fontFamily, fontWeight: titleFace.fontWeight, lineHeight: Math.round(26 * titleFace.lineRatio) }]}
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+              >
+                {t('pregnancy_shareAffirmation')}
+              </Text>
+            </View>
+            <Text style={[styles.siteHint, { color: colors.textSecondary, fontFamily: font.body }]}>
+              {styleMode === 'text' ? t('affirmationShare_hintTextOnly') : t('affirmationShare_hintWithBg')}
+            </Text>
+          </FadeIn>
+        )}
 
         {/* Background / text-only toggle */}
         <View style={styles.toggleWrap}>
@@ -181,7 +190,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
                 label={t('affirmationShare_withBackground')}
                 selected={styleMode === 'bg'}
                 onPress={() => setStyleMode('bg')}
-                tone={getModeColorSoft('pregnancy')}
+                tone={toneSoft}
                 sticker="pola"
                 compact
                 style={styles.toggleBtn}
@@ -190,7 +199,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
                 label={t('affirmationShare_textOnly')}
                 selected={styleMode === 'text'}
                 onPress={() => setStyleMode('text')}
-                tone={getModeColorSoft('pregnancy')}
+                tone={toneSoft}
                 sticker="pencil"
                 compact
                 style={styles.toggleBtn}
@@ -201,20 +210,24 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
 
         {/* Tile grid */}
         <ScrollView contentContainerStyle={styles.grid}>
-          {templates.map((t) => (
-            <TemplateTile
-              key={t.id}
-              meta={t}
-              phrase={phrase}
-              styleMode={styleMode}
-              cardBg={cardBg}
-              borderCol={borderCol}
-              colors={colors}
-              font={font}
-              isDark={isDark}
-              registerRef={(r) => { shotRefs.current[t.id] = r }}
-            />
-          ))}
+          {templates.map((tpl, i) => {
+            const tile = (
+              <TemplateTile
+                key={tpl.id}
+                meta={tpl}
+                phrase={phrase}
+                styleMode={styleMode}
+                cardBg={cardBg}
+                borderCol={borderCol}
+                colors={colors}
+                font={font}
+                isDark={isDark}
+                registerRef={(r) => { shotRefs.current[tpl.id] = r }}
+              />
+            )
+            // Site look: tiles rise in, staggered (Reduce Motion → in place).
+            return diffuse ? tile : <FadeUp key={tpl.id} index={i} delay={80}>{tile}</FadeUp>
+          })}
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -429,6 +442,32 @@ const styles = StyleSheet.create({
     fontSize: 19,
     letterSpacing: -0.3,
     textAlign: 'center',
+  },
+  siteTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  siteTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
+  siteTitle: {
+    flex: 1,
+    fontSize: 26,
+    letterSpacing: 0.2,
+  },
+  siteHint: {
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 20,
+    marginTop: 6,
+    marginBottom: 14,
   },
   instructions: {
     textAlign: 'center',

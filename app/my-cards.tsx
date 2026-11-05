@@ -12,7 +12,7 @@ import { CardSticker } from '../components/home/pregnancy/CardSticker'
 import { useDailyMessage, type DailyMessageRow } from '../lib/dailyMessage/useDailyMessage'
 import { useTranslation } from '../lib/i18n'
 import { dateLoc } from '../lib/kpLocale'
-import { getCardById } from '../lib/dailyMessage'
+import { getCardById, localizeCard } from '../lib/dailyMessage'
 import type { DailyCard } from '../lib/dailyMessage'
 import { CenterModal } from '../components/ui/CenterModal'
 
@@ -31,7 +31,7 @@ function fmtDate(iso: string): string {
 
 export default function MyCardsScreen() {
   const insets = useSafeAreaInsets()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const theme = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -47,14 +47,17 @@ export default function MyCardsScreen() {
   const { collection } = useDailyMessage()
   const [openId, setOpenId] = useState<string | null>(null)
 
+  // Card text in the app language (content/<lang>.ts), falling back to English.
   const cards: CollectionItem[] = collection.reduce<CollectionItem[]>((acc, row) => {
     const card = getCardById(row.card_id)
-    if (card) acc.push({ row, card })
+    if (card) acc.push({ row, card: localizeCard(card, language) })
     return acc
   }, [])
 
-  const open = openId ? getCardById(openId) ?? null : null
-  const openDate = open ? collection.find((r) => r.card_id === open.id)?.date ?? '' : ''
+  // Opened by ROW id: the same card can be drawn on two different days.
+  const openItem = openId ? cards.find((x) => x.row.id === openId) ?? null : null
+  const open = openItem?.card ?? null
+  const openDate = openItem?.row.date ?? ''
   // Keep the last opened card so its content survives the exit animation.
   const lastShown = useRef<{ card: NonNullable<typeof open>; date: string } | null>(null)
   if (open) lastShown.current = { card: open, date: openDate }
@@ -107,7 +110,7 @@ export default function MyCardsScreen() {
         contentContainerStyle={{ gap: 12, padding: 20 }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <Pressable style={{ flex: 1 }} onPress={() => setOpenId(item.card.id)}>
+          <Pressable style={{ flex: 1 }} onPress={() => setOpenId(item.row.id)}>
             <View style={styles.tile}>
               <CardSticker color={item.card.color} size={38} mode={item.card.mode} />
               <Display size={16} style={styles.tileText} numberOfLines={4}>{item.card.text}</Display>

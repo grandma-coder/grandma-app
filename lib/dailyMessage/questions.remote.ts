@@ -16,6 +16,18 @@ type Bank = Record<JourneyMode, DailyQuestion[]>
 
 let cache: Bank | null = null
 
+// Bumped whenever the cache changes, so useDailyMessage re-picks today's
+// question once the DB bank lands (instead of keeping a pre-hydration pick).
+let version = 0
+const listeners = new Set<() => void>()
+export function subscribeRemoteQuestions(fn: () => void): () => void {
+  listeners.add(fn)
+  return () => { listeners.delete(fn) }
+}
+export function getRemoteQuestionsVersion(): number {
+  return version
+}
+
 interface Row {
   id: string
   mode: string
@@ -66,6 +78,8 @@ export async function hydrateDailyQuestions(): Promise<void> {
     // Only publish a mode's bank if the DB actually returned questions for it —
     // an empty DB mode must not shadow a populated hardcoded bank.
     cache = next
+    version++
+    listeners.forEach((fn) => fn())
   } catch {
     // swallow — fallback to bundled arrays
   }

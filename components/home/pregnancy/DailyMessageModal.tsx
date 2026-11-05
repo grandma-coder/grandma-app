@@ -13,6 +13,9 @@ import { SiteChoice } from '../../ui/SiteChoice'
 import { FadeUp } from '../../ui/Motion'
 import { useDailyMessage } from '../../../lib/dailyMessage/useDailyMessage'
 import { matchCard } from '../../../lib/dailyMessage/matcher'
+import { localizeCard } from '../../../lib/dailyMessage/localize'
+import { dailyDisplayFace } from '../../../lib/dailyMessage/typeface'
+import { useModeStore } from '../../../store/useModeStore'
 import { DailyMessageDeck } from './DailyMessageDeck'
 import { AffirmationShareModal } from './AffirmationShareModal'
 import type { DailyCard } from '../../../lib/dailyMessage/types'
@@ -20,7 +23,8 @@ import type { DailyCard } from '../../../lib/dailyMessage/types'
 interface Props { visible: boolean; onClose: () => void }
 
 export function DailyMessageModal({ visible, onClose }: Props) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  const mode = useModeStore((s) => s.mode)
   const insets = useSafeAreaInsets()
   const theme = useTheme()
   const diffuse = useIsDiffuse()
@@ -34,31 +38,46 @@ export function DailyMessageModal({ visible, onClose }: Props) {
   const [phase, setPhase] = useState<'question' | 'reveal'>('question')
   const [deck, setDeck] = useState<DailyCard[]>([])
   const [shareCard, setShareCard] = useState<DailyCard | null>(null)
+  const [picked, setPicked] = useState<number | null>(null)
 
-  // If already answered when opened, jump straight to the saved card.
+  // If already answered when opened, jump straight to the saved card. Only
+  // (re)build when the top card actually changes — the post-answer cache
+  // update must not reshuffle the peeks or replay the reveal.
   useEffect(() => {
-    if (!visible) { setPhase('question'); setDeck([]); return }
-    if (isAnswered && todayCard) { buildDeck(todayCard); setPhase('reveal') }
+    if (!visible) { setPhase('question'); setDeck([]); setPicked(null); return }
+    if (isAnswered && todayCard) { showDeck(todayCard); setPhase('reveal') }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, isAnswered, todayCard])
 
-  function buildDeck(top: DailyCard) {
-    // top card + 2 decorative peek cards from the same tags, excluding the top.
-    const p1 = matchCard(top.tags, top.mode, { exclude: [top.id] })
-    const p2 = matchCard(top.tags, top.mode, { exclude: [top.id, p1.id] })
-    setDeck([top, p1, p2])
+  // top card + 2 decorative peek cards from the same tags, excluding the top.
+  // A no-op when that top card is already showing (the answer resolves AND the
+  // cache updates — only the first one builds the deck).
+  function showDeck(top: DailyCard) {
+    setDeck((d) => {
+      if (d[0]?.id === top.id) return d
+      const p1 = matchCard(top.tags, top.mode, { exclude: [top.id] })
+      const p2 = matchCard(top.tags, top.mode, { exclude: [top.id, p1.id] })
+      return [top, localizeCard(p1, language), localizeCard(p2, language)]
+    })
   }
 
   async function pick(optionIndex: number) {
+    if (isSaving || picked !== null) return
+    setPicked(optionIndex)
     try {
       const card = await answer(optionIndex)
-      buildDeck(card)
+      showDeck(card)
       setPhase('reveal')
     } catch {
+      setPicked(null)
       Alert.alert(t('sw1_common_somethingWrong'), t('sw1_daily_saveFail'))
     }
   }
 
   if (!todayQuestion) return null
+  const promptFace = dailyDisplayFace(todayQuestion.prompt)
+  const promptSize = todayQuestion.prompt.length > 70 ? 24 : 28
+  const tone = getModeColorSoft(mode === 'pregnancy' ? 'pregnancy' : 'pre-pregnancy')
 
   return (
     <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
@@ -76,17 +95,28 @@ export function DailyMessageModal({ visible, onClose }: Props) {
             {diffuse ? (
               <MonoCaps color={colors.textMuted}>{t('sw1_daily_eyebrow')}</MonoCaps>
             ) : (
-              <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('sw1_daily_eyebrow')}</Text>
+              <FadeUp>
+                <Text style={[styles.eyebrow, { color: colors.textMuted, fontFamily: theme.font.bodySemiBold }]}>{t('sw1_daily_eyebrow')}</Text>
+              </FadeUp>
             )}
             {diffuse ? (
               <Display size={30} style={styles.qPrompt}>{todayQuestion.prompt}</Display>
             ) : (
-              <Text style={[styles.qPromptLight, { color: colors.text, fontFamily: theme.font.display }]}>{todayQuestion.prompt}</Text>
+              <FadeUp index={1}>
+                <Text
+                  style={[styles.qPromptLight, {
+                    color: colors.text, fontSize: promptSize, lineHeight: Math.round(promptSize * promptFace.lineRatio),
+                    letterSpacing: promptFace.letterSpacing, fontFamily: promptFace.fontFamily, fontWeight: promptFace.fontWeight,
+                  }]}
+                >
+                  {todayQuestion.prompt}
+                </Text>
+              </FadeUp>
             )}
             <View style={{ gap: 10, marginTop: 28 }}>
               {todayQuestion.options.map((o, i) => diffuse ? (
                 <Pressable
-                  key={o.label}
+                  key={i}
                   disabled={isSaving}
                   onPress={() => pick(i)}
                   style={({ pressed }) => [
@@ -98,15 +128,15 @@ export function DailyMessageModal({ visible, onClose }: Props) {
                   <ArrowRight size={16} color={colors.textMuted} strokeWidth={2} />
                 </Pressable>
               ) : (
-                <FadeUp key={o.label} index={i}>
+                <FadeUp key={i} index={i + 2}>
                   <SiteChoice
                     label={o.label}
-                    selected={false}
-                    onPress={() => { if (!isSaving) pick(i) }}
-                    tone={getModeColorSoft('pregnancy')}
+                    selected={picked === i}
+                    onPress={() => pick(i)}
+                    tone={tone}
                     align="start"
-                    tick={false}
-                    style={{ opacity: isSaving ? 0.5 : 1 }}
+                    tick={picked === i}
+                    style={{ opacity: picked !== null && picked !== i ? 0.45 : 1 }}
                   />
                 </FadeUp>
               ))}
@@ -114,22 +144,36 @@ export function DailyMessageModal({ visible, onClose }: Props) {
           </ScrollView>
         ) : (
           <View style={{ flex: 1, paddingTop: 20 }}>
-            <View style={{ alignItems: 'center', marginBottom: 4 }}>
-              {diffuse ? (
+            {diffuse ? (
+              <View style={{ alignItems: 'center', marginBottom: 4 }}>
                 <MonoCaps color={colors.textMuted}>{t('sw1_daily_todayEyebrow')}</MonoCaps>
-              ) : (
-                <Text style={[styles.eyebrow, { color: colors.textMuted }]}>{t('sw1_daily_todayEyebrow')}</Text>
-              )}
-            </View>
+              </View>
+            ) : (
+              <FadeUp style={{ alignItems: 'center', marginBottom: 10 }}>
+                <Text style={[styles.eyebrow, { color: colors.textMuted, fontFamily: theme.font.bodySemiBold, textAlign: 'center' }]}>{t('sw1_daily_todayEyebrow')}</Text>
+              </FadeUp>
+            )}
             <DailyMessageDeck cards={deck} />
-            <View style={styles.actions}>
-              <View style={{ flex: 1 }}>
-                <PillButton label={t('sw1_common_share')} variant="paper" onPress={() => setShareCard(deck[0])} />
+            {diffuse ? (
+              <View style={styles.actions}>
+                <View style={{ flex: 1 }}>
+                  <PillButton label={t('sw1_common_share')} variant="paper" onPress={() => setShareCard(deck[0])} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <PillButton label={t('common_done')} variant="ink" onPress={onClose} />
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <PillButton label={t('common_done')} variant="ink" onPress={onClose} />
-              </View>
-            </View>
+            ) : (
+              // Actions rise in after the card has landed.
+              <FadeUp delay={420} style={styles.actions}>
+                <View style={{ flex: 1 }}>
+                  <PillButton label={t('sw1_common_share')} variant="paper" onPress={() => setShareCard(deck[0])} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <PillButton label={t('common_done')} variant="ink" onPress={onClose} />
+                </View>
+              </FadeUp>
+            )}
           </View>
         )}
       </View>
@@ -148,8 +192,8 @@ const styles = StyleSheet.create({
   fill: { flex: 1, paddingHorizontal: 24 },
   close: { alignSelf: 'flex-end', width: 38, height: 38, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   qBody: { paddingTop: 20, paddingBottom: 40 },
-  eyebrow: { fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' },
-  qPromptLight: { fontSize: 28, lineHeight: 35, letterSpacing: 0.3, textTransform: 'uppercase', marginTop: 12 },
+  eyebrow: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' },
+  qPromptLight: { marginTop: 12 },
   qPrompt: { lineHeight: 37, letterSpacing: -0.5, marginTop: 12 },
   option: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: radius.md, paddingVertical: 18, paddingHorizontal: 20 },
   optionText: { fontFamily: font.bodySemiBold, fontSize: 16, letterSpacing: -0.2 },

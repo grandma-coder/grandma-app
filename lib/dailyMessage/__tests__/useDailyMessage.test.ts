@@ -22,3 +22,15 @@ describe('resolveAnswer', () => {
     expect(card.id.startsWith('pc_')).toBe(true)
   })
 })
+
+describe('resolveAnswer — no duplicate cards', () => {
+  it('never re-draws a card she already owns while unowned cards remain', () => {
+    const q = PREGNANCY_QUESTIONS[0]
+    const owned: string[] = []
+    for (let i = 0; i < 25; i++) {
+      const card = resolveAnswer(q, i % q.options.length, owned)
+      expect(owned).not.toContain(card.id)
+      owned.push(card.id)
+    }
+  })
+})
