@@ -1236,6 +1236,12 @@ export function Candlesticks({
   const up = upColor ?? stickers.green
   const down = downColor ?? stickers.coral
   const n = data.length
+  const totalDur = 520 + n * 60
+  const phase = useSharedValue(0)
+  useEffect(() => {
+    phase.value = 0
+    phase.value = withTiming(1, { duration: totalDur, easing: Easing.out(Easing.cubic) })
+  }, [n])
   if (n === 0) return null
 
   const values = data.flatMap((d) => [d.l, d.h, d.o, d.c])
@@ -1245,13 +1251,6 @@ export function Candlesticks({
 
   const padX = 12
   const colW = (200 - padX * 2) / n
-
-  const totalDur = 520 + n * 60
-  const phase = useSharedValue(0)
-  useEffect(() => {
-    phase.value = 0
-    phase.value = withTiming(1, { duration: totalDur, easing: Easing.out(Easing.cubic) })
-  }, [n])
 
   return (
     <View style={{ height, width: '100%' }}>

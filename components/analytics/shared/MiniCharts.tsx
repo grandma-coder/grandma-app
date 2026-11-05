@@ -1203,6 +1203,8 @@ export function BrickColumns({
   maxBricks?: number     // cap the visible stack; overflow compresses
   height?: number
 }) {
+  const { colors } = useTheme()
+  const dt = useDiffuseTheme()
   if (data.length === 0) return <EmptyChart height={height} />
   // Per-day series over a long window (30/90/365 days) has too many columns to
   // draw — the width math underflows and nothing renders. Bucket to a legible
@@ -1210,8 +1212,6 @@ export function BrickColumns({
   const bucketed = bucketSeries(data, labels, 13)
   data = bucketed.data
   labels = bucketed.labels
-  const { colors } = useTheme()
-  const dt = useDiffuseTheme()
   const w = CW, n = data.length
   const labelH = labels ? 20 : 0
   const plotH = height - labelH
@@ -1320,8 +1320,8 @@ export function MilestoneTrail({
   height?: number
 }) {
   const clean = data.filter((v) => Number.isFinite(v))
-  if (clean.length < 2) return <EmptyChart height={height} />
   const dt = useDiffuseTheme()
+  if (clean.length < 2) return <EmptyChart height={height} />
   const w = CW, padX = 22, labelH = labels ? 20 : 0
   const plotH = height - labelH
   const top = 22, bottom = plotH - 14

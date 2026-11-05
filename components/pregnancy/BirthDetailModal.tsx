@@ -82,6 +82,10 @@ export function BirthDetailModal({
     setOpenIndex(null)
   }, [topicKey, visible])
 
+  // Behind the remote grandma_chat flag (command center): off = no Ask Grandma CTA.
+  // Called before the early return so the hook order never changes between renders.
+  const chatOn = useGrandmaChatEnabled()
+
   if (!topicKey) return null
   const topic = getBirthTopic(topicKey)
   const renderSticker = TOPIC_STICKER[topicKey]
@@ -100,9 +104,6 @@ export function BirthDetailModal({
     setOpenIndex(null)
     onClose()
   }
-
-  // Behind the remote grandma_chat flag (command center): off = no Ask Grandma CTA.
-  const chatOn = useGrandmaChatEnabled()
 
   const handleAskGrandma = () => {
     handleClose()
