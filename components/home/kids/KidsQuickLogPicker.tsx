@@ -7,6 +7,9 @@ import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { useTheme } from '../../../constants/theme'
 import { Character, type CharacterName } from '../../characters/Characters'
+import { SiteSticker } from '../../stickers/SiteSticker'
+import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
+import { KIDS_LOG_STICKER } from '../../../lib/logStickers'
 import { QuickLogPickerGrid, type QuickLogGridItem } from '../QuickLogPickerGrid'
 import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
@@ -40,6 +43,7 @@ function characterFor(
 
 export function KidsQuickLogPicker({ visible, onClose }: Props) {
   const { stickers } = useTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const enabledKeys = useKidsQuickLogStore((s) => s.enabledKeys)
   const setEnabled = useKidsQuickLogStore((s) => s.setEnabled)
@@ -68,8 +72,8 @@ export function KidsQuickLogPicker({ visible, onClose }: Props) {
     return {
       key: q.key,
       label: t(q.labelKey),
-      icon: <Character name={c.name} size={24} color={c.hue} />,
-      socketTint: c.soft,
+      icon: diffuse ? <Character name={c.name} size={24} color={c.hue} /> : <SiteSticker name={KIDS_LOG_STICKER[q.logType] ?? 'star'} size={30} cut />,
+      socketTint: diffuse ? c.soft : 'transparent',
       selected: draft.includes(q.key),
       onToggle: () => toggleDraft(q.key),
     }

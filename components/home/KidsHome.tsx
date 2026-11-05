@@ -865,13 +865,15 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     // Insert a Supabase notification so the reminder also shows in the feed.
     try {
       const bodyParts: string[] = []
-      if (dueDate) bodyParts.push(`Due ${dueDate}`)
-      if (dueTime) bodyParts.push(`at ${formatTime12h(dueTime)}`)
+      const dueLabel = dueDate ? parseLocalDate(dueDate).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' }) : ''
+      if (dueDate && dueTime) bodyParts.push(tNow('kids_reminder_bodyDueAt', { date: dueLabel, time: formatTime12h(dueTime) }))
+      else if (dueDate) bodyParts.push(tNow('kids_reminder_bodyDue', { date: dueLabel }))
+      else if (dueTime) bodyParts.push(tNow('kids_reminder_bodyAt', { time: formatTime12h(dueTime) }))
       const { data } = await supabase.from('notifications').insert({
         user_id: session.user.id,
         type: 'reminder',
         title: newReminderText.trim(),
-        body: bodyParts.length ? bodyParts.join(' ') : 'No due date',
+        body: bodyParts.length ? bodyParts.join(' ') : tNow('kids_reminder_bodyNone'),
         data: { childId: child?.id, dueDate, dueTime },
         is_read: false,
       }).select('id').single()
@@ -3365,7 +3367,7 @@ function MoodCard({ moodCounts, dominantMood }: { moodCounts: Record<string, num
   const moods = ['happy', 'calm', 'energetic', 'fussy', 'cranky']
   const maxCount = Math.max(...Object.values(moodCounts), 1)
   const hasMoods = Object.values(moodCounts).some((v) => v > 0)
-  const dominantLabel = MOOD_LABELS[dominantMood] || 'No data'
+  const dominantLabel = MOOD_LABELS[dominantMood] || t('kp_kh_noData')
 
   // Pastel-soft yellow tile (sticker palette)
   const tileBg = isDark ? 'rgba(245,214,82,0.16)' : '#FBEA9E'
@@ -4905,9 +4907,9 @@ function BreastfeedingInsights({
       {(avgMin > 0 || perDay > 0) && (
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {[
-            { label: 'Avg Session', value: avgMin > 0 ? `${avgMin} min` : '—', accent: StickerPalette.pink, fill: StickerPalette.pinkSoft, tilt: -1 },
-            { label: 'Feeds / Day', value: perDay > 0 ? perDay.toString() : '—', accent: StickerPalette.peach, fill: StickerPalette.peachSoft, tilt: 1 },
-            { label: 'Min / Day', value: minPerDay > 0 ? `${minPerDay} min` : '—', accent: StickerPalette.blue, fill: StickerPalette.blueSoft, tilt: -0.5 },
+            { label: tNow('kids_home_breastfeeding_avg_session'), value: avgMin > 0 ? `${avgMin} min` : '—', accent: StickerPalette.pink, fill: StickerPalette.pinkSoft, tilt: -1 },
+            { label: tNow('kids_home_breastfeeding_feeds_per_day'), value: perDay > 0 ? perDay.toString() : '—', accent: StickerPalette.peach, fill: StickerPalette.peachSoft, tilt: 1 },
+            { label: tNow('kids_home_breastfeeding_min_per_day'), value: minPerDay > 0 ? `${minPerDay} min` : '—', accent: StickerPalette.blue, fill: StickerPalette.blueSoft, tilt: -0.5 },
           ].map((card, i) => (
             <View key={i} style={{
               flex: 1,
@@ -5036,7 +5038,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
     return (
       <DiffuseSheet
         visible={visible}
-        title={stage === 'liquid' ? 'Feeding' : 'Nutrition'}
+        title={stage === 'liquid' ? tNow('kids_calendar_labelFeeding') : tNow('kids_home_nutrition_modal_title')}
         onClose={onClose}
         chip={childName || undefined}
       >

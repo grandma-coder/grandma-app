@@ -13,6 +13,7 @@
  */
 import { getAgeMonths } from '../store/useGoalsStore'
 import { dateLoc } from './kpLocale'
+import { t as tNow } from './i18n'
 
 // ─── Health record shapes ────────────────────────────────────────────────────
 
@@ -305,9 +306,46 @@ export interface AgeMilestone {
   milestoneStatus: 'done' | 'partial' | 'future'
 }
 
+/**
+ * Schedule ages are stored as short source strings ("12-15 months", "4-6 yrs", "6 meses (anual)",
+ * "Birth"…), in whichever language the country's schedule was written. Display always goes through
+ * here so the reader sees her own language. Unknown shapes come back unchanged.
+ */
+export function localizeAgeLabel(raw: string): string {
+  const s = raw.trim()
+  if (/^(birth|nacimiento|nascimento|naissance)$/i.test(s)) return tNow('kids_vac_birth')
+  let core = s
+  let wrap: 'kids_vac_yearly' | 'kids_vac_booster' | 'kids_vac_every6mo' | null = null
+  const suffix = s.match(/^(.*?)\s*\(([^)]*)\)\s*$/)
+  if (suffix) {
+    const tag = suffix[2].toLowerCase()
+    if (/^(yearly|annually|anual|annuel)$/.test(tag)) wrap = 'kids_vac_yearly'
+    else if (/^(reforço|reforco)$/.test(tag)) wrap = 'kids_vac_booster'
+    else if (/^every 6 ?mo$/.test(tag)) wrap = 'kids_vac_every6mo'
+    if (wrap) core = suffix[1]
+  }
+  let out: string | null = null
+  const ym = core.match(/^(\d+) years? (\d+) months?$/i)
+  if (ym) out = tNow('kids_vac_yearsMonths', { y: ym[1], m: ym[2] })
+  else {
+    const m = core.match(/^(\d+(?:-\d+)?)\s*(months?|mo|meses|mois|weeks?|years?|yrs?|anos|años|ans)(?: \(annually\))?$/i)
+    if (m) {
+      const unit = m[2].toLowerCase()
+      const n = m[1]
+      if (/^(months?|mo|meses|mois)$/.test(unit)) out = tNow('kids_vac_months', { n })
+      else if (/^weeks?$/.test(unit)) out = tNow('kids_vac_weeks', { n })
+      else out = n === '1' ? tNow('kids_vac_oneYear') : tNow('kids_vac_years', { n })
+      if (/\(annually\)$/i.test(core)) wrap = wrap ?? 'kids_vac_yearly'
+    }
+  }
+  if (!out) return raw
+  return wrap ? tNow(wrap, { age: out }) : out
+}
+
 export function formatMilestoneLabel(monthMin: number, ageLabel: string): string {
-  if (monthMin === 0) return 'Birth'
-  return ageLabel.charAt(0).toUpperCase() + ageLabel.slice(1)
+  const label = localizeAgeLabel(ageLabel)
+  if (monthMin === 0) return tNow('kids_vac_birth')
+  return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
 export function buildVaccineScheduleTree(
@@ -383,8 +421,8 @@ export function buildVaccineScheduleTree(
 
       milestoneMap.get(monthMin)!.vaccines.push({
         name: v.name,
-        doseLabel: v.monthRanges.length > 1 ? `dose ${i + 1}` : '',
-        dueAge: ageLabel,
+        doseLabel: v.monthRanges.length > 1 ? tNow('kids_vac_dose', { n: i + 1 }) : '',
+        dueAge: localizeAgeLabel(ageLabel),
         status,
         givenDate,
         // Namespace by country so scheduled appointments don't leak across
@@ -498,9 +536,9 @@ export function getNextDueVaccines(birthDate: string, givenVaccines: HealthRecor
       key: `${v.name}-${doseCount}`,
       name: v.name,
       doseLabel: isAnnualSchedule
-        ? (doseCount === 0 ? '' : `dose ${doseCount + 1}`)
-        : (v.monthRanges.length > 1 ? `dose ${doseCount + 1}` : ''),
-      dueAge: v.ages[Math.min(doseCount, v.ages.length - 1)],
+        ? (doseCount === 0 ? '' : tNow('kids_vac_dose', { n: doseCount + 1 }))
+        : (v.monthRanges.length > 1 ? tNow('kids_vac_dose', { n: doseCount + 1 }) : ''),
+      dueAge: localizeAgeLabel(v.ages[Math.min(doseCount, v.ages.length - 1)]),
       overdue,
     })
     if (result.length >= 5) break

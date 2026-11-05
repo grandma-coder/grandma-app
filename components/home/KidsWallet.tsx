@@ -148,12 +148,12 @@ export function KidsWallet({
 
   const titleFor = (id: KidsCardId): string => {
     switch (id) {
-      case 'goals': return t('kids_home_set_goals_btn')
-      case 'health': return t('kids_home_section_health_care')
+      case 'goals': return diffuse ? t('kids_home_set_goals_btn') : t('kidsTile_short_goals')
+      case 'health': return diffuse ? t('kids_home_section_health_care') : t('kids_calendar_labelHealth')
       case 'vaccines': return t('kids_vaccines_title')
       case 'exams': return t('wallet_exams_title')
-      case 'diaper': return t('kids_home_diaper_tracker_title')
-      case 'growth_leap': return growthLeapName ? (diffuse ? growthLeapName : `${t('kids_growthLeapShort')} · ${growthLeapName}`) : t('kids_growthLeaps')
+      case 'diaper': return diffuse ? t('kids_home_diaper_tracker_title') : t('kids_calendar_labelDiaper')
+      case 'growth_leap': return growthLeapName ? (diffuse ? growthLeapName : t('kids_growthLeapShort')) : t('kids_growthLeaps')
       case 'reminders': return t('wallet_reminders_title')
       case 'memories': return t('wallet_memories_title')
       case 'ask_grandma': return t('wallet_askGrandma_title')

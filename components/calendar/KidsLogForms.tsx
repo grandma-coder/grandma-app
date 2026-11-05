@@ -62,6 +62,8 @@ import { ChildPill, childColor } from '../ui/ChildPills'
 import { useChildStore } from '../../store/useChildStore'
 import { useModeStore } from '../../store/useModeStore'
 import { supabase } from '../../lib/supabase'
+import { assertNotFuture } from '../../lib/futureDate'
+import { pregnancyLogErrorText } from '../../lib/pregnancyLogError'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { ChoiceStep, MoreSection, ActiveChildChip, StickerChoice, type ChoiceOption } from './QuickLogKit'
 import { SheetFooterAction } from './LogSheet'
@@ -498,6 +500,7 @@ export async function saveChildLog(
   photos?: string[],
   date?: string
 ) {
+  assertNotFuture(date ?? toDateStr(new Date()))
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error(tNow('kp_pk_notAuth'))
 
@@ -529,6 +532,7 @@ export async function updateChildLog(
   photos?: string[],
   date?: string,
 ) {
+  if (date) assertNotFuture(date)
   const { error } = await supabase
     .from('child_logs')
     .update({
@@ -1664,8 +1668,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       // Save as routine if toggled (only for new logs, not from existing routines)
       if (routineEnabled && !prefill) {
         const routineName = feedType === 'solids'
-          ? (meal ? MEAL_MOMENTS.find((m) => m.id === meal)?.label ?? 'Meal' : 'Meal')
-          : (feedType === 'breast' ? 'Breastfeed' : 'Bottle')
+          ? (meal ? MEAL_MOMENTS.find((m) => m.id === meal)?.label ?? t('kids_routineName_meal') : t('kids_routineName_meal'))
+          : (feedType === 'breast' ? t('kids_routineName_breastfeed') : t('kids_routineName_bottle'))
         const routineValue = feedType === 'solids'
           ? JSON.stringify({ feedType: 'solids', meal })
           : JSON.stringify({ feedType, amount: amount || undefined, duration: duration || undefined })
@@ -1673,7 +1677,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
       }
       onSaved()
     } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), e.message)
+      Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -2690,11 +2694,11 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         const durMins = m ? (parseInt(m[1] || '0') * 60 + parseInt(m[2] || '0')) : 0
         const longSleep = durMins >= 240 // 4h
         const isNap = !longSleep && startHour < 18
-        await saveAsRoutine(childId, 'sleep', isNap ? 'Nap' : 'Bedtime', JSON.stringify({ startTime, quality: qualityLabel }), startTime, routineDays)
+        await saveAsRoutine(childId, 'sleep', isNap ? t('kids_routineName_nap') : t('kids_routineName_bedtime'), JSON.stringify({ startTime, quality: qualityLabel }), startTime, routineDays)
       }
       onSaved()
     } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), e.message)
+      Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -2915,7 +2919,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
       await saveChildLog(childId, logType, tagged, notes || undefined, undefined, logDate)
       onSaved()
     } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), e.message)
+      Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -3077,11 +3081,11 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       }
       await saveChildLog(childId, 'mood', wrappedValue, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
-        await saveAsRoutine(childId, 'mood', 'Mood check', null, startTime, routineDays)
+        await saveAsRoutine(childId, 'mood', t('kids_routineName_moodCheck'), null, startTime, routineDays)
       }
       onSaved()
     } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), e.message)
+      Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -3218,7 +3222,7 @@ export function MemoryForm({ onSaved, initialDate }: { onSaved: () => void; init
       await saveChildLog(childId, 'photo', 'memory', caption || undefined, upload.urls, logDate)
       onSaved()
     } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), e.message)
+      Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -3407,12 +3411,12 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       }
       await saveChildLog(childId, 'activity', tagged, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
-        const routineName = name || ACTIVITY_TYPES.find((a) => a.id === activityType)?.label || 'Activity'
+        const routineName = name || ACTIVITY_TYPES.find((a) => a.id === activityType)?.label || t('kids_logForm_labelActivity')
         await saveAsRoutine(childId, 'activity', routineName, value, startTime, routineDays)
       }
       onSaved()
     } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), e.message)
+      Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -3627,7 +3631,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
       await saveChildLog(childId, 'diaper', value, notes || undefined, uploadedPhotos, logDate)
       onSaved()
     } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), e.message)
+      Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -3902,7 +3906,7 @@ export function WakeUpForm({ onSaved, prefill, onSkip }: {
       await updateChildLog(openLog.id, newValue, orig?.notes ?? null)
       onSaved()
     } catch (e: any) {
-      Alert.alert(t('kids_logForm_alertError'), e.message)
+      Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e))
     } finally {
       setSaving(false)
     }

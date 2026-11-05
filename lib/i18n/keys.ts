@@ -6332,4 +6332,33 @@ export interface TranslationKeys {
   pregnancy_affirmationFallback_18: string
   pregnancy_affirmationFallback_19: string
   preg_anyDayNow: string
+  kidsQuickLog_short_sleep: string
+  kidsQuickLog_short_mood: string
+  kidsQuickLog_short_feeding: string
+  kidsQuickLog_short_activity: string
+  kidsQuickLog_short_diaper: string
+  kidsQuickLog_short_health: string
+  kidsQuickLog_short_memory: string
+  kidsQuickLog_short_exam: string
+  kidsTile_short_goals: string
+  kids_routineName_meal: string
+  kids_routineName_breastfeed: string
+  kids_routineName_bottle: string
+  kids_routineName_nap: string
+  kids_routineName_bedtime: string
+  kids_routineName_moodCheck: string
+  kids_reminder_bodyDue: string
+  kids_reminder_bodyDueAt: string
+  kids_reminder_bodyAt: string
+  kids_reminder_bodyNone: string
+  kids_vac_birth: string
+  kids_vac_months: string
+  kids_vac_weeks: string
+  kids_vac_years: string
+  kids_vac_oneYear: string
+  kids_vac_yearsMonths: string
+  kids_vac_yearly: string
+  kids_vac_booster: string
+  kids_vac_every6mo: string
+  kids_vac_dose: string
 }

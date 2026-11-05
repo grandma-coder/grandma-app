@@ -8,7 +8,9 @@ import { resolveMenopauseSymptomId } from './menopauseSymptoms'
 export const KIDS_LOG_STICKER: Record<string, SiteStickerName> = {
   feeding: 'bottle', food: 'avocado', sleep: 'moon', wake_up: 'sun', mood: 'face3', activity: 'shoe',
   diaper: 'diaper', health: 'thermo', medicine: 'pill', vaccine: 'syringe', growth: 'ruler',
-  memory: 'camera', exam: 'doc', bath: 'drop', potty: 'diaper',
+  memory: 'camera', exam: 'doc', bath: 'drop', potty: 'drop',
+  // stored child_logs.type values that map onto a canonical log
+  temperature: 'thermo', photo: 'camera', milestone: 'star', note: 'pencil',
 }
 
 /**

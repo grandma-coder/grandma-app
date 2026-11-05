@@ -84,7 +84,7 @@ export function KidsTodaySummaryCard({ childId, todayCounts, onLogMetric }: Prop
         icon: !diffuse && SITE_FOR[key]
           ? <SiteSticker name={SITE_FOR[key]} size={22} />
           : <Character name={glyph.name} size={20} color={stickers[glyph.hue]} />,
-        label: t(def.labelKey),
+        label: t(diffuse ? def.labelKey : def.shortKey),
         done,
       }
     })
