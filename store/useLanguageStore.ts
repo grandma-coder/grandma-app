@@ -25,14 +25,18 @@ export interface LanguageOption {
   rtl?: boolean
 }
 
-// Languages the app is FULLY translated into — the only ones offered in the
-// picker and used by device auto-detect. The AppLanguage type + engine still
-// support all 12 (locale files remain in lib/i18n/), so re-enabling any of the
-// nine below is just moving it back into this array once Tolgee has filled it.
+// Launch languages — the only ones offered in the picker and used by device auto-detect.
+// Every UI string exists in all 12 locale files (lib/i18n/), but long-form content (birth guide,
+// reads, articles) is only complete for these three. The rest return in V2: move an entry from
+// UPCOMING_LANGUAGES back here once its content is complete.
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
   { code: 'pt-BR', name: 'Portuguese (Brazil)', nativeName: 'Português (Brasil)', flag: '🇧🇷' },
   { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
+]
+
+// Wired in the engine (UI strings translated) but hidden from the picker until V2.
+export const UPCOMING_LANGUAGES: LanguageOption[] = [
   { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
   { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹' },
@@ -41,12 +45,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'zh', name: 'Chinese (Simplified)', nativeName: '中文 (简体)', flag: '🇨🇳' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
   { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', flag: '🇹🇷' },
-]
-
-// Wired in the engine but not yet fully translated — hidden from the picker.
-// Promote an entry into SUPPORTED_LANGUAGES when its locale file is complete.
-export const UPCOMING_LANGUAGES: LanguageOption[] = [
-  // Translated, but the layout hasn't been checked right-to-left yet.
+  // Also needs its right-to-left layout checked.
   { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦', rtl: true },
 ]
 
@@ -96,7 +95,7 @@ export const useLanguageStore = create<LanguageStore>()(
         // picker (one of the not-yet-translated nine) should fall back to
         // English rather than stay stuck on a half-translated locale.
         if (state && !SUPPORTED_LANGUAGES.some((l) => l.code === state.language)) {
-          state.language = 'en'
+          state.language = getDeviceLanguage()
         }
         useLanguageStore.setState({ hydrated: true })
       },
