@@ -286,7 +286,7 @@ export default function MemoriesScreen() {
 
       setShowAddSheet(false); setPendingPhotos([])
       await loadMemories()
-    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+    } catch (e: any) { Alert.alert(t('common_error'), t('error_generic')) }
     finally { setUploading(false) }
   }
 
@@ -303,14 +303,14 @@ export default function MemoriesScreen() {
           onPress: async () => {
             try {
               if (isOnlyPhoto) {
-                await supabase.from('child_logs').delete().eq('id', post.logId)
+                { const { error: delErr } = await supabase.from('child_logs').delete().eq('id', post.logId); if (delErr) throw delErr }
               } else {
                 const remaining = post.photos.filter((_, i) => i !== photoIdx)
                 await supabase.from('child_logs').update({ photos: remaining }).eq('id', post.logId)
               }
               setViewPost(null)
               await loadMemories()
-            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+            } catch (e: any) { Alert.alert(t('common_error'), t('error_generic')) }
           },
         },
       ]
@@ -327,10 +327,10 @@ export default function MemoriesScreen() {
     if (!post) return
     setPendingDelete(null)
     try {
-      await supabase.from('child_logs').delete().eq('id', post.logId)
+      { const { error: delErr } = await supabase.from('child_logs').delete().eq('id', post.logId); if (delErr) throw delErr }
       setViewPost(null)
       await loadMemories()
-    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+    } catch (e: any) { Alert.alert(t('common_error'), t('error_generic')) }
   }
 
   // ─── Edit caption ───────────────────────────────────────────────
@@ -344,7 +344,7 @@ export default function MemoriesScreen() {
       await loadMemories()
       // Update the viewPost in-place
       setViewPost({ ...post, notes: editCaptionText.trim() })
-    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+    } catch (e: any) { Alert.alert(t('common_error'), t('error_generic')) }
   }
 
   return (
@@ -367,7 +367,7 @@ export default function MemoriesScreen() {
             <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="pola" size={30} cut />
             <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{t('memories_headerTitle')}</Text>
-            <Pressable onPress={pickPhotos} hitSlop={10} accessibilityRole="button" accessibilityLabel="Add photos">
+            <Pressable onPress={pickPhotos} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('kp_pk_addPhoto')}>
               <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder, borderWidth: bw }]}>
                 <Ionicons name="add" size={20} color={colors.text} />
               </View>

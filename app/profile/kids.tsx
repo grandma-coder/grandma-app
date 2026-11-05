@@ -289,7 +289,7 @@ export default function KidsProfileScreen() {
               if (error) throw error
               setChildren(children.filter((c) => c.id !== child.id))
             } catch (e: any) {
-              Alert.alert(t('common_error'), e.message)
+              Alert.alert(t('common_error'), t('error_generic'))
             }
           },
         },
@@ -759,7 +759,7 @@ function EditChildSheet({
         notes: notes.trim(),
       })
     } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+      Alert.alert(t('common_error'), t('error_generic'))
     } finally {
       setSaving(false)
     }
@@ -937,8 +937,8 @@ function EditChildSheet({
 
           {/* Pediatrician */}
           <SectionHeader label={t('children_pediatrician')} />
-          <FormField label={t('kp_pk_doctorName')} value={pedName} onChangeText={setPedName} placeholder="Dr. Smith" />
-          <FormField label={t('emergencyInsurance_fieldPhone')} value={pedPhone} onChangeText={setPedPhone} placeholder="+1 555-0100" keyboardType="phone-pad" />
+          <FormField label={t('kp_pk_doctorName')} value={pedName} onChangeText={setPedName} placeholder={t('kp_pk_pedNamePh')} />
+          <FormField label={t('emergencyInsurance_fieldPhone')} value={pedPhone} onChangeText={setPedPhone} placeholder={t('kp_pk_phonePh')} keyboardType="phone-pad" />
           <FormField label={t('kp_pk_clinic')} value={pedClinic} onChangeText={setPedClinic} placeholder={t('kp_pk_clinicPh')} />
 
           {/* Notes */}
@@ -1081,7 +1081,7 @@ function AddChildSheet({
       reset()
       onAdded(newChild)
     } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+      Alert.alert(t('common_error'), t('error_generic'))
     } finally {
       setSaving(false)
     }
@@ -1256,8 +1256,8 @@ function AddChildSheet({
           <ChipInput label={t('kp_pk_dietary')} value={dietaryRestrictions} onChange={setDietaryRestrictions} suggestions={[]} chipColor={brand.accent} softColor={stickers.lilacSoft} placeholder={t('kp_pk_dietaryPh')} />
 
           <SectionHeader label={t('children_pediatrician')} />
-          <FormField label={t('kp_pk_doctorName')} value={pedName} onChangeText={setPedName} placeholder="Dr. Smith" />
-          <FormField label={t('emergencyInsurance_fieldPhone')} value={pedPhone} onChangeText={setPedPhone} placeholder="+1 555-0100" keyboardType="phone-pad" />
+          <FormField label={t('kp_pk_doctorName')} value={pedName} onChangeText={setPedName} placeholder={t('kp_pk_pedNamePh')} />
+          <FormField label={t('emergencyInsurance_fieldPhone')} value={pedPhone} onChangeText={setPedPhone} placeholder={t('kp_pk_phonePh')} keyboardType="phone-pad" />
           <FormField label={t('kp_pk_clinic')} value={pedClinic} onChangeText={setPedClinic} placeholder={t('kp_pk_clinicPh')} />
 
           <SectionHeader label={t('kp_pk_additionalNotes')} />

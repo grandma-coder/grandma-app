@@ -105,7 +105,7 @@ export default function AccountScreen() {
   }
 
   async function handleChangePassword() {
-    if (newPassword.length < 6) return Alert.alert(t('app_account_tooShortTitle'), t('app_account_tooShortMsg'))
+    if (newPassword.length < 8) return Alert.alert(t('app_account_tooShortTitle'), t('app_account_tooShortMsg'))
     setSaving(true)
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword })
@@ -232,7 +232,7 @@ export default function AccountScreen() {
             <QuietPill
               label={saving ? t('account_saving') : t('account_changePassword')}
               onPress={handleChangePassword}
-              disabled={saving || newPassword.length < 6}
+              disabled={saving || newPassword.length < 8}
               style={{ marginTop: 12, backgroundColor: colors.surface }}
             />
 
@@ -356,19 +356,19 @@ export default function AccountScreen() {
           <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('account_minChars')}</Body>
           <Pressable
             onPress={handleChangePassword}
-            disabled={saving || newPassword.length < 6}
+            disabled={saving || newPassword.length < 8}
             style={({ pressed }) => [
               styles.actionPill,
               diffuse
                 ? {
                     backgroundColor: 'transparent',
                     borderColor: dt.colors.line2,
-                    opacity: (saving || newPassword.length < 6) ? 0.4 : pressed ? 0.6 : 1,
+                    opacity: (saving || newPassword.length < 8) ? 0.4 : pressed ? 0.6 : 1,
                   }
                 : {
                     backgroundColor: stickers.lilacSoft,
                     borderColor: paperBorder,
-                    opacity: (saving || newPassword.length < 6) ? 0.5 : 1,
+                    opacity: (saving || newPassword.length < 8) ? 0.5 : 1,
                     transform: [{ translateY: pressed ? 1 : 0 }],
                   },
             ]}

@@ -135,7 +135,7 @@ export default function AcceptInvite() {
       await reloadUserData().catch(() => {})
       setAccepted(true)
     } catch (e: any) {
-      Alert.alert(t('acceptInvite_errorTitle'), e.message)
+      Alert.alert(t('acceptInvite_errorTitle'), t('error_generic'))
     } finally {
       setLoading(false)
     }

@@ -118,7 +118,7 @@ function CurrentPillButton({
         ) : (
           <>
             {leading ? <View style={styles.slot}>{leading}</View> : null}
-            <Text style={[styles.label, { fontFamily: font.bodyBold, color: v.fg }]}>{label}</Text>
+            <Text style={[styles.label, { fontFamily: font.bodyBold, color: v.fg }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
             {trailing ? <View style={styles.slot}>{trailing}</View> : null}
           </>
         )}

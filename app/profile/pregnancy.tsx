@@ -14,6 +14,8 @@
  * 10. Nesting Checklist — standard items
  */
 
+import { useUnitsStore } from '../../store/useUnitsStore'
+import { formatWeight, weightLabel, kgToDisplay, displayToKg } from '../../lib/units'
 import { useState, useEffect, useRef } from 'react'
 import {
   View,
@@ -322,6 +324,7 @@ function range(start: number, end: number, step = 1): number[] {
 
 const HEIGHT_OPTIONS = range(130, 210, 1).map((n) => String(n))
 const WEIGHT_OPTIONS = range(35, 200, 0.5).map((n) => n.toFixed(1))
+const WEIGHT_OPTIONS_LB = range(77, 440, 1).map((n) => String(n))
 
 const SEX_OPTIONS = ['Boy', 'Girl', 'Not revealed', 'Other']
 const POSITION_OPTIONS = ['cephalic', 'breech', 'transverse', 'unknown']
@@ -853,6 +856,11 @@ export default function PregnancyProfileScreen() {
   })
   const [childId, setChildId] = useState<string | null>(null)
   const [currentWeight, setCurrentWeight] = useState<string>('')
+  const weightUnit = useUnitsStore((u) => u.weightUnit)
+  const wheelWeightOptions = weightUnit === 'lb' ? WEIGHT_OPTIONS_LB : WEIGHT_OPTIONS
+  // Store stays kg; the wheel shows/accepts the user's unit.
+  const toWheelWeight = (kg: string) => weightUnit === 'lb' ? String(Math.round(kgToDisplay(parseFloat(kg), 'lb'))) : kg
+  const fromWheelWeight = (v: string) => weightUnit === 'lb' ? displayToKg(parseFloat(v), 'lb').toFixed(1) : v
 
   const [postpartumDone, setPostpartumDone] = useState<Record<string, boolean>>({})
   const [nestingDone, setNestingDone] = useState<Record<string, boolean>>({})
@@ -1351,25 +1359,25 @@ export default function PregnancyProfileScreen() {
           <InfoRow
             dotColor={ROW_DOTS[3]}
             label={t('sw1_pp_prePregWeight')}
-            value={bp.prePregnancyWeight ? `${bp.prePregnancyWeight} kg` : ''}
+            value={bp.prePregnancyWeight ? formatWeight(parseFloat(bp.prePregnancyWeight), weightUnit) : ''}
             onEdit={() => setWheelSheet({
               label: t('sw1_pp_prePregWeight'),
-              value: bp.prePregnancyWeight ?? '60.0',
-              options: WEIGHT_OPTIONS,
-              unit: 'kg',
-              onSave: (v) => void saveBirthPreferences({ prePregnancyWeight: v }),
+              value: toWheelWeight(bp.prePregnancyWeight ?? '60.0'),
+              options: wheelWeightOptions,
+              unit: weightLabel(weightUnit),
+              onSave: (v) => void saveBirthPreferences({ prePregnancyWeight: fromWheelWeight(v) }),
             })}
           />
           <InfoRow
             dotColor={ROW_DOTS[4]}
             label={t('preg_profile_currentWeight')}
-            value={currentWeight ? `${currentWeight} kg` : ''}
+            value={currentWeight ? formatWeight(parseFloat(currentWeight), weightUnit) : ''}
             onEdit={() => setWheelSheet({
               label: t('preg_profile_currentWeight'),
-              value: currentWeight || '62.0',
-              options: WEIGHT_OPTIONS,
-              unit: 'kg',
-              onSave: (v) => void saveCurrentWeight(v),
+              value: toWheelWeight(currentWeight || '62.0'),
+              options: wheelWeightOptions,
+              unit: weightLabel(weightUnit),
+              onSave: (v) => void saveCurrentWeight(fromWheelWeight(v)),
             })}
           />
           <InfoRow
@@ -1381,7 +1389,7 @@ export default function PregnancyProfileScreen() {
               if (Number.isNaN(cur) || Number.isNaN(pre)) return ''
               const diff = cur - pre
               const sign = diff >= 0 ? '+' : ''
-              return `${sign}${diff.toFixed(1)} kg`
+              return `${sign}${kgToDisplay(diff, weightUnit).toFixed(1)} ${weightLabel(weightUnit)}`
             })()}
           />
         </SectionCard>

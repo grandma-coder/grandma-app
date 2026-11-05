@@ -5,6 +5,8 @@
  * Milestones Timeline, Recent Events. Tap any section for detail popup.
  */
 
+import { useUnitsStore } from '../../store/useUnitsStore'
+import { kgToDisplay, displayToKg, weightLabel } from '../../lib/units'
 import { dateLoc } from '../../lib/kpLocale'
 import { useState, useCallback, useMemo } from 'react'
 import { healthLogText } from '../../lib/kidsHealthLogText'
@@ -108,6 +110,8 @@ const VACCINE_SCHEDULE: { name: string; labelKey: Parameters<typeof tNow>[0]; ag
 // ─── Main Screen ──────────────────────────────────────────────────────────
 
 export default function HealthHistoryScreen() {
+  const weightUnit = useUnitsStore((u) => u.weightUnit)
+  const kgNum = (raw: string) => kgToDisplay(parseFloat(raw.replace(/[^0-9.]/g, '')) || 0, weightUnit)
   const { colors, font, stickers, isDark, radius } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -308,7 +312,7 @@ export default function HealthHistoryScreen() {
             </View>
           ) : (
             <View style={styles.emptySite}>
-              <SiteSticker name="drop" size={34} cut />
+              <SiteSticker name="pill" size={34} cut />
               <Text style={[styles.emptyText, { color: colors.textSecondary, fontFamily: font.body }]}>{t('healthHistory_noMedicationsLogged')}</Text>
             </View>
           )}
@@ -346,11 +350,11 @@ export default function HealthHistoryScreen() {
                     {/* Weight bars */}
                     {weights.length > 0 && (
                       <>
-                        <Text style={[styles.chartSubtitle, { color: wColor, fontFamily: subFont }, subExtra]}>{t('healthHistory_weightKg')}</Text>
+                        <Text style={[styles.chartSubtitle, { color: wColor, fontFamily: subFont }, subExtra]}>{`${t('pedReport_weight')} (${weightLabel(weightUnit)})`}</Text>
                         <View style={styles.miniChart}>
                           {weights.map((g) => {
-                            const num = parseFloat(g.value.replace(/[^0-9.]/g, '')) || 5
-                            const h = Math.min(50, Math.max(10, (num / 20) * 50))
+                            const num = kgNum(g.value) || kgToDisplay(5, weightUnit)
+                            const h = Math.min(50, Math.max(10, (num / (weightUnit === 'lb' ? 44 : 20)) * 50))
                             return (
                               <View key={g.id} style={styles.barCol}>
                                 <Text style={[styles.barValue, { color: wColor, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{diffuse ? num : Math.round(num * 10) / 10}</Text>
@@ -382,7 +386,7 @@ export default function HealthHistoryScreen() {
                       </>
                     )}
                     <Text style={[styles.lastMeasure, { color: diffuse ? dt.colors.ink2 : colors.text, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-                      {latestWeight ? t('kp_hh_weightLine', { v: latestWeight.value.replace(/weight:?\s*/i, '') }) : ''}
+                      {latestWeight ? t('kp_hh_weightLine', { v: `${Math.round(kgNum(latestWeight.value) * 10) / 10} ${weightLabel(weightUnit)}` }) : ''}
                       {latestWeight && latestHeight ? '  ·  ' : ''}
                       {latestHeight ? t('kp_hh_heightLine', { v: latestHeight.value.replace(/height:?\s*/i, '') }) : ''}
                     </Text>
@@ -472,7 +476,7 @@ export default function HealthHistoryScreen() {
                       <View key={m} style={[styles.refChip, diffuse
                         ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
                         : { backgroundColor: isDark ? stickers.blue + '28' : stickers.blueSoft, borderWidth: 1.5, borderColor: isDark ? 'transparent' : ink }]}>
-                        {diffuse || isDark ? <Character name="medicine" size={10} color={diffuse ? dt.colors.ink3 : stickers.blueInk} /> : <SiteSticker name="drop" size={14} />}
+                        {diffuse || isDark ? <Character name="medicine" size={10} color={diffuse ? dt.colors.ink3 : stickers.blueInk} /> : <SiteSticker name="pill" size={14} />}
                         <Text style={[styles.refChipText, { color: diffuse ? dt.colors.ink2 : (isDark ? stickers.blueInk : ink), fontFamily: diffuse ? diffuseFont.mono : font.bodySemiBold, letterSpacing: diffuse ? 1 : 0, textTransform: diffuse ? 'uppercase' : 'none' }]}>{m}</Text>
                       </View>
                     ))}
@@ -701,6 +705,7 @@ function DetailPopup({ section, events, onClose }: { section: string; events: He
 const ADD_TYPES = Object.entries(TYPE_CFG).map(([id, cfg]) => ({ id, ...cfg }))
 
 function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
+  const weightUnit = useUnitsStore((u) => u.weightUnit)
   const { colors, font, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -753,7 +758,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
           entries.push({
             child_id: selectedChild, user_id: session.user.id,
             date: dateStr, type: 'growth',
-            value: `Weight: ${weight.trim()} kg`, notes: notes.trim() || null,
+            value: `Weight: ${Math.round(displayToKg(parseFloat(weight.trim().replace(',', '.')) || 0, weightUnit) * 100) / 100} kg`, notes: notes.trim() || null,
             logged_by: session.user.id,
           })
         }
@@ -786,7 +791,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
       reset(); onSaved()
       void invalidateKidsLogQueries()
-    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+    } catch (e: any) { Alert.alert(t('common_error'), t('error_generic')) }
     finally { setSaving(false) }
   }
 
@@ -885,7 +890,7 @@ function AddHealthEventSheet({ visible, onClose, onSaved }: { visible: boolean; 
 
           {eventType === 'growth' ? (
             <>
-              <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{t('healthHistory_weightKg')}</MonoCaps>
+              <MonoCaps color={diffuse ? dt.colors.ink3 : colors.textMuted}>{`${t('pedReport_weight')} (${weightLabel(weightUnit)})`}</MonoCaps>
               <TextInput
                 value={weight}
                 onChangeText={setWeight}

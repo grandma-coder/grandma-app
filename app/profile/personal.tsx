@@ -462,7 +462,7 @@ function LocationField({
   const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const paper = diffuse ? dt.colors.surface : colors.surface
   const border = diffuse ? dt.colors.line : colors.text
   const [query, setQuery] = useState(value)
@@ -486,7 +486,7 @@ function LocationField({
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=5&addressdetails=0`,
-          { headers: { 'Accept-Language': 'en' } }
+          { headers: { 'Accept-Language': language } }
         )
         const data: LocationResult[] = await res.json()
         setResults(data)

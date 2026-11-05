@@ -28,6 +28,7 @@ import { PillButton } from '../components/ui/PillButton'
 import { SiteSticker } from '../components/stickers/SiteSticker'
 import { Display, DisplayItalic, MonoCaps } from '../components/ui/Typography'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
+import { formatReportDate, isRtl } from '../lib/reports/reportKit'
 import {
   generateAndShareReport, measurementPercentile, isPdfExportAvailable,
   type PediatricReportData, type ReportMeasurement, type ReportVaccine,
@@ -78,7 +79,7 @@ export default function ChildReportScreen() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   const children = useChildStore((s) => s.children)
   const activeChild = useChildStore((s) => s.activeChild)
@@ -155,26 +156,28 @@ export default function ChildReportScreen() {
     try {
       const data: PediatricReportData = {
         childName: child.name,
-        birthDate: child.birthDate ?? '—',
+        birthDate: child.birthDate ? formatReportDate(child.birthDate, language) : '—',
         ageLabel: child.birthDate ? ageLabel(child.birthDate, t) : '',
-        sex: child.sex ?? '',
+        sex: child.sex === 'male' ? t('kp_pk_boy') : child.sex === 'female' ? t('kp_pk_girl') : child.sex ? t('kp_pk_other') : '',
         bloodType: child.bloodType,
         allergies: child.allergies ?? [],
         conditions: child.conditions ?? [],
         medications: child.medications ?? [],
         pediatrician: child.pediatrician,
-        growth,
-        vaccines,
+        growth: growth.map((g) => ({ ...g, date: formatReportDate(g.date, language) })),
+        vaccines: vaccines.map((v) => ({ ...v, date: v.date ? formatReportDate(v.date, language) : '' })),
         feedingSummary,
         sleepSummary,
-        generatedOn: new Date().toLocaleDateString(),
+        generatedOn: formatReportDate(new Date().toISOString(), language),
+        t,
+        rtl: isRtl(language),
       }
       await generateAndShareReport(data)
     } catch (e: any) {
       // expo-print native module missing (un-rebuilt client) surfaces here.
       Alert.alert(
         t('report_errorTitle'),
-        /native module|ExpoPrint/i.test(e?.message ?? '') ? t('report_errorRebuild') : (e?.message ?? t('report_errorGeneric')),
+        /native module|ExpoPrint/i.test(e?.message ?? '') ? t('report_errorRebuild') : t('report_errorGeneric'),
       )
     } finally {
       setGenerating(false)
