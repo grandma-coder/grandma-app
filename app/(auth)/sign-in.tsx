@@ -18,6 +18,7 @@ import {
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { authErrorText } from '../../lib/authError'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -74,10 +75,9 @@ export default function SignIn() {
         email: trimmedEmail,
         password,
       })
-      if (error) Alert.alert(t('auth_signInFailed'), error.message)
+      if (error) Alert.alert(t('auth_signInFailed'), authErrorText(error))
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('error_network')
-      Alert.alert(t('auth_signInFailed'), msg)
+      Alert.alert(t('auth_signInFailed'), authErrorText(e))
     } finally {
       setLoading(false)
     }
@@ -88,7 +88,7 @@ export default function SignIn() {
       setOauthLoading('apple')
       await signInWithApple()
     } catch (e: any) {
-      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('auth_signInError'), e.message)
+      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('auth_signInError'), authErrorText(e))
     } finally {
       setOauthLoading(null)
     }
@@ -99,7 +99,7 @@ export default function SignIn() {
       setOauthLoading('google')
       await signInWithGoogle()
     } catch (e: any) {
-      if (e.message !== 'Google sign-in was cancelled or failed') Alert.alert(t('auth_signInError'), e.message)
+      if (e.message !== 'Google sign-in was cancelled or failed') Alert.alert(t('auth_signInError'), authErrorText(e))
     } finally {
       setOauthLoading(null)
     }

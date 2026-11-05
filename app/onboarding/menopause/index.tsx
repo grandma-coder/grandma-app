@@ -15,6 +15,7 @@
  * Semantic icons are Character blobs (the shared icon system).
  */
 
+import { MENOPAUSE_LOG_STICKER } from '../../../lib/logStickers'
 import { SiteSticker, type SiteStickerName } from '../../../components/stickers/SiteSticker'
 import { PillButton } from '../../../components/ui/PillButton'
 import { SiteChoice } from '../../../components/ui/SiteChoice'
@@ -31,6 +32,7 @@ import {
   Platform,
   ScrollView,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -100,19 +102,7 @@ const stageOptions = (): { id: MenopauseStage; label: string; desc: string; icon
 
 // Site-look stickers (non-diffuse only)
 const STAGE_STICKERS: Record<MenopauseStage, SiteStickerName> = { peri: 'moon', meno: 'moon2', post: 'leaf' }
-const SYMPTOM_STICKERS: Partial<Record<MenopauseSymptomId, SiteStickerName>> = {
-  hot_flash: 'flame',
-  night_sweat: 'drop',
-  sleep: 'zz',
-  fatigue: 'cloud',
-  low_mood: 'face1',
-  anxiety: 'bubble',
-  brain_fog: 'brain',
-  palpitations: 'heart',
-  weight: 'ruler',
-  vaginal_dryness: 'flower',
-  libido: 'heart',
-}
+const SYMPTOM_STICKERS: Partial<Record<MenopauseSymptomId, SiteStickerName>> = MENOPAUSE_LOG_STICKER
 
 const GROUP_META: Record<MenopauseGroup, { icon: CharacterName }> = {
   vasomotor: { icon: 'temperature' },
@@ -249,6 +239,7 @@ export default function MenopauseOnboarding() {
 
     // DB writes are best-effort — a failure still enrolls locally + navigates so
     // the user is never stranded (mirrors the cycle flow's non-blocking finish).
+    let saveFailed = false
     try {
       const { data } = await supabase.auth.getSession()
       const userId = data.session?.user.id
@@ -277,16 +268,19 @@ export default function MenopauseOnboarding() {
         const { error: profileErr } = await supabase
           .from('profiles')
           .upsert(profilePayload, { onConflict: 'id' })
-        if (profileErr) console.warn('[menopause onboarding] profile upsert failed:', profileErr.message)
+        if (profileErr) saveFailed = true
+      if (profileErr) console.warn('[menopause onboarding] profile upsert failed:', profileErr.message)
 
         // 1:1 db behavior type (no alias, unlike pre-pregnancy → 'cycle').
         const { error: behaviorErr } = await supabase.from('behaviors').upsert(
           { user_id: userId, type: 'menopause', active: true },
           { onConflict: 'user_id,type' },
         )
-        if (behaviorErr) console.warn('[menopause onboarding] behaviors upsert failed:', behaviorErr.message)
+        if (behaviorErr) saveFailed = true
+      if (behaviorErr) console.warn('[menopause onboarding] behaviors upsert failed:', behaviorErr.message)
       }
     } catch (e) {
+      saveFailed = true
       console.warn('Failed to save menopause onboarding:', e)
     }
 
@@ -299,6 +293,7 @@ export default function MenopauseOnboarding() {
     // the active mode via setModeUnsafe once the enroll above has landed.
     // Replaces the old hardcoded setMode('menopause') + router.replace('/(tabs)').
     onboardingComplete('menopause')
+    if (saveFailed) Alert.alert(tNow('onb_saveLater_title'), tNow('onb_saveLater_body'))
   }
 
   if (currentStep === 'complete') {

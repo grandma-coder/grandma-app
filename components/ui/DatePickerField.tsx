@@ -33,6 +33,7 @@ import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { HandDrawnBox } from './HandDrawn'
 import { useTranslation } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
+import { parseLocalDate } from '../../lib/localDate'
 import { SheetModal } from './SheetModal'
 
 const ST_INK = '#141313'
@@ -123,11 +124,11 @@ export default function DatePickerField({
     return modeAccent(mode, isDark)
   }, [accentColor, mode, isDark])
 
-  const draftInitial = value ? new Date(value) : defaultDate ?? new Date()
+  const draftInitial = value ? parseLocalDate(value) : defaultDate ?? new Date()
   const [draft, setDraft] = useState<Date>(draftInitial)
 
   function handleOpen() {
-    setDraft(value ? new Date(value) : new Date())
+    setDraft(value ? parseLocalDate(value) : new Date())
     setOpen(true)
   }
 
@@ -170,6 +171,7 @@ export default function DatePickerField({
         textColor={isDark ? colors.text : ST_INK}
         accentColor={ST_INK}
         themeVariant={isDark ? 'dark' : 'light'}
+        locale={dateLoc()}
         style={{ width: '100%', height: 216 }}
       />
     )
@@ -328,6 +330,7 @@ export default function DatePickerField({
         textColor={isDark ? colors.text : ST_INK}
         accentColor={ST_INK}
         themeVariant={isDark ? 'dark' : 'light'}
+        locale={dateLoc()}
         style={{ width: '100%' }}
       />
     </View>

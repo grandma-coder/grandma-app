@@ -18,6 +18,7 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { authErrorText } from '../../lib/authError'
 import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -57,13 +58,12 @@ export default function ForgotPassword() {
         redirectTo: 'grandma-app://auth/reset',
       })
       if (error) {
-        Alert.alert(t('auth_couldntSendReset'), error.message)
+        Alert.alert(t('auth_couldntSendReset'), authErrorText(error))
         return
       }
       setSent(true)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('error_network')
-      Alert.alert(t('auth_couldntSendReset'), msg)
+      Alert.alert(t('auth_couldntSendReset'), authErrorText(e))
     } finally {
       setLoading(false)
     }

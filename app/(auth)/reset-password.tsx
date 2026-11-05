@@ -21,6 +21,7 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { authErrorText } from '../../lib/authError'
 import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -58,7 +59,7 @@ export default function ResetPassword() {
     try {
       const { error } = await supabase.auth.updateUser({ password })
       if (error) {
-        Alert.alert(t('auth_couldntUpdatePassword'), error.message)
+        Alert.alert(t('auth_couldntUpdatePassword'), authErrorText(error))
         return
       }
       // Sign out so the user logs in fresh with the new password. The root
@@ -69,8 +70,7 @@ export default function ResetPassword() {
         { text: 'OK', onPress: () => router.replace('/(auth)/sign-in') },
       ])
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('error_network')
-      Alert.alert(t('auth_couldntUpdatePassword'), msg)
+      Alert.alert(t('auth_couldntUpdatePassword'), authErrorText(e))
     } finally {
       setLoading(false)
     }
@@ -192,9 +192,10 @@ export default function ResetPassword() {
               selectionColor={ink}
               placeholder="••••••••"
               placeholderTextColor={ink4}
-              accessibilityLabel="New password"
+              accessibilityLabel={t('auth_newPasswordLabel')}
             />
           </HandDrawnBox>
+          <Text style={{ fontFamily: font.body, fontSize: 13, color: colors.textMuted, marginTop: -8, marginBottom: 8 }}>{t('auth_passwordTooShortN', { n: MIN_PASSWORD_LENGTH })}</Text>
 
           <HandDrawnBox style={styles.inputCard} fill={paper} stroke={paperBorder} radius={14} seed={'field2'}>
             <Text style={[styles.inputLabel, { fontFamily: 'SpaceMono_400Regular', letterSpacing: 1.4, color: colors.textMuted }]}>
@@ -210,7 +211,7 @@ export default function ResetPassword() {
               selectionColor={ink}
               placeholder="••••••••"
               placeholderTextColor={ink4}
-              accessibilityLabel="Confirm new password"
+              accessibilityLabel={t('auth_confirmPasswordLabel')}
             />
           </HandDrawnBox>
 

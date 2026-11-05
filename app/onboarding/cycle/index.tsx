@@ -17,8 +17,9 @@ import {
   Platform,
   ScrollView,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, t as tNow } from '../../../lib/i18n'
 import type { TranslationKeys } from '../../../lib/i18n/keys'
 import DatePickerField from '../../../components/ui/DatePickerField'
 import { SiteChoice, SiteStepper } from '../../../components/ui/SiteChoice'
@@ -159,6 +160,7 @@ export default function CycleOnboarding() {
       return onboardingComplete('pre-pregnancy')
     }
 
+    let saveFailed = false
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -186,6 +188,7 @@ export default function CycleOnboarding() {
       const { error: profileErr } = await supabase
         .from('profiles')
         .upsert(profilePayload, { onConflict: 'id' })
+      if (profileErr) saveFailed = true
       if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
 
       // Behavior row. Schema CHECK constraint requires PRE_PREG_DB_TYPE
@@ -198,6 +201,7 @@ export default function CycleOnboarding() {
         },
         { onConflict: 'user_id,type' }
       )
+      if (behaviorErr) saveFailed = true
       if (behaviorErr) console.warn('[onboarding] behaviors upsert failed:', behaviorErr.message)
       // Enroll locally regardless of the server result — the catch path below
       // also lets the user proceed, so local enrollment must always happen.
@@ -227,6 +231,7 @@ export default function CycleOnboarding() {
       }
     } catch (e) {
       // Non-blocking — local mode set below so user can still proceed.
+      saveFailed = true
       console.warn('Failed to save cycle onboarding:', e)
     }
 
@@ -245,6 +250,7 @@ export default function CycleOnboarding() {
 
     store.clearAll()
     onboardingComplete('pre-pregnancy')
+    if (saveFailed) Alert.alert(tNow('onb_saveLater_title'), tNow('onb_saveLater_body'))
   }
 
   // ─── Render current step ────────────────────────────────────────────────
@@ -461,7 +467,7 @@ function StepCycleLength({
           </Text>
           <View style={stepStyles.toggleRow}>
             <SiteChoice label={t('common_yes')} selected={ttc} onPress={() => setTTC(true)} tone={modeSoft} sticker="otest" style={{ flex: 1 }} />
-            <SiteChoice label={t('common_no')} selected={!ttc} onPress={() => setTTC(false)} tone={modeSoft} sticker="cal" style={{ flex: 1 }} />
+            <SiteChoice label={t('common_no')} selected={!ttc} onPress={() => setTTC(false)} tone={modeSoft} sticker="flower" style={{ flex: 1 }} />
           </View>
         </>
       )}

@@ -12,7 +12,7 @@
  */
 
 import { useState } from 'react'
-import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { OnboardingStep } from '../../components/onboarding/OnboardingStep'
 import { DiffuseField } from '../../components/ui/diffuse/DiffuseField'
@@ -93,6 +93,12 @@ export default function AboutYouScreen() {
               />
             </HandDrawnBox>
           )}
+
+          {!name.trim() ? (
+            <Text style={{ fontFamily: font.body, fontSize: 13, lineHeight: 18, color: colors.textMuted, marginTop: -8 }}>
+              {t('aboutYou_nameHint')}
+            </Text>
+          ) : null}
 
           <DatePickerField
             inline

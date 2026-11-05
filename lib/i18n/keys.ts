@@ -6383,4 +6383,44 @@ export interface TranslationKeys {
   meno_c_editA11y: string
   meno_h_days_one: string
   meno_h_days_other: string
+  auth_err_invalidCredentials: string
+  auth_err_emailNotConfirmed: string
+  auth_err_userExists: string
+  auth_err_weakPassword: string
+  auth_err_rateLimit: string
+  pedReport_title: string
+  pedReport_generated: string
+  pedReport_child: string
+  pedReport_dob: string
+  pedReport_bloodType: string
+  pedReport_allergies: string
+  pedReport_conditions: string
+  pedReport_medications: string
+  pedReport_pediatrician: string
+  pedReport_growth: string
+  pedReport_measure: string
+  pedReport_latest: string
+  pedReport_percentileHead: string
+  pedReport_date: string
+  pedReport_weight: string
+  pedReport_height: string
+  pedReport_head: string
+  pedReport_percentile: string
+  pedReport_noGrowth: string
+  pedReport_vaccinesGiven: string
+  pedReport_vaccine: string
+  pedReport_noVaccines: string
+  pedReport_dueOverdue: string
+  pedReport_overdue: string
+  pedReport_noneDue: string
+  pedReport_typicalDay: string
+  pedReport_feeding: string
+  pedReport_sleep: string
+  pedReport_disclaimer: string
+  pedReport_fileName: string
+  kp_pk_pedNamePh: string
+  kp_pk_phonePh: string
+  onb_saveLater_title: string
+  onb_saveLater_body: string
+  aboutYou_nameHint: string
 }

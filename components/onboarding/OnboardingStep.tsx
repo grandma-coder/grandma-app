@@ -90,7 +90,7 @@ export function OnboardingStep({
   onBack,
   onClose,
   continueDisabled = false,
-  continueLabel = 'Continue →',
+  continueLabel: continueLabelProp,
   auraMode,
   progress,
   ctaSticker,
@@ -99,6 +99,7 @@ export function OnboardingStep({
   const insets = useSafeAreaInsets()
   const { colors, font, isDark } = useTheme()
   const { t } = useTranslation()
+  const continueLabel = continueLabelProp ?? t('auth_continue')
   const nav = useContext(OnboardingNavContext)
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()

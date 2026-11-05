@@ -346,7 +346,7 @@ export default function KidsOnboarding() {
       if (insertError) {
         Alert.alert(
           tNow('kp_ob_saveFailedTitle'),
-          insertError.message || tNow('kp_ob_checkConnection'),
+          tNow('kp_ob_checkConnection'),
         )
         // eslint-disable-next-line no-console
         console.error('children insert failed:', insertError.message)
@@ -511,7 +511,7 @@ export default function KidsOnboarding() {
       console.warn('Failed to save kids onboarding:', msg)
       Alert.alert(
         tNow('kp_ob_finishFailedTitle'),
-        tNow('kp_ob_finishFailedBody', { msg })
+        tNow('kp_ob_finishFailedBody')
       )
       // Do NOT clear the draft or navigate — let the user retry. Release the
       // submit guard so the retry tap is accepted.

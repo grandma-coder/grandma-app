@@ -96,8 +96,8 @@ export function SiteChoice({
         <View style={[styles.inner, align === 'start' && styles.innerStart, compact && styles.innerCompact]}>
           {sticker ? <SiteSticker name={sticker} size={24} cut /> : null}
           <View style={{ flexShrink: 1, flexGrow: align === 'start' ? 1 : 0, alignItems: sticker || align === 'start' ? 'flex-start' : 'center' }}>
-            <Text style={[styles.label, { color: selected ? inkOn(tone, ink) : ink, fontFamily: font.bodyBold }]} numberOfLines={2}>{label}</Text>
-            {sub ? <Text style={[styles.sub, { color: selected ? inkOn(tone, colors.textSecondary) : colors.textSecondary, opacity: selected && inkOn(tone, ink) !== ink ? 0.7 : 1, fontFamily: font.body }]} numberOfLines={2}>{sub}</Text> : null}
+            <Text style={[styles.label, { color: selected ? inkOn(tone, ink) : ink, fontFamily: font.bodyBold }]} numberOfLines={3}>{label}</Text>
+            {sub ? <Text style={[styles.sub, { color: selected ? inkOn(tone, colors.textSecondary) : colors.textSecondary, opacity: selected && inkOn(tone, ink) !== ink ? 0.7 : 1, fontFamily: font.body }]} numberOfLines={4}>{sub}</Text> : null}
           </View>
           {tick ? <Animated.View style={[styles.tick, { opacity: sel, transform: [{ scale: sel }] }]}>
             <Svg width={14} height={14} viewBox="0 0 18 18">

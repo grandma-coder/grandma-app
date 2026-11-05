@@ -9,6 +9,7 @@
 import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
+import { useModeStore } from '../store/useModeStore'
 import { getCycleInfo, toDateStr, type CyclePhase, type CycleCalendarInput } from './cycleLogic'
 import {
   getChecklistItems,
@@ -659,13 +660,14 @@ export function useIntercourseStats() {
 
 export function useCycleIntent() {
   const { data: logs, ...rest } = useCycleLogs()
-  let intent: ChecklistIntent = 'cycle'
+  // Onboarding with "I don't know" for the last period writes no log, so fall back to the on-device intent.
+  let intent: ChecklistIntent = useModeStore.getState().cycleIntent === 'ttc' ? 'ttc' : 'cycle'
   if (logs) {
     const periodStart = logs.find((l) => l.type === 'period_start' && l.notes)
     if (periodStart?.notes) {
       try {
         const meta = JSON.parse(periodStart.notes)
-        if (meta?.tryingToConceive) intent = 'ttc'
+        if (meta && typeof meta.tryingToConceive === 'boolean') intent = meta.tryingToConceive ? 'ttc' : 'cycle'
       } catch {
         // malformed notes — keep neutral default
       }

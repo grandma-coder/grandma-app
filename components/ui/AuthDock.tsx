@@ -93,7 +93,7 @@ export function ActionDisc({
           {loading ? <ActivityIndicator color={ink} /> : children}
         </View>
       </Animated.View>
-      <Animated.Text style={[styles.label, { color: ink, opacity: pop }]} numberOfLines={1}>
+      <Animated.Text style={[styles.label, { color: ink, opacity: pop }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {label}
       </Animated.Text>
       {underline ? (

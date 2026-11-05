@@ -13,6 +13,7 @@
 
 import { supabase } from './supabase'
 import { useFeatureFlags } from '../store/useFeatureFlags'
+import { useModeStore } from '../store/useModeStore'
 import { getCycleInfo, toDateStr } from './cycleLogic'
 import { parseLocalDate } from './localDate'
 import {
@@ -913,12 +914,12 @@ export async function generateCycleNotifications(userId: string): Promise<number
 
   // Parse cycle config from notes JSON (onboarding stored it on the period_start row)
   let cycleLength = 28
-  let tryingToConceive = false
+  let tryingToConceive = useModeStore.getState().cycleIntent === 'ttc'
   try {
     if (periodRows[0].notes) {
       const meta = JSON.parse(periodRows[0].notes)
       if (typeof meta.cycleLength === 'number') cycleLength = meta.cycleLength
-      tryingToConceive = !!meta.tryingToConceive
+      if (typeof meta.tryingToConceive === 'boolean') tryingToConceive = meta.tryingToConceive
     }
   } catch {}
 

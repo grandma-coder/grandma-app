@@ -18,6 +18,7 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { authErrorText } from '../../lib/authError'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -57,15 +58,15 @@ export default function SignUp() {
       Alert.alert(t('auth_invalidEmail'), t('auth_invalidEmailMsg'))
       return
     }
-    if (password.length < 6) {
-      Alert.alert(t('auth_passwordTooShort'), t('auth_passwordTooShortMsg'))
+    if (password.length < 8) {
+      Alert.alert(t('auth_passwordTooShort'), t('auth_passwordTooShortN', { n: 8 }))
       return
     }
     setLoading(true)
     try {
       const { error } = await supabase.auth.signUp({ email: trimmedEmail, password })
       if (error) {
-        Alert.alert(t('auth_signUpFailed'), error.message)
+        Alert.alert(t('auth_signUpFailed'), authErrorText(error))
         return
       }
       toast.show({
@@ -77,8 +78,7 @@ export default function SignUp() {
       // unmount the toast provider host and dismiss the message early).
       setTimeout(() => router.replace('/(auth)/sign-in'), 3200)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('error_network')
-      Alert.alert(t('auth_signUpFailed'), msg)
+      Alert.alert(t('auth_signUpFailed'), authErrorText(e))
     } finally {
       setLoading(false)
     }
@@ -251,6 +251,7 @@ export default function SignUp() {
               placeholderTextColor={ink4}
             />
           </HandDrawnBox>
+          <Text style={{ fontFamily: font.body, fontSize: 13, color: ink3, marginTop: -8, marginBottom: 8 }}>{t('auth_passwordTooShortN', { n: 8 })}</Text>
 
           {/* CTA */}
           <View style={{ alignItems: 'center', marginTop: 4 }}>

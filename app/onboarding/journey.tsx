@@ -298,7 +298,7 @@ export default function JourneyScreen() {
       <View style={[styles.root, { backgroundColor: bg }]}>
         <View style={[styles.emptyWrap, { paddingTop: insets.top + 80 }]}>
           <View style={[styles.emptyIcon, { backgroundColor: paper, borderColor: paperBorder, borderWidth: 1.5 }]}>
-            <SiteSticker name="heart" size={56} cut />
+            <SiteSticker name="eye" size={56} cut />
           </View>
           <Display align="center" size={28} color={ink}>
             {t('onboardingJourney_allEnrolled1')}

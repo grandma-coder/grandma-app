@@ -17,6 +17,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { authErrorText } from '../../lib/authError'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
@@ -79,7 +80,7 @@ export default function Welcome() {
       await signInWithApple()
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string }
-      if (err.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('auth_signInError'), err.message ?? t('error_tryAgain'))
+      if (err.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('auth_signInError'), authErrorText(err))
     } finally {
       setLoading(null)
     }
@@ -91,7 +92,7 @@ export default function Welcome() {
       await signInWithGoogle()
     } catch (e: unknown) {
       const err = e as { message?: string }
-      if (err.message !== 'Google sign-in was cancelled or failed') Alert.alert(t('auth_signInError'), err.message ?? t('error_tryAgain'))
+      if (err.message !== 'Google sign-in was cancelled or failed') Alert.alert(t('auth_signInError'), authErrorText(err))
     } finally {
       setLoading(null)
     }
