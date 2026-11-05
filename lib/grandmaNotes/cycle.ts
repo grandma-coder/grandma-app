@@ -18,13 +18,6 @@ export interface CycleNoteInput {
   today?: Date
 }
 
-const PHASE_WORD: Record<CyclePhase, NoteKey> = {
-  menstruation: 'cycleAnalytics_phaseWord_menstruation',
-  follicular: 'cycleAnalytics_phaseWord_follicular',
-  ovulation: 'cycleAnalytics_phaseWord_ovulation',
-  luteal: 'cycleAnalytics_phaseWord_luteal',
-}
-
 const PHASE_SUGGESTION: Record<CyclePhase, NoteKey> = {
   menstruation: 'gn_sug_cycle_menstruation',
   follicular: 'gn_sug_cycle_follicular',
@@ -47,7 +40,9 @@ export function buildCycleNote(input: CycleNoteInput, t: Translate): GrandmaLett
   }
 
   const info = input.info
-  const phase = t(PHASE_WORD[info.phase])
+  // Whole phrases per language ("Fase lútea", "na fase lútea", "durante a menstruação") — dropping
+  // the bare phase word into a sentence read "na fase Lútea" / "na fase Menstruação".
+  const phase = t(`gn_phaseCap_${info.phase}` as NoteKey)
   const c: NoteCandidate[] = []
 
   // Where you are today — always useful, rarely the most informative.
@@ -93,7 +88,7 @@ export function buildCycleNote(input: CycleNoteInput, t: Translate): GrandmaLett
     c.push({
       id: 'symptoms', area: 'pms', sticker: 'bubble', weight: 3.5,
       title: t('gn_cycle_sym_title'),
-      body: t('gn_cycle_sym_body', { count: symCount, phase: t(PHASE_WORD[symPhase]) }),
+      body: t('gn_cycle_sym_body', { count: symCount, phase: t(`gn_phaseIn_${symPhase}` as NoteKey) }),
     })
   }
 

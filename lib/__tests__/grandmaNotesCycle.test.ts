@@ -17,7 +17,7 @@ describe('buildCycleNote', () => {
     const l = buildCycleNote({ history: history([28, 29, 30, 28, 29]), info, today: TODAY } as CycleNoteInput, tEn)
     expect(l.notes.map((n) => n.id)).toEqual(['range', 'today'])
     expect(l.notes[0]).toMatchObject({ area: 'cycleLength', title: 'Your cycle length', body: '28–30 days across your last 5 cycles.' })
-    expect(l.notes[1]).toMatchObject({ title: 'Day 14 of your cycle', body: 'Ovulation phase. Next period estimated in about 15 days.' })
+    expect(l.notes[1]).toMatchObject({ title: 'Day 14 of your cycle', body: 'Ovulation. Next period estimated in about 15 days.' })
     expect(l.suggestion?.text).toBe(tEn('gn_sug_cycle_ovulation'))
   })
 

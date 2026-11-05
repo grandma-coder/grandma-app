@@ -5977,4 +5977,12 @@ export const zh: TranslationKeys = {
   allergen_cold: "寒冷",
   allergen_exercise: "运动诱发",
   cycleDetail_topSymptomsCaption: "每个症状被记录的总次数。色带显示它出现在周期的哪个阶段。",
+  gn_phaseCap_menstruation: "经期",
+  gn_phaseIn_menstruation: "经期",
+  gn_phaseCap_follicular: "卵泡期",
+  gn_phaseIn_follicular: "卵泡期",
+  gn_phaseCap_ovulation: "排卵期",
+  gn_phaseIn_ovulation: "排卵期",
+  gn_phaseCap_luteal: "黄体期",
+  gn_phaseIn_luteal: "黄体期",
 }

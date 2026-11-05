@@ -5977,4 +5977,12 @@ export const ko: TranslationKeys = {
   allergen_cold: "추위",
   allergen_exercise: "운동 유발",
   cycleDetail_topSymptomsCaption: "각 증상이 기록된 총 횟수예요. 띠는 그 증상이 주기의 어느 단계에 있었는지 보여 줘요.",
+  gn_phaseCap_menstruation: "월경",
+  gn_phaseIn_menstruation: "월경",
+  gn_phaseCap_follicular: "난포기",
+  gn_phaseIn_follicular: "난포기",
+  gn_phaseCap_ovulation: "배란기",
+  gn_phaseIn_ovulation: "배란기",
+  gn_phaseCap_luteal: "황체기",
+  gn_phaseIn_luteal: "황체기",
 }

@@ -5977,4 +5977,12 @@ export const tr: TranslationKeys = {
   allergen_cold: "Soğuk",
   allergen_exercise: "Egzersize bağlı",
   cycleDetail_topSymptomsCaption: "Her belirtinin toplamda kaç kez kaydedildiği. Şerit, döngünün hangi evresine denk geldiğini gösterir.",
+  gn_phaseCap_menstruation: "Adet",
+  gn_phaseIn_menstruation: "Adet",
+  gn_phaseCap_follicular: "Foliküler",
+  gn_phaseIn_follicular: "Foliküler",
+  gn_phaseCap_ovulation: "Yumurtlama",
+  gn_phaseIn_ovulation: "Yumurtlama",
+  gn_phaseCap_luteal: "Luteal",
+  gn_phaseIn_luteal: "Luteal",
 }

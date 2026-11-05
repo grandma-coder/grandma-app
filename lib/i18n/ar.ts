@@ -5977,4 +5977,12 @@ export const ar: TranslationKeys = {
   allergen_cold: "البرد",
   allergen_exercise: "ناتجة عن التمرين",
   cycleDetail_topSymptomsCaption: "عدد مرات تسجيل كل عرض إجمالًا. يوضّح الشريط في أي مرحلة من الدورة ظهر.",
+  gn_phaseCap_menstruation: "الدورة",
+  gn_phaseIn_menstruation: "الدورة",
+  gn_phaseCap_follicular: "الجريبي",
+  gn_phaseIn_follicular: "الجريبي",
+  gn_phaseCap_ovulation: "الإباضة",
+  gn_phaseIn_ovulation: "الإباضة",
+  gn_phaseCap_luteal: "الأصفري",
+  gn_phaseIn_luteal: "الأصفري",
 }

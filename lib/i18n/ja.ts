@@ -5977,4 +5977,12 @@ export const ja: TranslationKeys = {
   allergen_cold: "寒冷",
   allergen_exercise: "運動誘発",
   cycleDetail_topSymptomsCaption: "各症状が記録された合計回数です。帯は、それが周期のどのフェーズに当たったかを示します。",
+  gn_phaseCap_menstruation: "生理",
+  gn_phaseIn_menstruation: "生理",
+  gn_phaseCap_follicular: "卵胞期",
+  gn_phaseIn_follicular: "卵胞期",
+  gn_phaseCap_ovulation: "排卵期",
+  gn_phaseIn_ovulation: "排卵期",
+  gn_phaseCap_luteal: "黄体期",
+  gn_phaseIn_luteal: "黄体期",
 }

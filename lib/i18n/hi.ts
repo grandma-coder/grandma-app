@@ -5977,4 +5977,12 @@ export const hi: TranslationKeys = {
   allergen_cold: "ठंड",
   allergen_exercise: "व्यायाम से होने वाली",
   cycleDetail_topSymptomsCaption: "हर लक्षण कुल कितनी बार दर्ज हुआ। पट्टी दिखाती है कि वह चक्र के किस चरण में आया।",
+  gn_phaseCap_menstruation: "पीरियड",
+  gn_phaseIn_menstruation: "पीरियड",
+  gn_phaseCap_follicular: "फ़ॉलिक्युलर",
+  gn_phaseIn_follicular: "फ़ॉलिक्युलर",
+  gn_phaseCap_ovulation: "ओव्यूलेशन",
+  gn_phaseIn_ovulation: "ओव्यूलेशन",
+  gn_phaseCap_luteal: "ल्यूटियल",
+  gn_phaseIn_luteal: "ल्यूटियल",
 }

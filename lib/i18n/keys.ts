@@ -6279,4 +6279,12 @@ export interface TranslationKeys {
   allergen_cold: string
   allergen_exercise: string
   cycleDetail_topSymptomsCaption: string
+  gn_phaseCap_menstruation: string
+  gn_phaseIn_menstruation: string
+  gn_phaseCap_follicular: string
+  gn_phaseIn_follicular: string
+  gn_phaseCap_ovulation: string
+  gn_phaseIn_ovulation: string
+  gn_phaseCap_luteal: string
+  gn_phaseIn_luteal: string
 }
