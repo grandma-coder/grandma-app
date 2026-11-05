@@ -8,7 +8,7 @@
  */
 import { useGrandmaChatEnabled, useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { router } from 'expo-router'
 import { SlidersHorizontal } from 'lucide-react-native'
@@ -26,6 +26,10 @@ import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { StickerTileGrid } from '../ui/StickerTileGrid'
 import { Display } from '../ui/Typography'
 import type { SiteStickerName } from '../stickers/SiteSticker'
+import { supabase } from '../../lib/supabase'
+import { LogSheet } from '../calendar/LogSheet'
+import { UserReminders } from './UserReminders'
+import { useReminders } from '../../store/useRemindersStore'
 
 type MenoWalletId = 'ask_grandma' | 'reminders' | 'rewards' | 'community'
 
@@ -41,6 +45,14 @@ export function MenopauseWallet() {
   const enabledKeys = useMenopauseWalletStore((s) => s.enabledKeys)
   const setEnabled = useMenopauseWalletStore((s) => s.setEnabled)
   const [pickerOpen, setPickerOpen] = useState(false)
+  // Site look: "Reminders" opens the personal reminders sheet (it used to land on the inbox).
+  const [remindersOpen, setRemindersOpen] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id ?? null))
+  }, [])
+  // Loading the list on the home also re-syncs its alerts (after a restart or re-login).
+  useReminders(userId, 'menopause')
 
   const toneFor = (id: MenoWalletId): WalletTone =>
     ({ ask_grandma: 'peach', reminders: 'lilac', rewards: 'yellow', community: 'green' } as const)[id]
@@ -73,7 +85,7 @@ export function MenopauseWallet() {
   const onHeader = (id: MenoWalletId) => {
     switch (id) {
       case 'ask_grandma': return router.push('/grandma-talk' as never)
-      case 'reminders': return router.push('/notifications' as never)
+      case 'reminders': return diffuse ? router.push('/notifications' as never) : setRemindersOpen(true)
       case 'rewards': return router.push('/daily-rewards' as never)
       case 'community': return router.push('/community' as never)
     }
@@ -130,6 +142,9 @@ export function MenopauseWallet() {
           enabledKeys={displayedIds}
           onSave={setEnabled}
         />
+        <LogSheet sticker="bell" visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>
+          <UserReminders userId={userId} context="menopause" />
+        </LogSheet>
       </View>
     )
   }

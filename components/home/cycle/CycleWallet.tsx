@@ -21,7 +21,8 @@ import { buildCycleWalletCards, type CycleWalletCardId } from '../../../lib/cycl
 import { WALLET_SHORTCUTS } from '../../../lib/walletCatalog'
 import { useCycleWalletStore } from '../../../store/useWalletStore'
 import type { WalletTone } from '../../../lib/wallet'
-import { loadReminders, upcomingReminders, type Reminder } from '../../../lib/reminders'
+import { openReminderCount } from '../../../lib/reminders'
+import { useReminders } from '../../../store/useRemindersStore'
 import { WalletCard } from '../WalletCard'
 import { WalletPicker, type WalletPickerItem } from '../WalletPicker'
 import { QuietPill } from '../../ui/QuietPill'
@@ -76,12 +77,9 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
   const defaultCards = buildCycleWalletCards()
     .filter((c): c is typeof c & { id: CycleCardId } => c.id !== 'essentials')
 
-  const [reminders, setReminders] = useState<Reminder[]>([])
-  useEffect(() => {
-    if (remindersOpen) return // don't refetch while editing
-    loadReminders(userId ?? null, 'pre-pregnancy').then(setReminders)
-  }, [userId, remindersOpen])
-  const upcoming = upcomingReminders(reminders, 2)
+  // Shared with the sheet (store) so the badge updates live; it counts every open reminder.
+  const { reminders } = useReminders(userId ?? null, 'pre-pregnancy')
+  const openReminders = openReminderCount(reminders)
 
   const shortcutOnlyIds: CycleCardId[] = WALLET_SHORTCUTS
     .map((s) => s.key)
@@ -220,7 +218,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
 
       {displayedIds.map((id, i) => {
         const isLast = i === displayedIds.length - 1
-        const reminderBadge = id === 'reminders' ? upcoming.length : undefined
+        const reminderBadge = id === 'reminders' ? openReminders : undefined
         return (
           <WalletCard
             key={id}
@@ -240,7 +238,7 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
       )}
 
       {/* Reminders — pop-up sheet (shared add + list, cycle-scoped) */}
-      <LogSheet visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>
+      <LogSheet sticker="bell" visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>
         <UserReminders userId={userId} context="pre-pregnancy" />
       </LogSheet>
 

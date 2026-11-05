@@ -24,6 +24,7 @@ import { useOnboardingStore } from '../store/useOnboardingStore'
 import { usePregnancyOnboardingStore } from '../store/usePregnancyOnboardingStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { useQuickLogStore } from '../store/useQuickLogStore'
+import { useRemindersStore } from '../store/useRemindersStore'
 import { useUnlockStore } from '../store/useUnlockStore'
 import { useVaultStore } from '../store/useVaultStore'
 import { usePregnancyWalletStore, useCycleWalletStore, useKidsWalletStore, useMenopauseWalletStore } from '../store/useWalletStore'
@@ -39,7 +40,7 @@ const USER_STORES = [
   useCycleQuickLogStore, useCycleSettingsStore, useEmergencyInsuranceStore, useFoodStore, useGoalsStore,
   useGrandmaHistoryStore, useJourneyStore, useKidsOnboardingStore, useKidsQuickLogStore,
   useMenopauseQuickLogStore, useMenopauseStore, useModeStore, useOnboardingStore,
-  usePregnancyOnboardingStore, usePregnancyStore, useQuickLogStore, useUnlockStore, useVaultStore,
+  usePregnancyOnboardingStore, usePregnancyStore, useQuickLogStore, useRemindersStore, useUnlockStore, useVaultStore,
   usePregnancyWalletStore, useCycleWalletStore, useKidsWalletStore, useMenopauseWalletStore,
 ]
 

@@ -226,6 +226,9 @@ import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { parseLocalDate } from '../../lib/localDate'
 import { SheetModal } from '../ui/SheetModal'
 import { CenterModal } from '../ui/CenterModal'
+import { RemindersPanel, type PanelDraft } from './reminders/RemindersPanel'
+import { syncReminderNotifications } from '../../lib/reminderNotifications'
+import { cleanDraft } from '../../lib/reminders'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
@@ -457,6 +460,7 @@ interface Reminder {
   archivedAt?: string | null  // ISO timestamp when marked done
   childId?: string | null     // null = all kids
   flagged?: boolean           // priority flag
+  ownerId?: string            // user_id — only the author's phone schedules the alert
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -521,6 +525,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
   // Reminders
   const [reminders, setReminders] = useState<Reminder[]>([])
+  const [reminderUserId, setReminderUserId] = useState<string | null>(null)
   const [showReminderInput, setShowReminderInput] = useState(false)
   const [newReminderText, setNewReminderText] = useState('')
   const [newReminderDate, setNewReminderDate] = useState<Date | null>(null)
@@ -612,6 +617,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         archivedAt: row.archived_at ?? null,
         childId: row.child_id ?? null,
         flagged: !!row.flagged,
+        ownerId: row.user_id,
       }))
 
       // One-time backfill from AsyncStorage. We only attempt this if the
@@ -656,6 +662,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                     archivedAt: row.archived_at ?? null,
                     childId: row.child_id ?? null,
                     flagged: !!row.flagged,
+                    ownerId: row.user_id,
                   })
                 }
               }
@@ -666,7 +673,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         }
       }
 
-      if (!cancelled) setReminders(fromServer)
+      if (!cancelled) { setReminders(fromServer); setReminderUserId(userId) }
     }
 
     hydrate()
@@ -900,6 +907,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       dueTime,
       notifId,
       childId: newReminderChildId,
+      ownerId: session.user.id,
     }
     applyReminders([...reminders, r])
     setNewReminderText('')
@@ -973,6 +981,71 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           supabase.from('notifications').delete().eq('id', r.notifId).then(() => {})
         }
       })
+  }
+
+  // Local alerts for this phone's own kids reminders (a co-caregiver's alert rings on their phone).
+  // Re-synced whenever the list changes; ids are stable, so this never duplicates.
+  useEffect(() => {
+    if (!reminderUserId) return
+    void syncReminderNotifications('kids', reminders.filter((r) => !r.ownerId || r.ownerId === reminderUserId))
+  }, [reminders, reminderUserId])
+
+  /** Site-look sheet: add from the composer draft. Resolves false when the insert fails. */
+  async function addKidsReminder(draft: PanelDraft): Promise<boolean> {
+    const d = cleanDraft(draft)
+    if (!d.text) return false
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return false
+    const { data, error } = await supabase
+      .from('kids_reminders')
+      .insert({
+        user_id: session.user.id,
+        child_id: draft.personId,
+        text: d.text,
+        done: false,
+        flagged: false,
+        due_date: d.dueDate,
+        due_time: d.dueTime,
+        sort_order: reminders.length,
+      })
+      .select('id')
+      .single()
+    if (error || !data) {
+      console.error('kids_reminders insert failed:', error?.message)
+      return false
+    }
+    setReminders((prev) => [...prev, {
+      id: data.id, text: d.text, done: false, dueDate: d.dueDate, dueTime: d.dueTime,
+      childId: draft.personId, ownerId: session.user.id,
+    }])
+    return true
+  }
+
+  /** Site-look sheet: save an edit (text, when, child). Moving a done one to a future time reopens it. */
+  async function updateKidsReminder(id: string, draft: PanelDraft): Promise<boolean> {
+    const r = reminders.find((x) => x.id === id)
+    if (!r) return false
+    const d = cleanDraft(draft)
+    if (!d.text) return false
+    const whenChanged = d.dueDate !== (r.dueDate ?? null) || d.dueTime !== (r.dueTime ?? null)
+    const reopen = r.done && whenChanged && !!d.dueDate
+    const patch = {
+      text: d.text, due_date: d.dueDate, due_time: d.dueTime, child_id: draft.personId,
+      ...(reopen ? { done: false, archived_at: null } : {}),
+    }
+    const { error } = await supabase.from('kids_reminders').update(patch).eq('id', id)
+    if (error) {
+      console.error('kids_reminders update failed:', error.message)
+      return false
+    }
+    setReminders((prev) => prev.map((x) => x.id === id ? {
+      ...x, text: d.text, dueDate: d.dueDate, dueTime: d.dueTime, childId: draft.personId,
+      ...(reopen ? { done: false, archivedAt: null } : {}),
+    } : x))
+    if (r.notifId && d.text !== r.text) {
+      supabase.from('notifications').update({ title: d.text }).eq('id', r.notifId).then(() => {})
+    }
+    return true
   }
 
   function flagReminder(id: string) {
@@ -2450,8 +2523,23 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
             {/* Reminders — pop-up sheet (add + compact list; "see all" opens the
                 full manage modal). Mirrors the pregnancy wallet reminders sheet. */}
-            <LogSheet visible={remindersSheetVisible} title={t('kids_home_section_reminders')} onClose={() => setRemindersSheetVisible(false)}>
-              {remindersBody}
+            <LogSheet sticker="bell" visible={remindersSheetVisible} title={t('kids_home_section_reminders')} onClose={() => setRemindersSheetVisible(false)}>
+              {diffuse ? remindersBody : (
+                <RemindersPanel
+                  context="kids"
+                  reminders={reminders}
+                  ready={!!reminderUserId}
+                  placeholder={t('kids_home_reminder_placeholder')}
+                  notes={false}
+                  people={children.length > 1
+                    ? [{ id: null, label: t('kids_home_reminder_child_all') }, ...children.map((c) => ({ id: c.id, label: c.name }))]
+                    : undefined}
+                  onAdd={addKidsReminder}
+                  onUpdate={updateKidsReminder}
+                  onSetDone={(id, done) => { if (reminders.find((x) => x.id === id)?.done !== done) toggleReminder(id) }}
+                  onDelete={deleteReminder}
+                />
+              )}
             </LogSheet>
 
             {/* Growth Leap — pop-up sheet with the leap info card. */}

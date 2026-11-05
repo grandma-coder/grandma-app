@@ -30,7 +30,8 @@ import { getUpcomingAppointment } from '../../../lib/pregnancyAppointments'
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 import { getWeekData } from '../../../lib/pregnancyData'
 import type { TodayLogEntry } from '../../../lib/analyticsData'
-import { loadReminders, upcomingReminders, type Reminder } from '../../../lib/reminders'
+import { openReminderCount } from '../../../lib/reminders'
+import { useReminders } from '../../../store/useRemindersStore'
 import { WalletCard } from '../WalletCard'
 import { WalletPicker, type WalletPickerItem } from '../WalletPicker'
 import { MemoriesSheet } from '../MemoriesSheet'
@@ -89,12 +90,9 @@ export function WeekWallet({
 
   const [remindersOpen, setRemindersOpen] = useState(false)
   const [showMemories, setShowMemories] = useState(false)
-  const [reminders, setReminders] = useState<Reminder[]>([])
-  useEffect(() => {
-    if (remindersOpen) return // don't refetch while editing
-    loadReminders(userId ?? null, 'pregnancy').then(setReminders)
-  }, [userId, remindersOpen])
-  const upcoming = upcomingReminders(reminders, 2)
+  // Shared with the sheet (store) so the badge updates live; it counts every open reminder.
+  const { reminders } = useReminders(userId ?? null, 'pregnancy')
+  const openReminders = openReminderCount(reminders)
 
   const appt = getUpcomingAppointment(weekNumber) ?? null
   const weekData = getWeekData(weekNumber)
@@ -247,7 +245,7 @@ export function WeekWallet({
         {displayedIds.map((id, i) => {
           const isLast = i === displayedIds.length - 1
           // Reminders card shows a notification-style count badge (upcoming).
-          const reminderBadge = id === 'reminders' ? upcoming.length : undefined
+          const reminderBadge = id === 'reminders' ? openReminders : undefined
           return (
             <WalletCard
               key={id}
@@ -295,7 +293,7 @@ export function WeekWallet({
       )}
 
       {/* Reminders — full pop-up sheet (compact list + add) */}
-      <LogSheet visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>
+      <LogSheet sticker="bell" visible={remindersOpen} title={t('pregnancy_reminders_title')} onClose={() => setRemindersOpen(false)}>
         <PregnancyUserReminders userId={userId ?? null} />
       </LogSheet>
 
