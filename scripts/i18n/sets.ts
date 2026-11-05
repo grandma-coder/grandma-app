@@ -31,7 +31,10 @@ export const SETS: ContentSet[] = [
  */
 export function activeLanguages(): string[] {
   const src = readFileSync(join(ROOT, 'store/useLanguageStore.ts'), 'utf8')
-  const block = src.slice(src.indexOf('export const SUPPORTED_LANGUAGES'), src.indexOf('export const UPCOMING_LANGUAGES'))
+  const start = src.indexOf('export const SUPPORTED_LANGUAGES')
+  const end = src.indexOf('export const UPCOMING_LANGUAGES')
+  if (start === -1 || end === -1 || end < start) throw new Error('store/useLanguageStore.ts: SUPPORTED_LANGUAGES / UPCOMING_LANGUAGES markers not found')
+  const block = src.slice(start, end)
   return [...block.matchAll(/code:\s*'([^']+)'/g)].map((m) => m[1]).filter((c) => c !== 'en')
 }
 

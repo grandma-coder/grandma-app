@@ -38,7 +38,8 @@ export async function translateBatch(lang: string, entries: Record<string, strin
   const key = apiKey()
   if (!key) throw new Error('ANTHROPIC_API_KEY is not set (env or .env)')
   let lastError: unknown
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 4000 * attempt))
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -51,7 +52,8 @@ export async function translateBatch(lang: string, entries: Record<string, strin
         }),
       })
       if (!res.ok) throw new Error(`Anthropic API ${res.status}: ${(await res.text()).slice(0, 300)}`)
-      const data = (await res.json()) as { content: { type: string; text?: string }[] }
+      const data = (await res.json()) as { content: { type: string; text?: string }[]; stop_reason?: string }
+      if (data.stop_reason === 'max_tokens') throw new Error('Reply cut off (max_tokens) — batch too large')
       const text = data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join('')
       const json = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)
       const out = JSON.parse(json) as Record<string, string>
@@ -60,6 +62,8 @@ export async function translateBatch(lang: string, entries: Record<string, strin
       for (const [k, v] of Object.entries(out)) {
         if (typeof v !== 'string' || !v.trim()) throw new Error(`Empty translation for ${k}`)
         if (paramMismatch(entries[k], v)) throw new Error(`{{param}} mismatch in ${k}`)
+        // An echoed English sentence would pass the manifest but fail the check forever.
+        if (v === entries[k] && /[A-Za-z]{3,}\s[a-z]{3,}/.test(v)) throw new Error(`Left in English: ${k}`)
       }
       return out
     } catch (e) {

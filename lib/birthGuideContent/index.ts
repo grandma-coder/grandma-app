@@ -12,8 +12,21 @@ import type { BirthGuideLocale } from './types'
 
 export const BIRTH_GUIDE_CONTENT: Partial<Record<AppLanguage, BirthGuideLocale>> = { 'pt-BR': ptBR, es }
 
+const BUNDLED_LANGS = new Set(
+  (Object.keys(BIRTH_GUIDE_CONTENT) as AppLanguage[]).filter((l) => Object.keys(BIRTH_GUIDE_CONTENT[l]!).length > 0),
+)
+
 export function hasBundledBirthGuide(lang: AppLanguage): boolean {
-  return lang !== 'en' && !!BIRTH_GUIDE_CONTENT[lang] && Object.keys(BIRTH_GUIDE_CONTENT[lang]!).length > 0
+  return BUNDLED_LANGS.has(lang)
+}
+
+/**
+ * What to hand the runtime translator for one field: nothing when the bundle translated it,
+ * the text itself when it's still English (admin edit, shifted section) or the language has
+ * no bundle. `localized` is the field after localizedBirthTopic, `english` the source field.
+ */
+export function runtimeSource(localized: string, english: string | undefined, bundled: boolean): string {
+  return bundled && localized !== english ? '' : localized
 }
 
 export function localizedBirthTopic(topic: BirthTopic, lang: AppLanguage): BirthTopic {

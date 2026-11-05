@@ -11,9 +11,9 @@ import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { fnv1a } from '../../lib/i18nHash'
-import { diffSet, readLocaleFile, writeLocaleFile, type Manifest } from './core'
+import { diffSet, fillPlaceholders, readLocaleFile, writeLocaleFile, type Manifest } from './core'
 import { MANIFEST_PATH, readManifest } from './check'
-import { SETS, activeLanguages } from './sets'
+import { LANGUAGE_NAMES, SETS, activeLanguages } from './sets'
 import { translateBatch } from './translate'
 
 const args = process.argv.slice(2)
@@ -97,6 +97,23 @@ async function main() {
       process.stdout.write('\n')
     }
   }
+  // UI strings in hidden (V2) languages: English placeholders for new keys, removed keys
+  // dropped — keeps the TranslationKeys type and key parity green without translating them.
+  if (!ONLY || ONLY === 'ui') {
+    const ui = SETS.find((s) => s.name === 'ui')!
+    const english = ui.english()
+    for (const lang of Object.keys(LANGUAGE_NAMES)) {
+      if (!activeLanguages().includes(lang)) fillPlaceholders(ui.localePath(lang), english)
+    }
+  }
+  // Drop manifest entries for keys English no longer has.
+  for (const set of SETS) {
+    const english = set.english()
+    for (const lang of Object.keys(manifest[set.name] ?? {})) {
+      for (const k of Object.keys(manifest[set.name][lang])) if (!(k in english)) delete manifest[set.name][lang][k]
+    }
+  }
+  save(manifest)
   writeBirthGuideHashes(manifest)
   console.log('Done.')
 }

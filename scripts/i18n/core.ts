@@ -74,3 +74,11 @@ export function writeLocaleFile(path: string, updates: Record<string, string>, r
   out.splice(close, 0, ...added)
   writeFileSync(path, out.join('\n'))
 }
+
+/** Hidden (not yet offered) languages: keep their translations, add new keys as English placeholders, drop removed keys — so typecheck and key parity hold without translating them. */
+export function fillPlaceholders(path: string, english: Record<string, string>): void {
+  const locale = readLocaleFile(path)
+  const missing = Object.fromEntries(Object.keys(english).filter((k) => !(k in locale)).map((k) => [k, english[k]]))
+  const removed = Object.keys(locale).filter((k) => !(k in english))
+  if (Object.keys(missing).length || removed.length) writeLocaleFile(path, missing, removed)
+}

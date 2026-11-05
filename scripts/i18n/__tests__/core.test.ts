@@ -66,3 +66,15 @@ describe('locale file round-trip', () => {
     expect(readLocaleFile(p)).toEqual({ keep: 'a "q" \n ç', single: "it's", change: 'novo', 'pillar_a-b': 'traço', added: 'olá "x"' })
   })
 })
+
+import { fillPlaceholders } from '../core'
+
+describe('fillPlaceholders (hidden languages)', () => {
+  it('adds new English keys as placeholders and drops removed ones, keeping translations', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'i18n-'))
+    const p = join(dir, 'fr.ts')
+    writeFileSync(p, 'export const fr: X = {\n  a: "Un",\n  gone: "Parti",\n}\n')
+    fillPlaceholders(p, { a: 'One', b: 'Two' })
+    expect(readLocaleFile(p)).toEqual({ a: 'Un', b: 'Two' })
+  })
+})

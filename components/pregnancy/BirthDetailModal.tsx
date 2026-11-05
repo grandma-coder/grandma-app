@@ -22,7 +22,7 @@ import { useIsDiffuse, DiffuseFieldSurface, DiffuseArrow } from '../ui/diffuse/D
 import { DiffuseSheet } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { useTranslatedContent } from '../../lib/useTranslatedContent'
-import { localizedBirthTopic, hasBundledBirthGuide } from '../../lib/birthGuideContent'
+import { localizedBirthTopic, hasBundledBirthGuide, runtimeSource } from '../../lib/birthGuideContent'
 import { Display, Body } from '../ui/Typography'
 import {
   Leaf, Cross, Cloud, Drop, ClockFace, Bolt, Key, Pill, Lungs, Heart, Moon,
@@ -331,10 +331,13 @@ function AccordionItem({
   // translator only covers languages that aren't bundled (passing '' skips its request).
   const { language } = useTranslation()
   const bundled = hasBundledBirthGuide(language)
-  const { text: rtTitle } = useTranslatedContent(`birthguide_${topicKey}_${index}_title`, bundled ? '' : section.title)
-  const { text: rtContent } = useTranslatedContent(`birthguide_${topicKey}_${index}_content`, bundled ? '' : section.content)
-  const sectionTitle = bundled ? section.title : rtTitle
-  const sectionContent = bundled ? section.content : rtContent
+  const english = getBirthTopic(topicKey).sections[index]
+  const titleSrc = runtimeSource(section.title, english?.title, bundled)
+  const contentSrc = runtimeSource(section.content, english?.content, bundled)
+  const { text: rtTitle } = useTranslatedContent(`birthguide_${topicKey}_${index}_title`, titleSrc)
+  const { text: rtContent } = useTranslatedContent(`birthguide_${topicKey}_${index}_content`, contentSrc)
+  const sectionTitle = titleSrc ? rtTitle : section.title
+  const sectionContent = contentSrc ? rtContent : section.content
 
   if (diffuse && dt) {
     const acc = accent ?? dt.colors.ink

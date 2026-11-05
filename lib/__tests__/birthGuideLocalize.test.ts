@@ -26,3 +26,17 @@ it('never shows a translation of older text (topic edited in the command center)
 it('returns English topics unchanged', () => {
   expect(localizedBirthTopic(NATURAL_TOPIC, 'en')).toBe(NATURAL_TOPIC)
 })
+
+import { runtimeSource } from '../birthGuideContent'
+
+describe('runtimeSource', () => {
+  it('skips the runtime translator for text the bundle translated', () => {
+    expect(runtimeSource('Parto natural', 'Natural Birth', true)).toBe('')
+  })
+  it('sends still-English text (admin edit, shifted section) to the runtime translator', () => {
+    expect(runtimeSource('Edited in admin', 'Edited in admin', true)).toBe('Edited in admin')
+  })
+  it('always uses the runtime translator for languages without a bundle', () => {
+    expect(runtimeSource('Natural Birth', 'Natural Birth', false)).toBe('Natural Birth')
+  })
+})

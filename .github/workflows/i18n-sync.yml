@@ -1,47 +1,63 @@
 name: Translations
 
 # Translates new or changed English text into the app's active languages and commits the
-# result back to the pull request, so every PR reaches review already translated.
-# Needs the ANTHROPIC_API_KEY repository secret; without it the job is skipped and the
-# i18n coverage test in CI still fails on anything untranslated.
+# result back (to the PR branch, or to main after a direct push), then re-checks types and
+# translation coverage on that result — a push made with GITHUB_TOKEN doesn't trigger CI,
+# so this job is where the bot commit gets validated (and why it can't loop).
+# Needs the ANTHROPIC_API_KEY repository secret; without it the job does nothing and the
+# i18n coverage test in CI keeps failing on anything untranslated.
 
 on:
   pull_request:
+    branches: [main]
+  push:
     branches: [main]
 
 permissions:
   contents: write
 
 concurrency:
-  group: i18n-sync-${{ github.head_ref }}
+  group: i18n-sync-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   sync:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
+      - name: Is the translation key configured?
+        id: key
+        env:
+          HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        run: echo "present=$HAS_KEY" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+        if: steps.key.outputs.present == 'true'
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - uses: actions/setup-node@v4
+        if: steps.key.outputs.present == 'true'
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
-        if: env.ANTHROPIC_API_KEY != ''
+        if: steps.key.outputs.present == 'true'
         run: npm ci
 
       - name: Translate new or changed text
-        if: env.ANTHROPIC_API_KEY != ''
+        if: steps.key.outputs.present == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: npm run i18n:sync
 
+      - name: Verify the translated result
+        if: steps.key.outputs.present == 'true'
+        run: npm run typecheck && npm run i18n:check
+
       - name: Commit translations
-        if: env.ANTHROPIC_API_KEY != ''
+        if: steps.key.outputs.present == 'true'
         run: |
           git config user.name grandma-coder
           git config user.email grandma-coder@users.noreply.github.com
