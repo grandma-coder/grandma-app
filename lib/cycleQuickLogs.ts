@@ -13,24 +13,25 @@ export type CycleQuickLogSheet =
 export interface CycleQuickLogDef {
   key: string                 // stable id, stored in the user's enabled list
   sheet: CycleQuickLogSheet   // the log sheet this chip opens
-  labelKey: TranslationKey    // display label in the picker
+  labelKey: TranslationKey    // display label in the picker (room for a descriptive label)
+  shortKey: TranslationKey    // one-or-two-word label under the sticker in the home row (no truncation)
 }
 
 export const CYCLE_QUICK_LOGS: CycleQuickLogDef[] = [
-  { key: 'mood',           sheet: 'mood',           labelKey: 'cycleQuickLog_mood' },
-  { key: 'symptoms',       sheet: 'symptom',        labelKey: 'cycleQuickLog_symptoms' },
-  { key: 'bbt',            sheet: 'basal_temp',     labelKey: 'cycleQuickLog_bbt' },
-  { key: 'lh',             sheet: 'lh',             labelKey: 'cycleQuickLog_lh' },
-  { key: 'cm',             sheet: 'cm',             labelKey: 'cycleQuickLog_cm' },
-  { key: 'intimacy',       sheet: 'intercourse',    labelKey: 'cycleQuickLog_intimacy' },
-  { key: 'period_start',   sheet: 'period_start',   labelKey: 'cycleQuickLog_periodStart' },
-  { key: 'period_end',     sheet: 'period_end',     labelKey: 'cycleCalendar_logEntry_periodEnd' },
-  { key: 'pregnancy_test', sheet: 'pregnancy_test', labelKey: 'cycleCalendar_logEntry_pregTest' },
-  { key: 'sex_drive',      sheet: 'sex_drive',      labelKey: 'cycleCalendar_logEntry_sexDrive' },
-  { key: 'clots',          sheet: 'clots',          labelKey: 'cycleCalendar_logEntry_clots' },
-  { key: 'weight',         sheet: 'weight',         labelKey: 'cycleCalendar_logEntry_weight' },
-  { key: 'water',          sheet: 'water',          labelKey: 'cycleCalendar_logEntry_water' },
-  { key: 'activity',       sheet: 'activity',       labelKey: 'cycleCalendar_logEntry_activity' },
+  { key: 'mood',           sheet: 'mood',           labelKey: 'cycleQuickLog_mood', shortKey: 'cycleQuickLog_short_mood' },
+  { key: 'symptoms',       sheet: 'symptom',        labelKey: 'cycleQuickLog_symptoms', shortKey: 'cycleQuickLog_short_symptoms' },
+  { key: 'bbt',            sheet: 'basal_temp',     labelKey: 'cycleQuickLog_bbt', shortKey: 'cycleQuickLog_short_bbt' },
+  { key: 'lh',             sheet: 'lh',             labelKey: 'cycleQuickLog_lh', shortKey: 'cycleQuickLog_short_lh' },
+  { key: 'cm',             sheet: 'cm',             labelKey: 'cycleQuickLog_cm', shortKey: 'cycleQuickLog_short_cm' },
+  { key: 'intimacy',       sheet: 'intercourse',    labelKey: 'cycleQuickLog_intimacy', shortKey: 'cycleQuickLog_short_intimacy' },
+  { key: 'period_start',   sheet: 'period_start',   labelKey: 'cycleQuickLog_periodStart', shortKey: 'cycleQuickLog_short_period_start' },
+  { key: 'period_end',     sheet: 'period_end',     labelKey: 'cycleCalendar_logEntry_periodEnd', shortKey: 'cycleQuickLog_short_period_end' },
+  { key: 'pregnancy_test', sheet: 'pregnancy_test', labelKey: 'cycleCalendar_logEntry_pregTest', shortKey: 'cycleQuickLog_short_pregnancy_test' },
+  { key: 'sex_drive',      sheet: 'sex_drive',      labelKey: 'cycleCalendar_logEntry_sexDrive', shortKey: 'cycleQuickLog_short_sex_drive' },
+  { key: 'clots',          sheet: 'clots',          labelKey: 'cycleCalendar_logEntry_clots', shortKey: 'cycleQuickLog_short_clots' },
+  { key: 'weight',         sheet: 'weight',         labelKey: 'cycleCalendar_logEntry_weight', shortKey: 'cycleQuickLog_short_weight' },
+  { key: 'water',          sheet: 'water',          labelKey: 'cycleCalendar_logEntry_water', shortKey: 'cycleQuickLog_short_water' },
+  { key: 'activity',       sheet: 'activity',       labelKey: 'cycleCalendar_logEntry_activity', shortKey: 'cycleQuickLog_short_activity' },
 ]
 
 // The default chips a new user sees before they customize.

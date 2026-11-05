@@ -10,7 +10,8 @@ import { PillButton } from '../../ui/PillButton'
 import { LogSheet } from '../../calendar/LogSheet'
 import { useTranslation } from '../../../lib/i18n'
 import { Character, CharacterName } from '../../characters/Characters'
-import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { SiteSticker } from '../../stickers/SiteSticker'
+import { CYCLE_LOG_STICKER } from '../../../lib/logStickers'
 import { useIsDiffuse } from '../../ui/diffuse/DiffuseKit'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogTimeline'
 import { CYCLE_QUICK_LOGS } from '../../../lib/cycleQuickLogs'
@@ -51,20 +52,14 @@ const CYCLE_BLOB_OVERRIDE: Record<string, { char: CharacterName; hue: keyof Retu
 // the SHARED canonical map the Diffuse variant + calendar timeline use (keyed by
 // the def's cycle log type). One source of truth = the picker, the home card,
 // and the calendar all show the same icon; distinctness is concept + hue.
-// Site-look stickers per cycle log type (light branch).
-const SITE_FOR: Record<string, SiteStickerName> = {
-  mood: 'face3', symptom: 'heart', basal_temp: 'thermo', lh: 'otest', cm: 'drop', intercourse: 'heart',
-  period_start: 'drop', period_end: 'drop', pregnancy_test: 'otest', sex_drive: 'heart',
-  clots: 'drop', weight: 'bars', water: 'drop', activity: 'shoe',
-}
-
+// Site look: the SAME sticker map as the home dock, sheet headers and calendar (lib/logStickers).
 function blobFor(logType: string, stickers: ReturnType<typeof useTheme>['stickers'], diffuse: boolean): { node: React.ReactElement; soft: string } {
   const override = CYCLE_BLOB_OVERRIDE[logType]
   const name = override?.char ?? DIFFUSE_LOG_CHARACTER[logType] ?? 'note'
   const hue = override ? stickers[override.hue] : diffuseLogHue(logType)
   return {
-    node: !diffuse && SITE_FOR[logType]
-      ? <SiteSticker name={SITE_FOR[logType]} size={26} />
+    node: !diffuse && CYCLE_LOG_STICKER[logType]
+      ? <SiteSticker name={CYCLE_LOG_STICKER[logType]} size={30} cut />
       : <Character name={name} size={22} color={hue} />,
     soft: softForHue(hue, stickers),
   }

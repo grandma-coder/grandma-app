@@ -11,7 +11,7 @@
  */
 import { SheetFooterAction } from './LogSheet'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   View, Text, Pressable, Alert, StyleSheet, ActivityIndicator, TextInput,
 } from 'react-native'
@@ -27,20 +27,38 @@ import { askGrandmaAboutSymptoms, canAskGrandma } from '../../lib/symptomAssist'
 import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel, kgToDisplay, displayToKg, weightLabel } from '../../lib/units'
-import { SymptomSticker, CustomSymptomBlob } from './symptomStickers'
+import { SymptomSticker, CustomSymptomBlob, SymptomSiteSticker, CustomSymptomSiteSticker } from './symptomStickers'
 import { Smiley, Sad, Sleepy } from '../ui/Stickers'
 import { Character, type MoodExpression } from '../characters/Characters'
-import { SiteSticker } from '../stickers/SiteSticker'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { CYCLE_LOG_STICKER, CYCLE_MOOD_STICKER } from '../../lib/logStickers'
 import { StickerChoice, MoreSection } from './QuickLogKit'
 import { useTranslation, t as translate } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
-import { assertNotFuture } from '../../lib/futureDate'
+import { assertNotFuture, FutureDateError } from '../../lib/futureDate'
+
+/** Alert text for a failed save: our own (translated) future-date message, else a calm generic
+ *  line — never a raw English Supabase/network error. */
+function saveErrorText(e: unknown): string {
+  return e instanceof FutureDateError ? e.message : translate('cyc_alert_saveFailed')
+}
+
+/** The JSON object stored in a log's `notes` by onboarding, or null for plain note text. */
+function parseNotesMeta(notes: string): Record<string, unknown> | null {
+  if (!notes.trimStart().startsWith('{')) return null
+  try {
+    const v = JSON.parse(notes)
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : null
+  } catch {
+    return null
+  }
+}
 
 // ─── Save helpers ──────────────────────────────────────────────────────────
 async function replaceSingleLog(
   date: string,
   type: string,
-  value: string,
+  value: string | null,
   notes?: string,
 ) {
   assertNotFuture(date)
@@ -81,6 +99,78 @@ function useInvalidate() {
   return async () => {
     await qc.invalidateQueries({ queryKey: ['cycleLogs'] })
   }
+}
+
+// ─── useExistingLog (single-value forms) ────────────────────────────────────
+/**
+ * The row already saved for this day + type, so re-opening a form (from the dock, the day detail
+ * or the launcher) shows what she logged instead of a blank form. `apply` runs once per
+ * date/type when the row arrives, and never after the user has started changing things.
+ */
+function useExistingLog(
+  date: string,
+  type: string,
+  apply: (row: { value: string | null; notes: string | null }) => void,
+) {
+  const [userId, setUserId] = useState<string | undefined>()
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id))
+  }, [])
+  const { data } = useQuery({
+    queryKey: ['cycleLogs', 'existing', userId, date, type],
+    queryFn: async (): Promise<{ value: string | null; notes: string | null } | null> => {
+      if (!userId) return null
+      const { data: rows, error } = await supabase
+        .from('cycle_logs')
+        .select('value, notes')
+        .eq('user_id', userId)
+        .eq('date', date)
+        .eq('type', type)
+        .limit(1)
+      if (error) throw error
+      return rows?.[0] ?? null
+    },
+    enabled: !!userId,
+    staleTime: 0,
+  })
+  const [appliedFor, setAppliedFor] = useState<string | null>(null)
+  const [touched, setTouched] = useState(false)
+  const key = `${date}|${type}`
+  useEffect(() => {
+    if (data && appliedFor !== key && !touched) {
+      apply(data)
+      setAppliedFor(key)
+    }
+  }, [data, key]) // eslint-disable-line react-hooks/exhaustive-deps
+  return { exists: !!data, markTouched: () => setTouched(true) }
+}
+
+// ─── StickerStack (site look) ───────────────────────────────────────────────
+/**
+ * One sticker drawn 1–3 times (and/or faded) so graded options read at a glance: Light = one
+ * drop, Medium = two, Heavy = three; "None" = the sticker faded. Keeps every option of a sheet
+ * visually distinct while staying on the log type's own sticker.
+ */
+function StickerStack({ name, count = 1, faded = false, size = 36 }: {
+  name: SiteStickerName; count?: 1 | 2 | 3; faded?: boolean | number; size?: number
+}) {
+  const opacity = faded === true ? 0.35 : typeof faded === 'number' ? faded : 1
+  if (count === 1) {
+    return <View style={{ opacity }}><SiteSticker name={name} size={size} /></View>
+  }
+  const s = Math.round(size * (count === 2 ? 0.7 : 0.6))
+  const spots = count === 2
+    ? [{ left: 0, top: 0 }, { left: size - s, top: size - s }]
+    : [{ left: (size - s) / 2, top: 0 }, { left: 0, top: size - s }, { left: size - s, top: size - s }]
+  return (
+    <View style={{ width: size, height: size, opacity }}>
+      {spots.map((p, i) => (
+        <View key={i} style={{ position: 'absolute', left: p.left, top: p.top }}>
+          <SiteSticker name={name} size={s} />
+        </View>
+      ))}
+    </View>
+  )
 }
 
 // ─── useDayLogToggle (multi-pick) ──────────────────────────────────────────
@@ -378,10 +468,10 @@ function phaseTitle(phase: CyclePhase): string {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ─── PeriodStartForm ───────────────────────────────────────────────────────
-const FLOW_OPTIONS: { id: 'light' | 'medium' | 'heavy'; labelKey: keyof TranslationKeys; dropColor: string }[] = [
-  { id: 'light',  labelKey: 'cycleLogForm_flow_light',  dropColor: '#F2B2C7' },
-  { id: 'medium', labelKey: 'cycleLogForm_flow_medium', dropColor: '#EE7B6D' },
-  { id: 'heavy',  labelKey: 'cycleLogForm_flow_heavy',  dropColor: '#D94A3E' },
+const FLOW_OPTIONS: { id: 'light' | 'medium' | 'heavy'; labelKey: keyof TranslationKeys; dropColor: string; drops: 1 | 2 | 3 }[] = [
+  { id: 'light',  labelKey: 'cycleLogForm_flow_light',  dropColor: '#F2B2C7', drops: 1 },
+  { id: 'medium', labelKey: 'cycleLogForm_flow_medium', dropColor: '#EE7B6D', drops: 2 },
+  { id: 'heavy',  labelKey: 'cycleLogForm_flow_heavy',  dropColor: '#D94A3E', drops: 3 },
 ]
 
 export function PeriodStartForm({
@@ -395,6 +485,17 @@ export function PeriodStartForm({
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  // The onboarding row keeps its answers (incl. `tryingToConceive`, read by useCycleIntent and the
+  // notification engine) as JSON in `notes`. Show only her own note text and write the answers
+  // back on save — re-logging that first period used to drop them and show raw JSON here.
+  const meta = useRef<Record<string, unknown> | null>(null)
+  const existing = useExistingLog(date, 'period_start', (r) => {
+    if (r.value === 'light' || r.value === 'medium' || r.value === 'heavy') setFlow(r.value)
+    if (!r.notes) return
+    const parsed = parseNotesMeta(r.notes)
+    meta.current = parsed
+    setNotes(parsed ? (typeof parsed.text === 'string' ? parsed.text : '') : r.notes)
+  })
   const accent = stickers.coral
   const tint = stickers.pinkSoft
   const ink = stickers.coralInk
@@ -403,11 +504,14 @@ export function PeriodStartForm({
     if (!flow) return
     setSaving(true)
     try {
-      await replaceSingleLog(date, 'period_start', flow, notes || undefined)
+      const stored = meta.current
+        ? JSON.stringify({ ...meta.current, text: notes || undefined })
+        : notes || undefined
+      await replaceSingleLog(date, 'period_start', flow, stored)
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -450,7 +554,7 @@ export function PeriodStartForm({
       ) : (
         <ChoiceGrid>
           {FLOW_OPTIONS.map((opt) => (
-            <StickerChoice key={opt.id} label={t(opt.labelKey)} sticker="drop" on={flow === opt.id} onPress={() => setFlow(opt.id)} tone={getModeColorSoft('pre')} width="33.33%" />
+            <StickerChoice key={opt.id} label={t(opt.labelKey)} fallback={<StickerStack name={CYCLE_LOG_STICKER.period_start} count={opt.drops} />} on={flow === opt.id} onPress={() => { existing.markTouched(); setFlow(opt.id) }} tone={getModeColorSoft('pre')} width="33.33%" />
           ))}
         </ChoiceGrid>
       )}
@@ -484,11 +588,12 @@ export function PeriodEndForm({
   async function save() {
     setSaving(true)
     try {
-      await insertSingleLog(date, 'period_end')
+      // Replace, not insert: tapping save twice used to stack two period_end rows on one day.
+      await replaceSingleLog(date, 'period_end', null)
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -515,7 +620,7 @@ export function PeriodEndForm({
             <Character name="period" size={40} color={stickers.coral} />
           </View>
         ) : (
-          <SiteSticker name="drop" size={72} />
+          <SiteSticker name={CYCLE_LOG_STICKER.period_end} size={72} />
         )}
       </View>
     </LogFormShell>
@@ -572,7 +677,7 @@ export function SymptomsForm({
       await toggle.commit()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     }
   }
 
@@ -620,7 +725,7 @@ export function SymptomsForm({
             <StickerChoice
               key={id}
               label={symptomLabel(id)}
-              fallback={<SymptomSticker id={id} size={30} />}
+              fallback={<SymptomSiteSticker id={id} size={36} />}
               on={toggle.selected.has(id)}
               onPress={() => toggle.toggle(id)}
               tone={tint}
@@ -630,7 +735,7 @@ export function SymptomsForm({
             <StickerChoice
               key={custom}
               label={custom}
-              fallback={<CustomSymptomBlob size={30} />}
+              fallback={<CustomSymptomSiteSticker size={36} />}
               on
               onPress={() => toggle.toggle(custom)}
               tone={tint}
@@ -674,7 +779,7 @@ export function SymptomsForm({
           <ChoiceGrid>
             <StickerChoice
               label={t('cycleLogForm_symptomOther')}
-              fallback={<CustomSymptomBlob size={30} />}
+              fallback={<CustomSymptomSiteSticker size={36} />}
               on={false}
               onPress={() => setAddingCustom(true)}
               tone={tint}
@@ -776,6 +881,10 @@ export function MoodForm({
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'mood', (r) => {
+    if (r.value) setValue(r.value)
+    if (r.notes) setNotes(r.notes)
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -786,7 +895,7 @@ export function MoodForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -836,7 +945,7 @@ export function MoodForm({
       ) : (
         <ChoiceGrid>
           {MOOD_OPTIONS.map((m) => (
-            <StickerChoice key={m.id} label={t(m.labelKey)} sticker={MOOD_FACE[m.id] ?? 'face2'} on={value === m.id} onPress={() => setValue(m.id)} tone={getModeColorSoft('pre')} width="20%" />
+            <StickerChoice key={m.id} label={t(m.labelKey)} sticker={CYCLE_MOOD_STICKER[m.id] ?? 'face2'} on={value === m.id} onPress={() => { existing.markTouched(); setValue(m.id) }} tone={getModeColorSoft('pre')} width="20%" />
           ))}
         </ChoiceGrid>
       )}
@@ -870,6 +979,10 @@ export function BbtForm({
   const [tenths, setTenths] = useState(364)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const bbtExisting = useExistingLog(date, 'basal_temp', (r) => {
+    const c = parseFloat(String(r.value ?? '').replace(',', '.'))
+    if (Number.isFinite(c)) setTenths(Math.min(BBT_MAX, Math.max(BBT_MIN, Math.round(c * 10))))
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   // A canonical tenths-°C value → the display string in the user's unit.
@@ -883,7 +996,7 @@ export function BbtForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -921,7 +1034,7 @@ export function BbtForm({
         </View>
         <View style={styles.sliderTicks}>
           {[BBT_MIN, BBT_MAX].map((v) => (
-            <Pressable key={v} onPress={() => setTenths(v)} style={styles.sliderTickHit}>
+            <Pressable key={v} onPress={() => { bbtExisting.markTouched(); setTenths(v) }} style={styles.sliderTickHit}>
               <Text style={{ color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium, fontSize: 11 }}>
                 {showTemp(v)}
               </Text>
@@ -929,10 +1042,10 @@ export function BbtForm({
           ))}
         </View>
         <View style={styles.sliderRow}>
-          <Pressable onPress={() => setTenths(Math.max(BBT_MIN, tenths - 1))} style={diffuse ? [styles.sliderBtn, styles.sliderBtnD, { borderColor: dt.colors.line2, backgroundColor: 'transparent' }] : styles.sliderBtn}>
+          <Pressable onPress={() => { bbtExisting.markTouched(); setTenths(Math.max(BBT_MIN, tenths - 1)) }} style={diffuse ? [styles.sliderBtn, styles.sliderBtnD, { borderColor: dt.colors.line2, backgroundColor: 'transparent' }] : styles.sliderBtn}>
             <Text style={{ color: diffuse ? dt.colors.ink : colors.text, fontSize: 20, fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold }}>{'−'}</Text>
           </Pressable>
-          <Pressable onPress={() => setTenths(Math.min(BBT_MAX, tenths + 1))} style={diffuse ? [styles.sliderBtn, styles.sliderBtnD, { borderColor: dt.colors.line2, backgroundColor: 'transparent' }] : styles.sliderBtn}>
+          <Pressable onPress={() => { bbtExisting.markTouched(); setTenths(Math.min(BBT_MAX, tenths + 1)) }} style={diffuse ? [styles.sliderBtn, styles.sliderBtnD, { borderColor: dt.colors.line2, backgroundColor: 'transparent' }] : styles.sliderBtn}>
             <Text style={{ color: diffuse ? dt.colors.ink : colors.text, fontSize: 20, fontFamily: diffuse ? diffuseFont.monoBold : font.bodyBold }}>+</Text>
           </Pressable>
         </View>
@@ -942,11 +1055,12 @@ export function BbtForm({
 }
 
 // ─── LhForm ─────────────────────────────────────────────────────────────────
-const LH_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
-  { id: 'negative', labelKey: 'cycleLogForm_lh_negative' },
-  { id: 'faint',    labelKey: 'cycleLogForm_lh_faint' },
-  { id: 'positive', labelKey: 'cycleLogForm_lh_positive' },
-  { id: 'peak',     labelKey: 'cycleLogForm_lh_peak' },
+type StackLook = { count?: 1 | 2 | 3; faded?: boolean | number }
+const LH_OPTIONS: { id: string; labelKey: keyof TranslationKeys; look: StackLook }[] = [
+  { id: 'negative', labelKey: 'cycleLogForm_lh_negative', look: { faded: true } },
+  { id: 'faint',    labelKey: 'cycleLogForm_lh_faint',    look: { faded: 0.65 } },
+  { id: 'positive', labelKey: 'cycleLogForm_lh_positive', look: { count: 2 } },
+  { id: 'peak',     labelKey: 'cycleLogForm_lh_peak',     look: { count: 3 } },
 ]
 
 export function LhForm({
@@ -959,6 +1073,9 @@ export function LhForm({
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'lh', (r) => {
+    if (r.value) setValue(r.value as never)
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -969,7 +1086,7 @@ export function LhForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1011,7 +1128,7 @@ export function LhForm({
       ) : (
         <ChoiceGrid>
           {LH_OPTIONS.map((opt) => (
-            <StickerChoice key={opt.id} label={t(opt.labelKey)} sticker="otest" on={value === opt.id} onPress={() => setValue(opt.id)} tone={tint} />
+            <StickerChoice key={opt.id} label={t(opt.labelKey)} fallback={<StickerStack name={CYCLE_LOG_STICKER.lh} {...opt.look} />} on={value === opt.id} onPress={() => { existing.markTouched(); setValue(opt.id) }} tone={tint} />
           ))}
         </ChoiceGrid>
       )}
@@ -1020,12 +1137,13 @@ export function LhForm({
 }
 
 // ─── CmForm ─────────────────────────────────────────────────────────────────
-const CM_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
-  { id: 'dry',      labelKey: 'cycleLogForm_cm_dry' },
-  { id: 'sticky',   labelKey: 'cycleLogForm_cm_sticky' },
-  { id: 'creamy',   labelKey: 'cycleLogForm_cm_creamy' },
-  { id: 'watery',   labelKey: 'cycleLogForm_cm_watery' },
-  { id: 'eggwhite', labelKey: 'cycleLogForm_cm_eggwhite' },
+// Site look: dry → wet reads as more drops; egg-white is drawn as the egg it is named after.
+const CM_OPTIONS: { id: string; labelKey: keyof TranslationKeys; look: StackLook; sticker?: SiteStickerName }[] = [
+  { id: 'dry',      labelKey: 'cycleLogForm_cm_dry',      look: { faded: true } },
+  { id: 'sticky',   labelKey: 'cycleLogForm_cm_sticky',   look: {} },
+  { id: 'creamy',   labelKey: 'cycleLogForm_cm_creamy',   look: { count: 2 } },
+  { id: 'watery',   labelKey: 'cycleLogForm_cm_watery',   look: { count: 3 } },
+  { id: 'eggwhite', labelKey: 'cycleLogForm_cm_eggwhite', look: {}, sticker: 'egg' },
 ]
 
 export function CmForm({
@@ -1038,6 +1156,9 @@ export function CmForm({
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'cervical_mucus', (r) => {
+    if (r.value) setValue(r.value as never)
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -1048,7 +1169,7 @@ export function CmForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1091,7 +1212,7 @@ export function CmForm({
       ) : (
         <ChoiceGrid>
           {CM_OPTIONS.map((opt) => (
-            <StickerChoice key={opt.id} label={t(opt.labelKey)} sticker="drop" on={value === opt.id} onPress={() => setValue(opt.id)} tone={tint} width="20%" />
+            <StickerChoice key={opt.id} label={t(opt.labelKey)} fallback={<StickerStack name={opt.sticker ?? CYCLE_LOG_STICKER.cm} {...opt.look} />} on={value === opt.id} onPress={() => { existing.markTouched(); setValue(opt.id) }} tone={tint} width="20%" />
           ))}
         </ChoiceGrid>
       )}
@@ -1111,6 +1232,10 @@ export function IntimacyForm({
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'intercourse', (r) => {
+    if (r.value === 'protected' || r.value === 'unprotected') setValue(r.value)
+    if (r.notes) setNotes(r.notes)
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -1121,7 +1246,7 @@ export function IntimacyForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1163,7 +1288,7 @@ export function IntimacyForm({
       ) : (
         <ChoiceGrid>
           {(['unprotected', 'protected'] as const).map((opt) => (
-            <StickerChoice key={opt} label={t(opt === 'unprotected' ? 'cycleLogForm_unprotected' : 'cycleLogForm_protected')} sticker="heart" on={value === opt} onPress={() => setValue(opt)} tone={tint} width="50%" />
+            <StickerChoice key={opt} label={t(opt === 'unprotected' ? 'cycleLogForm_unprotected' : 'cycleLogForm_protected')} sticker={opt === 'protected' ? 'lock' : CYCLE_LOG_STICKER.intercourse} on={value === opt} onPress={() => { existing.markTouched(); setValue(opt) }} tone={tint} width="50%" />
           ))}
         </ChoiceGrid>
       )}
@@ -1204,7 +1329,7 @@ export function OvulationForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1252,10 +1377,11 @@ export function OvulationForm({
 }
 
 // ─── PregnancyTestForm ──────────────────────────────────────────────────────
-const PREG_TEST_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
-  { id: 'negative', labelKey: 'cycleLogForm_pregTest_negative' },
-  { id: 'faint',    labelKey: 'cycleLogForm_pregTest_faint' },
-  { id: 'positive', labelKey: 'cycleLogForm_pregTest_positive' },
+// Site look: the line gets darker — faded strip, half strip, full strip.
+const PREG_TEST_OPTIONS: { id: string; labelKey: keyof TranslationKeys; look: StackLook }[] = [
+  { id: 'negative', labelKey: 'cycleLogForm_pregTest_negative', look: { faded: true } },
+  { id: 'faint',    labelKey: 'cycleLogForm_pregTest_faint',    look: { faded: 0.65 } },
+  { id: 'positive', labelKey: 'cycleLogForm_pregTest_positive', look: {} },
 ]
 
 export function PregnancyTestForm({
@@ -1268,6 +1394,9 @@ export function PregnancyTestForm({
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'pregnancy_test', (r) => {
+    if (r.value) setValue(r.value as never)
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -1278,7 +1407,7 @@ export function PregnancyTestForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1312,7 +1441,7 @@ export function PregnancyTestForm({
       ) : (
         <ChoiceGrid>
           {PREG_TEST_OPTIONS.map((opt) => (
-            <StickerChoice key={opt.id} label={t(opt.labelKey)} sticker="otest" on={value === opt.id} onPress={() => setValue(opt.id)} tone={tint} width="33.33%" />
+            <StickerChoice key={opt.id} label={t(opt.labelKey)} fallback={<StickerStack name={CYCLE_LOG_STICKER.pregnancy_test} {...opt.look} />} on={value === opt.id} onPress={() => { existing.markTouched(); setValue(opt.id) }} tone={tint} width="33.33%" />
           ))}
         </ChoiceGrid>
       )}
@@ -1321,6 +1450,8 @@ export function PregnancyTestForm({
 }
 
 // ─── SexDriveForm ───────────────────────────────────────────────────────────
+// None / low / medium / high on the log type's own sticker: faded, one, two, three.
+const LEVEL_LOOK: StackLook[] = [{ faded: true }, {}, { count: 2 }, { count: 3 }]
 const SEX_DRIVE_OPTIONS: { id: string; labelKey: keyof TranslationKeys }[] = [
   { id: 'none',   labelKey: 'cycleLogForm_sexDrive_none' },
   { id: 'low',    labelKey: 'cycleLogForm_sexDrive_low' },
@@ -1338,6 +1469,9 @@ export function SexDriveForm({
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'sex_drive', (r) => {
+    if (r.value) setValue(r.value as never)
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -1348,7 +1482,7 @@ export function SexDriveForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1381,8 +1515,8 @@ export function SexDriveForm({
       </View>
       ) : (
         <ChoiceGrid>
-          {SEX_DRIVE_OPTIONS.map((opt) => (
-            <StickerChoice key={opt.id} label={t(opt.labelKey)} sticker="heart" on={value === opt.id} onPress={() => setValue(opt.id)} tone={tint} />
+          {SEX_DRIVE_OPTIONS.map((opt, i) => (
+            <StickerChoice key={opt.id} label={t(opt.labelKey)} fallback={<StickerStack name={CYCLE_LOG_STICKER.sex_drive} {...LEVEL_LOOK[i]} />} on={value === opt.id} onPress={() => { existing.markTouched(); setValue(opt.id) }} tone={tint} />
           ))}
         </ChoiceGrid>
       )}
@@ -1408,6 +1542,9 @@ export function ClotsForm({
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'clots', (r) => {
+    if (r.value) setValue(r.value as never)
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -1418,7 +1555,7 @@ export function ClotsForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1451,8 +1588,8 @@ export function ClotsForm({
       </View>
       ) : (
         <ChoiceGrid>
-          {CLOTS_OPTIONS.map((opt) => (
-            <StickerChoice key={opt.id} label={t(opt.labelKey)} sticker="drop" on={value === opt.id} onPress={() => setValue(opt.id)} tone={tint} />
+          {CLOTS_OPTIONS.map((opt, i) => (
+            <StickerChoice key={opt.id} label={t(opt.labelKey)} fallback={<StickerStack name={CYCLE_LOG_STICKER.clots} {...LEVEL_LOOK[i]} />} on={value === opt.id} onPress={() => { existing.markTouched(); setValue(opt.id) }} tone={tint} />
           ))}
         </ChoiceGrid>
       )}
@@ -1509,6 +1646,10 @@ export function WeightForm({
   const [display, setDisplay] = useState(() => Number(kgToDisplay(65, weightUnit).toFixed(1)))
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'weight', (r) => {
+    const kg = parseFloat(String(r.value ?? '').replace(',', '.'))
+    if (Number.isFinite(kg)) setDisplay(Number(kgToDisplay(kg, weightUnit).toFixed(1)))
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -1520,7 +1661,7 @@ export function WeightForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1537,7 +1678,7 @@ export function WeightForm({
       saving={saving}
       onSave={save}
     >
-      <CycleStepper value={display} onChange={setDisplay} step={0.1} min={30} max={200} unit={weightLabel(weightUnit)} decimals={1} accent={accent} />
+      <CycleStepper value={display} onChange={(n) => { existing.markTouched(); setDisplay(n) }} step={0.1} min={30} max={200} unit={weightLabel(weightUnit)} decimals={1} accent={accent} />
     </LogFormShell>
   )
 }
@@ -1551,6 +1692,10 @@ export function WaterForm({
   const [glasses, setGlasses] = useState(6)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'water', (r) => {
+    const n = parseInt(String(r.value ?? ''), 10)
+    if (Number.isFinite(n)) setGlasses(Math.min(20, Math.max(0, n)))
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -1560,7 +1705,7 @@ export function WaterForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1577,7 +1722,7 @@ export function WaterForm({
       saving={saving}
       onSave={save}
     >
-      <CycleStepper value={glasses} onChange={setGlasses} step={1} min={0} max={20} unit={t('cycleLogForm_water_glasses')} accent={accent} />
+      <CycleStepper value={glasses} onChange={(n) => { existing.markTouched(); setGlasses(n) }} step={1} min={0} max={20} unit={t('cycleLogForm_water_glasses')} accent={accent} />
     </LogFormShell>
   )
 }
@@ -1600,6 +1745,9 @@ export function ActivityForm({
   const [value, setValue] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const invalidate = useInvalidate()
+  const existing = useExistingLog(date, 'activity', (r) => {
+    if (r.value) setValue(r.value as never)
+  })
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   async function save() {
@@ -1610,7 +1758,7 @@ export function ActivityForm({
       await invalidate()
       onSaved()
     } catch (e: unknown) {
-      Alert.alert(t('common_error'), e instanceof Error ? e.message : t('cyc_alert_saveFailed'))
+      Alert.alert(t('common_error'), saveErrorText(e))
     } finally {
       setSaving(false)
     }
@@ -1643,8 +1791,8 @@ export function ActivityForm({
       </View>
       ) : (
         <ChoiceGrid>
-          {ACTIVITY_OPTIONS.map((opt) => (
-            <StickerChoice key={opt.id} label={t(opt.labelKey)} sticker="shoe" on={value === opt.id} onPress={() => setValue(opt.id)} tone={tint} />
+          {ACTIVITY_OPTIONS.map((opt, i) => (
+            <StickerChoice key={opt.id} label={t(opt.labelKey)} fallback={<StickerStack name={CYCLE_LOG_STICKER.activity} {...LEVEL_LOOK[i]} />} on={value === opt.id} onPress={() => { existing.markTouched(); setValue(opt.id) }} tone={tint} />
           ))}
         </ChoiceGrid>
       )}
@@ -1659,9 +1807,6 @@ const SITE_NOTES = {
   borderColor: '#161513',
   borderRadius: 14,
   fontSize: 16,
-}
-const MOOD_FACE: Record<string, 'face1' | 'face2' | 'face3' | 'face4'> = {
-  low: 'face1', down: 'face1', okay: 'face2', good: 'face3', great: 'face4',
 }
 
 const styles = StyleSheet.create({

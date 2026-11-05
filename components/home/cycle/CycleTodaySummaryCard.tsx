@@ -9,7 +9,7 @@
  * period date (see CycleHome + getCycleInfo), so an empty log day is a
  * valid, honest state.
  */
-import { CYCLE_LOG_STICKER } from '../../../lib/logStickers'
+import { CYCLE_LOG_STICKER, CYCLE_MOOD_STICKER } from '../../../lib/logStickers'
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ChevronRight, SlidersHorizontal } from 'lucide-react-native'
@@ -37,11 +37,12 @@ import {
   PeriodEndForm, PregnancyTestForm, SexDriveForm, ClotsForm, WeightForm, WaterForm, ActivityForm,
 } from '../../calendar/CycleLogForms'
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
-import { DEFAULT_CYCLE_QUICK_LOG_KEYS } from '../../../lib/cycleQuickLogs'
+import { DEFAULT_CYCLE_QUICK_LOG_KEYS, cycleQuickLogByKey } from '../../../lib/cycleQuickLogs'
 import { CycleQuickLogPicker } from './CycleQuickLogPicker'
 import { CycleLogConfirm } from './CycleLogConfirm'
 import { useUnitsStore } from '../../../store/useUnitsStore'
 import { cToDisplay, kgToDisplay } from '../../../lib/units'
+import { isFutureDate } from '../../../lib/futureDate'
 
 /** Chip key → the cycle_logs sheet it opens. */
 type CycleSheetType =
@@ -86,11 +87,10 @@ const LH_LABEL_KEY: Record<string, TranslationKey> = {
   negative: 'cyc_chip_neg', faint: 'cyc_chip_faint', positive: 'cyc_chip_pos', peak: 'cyc_chip_peak',
 }
 
-// Site-look dock sticker per chip key (mood face is value-driven, resolved in the component).
+// Site-look dock sticker per chip key — the shared cycle map, so the dock, the picker, the sheet
+// header and the calendar all show the same sticker (mood face is value-driven).
 const DOCK_STICKER: Record<string, SiteStickerName> = CYCLE_LOG_STICKER
-const MOOD_FACE: Record<string, SiteStickerName> = {
-  low: 'face1', down: 'face1', okay: 'face2', good: 'face3', great: 'face4',
-}
+const MOOD_FACE: Record<string, SiteStickerName> = CYCLE_MOOD_STICKER
 
 export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActiveChange, onLogConfirmed }: Props) {
   const { colors, font, stickers, isDark } = useTheme()
@@ -400,10 +400,13 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
           accent={getModeAccent('pre-pregnancy')}
           items={visibleChips.map((c) => ({
             key: c.key,
-            label: c.sheet === 'mood' ? t('agenda_mood') : sheetTitle[c.sheet],
+            // Short one/two-word label that fits under the sticker in every language
+            // (the long "Log …" sheet titles were truncated and some were English).
+            label: (() => { const q = cycleQuickLogByKey(c.key); return q ? t(q.shortKey) : sheetTitle[c.sheet] })(),
             sticker: c.key === 'mood' && moodValue && MOOD_FACE[moodValue] ? MOOD_FACE[moodValue] : (DOCK_STICKER[c.key] ?? 'star'),
             done: c.done,
-            onPress: () => setSheetType(c.sheet),
+            // Future days can be looked at, not logged (a save would only fail).
+            onPress: isFutureDate(logDate) ? undefined : () => setSheetType(c.sheet),
           }))}
         />
       ) : (

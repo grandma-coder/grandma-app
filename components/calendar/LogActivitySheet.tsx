@@ -22,6 +22,8 @@ import { logSticker } from './logStickers'
 import { Character } from '../characters/Characters'
 import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
 import { SheetModal } from '../ui/SheetModal'
+import { SiteSticker } from '../stickers/SiteSticker'
+import { CYCLE_LOG_STICKER } from '../../lib/logStickers'
 
 export type LogType =
   | 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp'
@@ -105,7 +107,10 @@ export function LogActivitySheet({ open, onClose, onSelect, title }: Props) {
               tint={e.tint}
               icon={diffuse && DIFFUSE_LOG_CHARACTER[e.id]
                 ? <Character name={DIFFUSE_LOG_CHARACTER[e.id]} size={34} color={diffuseLogHue(e.id)} />
-                : logSticker(e.id, 36, isDark)}
+                : diffuse
+                  ? logSticker(e.id, 36, isDark)
+                  // Site look: the same sticker as the dock, picker, sheet header and calendar.
+                  : <SiteSticker name={CYCLE_LOG_STICKER[e.id] ?? 'pencil'} size={36} />}
               onPress={() => handleSelect(e.id)}
             />
           ))}

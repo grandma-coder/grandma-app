@@ -113,7 +113,7 @@ export function LogTile({ icon, label, tint = 'activity', onPress, index = 0 }: 
             {label}
           </Text>
         ) : (
-          <Body size={13} color={textInk} style={{ fontFamily: font.display, letterSpacing: 0.2, textTransform: 'uppercase' }} align="center">
+          <Body size={13} color={textInk} style={{ fontFamily: font.display, letterSpacing: 0.2, textTransform: 'uppercase' }} align="center" numberOfLines={/\s/.test(label.trim()) ? 2 : 1} adjustsFontSizeToFit minimumFontScale={0.6}>
             {label}
           </Body>
         )}

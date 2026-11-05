@@ -21,11 +21,14 @@ import { PaperCard } from '../../ui/PaperCard'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 import { Drop, Heart, Smiley, Sad, Sleepy } from '../../ui/Stickers'
 import { Thermometer as ThermometerLine, Droplet as DropletLine, Heart as HeartLine } from 'lucide-react-native'
-import { SymptomSticker } from '../../calendar/symptomStickers'
-import { symptomLabel } from '../../../lib/cycleSymptoms'
+import { SymptomSticker, SymptomSiteSticker, CustomSymptomSiteSticker } from '../../calendar/symptomStickers'
+import { symptomLabel, resolveSymptomId } from '../../../lib/cycleSymptoms'
+import { useUnitsStore } from '../../../store/useUnitsStore'
+import { cToDisplay } from '../../../lib/units'
+import { CYCLE_LOG_STICKER, CYCLE_MOOD_STICKER } from '../../../lib/logStickers'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
 import { supabase } from '../../../lib/supabase'
-import { useTranslation } from '../../../lib/i18n'
+import { useTranslation, t as translate } from '../../../lib/i18n'
 import { dateLoc } from '../../../lib/kpLocale'
 
 interface Props {
@@ -48,17 +51,10 @@ const MOOD_META: Record<string, { Sticker: typeof Sad; fill: string }> = {
   great: { Sticker: Smiley, fill: '#BDD48C' },
 }
 
-const MOOD_SITE: Record<string, SiteStickerName> = {
-  low: 'face1', down: 'face1', okay: 'face2', good: 'face3', great: 'face4',
-}
+const MOOD_SITE: Record<string, SiteStickerName> = CYCLE_MOOD_STICKER
 
 function phaseLabel(phase: CyclePhase): string {
-  switch (phase) {
-    case 'menstruation': return 'Menstruation'
-    case 'follicular':   return 'Follicular'
-    case 'ovulation':    return 'Ovulation'
-    case 'luteal':       return 'Luteal'
-  }
+  return translate(`cyc_phase_${phase}` as const)
 }
 
 function phaseColor(phase: CyclePhase, s: ReturnType<typeof useTheme>['stickers']): string {
@@ -155,6 +151,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
 
   const moodValue = rows.find((r) => r.type === 'mood')?.value ?? null
   const bbtValue = rows.find((r) => r.type === 'basal_temp')?.value ?? null
+  const tempUnit = useUnitsStore((u) => u.tempUnit)
   const lhValue = rows.find((r) => r.type === 'lh')?.value ?? null
   const cmValue = rows.find((r) => r.type === 'cervical_mucus')?.value ?? null
   const intimacy = rows.find((r) => r.type === 'intercourse')?.value ?? null
@@ -213,7 +210,8 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
               <MonoCaps size={10} color={muted}>{t('cycleDash_bbt')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
-              {bbtValue ? `${bbtValue}°` : '—'}
+              {/* Stored in °C — show her unit. */}
+              {bbtValue && Number.isFinite(parseFloat(bbtValue)) ? `${cToDisplay(parseFloat(bbtValue), tempUnit).toFixed(1)}°` : bbtValue ? `${bbtValue}°` : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {bbtValue ? t('cycleDash_basalTemp') : t('cycleDash_notLogged')}
@@ -222,7 +220,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
 
           <PaperCard tint={tileTint(stickers.yellowSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="water" size={18} color={stickers.yellow} /> : <SiteSticker name="otest" size={22} />}
+              {diffuse ? <Character name="water" size={18} color={stickers.yellow} /> : <SiteSticker name={CYCLE_LOG_STICKER.lh} size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_lh')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -235,7 +233,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
 
           <PaperCard tint={tileTint(stickers.greenSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="water" size={18} color={stickers.green} /> : <SiteSticker name="drop" size={22} />}
+              {diffuse ? <Character name="water" size={18} color={stickers.green} /> : <SiteSticker name={CYCLE_LOG_STICKER.cervical_mucus} size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_cm')}</MonoCaps>
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
@@ -251,7 +249,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
         <View style={styles.twoCol}>
           <PaperCard tint={tileTint(stickers.pinkSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="heart" size={18} color={stickers.pink} /> : <SiteSticker name="heart" size={22} />}
+              {diffuse ? <Character name="heart" size={18} color={stickers.pink} /> : <SiteSticker name={CYCLE_LOG_STICKER.intercourse} size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_intimacy')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -264,7 +262,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
 
           <PaperCard tint={tileTint(stickers.peachSoft)} radius={20} padding={16} flat style={styles.colTile}>
             <View style={styles.tileHeader}>
-              {diffuse ? <Character name="period" size={18} color={stickers.coral} /> : <SiteSticker name="drop" size={22} />}
+              {diffuse ? <Character name="period" size={18} color={stickers.coral} /> : <SiteSticker name={CYCLE_LOG_STICKER.period_start} size={22} />}
               <MonoCaps size={10} color={muted}>{t('cycleDash_period')}</MonoCaps>
             </View>
             <Display size={28} color={ink} style={{ marginTop: 4 }}>
@@ -288,11 +286,13 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
                   key={id}
                   style={[styles.symptomChip, diffuse ? { backgroundColor: 'transparent', borderColor: dt.colors.line2 } : { backgroundColor: colors.surface, borderColor: colors.border }]}
                 >
-                  <SymptomSticker id={id as SymptomId} size={16} />
+                  {diffuse
+                    ? <SymptomSticker id={id as SymptomId} size={16} />
+                    : (resolveSymptomId(id) ? <SymptomSiteSticker id={resolveSymptomId(id)!} size={20} /> : <CustomSymptomSiteSticker size={20} />)}
                   <Text style={diffuse
                     ? { fontSize: 11, fontFamily: diffuseFont.mono, letterSpacing: 0.4, textTransform: 'uppercase', color: dt.colors.ink2 }
                     : { fontSize: 12, fontFamily: font.bodySemiBold, color: ink }}>
-                    {symptomLabel(id as SymptomId)}
+                    {resolveSymptomId(id) ? symptomLabel(resolveSymptomId(id)!) : id}
                   </Text>
                 </View>
               ))}

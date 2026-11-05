@@ -18,11 +18,24 @@ export const PREGNANCY_LOG_STICKER_MAP: Record<string, SiteStickerName> = {
   nesting: 'crib', birth_prep: 'backpack', ultrasound: 'camera',
 }
 
+/**
+ * Cycle: ONE sticker per thing, never shared between two different log types. Used by the home
+ * dock, the "what do you want to track?" picker, every log sheet header, the log launcher, the
+ * calendar day marks and the day detail. Keys cover both the quick-log key, the sheet id and the
+ * stored `cycle_logs.type` (e.g. `cm` sheet → `cervical_mucus` rows).
+ * `ovulation` (legacy, no form) shares the egg with LH on purpose: both mean "ovulation".
+ */
 export const CYCLE_LOG_STICKER: Record<string, SiteStickerName> = {
   period_start: 'drop', period_end: 'leaf', mood: 'face3', symptom: 'headache', symptoms: 'headache',
-  bbt: 'thermo', basal_temp: 'thermo', lh: 'otest', pregnancy_test: 'otest', cm: 'egg', clots: 'drop', intimacy: 'love',
-  intercourse: 'love', sex_drive: 'flower', water: 'glass', weight: 'scale', activity: 'dumbbell',
+  bbt: 'thermo', basal_temp: 'thermo', lh: 'egg', pregnancy_test: 'otest',
+  cm: 'pee', cervical_mucus: 'pee', clots: 'rasp', intimacy: 'love', intercourse: 'love',
+  sex_drive: 'flame', water: 'glass', weight: 'scale', activity: 'dumbbell',
   ovulation: 'egg', exam: 'doc', meds: 'pill',
+}
+
+/** Cycle mood value → face. Five distinct stickers for the five moods (low ≠ down). */
+export const CYCLE_MOOD_STICKER: Record<string, SiteStickerName> = {
+  low: 'face1', down: 'cloud', okay: 'face2', good: 'face3', great: 'face4',
 }
 
 export const MENOPAUSE_LOG_STICKER: Record<string, SiteStickerName> = {
