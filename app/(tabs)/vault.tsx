@@ -9,6 +9,9 @@
 
 import { View, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTheme } from '../../constants/theme'
+import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { useModeStore } from '../../store/useModeStore'
 import { CycleAnalytics } from '../../components/analytics/CycleAnalytics'
 import { PregnancyAnalytics } from '../../components/analytics/PregnancyAnalytics'
@@ -17,6 +20,9 @@ import { MenopauseAnalytics } from '../../components/analytics/MenopauseAnalytic
 
 export default function VaultScreen() {
   const mode = useModeStore((s) => s.mode)
+  const insets = useSafeAreaInsets()
+  const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
 
   // Exams are isolated per behavior — open the list locked to the active
   // journey. Cycle + kids reach exams from their home wallet card; pregnancy
@@ -31,7 +37,15 @@ export default function VaultScreen() {
   else if (mode === 'menopause') inner = <MenopauseAnalytics />
   else inner = <KidsAnalytics />
 
-  return <View style={styles.root}>{inner}</View>
+  return (
+    <View style={styles.root}>
+      {inner}
+      {/* Paper band under the status bar so scrolled notes never run beneath the clock. */}
+      {!diffuse && (
+        <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.bg }} />
+      )}
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({

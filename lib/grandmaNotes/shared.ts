@@ -1,5 +1,6 @@
 // lib/grandmaNotes/shared.ts — small pure helpers shared by the four builders.
 import type { GrandmaNoteItem, NoteCandidate } from './types'
+import { dateLoc } from '../kpLocale'
 
 export const MAX_NOTES = 3
 
@@ -57,10 +58,10 @@ export function inRange(d: string | null | undefined, from: string, to: string):
   return !!d && d >= from && d <= to
 }
 
-/** One decimal, trailing ".0" dropped ("7.5", "8"). */
+/** One decimal, trailing ".0" dropped, in the app language ("7.5" en, "7,5" pt-BR, "8"). */
 export function fmt1(n: number): string {
   const r = Math.round(n * 10) / 10
-  return Number.isInteger(r) ? String(r) : r.toFixed(1)
+  return r.toLocaleString(dateLoc(), { maximumFractionDigits: 1, useGrouping: false })
 }
 
 /** Highest weight first; stable on ties; one note per id. */

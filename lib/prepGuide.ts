@@ -455,6 +455,20 @@ const ICON_GUIDES: Partial<Record<StickerIconName, PrepGuide>> = {
 // ─── Title-keyed overrides (regex against item.t) ────────────────────────────
 const TITLE_OVERRIDES: Array<{ id: string; match: RegExp; guide: PrepGuide }> = [
   {
+    id: 'labor_signs',
+    match: /labor signs|signs of labor/i,
+    guide: {
+      why: 'In the last weeks, knowing what real labor looks like helps you tell when to call and when to head in.',
+      how: [
+        'Contractions that come at regular intervals, get stronger and closer together, and don\'t ease when you rest or change position.',
+        'Your waters breaking — a gush or a steady trickle of fluid. Note the time and the colour.',
+        'A "show": mucus with a little pink or brown blood as the cervix starts to open.',
+        'Ask your provider now which pattern means it\'s time to call or come in (often contractions about 5 minutes apart for an hour).',
+      ],
+      watch: 'Call your provider or maternity unit right away for bright red bleeding, green or brown fluid, constant severe pain, or if the baby moves less than usual.',
+    },
+  },
+  {
     id: 'pregnancy_test',
     match: /pregnancy test/i,
     guide: {

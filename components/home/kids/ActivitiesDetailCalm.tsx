@@ -8,6 +8,7 @@
  */
 
 import { ScrollView, Text, View, StyleSheet } from 'react-native'
+import { clockLabel, hourLabel } from '../../../lib/timeFormat'
 import { useTheme, stickers } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
@@ -55,12 +56,7 @@ function formatDate(dateStr: string): string {
 }
 function formatTime(start?: string, end?: string): string {
   if (!start) return ''
-  const label = (s: string) => {
-    const [hStr, mStr] = s.split(':')
-    const h = Number(hStr), m = Number(mStr ?? 0)
-    if (isNaN(h)) return s
-    return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`
-  }
+  const label = clockLabel
   return end ? `${label(start)} – ${label(end)}` : label(start)
 }
 

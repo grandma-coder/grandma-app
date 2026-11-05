@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import {
   View,
   Text,
@@ -348,13 +349,7 @@ function formatActivitySummary(type: string, value: string | null, notes: string
 
 /** Format "HH:MM" to "H:MM AM/PM" */
 function fmtTime12(t: string): string {
-  const [hStr, mStr] = t.split(':')
-  const h = parseInt(hStr, 10)
-  const m = mStr ?? '00'
-  if (isNaN(h)) return t
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-  return `${h12}:${m} ${ampm}`
+  return clockLabel(t)
 }
 
 /** Friendly label for log type */

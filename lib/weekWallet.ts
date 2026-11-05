@@ -50,7 +50,8 @@ export function buildWalletCards(input: BuildWalletCardsInput): WalletCardDescri
   if (hasWeekTip) {
     cards.push({ id: 'week_tip', tone: 'lilac', linkOnly: false })
   }
-  if (weekNumber >= KICK_COUNT_FROM_WEEK && !todayLogs['kick_count']) {
+  // Kicks stays put once a session is saved — counting happens several times a day.
+  if (weekNumber >= KICK_COUNT_FROM_WEEK) {
     cards.push({ id: 'kicks', tone: 'green', linkOnly: false })
   }
 

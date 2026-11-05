@@ -18,8 +18,8 @@
  */
 
 import { dateLoc, weekdayShort } from '../../lib/kpLocale'
+import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import { PREGNANCY_LOG_STICKER_MAP, PREGNANCY_MOOD_STICKER } from '../../lib/logStickers'
-import { healthLogText } from '../../lib/kidsHealthLogText'
 import { PREGNANCY_LOG_STICKER } from './PregnancyLogRouter'
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
@@ -76,7 +76,8 @@ import { LogMonthGrid } from './LogMonthGrid'
 import { DiffuseListRow, DiffuseEmptyState, DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useUnitsStore } from '../../store/useUnitsStore'
-import { kgToDisplay, weightLabel } from '../../lib/units'
+import type { WeightUnit } from '../../store/useUnitsStore'
+import { pregnancyLogDisplay, pregnancyLogSummary, type PregSummaryDeps } from '../../lib/pregnancyLogSummary'
 import { getTrimester, weekForDate, pregnancyWeekStart } from '../../lib/pregnancyWeeks'
 import { pregnancyWeeks, getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { toDateStr } from '../../lib/cycleLogic'
@@ -109,6 +110,7 @@ import { WeekDetailModal } from '../home/pregnancy/WeekDetailModal'
 import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { moodFaceVariant, moodFaceFill } from '../../lib/moodFace'
 import { PregnancyLogRouter, type PregnancyLogType } from './PregnancyLogRouter'
+import { pregOptionLabel } from './PregnancyLogForms'
 import { useTranslation, t as tNow } from '../../lib/i18n'
 import { isFutureDate } from '../../lib/futureDate'
 import { Skeleton } from '../ui/Skeleton'
@@ -264,16 +266,12 @@ const DAY_VIEW_END = 24
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtTime(t: string): string {
-  const [h, m] = t.split(':').map(Number)
-  if (isNaN(h)) return t
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+  return clockLabel(t)
 }
 
 function formatTime(isoStr: string): string {
   const d = new Date(isoStr)
-  return d.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit', hour12: true })
+  return d.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })
 }
 
 function formatDayLabel(dateStr: string, todayStr: string): string {
@@ -293,9 +291,7 @@ function isoToLocalHours(iso: string): number {
 }
 
 function fmtHourLabel(h: number): string {
-  if (h === 0) return '12 AM'
-  if (h === 12) return '12 PM'
-  return h < 12 ? `${h} AM` : `${h - 12} PM`
+  return hourLabel(h)
 }
 
 function hoursToHHMM(h: number): string {
@@ -313,29 +309,18 @@ function activityTimeHoursPreg(log: { value: string | null; created_at: string }
   return isoToLocalHours(log.created_at)
 }
 
-function formatLogValue(log: PregnancyCalendarLog): string {
-  if (!log.value) return ''
-  try {
-    const v = JSON.parse(log.value)
-    if (typeof v === 'object' && v !== null) {
-      const parts: string[] = []
-      if (v.mood)      parts.push(v.mood)
-      if (v.level)     parts.push(v.level)
-      if (v.value)     parts.push(String(v.value))
-      if (v.duration)  parts.push(tNow('kp_pc_nMin', { n: v.duration }))
-      if (v.amount)    parts.push(`${v.amount}`)
-      if (v.count)     parts.push(tNow('kp_pc_nKicks', { n: v.count }))
-      if (v.quality)   parts.push(v.quality)
-      if (v.sets)      parts.push(tNow('kp_pc_nSets', { n: v.sets }))
-      if (v.reps)      parts.push(tNow('kp_pc_nReps', { n: v.reps }))
-      if (v.name)      parts.push(v.name)
-      // Unknown shape: readable leftovers only — never the raw JSON.
-      return parts.join(' · ') || healthLogText(log.value, null).text || ''
-    }
-  } catch {
-    // Not JSON — use as-is
+/** One localized summary per log type — shared by timeline rows and the detail popup. */
+function pregSummaryDeps(weightUnit: WeightUnit): PregSummaryDeps {
+  return {
+    t: tNow as PregSummaryDeps['t'],
+    weightUnit,
+    moodLabel: (id) => MOOD_LABEL[id],
+    optionLabel: pregOptionLabel,
   }
-  return log.value
+}
+
+function formatLogValue(log: PregnancyCalendarLog): string {
+  return pregnancyLogSummary(log, pregSummaryDeps(useUnitsStore.getState().weightUnit))
 }
 
 // ─── Site look (light) helpers ─────────────────────────────────────────────
@@ -1625,28 +1610,12 @@ function LogDetailPopup({
 
   // Build big metric (metric value, unit, sublabel)
   function getBigDisplay(): { metric: string; unit: string; sublabel: string; isText: boolean } {
-    const isMood = log.log_type === 'mood'
-    if (isMood) {
-      const key = rawValue.toLowerCase()
-      return { metric: MOOD_LABEL[key] ?? rawValue, unit: '', sublabel: tNow('kp_pc_moodSub', { mood: MOOD_LABEL[key] ?? (rawValue || tNow('kp_pc_moodWord')) }).toLocaleUpperCase(dateLoc()), isText: true }
+    const disp = pregnancyLogDisplay(log, pregSummaryDeps(weightUnit))
+    const upper = (x: string) => x.toLocaleUpperCase(dateLoc())
+    if (log.log_type === 'mood') {
+      return { metric: disp.metric, unit: '', sublabel: upper(tNow('kp_pc_moodSub', { mood: disp.metric || tNow('kp_pc_moodWord') })), isText: true }
     }
-    switch (log.log_type) {
-      case 'sleep':       return { metric: rawValue, unit: 'h', sublabel: 'SLEEP', isText: false }
-      case 'weight':      return { metric: rawValue ? kgToDisplay(parseFloat(rawValue), weightUnit).toFixed(1) : rawValue, unit: weightLabel(weightUnit), sublabel: 'WEIGHT', isText: false }
-      case 'water':       return { metric: rawValue, unit: 'gl', sublabel: 'WATER INTAKE', isText: false }
-      case 'vitamins':    return { metric: '✓', unit: '', sublabel: 'VITAMINS TAKEN', isText: false }
-      case 'kick_count':  return { metric: rawValue, unit: 'kicks', sublabel: 'KICK COUNT', isText: false }
-      case 'exercise':    return { metric: rawValue, unit: 'min', sublabel: 'EXERCISE', isText: false }
-      case 'contraction': return { metric: rawValue, unit: 's', sublabel: 'CONTRACTION', isText: false }
-      case 'kegel':       return { metric: rawValue, unit: 'sets', sublabel: 'KEGEL', isText: false }
-      case 'symptom':     return { metric: rawValue, unit: '', sublabel: 'SYMPTOM', isText: true }
-      case 'appointment': return { metric: rawValue, unit: '', sublabel: 'APPOINTMENT', isText: true }
-      case 'nutrition':   return { metric: rawValue, unit: 'kcal', sublabel: 'MEAL', isText: false }
-      case 'nesting':     return { metric: typeof notesObj.title === 'string' ? notesObj.title : rawValue, unit: '', sublabel: 'NESTING TASK', isText: true }
-      case 'birth_prep':  return { metric: typeof notesObj.title === 'string' ? notesObj.title : rawValue, unit: '', sublabel: 'BIRTH PREP', isText: true }
-      case 'exam_result': return { metric: rawValue, unit: '', sublabel: 'EXAM RESULT', isText: true }
-      default:            return { metric: rawValue, unit: '', sublabel: meta.label.toUpperCase(), isText: rawValue.length > 6 }
-    }
+    return { metric: disp.metric, unit: disp.unit, sublabel: upper(meta.label), isText: disp.isText || disp.metric.length > 6 }
   }
 
   // Build metadata pills
@@ -2702,7 +2671,7 @@ export function PregnancyCalendar() {
       rows.push({
         key: `a-${appt.id}`,
         type: 'appointment',
-        time: `W${appt.week}`,
+        time: t('preg_calendar_weekShort', { n: appt.week }),
         sortHours: -1,  // pin to top
         title: appt.name,
         subtitle: appt.prepNote.length > 70 ? appt.prepNote.slice(0, 67) + '…' : appt.prepNote,
@@ -2719,7 +2688,7 @@ export function PregnancyCalendar() {
     const isToday = selectedDate === todayStr
     const nowHours = new Date().getHours() + new Date().getMinutes() / 60
     const nowInsertIdx = isToday ? rows.findIndex((r) => !r.logged && r.sortHours >= nowHours) : -1
-    const nowTimeLabel = new Date().toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit', hour12: true })
+    const nowTimeLabel = new Date().toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })
 
     return (
       <>

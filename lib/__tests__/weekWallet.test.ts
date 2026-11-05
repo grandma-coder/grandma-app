@@ -37,12 +37,12 @@ describe('buildWalletCards', () => {
     expect(rem.linkOnly).toBe(false)
   })
 
-  test('kicks appears at week 28 when not logged, hidden once logged', () => {
+  test('kicks appears from week 28 and stays after a session is logged', () => {
     const base = { weekNumber: 30, hasWeekTip: false, upcomingAppointment: null }
     const withKicks = buildWalletCards({ ...base, todayLogs: {} }).map((c) => c.id)
     expect(withKicks).toContain('kicks')
     const logged = buildWalletCards({ ...base, todayLogs: { kick_count: loggedKick } }).map((c) => c.id)
-    expect(logged).not.toContain('kicks')
+    expect(logged).toContain('kicks')
   })
 
   test('kicks hidden before week 28', () => {

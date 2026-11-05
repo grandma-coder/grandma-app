@@ -7,6 +7,7 @@
  */
 
 import { dateLoc, weekdayShort } from '../../lib/kpLocale'
+import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react'
 import {
   View, Text, Pressable, ScrollView, StyleSheet, Dimensions, Image, Modal, TextInput, Platform,
@@ -275,12 +276,7 @@ function localDateStr(d: Date): string {
 }
 
 function formatTime12h(hhmm: string): string {
-  const [hStr, mStr] = hhmm.split(':')
-  const h = parseInt(hStr, 10)
-  const m = mStr ?? '00'
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12 = h % 12 === 0 ? 12 : h % 12
-  return `${h12}:${m} ${ampm}`
+  return clockLabel(hhmm)
 }
 
 function toDateStr(d: any): string {
@@ -5517,14 +5513,7 @@ function ActivitiesDetailModal({ visible, onClose, activityCount, activeDays, ra
 
   function formatEntryTime(start?: string, end?: string): string {
     if (!start) return ''
-    const toLabel = (t: string) => {
-      const [hStr, mStr] = t.split(':')
-      const h = Number(hStr), m = Number(mStr ?? 0)
-      if (isNaN(h)) return t
-      const ampm = h >= 12 ? 'PM' : 'AM'
-      const hh = ((h + 11) % 12) + 1
-      return `${hh}:${String(m).padStart(2, '0')} ${ampm}`
-    }
+    const toLabel = clockLabel
     return end ? `${toLabel(start)} – ${toLabel(end)}` : toLabel(start)
   }
 

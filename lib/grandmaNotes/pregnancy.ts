@@ -117,12 +117,12 @@ export function buildPregnancyNote(input: PregnancyNoteInput, t: Translate): Gra
     const min = now.movement.minutes
     const diff = prev.movement ? min - prev.movement.minutes : 0
     if (prev.movement && Math.abs(diff) >= 20) {
-      c.push({ id: 'move', area: 'exercise', sticker: 'shoe', weight: 4 + Math.abs(diff) / 60, title: t('gn_preg_move_title'), body: t(diff > 0 ? 'gn_preg_move_more_body' : 'gn_preg_move_less_body', { min, diff: Math.abs(diff) }) })
+      c.push({ id: 'move', area: 'exercise', sticker: 'dumbbell', weight: 4 + Math.abs(diff) / 60, title: t('gn_preg_move_title'), body: t(diff > 0 ? 'gn_preg_move_more_body' : 'gn_preg_move_less_body', { min, diff: Math.abs(diff) }) })
     } else {
-      c.push({ id: 'move', area: 'exercise', sticker: 'shoe', weight: 2, title: t('gn_preg_move_title'), body: t('gn_preg_move_body', { min }) })
+      c.push({ id: 'move', area: 'exercise', sticker: 'dumbbell', weight: 2, title: t('gn_preg_move_title'), body: t('gn_preg_move_body', { min }) })
     }
   } else if (prev.movement) {
-    c.push({ id: 'move', area: 'exercise', sticker: 'shoe', weight: 2.5, title: t('gn_missed_move_title'), body: t('gn_missed_body') })
+    c.push({ id: 'move', area: 'exercise', sticker: 'dumbbell', weight: 2.5, title: t('gn_missed_move_title'), body: t('gn_missed_body') })
   }
 
   // Mood + nutrition — plain day counts.

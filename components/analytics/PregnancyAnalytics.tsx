@@ -114,7 +114,7 @@ const HAIR = StyleSheet.hairlineWidth * 2
 
 // Pillar → site sticker (card-less, sits straight on the page).
 const WELLBEING_STICKER: Record<string, SiteStickerName> = {
-  sleep: 'moon', mood: 'face3', nutrition: 'avocado', exercise: 'shoe', hydration: 'drop',
+  sleep: 'moon', mood: 'face3', nutrition: 'avocado', exercise: 'dumbbell', hydration: 'glass',
 }
 const PILLAR_SITE_STICKER: Record<PillarKey, SiteStickerName> = {
   wellbeing: 'flower', weight: 'scale', kicks: 'foot', sleep: 'moon', mood: 'face3',
@@ -899,7 +899,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               label={t('preg_week_title')}
               sub={t('preg_week_daysLogged', { days: weekFacts.daysLogged, total: weekFacts.days })}
               value={weekFacts.logCount > 0 ? String(weekFacts.logCount) : '—'}
-              valueSub={weekFacts.logCount > 0 ? t('kids_analytics_logs_week') : undefined}
+              valueSub={weekFacts.logCount > 0 ? t('preg_analytics_logsShort') : undefined}
               pct={tk.wellbeing.pct}
               tone={stickers.greenSoft}
               onPress={() => setOpenPillar('wellbeing')}

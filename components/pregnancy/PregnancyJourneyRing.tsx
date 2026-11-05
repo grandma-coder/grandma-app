@@ -74,13 +74,13 @@ function formatWeightUnit(g: number | null): string {
 
 // ─── Date utilities ──────────────────────────────────────────────────────────
 function getWeekDateRange(dueDate: string, week: number): { start: string; end: string } {
-  // Inverse of weekForDate(): week W contains the 7 days ending
-  // (40 - W) * 7 days before the due date.
+  // Inverse of weekForDate(): week W starts (40 - W) * 7 days before the due
+  // date (the due date itself is 40w0d) and runs 7 days.
   const due = new Date(dueDate + 'T00:00:00')
-  const end = new Date(due)
-  end.setDate(due.getDate() - (40 - week) * 7)
-  const start = new Date(end)
-  start.setDate(end.getDate() - 6)
+  const start = new Date(due)
+  start.setDate(due.getDate() - (40 - week) * 7)
+  const end = new Date(start)
+  end.setDate(start.getDate() + 6)
   const toISO = (d: Date) => toDateStr(d)
   return { start: toISO(start), end: toISO(end) }
 }
@@ -255,7 +255,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   const [userId, setUserId] = useState<string | undefined>()
   useEffect(() => {
@@ -503,7 +503,8 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   const triKey = (['preg_ring_trimester1', 'preg_ring_trimester2', 'preg_ring_trimester3'] as const)[triIdx]
   const triLabel = t(triKey)
   const sizeName = localizeBabySizeName(weekData.babySize).toLowerCase()
-  const article = articleFor(sizeName)
+  // "a"/"an" is English only — other languages show the size name alone.
+  const article = language === 'en' ? articleFor(sizeName) : ''
   const statusLabel = isCurrWeek
     ? t('preg_ring_statusHere')
     : isPastWeek
@@ -601,7 +602,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
           <View style={styles.sizeRow}>
             <View style={styles.sizeBlock}>
               <Text style={[dstyles.sizeText, { color: ink }]} numberOfLines={1}>
-                {article}{' '}
+                {article ? `${article} ` : ''}
                 <Text style={[dstyles.sizeNameAccent, { color: ink }]}>
                   {sizeName}
                 </Text>
@@ -722,7 +723,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
         <View style={styles.sizeRow}>
           <View style={styles.sizeBlock}>
             <Text style={[styles.sizeText, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]} numberOfLines={1}>
-              {article}{' '}
+              {article ? `${article} ` : ''}
               <Text style={[styles.sizeNameAccent, { color: colors.text, fontFamily: font.display }]}>
                 {sizeName}
               </Text>

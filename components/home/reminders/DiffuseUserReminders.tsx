@@ -14,6 +14,7 @@
  * is a thin wrapper that passes context="pregnancy".
  */
 import React, { useEffect, useState } from 'react'
+import { clockLabel, hourLabel } from '../../../lib/timeFormat'
 import {
   View,
   Text,
@@ -55,12 +56,7 @@ const DIFFUSE_MODE: Record<JourneyMode, 'preg' | 'prePreg' | 'kids' | 'meno'> = 
 }
 
 function formatTime12h(hhmm: string): string {
-  const [hStr, mStr] = hhmm.split(':')
-  const h = parseInt(hStr, 10)
-  const m = mStr ?? '00'
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12 = h % 12 === 0 ? 12 : h % 12
-  return `${h12}:${m} ${ampm}`
+  return clockLabel(hhmm)
 }
 
 function localDateStr(d: Date): string {

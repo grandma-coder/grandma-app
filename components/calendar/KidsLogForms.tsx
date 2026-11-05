@@ -6,6 +6,7 @@
  */
 
 import { dateLoc } from '../../lib/kpLocale'
+import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactElement, type ReactNode, type ComponentProps } from 'react'
 import {
   View,
@@ -1051,10 +1052,7 @@ function toTimeStr(d: Date): string {
 }
 
 function formatTimeLabel(timeStr: string): string {
-  const [h, m] = timeStr.split(':').map(Number)
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+  return clockLabel(timeStr)
 }
 
 function TimeChip({

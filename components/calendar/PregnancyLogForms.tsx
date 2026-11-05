@@ -75,13 +75,15 @@ function useExistingPregnancyLog(
   date: string,
   type: string,
   apply: (row: { value: string | null; notes: string | null }) => void,
+  /** No row on this day → start from the most recent earlier entry (e.g. weight). */
+  latestFallback = false,
 ) {
   const [userId, setUserId] = useState<string | undefined>()
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user.id))
   }, [])
   const { data } = useQuery({
-    queryKey: ['pregnancy-logs', 'existing', userId, date, type],
+    queryKey: ['pregnancy-logs', 'existing', userId, date, type, latestFallback],
     queryFn: async (): Promise<{ value: string | null; notes: string | null } | null> => {
       if (!userId) return null
       const { data: rows, error } = await supabase
@@ -93,7 +95,17 @@ function useExistingPregnancyLog(
         .order('created_at', { ascending: false })
         .limit(1)
       if (error) throw error
-      return rows?.[0] ?? null
+      if (rows?.[0] || !latestFallback) return rows?.[0] ?? null
+      const { data: earlier, error: e2 } = await supabase
+        .from('pregnancy_logs')
+        .select('value, notes')
+        .eq('user_id', userId)
+        .lt('log_date', date)
+        .eq('log_type', type)
+        .order('log_date', { ascending: false })
+        .limit(1)
+      if (e2) throw e2
+      return earlier?.[0] ?? null
     },
     enabled: !!userId,
     staleTime: 0,
@@ -508,6 +520,12 @@ const SYMPTOM_OPTIONS = [
   { id: 'Shortness of breath', key: 'preg_symptom_shortBreath' },
 ] as const
 
+/** Localized label for any stored English option id (symptom, appointment, exercise, nutrition tag, nesting…). */
+export function pregOptionLabel(id: string): string {
+  const sym = SYMPTOM_OPTIONS.find((o) => o.id === id)
+  return sym ? tNow(sym.key) : plfLabel(id)
+}
+
 export function PregnancySymptomsForm({
   date,
   onSaved,
@@ -844,7 +862,7 @@ export function AppointmentForm({
         <TextInput
           value={customType}
           onChangeText={setCustomType}
-          placeholder="Describe the appointment"
+          placeholder={tNow('kp_plf_describeAppt')}
           placeholderTextColor={diffuse ? dt.colors.ink4 : (isDark ? colors.textMuted : '#8A8480')}
           autoFocus
           style={[
@@ -866,7 +884,7 @@ export function AppointmentForm({
       <TextInput
         value={doctor}
         onChangeText={setDoctor}
-        placeholder="Doctor name (optional)"
+        placeholder={tNow('kp_plf_doctorOpt')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : (isDark ? colors.textMuted : '#8A8480')}
         style={[
           styles.input,
@@ -888,7 +906,7 @@ export function AppointmentForm({
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Notes (optional)"
+        placeholder={tNow('kp_plf_notesOpt')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : (isDark ? colors.textMuted : '#8A8480')}
         multiline
         style={[
@@ -1148,7 +1166,7 @@ export function KickCountForm({
         onPress={save}
         saving={saving}
         disabled={count === 0}
-        label="Save Session"
+        label={tNow('kp_plf_saveSession')}
       />
     </View>
   )
@@ -1410,7 +1428,7 @@ export function ExerciseLogForm({ date, onSaved }: { date: string; onSaved: () =
         <TextInput
           value={customType}
           onChangeText={setCustomType}
-          placeholder="What kind of movement?"
+          placeholder={tNow('kp_plf_whatMovement')}
           placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
           autoFocus
           style={[
@@ -1538,7 +1556,7 @@ export function NutritionLogForm({ date, onSaved }: { date: string; onSaved: () 
       <TextInput
         value={nutritionNotes}
         onChangeText={setNutritionNotes}
-        placeholder="Notes (optional)"
+        placeholder={tNow('kp_plf_notesOpt')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline
         style={[styles.inputMultiline, diffuse
@@ -1912,7 +1930,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
       <TextInput
         value={nestingTitle}
         onChangeText={setNestingTitle}
-        placeholder="Task name (e.g. Set up crib)"
+        placeholder={tNow('kp_plf_taskNest')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         style={[styles.input, diffuse
           ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
@@ -1951,7 +1969,7 @@ export function NestingTaskForm({ date, onSaved }: { date: string; onSaved: () =
         <TextInput
           value={customCategory}
           onChangeText={setCustomCategory}
-          placeholder="Custom category"
+          placeholder={tNow('kp_plf_customCat')}
           placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
           autoFocus
           style={[styles.input, diffuse
@@ -2050,7 +2068,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
       <TextInput
         value={birthPrepTitle}
         onChangeText={setBirthPrepTitle}
-        placeholder="Task name (e.g. Pack hospital bag)"
+        placeholder={tNow('kp_plf_taskBirth')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         style={[styles.input, diffuse
           ? { color: dt.colors.ink, backgroundColor: 'transparent', borderColor: dt.colors.line, borderRadius: 18, fontFamily: diffuseFont.body }
@@ -2089,7 +2107,7 @@ export function BirthPrepTaskForm({ date, onSaved }: { date: string; onSaved: ()
         <TextInput
           value={customCategory}
           onChangeText={setCustomCategory}
-          placeholder="Custom category"
+          placeholder={tNow('kp_plf_customCat')}
           placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
           autoFocus
           style={[styles.input, diffuse
@@ -2204,7 +2222,7 @@ export function ContractionTimerLogForm({ date, onSaved }: { date: string; onSav
       <TextInput
         value={contractionNotes}
         onChangeText={setContractionNotes}
-        placeholder="Notes (intensity, location)"
+        placeholder={tNow('kp_plf_notesIntensity')}
         placeholderTextColor={diffuse ? dt.colors.ink4 : colors.textMuted}
         multiline
         style={[styles.inputMultiline, diffuse
@@ -2232,7 +2250,7 @@ export function WeightLogForm({ date, onSaved }: { date: string; onSaved: () => 
   useExistingPregnancyLog(date, 'weight', (r) => {
     const kg = Number(r.value)
     if (r.value && !isNaN(kg) && kg > 0) setWeight(Math.round(kgToDisplay(kg, weightUnit) * 10) / 10)
-  })
+  }, true)
   const accent = diffuse ? diffuseLogHue('weight') : (isDark ? stickersDark.peach : stickersLight.peach)
 
   async function save() {

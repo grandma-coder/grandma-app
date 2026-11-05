@@ -10,6 +10,7 @@
  */
 
 import { dateLoc, weekdayShort } from '../../lib/kpLocale'
+import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import { KIDS_LOG_STICKER, kidsDayMarks } from '../../lib/logStickers'
 import { useState, useMemo, useEffect, useCallback, useRef, Fragment } from 'react'
 import {
@@ -442,7 +443,7 @@ const ROUTINE_SHEET_MAP: Record<string, string> = {
 
 function formatTime(isoStr: string): string {
   const d = new Date(isoStr)
-  return d.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit', hour12: true })
+  return d.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })
 }
 
 function formatDayLabel(dateStr: string, todayStr: string, t: (key: TranslationKey) => string): string {
@@ -462,11 +463,7 @@ function stripUnit(val: string, units: string[]): string {
 
 /** Format "HH:MM" to "h:MM AM/PM" */
 function fmtTime(t: string): string {
-  const [h, m] = t.split(':').map(Number)
-  if (isNaN(h)) return t
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+  return clockLabel(t)
 }
 
 /** Convert "HH:MM" string to decimal hours */
@@ -483,9 +480,7 @@ function isoToLocalHours(iso: string): number {
 
 /** Format hour number (0–23) to "h AM/PM" label */
 function fmtHourLabel(h: number): string {
-  if (h === 0) return '12 AM'
-  if (h === 12) return '12 PM'
-  return h < 12 ? `${h} AM` : `${h - 12} PM`
+  return hourLabel(h)
 }
 
 /** Convert decimal hours back to "HH:MM" for fmtTime */
@@ -2585,7 +2580,7 @@ export function KidsCalendar() {
     const isToday = selectedDate === todayStr
     const nowHours = new Date().getHours() + new Date().getMinutes() / 60
     const nowInsertIdx = isToday ? rows.findIndex((r) => !r.logged && r.sortHours >= nowHours) : -1
-    const nowTimeLabel = new Date().toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit', hour12: true })
+    const nowTimeLabel = new Date().toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })
 
     // ── Diffuse variant: serif day header + connector-spine timeline (v4 §06) ──
     // A vertical spine threads every entry; each entry is a bloom-node on the
