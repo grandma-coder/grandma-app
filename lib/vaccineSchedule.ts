@@ -234,6 +234,18 @@ export const VACCINE_SCHEDULE_SOURCES: Record<string, VaccineScheduleSource> = {
   WHO: { authority: 'WHO', title: 'WHO recommended routine immunizations', url: 'https://immunizationdata.who.int/', reviewed: '2026-07' },
 }
 
+/**
+ * Does a logged vaccine value name this schedule entry? "Mark as given" stores the name with its
+ * dose label ("DTaP - dose 2", label in the app language), so compare the part before " - ".
+ * Exact name only — substring matching collides (Hepatitis A vs B, DTaP vs DTaP/IPV/Hib).
+ */
+export function vaccineValueMatches(value: string, scheduleName: string): boolean {
+  const norm = (s: string) => s.trim().toLowerCase()
+  const v = norm(value)
+  const target = norm(scheduleName)
+  return v === target || v.startsWith(target + ' - ')
+}
+
 export function getScheduleForCountry(countryCode: string): ResolvedSchedule {
   const national = VACCINE_SCHEDULES[countryCode]
   if (national) {
@@ -363,7 +375,7 @@ export function buildVaccineScheduleTree(
     // Exact-name match — substring matching collides across vaccines
     // (e.g. Hepatitis A vs Hepatitis B, DTaP vs DTaP/IPV/Hib).
     const target = normalize(v.name)
-    const doseCount = givenVaccines.filter((g) => normalize(g.value) === target).length
+    const doseCount = givenVaccines.filter((g) => vaccineValueMatches(g.value, v.name)).length
 
     const isAnnualSchedule = v.monthRanges.some(([, max]) => max === ANNUAL_VACCINE_SENTINEL)
 
@@ -384,7 +396,7 @@ export function buildVaccineScheduleTree(
           status = ageMonths > monthMin + 2 ? 'overdue' : 'upcoming'
         } else {
           const lastDate = givenVaccines
-            .filter((g) => normalize(g.value) === target)
+            .filter((g) => vaccineValueMatches(g.value, v.name))
             .map((g) => g.date)
             .sort()
             .pop()
@@ -405,7 +417,7 @@ export function buildVaccineScheduleTree(
 
       let givenDate: string | undefined
       if (status === 'done') {
-        const match = givenVaccines.filter((g) => normalize(g.value) === target)[i]
+        const match = givenVaccines.filter((g) => vaccineValueMatches(g.value, v.name))[i]
         givenDate = match?.date
       }
 
@@ -483,7 +495,7 @@ export function getNextDueVaccines(birthDate: string, givenVaccines: HealthRecor
   const normalize = (s: string) => s.trim().toLowerCase()
   for (const v of schedule) {
     const target = normalize(v.name)
-    const matchedDoses = givenVaccines.filter((g) => normalize(g.value) === target)
+    const matchedDoses = givenVaccines.filter((g) => vaccineValueMatches(g.value, v.name))
     const doseCount = matchedDoses.length
 
     const isAnnualSchedule = v.monthRanges.some(([, max]) => max === ANNUAL_VACCINE_SENTINEL)

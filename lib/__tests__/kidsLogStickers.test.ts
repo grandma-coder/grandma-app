@@ -57,3 +57,17 @@ describe('vaccine age labels', () => {
     expect(unparsed).toEqual([])
   })
 })
+
+import { vaccineValueMatches } from '../vaccineSchedule'
+
+describe('vaccineValueMatches', () => {
+  it('counts a dose marked as given with its dose label', () => {
+    expect(vaccineValueMatches('DTaP - dose 2', 'DTaP')).toBe(true)
+    expect(vaccineValueMatches('DTaP - dose 2', 'DTaP')).toBe(true)
+    expect(vaccineValueMatches('dtap', 'DTaP')).toBe(true)
+  })
+  it('never matches a different vaccine with a shared prefix', () => {
+    expect(vaccineValueMatches('Hepatitis A - dose 1', 'Hepatitis B')).toBe(false)
+    expect(vaccineValueMatches('DTaP/IPV/Hib - dose 1', 'DTaP')).toBe(false)
+  })
+})
