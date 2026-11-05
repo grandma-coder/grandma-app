@@ -59,9 +59,12 @@ interface NotificationPayload {
 // ─── Dedup helper ─────────────────────────────────────────────────────────────
 
 /** Check if a similar notification was already created today */
-async function alreadyNotifiedToday(userId: string, type: string, dedupeKey: string): Promise<boolean> {
+async function alreadyNotifiedToday(userId: string, type: string, dedupeKey: string, windowDays = 0): Promise<boolean> {
+  // windowDays > 0 = cooldown: a nudge with this key is not repeated for that many days
+  // (quiet / wellness nudges used to come back every single day).
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
+  if (windowDays > 0) todayStart.setDate(todayStart.getDate() - windowDays)
 
   const { count } = await supabase
     .from('notifications')
@@ -117,7 +120,7 @@ export async function generateWellnessNotifications(
 
     // Score dropped below 4 → alert
     if (score.value < 4) {
-      const already = await alreadyNotifiedToday(userId, 'wellness_drop', dedupeKey)
+      const already = await alreadyNotifiedToday(userId, 'wellness_drop', dedupeKey, 7)
       if (!already) {
         notifications.push({
           user_id: userId,
@@ -132,7 +135,7 @@ export async function generateWellnessNotifications(
 
     // Score improved significantly (trend > 30%)
     if (score.trend > 30 && score.value >= 6) {
-      const already = await alreadyNotifiedToday(userId, 'wellness_improve', dedupeKey)
+      const already = await alreadyNotifiedToday(userId, 'wellness_improve', dedupeKey, 7)
       if (!already) {
         notifications.push({
           user_id: userId,
@@ -155,7 +158,7 @@ export async function generateMissingDataNotifications(
   childName: string,
 ): Promise<number> {
   const dedupeKey = `missing_${childId}`
-  const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey)
+  const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey, 3)
   if (already) return 0
 
   // Check last log for this child
@@ -467,7 +470,7 @@ export async function generateStreakNotifications(
         .eq('date', dateStr)
 
       if ((count ?? 0) > 0) {
-        const alreadyBroken = await alreadyNotifiedToday(userId, 'streak_broken', `streak_broken_${child.id}`)
+        const alreadyBroken = await alreadyNotifiedToday(userId, 'streak_broken', `streak_broken_${child.id}`, 3)
         if (!alreadyBroken) {
           notifications.push({
             user_id: userId,
@@ -779,7 +782,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
   // ── Week milestone notification ───────────────────────────────────────────
   if (weekNumber && WEEK_MILESTONES.has(weekNumber)) {
     const dedupeKey = `pregnancy_week_${weekNumber}`
-    const already = await alreadyNotifiedToday(userId, 'milestone', dedupeKey)
+    const already = await alreadyNotifiedToday(userId, 'milestone', dedupeKey, 365)
     if (!already) {
       notifications.push({
         user_id: userId,
@@ -793,7 +796,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
   // ── Due date approaching ──────────────────────────────────────────────────
   if (dueDate) {
     const daysToDue = Math.ceil((parseLocalDate(dueDate).getTime() - Date.now()) / 86400000)
-    if (daysToDue >= 0 && daysToDue <= 14) {
+    if ([14, 7, 3, 1, 0].includes(daysToDue)) {
       const dedupeKey = `pregnancy_due_${daysToDue}`
       const already = await alreadyNotifiedToday(userId, 'reminder', dedupeKey)
       if (!already) {
@@ -819,8 +822,8 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
   if (lastLog) {
     const daysSince = Math.floor((Date.now() - parseLocalDate(lastLog.log_date).getTime()) / 86400000)
     if (daysSince >= 3) {
-      const dedupeKey = `pregnancy_missing_${daysSince}`
-      const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey)
+      const dedupeKey = 'pregnancy_missing'
+      const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey, 5)
       if (!already) {
         notifications.push({
           user_id: userId,
@@ -977,8 +980,8 @@ export async function generateCycleNotifications(userId: string): Promise<number
   // ── Late period (3+ days past expected) ───────────────────────────────────
   if (info.daysUntilPeriod < -2 && info.daysUntilPeriod >= -10) {
     const lateDays = Math.abs(info.daysUntilPeriod)
-    const dedupeKey = `cycle_late_${lateDays}`
-    const already = await alreadyNotifiedToday(userId, 'insight', dedupeKey)
+    const dedupeKey = 'cycle_late'
+    const already = await alreadyNotifiedToday(userId, 'insight', dedupeKey, 3)
     if (!already) {
       notifications.push({
         user_id: userId,
@@ -1001,8 +1004,8 @@ export async function generateCycleNotifications(userId: string): Promise<number
   if (lastLog) {
     const daysSince = Math.floor((Date.now() - parseLocalDate(lastLog.date).getTime()) / 86400000)
     if (daysSince >= 5) {
-      const dedupeKey = `cycle_missing_${daysSince}`
-      const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey)
+      const dedupeKey = 'cycle_missing'
+      const already = await alreadyNotifiedToday(userId, 'missing_data', dedupeKey, 7)
       if (!already) {
         notifications.push({
           user_id: userId,
@@ -1019,7 +1022,15 @@ export async function generateCycleNotifications(userId: string): Promise<number
 
 // ─── MASTER: Run All Generators ──────────────────────────────────────────────
 
-export async function runNotificationEngine(): Promise<number> {
+let engineRun: Promise<number> | null = null
+
+/** Single-flight: app start + inbox open used to run concurrently and both passed the dedupe check. */
+export function runNotificationEngine(): Promise<number> {
+  if (!engineRun) engineRun = runNotificationEngineOnce().finally(() => { engineRun = null })
+  return engineRun
+}
+
+async function runNotificationEngineOnce(): Promise<number> {
   try {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return 0

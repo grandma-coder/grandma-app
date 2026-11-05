@@ -650,7 +650,7 @@ const WARNING_SIGNS = [
 
 function PregnancyInsightsContent() {
   const { colors, ink, diffuse } = useInsightsTheme()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const chatEnabled = useGrandmaChatEnabled()
   const insets = useSafeAreaInsets()
   const storedWeek = usePregnancyStore((s) => s.weekNumber)
@@ -668,7 +668,7 @@ function PregnancyInsightsContent() {
   }
 
   const weekData = getWeekData(weekNumber)
-  const affirmation = getDailyAffirmation()
+  const affirmation = getDailyAffirmation(language)
   const birthFocus: BirthFocusCard = getBirthFocusForWeek(weekNumber)
   const upcomingAppt = getUpcomingAppointment(weekNumber)
   const featuredRead = getFeaturedReadForWeek(weekNumber)

@@ -1,6 +1,9 @@
 // lib/pregnancyAffirmations.ts
 // 42 daily affirmations — keyed by dayOfYear % 42
 
+import type { AppLanguage } from '../store/useLanguageStore'
+import { PREGNANCY_AFFIRMATIONS_I18N } from './pregnancyAffirmationsContent'
+
 export const pregnancyAffirmations: string[] = [
   "Your body knows exactly what to do. Trust it completely.",
   "Every day you are growing a miracle. You are extraordinary.",
@@ -46,10 +49,12 @@ export const pregnancyAffirmations: string[] = [
   "You are doing the most important thing there is.",
 ]
 
-export function getDailyAffirmation(): string {
+export function getDailyAffirmation(lang: AppLanguage = 'en'): string {
   const now = new Date()
   const start = new Date(now.getFullYear(), 0, 0)
   const diff = now.getTime() - start.getTime()
   const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24))
-  return pregnancyAffirmations[dayOfYear % pregnancyAffirmations.length]
+  const i = dayOfYear % pregnancyAffirmations.length
+  if (lang === 'en') return pregnancyAffirmations[i]
+  return PREGNANCY_AFFIRMATIONS_I18N[lang]?.[i] || pregnancyAffirmations[i]
 }

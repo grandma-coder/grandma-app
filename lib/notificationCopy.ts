@@ -360,6 +360,13 @@ export function displayNotificationText(n: NotificationText): { title: string; b
     const author = typeof n.data.authorName === 'string' && n.data.authorName ? n.data.authorName : t('notif_mention_someone')
     return { title: t('notif_mention_title', { name: author, channel: n.data.channelName }), body: n.body }
   }
+  // Rows stored in another language: rebuild from the structured fields when they carry everything.
+  const d = n.data ?? {}
+  const beh = d.behavior
+  if (n.type === 'milestone' && beh === 'pregnancy' && typeof d.week === 'number') return pregnancyWeekCopy(d.week)
+  if (n.type === 'reminder' && beh === 'pregnancy' && typeof d.daysToDue === 'number') return dueDateCopy(d.daysToDue)
+  if (n.type === 'missing_data' && beh === 'pregnancy' && typeof d.daysMissing === 'number') return pregnancyQuietCopy(d.daysMissing)
+  if (n.type === 'missing_data' && beh === 'pre-pregnancy' && typeof d.daysMissing === 'number') return cycleQuietCopy(d.daysMissing)
   const isWellness = n.type === 'wellness_drop' || n.type === 'wellness_improve'
   if (!isWellness || !(SCORE_RE.test(n.title) || SCORE_RE.test(n.body ?? ''))) {
     return { title: n.title, body: n.body }

@@ -170,6 +170,8 @@ function navigateForNotification(item: AppNotification) {
   const currentMode = useModeStore.getState().mode
   const isPregnancy = currentMode === 'pregnancy'
   const isPrePregnancy = currentMode === 'pre-pregnancy'
+  // Insights is only offered while the Grandma chat flag is on (same as the center menu).
+  const insightsOn = useFeatureFlags.getState().grandmaChat
 
   switch (item.type) {
     case 'wellness_drop':
@@ -177,16 +179,14 @@ function navigateForNotification(item: AppNotification) {
     case 'daily_summary':
     case 'weekly_report':
     case 'health_alert':
-      // In pregnancy / pre-pregnancy mode the vault has no analytics surface;
-      // send the user to the dedicated insights screen instead.
-      router.push(isPregnancy || isPrePregnancy ? '/insights' : '/(tabs)/vault')
+      // Notes (vault) covers every journey. Insights lives behind the Grandma chat flag,
+      // same as its menu entry — only go there when that's on.
+      router.push(insightsOn && (isPregnancy || isPrePregnancy) ? '/insights' : '/(tabs)/vault')
       break
     case 'vaccine_due':
     case 'goal_achieved':
     case 'goal_missed':
-      // Pregnancy + pre-pregnancy don't have vaccine / kid goal destinations.
-      // Route to insights so the notification leads somewhere useful.
-      router.push(isPregnancy || isPrePregnancy ? '/insights' : '/(tabs)/vault')
+      router.push(insightsOn && (isPregnancy || isPrePregnancy) ? '/insights' : '/(tabs)/vault')
       break
     case 'missing_data':
     case 'routine_missed':
@@ -200,7 +200,7 @@ function navigateForNotification(item: AppNotification) {
       break
     case 'insight':
     case 'milestone':
-      router.push('/insights')
+      router.push(insightsOn ? '/insights' : '/(tabs)/vault')
       break
     case 'mention':
     case 'reply':
