@@ -14,11 +14,14 @@ import { useTheme, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
-import { getCycleInfo, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
+import { getCycleInfo, getCycleCalendarDay, toDateStr, type CycleConfig, type CyclePhase, type CycleCalendarDay } from '../../lib/cycleLogic'
+import { useCycleCalendarInput } from '../../lib/cycleAnalytics'
+import { CYCLE_LOG_STICKER } from '../../lib/logStickers'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { CyclePhaseGlyph, CYCLE_PHASE_ORDER } from './CyclePhaseGlyph'
 import { useTranslation } from '../../lib/i18n'
 import { appIntlLocale } from '../../lib/cycleLogForms'
+import { deviceWeekStart, monthGridDates, weekdayOrder } from './agendaDates'
 
 interface Props {
   cycleConfig: CycleConfig
@@ -48,44 +51,40 @@ const PHASE_LEGEND_KEY: Record<CyclePhase, 'cycleRing_label_menstruation' | 'cyc
   luteal:       'cycleRing_label_luteal',
 }
 
-function startOfMonthGrid(year: number, month: number): Date {
-  const first = new Date(year, month, 1)
-  // Week starts Monday — JS: Sun=0, so shift to Mon=0
-  const dow = (first.getDay() + 6) % 7
-  return new Date(year, month, 1 - dow)
-}
-
 /**
- * Site-look look of one cycle day: soft coral for period, soft green for the
- * fertile window (lighter when predicted), plus the ovulation flag (egg).
- * Shared by this grid and the agenda calendar.
+ * Site-look look of one cycle day (from getCycleCalendarDay): coral for period days — solid when
+ * logged, faint with a dashed coral ring when it's an estimate — soft green for the fertile window
+ * (lighter when it's still ahead), plus the ovulation flag (egg). Shared by this grid and the
+ * agenda calendar.
  */
 export function cycleSiteDay(
-  cycleConfig: CycleConfig,
-  date: string,
-  today: string,
+  day: CycleCalendarDay,
   s: ReturnType<typeof useTheme>['stickers'],
-): { tint?: string; isOvulation: boolean } {
-  const info = getCycleInfo(cycleConfig, date)
-  const isPeriod = (info.phase as CyclePhase) === 'menstruation'
-  const isOvulation = !isPeriod && info.cycleDay === info.ovulationDay
-  const isFertile = !isPeriod && info.isFertile
-  const isPredicted = date > today
-  const tint = isPeriod ? s.coral + (isPredicted ? '22' : '44')
-    : isFertile || isOvulation ? s.green + (isPredicted ? '33' : '66')
-    : undefined
-  return { tint, isOvulation }
+): { tint?: string; dashed?: string; isOvulation: boolean } {
+  if (day.isPeriod) {
+    return day.predicted
+      ? { tint: s.coral + '22', dashed: s.coral, isOvulation: false }
+      : { tint: s.coral + '55', isOvulation: false }
+  }
+  if (day.isFertile || day.isOvulation) {
+    return { tint: s.green + (day.predicted ? '33' : '66'), isOvulation: day.isOvulation }
+  }
+  return { isOvulation: false }
 }
 
-/** Site-look legend: period swatch · fertile swatch · ovulation egg. */
+/** Site-look legend: period · estimated period · fertile window · ovulation egg · intimacy. */
 export function CycleSiteLegend() {
   const { colors, stickers } = useTheme()
   const { t } = useTranslation()
   return (
     <View style={styles.siteLegend}>
       <View style={styles.legendItem}>
-        <View style={[styles.legendSwatch, { backgroundColor: stickers.coral + '44' }]} />
+        <View style={[styles.legendSwatch, { backgroundColor: stickers.coral + '55' }]} />
         <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.menstruation)}</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendSwatch, { backgroundColor: stickers.coral + '22', borderWidth: 1.5, borderStyle: 'dashed', borderColor: stickers.coral }]} />
+        <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t('cycleCalendar_estimate')}</Text>
       </View>
       <View style={styles.legendItem}>
         <View style={[styles.legendSwatch, { backgroundColor: stickers.green + '66' }]} />
@@ -96,7 +95,7 @@ export function CycleSiteLegend() {
         <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t(PHASE_LEGEND_KEY.ovulation)}</Text>
       </View>
       <View style={styles.legendItem}>
-        <SiteSticker name="love" size={13} />
+        <SiteSticker name={CYCLE_LOG_STICKER.intercourse ?? 'love'} size={13} />
         <Text style={[styles.siteLegendLabel, { color: colors.textMuted }]}>{t('cycleCalendar_logEntry_intimacy')}</Text>
       </View>
     </View>
@@ -154,22 +153,18 @@ export function CycleMonthGrid({
   const ink = isDark ? colors.text : '#141313'
 
   const today = toDateStr(new Date())
+  // Site look: logged cycles + estimates (Diffuse keeps its repeating-pattern view below).
+  const { input: calendarInput } = useCycleCalendarInput()
+  // First weekday follows the device region, like the agenda calendar.
+  const weekStart = useMemo(() => deviceWeekStart(), [])
 
-  // Build the 6×7 grid of dates
+  // Whole weeks around the visible month (4–6 rows).
   const cells = useMemo(() => {
-    const start = startOfMonthGrid(visibleMonth.year, visibleMonth.month)
-    const arr: { date: string; day: number; inMonth: boolean }[] = []
-    for (let i = 0; i < 42; i++) {
-      const d = new Date(start)
-      d.setDate(start.getDate() + i)
-      arr.push({
-        date: toDateStr(d),
-        day: d.getDate(),
-        inMonth: d.getMonth() === visibleMonth.month,
-      })
-    }
-    return arr
-  }, [visibleMonth.year, visibleMonth.month])
+    const first = toDateStr(new Date(visibleMonth.year, visibleMonth.month, 1))
+    return monthGridDates(first, weekStart).map(({ date, inMonth }) => ({
+      date, inMonth, day: Number(date.slice(8, 10)),
+    }))
+  }, [visibleMonth.year, visibleMonth.month, weekStart])
 
   // Month range for log fetch
   const monthStart = cells[0].date
@@ -250,19 +245,19 @@ export function CycleMonthGrid({
   return (
     <View style={[styles.wrap, styles.siteWrap, { backgroundColor: colors.surface, borderColor: colors.text }]}>
       <View style={styles.header}>
-        <Pressable onPress={onPrevMonth} style={styles.navBtn} hitSlop={8}>
+        <Pressable onPress={onPrevMonth} style={styles.navBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('agendaCalendar_prevMonth')}>
           <Text style={[styles.navText, { color: ink, fontFamily: font.bodyBold }]}>{t('common_chevronPrev')}</Text>
         </Pressable>
         <Text style={[styles.monthLabel, { color: ink, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.2 }]}>
           {monthLabel}
         </Text>
-        <Pressable onPress={onNextMonth} style={styles.navBtn} hitSlop={8}>
+        <Pressable onPress={onNextMonth} style={styles.navBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('agendaCalendar_nextMonth')}>
           <Text style={[styles.navText, { color: ink, fontFamily: font.bodyBold }]}>{t('common_chevronNext')}</Text>
         </Pressable>
       </View>
 
       <View style={styles.dowRow}>
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => new Date(2024, 0, 1 + i).toLocaleDateString(appIntlLocale(), { weekday: 'narrow' })).map((d, i) => (
+        {weekdayOrder(weekStart).map((dow) => new Date(2023, 11, 31 + dow, 12).toLocaleDateString(appIntlLocale(), { weekday: 'narrow' })).map((d, i) => (
           <Text
             key={i}
             style={[styles.dow, { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}
@@ -274,7 +269,9 @@ export function CycleMonthGrid({
 
       <View style={styles.grid}>
         {cells.map((c) => {
-          const day = cycleSiteDay(cycleConfig, c.date, today, stickers)
+          const day = calendarInput
+            ? cycleSiteDay(getCycleCalendarDay(calendarInput, c.date, today), stickers)
+            : { isOvulation: false } as ReturnType<typeof cycleSiteDay>
           const isOvulation = day.isOvulation
           const isToday = c.date === today
           const isSelected = c.date === selectedDate
@@ -297,6 +294,7 @@ export function CycleMonthGrid({
                   style={[
                     styles.dayDisc,
                     { backgroundColor: isSelected ? colors.text : fill },
+                    c.inMonth && !isSelected && day.dashed ? { borderWidth: 1.5, borderStyle: 'dashed', borderColor: day.dashed } : null,
                   ]}
                 >
                   <Text

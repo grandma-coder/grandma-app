@@ -1,58 +1,44 @@
 /**
  * C4 — Cycle Calendar (cream-paper redesign, Apr 2026)
  *
- * 2-tab shell: Cycle / Health (ink active pill).
- * Cycle tab: week strip + Today section with pastel ActivityPillCards for each
- * loggable type. Tapping a card opens the matching LogSheet form.
- * "+" in header opens a Log Activity sheet with all quick-log tiles.
+ * 2-tab shell: Cycle / Exams.
+ * Cycle tab (site look): the shared AgendaCalendar (week | month) painted from the LOGGED cycles —
+ * logged period days solid, estimated ones dashed, fertile window green, ovulation egg, what was
+ * logged as tiny stickers — then the selected day's detail (edit / remove what was logged).
+ * "+" in the header opens the shared log launcher for the selected day (today when a future day is
+ * selected: future days can't hold logs). Every form comes from the shared CycleLogRouter.
  */
 
-import { useState, useMemo } from 'react'
-import { View, Text, Pressable, ScrollView, StyleSheet, Modal } from 'react-native'
-import { X, Check } from 'lucide-react-native'
+import { useState, useMemo, useCallback } from 'react'
+import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
+import { useQueryClient } from '@tanstack/react-query'
+import { useTheme, useDiffuseTheme, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
-import { getCycleInfo, toDateStr, type CyclePhase, type CycleConfig } from '../../lib/cycleLogic'
-import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { getCycleCalendarDay, toDateStr, type CycleConfig, type CycleCalendarInput } from '../../lib/cycleLogic'
+import { useCycleCalendarInput, useCycleHistory } from '../../lib/cycleAnalytics'
 import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
+import { isFutureDate } from '../../lib/futureDate'
+import { appIntlLocale } from '../../lib/cycleLogForms'
 import { useTranslation } from '../../lib/i18n'
-import type { TranslationKeys } from '../../lib/i18n/keys'
-import { LogSheet } from './LogSheet'
 import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { CycleMonthGrid, CycleSiteLegend, cycleSiteDay, useCycleLogDates } from './CycleMonthGrid'
 import { AgendaCalendar, DayMarks } from './AgendaCalendar'
 import { cycleDayMarks } from '../../lib/logStickers'
-import { monthGridDates } from './agendaDates'
-import { SiteSticker } from '../stickers/SiteSticker'
+import { deviceWeekStart, monthGridDates } from './agendaDates'
 import { CycleDayDetail } from './CycleDayDetail'
 import { LogActivitySheet, type LogType } from './LogActivitySheet'
+import { CycleLogRouter } from './CycleLogRouter'
 import { Display, Body } from '../ui/Typography'
-import { logSticker } from './logStickers'
-import { Character } from '../characters/Characters'
-import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
 import { ExamsBody } from '../exams/ExamsBody'
-import {
-  PeriodStartForm,
-  PeriodEndForm,
-  SymptomsForm,
-  MoodForm,
-  BbtForm,
-  IntimacyForm,
-  PregnancyTestForm,
-  SexDriveForm,
-  ClotsForm,
-  WeightForm,
-  WaterForm,
-  ActivityForm,
-} from './CycleLogForms'
-import { ExamForm } from '../exams/ExamForm'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 type ViewTab = 'cycle' | 'health'
+
+const NO_CYCLES: CycleCalendarInput = { cycles: [], cycleLength: 28, periodLength: 5, lutealPhase: 14 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
@@ -61,6 +47,7 @@ export function CycleCalendar() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const qc = useQueryClient()
   const insets = useSafeAreaInsets()
   const bottomInset = useScrollBottomInset(insets.bottom + 40)
   // Ink/muted resolved per variant so shared Display/Body typography matches.
@@ -71,15 +58,16 @@ export function CycleCalendar() {
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [sheetType, setSheetType] = useState<LogType | null>(null)
   const [logSheetOpen, setLogSheetOpen] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const d = new Date()
     return { year: d.getFullYear(), month: d.getMonth() }
   })
 
   // Derive the real cycle config from the user's logged period_start history.
-  // Falls back to a 10-days-ago default so the UI still renders for users
-  // who haven't logged anything yet.
-  const { data: history, isLoading: historyLoading } = useCycleHistory()
+  // (Diffuse month grid + the forms' phase hints.) Falls back to a 10-days-ago
+  // default so Diffuse still renders for users who haven't logged anything yet.
+  const { data: history } = useCycleHistory()
   // User cycle settings override the measured average + hardcoded defaults.
   const cs = useCycleSettingsStore()
   const cycleConfig: CycleConfig = useMemo(() => {
@@ -88,8 +76,7 @@ export function CycleCalendar() {
     if (latest) {
       return { lastPeriodStart: latest.startDate, cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
     }
-    // Light look with no period logged: no invented anchor, so the month shows no predicted
-    // period/fertile tints. Diffuse keeps its old 10-days-ago placeholder.
+    // Light look with no period logged: no invented anchor.
     if (!diffuse && history && history.cycles.length === 0) {
       return { lastPeriodStart: '', cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
     }
@@ -98,22 +85,51 @@ export function CycleCalendar() {
     return { lastPeriodStart: toDateStr(d), cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
   }, [history, cs.cycleLength, cs.periodLength, cs.lutealPhase, diffuse])
 
-  const selectedInfo = getCycleInfo(cycleConfig, selectedDate)
-
-  // Site look: logged-day dots for the agenda calendar — the month around the
-  // selected day (whole weeks, so the week view is covered too).
-  const agendaRange = useMemo(() => {
-    const cells = monthGridDates(selectedDate)
-    return { start: cells[0].date, end: cells[cells.length - 1].date }
-  }, [selectedDate])
-  const { logsByDate: agendaLogs, isLoading: agendaLogsLoading } = useCycleLogDates(agendaRange.start, agendaRange.end)
+  // Site look: every day is read from the logged cycles (past cycles keep their real length,
+  // nothing before the first logged period, estimates pause while the period is late).
+  const { input: calendarInput, isLoading: calendarLoading } = useCycleCalendarInput()
   const todayStr = toDateStr(new Date())
-  // First load: no real cycle yet → skeleton, never the fallback "10 days ago" cycle.
-  const agendaLoading = (historyLoading && !history) || agendaLogsLoading
+  const dayOf = useCallback(
+    (date: string) => getCycleCalendarDay(calendarInput ?? NO_CYCLES, date, todayStr),
+    [calendarInput, todayStr],
+  )
 
-  function handleSaved() {
-    setSheetType(null)
-  }
+  // Logged-day stickers for the agenda calendar — the month around the selected day (whole weeks,
+  // so the week view is covered too).
+  const weekStart = useMemo(() => deviceWeekStart(), [])
+  const agendaRange = useMemo(() => {
+    const cells = monthGridDates(selectedDate, weekStart)
+    return { start: cells[0].date, end: cells[cells.length - 1].date }
+  }, [selectedDate, weekStart])
+  const { logsByDate: agendaLogs, isLoading: agendaLogsLoading } = useCycleLogDates(agendaRange.start, agendaRange.end)
+  // First load: no real cycle yet → skeleton, never a provisional cycle that then jumps.
+  const agendaLoading = (calendarLoading && !calendarInput) || agendaLogsLoading
+
+  // "+" logs for the selected day — or today when a future day is selected (no future logs).
+  const logDate = isFutureDate(selectedDate, todayStr) ? todayStr : selectedDate
+  const openLauncher = useCallback(() => {
+    if (logDate !== selectedDate) setSelectedDate(logDate)
+    setLogSheetOpen(true)
+  }, [logDate, selectedDate])
+  const launcherTitle = logDate === todayStr
+    ? t('cycleLog_todayTitle')
+    : t('cycleLog_dateTitle', {
+        date: new Date(logDate + 'T12:00:00').toLocaleDateString(appIntlLocale(), { weekday: 'short', month: 'short', day: 'numeric' }),
+      })
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ['cycleLogs'], type: 'active' }),
+        tab === 'health' ? qc.refetchQueries({ queryKey: ['exams'], type: 'active' }) : Promise.resolve(),
+      ])
+    } finally {
+      setRefreshing(false)
+    }
+  }, [qc, tab])
+
+  const refreshTint = diffuse ? dt.colors.ink3 : colors.text
 
   return (
     <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
@@ -123,8 +139,9 @@ export function CycleCalendar() {
           { paddingTop: insets.top + 12, paddingBottom: bottomInset },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={refreshTint} colors={[refreshTint]} />}
       >
-        <AgendaHeader onAdd={() => setLogSheetOpen(true)} />
+        <AgendaHeader onAdd={openLauncher} />
 
         <View style={{ marginBottom: 14 }}>
           <SegmentedTabs
@@ -163,9 +180,10 @@ export function CycleCalendar() {
                 onSelectDate={setSelectedDate}
                 tone={getModeColorSoft('pre', isDark)}
                 loading={agendaLoading}
-                dayTint={(date) => cycleSiteDay(cycleConfig, date, todayStr, stickers).tint}
+                dayTint={(date) => cycleSiteDay(dayOf(date), stickers).tint}
+                dayDashed={(date) => cycleSiteDay(dayOf(date), stickers).dashed}
                 renderDayDecoration={(date) => {
-                  const { isOvulation } = cycleSiteDay(cycleConfig, date, todayStr, stickers)
+                  const { isOvulation } = cycleSiteDay(dayOf(date), stickers)
                   // What was logged, at a glance — heart for intimacy first, then tests, period, symptoms…
                   const marks = cycleDayMarks(agendaLogs.get(date) ?? [])
                   if (!isOvulation && marks.length === 0) return null
@@ -178,8 +196,10 @@ export function CycleCalendar() {
 
             <CycleDayDetail
               cycleConfig={cycleConfig}
+              day={dayOf(selectedDate)}
+              dayLoading={agendaLoading}
               date={selectedDate}
-              onAddLog={() => setLogSheetOpen(true)}
+              onAddLog={openLauncher}
               onOpenLog={(type) => setSheetType(type)}
             />
           </>
@@ -207,53 +227,21 @@ export function CycleCalendar() {
         )}
       </ScrollView>
 
-      {/* ─── Bottom sheets per log type ────────────────────────────────── */}
+      {/* Every log form (incl. LH + cervical mucus) — the same switchboard the home uses. */}
+      <CycleLogRouter
+        sheetType={sheetType}
+        date={sheetType === 'exam' ? selectedDate : logDate}
+        cycleConfig={cycleConfig}
+        onClose={() => setSheetType(null)}
+        onSaved={() => setSheetType(null)}
+      />
 
-      <LogSheet visible={sheetType === 'period_start'} sticker="drop" title={t('cycleCalendar_logSheet_periodStart')} onClose={() => setSheetType(null)}>
-        <PeriodStartForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'period_end'} sticker="drop" title={t('cycleCalendar_logSheet_periodEnd')} onClose={() => setSheetType(null)}>
-        <PeriodEndForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'symptom'} sticker="thermo" title={t('cycleCalendar_logSheet_symptoms')} onClose={() => setSheetType(null)}>
-        <SymptomsForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'mood'} sticker="face3" title={t('cycleCalendar_logSheet_mood')} onClose={() => setSheetType(null)}>
-        <MoodForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'basal_temp'} sticker="thermo" title={t('cycleCalendar_logSheet_temperature')} onClose={() => setSheetType(null)}>
-        <BbtForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'intercourse'} sticker="heart" title={t('cycleCalendar_logSheet_intimacy')} onClose={() => setSheetType(null)}>
-        <IntimacyForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'pregnancy_test'} sticker="otest" title={t('cycleCalendar_logSheet_pregTest')} onClose={() => setSheetType(null)}>
-        <PregnancyTestForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'sex_drive'} sticker="heart" title={t('cycleCalendar_logSheet_sexDrive')} onClose={() => setSheetType(null)}>
-        <SexDriveForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'clots'} sticker="drop" title={t('cycleCalendar_logSheet_clots')} onClose={() => setSheetType(null)}>
-        <ClotsForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'weight'} sticker="ruler" title={t('cycleCalendar_logSheet_weight')} onClose={() => setSheetType(null)}>
-        <WeightForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'water'} sticker="drop" title={t('cycleCalendar_logSheet_water')} onClose={() => setSheetType(null)}>
-        <WaterForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'activity'} sticker="shoe" title={t('cycleCalendar_logSheet_activity')} onClose={() => setSheetType(null)}>
-        <ActivityForm date={selectedDate} phase={selectedInfo.phase as CyclePhase} onSaved={handleSaved} />
-      </LogSheet>
-      <LogSheet visible={sheetType === 'exam'} sticker="doc" title={t('cycleCalendar_logSheet_exam')} onClose={() => setSheetType(null)}>
-        <ExamForm behavior="pre-pregnancy" date={selectedDate} onSaved={() => setSheetType(null)} />
-      </LogSheet>
-
-      {/* Log Activity sheet (opened by header "+") */}
+      {/* Log Activity sheet (opened by header "+" / the day's log pill) */}
       <LogActivitySheet
         open={logSheetOpen}
         onClose={() => setLogSheetOpen(false)}
         onSelect={(type) => setSheetType(type)}
+        title={launcherTitle}
       />
     </View>
   )
@@ -264,35 +252,4 @@ export function CycleCalendar() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingHorizontal: 16 },
-
-  // Sheet
-  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,8,6,0.55)' },
-  sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    maxHeight: '85%',
-  },
-  handleWrap: { alignItems: 'center', paddingTop: 10, paddingBottom: 6 },
-  handle: { width: 42, height: 4, borderRadius: 2 },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
-  closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetBody: { paddingHorizontal: 20 },
 })

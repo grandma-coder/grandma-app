@@ -6,9 +6,10 @@
  * values so the UI can show a "Log your first cycle" nudge.
  */
 
+import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from './supabase'
-import { getCycleInfo, toDateStr, type CyclePhase } from './cycleLogic'
+import { getCycleInfo, toDateStr, type CyclePhase, type CycleCalendarInput } from './cycleLogic'
 import {
   getChecklistItems,
   getChecklistTitle,
@@ -79,6 +80,8 @@ export interface Cycle {
   startDate: string        // YYYY-MM-DD (period_start date)
   endDate: string | null   // next period_start - 1 day, null if current open cycle
   lengthDays: number | null
+  /** Last logged period_end within 14 days of this start (and before the next start), if any. */
+  periodEnd?: string | null
 }
 
 export interface CycleHistory {
@@ -92,6 +95,13 @@ export interface CycleHistory {
 const MIN_GAP_DAYS = 10
 /** Cycle lengths kept for the average; outside this they're missed logs or a skipped month. */
 const AVG_RANGE = { min: 15, max: 45 }  // matches the settings' cycle-length range
+/** A period_end further than this from its start is a stray log, not the end of that period. */
+const MAX_PERIOD_DAYS = 14
+
+/** Whole local days between two 'YYYY-MM-DD' strings (rounded, so DST's 23/25h days count as 1). */
+function dayDiff(a: string, b: string): number {
+  return Math.round((new Date(b + 'T00:00:00').getTime() - new Date(a + 'T00:00:00').getTime()) / 86400000)
+}
 
 export function computeCycleHistory(logs: CycleLogRow[]): CycleHistory {
   const sorted = [...new Set(logs
@@ -103,21 +113,25 @@ export function computeCycleHistory(logs: CycleLogRow[]): CycleHistory {
   const starts: string[] = []
   for (const d of sorted) {
     const prev = starts[starts.length - 1]
-    if (prev && (new Date(d + 'T00:00:00').getTime() - new Date(prev + 'T00:00:00').getTime()) / 86400000 < MIN_GAP_DAYS) continue
+    if (prev && dayDiff(prev, d) < MIN_GAP_DAYS) continue
     starts.push(d)
   }
 
   if (starts.length === 0) return { cycles: [], avg: null, min: null, max: null }
 
+  const ends = [...new Set(logs.filter((l) => l.type === 'period_end').map((l) => l.date))].sort()
+
   const cycles: Cycle[] = starts.map((startDate, i) => {
     const next = starts[i + 1]
-    if (!next) return { startDate, endDate: null, lengthDays: null }
-    const a = new Date(startDate + 'T00:00:00')
-    const b = new Date(next + 'T00:00:00')
-    const length = Math.round((b.getTime() - a.getTime()) / 86400000)
-    const endDate = new Date(b.getTime() - 86400000)
-    const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`
-    return { startDate, endDate: endStr, lengthDays: length }
+    // The latest period_end inside this period (re-logging the end corrects it).
+    const periodEnd = ends
+      .filter((e) => e >= startDate && (!next || e < next) && dayDiff(startDate, e) < MAX_PERIOD_DAYS)
+      .pop() ?? null
+    if (!next) return { startDate, endDate: null, lengthDays: null, periodEnd }
+    const length = dayDiff(startDate, next)
+    const b = new Date(next + 'T12:00:00')
+    const endDate = new Date(b.getFullYear(), b.getMonth(), b.getDate() - 1)
+    return { startDate, endDate: toDateStr(endDate), lengthDays: length, periodEnd }
   })
 
   // A missed month logs as one ~56-day cycle; leave such outliers out of the average/min/max.
@@ -133,10 +147,25 @@ export function computeCycleHistory(logs: CycleLogRow[]): CycleHistory {
 
 export function useCycleHistory() {
   const { data: logs, ...rest } = useCycleLogs()
-  return {
-    ...rest,
-    data: logs ? computeCycleHistory(logs) : undefined,
-  }
+  // Memoised on the cached rows so consumers get a stable object between refetches.
+  const data = useMemo(() => (logs ? computeCycleHistory(logs) : undefined), [logs])
+  return { ...rest, data }
+}
+
+/**
+ * Input for the calendar's per-day view (getCycleCalendarDay): the logged cycles plus the user's
+ * settings — declared cycle length wins over the measured average, like the home ring.
+ * `input` is undefined until the first load finishes.
+ */
+export function useCycleCalendarInput() {
+  const { data: history, ...rest } = useCycleHistory()
+  const cycleLength = useCycleSettingsStore((s) => s.cycleLength)
+  const periodLength = useCycleSettingsStore((s) => s.periodLength)
+  const lutealPhase = useCycleSettingsStore((s) => s.lutealPhase)
+  const input = useMemo<CycleCalendarInput | undefined>(() => history
+    ? { cycles: history.cycles, cycleLength: cycleLength ?? history.avg ?? 28, periodLength, lutealPhase }
+    : undefined, [history, cycleLength, periodLength, lutealPhase])
+  return { ...rest, input }
 }
 
 // ─── Regularity ───────────────────────────────────────────────────────────
@@ -222,9 +251,7 @@ function phaseForCycleDay(cycleDay: number, cycleLength: number): CyclePhase {
 
 /** Local Date-math day difference on 'YYYY-MM-DD' strings (daysBetween isn't exported from cycleLogic.ts). */
 function daysBetweenDates(dateA: string, dateB: string): number {
-  const a = new Date(dateA + 'T00:00:00')
-  const b = new Date(dateB + 'T00:00:00')
-  return Math.floor((b.getTime() - a.getTime()) / 86400000)
+  return dayDiff(dateA, dateB)
 }
 
 /** Finds the cycle (closed or the trailing open one) that contains `logDate`. */

@@ -85,7 +85,9 @@ const DEFAULT_CONFIG: CycleConfig = {
 function daysBetween(dateA: string, dateB: string): number {
   const a = new Date(dateA + 'T00:00:00')
   const b = new Date(dateB + 'T00:00:00')
-  return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24))
+  // Round, not floor: across a spring-forward DST change two local midnights are 23h apart, and
+  // floor turned that into one day less — every cycle day after the change was off by one.
+  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 function addDays(dateStr: string, days: number): string {
@@ -139,44 +141,12 @@ export function getCycleInfo(config: Partial<CycleConfig>, forDate?: string): Cy
   const dayInCycle = ((daysSincePeriod % cfg.cycleLength) + cfg.cycleLength) % cfg.cycleLength
   const cycleDay = dayInCycle + 1
 
-  // Ovulation typically happens cycleLength - lutealPhase days after period start
-  const ovulationDay = cfg.cycleLength - cfg.lutealPhase
-
-  // Fertile window: 5 days before ovulation through 1 day after. The clinical
-  // "6-day window" (Wilcox) ends ON ovulation day; we extend one day for a
-  // gentler display buffer — a UI choice, not a claim that day+1 is fertile.
-  const fertileStart = Math.max(1, ovulationDay - 5)
-  const fertileEnd = ovulationDay + 1
-
-  // Determine phase
-  let phase: CyclePhase
-  if (cycleDay <= cfg.periodLength) {
-    phase = 'menstruation'
-  } else if (cycleDay < ovulationDay - 1) {
-    phase = 'follicular'
-  } else if (cycleDay >= ovulationDay - 1 && cycleDay <= ovulationDay + 1) {
-    phase = 'ovulation'
-  } else {
-    phase = 'luteal'
-  }
-
-  const isFertile = cycleDay >= fertileStart && cycleDay <= fertileEnd
+  const { phase, isFertile, ovulationDay, fertileStart, fertileEnd, conceptionProbability } =
+    phaseForCycleDay(cycleDay, cfg.cycleLength, cfg.periodLength, cfg.lutealPhase)
 
   // Days until next period
   const daysUntilPeriod = cfg.cycleLength - cycleDay + 1
   const daysUntilOvulation = ovulationDay - cycleDay
-
-  // Conception probability
-  let conceptionProbability: CycleInfo['conceptionProbability'] = 'none'
-  if (cycleDay === ovulationDay || cycleDay === ovulationDay - 1) {
-    conceptionProbability = 'peak'
-  } else if (cycleDay >= ovulationDay - 3 && cycleDay <= ovulationDay + 1) {
-    conceptionProbability = 'high'
-  } else if (cycleDay >= fertileStart && cycleDay < ovulationDay - 3) {
-    conceptionProbability = 'medium'
-  } else if (phase === 'follicular' && cycleDay >= cfg.periodLength + 1) {
-    conceptionProbability = 'low'
-  }
 
   // Predicted dates
   const currentCycleStart = addDays(cfg.lastPeriodStart, Math.floor(daysSincePeriod / cfg.cycleLength) * cfg.cycleLength)
@@ -209,6 +179,59 @@ export function getCycleInfo(config: Partial<CycleConfig>, forDate?: string): Cy
   }
 }
 
+interface DayPhase {
+  phase: CyclePhase
+  isFertile: boolean
+  ovulationDay: number
+  fertileStart: number
+  fertileEnd: number
+  conceptionProbability: CycleInfo['conceptionProbability']
+}
+
+/** Settings clamped the way the engine needs them (cycle 21–60; ovulation after the period). */
+function clampSettings(cycleLength: number, periodLength: number, lutealPhase: number) {
+  const len = Math.min(60, Math.max(21, cycleLength))
+  return { cycleLength: len, periodLength, lutealPhase: Math.min(lutealPhase, len - periodLength - 1) }
+}
+
+/** Phase math for one 1-based cycle day. Inputs are already clamped (see clampSettings). */
+function phaseForCycleDay(cycleDay: number, cycleLength: number, periodLength: number, lutealPhase: number): DayPhase {
+  // Ovulation typically happens cycleLength - lutealPhase days after period start
+  const ovulationDay = cycleLength - lutealPhase
+
+  // Fertile window: 5 days before ovulation through 1 day after. The clinical
+  // "6-day window" (Wilcox) ends ON ovulation day; we extend one day for a
+  // gentler display buffer — a UI choice, not a claim that day+1 is fertile.
+  const fertileStart = Math.max(1, ovulationDay - 5)
+  const fertileEnd = ovulationDay + 1
+
+  let phase: CyclePhase
+  if (cycleDay <= periodLength) {
+    phase = 'menstruation'
+  } else if (cycleDay < ovulationDay - 1) {
+    phase = 'follicular'
+  } else if (cycleDay >= ovulationDay - 1 && cycleDay <= ovulationDay + 1) {
+    phase = 'ovulation'
+  } else {
+    phase = 'luteal'
+  }
+
+  const isFertile = cycleDay >= fertileStart && cycleDay <= fertileEnd
+
+  let conceptionProbability: CycleInfo['conceptionProbability'] = 'none'
+  if (cycleDay === ovulationDay || cycleDay === ovulationDay - 1) {
+    conceptionProbability = 'peak'
+  } else if (cycleDay >= ovulationDay - 3 && cycleDay <= ovulationDay + 1) {
+    conceptionProbability = 'high'
+  } else if (cycleDay >= fertileStart && cycleDay < ovulationDay - 3) {
+    conceptionProbability = 'medium'
+  } else if (phase === 'follicular' && cycleDay >= periodLength + 1) {
+    conceptionProbability = 'low'
+  }
+
+  return { phase, isFertile, ovulationDay, fertileStart, fertileEnd, conceptionProbability }
+}
+
 function getEmptyCycleInfo(cfg: CycleConfig): CycleInfo {
   return {
     cycleDay: 0,
@@ -234,7 +257,7 @@ function getEmptyCycleInfo(cfg: CycleConfig): CycleInfo {
   }
 }
 
-function getPhaseLabel(phase: CyclePhase): string {
+export function getPhaseLabel(phase: CyclePhase): string {
   switch (phase) {
     case 'menstruation': return t('cyc_phase_menstruation')
     case 'follicular': return t('cyc_phase_name_follicular')
@@ -341,6 +364,127 @@ function getPhaseNutrition(phase: CyclePhase): string[] {
         'Fiber: beans, oats, flaxseeds (helps with bloating)',
       ]
   }
+}
+
+// ─── Calendar days (logged history + estimates) ─────────────────────────────
+
+/** One cycle from the logged history (see computeCycleHistory). */
+export interface CycleSpan {
+  /** Logged period start (YYYY-MM-DD). */
+  startDate: string
+  /** Days until the next logged start; null for the latest (still open) cycle. */
+  lengthDays: number | null
+  /** Logged period end inside this cycle, if any. */
+  periodEnd?: string | null
+}
+
+export interface CycleCalendarInput {
+  /** Chronological cycles from the logged period starts. */
+  cycles: CycleSpan[]
+  /** Expected cycle length (declared setting, else measured average, else 28). */
+  cycleLength: number
+  periodLength: number
+  lutealPhase: number
+}
+
+export interface CycleCalendarDay {
+  /** 1-based day of the cycle; null outside the tracked history. */
+  cycleDay: number | null
+  /** null when there is nothing to say (before tracking, late/paused, an implausible cycle). */
+  phase: CyclePhase | null
+  isPeriod: boolean
+  isFertile: boolean
+  isOvulation: boolean
+  /** An estimate for a day that hasn't been confirmed by a logged period yet. */
+  predicted: boolean
+  /** Days past the expected start, for a day in a late, still-open cycle. */
+  daysLate: number
+  conceptionProbability: CycleInfo['conceptionProbability']
+}
+
+const EMPTY_CALENDAR_DAY: CycleCalendarDay = {
+  cycleDay: null, phase: null, isPeriod: false, isFertile: false, isOvulation: false,
+  predicted: false, daysLate: 0, conceptionProbability: 'none',
+}
+
+/** Closed cycles outside this range are a missed or doubled log: show the period, not a fertile guess. */
+const PLAUSIBLE_CYCLE = { min: 15, max: 45 }
+
+function calendarDay(
+  cycleDay: number,
+  cycleLength: number,
+  periodLength: number,
+  lutealPhase: number,
+  predicted: boolean,
+): CycleCalendarDay {
+  const c = clampSettings(cycleLength, periodLength, lutealPhase)
+  const p = phaseForCycleDay(cycleDay, c.cycleLength, c.periodLength, c.lutealPhase)
+  const isPeriod = p.phase === 'menstruation'
+  return {
+    cycleDay,
+    phase: p.phase,
+    isPeriod,
+    isFertile: !isPeriod && p.isFertile,
+    isOvulation: !isPeriod && cycleDay === p.ovulationDay,
+    predicted,
+    daysLate: 0,
+    conceptionProbability: p.conceptionProbability,
+  }
+}
+
+/** Bleeding days for a cycle: the logged end when there is a believable one, else the setting. */
+function periodLengthFor(cycle: CycleSpan, fallback: number): number {
+  if (!cycle.periodEnd) return fallback
+  const n = daysBetween(cycle.startDate, cycle.periodEnd) + 1
+  return n >= 1 && n <= 15 ? n : fallback
+}
+
+/**
+ * What the calendar shows for one day, from the LOGGED cycles rather than one repeating pattern:
+ *  - before the first logged period: nothing (no invented past);
+ *  - inside a past cycle: that cycle's real length and logged period end;
+ *  - the open cycle and later ones: estimates from the expected length (`predicted` once they
+ *    haven't happened yet);
+ *  - once the period is later than expected, estimates pause (same as the home): days up to today
+ *    carry `daysLate`, later days stay blank until a new period is logged.
+ */
+export function getCycleCalendarDay(
+  input: CycleCalendarInput,
+  date: string,
+  today: string = toDateStr(new Date()),
+): CycleCalendarDay {
+  const { cycles, periodLength, lutealPhase } = input
+  if (cycles.length === 0 || date < cycles[0].startDate) return EMPTY_CALENDAR_DAY
+
+  let idx = 0
+  for (let i = 0; i < cycles.length; i++) if (cycles[i].startDate <= date) idx = i
+  const cycle = cycles[idx]
+  const since = daysBetween(cycle.startDate, date)
+  const periodLen = periodLengthFor(cycle, periodLength)
+
+  // A past cycle, closed by the next logged start.
+  if (cycle.lengthDays !== null && idx < cycles.length - 1) {
+    const len = cycle.lengthDays
+    if (len < PLAUSIBLE_CYCLE.min || len > PLAUSIBLE_CYCLE.max) {
+      return since < periodLen
+        ? { ...EMPTY_CALENDAR_DAY, cycleDay: since + 1, phase: 'menstruation', isPeriod: true }
+        : { ...EMPTY_CALENDAR_DAY, cycleDay: since + 1 }
+    }
+    return calendarDay(since + 1, len, periodLen, lutealPhase, false)
+  }
+
+  // The latest (open) cycle and the estimated ones after it.
+  const expected = Math.min(60, Math.max(21, input.cycleLength))
+  const lateToday = daysBetween(cycle.startDate, today) - expected
+  if (since < expected) {
+    return calendarDay(since + 1, expected, periodLen, lutealPhase, date > today)
+  }
+  if (lateToday > 0) {
+    if (date > today) return EMPTY_CALENDAR_DAY
+    return { ...EMPTY_CALENDAR_DAY, cycleDay: since + 1, daysLate: since - expected }
+  }
+  const dayInCycle = since % expected
+  return calendarDay(dayInCycle + 1, expected, periodLength, lutealPhase, true)
 }
 
 /**

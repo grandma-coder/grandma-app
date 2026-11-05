@@ -1,9 +1,34 @@
 /**
  * Pure date math for the shared agenda calendar (week strip / month grid) and
  * the kids agenda list window. No React, no theme — easy to unit test.
- * All dates are local 'YYYY-MM-DD' strings; weeks start on Monday.
+ * All dates are local 'YYYY-MM-DD' strings. Weeks start on `weekStart`
+ * (JS getDay index: 0 = Sunday, 1 = Monday, 6 = Saturday) — Monday by default;
+ * the calendar passes the device region's first weekday (deviceWeekStart).
  */
+import { getCalendars } from 'expo-localization'
 import type { AgendaView } from '../../store/useAgendaViewStore'
+
+/** JS getDay index of the first day of the week: 0 = Sunday … 6 = Saturday. */
+export type WeekStart = 0 | 1 | 2 | 3 | 4 | 5 | 6
+
+/**
+ * The device region's first weekday (Brazil/US → Sunday, most of Europe → Monday, …).
+ * expo-localization counts 1 = Sunday … 7 = Saturday. Falls back to Monday.
+ */
+export function deviceWeekStart(): WeekStart {
+  try {
+    const first = getCalendars()[0]?.firstWeekday
+    if (typeof first === 'number' && first >= 1 && first <= 7) return (first - 1) as WeekStart
+  } catch {
+    // no native module (tests / web) → default
+  }
+  return 1
+}
+
+/** JS getDay indices in display order for a week starting on `weekStart`. */
+export function weekdayOrder(weekStart: WeekStart = 1): number[] {
+  return Array.from({ length: 7 }, (_, i) => (weekStart + i) % 7)
+}
 
 export function dayStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -14,10 +39,10 @@ export function parseDay(dateStr: string): Date {
   return new Date(dateStr + 'T12:00:00')
 }
 
-/** The 7 days (Mon → Sun) of the week that contains `dateStr`. */
-export function weekDates(dateStr: string): string[] {
+/** The 7 days of the week that contains `dateStr`, starting on `weekStart`. */
+export function weekDates(dateStr: string, weekStart: WeekStart = 1): string[] {
   const d = parseDay(dateStr)
-  const offsetToMon = (d.getDay() + 6) % 7
+  const offsetToMon = (d.getDay() - weekStart + 7) % 7
   const out: string[] = []
   for (let i = 0; i < 7; i++) {
     out.push(dayStr(new Date(d.getFullYear(), d.getMonth(), d.getDate() - offsetToMon + i, 12)))
@@ -26,14 +51,14 @@ export function weekDates(dateStr: string): string[] {
 }
 
 /**
- * Month grid for the month that contains `dateStr`: whole Mon → Sun weeks,
- * only as many rows as the month needs (4–6).
+ * Month grid for the month that contains `dateStr`: whole weeks (starting on
+ * `weekStart`), only as many rows as the month needs (4–6).
  */
-export function monthGridDates(dateStr: string): { date: string; inMonth: boolean }[] {
+export function monthGridDates(dateStr: string, weekStart: WeekStart = 1): { date: string; inMonth: boolean }[] {
   const d = parseDay(dateStr)
   const year = d.getFullYear()
   const month = d.getMonth()
-  const lead = (new Date(year, month, 1, 12).getDay() + 6) % 7
+  const lead = (new Date(year, month, 1, 12).getDay() - weekStart + 7) % 7
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const total = Math.ceil((lead + daysInMonth) / 7) * 7
   const out: { date: string; inMonth: boolean }[] = []
@@ -60,8 +85,8 @@ export function shiftAgendaDate(dateStr: string, view: AgendaView, dir: 1 | -1):
 }
 
 /** Stable key for the visible period (drives the slide-in animation). */
-export function agendaPeriodKey(dateStr: string, view: AgendaView): string {
-  return view === 'week' ? weekDates(dateStr)[0] : dateStr.slice(0, 7)
+export function agendaPeriodKey(dateStr: string, view: AgendaView, weekStart: WeekStart = 1): string {
+  return view === 'week' ? weekDates(dateStr, weekStart)[0] : dateStr.slice(0, 7)
 }
 
 /**

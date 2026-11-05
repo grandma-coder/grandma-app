@@ -1,4 +1,4 @@
-import { weekDates, monthGridDates, shiftAgendaDate, agendaPeriodKey, upcomingWindow } from '../agendaDates'
+import { weekDates, monthGridDates, shiftAgendaDate, agendaPeriodKey, upcomingWindow, weekdayOrder, deviceWeekStart } from '../agendaDates'
 
 describe('agendaDates — week', () => {
   it('returns Monday → Sunday around the day', () => {
@@ -76,5 +76,37 @@ describe('upcomingWindow', () => {
 
   it('returns short lists unchanged', () => {
     expect(upcomingWindow(rows.slice(0, 2), 11)).toHaveLength(2)
+  })
+})
+
+describe('agendaDates — week start per region', () => {
+  it('starts the week on Sunday (Brazil / US)', () => {
+    expect(weekDates('2026-11-04', 0)).toEqual([
+      '2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07',
+    ])
+    // A Sunday is the FIRST day of its own week.
+    expect(weekDates('2026-11-01', 0)[0]).toBe('2026-11-01')
+    expect(agendaPeriodKey('2026-11-07', 'week', 0)).toBe('2026-11-01')
+  })
+
+  it('starts the week on Saturday', () => {
+    expect(weekDates('2026-11-04', 6)[0]).toBe('2026-10-31')
+  })
+
+  it('builds a Sunday-first month grid', () => {
+    const nov = monthGridDates('2026-11-15', 0) // Nov 1 2026 is a Sunday → no leading days
+    expect(nov[0]).toEqual({ date: '2026-11-01', inMonth: true })
+    expect(nov.length).toBe(35)
+    expect(nov[nov.length - 1].date).toBe('2026-12-05')
+  })
+
+  it('lists weekday indices in display order', () => {
+    expect(weekdayOrder(0)).toEqual([0, 1, 2, 3, 4, 5, 6])
+    expect(weekdayOrder(1)).toEqual([1, 2, 3, 4, 5, 6, 0])
+    expect(weekdayOrder(6)).toEqual([6, 0, 1, 2, 3, 4, 5])
+  })
+
+  it('falls back to Monday without a native calendar', () => {
+    expect([0, 1, 2, 3, 4, 5, 6]).toContain(deviceWeekStart())
   })
 })

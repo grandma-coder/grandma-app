@@ -22,12 +22,13 @@ import { useTheme } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { useAgendaViewStore, type AgendaView } from '../../store/useAgendaViewStore'
 import { Skeleton } from '../ui/Skeleton'
-import { agendaPeriodKey, dayStr, monthGridDates, parseDay, shiftAgendaDate, weekDates } from './agendaDates'
+import { agendaPeriodKey, dayStr, deviceWeekStart, monthGridDates, parseDay, shiftAgendaDate, weekDates, weekdayOrder } from './agendaDates'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { dateLoc } from '../../lib/kpLocale'
 
 const MONO = 'SpaceMono_400Regular'
-const FALLBACK_INITIALS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+// Indexed by JS getDay (0 = Sunday).
+const FALLBACK_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 interface AgendaCalendarProps {
   selectedDate: string
@@ -36,6 +37,8 @@ interface AgendaCalendarProps {
   tone: string
   /** Optional soft background for a day (cycle phase tint). */
   dayTint?: (date: string) => string | undefined
+  /** Optional dashed ring for a day (cycle: an estimated, not yet logged, period day). */
+  dayDashed?: (date: string) => string | undefined
   /** Small mark under the day number (dots, sticker, egg). */
   renderDayDecoration?: (date: string) => ReactNode
   /** First load with no data yet → skeleton days instead of empty ones. */
@@ -59,6 +62,7 @@ export function AgendaCalendar({
   onSelectDate,
   tone,
   dayTint,
+  dayDashed,
   renderDayDecoration,
   loading = false,
   caption,
@@ -70,15 +74,17 @@ export function AgendaCalendar({
   const setView = useAgendaViewStore((s) => s.setView)
 
   const todayStr = dayStr(new Date())
+  // First weekday follows the device region (Sunday in Brazil/US, Monday in most of Europe).
+  const weekStart = useMemo(() => deviceWeekStart(), [])
   const cells = useMemo(
     () => (view === 'week'
-      ? weekDates(selectedDate).map((date) => ({ date, inMonth: true }))
-      : monthGridDates(selectedDate)),
-    [view, selectedDate],
+      ? weekDates(selectedDate, weekStart).map((date) => ({ date, inMonth: true }))
+      : monthGridDates(selectedDate, weekStart)),
+    [view, selectedDate, weekStart],
   )
 
   // Slide direction follows the period we moved to (previous-render state pattern).
-  const periodKey = `${view}:${agendaPeriodKey(selectedDate, view)}`
+  const periodKey = `${view}:${agendaPeriodKey(selectedDate, view, weekStart)}`
   const [slide, setSlide] = useState({ key: periodKey, dir: 0 })
   if (slide.key !== periodKey) setSlide({ key: periodKey, dir: periodKey > slide.key ? 1 : -1 })
   const direction = slide.dir
@@ -98,13 +104,14 @@ export function AgendaCalendar({
   )
 
   const monthLabel = safeDate(parseDay(selectedDate), language, { month: 'long', year: 'numeric' })
-  const initials = useMemo(() => FALLBACK_INITIALS.map((fallback, i) => {
-    // 2024-01-01 is a Monday.
-    const s = safeDate(new Date(2024, 0, 1 + i, 12), language, { weekday: 'narrow' })
-    return s && s.length <= 2 ? s : fallback
-  }), [language])
+  const initials = useMemo(() => weekdayOrder(weekStart).map((dow) => {
+    // 2023-12-31 is a Sunday, so +dow lands on that weekday.
+    const s = safeDate(new Date(2023, 11, 31 + dow, 12), language, { weekday: 'narrow' })
+    return s && s.length <= 2 ? s : FALLBACK_INITIALS[dow]
+  }), [language, weekStart])
 
-  const periodWord = view === 'week' ? 'week' : 'month'
+  const prevLabel = t(view === 'week' ? 'agendaCalendar_prevWeek' : 'agendaCalendar_prevMonth')
+  const nextLabel = t(view === 'week' ? 'agendaCalendar_nextWeek' : 'agendaCalendar_nextMonth')
   const rows = cells.length / 7
 
   return (
@@ -134,8 +141,8 @@ export function AgendaCalendar({
             {monthLabel}
           </Text>
           <View style={styles.arrows}>
-            <ArrowBtn dir={-1} onPress={() => step(-1)} label={`Previous ${periodWord}`} />
-            <ArrowBtn dir={1} onPress={() => step(1)} label={`Next ${periodWord}`} />
+            <ArrowBtn dir={-1} onPress={() => step(-1)} label={prevLabel} />
+            <ArrowBtn dir={1} onPress={() => step(1)} label={nextLabel} />
           </View>
         </View>
 
@@ -163,6 +170,7 @@ export function AgendaCalendar({
               const isSelected = date === selectedDate
               const isToday = date === todayStr
               const tint = inMonth ? dayTint?.(date) : undefined
+              const dashed = inMonth && !isSelected && !isToday ? dayDashed?.(date) : undefined
               return (
                 <Pressable
                   key={date}
@@ -176,6 +184,7 @@ export function AgendaCalendar({
                     style={[
                       styles.bubble,
                       tint ? { backgroundColor: tint } : null,
+                      dashed ? { borderWidth: 1.5, borderStyle: 'dashed', borderColor: dashed } : null,
                       isSelected && { backgroundColor: tone, borderWidth: 1.5, borderColor: colors.text },
                       isToday && { borderWidth: 2, borderColor: colors.text },
                       isToday && !isSelected && !tint && { backgroundColor: colors.surface },
