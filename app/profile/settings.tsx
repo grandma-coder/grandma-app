@@ -24,6 +24,7 @@ import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseK
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
 import { signOut } from '../../lib/signOut'
+import { getNotificationPrefs, syncLocalSchedules } from '../../lib/pushNotifications'
 import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle, QuietPill } from '../../components/profile/SiteSettingsKit'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { useModeStore } from '../../store/useModeStore'
@@ -70,8 +71,8 @@ export default function SettingsScreen() {
     try {
       setSignOutModalVisible(false)
       await signOut(global ? 'global' : 'local')
-    } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+    } catch {
+      Alert.alert(t('common_error'), t('common_checkConnection'))
     } finally {
       setSigningOut(false)
     }
@@ -86,9 +87,13 @@ export default function SettingsScreen() {
   function handleSelectLanguage(lang: LanguageOption) {
     setLanguage(lang.code)
     setLangModalVisible(false)
+    // Scheduled local reminders carry their text from when they were scheduled —
+    // re-schedule them so the next one arrives in the new language.
+    void getNotificationPrefs().then(syncLocalSchedules).catch(() => {})
   }
 
   async function handleDeleteAccount() {
+    if (deleting) return
     Alert.alert(
       t('settings_deleteAccount'),
       t('settings_deleteConfirm'),
@@ -104,9 +109,10 @@ export default function SettingsScreen() {
               if (error) throw error
               // Account is gone — clear the local session and return to auth.
               await signOut('global')
-            } catch (e: any) {
+            } catch {
               setDeleting(false)
-              Alert.alert(t('common_error'), e.message ?? t('settings_deleteFailedMsg'))
+              // Server/edge errors come back in English — always show the warm, localized message.
+              Alert.alert(t('common_error'), t('settings_deleteFailedMsg'))
             }
           },
         },
@@ -209,8 +215,8 @@ export default function SettingsScreen() {
             <SiteEyebrow>{t('settings_account')}</SiteEyebrow>
             <View style={{ gap: 12, marginTop: 12 }}>
               <QuietPill label={t('profile_signOut')} onPress={() => setSignOutModalVisible(true)} />
-              <Pressable onPress={handleDeleteAccount} accessibilityRole="button" hitSlop={8} style={{ alignSelf: 'center', paddingVertical: 8 }}>
-                <Text style={{ fontFamily: font.bodyMedium, fontSize: 14, color: colors.textMuted, textDecorationLine: 'underline' }}>{t('settings_deleteAccount')}</Text>
+              <Pressable onPress={handleDeleteAccount} disabled={deleting} accessibilityRole="button" accessibilityState={{ disabled: deleting, busy: deleting }} hitSlop={8} style={{ alignSelf: 'center', paddingVertical: 8, opacity: deleting ? 0.5 : 1 }}>
+                <Text style={{ fontFamily: font.bodyMedium, fontSize: 14, color: colors.textMuted, textDecorationLine: 'underline' }}>{deleting ? t('common_loading') : t('settings_deleteAccount')}</Text>
               </Pressable>
             </View>
           </View>

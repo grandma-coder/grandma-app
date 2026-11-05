@@ -7,7 +7,7 @@
  * GarageScreen, which owns its own "The Village." title + view toggle.
  */
 
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -18,19 +18,28 @@ import { InkBackButton } from '../components/ui/InkBackButton'
 import { SiteSticker } from '../components/stickers/SiteSticker'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { GarageScreen } from '../components/connections/GarageScreen'
-import { getUnreadNotificationCount } from '../lib/channelPosts'
+import { useQuery } from '@tanstack/react-query'
+import { getUnreadCount } from '../lib/notifications'
+import { useTranslation } from '../lib/i18n'
 
 export default function VillageScreen() {
   const { colors } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const insets = useSafeAreaInsets()
-  const [notifCount, setNotifCount] = useState(0)
-
+  const { t } = useTranslation()
+  // Same query (and cache) as the tab-bar badge + NotificationBell, so this bell
+  // shows the exact inbox count /notifications opens to, and marking read there
+  // clears it here. Refetched on focus (returning from the inbox).
+  const { data: notifCount = 0, refetch } = useQuery({
+    queryKey: ['notification-count'],
+    queryFn: getUnreadCount,
+    staleTime: 30 * 1000,
+  })
   useFocusEffect(
     useCallback(() => {
-      getUnreadNotificationCount().then(setNotifCount).catch(() => {})
-    }, [])
+      refetch()
+    }, [refetch])
   )
 
   return (
@@ -56,7 +65,7 @@ export default function VillageScreen() {
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
-            <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Notifications">
+            <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8} accessibilityRole="button" accessibilityLabel={notifCount > 0 ? t('comm_bellA11yUnread', { count: notifCount }) : t('comm_bellA11y')}>
               <View>
                 <SiteSticker name="bell" size={34} cut />
                 {notifCount > 0 && (

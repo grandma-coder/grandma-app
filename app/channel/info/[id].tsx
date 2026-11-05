@@ -34,6 +34,7 @@ import {
   Share2,
   Copy,
   Link,
+  Flag,
 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, getModeColor, font, useDiffuseTheme, diffuseFont, getDiffuseAccent, getModeColorSoft } from '../../../constants/theme'
@@ -67,6 +68,8 @@ import { PaperActionSheet, type ActionSheetItem } from '../../../components/ui/P
 import { useTranslation } from '../../../lib/i18n'
 import { dateLoc } from '../../../lib/kpLocale'
 import { SheetModal } from '../../../components/ui/SheetModal'
+import { reportContent, REPORT_REASONS, type ReportReason } from '../../../lib/communitySafety'
+import { channelDisplayName, channelDisplayDesc, channelCategoryLabel } from '../../../components/connections/communityLabels'
 
 const SCREEN_W = Dimensions.get('window').width
 const MEDIA_THUMB = (SCREEN_W - 48 - 8) / 4 // 4 columns
@@ -222,14 +225,16 @@ export default function ChannelInfoScreen() {
     if (!id || !editName.trim()) return
     setSaving(true)
     try {
-      await supabase.from('channels').update({
+      // supabase-js resolves on DB/RLS errors — check, or a failed save looked saved.
+      const { error } = await supabase.from('channels').update({
         name: editName.trim(),
         description: editDesc.trim() || null,
       }).eq('id', id)
+      if (error) throw error
       setEditing(false)
       load()
     } catch (e: any) {
-      await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+      await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
     } finally {
       setSaving(false)
     }
@@ -242,11 +247,13 @@ export default function ChannelInfoScreen() {
   async function confirmDeleteChannel() {
     setDeleting(true)
     try {
-      await supabase.from('channels').delete().eq('id', id)
+      const { error } = await supabase.from('channels').delete().eq('id', id)
+      if (error) throw error
       setShowDelete(false)
-      router.replace('/community?tab=channels' as any)
+      // Pop info + the (now deleted) chat off the stack back to Community.
+      router.dismissTo('/community?tab=channels' as any)
     } catch (e: any) {
-      await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+      await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
     } finally {
       setDeleting(false)
     }
@@ -266,8 +273,29 @@ export default function ChannelInfoScreen() {
       try {
         await deleteMessage(msgId, currentUserId)
         setMessages((prev) => prev.filter((m) => m.id !== msgId))
-      } catch {}
+      } catch {
+        await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
+      }
     }
+  }
+
+  // Hosts can only delete their OWN posts (RLS: channel_posts_delete is
+  // author-only) — the old trash icon on everyone's messages "removed" them
+  // locally while nothing was deleted. Other members' posts get Report, which
+  // reaches the moderation queue.
+  function handleReportMessage(msg: ChannelPost) {
+    const items: ActionSheetItem[] = REPORT_REASONS.map((reason: ReportReason) => ({
+      label: t(`safety_reason_${reason}` as any),
+      onPress: async () => {
+        try {
+          await reportContent({ contentType: 'channel_post', contentId: msg.id, authorId: msg.author_id, reason })
+          toast.show({ title: t('safety_reportedTitle'), message: t('safety_reportedBody') })
+        } catch {
+          await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
+        }
+      },
+    }))
+    setSheet({ title: t('safety_reportTitle'), message: t('safety_reportBody'), items })
   }
 
   async function handleLeave() {
@@ -284,7 +312,7 @@ export default function ChannelInfoScreen() {
     if (
       await confirm({
         title: t('channelInfo_leaveChannelTitle'),
-        message: t('channelInfo_leaveChannelConfirm', { channel: channel?.name ?? t('channelInfo_thisChannel') }),
+        message: t('channelInfo_leaveChannelConfirm', { channel: channel ? channelDisplayName(channel.name) : t('channelInfo_thisChannel') }),
         confirmLabel: t('channelInfo_leave'),
         cancelLabel: t('common_cancel'),
         danger: true,
@@ -312,7 +340,7 @@ export default function ChannelInfoScreen() {
         if (
           await confirm({
             title: t('channelInfo_confirmTransferTitle'),
-            message: t('channelInfo_confirmTransferBody', { channel: channel?.name ?? '', member: m.name ?? t('channelInfo_thisMember') }),
+            message: t('channelInfo_confirmTransferBody', { channel: channelDisplayName(channel?.name), member: m.name ?? t('channelInfo_thisMember') }),
             confirmLabel: t('channelInfo_transferBtn'),
             cancelLabel: t('common_cancel'),
             danger: true,
@@ -323,7 +351,7 @@ export default function ChannelInfoScreen() {
             toast.show({ title: t('channelInfo_doneTitle'), message: t('channelInfo_transferredMsg', { member: m.name ?? t('channelInfo_theNewHost') }) })
             load()
           } catch (e: any) {
-            await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+            await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
           }
         }
       },
@@ -338,7 +366,7 @@ export default function ChannelInfoScreen() {
       load()
       await confirm({ title: t('channelInfo_approvedTitle'), message: t('channelInfo_approvedBody', { user: req.user_name ?? t('channelInfo_userFallback') }), cancelLabel: null })
     } catch (e: any) {
-      await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+      await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
     }
   }
 
@@ -356,7 +384,7 @@ export default function ChannelInfoScreen() {
         await denyRequest(req.id)
         setPendingRequests((prev) => prev.filter((r) => r.id !== req.id))
       } catch (e: any) {
-        await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+        await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
       }
     }
   }
@@ -371,9 +399,10 @@ export default function ChannelInfoScreen() {
     }
 
     const channelUrl = `grandma-app://channel/${id}`
-    const desc = channel.description ? `\n${channel.description}` : ''
+    const descText = channelDisplayDesc(channel.name, channel.description)
+    const desc = descText ? `\n${descText}` : ''
     const privacy = channel.channelType === 'private' ? ` ${t('channelInfo_privateSuffix')}` : ''
-    const shareMessage = `${t('channelInfo_shareMessage', { channel: channel.name, privacy })}${desc}\n\n${channelUrl}`
+    const shareMessage = `${t('channelInfo_shareMessage', { channel: channelDisplayName(channel.name), privacy })}${desc}\n\n${channelUrl}`
 
     setSheet({
       title: t('channelInfo_shareChannelTitle'),
@@ -392,7 +421,7 @@ export default function ChannelInfoScreen() {
           onPress: () => {
             Share.share({
               message: shareMessage,
-              title: `#${channel.name}`,
+              title: `#${channelDisplayName(channel.name)}`,
             })
           },
         },
@@ -409,9 +438,22 @@ export default function ChannelInfoScreen() {
   }
 
   if (!channel) {
+    // Was a bare line of text with no way back — keep a back button.
     return (
-      <View style={[s.center, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
-        <Text style={diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted }}>{t('channelInfo_channelNotFound')}</Text>
+      <View style={[s.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
+        <View style={[s.header, { paddingTop: insets.top + 8, borderBottomWidth: 0, justifyContent: 'flex-start' }]}>
+          {diffuse ? (
+            <Pressable onPress={() => router.back()} hitSlop={8} style={s.headerBtn}>
+              <ArrowLeft size={24} color={dt.colors.ink} strokeWidth={1.6} />
+            </Pressable>
+          ) : (
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          )}
+        </View>
+        <View style={s.center}>
+          {!diffuse && <SiteSticker name="cloud" size={56} cut />}
+          <Text style={[diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted, fontFamily: font.body, marginTop: 12 }]}>{t('channelInfo_channelNotFound')}</Text>
+        </View>
       </View>
     )
   }
@@ -486,16 +528,16 @@ export default function ChannelInfoScreen() {
             </View>
           ) : (
             <>
-              <Text style={[s.channelName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{channel.name}</Text>
-              {channel.description && (
-                <Text style={[s.channelDesc, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>{channel.description}</Text>
-              )}
+              <Text style={[s.channelName, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{channelDisplayName(channel.name)}</Text>
+              {channelDisplayDesc(channel.name, channel.description) ? (
+                <Text style={[s.channelDesc, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]}>{channelDisplayDesc(channel.name, channel.description)}</Text>
+              ) : null}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 {channel.channelType === 'private' && (
                   <Lock size={12} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={2} />
                 )}
                 <Text style={[s.channelCategory, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1 } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }]}>
-                  {t('channelInfo_typeChannel', { type: channel.channelType === 'private' ? t('channelInfo_privateLabel') : (channel.category ?? '') })}
+                  {t('channelInfo_typeChannel', { type: channel.channelType === 'private' ? t('channelInfo_privateLabel') : channelCategoryLabel(channel.category) })}
                 </Text>
               </View>
             </>
@@ -772,15 +814,21 @@ export default function ChannelInfoScreen() {
               <View style={[s.messagesList, diffuse
                 ? { backgroundColor: dt.colors.surface, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line }
                 : cardless]}>
-                {messages.slice(0, 20).map((msg) => (
+                {messages.filter((m) => m.message_type !== 'system_join' && m.message_type !== 'system_leave').slice(0, 20).map((msg) => (
                   <View key={msg.id} style={[s.modMsgRow, { borderBottomColor: diffuse ? dt.colors.line : colors.borderLight }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[s.modMsgAuthor, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.bodySemiBold } : { color: colors.text, fontFamily: font.bodyBold }]}>{msg.author_name ?? t('channelInfo_memberFallback')}</Text>
                       <Text style={[s.modMsgContent, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>{msg.content}</Text>
                     </View>
-                    <Pressable onPress={() => handleDeleteMessage(msg.id)} hitSlop={8}>
-                      <Trash2 size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-                    </Pressable>
+                    {msg.author_id === currentUserId ? (
+                      <Pressable onPress={() => handleDeleteMessage(msg.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common_delete')}>
+                        <Trash2 size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+                      </Pressable>
+                    ) : (
+                      <Pressable onPress={() => handleReportMessage(msg)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('safety_report')}>
+                        <Flag size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
+                      </Pressable>
+                    )}
                   </View>
                 ))}
               </View>

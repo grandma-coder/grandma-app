@@ -940,7 +940,8 @@ export default function CareCircleScreen() {
             const isPending = m.status === 'pending'
             const childNames = getChildNames(m.childIds)
             const permKeys = Object.entries(m.permissions).filter(([k, v]) => v === true && !k.startsWith('_')).map(([k]) => k)
-            const title = m.displayName || m.role.charAt(0).toUpperCase() + m.role.slice(1)
+            const localizedRole = m.role === 'parent' ? t('careCircle_parent') : m.role === 'nanny' ? t('careCircle_nanny') : m.role === 'family' ? t('careCircle_family') : m.role === 'doctor' ? t('careCircle_doctor') : m.role === 'partner' ? t('sw3_cc_rolePartner') : m.role.charAt(0).toUpperCase() + m.role.slice(1)
+            const title = m.displayName || localizedRole
             const isPaused = m.permissions._paused === true
             const statusColor = isPaused ? stickers.coral : stickers.green
             const pendingColor = stickers.yellow
@@ -949,7 +950,7 @@ export default function CareCircleScreen() {
             const dStatusColor = isPaused ? dt.colors.error : isPending ? dt.colors.warning : dt.colors.success
 
             if (!diffuse) {
-              const roleLabel = m.role === 'parent' ? t('careCircle_parent') : m.role === 'nanny' ? t('careCircle_nanny') : m.role === 'family' ? t('careCircle_family') : m.role === 'doctor' ? t('careCircle_doctor') : m.role === 'partner' ? t('sw3_cc_rolePartner') : m.role.charAt(0).toUpperCase() + m.role.slice(1)
+              const roleLabel = localizedRole
               const statusTone = isPaused ? stickers.peachSoft : isPending ? stickers.yellowSoft : stickers.greenSoft
               return (
                 <View key={m.email || m.rowIds[0]} style={[styles.siteMember, { borderBottomColor: colors.border, opacity: isPaused ? 0.7 : 1 }]}>
@@ -1248,6 +1249,13 @@ export default function CareCircleScreen() {
           {/* Add button — editorial ink CTA with sparkle.
               Free tier has 0 seats: send them to the paywall up front rather
               than letting them fill out 4 steps only to be blocked by the DB. */}
+          {/* Invites are per child (child_caregivers). With no child yet the 4-step
+              sheet would stall on "which children?" — say so instead of a dead end. */}
+          {children.length === 0 ? (
+            <Body size={14} align="center" color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={{ marginTop: 10, paddingHorizontal: 12 }}>
+              {t('careCircle_needsChild')}
+            </Body>
+          ) : (
           <PillButton
             label={effectiveSeatLimit(tier, paywallOn) === 0 ? t('app_cc_upgradeToAdd') : t('app_cc_addToCircle')}
             variant="ink"
@@ -1262,6 +1270,7 @@ export default function CareCircleScreen() {
               : undefined}
             style={{ marginTop: 10 }}
           />
+          )}
         </ScrollView>
         </AfterTransition>
       ) : (
@@ -1780,7 +1789,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 2 && (
             <>
               <Text style={[sheetStyles.stepDesc, { color: secondaryColor, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
-                {t('careCircle_step2_which_children', { name: name || 'this person' })}
+                {t('careCircle_step2_which_children', { name: name || t('app_cc_caregiver') })}
               </Text>
               <View style={sheetStyles.chipGrid}>
                 {allChildren.map((c) => {
@@ -1824,7 +1833,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
           {step === 3 && (
             <>
               <Text style={[sheetStyles.stepDesc, { color: secondaryColor, fontFamily: diffuse ? diffuseFont.body : undefined }]}>
-                {t('careCircle_step3_what_can', { name: name || 'this person' })}
+                {t('careCircle_step3_what_can', { name: name || t('app_cc_caregiver') })}
               </Text>
               {PERMISSION_LEVELS.map((p) => {
                 const active = permLevel === p.id

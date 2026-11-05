@@ -661,7 +661,7 @@ function PMSDetail() {
         {!diffuse && (
           <>
             <Text style={{ color: colors.textMuted, fontFamily: font.body, fontSize: 12, lineHeight: 17 }}>
-              Times each symptom was logged, in total. The strip shows which phase of the cycle it landed in.
+              {t('cycleDetail_topSymptomsCaption')}
             </Text>
             <View style={regStyles.legendRow}>
               {PHASE_ORDER.map((ph) => (

@@ -7,7 +7,7 @@
  * Source: docs/Claude design studio/src/more-screens.jsx:5-86
  */
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   View,
   ScrollView,
@@ -35,6 +35,10 @@ import { supabase } from '../../lib/supabase'
 import { signOut } from '../../lib/signOut'
 import { checkPremium } from '../../lib/revenue'
 import { useTranslation } from '../../lib/i18n'
+import Constants from 'expo-constants'
+import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { getCycleInfo, toDateStr } from '../../lib/cycleLogic'
+import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 import { useDevPanel } from '../../context/DevPanelContext'
 import { getSubtitleFor } from '../../lib/profileStatus'
 import { ProfileHero, type KidPill } from '../../components/profile/ProfileHero'
@@ -76,6 +80,8 @@ export default function ProfileScreen() {
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null)
   const [joinedYear, setJoinedYear] = useState<number | null>(null)
   const [careCircleCount, setCareCircleCount] = useState<number>(0)
+  // Emergency card status: any saved emergency contact or insurance plan = ready.
+  const [hasEmergency, setHasEmergency] = useState(false)
   const [isPremium, setIsPremium] = useState(false)
   const paywallOn = usePaywallEnabled()
   const rewardsOn = useDailyRewardsEnabled()
@@ -112,14 +118,25 @@ export default function ProfileScreen() {
     if (!session) return
     setUserEmail(session.user.email ?? null)
 
-    const [{ data: profile }, { count }] = await Promise.all([
+    const [{ data: profile }, { data: caregiverRows }, { count: contactCount }, { count: planCount }] = await Promise.all([
       supabase
         .from('profiles')
         .select('name, photo_url, created_at')
         .eq('id', session.user.id)
         .single(),
+      // Same source as the Care Circle screen: people this user invited
+      // (one row per child they can see → count distinct people).
       supabase
-        .from('care_circle')
+        .from('child_caregivers')
+        .select('email')
+        .eq('invited_by', session.user.id)
+        .neq('status', 'revoked'),
+      supabase
+        .from('emergency_contacts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', session.user.id),
+      supabase
+        .from('insurance_plans')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', session.user.id),
     ])
@@ -127,7 +144,14 @@ export default function ProfileScreen() {
     if (profile?.name) setUserName(profile.name)
     setUserPhotoUrl(profile?.photo_url ?? null)
     if (profile?.created_at) setJoinedYear(new Date(profile.created_at).getFullYear())
-    setCareCircleCount(count ?? 0)
+    const selfEmail = session.user.email?.toLowerCase()
+    const people = new Set(
+      ((caregiverRows ?? []) as { email: string | null }[])
+        .map((r) => r.email?.toLowerCase())
+        .filter((e): e is string => !!e && e !== selfEmail),
+    )
+    setCareCircleCount(people.size)
+    setHasEmergency((contactCount ?? 0) + (planCount ?? 0) > 0)
   }
 
   async function handleSignOut() {
@@ -145,12 +169,29 @@ export default function ProfileScreen() {
 
   // ─── Derived values ───────────────────────────────────────────────────────
   const nameParts = (userName || parentName || '').trim().split(/\s+/).filter(Boolean)
-  const firstName = nameParts[0] ?? 'Hi'
+  // No name saved yet: show no name rather than an English placeholder; the
+  // avatar falls back to the email's first letter.
+  const firstName = nameParts[0] ?? ''
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined
-  const initial = (firstName[0] ?? 'I').toUpperCase()
+  const initial = (firstName[0] ?? userEmail?.[0] ?? '·').toUpperCase()
+
+  // Cycle subtitle from the real cycle — same config the Home ring uses
+  // (declared settings win over the measured average). No period yet = no day.
+  const { data: cycleHistory } = useCycleHistory()
+  const declaredCycleLength = useCycleSettingsStore((s) => s.cycleLength)
+  const periodLength = useCycleSettingsStore((s) => s.periodLength)
+  const lutealPhase = useCycleSettingsStore((s) => s.lutealPhase)
+  const cycleToday = useMemo(() => {
+    if (currentBehavior !== 'pre-pregnancy') return null
+    const latest = cycleHistory?.cycles[cycleHistory.cycles.length - 1]
+    if (!latest) return null
+    const cycleLength = declaredCycleLength ?? cycleHistory?.avg ?? 28
+    return getCycleInfo({ lastPeriodStart: latest.startDate, cycleLength, periodLength, lutealPhase }, toDateStr(new Date()))
+    // language: phaseLabel is localized at compute time
+  }, [currentBehavior, cycleHistory, declaredCycleLength, periodLength, lutealPhase, language])
 
   const behaviorForSubtitle = currentBehavior ?? 'kids'
-  const subtitle = userEmail ? getSubtitleFor(behaviorForSubtitle) : ''
+  const subtitle = userEmail ? getSubtitleFor(behaviorForSubtitle, cycleToday) : ''
 
   const accent = getModeColor(mode, isDark)
 
@@ -167,7 +208,6 @@ export default function ProfileScreen() {
     })
 
   const hasChildren = children.length > 0
-  const hasEmergency = false // Wave 2 wires real emergency status
 
   // Behavior-aware gating — each journey only sees the menu items relevant
   // to it (e.g. a pregnant user shouldn't see Kids Profile or per-child
@@ -387,12 +427,16 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
-              <SiteRow
-                sticker="heart"
-                label={t('profile_careCircle')}
-                value={careCircleCount === 1 ? t('app_settings_onePerson') : t('app_settings_nPeople', { n: careCircleCount })}
-                onPress={() => router.push('/profile/care-circle')}
-              />
+              {/* The care circle shares children's care (invites are per child), so
+                  with no children and nobody invited it would be an empty dead end. */}
+              {(hasChildren || careCircleCount > 0) && (
+                <SiteRow
+                  sticker="heart"
+                  label={t('profile_careCircle')}
+                  value={careCircleCount === 1 ? t('app_settings_onePerson') : t('app_settings_nPeople', { n: careCircleCount })}
+                  onPress={() => router.push('/profile/care-circle')}
+                />
+              )}
 
               {/* Pregnancy-only row — surfaces current week / due date */}
               {isPregnancyBehavior && (
@@ -404,19 +448,14 @@ export default function ProfileScreen() {
                 />
               )}
 
-              {/* Pre-pregnancy-only row — cycle tracking entry point */}
+              {/* Pre-pregnancy-only row — the cycle's own settings (lengths,
+                  phases, period reminder). The old "Cycle · Tracking" row only
+                  bounced back to Home, so it's folded into this one. */}
               {isPrePregBehavior && (
                 <SiteRow
                   sticker="drop"
-                  label={t('onboardingJourney_trying')}
-                  value={t('app_settings_tracking')}
-                  onPress={() => router.push('/(tabs)')}
-                />
-              )}
-              {isPrePregBehavior && (
-                <SiteRow
-                  sticker="cal"
                   label={t('cycleSettings_rowTitle')}
+                  value={cycleToday ? t('cycleAnalytics_dayNumber', { currentDay: cycleToday.cycleDay }) : undefined}
                   onPress={() => router.push('/profile/cycle-settings')}
                 />
               )}
@@ -434,7 +473,6 @@ export default function ProfileScreen() {
                 <SiteRow
                   sticker="camera"
                   label={t('profile_memories')}
-                  value="—"
                   onPress={() => setShowMemories(true)}
                 />
               )}
@@ -531,7 +569,7 @@ export default function ProfileScreen() {
                 : { color: colors.textMuted },
             ]}
           >
-            {t('profile_version')}
+            {Constants.expoConfig?.version ? `grandma.app v${Constants.expoConfig.version}` : t('profile_version')}
           </Text>
         </Pressable>
       </ScrollView>

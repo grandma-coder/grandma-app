@@ -42,7 +42,7 @@ import {
 import { supabase } from '../../../lib/supabase'
 import { BrandedLoader } from '../../../components/ui/BrandedLoader'
 import { useTranslation } from '../../../lib/i18n'
-import { dateLoc } from '../../../lib/kpLocale'
+import { chatTime } from '../../../components/connections/communityLabels'
 
 export default function ThreadView() {
   const { colors, radius } = useTheme()
@@ -68,15 +68,17 @@ export default function ThreadView() {
   }, [id, sort])
 
   async function load(sortBy: ReplySort = sort) {
-    setLoading(true)
+    // Full-screen loader only for the first load — switching the sort pill
+    // used to blank the whole thread and jump back to the top.
+    if (!parentMsg) setLoading(true)
     try {
-      // Fetch parent message
+      // Fetch parent message (maybeSingle: a removed post is "not found", not an error)
       const { data: parent } = await supabase
         .from('channel_posts')
         .select('*')
         .eq('id', id)
-        .single()
-      if (parent) setParentMsg(parent as ChannelPost)
+        .maybeSingle()
+      setParentMsg((parent as ChannelPost | null) ?? null)
 
       // Fetch replies
       const replyData = await fetchThreadReplies(id!, sortBy)
@@ -120,7 +122,7 @@ export default function ThreadView() {
       setText('')
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200)
     } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+      Alert.alert(t('channelScreen_sendFailed'), t('common_checkConnection'))
     } finally {
       setSending(false)
     }
@@ -130,6 +132,33 @@ export default function ThreadView() {
     return (
       <View style={[s.center, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
         <BrandedLoader />
+      </View>
+    )
+  }
+
+  // Removed post / stale link: no dead reply box under an empty thread.
+  if (!parentMsg) {
+    return (
+      <View style={[s.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
+        <View style={[s.header, { paddingTop: insets.top + 8, borderBottomWidth: 0, justifyContent: 'flex-start' }]}>
+          {diffuse ? (
+            <Pressable onPress={() => router.back()} style={s.headerBtn}>
+              <ArrowLeft size={24} color={dt.colors.ink} strokeWidth={1.6} />
+            </Pressable>
+          ) : (
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          )}
+        </View>
+        <View style={[s.center, { paddingHorizontal: 24 }]}>
+          <EmptyState
+            icon={diffuse ? <MessageCircle size={36} color={dt.colors.ink3} strokeWidth={1.5} /> : <SiteSticker name="cloud" size={48} cut />}
+            iconBg={diffuse ? dt.colors.surface : tone}
+            title={t('comm_postGoneTitle')}
+            message={t('comm_postGoneBody')}
+            ctaLabel={t('common_back')}
+            onCtaPress={() => router.back()}
+          />
+        </View>
       </View>
     )
   }
@@ -280,7 +309,7 @@ export default function ThreadView() {
               />
             ) : (
               <EmptyState
-                icon={<MessageCircle size={36} color={colors.text} strokeWidth={1.5} />}
+                icon={<SiteSticker name="bubble" size={44} cut />}
                 iconBg={tone}
                 title={t('channelThread_emptyTitle')}
                 message={t('channelThread_emptySubtitle')}
@@ -317,6 +346,8 @@ export default function ThreadView() {
             <Pressable
               onPress={handleSend}
               disabled={!text.trim() || sending}
+              accessibilityRole="button"
+              accessibilityLabel={t('channelScreen_sendA11y')}
               style={[s.sendBtn, { width: 38, height: 38, backgroundColor: colors.text, borderRadius: radius.full, opacity: text.trim() ? 1 : 0.3 }]}
             >
               <Send size={17} color={colors.bg} strokeWidth={2} />
@@ -328,16 +359,7 @@ export default function ThreadView() {
   )
 }
 
-function formatTime(dateStr: string): string {
-  const d = new Date(dateStr)
-  const now = new Date()
-  const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000)
-  if (diffMin < 1) return 'now'
-  if (diffMin < 60) return `${diffMin}m`
-  const diffHrs = Math.floor(diffMin / 60)
-  if (diffHrs < 24) return `${diffHrs}h`
-  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
-}
+const formatTime = chatTime
 
 const s = StyleSheet.create({
   root: { flex: 1 },

@@ -1,6 +1,6 @@
 /**
  * Saved posts (Phase 3). A list of the posts the user has bookmarked across
- * channels, newest-saved first. Tapping a post opens its channel. Unsave from
+ * channels, newest-saved first. Tapping a post opens it (its thread). Unsave from
  * here too. Reached from the Channels list header.
  */
 
@@ -53,7 +53,9 @@ export default function SavedPostsScreen() {
   function renderItem({ item }: { item: ChannelPost }) {
     return (
       <Pressable
-        onPress={() => router.push(`/channel/${item.channel_id}` as any)}
+        // Open the post itself (its thread), not the top of a long channel
+        // where the saved message may be hundreds of rows up.
+        onPress={() => router.push(`/channel/thread/${item.id}` as any)}
         style={({ pressed }) => [
           styles.card,
           diffuse
@@ -66,7 +68,7 @@ export default function SavedPostsScreen() {
           <Text style={[styles.author, { color: ink, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodySemiBold }]}>
             {item.author_name ?? t('channelScreen_someoneFallback')}
           </Text>
-          <Pressable onPress={() => handleUnsave(item.id)} hitSlop={8}>
+          <Pressable onPress={() => handleUnsave(item.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('garage_profile_unsave')}>
             <Bookmark size={16} color={diffuse ? accent : colors.text} strokeWidth={2} fill={diffuse ? accent : colors.text} />
           </Pressable>
         </View>
@@ -108,8 +110,8 @@ export default function SavedPostsScreen() {
       ) : posts.length === 0 ? (
         <View style={styles.center}>
           <EmptyState
-            icon={<Bookmark size={40} color={inkMuted} strokeWidth={1.5} />}
-            iconBg={diffuse ? dt.colors.surface : colors.surface}
+            icon={diffuse ? <Bookmark size={40} color={inkMuted} strokeWidth={1.5} /> : <SiteSticker name="pola" size={44} cut />}
+            iconBg={diffuse ? dt.colors.surface : stickers.yellowSoft}
             title={t('savedPosts_emptyTitle')}
             message={t('savedPosts_emptyBody')}
           />

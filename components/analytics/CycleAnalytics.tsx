@@ -47,6 +47,7 @@ import {
 import { cycleUnlocks, type CycleMetricKey, type LockState } from '../../lib/cycleUnlocks'
 import { useUnlockStore } from '../../store/useUnlockStore'
 import { useUnitsStore } from '../../store/useUnitsStore'
+import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { CycleDetailSheet, type CycleDetailType } from './CycleDetailSheets'
 import { Section } from './shared/Section'
@@ -151,17 +152,22 @@ export function CycleAnalytics() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlockHydrated, firstLoad, unlockedSig])
 
-  // Live cycle config — same derivation CycleHome uses.
+  // Live cycle config — same derivation CycleHome uses: the user's Cycle settings
+  // (declared length, period + luteal days) win over the measured average and the
+  // 5/14 defaults, so changing them in Settings moves the Notes tab too.
+  const declaredLength = useCycleSettingsStore((s) => s.cycleLength)
+  const periodLength = useCycleSettingsStore((s) => s.periodLength)
+  const lutealPhase = useCycleSettingsStore((s) => s.lutealPhase)
   const cycleConfig: CycleConfig = useMemo(() => {
     const latest = history?.cycles[history.cycles.length - 1]
-    const avgLen = history?.avg ?? 28
+    const cycleLength = declaredLength ?? history?.avg ?? 28
     if (latest) {
-      return { lastPeriodStart: latest.startDate, cycleLength: avgLen, periodLength: 5, lutealPhase: 14 }
+      return { lastPeriodStart: latest.startDate, cycleLength, periodLength, lutealPhase }
     }
     const d = new Date()
     d.setDate(d.getDate() - 10)
-    return { lastPeriodStart: toDateStr(d), cycleLength: 28, periodLength: 5, lutealPhase: 14 }
-  }, [history])
+    return { lastPeriodStart: toDateStr(d), cycleLength, periodLength, lutealPhase }
+  }, [history, declaredLength, periodLength, lutealPhase])
 
   const hasData = (history?.cycles.length ?? 0) > 0
   const info = useMemo(() => getCycleInfo(cycleConfig, toDateStr(new Date())), [cycleConfig])
@@ -200,8 +206,11 @@ export function CycleAnalytics() {
           : t('cycleAnalytics_regularSub_unpredictable')
   const pmsSub = pms?.avgDays == null ? t('cycleAnalytics_pmsSub_none') : t('cycleAnalytics_pmsSub_symptomDays')
   const moodSub = mood?.avgScore == null ? t('cycleAnalytics_moodSub_log') : t('cycleAnalytics_moodSub_avg')
-  const fertileSub =
-    info.daysUntilOvulation > 0
+  // No period logged yet: `info` is built from a placeholder start, so don't
+  // read a fertile-window countdown off it (light look) — ask for a period instead.
+  const fertileSub = !hasData && !diffuse
+    ? t('cycleInsights_lock_period')
+    : info.daysUntilOvulation > 0
       ? t('cycleAnalytics_fertileSub_opensIn', { d: info.daysUntilOvulation })
       : info.isFertile
         ? t('cycleAnalytics_fertileSub_open')
@@ -493,7 +502,9 @@ export function CycleAnalytics() {
             no standalone history list on the surface). */}
         {!diffuse && <RecentCyclesCard cycles={history?.cycles ?? []} />}
 
-        {!hasData && (
+        {/* "Showing an example cycle" only applies to Diffuse, which still draws
+            the placeholder cycle; the light look shows empty states instead. */}
+        {diffuse && !hasData && (
           <Text style={[styles.seedHint, diffuse ? { color: muted, fontFamily: diffuseFont.body } : { color: colors.textMuted, fontFamily: font.body }]}>
             {t('cycleAnalytics_seed_hint')}
           </Text>
@@ -742,7 +753,7 @@ function RecentCyclesCard({
       <View style={[styles.siteCard, styles.recentCardSite, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text }]}>
         <Text style={[styles.siteEyebrow, { color: colors.textMuted }]}>{t('cycleAnalytics_recentCycles')}</Text>
         <Text style={[styles.siteRowSub, { color: colors.textSecondary, fontFamily: font.body, marginBottom: 6 }]}>
-          Days from one period start to the next (total per cycle).
+          {t('cyc_analytics_recentCaption')}
         </Text>
 
         {open && currentDay !== null ? (
@@ -787,7 +798,7 @@ function RecentCyclesCard({
         )}
         {lens.some((l) => l > BAR_CAP) && (
           <Text style={[styles.siteRowSub, { color: colors.textMuted, fontFamily: font.body, marginTop: 6 }]}>
-            Bars stop at {BAR_CAP} days; the number shows the real length.
+            {t('cyc_analytics_barCapNote', { n: BAR_CAP })}
           </Text>
         )}
       </View>

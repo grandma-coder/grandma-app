@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { View, ScrollView, Switch, StyleSheet, Pressable, Platform, Alert } from 'react-native'
+import { View, ScrollView, Switch, StyleSheet, Pressable, Platform, Alert, AppState, Linking } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { useTheme, getModeColor, useDiffuseTheme, getDiffuseAccent, diffuseFont } from '../../constants/theme'
@@ -24,8 +24,17 @@ import {
   getNotificationPrefs,
   saveNotificationPrefs,
   DEFAULT_NOTIFICATION_PREFS,
+  getNotificationPermissionStatus,
+  requestNotificationPermission,
   type NotificationPrefs,
+  type NotificationPermissionStatus,
 } from '../../lib/pushNotifications'
+import { useBehaviorStore } from '../../store/useBehaviorStore'
+import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
+import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
+import { useCycleHistory } from '../../lib/cycleAnalytics'
+import { resolvePeriodReminderEnabled } from '../../lib/cycleReminders'
+import { dateLoc } from '../../lib/kpLocale'
 
 type StickerName = 'sun' | 'sparkle' | 'star' | 'moon' | 'heart' | 'flower' | 'leaf'
 
@@ -65,7 +74,7 @@ function dateToTime(d: Date): string {
 }
 function formatTime(hhmm: string): string {
   const d = timeToDate(hhmm)
-  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  return d.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })
 }
 
 const SITE_STICKER: Record<StickerName, SiteStickerName> = {
@@ -137,7 +146,49 @@ export default function NotificationsScreen() {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const GROUPS = GROUP_DEFS.map((g) => ({ ...g, label: t(g.label) }))
-  const NOTIFS = NOTIFICATION_SETTINGS.map((n) => ({ ...n, label: t(n.label), description: t(n.description) }))
+
+  // Only show toggles that can do something for this person: AI insights ride the
+  // (off) Grandma chat flag, cycle predictions need the Cycle journey, milestone
+  // alerts are pregnancy/kids. The light look filters; Diffuse is left as it was.
+  const enrolled = useBehaviorStore((st) => st.enrolledBehaviors)
+  const chatOn = useGrandmaChatEnabled()
+  const cycleEnrolled = enrolled.includes('pre-pregnancy')
+  const relevant = (id: ToggleId) => {
+    if (diffuse) return true
+    if (id === 'insights') return chatOn
+    if (id === 'cycle_predictions') return cycleEnrolled
+    if (id === 'milestones') return enrolled.includes('pregnancy') || enrolled.includes('kids')
+    return true
+  }
+  const NOTIFS = NOTIFICATION_SETTINGS
+    .filter((n) => relevant(n.id))
+    .map((n) => ({ ...n, label: t(n.label), description: t(n.description) }))
+
+  // "Cycle predictions" for a Cycle user IS the on-device period reminder (the
+  // same switch as Cycle settings → Reminders) — the server pref alone sends nothing.
+  const periodReminderPref = useCycleSettingsStore((st) => st.periodReminder)
+  const setPeriodReminder = useCycleSettingsStore((st) => st.setPeriodReminder)
+  const { data: cycleHistory } = useCycleHistory()
+  const periodReminderOn = resolvePeriodReminderEnabled(periodReminderPref, !!cycleHistory?.cycles.length)
+  const valueOf = (id: ToggleId): boolean =>
+    !diffuse && id === 'cycle_predictions' && cycleEnrolled ? periodReminderOn : prefs[id]
+
+  // OS permission — every toggle here is silent without it.
+  const [permission, setPermission] = useState<NotificationPermissionStatus>('unavailable')
+  useEffect(() => {
+    let alive = true
+    const refresh = () => { void getNotificationPermissionStatus().then((p) => { if (alive) setPermission(p) }) }
+    refresh()
+    // Back from the phone's Settings app → pick up a newly granted permission.
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') refresh() })
+    return () => { alive = false; sub.remove() }
+  }, [])
+  async function askPermission() {
+    const granted = await requestNotificationPermission()
+    setPermission(granted ? 'granted' : await getNotificationPermissionStatus())
+    // Now that alerts can be delivered, schedule the local ones from the saved prefs.
+    if (granted) void saveNotificationPrefs(prefs)
+  }
   const mode = useModeStore((s) => s.mode)
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
 
@@ -176,12 +227,21 @@ export default function NotificationsScreen() {
   }
 
   function handleToggle(id: ToggleId) {
+    // Before the saved prefs arrive, a tap would write the defaults over them.
+    if (!hydrated) return
+    if (!diffuse && id === 'cycle_predictions' && cycleEnrolled) {
+      const next = !periodReminderOn
+      // CycleHome's reminder sync watches this store and (re)schedules / cancels.
+      setPeriodReminder(next)
+      apply({ ...prefs, cycle_predictions: next })
+      return
+    }
     apply({ ...prefs, [id]: !prefs[id] })
   }
 
   function handleTimeChange(_e: DateTimePickerEvent, date?: Date) {
     if (Platform.OS !== 'ios') setShowTimePicker(false)
-    if (date) apply({ ...prefs, daily_reminder_time: dateToTime(date) })
+    if (date && hydrated) apply({ ...prefs, daily_reminder_time: dateToTime(date) })
   }
 
   return (
@@ -206,8 +266,28 @@ export default function NotificationsScreen() {
           </DisplayItalic>
         </View>}
 
+        {!diffuse && permission === 'undetermined' && (
+          <SiteRow
+            sticker="bell"
+            label={t('cycleSettings_reminderAllow')}
+            desc={t('notifSettings_permAllowDesc')}
+            onPress={() => void askPermission()}
+            last
+          />
+        )}
+        {!diffuse && permission === 'denied' && (
+          <SiteRow
+            sticker="bell"
+            label={t('cycleSettings_reminderDenied')}
+            desc={t('cycleSettings_reminderDeniedDesc')}
+            onPress={() => void Linking.openSettings()}
+            last
+          />
+        )}
+
         {!diffuse && GROUPS.map((group) => {
           const items = NOTIFS.filter((n) => n.group === group.id)
+          if (items.length === 0) return null
           return (
             <View key={group.id}>
               <SiteEyebrow>{group.label}</SiteEyebrow>
@@ -217,7 +297,7 @@ export default function NotificationsScreen() {
                     sticker={SITE_STICKER[notif.sticker]}
                     label={notif.label}
                     desc={notif.description}
-                    right={<SiteToggle value={prefs[notif.id]} onValueChange={() => handleToggle(notif.id)} label={notif.label} />}
+                    right={<SiteToggle value={valueOf(notif.id)} onValueChange={() => handleToggle(notif.id)} label={notif.label} />}
                     last={i === items.length - 1 && !(notif.id === 'daily_reminder' && prefs.daily_reminder)}
                   />
                   {notif.id === 'daily_reminder' && prefs.daily_reminder && (

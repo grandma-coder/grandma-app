@@ -39,6 +39,7 @@ import {
 } from '../../lib/garagePosts'
 import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../lib/i18n'
+import { villageCategoryLabel } from './communityLabels'
 
 const hardShadow = (ink: string) => ({ shadowColor: ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 0 })
 
@@ -52,7 +53,13 @@ const CARD_W = SCREEN_W - DECK_H_MARGIN * 2
 const CARD_H = Math.min(SCREEN_H * 0.52, CARD_W * 1.28)
 const SWIPE_THRESHOLD = SCREEN_W * 0.28
 
-const FEED_FILTERS = ['For You', 'Clothing', 'Gear', 'Toys', 'Furniture', 'Books']
+// Stored category values (English, matching app/garage/create.tsx CATEGORIES);
+// labels are localised at render via villageCategoryLabel. Maternity + Nursery
+// were creatable but not filterable — listings in them could only surface
+// under "For You".
+const FEED_FILTERS = ['For You', 'Clothing', 'Gear', 'Toys', 'Furniture', 'Books', 'Maternity', 'Nursery']
+// A cycle user has no little one yet — lead with what's relevant to her.
+const FEED_FILTERS_CYCLE = ['For You', 'Maternity', 'Nursery', 'Clothing', 'Gear', 'Furniture', 'Books', 'Toys']
 
 type ViewMode = 'deck' | 'gallery'
 
@@ -250,7 +257,7 @@ export function GarageScreen() {
             </View>
           )}
           <Text style={[styles.headerSubtitle, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-            {t('garage_screen_header_subtitle')}
+            {!diffuse && mode === 'pre-pregnancy' ? t('garage_screen_header_subtitle_cycle') : t('garage_screen_header_subtitle')}
           </Text>
         </View>
         <View style={styles.headerActions}>
@@ -276,7 +283,7 @@ export function GarageScreen() {
             tint={stickers.pinkSoft}
             radiusFull={radius.full}
             border={colors.border}
-            accessibilityLabel="My Village"
+            accessibilityLabel={t('garage_profile_myVillage')}
           >
             {diffuse
               ? <Character name="heart" size={20} color={accent} bg="transparent" />
@@ -287,7 +294,7 @@ export function GarageScreen() {
             tint={stickers.yellowSoft}
             radiusFull={radius.full}
             border={colors.border}
-            accessibilityLabel="Add a listing"
+            accessibilityLabel={t('village_addListingA11y')}
           >
             <Plus size={20} color={diffuse ? dt.colors.ink : colors.text} strokeWidth={2.6} />
           </CircleBtn>
@@ -411,7 +418,7 @@ export function GarageScreen() {
                   style={styles.detailsTap}
                   onPress={() => router.push(`/garage/${current.id}` as any)}
                   accessibilityRole="button"
-                  accessibilityLabel="View item details"
+                  accessibilityLabel={t('village_itemDetailsA11y')}
                 />
               </Animated.View>
             )}
@@ -578,6 +585,7 @@ function GalleryTile({
 }) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { t } = useTranslation()
   const cover = post.media[0]?.url
   return (
     <Pressable
@@ -593,7 +601,7 @@ function GalleryTile({
         pressed && { opacity: 0.72 },
       ]}
       accessibilityRole="button"
-      accessibilityLabel={post.caption?.split('\n')[0] ?? post.author_name ?? 'Listing'}
+      accessibilityLabel={post.caption?.split('\n')[0] || post.author_name || t('village_listingFallback')}
     >
       <View style={styles.gridImageWrap}>
         {cover ? (
@@ -639,6 +647,7 @@ function SwipeCard({
 }) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
+  const { t } = useTranslation()
   const cover = post.media[0]?.url
   if (!diffuse) {
     // Site look: photo on top, a paper strip below with the item first (hand-lettered) and the
@@ -650,18 +659,18 @@ function SwipeCard({
           <CoverImage uri={cover} style={styles.cardImage} size={64} />
           {post.category ? (
             <View style={[styles.catChip, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5, borderRadius: radius.full }]}>
-              <Text style={[styles.catChipText, { color: colors.text, fontFamily: font.bodyBold }]}>{post.category}</Text>
+              <Text style={[styles.catChipText, { color: colors.text, fontFamily: font.bodyBold }]}>{villageCategoryLabel(post.category)}</Text>
             </View>
           ) : null}
         </View>
         <View style={{ borderTopWidth: 1.5, borderTopColor: colors.text, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 6 }}>
           <Text numberOfLines={1} style={{ fontFamily: font.display, fontSize: 22, lineHeight: 28, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}>
-            {title || post.category || 'A little treasure'}
+            {title || villageCategoryLabel(post.category) || t('village_listingFallback')}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <SiteSticker name="me" size={20} />
             <Text numberOfLines={1} style={{ flex: 1, fontFamily: font.body, fontSize: 13, color: colors.textSecondary }}>
-              {post.author_name ?? 'A neighbour'}
+              {post.author_name ?? t('village_neighbourFallback')}
             </Text>
             {post.like_count > 0 ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -772,6 +781,7 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const mode = useModeStore((s) => s.mode)
+  const filters = !diffuse && mode === 'pre-pregnancy' ? FEED_FILTERS_CYCLE : FEED_FILTERS
   return (
     <ScrollView
       horizontal
@@ -779,12 +789,14 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
       style={styles.filterScroll}
       contentContainerStyle={styles.filterBar}
     >
-      {FEED_FILTERS.map((f) => {
+      {filters.map((f) => {
         const isActive = active === f
         return (
           <Pressable
             key={f}
             onPress={() => onSelect(f)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: isActive }}
             style={[
               styles.filterChip,
               diffuse
@@ -818,7 +830,7 @@ function FeedFilters({ active, onSelect }: { active: string; onSelect: (f: strin
                     },
               ]}
             >
-              {f}
+              {villageCategoryLabel(f)}
             </Text>
           </Pressable>
         )

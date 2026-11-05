@@ -183,8 +183,8 @@ export default function EmergencyInsuranceScreen() {
             try {
               await deleteEmergencyContact(contact.id)
               store.removeContact(contact.id)
-            } catch (e: any) {
-              Alert.alert(t('common_error'), e.message)
+            } catch {
+              Alert.alert(t('common_error'), t('common_checkConnection'))
             }
           },
         },
@@ -217,8 +217,8 @@ export default function EmergencyInsuranceScreen() {
             try {
               await deleteInsurancePlan(plan.id)
               store.removePlan(plan.id)
-            } catch (e: any) {
-              Alert.alert(t('common_error'), e.message)
+            } catch {
+              Alert.alert(t('common_error'), t('common_checkConnection'))
             }
           },
         },
@@ -616,8 +616,8 @@ function ContactFormModal({
         isPrimary,
         notes: notes.trim() || null,
       })
-    } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+    } catch {
+      Alert.alert(t('common_error'), t('common_checkConnection'))
     }
     setSaving(false)
   }
@@ -877,8 +877,8 @@ function PlanFormModal({
         applyScannedData(data)
         toast.show({ title: t('emergencyInsurance_cardScanned'), message: t('sw3_ei_scanFilled') })
       }
-    } catch (e: any) {
-      Alert.alert(t('sw3_ei_scanFailed'), e.message)
+    } catch {
+      Alert.alert(t('sw3_ei_scanFailed'), t('common_tryAgain'))
     }
     setScanning(false)
   }
@@ -898,8 +898,8 @@ function PlanFormModal({
         phone: phone.trim() || null,
         notes: notes.trim() || null,
       })
-    } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+    } catch {
+      Alert.alert(t('common_error'), t('common_checkConnection'))
     }
     setSaving(false)
   }

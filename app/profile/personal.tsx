@@ -24,7 +24,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import { useTheme, getModeColor, useDiffuseTheme, diffuseFont } from '../../constants/theme'
-import { useTranslation, t as tNow } from '../../lib/i18n'
+import { useTranslation, t as tNow, type TranslationKey } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -43,20 +43,22 @@ import { SiteHeader, SiteEyebrow } from '../../components/profile/SiteSettingsKi
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
-const COMMON_ALLERGIES = [
-  'Peanuts', 'Tree nuts', 'Milk', 'Eggs', 'Wheat', 'Soy', 'Fish',
-  'Shellfish', 'Sesame', 'Gluten', 'Lactose', 'Corn', 'Mustard',
-  'Celery', 'Lupin', 'Mollusks', 'Sulfites', 'Coconut', 'Banana',
-  'Avocado', 'Kiwi', 'Mango', 'Strawberry', 'Citrus fruits',
-  'Penicillin', 'Amoxicillin', 'Aspirin', 'Ibuprofen', 'Sulfa drugs',
-  'Codeine', 'Morphine', 'Insulin', 'Contrast dye',
-  'Latex', 'Bee stings', 'Wasp stings', 'Dust mites', 'Mold',
-  'Pet dander', 'Cat dander', 'Dog dander', 'Pollen', 'Grass pollen',
-  'Cockroach', 'Feathers',
-  'Nickel', 'Fragrance', 'Dyes', 'Lanolin', 'Formaldehyde',
-  'Urticaria', 'Dermatitis', 'Eczema',
-  'Sunlight', 'Cold temperature', 'Exercise-induced',
-]
+// Suggestions are localized (a Portuguese user types "Amen…" and finds
+// "Amendoim"); the chosen label is saved as shown, like a typed allergy.
+const COMMON_ALLERGY_IDS = [
+  'peanuts', 'treeNuts', 'milk', 'eggs', 'wheat', 'soy', 'fish',
+  'shellfish', 'sesame', 'gluten', 'lactose', 'corn', 'mustard',
+  'celery', 'lupin', 'mollusks', 'sulfites', 'coconut', 'banana',
+  'avocado', 'kiwi', 'mango', 'strawberry', 'citrus',
+  'penicillin', 'amoxicillin', 'aspirin', 'ibuprofen', 'sulfaDrugs',
+  'codeine', 'morphine', 'insulin', 'contrastDye',
+  'latex', 'beeStings', 'waspStings', 'dustMites', 'mold',
+  'petDander', 'catDander', 'dogDander', 'pollen', 'grassPollen',
+  'cockroach', 'feathers',
+  'nickel', 'fragrance', 'dyes', 'lanolin', 'formaldehyde',
+  'urticaria', 'dermatitis', 'eczema',
+  'sunlight', 'cold', 'exercise',
+] as const
 
 // ─── Avatar with photo upload + sticker fallback ──────────────────────────
 
@@ -249,8 +251,8 @@ export default function PersonalProfile() {
     try {
       const url = await uploadPhoto(value)
       setPhotoUrl(url)
-    } catch (e: any) {
-      Alert.alert(t('examForm_uploadFailed'), e.message)
+    } catch {
+      Alert.alert(t('examForm_uploadFailed'), t('common_tryAgain'))
     }
   }
 
@@ -280,8 +282,8 @@ export default function PersonalProfile() {
       })
       // Let the toast breathe before the screen pops
       setTimeout(() => router.back(), 900)
-    } catch (e: any) {
-      Alert.alert(t('common_error'), e.message)
+    } catch {
+      Alert.alert(t('common_error'), t('common_checkConnection'))
     } finally {
       setSaving(false)
     }
@@ -599,9 +601,10 @@ function AllergyField({
   const [query, setQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
 
+  const commonAllergies = COMMON_ALLERGY_IDS.map((id) => t(`allergen_${id}` as TranslationKey))
   const suggestions =
     query.length >= 1
-      ? COMMON_ALLERGIES.filter(
+      ? commonAllergies.filter(
           (a) =>
             a.toLowerCase().includes(query.toLowerCase()) &&
             !value.includes(a)

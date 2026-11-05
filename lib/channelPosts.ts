@@ -388,7 +388,14 @@ async function postSystemMessage(channelId: string, messageType: 'system_join' |
 export async function joinChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
-  await supabase.from('channel_members').insert({ channel_id: channelId, user_id: session.user.id })
+  const { error } = await supabase.from('channel_members').insert({ channel_id: channelId, user_id: session.user.id })
+  // 23505 = already a member (double tap / stale UI) → nothing to do, and no
+  // second "joined" line in the channel. Any other error must surface: the old
+  // code ignored it and still posted "X joined the channel" for a failed join.
+  if (error) {
+    if ((error as any).code === '23505') return
+    throw error
+  }
   await postSystemMessage(channelId, 'system_join')
 }
 
@@ -863,7 +870,9 @@ export async function notifyMentions(
         p_type: 'mention',
         p_title: `${authorName ?? 'Someone'} mentioned you in #${channelName}`,
         p_body: messageContent.slice(0, 100),
-        p_data: { channelId },
+        // Structured fields so the inbox can render this in the reader's
+        // language (p_title above is stored English).
+        p_data: { channelId, channelName, authorName: authorName ?? null, kind: 'mention' },
         p_channel_id: channelId,
       })
     )

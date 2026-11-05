@@ -4,7 +4,7 @@
  * its read-only anonymous feed. Posting is a follow-up.
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import { ChevronRight } from 'lucide-react-native'
@@ -16,6 +16,8 @@ import { Character } from '../characters/Characters'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { circleBlob } from '../../lib/circleBlob'
 import { getCircles, type Circle, type CircleJourney } from '../../lib/circles'
+import { PillButton } from '../ui/PillButton'
+import { circleDisplayName, circleDisplayDesc } from './communityLabels'
 
 export function CirclesTab() {
   const { colors, font, stickers, radius } = useTheme()
@@ -26,14 +28,18 @@ export function CirclesTab() {
 
   const [circles, setCircles] = useState<Circle[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   const journey: CircleJourney = mode === 'pre-pregnancy' ? 'pre-pregnancy' : mode === 'pregnancy' ? 'pregnancy' : 'kids'
 
+  // Spinner only when there's nothing on screen yet — refocusing (back from a
+  // circle) refreshes quietly. A failed load is an error state, not "empty".
+  const loadedOnce = useRef(false)
   const load = useCallback(() => {
-    setLoading(true)
+    if (!loadedOnce.current) setLoading(true)
     getCircles(journey)
-      .then(setCircles)
-      .catch(() => setCircles([]))
+      .then((c) => { setCircles(c); setLoadError(false); loadedOnce.current = true })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [journey])
 
@@ -56,10 +62,10 @@ export function CirclesTab() {
             <SiteSticker name="owl" size={28} cut />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.name, { color: colors.text, fontFamily: font.bodySemiBold }]}>{item.name}</Text>
-            {item.description ? (
+            <Text style={[styles.name, { color: colors.text, fontFamily: font.bodySemiBold }]}>{circleDisplayName(item.name)}</Text>
+            {circleDisplayDesc(item.name, item.description) ? (
               <Text style={[styles.desc, { color: colors.textSecondary, fontFamily: font.body }]} numberOfLines={2}>
-                {item.description}
+                {circleDisplayDesc(item.name, item.description)}
               </Text>
             ) : null}
           </View>
@@ -98,6 +104,14 @@ export function CirclesTab() {
           explainer (community_anon_explainer), so no banner is repeated here. */}
       {loading ? (
         <View style={styles.center}><ActivityIndicator color={inkMuted} /></View>
+      ) : loadError && circles.length === 0 && !diffuse ? (
+        <View style={[styles.center, { paddingHorizontal: 40, gap: 10 }]}>
+          <SiteSticker name="cloud" size={64} cut />
+          <Text style={[styles.empty, { marginTop: 0, color: colors.textSecondary, fontFamily: font.body }]}>{t('common_couldntLoad')}</Text>
+          <View style={{ alignSelf: 'stretch', marginTop: 8 }}>
+            <PillButton variant="ink" label={t('channelScreen_tryAgain')} onPress={load} />
+          </View>
+        </View>
       ) : (
         <FlatList
           data={circles}

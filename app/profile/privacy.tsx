@@ -59,6 +59,7 @@ export default function PrivacyScreen() {
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
   const children = useChildStore((s) => s.children)
+  const hasChildren = children.length > 0
   const toast = useSavedToast()
 
   const [settings, setSettings] = useState<PrivacySettings>(DEFAULT_SETTINGS)
@@ -96,6 +97,8 @@ export default function PrivacyScreen() {
   }
 
   async function updateSetting(key: keyof PrivacySettings, value: boolean) {
+    // Until the saved settings arrive, a tap would write the defaults over them.
+    if (loadingSettings) return
     const previous = settings
     const updated = { ...settings, [key]: value }
     setSettings(updated) // optimistic
@@ -111,7 +114,7 @@ export default function PrivacyScreen() {
     if (error) {
       // Roll back the optimistic toggle and let the user know it didn't stick.
       setSettings(previous)
-      Alert.alert(t('common_error') ?? 'Error', error.message)
+      Alert.alert(t('common_error'), t('common_checkConnection'))
     }
   }
 
@@ -150,8 +153,8 @@ export default function PrivacyScreen() {
               } else {
                 Alert.alert(t('privacy_exportTitle'), t('privacy_exportSavedMsg'))
               }
-            } catch (e: any) {
-              Alert.alert(t('common_error'), e.message ?? t('privacy_exportFailedMsg'))
+            } catch {
+              Alert.alert(t('common_error'), t('privacy_exportFailedMsg'))
             } finally {
               setExporting(false)
             }
@@ -184,7 +187,7 @@ export default function PrivacyScreen() {
 
               if (error) throw error
               toast.show({ title: t('app_privacy_cleared'), message: t('app_privacy_logsCleared') })
-            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+            } catch { Alert.alert(t('common_error'), t('common_checkConnection')) }
             finally { setClearingLogs(false) }
           },
         },
@@ -214,7 +217,7 @@ export default function PrivacyScreen() {
               // legacy. Without this, 'Cleared' showed while every conversation was still there.
               useGrandmaHistoryStore.getState().clearAll()
               toast.show({ title: t('app_privacy_cleared'), message: t('app_privacy_chatCleared') })
-            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+            } catch { Alert.alert(t('common_error'), t('common_checkConnection')) }
             finally { setClearingChat(false) }
           },
         },
@@ -269,7 +272,7 @@ export default function PrivacyScreen() {
               if (failed?.error) throw failed.error
               void queryClient.invalidateQueries({ queryKey: ['memories'] })
               toast.show({ title: t('app_privacy_cleared'), message: t('app_privacy_memoriesCleared') })
-            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+            } catch { Alert.alert(t('common_error'), t('common_checkConnection')) }
             finally { setClearingMemories(false) }
           },
         },
@@ -299,7 +302,7 @@ export default function PrivacyScreen() {
 
               if (error) throw error
               toast.show({ title: t('app_privacy_cleared'), message: t('app_privacy_healthCleared') })
-            } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+            } catch { Alert.alert(t('common_error'), t('common_checkConnection')) }
           },
         },
       ]
@@ -334,8 +337,11 @@ export default function PrivacyScreen() {
               right={<SiteToggle value={settings.share_photos} onValueChange={(v) => updateSetting('share_photos', v)} label={t('privacy_toggleSharePhotos')} />} last />
 
             <SiteEyebrow>{t('privacy_sectionAI')}</SiteEyebrow>
-            <SiteRow sticker="brain" label={t('privacy_toggleAI')} desc={t('privacy_toggleAIDesc')}
-              right={<SiteToggle value={settings.ai_data_usage} onValueChange={(v) => updateSetting('ai_data_usage', v)} label={t('privacy_toggleAI')} />} />
+            {/* AI personalization only exists while the Grandma AI (chat flag) is on. */}
+            {chatOn && (
+              <SiteRow sticker="brain" label={t('privacy_toggleAI')} desc={t('privacy_toggleAIDesc')}
+                right={<SiteToggle value={settings.ai_data_usage} onValueChange={(v) => updateSetting('ai_data_usage', v)} label={t('privacy_toggleAI')} />} />
+            )}
             <SiteRow sticker="bars" label={t('privacy_toggleAnalytics')} desc={t('privacy_toggleAnalyticsDesc')}
               right={<SiteToggle value={settings.analytics} onValueChange={(v) => updateSetting('analytics', v)} label={t('privacy_toggleAnalytics')} />} />
             <SiteRow sticker="bubble" label={t('privacy_toggleMarketing')} desc={t('privacy_toggleMarketingDesc')}
@@ -347,10 +353,12 @@ export default function PrivacyScreen() {
 
             <SiteEyebrow>{t('privacy_sectionYourData')}</SiteEyebrow>
             <SiteRow sticker="doc" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} loading={exporting} />
-            <SiteRow sticker="doc" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} />
+            {/* Feeding/sleep/mood logs and vaccine/growth records are per child — without
+                children these two rows could only answer "no data". */}
+            {hasChildren && <SiteRow sticker="doc" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} />}
             {chatOn && <SiteRow sticker="bubble" label={t('privacy_clearChat')} desc={t('privacy_clearChatDesc')} onPress={handleClearChat} loading={clearingChat} />}
-            <SiteRow sticker="camera" label={t('privacy_clearMemories')} desc={t('privacy_clearMemoriesDesc')} onPress={handleClearMemories} loading={clearingMemories} />
-            <SiteRow sticker="syringe" label={t('privacy_clearHealth')} desc={t('privacy_clearHealthDesc')} onPress={handleClearHealthRecords} last />
+            <SiteRow sticker="camera" label={t('privacy_clearMemories')} desc={t('privacy_clearMemoriesDesc')} onPress={handleClearMemories} loading={clearingMemories} last={!hasChildren} />
+            {hasChildren && <SiteRow sticker="syringe" label={t('privacy_clearHealth')} desc={t('privacy_clearHealthDesc')} onPress={handleClearHealthRecords} last />}
 
             <SiteEyebrow>{t('privacy_sectionLegal')}</SiteEyebrow>
             <SiteRow sticker="books" label={t('privacy_privacyPolicy')} desc={t('privacy_privacyPolicyDesc')} onPress={() => router.push('/legal/privacy')} />

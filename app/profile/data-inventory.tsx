@@ -130,7 +130,7 @@ export default function DataInventoryScreen() {
         Alert.alert(t('privacy_exportTitle'), t('privacy_exportSavedMsg'))
       }
     } catch (e: any) {
-      Alert.alert(t('common_error'), e.message ?? t('privacy_exportFailedMsg'))
+      Alert.alert(t('common_error'), t('privacy_exportFailedMsg'))
     } finally {
       setExporting(false)
     }

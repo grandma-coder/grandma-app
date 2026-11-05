@@ -13,6 +13,8 @@ import { Heart, MessageCircle, ShieldCheck, Send } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont, getModeColorSoft } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
+import { useModeStore } from '../../store/useModeStore'
+import { anonHandleLabel, circleDisplayName, circleDisplayDesc } from '../../components/connections/communityLabels'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { InkBackButton } from '../../components/ui/InkBackButton'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -36,6 +38,8 @@ export default function CircleScreen() {
   const [loading, setLoading] = useState(true)
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState(false)
+  const mode = useModeStore((s) => s.mode)
 
   const load = useCallback(() => {
     if (!id) return
@@ -52,12 +56,14 @@ export default function CircleScreen() {
     const text = draft.trim()
     if (!id || !text || sending) return
     setSending(true)
+    setSendError(false)
     try {
       await createCirclePost(id, text)
       setDraft('')
       const fresh = await getCirclePosts(id)
       setPosts(fresh)
     } catch {
+      setSendError(true)
       // keep the draft so the user doesn't lose their text
     } finally {
       setSending(false)
@@ -101,13 +107,13 @@ export default function CircleScreen() {
           pressed && { opacity: 0.7 },
         ]}
       >
-        <Text style={[styles.handle, { color: diffuse ? accent : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }, !diffuse && { fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.4 }]}>{item.handle}</Text>
+        <Text style={[styles.handle, { color: diffuse ? accent : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }, !diffuse && { fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.4 }]}>{anonHandleLabel(item.handle)}</Text>
         <Text style={[styles.content, { color: ink, fontFamily: diffuse ? diffuseFont.body : font.body }]}>{item.content}</Text>
         <View style={styles.postFooter}>
           <Pressable
             onPress={() => handleReact(item)}
             hitSlop={8}
-            style={[styles.stat, !diffuse && { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1.5, borderColor: item.has_reacted ? colors.text : 'transparent', backgroundColor: item.has_reacted ? getModeColorSoft('kids') : 'transparent' }]}
+            style={[styles.stat, !diffuse && { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1.5, borderColor: item.has_reacted ? colors.text : 'transparent', backgroundColor: item.has_reacted ? getModeColorSoft(mode) : 'transparent' }]}
           >
             <Heart
               size={14}
@@ -140,7 +146,7 @@ export default function CircleScreen() {
         <View style={[styles.headerWrap, styles.siteHeader, { paddingTop: insets.top + 8 }]}>
           <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
           <SiteSticker name="bubble" size={34} cut />
-          <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{circle?.name ?? ''}</Text>
+          <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{circleDisplayName(circle?.name)}</Text>
         </View>
       )}
 
@@ -158,14 +164,14 @@ export default function CircleScreen() {
               <Character name={circleBlob(circle?.name ?? '')} size={44} bg={diffuse ? dt.stickers.lilacSoft : stickers.lilacSoft} />
             </View>
             )}
-            {diffuse && <Display size={30} color={ink} align="center">{circle?.name ?? ''}</Display>}
-            {circle?.description ? (
+            {diffuse && <Display size={30} color={ink} align="center">{circleDisplayName(circle?.name)}</Display>}
+            {circleDisplayDesc(circle?.name, circle?.description) ? (
               diffuse ? (
                 <DisplayItalic size={15} color={inkMuted} align="center" style={{ marginTop: 6 }}>
-                  {circle.description}
+                  {circleDisplayDesc(circle?.name, circle?.description)}
                 </DisplayItalic>
               ) : (
-                <Text style={{ color: colors.textSecondary, fontFamily: font.body, fontSize: 14, lineHeight: 20, textAlign: 'center' }}>{circle.description}</Text>
+                <Text style={{ color: colors.textSecondary, fontFamily: font.body, fontSize: 14, lineHeight: 20, textAlign: 'center' }}>{circleDisplayDesc(circle?.name, circle?.description)}</Text>
               )
             ) : null}
             <View style={[styles.anonPill, { backgroundColor: diffuse ? dt.stickers.lilacSoft : getModeColorSoft('preg'), borderRadius: radius.full }, !diffuse && { borderWidth: 1.5, borderColor: colors.text }]}>
@@ -180,8 +186,8 @@ export default function CircleScreen() {
           ) : (
             <View style={styles.center}>
               <EmptyState
-                icon={<MessageCircle size={40} color={inkMuted} strokeWidth={1.5} />}
-                iconBg={diffuse ? dt.colors.surface : colors.surface}
+                icon={diffuse ? <MessageCircle size={40} color={inkMuted} strokeWidth={1.5} /> : <SiteSticker name="bubble" size={44} cut />}
+                iconBg={diffuse ? dt.colors.surface : stickers.lilacSoft}
                 title={t('circles_readEmptyTitle')}
                 message={t('circles_readEmptyBody')}
               />
@@ -195,7 +201,7 @@ export default function CircleScreen() {
         <View style={styles.composerRow}>
           <TextInput
             value={draft}
-            onChangeText={setDraft}
+            onChangeText={(v) => { setDraft(v); if (sendError) setSendError(false) }}
             placeholder={t('circles_composerPlaceholder')}
             placeholderTextColor={inkMuted}
             multiline
@@ -214,6 +220,8 @@ export default function CircleScreen() {
           <Pressable
             onPress={handleSend}
             disabled={!canSend}
+            accessibilityRole="button"
+            accessibilityLabel={t('channelScreen_sendA11y')}
             style={[styles.send, diffuse ? { backgroundColor: canSend ? accent : dt.colors.line, borderRadius: radius.full } : { width: 40, height: 40, backgroundColor: canSend ? colors.text : colors.borderLight, borderRadius: radius.full }]}
           >
             {sending
@@ -221,8 +229,11 @@ export default function CircleScreen() {
               : <Send size={17} color={canSend ? (diffuse ? onAccent : colors.bg) : inkMuted} strokeWidth={2} />}
           </Pressable>
         </View>
-        <Text style={[styles.composerHint, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
-          {t('circles_composerHint')}
+        <Text
+          style={[styles.composerHint, { color: sendError ? ink : inkMuted, fontFamily: diffuse ? diffuseFont.body : (sendError ? font.bodySemiBold : font.body) }]}
+          accessibilityLiveRegion={sendError ? 'polite' : 'none'}
+        >
+          {sendError ? t('circles_sendFailed') : t('circles_composerHint')}
         </Text>
       </View>
     </KeyboardAvoidingView>

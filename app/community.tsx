@@ -22,7 +22,8 @@ import { SiteSticker } from '../components/stickers/SiteSticker'
 import { useTranslation } from '../lib/i18n'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { useModeStore } from '../store/useModeStore'
-import { getUnreadNotificationCount } from '../lib/channelPosts'
+import { useQuery } from '@tanstack/react-query'
+import { getUnreadCount } from '../lib/notifications'
 
 type CommunityTab = 'channels' | 'anonymous'
 
@@ -34,13 +35,19 @@ export default function CommunityScreen() {
   const { t } = useTranslation()
   const params = useLocalSearchParams<{ tab?: string }>()
   const [tab, setTab] = useState<CommunityTab>(params.tab === 'anonymous' ? 'anonymous' : 'channels')
-  const [notifCount, setNotifCount] = useState(0)
   const mode = useModeStore((st) => st.mode)
 
+  // Shared with the tab-bar badge + NotificationBell (same key) so the count
+  // always matches the /notifications inbox it opens; refetched on focus.
+  const { data: notifCount = 0, refetch } = useQuery({
+    queryKey: ['notification-count'],
+    queryFn: getUnreadCount,
+    staleTime: 30 * 1000,
+  })
   useFocusEffect(
     useCallback(() => {
-      getUnreadNotificationCount().then(setNotifCount).catch(() => {})
-    }, [])
+      refetch()
+    }, [refetch])
   )
 
   const ink = diffuse ? dt.colors.ink : colors.text
@@ -73,7 +80,12 @@ export default function CommunityScreen() {
             <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
               {t('community_title')}
             </Text>
-            <Pressable onPress={() => router.push('/notifications' as any)} hitSlop={8}>
+            <Pressable
+              onPress={() => router.push('/notifications' as any)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={notifCount > 0 ? t('comm_bellA11yUnread', { count: notifCount }) : t('comm_bellA11y')}
+            >
               <View style={[styles.bellBtn, { backgroundColor: colors.surface, borderColor: colors.text, borderWidth: 1.5 }]}>
                 <SiteSticker name="bell" size={20} cut />
                 {notifCount > 0 && (
@@ -94,7 +106,7 @@ export default function CommunityScreen() {
         {(['channels', 'anonymous'] as const).map((tk) => {
           const active = tab === tk
           return (
-            <Pressable key={tk} onPress={() => setTab(tk)} style={styles.tabBtnWrap}>
+            <Pressable key={tk} onPress={() => setTab(tk)} style={styles.tabBtnWrap} accessibilityRole="tab" accessibilityState={{ selected: active }}>
               <View
                 style={[
                   styles.tabBtn,

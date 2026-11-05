@@ -40,6 +40,10 @@ export default function AccountScreen() {
   const dangerLabel = diffuse ? dt.colors.error : stickers.coralInk
 
   const [email, setEmail] = useState('')
+  // The address on file — "Update email" only does something when it changed.
+  const [savedEmail, setSavedEmail] = useState('')
+  const emailChanged = email.trim().toLowerCase() !== savedEmail.trim().toLowerCase()
+  const [deleting, setDeleting] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -54,7 +58,10 @@ export default function AccountScreen() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setEmail(session.user.email ?? '')
+      if (session) {
+        setEmail(session.user.email ?? '')
+        setSavedEmail(session.user.email ?? '')
+      }
     })
     isBiometricAvailable().then(setBiometricAvail)
   }, [])
@@ -90,7 +97,10 @@ export default function AccountScreen() {
       const { error } = await supabase.auth.updateUser({ email: email.trim() })
       if (error) throw error
       toast.show({ title: t('app_account_verificationSentTitle'), message: t('app_account_verificationSentMsg'), autoDismiss: 0 })
-    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+    } catch {
+      // Supabase auth errors are English — keep the dialog in the user's language.
+      Alert.alert(t('common_error'), t('common_checkConnection'))
+    }
     finally { setSaving(false) }
   }
 
@@ -102,7 +112,9 @@ export default function AccountScreen() {
       if (error) throw error
       setNewPassword('')
       toast.show({ title: t('app_account_passwordUpdatedTitle'), message: t('app_account_passwordUpdatedMsg') })
-    } catch (e: any) { Alert.alert(t('common_error'), e.message) }
+    } catch {
+      Alert.alert(t('common_error'), t('common_checkConnection'))
+    }
     finally { setSaving(false) }
   }
 
@@ -120,6 +132,7 @@ export default function AccountScreen() {
   }
 
   async function handleDeleteAccount() {
+    if (deleting) return
     Alert.alert(
       t('account_deleteTitle'),
       t('account_deleteMsg'),
@@ -129,16 +142,16 @@ export default function AccountScreen() {
           text: t('account_deleteConfirmBtn'),
           style: 'destructive',
           onPress: async () => {
-            setSaving(true)
+            setDeleting(true)
             try {
               const { error } = await supabase.functions.invoke('delete-account')
               if (error) throw error
               // Account is gone — clear the local session and return to auth.
               // signOut handles store resets + navigation to the welcome screen.
               await signOut('global')
-            } catch (e: any) {
-              setSaving(false)
-              Alert.alert(t('common_error'), e.message ?? t('account_deleteFailedMsg'))
+            } catch {
+              setDeleting(false)
+              Alert.alert(t('common_error'), t('account_deleteFailedMsg'))
             }
           },
         },
@@ -195,7 +208,7 @@ export default function AccountScreen() {
             <QuietPill
               label={saving ? t('account_saving') : t('account_updateEmail')}
               onPress={handleChangeEmail}
-              disabled={saving}
+              disabled={saving || !emailChanged}
               style={{ marginTop: 12, backgroundColor: colors.surface }}
             />
 
@@ -256,7 +269,7 @@ export default function AccountScreen() {
 
             {/* Danger zone */}
             <SiteEyebrow>{t('account_sectionDanger')}</SiteEyebrow>
-            <QuietPill label={t('account_deleteAccount')} onPress={handleDeleteAccount} style={{ marginTop: 12 }} />
+            <QuietPill label={deleting ? t('common_loading') : t('account_deleteAccount')} onPress={handleDeleteAccount} disabled={deleting} style={{ marginTop: 12 }} />
             <Text style={[styles.dangerHint, { color: colors.textMuted, fontFamily: font.body }]}>
               {t('account_deleteHint')}
             </Text>

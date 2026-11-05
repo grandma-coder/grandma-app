@@ -38,6 +38,8 @@ import { ChannelGlyph } from '../community/ChannelGlyph'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { useConfirmDialog } from '../ui/useConfirm'
 import { useTranslation } from '../../lib/i18n'
+import { PillButton } from '../ui/PillButton'
+import { channelDisplayName, channelDisplayDesc } from './communityLabels'
 
 // ─── Member count copy ──────────────────────────────────────────────────────
 // Soften low/zero counts so seeded + brand-new channels don't read as empty.
@@ -53,6 +55,25 @@ const BEHAVIOR_TAGS: Record<string, string[]> = {
   'pre-pregnancy': ['fertility', 'ttc', 'cycle', 'wellness'],
   pregnancy: ['pregnancy', 'expecting', 'birth', 'prenatal'],
   kids: ['parenting', 'feeding', 'sleep', 'milestones'],
+}
+
+// Channel `category` values that belong to one journey. Anything else
+// (community, wellness, other, custom) is journey-neutral. Used so a channel
+// matches "Suggested" by its category too (e.g. "The Two-Week Wait" has no TTC
+// word in its name/description but is category "fertility"), and so Trending
+// leads with what fits the user's journey instead of whatever is biggest app-wide.
+const JOURNEY_CATEGORIES: Record<string, string[]> = {
+  'pre-pregnancy': ['fertility'],
+  pregnancy: ['pregnancy'],
+  kids: ['parenting', 'feeding', 'sleep', 'milestones', 'health'],
+}
+const ALL_JOURNEY_CATEGORIES = new Set(Object.values(JOURNEY_CATEGORIES).flat())
+
+/** 2 = the user's journey, 1 = journey-neutral, 0 = another journey. */
+function journeyRelevance(c: Channel, mode: string): number {
+  const cat = (c.category ?? '').toLowerCase()
+  if ((JOURNEY_CATEGORIES[mode] ?? []).includes(cat)) return 2
+  return ALL_JOURNEY_CATEGORIES.has(cat) ? 0 : 1
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
@@ -71,11 +92,15 @@ export function ChannelsScreen() {
   const [mutedIds, setMutedIds] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const loadedOnce = useRef(false)
   const unreadCounts = useChannelsStore((s) => s.unreadCounts)
   const fetchUnreadCounts = useChannelsStore((s) => s.fetchUnreadCounts)
 
+  // Full-screen loader only on the very first load; refocus (coming back from
+  // a channel) refreshes quietly instead of blanking the whole list.
   const load = useCallback(async () => {
-    setLoading(true)
+    if (!loadedOnce.current) setLoading(true)
     try {
       const [all, ids, favIds, mutes] = await Promise.all([
         getChannels(),
@@ -87,8 +112,13 @@ export function ChannelsScreen() {
       setMyIds(ids)
       setFavoriteIds(favIds)
       setMutedIds(mutes)
+      setLoadError(false)
+      loadedOnce.current = true
       fetchUnreadCounts()
-    } catch {} finally {
+    } catch {
+      // Keep whatever we already showed; only an empty first load is an error.
+      if (!loadedOnce.current) setLoadError(true)
+    } finally {
       setLoading(false)
     }
   }, [fetchUnreadCounts])
@@ -132,8 +162,13 @@ export function ChannelsScreen() {
   const discoverable = channels.filter((c) => !isMuted(c.id))
   const myChannels = channels.filter((c) => myIds.includes(c.id))
   const favoriteChannels = channels.filter((c) => favoriteIds.includes(c.id))
-  const trending = discoverable.slice(0, 5)
+  // Stable sort (getChannels is already member_count desc): the user's journey
+  // first, neutral next, other journeys last.
+  const trending = [...discoverable]
+    .sort((a, b) => journeyRelevance(b, mode) - journeyRelevance(a, mode))
+    .slice(0, 5)
   const suggested = discoverable.filter((c) => {
+    if (journeyRelevance(c, mode) === 2) return true
     const tags = BEHAVIOR_TAGS[mode] ?? []
     const name = c.name.toLowerCase()
     const desc = (c.description ?? '').toLowerCase()
@@ -145,10 +180,13 @@ export function ChannelsScreen() {
     })
   }).slice(0, 5)
 
-  const searchResults = search
+  // Search both the stored text and what the user actually reads (seeded
+  // channels are shown translated).
+  const q = search.trim().toLowerCase()
+  const searchResults = q
     ? channels.filter((c) =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        (c.description ?? '').toLowerCase().includes(search.toLowerCase())
+        [c.name, c.description ?? '', channelDisplayName(c.name), channelDisplayDesc(c.name, c.description) ?? '']
+          .some((s) => s.toLowerCase().includes(q))
       )
     : null
 
@@ -156,6 +194,21 @@ export function ChannelsScreen() {
     return (
       <View style={styles.center}>
         <BrandedLoader />
+      </View>
+    )
+  }
+
+  if (loadError && channels.length === 0 && !diffuse) {
+    return (
+      <View style={[styles.center, { paddingHorizontal: 40, gap: 10 }]}>
+        <SiteSticker name="cloud" size={72} cut />
+        <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
+          {t('channelsDiscover_errorTitle')}
+        </Text>
+        <Text style={[styles.emptyBody, { color: colors.textSecondary, fontFamily: font.body }]}>{t('common_checkConnection')}</Text>
+        <View style={{ alignSelf: 'stretch', marginTop: 12 }}>
+          <PillButton variant="ink" label={t('channelScreen_tryAgain')} onPress={load} />
+        </View>
       </View>
     )
   }
@@ -175,6 +228,8 @@ export function ChannelsScreen() {
           <Pressable
             onPress={() => router.push('/channel/saved' as any)}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('channelsDiscover_savedA11y')}
             style={({ pressed }) => [
               styles.savedBtn,
               { backgroundColor: diffuse ? 'transparent' : colors.surface, borderColor: diffuse ? dt.colors.line : colors.text },
@@ -280,6 +335,8 @@ export function ChannelsScreen() {
     {/* Create Channel FAB — mode-color filled (current); calm hairline node (diffuse) */}
     <Pressable
       onPress={() => router.push('/channel/create' as any)}
+      accessibilityRole="button"
+      accessibilityLabel={t('channelCreate_header')}
       style={({ pressed }) => [
         styles.fab,
         diffuse
@@ -363,10 +420,10 @@ function BannerCarousel({ channels, myIds, accent, onJoin }: { channels: Channel
               )}
               <View style={styles.bannerContent}>
                 <Text style={[styles.bannerName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.bodyBold }]} numberOfLines={1}>
-                  {c.name}
+                  {channelDisplayName(c.name)}
                 </Text>
                 <Text style={[styles.bannerDesc, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={2}>
-                  {c.description ?? t('channelsDiscover_joinConversation')}
+                  {channelDisplayDesc(c.name, c.description) ?? t('channelsDiscover_joinConversation')}
                 </Text>
                 <View style={styles.bannerMeta}>
                   <Text style={[styles.bannerMembers, diffuse
@@ -478,7 +535,7 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
       onLongPress={onToggleMute ? async () => {
         if (
           await confirm({
-            title: channel.name,
+            title: channelDisplayName(channel.name),
             confirmLabel: muted ? t('channels_unmute') : t('channels_mute'),
             cancelLabel: t('common_cancel'),
           })
@@ -507,10 +564,10 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
       )}
       <View style={styles.cardContent}>
         <Text style={[styles.cardName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]} numberOfLines={1}>
-          {channel.name}
+          {channelDisplayName(channel.name)}
         </Text>
         <Text style={[styles.cardDesc, { color: diffuse ? dt.colors.ink3 : colors.textSecondary, fontFamily: diffuse ? diffuseFont.body : font.body }]} numberOfLines={1}>
-          {channel.description ?? t('channelsDiscover_joinConversation')}
+          {channelDisplayDesc(channel.name, channel.description) ?? t('channelsDiscover_joinConversation')}
         </Text>
       </View>
       <View style={styles.cardRight}>
@@ -588,7 +645,7 @@ function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Chan
         </View>
       )}
       <Text style={[styles.compactName, { color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.bodySemiBold : font.bodyBold }]} numberOfLines={1}>
-        {channel.name}
+        {channelDisplayName(channel.name)}
       </Text>
       {/* For an empty channel the JOIN button below already carries the CTA, so
           instead of repeating "Be the first" on every suggested card we show the

@@ -92,8 +92,8 @@ import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { useConfirmDialog } from '../../components/ui/useConfirm'
 import { PaperActionSheet, type ActionSheetItem } from '../../components/ui/PaperActionSheet'
 import { useTranslation } from '../../lib/i18n'
-import { dateLoc } from '../../lib/kpLocale'
 import { SheetModal } from '../../components/ui/SheetModal'
+import { channelDisplayName, channelDisplayDesc, chatTime } from '../../components/connections/communityLabels'
 
 // Emoji per reaction type — for the footer indicator when a non-heart reaction
 // is chosen (the picker itself owns the full set).
@@ -140,6 +140,8 @@ export default function ChannelChat() {
   // Favorite state
   const [isFavorited, setIsFavorited] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const currentUserIdRef = useRef<string | null>(null)
+  currentUserIdRef.current = currentUserId
 
   // Rating state
   const [showRating, setShowRating] = useState(false)
@@ -231,6 +233,14 @@ export default function ChannelChat() {
         initialFocusDone.current = true
         return
       }
+      // Membership / host can change on the info screen (leave, transfer,
+      // request approved) — re-sync so the header pill + composer match.
+      Promise.all([isChannelMember(id), getChannels()]).then(([member, all]) => {
+        setIsMember(member)
+        const ch = all.find((c) => c.id === id) ?? null
+        setChannel(ch)
+        setIsOwner(!!ch && !!currentUserIdRef.current && ch.createdBy === currentUserIdRef.current)
+      }).catch(() => {})
       // Re-fetch messages to get fresh reply_count from DB triggers
       fetchMessages(id).then((fresh) => {
         setMessages((prev) => {
@@ -376,7 +386,8 @@ export default function ChannelChat() {
 
   async function handleSend() {
     const content = text.trim()
-    if (!content || !id) return
+    // A photo on its own is a valid post — the send button is enabled for it.
+    if ((!content && photos.length === 0) || !id) return
     setSending(true)
     try {
       // Inline reply sends as a top-level message with context reference
@@ -407,7 +418,7 @@ export default function ChannelChat() {
       setReplyTo(null)
       setMentionIds([])
     } catch (e: any) {
-      await confirm({ title: t('common_error'), message: e.message ?? t('channelScreen_sendFailed'), cancelLabel: null })
+      await confirm({ title: t('channelScreen_sendFailed'), message: t('common_checkConnection'), cancelLabel: null })
     } finally {
       setSending(false)
     }
@@ -477,21 +488,20 @@ export default function ChannelChat() {
   }, [])
 
   // Bookmark toggle (Phase 3) — optimistic, reverts on failure.
+  // Read the current flag from a ref: a value assigned inside a setState
+  // updater isn't guaranteed to be set yet when the next line runs (React may
+  // run updaters lazily), which made "save" sometimes call unsavePost.
+  const messagesRef = useRef(messages)
+  messagesRef.current = messages
   const handleSave = useCallback(async (postId: string) => {
-    let willSave = false
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id !== postId) return m
-        willSave = !m.saved
-        return { ...m, saved: !m.saved }
-      })
-    )
+    const willSave = !messagesRef.current.find((m) => m.id === postId)?.saved
+    setMessages((prev) => prev.map((m) => (m.id === postId ? { ...m, saved: willSave } : m)))
     try {
       if (willSave) await savePost(postId)
       else await unsavePost(postId)
     } catch {
       // revert
-      setMessages((prev) => prev.map((m) => (m.id === postId ? { ...m, saved: !m.saved } : m)))
+      setMessages((prev) => prev.map((m) => (m.id === postId ? { ...m, saved: !willSave } : m)))
     }
   }, [])
 
@@ -550,7 +560,7 @@ export default function ChannelChat() {
         if (
           await confirm({
             title: t('channelScreen_confirmTransferTitle'),
-            message: t('channelScreen_confirmTransferBody', { channel: channel?.name ?? '', member: m.name ?? t('channelScreen_thisMember') }),
+            message: t('channelScreen_confirmTransferBody', { channel: channelName, member: m.name ?? t('channelScreen_thisMember') }),
             confirmLabel: t('channelScreen_transferBtn'),
             cancelLabel: t('common_cancel'),
             danger: true,
@@ -562,7 +572,7 @@ export default function ChannelChat() {
             toast.show({ title: t('channelScreen_doneTitle'), message: t('channelScreen_transferredMsg', { member: m.name ?? t('channelScreen_theNewHost') }) })
             load()
           } catch (e: any) {
-            await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+            await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
           }
         }
       },
@@ -594,10 +604,15 @@ export default function ChannelChat() {
                 })
               ) {
                 try {
-                  await supabase.from('channels').delete().eq('id', id)
-                  router.replace('/community?tab=channels' as any)
+                  // supabase-js resolves (doesn't throw) on RLS/DB errors —
+                  // check it, or a failed delete looked like a success.
+                  const { error } = await supabase.from('channels').delete().eq('id', id)
+                  if (error) throw error
+                  // Pop back to the Community screen already in the stack
+                  // (replace() left the deleted channel one "back" away).
+                  router.dismissTo('/community?tab=channels' as any)
                 } catch (e: any) {
-                  await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+                  await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
                 }
               }
             },
@@ -619,7 +634,7 @@ export default function ChannelChat() {
       if (
         await confirm({
           title: t('channelScreen_requestToJoinTitle'),
-          message: t('channelScreen_requestToJoinBody', { channel: channel.name }),
+          message: t('channelScreen_requestToJoinBody', { channel: channelName }),
           confirmLabel: t('channelScreen_sendRequestBtn'),
           cancelLabel: t('common_cancel'),
         })
@@ -630,7 +645,7 @@ export default function ChannelChat() {
           setMyRequest(req)
           await confirm({ title: t('channelScreen_requestSentTitle'), message: t('channelScreen_requestSentBody'), cancelLabel: null })
         } catch (e: any) {
-          await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+          await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
         }
       }
     } else {
@@ -638,7 +653,7 @@ export default function ChannelChat() {
       if (
         await confirm({
           title: t('channelScreen_joinChannelTitle'),
-          message: t('channelScreen_joinChannelBody', { channel: channel?.name ?? t('channelScreen_thisChannel') }),
+          message: t('channelScreen_joinChannelBody', { channel: channelName || t('channelScreen_thisChannel') }),
           confirmLabel: t('channelScreen_join'),
           cancelLabel: t('common_cancel'),
         })
@@ -704,11 +719,12 @@ export default function ChannelChat() {
   async function handleShareExternal() {
     if (!id || !channel) return
     const channelUrl = `grandma-app://channel/${id}`
-    const desc = channel.description ? `\n${channel.description}` : ''
+    const descText = channelDisplayDesc(channel.name, channel.description)
+    const desc = descText ? `\n${descText}` : ''
     const privacy = channel.channelType === 'private' ? ` ${t('channelScreen_privateSuffix')}` : ''
-    const shareMessage = `${t('channelScreen_shareMessage', { channel: channel.name, privacy })}${desc}\n\n${channelUrl}`
+    const shareMessage = `${t('channelScreen_shareMessage', { channel: channelName, privacy })}${desc}\n\n${channelUrl}`
     setShowShare(false)
-    await Share.share({ message: shareMessage, title: `#${channel.name}` })
+    await Share.share({ message: shareMessage, title: `#${channelName}` })
   }
 
   async function handleDeleteMessage(msgId: string, authorId: string) {
@@ -736,7 +752,7 @@ export default function ChannelChat() {
           await reportContent({ contentType: 'channel_post', contentId: msgId, authorId, reason })
           toast.show({ title: t('safety_reportedTitle'), message: t('safety_reportedBody') })
         } catch (e: any) {
-          await confirm({ title: t('common_error'), message: e.message ?? '', cancelLabel: null })
+          await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
         }
       },
     }))
@@ -758,7 +774,7 @@ export default function ChannelChat() {
         toast.show({ title: t('safety_blockedTitle'), message: t('safety_blockedBody') })
         load() // RLS now hides their messages — refetch
       } catch (e: any) {
-        await confirm({ title: t('common_error'), message: e.message ?? '', cancelLabel: null })
+        await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
       }
     }
   }
@@ -772,11 +788,14 @@ export default function ChannelChat() {
       toast.show({ title: t('channelScreen_thanksTitle'), message: t('channelScreen_ratingSubmittedMsg') })
       load() // Refresh to get updated avg
     } catch (e: any) {
-      await confirm({ title: t('common_error'), message: e.message, cancelLabel: null })
+      await confirm({ title: t('common_error'), message: t('common_checkConnection'), cancelLabel: null })
     } finally {
       setSavingRating(false)
     }
   }
+
+  // What the user reads (seeded channels are stored in English).
+  const channelName = channel ? channelDisplayName(channel.name) : ''
 
   // ─── Pinned messages ──────────────────────────────────────────────────
 
@@ -827,6 +846,36 @@ export default function ChannelChat() {
     )
   }
 
+  // ─── Not found ────────────────────────────────────────────────────────
+  // Deleted channel / stale link (e.g. an old notification): don't render a
+  // working-looking chat with a JOIN button for a channel that isn't there.
+
+  if (!channel) {
+    return (
+      <View style={[styles.root, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
+        <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
+          {diffuse ? (
+            <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerBtn}>
+              <ArrowLeft size={24} color={dt.colors.ink} strokeWidth={1.6} />
+            </Pressable>
+          ) : (
+            <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
+          )}
+        </View>
+        <View style={[styles.center, { paddingHorizontal: 24 }]}>
+          <EmptyState
+            icon={diffuse ? <MessageCircle size={36} color={dt.colors.ink3} strokeWidth={1.5} /> : <SiteSticker name="cloud" size={48} cut />}
+            iconBg={diffuse ? dt.colors.surface : stickers.blueSoft}
+            title={t('channelScreen_notFoundTitle')}
+            message={t('channelScreen_notFoundBody')}
+            ctaLabel={t('channelScreen_backToCommunity')}
+            onCtaPress={() => router.dismissTo('/community?tab=channels' as any)}
+          />
+        </View>
+      </View>
+    )
+  }
+
   // ─── Render ───────────────────────────────────────────────────────────
 
   const channelEmptyNode =
@@ -840,7 +889,7 @@ export default function ChannelChat() {
               const emptyTitle = isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')
               const emptyMsg = isMember
                 ? t('channelScreen_emptyMemberMsg')
-                : t('channelScreen_emptyJoinMsg', { channel: channel?.name ? `#${channel.name}` : t('channelScreen_thisChannel') })
+                : t('channelScreen_emptyJoinMsg', { channel: channelName ? `#${channelName}` : t('channelScreen_thisChannel') })
               if (diffuse) {
                 return (
                   <DiffuseEmptyState
@@ -902,7 +951,7 @@ export default function ChannelChat() {
               : { color: colors.text, fontFamily: font.display, fontSize: 16, lineHeight: 20, textTransform: 'uppercase', letterSpacing: 0.3 }]}
             numberOfLines={diffuse ? 1 : 2}
           >
-            {channel?.name ?? t('channelScreen_nameFallback')}
+            {channelName || t('channelScreen_nameFallback')}
           </Text>
           <Text style={[styles.memberCount, diffuse
             ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono }
@@ -914,11 +963,17 @@ export default function ChannelChat() {
         <View style={styles.headerActions}>
         {/* Share — public: always, private: members only */}
         {(channel?.channelType !== 'private' || isMember) && (
-          <Pressable onPress={handleShareChannel} hitSlop={8} style={styles.headerIconBtn}>
+          <Pressable onPress={handleShareChannel} hitSlop={8} style={styles.headerIconBtn} accessibilityRole="button" accessibilityLabel={t('channelScreen_shareTitle')}>
             <Share2 size={18} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
           </Pressable>
         )}
-        <Pressable onPress={handleFavoriteToggle} hitSlop={8} style={styles.headerIconBtn}>
+        <Pressable
+          onPress={handleFavoriteToggle}
+          hitSlop={8}
+          style={styles.headerIconBtn}
+          accessibilityRole="button"
+          accessibilityLabel={isFavorited ? t('channelScreen_unfavoriteA11y') : t('channelScreen_favoriteA11y')}
+        >
           <Star
             size={18}
             color={isFavorited ? (diffuse ? dt.colors.ink : colors.text) : (diffuse ? dt.colors.ink3 : colors.text)}
@@ -1171,10 +1226,10 @@ export default function ChannelChat() {
                   },
             ]}
           >
-            <Pressable onPress={pickPhoto} hitSlop={4} style={styles.inputIconBtn}>
+            <Pressable onPress={pickPhoto} hitSlop={4} style={styles.inputIconBtn} accessibilityRole="button" accessibilityLabel={t('channelScreen_addPhotoA11y')}>
               <Camera size={22} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
-            <Pressable onPress={() => setShowPollComposer(true)} hitSlop={4} style={styles.inputIconBtn}>
+            <Pressable onPress={() => setShowPollComposer(true)} hitSlop={4} style={styles.inputIconBtn} accessibilityRole="button" accessibilityLabel={t('channelScreen_addPollA11y')}>
               <BarChart3 size={22} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
             </Pressable>
             <TextInput
@@ -1227,6 +1282,8 @@ export default function ChannelChat() {
                 onPress={handleSend}
                 disabled={(!text.trim() && photos.length === 0) || sending}
                 hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={t('channelScreen_sendA11y')}
                 style={({ pressed }) => [
                   styles.sendBtn,
                   {
@@ -1325,7 +1382,7 @@ export default function ChannelChat() {
             })()}
 
             <Text style={[styles.ratingTitle, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display } : { color: colors.text, fontFamily: font.display }]}>
-              {t('channelScreen_ratingHeading', { channel: channel?.name ?? '' })}
+              {t('channelScreen_ratingHeading', { channel: channelName })}
             </Text>
             <Text style={[styles.ratingSubtitle, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.body } : { color: colors.textMuted, fontFamily: font.body }]}>
               {t('channelScreen_ratingModalTitle')}
@@ -1383,7 +1440,7 @@ export default function ChannelChat() {
       {/* Leave confirm sheet */}
       <LeaveChannelSheet
         visible={showLeave}
-        channelName={channel?.name ?? t('channelScreen_thisChannel')}
+        channelName={channelName || t('channelScreen_thisChannel')}
         leaving={leaving}
         onCancel={() => setShowLeave(false)}
         onConfirm={confirmLeave}
@@ -1614,6 +1671,11 @@ function SystemMessage({ message }: { message: ChannelPost }) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const isJoin = message.message_type === 'system_join'
+  const { t } = useTranslation()
+  // Stored content is English ("X joined the channel") — rebuild it localised.
+  const label = t(isJoin ? 'channelScreen_systemJoined' : 'channelScreen_systemLeft', {
+    name: message.author_name ?? t('channelScreen_someoneFallback'),
+  })
 
   return (
     <View style={styles.systemMsg}>
@@ -1627,7 +1689,7 @@ function SystemMessage({ message }: { message: ChannelPost }) {
         )}
       </View>
       <Text style={[styles.systemMsgText, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, fontStyle: 'normal', letterSpacing: 0.5 } : { color: colors.textMuted, fontFamily: font.body }]}>
-        {message.content}
+        {label}
       </Text>
       <Text style={[styles.systemMsgTime, diffuse ? { color: dt.colors.ink4, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular' }]}>
         {formatTime(message.created_at)}
@@ -1916,16 +1978,7 @@ function MessageContent({ content, photos }: { content: string; photos?: string[
   )
 }
 
-function formatTime(dateStr: string): string {
-  const d = new Date(dateStr)
-  const now = new Date()
-  const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000)
-  if (diffMin < 1) return 'now'
-  if (diffMin < 60) return `${diffMin}m`
-  const diffHrs = Math.floor(diffMin / 60)
-  if (diffHrs < 24) return `${diffHrs}h`
-  return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
-}
+const formatTime = chatTime
 
 // ─── Styles ─────────────────────────────────────────────────────────────
 

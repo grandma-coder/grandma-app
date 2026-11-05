@@ -53,6 +53,16 @@ export default function CycleSettingsScreen() {
   // launch; the background sync in CycleHome just skips when not granted.
   const { data: history } = useCycleHistory()
   const reminderOn = resolvePeriodReminderEnabled(s.periodReminder, !!history?.cycles.length)
+
+  // Measured average (from logged periods), clamped to the stepper range. Turning
+  // "learn from my logs" off starts the stepper here instead of a flat 28, and
+  // while it's on the disabled stepper shows what's actually being used.
+  const measured = history?.avg != null
+    ? Math.min(CYCLE_LENGTH_RANGE.max, Math.max(CYCLE_LENGTH_RANGE.min, Math.round(history.avg)))
+    : null
+  function onAutoToggle(on: boolean) {
+    s.setCycleLength(on ? null : (measured ?? 28))
+  }
   const [permission, setPermission] = useState<NotificationPermissionStatus>('unavailable')
   useEffect(() => {
     let alive = true
@@ -85,10 +95,12 @@ export default function CycleSettingsScreen() {
   }
 
   function Stepper({
-    label, desc, value, unit, min, max, onChange, disabled,
+    label, desc, value, unit, min, max, onChange, disabled, disabledValue,
   }: {
     label: string; desc?: string; value: number; unit: string
     min: number; max: number; onChange: (n: number) => void; disabled?: boolean
+    /** Read-only value to show while disabled (else "—"). */
+    disabledValue?: number | null
   }) {
     const dec = () => onChange(Math.max(min, value - 1))
     const inc = () => onChange(Math.min(max, value + 1))
@@ -115,7 +127,7 @@ export default function CycleSettingsScreen() {
         <View style={styles.stepper}>
           {btn(!disabled && value > min, dec, <Minus size={16} color={ink} strokeWidth={2} />)}
           <Text style={[styles.stepValue, { color: ink, fontFamily: diffuse ? diffuseFont.mono : font.displayBold }]}>
-            {disabled ? '—' : `${value}`}<Text style={[styles.stepUnit, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}> {unit}</Text>
+            {disabled ? (disabledValue != null ? `${disabledValue}` : '—') : `${value}`}<Text style={[styles.stepUnit, { color: inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}> {unit}</Text>
           </Text>
           {btn(!disabled && value < max, inc, <Plus size={16} color={ink} strokeWidth={2} />)}
         </View>
@@ -144,7 +156,7 @@ export default function CycleSettingsScreen() {
                 <Text style={[styles.rowLabel, { color: colors.text, fontFamily: font.bodySemiBold }]}>{t('cycleSettings_autoLabel')}</Text>
                 <Text style={[styles.rowDesc, { color: colors.textMuted, fontFamily: font.body }]}>{t('cycleSettings_autoDesc')}</Text>
               </View>
-              <SiteToggle value={autoCycle} onValueChange={(on) => s.setCycleLength(on ? null : 28)} label={t('cycleSettings_autoLabel')} />
+              <SiteToggle value={autoCycle} onValueChange={onAutoToggle} label={t('cycleSettings_autoLabel')} />
             </View>
             <View style={[styles.hair, { backgroundColor: colors.border }]} />
             <Stepper
@@ -155,6 +167,7 @@ export default function CycleSettingsScreen() {
               max={CYCLE_LENGTH_RANGE.max}
               onChange={s.setCycleLength}
               disabled={autoCycle}
+              disabledValue={measured}
             />
 
             <SiteEyebrow>{t('cycleSettings_sectionPhases')}</SiteEyebrow>

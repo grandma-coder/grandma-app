@@ -16,12 +16,13 @@
  */
 
 import React, { useState } from 'react'
-import { View, Text, Image, Pressable, TextInput, ActivityIndicator, StyleSheet } from 'react-native'
+import { View, Text, Image, Pressable, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTranslation } from '../../lib/i18n'
-import { useMemories, useAddMemory, type Memory, type MemoryBehavior } from '../../lib/memories'
+import { useMemories, useAddMemory, useDeleteMemory, type Memory, type MemoryBehavior } from '../../lib/memories'
+import { dateLoc } from '../../lib/kpLocale'
 import { SignedImage, PHOTO_BUCKETS, type PhotoBucket } from '../../lib/photoSigning'
 import { toDateStr } from '../../lib/cycleLogic'
 import { LogSheet } from '../calendar/LogSheet'
@@ -81,6 +82,24 @@ function MemoriesBody({ behavior }: { behavior: MemoryBehavior }) {
 
   const { data: memories = [], isLoading } = useMemories(behavior)
   const addMemory = useAddMemory(behavior)
+  const deleteMemory = useDeleteMemory(behavior)
+
+  // Long-press a memory to remove it (with a confirm) — previously the only way
+  // out was "clear all memories" in Data & Privacy.
+  function confirmDelete(m: Memory) {
+    Alert.alert(t('memories_deleteMemory'), t('sw3_mem_deleteMemoryMsg'), [
+      { text: t('common_cancel'), style: 'cancel' },
+      {
+        text: t('common_delete'),
+        style: 'destructive',
+        onPress: () => deleteMemory.mutate(m.id, { onError: () => setPickError(t('common_tryAgain')) }),
+      },
+    ])
+  }
+  const shortDate = (iso: string) => {
+    const d = new Date(iso + 'T12:00:00')
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(dateLoc(), { day: 'numeric', month: 'short', year: 'numeric' })
+  }
   const bucket = BEHAVIOR_BUCKET[behavior]
   const emptyMsg = t(EMPTY_MSG_KEY[behavior])
 
@@ -120,7 +139,8 @@ function MemoriesBody({ behavior }: { behavior: MemoryBehavior }) {
       { date: toDateStr(new Date()), photos: pendingPhotos, caption: caption.trim() },
       {
         onSuccess: () => { setAdding(false); setPendingPhotos([]); setCaption('') },
-        onError: (e) => setPickError(e instanceof Error ? e.message : t('memories_saveFailed')),
+        // Storage/DB errors are English — keep the message warm and localized.
+        onError: () => setPickError(t('memories_saveFailed')),
       }
     )
   }
@@ -162,7 +182,15 @@ function MemoriesBody({ behavior }: { behavior: MemoryBehavior }) {
           {memories.length > 0 && (
             <View style={styles.grid}>
               {memories.map((m: Memory) => (
-                <View key={m.id} style={styles.gridItem}>
+                <Pressable
+                  key={m.id}
+                  style={styles.gridItem}
+                  onLongPress={() => confirmDelete(m)}
+                  delayLongPress={350}
+                  accessibilityRole="button"
+                  accessibilityLabel={m.caption || shortDate(m.date)}
+                  accessibilityHint={t('memories_deleteMemory')}
+                >
                   {m.photos[0] ? (
                     <SignedImage value={m.photos[0]} bucket={bucket} style={[styles.gridImage, { borderColor: paperBorder }]} resizeMode="cover" />
                   ) : (
@@ -192,9 +220,9 @@ function MemoriesBody({ behavior }: { behavior: MemoryBehavior }) {
                         : { color: colors.textMuted, fontFamily: font.body, fontSize: 10 },
                     ]}
                   >
-                    {m.date}
+                    {shortDate(m.date)}
                   </Text>
-                </View>
+                </Pressable>
               ))}
             </View>
           )}
