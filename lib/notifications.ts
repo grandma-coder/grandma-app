@@ -3,6 +3,7 @@
  */
 
 import { supabase } from './supabase'
+import { useFeatureFlags } from '../store/useFeatureFlags'
 
 export type NotificationType =
   | 'care_circle_invite' | 'care_circle_accepted'
@@ -63,11 +64,15 @@ export async function deleteNotification(id: string): Promise<void> {
 export async function getUnreadCount(): Promise<number> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return 0
-  const { count } = await supabase
+  let query = supabase
     .from('notifications')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', session.user.id)
     .eq('is_read', false)
+  // The inbox hides streak rows while Daily Rewards is off — don't count what
+  // the user can never see (the badge would never clear).
+  if (!useFeatureFlags.getState().dailyRewards) query = query.not('type', 'in', '(streak,streak_broken)')
+  const { count } = await query
   return count ?? 0
 }
 

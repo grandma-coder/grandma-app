@@ -4,6 +4,9 @@ import { supabase } from './supabase'
 import { queryClient } from './queryClient'
 import { resetUserStores, USER_STORE_PERSIST } from './resetUserStores'
 import { clearPin } from './appLock'
+import { cancelAllReminderNotifications } from './reminderNotifications'
+import { cancelLocalNotification, cancelLocalSchedules } from './pushNotifications'
+import { PERIOD_REMINDER_ID } from './cycleReminders'
 
 type Scope = 'local' | 'global'
 
@@ -82,6 +85,13 @@ export async function signOut(scope: Scope = 'local'): Promise<void> {
   }
   resetUserStores()
   await clearPin().catch(() => {})
+  // Personal reminder alerts belong to the account: don't fire them for whoever signs in next.
+  // They're rescheduled from the saved list when this user signs back in.
+  await cancelAllReminderNotifications().catch(() => {})
+  // Same for the daily log / weekly summary nudges and the period reminder (which
+  // would otherwise announce this account's cycle on a shared phone).
+  await cancelLocalSchedules().catch(() => {})
+  await cancelLocalNotification(PERIOD_REMINDER_ID).catch(() => {})
 
   router.replace('/(auth)/welcome')
 }

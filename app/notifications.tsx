@@ -6,6 +6,7 @@
  * so dark mode auto-brightens.
  */
 
+import { useQueryClient } from '@tanstack/react-query'
 import { useFeatureFlags } from '../store/useFeatureFlags'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
@@ -209,7 +210,8 @@ function navigateForNotification(item: AppNotification) {
       break
     case 'care_circle_invite':
     case 'care_circle_accepted':
-      router.push('/manage-caregivers')
+      // The live care-circle screen (manage-caregivers is the legacy design).
+      router.push('/profile/care-circle')
       break
     case 'reminder':
     case 'appointment':
@@ -381,10 +383,18 @@ export default function NotificationsScreen() {
     setRefreshing(false)
   }, [load])
 
+  // Keep every bell badge (tab bar, NotificationBell, Village/Community) in step
+  // without waiting for realtime or the 30s poll.
+  const queryClient = useQueryClient()
+  const refreshBadge = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['notification-count'] })
+  }, [queryClient])
+
   const handleMarkAllRead = useCallback(async () => {
     await markAllNotificationsRead()
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
-  }, [])
+    refreshBadge()
+  }, [refreshBadge])
 
   const handleTap = useCallback(async (item: AppNotification) => {
     if (!item.is_read) {
@@ -392,9 +402,10 @@ export default function NotificationsScreen() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n)),
       )
+      refreshBadge()
     }
     navigateForNotification(item)
-  }, [])
+  }, [refreshBadge])
 
   const filtered = useMemo(
     () =>

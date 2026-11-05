@@ -14,9 +14,14 @@
 import { supabase } from './supabase'
 import { useFeatureFlags } from '../store/useFeatureFlags'
 import { getCycleInfo, toDateStr } from './cycleLogic'
-import { getWeekData } from './pregnancyData'
 import { parseLocalDate } from './localDate'
-import { dateLoc } from './kpLocale'
+import {
+  activityGoalCopy, appointmentCopy, caregiverActivityCopy, channelActivityCopy, cycleQuietCopy,
+  dailySummaryCopy, dueDateCopy, fertileWindowCopy, insightCopy, insightsCopy, kickCountCopy,
+  kidsQuietCopy, latePeriodCopy, ovulationCopy, periodSoonCopy, pregnancyQuietCopy, pregnancyWeekCopy,
+  routineMissedCopy, routinesMissedCopy, sleepGoalCopy, streakCopy, streakPausedCopy, strongSymptomsCopy,
+  temperatureCopy, wellnessDropCopy, wellnessImproveCopy,
+} from './notificationCopy'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,14 +99,6 @@ interface ScoresInput {
   growth: PillarScoreInput
 }
 
-const PILLAR_NAMES: Record<string, string> = {
-  nutrition: 'Nutrition',
-  sleep: 'Sleep',
-  mood: 'Mood',
-  health: 'Health',
-  growth: 'Growth',
-}
-
 export async function generateWellnessNotifications(
   userId: string,
   scores: ScoresInput,
@@ -115,7 +112,6 @@ export async function generateWellnessNotifications(
     const score = scores[key]
     if (!score.hasData) continue
 
-    const name = PILLAR_NAMES[key]
     const dedupeKey = `wellness_${key}_${childId}`
 
     // Score dropped below 4 → alert
@@ -127,8 +123,7 @@ export async function generateWellnessNotifications(
           type: 'wellness_drop',
           // Neutral wording: no `/10`, no "needs attention" — the score only
           // decides WHEN to nudge (see docs/compliance/2026-11-02-regras-saude.md).
-          title: `A look at ${childName}'s ${name.toLowerCase()}`,
-          body: `Grandma noticed a pattern in ${childName}'s ${name.toLowerCase()} logs this week. Tap to see the counts.`,
+          ...wellnessDropCopy(childName, key),
           data: { childId, pillar: key, score: score.value, dedupeKey },
         })
       }
@@ -141,8 +136,7 @@ export async function generateWellnessNotifications(
         notifications.push({
           user_id: userId,
           type: 'wellness_improve',
-          title: `${childName}'s ${name.toLowerCase()}: steadier this week`,
-          body: `${name} logs look steadier than last week. Tap to see the counts.`,
+          ...wellnessImproveCopy(childName, key),
           data: { childId, pillar: key, score: score.value, dedupeKey },
         })
       }
@@ -181,8 +175,7 @@ export async function generateMissingDataNotifications(
     return insertNotifications([{
       user_id: userId,
       type: 'missing_data',
-      title: `No logs for ${childName} in ${days} day${days > 1 ? 's' : ''}`,
-      body: 'Regular logging helps Grandma track patterns and give better insights. Log a quick update!',
+      ...kidsQuietCopy(childName, days),
       data: { childId, daysMissing: days, dedupeKey },
     }])
   }
@@ -253,22 +246,20 @@ export async function generateRoutineNotifications(
   }
 
   for (const [childId, childMissed] of byChild) {
-    const name = childMap.get(childId) || 'Your child'
+    const name = childMap.get(childId) || null
     if (childMissed.length === 1) {
       const r = childMissed[0]
       notifications.push({
         user_id: userId,
         type: 'routine_missed',
-        title: `${name}: ${r.name} not logged yet`,
-        body: `Scheduled at ${r.time} — tap to log it now.`,
+        ...routineMissedCopy(name, r.name, r.time),
         data: { childId, routineId: r.id, routineType: r.type, dedupeKey },
       })
     } else {
       notifications.push({
         user_id: userId,
         type: 'routine_missed',
-        title: `${name}: ${childMissed.length} routines not logged`,
-        body: `${childMissed.map((r) => r.name).join(', ')} — open the calendar to catch up.`,
+        ...routinesMissedCopy(name, childMissed.map((r) => r.name)),
         data: { childId, count: childMissed.length, dedupeKey },
       })
     }
@@ -314,8 +305,8 @@ export async function generateHealthAlertNotifications(
             notifications.push({
               user_id: userId,
               type: 'health_alert',
-              title: `${child?.name || 'Child'}: High temperature recorded`,
-              body: `${temp}°C on ${parseLocalDate(log.date).toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })}. Monitor closely and consult a doctor if it persists.`,
+              // Factual: what was logged + "pediatrician if worried". No verdict.
+              ...temperatureCopy(child?.name ?? null, temp, parseLocalDate(log.date)),
               data: { childId: log.child_id, temperature: temp, dedupeKey },
             })
           }
@@ -385,8 +376,7 @@ export async function generateGoalNotifications(
         notifications.push({
           user_id: userId,
           type: 'goal_achieved',
-          title: `${child.name} hit the sleep goal!`,
-          body: `${totalHours.toFixed(1)}h of sleep today (goal: ${sleepGoal.daily_target}h). Great rest!`,
+          ...sleepGoalCopy(child.name, totalHours, sleepGoal.daily_target),
           data: { childId: child.id, metric: 'sleep', dedupeKey },
         })
       }
@@ -402,8 +392,7 @@ export async function generateGoalNotifications(
         notifications.push({
           user_id: userId,
           type: 'goal_achieved',
-          title: `${child.name}'s daily activity goal met!`,
-          body: `${activityCount} activities logged today. Consistent tracking builds better insights.`,
+          ...activityGoalCopy(child.name, activityCount),
           data: { childId: child.id, metric: 'activity', dedupeKey },
         })
       }
@@ -459,8 +448,7 @@ export async function generateStreakNotifications(
       notifications.push({
         user_id: userId,
         type: 'streak',
-        title: `${streak}-day streak for ${child.name}!`,
-        body: `You've logged ${child.name}'s activities for ${streak} days in a row. Amazing consistency!`,
+        ...streakCopy(child.name, streak),
         data: { childId: child.id, streak, dedupeKey },
       })
     }
@@ -468,7 +456,8 @@ export async function generateStreakNotifications(
     // Streak broken (had 3+ then missed yesterday)
     if (streak === 0) {
       // Check if day before yesterday had a streak
-      checkDate.setDate(new Date().getDate() - 2)
+      // checkDate is still yesterday here (loop broke on i=0) → day before yesterday.
+      checkDate.setDate(checkDate.getDate() - 1)
       const dateStr = toDateStr(checkDate)
       const { count } = await supabase
         .from('child_logs')
@@ -482,8 +471,7 @@ export async function generateStreakNotifications(
           notifications.push({
             user_id: userId,
             type: 'streak_broken',
-            title: `${child.name}'s logging streak paused`,
-            body: 'No logs yesterday. Log something today to start a new streak!',
+            ...streakPausedCopy(child.name),
             data: { childId: child.id, dedupeKey: `streak_broken_${child.id}` },
           })
         }
@@ -535,17 +523,14 @@ export async function generateDailySummary(
     typeCounts[log.type] = (typeCounts[log.type] || 0) + 1
   }
 
-  const parts = Object.entries(typeCounts)
+  const top = Object.entries(typeCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([type, count]) => `${count} ${type}`)
-    .join(', ')
 
   return insertNotifications([{
     user_id: userId,
     type: 'daily_summary',
-    title: `Today's recap: ${total} activities logged`,
-    body: `${parts}. ${total >= 5 ? 'Great tracking day!' : 'Keep going — every log helps Grandma learn.'}`,
+    ...dailySummaryCopy(total, top),
     data: { date: todayDate, totalLogs: total, dedupeKey },
   }])
 }
@@ -587,7 +572,7 @@ export async function generateCaregiverNotifications(
     .select('id, name')
     .in('id', caregiverIds)
 
-  const nameMap = new Map((profiles ?? []).map((p) => [p.id, p.name || 'A caregiver']))
+  const nameMap = new Map((profiles ?? []).map((p) => [p.id, p.name || null]))
   const childMap = new Map(children.map((c) => [c.id, c.name]))
 
   // Group by caregiver
@@ -600,15 +585,14 @@ export async function generateCaregiverNotifications(
   }
 
   for (const [caregiverId, logs] of byCaregiver) {
-    const name = nameMap.get(caregiverId) || 'A caregiver'
-    const childNames = [...new Set(logs.map((l) => childMap.get(l.child_id) || 'your child'))]
+    const name = nameMap.get(caregiverId) || null
+    const childNames = [...new Set(logs.map((l) => childMap.get(l.child_id) || null))]
     const types = [...new Set(logs.map((l) => l.type))]
 
     notifications.push({
       user_id: userId,
       type: 'care_circle_accepted',
-      title: `${name} logged ${logs.length} activit${logs.length === 1 ? 'y' : 'ies'}`,
-      body: `${types.join(', ')} for ${childNames.join(' & ')}. Check the calendar for details.`,
+      ...caregiverActivityCopy(name, logs.length, types, childNames),
       data: { caregiverId, count: logs.length, dedupeKey },
     })
   }
@@ -646,16 +630,14 @@ export async function generateInsightNotifications(
     notifications.push({
       user_id: userId,
       type: 'insight',
-      title: `New insight: ${insight.title}`,
-      body: insight.body?.slice(0, 120) || 'Grandma noticed a new pattern. Tap to learn more.',
+      ...insightCopy(insight.title, insight.body),
       data: { insightId: insight.id, dedupeKey },
     })
   } else {
     notifications.push({
       user_id: userId,
       type: 'insight',
-      title: `${newInsights.length} new insights from Grandma`,
-      body: `${newInsights.map((i) => i.title).join(', ')}. Check your insights for details.`,
+      ...insightsCopy(newInsights.map((i) => i.title)),
       data: { count: newInsights.length, dedupeKey },
     })
   }
@@ -689,20 +671,18 @@ export async function generateAppointmentReminders(
     const already = await alreadyNotifiedToday(userId, 'reminder', dedupeKey)
     if (already) continue
 
-    const apptDate = new Date(appt.appointment_date)
-    const hoursUntil = (apptDate.getTime() - now.getTime()) / (1000 * 60 * 60)
-    const timeLabel = hoursUntil < 24
-      ? `today at ${apptDate.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })}`
-      : `tomorrow at ${apptDate.toLocaleTimeString(dateLoc(), { hour: 'numeric', minute: '2-digit' })}`
-
-    const type = appt.appointment_type || 'Appointment'
-    const doctor = appt.doctor_name ? ` with ${appt.doctor_name}` : ''
-
     notifications.push({
       user_id: userId,
       type: 'reminder',
-      title: `${type}${doctor} ${timeLabel}`,
-      body: appt.location ? `Location: ${appt.location}` : (appt.notes || 'Don\'t forget to prepare any questions!'),
+      // Today / tomorrow / weekday by calendar day (was a 24h window: 23:00 → 09:00 read "today").
+      ...appointmentCopy({
+        date: new Date(appt.appointment_date),
+        now,
+        type: appt.appointment_type,
+        doctor: appt.doctor_name,
+        location: appt.location,
+        notes: appt.notes,
+      }),
       data: { appointmentId: appt.id, dedupeKey },
     })
   }
@@ -741,12 +721,10 @@ export async function generateChannelActivityNotifications(
 
     const postCount = count ?? 0
     if (postCount >= 5) {
-      const channelName = (mem as any).channels?.name || 'a channel'
       notifications.push({
         user_id: userId,
         type: 'channel',
-        title: `${postCount} new messages in #${channelName}`,
-        body: 'Catch up on the conversation!',
+        ...channelActivityCopy(postCount, (mem as any).channels?.name),
         data: { channelId: mem.channel_id, dedupeKey },
       })
     }
@@ -802,12 +780,10 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
     const dedupeKey = `pregnancy_week_${weekNumber}`
     const already = await alreadyNotifiedToday(userId, 'milestone', dedupeKey)
     if (!already) {
-      const wk = getWeekData(weekNumber)
       notifications.push({
         user_id: userId,
         type: 'milestone',
-        title: `Week ${weekNumber}: ${wk.babySize}`,
-        body: wk.developmentFact,
+        ...pregnancyWeekCopy(weekNumber),
         data: { behavior: 'pregnancy', week: weekNumber, dedupeKey },
       })
     }
@@ -823,10 +799,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
         notifications.push({
           user_id: userId,
           type: 'reminder',
-          title: daysToDue === 0 ? 'Today is your due date!' : `${daysToDue} day${daysToDue === 1 ? '' : 's'} until due date`,
-          body: daysToDue <= 3
-            ? 'Hospital bag packed? Stay close to home and trust your body.'
-            : 'Final stretch — rest, hydrate, and prepare for baby.',
+          ...dueDateCopy(daysToDue),
           data: { behavior: 'pregnancy', daysToDue, dedupeKey },
         })
       }
@@ -851,8 +824,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
         notifications.push({
           user_id: userId,
           type: 'missing_data',
-          title: `No pregnancy logs in ${daysSince} days`,
-          body: 'Log a symptom, mood, or weight to keep your week-by-week journey on track.',
+          ...pregnancyQuietCopy(daysSince),
           data: { behavior: 'pregnancy', daysMissing: daysSince, dedupeKey },
         })
       }
@@ -874,12 +846,10 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
     const dedupeKey = `pregnancy_severe_${todayDate}`
     const already = await alreadyNotifiedToday(userId, 'health_alert', dedupeKey)
     if (!already) {
-      const list = severeSymptoms.map((s) => s.value).filter(Boolean).slice(0, 3).join(', ')
       notifications.push({
         user_id: userId,
         type: 'health_alert',
-        title: 'Strong symptoms logged recently',
-        body: `${list || 'Severe symptoms'} — if it persists or worsens, contact your provider.`,
+        ...strongSymptomsCopy(severeSymptoms.map((s) => s.value)),
         data: { behavior: 'pregnancy', count: severeSymptoms.length, dedupeKey },
       })
     }
@@ -912,8 +882,8 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
           notifications.push({
             user_id: userId,
             type: 'health_alert',
-            title: 'Kick count is lower than usual',
-            body: `Today: ${todayKicks} kicks vs ${avgOlder.toFixed(0)} avg. Try lying on your left side and counting again. Call your provider if reduced movement persists.`,
+            // Factual counts + "call your midwife/maternity unit" — no at-home instructions.
+            ...kickCountCopy(todayKicks, avgOlder),
             data: { behavior: 'pregnancy', todayKicks, avgOlder, dedupeKey },
           })
         }
@@ -969,8 +939,7 @@ export async function generateCycleNotifications(userId: string): Promise<number
       notifications.push({
         user_id: userId,
         type: 'insight',
-        title: 'Your fertile window is starting',
-        body: `Days ${info.fertileStart}–${info.fertileEnd}. Ovulation predicted around day ${info.ovulationDay}.`,
+        ...fertileWindowCopy(info.fertileStart, info.fertileEnd, info.ovulationDay),
         data: { behavior: 'pre-pregnancy', cycleDay: info.cycleDay, dedupeKey },
       })
     }
@@ -984,10 +953,7 @@ export async function generateCycleNotifications(userId: string): Promise<number
       notifications.push({
         user_id: userId,
         type: 'milestone',
-        title: tryingToConceive ? 'Ovulation today — peak fertility' : 'Ovulation day',
-        body: tryingToConceive
-          ? 'Your most fertile 24 hours. Conception probability is at its peak.'
-          : `You're on day ${info.cycleDay} of your cycle.`,
+        ...ovulationCopy(tryingToConceive, info.cycleDay),
         data: { behavior: 'pre-pregnancy', cycleDay: info.cycleDay, dedupeKey },
       })
     }
@@ -1001,8 +967,7 @@ export async function generateCycleNotifications(userId: string): Promise<number
       notifications.push({
         user_id: userId,
         type: 'reminder',
-        title: `Period expected in ${info.daysUntilPeriod} day${info.daysUntilPeriod === 1 ? '' : 's'}`,
-        body: 'PMS symptoms are common now. Stock up on what you need and rest if you can.',
+        ...periodSoonCopy(info.daysUntilPeriod),
         data: { behavior: 'pre-pregnancy', daysUntilPeriod: info.daysUntilPeriod, dedupeKey },
       })
     }
@@ -1017,10 +982,7 @@ export async function generateCycleNotifications(userId: string): Promise<number
       notifications.push({
         user_id: userId,
         type: 'insight',
-        title: `Period is ${lateDays} days late`,
-        body: tryingToConceive
-          ? 'A late period can be an early pregnancy sign. Consider taking a test.'
-          : 'Stress, sleep, and hormone shifts can delay your cycle. Keep tracking.',
+        ...latePeriodCopy(lateDays, tryingToConceive),
         data: { behavior: 'pre-pregnancy', lateDays, dedupeKey },
       })
     }
@@ -1044,8 +1006,7 @@ export async function generateCycleNotifications(userId: string): Promise<number
         notifications.push({
           user_id: userId,
           type: 'missing_data',
-          title: `No cycle logs in ${daysSince} days`,
-          body: 'Log a symptom, BBT, or mood to keep your predictions accurate.',
+          ...cycleQuietCopy(daysSince),
           data: { behavior: 'pre-pregnancy', daysMissing: daysSince, dedupeKey },
         })
       }

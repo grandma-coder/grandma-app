@@ -18,6 +18,7 @@ import { Platform } from 'react-native'
 import Constants from 'expo-constants'
 import { requireOptionalNativeModule } from 'expo-modules-core'
 import { supabase } from './supabase'
+import { t } from './i18n'
 import type * as NotificationsType from 'expo-notifications'
 import type * as DeviceType from 'expo-device'
 
@@ -156,6 +157,18 @@ export async function cancelLocalNotification(identifier: string): Promise<void>
   await cancelById(identifier)
 }
 
+/** Identifiers of every pending local notification ([] when the module is missing). */
+export async function listScheduledLocalNotificationIds(): Promise<string[]> {
+  const Notifications = getNotifs()
+  if (!Notifications) return []
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync()
+    return all.map((n) => n.identifier)
+  } catch {
+    return []
+  }
+}
+
 /**
  * Schedule a one-shot local notification at an exact Date under a stable
  * identifier (scheduling the same identifier again replaces it). On Android the
@@ -291,9 +304,10 @@ export async function syncLocalSchedules(prefs: NotificationPrefs): Promise<void
       const { hour, minute } = parseTime(prefs.daily_reminder_time)
       await Notifications.scheduleNotificationAsync({
         identifier: LOCAL_IDS.dailyReminder,
+        // Localized at schedule time — re-synced on launch and on language change.
         content: {
-          title: 'Time to check in 🌿',
-          body: 'Log today so Grandma can keep your insights fresh.',
+          title: t('notif_local_daily_title'),
+          body: t('notif_local_daily_body'),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -309,8 +323,8 @@ export async function syncLocalSchedules(prefs: NotificationPrefs): Promise<void
       await Notifications.scheduleNotificationAsync({
         identifier: LOCAL_IDS.weeklySummary,
         content: {
-          title: 'Your week with Grandma 📖',
-          body: 'See this week\'s activity and what to focus on next.',
+          title: t('notif_local_weekly_title'),
+          body: t('notif_local_weekly_body'),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
@@ -324,6 +338,16 @@ export async function syncLocalSchedules(prefs: NotificationPrefs): Promise<void
     // Native module unavailable (old dev client pre-rebuild) — prefs still
     // persist to the DB; scheduling resumes once the app is rebuilt.
   }
+}
+
+/**
+ * Cancel the account's on-device schedules (daily log reminder + weekly summary).
+ * Called on sign-out so the next person on this phone isn't nudged with the
+ * previous account's reminders; initNotifications re-syncs on the next sign-in.
+ */
+export async function cancelLocalSchedules(): Promise<void> {
+  await cancelById(LOCAL_IDS.dailyReminder)
+  await cancelById(LOCAL_IDS.weeklySummary)
 }
 
 // ─── Open tracking (feeds the command center's Push → Analytics funnel) ──────
