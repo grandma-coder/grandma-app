@@ -18,10 +18,10 @@
     "closed": "closed"
   },
   "kinds": {
-    "bug": "bug",
+    "bug": "problem",
     "question": "question",
     "review": "review",
-    "feedback": "feedback"
+    "feedback": "suggestion"
   },
   "priorities": {
     "low": "Low",

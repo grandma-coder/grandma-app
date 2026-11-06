@@ -18,10 +18,10 @@
     "closed": "fechado"
   },
   "kinds": {
-    "bug": "bug",
+    "bug": "problema",
     "question": "dúvida",
     "review": "avaliação",
-    "feedback": "feedback"
+    "feedback": "sugestão"
   },
   "priorities": {
     "low": "Baixa",
