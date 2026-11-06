@@ -10,6 +10,7 @@
  * - Logged in, has enrolled behaviors or children → (tabs)
  */
 
+import { AnimatedSplash } from '../components/ui/AnimatedSplash'
 import '../lib/fontDefaults' // first: default Hanken on StyleSheet text styles
 import { useCallback, useEffect, useState } from 'react'
 import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet } from 'react-native'
@@ -693,6 +694,9 @@ export default function RootLayout() {
   // Hide the native splash once the first real frame has laid out. onLayout
   // guarantees the tree below has painted, so the splash cross-fades straight
   // into content with no intermediate blank frame.
+  const [splashDone, setSplashDone] = useState(false)
+  const onSplashDone = useCallback(() => setSplashDone(true), [])
+
   const onRootLayout = useCallback(() => {
     if (appReady) SplashScreen.hideAsync().catch(() => {})
   }, [appReady])
@@ -710,6 +714,8 @@ export default function RootLayout() {
 
   return (
     <View style={styles.flex} onLayout={onRootLayout}>
+    {/* Cold-start brand moment on top of the (already rendering) app; unmounts itself. */}
+    {!splashDone && <AnimatedSplash onDone={onSplashDone} />}
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <DevPanelProvider>
