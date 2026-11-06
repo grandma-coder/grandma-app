@@ -4,6 +4,7 @@
  * Shows chart at full width with title and share/export button.
  */
 
+import { useQueuedModal } from '../../lib/useQueuedModal'
 import { View, Text, Pressable, Modal, StyleSheet, Dimensions, Share } from 'react-native'
 import { X, Share2 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -21,6 +22,7 @@ interface FullScreenChartProps {
 export function FullScreenChart({ visible, title, onClose, children }: FullScreenChartProps) {
   const { colors, radius, font } = useTheme()
   const insets = useSafeAreaInsets()
+  const modalVisible = useQueuedModal(visible)
 
   async function handleShare() {
     try {
@@ -29,7 +31,7 @@ export function FullScreenChart({ visible, title, onClose, children }: FullScree
   }
 
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+    <Modal visible={modalVisible} animationType="fade" transparent onRequestClose={onClose}>
       <View style={[styles.overlay, { backgroundColor: colors.bg }]}>
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>

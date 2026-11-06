@@ -6,6 +6,7 @@
  * Deep-links to full agenda for scheduling.
  */
 
+import { afterSheets } from '../../../lib/afterSheets'
 import { useGrandmaChatEnabled } from '../../../store/useFeatureFlags'
 import React from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
@@ -110,7 +111,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
 
         {/* CTAs — containerless actions on hairline rules */}
         <Pressable
-          onPress={() => { onClose(); router.push('/(tabs)/agenda') }}
+          onPress={() => { onClose(); afterSheets(() => router.push('/(tabs)/agenda')) }}
           style={({ pressed }) => [dstyles.action, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
         >
           <Text style={[dstyles.actionLabel, { color: ink }]}>{t('pregnancy_appt_scheduleInAgenda')}</Text>
@@ -118,7 +119,7 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
         </Pressable>
         {chatOn && (
         <Pressable
-          onPress={() => { onClose(); router.push('/grandma-talk') }}
+          onPress={() => { onClose(); afterSheets(() => router.push('/grandma-talk')) }}
           style={({ pressed }) => [dstyles.action, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
         >
           <Text style={[dstyles.actionLabel, { color: ink }]}>{t('pregnancy_appt_askGrandma')}</Text>
@@ -198,9 +199,9 @@ export function AppointmentDetailModal({ visible, appointment, currentWeek, onCl
 
         <FadeUp index={4}>
           <View style={{ marginTop: 18 }}>
-            <Action label={t('pregnancy_appt_scheduleInAgenda')} onPress={() => { onClose(); router.push('/(tabs)/agenda') }} />
+            <Action label={t('pregnancy_appt_scheduleInAgenda')} onPress={() => { onClose(); afterSheets(() => router.push('/(tabs)/agenda')) }} />
             {chatOn && (
-              <Action label={t('pregnancy_appt_askGrandma')} onPress={() => { onClose(); router.push('/grandma-talk') }} />
+              <Action label={t('pregnancy_appt_askGrandma')} onPress={() => { onClose(); afterSheets(() => router.push('/grandma-talk')) }} />
             )}
           </View>
         </FadeUp>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { afterSheets } from '../../lib/afterSheets'
 import {
   View, Text, TextInput, Pressable, ScrollView, StyleSheet,
   KeyboardAvoidingView, Platform, Image, Animated, Easing,
@@ -370,7 +371,7 @@ export default function CreateChannel() {
         channelName={name.trim()}
         onGo={() => {
           setShowSuccess(false)
-          if (createdChannelId) router.replace(`/channel/${createdChannelId}`)
+          if (createdChannelId) afterSheets(() => router.replace(`/channel/${createdChannelId}`))
         }}
       />
 

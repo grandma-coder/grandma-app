@@ -6,6 +6,8 @@
  * Self-gates to null in a caregiver context — switching someone else's child's
  * journey is meaningless there.
  */
+import { useQueuedModal } from '../../lib/useQueuedModal'
+import { afterSheets } from '../../lib/afterSheets'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { useRef, useState } from 'react'
 import { View, Text, Pressable, Modal, StyleSheet, Animated, Easing } from 'react-native'
@@ -46,6 +48,7 @@ export function HomeJourneySwitcher() {
   const activeChild = useChildStore((s) => s.activeChild)
 
   const [open, setOpen] = useState(false)
+  const modalVisible = useQueuedModal(open)
   const [anchor, setAnchor] = useState({ top: 96, right: 20 })
   const triggerRef = useRef<View>(null)
   const anim = useRef(new Animated.Value(0)).current
@@ -90,7 +93,7 @@ export function HomeJourneySwitcher() {
     setOpen(false)
     if (b === currentBehavior) return
     if (!enrolled.includes(b)) {
-      router.push({ pathname: '/onboarding/journey', params: { addMode: 'true', preselect: b } })
+      afterSheets(() => router.push({ pathname: '/onboarding/journey', params: { addMode: 'true', preselect: b } }))
       return
     }
     // Canonical switch: behavior + mode in sync. No navigation — we're already on
@@ -120,7 +123,7 @@ export function HomeJourneySwitcher() {
         </View>
       </Pressable>
 
-      <Modal visible={open} transparent animationType="none" onRequestClose={() => setOpen(false)}>
+      <Modal visible={modalVisible} transparent animationType="none" onRequestClose={() => setOpen(false)}>
         <View style={styles.overlay}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel="Close journey switcher" />
           <Animated.View

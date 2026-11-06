@@ -6,6 +6,7 @@
  * owns `visible`/`onClose`; render the card as children. Reduce Motion: fades only.
  */
 
+import { beginClosing, whenNoneClosing } from '../../lib/modalQueue'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import { Animated, Easing, Modal, Pressable, StyleSheet, View, KeyboardAvoidingView, Platform, type StyleProp, type ViewStyle } from 'react-native'
 import { useReduceMotion } from './Motion'
@@ -36,6 +37,9 @@ export function CenterModal({
   const shown = useRef(false)
   const backdrop = useRef(new Animated.Value(0)).current
   const card = useRef(new Animated.Value(0)).current
+  const endClosing = useRef<(() => void) | null>(null)
+  // Unmounting mid-close must not leave the queue waiting.
+  useEffect(() => () => { endClosing.current?.() }, [])
 
   function animateIn() {
     Animated.parallel([
@@ -46,15 +50,26 @@ export function CenterModal({
 
   useEffect(() => {
     if (visible) {
-      if (shown.current) animateIn()
-      else { backdrop.setValue(0); card.setValue(0) }
-      setMounted(true)
+      if (shown.current) {
+        animateIn()
+        endClosing.current?.() // reopened mid-close — it's staying up
+        endClosing.current = null
+        setMounted(true)
+        return
+      }
+      backdrop.setValue(0); card.setValue(0)
+      // iOS can't present a Modal while another is still closing: wait for it.
+      return whenNoneClosing(() => setMounted(true))
     } else if (mounted) {
+      endClosing.current?.()
+      endClosing.current = beginClosing()
       Animated.parallel([
         Animated.timing(backdrop, { toValue: 0, duration: OUT_MS, easing: Easing.in(Easing.quad), useNativeDriver: true }),
         Animated.timing(card, { toValue: 0, duration: OUT_MS, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
       ]).start(({ finished }) => {
         if (finished) { shown.current = false; setMounted(false) }
+        endClosing.current?.()
+        endClosing.current = null
       })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

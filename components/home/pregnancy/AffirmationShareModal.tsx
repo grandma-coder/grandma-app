@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react'
+import { useQueuedModal } from '../../../lib/useQueuedModal'
 import {
   Modal,
   View,
@@ -59,6 +60,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
   const toast = useSavedToast()
   const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
+  const modalVisible = useQueuedModal(visible)
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
@@ -101,7 +103,7 @@ export function AffirmationShareModal({ visible, phrase, mode = 'pregnancy', onC
   }
 
   return (
-    <Modal visible={visible} presentationStyle="pageSheet" animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
+    <Modal visible={modalVisible} presentationStyle="pageSheet" animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <SafeAreaView style={[styles.container, { backgroundColor: paperBg }]} edges={['top']}>
 
         {diffuse ? (

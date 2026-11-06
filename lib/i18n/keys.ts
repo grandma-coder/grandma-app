@@ -6,6 +6,20 @@
 export interface TranslationKeys {
   // ─── Common ────────────────────────────────────────────────────────────
   common_cancel: string
+  feedback_row: string
+  feedback_title: string
+  feedback_intro: string
+  feedback_kindIdea: string
+  feedback_kindProblem: string
+  feedback_kindQuestion: string
+  feedback_placeholder: string
+  feedback_send: string
+  feedback_sentTitle: string
+  feedback_sentBody: string
+  feedback_rateLimited: string
+  rootError_title: string
+  rootError_body: string
+  rootError_retry: string
   common_save: string
   common_done: string
   common_delete: string

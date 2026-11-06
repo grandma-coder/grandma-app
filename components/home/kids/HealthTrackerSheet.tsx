@@ -12,6 +12,7 @@
  * Shell mirrors `HealthDetailModal` / `VaccineTrackerSheet`: DiffuseSheet under
  * `useIsDiffuse()`, else LogSheet (which supplies the cream paper-sheet chrome).
  */
+import { afterSheets } from '../../../lib/afterSheets'
 import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native'
 import { AlertCircle } from 'lucide-react-native'
 import { router } from 'expo-router'
@@ -154,7 +155,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
               </View>
             ))}
             <Pressable
-              onPress={() => { onClose(); router.push('/profile/kids') }}
+              onPress={() => { onClose(); afterSheets(() => router.push('/profile/kids')) }}
               style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: dCol.line2, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12, opacity: pressed ? 0.6 : 1 })}
             >
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>
@@ -214,7 +215,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
             />
           ))}
           <Pressable
-            onPress={() => { onClose(); router.push('/exams?behavior=kids') }}
+            onPress={() => { onClose(); afterSheets(() => router.push('/exams?behavior=kids')) }}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dCol.line2, paddingTop: 18, marginTop: 14, opacity: pressed ? 0.6 : 1 })}
           >
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: dCol.ink }}>{t(KIDS_HEALTH_EXAMS_SEE_ALL_KEY)}</Text>
@@ -391,7 +392,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
             </View>
           ))}
           <Pressable
-            onPress={() => { onClose(); router.push('/profile/kids') }}
+            onPress={() => { onClose(); afterSheets(() => router.push('/profile/kids')) }}
             style={{
               flexDirection: 'row', alignItems: 'center', gap: 6,
               paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5,
@@ -452,7 +453,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
           </View>
         ))}
         <Pressable
-          onPress={() => { onClose(); router.push('/exams?behavior=kids') }}
+          onPress={() => { onClose(); afterSheets(() => router.push('/exams?behavior=kids')) }}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, marginTop: 4, opacity: pressed ? 0.6 : 1 })}
         >
           <Text style={{ fontSize: 13, fontFamily: font.bodyBold, color: colors.text, textDecorationLine: 'underline' }}>{t(KIDS_HEALTH_EXAMS_SEE_ALL_KEY)}</Text>

@@ -9,6 +9,7 @@
  * trimester-aware tips. ScoreInfoModal explains how Wellbeing is computed.
  */
 
+import { afterSheets } from '../../lib/afterSheets'
 import { shortDayMonth } from '../../lib/timeFormat'
 import { router } from 'expo-router'
 import { dateLoc } from '../../lib/kpLocale'
@@ -2910,7 +2911,7 @@ function BirthDetail({ birthReady, weekNumber, trimester, accentColor, accentTin
                 onPress={() => {
                   // Close the sheet first so the next screen isn't hidden under the modal.
                   onClose()
-                  router.push(BIRTH_BUCKET_ROUTE[b.id] as never)
+                  afterSheets(() => router.push(BIRTH_BUCKET_ROUTE[b.id] as never))
                 }}
                 style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }, pressed && { opacity: 0.6 }]}
               >

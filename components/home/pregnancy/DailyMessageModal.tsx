@@ -1,4 +1,5 @@
 // components/home/pregnancy/DailyMessageModal.tsx
+import { useQueuedModal } from '../../../lib/useQueuedModal'
 import { useEffect, useState } from 'react'
 import { Modal, View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -28,6 +29,7 @@ export function DailyMessageModal({ visible, onClose }: Props) {
   const insets = useSafeAreaInsets()
   const theme = useTheme()
   const diffuse = useIsDiffuse()
+  const modalVisible = useQueuedModal(visible)
   const dt = useDiffuseTheme()
   // Under Diffuse the full-screen sheet must use the v3 cream (lighter) so it
   // matches every other sheet; otherwise it looked like a different tone.
@@ -80,7 +82,7 @@ export function DailyMessageModal({ visible, onClose }: Props) {
   const tone = getModeColorSoft(mode === 'pregnancy' ? 'pregnancy' : 'pre-pregnancy')
 
   return (
-    <Modal visible={visible} animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
+    <Modal visible={modalVisible} animationType={diffuse ? 'slide' : 'fade'} onRequestClose={onClose}>
       <View style={[styles.fill, { backgroundColor: colors.bg, paddingTop: insets.top + 12 }]}>
         {diffuse ? (
           <Pressable onPress={onClose} style={[styles.close, { borderColor: colors.border }]} hitSlop={12}>

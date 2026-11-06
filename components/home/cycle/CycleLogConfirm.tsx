@@ -15,6 +15,7 @@
  * Timeline ≈ 1.3s total, then onDone(). Honors reduce-motion (skips straight to
  * the DONE state and holds briefly).
  */
+import { useQueuedModal } from '../../../lib/useQueuedModal'
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, Modal, StyleSheet, AccessibilityInfo } from 'react-native'
 import Animated, {
@@ -52,6 +53,7 @@ const DONE_HOLD_MS = 680  // beat 2 — "updated" held before dismiss
 export function CycleLogConfirm({ visible, phase, onDone }: Props) {
   const { colors, font, isDark } = useTheme()
   const diffuse = useIsDiffuse()
+  const modalVisible = useQueuedModal(visible)
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
 
@@ -180,7 +182,7 @@ export function CycleLogConfirm({ visible, phase, onDone }: Props) {
   }))
 
   return (
-    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+    <Modal visible={modalVisible} transparent animationType="none" statusBarTranslucent>
       <Animated.View style={[StyleSheet.absoluteFill, styles.scrim, { backgroundColor: scrimColor }, scrimStyle]}>
         <View style={styles.center}>
           <View style={styles.circleStage}>

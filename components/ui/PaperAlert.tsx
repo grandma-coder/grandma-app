@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useQueuedModal } from '../../lib/useQueuedModal'
 import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTheme, radius, spacing, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { useModeStore } from '../../store/useModeStore'
@@ -33,6 +34,7 @@ function CurrentPaperAlert({
   onRequestClose,
 }: PaperAlertProps) {
   const { colors, font, stickers } = useTheme()
+  const modalVisible = useQueuedModal(visible)
   const fade = useRef(new Animated.Value(0)).current
   const scale = useRef(new Animated.Value(0.92)).current
 
@@ -55,7 +57,7 @@ function CurrentPaperAlert({
 
   return (
     <Modal
-      visible={visible}
+      visible={modalVisible}
       transparent
       animationType="none"
       statusBarTranslucent

@@ -13,6 +13,7 @@
  *  9. Ask Grandma passes full analytics context automatically
  */
 
+import { afterSheets } from '../../lib/afterSheets'
 import { shortDayMonth } from '../../lib/timeFormat'
 import { dateLoc } from '../../lib/kpLocale'
 import { fmt1 } from '../../lib/grandmaNotes/shared'
@@ -2178,10 +2179,10 @@ function GrandmaInsightCard({
   function handleConfirmYes() {
     const ctx = buildGrandmaContext(scores, analytics, childName, ageMonths, !diffuse)
     setConfirmOpen(false)
-    setTimeout(() => {
+    afterSheets(() => {
       AsyncStorage.setItem('grandma-insight-context', ctx).catch(() => {})
       router.push({ pathname: '/grandma-talk', params: { hasInsightContext: '1' } } as any)
-    }, 150)
+    })
   }
 
   if (diffuse) {

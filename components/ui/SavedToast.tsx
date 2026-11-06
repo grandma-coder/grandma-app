@@ -14,6 +14,7 @@
  *
  * The provider mounts once in _layout.tsx. Any screen can call `useSavedToast()`.
  */
+import { useQueuedModal } from '../../lib/useQueuedModal'
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { Modal, View, Pressable, StyleSheet, Animated, Easing, Dimensions } from 'react-native'
 import { useTheme, useDiffuseTheme } from '../../constants/theme'
@@ -89,6 +90,7 @@ function SavedToastOverlay({
 }) {
   const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
+  const modalVisible = useQueuedModal(visible)
   const dt = useDiffuseTheme()
   const autoMs = opts.autoDismiss ?? 2400
   const wantsButton = opts.showButton ?? autoMs === 0
@@ -121,7 +123,7 @@ function SavedToastOverlay({
   const muted = diffuse ? dt.colors.ink3 : colors.textMuted
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Animated.View
           pointerEvents="box-none"

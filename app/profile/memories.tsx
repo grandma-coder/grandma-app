@@ -6,6 +6,8 @@
  * long-press for edit/delete actions.
  */
 
+import { alertAfterSheets } from '../../lib/afterSheets'
+import { useQueuedModal } from '../../lib/useQueuedModal'
 import { useState, useCallback, useMemo } from 'react'
 import { healthLogText } from '../../lib/kidsHealthLogText'
 import {
@@ -130,6 +132,7 @@ export default function MemoriesScreen() {
 
   // Add sheet
   const [showAddSheet, setShowAddSheet] = useState(false)
+  const addSheetVisible = useQueuedModal(showAddSheet)
   const [pendingPhotos, setPendingPhotos] = useState<string[]>([])
   const [caption, setCaption] = useState('')
   const [selectedChild, setSelectedChild] = useState('')
@@ -286,7 +289,7 @@ export default function MemoriesScreen() {
 
       setShowAddSheet(false); setPendingPhotos([])
       await loadMemories()
-    } catch (e: any) { Alert.alert(t('common_error'), t('error_generic')) }
+    } catch (e: any) { alertAfterSheets(t('common_error'), t('error_generic')) }
     finally { setUploading(false) }
   }
 
@@ -627,7 +630,7 @@ export default function MemoriesScreen() {
       )}
 
       {/* ─── Add Memory Sheet ──────────────────────────────────────── */}
-      <Modal visible={showAddSheet} animationType={diffuse ? 'slide' : 'fade'} presentationStyle="pageSheet">
+      <Modal visible={addSheetVisible} animationType={diffuse ? 'slide' : 'fade'} presentationStyle="pageSheet">
         <View style={[styles.sheetRoot, { backgroundColor: diffuse ? dt.colors.bg : colors.bg }]}>
           <View style={[styles.sheetHeader, { paddingTop: insets.top + 8 }]}>
             {diffuse ? (

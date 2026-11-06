@@ -1,4 +1,5 @@
 // components/pregnancy/BirthGuideModal.tsx
+import { afterSheets } from '../../lib/afterSheets'
 import React, { useState } from 'react'
 import {
   View,
@@ -102,7 +103,7 @@ export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {
 
   const handleAskGrandma = () => {
     handleClose()
-    router.push('/grandma-talk')
+    afterSheets(() => router.push('/grandma-talk'))
   }
 
   // ── Diffuse render path — DiffuseSheet + field tiles + hairline rows ──

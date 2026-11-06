@@ -6,6 +6,7 @@
  * Activity: chronological log with filters
  */
 
+import { alertAfterSheets } from '../../lib/afterSheets'
 import { useState, useEffect, useCallback } from 'react'
 import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import {
@@ -1598,7 +1599,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
         Alert.alert(t('careCircle_seatsFullTitle'), t('careCircle_seatsFullBody'))
       } else if (msg.includes('seat_limit_exceeded')) {
         handleClose()
-        Alert.alert(
+        alertAfterSheets(
           t('app_cc_premiumTitle'),
           t('app_cc_premiumBody'),
           [

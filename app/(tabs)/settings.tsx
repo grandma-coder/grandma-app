@@ -7,6 +7,7 @@
  * Source: docs/Claude design studio/src/more-screens.jsx:5-86
  */
 
+import { FeedbackSheet } from '../../components/profile/FeedbackSheet'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   View,
@@ -75,6 +76,7 @@ export default function ProfileScreen() {
     : storedPregnancyWeek
 
   const [userName, setUserName] = useState<string | null>(null)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const parentName = useJourneyStore((s) => s.parentName)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null)
@@ -519,6 +521,11 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/profile/help')}
               />
               <SiteRow
+                sticker="bubble"
+                label={t('feedback_row')}
+                onPress={() => setFeedbackOpen(true)}
+              />
+              <SiteRow
                 sticker="doc"
                 label={t('profile_about')}
                 onPress={() => router.push('/profile/about')}
@@ -579,6 +586,11 @@ export default function ProfileScreen() {
         visible={showMemories}
         onClose={() => setShowMemories(false)}
       />
+      {/* Paper band under the status bar so scrolled rows never run beneath the clock. */}
+      {!diffuse && (
+        <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.bg }} />
+      )}
+      <FeedbackSheet visible={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </View>
   )
 }

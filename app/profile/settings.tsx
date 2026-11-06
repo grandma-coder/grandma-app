@@ -5,6 +5,7 @@
  * sticker-style unit toggles, no emoji-flag dependency for languages.
  */
 
+import { alertAfterSheets } from '../../lib/afterSheets'
 import { useState } from 'react'
 import {
   View, Text, Pressable, ScrollView, Switch, Alert, Modal, FlatList, StyleSheet,
@@ -72,7 +73,7 @@ export default function SettingsScreen() {
       setSignOutModalVisible(false)
       await signOut(global ? 'global' : 'local')
     } catch {
-      Alert.alert(t('common_error'), t('common_checkConnection'))
+      alertAfterSheets(t('common_error'), t('common_checkConnection'))
     } finally {
       setSigningOut(false)
     }

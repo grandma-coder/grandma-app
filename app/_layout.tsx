@@ -10,7 +10,9 @@
  * - Logged in, has enrolled behaviors or children → (tabs)
  */
 
+import '../lib/sentry' // first: crash reporting before anything else can throw
 import { AnimatedSplash } from '../components/ui/AnimatedSplash'
+import { RootErrorScreen } from '../components/ui/RootErrorScreen'
 import '../lib/fontDefaults' // first: default Hanken on StyleSheet text styles
 import { useCallback, useEffect, useState } from 'react'
 import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet } from 'react-native'
@@ -129,6 +131,11 @@ SplashScreen.setOptions({ duration: 260, fade: true })
 // spam production on every cold boot + auth event, so gate them behind __DEV__.
 // Genuine failures stay on console.warn/console.error (always visible).
 const authLog = (...args: unknown[]) => { if (__DEV__) console.log(...args) }
+
+/** Any render error below the root shows a calm "try again" screen instead of a blank app. */
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Promise<void> }) {
+  return <RootErrorScreen error={error} retry={retry} />
+}
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
