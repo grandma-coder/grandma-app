@@ -2,7 +2,8 @@
  * CycleJourneyRingFull — full-size cycle journey ring (home hero).
  *
  * Mirrors PregnancyJourneyRing UX:
- *   • 320px wheel, ring radius 128, anchor at 6 o'clock.
+ *   • 320px wheel, ring radius 128, anchor at 12 o'clock — clockwise, so the days after the
+ *     selected one run to the right, the same direction as the week strip below.
  *   • One sticker per day around the ring, sized + tinted by phase.
  *   • Smooth drag-with-momentum via tangent-projection PanResponder +
  *     withDecay, then snap to nearest day.
@@ -71,7 +72,11 @@ const SVG_SIZE = 260
 const CX = SVG_SIZE / 2
 const CY = SVG_SIZE / 2
 const RING_R = 104
-const ANCHOR_DEG = 90
+// Selected day sits at the top (screen angle -90° = 270°). At the bottom a clockwise ring runs
+// right-to-left, opposite to the week strip — the ring read "backwards".
+const ANCHOR_DEG = 270
+/** Ring rotation that puts day index 0 on the anchor (sticker angle = i/len·360 − 90 + rot). */
+const ANCHOR_ROT = ANCHOR_DEG + 90
 
 // ─── Phase helpers ──────────────────────────────────────────────────────────
 function getPhaseForDay(
@@ -323,7 +328,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
     [cycleDayToday, cycleLength, periodLength, lutealPhase],
   )
 
-  const initialRot = 180 - ((cycleDayToday - 1) / cycleLength) * 360
+  const initialRot = ANCHOR_ROT - ((cycleDayToday - 1) / cycleLength) * 360
   const rotationDeg = useSharedValue(initialRot)
   const dotsAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotationDeg.value}deg` }],
@@ -391,7 +396,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
   }
 
   const snapToDay = useCallback((d: number) => {
-    const target = 180 - ((d - 1) / cycleLength) * 360
+    const target = ANCHOR_ROT - ((d - 1) / cycleLength) * 360
     let diff = ((target - rotationDeg.value) % 360 + 360) % 360
     if (diff > 180) diff -= 360
     cancelAnimation(rotationDeg)
@@ -411,7 +416,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
     seededToday.current = cycleDayToday
     if (interactingRef.current) return
     cancelAnimation(rotationDeg)
-    rotationDeg.value = 180 - ((cycleDayToday - 1) / cycleLength) * 360
+    rotationDeg.value = ANCHOR_ROT - ((cycleDayToday - 1) / cycleLength) * 360
     setSelectedDay(cycleDayToday)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cycleDayToday, cycleLength])
@@ -532,7 +537,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
                 const d = norm > 180 ? 360 - norm : norm
                 if (d < bestDiff) { bestDiff = d; best = i }
               }
-              const target = 180 - (best / cycleLength) * 360
+              const target = ANCHOR_ROT - (best / cycleLength) * 360
               let diff = ((target - rotationDeg.value) % 360 + 360) % 360
               if (diff > 180) diff -= 360
               rotationDeg.value = withTiming(rotationDeg.value + diff, {
