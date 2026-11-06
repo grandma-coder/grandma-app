@@ -6145,4 +6145,6 @@ export const ko: TranslationKeys = {
   paywall_autoRenewLegal: "결제는 App Store 계정으로 청구됩니다. 현재 구독 기간이 끝나기 최소 24시간 전에 취소하지 않으면 구독이 자동으로 갱신됩니다.",
   kids_analytics_referenceVaccines: "참고 — 기록된 예방접종, 점수 없음",
   common_unit_h: "시간",
+  pregCal_logged_count_one: "{{count}} logged",
+  pregCal_pending_count_one: "{{count}} pending",
 }

@@ -6148,4 +6148,6 @@ export const ptBR: TranslationKeys = {
   paywall_autoRenewLegal: "O pagamento será cobrado na sua conta da App Store. A assinatura renova automaticamente, a menos que seja cancelada pelo menos 24 horas antes do fim do período atual.",
   kids_analytics_referenceVaccines: "Referência — vacinas registradas, sem pontuação",
   common_unit_h: "h",
+  pregCal_logged_count_one: "{{count}} registrado",
+  pregCal_pending_count_one: "{{count}} pendente",
 }

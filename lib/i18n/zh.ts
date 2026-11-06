@@ -6145,4 +6145,6 @@ export const zh: TranslationKeys = {
   paywall_autoRenewLegal: "费用将从你的 App Store 账户扣除。除非在当前订阅周期结束前至少24小时取消，否则订阅将自动续订。",
   kids_analytics_referenceVaccines: "参考 — 已记录的疫苗，不计分",
   common_unit_h: "小时",
+  pregCal_logged_count_one: "{{count}} logged",
+  pregCal_pending_count_one: "{{count}} pending",
 }

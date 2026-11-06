@@ -6145,4 +6145,6 @@ export const ja: TranslationKeys = {
   paywall_autoRenewLegal: "お支払いはApp Storeアカウントに請求されます。現在の期間が終了する24時間前までにキャンセルしない限り、サブスクリプションは自動的に更新されます。",
   kids_analytics_referenceVaccines: "参考 — 記録済みの予防接種（採点なし）",
   common_unit_h: "時間",
+  pregCal_logged_count_one: "{{count}} logged",
+  pregCal_pending_count_one: "{{count}} pending",
 }

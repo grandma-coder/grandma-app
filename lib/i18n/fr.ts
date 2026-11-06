@@ -6145,4 +6145,6 @@ export const fr: TranslationKeys = {
   paywall_autoRenewLegal: "Le paiement sera débité de votre compte App Store. L'abonnement se renouvelle automatiquement, sauf annulation au moins 24 heures avant la fin de la période en cours.",
   kids_analytics_referenceVaccines: "Référence — vaccins enregistrés, sans note",
   common_unit_h: "h",
+  pregCal_logged_count_one: "{{count}} logged",
+  pregCal_pending_count_one: "{{count}} pending",
 }

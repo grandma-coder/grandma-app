@@ -6145,4 +6145,6 @@ export const de: TranslationKeys = {
   paywall_autoRenewLegal: "Die Zahlung wird deinem App-Store-Konto belastet. Das Abonnement verlängert sich automatisch, sofern es nicht mindestens 24 Stunden vor Ende des aktuellen Zeitraums gekündigt wird.",
   kids_analytics_referenceVaccines: "Referenz — erfasste Impfungen, ohne Bewertung",
   common_unit_h: "Std.",
+  pregCal_logged_count_one: "{{count}} logged",
+  pregCal_pending_count_one: "{{count}} pending",
 }

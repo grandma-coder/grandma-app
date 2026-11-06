@@ -127,7 +127,9 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
   const fruitName = (language === 'en' ? data.babySize : t(sizeKey)).toLowerCase()
   const article = language === 'en' ? articleFor(fruitName) : ''
   const weightStr = formatWeight(stat.g)
-  const lengthStr = `${cm}cm`
+  // Display only — decimal separator in the app language (48,6 in pt/es).
+  const cmLabel = cm.toLocaleString(dateLoc(), { maximumFractionDigits: 1, useGrouping: false })
+  const lengthStr = `${cmLabel}cm`
 
   // Computed stage column width for the illustration sizing (roughly half the card minus gutters)
   const stageColWidth = (width - 56) / 2 - 12
@@ -177,7 +179,7 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
               <View style={[dstyles.statCell, { borderTopColor: hairline }]}>
                 <Text style={[dstyles.statLabel, { color: ink3 }]}>{t('preg_ring_length')}</Text>
                 <Text style={[dstyles.statValue, { color: ink }]}>
-                  {cm}
+                  {cmLabel}
                   <Text style={[dstyles.statUnit, { color: ink2 }]}>{' ' + t('preg_weekCard_unitCm')}</Text>
                 </Text>
               </View>
@@ -259,7 +261,7 @@ export function WeekCard({ week, daysLabel, onPress, width }: WeekCardProps) {
           <View style={[styles.statCell, { borderTopColor: statBorder }]}>
             <Text style={[styles.statLabel, { color: pal.fg }]}>{t('preg_ring_length')}</Text>
             <Text style={[styles.statValue, { color: pal.fg }]}>
-              {cm}
+              {cmLabel}
               <Text style={[styles.statUnit, { color: pal.fg }]}>{t('preg_weekCard_unitCm')}</Text>
             </Text>
           </View>

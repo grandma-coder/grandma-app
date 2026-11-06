@@ -2593,8 +2593,8 @@ export function PregnancyCalendar() {
     const selDow = new Date(selectedDate + 'T12:00:00').getDay()
     const dayLabel = formatDayLabel(selectedDate, todayStr)
     const summary = [
-      selPending.length > 0 && tNow('pregCal_pending_count', { count: selPending.length }),
-      selLogs.length > 0 && tNow('pregCal_logged_count', { count: selLogs.length }),
+      selPending.length > 0 && tNow(selPending.length === 1 ? 'pregCal_pending_count_one' : 'pregCal_pending_count', { count: selPending.length }),
+      selLogs.length > 0 && tNow(selLogs.length === 1 ? 'pregCal_logged_count_one' : 'pregCal_logged_count', { count: selLogs.length }),
     ].filter(Boolean).join(' · ') || (dayLoading ? '' : tNow('kp_pc_nothingPlanned'))
 
     interface Row {

@@ -3437,6 +3437,8 @@ export const en: TranslationKeys = {
   pregCal_now: 'Now',
   pregCal_logged: 'Logged',
   pregCal_logged_count: '{{count}} logged',
+  pregCal_logged_count_one: '{{count}} logged',
+  pregCal_pending_count_one: '{{count}} pending',
   pregCal_date_at_time: '{{date}} at {{time}}',
   pregCal_no_logs_day: 'No logs for this day',
   pregCal_nothing_planned: 'Nothing planned for this day.',

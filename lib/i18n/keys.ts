@@ -3434,6 +3434,8 @@ export interface TranslationKeys {
   pregCal_now: string
   pregCal_logged: string
   pregCal_logged_count: string
+  pregCal_logged_count_one: string
+  pregCal_pending_count_one: string
   pregCal_date_at_time: string
   pregCal_no_logs_day: string
   pregCal_nothing_planned: string

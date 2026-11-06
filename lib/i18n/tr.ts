@@ -6145,4 +6145,6 @@ export const tr: TranslationKeys = {
   paywall_autoRenewLegal: "Ödeme App Store hesabından tahsil edilecektir. Abonelik, mevcut dönemin bitiminden en az 24 saat önce iptal edilmezse otomatik olarak yenilenir.",
   kids_analytics_referenceVaccines: "Referans — kayıtlı aşılar, puanlanmaz",
   common_unit_h: "sa",
+  pregCal_logged_count_one: "{{count}} logged",
+  pregCal_pending_count_one: "{{count}} pending",
 }

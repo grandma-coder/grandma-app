@@ -6145,4 +6145,6 @@ export const hi: TranslationKeys = {
   paywall_autoRenewLegal: "भुगतान आपके App Store खाते से लिया जाएगा। मौजूदा अवधि समाप्त होने से कम से कम 24 घंटे पहले रद्द न करने पर सदस्यता अपने-आप नवीनीकृत हो जाएगी।",
   kids_analytics_referenceVaccines: "संदर्भ — दर्ज टीके, कोई स्कोर नहीं",
   common_unit_h: "घं",
+  pregCal_logged_count_one: "{{count}} logged",
+  pregCal_pending_count_one: "{{count}} pending",
 }

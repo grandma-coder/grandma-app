@@ -6145,4 +6145,6 @@ export const ar: TranslationKeys = {
   paywall_autoRenewLegal: "سيتم خصم المبلغ من حسابك في App Store. يتجدد الاشتراك تلقائيًا ما لم يتم إلغاؤه قبل 24 ساعة على الأقل من نهاية الفترة الحالية.",
   kids_analytics_referenceVaccines: "مرجع — اللقاحات المسجّلة، دون تقييم",
   common_unit_h: "س",
+  pregCal_logged_count_one: "{{count}} logged",
+  pregCal_pending_count_one: "{{count}} pending",
 }
