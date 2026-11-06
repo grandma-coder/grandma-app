@@ -9,6 +9,7 @@
  * Reduce Motion: fades only.
  */
 
+import { beginClosing, whenNoneClosing } from '../../lib/modalQueue'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import {
   Animated, Easing, Modal, PanResponder, Pressable, StyleSheet, View, KeyboardAvoidingView, Platform,
@@ -43,6 +44,9 @@ export function SheetModal({ visible, onClose, children, backdropColor = BACKDRO
   const shown = useRef(false)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
+  const endClosing = useRef<(() => void) | null>(null)
+  // Unmounting mid-close must not leave the queue waiting.
+  useEffect(() => () => { endClosing.current?.() }, [])
 
   useEffect(() => {
     if (visible) {
@@ -53,17 +57,26 @@ export function SheetModal({ visible, onClose, children, backdropColor = BACKDRO
         // Reopened while the Modal is still presented (e.g. during the close animation): onShow
         // won't fire again, so ease back in from wherever it is.
         animateIn()
-      } else {
-        offset.setValue(reduce ? 0 : screenH * 0.6)
-        backdrop.setValue(0)
+        endClosing.current?.() // it's staying up — no longer closing
+        endClosing.current = null
+        setMounted(true)
+        return
       }
-      setMounted(true)
+      offset.setValue(reduce ? 0 : screenH * 0.6)
+      backdrop.setValue(0)
+      // iOS can't present this Modal while another sheet's Modal is still closing (picker → form
+      // hand-off): wait for it, or the form never shows and can leave touches blocked.
+      return whenNoneClosing(() => setMounted(true))
     } else if (mounted) {
+      endClosing.current?.()
+      endClosing.current = beginClosing()
       Animated.parallel([
         Animated.timing(backdrop, { toValue: 0, duration: OUT_MS, easing: Easing.in(Easing.quad), useNativeDriver: true }),
         Animated.timing(offset, { toValue: reduce ? 0 : screenH * 0.6, duration: reduce ? 0 : OUT_MS, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
       ]).start(({ finished }) => {
         if (finished) { shown.current = false; setMounted(false) }
+        endClosing.current?.()
+        endClosing.current = null
       })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
