@@ -22,7 +22,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F3ECD9"
+        "backgroundColor": "#F3F0E8"
       },
       "package": "com.grandmacoder.grandmaapp",
       "versionCode": 4
