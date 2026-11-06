@@ -165,8 +165,10 @@ const SITE_FOR_BLOB: Partial<Record<CharacterName, SiteStickerName>> = {
 }
 // Option ids that deserve their own sticker (so a list of one concept doesn't repeat one icon).
 const ID_STICKER: Record<string, SiteStickerName> = {
-  class: 'brain', school: 'backpack', study: 'pencil', reading: 'books', sport: 'shoe', swim: 'drop',
-  dance: 'star', music: 'bell', art: 'flower', playground: 'stroller', walk: 'leaf', therapy: 'heart', playdate: 'baby2',
+  // Kids activities — never reuse a sticker that means something else in the app (the red drop is
+  // a period, the leaf the end of a period, the brain the pillars).
+  class: 'owl', school: 'backpack', study: 'pencil', reading: 'books', sport: 'shoe', swim: 'sun',
+  dance: 'star', music: 'bell', art: 'flower', playground: 'stroller', walk: 'foot', therapy: 'heart', playdate: 'baby2',
   pee: 'pee', poop: 'poop', mixed: 'diaper',
 }
 const FACE_STICKER: Record<string, SiteStickerName> = {
