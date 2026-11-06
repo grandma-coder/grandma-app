@@ -6425,4 +6425,26 @@ export interface TranslationKeys {
   aboutYou_nameHint: string
   garage_create_safetyBody: string
   channelCreate_nameTaken: string
+  garage_cond_new: string
+  garage_cond_likeNew: string
+  garage_cond_good: string
+  garage_cond_fair: string
+  garage_cond_wellLoved: string
+  garage_size_preemie: string
+  garage_size_newborn: string
+  garage_size_oneSize: string
+  garage_size_adjustable: string
+  essentials_title: string
+  essentials_loading: string
+  essentials_cardTitle: string
+  essentials_allergy: string
+  essentials_bloodType: string
+  essentials_conditions: string
+  essentials_medications: string
+  caregiverHome_emptyBody: string
+  kids_nannyNotes_emptyDesc: string
+  app_journey_add: string
+  paywall_autoRenewLegal: string
+  kids_analytics_referenceVaccines: string
+  common_unit_h: string
 }

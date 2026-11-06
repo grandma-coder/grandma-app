@@ -73,8 +73,7 @@ export function CaregiverHome() {
                 diffuse && { fontFamily: diffuseFont.body, color: dt.colors.ink3 },
               ]}
             >
-              You're not linked to a child yet. Ask the parent to add you to their
-              care circle, or check that your invite was accepted.
+              {t('caregiverHome_emptyBody')}
             </Text>
           </View>
         </Shell>

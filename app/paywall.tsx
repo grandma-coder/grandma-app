@@ -617,7 +617,7 @@ export default function Paywall() {
           color={diffuse ? dt.colors.ink4 : colors.textMuted}
           style={{ marginTop: 16, lineHeight: 16, paddingHorizontal: 12, fontFamily: diffuse ? diffuseFont.body : undefined }}
         >
-          Payment will be charged to your App Store account. Subscription auto-renews unless cancelled 24 hours before the end of the current period.
+          {t('paywall_autoRenewLegal')}
         </Body>
       </ScrollView>
       <PaperAlert

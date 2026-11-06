@@ -11,6 +11,9 @@
  * mode via getModeColor. Dialogs use PaperAlert, not native Alert.
  */
 
+import { villageCategoryLabel } from '../../components/connections/communityLabels'
+import type { TranslationKeys } from '../../lib/i18n/keys'
+type TranslationKey = keyof TranslationKeys
 import { useState, useRef } from 'react'
 import {
   View,
@@ -77,6 +80,19 @@ const AGE_GROUPS = [
 ]
 
 // Display label for a stored age-group value ('0–3 months', '12+ years', 'All ages').
+const CONDITION_KEYS: Record<string, TranslationKey> = {
+  New: 'garage_cond_new', 'Like New': 'garage_cond_likeNew', Good: 'garage_cond_good', Fair: 'garage_cond_fair', 'Well Loved': 'garage_cond_wellLoved',
+}
+const SIZE_KEYS: Record<string, TranslationKey> = {
+  Preemie: 'garage_size_preemie', 'Newborn (NB)': 'garage_size_newborn', 'One Size': 'garage_size_oneSize', Adjustable: 'garage_size_adjustable',
+}
+/** Stored values stay English ids; labels follow the app language. */
+function conditionLabel(c: string): string { return CONDITION_KEYS[c] ? t(CONDITION_KEYS[c]) : c }
+function sizeLabel(sz: string): string {
+  if (SIZE_KEYS[sz]) return t(SIZE_KEYS[sz])
+  return /^(\S+) (months|years)$/.test(sz) ? ageLabel(sz) : sz // letter sizes (S (6), 2T) read the same everywhere
+}
+
 function ageLabel(label: string): string {
   const m = /^(\S+) (months|years)$/.exec(label)
   if (m) return t(m[2] === 'months' ? 'sw4_ageMonths' : 'sw4_ageYears', { range: m[1] })
@@ -664,7 +680,7 @@ function Step3Category({
               <SiteChoice
                 key={c}
                 style={{ width: '48%' }}
-                label={c}
+                label={villageCategoryLabel(c)}
                 sticker={CATEGORY_STICKER[c]}
                 tone={getModeColorSoft(mode, isDark)}
                 align="start"
@@ -684,7 +700,7 @@ function Step3Category({
               }]}
             >
               {isActive && <Check size={16} color={accent} strokeWidth={3} />}
-              <Text style={[s.categoryChipText, { color: isActive ? dt.colors.ink : dt.colors.ink3, fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 12 }]}>{c}</Text>
+              <Text style={[s.categoryChipText, { color: isActive ? dt.colors.ink : dt.colors.ink3, fontFamily: isActive ? diffuseFont.monoBold : diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.2, fontSize: 12 }]}>{villageCategoryLabel(c)}</Text>
             </Pressable>
           )
         })}
@@ -767,10 +783,10 @@ function Step4Details({
                 onPress={() => onConditionChange(c)}
                 style={[s.pillChip, pillStyle(isActive)]}
               >
-                <Text style={[s.pillChipText, pillTextStyle(isActive)]}>{c}</Text>
+                <Text style={[s.pillChipText, pillTextStyle(isActive)]}>{conditionLabel(c)}</Text>
               </Pressable>
             ) : (
-              <SiteChoice key={c} compact tick={false} label={c} tone={tone} selected={isActive} onPress={() => onConditionChange(c)} />
+              <SiteChoice key={c} compact tick={false} label={conditionLabel(c)} tone={tone} selected={isActive} onPress={() => onConditionChange(c)} />
             )
           )
         })}
@@ -819,10 +835,10 @@ function Step4Details({
                     onPress={() => onSizeChange(isActive ? null : sz)}
                     style={[s.pillChip, pillStyle(isActive)]}
                   >
-                    <Text style={[s.pillChipText, pillTextStyle(isActive)]}>{sz}</Text>
+                    <Text style={[s.pillChipText, pillTextStyle(isActive)]}>{sizeLabel(sz)}</Text>
                   </Pressable>
                 ) : (
-                  <SiteChoice key={sz} compact tick={false} label={sz} tone={tone} selected={isActive} onPress={() => onSizeChange(isActive ? null : sz)} />
+                  <SiteChoice key={sz} compact tick={false} label={sizeLabel(sz)} tone={tone} selected={isActive} onPress={() => onSizeChange(isActive ? null : sz)} />
                 )
               )
             })}

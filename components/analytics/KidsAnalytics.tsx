@@ -3204,7 +3204,7 @@ function PillarDetailModal({
         />
         {pillarKey === 'health' ? (
           <Text style={[styles.siteEyebrow, { color: colors.textSecondary, marginBottom: 0 }]}>
-            Reference — vaccines on record, not scored
+            {t('kids_analytics_referenceVaccines')}
           </Text>
         ) : lightStat ? (
           // Neutral count/average — never a `/10` grade or label.

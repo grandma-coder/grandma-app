@@ -18,6 +18,7 @@ import { Text, StyleSheet } from 'react-native'
 import { useTheme, font, radius } from '../../constants/theme'
 import { PaperCard } from '../ui/PaperCard'
 import { useChildStore } from '../../store/useChildStore'
+import { useTranslation } from '../../lib/i18n'
 
 interface Props {
   // Kept for call-site compatibility (KidsHome/PregnancyHome/CycleHome) and the
@@ -31,14 +32,15 @@ interface Props {
 
 export function EssentialsWalletCard({ childId: _childId, ownerUserId: _ownerUserId, showFull, pinned }: Props) {
   const { colors } = useTheme()
+  const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const child = useChildStore((s) => s.activeChild)
 
   if (!child) {
     return (
       <PaperCard radius={radius.lg} padding={16} style={pinned ? styles.pinned : undefined}>
-        <Text style={styles.label}>ESSENTIALS</Text>
-        <Text style={styles.line}>Loading…</Text>
+        <Text style={styles.label}>{t('essentials_title').toUpperCase()}</Text>
+        <Text style={styles.line}>{t('essentials_loading')}</Text>
       </PaperCard>
     )
   }
@@ -49,9 +51,9 @@ export function EssentialsWalletCard({ childId: _childId, ownerUserId: _ownerUse
 
   return (
     <PaperCard radius={radius.lg} padding={16} style={pinned ? styles.pinned : undefined}>
-      <Text style={styles.label}>{child.name.toUpperCase()}'S CARD</Text>
+      <Text style={styles.label}>{t('essentials_cardTitle', { name: child.name }).toUpperCase()}</Text>
       {allergies.length > 0 && (
-        <Text style={styles.line}>⚠️ Allergy: {allergies.join(', ')}</Text>
+        <Text style={styles.line}>⚠️ {t('essentials_allergy', { list: allergies.join(', ') })}</Text>
       )}
       {child.pediatrician?.name && (
         <Text style={styles.line}>🩺 {child.pediatrician.name}{child.pediatrician.phone ? ` — ${child.pediatrician.phone}` : ''}</Text>
@@ -59,13 +61,13 @@ export function EssentialsWalletCard({ childId: _childId, ownerUserId: _ownerUse
       {/* Full form (emergency-granted): extra fields the RPC also masks for
           non-emergency caregivers, so they degrade to nothing on their own. */}
       {showFull && child.bloodType && (
-        <Text style={styles.line}>🩸 Blood type: {child.bloodType}</Text>
+        <Text style={styles.line}>🩸 {t('essentials_bloodType', { value: child.bloodType })}</Text>
       )}
       {showFull && conditions.length > 0 && (
-        <Text style={styles.line}>📋 Conditions: {conditions.join(', ')}</Text>
+        <Text style={styles.line}>📋 {t('essentials_conditions', { list: conditions.join(', ') })}</Text>
       )}
       {showFull && medications.length > 0 && (
-        <Text style={styles.line}>💊 Medications: {medications.join(', ')}</Text>
+        <Text style={styles.line}>💊 {t('essentials_medications', { list: medications.join(', ') })}</Text>
       )}
       {/* TODO(caregiver): emergency_contacts/insurance need a caregiver-read RLS
           migration before they can show here — no caregiver-safe source today. */}

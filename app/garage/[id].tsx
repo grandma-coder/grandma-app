@@ -5,6 +5,7 @@
  * display + DM Sans body. All like/save/comment/@mention/share logic unchanged.
  */
 
+import { villageCategoryLabel } from '../../components/connections/communityLabels'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
@@ -257,7 +258,7 @@ export default function PostDetail() {
                 <Text style={[styles.categoryText, diffuse
                   ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.4 }
                   : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.4 }]}>
-                  {post.category}
+                  {villageCategoryLabel(post.category)}
                 </Text>
               )}
             </View>

@@ -181,7 +181,7 @@ export function HomeJourneySwitcher() {
                       ? <Text style={[styles.tag, { color: accent, fontFamily: diffuseFont.mono }]}>ACTIVE</Text>
                       : <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' }}><Check size={13} color={colors.surface} strokeWidth={3} /></View>
                   ) : !isEnrolled ? (
-                    <Text style={[styles.tag, { color: diffuse ? inkMuted : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>+ ADD</Text>
+                    <Text style={[styles.tag, { color: diffuse ? inkMuted : colors.text, fontFamily: diffuse ? diffuseFont.mono : font.bodyBold }]}>{t('app_journey_add').toUpperCase()}</Text>
                   ) : null}
                 </Pressable>
               )

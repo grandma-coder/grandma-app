@@ -209,7 +209,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           {hasSleep ? (
             <Text style={styles.numRow}>
               <CountUp value={sleepVal} decimals={1} style={numStyle} />
-              <Text style={unitStyle}> h</Text>
+              <Text style={unitStyle}> {t('common_unit_h')}</Text>
             </Text>
           ) : <Text style={emptyStyle}>{t('kids_home_tile_tap_to_log')}</Text>}
           <Text style={subStyle} numberOfLines={1}>
@@ -249,7 +249,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           {hasFood ? (
             <Text style={styles.numRow}>
               <CountUp value={foodVal} decimals={liquid && multi ? 1 : 0} style={numStyle} />
-              {!liquid ? <Text style={unitStyle}> kcal</Text> : null}
+              {!liquid ? <Text style={unitStyle}> {t('common_kcal')}</Text> : null}
             </Text>
           ) : <Text style={emptyStyle}>{t('kids_home_tile_tap_to_log')}</Text>}
           <Text style={subStyle} numberOfLines={1}>

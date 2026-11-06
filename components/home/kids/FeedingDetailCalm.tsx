@@ -218,7 +218,7 @@ export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
           <Text style={eyebrow}>{oneDay ? t('feedCalm_solids') : t('feedCalm_solidsPerDay')}</Text>
           <View style={styles.heroRow}>
             <Text style={[styles.solidHero, { color: ink, fontFamily: font.displayBold }]} testID="solids-hero">
-              {Math.round(kcal / days).toLocaleString(dateLoc())} kcal
+              {Math.round(kcal / days).toLocaleString(dateLoc())}{` ${t('common_kcal')}`}
             </Text>
             {kcalGoal > 0 ? (
               <Text style={[styles.heroSub, { color: ink2, fontFamily: font.body }]}>
@@ -241,7 +241,7 @@ export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
                       <View style={styles.rowBetween}>
                         <Text style={[styles.line, { color: ink, fontFamily: font.bodySemiBold, textTransform: 'capitalize' }]}>{c.label}</Text>
                         <Text style={[styles.line, { color: ink, fontFamily: font.bodyBold }]}>
-                          {perDay.toLocaleString(dateLoc())} kcal
+                          {perDay.toLocaleString(dateLoc())}{` ${t('common_kcal')}`}
                           <Text style={{ color: ink2, fontFamily: font.body }}>{`  ${share}%`}</Text>
                         </Text>
                       </View>

@@ -707,7 +707,7 @@ function SwipeCard({
           <Text style={[styles.catChipText, diffuse
             ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, textTransform: 'uppercase', letterSpacing: 1.4 }
             : { color: colors.text, fontFamily: font.bodyBold }]}>
-            {post.category}
+            {villageCategoryLabel(post.category)}
           </Text>
         </View>
       )}

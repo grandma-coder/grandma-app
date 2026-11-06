@@ -78,7 +78,7 @@ export function NotesPanel({ notes, onAddNote }: NotesPanelProps) {
           <Ionicons name="document-text-outline" size={40} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>{t('kids_nannyNotes_emptyTitle')}</Text>
           <Text style={styles.emptyDesc}>
-            Add notes about food, vaccines, activities, health, or reminders. All caregivers can see and contribute.
+            {t('kids_nannyNotes_emptyDesc')}
           </Text>
         </View>
       ) : (
