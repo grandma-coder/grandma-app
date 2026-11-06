@@ -51,7 +51,15 @@ function Tile({ tile, index }: { tile: StickerTile; index: number }) {
             <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
               <SiteSticker name={tile.sticker} size={38} cut />
             </Animated.View>
-            <Text style={[styles.label, { color: ink, fontFamily: font.display }]} numberOfLines={2}>{tile.label}</Text>
+            <Text
+              style={[styles.label, { color: ink, fontFamily: font.display }]}
+              // One long word ("RECORDATORIOS") shrinks on one line instead of breaking mid-word.
+              numberOfLines={/\s/.test(tile.label.trim()) ? 2 : 1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
+              {tile.label}
+            </Text>
           </View>
         </Animated.View>
       </Pressable>

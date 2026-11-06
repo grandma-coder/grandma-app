@@ -6147,4 +6147,6 @@ export const ja: TranslationKeys = {
   common_unit_h: "時間",
   pregCal_logged_count_one: "{{count}} logged",
   pregCal_pending_count_one: "{{count}} pending",
+  meno_an_day_one: "day",
+  meno_an_day_other: "days",
 }

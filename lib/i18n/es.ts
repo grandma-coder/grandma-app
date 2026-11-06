@@ -6150,4 +6150,6 @@ export const es: TranslationKeys = {
   common_unit_h: "h",
   pregCal_logged_count_one: "{{count}} registrado",
   pregCal_pending_count_one: "{{count}} pendiente",
+  meno_an_day_one: "día",
+  meno_an_day_other: "días",
 }

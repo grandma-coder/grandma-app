@@ -4322,6 +4322,8 @@ export const en: TranslationKeys = {
   meno_an_log_last: "log your last period",
   meno_an_month_one: "month",
   meno_an_month_other: "months",
+  meno_an_day_one: 'day',
+  meno_an_day_other: 'days',
   meno_an_milestone: "Twelve months is a natural milestone — a good one to talk through with your clinician.",
   meno_an_empty_title: "No patterns yet",
   meno_an_empty_body: "Log a few symptoms and your hot-flash rhythm, top symptoms, and sleep & mood trends will show up here.",

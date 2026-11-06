@@ -6150,4 +6150,6 @@ export const ptBR: TranslationKeys = {
   common_unit_h: "h",
   pregCal_logged_count_one: "{{count}} registrado",
   pregCal_pending_count_one: "{{count}} pendente",
+  meno_an_day_one: "dia",
+  meno_an_day_other: "dias",
 }

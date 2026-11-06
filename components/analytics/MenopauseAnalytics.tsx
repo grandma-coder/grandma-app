@@ -106,6 +106,9 @@ export function MenopauseAnalytics() {
   const hasData = rows.length > 0
   const vasoTotal = vaso.reduce((a, d) => a + d.count, 0)
   const months = monthsSinceDate(lastPeriodDate, new Date())
+  const daysSince = lastPeriodDate
+    ? Math.max(0, Math.round((new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() - parseLocalDate(lastPeriodDate).getTime()) / 86400000))
+    : null
 
   const stageWord = stage ? t(`report_meno_stage_${stage}` as const) : t('meno_an_your_patterns')
   const heroLine =
@@ -134,7 +137,7 @@ export function MenopauseAnalytics() {
           <GrandmaNotesTitle />
           <GrandmaNote letter={notesLetter} loading={logsLoading || !hydrated} />
           <NotesDetailsEyebrow />
-          {stage === 'peri' && <SiteMonths months={months} palette={palette} />}
+          {stage === 'peri' && <SiteMonths months={months} days={daysSince} palette={palette} />}
           {logsLoading ? (
             // First load of the logs: ghost chart + symptom rows, not the empty state.
             <View style={{ marginHorizontal: 24, marginTop: 18, gap: 28 }}>
@@ -588,7 +591,7 @@ function SiteHero({ stageWord, heroLine }: { stageWord: string; heroLine: string
 }
 
 /** Months since last period: one big number + 12 thin ink-outlined segments. */
-function SiteMonths({ months, palette }: { months: number | null; palette: MenoPalette }) {
+function SiteMonths({ months, days, palette }: { months: number | null; days: number | null; palette: MenoPalette }) {
   const { t } = useTranslation()
   const { colors, font } = useTheme()
   const filled = months == null ? 0 : Math.min(months, MONTH_PIPS)
@@ -596,7 +599,12 @@ function SiteMonths({ months, palette }: { months: number | null; palette: MenoP
     <SiteSection eyebrow={t('meno_an_since_title')}>
       <View style={siteStyles.bigRow}>
         <SiteSticker name="cal" size={40} />
-        <SiteBigNumber value={months == null ? '—' : String(months)} unit={months == null ? t('meno_an_log_last') : t(months === 1 ? 'meno_an_month_one' : 'meno_an_month_other')} />
+        {/* Under a month, count days — same as the home ring ("18 days", not "0 months"). */}
+        {months === 0 && days != null ? (
+          <SiteBigNumber value={String(days)} unit={t(days === 1 ? 'meno_an_day_one' : 'meno_an_day_other')} />
+        ) : (
+          <SiteBigNumber value={months == null ? '—' : String(months)} unit={months == null ? t('meno_an_log_last') : t(months === 1 ? 'meno_an_month_one' : 'meno_an_month_other')} />
+        )}
       </View>
       <View style={siteStyles.pipRow}>
         {Array.from({ length: MONTH_PIPS }, (_, i) => (

@@ -6147,4 +6147,6 @@ export const tr: TranslationKeys = {
   common_unit_h: "sa",
   pregCal_logged_count_one: "{{count}} logged",
   pregCal_pending_count_one: "{{count}} pending",
+  meno_an_day_one: "day",
+  meno_an_day_other: "days",
 }

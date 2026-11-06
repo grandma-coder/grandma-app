@@ -4323,6 +4323,8 @@ export interface TranslationKeys {
   meno_an_log_last: string
   meno_an_month_one: string
   meno_an_month_other: string
+  meno_an_day_one: string
+  meno_an_day_other: string
   meno_an_milestone: string
   meno_an_empty_title: string
   meno_an_empty_body: string
