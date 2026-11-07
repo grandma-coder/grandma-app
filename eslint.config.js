@@ -16,6 +16,9 @@ module.exports = [
   {
     ignores: [
       'node_modules/**',
+      // the web apps live in their own folders with their own lint setup
+      'site/**',
+      'admin/**',
       '.expo/**',
       '.agents/**',
       '.claude/**',

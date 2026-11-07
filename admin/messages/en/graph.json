@@ -1,0 +1,63 @@
+{
+  "noAccess": "No access.",
+  "eyebrow": "Relationships",
+  "adminOnly": {
+    "title": "Admin only",
+    "body": "The relationship graph exposes a user's full network, so it's restricted to the admin role."
+  },
+  "title": "Relationship explorer",
+  "intro": "The whole user network — linked by care-circle and shared channels, colored by behavior, sized by connections. Search or click a node for details, or switch to <b>One User</b> to map a single person's world.",
+  "kind": {
+    "user": "User",
+    "child": "Child",
+    "caregiver": "Caregiver",
+    "owner": "Circle owner",
+    "behavior": "Behavior",
+    "subscription": "Subscription",
+    "community": "Community"
+  },
+  "behavior": {
+    "pre_pregnancy": "Pre-pregnancy",
+    "pregnancy": "Pregnancy",
+    "kids": "Kids",
+    "none": "No behavior"
+  },
+  "mode": {
+    "ego": "One User",
+    "population": "All Users"
+  },
+  "hint3d": "drag to orbit · scroll to zoom · click a node to open it",
+  "buildingPopulation": "Building the population graph…",
+  "ego": {
+    "searchPlaceholder": "Search a user by email or name…",
+    "pickPrompt": "Search and pick a user above to render their relationship graph.",
+    "building": "Building graph for {label}…",
+    "empty": "This user has no children, care-circle, behaviors, or community activity yet.",
+    "legend": "Legend",
+    "clickToInspect": "Click a node to inspect it.",
+    "openInConsole": "open in console →"
+  },
+  "search": {
+    "placeholder": "Find a person in the graph…"
+  },
+  "population": {
+    "emptyTitle": "No connections yet",
+    "emptyBody": "The population graph links users who share a care-circle or a channel. With <b>{count}</b> {count, plural, one {user} other {users}} and no cross-links yet, there's no network to draw — it fills in as your user base grows and connects.",
+    "exploreOne": "Explore one user's graph instead →",
+    "showing": "Showing <b>{shown}</b> of <b>{total}</b>",
+    "capped": "capped",
+    "fitView": "fit view",
+    "tooltip": "{degree, plural, one {# connection} other {# connections}} · {tier} · {behavior}",
+    "help2d": "<b>Search</b> or <b>click</b> a node to open its details · <b>hover</b> to spotlight connections · <b>scroll</b> to zoom · <b>drag</b> to pan or move a node. Node size = connections; purple edges = care-circle, grey = shared channels.",
+    "help3d": "<b>Search</b> or <b>click</b> a node to open its details · <b>drag</b> to orbit · <b>scroll</b> to zoom. Node size = connections; purple links = care-circle, grey = shared channels.",
+    "nodeName3d": "{label} · {degree} connections · {tier}"
+  },
+  "panel": {
+    "close": "Close",
+    "connections": "Connections",
+    "subscription": "Subscription",
+    "behavior": "Behavior",
+    "openGraph": "Open full graph →",
+    "viewProfile": "View user profile"
+  }
+}

@@ -1,0 +1,9 @@
+appId: co.sauceroom.grandma
+---
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1400 }
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1400 }
+- waitForAnimationToEnd
+- swipe: { direction: DOWN, duration: 1800 }
+- waitForAnimationToEnd

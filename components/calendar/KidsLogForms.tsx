@@ -1170,6 +1170,11 @@ function calcDuration(start: string, end: string, allowOvernight = true): string
 // ─── 1. FEEDING / FOOD LOG FORM ────────────────────────────────────────────
 
 type FeedingType = 'breast' | 'bottle' | 'solids'
+const FEED_TYPE_LABEL: Record<FeedingType, TranslationKey> = {
+  breast: 'kids_logForm_feedBreast',
+  bottle: 'kids_logForm_feedBottle',
+  solids: 'kids_logForm_feedSolids',
+}
 type MealMoment = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'night_snack'
 type EatQuality = 'ate_well' | 'ate_little' | 'did_not_eat'
 

@@ -1,0 +1,8 @@
+appId: co.sauceroom.grandma
+---
+- runFlow: _open-panel.yaml
+- scrollUntilVisible:
+    element: "MODE"
+    direction: UP
+- tapOn: "Pre-Preg"
+- runFlow: _home.yaml

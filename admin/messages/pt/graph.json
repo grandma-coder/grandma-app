@@ -1,0 +1,63 @@
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Relações",
+  "adminOnly": {
+    "title": "Só para admins",
+    "body": "O grafo de relações expõe a rede completa de um usuário, por isso é restrito ao papel de admin."
+  },
+  "title": "Explorador de relações",
+  "intro": "A rede inteira de usuários — ligados por círculo de cuidado e canais em comum, coloridos por comportamento, dimensionados por conexões. Busque ou clique em um nó para ver detalhes, ou troque para <b>Um usuário</b> para mapear o mundo de uma pessoa.",
+  "kind": {
+    "user": "Usuário",
+    "child": "Criança",
+    "caregiver": "Cuidador",
+    "owner": "Dono do círculo",
+    "behavior": "Comportamento",
+    "subscription": "Assinatura",
+    "community": "Comunidade"
+  },
+  "behavior": {
+    "pre_pregnancy": "Pré-gravidez",
+    "pregnancy": "Gravidez",
+    "kids": "Filhos",
+    "none": "Sem comportamento"
+  },
+  "mode": {
+    "ego": "Um usuário",
+    "population": "Todos os usuários"
+  },
+  "hint3d": "arraste para orbitar · role para dar zoom · clique em um nó para abri-lo",
+  "buildingPopulation": "Montando o grafo da população…",
+  "ego": {
+    "searchPlaceholder": "Busque um usuário por e-mail ou nome…",
+    "pickPrompt": "Busque e escolha um usuário acima para desenhar o grafo de relações dele.",
+    "building": "Montando o grafo de {label}…",
+    "empty": "Este usuário ainda não tem filhos, círculo de cuidado, comportamentos nem atividade na comunidade.",
+    "legend": "Legenda",
+    "clickToInspect": "Clique em um nó para inspecioná-lo.",
+    "openInConsole": "abrir no console →"
+  },
+  "search": {
+    "placeholder": "Encontre uma pessoa no grafo…"
+  },
+  "population": {
+    "emptyTitle": "Nenhuma conexão ainda",
+    "emptyBody": "O grafo da população liga usuários que compartilham um círculo de cuidado ou um canal. Com <b>{count}</b> {count, plural, one {usuário} other {usuários}} e nenhuma ligação entre eles ainda, não há rede para desenhar — ela se forma conforme a base de usuários cresce e se conecta.",
+    "exploreOne": "Explorar o grafo de um usuário →",
+    "showing": "Mostrando <b>{shown}</b> de <b>{total}</b>",
+    "capped": "limitado",
+    "fitView": "ajustar à tela",
+    "tooltip": "{degree, plural, one {# conexão} other {# conexões}} · {tier} · {behavior}",
+    "help2d": "<b>Busque</b> ou <b>clique</b> em um nó para abrir os detalhes · <b>passe o mouse</b> para destacar as conexões · <b>role</b> para dar zoom · <b>arraste</b> para mover a tela ou um nó. Tamanho do nó = conexões; arestas roxas = círculo de cuidado, cinza = canais em comum.",
+    "help3d": "<b>Busque</b> ou <b>clique</b> em um nó para abrir os detalhes · <b>arraste</b> para orbitar · <b>role</b> para dar zoom. Tamanho do nó = conexões; ligações roxas = círculo de cuidado, cinza = canais em comum.",
+    "nodeName3d": "{label} · {degree} conexões · {tier}"
+  },
+  "panel": {
+    "close": "Fechar",
+    "connections": "Conexões",
+    "subscription": "Assinatura",
+    "behavior": "Comportamento",
+    "openGraph": "Abrir grafo completo →",
+    "viewProfile": "Ver perfil do usuário"
+  }
+}

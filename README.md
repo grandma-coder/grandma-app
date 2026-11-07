@@ -6,6 +6,20 @@ A full-platform parenting companion that walks with families across the entire j
 
 ---
 
+## This repo
+
+One repo for all of grandma. Each app keeps its own `package.json` and deploys on its own:
+
+| Folder | What | Deploys to |
+|---|---|---|
+| `/` (root) | the mobile app (Expo) | EAS → App Store / Play |
+| `site/` | marketing site + waitlist (Next.js) | Vercel → thegrandma.app |
+| `admin/` | command center (Next.js, Clerk) | Vercel → admin.thegrandma.app |
+
+`site/` and `admin/` came in with their full history from `v0-grandma-app` and `grandma-command-center` (now archived). The mobile tooling (Metro, TypeScript, ESLint, Jest, EAS upload) ignores both folders. Commit as `grandma-coder`: Vercel only builds commits from team members.
+
+---
+
 ## What's inside
 
 - **AI chat** — Guru Grandma, a Claude Sonnet–powered assistant, mode- and pillar-aware

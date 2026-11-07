@@ -1,0 +1,51 @@
+{
+  "brand": "Command Center",
+  "you": "Você",
+  "comingSoon": "em breve",
+  "language": "Idioma",
+  "sections": {
+    "audience": "Público",
+    "engage": "Engajamento",
+    "product": "Produto",
+    "operations": "Operações",
+    "manage": "Gestão"
+  },
+  "items": {
+    "home": "Command Center",
+    "users": "Usuários",
+    "map": "Mapa",
+    "metrics": "Métricas",
+    "revenue": "Receita",
+    "waitlist": "Lista de espera",
+    "graph": "Relações",
+    "community": "Comunidade",
+    "push": "Push",
+    "support": "Suporte",
+    "content": "Conteúdo",
+    "releases": "Versões",
+    "tokens": "Design tokens",
+    "ai": "Custo de IA",
+    "sentry": "Sentry",
+    "beta": "Beta testers",
+    "admin": "Admin"
+  },
+  "roles": {
+    "admin": "admin",
+    "editor": "editor",
+    "viewer": "leitura"
+  },
+  "search": "Buscar",
+  "openMenu": "Abrir menu",
+  "closeMenu": "Fechar menu",
+  "badges": {
+    "support": "{n} chamados abertos",
+    "reports": "{n} denúncias esperando",
+    "waitlistToday": "{n} novos na lista hoje"
+  },
+  "palette": {
+    "placeholder": "Ir para uma página ou buscar pessoa…",
+    "searching": "Buscando…",
+    "empty": "Nada encontrado.",
+    "peopleError": "Não deu para buscar pessoas agora."
+  }
+}

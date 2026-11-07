@@ -1,0 +1,24 @@
+appId: co.sauceroom.grandma
+---
+# Scene 4: kick counter. Pregnancy home's Log-for-today row has no kicks/symptom
+# signal, so open it from the Agenda "+" (Log something → KICKS), count 6 kicks, save.
+- tapOn: "Calendar|Calendário"
+# scene 5 leaves the Agenda on APPTS; the "+" log sheet is opened from TIMELINE
+- tapOn: "TIMELINE|CRONOGRAMA"
+- tapOn: { point: "399,93" }
+- extendedWaitUntil:
+    visible: "KICKS|CHUTES"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 600 } }
+- tapOn: "KICKS|CHUTES"
+- extendedWaitUntil:
+    visible: "SAVE.*|SALVAR.*"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 500 } }
+# each tap is ~0.6 s of maestro overhead already, so no extra pauses
+- repeat:
+    times: 6
+    commands:
+      - tapOn: { point: "220,562" }
+- tapOn: "SAVE.*|SALVAR.*"
+- runFlow: { file: _pause.yaml, env: { MS: 2000 } }

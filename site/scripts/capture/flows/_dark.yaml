@@ -1,0 +1,19 @@
+appId: co.sauceroom.grandma
+---
+# Mirror of _light.yaml: the app's own Dark Mode switch (Settings → Display)
+# ignores the simulator appearance, so turn it ON if it is off.
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://profile/settings"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        text: "Dark Mode"
+        checked: false
+    commands:
+      - tapOn:
+          point: "85%,21%"
+      - waitForAnimationToEnd
+- runFlow: _home.yaml

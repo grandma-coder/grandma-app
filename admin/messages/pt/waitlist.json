@@ -1,0 +1,73 @@
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Público",
+  "title": "Lista de espera",
+  "intro": "Pessoas que entraram pelo grandma.app. O lançamento é mundial. Dentro de cada país, quem chega primeiro é atendido primeiro — promova as pessoas pro beta quando chegar a vez delas.",
+  "adminsOnly": "A lista de e-mails só aparece para admins.",
+  "loading": "Carregando…",
+  "labels": {
+    "OTHER": "Outros",
+    "pre": "Ciclo",
+    "preg": "Grávida",
+    "kids": "Filhos",
+    "meno": "Menopausa",
+    "en": "Inglês",
+    "pt": "Português"
+  },
+  "stats": {
+    "loadError": "Não deu para carregar as estatísticas: {error}",
+    "total": "Total",
+    "last7": "Últimos 7 dias",
+    "byCountry": "Por país",
+    "byMode": "Por fase",
+    "more": "+{n} outros",
+    "perDay": "Inscrições por dia · 90 dias",
+    "signups": "inscrições"
+  },
+  "filters": {
+    "search": "Buscar e-mail ou nome",
+    "country": "País",
+    "mode": "Fase",
+    "language": "Idioma",
+    "invited": "Convidados",
+    "from": "De",
+    "to": "Até",
+    "allCountries": "Todos os países",
+    "allModes": "Todas as fases",
+    "allLanguages": "Todos os idiomas",
+    "everyone": "Todos",
+    "notInvited": "Não convidados"
+  },
+  "actions": {
+    "export": "Exportar CSV",
+    "exporting": "Exportando…",
+    "promote": "Promover pro beta ({n})",
+    "promoting": "Promovendo…"
+  },
+  "notice": {
+    "exported": "{count, plural, one {# linha exportada.} other {# linhas exportadas.}}",
+    "promoted": "{promoted} promovidos pro beta.",
+    "promotedWithExisting": "{promoted} promovidos pro beta · {alreadyBeta} já estavam na lista do beta."
+  },
+  "table": {
+    "loadError": "Não deu para carregar a lista: {error}",
+    "selectPage": "Selecionar página",
+    "selectRow": "Selecionar {email}",
+    "columns": {
+      "number": "#",
+      "email": "E-mail",
+      "name": "Nome",
+      "country": "País",
+      "mode": "Fase",
+      "lang": "Idioma",
+      "joined": "Entrou em",
+      "invited": "Convidado em",
+      "inApp": "No app"
+    },
+    "empty": "Ninguém corresponde a esses filtros.",
+    "yes": "Sim",
+    "people": "{n} pessoas",
+    "previous": "Anterior",
+    "next": "Próxima"
+  }
+}

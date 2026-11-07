@@ -1,0 +1,158 @@
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Push",
+  "title": "Notificações",
+  "loading": "Carregando…",
+  "cancel": "Cancelar",
+  "edit": "Editar",
+  "save": "Salvar",
+  "tabs": {
+    "notifications": "Notificações",
+    "analytics": "Métricas",
+    "templates": "Modelos do app",
+    "ai": "Configurações de IA"
+  },
+  "status": {
+    "draft": "rascunho",
+    "scheduled": "agendado",
+    "sending": "enviando",
+    "sendingNow": "enviando…",
+    "sent": "enviado",
+    "cancelled": "cancelado",
+    "failed": "falhou"
+  },
+  "categories": {
+    "broadcast": "Comunicado (marketing)",
+    "insights": "Insights",
+    "appointments": "Consultas",
+    "cycle": "Ciclo",
+    "milestones": "Marcos",
+    "care_circle": "Rede de cuidado",
+    "reminder": "Lembrete"
+  },
+  "deepLinks": {
+    "none": "Nenhum",
+    "home": "Início",
+    "agenda": "Agenda / Planejador",
+    "library": "Biblioteca",
+    "channels": "Comunidade / Canais",
+    "grandmaTalk": "Chat com a Grandma",
+    "insights": "Insights",
+    "paywall": "Paywall (upgrade)"
+  },
+  "list": {
+    "searchPlaceholder": "Buscar no título ou texto…",
+    "allStatuses": "Todos os status",
+    "new": "+ Nova notificação",
+    "colTitle": "Título",
+    "colStatus": "Status",
+    "colTarget": "Público",
+    "colScheduled": "Agendado",
+    "colSent": "Enviado",
+    "colSentCount": "Nº enviados",
+    "colCreated": "Criado",
+    "empty": "Nenhuma notificação ainda.",
+    "targetUsers": "{n, plural, one {# usuário} other {# usuários}}",
+    "allUsers": "Todos os usuários",
+    "delete": "Excluir",
+    "confirmCancel": "Cancelar esta notificação agendada?",
+    "confirmDelete": "Excluir esta notificação?"
+  },
+  "composer": {
+    "headingEdit": "Editar notificação",
+    "headingNew": "Nova notificação push",
+    "close": "Fechar",
+    "intro": "Crie uma notificação push para enviar aos usuários do app.",
+    "titleLabel": "Título ({count}/120)",
+    "suggest": "✨ Sugerir com IA",
+    "titlePlaceholder": "ex.: Novidades da semana ✨",
+    "briefLabel": "Sobre o que é?",
+    "briefPlaceholder": "ex.: Lembrar gestantes de registrar o peso desta semana",
+    "drafting": "Escrevendo…",
+    "tryAnother": "Tentar outra",
+    "draftCopy": "Gerar texto",
+    "bodyLabel": "Texto ({count}/400)",
+    "bodyPlaceholder": "A mensagem que os usuários vão ver…",
+    "categoryLabel": "Categoria (controle de consentimento)",
+    "deepLinkLabel": "Deep link",
+    "deepLinkHint": "(opcional — para onde levar ao tocar)",
+    "scheduleLater": "Agendar para depois",
+    "sending": "Enviando…",
+    "saveAndSend": "Salvar e enviar agora",
+    "schedule": "Agendar",
+    "saveDraft": "Salvar rascunho",
+    "aiNotConfigured": "Texto por IA não configurado — defina ANTHROPIC_API_KEY para ativar o Sugerir.",
+    "suggestFailed": "Falha ao sugerir",
+    "invalidSchedule": "Escolha uma data e hora válidas para agendar.",
+    "saveFailed": "Falha ao salvar",
+    "sendFailed": "Falha ao enviar"
+  },
+  "templates": {
+    "intro": "Textos de push enviados automaticamente para cada evento, agrupados por comportamento. Use marcadores <code>{placeholder}</code> — preenchidos quando a notificação é enviada. <live>ativo</live> = o app já dispara hoje; <planned>planejado</planned> = pronto para editar, ainda não ligado no app.",
+    "expandAll": "Expandir tudo",
+    "collapseAll": "Recolher tudo",
+    "liveCount": "{live}/{total} ativos",
+    "templatesCount": "{n, plural, one {# modelo} other {# modelos}}",
+    "colType": "Tipo",
+    "colTitle": "Título",
+    "colBody": "Texto",
+    "colVariables": "Variáveis",
+    "colStatus": "Status",
+    "live": "ativo",
+    "planned": "planejado",
+    "plannedHint": "Um evento previsto que o app ainda não dispara — já dá para editar, pronto para quando for lançado",
+    "saving": "…",
+    "sections": {
+      "pre_pregnancy": {
+        "label": "Pré-gestação",
+        "blurb": "Tentando engravidar — ciclo e fertilidade"
+      },
+      "pregnancy": {
+        "label": "Gestação",
+        "blurb": "Gestantes — progresso semanal, consultas, chutes"
+      },
+      "kids": {
+        "label": "Filhos",
+        "blurb": "Pais de 0–5 anos — registros, marcos, saúde"
+      },
+      "general": {
+        "label": "Geral",
+        "blurb": "Todos os comportamentos — comunidade, rede de cuidado, conta"
+      }
+    }
+  },
+  "ai": {
+    "heading": "Prompt de sistema dos textos de notificação",
+    "intro": "O que o Claude recebe antes de escrever o texto do push quando você clica em <b>Sugerir</b> no editor. Um prompt, uma única fonte de verdade.",
+    "currentlyUsing": "Em uso:",
+    "usingDefault": "o padrão embutido",
+    "usingCustom": "um prompt personalizado",
+    "suggestDisabled": "Sugerir desativado — defina ANTHROPIC_API_KEY",
+    "saving": "Salvando…",
+    "saveRevert": "Salvar (voltar ao padrão)",
+    "discard": "Descartar alterações",
+    "reset": "Restaurar padrão embutido",
+    "viewDefault": "Ver padrão embutido",
+    "hideDefault": "Ocultar padrão embutido",
+    "viewOnly": "Somente leitura. Editar o prompt de sistema exige o papel de admin.",
+    "builtInHeading": "Padrão embutido ({n} caracteres)",
+    "saved": "Salvo."
+  },
+  "analytics": {
+    "campaignsSent": "Campanhas enviadas",
+    "sent": "Enviados",
+    "delivered": "Entregues",
+    "opened": "Abertos",
+    "ofDelivered": "{pct} dos entregues",
+    "emptyTitle": "Nenhuma campanha enviada ainda",
+    "emptyBody": "Assim que uma notificação for enviada, o funil dela aparece aqui. A entrega vem dos recibos do Expo (use <b>Verificar recibos</b> alguns minutos após o envio); as aberturas são informadas pelo app quando o push é tocado.",
+    "colCampaign": "Campanha",
+    "colWhen": "Quando",
+    "failed": "· {n} falharam",
+    "checkReceipts": "Verificar recibos",
+    "checking": "Verificando…",
+    "checkHint": "Consultar os recibos de entrega do Expo para esta campanha",
+    "checkResult": "{checked} verificados · {delivered} entregues · {errored} com erro",
+    "pruned": " · {n, plural, one {# token inválido removido} other {# tokens inválidos removidos}}"
+  }
+}

@@ -1436,6 +1436,9 @@ export interface TranslationKeys {
   kids_logForm_diaperPee: string
   kids_logForm_diaperPoop: string
   kids_logForm_diaperBoth: string
+  kids_logForm_feedBreast: string
+  kids_logForm_feedBottle: string
+  kids_logForm_feedSolids: string
   kids_logForm_diaperColorYellow: string
   kids_logForm_diaperColorGreen: string
   kids_logForm_diaperColorBrown: string

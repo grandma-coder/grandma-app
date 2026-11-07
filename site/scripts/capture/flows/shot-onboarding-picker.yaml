@@ -1,0 +1,14 @@
+appId: co.sauceroom.grandma
+---
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://onboarding/journey?addMode=true"
+- extendedWaitUntil:
+    visible: ".*Pregnant.*|.*Gr.vida.*"
+    timeout: 10000
+# The journeys already added are dimmed and tapping them does nothing, and tapping an
+# available one would enrol the demo account, so do not tap: let the floating
+# bubbles drift for the length of the clip.
+- waitForAnimationToEnd:
+    timeout: 5000

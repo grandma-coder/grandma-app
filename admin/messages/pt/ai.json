@@ -1,0 +1,45 @@
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Custo de IA",
+  "adminOnly": {
+    "title": "Só para admins",
+    "body": "O uso e o gasto com IA são restritos ao papel de admin."
+  },
+  "title": "Gasto com Claude",
+  "intro": "Gasto em tokens de todas as edge functions que chamam o Claude — o maior custo variável do app, por função, modelo, dia e usuário.",
+  "loading": "Carregando…",
+  "ranges": {
+    "7d": "7d",
+    "30d": "30d",
+    "90d": "90d"
+  },
+  "empty": {
+    "title": "Nenhum uso de IA registrado ainda",
+    "body": "As edge functions gravam uma linha em <code>ai_usage</code> por chamada ao Claude. Quando <mono>nana-chat</mono> / <mono>food-ai</mono> / <mono>scan-image</mono> forem publicadas com o helper <code>logAiUsage()</code>, o gasto aparece aqui."
+  },
+  "kpi": {
+    "totalSpend": "Gasto total",
+    "calls": "Chamadas",
+    "tokens": "Tokens",
+    "errorRate": "Taxa de erro"
+  },
+  "daily": {
+    "title": "Gasto diário",
+    "spend": "gasto"
+  },
+  "byFunction": {
+    "title": "Por função",
+    "calls": "{n} chamadas",
+    "errors": "{n} erros"
+  },
+  "byModel": {
+    "title": "Por modelo",
+    "tokens": "{n} tokens"
+  },
+  "topUsers": {
+    "title": "Usuários que mais gastam",
+    "calls": "Chamadas",
+    "cost": "Custo",
+    "view": "ver →"
+  }
+}

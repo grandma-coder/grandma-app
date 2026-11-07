@@ -1,0 +1,45 @@
+{
+  "noAccess": "No access.",
+  "eyebrow": "AI cost",
+  "adminOnly": {
+    "title": "Admin only",
+    "body": "AI usage & spend is restricted to the admin role."
+  },
+  "title": "Claude spend",
+  "intro": "Token spend across every edge function that calls Claude — the app's biggest variable cost, per function, model, day, and user.",
+  "loading": "Loading…",
+  "ranges": {
+    "7d": "7d",
+    "30d": "30d",
+    "90d": "90d"
+  },
+  "empty": {
+    "title": "No AI usage logged yet",
+    "body": "The edge functions log one <code>ai_usage</code> row per Claude call. Once <mono>nana-chat</mono> / <mono>food-ai</mono> / <mono>scan-image</mono> deploy with the <code>logAiUsage()</code> helper, spend appears here."
+  },
+  "kpi": {
+    "totalSpend": "Total spend",
+    "calls": "Calls",
+    "tokens": "Tokens",
+    "errorRate": "Error rate"
+  },
+  "daily": {
+    "title": "Daily spend",
+    "spend": "spend"
+  },
+  "byFunction": {
+    "title": "By function",
+    "calls": "{n} calls",
+    "errors": "{n} err"
+  },
+  "byModel": {
+    "title": "By model",
+    "tokens": "{n} tok"
+  },
+  "topUsers": {
+    "title": "Top users by spend",
+    "calls": "Calls",
+    "cost": "Cost",
+    "view": "view →"
+  }
+}

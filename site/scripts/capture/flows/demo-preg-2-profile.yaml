@@ -1,0 +1,45 @@
+appId: co.sauceroom.grandma
+---
+# Onboarding backgrounds animate continuously, so every tap uses a short
+# waitToSettleTimeoutMs (else Maestro idles ~5-10 s after each tap).
+# Scene 2: first 3 pregnancy onboarding steps (due date, first pregnancy, mood).
+# Stops on step 3; _demo-onb-close.yaml (not recorded) leaves without saving.
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://onboarding/pregnancy"
+- extendedWaitUntil:
+    visible: "1 / 7"
+    timeout: 15000
+- runFlow: { file: _pause.yaml, env: { MS: 1200 } }
+# Next month (">" arrow has no label), then "18" (never a filler day, so unique).
+- tapOn:
+    point: "398,240"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    text: "18"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 600 } }
+- tapOn:
+    text: "CONTINUE.*|CONTINUAR.*"
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    visible: "2 / 7"
+    timeout: 5000
+# These screens animate continuously, so don't wait for them to settle after a tap.
+- tapOn:
+    text: "radio button, (Yes|Sim)|(Yes|Sim)"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 700 } }
+- tapOn:
+    text: "CONTINUE.*|CONTINUAR.*"
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    visible: "3 / 7"
+    timeout: 5000
+- runFlow: { file: _pause.yaml, env: { MS: 400 } }
+# Mood labels are hardcoded English in the app (MOOD_OPTIONS).
+- tapOn:
+    text: "EXCITED|Excited"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }

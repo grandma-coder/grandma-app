@@ -1,0 +1,7 @@
+appId: co.sauceroom.grandma
+---
+# Tab label comes from modeConfig ("Calendar", hardcoded) with tab_calendar fallback ("Calendário" in pt-BR).
+- tapOn: "Calendar|Calendário"
+- waitForAnimationToEnd
+- swipe: { direction: UP, duration: 1400 }
+- waitForAnimationToEnd

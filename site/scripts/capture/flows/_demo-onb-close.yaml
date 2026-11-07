@@ -1,0 +1,23 @@
+appId: co.sauceroom.grandma
+---
+# Not recorded. Leaves a per-behavior onboarding WITHOUT saving: steps that show
+# SKIP have no close button, so go back one step first; then tap the close (x),
+# which clears the ephemeral onboarding store and pops back to the journey picker.
+# Leave the picker with its own "Skip for now" (router.back) so it is not kept in
+# the stack with the bloom still selected (the next scene 1 must start unselected).
+- runFlow:
+    when:
+      visible: "SKIP|PULAR"
+    commands:
+      - tapOn: { point: "43,96" }
+      - waitForAnimationToEnd
+- tapOn: { point: "397,93" }
+- waitForAnimationToEnd
+- repeat:
+    while:
+      visible: "SKIP FOR NOW|PULAR POR ENQUANTO"
+    times: 3
+    commands:
+      - tapOn: "SKIP FOR NOW|PULAR POR ENQUANTO"
+      - waitForAnimationToEnd
+- runFlow: _home.yaml

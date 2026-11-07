@@ -1,0 +1,76 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+.env
+.env
+.superdesign
+.agents/
+.claude/skills/
+.claude/settings.local.json
+skills-lock.json
+
+# Supabase CLI working dir
+supabase/.temp/
+
+# Design handoff bundles (large, local-only)
+docs/Claude design studio*/
+docs/claude-design/
+
+# Pitch decks & large binaries (keep local, store in Drive/Notion)
+*.pptx
+*.key
+*.pdf
+.superpowers/
+
+.env.local
+
+# Tolgee CLI build artifacts (generated JSON; do NOT commit)
+tolgee/
+/*.png
+screenshot-*.png
+smoke-*.png
+dl-*.png
+.maestro/**/*.png
+docs/v2-screenshots/
+
+# web apps: not part of the mobile build (EAS reads this file instead of .gitignore)
+site/
+admin/

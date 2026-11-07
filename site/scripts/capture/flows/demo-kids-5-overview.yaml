@@ -1,0 +1,9 @@
+appId: co.sauceroom.grandma
+---
+# Scene 5: Calendar tab (month grid with per-day log icons + today's timeline), filtered to Kenji.
+- tapOn: "Calendar|Calendário"
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }
+- tapOn: "KENJI"
+- runFlow: { file: _pause.yaml, env: { MS: 1000 } }
+- swipe: { start: "50%,75%", end: "50%,45%", duration: 1000 }
+- runFlow: { file: _pause.yaml, env: { MS: 1200 } }

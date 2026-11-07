@@ -1,0 +1,51 @@
+{
+  "noAccess": "No access.",
+  "eyebrow": "Beta",
+  "adminsOnly": {
+    "title": "Admins only",
+    "body": "Managing beta testers requires the admin role."
+  },
+  "title": "Beta testers",
+  "intro": "Track who you've invited to test the app, see when they sign up, and grant premium so they can try paid features.",
+  "loading": "Loading…",
+  "tiers": {
+    "free": "Free",
+    "premium_solo": "Premium (Solo)",
+    "premium_family": "Premium (Family)"
+  },
+  "add": {
+    "title": "Add a tester",
+    "body": "Records who you invited. Send the actual app invite in TestFlight / Play Console — this list tracks whether they've signed up and lets you grant premium.",
+    "emailLabel": "Tester email",
+    "name": "Name (optional)",
+    "note": "Note (optional)",
+    "submit": "Add tester",
+    "adding": "Adding…"
+  },
+  "roster": {
+    "title": "Testers",
+    "signedUpCount": "({signedUp}/{total} signed up)",
+    "empty": "No testers yet. Add one above.",
+    "grantPremium": "Grant premium",
+    "today": "today",
+    "daysAgo": "{n}d ago",
+    "view": "view →",
+    "confirmRemove": "Remove {email} from the beta list?",
+    "remove": "remove"
+  },
+  "columns": {
+    "email": "Email",
+    "platform": "Platform",
+    "status": "Status",
+    "tier": "Tier",
+    "lastActive": "Last active"
+  },
+  "status": {
+    "signedUp": "signed up",
+    "invited": "invited"
+  },
+  "howTo": {
+    "title": "How beta invites actually work",
+    "body": "This list is a tracker. To give someone the app: add them in <b>TestFlight</b> (iOS) or <b>Play Console</b> (Android) — the store emails them the build. When they open the app and sign up, they turn <pill>signed up</pill> here and you can grant premium so they test paid features."
+  }
+}

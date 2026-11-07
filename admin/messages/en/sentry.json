@@ -1,0 +1,36 @@
+{
+  "noAccess": "No access.",
+  "eyebrow": "Sentry",
+  "adminOnly": {
+    "title": "Admin only",
+    "body": "Crash triage is restricted to the admin role."
+  },
+  "title": "Crash triage",
+  "loading": "Loading…",
+  "notConfigured": {
+    "title": "Sentry not configured",
+    "body": "Set <code>SENTRY_AUTH_TOKEN</code> (read scope, org <mono>grandmaapp</mono>) in the environment to pull live issues."
+  },
+  "error": "Sentry error: {error}",
+  "empty": "No unresolved issues in this window. 🎉",
+  "columns": {
+    "issue": "Issue",
+    "level": "Level",
+    "events": "Events",
+    "users": "Users",
+    "lastSeen": "Last seen"
+  },
+  "open": "open ↗",
+  "ago": {
+    "minutes": "{n}m ago",
+    "hours": "{n}h ago",
+    "days": "{n}d ago"
+  },
+  "levels": {
+    "fatal": "fatal",
+    "error": "error",
+    "warning": "warning",
+    "info": "info",
+    "debug": "debug"
+  }
+}

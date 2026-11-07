@@ -1,0 +1,39 @@
+{
+  "project": { "name": "grandma-command-center", "skill_prefix": "gcc" },
+  "vcs": { "default_branch": "main", "branch_fmt": "<type>/<slug>" },
+  "ticket": { "system": "none", "system_label": "", "prefix": "", "cli": "", "cmd_view": "", "cmd_transition": "", "workflow_skill": "" },
+  "gates": {
+    "implement": { "skill": "/ce-work", "model": "opus" },
+    "verify": { "skill": "/gcc-verify", "ac_source": "plan verify blocks", "mode": "deterministic+judge", "model": "haiku" },
+    "review": { "skill": "/gcc-review", "personas": ["correctness", "security", "reliability", "maintainability", "testing"], "model": "sonnet" }
+  },
+  "pr": { "tool": "gh", "flow_skill": "/gcc-pr", "reviewers": [], "reviewers_csv": "", "comment_puller": "/pull-pr-comments", "model": "haiku" },
+  "collision": { "enabled": true, "sources": ["git", "prs"], "model": "haiku" },
+  "publish": { "target": "skeleton", "mcp_call": "save_context", "space_id": "space-90a3cabe", "space_name": "Grandma", "workspace_id": "Personal", "model": "haiku" },
+  "learn": { "skill": "/ce-compound", "sink": "docs/solutions", "model": "sonnet" },
+  "paths": { "plans_dir": "docs/plans", "run_dir_fmt": "docs/plans/orchestration-<slug>-<date>", "patterns": "docs/plans/orchestration-patterns.md" },
+  "build": { "multi_workspace": false, "preflight": ["pnpm lint", "pnpm typecheck", "pnpm build"], "stack_ports": {}, "stack_ports_json": "{}" },
+  "restricted_areas": [
+    "migrations/** (center-owned SQL + cc_* RPCs)",
+    "server/trpc.ts (auth/role gates) + server/context.ts",
+    "middleware.ts (Clerk gate)",
+    "lib/expo/** (push send/prefs/token logic)",
+    "lib/audit.ts + admin_audit_log",
+    ".env.* files",
+    ".github/workflows/**",
+    "db/** (schema + privileged client)"
+  ],
+  "roles": { "enabled": false },
+  "work_id": "<slug>",
+  "reviewers": [
+    { "id": "human", "type": "human", "trigger": "on-pr", "source": "pr-comments+threads" }
+  ],
+  "pricing": {
+    "opus": { "input": 5, "output": 25 },
+    "sonnet": { "input": 3, "output": 15 },
+    "haiku": { "input": 1, "output": 5 },
+    "fable": { "input": 10, "output": 50 }
+  },
+  "cost": { "track": true },
+  "pricing_json": "{\"opus\":{\"input\":5,\"output\":25},\"sonnet\":{\"input\":3,\"output\":15},\"haiku\":{\"input\":1,\"output\":5},\"fable\":{\"input\":10,\"output\":50}}"
+}

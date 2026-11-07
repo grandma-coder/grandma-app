@@ -1,0 +1,48 @@
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Admin",
+  "adminsOnly": {
+    "title": "Só para admins",
+    "body": "Gerenciar o time é restrito a admins. Você entrou como <b>{email}</b> · <r>{role}</r>. Peça a um admin para liberar seu acesso."
+  },
+  "title": "Time",
+  "intro": "Convide pessoas para o Command Center e gerencie o acesso delas. Os membros entram com o Clerk; o papel que você atribui define o que podem ver e fazer.",
+  "loading": "Carregando…",
+  "roles": {
+    "viewer": "Leitura",
+    "admin": "Admin"
+  },
+  "badge": {
+    "viewer": "leitura",
+    "admin": "admin"
+  },
+  "notice": {
+    "inviteSent": "Convite enviado para {email}.",
+    "memberRemoved": "Membro removido.",
+    "inviteRevoked": "Convite revogado."
+  },
+  "invite": {
+    "title": "Convidar alguém do time",
+    "body": "A pessoa recebe um e-mail para entrar. Novos membros começam com o papel que você escolher aqui.",
+    "emailLabel": "E-mail da pessoa",
+    "send": "Enviar convite",
+    "sending": "Enviando…",
+    "legend": "<b>Leitura</b> — vê métricas, usuários, comunidade. <b>Admin</b> — tudo, mais dados pessoais, push, Sentry e este painel."
+  },
+  "pending": {
+    "title": "Convites pendentes",
+    "invited": "Convidado em {date}",
+    "revoke": "Revogar"
+  },
+  "members": {
+    "title": "Time",
+    "unknown": "Desconhecido",
+    "you": "(você)",
+    "lastActive": "ativo por último em {date}",
+    "cantChangeOwnRole": "Você não pode mudar o próprio papel",
+    "lastAdmin": "Último admin — promova outra pessoa antes",
+    "cantRemoveSelf": "Você não pode remover a si mesmo",
+    "removeTitle": "Remover do time",
+    "remove": "Remover"
+  }
+}

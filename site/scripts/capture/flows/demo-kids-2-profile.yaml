@@ -1,0 +1,41 @@
+appId: co.sauceroom.grandma
+---
+# Onboarding backgrounds animate continuously, so every tap uses a short
+# waitToSettleTimeoutMs (else Maestro idles ~5-10 s after each tap).
+# Scene 2: first 3 kids onboarding steps with fictional values (1 child, "Kenji",
+# a birth date). Stops on step 3; demo.sh then runs _demo-onb-close.yaml (not
+# recorded), so nothing is saved. Kids onboarding copy is hardcoded English in the app.
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://onboarding/kids"
+- extendedWaitUntil:
+    visible: "How many children.*"
+    timeout: 15000
+- runFlow: { file: _pause.yaml, env: { MS: 1200 } }
+- tapOn:
+    text: "CONTINUE.*|CONTINUAR.*"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    text: ".*First name.*|.*Primeiro nome.*|.*Nome.*"
+    waitToSettleTimeoutMs: 500
+- inputText: "Kenji"
+- runFlow: { file: _pause.yaml, env: { MS: 1200 } }
+- tapOn:
+    text: "CONTINUE.*|CONTINUAR.*"
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    visible: "When was Kenji born.*"
+    timeout: 5000
+# Two months back (the "<" arrow has no label), then a day: "14" is never a
+# leading/trailing filler day, so it is unique in any month grid.
+- tapOn:
+    point: "358,240"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    point: "358,240"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    text: "14"
+    waitToSettleTimeoutMs: 500
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }

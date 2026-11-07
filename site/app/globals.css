@@ -1,0 +1,51 @@
+@import 'tailwindcss';
+
+/* site v3 tokens (docs/mockups/2026-10-30-app-site.html) */
+:root {
+  --bg: #F3F0E8; --paper: #FBF9F3; --app: #FBF6EA; --paper-2: #F7F4EC; --deep: #E7E3D7;
+  --ink: #161513; --ink-2: #4F4B43; --ink-3: #8C877C; --ink-4: #B3AC9C;
+  --line: rgba(26,25,22,.12); --line-2: rgba(26,25,22,.20); --hair: rgba(26,25,22,.55);
+  --err: #C62828;
+  --r-sm: 14px; --r-md: 20px; --r-lg: 28px; --r-xl: 40px;
+  --sh-card: 0 1px 2px rgba(26,25,22,.04), 0 8px 30px -18px rgba(26,25,22,.18);
+  --sh-pop: 0 2px 6px rgba(26,25,22,.06), 0 22px 50px -24px rgba(26,25,22,.30);
+  /* v3 sticker palette (matches components/stickers/paths.ts) */
+  --s-pink: #F4A6C9; --s-yellow: #F9C846; --s-blue: #8DB6F2; --s-orange: #F37A3B; --s-green: #1E8A6A;
+  --s-red: #EC4B3C; --s-lilac: #B69CF2; --s-peach: #F7C9A6; --s-mint: #9ED8B0; --s-cream: #FFF8E6;
+  --hand: var(--font-hand), 'Architects Daughter', cursive;
+  --sans: var(--font-hanken), 'Hanken Grotesk', system-ui, sans-serif;
+  --mono: var(--font-space-mono), 'Space Mono', monospace;
+  --ease: cubic-bezier(.22,.8,.2,1); --spring: cubic-bezier(.34,1.56,.64,1);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+@theme inline {
+  --font-display: var(--font-hanken), system-ui, sans-serif;
+  --font-sans: var(--font-hanken), system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+  --color-bg: var(--bg); --color-paper: var(--paper); --color-paper-2: var(--paper-2); --color-deep: var(--deep);
+  --color-ink: var(--ink); --color-ink-2: var(--ink-2); --color-ink-3: var(--ink-3); --color-ink-4: var(--ink-4);
+  --color-line: var(--line); --color-line-2: var(--line-2); --color-hair: var(--hair); --color-err: var(--err);
+  --color-app: var(--app);
+  --color-s-pink: var(--s-pink); --color-s-yellow: var(--s-yellow); --color-s-blue: var(--s-blue); --color-s-orange: var(--s-orange); --color-s-green: var(--s-green);
+  --color-s-red: var(--s-red); --color-s-lilac: var(--s-lilac); --color-s-peach: var(--s-peach); --color-s-mint: var(--s-mint); --color-s-cream: var(--s-cream);
+  --radius-d-sm: var(--r-sm); --radius-d-md: var(--r-md); --radius-d-lg: var(--r-lg); --radius-d-xl: var(--r-xl);
+  --shadow-card: var(--sh-card); --shadow-pop: var(--sh-pop);
+}
+
+/* hand-lettered face: --font-hand is set by next/font on <html> (a theme token would self-reference) */
+.font-hand { font-family: var(--font-hand), 'Architects Daughter', cursive; }
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+
+/* room for the black bar on phones */
+@media (max-width: 900px) { body { padding-bottom: calc(84px + var(--safe-b)); } }

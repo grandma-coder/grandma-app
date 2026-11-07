@@ -1,0 +1,63 @@
+{
+  "noAccess": "Sem acesso.",
+  "eyebrow": "Versões",
+  "title": "Builds e changelog",
+  "intro": "Todas as builds do App Store Connect, com o changelog do que saiu em cada versão — para você sempre saber o que há de novo em cada build.",
+  "loading": "Carregando…",
+  "connect": {
+    "title": "Conectar o App Store Connect",
+    "body": "Defina estas variáveis de ambiente para puxar as builds ao vivo:",
+    "easCommits": "(commits do EAS)",
+    "publishNotes": "(para publicar notas)"
+  },
+  "lead": "Cada build da App Store com seu commit git (do EAS), estado e changelog — uma linha por build. Adicione um changelog e depois envie para o TestFlight ou a App Store.",
+  "enablePush": "(Defina APPSTORE_WRITE=1 para habilitar o envio.)",
+  "table": {
+    "build": "Build",
+    "shipped": "O que saiu (git)",
+    "state": "Estado",
+    "uploaded": "Enviada em",
+    "changelog": "Changelog"
+  },
+  "loadingBuilds": "Carregando builds…",
+  "noBuilds": "Nenhuma build.",
+  "buildLabel": "build {number}",
+  "state": {
+    "valid": "válida",
+    "processing": "processando",
+    "failed": "falhou",
+    "invalid": "inválida"
+  },
+  "expired": "expirada",
+  "documented": "documentada",
+  "shipped": "lançada",
+  "edit": "Editar",
+  "add": "Adicionar",
+  "toTestFlight": "→ TestFlight",
+  "noChangelog": "Ainda sem changelog.",
+  "gitLine": "git: {message}",
+  "note": {
+    "title": "Changelog — build {number}",
+    "aiNotConfigured": "O changelog com IA não está configurado (defina ANTHROPIC_API_KEY).",
+    "drafting": "Gerando rascunho…",
+    "draftWithAi": "✨ Rascunho com IA",
+    "close": "Fechar",
+    "headline": "Título",
+    "highlights": "Destaques para o usuário (um por linha)",
+    "changelog": "Changelog / notas",
+    "markShipped": "Marcar como lançada",
+    "cancel": "Cancelar",
+    "saving": "Salvando…",
+    "save": "Salvar changelog"
+  },
+  "push": {
+    "title": "Enviar ao TestFlight — build {number}",
+    "warning": "Define a nota “What to Test” que os testers veem na build {number}. Grava no App Store Connect.",
+    "confirm": "Entendo que isso muda o que os testers veem.",
+    "success": "Enviado ao “What to Test” do TestFlight.",
+    "failed": "Falhou: {error}",
+    "close": "Fechar",
+    "pushing": "Enviando…",
+    "submit": "Enviar ao TestFlight"
+  }
+}

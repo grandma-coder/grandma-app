@@ -1,0 +1,18 @@
+appId: co.sauceroom.grandma
+---
+# The app has its own Dark Mode switch (Settings → Display) that ignores the
+# simulator appearance. Capture is light, so turn it off if it is on.
+- runFlow:
+    file: _open.yaml
+    env:
+      LINK: "grandma-app://profile/settings"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        checked: true
+    commands:
+      - tapOn:
+          checked: true
+      - waitForAnimationToEnd
+- runFlow: _home.yaml

@@ -1,0 +1,51 @@
+{
+  "brand": "Command Center",
+  "you": "You",
+  "comingSoon": "coming soon",
+  "language": "Language",
+  "sections": {
+    "audience": "Audience",
+    "engage": "Engage",
+    "product": "Product",
+    "operations": "Operations",
+    "manage": "Manage"
+  },
+  "items": {
+    "home": "Command Center",
+    "users": "Users",
+    "map": "Map",
+    "metrics": "Metrics",
+    "revenue": "Revenue",
+    "waitlist": "Waitlist",
+    "graph": "Relationships",
+    "community": "Community",
+    "push": "Push",
+    "support": "Support",
+    "content": "Content",
+    "releases": "Releases",
+    "tokens": "Design tokens",
+    "ai": "AI cost",
+    "sentry": "Sentry",
+    "beta": "Beta testers",
+    "admin": "Admin"
+  },
+  "roles": {
+    "admin": "admin",
+    "editor": "editor",
+    "viewer": "viewer"
+  },
+  "search": "Search",
+  "openMenu": "Open menu",
+  "closeMenu": "Close menu",
+  "badges": {
+    "support": "{n} open tickets",
+    "reports": "{n} reports waiting",
+    "waitlistToday": "{n} new on the waitlist today"
+  },
+  "palette": {
+    "placeholder": "Go to a page or find a person…",
+    "searching": "Searching…",
+    "empty": "Nothing found.",
+    "peopleError": "Couldn't search people right now."
+  }
+}

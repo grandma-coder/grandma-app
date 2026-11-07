@@ -1,0 +1,66 @@
+{
+  "noAccess": "No access.",
+  "eyebrow": "Support",
+  "title": "Inbox",
+  "intro": "User feedback, bug reports, questions, and reviews — triage, assign, and record replies.",
+  "loading": "Loading…",
+  "tabs": {
+    "open": "Open",
+    "in_progress": "In progress",
+    "resolved": "Resolved",
+    "closed": "Closed",
+    "all": "All"
+  },
+  "statuses": {
+    "open": "open",
+    "in_progress": "in progress",
+    "resolved": "resolved",
+    "closed": "closed"
+  },
+  "kinds": {
+    "bug": "bug",
+    "question": "question",
+    "review": "review",
+    "feedback": "feedback"
+  },
+  "priorities": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High"
+  },
+  "highPill": "high",
+  "ago": {
+    "minutes": "{n}m ago",
+    "hours": "{n}h ago",
+    "days": "{n}d ago"
+  },
+  "empty": {
+    "title": "Nothing here",
+    "body": "No tickets in this view. New reports arrive from the app via the <code>support_tickets</code> table."
+  },
+  "columns": {
+    "ticket": "Ticket",
+    "kind": "Kind",
+    "status": "Status",
+    "assignee": "Assignee",
+    "received": "Received"
+  },
+  "anonymous": "anonymous",
+  "drawer": {
+    "close": "Close",
+    "untitled": "Feedback",
+    "viewUser": "view user →",
+    "adminOnly": "Triage actions are admin-only. You can read and route by assignment offline.",
+    "status": "Status",
+    "priority": "Priority",
+    "assignee": "Assignee (email)",
+    "unassigned": "unassigned",
+    "notes": "Internal notes",
+    "reply": "Reply sent (recorded)",
+    "replyPlaceholder": "What you replied — recorded for the audit trail",
+    "replyHint": "Recording only — this doesn't deliver the message to the user.",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel"
+  }
+}

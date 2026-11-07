@@ -1,0 +1,8 @@
+appId: co.sauceroom.grandma
+---
+# Scene 5: Calendar tab (cycle phase + log icons per day), then a period day's logs.
+- tapOn: "Calendar|Calendário"
+- runFlow: { file: _pause.yaml, env: { MS: 1500 } }
+# "20" is never a filler day, so it is unique in the month grid.
+- tapOn: "20"
+- runFlow: { file: _pause.yaml, env: { MS: 2000 } }

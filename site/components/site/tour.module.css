@@ -1,0 +1,30 @@
+/* guided tour: a sticky note + drawn arrow pointing at the next thing to tap (ported from the mockup) */
+.coach { position: fixed; z-index: 58; pointer-events: none; left: 0; top: 0; opacity: 0; visibility: hidden; transition: opacity .3s, visibility 0s .3s; }
+.coach.on { opacity: 1; visibility: visible; transition: opacity .3s; }
+.note { position: fixed; pointer-events: auto; max-width: 210px; background: #FFE58A; border: 1.5px solid var(--ink); border-radius: 4px 14px 14px 14px; padding: 8px 12px 7px; box-shadow: 0 6px 14px -6px rgba(40,30,10,.45); font: 15px/1.1 var(--hand); text-transform: uppercase; -webkit-text-stroke: .3px currentColor; transform: rotate(-2deg); animation: bob 1.6s ease-in-out infinite; }
+.note small { display: flex; justify-content: space-between; gap: 10px; margin-top: 5px; font: 9px var(--mono); text-transform: none; -webkit-text-stroke: 0; color: rgba(22,21,19,.6); }
+.note small button { border: 0; background: none; padding: 0; font: inherit; text-decoration: underline; color: inherit; cursor: pointer; }
+.arrow { position: fixed; width: 44px; height: 44px; overflow: visible; }
+.halo { position: fixed; border: 2.5px dashed var(--ink); border-radius: 999px; animation: halo 1.3s ease-in-out infinite; }
+@keyframes halo { 50% { transform: scale(1.08); opacity: .6; } }
+
+/* radar ripples around the thing to tap, plus the thing itself breathing */
+.halo::before, .halo::after, .go::before, .go::after { content: ""; position: absolute; inset: -3px; border-radius: inherit; border: 3px solid #F07AA6; animation: ripple 1.6s ease-out infinite; pointer-events: none; }
+.halo::after, .go::after { animation-delay: .8s; border-color: #F9C846; }
+/* grow outwards by a fixed distance so wide targets (the email field) ripple evenly too */
+@keyframes ripple { from { inset: -3px; opacity: .9; } to { inset: -22px; opacity: 0; } }
+:global(.tour-hit) { animation: hit 1.6s ease-in-out infinite !important; position: relative; z-index: 3; }
+@keyframes hit { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.09); } 55% { transform: scale(.98); } }
+@keyframes bob { 50% { transform: rotate(-2deg) translateY(-4px); } }
+
+/* "Try the app" pill, shown when the next thing to tap is further down the page */
+.go { isolation: isolate; position: fixed; z-index: 58; left: 50%; bottom: calc(96px + var(--safe-b)); transform: translateX(-50%); display: none; align-items: center; gap: 6px; border: 1.5px solid var(--ink); background: #FFE58A; border-radius: 99px; padding: 9px 16px; font: 15px var(--hand); text-transform: uppercase; color: var(--ink); cursor: pointer; box-shadow: 0 8px 18px -8px rgba(0,0,0,.4); animation: bob 1.6s ease-in-out infinite; }
+.go.on { display: flex; }
+@media (min-width: 901px) { .go { bottom: 24px; } }
+
+/* the note still shows; nothing bobs, pulses or ripples */
+@media (prefers-reduced-motion: reduce) {
+  .note, .halo, .go { animation: none; }
+  .halo::before, .halo::after, .go::before, .go::after { display: none; }
+  :global(.tour-hit) { animation: none !important; }
+}
