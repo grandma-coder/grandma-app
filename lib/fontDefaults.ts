@@ -38,9 +38,21 @@ export function withDefaultFont(style: unknown): unknown {
   return [style, { fontFamily: hankenFor(flat.fontWeight) }]
 }
 
+/**
+ * Cap for the iOS/Android text-size setting. Larger accessibility sizes still grow the text, but
+ * past ~1.3× the hand-lettered headings, tab labels and tight tiles broke mid-word or overlapped.
+ * A screen can opt out per Text with its own maxFontSizeMultiplier.
+ */
+export const MAX_FONT_SCALE = 1.3
+
 function wrap(Orig: any, name: string) {
   const Wrapped = forwardRef<unknown, any>((props, ref) =>
-    createElement(Orig, { ...props, ref, style: withDefaultFont(props.style) }),
+    createElement(Orig, {
+      maxFontSizeMultiplier: MAX_FONT_SCALE,
+      ...props,
+      ref,
+      style: withDefaultFont(props.style),
+    }),
   )
   ;(Wrapped as { displayName?: string }).displayName = name
   return Wrapped

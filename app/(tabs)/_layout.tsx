@@ -602,6 +602,10 @@ function CurrentStripTabBar({ state, descriptors, navigation }: BottomTabBarProp
               <Text
                 style={[stripStyles.tabLabel, { color: isFocused ? inkColor : labelMutedColor }]}
                 numberOfLines={1}
+                // Fixed-width tab: shrink to fit rather than truncate ("CALENDÁ…") with larger text sizes.
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+                maxFontSizeMultiplier={1.1}
               >
                 {cfg.label}
               </Text>

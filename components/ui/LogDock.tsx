@@ -95,7 +95,7 @@ function DockItem({ item, index, accent }: { item: LogDockItem; index: number; a
           </Animated.View>
         ) : null}
       </Animated.View>
-      <Text style={[styles.label, { color: item.done ? ink : colors.textSecondary, fontFamily: font.display }]} numberOfLines={/\s/.test(item.label.trim()) ? 2 : 1} adjustsFontSizeToFit minimumFontScale={0.6}>
+      <Text style={[styles.label, { color: item.done ? ink : colors.textSecondary, fontFamily: font.display }]} numberOfLines={/\s/.test(item.label.trim()) ? 2 : 1} adjustsFontSizeToFit minimumFontScale={0.6} maxFontSizeMultiplier={1.1}>
         {item.label}
       </Text>
       <Animated.View style={{ height: 8, opacity: item.done ? tickIn : 0, transform: [{ scaleX: tickIn }] }}>
