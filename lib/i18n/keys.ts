@@ -6394,6 +6394,7 @@ export interface TranslationKeys {
   preg_sum_vitaminsTaken: string
   preg_sum_vitaminsNotTaken: string
   preg_analytics_logsShort: string
+  preg_analytics_logsShort_one: string
   kidsTile_logsUnit_one: string
   kids_summary_sleepStarted: string
   meno_c_deleteTitle: string
@@ -6456,6 +6457,7 @@ export interface TranslationKeys {
   essentials_loading: string
   essentials_cardTitle: string
   essentials_allergy: string
+  essentials_pediatrician: string
   essentials_bloodType: string
   essentials_conditions: string
   essentials_medications: string

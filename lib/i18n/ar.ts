@@ -6163,4 +6163,6 @@ export const ar: TranslationKeys = {
   feedback_sentTitle: "Thank you!",
   feedback_sentBody: "We got your message.",
   feedback_rateLimited: "You've sent a few messages in the last hour. Please try again a bit later.",
+  essentials_pediatrician: "Pediatrician: {{name}}",
+  preg_analytics_logsShort_one: "log",
 }

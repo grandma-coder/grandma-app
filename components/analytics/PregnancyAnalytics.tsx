@@ -904,7 +904,7 @@ export function PregnancyAnalytics({ onExamsPress }: PregnancyAnalyticsProps = {
               label={t('preg_week_title')}
               sub={t('preg_week_daysLogged', { days: weekFacts.daysLogged, total: weekFacts.days })}
               value={weekFacts.logCount > 0 ? String(weekFacts.logCount) : '—'}
-              valueSub={weekFacts.logCount > 0 ? t('preg_analytics_logsShort') : undefined}
+              valueSub={weekFacts.logCount > 0 ? t(weekFacts.logCount === 1 ? 'preg_analytics_logsShort_one' : 'preg_analytics_logsShort') : undefined}
               pct={tk.wellbeing.pct}
               tone={stickers.greenSoft}
               onPress={() => setOpenPillar('wellbeing')}

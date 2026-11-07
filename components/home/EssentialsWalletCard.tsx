@@ -53,21 +53,21 @@ export function EssentialsWalletCard({ childId: _childId, ownerUserId: _ownerUse
     <PaperCard radius={radius.lg} padding={16} style={pinned ? styles.pinned : undefined}>
       <Text style={styles.label}>{t('essentials_cardTitle', { name: child.name }).toUpperCase()}</Text>
       {allergies.length > 0 && (
-        <Text style={styles.line}>⚠️ {t('essentials_allergy', { list: allergies.join(', ') })}</Text>
+        <Text style={styles.line}>{t('essentials_allergy', { list: allergies.join(', ') })}</Text>
       )}
       {child.pediatrician?.name && (
-        <Text style={styles.line}>🩺 {child.pediatrician.name}{child.pediatrician.phone ? ` — ${child.pediatrician.phone}` : ''}</Text>
+        <Text style={styles.line}>{t('essentials_pediatrician', { name: child.pediatrician.name })}{child.pediatrician.phone ? ` — ${child.pediatrician.phone}` : ''}</Text>
       )}
       {/* Full form (emergency-granted): extra fields the RPC also masks for
           non-emergency caregivers, so they degrade to nothing on their own. */}
       {showFull && child.bloodType && (
-        <Text style={styles.line}>🩸 {t('essentials_bloodType', { value: child.bloodType })}</Text>
+        <Text style={styles.line}>{t('essentials_bloodType', { value: child.bloodType })}</Text>
       )}
       {showFull && conditions.length > 0 && (
-        <Text style={styles.line}>📋 {t('essentials_conditions', { list: conditions.join(', ') })}</Text>
+        <Text style={styles.line}>{t('essentials_conditions', { list: conditions.join(', ') })}</Text>
       )}
       {showFull && medications.length > 0 && (
-        <Text style={styles.line}>💊 {t('essentials_medications', { list: medications.join(', ') })}</Text>
+        <Text style={styles.line}>{t('essentials_medications', { list: medications.join(', ') })}</Text>
       )}
       {/* TODO(caregiver): emergency_contacts/insurance need a caregiver-read RLS
           migration before they can show here — no caregiver-safe source today. */}

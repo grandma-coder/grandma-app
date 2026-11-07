@@ -6166,4 +6166,6 @@ export const ptBR: TranslationKeys = {
   feedback_sentTitle: "Obrigada!",
   feedback_sentBody: "Recebemos a sua mensagem.",
   feedback_rateLimited: "Você enviou algumas mensagens na última hora. Tente de novo um pouquinho mais tarde.",
+  essentials_pediatrician: "Pediatra: {{name}}",
+  preg_analytics_logsShort_one: "registro",
 }

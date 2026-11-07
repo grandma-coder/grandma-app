@@ -34,7 +34,15 @@ const SVG_SIZE = 320
 const CX = SVG_SIZE / 2
 const CY = SVG_SIZE / 2
 const RING_R = 128
-const ANCHOR_DEG = 90
+/** Is a touch (in the wheel's own coordinates) on the ring of stickers? */
+function onRingBand(x: number, y: number): boolean {
+  return Math.abs(Math.hypot(x - CX, y - CY) - RING_R) <= 34
+}
+// Selected week sits at the top so the ring runs clockwise left-to-right there, like every other
+// timeline in the app (at the bottom a clockwise ring reads right-to-left — "backwards").
+const ANCHOR_DEG = 270
+/** Ring rotation that puts index 0 on the anchor (dot angle = i/40·360 − 90 + rot). */
+const ANCHOR_ROT = ANCHOR_DEG + 90
 
 // ─── Color helpers ───────────────────────────────────────────────────────────
 // Warm earthy palette — matches WeekCard cream/peach/coral aesthetic
@@ -266,7 +274,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
   const dots = useMemo(() => buildDotConfigs(weekNumber), [weekNumber])
 
-  const initialRot = 180 - ((weekNumber - 1) / 40) * 360
+  const initialRot = ANCHOR_ROT - ((weekNumber - 1) / 40) * 360
   const rotationDeg = useSharedValue(initialRot)
 
   const dotsAnimatedStyle = useAnimatedStyle(() => ({
@@ -275,6 +283,15 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
   // ── Selected week state ────────────────────────────────────────────────────
   const [selectedWeek, setSelectedWeek] = useState(weekNumber)
+
+  // The rotation is seeded from the first weekNumber; Notes can hand us a placeholder before the
+  // real pregnancy data arrives, which left the ring a week off ("week 36 · done" on week 37).
+  // Re-anchor whenever the current week changes.
+  useEffect(() => {
+    cancelAnimation(rotationDeg)
+    rotationDeg.value = ANCHOR_ROT - ((weekNumber - 1) / 40) * 360
+    setSelectedWeek(weekNumber)
+  }, [weekNumber, rotationDeg])
 
   const selectedWeekDerived = useDerivedValue(() => {
     let best = 0
@@ -397,7 +414,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
   // Snap to week — short-arc, JS thread.
   const snapToWeek = useCallback(
     (w: number) => {
-      const target = 180 - ((w - 1) / 40) * 360
+      const target = ANCHOR_ROT - ((w - 1) / 40) * 360
       let diff = ((target - rotationDeg.value) % 360 + 360) % 360
       if (diff > 180) diff -= 360
       cancelAnimation(rotationDeg)
@@ -411,8 +428,10 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder:  () => true,
+      // Only a touch on the band of stickers spins the ring — dragging through the middle or
+      // past it scrolls the page (scrolling Notes used to spin the ring a week).
+      onStartShouldSetPanResponder: (e) => onRingBand(e.nativeEvent.locationX, e.nativeEvent.locationY),
+      onMoveShouldSetPanResponder: (e) => onRingBand(e.nativeEvent.locationX, e.nativeEvent.locationY),
 
       onPanResponderGrant: (e) => {
         cancelAnimation(rotationDeg)
@@ -479,7 +498,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
                 const d    = norm > 180 ? 360 - norm : norm
                 if (d < bestDiff) { bestDiff = d; best = i }
               }
-              const target = 180 - (best / 40) * 360
+              const target = ANCHOR_ROT - (best / 40) * 360
               let diff = ((target - rotationDeg.value) % 360 + 360) % 360
               if (diff > 180) diff -= 360
               rotationDeg.value = withTiming(rotationDeg.value + diff, {

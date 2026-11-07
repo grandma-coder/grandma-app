@@ -95,19 +95,16 @@ export function SiteRow({
 }) {
   const { colors, font } = useTheme()
   const showChevron = (chevron ?? (!!onPress && !right)) && !loading
-  return (
-    <Pressable
-      onPress={loading ? undefined : onPress}
-      disabled={!onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
-      style={({ pressed }) => [
-        styles.row,
-        !last && { borderBottomWidth: 1, borderBottomColor: colors.border },
-        pressed && onPress ? { opacity: 0.6 } : null,
-        loading ? { opacity: 0.5 } : null,
-        style,
-      ]}
-    >
+  // A row without onPress (e.g. holding a Switch) is a plain View: on iOS a disabled Pressable
+  // still claims the touch, so the Switch inside never toggled.
+  const base = [
+    styles.row,
+    !last && { borderBottomWidth: 1, borderBottomColor: colors.border },
+    loading ? { opacity: 0.5 } : null,
+    style,
+  ]
+  const content = (
+    <>
       {sticker ? <SiteSticker name={sticker} size={30} /> : null}
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: font.bodySemiBold, fontSize: 15, color: colors.text }}>{label}</Text>
@@ -119,6 +116,16 @@ export function SiteRow({
       {right}
       {loading ? <ActivityIndicator size="small" color={colors.text} /> : null}
       {showChevron ? <Ionicons name="chevron-forward" size={16} color={colors.textMuted} /> : null}
+    </>
+  )
+  if (!onPress) return <View style={base}>{content}</View>
+  return (
+    <Pressable
+      onPress={loading ? undefined : onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [...base, pressed ? { opacity: 0.6 } : null]}
+    >
+      {content}
     </Pressable>
   )
 }

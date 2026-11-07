@@ -72,6 +72,10 @@ const SVG_SIZE = 260
 const CX = SVG_SIZE / 2
 const CY = SVG_SIZE / 2
 const RING_R = 104
+/** Is a touch (in the wheel's own coordinates) on the ring of stickers? */
+function onRingBand(x: number, y: number): boolean {
+  return Math.abs(Math.hypot(x - CX, y - CY) - RING_R) <= 34
+}
 // Selected day sits at the top (screen angle -90° = 270°). At the bottom a clockwise ring runs
 // right-to-left, opposite to the week strip — the ring read "backwards".
 const ANCHOR_DEG = 270
@@ -464,8 +468,10 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      // Only a touch on the band of stickers spins the ring — dragging through the middle or
+      // past it scrolls the page (scrolling Notes used to spin the ring a week).
+      onStartShouldSetPanResponder: (e) => onRingBand(e.nativeEvent.locationX, e.nativeEvent.locationY),
+      onMoveShouldSetPanResponder: (e) => onRingBand(e.nativeEvent.locationX, e.nativeEvent.locationY),
       onPanResponderGrant: (e) => {
         interactingRef.current = true
         cancelAnimation(rotationDeg)
