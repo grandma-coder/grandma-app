@@ -108,7 +108,7 @@ export function HomeJourneySwitcher() {
         ref={triggerRef}
         onPress={openMenu}
         accessibilityRole="button"
-        accessibilityLabel={`Switch journey, currently ${labelFor(currentBehavior)}`}
+        accessibilityLabel={t('a11y_switchJourney', { journey: labelFor(currentBehavior) })}
         hitSlop={8}
         style={[styles.trigger, { backgroundColor: diffuse ? 'transparent' : getModeColorSoft(currentBehavior, isDark), borderColor: diffuse ? line : colors.text, borderWidth: diffuse ? 1 : 1.5 }]}
       >
@@ -125,7 +125,7 @@ export function HomeJourneySwitcher() {
 
       <Modal visible={modalVisible} transparent animationType="none" onRequestClose={() => setOpen(false)}>
         <View style={styles.overlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel="Close journey switcher" />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel={t('a11y_closeJourneySwitcher')} />
           <Animated.View
             style={[
               styles.card,
@@ -160,9 +160,9 @@ export function HomeJourneySwitcher() {
                   disabled={isActive}
                   accessibilityRole="button"
                   accessibilityLabel={
-                    isActive ? `${labelFor(b)}, current journey`
-                    : isEnrolled ? `Switch to ${labelFor(b)}`
-                    : `Start ${labelFor(b)} journey`
+                    isActive ? t('a11y_journeyCurrent', { journey: labelFor(b) })
+                    : isEnrolled ? t('a11y_journeySwitchTo', { journey: labelFor(b) })
+                    : t('a11y_journeyStart', { journey: labelFor(b) })
                   }
                   style={({ pressed }) => [
                     styles.row,

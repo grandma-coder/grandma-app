@@ -369,7 +369,7 @@ export default function MemoriesScreen() {
           <View style={styles.siteHeader}>
             <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="pola" size={30} cut />
-            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{t('memories_headerTitle')}</Text>
+            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('memories_headerTitle')}</Text>
             <Pressable onPress={pickPhotos} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('kp_pk_addPhoto')}>
               <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: paperBorder, borderWidth: bw }]}>
                 <Ionicons name="add" size={20} color={colors.text} />

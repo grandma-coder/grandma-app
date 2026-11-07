@@ -1154,7 +1154,7 @@ export default function PregnancyProfileScreen() {
           <View style={styles.siteHeader}>
             <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="heart" size={30} cut />
-            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>{t('sw1_pp_title')}</Text>
+            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('sw1_pp_title')}</Text>
             {saving ? <ActivityIndicator color={ink} size="small" /> : null}
           </View>
         )}

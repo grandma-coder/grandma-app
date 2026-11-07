@@ -101,7 +101,7 @@ export function CaregiverHome() {
           <View
             style={styles.headerRow}
             accessibilityRole="header"
-            accessibilityLabel={`${activeChild.name} — ${isFamily ? 'Family caregiver' : 'Nanny'}`}
+            accessibilityLabel={t(isFamily ? 'a11y_caregiverFamily' : 'a11y_caregiverNanny', { name: activeChild.name })}
           >
             <View
               style={[

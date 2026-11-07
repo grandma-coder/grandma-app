@@ -146,7 +146,7 @@ export default function CircleScreen() {
         <View style={[styles.headerWrap, styles.siteHeader, { paddingTop: insets.top + 8 }]}>
           <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
           <SiteSticker name="bubble" size={34} cut />
-          <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{circleDisplayName(circle?.name)}</Text>
+          <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{circleDisplayName(circle?.name)}</Text>
         </View>
       )}
 

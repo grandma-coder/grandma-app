@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native'
 import { Minus, Plus } from 'lucide-react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { useIsDiffuse, SoftBloom } from './diffuse/DiffuseKit'
 
 interface NumberStepperProps {
@@ -50,6 +51,7 @@ export function NumberStepper({
   unit,
   color,
 }: NumberStepperProps) {
+  const { t } = useTranslation()
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -154,7 +156,7 @@ export function NumberStepper({
           pressed && !atMin && { transform: [{ scale: 0.92 }] },
         ]}
         accessibilityRole="button"
-        accessibilityLabel="Decrease"
+        accessibilityLabel={t('a11y_decrease')}
       >
         <Bloom />
         <Minus size={22} color={glyphColor} strokeWidth={2.5} />
@@ -212,7 +214,7 @@ export function NumberStepper({
           pressed && !atMax && { transform: [{ scale: 0.92 }] },
         ]}
         accessibilityRole="button"
-        accessibilityLabel="Increase"
+        accessibilityLabel={t('a11y_increase')}
       >
         <Bloom />
         <Plus size={22} color={glyphColor} strokeWidth={2.5} />

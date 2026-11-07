@@ -77,7 +77,7 @@ export default function CommunityScreen() {
           <View style={styles.siteHeader}>
             <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="bubble" size={34} cut />
-            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
+            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {t('community_title')}
             </Text>
             <Pressable

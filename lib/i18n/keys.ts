@@ -3747,7 +3747,6 @@ export interface TranslationKeys {
 
   // ─── Cycle Memories wallet card + sheet ────────────────────────────────
   wallet_memories_title: string
-  wallet_memories_chip: string
   cycleMemories_emptyMsg: string
   pregnancyMemories_emptyMsg: string
   kidsMemories_emptyMsg: string
@@ -6467,4 +6466,31 @@ export interface TranslationKeys {
   paywall_autoRenewLegal: string
   kids_analytics_referenceVaccines: string
   common_unit_h: string
+  wallet_memories_chipLabel: string
+  a11y_openSettings: string
+  a11y_switchJourney: string
+  a11y_closeJourneySwitcher: string
+  a11y_journeyCurrent: string
+  a11y_journeySwitchTo: string
+  a11y_journeyStart: string
+  a11y_dailyReminderTime: string
+  a11y_decrease: string
+  a11y_increase: string
+  a11y_kickStart: string
+  a11y_kickRecord: string
+  a11y_kickEnd: string
+  a11y_switchToChild: string
+  a11y_caregiverFamily: string
+  a11y_caregiverNanny: string
+  a11y_pastConversations: string
+  a11y_askGrandmaTopic: string
+  a11y_sourcesCount_one: string
+  a11y_sourcesCount: string
+  meno_set_subtitle: string
+  meno_set_sectionStage: string
+  meno_set_sectionLastPeriod: string
+  meno_set_clearDate: string
+  meno_set_savedTitle: string
+  meno_set_savedMsg: string
+  meno_set_rowNotSet: string
 }

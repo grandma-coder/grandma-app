@@ -97,7 +97,7 @@ export default function HelpScreen() {
   const paywallOn = usePaywallEnabled()
   const categories = useMemo(() => CATEGORIES
     .filter((cat) => paywallOn || cat.key !== 'billing')
-    .map((cat) => ({ ...cat, items: cat.items.filter((it) => chatOn || it.qKey !== 'help_q_grandma') }))
+    .filter((cat) => chatOn || cat.key !== 'ai')
     .filter((cat) => cat.items.length > 0), [chatOn, paywallOn])
 
   // Filter Q/A by query across all categories (matches question OR answer).

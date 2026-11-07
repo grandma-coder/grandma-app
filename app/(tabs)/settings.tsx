@@ -14,7 +14,6 @@ import {
   ScrollView,
   Pressable,
   Text,
-  Alert,
   StyleSheet,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
@@ -31,6 +30,7 @@ import { useChildStore } from '../../store/useChildStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
 import { useBadgeStore, BADGE_DEFS, badgeName } from '../../store/useBadgeStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
+import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
 import { supabase } from '../../lib/supabase'
 import { signOut } from '../../lib/signOut'
@@ -50,6 +50,7 @@ import { childColor } from '../../components/ui/ChildPills'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { Character } from '../../components/characters/Characters'
 import { MemoriesSheet } from '../../components/home/MemoriesSheet'
+import { PaperAlert } from '../../components/ui/PaperAlert'
 import { usePaywallEnabled, useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 
 function intlLocaleFor(language: string): string {
@@ -88,6 +89,7 @@ export default function ProfileScreen() {
   const paywallOn = usePaywallEnabled()
   const rewardsOn = useDailyRewardsEnabled()
   const [showMemories, setShowMemories] = useState(false)
+  const [signOutConfirm, setSignOutConfirm] = useState(false)
 
   // Dev-panel 5-tap trigger on the version text (bottom of screen)
   const { openDevPanel } = useDevPanel()
@@ -156,17 +158,8 @@ export default function ProfileScreen() {
     setHasEmergency((contactCount ?? 0) + (planCount ?? 0) > 0)
   }
 
-  async function handleSignOut() {
-    Alert.alert(t('profile_signOut'), t('profile_signOutConfirm'), [
-      { text: t('common_cancel'), style: 'cancel' },
-      {
-        text: t('profile_signOut'),
-        style: 'destructive',
-        onPress: async () => {
-          await signOut()
-        },
-      },
-    ])
+  function handleSignOut() {
+    setSignOutConfirm(true)
   }
 
   // ─── Derived values ───────────────────────────────────────────────────────
@@ -217,6 +210,7 @@ export default function ProfileScreen() {
   const isKidsBehavior = currentBehavior === 'kids'
   const isPregnancyBehavior = currentBehavior === 'pregnancy'
   const isPrePregBehavior = currentBehavior === 'pre-pregnancy'
+  const isMenopauseBehavior = currentBehavior === 'menopause'
   const showKidsItems = isKidsBehavior && hasChildren
 
   // Memories are available in every behavior (kids per-child, pregnancy + cycle
@@ -247,6 +241,11 @@ export default function ProfileScreen() {
     return t('app_settings_setUp')
   })()
 
+  const menopauseStage = useMenopauseStore((s) => s.stage)
+  const menopauseStageLabel = menopauseStage
+    ? t(menopauseStage === 'peri' ? 'report_meno_stage_peri' : menopauseStage === 'meno' ? 'meno_ob_stage_meno_label' : 'report_meno_stage_post')
+    : t('meno_set_rowNotSet')
+
   function handleKidPillPress(id: string) {
     const child = children.find((c) => c.id === id)
     if (child) setActiveChild(child)
@@ -267,6 +266,8 @@ export default function ProfileScreen() {
           <NotificationBell />
           <Pressable
             onPress={() => router.push('/profile/settings')}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y_openSettings')}
             style={[
               styles.gearBtn,
               diffuse
@@ -443,7 +444,7 @@ export default function ProfileScreen() {
               {/* Pregnancy-only row — surfaces current week / due date */}
               {isPregnancyBehavior && (
                 <SiteRow
-                  sticker="egg"
+                  sticker="heart"
                   label={t('mode_pregnancy')}
                   value={pregnancySummary}
                   onPress={() => router.push('/profile/pregnancy')}
@@ -455,10 +456,20 @@ export default function ProfileScreen() {
                   bounced back to Home, so it's folded into this one. */}
               {isPrePregBehavior && (
                 <SiteRow
-                  sticker="drop"
+                  sticker="flower"
                   label={t('cycleSettings_rowTitle')}
                   value={cycleToday ? t('cycleAnalytics_dayNumber', { currentDay: cycleToday.cycleDay }) : undefined}
                   onPress={() => router.push('/profile/cycle-settings')}
+                />
+              )}
+
+              {/* Menopause-only row — stage + last period, editable */}
+              {isMenopauseBehavior && (
+                <SiteRow
+                  sticker="flame"
+                  label={t('app_journey_menopause')}
+                  value={menopauseStageLabel}
+                  onPress={() => router.push('/profile/menopause')}
                 />
               )}
 
@@ -591,6 +602,16 @@ export default function ProfileScreen() {
         <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.bg }} />
       )}
       <FeedbackSheet visible={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      <PaperAlert
+        visible={signOutConfirm}
+        title={t('profile_signOut')}
+        message={t('profile_signOutConfirm')}
+        buttons={[
+          { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('profile_signOut'), variant: 'danger', onPress: () => { void signOut() } },
+        ]}
+        onRequestClose={() => setSignOutConfirm(false)}
+      />
     </View>
   )
 }

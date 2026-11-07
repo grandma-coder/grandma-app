@@ -183,7 +183,7 @@ export function BirthDetailModal({
         <Pressable
           onPress={handleAskGrandma}
           accessibilityRole="button"
-          accessibilityLabel="Ask Grandma anything about this topic"
+          accessibilityLabel={t('a11y_askGrandmaTopic')}
           style={({ pressed }) => [styles.dCta, { borderTopColor: dt.colors.line2, opacity: pressed ? 0.6 : 1 }]}
         >
           <Character name="chat" size={16} color={dt.colors.ink} />
@@ -281,7 +281,7 @@ export function BirthDetailModal({
             <Pressable
               onPress={handleAskGrandma}
               accessibilityRole="button"
-              accessibilityLabel="Ask Grandma anything about this topic"
+              accessibilityLabel={t('a11y_askGrandmaTopic')}
               style={({ pressed }) => [
                 styles.cta,
                 {
@@ -554,6 +554,7 @@ interface SourcesBlockProps {
 }
 
 function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label, diffuse, dt }: SourcesBlockProps) {
+  const { t } = useTranslation()
   // Collapsed by default — sources are reassurance, not primary content. The
   // user can tap to expand and check them if they want to.
   const [open, setOpen] = useState(false)
@@ -570,7 +571,7 @@ function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label, diffu
           onPress={toggle}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
-          accessibilityLabel={`${label}, ${sources.length} ${sources.length === 1 ? 'source' : 'sources'}`}
+          accessibilityLabel={t('a11y_sourcesCount', { label, count: sources.length })}
           style={({ pressed }) => [styles.sourcesHeader, { opacity: pressed ? 0.7 : 1 }]}
         >
           <Character name="book" size={13} color={dt.colors.ink3} />
@@ -613,7 +614,7 @@ function SourcesBlock({ sources, ink, inkMuted, paper, paperBorder, label, diffu
         onPress={toggle}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        accessibilityLabel={`${label}, ${sources.length} ${sources.length === 1 ? 'source' : 'sources'}`}
+        accessibilityLabel={t('a11y_sourcesCount', { label, count: sources.length })}
         style={({ pressed }) => [styles.sourcesHeader, { opacity: pressed ? 0.7 : 1 }]}
       >
         <BookOpen size={13} color={inkMuted} strokeWidth={2.2} />

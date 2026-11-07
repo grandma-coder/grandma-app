@@ -20,6 +20,7 @@ import { signOut } from '../../lib/signOut'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
+import { PaperAlert } from '../../components/ui/PaperAlert'
 import { Heart, Star, Moon, Cross, Sparkle } from '../../components/ui/Stickers'
 import { useAppLockStore } from '../../store/useAppLockStore'
 import { hasPin, clearPin, isBiometricAvailable } from '../../lib/appLock'
@@ -118,45 +119,30 @@ export default function AccountScreen() {
     finally { setSaving(false) }
   }
 
-  async function handleSignOutAll() {
-    Alert.alert(t('account_signOutEverywhereTitle'), t('account_signOutEverywhereMsg'), [
-      { text: t('common_cancel'), style: 'cancel' },
-      {
-        text: t('account_signOutAll'),
-        style: 'destructive',
-        onPress: async () => {
-          await signOut('global')
-        },
-      },
-    ])
+  const [signOutAllConfirm, setSignOutAllConfirm] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+
+  function handleSignOutAll() {
+    setSignOutAllConfirm(true)
   }
 
-  async function handleDeleteAccount() {
+  function handleDeleteAccount() {
     if (deleting) return
-    Alert.alert(
-      t('account_deleteTitle'),
-      t('account_deleteMsg'),
-      [
-        { text: t('common_cancel'), style: 'cancel' },
-        {
-          text: t('account_deleteConfirmBtn'),
-          style: 'destructive',
-          onPress: async () => {
-            setDeleting(true)
-            try {
-              const { error } = await supabase.functions.invoke('delete-account')
-              if (error) throw error
-              // Account is gone — clear the local session and return to auth.
-              // signOut handles store resets + navigation to the welcome screen.
-              await signOut('global')
-            } catch {
-              setDeleting(false)
-              Alert.alert(t('common_error'), t('account_deleteFailedMsg'))
-            }
-          },
-        },
-      ]
-    )
+    setDeleteConfirm(true)
+  }
+
+  async function confirmDeleteAccount() {
+    setDeleting(true)
+    try {
+      const { error } = await supabase.functions.invoke('delete-account')
+      if (error) throw error
+      // Account is gone — clear the local session and return to auth.
+      // signOut handles store resets + navigation to the welcome screen.
+      await signOut('global')
+    } catch {
+      setDeleting(false)
+      Alert.alert(t('common_error'), t('account_deleteFailedMsg'))
+    }
   }
 
   function SectionLabel({ children, sticker, diffuseIcon, color }: { children: React.ReactNode; sticker: React.ReactNode; diffuseIcon?: React.ReactNode; color?: string }) {
@@ -504,6 +490,27 @@ export default function AccountScreen() {
         </Text>
         </>)}
       </ScrollView>
+
+      <PaperAlert
+        visible={signOutAllConfirm}
+        title={t('account_signOutEverywhereTitle')}
+        message={t('account_signOutEverywhereMsg')}
+        buttons={[
+          { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('account_signOutAll'), variant: 'danger', onPress: () => { void signOut('global') } },
+        ]}
+        onRequestClose={() => setSignOutAllConfirm(false)}
+      />
+      <PaperAlert
+        visible={deleteConfirm}
+        title={t('account_deleteTitle')}
+        message={t('account_deleteMsg')}
+        buttons={[
+          { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('account_deleteConfirmBtn'), variant: 'danger', onPress: () => { void confirmDeleteAccount() } },
+        ]}
+        onRequestClose={() => setDeleteConfirm(false)}
+      />
     </View>
   )
 }

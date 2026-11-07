@@ -63,7 +63,7 @@ const SCREEN_W = Dimensions.get('window').width
 
 // Site stickers per health-event kind (light look).
 const SITE_STICKER: Record<string, SiteStickerName> = {
-  vaccine: 'syringe', medicine: 'drop', temperature: 'thermo', growth: 'ruler',
+  vaccine: 'syringe', medicine: 'pill', temperature: 'thermo', growth: 'ruler',
   star: 'star', milestone: 'star', note: 'doc', warning: 'bell',
 }
 
@@ -187,7 +187,7 @@ export default function HealthHistoryScreen() {
           <View style={styles.siteHeader}>
             <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="syringe" size={30} cut />
-            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1}>{t('kp_hh_title')}</Text>
+            <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('kp_hh_title')}</Text>
             <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('healthHistory_logEvent')}>
               <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: ink, borderWidth: 1.5 }]}>
                 <Ionicons name="add" size={20} color={ink} />

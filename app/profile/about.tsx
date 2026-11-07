@@ -40,7 +40,7 @@ const PILLAR_CHARACTER: Record<Pillar['sticker'], CharacterName> = {
 }
 
 const PILLAR_SITE: Record<Pillar['sticker'], SiteStickerName> = {
-  heart: 'heart',
+  heart: 'love',
   cross: 'thermo',
   leaf: 'lock',
 }
@@ -76,7 +76,7 @@ export default function AboutScreen() {
           <ScreenHeader title="" />
         </View>
       ) : (
-        <SiteHeader title={t('about_title')} sticker="heart" />
+        <SiteHeader title={t('about_title')} sticker="eye" />
       )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

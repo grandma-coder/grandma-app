@@ -279,7 +279,7 @@ export function MenopauseHome() {
                   onPress={() => setOfferDismissed(true)}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel="Dismiss the menopause update prompt"
+                  accessibilityLabel={t('meno_h_offer_dismiss_a11y')}
                   style={styles.dismiss}
                 >
                   <Text style={[styles.dismissText, { color: pal.textMuted, fontFamily: pal.fontBodyMedium }]}>Not now</Text>
@@ -318,7 +318,7 @@ const quickBlock = (
                 <QuietPill
                   leading={<SlidersHorizontal size={16} color={pal.textMuted} strokeWidth={2} />}
                   onPress={() => setQuickPickerOpen(true)}
-                  accessibilityLabel="Edit quick-log signals"
+                  accessibilityLabel={t('meno_h_quick_edit_a11y')}
                 />
               }
             />

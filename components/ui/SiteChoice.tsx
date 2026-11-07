@@ -13,6 +13,7 @@ import Svg, { Path } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useTheme } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { HandDrawnPill } from './HandDrawn'
 
@@ -125,6 +126,7 @@ export function SiteStepper({
   unit?: string
   tone: string
 }) {
+  const { t } = useTranslation()
   const { colors, font } = useTheme()
   const ink = colors.text
   const bump = useRef(new Animated.Value(0)).current
@@ -139,7 +141,7 @@ export function SiteStepper({
   const Btn = ({ d, icon }: { d: number; icon: 'remove' | 'add' }) => {
     const disabled = d < 0 ? value <= min : value >= max
     return (
-      <Pressable onPress={() => step(d)} disabled={disabled} hitSlop={8} accessibilityRole="button" accessibilityLabel={d < 0 ? 'Decrease' : 'Increase'}
+      <Pressable onPress={() => step(d)} disabled={disabled} hitSlop={8} accessibilityRole="button" accessibilityLabel={d < 0 ? t('a11y_decrease') : t('a11y_increase')}
         style={({ pressed }) => [styles.stepBtn, { opacity: disabled ? 0.35 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] }]}>
         <HandDrawnPill wobble width={52} height={52} fill={tone} stroke={ink} strokeWidth={2.4} seed={icon} />
         <Ionicons name={icon} size={24} color={ink} />

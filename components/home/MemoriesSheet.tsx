@@ -28,6 +28,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 import { LogSheet } from '../calendar/LogSheet'
 import { DiffuseSheet, DiffuseEmptyState } from '../ui/diffuse/DiffusePrimitives'
 import { Character } from '../characters/Characters'
+import { SiteSticker } from '../stickers/SiteSticker'
 import { PillButton } from '../ui/PillButton'
 import { Body } from '../ui/Typography'
 
@@ -56,7 +57,7 @@ export function MemoriesSheet({ behavior, visible, onClose }: MemoriesSheetProps
   const diffuse = useIsDiffuse()
 
   const title = t('wallet_memories_title')
-  const chip = t('wallet_memories_chip')
+  const chip = t('wallet_memories_chipLabel')
   const body = <MemoriesBody behavior={behavior} />
 
   if (diffuse) {
@@ -171,7 +172,7 @@ function MemoriesBody({ behavior }: { behavior: MemoryBehavior }) {
           />
         ) : (
           <View style={styles.emptyCard}>
-            <Character name="photo" size={40} color={stickers.pink} />
+            <SiteSticker name="camera" size={48} cut />
             <Text style={[styles.emptyTitle, { color: colors.text, fontFamily: font.display }]}>{t('wallet_memories_title')}</Text>
             <Body size={14} align="center" color={colors.textSecondary}>{emptyMsg}</Body>
             <PillButton label={t('cycleMemories_addCta')} variant="ink" onPress={pickPhotos} style={{ marginTop: 4 }} />

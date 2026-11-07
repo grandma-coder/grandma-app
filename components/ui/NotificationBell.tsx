@@ -21,11 +21,13 @@ import { router } from 'expo-router'
 import { Bell } from 'lucide-react-native'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { useIsDiffuse } from './diffuse/DiffuseKit'
 import { getUnreadCount } from '../../lib/notifications'
 import { supabase } from '../../lib/supabase'
 
 export function NotificationBell() {
+  const { t } = useTranslation()
   const { colors, stickers, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -106,7 +108,7 @@ export function NotificationBell() {
       onPress={() => router.push('/notifications')}
       hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel={count > 0 ? `Notifications, ${count} unread` : 'Notifications'}
+      accessibilityLabel={count > 0 ? t('comm_bellA11yUnread', { count }) : t('comm_bellA11y')}
     >
       <Animated.View
         style={[

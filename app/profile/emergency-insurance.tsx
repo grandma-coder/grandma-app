@@ -247,7 +247,7 @@ export default function EmergencyInsuranceScreen() {
         ) : (
           <View style={styles.siteHeader}>
             <InkBackButton ink={ink} paper={colors.surface} style={{ marginBottom: 0 }} />
-            <SiteSticker name="bell" size={30} cut />
+            <SiteSticker name="phone" size={30} cut />
             <View style={{ flex: 1 }}>
               <Text style={[styles.siteTitle, { color: ink, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                 {t('emergencyInsurance_title')}
@@ -278,7 +278,7 @@ export default function EmergencyInsuranceScreen() {
                   <Character name="community" size={17} />
                 </DiffuseBloomIcon>
               ) : (
-                <SiteSticker name="heart" size={28} cut />
+                <SiteSticker name="phone" size={28} cut />
               )}
               <Text style={[styles.sectionLabel, { color: diffuse ? mutedColor : secondaryColor, fontFamily: diffuse ? diffuseFont.mono : 'SpaceMono_400Regular' }]}>{t('emergencyInsurance_sectionContacts')}</Text>
             </View>
@@ -308,7 +308,7 @@ export default function EmergencyInsuranceScreen() {
                     <Character name="heart" size={30} color={dt.colors.ink3} />
                   </DiffuseBloomIcon>
                 ) : (
-                  <SiteSticker name="heart" size={96} cut />
+                  <SiteSticker name="phone" size={96} cut />
                 )}
               </View>
               <Text style={[styles.emptyTitle, { color: textColor, fontFamily: diffuse ? diffuseFont.display : font.display }, !diffuse && { textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 19 }]}>

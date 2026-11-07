@@ -387,7 +387,7 @@ export default function NotificationsScreen() {
                               borderColor: diffuse ? dt.colors.line2 : colors.border,
                             },
                           ]}
-                          accessibilityLabel="Set daily reminder time"
+                          accessibilityLabel={t('a11y_dailyReminderTime')}
                         >
                           <Body size={13} color={diffuse ? dt.colors.ink3 : colors.textMuted} style={{ fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }}>
                             {'Remind me at '}

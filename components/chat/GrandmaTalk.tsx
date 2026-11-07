@@ -1650,7 +1650,7 @@ export function GrandmaTalk() {
             ? { backgroundColor: dt.colors.surface, borderColor: dt.colors.line2, borderWidth: StyleSheet.hairlineWidth }
             : { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
           hitSlop={8}
-          accessibilityLabel="Past conversations"
+          accessibilityLabel={t('a11y_pastConversations')}
         >
           <MessagesSquare size={18} color={headerTextColor} strokeWidth={1.75} />
         </Pressable>

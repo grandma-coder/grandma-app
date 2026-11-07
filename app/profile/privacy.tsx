@@ -340,7 +340,7 @@ export default function PrivacyScreen() {
 
             <SiteEyebrow>{t('privacy_sectionRights')}</SiteEyebrow>
             <SiteRow sticker="eye" label={t('privacy_dataInventory')} desc={t('privacy_dataInventoryDesc')} onPress={() => router.push('/profile/data-inventory')} />
-            <SiteRow sticker="leaf" label={t('privacy_transparency')} desc={t('privacy_transparencyDesc')} onPress={() => router.push('/profile/data-transparency')} last />
+            <SiteRow sticker="notebook" label={t('privacy_transparency')} desc={t('privacy_transparencyDesc')} onPress={() => router.push('/profile/data-transparency')} last />
 
             <SiteEyebrow>{t('privacy_sectionYourData')}</SiteEyebrow>
             <SiteRow sticker="doc" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} loading={exporting} />

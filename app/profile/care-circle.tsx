@@ -704,7 +704,7 @@ export default function CareCircleScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 }}>
               <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
               <SiteSticker name="love" size={30} cut />
-              <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>
+              <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                 {t('careCircle_title')}
               </Text>
             </View>

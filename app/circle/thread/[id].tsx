@@ -144,7 +144,7 @@ export default function CircleThreadScreen() {
         <View style={[styles.headerWrap, styles.siteHeader, { paddingTop: insets.top + 8 }]}>
           <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
           <SiteSticker name="bubble" size={34} cut />
-          <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{t('circles_threadTitle')}</Text>
+          <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('circles_threadTitle')}</Text>
         </View>
       )}
 

@@ -85,7 +85,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
             onPress={startSession}
             style={({ pressed }) => [styles.startButton, pressed && { transform: [{ scale: 0.95 }] }]}
             accessibilityRole="button"
-            accessibilityLabel="Start kick counting session"
+            accessibilityLabel={t('a11y_kickStart')}
           >
             <Ionicons name="play" size={32} color={colors.textInverse} />
             <Text style={styles.startText}>{t('preg_kicks_startSession')}</Text>
@@ -120,7 +120,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
               onPress={recordKick}
               style={({ pressed }) => [styles.kickButton, pressed && { transform: [{ scale: 0.9 }] }]}
               accessibilityRole="button"
-              accessibilityLabel="Record a kick"
+              accessibilityLabel={t('a11y_kickRecord')}
             >
               <Ionicons name="hand-left" size={48} color={colors.textInverse} />
               <Text style={styles.kickText}>{t('preg_kicks_tapForKick')}</Text>
@@ -130,7 +130,7 @@ export function KickCounter({ sessions = [], onSaveSession }: KickCounterProps) 
               onPress={endSession}
               style={styles.endButton}
               accessibilityRole="button"
-              accessibilityLabel="End kick session"
+              accessibilityLabel={t('a11y_kickEnd')}
             >
               <Ionicons name="stop-circle-outline" size={20} color={stickers.coral} />
               <Text style={styles.endText}>{t('preg_kicks_endSession')}</Text>

@@ -24,6 +24,7 @@ import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typo
 import { useIsDiffuse, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
+import { PaperAlert } from '../../components/ui/PaperAlert'
 import { signOut } from '../../lib/signOut'
 import { getNotificationPrefs, syncLocalSchedules } from '../../lib/pushNotifications'
 import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle, QuietPill } from '../../components/profile/SiteSettingsKit'
@@ -93,32 +94,25 @@ export default function SettingsScreen() {
     void getNotificationPrefs().then(syncLocalSchedules).catch(() => {})
   }
 
-  async function handleDeleteAccount() {
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+
+  function handleDeleteAccount() {
     if (deleting) return
-    Alert.alert(
-      t('settings_deleteAccount'),
-      t('settings_deleteConfirm'),
-      [
-        { text: t('common_cancel'), style: 'cancel' },
-        {
-          text: t('common_delete'),
-          style: 'destructive',
-          onPress: async () => {
-            setDeleting(true)
-            try {
-              const { error } = await supabase.functions.invoke('delete-account')
-              if (error) throw error
-              // Account is gone — clear the local session and return to auth.
-              await signOut('global')
-            } catch {
-              setDeleting(false)
-              // Server/edge errors come back in English — always show the warm, localized message.
-              Alert.alert(t('common_error'), t('settings_deleteFailedMsg'))
-            }
-          },
-        },
-      ]
-    )
+    setDeleteConfirm(true)
+  }
+
+  async function confirmDeleteAccount() {
+    setDeleting(true)
+    try {
+      const { error } = await supabase.functions.invoke('delete-account')
+      if (error) throw error
+      // Account is gone — clear the local session and return to auth.
+      await signOut('global')
+    } catch {
+      setDeleting(false)
+      // Server/edge errors come back in English — always show the warm, localized message.
+      Alert.alert(t('common_error'), t('settings_deleteFailedMsg'))
+    }
   }
 
   function renderLanguageItem({ item }: { item: LanguageOption }) {
@@ -403,6 +397,17 @@ export default function SettingsScreen() {
         </Pressable>
         </>)}
       </ScrollView>
+
+      <PaperAlert
+        visible={deleteConfirm}
+        title={t('settings_deleteAccount')}
+        message={t('settings_deleteConfirm')}
+        buttons={[
+          { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('common_delete'), variant: 'danger', onPress: () => { void confirmDeleteAccount() } },
+        ]}
+        onRequestClose={() => setDeleteConfirm(false)}
+      />
 
       {/* ── Sign Out Confirmation Modal ── */}
       <CenterModal

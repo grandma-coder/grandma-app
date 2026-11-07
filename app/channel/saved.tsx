@@ -99,7 +99,7 @@ export default function SavedPostsScreen() {
           <View style={[styles.headerWrap, styles.siteHeader, { paddingTop: insets.top + 8 }]}>
             <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="pola" size={34} cut />
-            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{t('savedPosts_title')}</Text>
+            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('savedPosts_title')}</Text>
           </View>
           <Text style={[styles.siteSub, { color: colors.textSecondary, fontFamily: font.body }]}>{t('savedPosts_subtitle')}</Text>
         </>

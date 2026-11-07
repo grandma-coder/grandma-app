@@ -9,11 +9,13 @@ import { ScrollView, Pressable, Text, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useChildStore } from '../../store/useChildStore'
 import { useTheme, useDiffuseTheme, diffuseFont, radius, font } from '../../constants/theme'
+import { useTranslation } from '../../lib/i18n'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { SiteChoice } from '../ui/SiteChoice'
 import type { ChildWithRole } from '../../types'
 
 export function CaregiverChildPicker() {
+  const { t } = useTranslation()
   const { colors, stickers } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -64,7 +66,7 @@ export function CaregiverChildPicker() {
             onPress={() => switchTo(c)}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={`Switch to ${c.name}`}
+            accessibilityLabel={t('a11y_switchToChild', { name: c.name })}
             style={[
               styles.pill,
               diffuse

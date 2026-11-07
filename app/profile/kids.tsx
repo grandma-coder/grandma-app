@@ -304,7 +304,7 @@ export default function KidsProfileScreen() {
           <View style={styles.siteHeader}>
             <InkBackButton ink={colors.text} paper={colors.surface} style={{ marginBottom: 0 }} />
             <SiteSticker name="baby" size={30} cut />
-            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1}>{t('kp_pk_kidsProfile')}</Text>
+            <Text style={[styles.siteTitle, { color: colors.text, fontFamily: font.display }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('kp_pk_kidsProfile')}</Text>
             <Pressable onPress={() => setShowAddSheet(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('kp_pk_addChildA11y')}>
               <View style={[styles.headerAddBtn, { backgroundColor: paper, borderColor: colors.text, borderWidth: bw }]}>
                 <Ionicons name="add" size={20} color={colors.text} />
@@ -543,7 +543,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
 
       {child.pediatrician?.name ? (
         <View style={styles.pedRow}>
-          {site ? <SiteSticker name="thermo" size={18} /> : <Character name="checkup" size={12} color={colors.textMuted} />}
+          {site ? <SiteSticker name="phone" size={18} /> : <Character name="checkup" size={12} color={colors.textMuted} />}
           <Text style={[styles.pedText, { color: site ? colors.text : colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
             {child.pediatrician.name}{child.pediatrician.phone ? ` · ${child.pediatrician.phone}` : ''}
           </Text>
