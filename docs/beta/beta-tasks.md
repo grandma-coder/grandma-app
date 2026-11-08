@@ -15,9 +15,9 @@ Atualizado a cada tarefa. ✅ feito · 🔄 em andamento · ⬜ a fazer · 👤 
 | T9 | Sem internet: aviso de conexão nas leituras, erro traduzido ao salvar, retry na abertura; sem fila offline (conhecido) | Claude | ✅ |
 | T10 | Lembretes locais no idioma do app e reagendados ao trocar idioma ✅; push de campanha do admin tem 1 texto só e o idioma do usuário não fica no banco | Claude | ✅ (👤 decidir) |
 | T11 | Convite: link antigo `invite/…` dava 404 → rota de redirecionamento; texto com "Guru Grandma" e masculino → corrigido; nome antigo removido do app | Claude | ✅ |
-| T12 | Inventário de dados para os rótulos de privacidade da App Store | Claude | 🔄 |
+| T12 | Inventário de dados para App Privacy → `docs/beta/app-privacy-inventory.md` (👤 decidir Anthropic/Skeleton na política) | Claude | ✅ |
 | T13 | Teste de ponta a ponta com conta nova: 4 jornadas × 3 idiomas | Claude | ⬜ 👤 e-mail de teste |
-| T14 | Abrir PR `feat/site-look` → `main` (sem merge) | Claude | ⬜ |
+| T14 | Abrir PR `feat/site-look` → `main` (sem merge) | Claude | 🔄 |
 | T15 | Aplicar migração de segurança + rodar `prod-verification.sql` | Igor | ⬜ |
 | T16 | Build final + TestFlight interno no aparelho | Igor | ⬜ |
 | T17 | App Store Connect: Beta App Review, App Privacy, conta demo | Igor | ⬜ |
