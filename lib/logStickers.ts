@@ -31,6 +31,8 @@ export const PREGNANCY_LOG_STICKER_MAP = PREGNANCY_LOG_STICKER
 /** Pregnancy mood options (form + day detail): five moods, five different stickers. */
 export const PREGNANCY_MOOD_STICKER: Record<string, SiteStickerName> = {
   excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face1', energetic: 'star', sad: 'face1',
+  // Moods the pregnancy onboarding saves (same faces as its picker).
+  calm: 'leaf', tired: 'zz', nauseous: 'face2',
 }
 
 /**

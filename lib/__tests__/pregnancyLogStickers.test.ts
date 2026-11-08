@@ -19,6 +19,10 @@ describe('pregnancy log stickers', () => {
     const moods = ['excited', 'happy', 'okay', 'anxious', 'energetic'].map((m) => PREGNANCY_MOOD_STICKER[m])
     expect(new Set(moods).size).toBe(5)
   })
+
+  it('moods saved by the pregnancy onboarding have a sticker too', () => {
+    for (const m of ['excited', 'happy', 'calm', 'anxious', 'tired', 'nauseous']) expect(PREGNANCY_MOOD_STICKER[m]).toBeTruthy()
+  })
 })
 
 describe('pregnancy quick-log short labels', () => {

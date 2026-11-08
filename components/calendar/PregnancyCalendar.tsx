@@ -211,6 +211,10 @@ const MOOD_LABEL: Record<string, string> = {
   get anxious() { return tNow('preg_mood_anxious') },
   get energetic() { return tNow('preg_mood_energetic') },
   get sad() { return tNow('kp_pc_m_sad') },
+  // Saved by the pregnancy onboarding's "How are you feeling?" step.
+  get calm() { return tNow('preg_onboard_mood_calm') },
+  get tired() { return tNow('preg_onboard_mood_tired') },
+  get nauseous() { return tNow('preg_onboard_mood_nauseous') },
 }
 
 /** Maps a saturated meta color to a fixed pastel hex usable as a sticker fill. */
