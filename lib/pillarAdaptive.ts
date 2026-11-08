@@ -7,6 +7,7 @@
  * them as separate sections.
  */
 
+import { parseLocalDate } from './localDate'
 import type { PillarTip, PillarId } from '../types'
 import { useCycleHistory } from './cycleAnalytics'
 import { getCycleInfo, toDateStr, type CycleConfig } from './cycleLogic'
@@ -112,7 +113,7 @@ function useKidsContext(enabled: boolean): AdaptiveContext {
   const activeChild = useChildStore((s) => s.activeChild)
   if (!enabled) return {}
   if (!activeChild?.birthDate) return {}
-  const d = new Date(activeChild.birthDate)
+  const d = parseLocalDate(activeChild.birthDate)
   if (isNaN(d.getTime())) return {}
   const now = new Date()
   const months = Math.max(

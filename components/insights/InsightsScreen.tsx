@@ -6,6 +6,7 @@
  * History: Past AI-generated insights (archived)
  */
 
+import { parseLocalDate } from '../../lib/localDate'
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import {
   View, Text, Pressable, ScrollView, RefreshControl,
@@ -394,7 +395,7 @@ const MOTIVATION_QUOTES = [
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 function getAgeMonths(birthDate: string): number {
-  const birth = new Date(birthDate)
+  const birth = parseLocalDate(birthDate)
   const now = new Date()
   return Math.max(0, (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth()))
 }

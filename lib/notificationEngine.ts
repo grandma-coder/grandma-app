@@ -772,7 +772,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
       const meta = JSON.parse(noteRows[0].notes)
       if (meta.dueDate) {
         dueDate = meta.dueDate
-        const due = new Date(meta.dueDate)
+        const due = parseLocalDate(meta.dueDate)
         const daysToDue = Math.ceil((due.getTime() - Date.now()) / 86400000)
         weekNumber = Math.max(1, Math.min(40, 40 - Math.floor(daysToDue / 7)))
       }

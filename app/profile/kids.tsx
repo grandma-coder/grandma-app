@@ -129,7 +129,7 @@ const COMMON_MEDICATIONS = [
 
 function formatAge(birthDate: string): string {
   if (!birthDate) return ''
-  const born = new Date(birthDate)
+  const born = parseLocalDate(birthDate)
   const now = new Date()
   const months = (now.getFullYear() - born.getFullYear()) * 12 + (now.getMonth() - born.getMonth())
   if (months < 1) return tNow('kids_home_age_newborn')
@@ -688,7 +688,7 @@ function EditChildSheet({
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
   const [notes, setNotes] = useState(child.notes)
   const [dateModalOpen, setDateModalOpen] = useState(false)
-  const [dateDraft, setDateDraft] = useState<Date>(child.birthDate ? new Date(child.birthDate) : new Date())
+  const [dateDraft, setDateDraft] = useState<Date>(child.birthDate ? parseLocalDate(child.birthDate) : new Date())
   const [saving, setSaving] = useState(false)
 
   function splitList(s: string): string[] {
@@ -803,7 +803,7 @@ function EditChildSheet({
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelBirthDate')}</MonoCaps></View>
           <Pressable
             onPress={() => {
-              setDateDraft(birthDate ? new Date(birthDate) : new Date())
+              setDateDraft(birthDate ? parseLocalDate(birthDate) : new Date())
               setDateModalOpen(true)
             }}
             style={[
@@ -1125,7 +1125,7 @@ function AddChildSheet({
           <View style={{ marginTop: 4 }}><MonoCaps color={colors.textMuted}>{t('profKids_labelBirthDate')}</MonoCaps></View>
           <Pressable
             onPress={() => {
-              setDateDraft(birthDate ? new Date(birthDate) : new Date())
+              setDateDraft(birthDate ? parseLocalDate(birthDate) : new Date())
               setDateModalOpen(true)
             }}
             style={[

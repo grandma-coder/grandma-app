@@ -186,7 +186,7 @@ export default function MemoriesScreen() {
   const availableMonths = useMemo(() => {
     const months = new Set<string>()
     for (const p of allPosts) {
-      const d = new Date(p.date)
+      const d = parseLocalDate(p.date)
       months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
     }
     return Array.from(months).sort().reverse()
@@ -204,7 +204,7 @@ export default function MemoriesScreen() {
     if (filterChild) result = result.filter((p) => p.childId === filterChild)
     if (filterMonth) {
       result = result.filter((p) => {
-        const d = new Date(p.date)
+        const d = parseLocalDate(p.date)
         const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
         return ym === filterMonth
       })
@@ -226,7 +226,7 @@ export default function MemoriesScreen() {
   const sections = useMemo(() => {
     const grouped = new Map<string, MemoryPost[]>()
     for (const p of filtered) {
-      const d = new Date(p.date)
+      const d = parseLocalDate(p.date)
       const key = `${d.toLocaleString(dateLoc(), { month: 'long' })} ${d.getFullYear()}`
       const arr = grouped.get(key) ?? []
       arr.push(p)

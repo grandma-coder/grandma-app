@@ -3,6 +3,7 @@
  * and transforms them into chart-ready structures for KidsAnalytics.
  */
 
+import { parseLocalDate } from './localDate'
 import { shortDayMonth } from './timeFormat'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
@@ -784,7 +785,7 @@ export function useKidsAnalytics(
       const selectedChild = childId === 'all' ? null : children.find((c) => c.id === childId)
       const ageMonths = selectedChild?.birthDate
         ? (() => {
-            const d = new Date(selectedChild.birthDate)
+            const d = parseLocalDate(selectedChild.birthDate)
             if (isNaN(d.getTime())) return 24
             const now = new Date()
             return Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()))

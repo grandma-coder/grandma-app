@@ -5,6 +5,7 @@
  * Persist to Supabase child_logs table.
  */
 
+import { parseLocalDate } from '../../lib/localDate'
 import { dateLoc } from '../../lib/kpLocale'
 import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactElement, type ReactNode, type ComponentProps } from 'react'
@@ -1266,7 +1267,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
   const childAgeMonths = useMemo(() => {
     const c = children.find((x) => x.id === childId) ?? activeChild
     if (!c?.birthDate) return undefined
-    const d = new Date(c.birthDate)
+    const d = parseLocalDate(c.birthDate)
     if (isNaN(d.getTime())) return undefined
     const now = new Date()
     return Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()))

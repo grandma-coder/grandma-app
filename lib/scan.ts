@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { parseLocalDate } from './localDate'
 import type { Child } from '../types'
 
 /** Thrown when the server rejects a scan because the free-tier limit is reached.
@@ -29,7 +30,7 @@ interface ScanParams {
 }
 
 function getAgeInMonths(birthDate: string): number {
-  const birth = new Date(birthDate)
+  const birth = parseLocalDate(birthDate)
   const now = new Date()
   return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
 }

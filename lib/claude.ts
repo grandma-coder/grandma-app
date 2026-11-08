@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { parseLocalDate } from './localDate'
 import type { Child, PillarId, JourneyMode } from '../types'
 
 interface CallNanaParams {
@@ -29,7 +30,7 @@ export async function callNana({ messages, child, pillarId, mode = 'kids', weekN
 }
 
 function getAgeInMonths(birthDate: string): number {
-  const birth = new Date(birthDate)
+  const birth = parseLocalDate(birthDate)
   const now = new Date()
   return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
 }

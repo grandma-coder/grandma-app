@@ -7,6 +7,7 @@
  * cycle (the old version invented "Day 11" from a period 10 days ago).
  */
 
+import { parseLocalDate } from './localDate'
 import { useChildStore } from '../store/useChildStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
 import { getCurrentWeekFromDueDate } from './pregnancyData'
@@ -16,7 +17,7 @@ import { t } from './i18n'
 
 function formatAge(birthDate: string | undefined | null): string {
   if (!birthDate) return ''
-  const born = new Date(birthDate)
+  const born = parseLocalDate(birthDate)
   if (Number.isNaN(born.getTime())) return ''
   const now = new Date()
   const months =

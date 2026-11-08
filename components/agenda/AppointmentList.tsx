@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { parseLocalDate } from '../../lib/localDate'
 import { View, Text, Pressable, TextInput, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { PaperCard } from '../ui/PaperCard'
@@ -47,7 +48,7 @@ function buildTypes(stickers: ThemeShape['stickers'], t: TFn): TypeOption[] {
 }
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr)
+  const d = parseLocalDate(dateStr)
   return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric', year: 'numeric' })
 }
 

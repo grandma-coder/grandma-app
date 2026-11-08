@@ -11,6 +11,7 @@
  * components that render this data live in
  * `components/home/kids/VaccineScheduleTree.tsx`.
  */
+import { parseLocalDate } from './localDate'
 import { getAgeMonths } from '../store/useGoalsStore'
 import { dateLoc } from './kpLocale'
 import { t as tNow } from './i18n'
@@ -475,7 +476,7 @@ export interface UpcomingVaccine {
 }
 
 export function monthsSince(dateStr: string): number {
-  const d = new Date(dateStr)
+  const d = parseLocalDate(dateStr)
   if (Number.isNaN(d.getTime())) return Infinity
   const now = new Date()
   return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth())

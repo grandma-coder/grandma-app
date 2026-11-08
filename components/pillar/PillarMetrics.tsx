@@ -7,6 +7,7 @@
  * with the "·" kept at the end of the previous phrase so a wrapped line never starts with it.
  */
 
+import { parseLocalDate } from '../../lib/localDate'
 import { useEffect, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
@@ -136,7 +137,7 @@ function usePillarMetaChips(pillarId: PillarId): string[] {
     if (!activeChild) return []
     let ageMonths: number | null = null
     if (activeChild.birthDate) {
-      const d = new Date(activeChild.birthDate)
+      const d = parseLocalDate(activeChild.birthDate)
       if (!isNaN(d.getTime())) {
         const now = new Date()
         ageMonths = Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()))

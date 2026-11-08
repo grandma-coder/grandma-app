@@ -9,6 +9,7 @@
  * recognise (user-created channels, custom categories) is shown as typed.
  */
 
+import { parseLocalDate } from '../../lib/localDate'
 import { t, type TranslationKey } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
 
@@ -126,7 +127,7 @@ export function villageCategoryLabel(category: string | null | undefined): strin
 // ─── Compact chat timestamp ─────────────────────────────────────────────────
 
 export function chatTime(dateStr: string): string {
-  const d = new Date(dateStr)
+  const d = parseLocalDate(dateStr)
   const diffMin = Math.floor((Date.now() - d.getTime()) / 60000)
   if (diffMin < 1) return t('app_nlist_justNow')
   if (diffMin < 60) return t('app_nlist_minAgo', { n: diffMin })

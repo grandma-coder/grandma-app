@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { parseLocalDate } from '../../lib/localDate'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { stickers, borderRadius, shadows, useTheme, font } from '../../constants/theme'
@@ -33,7 +34,7 @@ function toDateStr(d: Date): string {
 }
 
 function getWeekDates(dateStr: string): Date[] {
-  const d = new Date(dateStr)
+  const d = parseLocalDate(dateStr)
   const day = d.getDay()
   const start = new Date(d)
   start.setDate(d.getDate() - day)
