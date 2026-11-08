@@ -30,6 +30,8 @@ export interface SleepDetailCalmProps {
   /** Hours per day for the last 7 days. */
   dailySleep: number[]
   dayLabels: string[]
+  /** Nights in the range that have a sleep entry — the average divides by these. */
+  sleepDays?: number
   /** Days (= nights) in the selected range. */
   rangeDays?: number
 }
@@ -62,7 +64,7 @@ export function SleepDetailCalm(p: SleepDetailCalmProps) {
     )
   }
 
-  const hero = oneNight ? p.sleepTotal : p.sleepTotal / nights
+  const hero = oneNight ? p.sleepTotal : p.sleepTotal / Math.max(1, p.sleepDays ?? nights)
 
   const series = p.dailySleep
   const hasBars = series.some((h) => h > 0)

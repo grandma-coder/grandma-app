@@ -1405,10 +1405,9 @@ function CompletionScreen({
             <FadeUp key={i} index={i} delay={700} style={{ alignSelf: 'stretch' }}>
             <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={20} seed={`child-card-${i}`} style={completeStyles.childCard}>
               {child.photoUri ? (
-                <Image
-                  source={{ uri: child.photoUri }}
-                  style={completeStyles.childPhoto}
-                />
+                // A picked icon is stored as "icon:<key>" — AvatarView draws it as a sticker
+                // (as an <Image uri> it failed: "No suitable image URL loader found for icon:cloud").
+                <AvatarView value={child.photoUri} size={52} accent={colors.surface} initial={child.name?.[0] ?? '?'} borderWidth={0} />
               ) : (
                 <View
                   style={[

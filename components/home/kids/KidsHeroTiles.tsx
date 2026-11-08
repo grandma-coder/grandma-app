@@ -23,6 +23,9 @@ import { Skeleton } from '../../ui/Skeleton'
 
 export interface KidsHeroTilesProps {
   sleepTotal: number
+  /** Days in the range with a sleep / food entry — averages divide by these. */
+  sleepDays?: number
+  foodDays?: number
   sleepTarget: number
   dominantMood: string
   moodCounts: Record<string, number>
@@ -173,7 +176,8 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
   const multi = days > 1
 
   // Sleep: per night when the range spans several days.
-  const sleepVal = multi ? p.sleepTotal / days : p.sleepTotal
+  // Average over the nights she logged, not over the whole range.
+  const sleepVal = multi ? p.sleepTotal / Math.max(1, p.sleepDays ?? days) : p.sleepTotal
   const sleepGoal = multi ? p.sleepTarget / days : p.sleepTarget
   const hasSleep = p.sleepTotal > 0
 
@@ -181,7 +185,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
   const liquid = p.stage === 'liquid' || p.stage === 'mixed'
   const foodTotal = liquid ? p.feedingCount : p.caloriesTotal
   const foodGoalTotal = liquid ? p.feedingTarget : p.caloriesTarget
-  const foodVal = multi ? foodTotal / days : foodTotal
+  const foodVal = multi ? foodTotal / Math.max(1, p.foodDays ?? days) : foodTotal
   const foodGoal = multi ? foodGoalTotal / days : foodGoalTotal
   const hasFood = foodTotal > 0
 

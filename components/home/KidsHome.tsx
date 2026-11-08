@@ -382,6 +382,8 @@ type MiniRingMetric = 'sleep' | 'nutrition' | 'activity'
 
 interface RangeData {
   sleepTotal: number
+  sleepDays: number
+  foodDays: number
   sleepTarget: number
   // Nutrition — adapts by feeding stage
   caloriesTotal: number
@@ -1103,7 +1105,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   const nutritionLabel = getNutritionLabel(feedingStage)
 
   const [rangeData, setRangeData] = useState<RangeData>({
-    sleepTotal: 0, sleepTarget: 0,
+    sleepTotal: 0, sleepTarget: 0, sleepDays: 0, foodDays: 0,
     caloriesTotal: 0, caloriesTarget: 0,
     feedingCount: 0, feedingCountTarget: 0,
     feedingMl: 0, feedingMlTarget: 0,
@@ -1197,12 +1199,14 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     // ── Sleep ──
     let sleepTotal = 0
     let goodSleep = 0, poorSleep = 0, totalSleepLogs = 0, ratedSleep = 0
+    const sleepDates = new Set<string>()
     for (const log of rangeLogs.filter((l) => l.type === 'sleep')) {
       let val: any = log.value
       try { val = typeof val === 'string' ? JSON.parse(val) : val } catch {}
       // Durations are stored as "45m" / "1h 30m"; parseFloat read "45m" as 45 hours.
       const hours = typeof val === 'object' && val ? (parseDurationMinutes(val.duration) ?? 0) / 60 : 0
       sleepTotal += hours
+      if (hours > 0) sleepDates.add(log.date)
       totalSleepLogs++
       const q = typeof val === 'object' && val ? normalizeSleepQuality(val.quality) : null
       if (q) ratedSleep++
@@ -1245,6 +1249,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     // ── Nutrition (feeding-stage aware) ──
     const stage = getFeedingStage(c.birthDate)
     const foodLogs = rangeLogs.filter((l) => l.type === 'food' || l.type === 'feeding')
+    const foodDates = new Set(foodLogs.map((l) => l.date))
     const catMap: Record<string, { cals: number; color: string }> = {}
     let totalCalories = 0
     let feedingCount = 0, feedingBreast = 0, feedingBottle = 0, feedingMlTotal = 0
@@ -1444,6 +1449,10 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     setRangeData({
       sleepTotal: Math.round(sleepTotal * 10) / 10,
       sleepTarget: Math.round(sleepTarget * 10) / 10,
+      // Days with at least one entry — averages divide by these, not by the range length
+      // (one 8h night in a 7-day range read "1.1 h a night").
+      sleepDays: sleepDates.size,
+      foodDays: foodDates.size,
       caloriesTotal: Math.round(totalCalories),
       caloriesTarget: Math.round(caloriesTarget),
       feedingCount, feedingCountTarget, feedingMl: feedingMlTotal, feedingMlTarget,
@@ -2052,6 +2061,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       {show('hero-tiles') && (
       <HeroTiles
         sleepTotal={rangeData.sleepTotal}
+        sleepDays={rangeData.sleepDays}
+        foodDays={rangeData.foodDays}
         sleepTarget={rangeData.sleepTarget}
         dominantMood={rangeData.dominantMood}
         moodCounts={rangeData.moodCounts}
@@ -2600,6 +2611,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
         visible={sleepModalVisible}
         onClose={() => setSleepModalVisible(false)}
         sleepTotal={rangeData.sleepTotal}
+        sleepDays={rangeData.sleepDays}
         sleepTarget={rangeData.sleepTarget}
         sleepQuality={rangeData.sleepQuality}
         sleepRestful={rangeData.sleepRestful}
@@ -2690,6 +2702,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
 interface HeroTilesProps {
   sleepTotal: number
+  sleepDays?: number
+  foodDays?: number
   sleepTarget: number
   dominantMood: string
   moodCounts: Record<string, number>
@@ -4308,7 +4322,8 @@ function ActivityBreakdownModal({ visible, onClose, breakdown, total, colors, ra
   )
 }
 
-function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQuality, sleepRestful, sleepRated, dailySleep, dailySleepTarget, dayLabels, rangeDays, dateRange, childName, childColor }: {
+function SleepDetailModal({ visible, onClose, sleepTotal, sleepDays, sleepTarget, sleepQuality, sleepRestful, sleepRated, dailySleep, dailySleepTarget, dayLabels, rangeDays, dateRange, childName, childColor }: {
+  sleepDays?: number
   visible: boolean; onClose: () => void
   rangeDays: number
   sleepTotal: number; sleepTarget: number
@@ -4417,7 +4432,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepTarget, sleepQual
             <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
           </View>
           <DetailSheetHeader title={t('kids_home_sleep_modal_title')} sticker="moon" tone={StickerPalette.blueSoft} childName={childName} childColor={childColor} onClose={onClose} />
-          <SleepDetailCalm sleepTotal={sleepTotal} sleepTarget={sleepTarget} dailySleepTarget={dailySleepTarget} sleepQuality={sleepQuality} sleepRestful={sleepRestful} sleepRated={sleepRated} dailySleep={dailySleep} dayLabels={dayLabels} rangeDays={rangeDays} />
+          <SleepDetailCalm sleepTotal={sleepTotal} sleepDays={sleepDays} sleepTarget={sleepTarget} dailySleepTarget={dailySleepTarget} sleepQuality={sleepQuality} sleepRestful={sleepRestful} sleepRated={sleepRated} dailySleep={dailySleep} dayLabels={dayLabels} rangeDays={rangeDays} />
         </Pressable>
       )}
     </SheetModal>
