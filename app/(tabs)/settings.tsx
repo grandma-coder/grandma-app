@@ -38,7 +38,7 @@ import { checkPremium } from '../../lib/revenue'
 import { useTranslation } from '../../lib/i18n'
 import Constants from 'expo-constants'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
-import { getCycleInfo, toDateStr } from '../../lib/cycleLogic'
+import { getCycleInfo, getDaysLate, toDateStr } from '../../lib/cycleLogic'
 import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 import { useDevPanel } from '../../context/DevPanelContext'
 import { getSubtitleFor } from '../../lib/profileStatus'
@@ -181,12 +181,19 @@ export default function ProfileScreen() {
     const latest = cycleHistory?.cycles[cycleHistory.cycles.length - 1]
     if (!latest) return null
     const cycleLength = declaredCycleLength ?? cycleHistory?.avg ?? 28
-    return getCycleInfo({ lastPeriodStart: latest.startDate, cycleLength, periodLength, lutealPhase }, toDateStr(new Date()))
+    const cfg = { lastPeriodStart: latest.startDate, cycleLength, periodLength, lutealPhase }
+    const today = toDateStr(new Date())
+    // Past the expected start: Home shows "N days late", so don't wrap into an invented new cycle here.
+    const daysLate = getDaysLate(cfg, today)
+    return { ...getCycleInfo(cfg, today), daysLate }
     // language: phaseLabel is localized at compute time
   }, [currentBehavior, cycleHistory, declaredCycleLength, periodLength, lutealPhase, language])
 
   const behaviorForSubtitle = currentBehavior ?? 'kids'
-  const subtitle = userEmail ? getSubtitleFor(behaviorForSubtitle, cycleToday) : ''
+  const cycleLateLabel = cycleToday && cycleToday.daysLate > 0
+    ? (cycleToday.daysLate === 1 ? t('profile_sub_cycleLateOne') : t('profile_sub_cycleLate', { count: cycleToday.daysLate }))
+    : null
+  const subtitle = !userEmail ? '' : cycleLateLabel ?? getSubtitleFor(behaviorForSubtitle, cycleToday)
 
   const accent = getModeColor(mode, isDark)
 
@@ -458,7 +465,7 @@ export default function ProfileScreen() {
                 <SiteRow
                   sticker="flower"
                   label={t('cycleSettings_rowTitle')}
-                  value={cycleToday ? t('cycleAnalytics_dayNumber', { currentDay: cycleToday.cycleDay }) : undefined}
+                  value={cycleLateLabel ?? (cycleToday ? t('cycleAnalytics_dayNumber', { currentDay: cycleToday.cycleDay }) : undefined)}
                   onPress={() => router.push('/profile/cycle-settings')}
                 />
               )}

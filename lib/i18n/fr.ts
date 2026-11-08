@@ -6194,4 +6194,6 @@ export const fr: TranslationKeys = {
   meno_set_savedMsg: "Your menopause details have been updated.",
   meno_set_rowNotSet: "Set up",
   a11y_sourcesCount: "{{label}}, {{count}} sources",
+  profile_sub_cycleLateOne: "1 day late",
+  profile_sub_cycleLate: "{{count}} days late",
 }

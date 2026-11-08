@@ -6153,6 +6153,8 @@ export interface TranslationKeys {
   profile_sub_ageYearsMonths: string
   profile_sub_childAge: string
   profile_sub_cycleDay: string
+  profile_sub_cycleLateOne: string
+  profile_sub_cycleLate: string
   profile_sub_cycleNoPeriod: string
   profile_sub_weekDue: string
   profile_sub_noChildren: string

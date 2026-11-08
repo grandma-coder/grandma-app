@@ -6152,6 +6152,8 @@ export const en: TranslationKeys = {
   profile_sub_ageYearsMonths: "{{y}} yr {{m}} mo",
   profile_sub_childAge: "{{name}} · {{age}}",
   profile_sub_cycleDay: "Day {{day}} · {{phase}}",
+  profile_sub_cycleLateOne: "1 day late",
+  profile_sub_cycleLate: "{{count}} days late",
   profile_sub_cycleNoPeriod: "Cycle · log your period to begin",
   profile_sub_weekDue: "Week {{n}} · due {{date}}",
   profile_sub_noChildren: "No children added yet",
