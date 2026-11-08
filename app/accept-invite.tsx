@@ -203,7 +203,7 @@ export default function AcceptInvite() {
       {diffuse ? (
         <Text style={styles.emoji}>{t('acceptInvite_headerEmoji')}</Text>
       ) : (
-        <View style={{ marginBottom: 16 }}><SiteSticker name="heart" size={64} cut /></View>
+        <View style={{ marginBottom: 16 }}><SiteSticker name="love" size={64} cut /></View>
       )}
       <Text style={[
         diffuse ? styles.title : styles.siteTitle,

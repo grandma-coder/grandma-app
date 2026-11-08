@@ -11,11 +11,11 @@ Atualizado a cada tarefa. ✅ feito · 🔄 em andamento · ⬜ a fazer · 👤 
 | T5 | H1 — cuidadora bloqueada/pausada não lê mais a ficha (migração parte 2); colunas médicas p/ cuidadora ativa sem permissão ficam pós-beta | Claude | ✅ (👤 aplicar) |
 | T6 | M2 — `create_notification`: só tipos do app, respeita bloqueio, limita tamanho (migração parte 2) | Claude | ✅ (👤 aplicar) |
 | T7 | Storage do brechó: editar/apagar já é só do dono; sem mudança (avatares de canal usam `channels/`) | Claude | ✅ |
-| T8 | Datas e fuso: registro às 23h55, horário de verão, virada de mês | Claude | 🔄 |
-| T9 | Sem internet: o que acontece ao abrir e ao registrar | Claude | ⬜ |
-| T10 | Lembretes e push: agendamento, idioma, horário | Claude | ⬜ |
-| T11 | Link de convite (`grandma-app://invite/…`) no simulador | Claude | ⬜ |
-| T12 | Inventário de dados para os rótulos de privacidade da App Store | Claude | ⬜ |
+| T8 | Datas e fuso: 22 lugares liam datas como UTC (aniversário, memórias, consultas e idades 1 dia antes) → corrigido | Claude | ✅ |
+| T9 | Sem internet: aviso de conexão nas leituras, erro traduzido ao salvar, retry na abertura; sem fila offline (conhecido) | Claude | ✅ |
+| T10 | Lembretes locais no idioma do app e reagendados ao trocar idioma ✅; push de campanha do admin tem 1 texto só e o idioma do usuário não fica no banco | Claude | ✅ (👤 decidir) |
+| T11 | Convite: link antigo `invite/…` dava 404 → rota de redirecionamento; texto com "Guru Grandma" e masculino → corrigido; nome antigo removido do app | Claude | ✅ |
+| T12 | Inventário de dados para os rótulos de privacidade da App Store | Claude | 🔄 |
 | T13 | Teste de ponta a ponta com conta nova: 4 jornadas × 3 idiomas | Claude | ⬜ 👤 e-mail de teste |
 | T14 | Abrir PR `feat/site-look` → `main` (sem merge) | Claude | ⬜ |
 | T15 | Aplicar migração de segurança + rodar `prod-verification.sql` | Igor | ⬜ |

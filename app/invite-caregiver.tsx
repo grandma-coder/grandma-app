@@ -187,7 +187,7 @@ export default function InviteCaregiver() {
       if (error) throw new Error(error.message)
       if (data?.error) throw new Error(data.error)
 
-      const link = `grandma-app://invite/${data.inviteToken}`
+      const link = `grandma-app://accept-invite?token=${data.inviteToken}`
       setInviteLink(link)
     } catch {
       Alert.alert(t('common_error'), t('common_checkConnection'))
