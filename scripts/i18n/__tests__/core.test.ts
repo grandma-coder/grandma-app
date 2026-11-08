@@ -22,6 +22,11 @@ describe('diffSet', () => {
     expect(todo.sort()).toEqual(['b', 'c']) // b stale, c missing
     expect(removed).toEqual(['z'])
   })
+  it('re-translates a value with a stray backslash (escape written twice)', () => {
+    const done = { a: fnv1a('One'), b: fnv1a('Two'), c: fnv1a('Three') }
+    const { todo } = diffSet(english, { a: 'Um\\u2026', b: 'Dois', c: 'Três' }, done)
+    expect(todo).toEqual(['a'])
+  })
   it('is clean when every key matches its hash', () => {
     const done = { a: fnv1a('One'), b: fnv1a('Two'), c: fnv1a('Three') }
     expect(diffSet(english, { a: 'Um', b: 'Dois', c: 'Três' }, done)).toEqual({ todo: [], removed: [] })

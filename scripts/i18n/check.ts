@@ -32,6 +32,8 @@ export function checkAll(): string[] {
         if (tr === undefined) { problems.push(`${set.name}/${lang}: missing ${k}`); continue }
         if (done[k] !== fnv1a(en)) problems.push(`${set.name}/${lang}: stale ${k} (English changed — run npm run i18n:sync)`)
         if (paramMismatch(en, tr)) problems.push(`${set.name}/${lang}: {{param}} mismatch in ${k}`)
+        // An escape written twice shows up on screen as \\" or \\u2026.
+        if (tr.includes('\\') && !en.includes('\\')) problems.push(`${set.name}/${lang}: stray backslash in ${k}`)
         if (tr === en && /[A-Za-z]{3,}\s[a-z]{3,}/.test(en) && !SAME_OK.test(en)) problems.push(`${set.name}/${lang}: still English ${k}`)
       }
     }

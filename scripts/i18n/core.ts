@@ -15,7 +15,9 @@ export function diffSet(
   locale: Record<string, string>,
   done: Record<string, string>,
 ): { todo: string[]; removed: string[] } {
-  const todo = Object.keys(english).filter((k) => !(k in locale) || done[k] !== fnv1a(english[k]))
+  // A backslash the English doesn't have is an escape written twice (shows as \\" or \\u2026).
+  const brokenEscape = (k: string) => locale[k].includes('\\') && !english[k].includes('\\')
+  const todo = Object.keys(english).filter((k) => !(k in locale) || done[k] !== fnv1a(english[k]) || brokenEscape(k))
   const removed = Object.keys(locale).filter((k) => !(k in english))
   return { todo, removed }
 }
