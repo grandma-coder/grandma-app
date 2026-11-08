@@ -292,13 +292,19 @@ export default function Scan() {
         const persistedReply = reply.length > REPLY_PERSIST_MAX
           ? reply.slice(0, REPLY_PERSIST_MAX) + '…'
           : reply
-        const { error: insErr } = await supabase.from('scan_history').insert({
+        const row = {
           user_id: session.user.id,
           child_id: child?.id ?? null,
           scan_type: scanType,
           image_url: uri,
           result_json: { reply: persistedReply, truncated: reply.length > REPLY_PERSIST_MAX },
-        })
+        }
+        let { error: insErr } = await supabase.from('scan_history').insert(row)
+        // A view-only caregiver may not attach the child (RLS) — keep the scan on record without
+        // it, so history and the free-scan count still work.
+        if (insErr && row.child_id) {
+          ;({ error: insErr } = await supabase.from('scan_history').insert({ ...row, child_id: null }))
+        }
         if (insErr) {
           console.warn('[scan] failed to record scan_history:', insErr.message)
         } else {

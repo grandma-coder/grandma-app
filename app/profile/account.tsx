@@ -24,6 +24,7 @@ import { PaperAlert } from '../../components/ui/PaperAlert'
 import { Heart, Star, Moon, Cross, Sparkle } from '../../components/ui/Stickers'
 import { useAppLockStore } from '../../store/useAppLockStore'
 import { hasPin, clearPin, isBiometricAvailable } from '../../lib/appLock'
+import { alertAfterSheets } from '../../lib/afterSheets'
 import { SiteHeader, SiteEyebrow, SiteRow, SiteToggle, QuietPill, useSiteInput } from '../../components/profile/SiteSettingsKit'
 import { Ionicons } from '@expo/vector-icons'
 
@@ -141,7 +142,7 @@ export default function AccountScreen() {
       await signOut('global')
     } catch {
       setDeleting(false)
-      Alert.alert(t('common_error'), t('account_deleteFailedMsg'))
+      alertAfterSheets(t('common_error'), t('account_deleteFailedMsg'))
     }
   }
 

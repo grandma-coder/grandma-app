@@ -147,12 +147,12 @@ export const PREGNANCY_READS: PregnancyRead[] = [
   },
   {
     id: 'kick_counting',
-    title: 'Kick counting: why it matters and how to do it',
+    title: "Baby's movements: getting to know their pattern",
     category: 'body',
     readMinutes: 4,
     weekRangeStart: 26,
     weekRangeEnd: 40,
-    teaser: 'The 10-kicks-in-2-hours guideline explained. When to worry, when not to, and what to do if something seems off.',
+    teaser: "There is no set number of kicks. Learn your baby's usual pattern, and if movements slow down, stop or change, contact your maternity unit straight away.",
     icon: '👶',
   },
   {

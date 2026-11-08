@@ -111,7 +111,7 @@ export default function SettingsScreen() {
     } catch {
       setDeleting(false)
       // Server/edge errors come back in English — always show the warm, localized message.
-      Alert.alert(t('common_error'), t('settings_deleteFailedMsg'))
+      alertAfterSheets(t('common_error'), t('settings_deleteFailedMsg'))
     }
   }
 
