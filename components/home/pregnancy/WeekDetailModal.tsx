@@ -33,7 +33,7 @@ import { DiffuseBloomIcon } from '../../ui/diffuse/DiffusePrimitives'
 import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import { useLanguageStore } from '../../../store/useLanguageStore'
 import { getWeekData } from '../../../lib/pregnancyData'
-import { getWeekStat, formatWeight } from '../../../lib/weekStats'
+import { getWeekStat, formatWeight, formatLength } from '../../../lib/weekStats'
 import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
 import { localizedWeekContent, localizedPrepGuide } from '../../../lib/pregnancyContent'
 import { StickerIcon } from './stickerIcons'
@@ -309,7 +309,7 @@ export function WeekDetailModal({ visible, week, onClose }: Props) {
   const tri = getTrimester(week)
 
   const weekStr = String(week).padStart(2, '0')
-  const lengthStr = `${stat.cm}cm`
+  const lengthStr = formatLength(stat.cm)
   const weightStr = formatWeight(stat.g)
   const fruitName = localizeBabySizeName(weekData.babySize).toLowerCase()
   // English reads "a lime" / "an apple"; other languages show the bare name (gendered articles differ).

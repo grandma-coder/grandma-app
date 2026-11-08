@@ -8,6 +8,7 @@
  */
 
 import type { WeightUnit, TempUnit, VolumeUnit } from '../store/useUnitsStore'
+import { numLoc } from './kpLocale'
 
 // ─── Weight (canonical: kg) ────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ export function weightLabel(unit: WeightUnit): string {
 }
 
 export function formatWeight(kg: number, unit: WeightUnit, decimals = 1): string {
-  return `${kgToDisplay(kg, unit).toFixed(decimals)} ${weightLabel(unit)}`
+  return `${numLoc(kgToDisplay(kg, unit), decimals, decimals)} ${weightLabel(unit)}`
 }
 
 // ─── Temperature (canonical: °C) ───────────────────────────────────────────
@@ -44,7 +45,7 @@ export function tempLabel(unit: TempUnit): string {
 }
 
 export function formatTemp(c: number, unit: TempUnit, decimals = 1): string {
-  return `${cToDisplay(c, unit).toFixed(decimals)}${tempLabel(unit)}`
+  return `${numLoc(cToDisplay(c, unit), decimals, decimals)}${tempLabel(unit)}`
 }
 
 // ─── Volume (canonical: mL) ────────────────────────────────────────────────
@@ -64,5 +65,5 @@ export function volumeLabel(unit: VolumeUnit): string {
 }
 
 export function formatVolume(ml: number, unit: VolumeUnit, decimals = 0): string {
-  return `${mlToDisplay(ml, unit).toFixed(decimals)} ${volumeLabel(unit)}`
+  return `${numLoc(mlToDisplay(ml, unit), decimals, decimals)} ${volumeLabel(unit)}`
 }

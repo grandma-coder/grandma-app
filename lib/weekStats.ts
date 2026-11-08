@@ -6,6 +6,8 @@
  * Source: Hadlock-derived charts, https://perinatology.com/Reference/Fetal%20development.htm
  */
 
+import { numLoc } from './kpLocale'
+
 /** Length convention switches from crown-rump (CRL) to crown-heel at this week. Chart code can segment the series here so the wk13→14 step doesn't read as a glitch. */
 export const CROWN_HEEL_STARTS_WEEK = 14
 
@@ -68,11 +70,9 @@ export function getWeekStat(week: number): WeekStat {
 export function formatWeight(g: number | null): string {
   if (g == null) return '<1g'
   if (g < 1000) return `${g}g`
-  const kg = g / 1000
-  return `${kg.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')}kg`
+  return `${numLoc(g / 1000, 2)}kg`
 }
 
 export function formatLength(cm: number): string {
-  if (cm < 1) return `${cm}cm`
-  return `${cm}cm`
+  return `${numLoc(cm, cm < 1 ? 2 : 1)}cm`
 }

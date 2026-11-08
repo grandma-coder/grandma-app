@@ -26,7 +26,7 @@ import { useTranslation } from '../../lib/i18n'
 import { useTheme, useDiffuseTheme, getDiffuseAccent, getModeField, getModeColorSoft, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { DiffuseTimelineRow } from '../calendar/DiffuseLogTimeline'
-import { dateLoc } from '../../lib/kpLocale'
+import { dateLoc, numLoc } from '../../lib/kpLocale'
 import { localizeBabySizeName } from '../../lib/pregnancyData'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
@@ -644,7 +644,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
                 {t('preg_ring_length')}
               </Text>
               <Text style={[dstyles.statValue, { color: ink }]}>
-                {stat.cm}
+                {numLoc(stat.cm, 1)}
                 <Text style={[dstyles.statUnit, { color: ink2 }]}>
                   {' ' + t('preg_weekCard_unitCm')}
                 </Text>
@@ -765,7 +765,7 @@ export function PregnancyJourneyRing({ weekNumber, dueDate }: Props) {
               {t('preg_ring_length')}
             </Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: font.displayBold, letterSpacing: 0 }]}>
-              {stat.cm}
+              {numLoc(stat.cm, 1)}
               <Text style={[styles.statUnit, { color: colors.textSecondary, fontFamily: font.body, fontStyle: 'normal' }]}>
                 {t('preg_weekCard_unitCm')}
               </Text>
