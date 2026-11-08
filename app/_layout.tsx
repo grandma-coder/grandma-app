@@ -14,7 +14,7 @@ import '../lib/sentry' // first: crash reporting before anything else can throw
 import { AnimatedSplash } from '../components/ui/AnimatedSplash'
 import { RootErrorScreen } from '../components/ui/RootErrorScreen'
 import '../lib/fontDefaults' // first: default Hanken on StyleSheet text styles
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -648,6 +648,9 @@ export default function RootLayout() {
     })
   }, [lockHydrated, lockEnabled])
 
+  // True from the moment a stashed invite token is routed to /accept-invite until we're there.
+  const inviteRedirecting = useRef(false)
+
   useEffect(() => {
     if (loading || !behaviorHydrated) return
 
@@ -663,11 +666,16 @@ export default function RootLayout() {
     // through the auth flow. Now that they're authenticated, resume the accept
     // flow instead of dropping them on home/onboarding.
     if (session) {
+      if (segments[0] === 'accept-invite') inviteRedirecting.current = false
       const inviteToken = consumePendingInvite()
       if (inviteToken) {
+        inviteRedirecting.current = true
         router.replace(`/accept-invite?token=${encodeURIComponent(inviteToken)}` as Parameters<typeof router.replace>[0])
         return
       }
+      // The guard re-runs before that navigation lands (segments still say (auth)); without this it
+      // fell through to "signed in → /(tabs)" and the caregiver never saw the invite.
+      if (inviteRedirecting.current) return
     }
 
     const inAuth = segments[0] === '(auth)'
