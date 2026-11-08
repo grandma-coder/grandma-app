@@ -11,7 +11,7 @@
 
 import { dateLoc, numLoc } from '../../../lib/kpLocale'
 import { useEffect, useRef, useState } from 'react'
-import { Animated, Easing, Pressable, Text, View, StyleSheet } from 'react-native'
+import { Animated, Easing, Pressable, Text, View, StyleSheet, useWindowDimensions } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import * as Haptics from 'expo-haptics'
 import { useTheme, stickers } from '../../../constants/theme'
@@ -115,8 +115,9 @@ function WaveMeter({ pct, color, ink }: { pct: number; color: string; ink: strin
 }
 
 function Tile({
-  index, tone, sticker, eyebrow, onPress, children, flex,
+  index, tone, sticker, eyebrow, onPress, children, flex, compact = false,
 }: {
+  compact?: boolean
   index: number
   tone: string
   sticker: SiteStickerName
@@ -149,13 +150,13 @@ function Tile({
             <HandDrawnPill width={size.w} height={size.h} fill={ink} radius={22} seed={eyebrow + 'sh'} />
           </View>
           <HandDrawnPill width={size.w} height={size.h} fill={tone} stroke={ink} strokeWidth={2.4} radius={22} seed={eyebrow} />
-          <View style={styles.tile}>
+          <View style={[styles.tile, compact && styles.tileCompact]}>
             <View style={styles.tileHead}>
-              <Text style={[styles.eyebrow, { color: ink }]} numberOfLines={2}>{eyebrow}</Text>
-              <View style={styles.disc}>
-                <HandDrawnPill width={42} height={42} fill={colors.surface} stroke={ink} strokeWidth={2} seed={sticker + 'disc'} />
+              <Text style={[styles.eyebrow, compact && styles.eyebrowCompact, { color: ink }]} numberOfLines={2}>{eyebrow}</Text>
+              <View style={[styles.disc, compact && styles.discCompact]}>
+                <HandDrawnPill width={compact ? 34 : 42} height={compact ? 34 : 42} fill={colors.surface} stroke={ink} strokeWidth={2} seed={sticker + 'disc'} />
                 <Animated.View style={{ transform: [{ translateY: sway.translateY }, { rotate: sway.rotate }] }}>
-                  <SiteSticker name={sticker} size={28} cut />
+                  <SiteSticker name={sticker} size={compact ? 22 : 28} cut />
                 </Animated.View>
               </View>
             </View>
@@ -170,6 +171,9 @@ function Tile({
 export function KidsHeroTiles(p: KidsHeroTilesProps) {
   const { colors, font } = useTheme()
   const { t } = useTranslation()
+  // Small phones (iPhone SE / mini): two tiles share ~170pt, so the big type made each tile tall
+  // and the grid pushed everything below the fold.
+  const compact = useWindowDimensions().width < 390
   const ink = colors.text
   const ink2 = colors.textSecondary
   const days = Math.max(1, p.activityRangeDays || 1)
@@ -198,15 +202,15 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
   const hasAct = p.activityCount > 0
   const loading = !!p.loading
 
-  const numStyle = [styles.num, { color: ink, fontFamily: font.displayBold }]
+  const numStyle = [styles.num, compact && styles.numCompact, { color: ink, fontFamily: font.displayBold }]
   const unitStyle = [styles.unit, { color: ink, fontFamily: font.display }]
   const subStyle = [styles.sub, { color: ink2, fontFamily: font.body }]
-  const emptyStyle = [styles.empty, { color: ink, fontFamily: font.display }]
+  const emptyStyle = [styles.empty, compact && styles.emptyCompact, { color: ink, fontFamily: font.display }]
 
   return (
     <View style={{ gap: 14 }}>
       <View style={styles.row}>
-        <Tile index={0} flex={1.15} tone={stickers.blueSoft} sticker="moon"
+        <Tile compact={compact} index={0} flex={1.15} tone={stickers.blueSoft} sticker="moon"
           eyebrow={multi ? t('kidsTile_sleepAvg') : t('kidsTile_sleepNight')}
           onPress={loading ? undefined : !hasSleep && p.onLogSleep ? p.onLogSleep : p.onPressSleep}>
           {loading ? <TileValueSkeleton /> : <FadeIn>
@@ -223,11 +227,11 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           </FadeIn>}
         </Tile>
 
-        <Tile index={1} flex={1} tone={stickers.yellowSoft} sticker={hasMood ? MOOD_STICKER[p.dominantMood] ?? 'face3' : 'face3'}
+        <Tile compact={compact} index={1} flex={1} tone={stickers.yellowSoft} sticker={hasMood ? MOOD_STICKER[p.dominantMood] ?? 'face3' : 'face3'}
           eyebrow={t('kids_home_tile_mood')}
           onPress={loading ? undefined : !hasMood && p.onLogMood ? p.onLogMood : p.onPressMood}>
           {loading ? <TileValueSkeleton /> : <FadeIn>
-          <Text style={hasMood ? [styles.moodWord, { color: ink, fontFamily: font.display }] : emptyStyle} numberOfLines={hasMood ? 1 : 2}>
+          <Text style={hasMood ? [styles.moodWord, compact && styles.moodWordCompact, { color: ink, fontFamily: font.display }] : emptyStyle} numberOfLines={hasMood ? 1 : 2}>
             {hasMood ? (MOOD_LABEL_KEY[p.dominantMood] ? t(MOOD_LABEL_KEY[p.dominantMood]) : t('kp_kh_moodContent')) : t('kids_home_tile_mood_empty')}
           </Text>
           {/* one little hand-drawn bar per mood, dominant one tallest + ink-outlined */}
@@ -246,7 +250,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
       </View>
 
       <View style={styles.row}>
-        <Tile index={2} flex={1} tone={stickers.pinkSoft} sticker={liquid ? 'bottle' : 'avocado'}
+        <Tile compact={compact} index={2} flex={1} tone={stickers.pinkSoft} sticker={liquid ? 'bottle' : 'avocado'}
           eyebrow={multi ? (liquid ? t('kidsTile_feedAvg') : t('kidsTile_calAvg')) : (liquid ? t('kids_home_tile_feedings') : t('kids_home_tile_calories'))}
           onPress={loading ? undefined : !hasFood && p.onLogFeeding ? p.onLogFeeding : p.onPressCalories}>
           {loading ? <TileValueSkeleton /> : <FadeIn>
@@ -263,7 +267,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
           </FadeIn>}
         </Tile>
 
-        <Tile index={3} flex={1.15} tone={stickers.greenSoft} sticker="shoe"
+        <Tile compact={compact} index={3} flex={1.15} tone={stickers.greenSoft} sticker="shoe"
           eyebrow={t('kids_home_tile_activities')}
           onPress={loading ? undefined : !hasAct && p.onLogActivity ? p.onLogActivity : p.onPressActivity}>
           {loading ? <TileValueSkeleton /> : <FadeIn>
@@ -296,11 +300,17 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 12 },
   tile: { padding: 14, paddingBottom: 16, minHeight: 168 },
+  tileCompact: { padding: 12, paddingBottom: 13, minHeight: 136 },
   tileHead: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 6 },
   eyebrow: { flex: 1, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4 },
   disc: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', marginTop: -4, marginRight: -4 },
   numRow: { marginTop: 4 },
   num: { fontSize: 38, lineHeight: 44, letterSpacing: -1 },
+  eyebrowCompact: { fontSize: 9, letterSpacing: 0.9 },
+  discCompact: { width: 34, height: 34 },
+  numCompact: { fontSize: 30, lineHeight: 36 },
+  emptyCompact: { fontSize: 16, lineHeight: 21, marginTop: 6 },
+  moodWordCompact: { fontSize: 20, lineHeight: 26 },
   unit: { fontSize: 18, textTransform: 'uppercase' },
   sub: { fontSize: 13, marginTop: 2 },
   empty: { fontSize: 20, lineHeight: 26, textTransform: 'uppercase', marginTop: 8 },
