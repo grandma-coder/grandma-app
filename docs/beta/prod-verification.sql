@@ -347,6 +347,19 @@ FROM query_to_xml(
 
 
 -- -----------------------------------------------------------------------------
+-- BLOCK 5b: Caregiver seat limit follows the paywall flag (20261102200000)
+-- Expected: has_effective_limit = true, trigger_uses_it = true, limit_now = 4.
+-- If false: every invite on a free account fails with "your care circle is full"
+-- (free tier = 0 seats) — seen on the simulator with a fresh beta account.
+-- -----------------------------------------------------------------------------
+SELECT
+  to_regprocedure('public.effective_seat_limit(subscription_tier)') IS NOT NULL AS has_effective_limit,
+  coalesce(position('effective_seat_limit' IN pg_get_functiondef('public.enforce_seat_limit_on_insert()'::regprocedure)) > 0, false) AS trigger_uses_it,
+  CASE WHEN to_regprocedure('public.effective_seat_limit(subscription_tier)') IS NOT NULL
+    THEN (SELECT public.effective_seat_limit('free')) END AS limit_now;
+
+
+-- -----------------------------------------------------------------------------
 -- BLOCK 6: Tables in schema public with Row Level Security DISABLED
 -- Any row here is readable/writable by anyone with the anon key if grants allow
 -- it. Ideally this returns zero rows (or only tables you deliberately left open).

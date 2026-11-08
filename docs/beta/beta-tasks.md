@@ -18,7 +18,7 @@ Atualizado a cada tarefa. ✅ feito · 🔄 em andamento · ⬜ a fazer · 👤 
 | T12 | Inventário de dados para App Privacy → `docs/beta/app-privacy-inventory.md` (👤 decidir Anthropic/Skeleton na política) | Claude | ✅ |
 | T13 | Conta nova no iPhone SE: filhos+ciclo (EN), gravidez (ES), menopausa (PT), calendário, notas, ajustes. 13 bugs achados e corrigidos (ver known-issues). Não coberto no simulador: convite de cuidadora entre 2 contas, lembretes no aparelho, Apple/Google login | Claude | ✅ |
 | T14 | PR aberto: https://github.com/grandma-coder/grandma-app/pull/2 (👤 merge depois de T15/T16) | Claude | ✅ |
-| T15 | Aplicar migração de segurança + rodar `prod-verification.sql` | Igor | ⬜ |
+| T15 | Aplicar migração de segurança + rodar `prod-verification.sql`. **Bloqueia o beta:** conta nova não consegue convidar cuidadora ("círculo cheio" com 0 pessoas) — a migração `20261102200000_paywall_flag` não parece estar em produção; o bloco 5b do SQL confirma | Igor | ⬜ |
 | T16 | Build final + TestFlight interno no aparelho | Igor | ⬜ |
 | T17 | App Store Connect: Beta App Review, App Privacy, conta demo | Igor | ⬜ |
 | T18 | Ícone novo no TestFlight: o ícone novo (6 nov) só existe no `feat/site-look`; builds 14/15 são anteriores. Sai no build do T16, depois do merge do PR #2 — conferir o ícone no TestFlight e na tela inicial | Igor | ⬜ |

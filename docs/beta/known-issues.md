@@ -23,6 +23,7 @@ abrir de novo. Atualizar a cada build.
 | Notificações antigas | Contas antigas podem ter notificações gravadas em inglês | Só contas criadas antes da correção; limpeza pendente |
 | Onboarding do ciclo | Condições e suplementos não ficam salvos quando a data da última menstruação é "não sei" | Precisa de coluna nova no banco |
 | Sem internet | Registro sem conexão mostra erro e não fica pendente para reenviar | Sem fila offline |
+| Círculo de Cuidados | Convite falha com "Seu círculo de cuidado está cheio" mesmo sem ninguém no círculo | Migração `20261102200000_paywall_flag` faltando em produção (T15) |
 
 ## Corrigido recentemente (se aparecer de novo, é regressão — prioridade alta)
 
