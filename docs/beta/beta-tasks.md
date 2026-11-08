@@ -21,3 +21,5 @@ Atualizado a cada tarefa. ✅ feito · 🔄 em andamento · ⬜ a fazer · 👤 
 | T15 | Aplicar migração de segurança + rodar `prod-verification.sql` | Igor | ⬜ |
 | T16 | Build final + TestFlight interno no aparelho | Igor | ⬜ |
 | T17 | App Store Connect: Beta App Review, App Privacy, conta demo | Igor | ⬜ |
+| T18 | Ícone novo no TestFlight: o ícone novo (6 nov) só existe no `feat/site-look`; builds 14/15 são anteriores. Sai no build do T16, depois do merge do PR #2 — conferir o ícone no TestFlight e na tela inicial | Igor | ⬜ |
+| T19 | Simulador, 2ª rodada: convite de cuidadora entre 2 contas, sugestão → Suporte do admin, sair/entrar/esqueci a senha, combinações de idioma que faltam | Claude | 🔄 |
