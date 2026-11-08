@@ -9,7 +9,7 @@ import { useIsDiffuse, DiffuseArrow } from '../ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { parseLocalDate } from '../../lib/localDate'
-import { dateLoc } from '../../lib/kpLocale'
+import { dateLoc, numLoc } from '../../lib/kpLocale'
 
 export interface DocumentItem {
   id: string
@@ -30,8 +30,8 @@ interface DocumentSectionProps {
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1048576) return `${(bytes / 1024).toFixed(0)} KB`
-  return `${(bytes / 1048576).toFixed(1)} MB`
+  if (bytes < 1048576) return `${numLoc(bytes / 1024, 0, 0)} KB`
+  return `${numLoc(bytes / 1048576, 1, 1)} MB`
 }
 
 function formatDate(dateStr: string): string {

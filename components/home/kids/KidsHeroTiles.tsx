@@ -9,7 +9,7 @@
  * on press (light haptic).
  */
 
-import { dateLoc } from '../../../lib/kpLocale'
+import { dateLoc, numLoc } from '../../../lib/kpLocale'
 import { useEffect, useRef, useState } from 'react'
 import { Animated, Easing, Pressable, Text, View, StyleSheet } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
@@ -73,7 +73,7 @@ function CountUp({ value, decimals = 0, style }: { value: number; decimals?: num
     Animated.timing(v, { toValue: value, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start()
     return () => v.removeListener(id)
   }, [value, v])
-  const txt = decimals ? shown.toFixed(decimals) : Math.round(shown).toLocaleString(dateLoc())
+  const txt = decimals ? numLoc(shown, decimals, decimals) : Math.round(shown).toLocaleString(dateLoc())
   return <Text style={style}>{txt}</Text>
 }
 

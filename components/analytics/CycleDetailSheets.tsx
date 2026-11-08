@@ -5,6 +5,7 @@
  * own internal body component that calls the matching cycleAnalytics hook.
  */
 
+import { numLoc } from '../../lib/kpLocale'
 import React, { createContext, useContext } from 'react'
 import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Dimensions, Modal, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -1058,7 +1059,7 @@ function BBTDetail() {
 
   return (
     <View style={{ gap: 18 }}>
-      <HeroRow size={40} value={<>{tempU(latest).toFixed(1)}{degLabel}</>} unit={t('cycleDetail_bbtLatest')} />
+      <HeroRow size={40} value={<>{numLoc(tempU(latest), 1, 1)}{degLabel}</>} unit={t('cycleDetail_bbtLatest')} />
 
       <View style={detailStyles.minMaxRow}>
         <StatChip
@@ -1066,7 +1067,7 @@ function BBTDetail() {
           value={data.shiftDay ? t('cycleAnalytics_dayNumber', { currentDay: data.shiftDay }) : '—'}
           tint={stickers.pinkSoft}
         />
-        <StatChip label={t('cycleDetail_bbtCoverline')} value={data.coverline ? `${tempU(data.coverline).toFixed(1)}${degLabel}` : '—'} tint={stickers.blueSoft} />
+        <StatChip label={t('cycleDetail_bbtCoverline')} value={data.coverline ? `${numLoc(tempU(data.coverline), 1, 1)}${degLabel}` : '—'} tint={stickers.blueSoft} />
         <StatChip label={t('cycleDetail_bbtReadings')} value={String(data.series.length)} tint={stickers.yellowSoft} />
       </View>
 

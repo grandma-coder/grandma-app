@@ -7,6 +7,7 @@
  * branch by the caller.
  */
 
+import { numLoc } from '../../lib/kpLocale'
 import { View, Text, StyleSheet } from 'react-native'
 import { useDiffuseTheme, diffuseFont } from '../../constants/theme'
 
@@ -31,7 +32,7 @@ export function KidsAnalyticsHero({ overall, hasData, caption, childName, band, 
         {lowConfidence && ' · LOW DATA'}
       </Text>
       <Text style={[styles.hero, { color: colors.ink }]}>
-        {hasData ? overall.toFixed(1) : '—'}
+        {hasData ? numLoc(overall, 1, 1) : '—'}
         <Text style={[styles.slash, { color: colors.ink3 }]}> / 10</Text>
       </Text>
       <Text style={[styles.read, { color: colors.ink2 }]}>

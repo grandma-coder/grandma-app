@@ -9,6 +9,7 @@
  *
  * Backwards-compat alias: IntercourseForm re-exports IntimacyForm.
  */
+import { numLoc } from '../../lib/kpLocale'
 import { SheetFooterAction } from './LogSheet'
 import { EyeAction, ACTION_TONES } from '../ui/AuthDock'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -1628,7 +1629,7 @@ function CycleStepper({
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20, paddingVertical: 12 }}>
       {btn(-1)}
       <Text style={{ fontSize: 32, color: diffuse ? dt.colors.ink : colors.text, fontFamily: diffuse ? diffuseFont.display : font.displayBold, minWidth: 110, textAlign: 'center' }}>
-        {value.toFixed(decimals)}
+        {numLoc(value, decimals, decimals)}
         <Text style={{ fontSize: 15, color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.mono : font.bodyMedium }}> {unit}</Text>
       </Text>
       {btn(1)}

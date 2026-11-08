@@ -58,7 +58,7 @@ import { Character, type CharacterName } from '../../components/characters/Chara
 import { PaperCard } from '../../components/ui/PaperCard'
 import { PillButton } from '../../components/ui/PillButton'
 import { PaperAlert } from '../../components/ui/PaperAlert'
-import { dateLoc } from '../../lib/kpLocale'
+import { dateLoc, numLoc } from '../../lib/kpLocale'
 import { AfterTransition } from '../../components/ui/AfterTransition'
 import { SheetModal } from '../../components/ui/SheetModal'
 
@@ -1389,7 +1389,7 @@ export default function PregnancyProfileScreen() {
               if (Number.isNaN(cur) || Number.isNaN(pre)) return ''
               const diff = cur - pre
               const sign = diff >= 0 ? '+' : ''
-              return `${sign}${kgToDisplay(diff, weightUnit).toFixed(1)} ${weightLabel(weightUnit)}`
+              return `${sign}${numLoc(kgToDisplay(diff, weightUnit), 1, 1)} ${weightLabel(weightUnit)}`
             })()}
           />
         </SectionCard>

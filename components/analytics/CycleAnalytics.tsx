@@ -13,6 +13,7 @@
  * previously collected but never shown. Intercourse is TTC-only.
  */
 
+import { numLoc } from '../../lib/kpLocale'
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -219,7 +220,7 @@ export function CycleAnalytics() {
   // previously collected but never shown). Intercourse only surfaces for TTC.
   const isTTC = intent === 'ttc'
   const bbtLatest = bbt?.series.length ? bbt.series[bbt.series.length - 1].temp : null
-  const bbtLabel = bbtLatest != null ? `${cToDisplay(bbtLatest, tempUnitPref).toFixed(1)}${tempLabel(tempUnitPref)}` : '—'
+  const bbtLabel = bbtLatest != null ? `${numLoc(cToDisplay(bbtLatest, tempUnitPref), 1, 1)}${tempLabel(tempUnitPref)}` : '—'
   const bbtSub = bbt?.shiftDay
     ? t('cycleAnalytics_bbtSub_shift', { d: bbt.shiftDay })
     : bbtLatest != null

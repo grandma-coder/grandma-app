@@ -4,6 +4,7 @@
  * Discovery header, suggested channels, trending, my channels, search.
  */
 
+import { numLoc } from '../../lib/kpLocale'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View,
@@ -437,7 +438,7 @@ function BannerCarousel({ channels, myIds, accent, onJoin }: { channels: Channel
                       <Text style={[styles.bannerRatingText, diffuse
                         ? { color: dt.colors.ink2, fontFamily: diffuseFont.monoBold }
                         : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>
-                        {c.avgRating.toFixed(1)}
+                        {numLoc(c.avgRating, 1, 1)}
                       </Text>
                     </View>
                   )}
@@ -485,7 +486,7 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
       ))}
       <Text style={[styles.ratingText, diffuse
         ? { color: dt.colors.ink2, fontFamily: diffuseFont.monoBold }
-        : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{rating.toFixed(1)}</Text>
+        : { color: colors.textSecondary, fontFamily: font.bodySemiBold }]}>{numLoc(rating, 1, 1)}</Text>
     </View>
   )
 }

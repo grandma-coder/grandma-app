@@ -3,6 +3,7 @@
  * Paper-native SVG, no legends. Single color with accent on latest point.
  */
 
+import { numLoc } from '../../../lib/kpLocale'
 import { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native'
 import Svg, { Path, Circle, Line, Rect, Defs, Pattern, G, LinearGradient, RadialGradient, Stop, Ellipse, Text as SvgText } from 'react-native-svg'
@@ -188,7 +189,7 @@ export function MiniBarChart({
 
 function formatBarValue(v: number): string {
   if (Number.isInteger(v)) return String(v)
-  return v.toFixed(1)
+  return numLoc(v, 1, 1)
 }
 
 // ─── PillDivergingChart ───────────────────────────────────────────────────────
@@ -527,7 +528,7 @@ export function MiniLineChart({
               }}
               numberOfLines={1}
             >
-              {data[selected!].toFixed(1)}{unit ? ` ${unit}` : ''}
+              {numLoc(data[selected!], 1, 1)}{unit ? ` ${unit}` : ''}
             </Text>
             <Text
               style={{
@@ -648,7 +649,7 @@ export function GlowAreaLine({ data, color, color2, height = 150, width = DEFAUL
             }}
           >
             <Text style={{ color: colors.bg, fontFamily: font.bodySemiBold, fontSize: 13 }} numberOfLines={1}>
-              {data[selected!].toFixed(1)}{unit ? ` ${unit}` : ''}
+              {numLoc(data[selected!], 1, 1)}{unit ? ` ${unit}` : ''}
             </Text>
             <Text style={{ color: colors.bg, fontFamily: font.body, fontSize: 10, opacity: 0.75 }} numberOfLines={1}>
               {labels[selected!]}
@@ -992,7 +993,7 @@ export function ConcentricArcs({ data, centerLabel, height = 236 }: { data: ArcD
               textAnchor={anchor}
               fontFamily={diffuseFont.mono}
             >
-              {d.value.toFixed(1)}
+              {numLoc(d.value, 1, 1)}
             </SvgText>
           )
         })}
@@ -1347,7 +1348,7 @@ export function MilestoneTrail({
               <Circle cx={xAt(i)} cy={yAt(v)} r={r} fill={isLast ? accent : withA(color, 0.9)} />
               <SvgText x={xAt(i)} y={yAt(v) + (isLast ? 4 : 3.5)} fontSize={isLast ? 11 : 9} textAnchor="middle"
                 fill={isLast ? '#FFFFFF' : dt.colors.ink} fontFamily={diffuseFont.mono}>
-                {v % 1 === 0 ? String(v) : v.toFixed(1)}
+                {v % 1 === 0 ? String(v) : numLoc(v, 1, 1)}
               </SvgText>
             </G>
           )

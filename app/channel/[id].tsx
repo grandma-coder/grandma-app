@@ -2,6 +2,7 @@
  * Channel Chat — real-time messaging interface with threads, mentions, reactions.
  */
 
+import { numLoc } from '../../lib/kpLocale'
 import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react'
 import {
   View,
@@ -1042,7 +1043,7 @@ export default function ChannelChat() {
                     fill={i <= Math.round(channel.avgRating) ? (diffuse ? dt.colors.ink3 : stickers.yellow) : 'none'}
                   />
                 ))}
-                <Text style={[styles.rateBarScore, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold } : { color: colors.text, fontFamily: 'SpaceMono_400Regular', fontSize: 12 }]}>{channel.avgRating.toFixed(1)}</Text>
+                <Text style={[styles.rateBarScore, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.monoBold } : { color: colors.text, fontFamily: 'SpaceMono_400Regular', fontSize: 12 }]}>{numLoc(channel.avgRating, 1, 1)}</Text>
                 <Text style={[styles.rateBarCount, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10 }]}>({channel.ratingCount})</Text>
               </>
             ) : (

@@ -10,6 +10,7 @@
  * tables abbreviated to monthly (0–24mo) and yearly+ (2y+) checkpoints.
  */
 
+import { numLoc } from '../../lib/kpLocale'
 import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Svg, { Path, Circle, Line, Text as SvgText, G } from 'react-native-svg'
@@ -157,7 +158,7 @@ export function GrowthPercentileChart({
   }
 
   const labelTick = (m: number) =>
-    m < 24 ? `${Math.round(m)}m` : `${(m / 12).toFixed(m % 12 === 0 ? 0 : 1)}y`
+    m < 24 ? `${Math.round(m)}m` : `${numLoc(m / 12, m % 12 === 0 ? 0 : 1, m % 12 === 0 ? 0 : 1)}y`
 
   const valueUnit = metric === 'weight' ? 'kg' : 'cm'
 
@@ -247,7 +248,7 @@ export function GrowthPercentileChart({
             fill={axisLabelColor}
             textAnchor="end"
           >
-            {v.toFixed(metric === 'weight' && v < 10 ? 1 : 0)}
+            {numLoc(v, metric === 'weight' && v < 10 ? 1 : 0, metric === 'weight' && v < 10 ? 1 : 0)}
           </SvgText>
         ))}
 

@@ -5,6 +5,7 @@
  * Features: smooth curves, Y-axis labels, grid lines, value labels, gradient fills, rounded bars.
  */
 
+import { numLoc } from '../../lib/kpLocale'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native'
 import Svg, {
@@ -53,7 +54,7 @@ function niceScale(min: number, max: number, ticks = 4): number[] {
 
 function formatNum(v: number): string {
   if (Number.isInteger(v)) return String(v)
-  return v.toFixed(1)
+  return numLoc(v, 1, 1)
 }
 
 /** Downsample a daily series to ≤ maxBuckets by summing each bucket. */

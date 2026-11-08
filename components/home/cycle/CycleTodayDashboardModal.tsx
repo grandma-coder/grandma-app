@@ -29,7 +29,7 @@ import { CYCLE_LOG_STICKER, CYCLE_MOOD_STICKER } from '../../../lib/logStickers'
 import type { SymptomId } from '../../../lib/cycleSymptoms'
 import { supabase } from '../../../lib/supabase'
 import { useTranslation, t as translate } from '../../../lib/i18n'
-import { dateLoc } from '../../../lib/kpLocale'
+import { dateLoc, numLoc } from '../../../lib/kpLocale'
 
 interface Props {
   visible: boolean
@@ -211,7 +211,7 @@ export function CycleTodayDashboardModal({ visible, onClose, phase, userId, date
             </View>
             <Display size={24} color={ink} style={{ marginTop: 4 }}>
               {/* Stored in °C — show her unit. */}
-              {bbtValue && Number.isFinite(parseFloat(bbtValue)) ? `${cToDisplay(parseFloat(bbtValue), tempUnit).toFixed(1)}°` : bbtValue ? `${bbtValue}°` : '—'}
+              {bbtValue && Number.isFinite(parseFloat(bbtValue)) ? `${numLoc(cToDisplay(parseFloat(bbtValue), tempUnit), 1, 1)}°` : bbtValue ? `${bbtValue}°` : '—'}
             </Display>
             <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.italic : font.italic }}>
               {bbtValue ? t('cycleDash_basalTemp') : t('cycleDash_notLogged')}

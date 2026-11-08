@@ -9,6 +9,7 @@
  * period date (see CycleHome + getCycleInfo), so an empty log day is a
  * valid, honest state.
  */
+import { numLoc } from '../../../lib/kpLocale'
 import { CYCLE_LOG_STICKER, CYCLE_MOOD_STICKER } from '../../../lib/logStickers'
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
@@ -228,7 +229,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
       sheet: 'basal_temp',
       icon: diffuse ? diffuseBlob('basal_temp') : <SiteSticker name="thermo" size={22} />,
       // Stored in °C / kg; show the user's units.
-      label: bbtValue && Number.isFinite(parseFloat(bbtValue)) ? `${cToDisplay(parseFloat(bbtValue), tempUnit).toFixed(1)}°` : bbtValue ? `${bbtValue}°` : '+',
+      label: bbtValue && Number.isFinite(parseFloat(bbtValue)) ? `${numLoc(cToDisplay(parseFloat(bbtValue), tempUnit), 1, 1)}°` : bbtValue ? `${bbtValue}°` : '+',
       done: !!bbtValue,
     },
     {
@@ -282,7 +283,7 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
     {
       key: 'weight', sheet: 'weight',
       icon: diffuse ? diffuseBlob('weight') : <Drop size={22} fill={stickers.peach} />,
-      label: weight && Number.isFinite(parseFloat(weight)) ? `${kgToDisplay(parseFloat(weight), weightUnit).toFixed(1)}` : weight ? `${weight}` : '+', done: !!weight,
+      label: weight && Number.isFinite(parseFloat(weight)) ? `${numLoc(kgToDisplay(parseFloat(weight), weightUnit), 1, 1)}` : weight ? `${weight}` : '+', done: !!weight,
     },
     {
       key: 'water', sheet: 'water',

@@ -9,6 +9,7 @@
  * the label above each bar always shows the true number.
  */
 
+import { numLoc } from '../../../lib/kpLocale'
 import { ScrollView, Text, View, StyleSheet } from 'react-native'
 import { useTheme, stickers } from '../../../constants/theme'
 import { useTranslation } from '../../../lib/i18n'
@@ -79,7 +80,7 @@ export function SleepDetailCalm(p: SleepDetailCalmProps) {
         <Text style={eyebrow}>{oneNight ? t('kidsTile_sleepNight') : t('kidsTile_sleepAvg')}</Text>
         <View style={styles.heroRow}>
           <Text style={[styles.hero, { color: ink, fontFamily: font.displayBold }]} testID="sleep-hero">
-            {`${r1(hero).toFixed(1)}h`}
+            {`${numLoc(r1(hero), 1, 1)}h`}
           </Text>
           {target > 0 ? (
             <Text style={[styles.heroSub, { color: ink2, fontFamily: font.body }]}>{t('kidsTile_ofNight', { h: target })}</Text>

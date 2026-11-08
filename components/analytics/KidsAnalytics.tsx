@@ -15,7 +15,7 @@
 
 import { afterSheets } from '../../lib/afterSheets'
 import { shortDayMonth } from '../../lib/timeFormat'
-import { dateLoc } from '../../lib/kpLocale'
+import { dateLoc, numLoc } from '../../lib/kpLocale'
 import { fmt1 } from '../../lib/grandmaNotes/shared'
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Animated, {
@@ -539,16 +539,16 @@ function getHealthTips(
     if (avg > 0 && avg < target * 0.85) {
       tips.push({
         title: 'Sleep Below Target',
-        body: `${childName} avg ${avg.toFixed(1)}h/night — target is ${target}h for their age.`,
-        detail: `At ${ageMonths} months, children need ~${target}h sleep/day. ${childName} is averaging ${avg.toFixed(1)}h. ${goodPct}% of sessions are good quality. Try an earlier bedtime, dim lights 30 min before sleep, and a consistent wind-down routine to reach the target.`,
+        body: `${childName} avg ${numLoc(avg, 1, 1)}h/night — target is ${target}h for their age.`,
+        detail: `At ${ageMonths} months, children need ~${target}h sleep/day. ${childName} is averaging ${numLoc(avg, 1, 1)}h. ${goodPct}% of sessions are good quality. Try an earlier bedtime, dim lights 30 min before sleep, and a consistent wind-down routine to reach the target.`,
         color: PILLAR_CONFIG.sleep.color,
         icon: Moon,
       })
     } else if (avg > 0) {
       tips.push({
         title: 'Sleep Goal Met ✓',
-        body: `${childName} avg ${avg.toFixed(1)}h — on track! ${goodPct}% good-quality sessions.`,
-        detail: `Great sleep pattern for ${ageMonths} months! ${avg.toFixed(1)}h average meets the ${target}h target. ${goodPct}% of sleep sessions are rated good or great. Quality sleep strengthens memory, immunity, and emotional regulation.`,
+        body: `${childName} avg ${numLoc(avg, 1, 1)}h — on track! ${goodPct}% good-quality sessions.`,
+        detail: `Great sleep pattern for ${ageMonths} months! ${numLoc(avg, 1, 1)}h average meets the ${target}h target. ${goodPct}% of sleep sessions are rated good or great. Quality sleep strengthens memory, immunity, and emotional regulation.`,
         color: PILLAR_CONFIG.sleep.color,
         icon: Moon,
       })
@@ -567,7 +567,7 @@ function getHealthTips(
   if (scores.nutrition.hasData) {
     const totalMeals = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
     const daysLogged = analytics.nutrition.mealFrequency.filter((m) => m > 0).length
-    const avgMeals = daysLogged > 0 ? (totalMeals / daysLogged).toFixed(1) : '0'
+    const avgMeals = daysLogged > 0 ? numLoc(totalMeals / daysLogged, 1, 1) : '0'
     const goodTotal = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
     const goodPct = totalMeals > 0 ? Math.round((goodTotal / totalMeals) * 100) : 0
     if (scores.nutrition.value < 7) {
@@ -646,7 +646,7 @@ function getHealthTips(
     // which made the "low diaper count" tip trigger constantly on long
     // ranges. Use the actual day count from dailyCounts.
     const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
-    const avgPerDay = (totalCount / windowDays).toFixed(1)
+    const avgPerDay = numLoc(totalCount / windowDays, 1, 1)
     const poopPct = totalCount > 0 ? Math.round((typeCounts.poop + typeCounts.mixed) / totalCount * 100) : 0
     if (ageMonths < 6 && totalCount / windowDays < 6) {
       tips.push({
@@ -838,15 +838,15 @@ function buildGrandmaContext(
     ? [`Analytics for ${childName} (${getAgeLabel(ageMonths)}) — ${analytics.totalLogs} logs in this window:`]
     : [
       `Analytics for ${childName} (${getAgeLabel(ageMonths)}) — this week:`,
-      `Overall thriving score: ${scores.overall.toFixed(1)}/10`,
+      `Overall thriving score: ${numLoc(scores.overall, 1, 1)}/10`,
     ]
-  const gradePrefix = (v: number) => (neutral ? '' : `${v.toFixed(1)}/10 — `)
+  const gradePrefix = (v: number) => (neutral ? '' : `${numLoc(v, 1, 1)}/10 — `)
 
   if (scores.sleep.hasData) {
     const target = getAgeSleepTarget(ageMonths)
     lines.push(neutral
-      ? `Sleep: avg ${analytics.sleep.avgHours.toFixed(1)}h/day on logged days (usual guide ${target}h)`
-      : `Sleep: ${scores.sleep.value.toFixed(1)}/10 — avg ${analytics.sleep.avgHours.toFixed(1)}h/night (target ${target}h)`)
+      ? `Sleep: avg ${numLoc(analytics.sleep.avgHours, 1, 1)}h/day on logged days (usual guide ${target}h)`
+      : `Sleep: ${numLoc(scores.sleep.value, 1, 1)}/10 — avg ${numLoc(analytics.sleep.avgHours, 1, 1)}h/night (target ${target}h)`)
   }
   if (scores.nutrition.hasData) {
     const totalMeals = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
@@ -877,7 +877,7 @@ function buildGrandmaContext(
     const { totalCount, typeCounts } = analytics.diaper
     const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
     const windowLabel = windowDays === 7 ? 'this week' : `last ${windowDays} days`
-    lines.push(`Diapers: ${totalCount} ${windowLabel} (${typeCounts.pee} pee, ${typeCounts.poop} poop, ${typeCounts.mixed} mixed) — avg ${(totalCount / windowDays).toFixed(1)}/day`)
+    lines.push(`Diapers: ${totalCount} ${windowLabel} (${typeCounts.pee} pee, ${typeCounts.poop} poop, ${typeCounts.mixed} mixed) — avg ${numLoc(totalCount / windowDays, 1, 1)}/day`)
   }
 
   // Health is reference-only and excluded from this "main concern" pick —
@@ -891,7 +891,7 @@ function buildGrandmaContext(
   if (lowest && scores[lowest].value < 7) {
     lines.push(neutral
       ? `Worth a closer look: ${PILLAR_CONFIG[lowest].label}`
-      : `Main concern: ${PILLAR_CONFIG[lowest].label} at ${scores[lowest].value.toFixed(1)}/10`)
+      : `Main concern: ${PILLAR_CONFIG[lowest].label} at ${numLoc(scores[lowest].value, 1, 1)}/10`)
   }
   if (neutral) {
     lines.push('Please talk about these as counts and patterns — no scores, grades or diagnoses.')
@@ -1547,7 +1547,7 @@ function ScoreInfoModal({
       <DiffuseSheet visible={visible} title={t('kids_analytics_score_guide_title')} onClose={onClose}>
         {scores && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, borderTopWidth: 1, borderTopColor: dt.colors.line, paddingVertical: 16 }}>
-            <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 44, color: dt.colors.ink, letterSpacing: -1 }}>{scores.overall.toFixed(1)}</Text>
+            <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 44, color: dt.colors.ink, letterSpacing: -1 }}>{numLoc(scores.overall, 1, 1)}</Text>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: diffuseFont.body, fontSize: 15, color: dt.colors.ink }}>{t('kids_analytics_score_child_label', { childName })}</Text>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 3 }}>{t('kids_analytics_score_weighted_avg')}</Text>
@@ -1572,7 +1572,7 @@ function ScoreInfoModal({
                 <Text style={{ flex: 1, fontFamily: diffuseFont.display, fontSize: 17, color: dt.colors.ink }}>{config.label}</Text>
                 <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 1, color: dt.colors.ink3 }}>{WEIGHTS[key]}</Text>
                 {key !== 'health' && score?.hasData && (
-                  <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, color: dt.colors.ink }}>{score.value.toFixed(1)}</Text>
+                  <Text style={{ fontFamily: diffuseFont.monoBold, fontSize: 12, color: dt.colors.ink }}>{numLoc(score.value, 1, 1)}</Text>
                 )}
               </View>
               <Text style={{ fontFamily: diffuseFont.body, fontSize: 13, lineHeight: 19, color: dt.colors.ink2 }}>{PILLAR_EXPLAIN[key]}</Text>
@@ -1812,7 +1812,7 @@ function KidsWellnessRingCard({
     return (
       <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4 }}>
         <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 96, lineHeight: 100, color: dt.colors.ink, letterSpacing: -3 }}>
-          {hasAnyData ? overall.toFixed(1) : '—'}
+          {hasAnyData ? numLoc(overall, 1, 1) : '—'}
         </Text>
         <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, letterSpacing: 2.5, textTransform: 'uppercase', color: dt.colors.ink3, marginTop: 6 }}>
           {caption.toUpperCase()}
@@ -2077,7 +2077,7 @@ function WellnessScoreArc({
           {activePillar ? (
             <>
               <Text style={{ fontSize: 34, fontWeight: '900', color: PILLAR_CONFIG[activePillar].color, lineHeight: 38, fontFamily: font.display }}>
-                {scores[activePillar].hasData ? scores[activePillar].value.toFixed(1) : '—'}
+                {scores[activePillar].hasData ? numLoc(scores[activePillar].value, 1, 1) : '—'}
               </Text>
               <Text style={{ fontSize: 10, fontWeight: '700', fontFamily: font.bodySemiBold, color: PILLAR_CONFIG[activePillar].color + 'AA', marginTop: 2, letterSpacing: 0.5 }}>
                 {PILLAR_CONFIG[activePillar].label.toLowerCase()}
@@ -2086,7 +2086,7 @@ function WellnessScoreArc({
           ) : (
             <>
               <Text style={{ fontSize: 34, fontWeight: '900', color: overallC, lineHeight: 38, fontFamily: font.display }}>
-                {hasAnyData ? overall.toFixed(1) : '—'}
+                {hasAnyData ? numLoc(overall, 1, 1) : '—'}
               </Text>
               <Text style={{ fontSize: 10, fontWeight: '600', fontFamily: font.bodySemiBold, color: colors.textSecondary, marginTop: 2 }}>
                 {t('kids_analytics_caption_thriving')}
@@ -2122,7 +2122,7 @@ function WellnessScoreArc({
               {activePillar === 'health'
                 ? tNow('kp_ka_reference')
                 : scores[activePillar].hasData
-                ? `${scores[activePillar].value.toFixed(1)}/10`
+                ? `${numLoc(scores[activePillar].value, 1, 1)}/10`
                 : t('kids_analytics_no_data_short')}
             </Text>
           </View>
@@ -2382,7 +2382,7 @@ function GrandmaInsightDetailSheet({
       <DiffuseSheet
         visible
         title={`${childName} is ${highlights.overallLabel}`}
-        chip={`${highlights.overallScore.toFixed(1)}/10`}
+        chip={`${numLoc(highlights.overallScore, 1, 1)}/10`}
         onClose={onClose}
       >
         {rows.map((r, i) => (
@@ -3051,7 +3051,7 @@ function PillarRow({ pillarKey, score, stat = null, tip, onPress }: {
             </Text>
           ) : score.hasData && Number.isFinite(score.value) ? (
             <Text style={{ fontFamily: diffuseFont.display, fontSize: 26, color: dt.colors.ink }}>
-              {score.value.toFixed(1)}
+              {numLoc(score.value, 1, 1)}
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 11, color: dt.colors.ink3 }}>{' /10'}</Text>
             </Text>
           ) : (
@@ -3178,7 +3178,7 @@ function PillarDetailModal({
         // Health is a REFERENCE pillar (vaccines-on-record + concern flags) —
         // never a graded `/10`. A mono "REFERENCE" chip (existing DiffuseSheet
         // chip styling — roleType.data) replaces the numeric chip for it.
-        chip={pillarKey === 'health' ? 'REFERENCE' : score.hasData ? `${score.value.toFixed(1)}/10` : undefined}
+        chip={pillarKey === 'health' ? 'REFERENCE' : score.hasData ? `${numLoc(score.value, 1, 1)}/10` : undefined}
         onClose={onClose}
       >
         <PillarDetail

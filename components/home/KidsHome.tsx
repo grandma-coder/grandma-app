@@ -6,7 +6,7 @@
  * All real data from Supabase.
  */
 
-import { dateLoc, weekdayShort } from '../../lib/kpLocale'
+import { dateLoc, weekdayShort, numLoc } from '../../lib/kpLocale'
 import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react'
 import {
@@ -1520,7 +1520,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
   // Focused ring center data
   const centerData = {
-    sleep: { value: rangeData.sleepTotal > 0 ? `${rangeData.sleepTotal.toFixed(1)}` : '—', unit: t('kp_kh_hoursSlept'), pct: Math.round(sleepProgress * 100), icon: Moon, color: PILLAR_COLORS.sleep },
+    sleep: { value: rangeData.sleepTotal > 0 ? `${numLoc(rangeData.sleepTotal, 1, 1)}` : '—', unit: t('kp_kh_hoursSlept'), pct: Math.round(sleepProgress * 100), icon: Moon, color: PILLAR_COLORS.sleep },
     nutrition: { value: nutritionCenter.value, unit: nutritionCenter.unit, pct: nutritionCenter.pct, icon: feedingStage === 'solids' ? Utensils : Droplets, color: PILLAR_COLORS.nutrition },
     activity: { value: rangeData.activityCount > 0 ? `${rangeData.activityCount}` : '—', unit: t('kp_kh_activities'), pct: Math.round(activityProgress * 100), icon: Zap, color: PILLAR_COLORS.activity },
   }
@@ -3870,7 +3870,7 @@ function DiaperDetailModal({ visible, onClose, count, pee, poop, mixed, diaperBy
     const start = new Date(startDate + 'T00:00:00')
     const end   = new Date(endDate   + 'T00:00:00')
     const days = daysInclusive(start, end)
-    return (count / days).toFixed(1)
+    return numLoc(count / days, 1, 1)
   })()
 
   const colorEntries = Object.entries(diaperColors).sort((a, b) => b[1] - a[1])
@@ -4376,7 +4376,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepDays, sleepTarget
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_sleep_modal_total_range')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
-                <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{sleepTotal > 0 ? sleepTotal.toFixed(1) : '—'}</Text>
+                <Text style={{ fontFamily: diffuseFont.displayLight, fontSize: 46, color: dCol.ink, letterSpacing: -1 }}>{sleepTotal > 0 ? numLoc(sleepTotal, 1, 1) : '—'}</Text>
                 <Text style={{ fontFamily: diffuseFont.mono, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: dCol.ink3 }}>{t('kids_home_sleep_modal_hours_unit')}</Text>
               </View>
               <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 0.8, color: dCol.ink3, marginTop: 6 }}>
@@ -4400,7 +4400,7 @@ function SleepDetailModal({ visible, onClose, sleepTotal, sleepDays, sleepTarget
               const barColor = hrs === 0 ? dCol.line : (hitTarget ? acc : dCol.ink3)
               return (
                 <View key={i} style={{ flex: 1, alignItems: 'center', gap: 5 }}>
-                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, color: dCol.ink2, height: 12 }}>{hrs > 0 ? hrs.toFixed(1) : ''}</Text>
+                  <Text style={{ fontFamily: diffuseFont.mono, fontSize: 9, color: dCol.ink2, height: 12 }}>{hrs > 0 ? numLoc(hrs, 1, 1) : ''}</Text>
                   <View style={{ width: 5, height: Math.max(ratio * 80, 4), backgroundColor: barColor, borderRadius: 999 }} />
                   <Text style={{ fontFamily: diffuseFont.mono, fontSize: 8.5, letterSpacing: 0.5, textTransform: 'uppercase', color: dCol.ink3 }}>{(dayLabels[i] ?? '').slice(0, 3)}</Text>
                 </View>

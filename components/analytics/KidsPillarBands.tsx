@@ -11,6 +11,7 @@
  * Rendered inside a `useIsDiffuse()` branch by the caller.
  */
 
+import { numLoc } from '../../lib/kpLocale'
 import { ReactNode } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useDiffuseTheme, diffuseFont } from '../../constants/theme'
@@ -83,7 +84,7 @@ export function KidsPillarBands({ items, onPillarPress }: Props) {
               i > 0 && { borderTopWidth: 1, borderTopColor: colors.line },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={`${item.label}${item.reference ? `, ${item.statusText ?? 'reference'}` : has ? `, ${item.score!.value.toFixed(1)} out of 10` : ', no data'}. ${item.takeaway ?? ''}`}
+            accessibilityLabel={`${item.label}${item.reference ? `, ${item.statusText ?? 'reference'}` : has ? `, ${numLoc(item.score!.value, 1, 1)} out of 10` : ', no data'}. ${item.takeaway ?? ''}`}
           >
             <View style={styles.icon}>{item.icon(focus ? 24 : 22, item.color)}</View>
             <View style={styles.mid}>
@@ -106,7 +107,7 @@ export function KidsPillarBands({ items, onPillarPress }: Props) {
               </Text>
             ) : (
               <Text style={[styles.value, focus && styles.valueFocus, { color: has ? (low ? colors.ink3 : ink) : colors.ink3 }]}>
-                {has ? item.score!.value.toFixed(1) : '—'}
+                {has ? numLoc(item.score!.value, 1, 1) : '—'}
               </Text>
             )}
           </Pressable>

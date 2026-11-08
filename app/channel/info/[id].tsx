@@ -66,7 +66,7 @@ import { BrandedLoader } from '../../../components/ui/BrandedLoader'
 import { useConfirmDialog } from '../../../components/ui/useConfirm'
 import { PaperActionSheet, type ActionSheetItem } from '../../../components/ui/PaperActionSheet'
 import { useTranslation } from '../../../lib/i18n'
-import { dateLoc } from '../../../lib/kpLocale'
+import { dateLoc, numLoc } from '../../../lib/kpLocale'
 import { SheetModal } from '../../../components/ui/SheetModal'
 import { reportContent, REPORT_REASONS, type ReportReason } from '../../../lib/communitySafety'
 import { channelDisplayName, channelDisplayDesc, channelCategoryLabel } from '../../../components/connections/communityLabels'
@@ -556,7 +556,7 @@ export default function ChannelInfoScreen() {
           <View style={[s.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />
           <View style={s.stat}>
             <ChannelGlyph name="star" size={18} color={diffuse ? dt.colors.ink3 : colors.text} />
-            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{channel.avgRating > 0 ? channel.avgRating.toFixed(1) : '—'}</Text>
+            <Text style={[s.statNumber, diffuse ? { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' } : { color: colors.text, fontFamily: font.displayBold, fontWeight: '400' }]}>{channel.avgRating > 0 ? numLoc(channel.avgRating, 1, 1) : '—'}</Text>
             <Text style={[s.statLabel, diffuse ? { color: dt.colors.ink3, fontFamily: diffuseFont.mono, letterSpacing: 1, textTransform: 'uppercase' } : { color: colors.textMuted, fontFamily: 'SpaceMono_400Regular', fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '400' }]}>{t('channelInfo_statRating')}</Text>
           </View>
           <View style={[s.statDivider, { backgroundColor: diffuse ? dt.colors.line : colors.borderLight }]} />

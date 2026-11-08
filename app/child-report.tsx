@@ -11,6 +11,7 @@
  * Everything else (data gathering, preview) works in any build.
  */
 
+import { numLoc } from '../lib/kpLocale'
 import { useMemo, useState } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
@@ -147,7 +148,7 @@ export default function ChildReportScreen() {
   const sleepSummary = useMemo(() => {
     const s = analytics.data?.sleep
     if (!s?.hasData) return undefined
-    return t('childReport_sleepSummary', { h: s.avgHours.toFixed(1) })
+    return t('childReport_sleepSummary', { h: numLoc(s.avgHours, 1, 1) })
   }, [analytics.data, t])
 
   async function handleGenerate() {
