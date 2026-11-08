@@ -14,7 +14,7 @@
 import { parseLocalDate } from './localDate'
 import { getAgeMonths } from '../store/useGoalsStore'
 import { dateLoc } from './kpLocale'
-import { t as tNow } from './i18n'
+import { t as tNow, type TranslationKey } from './i18n'
 
 // ─── Health record shapes ────────────────────────────────────────────────────
 
@@ -240,6 +240,72 @@ export const VACCINE_SCHEDULE_SOURCES: Record<string, VaccineScheduleSource> = {
  * dose label ("DTaP - dose 2", label in the app language), so compare the part before " - ".
  * Exact name only — substring matching collides (Hepatitis A vs B, DTaP vs DTaP/IPV/Hib).
  */
+/** Display name per catalog name, in the app language. Catalog names stay the stored/matched value. */
+export const VACCINE_NAME_KEY: Record<string, TranslationKey> = {
+  '4-in-1 (DTaP/IPV)': 'vac_n_4_in_1_dtap_ipv',
+  '6-in-1 (DTaP/IPV/Hib/HepB)': 'vac_n_6_in_1_dtap_ipv_hib_hepb',
+  'BCG': 'vac_n_bcg_tuberculosis',
+  'DPT': 'vac_n_dtp_diphtheria_tetanus_whooping_cough',
+  'DTCaP-Hib (Hexa)': 'vac_n_6_in_1_hexavalent',
+  'DTP (reforço)': 'vac_n_dtp_booster',
+  'DTaP': 'vac_n_dtap_diphtheria_tetanus_whooping_cough',
+  'DTaP/IPV (booster)': 'vac_n_dtap_ipv_booster',
+  'DTaP/IPV/Hib': 'vac_n_dtap_ipv_hib',
+  'Febre Amarela': 'vac_n_yellow_fever',
+  'Fiebre Amarilla': 'vac_n_yellow_fever',
+  'Flu (nasal spray)': 'vac_n_flu_nasal_spray',
+  'Hepatite A': 'vac_n_hepatitis_a',
+  'Hepatite B': 'vac_n_hepatitis_b',
+  'Hepatitis A': 'vac_n_hepatitis_a',
+  'Hepatitis B': 'vac_n_hepatitis_b',
+  'Hexavalente': 'vac_n_6_in_1_hexavalent',
+  'Hib': 'vac_n_hib',
+  'Hib booster': 'vac_n_hib_booster',
+  'Hib/MenC': 'vac_n_hib_menc',
+  'Hépatite B': 'vac_n_hepatitis_b',
+  'IPV': 'vac_n_polio_ipv',
+  'IPV (Polio)': 'vac_n_polio_ipv',
+  'Influenza': 'vac_n_flu_influenza',
+  'Japanese Encephalitis': 'vac_n_japanese_encephalitis',
+  'MMR': 'vac_n_mmr_measles_mumps_rubella',
+  'Measles (MR)': 'vac_n_measles_and_rubella_mr',
+  'MenACWY': 'vac_n_meningococcal_acwy',
+  'MenB': 'vac_n_meningococcal_b',
+  'MenC': 'vac_n_meningococcal_c',
+  'Meningocócica': 'vac_n_meningococcal',
+  'Meningocócica C': 'vac_n_meningococcal_c',
+  'Méningocoque C': 'vac_n_meningococcal_c',
+  'Neumocócica': 'vac_n_pneumococcal',
+  'OPV (Polio)': 'vac_n_polio_oral_opv',
+  'Oral Polio Vaccine': 'vac_n_polio_oral_opv',
+  'PCV (pneumo)': 'vac_n_pneumococcal_pcv',
+  'PCV13': 'vac_n_pneumococcal_pcv13',
+  'PCV15': 'vac_n_pneumococcal_pcv15',
+  'Pentavalent': 'vac_n_5_in_1_pentavalent',
+  'Pentavalente': 'vac_n_5_in_1_pentavalent',
+  'Pneumococcal': 'vac_n_pneumococcal',
+  'Pneumococcal (PCV)': 'vac_n_pneumococcal_pcv',
+  'Pneumocoque (PCV13)': 'vac_n_pneumococcal_pcv13',
+  'Pneumocócica 10': 'vac_n_pneumococcal_pcv10',
+  'ROR (MMR)': 'vac_n_mmr_measles_mumps_rubella',
+  'Rotavirus': 'vac_n_rotavirus',
+  'Rotavírus': 'vac_n_rotavirus',
+  'SRP (MMR)': 'vac_n_mmr_measles_mumps_rubella',
+  'Tríplice Viral': 'vac_n_mmr_measles_mumps_rubella',
+  'VASPR (MMR)': 'vac_n_mmr_measles_mumps_rubella',
+  'VIP/VOP (Polio)': 'vac_n_polio_ipv_opv',
+  'Varicela': 'vac_n_chickenpox_varicella',
+  'Varicella': 'vac_n_chickenpox_varicella',
+  'Varizellen': 'vac_n_chickenpox_varicella',
+  'Vitamin A': 'vac_n_vitamin_a',
+}
+
+/** A schedule vaccine's name for display ("Hepatitis B" → "Hepatite B" in Portuguese). Unknown names are returned as-is. */
+export function localizeVaccineName(name: string): string {
+  const key = VACCINE_NAME_KEY[name]
+  return key ? tNow(key) : name
+}
+
 export function vaccineValueMatches(value: string, scheduleName: string): boolean {
   const norm = (s: string) => s.trim().toLowerCase()
   const v = norm(value)

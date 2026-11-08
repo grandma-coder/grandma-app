@@ -5030,6 +5030,42 @@ export interface TranslationKeys {
   sw2_ob_allergiesOtherPh: string
   sw2_ob_personName: string
   sw2_hh_headForAge: string
+  vac_n_4_in_1_dtap_ipv: string
+  vac_n_6_in_1_dtap_ipv_hib_hepb: string
+  vac_n_bcg_tuberculosis: string
+  vac_n_dtp_diphtheria_tetanus_whooping_cough: string
+  vac_n_6_in_1_hexavalent: string
+  vac_n_dtp_booster: string
+  vac_n_dtap_diphtheria_tetanus_whooping_cough: string
+  vac_n_dtap_ipv_booster: string
+  vac_n_dtap_ipv_hib: string
+  vac_n_yellow_fever: string
+  vac_n_flu_nasal_spray: string
+  vac_n_hepatitis_a: string
+  vac_n_hepatitis_b: string
+  vac_n_hib: string
+  vac_n_hib_booster: string
+  vac_n_hib_menc: string
+  vac_n_polio_ipv: string
+  vac_n_flu_influenza: string
+  vac_n_japanese_encephalitis: string
+  vac_n_mmr_measles_mumps_rubella: string
+  vac_n_measles_and_rubella_mr: string
+  vac_n_meningococcal_acwy: string
+  vac_n_meningococcal_b: string
+  vac_n_meningococcal_c: string
+  vac_n_meningococcal: string
+  vac_n_pneumococcal: string
+  vac_n_polio_oral_opv: string
+  vac_n_pneumococcal_pcv: string
+  vac_n_pneumococcal_pcv13: string
+  vac_n_pneumococcal_pcv15: string
+  vac_n_5_in_1_pentavalent: string
+  vac_n_pneumococcal_pcv10: string
+  vac_n_rotavirus: string
+  vac_n_polio_ipv_opv: string
+  vac_n_chickenpox_varicella: string
+  vac_n_vitamin_a: string
   sw2_hh_vacHepB: string
   sw2_hh_vacDTaP: string
   sw2_hh_vacIPV: string

@@ -81,6 +81,7 @@ import {
   parseGrowthValue,
   type HealthRecord,
   type HealthHistoryData,
+  localizeVaccineName,
 } from '../../lib/vaccineSchedule'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
 import type { MoodBubbleItem } from '../charts/SvgCharts'
@@ -3585,7 +3586,7 @@ function HealthCard({ reminders, healthHistory, child }: {
               {overdueCount > 0 ? t('kids_home_vaccine_overdue') : t('kids_home_vaccine_next')}
             </Text>
             <Text style={[s.hcPrimary, { color: ink }, diffuse && { fontFamily: diffuseFont.display, letterSpacing: -0.2 }]} numberOfLines={1}>
-              {nextVaccine.name}{nextVaccine.doseLabel ? ` · ${nextVaccine.doseLabel}` : ''}
+              {localizeVaccineName(nextVaccine.name)}{nextVaccine.doseLabel ? ` · ${nextVaccine.doseLabel}` : ''}
             </Text>
             <Text style={[s.hcSecondary, { color: ink3 }, diffuse && { fontFamily: diffuseFont.body }]}>
               {overdueCount > 0

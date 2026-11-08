@@ -31,6 +31,7 @@ import {
   vaccineStatusLabel,
   vaccineMilestoneBadge,
   type HealthHistoryData,
+  localizeVaccineName,
 } from '../../../lib/vaccineSchedule'
 import { SheetModal } from '../../ui/SheetModal'
 
@@ -329,7 +330,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                   {milestone.vaccines.map((vax) => {
                     const apptDate = scheduledVaccines[vax.scheduleKey] ?? null
                     const isPickerOpen = expandedKey === vax.scheduleKey
-                    const fullName = vax.name + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
+                    const fullName = localizeVaccineName(vax.name) + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
                     // vaccine dose blob — status-expressive silhouette, single-tint:
                     // done → checkup(✓) ink · upcoming → clock accent ·
                     // overdue + future → neutral syringe (no red alarm — an
@@ -463,7 +464,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
         <VaccineInfoModal
           visible={infoVaccine !== null}
           onClose={() => setInfoVaccine(null)}
-          vaccineName={infoVaccine?.name ?? ''}
+          vaccineName={infoVaccine ? localizeVaccineName(infoVaccine.name) : ''}
           doseLabel={infoVaccine?.doseLabel ?? ''}
           info={infoVaccine?.info ?? null}
           accent={infoVaccine?.accent ?? acc}
@@ -543,7 +544,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
                 {milestone.vaccines.map((vax) => {
                   const apptDate = scheduledVaccines[vax.scheduleKey] ?? null
                   const isPickerOpen = expandedKey === vax.scheduleKey
-                  const fullName = vax.name + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
+                  const fullName = localizeVaccineName(vax.name) + (vax.doseLabel ? ` · ${vax.doseLabel}` : '')
 
                   // overdue + future both read as neutral cream/ink3 — an
                   // unlogged past-window dose is a records gap, not a red alarm.
@@ -722,7 +723,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
               }}>
                 {isDoneMilestone && (
                   <Text style={{ fontSize: 11, fontFamily: font.body, color: ink3, paddingLeft: 12, paddingTop: 4 }} numberOfLines={1}>
-                    {milestone.vaccines.map((v) => v.name.split(' ')[0]).join(' · ')}
+                    {milestone.vaccines.map((v) => localizeVaccineName(v.name).split(' (')[0]).join(' · ')}
                     {milestone.vaccines[0]?.givenDate ? ` · ${formatHealthDate(milestone.vaccines[0].givenDate)}` : ''}
                   </Text>
                 )}
@@ -742,7 +743,7 @@ export function VaccineScheduleTree({ child, healthHistory, scheduledVaccines, o
       <VaccineInfoModal
         visible={infoVaccine !== null}
         onClose={() => setInfoVaccine(null)}
-        vaccineName={infoVaccine?.name ?? ''}
+        vaccineName={infoVaccine ? localizeVaccineName(infoVaccine.name) : ''}
         doseLabel={infoVaccine?.doseLabel ?? ''}
         info={infoVaccine?.info ?? null}
         accent={infoVaccine?.accent ?? ST_YELLOW}
