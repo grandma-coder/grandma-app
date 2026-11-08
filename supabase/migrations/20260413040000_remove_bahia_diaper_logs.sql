@@ -1,18 +1,7 @@
--- Remove all diaper logs for Bahia (7 years old — diapers not appropriate)
-DO $$
-DECLARE
-  v_bahia_id uuid;
-BEGIN
-  SELECT id INTO v_bahia_id
-    FROM children WHERE lower(name) = 'bahia' LIMIT 1;
-
-  IF v_bahia_id IS NULL THEN
-    RAISE NOTICE 'Child Bahia not found — skipping.';
-    RETURN;
-  END IF;
-
-  DELETE FROM child_logs
-    WHERE child_id = v_bahia_id AND type = 'diaper';
-
-  RAISE NOTICE 'Removed all diaper logs for Bahia.';
-END $$;
+-- 20260413040000_remove_bahia_diaper_logs — neutralised before beta (2026-11-07).
+--
+-- This was a one-off DEMO seed for the test account's children (Bob, Rio, Bahia). It matched
+-- children by first name with no user filter and deleted/overwrote their logs, so on any new
+-- database a real child with one of those names could lose data. It already ran where it was
+-- meant to; it is now a no-op. The original is in git history.
+SELECT 1;
