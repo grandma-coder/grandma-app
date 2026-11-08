@@ -2071,7 +2071,7 @@ function DayDetailPanel({
           >
             <Check size={13} color={COLOR_GREEN} strokeWidth={2.5} />
             <Text style={[styles.sectionToggleLabel, { color: COLOR_GREEN }]}>
-              {t('pregCal_logged_count', { count: nonEmptyLogs.length })}
+              {t(nonEmptyLogs.length === 1 ? 'pregCal_logged_count_one' : 'pregCal_logged_count', { count: nonEmptyLogs.length })}
             </Text>
             {loggedCollapsed
               ? <ChevronDown size={14} color={COLOR_GREEN} strokeWidth={2} />

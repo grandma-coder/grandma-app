@@ -515,6 +515,12 @@ function activityTimeHours(log: { value: string | null; created_at: string }): n
   return isoToLocalHours(log.created_at)
 }
 
+/** A log type's name in the app language (unknown types are shown as stored). */
+function logTypeLabel(type: string): string {
+  const meta = LOG_META[type]
+  return meta ? tNow(meta.labelKey) : type
+}
+
 /**
  * Returns the title for a logged activity. When the log was saved from a
  * routine the routine name is stamped into value.routineName — use it so the
@@ -526,7 +532,7 @@ function logTitle(log: { type: string; value: string | null }): string {
     const v = JSON.parse(log.value ?? '{}')
     if (v && typeof v.routineName === 'string' && v.routineName.trim()) return v.routineName
   } catch {}
-  return (LOG_META[log.type] ?? { label: log.type }).label
+  return logTypeLabel(log.type)
 }
 
 /** Normalize a routine identity signature so casing/whitespace duplicates collapse */
@@ -1342,7 +1348,7 @@ function DiffuseLogDetailSheet({
               </Text>
             ) : null}
             <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: colors.ink3, marginTop: hero ? 6 : 10 }}>
-              {(LOG_META[log.type]?.label ?? log.type)}
+              {logTypeLabel(log.type)}
             </Text>
           </View>
 
@@ -2367,7 +2373,7 @@ export function KidsCalendar() {
       const childName = children.find((c) => c.id === log.child_id)?.name ?? tNow('kp_kc_child')
       const meta = LOG_META[log.type]
       return {
-        label: meta?.label ?? log.type,
+        label: logTypeLabel(log.type),
         detail: formatLogDisplay(log.type, log.value, log.notes),
         date: log.date,
         childName,
@@ -2493,7 +2499,7 @@ export function KidsCalendar() {
     const dayLabel = formatDayLabel(selectedDate, todayStr, t)
     const summary = [
       selPending.length > 0 && tNow('pregCal_pending_count', { count: selPending.length }),
-      selLogs.length > 0 && tNow('pregCal_logged_count', { count: selLogs.length }),
+      selLogs.length > 0 && tNow(selLogs.length === 1 ? 'pregCal_logged_count_one' : 'pregCal_logged_count', { count: selLogs.length }),
     ].filter(Boolean).join(' · ') || t('kids_calendar_nothingSummary')
 
     interface Row {
