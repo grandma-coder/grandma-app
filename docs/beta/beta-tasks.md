@@ -17,7 +17,7 @@ Atualizado a cada tarefa. ✅ feito · 🔄 em andamento · ⬜ a fazer · 👤 
 | T11 | Convite: link antigo `invite/…` dava 404 → rota de redirecionamento; texto com "Guru Grandma" e masculino → corrigido; nome antigo removido do app | Claude | ✅ |
 | T12 | Inventário de dados para App Privacy → `docs/beta/app-privacy-inventory.md` (👤 decidir Anthropic/Skeleton na política) | Claude | ✅ |
 | T13 | Teste de ponta a ponta com conta nova: 4 jornadas × 3 idiomas | Claude | ⬜ 👤 e-mail de teste |
-| T14 | Abrir PR `feat/site-look` → `main` (sem merge) | Claude | 🔄 |
+| T14 | PR aberto: https://github.com/grandma-coder/grandma-app/pull/2 (👤 merge depois de T15/T16) | Claude | ✅ |
 | T15 | Aplicar migração de segurança + rodar `prod-verification.sql` | Igor | ⬜ |
 | T16 | Build final + TestFlight interno no aparelho | Igor | ⬜ |
 | T17 | App Store Connect: Beta App Review, App Privacy, conta demo | Igor | ⬜ |
