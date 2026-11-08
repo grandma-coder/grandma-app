@@ -28,14 +28,13 @@ import { EyeAction, ACTION_TONES } from '../../../components/ui/AuthDock'
 import { FadeUp } from '../../../components/ui/Motion'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OnboardingStep, OnboardingNavProvider } from '../../../components/onboarding/OnboardingStep'
-import { useTheme, useDiffuseTheme, font, getModeColor, getModeColorSoft, getDiffuseAccent, diffuseFields } from '../../../constants/theme'
-import { useIsDiffuse, SoftBloom } from '../../../components/ui/diffuse/DiffuseKit'
+import { useTheme, font, getModeColor, getModeColorSoft, getDiffuseAccent, diffuseFields } from '../../../constants/theme'
+import { useIsDiffuse } from '../../../components/ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../../../components/ui/diffuse/DiffusePrimitives'
 import { DiffuseField } from '../../../components/ui/diffuse/DiffuseField'
 import { PoleField } from '../../../components/ui/diffuse/pickers/PoleField'
 import { OrbitPicker } from '../../../components/ui/diffuse/pickers/OrbitPicker'
 import { MetaballBloom } from '../../../components/ui/diffuse/pickers/MetaballBloom'
-import { User } from 'lucide-react-native'
 import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import {
   usePregnancyOnboardingStore,
@@ -54,7 +53,7 @@ import { toDateStr } from '../../../lib/cycleLogic'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const TOTAL_STEPS = 7
+const TOTAL_STEPS = 6
 
 type StepId =
   | 'due_date'
@@ -63,7 +62,6 @@ type StepId =
   | 'birth_place'
   | 'care_provider'
   | 'conditions'
-  | 'partner'
   | 'complete'
 
 const STEPS: StepId[] = [
@@ -73,7 +71,6 @@ const STEPS: StepId[] = [
   'birth_place',
   'care_provider',
   'conditions',
-  'partner',
   'complete',
 ]
 
@@ -262,7 +259,6 @@ export default function PregnancyOnboarding() {
             firstPregnancy: store.firstPregnancy,
             birthPlace: store.birthPlace,
             careProvider: store.careProvider,
-            partnerName: store.partnerName,
             weekNumber: calcWeekNumber(store.dueDate),
           }),
         },
@@ -356,9 +352,6 @@ export default function PregnancyOnboarding() {
       {currentStep === 'conditions' && (
         <StepConditions step={6} onContinue={goNext} onSkip={goSkip} />
       )}
-      {currentStep === 'partner' && (
-        <StepPartner step={7} onContinue={goNext} onSkip={goSkip} />
-      )}
     </KeyboardAvoidingView>
     </OnboardingNavProvider>
   )
@@ -394,9 +387,10 @@ function StepDueDate({
     setDueDate(toDateStr(lmpDate))
   }, [dueDate, setDueDate])
 
+  // A due date is at most 40 weeks (280 days) away; further out gave "week 1 — 304 days to go".
   const maxDue = (() => {
     const d = new Date()
-    d.setMonth(d.getMonth() + 10)
+    d.setDate(d.getDate() + 280)
     return d
   })()
 
@@ -727,77 +721,6 @@ function StepConditions({
   )
 }
 
-// ─── STEP 7: Partner ───────────────────────────────────────────────────────
-
-function StepPartner({
-  step,
-  onContinue,
-  onSkip,
-}: {
-  step: number
-  onContinue: () => void
-  onSkip: () => void
-}) {
-  const { colors, radius, isDark } = useTheme()
-  const dt = useDiffuseTheme()
-  const { t } = useTranslation()
-  const diffuse = useIsDiffuse()
-  const mode = getModeColor('pregnancy', isDark)
-  const modeSoft = getModeColorSoft('pregnancy', isDark)
-  const partner = usePregnancyOnboardingStore((s) => s.partnerName)
-  const setPartner = usePregnancyOnboardingStore((s) => s.setPartnerName)
-
-  return (
-    <OnboardingStep
-      step={step}
-      total={TOTAL_STEPS}
-      auraMode="pregnancy"
-      question={t('preg_onboard_step_partner')}
-      sticker={<SiteSticker name="bubble" size={48} cut />}
-      onContinue={onContinue}
-      onSkip={onSkip}
-    >
-      {diffuse ? (
-        // Bloom avatar + bare underlined field wired to the SAME setPartner
-        // setter. Invite / skip stays with OnboardingStep's CTA + text link.
-        <View style={stepStyles.partnerBlock}>
-          <View style={stepStyles.partnerAvatarWrap}>
-            <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-              <SoftBloom color={diffuseFields.preg.accent} opacity={0.5} spread={0.55} radius="55%" />
-            </View>
-            <User size={40} color={dt.colors.ink} strokeWidth={1.4} />
-          </View>
-          <DiffuseField
-            value={partner ?? ''}
-            onChangeText={setPartner}
-            placeholder={t('preg_onboard_partnerNamePlaceholder')}
-            autoCapitalize="words"
-          />
-          <Text style={[stepStyles.partnerHint, { color: dt.colors.ink3, fontFamily: font.body }]}>
-            {t('preg_onboard_partnerHint')}
-          </Text>
-        </View>
-      ) : (
-        <>
-          <HandDrawnBox fill={colors.surface} stroke={colors.text} radius={16} seed="preg-partner">
-            <TextInput
-              value={partner ?? ''}
-              onChangeText={setPartner}
-              placeholder={t('preg_onboard_partnerNamePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              style={[stepStyles.textInput, { color: colors.text }]}
-              autoCapitalize="words"
-            />
-          </HandDrawnBox>
-          <Text style={[stepStyles.hint, { color: colors.textMuted }]}>
-            {t('preg_onboard_partnerHint')}
-          </Text>
-        </>
-      )}
-    </OnboardingStep>
-  )
-}
-
 // ─── Completion Screen ─────────────────────────────────────────────────────
 
 function CompletionScreen({
@@ -988,21 +911,6 @@ const stepStyles = StyleSheet.create({
   metaballStage: {
     height: 340,
     width: '100%',
-  },
-  partnerBlock: {
-    gap: 24,
-  },
-  partnerAvatarWrap: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  partnerHint: {
-    fontSize: 13,
-    lineHeight: 18,
   },
 })
 

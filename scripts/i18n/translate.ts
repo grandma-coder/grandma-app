@@ -23,8 +23,15 @@ export function apiKey(): string | undefined {
   return undefined
 }
 
+// Product terms that must read the same on every screen.
+const GLOSSARY: Record<string, string> = {
+  'pt-BR': '"journey" (one of the app\'s four tracks: cycle, pregnancy, kids, menopause) → "jornada". A medical "provider" → "médico"; an insurance "provider" → "operadora".',
+  es: '"journey" (one of the app\'s four tracks: cycle, pregnancy, kids, menopause) → "etapa", never "viaje". A medical "provider" → "médico" (or "médico o matrona" in pregnancy), never "proveedor"; an insurance "provider" → "aseguradora".',
+}
+
 function systemPrompt(lang: string): string {
   return [
+    ...(GLOSSARY[lang] ? [`Glossary: ${GLOSSARY[lang]}`] : []),
     `You translate the text of "grandma", a pregnancy, cycle, kids and menopause companion app, from English into ${LANGUAGE_NAMES[lang] ?? lang}.`,
     'Voice: a warm, calm grandmother speaking to a woman. Use the feminine second person wherever the language marks gender. Natural, idiomatic, never literal or stiff.',
     'Keep every {{param}} exactly as written (same name, braces). Keep numbers, units, doses, ranges, percentages, drug names, organisation names (WHO, ACOG, NHS, CDC…) and the name "Grandma" exactly.',

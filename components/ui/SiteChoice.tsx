@@ -62,6 +62,9 @@ export function SiteChoice({
   const { colors, font } = useTheme()
   const ink = colors.text
   const [size, setSize] = useState({ w: 0, h: 0 })
+  // No more lines than words: a long single word ("Tranquila" on a small phone) shrinks to fit
+  // instead of breaking mid-word.
+  const labelLines = Math.min(3, label.trim().split(/\s+/).length)
   const sel = useRef(new Animated.Value(selected ? 1 : 0)).current
   const press = useRef(new Animated.Value(0)).current
   useEffect(() => {
@@ -97,10 +100,10 @@ export function SiteChoice({
         <View style={[styles.inner, align === 'start' && styles.innerStart, compact && styles.innerCompact]}>
           {sticker ? <SiteSticker name={sticker} size={24} cut /> : null}
           <View style={{ flexShrink: 1, flexGrow: align === 'start' ? 1 : 0, alignItems: sticker || align === 'start' ? 'flex-start' : 'center' }}>
-            <Text style={[styles.label, { color: selected ? inkOn(tone, ink) : ink, fontFamily: font.bodyBold }]} numberOfLines={3}>{label}</Text>
+            <Text style={[styles.label, { color: selected ? inkOn(tone, ink) : ink, fontFamily: font.bodyBold }]} numberOfLines={labelLines} adjustsFontSizeToFit minimumFontScale={0.75}>{label}</Text>
             {sub ? <Text style={[styles.sub, { color: selected ? inkOn(tone, colors.textSecondary) : colors.textSecondary, opacity: selected && inkOn(tone, ink) !== ink ? 0.7 : 1, fontFamily: font.body }]} numberOfLines={4}>{sub}</Text> : null}
           </View>
-          {tick ? <Animated.View style={[styles.tick, { opacity: sel, transform: [{ scale: sel }] }]}>
+          {tick ? <Animated.View style={[align === 'start' || compact ? styles.tick : styles.tickCorner, { opacity: sel, transform: [{ scale: sel }] }]}>
             <Svg width={14} height={14} viewBox="0 0 18 18">
               <Path d="M3.5 9.5 L7.5 13 L14.5 4.5" stroke={inkOn(tone, ink)} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
@@ -163,12 +166,14 @@ export function SiteStepper({
 }
 
 const styles = StyleSheet.create({
-  inner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 18, minHeight: 54 },
+  inner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 16, minHeight: 54 },
   innerCompact: { paddingVertical: 9, paddingHorizontal: 16, minHeight: 44, gap: 8 },
   innerStart: { justifyContent: 'flex-start', paddingHorizontal: 16 },
   label: { fontSize: 16 },
   sub: { fontSize: 13, marginTop: 1 },
   tick: { width: 14, marginLeft: -2 },
+  // Centered tiles: the tick sits in the corner so the label gets the full width.
+  tickCorner: { position: 'absolute', top: 10, right: 14, width: 14 },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 22, paddingVertical: 8 },
   stepBtn: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   valueWrap: { alignItems: 'center', minWidth: 96 },
