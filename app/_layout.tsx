@@ -371,7 +371,11 @@ export default function RootLayout() {
       const { data: profile, error: profileErr } = profileRes as any
       if (profileErr) {
         if (profileErr.code === 'PGRST116') {
-          console.warn(`[auth] profile row MISSING for uid=${uid} — sign-up likely didn't seed it, or env points at a different DB`)
+          // No profiles row (sign-up doesn't create one; only some onboardings upsert it). Create the
+          // empty row so screens that read/update profiles (name, privacy, units…) work for new users.
+          console.warn(`[auth] profile row missing for uid=${uid} — creating it`)
+          void supabase.from('profiles').upsert({ id: uid }, { onConflict: 'id', ignoreDuplicates: true })
+            .then(({ error }) => { if (error) console.warn('[auth] profile seed failed:', error.message) })
         } else if (profileErr.code !== 'TIMEOUT') {
           console.warn('[auth] profile load failed:', profileErr.message)
         }

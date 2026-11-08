@@ -7,6 +7,7 @@
  * just-completed behavior.
  */
 
+import { queryClient } from '../lib/queryClient'
 import { useCallback } from 'react'
 import { router } from 'expo-router'
 import { useOnboardingStore } from '../store/useOnboardingStore'
@@ -25,6 +26,10 @@ export function useOnboardingComplete() {
       // still holds the just-completed head, so deriving next-flow from it
       // would misroute or skip in a multi-behavior sequence.
       useOnboardingStore.getState().completeCurrentFlow()
+      // The flow just wrote its first rows (period start, pregnancy, children…). Cached reads from
+      // before — e.g. an empty cycle-log list — would otherwise make the new home ask again for
+      // what was just answered ("When did your last period start?").
+      void queryClient.invalidateQueries()
       const freshNext = useOnboardingStore.getState().currentOnboarding
 
       if (freshNext) {

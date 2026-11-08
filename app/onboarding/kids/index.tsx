@@ -79,7 +79,9 @@ function buildSteps(childCount: number): StepId[] {
   for (let i = 0; i < childCount; i++) {
     steps.push('child_name', 'child_dob', 'child_country', 'child_photo', 'child_allergies', 'child_conditions')
   }
-  steps.push('partner', 'caregiver', 'complete')
+  // The partner / caregiver steps only wrote a name into the legacy care_circle table, which nothing
+  // reads — nobody was ever invited. Real invites live in Settings → Care Circle.
+  steps.push('complete')
   return steps
 }
 
@@ -186,8 +188,8 @@ export default function KidsOnboarding() {
   const currentStep = steps[currentIndex]
   const childIdx = childIndexForStep(currentIndex, store.childCount)
 
-  // Total visible steps = child_count(1) + perChild(6)*N + partner(1) + caregiver(1)
-  const totalSteps = 1 + store.childCount * 6 + 2
+  // Total visible steps = child_count(1) + perChild(6)*N
+  const totalSteps = 1 + store.childCount * 6
 
   const goNext = useCallback(() => {
     if (currentIndex < steps.length - 1) {
@@ -429,47 +431,7 @@ export default function KidsOnboarding() {
         // and ignored; Grandma works on Supabase regardless.
         void Promise.all(resolvedChildren.map((c: any) => provisionChildSpace(c.id)))
 
-        // Create care_circle entry for the parent (self)
-        const { error: circleError } = await supabase.from('care_circle').insert({
-          owner_id: userId,
-          member_user_id: userId,
-          role: 'parent',
-          permissions: ['view', 'log_activity', 'chat', 'edit_child', 'emergency'],
-          children_access: childIds,
-          status: 'accepted',
-        })
-        if (circleError) {
-          // care_circle is less critical (caregiver invites use a different
-          // path) but still worth surfacing if it fails.
-          // eslint-disable-next-line no-console
-          console.warn('care_circle insert:', circleError.message)
-        }
-
-        // Partner entry — pending invite slot, name only (no email yet).
-        if (store.partnerName) {
-          await supabase.from('care_circle').insert({
-            owner_id: userId,
-            role: 'partner',
-            permissions: ['view', 'log_activity', 'chat', 'edit_child', 'emergency'],
-            children_access: childIds,
-            status: 'pending',
-            invite_email: null,
-            invite_name: store.partnerName,
-          })
-        }
-
-        // Caregiver entry if provided.
-        if (store.caregiverName && store.caregiverRole) {
-          await supabase.from('care_circle').insert({
-            owner_id: userId,
-            role: store.caregiverRole,
-            permissions: ['view', 'log_activity'],
-            children_access: childIds,
-            status: 'pending',
-            invite_email: null,
-            invite_name: store.caregiverName,
-          })
-        }
+        // (Legacy care_circle rows removed: nothing reads that table; invites go through Care Circle.)
 
         // Set children in the app store for immediate use.
         // parent_id is the canonical column on the children table; the
