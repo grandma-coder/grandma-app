@@ -409,10 +409,10 @@ function CenterTabButton() {
                 >
                   <SiteSticker name={item.site} size={lone ? 48 : 52} cut />
                   <View style={lone ? { flex: 1, marginLeft: 12 } : { marginTop: 10 }}>
-                    <Text style={[styles.menuLabel, { color: inkColor }]} numberOfLines={1}>
+                    <Text style={[styles.menuLabel, { color: inkColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {t(item.labelKey)}
                     </Text>
-                    <Text style={[styles.menuSub, { color: isDark ? ink3Color : '#4F4B43' }]} numberOfLines={1}>
+                    <Text style={[styles.menuSub, { color: isDark ? ink3Color : '#4F4B43' }]} numberOfLines={2}>
                       {t(item.subtitleKey)}
                     </Text>
                   </View>
