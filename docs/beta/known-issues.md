@@ -22,6 +22,7 @@ abrir de novo. Atualizar a cada build.
 | Guia de parto | Trecho editado pelo admin pode aparecer em inglês | Tradutor do servidor (`translate-content`) fora do ar; conteúdo embutido está traduzido |
 | Notificações antigas | Contas antigas podem ter notificações gravadas em inglês | Só contas criadas antes da correção; limpeza pendente |
 | Onboarding do ciclo | Condições e suplementos não ficam salvos quando a data da última menstruação é "não sei" | Precisa de coluna nova no banco |
+| Espanhol | "regla" e "período" convivem no app (ambos corretos); unificar depois do beta | Baixa prioridade |
 | Onboarding (nome) | No campo de nome vazio, o texto de exemplo aparece mais baixo que o cursor (iOS). O texto digitado fica no lugar certo | Cosmético; 3 hipóteses testadas (altura fixa, autoFocus, letterSpacing) sem sucesso |
 | Sem internet | Registro sem conexão mostra erro e não fica pendente para reenviar | Sem fila offline |
 | Vila (marketplace) | Anúncio "CRIB" de teste do Igor, com imagem em inglês, aparece para todos | Apagar anúncios de teste antes do beta |
@@ -51,3 +52,6 @@ abrir de novo. Atualizar a cada build.
 - Nomes de vacina em inglês para catálogos de outros países; tipos de registro em inglês no calendário de filhos ("Sleep"); "1 registrados".
 - Humor do onboarding da gravidez aparecia como "Registrado" no calendário.
 - Menu central cortava "COMUNIDADE" no iPhone SE; marketplace chamado "Vila" e "Aldeia" ao mesmo tempo.
+- Consentimento: primeira caixa em inglês em PT/ES; "acepto los Política… y la Términos".
+- Recados da Grandma para filhos em inglês ("Grandma looked at 1 log for Theo").
+- Botão de salvar desativado parecia ativo (ex.: "Empezar regla" antes de escolher o fluxo).
