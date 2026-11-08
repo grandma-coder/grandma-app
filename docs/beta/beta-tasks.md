@@ -22,4 +22,5 @@ Atualizado a cada tarefa. ✅ feito · 🔄 em andamento · ⬜ a fazer · 👤 
 | T16 | Build final + TestFlight interno no aparelho | Igor | ⬜ |
 | T17 | App Store Connect: Beta App Review, App Privacy, conta demo | Igor | ⬜ |
 | T18 | Ícone novo no TestFlight: o ícone novo (6 nov) só existe no `feat/site-look`; builds 14/15 são anteriores. Sai no build do T16, depois do merge do PR #2 — conferir o ícone no TestFlight e na tela inicial | Igor | ⬜ |
-| T19 | Simulador, 2ª rodada: convite de cuidadora entre 2 contas, sugestão → Suporte do admin, sair/entrar/esqueci a senha, combinações de idioma que faltam | Claude | 🔄 |
+| T19 | Simulador, 2ª rodada: sugestão enviada (👤 conferir no Suporte do admin: "Teste beta T19"), sair/entrar ✅, esqueci a senha ✅ (👤 conferir e-mail em production@), convite de cuidadora ⛔ bloqueado em prod (T15). 13 correções nesta rodada + itens da sessão dos reels (chutes, vacinas, calendário) | Claude | 🔄 |
+| T20 | Decidir (pedidos da sessão dos reels): campo de valor (°C/°F) no registro de temperatura dos filhos; lembrete com repetição diária/semanal; entrada "Pergunte à vila" na Comunidade (hoje só o canal) | Igor | ⬜ |

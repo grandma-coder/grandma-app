@@ -23,6 +23,7 @@ abrir de novo. Atualizar a cada build.
 | Notificações antigas | Contas antigas podem ter notificações gravadas em inglês | Só contas criadas antes da correção; limpeza pendente |
 | Onboarding do ciclo | Condições e suplementos não ficam salvos quando a data da última menstruação é "não sei" | Precisa de coluna nova no banco |
 | Sem internet | Registro sem conexão mostra erro e não fica pendente para reenviar | Sem fila offline |
+| Vila (marketplace) | Anúncio "CRIB" de teste do Igor, com imagem em inglês, aparece para todos | Apagar anúncios de teste antes do beta |
 | Círculo de Cuidados | Convite falha com "Seu círculo de cuidado está cheio" mesmo sem ninguém no círculo | Migração `20261102200000_paywall_flag` faltando em produção (T15) |
 
 ## Corrigido recentemente (se aparecer de novo, é regressão — prioridade alta)
@@ -43,3 +44,9 @@ abrir de novo. Atualizar a cada build.
 - Escolhas quebrando palavra no meio em iPhone pequeno ("Tranquil-a").
 - Decimais com ponto em PT/ES (8.0 h, 27.8 cm) → vírgula.
 - Gota vermelha (menstruação) usada para água, banho, natação e álcool.
+- Assistentes em várias etapas (convite de cuidadora e outros) perdiam os botões Voltar/Próximo ao trocar de etapa.
+- Contador de chutes falava em "10 movimentos em 2 horas" — agora segue NHS/RCOG (sem número fixo; mudou → maternidade na hora).
+- Título do login em PT "Bem-vinda bem-vinda de volta"; placeholder do convite em inglês.
+- Nomes de vacina em inglês para catálogos de outros países; tipos de registro em inglês no calendário de filhos ("Sleep"); "1 registrados".
+- Humor do onboarding da gravidez aparecia como "Registrado" no calendário.
+- Menu central cortava "COMUNIDADE" no iPhone SE; marketplace chamado "Vila" e "Aldeia" ao mesmo tempo.
