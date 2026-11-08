@@ -5,7 +5,7 @@
  * warm dark overlay.
  */
 
-import { ReactNode, createContext, useContext, useEffect, useLayoutEffect, useState } from 'react'
+import { ReactNode, createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { View, Pressable, Modal, StyleSheet, KeyboardAvoidingView, Platform, Text, ScrollView } from 'react-native'
 import { X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -20,12 +20,26 @@ import { useTranslation } from '../../lib/i18n'
 
 // Forms rendered inside a sheet hand their primary action to the sheet so it sits in a
 // fixed footer — always visible, never scrolled away. Outside a sheet it renders inline.
-const FooterSlot = createContext<((node: ReactNode) => void) | null>(null)
+// Each footer registers under its own owner. When a wizard swaps steps, the old step's cleanup
+// runs after the new step registered, so it may only clear the slot if the slot is still its own
+// (clearing unconditionally left the new step with no buttons until something re-rendered).
+type SlotSetter = (owner: object, node: ReactNode | null) => void
+const FooterSlot = createContext<SlotSetter | null>(null)
+
 export function SheetFooterAction({ children }: { children: ReactNode }) {
   const set = useContext(FooterSlot)
-  useLayoutEffect(() => { set?.(children) })
-  useEffect(() => () => { set?.(null) }, [set])
+  const owner = useRef({}).current
+  useLayoutEffect(() => { set?.(owner, children) })
+  useEffect(() => () => { set?.(owner, null) }, [set, owner])
   return set ? null : <>{children}</>
+}
+
+function useFooterSlot(): [ReactNode, SlotSetter] {
+  const [slot, setSlotState] = useState<{ owner: object; node: ReactNode } | null>(null)
+  const setSlot = useCallback<SlotSetter>((owner, node) => {
+    setSlotState((prev) => (node === null ? (prev?.owner === owner ? null : prev) : { owner, node }))
+  }, [])
+  return [slot?.node ?? null, setSlot]
 }
 
 interface LogSheetProps {
@@ -53,7 +67,7 @@ export function LogSheet(props: LogSheetProps) {
 function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight, footer, sticker }: LogSheetProps) {
   const { colors } = useTheme()
   const { t } = useTranslation()
-  const [slot, setSlot] = useState<ReactNode>(null)
+  const [slot, setSlot] = useFooterSlot()
   const footerNode = footer ?? slot
   const insets = useSafeAreaInsets()
 
