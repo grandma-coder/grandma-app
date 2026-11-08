@@ -550,7 +550,7 @@ export const ja: TranslationKeys = {
   preg_kicks_endSession: "記録を終える",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "{{count}}回",
-  preg_kicks_info: "感じるはずの胎動の回数に、決まった数はありません。赤ちゃんのいつものリズムを知っていきましょうね。胎動が減った、止まった、あるいはいつもと変わったと感じたら、すぐに助産師か産科に連絡してください。翌日まで待たないでね。",
+  preg_kicks_info: "赤ちゃんの動きがゆっくりになったり、止まったり、いつもと変わったりしたら、すぐに助産師さんか産科に連絡してね。次の日まで待たなくていいのよ。",
   preg_appts_addButton: "予約を追加",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",

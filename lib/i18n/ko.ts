@@ -550,7 +550,7 @@ export const ko: TranslationKeys = {
   preg_kicks_endSession: "세션 종료",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "태동 {{count}}번",
-  preg_kicks_info: "꼭 느껴야 하는 태동 횟수가 정해져 있는 것은 아니에요. 우리 아기의 평소 패턴을 알아가 보세요. 태동이 줄거나, 멈추거나, 평소와 달라졌다면 다음 날까지 기다리지 말고 바로 조산사나 산부인과(분만 병원)에 연락하세요.",
+  preg_kicks_info: "아기의 움직임이 줄어들거나, 멈추거나, 평소와 달라졌다면 다음 날까지 기다리지 말고 바로 조산사나 산부인과 분만 병동에 연락하세요.",
   preg_appts_addButton: "진료 예약 추가",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",

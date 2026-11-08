@@ -550,7 +550,7 @@ export const zh: TranslationKeys = {
   preg_kicks_endSession: "结束记录",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "{{count}} 次胎动",
-  preg_kicks_info: "胎动并没有一个你必须感觉到的固定次数。慢慢熟悉宝宝平时的规律。如果胎动减少、停止或有变化,请立即联系你的助产士或产科病房,不要等到第二天。",
+  preg_kicks_info: "如果宝宝的胎动变少、停止或者有了变化,请马上联系你的助产士或产科病房,不要拖到第二天。",
   preg_appts_addButton: "添加预约",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",

@@ -25,8 +25,8 @@ export function apiKey(): string | undefined {
 
 // Product terms that must read the same on every screen.
 const GLOSSARY: Record<string, string> = {
-  'pt-BR': '"journey" (one of the app\'s four tracks: cycle, pregnancy, kids, menopause) → "jornada". A medical "provider" → "médico"; an insurance "provider" → "operadora".',
-  es: '"journey" (one of the app\'s four tracks: cycle, pregnancy, kids, menopause) → "etapa", never "viaje". A medical "provider" → "médico" (or "médico o matrona" in pregnancy), never "proveedor"; an insurance "provider" → "aseguradora".',
+  'pt-BR': '"journey" (one of the app\'s four tracks: cycle, pregnancy, kids, menopause) → "jornada". A medical "provider" → "médico"; an insurance "provider" → "operadora". The "Village" marketplace → "Vila". A "midwife" the user should contact → "obstetra" (Brazilian prenatal care).',
+  es: '"journey" (one of the app\'s four tracks: cycle, pregnancy, kids, menopause) → "etapa", never "viaje". A medical "provider" → "médico" (or "médico o matrona" in pregnancy), never "proveedor"; an insurance "provider" → "aseguradora". The "Village" marketplace → "Aldea".',
 }
 
 function systemPrompt(lang: string): string {

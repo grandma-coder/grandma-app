@@ -602,7 +602,7 @@ export const ptBR: PregnancyContentLocale = {
   pg_ov_kick_count_how1: "O seu bebê deve continuar se mexendo até o trabalho de parto e durante ele — os movimentos não diminuem no fim da gravidez.",
   pg_ov_kick_count_how2: "Contar pode ajudar você a conhecer o padrão, mas não existe um número a ser atingido.",
   pg_ov_kick_count_how3: "Não use um doppler caseiro para conferir — ouvir o coração batendo não significa que está tudo bem.",
-  pg_ov_kick_count_watch: "Se os movimentos diminuírem, pararem ou mudarem, procure agora mesmo a sua parteira ou a maternidade, de dia ou de noite. Não espere até o dia seguinte.",
+  pg_ov_kick_count_watch: "Se os movimentos diminuírem, pararem ou mudarem, procure agora mesmo seu obstetra ou a maternidade, de dia ou de noite. Não espere até o dia seguinte.",
   pg_ov_labor_signs_why: "Nas últimas semanas, saber como é o trabalho de parto de verdade ajuda você a decidir quando ligar e quando ir para a maternidade.",
   pg_ov_labor_signs_how0: "Contrações em intervalos regulares, que ficam mais fortes e mais próximas e não passam quando você descansa ou muda de posição.",
   pg_ov_labor_signs_how1: "A bolsa estourar — um jato ou um escorrer contínuo de líquido. Anote o horário e a cor.",

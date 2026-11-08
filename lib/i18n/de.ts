@@ -550,7 +550,7 @@ export const de: TranslationKeys = {
   preg_kicks_endSession: "Sitzung beenden",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "{{count}} Tritte",
-  preg_kicks_info: "Es gibt keine bestimmte Anzahl an Bewegungen, die du spüren solltest. Lerne das gewohnte Bewegungsmuster deines Babys kennen. Wenn die Bewegungen nachlassen, aufhören oder sich verändern, wende dich sofort an deine Hebamme oder deine Entbindungsstation – warte nicht bis zum nächsten Tag.",
+  preg_kicks_info: "Wenn die Bewegungen deines Babys nachlassen, aufhören oder sich verändern, melde dich bitte sofort bei deiner Hebamme oder in der Geburtsklinik – warte nicht bis zum nächsten Tag.",
   preg_appts_addButton: "Termin hinzufügen",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",

@@ -550,7 +550,7 @@ export const fr: TranslationKeys = {
   preg_kicks_endSession: "Terminer la séance",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "{{count}} coups",
-  preg_kicks_info: "Il n'y a pas de nombre précis de mouvements que tu devrais ressentir. Apprends à connaître le rythme habituel de ton bébé. Si ses mouvements ralentissent, s'arrêtent ou changent, contacte ta sage-femme ou ta maternité sans attendre — ne patiente pas jusqu'au lendemain.",
+  preg_kicks_info: "Si les mouvements de bébé ralentissent, s'arrêtent ou changent, contacte ta sage-femme ou ta maternité tout de suite, sans attendre le lendemain.",
   preg_appts_addButton: "Ajouter un rendez-vous",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",

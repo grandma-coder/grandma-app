@@ -638,7 +638,7 @@ export const en: TranslationKeys = {
   preg_kicks_endSession: 'End Session',
   preg_kicks_recentSessions: 'RECENT SESSIONS',
   preg_kicks_countLabel: '{{count}} kicks',
-  preg_kicks_info: "There is no set number of movements you should feel. Get to know your baby's usual pattern. If movements slow down, stop or change, contact your midwife or maternity unit straight away — don't wait until the next day.",
+  preg_kicks_info: "If movements slow down, stop or change, contact your midwife or maternity unit straight away — don't wait until the next day.",
 
   // AppointmentList (Wave 2)
   preg_appts_addButton: 'Add Appointment',

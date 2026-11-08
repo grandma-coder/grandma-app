@@ -550,7 +550,7 @@ export const ar: TranslationKeys = {
   preg_kicks_endSession: "إنهاء الجلسة",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "{{count}} ركلات",
-  preg_kicks_info: "لا يوجد عدد محدد من الحركات يجب أن تشعري به. تعرّفي على النمط المعتاد لطفلك. إذا قلّت الحركات أو توقفت أو تغيّرت، فتواصلي مع القابلة أو وحدة الولادة فورًا، ولا تنتظري حتى اليوم التالي.",
+  preg_kicks_info: "إذا قلّت حركات الجنين أو توقّفت أو تغيّرت، فتواصلي مع القابلة أو مع وحدة الأمومة فورًا، ولا تنتظري حتى اليوم التالي.",
   preg_appts_addButton: "إضافة موعد",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",

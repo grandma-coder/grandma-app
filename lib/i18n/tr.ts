@@ -550,7 +550,7 @@ export const tr: TranslationKeys = {
   preg_kicks_endSession: "Seansı Bitir",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "{{count}} tekme",
-  preg_kicks_info: "Hissetmen gereken belirli bir hareket sayısı yoktur. Bebeğinin her zamanki düzenini tanımaya çalış. Hareketler yavaşlarsa, durursa ya da değişirse hemen ebenle ya da doğum ünitenle iletişime geç; ertesi güne bırakma.",
+  preg_kicks_info: "Bebeğinin hareketleri yavaşlarsa, durursa ya da değişirse hemen ebenle veya doğum ünitenle iletişime geç; ertesi güne bırakma.",
   preg_appts_addButton: "Randevu Ekle",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",

@@ -550,7 +550,7 @@ export const hi: TranslationKeys = {
   preg_kicks_endSession: "सेशन खत्म करें",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "{{count}} किक",
-  preg_kicks_info: "हलचल की कोई तय संख्या नहीं है जो तुम्हें महसूस होनी चाहिए। अपने बच्चे की हलचल का आम तरीका पहचानो। अगर हलचल धीमी हो जाए, रुक जाए या बदल जाए, तो तुरंत अपनी मिडवाइफ़ या मैटर्निटी यूनिट से संपर्क करो — अगले दिन तक इंतज़ार मत करो।",
+  preg_kicks_info: "अगर बच्चे की हलचल धीमी हो जाए, रुक जाए या उसके तरीके में कोई बदलाव लगे, तो तुरंत अपनी दाई (मिडवाइफ़) या मैटरनिटी यूनिट से संपर्क करो — अगले दिन तक इंतज़ार मत करो।",
   preg_appts_addButton: "अपॉइंटमेंट जोड़ें",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",

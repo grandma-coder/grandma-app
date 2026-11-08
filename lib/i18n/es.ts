@@ -551,7 +551,7 @@ export const es: TranslationKeys = {
   preg_kicks_endSession: "Finalizar Sesión",
   preg_kicks_recentSessions: "SESIONES RECIENTES",
   preg_kicks_countLabel: "{{count}} movimientos",
-  preg_kicks_info: "No existe un número fijo de movimientos que debas sentir. Llega a conocer el patrón habitual de tu bebé. Si los movimientos disminuyen, se detienen o cambian, contacta a tu matrona o a la unidad de maternidad de inmediato, sin esperar al día siguiente.",
+  preg_kicks_info: "Si los movimientos disminuyen, se detienen o cambian, contacta de inmediato a tu matrona o a la unidad de maternidad. No esperes hasta el día siguiente.",
   preg_appts_addButton: "Añadir Cita",
   preg_appts_upcoming: "PRÓXIMAS",
   preg_appts_past: "PASADAS",

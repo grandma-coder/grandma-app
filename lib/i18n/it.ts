@@ -550,7 +550,7 @@ export const it: TranslationKeys = {
   preg_kicks_endSession: "Termina sessione",
   preg_kicks_recentSessions: "RECENT SESSIONS",
   preg_kicks_countLabel: "{{count}} movimenti",
-  preg_kicks_info: "Non esiste un numero prestabilito di movimenti che dovresti sentire. Impara a conoscere il ritmo abituale del tuo bambino. Se i movimenti rallentano, si fermano o cambiano, contatta subito la tua ostetrica o il reparto di maternità: non aspettare il giorno dopo.",
+  preg_kicks_info: "Se i movimenti rallentano, si fermano o cambiano, contatta subito la tua ostetrica o il reparto di maternità, cara: non aspettare il giorno dopo.",
   preg_appts_addButton: "Aggiungi appuntamento",
   preg_appts_upcoming: "UPCOMING",
   preg_appts_past: "PAST",
