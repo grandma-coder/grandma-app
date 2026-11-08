@@ -6200,7 +6200,7 @@ export const es: TranslationKeys = {
   insights_quotedText: "\"{{text}}\"",
   insights_noArticlesAge: "No hay artículos que coincidan con este filtro para la edad de {{name}}. Prueba con \"Todos\".",
   careCircle_field_email_placeholder: "nombre@correo.com",
-  vac_n_4_in_1_dtap_ipv: "Cuádruple (DTaP/IPV)",
+  vac_n_4_in_1_dtap_ipv: "4 en 1 (DTaP/IPV)",
   vac_n_6_in_1_dtap_ipv_hib_hepb: "Hexavalente (DTaP/IPV/Hib/HepB)",
   vac_n_bcg_tuberculosis: "BCG (tuberculosis)",
   vac_n_dtp_diphtheria_tetanus_whooping_cough: "DPT (difteria, tétanos, tos convulsa)",
