@@ -55,7 +55,7 @@ export const WEEK_FOCUS: WeekRangeFocus[] = [
       bullets: [
         { icon: '🌊', text: 'Braxton Hicks are irregular practice contractions — not painful, no pattern. Normal from week 20+.' },
         { icon: '💧', text: 'Water breaking can be a trickle or a gush. Either way, call your doctor immediately.' },
-        { icon: '👶', text: 'Start kick counting at week 28 — 10 kicks in 2 hours is the goal, once a day.' },
+        { icon: '👶', text: 'Get to know your baby\'s movement pattern — there is no set number. If movements slow down, stop or change, contact your maternity unit straight away.' },
         // CLINICAL-REVIEW: pending sign-off — Labcorp/ACOG GDM screen. 1-hr 50g GCT needs no fasting; only the 3-hr GTT fasts.
         { icon: '🧪', text: 'Glucose test around week 24–28. No fasting needed for the 1-hour screen — only the follow-up 3-hour test requires fasting.' },
       ],

@@ -147,7 +147,7 @@ function questCopyForMode(mode: string, week: number | null): string {
     if (week == null) return 'Drink 8 glasses of water'
     if (week < 13) return 'Drink water + log a symptom'
     if (week < 28) return 'Log weight + a quick mood check'
-    if (week < 36) return 'Count 10 kicks in one hour'
+    if (week < 36) return 'Notice your baby\'s movements today'
     return 'Pack the hospital bag · prep for birth'
   }
   return ''

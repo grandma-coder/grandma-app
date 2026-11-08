@@ -566,7 +566,7 @@ export const en: TranslationKeys = {
   // RemindersSection (Wave 1)
   pregnancy_reminder_weekTip: 'Week {{week}} tip',
   pregnancy_reminder_kickCountTitle: 'Log your kick count',
-  pregnancy_reminder_kickCountSubtitle: 'Track 10 movements — aim to finish within 2 hours',
+  pregnancy_reminder_kickCountSubtitle: "Notice your baby's movements — you know their pattern best",
 
   // AffirmationRevealCard chrome (Wave 1)
   pregnancy_dailyAffirmation: 'DAILY AFFIRMATION',
@@ -629,7 +629,7 @@ export const en: TranslationKeys = {
 
   // KickCounter (Wave 2)
   preg_kicks_title: 'KICK COUNTER',
-  preg_kicks_goal: "Common guide: 10 movements within 2 hours",
+  preg_kicks_goal: "No set number — get to know your baby's usual pattern",
   preg_kicks_startSession: 'START SESSION',
   preg_kicks_kicksLabel: 'KICKS',
   preg_kicks_timeLabel: 'TIME',
@@ -638,7 +638,7 @@ export const en: TranslationKeys = {
   preg_kicks_endSession: 'End Session',
   preg_kicks_recentSessions: 'RECENT SESSIONS',
   preg_kicks_countLabel: '{{count}} kicks',
-  preg_kicks_info: "Count movements (kicks, rolls, jabs) starting from week 28. If you don't feel 10 movements in 2 hours, contact your healthcare provider.",
+  preg_kicks_info: "There is no set number of movements you should feel. Get to know your baby's usual pattern. If movements slow down, stop or change, contact your midwife or maternity unit straight away — don't wait until the next day.",
 
   // AppointmentList (Wave 2)
   preg_appts_addButton: 'Add Appointment',
@@ -4683,7 +4683,7 @@ export const en: TranslationKeys = {
   kp_plf_kick: "kick",
   kp_plf_kicks: "kicks",
   kp_plf_goalReached: "Goal reached! Great session.",
-  kp_plf_goal: "Common guide: 10 movements within 2 hours",
+  kp_plf_goal: "No set number — get to know your baby's usual pattern",
   kp_plf_saveSession: "Save Session",
   kp_plf_invalid: "Invalid",
   kp_plf_validWeight: "Please enter a valid weight.",

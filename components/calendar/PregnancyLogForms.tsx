@@ -995,7 +995,7 @@ export function KickCountForm({
             accessibilityRole="button"
             accessibilityLabel={t('preg_form_kick_tap')}
             style={({ pressed }) => [sl.kickBtn, {
-              backgroundColor: goalReached ? tone : colors.surface,
+              backgroundColor: count > 0 ? tone : colors.surface,
               borderColor: colors.text,
               transform: [{ scale: pressed ? 0.96 : 1 }],
             }]}
@@ -1007,16 +1007,12 @@ export function KickCountForm({
             {count}
             <Text style={{ fontSize: 20, fontFamily: font.bodyMedium, color: colors.textMuted }}>{` ${tNow(count === 1 ? 'kp_plf_kick' : 'kp_plf_kicks')}`}</Text>
           </Text>
-          <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
-            {dots.map((filled, i) => (
-              <View key={i} style={{
-                width: 11, height: 11, borderRadius: 999, borderWidth: 1.5, borderColor: colors.text,
-                backgroundColor: filled ? tone : 'transparent', opacity: filled ? 1 : 0.35,
-              }} />
-            ))}
-          </View>
+          {/* No target count (NHS/RCOG): the point is learning the baby's own pattern. */}
           <Text style={{ fontSize: 13, fontFamily: font.bodyMedium, color: colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
-            {goalReached ? tNow('kp_plf_goalReached') : tNow('kp_plf_goal')}
+            {tNow('kp_plf_goal')}
+          </Text>
+          <Text style={{ fontSize: 13, fontFamily: font.body, color: colors.textSecondary, textAlign: 'center', marginTop: 6, paddingHorizontal: 8 }}>
+            {t('preg_kicks_info')}
           </Text>
         </View>
         <SaveButton onPress={save} saving={saving} disabled={count === 0} label={tNow('kp_plf_saveSession')} />

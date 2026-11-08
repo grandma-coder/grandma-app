@@ -550,14 +550,14 @@ const TITLE_OVERRIDES: Array<{ id: string; match: RegExp; guide: PrepGuide }> = 
     id: 'kick_count',
     match: /count.*kicks|kick count|fetal movement/i,
     guide: {
-      why: 'From week 28, daily kick counts give you a sense of baby\'s baseline pattern — and a way to spot changes early.',
+      why: 'There is no set number of movements you should feel. What matters is getting to know your baby\'s own pattern, so you notice if it changes.',
       how: [
-        'Pick the same time each day, ideally after a meal when baby is active.',
-        'Lie on your side and count distinct movements.',
-        'Most providers want 10 movements within 2 hours.',
-        'Apps make tracking easy — or a simple paper tally works.',
+        'Notice when your baby is usually active, and how the movements feel.',
+        'Your baby should keep moving right up to and during labour — movements don\'t slow down at the end of pregnancy.',
+        'Counting can help you learn the pattern, but there is no target number to reach.',
+        'Don\'t use a home doppler to check — a heartbeat doesn\'t mean everything is fine.',
       ],
-      watch: 'A clear drop in baby\'s usual movement, especially after week 28, is a same-day call to your provider — even if it\'s 2 AM.',
+      watch: 'If movements slow down, stop or change, contact your midwife or maternity unit straight away, day or night. Don\'t wait until the next day.',
     },
   },
   {
