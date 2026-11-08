@@ -7,7 +7,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { fnv1a } from '../../lib/i18nHash'
-import { paramMismatch, readLocaleFile, type Manifest } from './core'
+import { looksUntranslated, paramMismatch, readLocaleFile, type Manifest } from './core'
 import { SETS, activeLanguages } from './sets'
 
 export const MANIFEST_PATH = join(__dirname, '../../i18n-manifest.json')
@@ -16,8 +16,6 @@ export function readManifest(): Manifest {
   return existsSync(MANIFEST_PATH) ? JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) : {}
 }
 
-/** Strings that may legitimately read the same as English (brand, acronyms, "OK"). */
-const SAME_OK = /^(OK|Grandma|grandma\.app|[A-Z0-9 .+\-/:%°]{1,12})$/
 
 export function checkAll(): string[] {
   const manifest = readManifest()
@@ -34,7 +32,7 @@ export function checkAll(): string[] {
         if (paramMismatch(en, tr)) problems.push(`${set.name}/${lang}: {{param}} mismatch in ${k}`)
         // An escape written twice shows up on screen as \\" or \\u2026.
         if (tr.includes('\\') && !en.includes('\\')) problems.push(`${set.name}/${lang}: stray backslash in ${k}`)
-        if (tr === en && /[A-Za-z]{3,}\s[a-z]{3,}/.test(en) && !SAME_OK.test(en)) problems.push(`${set.name}/${lang}: still English ${k}`)
+        if (looksUntranslated(en, tr)) problems.push(`${set.name}/${lang}: still English ${k}`)
       }
     }
   }

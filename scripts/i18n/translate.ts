@@ -38,7 +38,7 @@ function systemPrompt(lang: string): string {
     'Medical facts must be translated faithfully: do not add, soften, strengthen or drop any claim. Keep \\n line breaks where they are.',
     'Never call the body "normal". No scores, no pressure.',
     'Vaccine names (keys vac_n_*): use the name families and health services use in that language (e.g. pt-BR "Hepatite B", "Tríplice viral (sarampo, caxumba, rubéola)", "Catapora (varicela)"; es "Triple viral (SRP)"). Keep acronyms that are used locally (Hib, BCG, PCV13).',
-    'Some titles are split across keys and shown one after the other (e.g. "Welcome" then "back, dear."). A fragment stays a fragment: translate only its own words, never repeat the previous part.',
+    'Some titles are split across keys and shown one after the other (e.g. "Welcome" then "back, dear."). A fragment stays a fragment: translate only its own words, never repeat the previous part. Fragments that sit before a link ("I have read and agree to the" + Privacy Policy, "and" + Terms of Service) must agree in gender and number with that link\'s text.',
     'Input is a JSON object of key → English. Reply with ONLY a JSON object with exactly the same keys and the translated strings as values.',
   ].join('\n')
 }

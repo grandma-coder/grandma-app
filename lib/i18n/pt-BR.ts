@@ -2096,9 +2096,9 @@ export const ptBR: TranslationKeys = {
   consent_question: "Antes de começar,",
   consent_questionItalic: "sua privacidade.",
   consent_intro: "A Grandma guarda informações sensíveis de saúde e da família. Só usamos para dar vida à sua experiência — nunca vendemos, nunca compartilhamos sem o seu consentimento.",
-  consent_dataProcessing: "I agree to Grandma processing my health and family data to provide the app's features.",
-  consent_policyPrefix: "Li e concordo com os",
-  consent_policyAnd: "e a",
+  consent_dataProcessing: "Concordo que a Grandma processe meus dados de saúde e da minha família para oferecer os recursos do app.",
+  consent_policyPrefix: "Li e concordo com a",
+  consent_policyAnd: "e os",
   consent_footnote: "Você pode exportar ou excluir seus dados quando quiser em Ajustes → Dados e privacidade.",
   consent_cta: "Concordar e continuar",
   // Onboarding — About You (name + DOB)

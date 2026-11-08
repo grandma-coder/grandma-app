@@ -17,9 +17,19 @@ export function diffSet(
 ): { todo: string[]; removed: string[] } {
   // A backslash the English doesn't have is an escape written twice (shows as \\" or \\u2026).
   const brokenEscape = (k: string) => locale[k].includes('\\') && !english[k].includes('\\')
-  const todo = Object.keys(english).filter((k) => !(k in locale) || done[k] !== fnv1a(english[k]) || brokenEscape(k))
+  const todo = Object.keys(english).filter((k) => !(k in locale) || done[k] !== fnv1a(english[k]) || brokenEscape(k) || looksUntranslated(english[k], locale[k]))
   const removed = Object.keys(locale).filter((k) => !(k in english))
   return { todo, removed }
+}
+
+/** Strings that may legitimately read the same as English (brand, acronyms, "OK"). */
+export const SAME_OK = /^(OK|Grandma|grandma\.app|[A-Z0-9 .+\-/:%°]{1,12})$/
+
+const plainQuotes = (s: string) => s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').trim()
+
+/** A translated value that is still the English sentence (quote style ignored). */
+export function looksUntranslated(english: string, translated: string): boolean {
+  return plainQuotes(english) === plainQuotes(translated) && /[A-Za-z]{3,}\s[a-z]{3,}/.test(english) && !SAME_OK.test(english)
 }
 
 export function paramsOf(s: string): string {

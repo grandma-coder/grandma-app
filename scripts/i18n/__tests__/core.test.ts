@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
 import { fnv1a } from '../../../lib/i18nHash'
-import { diffSet, paramMismatch, readLocaleFile, writeLocaleFile } from '../core'
+import { diffSet, looksUntranslated, paramMismatch, readLocaleFile, writeLocaleFile } from '../core'
 
 describe('fnv1a', () => {
   it('is a stable 8-hex hash', () => {
@@ -81,5 +81,23 @@ describe('fillPlaceholders (hidden languages)', () => {
     writeFileSync(p, 'export const fr: X = {\n  a: "Un",\n  gone: "Parti",\n}\n')
     fillPlaceholders(p, { a: 'One', b: 'Two' })
     expect(readLocaleFile(p)).toEqual({ a: 'Un', b: 'Two' })
+  })
+})
+
+describe('looksUntranslated', () => {
+  it('catches English left in a locale even when only the apostrophe differs', () => {
+    expect(looksUntranslated('I agree to the app’s features.', "I agree to the app's features.")).toBe(true)
+  })
+  it('accepts real translations and brand-only strings', () => {
+    expect(looksUntranslated('I agree to the terms.', 'Eu concordo com os termos.')).toBe(false)
+    expect(looksUntranslated('Grandma', 'Grandma')).toBe(false)
+  })
+})
+
+describe('diffSet retranslates English left in a locale', () => {
+  it('queues a key whose value is still the English sentence', () => {
+    const english = { a: 'Keep this for later.' }
+    const { todo } = diffSet(english, { a: 'Keep this for later.' }, { a: fnv1a('Keep this for later.') })
+    expect(todo).toEqual(['a'])
   })
 })
