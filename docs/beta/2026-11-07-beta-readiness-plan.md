@@ -45,6 +45,33 @@ flowchart LR
 | 2.6 | Dados de exemplo (rotinas "Sleep Log", notificações em inglês) só na conta de teste — nunca em produção para usuários reais | Claude verifica seeds | ⬜ |
 | 2.7 | Excluir conta e exportar dados funcionando de ponta a ponta | Ambos | ⬜ |
 
+### Security migration (apply before beta)
+
+Arquivo: `supabase/migrations/20261107120000_beta_security_hardening.sql` — resultado da auditoria de RLS (item 2.4).
+**Ainda não aplicada.** Igor revisa e aplica no SQL editor do Supabase (colar o arquivo inteiro) ou via CLI
+(`supabase db push`). É idempotente: pode rodar de novo sem efeito colateral. Cada bloco que falhar emite um
+`WARNING` com o motivo em vez de abortar o resto — **ler a saída**: um WARNING significa que aquela correção não entrou.
+
+| Achado | O que a migração corrige |
+|---|---|
+| C1 (crítico) | Quem convidou não consegue mais reescrever o próprio convite para apontar para o filho de outra família. A policy de UPDATE exige que a criança seja do próprio usuário, e um trigger congela `child_id`, `invited_by`, `user_id` e `is_locked` e bloqueia "→ accepted" vindo do app (aceitar continua pela edge function `accept-invite`). Fecha também: cuidador revogado se reativando sozinho e convidante reativando cuidador sem passar pelo limite de vagas. |
+| H2 | `leaderboard_scores` passa a devolver só a linha do próprio usuário (a view completa vira `leaderboard_scores_all`, sem acesso de cliente). Admin e service role continuam vendo tudo. O ranking público (flag OFF no beta) vai precisar de uma view opt-in antes de ligar. |
+| H3 | Selo de especialista verificado (`is_verified_expert`, `expert_title`) só pode ser alterado pelo backend/admin. |
+| M3 | `scan_history` INSERT: a linha precisa ser sempre do próprio usuário, e a criança precisa ser dele ou de quem ele cuida ativamente (com permissão de registrar). |
+| M4 | Cuidadores pausados ou com vaga bloqueada perdem acesso a `kids_vaccine_schedule` (leitura), `nanny_notes` e `kids_reminders`. |
+| M1 | Tabelas da comunidade (`channel_members`, `poll_votes`, `post_reactions`, `channel_posts`, `post_comments`, `channel_ratings`) deixam de ser lidas com a chave anon (sem login). |
+| Baixo | `active_seats_for(uuid)` deixa de ser RPC pública. |
+
+**Fica para depois (não está nesta migração):**
+
+- **H1** — o SELECT de `children` para cuidadores expõe colunas médicas; a tela do cuidador usa o RPC `get_caregiver_children`, mas outras leituras podem bater direto na tabela. Precisa de análise do app antes de restringir.
+- **H4** — tabelas usadas pelo app que não são criadas em nenhuma migração do repo; conferir RLS direto em produção.
+- **M2** — RPC `create_notification` (qualquer membro de canal notifica qualquer outro membro).
+- **M5** — toggles de privacidade: revisar se o servidor respeita cada um.
+- Buckets de storage do garage — revisar políticas de storage.
+
+Depois de aplicar: testar no app convidar/aceitar/pausar cuidador, lembretes e vacinas na visão do cuidador, scan com criança selecionada e a tela de conquistas (badges).
+
 ## 3. Teste de ponta a ponta no simulador (conta NOVA, sem dados)
 
 Tudo até aqui foi testado na conta de teste cheia de dados. Beta tester chega **vazio** — estados vazios,
