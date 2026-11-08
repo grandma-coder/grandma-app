@@ -672,7 +672,9 @@ export default function RootLayout() {
 
     const inAuth = segments[0] === '(auth)'
 
-    if (!session && !inAuth) {
+    // accept-invite redirects signed-out users itself, keeping ?invite=<token>; sending them to a
+    // bare /welcome first (this guard fires before its async session check) lost the invite.
+    if (!session && !inAuth && segments[0] !== 'accept-invite') {
       router.replace('/(auth)/welcome')
     } else if (session && !hasCompletedOnboarding && segments[0] !== 'onboarding' && segments[0] !== 'accept-invite') {
       // (accept-invite is exempt: a new caregiver lands there straight from sign-up with no journey

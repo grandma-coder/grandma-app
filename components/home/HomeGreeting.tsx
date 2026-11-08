@@ -43,7 +43,7 @@ export function HomeGreeting({
   // Page canvas behind the greeting — used as the logo's "empty" body so the
   // black line-art heart stays legible instead of filling solid.
   const canvas = diffuse ? dt.colors.bg : colors.bg
-  const displayName = name?.trim().split(/\s+/)[0] || 'dear'
+  const displayName = name?.trim().split(/\s+/)[0] || t('greeting_noName')
 
   return (
     <View style={styles.wrap}>

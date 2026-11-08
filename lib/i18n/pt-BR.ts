@@ -6290,4 +6290,5 @@ export const ptBR: TranslationKeys = {
   kih_act_growth1: "Continue registrando peso + altura toda semana — a tendência importa mais do que um ponto isolado.",
   kih_act_lessSteady: "{{pillar}} parece menos estável do que na semana passada — vale olhar com mais carinho.",
   kih_act_dropped: "{{pillar}} caiu {{delta}}% nesta semana — vale olhar com mais carinho.",
+  greeting_noName: "querida",
 }

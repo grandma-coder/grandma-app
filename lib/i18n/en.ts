@@ -102,6 +102,7 @@ export const en: TranslationKeys = {
   mode_cycleTracking: 'Cycle Tracking',
 
   // Home Screen
+  greeting_noName: 'dear',
   home_greeting: 'Hello, dear',
   home_hi: 'Hi,',
   home_goodMorning: 'Good morning',

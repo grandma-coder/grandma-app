@@ -6287,4 +6287,5 @@ export const tr: TranslationKeys = {
   kih_act_growth1: "Keep logging weight + height weekly — trend matters more than a single point.",
   kih_act_lessSteady: "{{pillar}} looks less steady than last week — worth a closer look.",
   kih_act_dropped: "{{pillar}} dropped {{delta}}% this week — worth a closer look.",
+  greeting_noName: "dear",
 }

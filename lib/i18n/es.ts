@@ -6290,4 +6290,5 @@ export const es: TranslationKeys = {
   kih_act_growth1: "Sigue registrando peso y estatura cada semana — la tendencia importa más que un solo dato.",
   kih_act_lessSteady: "{{pillar}} se ve menos estable que la semana pasada — vale la pena mirarlo de cerca.",
   kih_act_dropped: "{{pillar}} bajó un {{delta}}% esta semana — vale la pena mirarlo de cerca.",
+  greeting_noName: "querida",
 }

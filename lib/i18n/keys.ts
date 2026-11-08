@@ -105,6 +105,7 @@ export interface TranslationKeys {
   mode_cycleTracking: string
 
   // ─── Home Screen ───────────────────────────────────────────────────────
+  greeting_noName: string
   home_greeting: string
   home_hi: string
   home_goodMorning: string

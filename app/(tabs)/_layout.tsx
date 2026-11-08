@@ -149,7 +149,7 @@ function CenterTabButton() {
   // then to the friendly default. Use only the first token so long names stay
   // on one line in the headline.
   const fullName = (profile?.name ?? parentName ?? '').trim()
-  const userName = fullName.split(/\s+/)[0] || 'dear'
+  const userName = fullName.split(/\s+/)[0] || t('greeting_noName')
   const [open, setOpen] = useState(false)
 
   // Animated values
